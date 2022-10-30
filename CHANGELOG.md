@@ -6,11 +6,12 @@ All notable changes to this project will be documented in this file.
 ## [12.2.0.2]
 ### Added
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk (#16938)
+- Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 
 ### Breaking Changed
 
 ### Changed
-- Prepare for two phase power calibration and move some persistent data (PowerLow)
+- Move some persistent data (PowerLow)
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
 
 ### Fixed

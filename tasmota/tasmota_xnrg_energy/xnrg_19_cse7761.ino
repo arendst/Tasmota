@@ -468,14 +468,14 @@ void Cse7761GetData(void) {
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      uint32_t power_calibration = (channel) ? Settings->energy_power_calibration2 : Settings->energy_power_calibration;
+      uint32_t power_calibration = EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION);
       // Active power = PowerPA * PowerPAC * 1000 / 0x80000000
       // Energy.active_power[channel] = (float)(((uint64_t)CSE7761Data.active_power[channel] * CSE7761Data.coefficient[PowerPAC + channel] * 1000) >> 31) / 1000;  // W
       Energy.active_power[channel] = (float)CSE7761Data.active_power[channel] / power_calibration;  // W
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        uint32_t current_calibration = (channel) ? Settings->energy_current_calibration2 : Settings->energy_current_calibration;
+        uint32_t current_calibration = EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION);
         // Current = RmsIA * RmsIAC / 0x800000
         // Energy.current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
         Energy.current[channel] = (float)CSE7761Data.current_rms[channel] / current_calibration;  // A

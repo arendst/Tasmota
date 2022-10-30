@@ -463,9 +463,9 @@ void Ade7953GetData(void) {
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
 
-      float power_calibration = ((channel) ? Settings->energy_power_calibration2 : Settings->energy_power_calibration) / 10;
-      float voltage_calibration = (channel) ? Settings->energy_voltage_calibration2 : Settings->energy_voltage_calibration;
-      float current_calibration = ((channel) ? Settings->energy_current_calibration2 : Settings->energy_current_calibration) * 10;
+      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
+      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION);
+      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) * 10;
 
       Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;

@@ -193,8 +193,8 @@ void Bl09XXUpdateEnergy() {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %2_f, T %2_f"), &Energy.voltage[0], &Bl09XX.temperature);
 #endif
     for (uint32_t chan = 0; chan < Energy.phase_count; chan++) {
-      uint32_t power_calibration = (chan) ? Settings->energy_power_calibration2 : Settings->energy_power_calibration;
-      uint32_t current_calibration = (chan) ? Settings->energy_current_calibration2 : Settings->energy_current_calibration;
+      uint32_t power_calibration = EnergyGetCalibration(chan, ENERGY_POWER_CALIBRATION);
+      uint32_t current_calibration = EnergyGetCalibration(chan, ENERGY_CURRENT_CALIBRATION);
       if (Bl09XX.power[chan] > power_calibration) {                                     // We need at least 1W
         Energy.active_power[chan] = (float)Bl09XX.power[chan] / power_calibration;
         Energy.current[chan] = (float)Bl09XX.current[chan] / current_calibration;

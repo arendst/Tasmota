@@ -45,7 +45,7 @@ void RtcSettingsSave(void) {
     if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
-//      RtcSettings.ex_energy_kWhtoday = Settings->energy_power_calibration2;
+//      RtcSettings.ex_energy_kWhtoday = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
 //      RtcSettings.ex_energy_kWhtotal = Settings->ex_energy_kWhtotal;
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
@@ -1535,8 +1535,8 @@ void SettingsDelta(void) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
       Settings->energy_kWhtotal_ph[0] = Settings->ex_energy_kWhtotal;
-      Settings->energy_kWhtoday_ph[0] = Settings->energy_power_calibration2;
-      Settings->energy_kWhyesterday_ph[0] = Settings->energy_voltage_calibration2;
+      Settings->energy_kWhtoday_ph[0] = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
+      Settings->energy_kWhyesterday_ph[0] = Settings->energy_voltage_calibration2;  // = ex_energy_kWhyesterday
       RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.ex_energy_kWhtoday;
       RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.ex_energy_kWhtotal;
     }

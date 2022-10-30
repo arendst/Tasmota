@@ -55,14 +55,20 @@ struct {
 void NrgDummyEverySecond(void) {
   if (Energy.power_on) {  // Powered on
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-      Energy.voltage[channel] = ((float)Settings->energy_voltage_calibration / 100);       // V
-      Energy.frequency[channel] = ((float)Settings->energy_frequency_calibration / 100);   // Hz
-      if (bitRead(TasmotaGlobal.power, channel)) {  // Emulate power read only if device is powered on
-        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : ((float)Settings->energy_power_calibration / 100);    // W
+
+      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 100;
+      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION) / 100;
+      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) / 100000;
+      float frequency_calibration = (float)EnergyGetCalibration(channel, ENERGY_FREQUENCY_CALIBRATION) / 100;
+
+      Energy.voltage[channel] = power_calibration;        // V
+      Energy.frequency[channel] = frequency_calibration;  // Hz
+      if (bitRead(TasmotaGlobal.power, channel)) {        // Emulate power read only if device is powered on
+        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : voltage_calibration;   // W
         if (0 == Energy.active_power[channel]) {
           Energy.current[channel] = 0;
         } else {
-          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : ((float)Settings->energy_current_calibration / 100000);  // A
+          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : current_calibration;  // A
           Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
         }
         Energy.data_valid[channel] = 0;
