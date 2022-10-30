@@ -1,7 +1,7 @@
 /*
   xsns_40_pn532.ino - Support for PN532 (HSU) NFC Tag Reader on Tasmota
 
-  Copyright (C) 2021  Andre Thomas and Theo Arends
+  Copyright (C) 2021  Andre Thomas, Theo Arends and md5sum-as (https://github.com/md5sum-as)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -354,7 +354,7 @@ void PN532_inRelease(void) {
   PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
 }
 
-uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData) {
+uint8_t PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData) {
   uint8_t i;
   uint8_t _key[6];
   uint8_t _uid[7];
@@ -391,7 +391,7 @@ uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t 
   return 1;
 }
 
-uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
+uint8_t PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the command */
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
@@ -418,7 +418,7 @@ uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   return 1;
 }
 
-uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
+uint8_t PN532_mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the first command */
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
@@ -435,7 +435,7 @@ uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
-uint8_t ntag21x_probe (void) {
+uint8_t PN532_ntag21x_probe (void) {
   uint8_t result=0;
 
   Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
@@ -461,7 +461,7 @@ uint8_t ntag21x_probe (void) {
   return result; //Return configuration page address
 }
 
-bool ntag21x_auth(void) {
+bool PN532_ntag21x_auth(void) {
 
   Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
   Pn532.packetbuffer[1] = NTAG21X_CMD_PWD_AUTH;
@@ -479,7 +479,7 @@ bool ntag21x_auth(void) {
   return memcmp(&Pn532.packetbuffer[1],&Pn532.pwd_pack,2)==0;
 }
 
-bool ntag2xx_read16 (const uint8_t page, char *out) {
+bool PN532_ntag2xx_read16 (const uint8_t page, char *out) {
 
   Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
   Pn532.packetbuffer[1] = NTAG2XX_CMD_READ;
@@ -497,7 +497,7 @@ bool ntag2xx_read16 (const uint8_t page, char *out) {
   return true;  
 }
 
-bool ntag2xx_write4(uint8_t page, char *in) {
+bool PN532_ntag2xx_write4(uint8_t page, char *in) {
 
     Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
     Pn532.packetbuffer[1] = NTAG2XX_CMD_WRITE;
@@ -514,29 +514,29 @@ bool ntag2xx_write4(uint8_t page, char *in) {
     return true;
 }
 
-bool ntag2xx_write16(uint8_t page, char *in) {
+bool PN532_ntag2xx_write16(uint8_t page, char *in) {
   
   for (uint8_t i = 0; i < 4; i++) {
-    if (!ntag2xx_write4(page +i, &in[i << 2])) {
+    if (!PN532_ntag2xx_write4(page +i, &in[i << 2])) {
       return false;
     }
   }
    return true;
 }
 
-bool ntag21x_set_password(uint8_t confPage, bool unsetPasswd) {
+bool PN532_ntag21x_set_password(uint8_t confPage, bool unsetPasswd) {
   char card_datas[16];
 
-  if (ntag2xx_read16(confPage, card_datas)) {
+  if (PN532_ntag2xx_read16(confPage, card_datas)) {
     if (unsetPasswd) {
       card_datas[3]=0xFF;
-      return ntag2xx_write4(confPage, card_datas);
+      return PN532_ntag2xx_write4(confPage, card_datas);
     }
     card_datas[3]=0; // Set AUTH0 for protect all pages
     card_datas[4] |= 0x80; // Set PROT flag for read and write access is protected by the password verification
     memcpy(&card_datas[8],&Pn532.pwd_auth_new, 4); // New password
     memcpy(&card_datas[12],&Pn532.pwd_pack_new, 2); // New password ack
-    return ntag2xx_write16(confPage, card_datas);
+    return PN532_ntag2xx_write16(confPage, card_datas);
   }
   return false;
 }
@@ -558,50 +558,50 @@ void PN532_ScanForTag(void) {
       uint8_t confPage=0;
       uint8_t nuid[] = { 0, 0, 0, 0, 0, 0, 0 };
       uint8_t nuid_len = 0;
-      if ((confPage=ntag21x_probe())>0) {
+      if ((confPage=PN532_ntag21x_probe())>0) {
         /* NTAG EV1 found*/
         str_pwd=PWD_NONE;
-        if (!ntag2xx_read16(4, card_datas)) {
+        if (!PN532_ntag2xx_read16(4, card_datas)) {
           if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
             if (memcmp(uid, nuid, sizeof(uid))==0) {
-              if (ntag21x_auth()) {
+              if (PN532_ntag21x_auth()) {
                 str_pwd=PWD_OK;
                 if (Pn532.function == 3) { /* new password */
-                  success = ntag21x_set_password(confPage, false);
+                  success = PN532_ntag21x_set_password(confPage, false);
                 }
                 if (Pn532.function == 4) { /* clear password */
-                  success = ntag21x_set_password(confPage, true);
+                  success = PN532_ntag21x_set_password(confPage, true);
                 }
               } else {
                 str_pwd=PWD_NOK;
               }
-              if (!ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+              if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
             }
           }
         } else {
           if (Pn532.function == 3) { /* new password */
-            success = ntag21x_set_password(confPage, false);
+            success = PN532_ntag21x_set_password(confPage, false);
           }
         }      
       } else {
         if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
           if (memcmp(uid, nuid, sizeof(uid))==0) {
-            if (!ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+            if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
           }
         }
       }
       if ((Pn532.function == 1) || (Pn532.function == 2)) {
-       success = ntag2xx_write16(4, (char *)Pn532.newdata);
-       if (!ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+       success = PN532_ntag2xx_write16(4, (char *)Pn532.newdata);
+       if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
       }
     }
     else if (uid_len == 4) { // Lets try to read blocks 1 & 2 of the mifare classic card for more information
       uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-      if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
+      if (PN532_mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
         if ((Pn532.function == 1) || (Pn532.function == 2)) {
-          success=mifareclassic_WriteDataBlock(1, Pn532.newdata);
+          success=PN532_mifareclassic_WriteDataBlock(1, Pn532.newdata);
         }
-        if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
+        if (PN532_mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
           for (uint32_t i = 0; i < 16; i++) {
             if (!isprint(card_datas[i])) {
               // do not output non-printable characters to the console 
