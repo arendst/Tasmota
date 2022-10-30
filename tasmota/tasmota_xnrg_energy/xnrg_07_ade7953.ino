@@ -69,6 +69,8 @@
 
 /*********************************************************************************************/
 
+#define ADE7953_ACCU_ENERGY                  // Use accumulating energy instead of instant power
+
 //#define ADE7953_DUMP_REGS
 
 #define ADE7953_PREF              1540       // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
@@ -201,9 +203,21 @@ const uint16_t Ade7953CalibRegs[2][ADE7953_CALIBREGS] {
 
 const uint8_t  ADE7953_REGISTERS = 6;
 const uint16_t Ade7953Registers[2][ADE7953_REGISTERS] {
+#ifdef ADE7953_ACCU_ENERGY
+  { ADE7953_IRMSA, ADE7953_AENERGYA, ADE7953_APENERGYA, ADE7953_RENERGYA, ADE7953_VRMS, ADE7943_Period },
+  { ADE7953_IRMSB, ADE7953_AENERGYB, ADE7953_APENERGYB, ADE7953_RENERGYB, ADE7953_VRMS, ADE7943_Period }
+#else   // No ADE7953_ACCU_ENERGY
   { ADE7953_IRMSA, ADE7953_AWATT, ADE7953_AVA, ADE7953_AVAR, ADE7953_VRMS, ADE7943_Period },
   { ADE7953_IRMSB, ADE7953_BWATT, ADE7953_BVA, ADE7953_BVAR, ADE7953_VRMS, ADE7943_Period }
+#endif  // ADE7953_ACCU_ENERGY
 };
+
+#ifdef ADE7953_ACCU_ENERGY
+const float ADE7953_LSB_PER_WATTSECOND = 2.5;
+const float ADE7953_POWER_CORRECTION = 23.41494;  // See https://github.com/arendst/Tasmota/pull/16941
+#else   // No ADE7953_ACCU_ENERGY
+const float ADE7953_LSB_PER_WATTSECOND = 44;
+#endif  // ADE7953_ACCU_ENERGY
 
 struct Ade7953 {
   uint32_t voltage_rms[2] = { 0, 0 };
@@ -272,7 +286,7 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
 }
 
 int32_t Ade7953Read(uint16_t reg) {
-	uint32_t response = 0;
+  uint32_t response = 0;
 
   int size = Ade7953RegSize(reg);
   if (size) {
@@ -304,7 +318,7 @@ int32_t Ade7953Read(uint16_t reg) {
     }
 #endif  // USE_ESP32_SPI
   }
-	return response;
+  return response;
 }
 
 #ifdef ADE7953_DUMP_REGS
@@ -439,6 +453,9 @@ void Ade7953GetData(void) {
     acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
     reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
 
+  // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
+  if (Ade7953.init_step) { return; }
+
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
@@ -464,15 +481,18 @@ void Ade7953GetData(void) {
       Energy.data_valid[channel] = 0;
 
       float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
+#ifdef ADE7953_ACCU_ENERGY
+      power_calibration /= ADE7953_POWER_CORRECTION;
+#endif  // ADE7953_ACCU_ENERGY
       float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION);
       float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) * 10;
 
       Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
       Energy.voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
@@ -482,7 +502,7 @@ void Ade7953GetData(void) {
           Energy.reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
@@ -497,14 +517,13 @@ void Ade7953GetData(void) {
 }
 
 void Ade7953EnergyEverySecond(void) {
-	if (Ade7953.init_step) {
-    if (1 == Ade7953.init_step) {
-      Ade7953Init();
-	  }
+  if (Ade7953.init_step) {
+    if (2 == Ade7953.init_step) { Ade7953Init(); }
+    if (1 == Ade7953.init_step) { Ade7953GetData(); }  // Read registers but do not display yet
     Ade7953.init_step--;
-	}	else {
-		Ade7953GetData();
-	}
+  } else {
+    Ade7953GetData();
+  }
 }
 
 /*********************************************************************************************/
@@ -668,7 +687,7 @@ void Ade7953DrvInit(void) {
 
     Ade7953Defaults();
 
-    Ade7953.init_step = 2;
+    Ade7953.init_step = 3;
 
 //    Energy.phase_count = 1;
 //    Energy.voltage_common = false;
@@ -712,7 +731,13 @@ bool Ade7953Command(void) {
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {       // Between 1W and 2000W
+#ifdef ADE7953_ACCU_ENERGY
+        float power_calibration = (float)(Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+        power_calibration *= ADE7953_POWER_CORRECTION;
+        XdrvMailbox.payload = (uint32_t)power_calibration;  // 0.00 W
+#else   // No ADE7953_ACCU_ENERGY
         XdrvMailbox.payload = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+#endif  // ADE7953_ACCU_ENERGY
       }
     }
   }

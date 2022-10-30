@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Move some persistent data (PowerLow)
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
+- ADE7953 monitoring from instant power to accumulated energy (#16941)
 
 ### Fixed
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)

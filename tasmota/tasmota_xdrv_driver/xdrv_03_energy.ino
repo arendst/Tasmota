@@ -852,7 +852,7 @@ uint32_t EnergyGetCalibration(uint32_t chan, uint32_t cal_type) {
 }
 
 void EnergyCommandCalSetResponse(uint32_t cal_type) {
-  if (XdrvMailbox.payload > 999) {
+  if (XdrvMailbox.payload > 99) {
     uint32_t channel = ((2 == XdrvMailbox.index) && (2 == Energy.phase_count)) ? 1 : 0;
     if (channel) {
       switch (cal_type) {

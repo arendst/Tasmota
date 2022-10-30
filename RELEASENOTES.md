@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Compiling with reduced boards manifests in favour of Autoconfig [#16848](https://github.com/arendst/Tasmota/issues/16848)
+- ADE7953 monitoring from instant power to accumulated energy [#16941](https://github.com/arendst/Tasmota/issues/16941)
 
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
