@@ -6,9 +6,9 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#if defined(USE_BERRY_ULP) && defined(CONFIG_IDF_TARGET_ESP32)
+#if defined(USE_BERRY_ULP) &&  (defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
 
-#include "esp32/ulp.h"
+// #include "esp32/ulp.h"
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
@@ -37,8 +37,6 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]");   // optional int arg
 extern void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size);
 BE_FUNC_CTYPE_DECLARE(be_ULP_load, "", "@(bytes)~");   // pass: 1/ vm, 2/ bytes point, 3/ bytes size
 
-#include "be_fixed_ULP.h"
-
 /* @const_object_info_begin
 module ULP (scope: global) {
   run,          ctype_func(be_ULP_run)
@@ -51,5 +49,6 @@ module ULP (scope: global) {
   adc_config,   ctype_func(be_ULP_adc_config)
 }
 @const_object_info_end */
+#include "be_fixed_ULP.h"
 
 #endif // USE_BERRY_ULP
