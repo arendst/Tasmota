@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk (#16938)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
+- Support for NTAG2xx tags read and write on PN532 NFC reader (#16939)
 
 ### Breaking Changed
 
@@ -19,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)
 
 ### Removed
+- Define ``USE_PN532_DATA_RAW`` from NFC reader (#16939)
 
 ## [12.2.0.1] 20221026
 ### Added
