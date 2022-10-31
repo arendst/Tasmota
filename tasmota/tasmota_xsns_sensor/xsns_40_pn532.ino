@@ -106,8 +106,10 @@ void PN532_Init(void) {
         PN532_SAMConfig();
         AddLog(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected v%u.%u",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
         Pn532.present = true;
+#ifdef USE_PN532_DATA_FUNCTION
         Pn532.pwd_auth=Settings->pn532_password;
         Pn532.pwd_pack=Settings->pn532_pack;
+#endif
       }
     }
   }
