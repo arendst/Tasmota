@@ -64,9 +64,9 @@ void ShellyProPreInit(void) {
       PinUsed(GPIO_SPI_CS) &&
       TasmotaGlobal.gpio_optiona.shelly_pro) {  // Option_A7
 
-    if (PinUsed(GPIO_SWT1)) {
+    if (PinUsed(GPIO_SWT1) || PinUsed(GPIO_KEY1)) {
       TasmotaGlobal.devices_present++;          // Shelly Pro 1
-      if (PinUsed(GPIO_SWT1, 1)) {
+      if (PinUsed(GPIO_SWT1, 1) || PinUsed(GPIO_KEY1, 1)) {
         TasmotaGlobal.devices_present++;        // Shelly Pro 2
       }
 
