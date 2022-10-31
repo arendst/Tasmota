@@ -85,8 +85,8 @@ struct PN532 {
 #ifdef USE_PN532_DATA_FUNCTION
   uint8_t newdata[16];
   uint8_t function = 0;
-  uint32_t pwd_auth=0x64636261;
-  uint16_t pwd_pack=0x6665;
+  uint32_t pwd_auth;
+  uint16_t pwd_pack;
   uint32_t pwd_auth_new;
   uint16_t pwd_pack_new;
 #endif  // USE_PN532_DATA_FUNCTION
@@ -106,6 +106,10 @@ void PN532_Init(void) {
         PN532_SAMConfig();
         AddLog(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected v%u.%u",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
         Pn532.present = true;
+#ifdef USE_PN532_DATA_FUNCTION
+        Pn532.pwd_auth=Settings->pn532_password;
+        Pn532.pwd_pack=Settings->pn532_pack;
+#endif
       }
     }
   }
@@ -708,6 +712,9 @@ bool PN532_Command(void) {
     if (ArgC() > 2) {
       Pn532.pwd_pack=strtoul(ArgV(argument,3),nullptr,0);
     }
+    Settings->pn532_password=Pn532.pwd_auth;
+    Settings->pn532_pack=Pn532.pwd_pack;
+
     serviced = true;
   }
   if (!strcmp_P(argument,PSTR("SET_PWD"))) {
