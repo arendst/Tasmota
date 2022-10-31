@@ -81,7 +81,7 @@ struct pmsX003data {
   uint16_t temperature10x, humidity10x;
 #else
   uint16_t particles_50um, particles_100um;
-#endif
+#endif // PMS_MODEL_PMSx003T
   uint16_t unused;
 #endif  // PMS_MODEL_PMS3003
   uint16_t checksum;
