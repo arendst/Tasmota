@@ -415,8 +415,8 @@ bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &
   return (change != save_flag);
 }
 
-void EnergyMarginCheck(void)
-{
+void EnergyMarginCheck(void) {
+  if (!Energy.phase_count || (TasmotaGlobal.uptime < 8)) { return; }
   if (Energy.power_steady_counter) {
     Energy.power_steady_counter--;
     return;
@@ -1094,9 +1094,6 @@ void EnergyDrvInit(void) {
   Energy.voltage_available = true;     // Enable if voltage is measured
   Energy.current_available = true;     // Enable if current is measured
   Energy.power_on = true;
-#ifdef USE_ENERGY_MARGIN_DETECTION
-  Energy.power_steady_counter = 8;     // Allow for power on stabilization
-#endif  // USE_ENERGY_MARGIN_DETECTION
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
   XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
