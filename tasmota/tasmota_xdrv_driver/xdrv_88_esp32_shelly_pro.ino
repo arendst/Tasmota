@@ -49,13 +49,15 @@ void ShellyProUpdate(void) {
   // bit 3 = wifi led green
   // bit 4 = wifi led red
   // bit 5 - 7 = nc
-  uint32_t val = SPro.power | SPro.ledlink;
+  // OE is connected to Gnd with 470 ohm resistor R62 AND a capacitor C81 to 3V3
+  // - this inhibits output of signals (also relay state) during power on for a few seconds
+  uint8_t val = SPro.power | SPro.ledlink;
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
   SPI.transfer(val);                            // Write 74HC595 shift register
   SPI.endTransaction();
-  delayMicroseconds(2);                         // Wait for SPI clock to stop
+//  delayMicroseconds(2);                         // Wait for SPI clock to stop
   digitalWrite(SPro.pin_shift595_rclk, 1);      // Latch data
-  delayMicroseconds(2);                         // Shelly 10mS
+  delayMicroseconds(1);                         // Shelly 10mS
   digitalWrite(SPro.pin_shift595_rclk, 0);
 }
 
@@ -76,21 +78,18 @@ void ShellyProPreInit(void) {
       // Does nothing if SPI is already initiated (by ADE7953) so no harm done
       SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 
-      SPro.power = TasmotaGlobal.power &3;      // Restore power
-      SPro.ledlink = 0x18;                      // Blue led on
-      ShellyProUpdate();
-
+      SPro.ledlink = 0x18;                      // Blue led on - set by first call ShellyProPower()
       SPro.detected = true;
     }
   }
 }
 
 void ShellyProInit(void) {
-  int pin_lan_reset = 5;                    // GPIO5 = LAN8720 nRST
-//  delay(30);                                // (t-purstd) This pin must be brought low for a minimum of 25 mS after power on
+  int pin_lan_reset = 5;                        // GPIO5 = LAN8720 nRST
+//  delay(30);                                    // (t-purstd) This pin must be brought low for a minimum of 25 mS after power on
   digitalWrite(pin_lan_reset, 0);
   pinMode(pin_lan_reset, OUTPUT);
-  delay(1);                                 // (t-rstia) This pin must be brought low for a minimum of 100 uS
+  delay(1);                                     // (t-rstia) This pin must be brought low for a minimum of 100 uS
   digitalWrite(pin_lan_reset, 1);
 
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: Shelly Pro %d%s initialized"),
@@ -123,9 +122,14 @@ void ShellyProLedLink(void) {
   - Green light indicator will be on if in STA mode and connected to a Wi-Fi network.
   */
   SPro.last_update = TasmotaGlobal.uptime;
-  uint32_t ledlink = 0x1C;                                         // All leds off
-  if (XdrvMailbox.index) { ledlink &= 0xFB; }                      // Blue blinks if wifi/mqtt lost
-  if (!TasmotaGlobal.global_state.wifi_down) { ledlink &= 0xF7; }  // Green On
+  uint32_t ledlink = 0x1C;                      // All leds off
+  if (XdrvMailbox.index) {
+    ledlink &= 0xFB;                            // Blue blinks if wifi/mqtt lost
+  }
+  else if (!TasmotaGlobal.global_state.wifi_down) {
+    ledlink &= 0xF7;                            // Green On
+  }
+
   ShellyProUpdateLedLink(ledlink);
 }
 
