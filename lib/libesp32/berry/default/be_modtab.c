@@ -166,7 +166,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_ALEXA_AVS
     &be_native_module(crypto),
 #endif
-#if defined(USE_BERRY_ULP)
+#if defined(USE_BERRY_ULP) && ((CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
