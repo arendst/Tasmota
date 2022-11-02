@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk (#16938)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Support for NTAG2xx tags read and write on PN532 NFC reader (#16939)
-- Added Berry ``bytes().reverse()`` method
+- Berry ``bytes().reverse()`` method (#16977)
 
 ### Breaking Changed
 
@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)
+- Serial initialization for baudrate and config (#16970)
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader (#16939)

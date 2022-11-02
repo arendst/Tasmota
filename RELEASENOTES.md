@@ -115,7 +115,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for up to four DS18x20 GPIOs by md5sum-as [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk [#16938](https://github.com/arendst/Tasmota/issues/16938)
 - Support for NTAG2xx tags read and write on PN532 NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)
-- Berry add `bytes().setbytes()` [#16892](https://github.com/arendst/Tasmota/issues/16892)
+- Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
+- Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
 
 ### Breaking Changed
@@ -130,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 [#16914](https://github.com/arendst/Tasmota/issues/16914)
+- Serial initialization for baudrate and config [#16970](https://github.com/arendst/Tasmota/issues/16970)
 
 
 ### Removed

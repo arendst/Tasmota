@@ -1977,6 +1977,13 @@ void SetSerialBegin(void) {
 #endif  // ESP32
 }
 
+void SetSerialInitBegin(void) {
+  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  if ((GetSerialBaudrate() != TasmotaGlobal.baudrate) || (TS_SERIAL_8N1 != Settings->serial_config)) {
+    SetSerialBegin();
+  }
+}
+
 void SetSerialConfig(uint32_t serial_config) {
   if (serial_config > TS_SERIAL_8O2) {
     serial_config = TS_SERIAL_8N1;
