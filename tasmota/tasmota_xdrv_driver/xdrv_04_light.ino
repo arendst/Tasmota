@@ -1763,6 +1763,7 @@ void LightReapplyColor(void) {
 void LightAnimate(void)
 {
   bool power_off = false;
+  static int32_t sleep_previous = -1;   // previous value of sleep before changing it to PWM_MAX_SLEEP, -1 means unchanged
 
   // make sure we update CT range in case SetOption82 was changed
   Light.strip_timer_counter++;
@@ -1770,13 +1771,17 @@ void LightAnimate(void)
   // set sleep parameter: either settings,
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
-    if (Settings->sleep > PWM_MAX_SLEEP) {
+    if (TasmotaGlobal.sleep > PWM_MAX_SLEEP) {
+      sleep_previous = TasmotaGlobal.sleep;     // save previous value of sleep
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
     } else {
-      TasmotaGlobal.sleep = Settings->sleep;     // or keep the current sleep if it's low enough
+      sleep_previous = -1;                      // if low enough, don't change it
     }
   } else {
-    TasmotaGlobal.sleep = Settings->sleep;
+    if (sleep_previous > 0) {
+      TasmotaGlobal.sleep = sleep_previous;
+      sleep_previous = -1;                      // rearm
+    }
   }
 
   if (!Light.power) {                   // All channels powered off
