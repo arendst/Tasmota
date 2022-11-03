@@ -109,6 +109,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.2.0.2
 ### Added
+- Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
 - Support for Shelly Pro 1/1PM and 2/2PM [#16773](https://github.com/arendst/Tasmota/issues/16773)
@@ -118,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
+- ESP32 Support for DMX ArtNet Led matrix animations [#16984](https://github.com/arendst/Tasmota/issues/16984)
 
 ### Breaking Changed
 

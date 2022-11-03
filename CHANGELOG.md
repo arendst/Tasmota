@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Support for NTAG2xx tags read and write on PN532 NFC reader (#16939)
 - Berry ``bytes().reverse()`` method (#16977)
-- Support for DMX ArtNet Led matrix animations
+- ESP32 Support for DMX ArtNet Led matrix animations (#16984)
+- Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
 
 ### Breaking Changed
 

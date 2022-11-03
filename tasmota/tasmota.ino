@@ -253,6 +253,7 @@ struct TasmotaGlobal_t {
   power_t blink_power;                      // Blink power state
   power_t blink_powersave;                  // Blink start power save state
   power_t blink_mask;                       // Blink relay active mask
+  power_t power_on_delay_state;
 
   int serial_in_byte_counter;               // Index in receive buffer
 
@@ -333,6 +334,7 @@ struct TasmotaGlobal_t {
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
+  uint8_t power_on_delay;                   // Delay relay power on to reduce power surge (SetOption47)
 #ifdef USE_PWM_DIMMER
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level

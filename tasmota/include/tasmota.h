@@ -362,7 +362,7 @@ enum SO32_49Index { P_HOLD_TIME,              // SetOption32 - (Button/Switch) K
                     P_IR_TOLERANCE,           // SetOption44 - (IR) Base tolerance percentage for matching incoming IR messages (default 25, max 100)
                     P_BISTABLE_PULSE,         // SetOption45 - (Bistable) Pulse time for two coil bistable latching relays (default 40)
                     P_POWER_ON_DELAY,         // SetOption46 - (PowerOn) Add delay of 10 x value milliseconds at power on
-                    P_SO47_FREE,              // SetOption47
+                    P_POWER_ON_DELAY2,        // SetOption47 - (PowerOn) Add delay of value seconds at power on before activating relays
                     P_SO48_FREE,              // SetOption48
                     P_SO49_FREE               // SetOption49
                   };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49

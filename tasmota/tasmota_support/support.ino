@@ -106,6 +106,11 @@ uint32_t ResetReason(void) {
   return ESP_ResetInfoReason();
 }
 
+bool ResetReasonPowerOn(void) {
+  uint32_t reset_reason = ESP_ResetInfoReason();
+  return ((reset_reason == REASON_DEFAULT_RST) || (reset_reason == REASON_EXT_SYS_RST));
+}
+
 String GetResetReason(void) {
   if (OsWatchBlockedLoop()) {
     char buff[32];
