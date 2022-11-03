@@ -6,7 +6,9 @@ class ArtNet
   var udp_server                # instance of `udp` class
   var universe_start            # base universe number
   var universe_end              # last universe number allowed (excluded)
-  static var artnet_sig = bytes().fromstring("Art-Net\x00")   # 8 bytes               # signature of packet
+  # static var artnet_sig = bytes().fromstring("Art-Net\x00")   # 8 bytes               # signature of packet
+  static var artnet_sig_0 = 0x4172742D    # "Art-"
+  static var artnet_sig_4 = 0x4E657400    # "Net\x00"
 
   var packet                    # try reusing the same packer bytes() object for performance
 
@@ -22,9 +24,10 @@ class ArtNet
     self.universe_end = universe_start + matrix.h
 
     if port == nil  port = 6454 end
-    # self.artnet_sig = bytes().fromstring("Art-Net\x00")   # 8 bytes
     self.port = int(port)
     if ip_addr == nil  ip_addr = "" end
+
+    self.packet = bytes()     # instanciate a single bytes() buffer that will be used for all received packets
 
     self.udp_server = udp()
     self.udp_server.begin(ip_addr, self.port)
@@ -38,10 +41,13 @@ class ArtNet
   def fast_loop()
     var universe_start = self.universe_start
     var universe_end = self.universe_end
+    var artnet_sig_0 = self.artnet_sig_0
+    var artnet_sig_4 = self.artnet_sig_4
     var dirty = false
     var packet = self.udp_server.read(self.packet)
     while (packet != nil)
-      if size(packet) >= 18 && packet[0..7] == self.artnet_sig   # check that we have a packet containing the 8 bytes header
+      if size(packet) >= 18 &&
+          packet.get(0, -4) == artnet_sig_0 && packet.get(4, -4) == artnet_sig_4
         var opcode = packet.get(8, 2)       # should be 0x5000
         var protocol = packet.get(10, -2)   # big endian, should be 14
         var universe = packet.get(14, 2)
@@ -64,13 +70,12 @@ class ArtNet
           #             opcode, protocol, seq, phy, universe, data_len, packet[18..-1].tohex()))
         end
       end
-      packet = self.udp_server.read(packet)
+      packet = self.udp_server.read(self.packet)
       if packet == nil
         tasmota.delay_microseconds(20)   # wait 20 us just in case
-        packet = self.udp_server.read(packet)
+        packet = self.udp_server.read(self.packet)
       end
     end
-    self.packet = packet          # save bytes() object for next iteration and avoid allocation of new object
 
     if dirty
       self.matrix.dirty()
@@ -83,7 +88,9 @@ return ArtNet
 
 #-
 # Example for M5Stack ATOM Matrix (5x5 matrix without alternate)
+import artnet
+# var artnet = ArtNet
 var strip = Leds(25, gpio.pin(gpio.WS2812, 0))
 var m = strip.create_matrix(5, 5, 0)
-var dmx = ArtNet(m)
+var dmx = artnet(m)
 -#

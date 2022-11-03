@@ -151,19 +151,11 @@ extern "C" {
             break;
           case 6: // # 06 : Pixels       void -> bytes() (mapped to the buffer)
             {
-            size_t pixels_bytes;
-            if (s_ws2812_grb)       pixels_bytes = s_ws2812_grb->PixelsSize();
-            if (s_sk6812_grbw)      pixels_bytes = s_sk6812_grbw->PixelsSize();
-
             uint8_t * pixels;
             if (s_ws2812_grb)       pixels = s_ws2812_grb->Pixels();
             if (s_sk6812_grbw)      pixels = s_sk6812_grbw->Pixels();
             
-            be_getbuiltin(vm, "bytes");
             be_pushcomptr(vm, pixels);
-            be_pushint(vm, pixels_bytes);
-            be_call(vm, 2);
-            be_pop(vm, 2);
             }
             break;
           case 7: // # 07 : PixelSize    void -> int

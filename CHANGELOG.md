@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Berry ``bytes().reverse()`` method (#16977)
 - ESP32 Support for DMX ArtNet Led matrix animations (#16984)
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
+- ESP32 DMX ArtNet optimization to avoid any object allocation and avoid garbage collector pauses
 
 ### Breaking Changed
 
