@@ -1081,7 +1081,7 @@ void PerformEverySecond(void)
     }
     if (!TasmotaGlobal.power_on_delay && TasmotaGlobal.power_on_delay_state) {
       // Set relays according to last SetDevicePower() request
-      SetDevicePower(TasmotaGlobal.power_on_delay_state, SRC_RESTART);
+      SetDevicePower(TasmotaGlobal.power_on_delay_state, SRC_SO47);
     }
   }
 
@@ -2084,7 +2084,7 @@ void GpioInit(void)
           DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);  // Off
         }
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO47 Power off relays"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO47 %d Power off relays"), Settings->param[P_POWER_ON_DELAY2]);
     }
   }
 
