@@ -178,6 +178,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     NULL /* do not remove */
 };
 
+be_extern_native_class(dyn);
 be_extern_native_class(tasmota);
 be_extern_native_class(Trigger);
 be_extern_native_class(Driver);
@@ -228,6 +229,7 @@ be_extern_native_class(int64);
 BERRY_LOCAL bclass_array be_class_table = {
 #ifdef TASMOTA
     /* first list are direct classes */
+    &be_native_class(dyn),
     &be_native_class(tasmota),
     &be_native_class(Trigger),
     &be_native_class(Driver),
