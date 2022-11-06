@@ -187,6 +187,10 @@ uint32_t swap_endian32(uint32_t num)
          ((num<<24)&0xff000000); // byte 0 to byte 3
 }
 
+void ModbusBridgeAllocError(const char* s)
+{
+  AddLog(LOG_LEVEL_ERROR, PSTR("MBS: could not allocate %s buffer"), s);
+}
 
 /********************************************************************************************/
 //
@@ -248,6 +252,11 @@ void ModbusBridgeHandle(void)
     uint8_t *buffer;
     if (modbusBridge.byteCount == 0) modbusBridge.byteCount = modbusBridge.dataCount * 2;
     buffer = (uint8_t *)malloc(9 + modbusBridge.byteCount); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
+    if (nullptr == buffer)
+    {
+      ModbusBridgeAllocError(PSTR("read"));
+      return;
+    }
     memset(buffer, 0, 9 + modbusBridge.byteCount);
     uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, 0, modbusBridge.byteCount);
 
@@ -562,9 +571,9 @@ void ModbusBridgeInit(void)
 #ifdef USE_MODBUS_BRIDGE_TCP
     // If TCP bridge is enabled allocate a TCP receive buffer
     modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
-    if (!modbusBridgeTCP.tcp_buf)
+    if (nullptr == modbusBridgeTCP.tcp_buf)
     {
-      AddLog(LOG_LEVEL_ERROR, PSTR("MBS: MBRTCP could not allocate buffer"));
+      ModbusBridgeAllocError(PSTR("TCP"));
       return;
     }
 #endif
@@ -674,6 +683,11 @@ void ModbusTCPHandle(void)
           modbusBridge.dataCount = 1;
 
           writeData = (uint16_t *)malloc((byteCount / 2)+1);
+          if (nullptr == writeData)
+          {
+            ModbusBridgeAllocError(PSTR("write"));
+            return;
+          }
           
           if ((mbfunctioncode == 15) || (mbfunctioncode == 16)) count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
           else count = 1;
@@ -860,6 +874,11 @@ void CmndModbusBridgeSend(void)
     else
     {
       writeData = (uint16_t *)malloc(modbusBridge.dataCount);
+      if (nullptr == writeData)
+      {
+        ModbusBridgeAllocError(PSTR("write"));
+        return;
+      }
 
       for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
       {
