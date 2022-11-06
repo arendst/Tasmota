@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define US_BP1658CJ
 #ifdef USE_LIGHT
 #ifdef USE_BP1658CJ
 /*********************************************************************************************\
