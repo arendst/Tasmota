@@ -914,6 +914,7 @@ void SettingsDefaultSet2(void) {
   // Serial
   Settings->serial_config = TS_SERIAL_8N1;
   Settings->baudrate = APP_BAUDRATE / 300;
+  Settings->sserial_config = TS_SERIAL_8N1;
   Settings->sbaudrate = SOFT_BAUDRATE / 300;
   Settings->serial_delimiter = 0xff;
   Settings->seriallog_level = SERIAL_LOG_LEVEL;
