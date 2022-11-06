@@ -798,6 +798,8 @@
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
 #define D_SENSOR_SM2335_CLK             "SM2335 - CLK"
 #define D_SENSOR_SM2335_DAT             "SM2335 - DATI"
+#define D_SENSOR_BP1658CJ_CLK           "BP1658CJ - CLK"
+#define D_SENSOR_BP1658CJ_DAT           "BP1658CJ - DATI"
 #define D_SENSOR_BP5758D_CLK            "BP5758D - CLK"
 #define D_SENSOR_BP5758D_DAT            "BP5758D - DATI"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"
