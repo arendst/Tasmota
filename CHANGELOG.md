@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)
 - Serial initialization for baudrate and config (#16970)
+- ModbusBridge buffer overflow (#16979)
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader (#16939)
