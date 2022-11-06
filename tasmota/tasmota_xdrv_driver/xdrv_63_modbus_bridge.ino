@@ -258,7 +258,7 @@ void ModbusBridgeHandle(void)
       WiFiClient &client = modbusBridgeTCP.client_tcp[i];
       if (client)
       {
-        uint8_t header[8];
+        uint8_t header[9];
         uint8_t nrOfBytes = 8;
         header[0] = modbusBridgeTCP.tcp_transaction_id >> 8;
         header[1] = modbusBridgeTCP.tcp_transaction_id;
