@@ -199,6 +199,7 @@ enum UserSelectablePins {
   GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
   GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
   GPIO_DALI_RX, GPIO_DALI_TX,          // Dali
+  GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -445,6 +446,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_NRG_MBS_TX "|" D_SENSOR_NRG_MBS_RX "|"
   D_SENSOR_ADE7953_CS "|"
   D_SENSOR_DALI_RX "|" D_SENSOR_DALI_TX "|"
+  D_SENSOR_BP1658CJ_CLK "|" D_SENSOR_BP1658CJ_DAT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -459,6 +461,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_SM2135_DAT   10
 #define MAX_SM2335_DAT   16
 #define MAX_DSB          4
+#define MAX_BP1658CJ_DAT 16
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -715,6 +718,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM2335_CLK),                    // SM2335 CLOCK
   AGPIO(GPIO_SM2335_DAT) + MAX_SM2335_DAT,   // SM2335 DATA
 #endif  // USE_SM2335
+#ifdef USE_BP1658CJ
+  AGPIO(GPIO_BP1658CJ_CLK),                    // BP1658CJ CLOCK
+  AGPIO(GPIO_BP1658CJ_DAT) + MAX_BP1658CJ_DAT, // BP1658CJ DATA
+#endif  // USE_BP1658CJ
 #ifdef USE_BP5758D
   AGPIO(GPIO_BP5758D_CLK),    // BP5758D CLOCK
   AGPIO(GPIO_BP5758D_DAT),    // BP5758D DATA
