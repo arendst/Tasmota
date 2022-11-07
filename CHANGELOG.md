@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Default Flash Mode changed from ``DOUT`` to ``DIO`` for ESP8266/ESP8285
 
 ### Fixed
 
