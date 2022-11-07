@@ -63,7 +63,8 @@ void CseReceived(void) {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
   // F2 5A 02 F7 60 00 03 61 00 40 10 05 72 40 51 A6 58 63 10 1B E1 7F 4D 4E - F2 = Power cycle exceeds range - takes too long - No load
   // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - 55 = Ok, 61 = Power not valid (load below 5W)
-  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36 - 55 = Ok, 71 = Ok
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36 - 55 = Ok, 71 = Ok, F1 = CF overflow, no problem
+  // 55 5A 02 F1 E8 00 07 9D 00 3F 3E 00 35 F8 50 DB 38 00 B2 A2 F1 D6 97 3E - CF overflow
 
   // 55 5A 02 DB 40 00 03 25 00 3D 18 03 8E CD 4F 0A 60 2A 56 85 61 01 02 1A - OK voltage
   // 55 5A 02 DB 40 07 17 1D 00 3D 18 03 8E CD 4F 0A 60 2B EF EA 61 01 02 2C - Wrong voltage
@@ -256,17 +257,17 @@ bool CseCommand(void) {
 
   if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Cse.power_cycle) {
-      Settings->energy_power_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.power_cycle) / CSE_PREF;
+      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.power_cycle) / CSE_PREF;
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Cse.voltage_cycle) {
-      Settings->energy_voltage_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.voltage_cycle) / CSE_UREF;
+      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.voltage_cycle) / CSE_UREF;
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Cse.current_cycle) {
-      Settings->energy_current_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.current_cycle) / 1000;
+      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.current_cycle) / 1000;
     }
   }
   else serviced = false;  // Unknown command

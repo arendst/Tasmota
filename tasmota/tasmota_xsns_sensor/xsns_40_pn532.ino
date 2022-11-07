@@ -1,7 +1,7 @@
 /*
   xsns_40_pn532.ino - Support for PN532 (HSU) NFC Tag Reader on Tasmota
 
-  Copyright (C) 2021  Andre Thomas and Theo Arends
+  Copyright (C) 2021  Andre Thomas, Theo Arends and md5sum-as (https://github.com/md5sum-as)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -47,13 +47,33 @@ TasmotaSerial *PN532_Serial;
 #define PN532_COMMAND_SAMCONFIGURATION              0x14
 #define PN532_COMMAND_RFCONFIGURATION               0x32
 #define PN532_COMMAND_INDATAEXCHANGE                0x40
+#define PN532_COMMAND_INCOMMUNICATETHRU             0x42
 #define PN532_COMMAND_INLISTPASSIVETARGET           0x4A
-
+#define PN532_COMMAND_INRELEASE                     0x52
+#define PN532_COMMAND_INSELECT                      0x54
 #define PN532_MIFARE_ISO14443A                      0x00
 #define MIFARE_CMD_READ                             0x30
 #define MIFARE_CMD_AUTH_A                           0x60
 #define MIFARE_CMD_AUTH_B                           0x61
 #define MIFARE_CMD_WRITE                            0xA0
+
+#define NTAG21X_CMD_GET_VERSION                     0x60
+#define NTAG2XX_CMD_READ                            0x30
+#define NTAG21X_CMD_FAST_READ                       0x3A
+#define NTAG21X_CMD_PWD_AUTH                        0x1B
+#define NTAG2XX_CMD_WRITE                           0xA2
+
+const struct {
+  uint8_t version[6];
+  uint8_t confPage;
+} NTAG[] PROGMEM ={ 
+  {.version={0x04, 0x02, 0x01, 0x00, 0x0f, 0x03},.confPage=0x29}, /* NTAG213 */
+  {.version={0x04, 0x02, 0x01, 0x00, 0x11, 0x03},.confPage=0x83}, /* NTAG215 */
+  {.version={0x04, 0x02, 0x01, 0x00, 0x13, 0x03},.confPage=0xe3}, /* NTAG216 */ 
+  {.version={0x04, 0x05, 0x02, 0x02, 0x13, 0x03},.confPage=0xe3}, /* NT3H2111 */
+  {.version={0x04, 0x05, 0x02, 0x02, 0x15, 0x03},.confPage=0xe3}, /* NT3H2211 */
+};
+#define NTAG_CNT (sizeof(NTAG)/7) // num records in NTAG array
 
 struct PN532 {
   char uids[21];                // Number of bytes in the UID. 4, 7 or 10
@@ -61,10 +81,14 @@ struct PN532 {
   uint8_t command = 0;          // Carry command code between functions
   uint8_t scantimer = 0;        // Prevent multiple successful reads within 2 second window
   bool present = false;         // Maintain detection flag
+  uint16_t atqa;
 #ifdef USE_PN532_DATA_FUNCTION
   uint8_t newdata[16];
   uint8_t function = 0;
-  uint8_t newdata_len = 0;
+  uint32_t pwd_auth;
+  uint16_t pwd_pack;
+  uint32_t pwd_auth_new;
+  uint16_t pwd_pack_new;
 #endif  // USE_PN532_DATA_FUNCTION
 } Pn532;
 
@@ -82,6 +106,10 @@ void PN532_Init(void) {
         PN532_SAMConfig();
         AddLog(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected v%u.%u",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
         Pn532.present = true;
+#ifdef USE_PN532_DATA_FUNCTION
+        Pn532.pwd_auth=Settings->pn532_password;
+        Pn532.pwd_pack=Settings->pn532_pack;
+#endif
       }
     }
   }
@@ -273,9 +301,9 @@ bool PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidL
     return 0;
   }
 
-  uint16_t sens_res = Pn532.packetbuffer[2];
-  sens_res <<= 8;
-  sens_res |= Pn532.packetbuffer[3];
+  Pn532.atqa = Pn532.packetbuffer[2];
+  Pn532.atqa <<= 8;
+  Pn532.atqa |= Pn532.packetbuffer[3];
 
   /* Card appears to be Mifare Classic */
   *uidLength = Pn532.packetbuffer[5];
@@ -310,9 +338,27 @@ bool PN532_SAMConfig(void) {
   return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
+/* void PN532_inSelect(void) {
+  Pn532.packetbuffer[0] = PN532_COMMAND_INSELECT;
+  Pn532.packetbuffer[1] = 1;
+  if (PN532_writeCommand(Pn532.packetbuffer, 2)) {
+    return ;
+  }
+  int16_t res = PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
+} */
+
 #ifdef USE_PN532_DATA_FUNCTION
 
-uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData) {
+void PN532_inRelease(void) {
+  Pn532.packetbuffer[0] = PN532_COMMAND_INRELEASE;
+  Pn532.packetbuffer[1] = 1;
+  if (PN532_writeCommand(Pn532.packetbuffer, 2)) {
+    return;
+  }
+  PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
+}
+
+uint8_t PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData) {
   uint8_t i;
   uint8_t _key[6];
   uint8_t _uid[7];
@@ -349,7 +395,7 @@ uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t 
   return 1;
 }
 
-uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
+uint8_t PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the command */
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
@@ -376,7 +422,7 @@ uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   return 1;
 }
 
-uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
+uint8_t PN532_mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the first command */
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
@@ -393,73 +439,181 @@ uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
+uint8_t PN532_ntag21x_probe (void) {
+  uint8_t result=0;
+
+  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
+  Pn532.packetbuffer[1] = NTAG21X_CMD_GET_VERSION;       
+
+  if (PN532_writeCommand(Pn532.packetbuffer, 2)) {
+    return result;
+  }
+
+  if (PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer))<9){
+    return result;
+  }
+
+  if (Pn532.packetbuffer[3] != 4) { // not NTAG type 
+    return result;
+  }
+
+  for (uint8_t i=0; i<NTAG_CNT; i++) {
+    if (0 == memcmp_P(&Pn532.packetbuffer[3],&NTAG[i].version[0],6)) {
+      memcpy_P(&result,&NTAG[i].confPage,sizeof(result));
+    }
+  }
+  return result; //Return configuration page address
+}
+
+bool PN532_ntag21x_auth(void) {
+
+  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
+  Pn532.packetbuffer[1] = NTAG21X_CMD_PWD_AUTH;
+  memcpy(&Pn532.packetbuffer[2],&Pn532.pwd_auth,4);
+
+  if (PN532_writeCommand(Pn532.packetbuffer, 6)) {
+    return false;
+  }
+  if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<3){
+    return false;
+  }
+  if (Pn532.packetbuffer[0]) { //PN532 return any error
+    return false;
+  }
+  return memcmp(&Pn532.packetbuffer[1],&Pn532.pwd_pack,2)==0;
+}
+
+bool PN532_ntag2xx_read16 (const uint8_t page, char *out) {
+
+  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
+  Pn532.packetbuffer[1] = NTAG2XX_CMD_READ;
+  Pn532.packetbuffer[2] = page;
+  if (PN532_writeCommand(Pn532.packetbuffer, 3)) {
+    return false;
+  }
+  if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<17){
+    return false;
+  }
+  if (Pn532.packetbuffer[0]!=0) {
+    return false;
+  }
+  memcpy(out,&Pn532.packetbuffer[1],16);
+  return true;  
+}
+
+bool PN532_ntag2xx_write4(uint8_t page, char *in) {
+
+    Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
+    Pn532.packetbuffer[1] = NTAG2XX_CMD_WRITE;
+    Pn532.packetbuffer[2] = page; // first page
+    memcpy(&Pn532.packetbuffer[3],in,4);
+
+    if (PN532_writeCommand(Pn532.packetbuffer, 7)) {
+      return false;
+    }
+
+    if (PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)) < 1) {
+      return false;
+    }
+    return true;
+}
+
+bool PN532_ntag2xx_write16(uint8_t page, char *in) {
+  
+  for (uint8_t i = 0; i < 4; i++) {
+    if (!PN532_ntag2xx_write4(page +i, &in[i << 2])) {
+      return false;
+    }
+  }
+   return true;
+}
+
+bool PN532_ntag21x_set_password(uint8_t confPage, bool unsetPasswd) {
+  char card_datas[16];
+
+  if (PN532_ntag2xx_read16(confPage, card_datas)) {
+    if (unsetPasswd) {
+      card_datas[3]=0xFF;
+      return PN532_ntag2xx_write4(confPage, card_datas);
+    }
+    card_datas[3]=0; // Set AUTH0 for protect all pages
+    card_datas[4] |= 0x80; // Set PROT flag for read and write access is protected by the password verification
+    memcpy(&card_datas[8],&Pn532.pwd_auth_new, 4); // New password
+    memcpy(&card_datas[12],&Pn532.pwd_pack_new, 2); // New password ack
+    return PN532_ntag2xx_write16(confPage, card_datas);
+  }
+  return false;
+}
+
 #endif  // USE_PN532_DATA_FUNCTION
 
 void PN532_ScanForTag(void) {
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
   uint8_t uid_len = 0;
   if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uid_len)) {
-
     ToHex_P((unsigned char*)uid, uid_len, Pn532.uids, sizeof(Pn532.uids));
 
 #ifdef USE_PN532_DATA_FUNCTION
-    bool erase_success = false;
-    bool set_success = false;
-    char card_datas[34];
-    if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
+    bool success = false;
+    char card_datas[17]={0};
+    enum {NOPWD, PWD_NONE, PWD_OK, PWD_NOK} str_pwd=NOPWD;
+
+    if (Pn532.atqa == 0x44) {
+      uint8_t confPage=0;
+      uint8_t nuid[] = { 0, 0, 0, 0, 0, 0, 0 };
+      uint8_t nuid_len = 0;
+      if ((confPage=PN532_ntag21x_probe())>0) {
+        /* NTAG EV1 found*/
+        str_pwd=PWD_NONE;
+        if (!PN532_ntag2xx_read16(4, card_datas)) {
+          if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
+            if (memcmp(uid, nuid, sizeof(uid))==0) {
+              if (PN532_ntag21x_auth()) {
+                str_pwd=PWD_OK;
+                if (Pn532.function == 3) { /* new password */
+                  success = PN532_ntag21x_set_password(confPage, false);
+                }
+                if (Pn532.function == 4) { /* clear password */
+                  success = PN532_ntag21x_set_password(confPage, true);
+                }
+              } else {
+                str_pwd=PWD_NOK;
+              }
+              if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+            }
+          }
+        } else {
+          if (Pn532.function == 3) { /* new password */
+            success = PN532_ntag21x_set_password(confPage, false);
+          }
+        }      
+      } else {
+        if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
+          if (memcmp(uid, nuid, sizeof(uid))==0) {
+            if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+          }
+        }
+      }
+      if ((Pn532.function == 1) || (Pn532.function == 2)) {
+       success = PN532_ntag2xx_write16(4, (char *)Pn532.newdata);
+       if (!PN532_ntag2xx_read16(4, card_datas)) card_datas[0]=0;
+      }
+    }
+    else if (uid_len == 4) { // Lets try to read blocks 1 & 2 of the mifare classic card for more information
       uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-      if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
-        uint8_t card_data[16];
-        if (mifareclassic_ReadDataBlock(1, card_data)) {
-#ifdef USE_PN532_DATA_RAW
-          memcpy(&card_datas,&card_data,sizeof(card_data));
-#else
-          for (uint32_t i = 0;i < sizeof(card_data);i++) {
-            if ((isalpha(card_data[i])) || ((isdigit(card_data[i])))) {
-              card_datas[i] = char(card_data[i]);
-            } else {
-              card_datas[i] = '\0';
-            }
-          }
-#endif  // USE_PN532_DATA_RAW
+      if (PN532_mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
+        if ((Pn532.function == 1) || (Pn532.function == 2)) {
+          success=PN532_mifareclassic_WriteDataBlock(1, Pn532.newdata);
         }
-        if (Pn532.function == 1) { // erase block 1 of card
-          for (uint32_t i = 0;i<16;i++) {
-            card_data[i] = 0x00;
-          }
-          if (mifareclassic_WriteDataBlock(1, card_data)) {
-            erase_success = true;
-            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase success"));
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
-          }
-        }
-        if (Pn532.function == 2) {
-#ifdef USE_PN532_DATA_RAW
-          memcpy(&card_data,&Pn532.newdata,sizeof(card_data));
-          if (mifareclassic_WriteDataBlock(1, card_data)) {
-            set_success = true;
-            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
-          }
-#else
-          bool IsAlphaNumeric = true;
-          for (uint32_t i = 0;i < Pn532.newdata_len;i++) {
-            if ((!isalpha(Pn532.newdata[i])) && (!isdigit(Pn532.newdata[i]))) {
-              IsAlphaNumeric = false;
+        if (PN532_mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
+          for (uint32_t i = 0; i < 16; i++) {
+            if (!isprint(card_datas[i])) {
+              // do not output non-printable characters to the console 
+              card_datas[i] = 0;
             }
           }
-          if (IsAlphaNumeric) {
-            memcpy(&card_data,&Pn532.newdata,Pn532.newdata_len);
-            card_data[Pn532.newdata_len] = '\0'; // Enforce null termination
-            if (mifareclassic_WriteDataBlock(1, card_data)) {
-              set_success = true;
-              AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
-              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
-            }
-          } else {
-            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data must be alphanumeric"));
-          }
-#endif  // USE_PN532_DATA_RAW
+        } else {
+          card_datas[0] = 0;
         }
       } else {
         sprintf_P(card_datas, PSTR("AUTHFAIL"));
@@ -467,19 +621,50 @@ void PN532_ScanForTag(void) {
     }
     switch (Pn532.function) {
       case 0x01:
-        if (!erase_success) {
-          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase fail - exiting erase mode"));
+        if (success) {
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Erase success"));
+        } else {
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Erase fail - exiting erase mode"));
         }
         break;
       case 0x02:
-        if (!set_success) {
-          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Write failed - exiting set mode"));
+        if (success) {
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Data write successful"));
+        } else{
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Write failed - exiting set mode"));
         }
+        break;
+      case 0x03:
+        if (success) {
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Set password successful"));
+        } else{
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Set password failed - exiting set mode"));
+        }
+        break;
+      case 0x04:
+        if (success) {
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Unset password successful"));
+        } else{
+          AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Unset password failed - exiting set mode"));
+        }
+        break;
       default:
         break;
     }
     Pn532.function = 0;
-    ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\",\"" D_JSON_DATA "\":\"%s\"}}"), Pn532.uids, card_datas);
+    card_datas[16] = 0;
+    ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\",\"" D_JSON_DATA "\":\"%s\""), Pn532.uids, card_datas);
+    if (str_pwd == PWD_NONE) {
+      ResponseAppend_P(PSTR(",\"Auth\":\"None\""));
+    } else
+    if (str_pwd == PWD_OK) {
+      ResponseAppend_P(PSTR(",\"Auth\":\"Ok\""));
+    } else
+    if (str_pwd == PWD_NOK) {
+      ResponseAppend_P(PSTR(",\"Auth\":\"NOk\""));
+    }
+    ResponseAppend_P(PSTR("}}"));
+    PN532_inRelease(); 
 #else
     ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), Pn532.uids);
 #endif  // USE_PN532_DATA_FUNCTION
@@ -492,44 +677,73 @@ void PN532_ScanForTag(void) {
 #ifdef USE_PN532_DATA_FUNCTION
 
 bool PN532_Command(void) {
-  bool serviced = true;
-  uint8_t paramcount = 0;
-  if (XdrvMailbox.data_len > 0) {
-    paramcount=1;
-  } else {
-    serviced = false;
+  bool serviced = false;
+  char command[10];
+  char log[70];
+  if (ArgC() < 1) {
     return serviced;
   }
+
   char argument[XdrvMailbox.data_len];
-  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
-    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
-    if (',' == XdrvMailbox.data[ca]) { paramcount++; }
-  }
-  UpperCase(XdrvMailbox.data,XdrvMailbox.data);
-  if (!strcmp(ArgV(argument, 1),"E")) {
+  ArgV(argument, 1);
+  strncpy(command,UpperCase(argument,argument),sizeof(command));
+
+  if (!strcmp_P(argument,PSTR("ERASE"))) {
+    memset(Pn532.newdata,0,sizeof(Pn532.newdata));
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
-    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
-    ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
-    return serviced;
+    snprintf_P(log, sizeof(log), PSTR("data block 1 (4-7 for NTAG) will be erased"));
+    serviced = true;
   }
-  if (!strcmp(ArgV(argument, 1),"S")) {
-    if (paramcount > 1) {
-      if (XdrvMailbox.data[XdrvMailbox.data_len-1] == ',') {
-        serviced = false;
-        return serviced;
-      }
+  if (!strcmp_P(argument,PSTR("WRITE"))) {
+    if (ArgC() > 1) {
       ArgV(argument, 2);
-      Pn532.newdata_len = strlen(argument);
-      if (Pn532.newdata_len > 15) { Pn532.newdata_len = 15; }
-      memcpy(&Pn532.newdata,&argument,Pn532.newdata_len);
-      Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
+      memset(Pn532.newdata,0,sizeof(Pn532.newdata));
+      strncpy((char *)Pn532.newdata,argument,sizeof(Pn532.newdata));
+      if (strlen(argument)>16) argument[16]=0;
       Pn532.function = 2;
-      AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);
-      ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
-      return serviced;
+      snprintf_P(log, sizeof(log), PSTR("data block 1 (4-7 for NTAG) will be set to '%s'"), argument);
+    serviced = true;
     }
   }
-  return false;
+  if (!strcmp_P(argument,PSTR("AUTH"))) {
+    if (ArgC() > 1) {
+      Pn532.pwd_auth=strtoul(ArgV(argument,2),nullptr,0);
+    }
+    if (ArgC() > 2) {
+      Pn532.pwd_pack=strtoul(ArgV(argument,3),nullptr,0);
+    }
+    Settings->pn532_password=Pn532.pwd_auth;
+    Settings->pn532_pack=Pn532.pwd_pack;
+
+    serviced = true;
+  }
+  if (!strcmp_P(argument,PSTR("SET_PWD"))) {
+    snprintf_P(log, sizeof(log), PSTR("will be protected"));
+    Pn532.pwd_auth_new=Pn532.pwd_auth;
+    Pn532.pwd_pack_new=Pn532.pwd_pack;
+    if (ArgC() > 1) {
+      Pn532.pwd_auth_new=strtoul(ArgV(argument,2),nullptr,0);
+    }
+    if (ArgC() > 2) {
+      Pn532.pwd_pack_new=strtoul(ArgV(argument,3),nullptr,0);
+    }
+      Pn532.function = 3;
+    serviced = true;
+  }
+  if (!strcmp_P(argument,PSTR("UNSET_PWD"))) {
+    snprintf_P(log, sizeof(log), PSTR("will be unprotected"));
+    Pn532.function = 4;
+    serviced = true;
+  }
+  if (!strcmp_P(argument,PSTR("CANCEL"))) {
+    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Job canceled"));
+    Pn532.function = 0;
+    serviced = true;
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Next scanned tag %s"), log);
+  }
+  if (serviced) ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"%s\"}}"),command);
+  return serviced;
 }
 
 #endif  // USE_PN532_DATA_FUNCTION

@@ -240,6 +240,11 @@ void SetLatchingRelay(power_t lpower, uint32_t state) {
 }
 
 void SetDevicePower(power_t rpower, uint32_t source) {
+  if (TasmotaGlobal.power_on_delay) {
+    TasmotaGlobal.power_on_delay_state = rpower;
+    return;
+  }
+
   ShowSource(source);
   TasmotaGlobal.last_source = source;
 
@@ -384,7 +389,7 @@ void SetPowerOnState(void)
     SetDevicePower(1, SRC_RESTART);
   } else {
     power_t devices_mask = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
-    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
+    if (ResetReasonPowerOn()) {
       switch (Settings->poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -422,7 +427,8 @@ void SetPowerOnState(void)
   uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
-    if (!Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+    if (!Settings->flag3.no_power_feedback &&  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+        !TasmotaGlobal.power_on_delay) {       // SetOption47 - Delay switching relays to reduce power surge at power on
       if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
         if (bitRead(TasmotaGlobal.rel_bistable, port)) {
           port++;                              // Skip both bistable relays as always 0
@@ -1054,6 +1060,29 @@ void PerformEverySecond(void)
 #ifdef USE_DEEPSLEEP
     }
 #endif
+  }
+
+  if (TasmotaGlobal.power_on_delay) {
+    if (1 == Settings->param[P_POWER_ON_DELAY2]) {       // SetOption47 1
+      // Allow relay power on once network is available
+      if (!TasmotaGlobal.global_state.network_down) {
+        TasmotaGlobal.power_on_delay = 0;
+      }
+    }
+    else if (2 == Settings->param[P_POWER_ON_DELAY2]) {  // SetOption47 2
+      // Allow relay power on once mqtt is available
+      if (!TasmotaGlobal.global_state.mqtt_down) {
+        TasmotaGlobal.power_on_delay = 0;
+      }
+    }
+    else {                                               // SetOption47 3..255
+      // Allow relay power on after x seconds
+      TasmotaGlobal.power_on_delay--;
+    }
+    if (!TasmotaGlobal.power_on_delay && TasmotaGlobal.power_on_delay_state) {
+      // Set relays according to last SetDevicePower() request
+      SetDevicePower(TasmotaGlobal.power_on_delay_state, SRC_SO47);
+    }
   }
 
   if (TasmotaGlobal.mqtt_cmnd_blocked_reset) {
@@ -2046,6 +2075,19 @@ void GpioInit(void)
 
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.gpio_pin, nitems(TasmotaGlobal.gpio_pin), sizeof(TasmotaGlobal.gpio_pin[0]));
 
+  if (ResetReasonPowerOn()) {
+    TasmotaGlobal.power_on_delay = Settings->param[P_POWER_ON_DELAY2];  // SetOption47 - Delay switching relays to reduce power surge at power on
+    if (TasmotaGlobal.power_on_delay) {
+      // This is the earliest possibility to disable relays connected to esp8266/esp32 gpios at power up to reduce power surge
+      for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+        if (PinUsed(GPIO_REL1, i)) {
+          DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);  // Off
+        }
+      }
+      AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO47 %d Power off relays"), Settings->param[P_POWER_ON_DELAY2]);
+    }
+  }
+
   analogWriteRange(Settings->pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
 
@@ -2169,7 +2211,11 @@ void GpioInit(void)
     }
   }
 
-  delay(Settings->param[P_POWER_ON_DELAY] * 10);  // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
+  if (Settings->param[P_POWER_ON_DELAY]) {                 // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
+    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %d msec"), init_delay);
+    delay(init_delay);
+  }
 
 #ifdef USE_I2C
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));

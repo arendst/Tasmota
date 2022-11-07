@@ -193,9 +193,11 @@ void Bl09XXUpdateEnergy() {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %2_f, T %2_f"), &Energy.voltage[0], &Bl09XX.temperature);
 #endif
     for (uint32_t chan = 0; chan < Energy.phase_count; chan++) {
-      if (Bl09XX.power[chan] > Settings->energy_power_calibration) {                                     // We need at least 1W
-        Energy.active_power[chan] = (float)Bl09XX.power[chan] / Settings->energy_power_calibration;
-        Energy.current[chan] = (float)Bl09XX.current[chan] / Settings->energy_current_calibration;
+      uint32_t power_calibration = EnergyGetCalibration(chan, ENERGY_POWER_CALIBRATION);
+      uint32_t current_calibration = EnergyGetCalibration(chan, ENERGY_CURRENT_CALIBRATION);
+      if (Bl09XX.power[chan] > power_calibration) {                                     // We need at least 1W
+        Energy.active_power[chan] = (float)Bl09XX.power[chan] / power_calibration;
+        Energy.current[chan] = (float)Bl09XX.current[chan] / current_calibration;
       } else {
         Energy.active_power[chan] = 0;
         Energy.current[chan] = 0;
@@ -289,6 +291,9 @@ void Bl09XXInit(void) {
       Settings->energy_voltage_calibration = bl09xx_uref[Bl09XX.model];
       Settings->energy_current_calibration = bl09xx_iref[Bl09XX.model];
       Settings->energy_power_calibration   = bl09xx_pref[Bl09XX.model];
+      Settings->energy_voltage_calibration2 = bl09xx_uref[Bl09XX.model];
+      Settings->energy_current_calibration2 = bl09xx_iref[Bl09XX.model];
+      Settings->energy_power_calibration2   = bl09xx_pref[Bl09XX.model];
     }
     if ((BL0940_MODEL == Bl09XX.model) && (Settings->energy_current_calibration < (BL0940_IREF / 20))) {
       Settings->energy_current_calibration *= 100;
@@ -357,17 +362,17 @@ bool Bl09XXCommand(void) {
 
   if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl09XX.power[channel]) {
-      Settings->energy_power_calibration = (Bl09XX.power[channel] * 100) / value;
+      XdrvMailbox.payload = (Bl09XX.power[channel] * 100) / value;
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl09XX.voltage) {
-      Settings->energy_voltage_calibration = (Bl09XX.voltage * 100) / value;
+      XdrvMailbox.payload = (Bl09XX.voltage * 100) / value;
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Bl09XX.current[channel]) {
-      Settings->energy_current_calibration = (Bl09XX.current[channel] * 100) / value;
+      XdrvMailbox.payload = (Bl09XX.current[channel] * 100) / value;
     }
   }
   else serviced = false;  // Unknown command

@@ -198,6 +198,8 @@ enum UserSelectablePins {
   GPIO_ADE7953_RST,                    // ADE7953 Reset
   GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
   GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
+  GPIO_DALI_RX, GPIO_DALI_TX,          // Dali
+  GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
   GPIO_DINGTIAN_CLK, GPIO_DINGTIAN_SDI, GPIO_DINGTIAN_Q7, GPIO_DINGTIAN_PL, GPIO_DINGTIAN_RCK,  // Dingtian relay board - 595's & 165's pins
   GPIO_SENSOR_END };
 
@@ -444,6 +446,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7953_RST "|"
   D_SENSOR_NRG_MBS_TX "|" D_SENSOR_NRG_MBS_RX "|"
   D_SENSOR_ADE7953_CS "|"
+  D_SENSOR_DALI_RX "|" D_SENSOR_DALI_TX "|"
+  D_SENSOR_BP1658CJ_CLK "|" D_SENSOR_BP1658CJ_DAT "|"
   D_GPIO_DINGTIAN_CLK "|" D_GPIO_DINGTIAN_SDI "|" D_GPIO_DINGTIAN_Q7 "|" D_GPIO_DINGTIAN_PL "|" D_GPIO_DINGTIAN_RCK "|"
   ;
 
@@ -459,6 +463,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_SM2135_DAT   10
 #define MAX_SM2335_DAT   16
 #define MAX_DSB          4
+#define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
 
 const uint16_t kGpioNiceList[] PROGMEM = {
@@ -529,6 +534,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 /*-------------------------------------------------------------------------------------------*\
  * Protocol specifics
 \*-------------------------------------------------------------------------------------------*/
+
+#if defined(USE_DALI) && defined(ESP32)
+  AGPIO(GPIO_DALI_RX),                 // DALI RX
+  AGPIO(GPIO_DALI_TX),                 // DALI TX
+#endif  // USE_DALI
 
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
@@ -711,6 +721,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM2335_CLK),                    // SM2335 CLOCK
   AGPIO(GPIO_SM2335_DAT) + MAX_SM2335_DAT,   // SM2335 DATA
 #endif  // USE_SM2335
+#ifdef USE_BP1658CJ
+  AGPIO(GPIO_BP1658CJ_CLK),                    // BP1658CJ CLOCK
+  AGPIO(GPIO_BP1658CJ_DAT) + MAX_BP1658CJ_DAT, // BP1658CJ DATA
+#endif  // USE_BP1658CJ
 #ifdef USE_BP5758D
   AGPIO(GPIO_BP5758D_CLK),    // BP5758D CLOCK
   AGPIO(GPIO_BP5758D_DAT),    // BP5758D DATA

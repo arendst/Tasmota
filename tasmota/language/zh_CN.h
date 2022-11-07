@@ -511,6 +511,11 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "找到 ZBBridge EEPROM, 地址:"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "正在随机化 Zigbee 参数, 请通过 'ZbConfig' 检查"
 
+// xdrv_89_dali.ino
+#define D_SENSOR_DALI_RX                  "Dali RX"
+#define D_SENSOR_DALI_TX                  "Dali TX"
+#define D_CONFIGURE_DALI                  "Config DALI"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
 #define D_ENERGY_YESTERDAY "昨日用电量"
@@ -795,6 +800,8 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_SM2335_CLK    "SM2335 Clk"
 #define D_SENSOR_SM2335_DAT    "SM2335 Dat"
+#define D_SENSOR_BP1658CJ_CLK  "BP1658CJ Clk"
+#define D_SENSOR_BP1658CJ_DAT  "BP1658CJ Dat"
 #define D_SENSOR_BP5758D_CLK    "BP5758D Clk"
 #define D_SENSOR_BP5758D_DAT    "BP5758D Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"

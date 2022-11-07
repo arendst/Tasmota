@@ -55,14 +55,20 @@ struct {
 void NrgDummyEverySecond(void) {
   if (Energy.power_on) {  // Powered on
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-      Energy.voltage[channel] = ((float)Settings->energy_voltage_calibration / 100);       // V
-      Energy.frequency[channel] = ((float)Settings->energy_frequency_calibration / 100);   // Hz
-      if (bitRead(TasmotaGlobal.power, channel)) {  // Emulate power read only if device is powered on
-        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : ((float)Settings->energy_power_calibration / 100);    // W
+
+      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 100;
+      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION) / 100;
+      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) / 100000;
+      float frequency_calibration = (float)EnergyGetCalibration(channel, ENERGY_FREQUENCY_CALIBRATION) / 100;
+
+      Energy.voltage[channel] = power_calibration;        // V
+      Energy.frequency[channel] = frequency_calibration;  // Hz
+      if (bitRead(TasmotaGlobal.power, channel)) {        // Emulate power read only if device is powered on
+        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : voltage_calibration;   // W
         if (0 == Energy.active_power[channel]) {
           Energy.current[channel] = 0;
         } else {
-          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : ((float)Settings->energy_current_calibration / 100000);  // A
+          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : current_calibration;  // A
           Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
         }
         Energy.data_valid[channel] = 0;
@@ -84,28 +90,28 @@ bool NrgDummyCommand(void) {
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 100) && (abs_value <= 16000000)) {   // Between 1.00 and 160000.00 W
-        Settings->energy_power_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 10000) && (abs_value <= 40000)) {    // Between 100.00 and 400.00 V
-        Settings->energy_voltage_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 1000) && (abs_value <= 40000000)) {  // Between 10.00 mA and 400.00000 A
-        Settings->energy_current_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 4500) && (abs_value <= 6500)) {      // Between 45.00 and 65.00 Hz
-        Settings->energy_frequency_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
@@ -134,6 +140,9 @@ void NrgDummyDrvInit(void) {
       Settings->energy_voltage_calibration = NRG_DUMMY_UREF;
       Settings->energy_current_calibration = NRG_DUMMY_IREF;
       Settings->energy_power_calibration = NRG_DUMMY_PREF;
+      Settings->energy_voltage_calibration2 = NRG_DUMMY_UREF;
+      Settings->energy_current_calibration2 = NRG_DUMMY_IREF;
+      Settings->energy_power_calibration2 = NRG_DUMMY_PREF;
     }
 
     Energy.phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;

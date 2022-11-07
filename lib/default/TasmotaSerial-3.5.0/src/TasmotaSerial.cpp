@@ -95,7 +95,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
 void TasmotaSerial::end(bool turnOffDebug) {
 #ifdef ESP8266
   if (m_hardserial) {
-    Serial.end();
+//    Serial.end();  // Keep active for logging
   } else {
     if (m_rx_pin > -1) {
       detachInterrupt(m_rx_pin);

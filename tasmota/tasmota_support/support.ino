@@ -106,6 +106,11 @@ uint32_t ResetReason(void) {
   return ESP_ResetInfoReason();
 }
 
+bool ResetReasonPowerOn(void) {
+  uint32_t reset_reason = ESP_ResetInfoReason();
+  return ((reset_reason == REASON_DEFAULT_RST) || (reset_reason == REASON_EXT_SYS_RST));
+}
+
 String GetResetReason(void) {
   if (OsWatchBlockedLoop()) {
     char buff[32];
@@ -1975,6 +1980,13 @@ void SetSerialBegin(void) {
   Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
 #endif  // Not ARDUINO_USB_CDC_ON_BOOT
 #endif  // ESP32
+}
+
+void SetSerialInitBegin(void) {
+  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  if ((GetSerialBaudrate() != TasmotaGlobal.baudrate) || (TS_SERIAL_8N1 != Settings->serial_config)) {
+    SetSerialBegin();
+  }
 }
 
 void SetSerialConfig(uint32_t serial_config) {

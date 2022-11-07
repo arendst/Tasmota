@@ -139,6 +139,11 @@ def esp32_create_combined_bin(source, target, env):
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     chip = env.get("BOARD_MCU")
     tasmota_platform = esp32_create_chip_string(chip)
+
+    if "-DUSE_USB_CDC_CONSOLE" in env.BoardConfig().get("build.extra_flags") and "cdc" not in tasmota_platform:
+        tasmota_platform += "cdc" 
+        print("WARNING: board definition uses CDC configuration, but environment name does not -> changing tasmota safeboot binary to:", tasmota_platform + "-safeboot.bin")
+ 
     if not os.path.exists(variants_dir):
         os.makedirs(variants_dir)
     if("safeboot" in firmware_name):

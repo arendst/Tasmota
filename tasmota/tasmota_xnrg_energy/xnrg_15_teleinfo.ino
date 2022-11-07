@@ -152,7 +152,7 @@ PROGMEM
     "|"
     ;
 
-#define TELEINFO_SERIAL_BUFFER_STANDARD        512      // Receive buffer size for Standard mode
+#define TELEINFO_SERIAL_BUFFER_STANDARD       1536      // Receive buffer size for Standard mode
 #define TELEINFO_SERIAL_BUFFER_HISTORIQUE      512      // Receive buffer size for Legacy mode
 #define TELEINFO_PROCESS_BUFFER                 32      // Local processing buffer
 
@@ -163,6 +163,7 @@ uint8_t tic_rx_pin = NOT_A_PIN;
 char serialNumber[13] = ""; // Serial number is 12 char long
 bool tinfo_found = false;
 int serial_buffer_size;
+uint32_t total_wh;
 int contrat;
 int tarif;
 int isousc;
@@ -183,7 +184,12 @@ char * getValueFromLabelIndex(int labelIndex, char * value)
     // Get the label name
     GetTextIndexed(labelName, sizeof(labelName), labelIndex, kLabel);
     // Get value of label name
-    return tinfo.valueGet(labelName, value) ;
+    tinfo.valueGet(labelName, value) ;
+    // Standard mode has values with space before/after
+    if (tinfo_mode==TINFO_MODE_STANDARD) {
+        Trim(value);
+    }
+    return value;
 }
 
 /* ======================================================================
@@ -329,12 +335,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 char value[32];
                 uint32_t hc = 0;
                 uint32_t hp = 0;
-                uint32_t total = 0;
 
                 // Base, un seul index
                 if (ilabel == LABEL_BASE) {
-                    total = atol(me->value);
-                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%ld"), total);
+                    total_wh = atol(me->value);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%ld"), total_wh);
                 // Heures creuses/pleines calculer total
                 } else {
                     // Heures creuses get heures pleines
@@ -352,15 +357,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                         }
                     }
                     if (hc>0 && hp>0) {
-                        total = hc + hp;
+                        total_wh = hc + hp;
                     }
-                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld  HP:%ld  Total:%ld"), hc, hp, total);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld  HP:%ld  Total:%ld"), hc, hp, total_wh);
                 }
 
-                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %ld Wh"), total);
-                if (total>0) {
-                    Energy.import_active[0] = (float)total/1000.0f;
-                    EnergyUpdateTotal();
+                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
+                if (total_wh>0) {
+                    Energy.total[0] = (float) total_wh / 1000.0f;
+                    Energy.import_active[0] = Energy.total[0];
+                    //Energy.import_active[0] = (float)total/1000.0f;
+                    //EnergyUpdateTotal();
                     AddLog (LOG_LEVEL_DEBUG_MORE, PSTR ("TIC: import_active[0]=%.3fKWh"), Energy.import_active[0] );
                 }
             }
@@ -368,10 +375,10 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Wh total index (all contract)
             else if ( ilabel == LABEL_EAST)
             {
-                uint32_t total = atol(me->value);
-                Energy.import_active[0] = (float)total/1000.0f;
-                EnergyUpdateTotal();
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total);
+                total_wh = atol(me->value);
+                Energy.total[0] = (float) total_wh / 1000.0f;
+                Energy.import_active[0] = Energy.total[0];
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total_wh);
             }
 
             // Wh indexes (standard)
@@ -538,7 +545,7 @@ void NewFrameCallback(struct _ValueList * me)
     Energy.data_valid[0] = 0;
 
     // Deprecated see setOption108
-    // send teleinfo raw data only if setup like that
+    // send teleinfo MQTT raw data only if setup like that
     if (Settings->teleinfo.raw_send) {
         // Do we need to skip this frame
         if (raw_skip == 0 ) {
@@ -578,6 +585,7 @@ void TInfoDrvInit(void) {
         Energy.voltage_available = false;
         Energy.phase_count = 1;
         // init hardware energy counters
+        total_wh = 0;
         Settings->flag3.hardware_energy_total = true;
     }
 }
@@ -673,6 +681,25 @@ void TInfoInit(void)
     }
 }
 
+// 
+/* ======================================================================
+Function: TInfoSaveBeforeRestart
+Purpose : Save data before ESP restart
+Input   : -
+Output  : -
+Comments: -
+====================================================================== */
+void TInfoSaveBeforeRestart()
+{
+    // if teleinfo enabled, set it low
+    if (PinUsed (GPIO_TELEINFO_ENABLE)) {
+        digitalWrite( Pin(GPIO_TELEINFO_ENABLE), LOW);
+    }
+
+    // update energy total (in kwh)
+    EnergyUpdateTotal();
+
+}
 
 /* ======================================================================
 Function: TInfoCmd
@@ -842,6 +869,7 @@ Comments: -
 void TInfoProcess(void)
 {
     static char buff[TELEINFO_PROCESS_BUFFER];
+    static uint32_t tick_update = 0;
     #ifdef MEASURE_PERF
     static unsigned long max_time = 0;
     unsigned long duration = millis();
@@ -872,6 +900,14 @@ void TInfoProcess(void)
     if (duration > max_time) { max_time = duration; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_time=%lu"), max_time); }
     if (tmp_size > max_size) { max_size = tmp_size; AddLog(LOG_LEVEL_INFO,PSTR("TIC: max_size=%d"), max_size); }
     #endif
+
+    // if needed, update energy total every hour
+    if (tick_update++ > 3600 * 4) {
+        EnergyUpdateTotal();
+        AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %lu Wh"), total_wh);
+        tick_update = 0;
+    }
+
 }
 
 /* ======================================================================
@@ -886,7 +922,8 @@ const char HTTP_ENERGY_ID_TELEINFO[] PROGMEM =  "{s}ID{m}%s{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
 //const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "%s{m}%d " D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}" D_CURRENT_TARIFF "{m}%s%s{e}" ;
+const char HTTP_ENERGY_TARIF_TELEINFO_STD[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}%s{e}" ;
+const char HTTP_ENERGY_TARIF_TELEINFO_HISTO[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}Heures %s{e}" ;
 const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d" D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
 const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
@@ -977,9 +1014,9 @@ void TInfoShow(bool json)
             if (tarif) {
                 GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
                 if (tinfo_mode==TINFO_MODE_STANDARD ) {
-                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, "", name);
+                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO_STD, name);
                 } else {
-                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, "Heures ", name);
+                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO_HISTO, name);
                 }
             }
             if (contrat && isousc) {
@@ -1006,7 +1043,7 @@ void TInfoShow(bool json)
                 WSContentSend_P(HTTP_ENERGY_PMAX_TELEINFO, atoi(value));
             }
             if (getValueFromLabelIndex(LABEL_LTARF, value) ) {
-                WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, value);
+                WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO_STD, value);
             }
             if (getValueFromLabelIndex(LABEL_NGTF, value) ) {
                 if (isousc) {
@@ -1035,6 +1072,9 @@ bool Xnrg15(uint8_t function)
         case FUNC_INIT:
             TInfoInit();
             break;
+        case FUNC_SAVE_BEFORE_RESTART:
+            if (tinfo_found) { TInfoSaveBeforeRestart(); }
+            break;            
         case FUNC_PRE_INIT:
             TInfoDrvInit();
             break;

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 05.10.2022
+ * Updated until v9.4.0.1 - Last update 30.10.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -511,6 +511,11 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS     "Trovata EEPROM ZBBridge all'indirizzo"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG        "Randomizzazione parametri Zigbee, controlla con \"ZbConfig\""
 
+// xdrv_89_dali.ino
+#define D_SENSOR_DALI_RX                  "Dali - RX"
+#define D_SENSOR_DALI_TX                  "Dali - TX"
+#define D_CONFIGURE_DALI                  "DALI - Config"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY      "Energia - oggi"
 #define D_ENERGY_YESTERDAY  "Energia  - ieri"
@@ -793,6 +798,8 @@
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
 #define D_SENSOR_SM2335_CLK             "SM2335 - CLK"
 #define D_SENSOR_SM2335_DAT             "SM2335 - DATI"
+#define D_SENSOR_BP1658CJ_CLK           "BP1658CJ - CLK"
+#define D_SENSOR_BP1658CJ_DAT           "BP1658CJ - DATI"
 #define D_SENSOR_BP5758D_CLK            "BP5758D - CLK"
 #define D_SENSOR_BP5758D_DAT            "BP5758D - DATI"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"

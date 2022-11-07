@@ -22,24 +22,24 @@
 /*********************************************************************************************\
  * Chinese BL6523  based Watt hour meter
  *
- * This meter provides accurate Voltage, Frequency, Ampere, Wattage, Power Factor, KWh 
+ * This meter provides accurate Voltage, Frequency, Ampere, Wattage, Power Factor, KWh
  * To use Tasmota the user needs to add an ESP8266 or ESP32
  * Three lines need to be connected via 1KOhh resistors to ESP from the main board(RX,TX GND)
- * 
+ *
  * Connection Eg (ESP8266) - Non - Isolated:
  *    BL6523 RX ->1KOhm-> ESP IO4(D2) (Should be Input Capable)
  *    BL6523 TX ->1KOhm->  ESP IO5(D1) (Should be Input Capable)
  *    BL6523 GND -> ESP GND
- * 
+ *
  * Connection Eg (ESP32) - Non - Isolated:
  *    BL6523 RX ->1KOhm-> ESP IO4 (Should be Input Capable)
  *    BL6523 TX ->1KOhm-> ESP IO5 (Should be Input Capable)
  *    BL6523 GND -> ESP GND
- * 
+ *
  * To build add the below to user_config_override.h
  * #define USE_ENERGY_SENSOR  // Enable Energy sensor framework
  * #define USE_BL6523         // Add support for Chinese BL6523 based Watt hour meter (+1k code)¸
- * 
+ *
  * After Installation use the below template sample:
  * {"NAME":"BL6523 Smart Meter","GPIO":[0,0,0,0,7488,7520,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 \*********************************************************************************************/
@@ -106,7 +106,7 @@ bool Bl6523ReadData(void)
   Bl6523RxSerial->flush(); // Make room for another burst
 
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, rx_buffer, BL6523_RX_DATASET_SIZE);
-  
+
   i=0;
   while (Bl6523TxSerial->available() < BL6523_TX_DATASET_SIZE)
   {
@@ -116,15 +116,15 @@ bool Bl6523ReadData(void)
       break;
     }
   }
-  
+
 
   uint8_t tx_buffer[BL6523_TX_DATASET_SIZE];
   Bl6523TxSerial->readBytes(tx_buffer, BL6523_TX_DATASET_SIZE);
   Bl6523TxSerial->flush(); // Make room for another burst
- 
+
 
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, tx_buffer, BL6523_TX_DATASET_SIZE);
-  
+
   /* Checksum: （Addr+Data_L+Data_M+Data_H） & 0xFF, then byte invert */
   uint8_t crc = rx_buffer[1]; //Addr
   for (uint32_t i = 0; i < (BL6523_TX_DATASET_SIZE - 1); i++)
@@ -136,15 +136,15 @@ bool Bl6523ReadData(void)
   if (crc != tx_buffer[BL6523_TX_DATASET_SIZE - 1])
   {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL6:" D_CHECKSUM_FAILURE));
-    Bl6523TxSerial->flush(); 
-    Bl6523RxSerial->flush(); 
+    Bl6523TxSerial->flush();
+    Bl6523RxSerial->flush();
     return false;
   }
 
   /* WRITE DATA (format: command(write->0xCA) address data_low data_mid data_high checksum )
 WRITE Sample(RX):
 RX: CA 3E 55 00 00 6C (WRPROT - allow)
-RX: CA 14 00 00 10 DB (MODE) 
+RX: CA 14 00 00 10 DB (MODE)
 RX: CA 15 04 00 00 E6 (GAIN - IB 16x gain )
 RX: CA 19 08 00 00 DE (WA_CFDIV )
 RX: CA 3E AA 00 00 17 (WRPROT - disable)
@@ -154,8 +154,8 @@ RX: CA 3E AA 00 00 17 (WRPROT - disable)
 READ Sample(RX-TX) Data:
 RX: 35 05 TX: E4 00 00 16 (IA rms )
 RX: 35 07 TX: D5 A3 2E 52 (V rms )
-RX: 35 09 TX: F0 FB 02 09 (FREQ) 
-RX: 35 0A TX: 00 00 00 F5 (WATT) 
+RX: 35 09 TX: F0 FB 02 09 (FREQ)
+RX: 35 0A TX: 00 00 00 F5 (WATT)
 RX: 35 08 TX: 00 00 00 F7 (PF)
 RX: 35 0C TX: 00 00 00 F3 (WATT_HR)
 */
@@ -169,7 +169,7 @@ switch(rx_buffer[1]) {
     break;
   case BL6523_REG_FREQ :
     Energy.frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_frequency_calibration;    // 50.0 Hz
-    break;        
+    break;
   case BL6523_REG_WATTS :
     Energy.active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_power_calibration; // -196.3 W
     break;
@@ -181,7 +181,7 @@ switch(rx_buffer[1]) {
    powf_buf = ((tx_buffer[2]  << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
    powf_word = (powf_buf >> 23) ? ~(powf_buf & 0x7fffff) : powf_buf & 0x7fffff; //Extract the 23 bits and invert if sign bit(24) is set
    for (int i = 0; i < 23; i++){ // Accumulate powf from 23 bits
-    powf += ((powf_word >> (22-i)) * pow(2,(0-(i+1)))); 
+    powf += ((powf_word >> (22-i)) * pow(2,(0-(i+1))));
     powf_word = powf_word & (0x7fffff >> (1+i));
    }
    powf = (powf_buf >> 23) ? (0.0f - (powf)) : powf; // Negate if sign bit(24) is set
@@ -190,8 +190,8 @@ switch(rx_buffer[1]) {
   case BL6523_REG_WATTHR :
     Energy.import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / ( Settings->energy_power_calibration - BL6523_PWHRREF_D ); // 6.216 kWh => used in EnergyUpdateTotal()
     break;
-  default :  
-  break;            
+  default :
+  break;
 }
   Energy.data_valid[SINGLE_PHASE] = 0;
   EnergyUpdateTotal();
@@ -201,7 +201,7 @@ switch(rx_buffer[1]) {
     Bl6523.discovery_triggered = true;
   }
   return true;
- 
+
 }
 
 /*********************************************************************************************/
@@ -216,7 +216,7 @@ void Bl6523Update(void)
   {
     if (Bl6523.valid) {
     Bl6523.valid--;
-    } 
+    }
   }
 }
 
@@ -224,7 +224,7 @@ void Bl6523Update(void)
 
 void Bl6523Init(void)
 {
-    
+
     Bl6523.type = 0;
     Bl6523RxSerial = new TasmotaSerial(Pin(GPIO_BL6523_RX), -1, 1);
     Bl6523TxSerial = new TasmotaSerial(Pin(GPIO_BL6523_TX), -1, 1);
@@ -247,7 +247,7 @@ void Bl6523Init(void)
        AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:Init Failure!" ));
        TasmotaGlobal.energy_driver = ENERGY_NONE;
      }
-  
+
 }
 
 bool Bl6523Command(void) {
@@ -262,28 +262,28 @@ bool Bl6523Command(void) {
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value > 100) && (abs_value < 200000)) {    // Between 1.00 and 2000.00 W
-        Settings->energy_power_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value > 10000) && (abs_value < 26000)) {   // Between 100.00 and 260.00 V
-        Settings->energy_voltage_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value > 1000) && (abs_value < 1000000)) {  // Between 10.00 mA and 10.00000 A
-        Settings->energy_current_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value > 4500) && (abs_value < 6500)) {     // Between 45.00 and 65.00 Hz
-        Settings->energy_frequency_calibration = abs_value;
+        XdrvMailbox.payload = abs_value;
       }
     }
   }
@@ -323,7 +323,7 @@ void Bl6523DrvInit(void)
       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:PreInit Failure!" ));
        TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
-  
+
 }
 
 /*********************************************************************************************\
@@ -333,7 +333,7 @@ void Bl6523DrvInit(void)
 bool Xnrg22(uint8_t function)
 {
   bool result = false;
-  
+
     switch (function)
     {
     case FUNC_EVERY_250_MSECOND:
@@ -341,7 +341,7 @@ bool Xnrg22(uint8_t function)
       break;
     case FUNC_COMMAND:
       result = Bl6523Command();
-      break;      
+      break;
     case FUNC_INIT:
       Bl6523Init();
       break;
@@ -349,7 +349,7 @@ bool Xnrg22(uint8_t function)
       Bl6523DrvInit();
       break;
     }
-  
+
   return result;
 }
 

@@ -41,6 +41,9 @@
 #define D_CMND_TARIFF "Tariff"
 #define D_CMND_MODULEADDRESS "ModuleAddress"
 
+enum EnergyCalibration {
+  ENERGY_POWER_CALIBRATION, ENERGY_VOLTAGE_CALIBRATION, ENERGY_CURRENT_CALIBRATION, ENERGY_FREQUENCY_CALIBRATION };
+
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL, CMND_FREQUENCYCAL,
   CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS, CMND_ENERGYCONFIG };
@@ -412,8 +415,8 @@ bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &
   return (change != save_flag);
 }
 
-void EnergyMarginCheck(void)
-{
+void EnergyMarginCheck(void) {
+  if (!Energy.phase_count || (TasmotaGlobal.uptime < 8)) { return; }
   if (Energy.power_steady_counter) {
     Energy.power_steady_counter--;
     return;
@@ -637,11 +640,6 @@ void EnergyEverySecond(void)
  * Commands
 \*********************************************************************************************/
 
-void EnergyCommandCalResponse(uint32_t nvalue) {
-  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR("%sCal"), XdrvMailbox.command);
-  ResponseCmndNumber(nvalue);
-}
-
 void ResponseCmndEnergyTotalYesterdayToday(void) {
   char value_chr[TOPSZ];   // Used by EnergyFormatIndex
   char value2_chr[TOPSZ];
@@ -835,71 +833,117 @@ void CmndTariff(void) {
     GetStateText(Settings->flag3.energy_weekend));             // CMND_TARIFF
 }
 
+uint32_t EnergyGetCalibration(uint32_t chan, uint32_t cal_type) {
+  uint32_t channel = ((1 == chan) && (2 == Energy.phase_count)) ? 1 : 0;
+  if (channel) {
+    switch (cal_type) {
+      case ENERGY_POWER_CALIBRATION: return Settings->energy_power_calibration2;
+      case ENERGY_VOLTAGE_CALIBRATION: return Settings->energy_voltage_calibration2;
+      case ENERGY_CURRENT_CALIBRATION: return Settings->energy_current_calibration2;
+    }
+  } else {
+    switch (cal_type) {
+      case ENERGY_POWER_CALIBRATION: return Settings->energy_power_calibration;
+      case ENERGY_VOLTAGE_CALIBRATION: return Settings->energy_voltage_calibration;
+      case ENERGY_CURRENT_CALIBRATION: return Settings->energy_current_calibration;
+    }
+  }
+  return Settings->energy_frequency_calibration;
+}
+
+void EnergyCommandCalSetResponse(uint32_t cal_type) {
+  if (XdrvMailbox.payload > 99) {
+    uint32_t channel = ((2 == XdrvMailbox.index) && (2 == Energy.phase_count)) ? 1 : 0;
+    if (channel) {
+      switch (cal_type) {
+        case ENERGY_POWER_CALIBRATION: Settings->energy_power_calibration2 = XdrvMailbox.payload; break;
+        case ENERGY_VOLTAGE_CALIBRATION: Settings->energy_voltage_calibration2 = XdrvMailbox.payload; break;
+        case ENERGY_CURRENT_CALIBRATION: Settings->energy_current_calibration2 = XdrvMailbox.payload; break;
+        case ENERGY_FREQUENCY_CALIBRATION: Settings->energy_frequency_calibration = XdrvMailbox.payload; break;
+      }
+    } else {
+      switch (cal_type) {
+        case ENERGY_POWER_CALIBRATION: Settings->energy_power_calibration = XdrvMailbox.payload; break;
+        case ENERGY_VOLTAGE_CALIBRATION: Settings->energy_voltage_calibration = XdrvMailbox.payload; break;
+        case ENERGY_CURRENT_CALIBRATION: Settings->energy_current_calibration = XdrvMailbox.payload; break;
+        case ENERGY_FREQUENCY_CALIBRATION: Settings->energy_frequency_calibration = XdrvMailbox.payload; break;
+      }
+    }
+  }
+  if (ENERGY_FREQUENCY_CALIBRATION == cal_type) {
+    ResponseAppend_P(PSTR("%d}"), Settings->energy_frequency_calibration);
+  } else {
+    if (2 == Energy.phase_count) {
+      ResponseAppend_P(PSTR("[%d,%d]}"), EnergyGetCalibration(0, cal_type), EnergyGetCalibration(1, cal_type));
+    } else {
+      ResponseAppend_P(PSTR("%d}"), EnergyGetCalibration(0, cal_type));
+    }
+  }
+}
+
+void EnergyCommandCalResponse(uint32_t cal_type) {
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+  EnergyCommandCalSetResponse(cal_type);
+}
+
+void EnergyCommandSetCalResponse(uint32_t cal_type) {
+  Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
+  EnergyCommandCalSetResponse(cal_type);
+}
+
 void CmndPowerCal(void) {
   Energy.command_code = CMND_POWERCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_power_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_power_calibration);
+    EnergyCommandCalResponse(ENERGY_POWER_CALIBRATION);
   }
 }
 
 void CmndVoltageCal(void) {
   Energy.command_code = CMND_VOLTAGECAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_voltage_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_voltage_calibration);
+    EnergyCommandCalResponse(ENERGY_VOLTAGE_CALIBRATION);
   }
 }
 
 void CmndCurrentCal(void) {
   Energy.command_code = CMND_CURRENTCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_current_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_current_calibration);
+    EnergyCommandCalResponse(ENERGY_CURRENT_CALIBRATION);
   }
 }
 
 void CmndFrequencyCal(void) {
   Energy.command_code = CMND_FREQUENCYCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_frequency_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_frequency_calibration);
+    EnergyCommandCalResponse(ENERGY_FREQUENCY_CALIBRATION);
   }
 }
 
 void CmndPowerSet(void) {
   Energy.command_code = CMND_POWERSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Watt
-    EnergyCommandCalResponse(Settings->energy_power_calibration);
+    EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
   }
 }
 
 void CmndVoltageSet(void) {
   Energy.command_code = CMND_VOLTAGESET;
   if (XnrgCall(FUNC_COMMAND)) {  // Volt
-    EnergyCommandCalResponse(Settings->energy_voltage_calibration);
+    EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
   }
 }
 
 void CmndCurrentSet(void) {
   Energy.command_code = CMND_CURRENTSET;
   if (XnrgCall(FUNC_COMMAND)) {  // milliAmpere
-    EnergyCommandCalResponse(Settings->energy_current_calibration);
+    EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
   }
 }
 
 void CmndFrequencySet(void) {
   Energy.command_code = CMND_FREQUENCYSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Hz
-    EnergyCommandCalResponse(Settings->energy_frequency_calibration);
+    EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
   }
 }
 
@@ -1050,9 +1094,6 @@ void EnergyDrvInit(void) {
   Energy.voltage_available = true;     // Enable if voltage is measured
   Energy.current_available = true;     // Enable if current is measured
   Energy.power_on = true;
-#ifdef USE_ENERGY_MARGIN_DETECTION
-  Energy.power_steady_counter = 8;     // Allow for power on stabilization
-#endif  // USE_ENERGY_MARGIN_DETECTION
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
   XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
