@@ -99,7 +99,10 @@ void DingtianInit(void) {
 
       Dingtian->first = TasmotaGlobal.devices_present;
       TasmotaGlobal.devices_present += Dingtian->count;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: Dingtian relays: POWER%d to POWER%d"), Dingtian->first + 1, Dingtian->first + Dingtian->count);
+      if (TasGlobal.devices_present > POWER_SIZE) {
+        TasGlobal.devices_present = POWER_SIZE;
+      }
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: Dingtian relays: POWER%d to POWER%d"), Dingtian->first + 1, TasGlobal.devices_present);
     }
   }
 }
@@ -135,9 +138,9 @@ void DingtianLoop()
 void DingtianSetPower(void)
 {
   // store relay status in structure
-  Dingtian->outputs = (XdrvMailbox.index >> Dingtian->first) & ~(0xFFFF << Dingtian->count);
+  Dingtian->outputs = (XdrvMailbox.index >> Dingtian->first) & ~(0xFFFFFFFF << Dingtian->count);
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DNGT: outputs=0x%08X"), Dingtian->outputs);
-  //DingtianLoop();
+  DingtianLoop();
 }
 
 /********************************************************************************************************
@@ -186,8 +189,8 @@ bool Xdrv90(uint8_t function) {
       case FUNC_SET_POWER:
         DingtianSetPower();
         break;
-      //case FUNC_EVERY_50_MSECOND:
-      case FUNC_EVERY_250_MSECOND:
+      case FUNC_EVERY_50_MSECOND:
+      //case FUNC_EVERY_250_MSECOND:
         DingtianLoop();
         break;
       case FUNC_JSON_APPEND:
@@ -198,7 +201,6 @@ bool Xdrv90(uint8_t function) {
         DingtianShow(0);
         break;
 #endif  // USE_WEBSERVER
-
     }
   }
   return result;
