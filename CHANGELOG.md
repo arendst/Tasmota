@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.2]
+## [12.2.0.3]
+### Added
+- Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid (#17011)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.2.0.2] 20221107
 ### Added
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk (#16938)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
@@ -14,8 +26,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 DMX ArtNet optimization to avoid any object allocation and avoid garbage collector pauses
 - Berry add ``dyn`` class
 
-### Breaking Changed
-
 ### Changed
 - Move some persistent data (PowerLow)
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
@@ -25,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)
 - Serial initialization for baudrate and config (#16970)
 - ModbusBridge buffer overflow (#16979)
+- Default serial bridge configuration from 5N1 to 8N1 regression from v10.1.0.3
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader (#16939)
