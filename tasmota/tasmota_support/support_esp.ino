@@ -98,26 +98,6 @@ void *special_calloc(size_t num, size_t size) {
   return calloc(num, size);
 }
 
-String GetDeviceHardwareOld(void) {
-  // esptool.py get_efuses
-  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
-  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
-//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
-//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
-  /*
-  ESP8266 SoCs
-  - 32-bit MCU & 2.4 GHz Wi-Fi
-  - High-performance 160 MHz single-core CPU
-  - +19.5 dBm output power ensures a good physical range
-  - Sleep current is less than 20 μA, making it suitable for battery-powered and wearable-electronics applications
-  - Peripherals include UART, GPIO, I2C, I2S, SDIO, PWM, ADC and SPI
-  */
-  if (((efuse1 & (1 << 4)) || (efuse2 & (1 << 16))) && (ESP.getFlashChipRealSize() < 1048577)) {  // ESP8285 can only have 1M flash
-    return F("ESP8285");
-  }
-  return F("ESP8266EX");
-}
-
 String GetDeviceHardware(void) {
   /*
   ESP8266 SoCs
