@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid (#17011)
 
 ### Breaking Changed
+- Redesign distance sensors HRXL and DYP to use cm instead of mm (#17021)
 
 ### Changed
 - Default Flash Mode changed from ``DOUT`` to ``DIO`` for ESP8266/ESP8285
