@@ -132,7 +132,7 @@ void Vl53l1Show(bool json) {
   uint32_t i, xshut;
   for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1) {
     char types[12] = "VL53L1X";
-    if (VL53L0X_xshut) {
+    if (VL53L1X_xshut) {
       snprintf_P(types, sizeof(types), PSTR("VL53L1X%c%d"), IndexSeparator(), i +1);
     }
     float distance = (float)vl53l1x_data[i].distance / 10;  // cm
