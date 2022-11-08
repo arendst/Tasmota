@@ -123,7 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Support for DMX ArtNet Led matrix animations [#16984](https://github.com/arendst/Tasmota/issues/16984)
 
 ### Breaking Changed
-- Redesign distance sensors HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)
+- Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
