@@ -32,7 +32,7 @@
 #include <TasmotaSerial.h>
 TasmotaSerial *HRXLSerial = nullptr;
 
-uint32_t hrxl_distance_cm = 0;  // distance, cm
+uint32_t hrxl_distance_mm = 0;  // distance, mm
 
 /*********************************************************************************************/
 
@@ -62,17 +62,18 @@ void HRXLEverySecond(void) {
     }
   }
   if (num_read > 1) {
-    hrxl_distance_cm = int(sum / num_read) / 10;  // cm
+    hrxl_distance_mm = int(sum / num_read);  // mm
   }
 }
 
 void HRXLShow(bool json) {
    char types[5] = "HRXL";
+   float distance = (float)hrxl_distance_mm / 10;  // cm
    if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%d}"), types, hrxl_distance_cm);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &distance);
 #ifdef USE_WEBSERVER
    } else {
-      WSContentSend_PD(HTTP_SNS_DISTANCE_CM, types, hrxl_distance_cm);
+      WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, types, &distance);
 #endif  // USE_WEBSERVER
    }
 }

@@ -41,7 +41,7 @@ TasmotaSerial *DYPSerial = nullptr;
 #define DYP_ABOVEMAX 4999
 #define DYP_NOSENSOR 5999
 
-uint16_t DYPDistance = 0;   // distance in centimeters
+uint16_t DYPDistance = 0;   // distance in millimeters
 
 /*********************************************************************************************/
 
@@ -87,7 +87,7 @@ void DYPEverySecond(void) {
         if (data > DYP_MAX) {
           data = DYP_ABOVEMAX;
         }
-        DYPDistance = data / 10;  // cm
+        DYPDistance = data;  // mm
       } else {
         DYPDistance = DYP_CRCERROR;
       }
@@ -97,11 +97,12 @@ void DYPEverySecond(void) {
 
 void DYPShow(bool json) {
   char types[4] = "DYP";
+  float distance = (float)DYPDistance / 10;  // cm
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%d}"), types, DYPDistance);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &distance);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_DISTANCE_CM, types, DYPDistance);
+    WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, types, &distance);
 #endif  // USE_WEBSERVER
   }
 }
