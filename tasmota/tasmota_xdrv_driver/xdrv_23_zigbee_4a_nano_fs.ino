@@ -69,7 +69,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version);
 
 // Signature entry:
 // - 4 bytes of signature, currently 'Tasm'. Any other entry indicates that the EEPROM was not formatted
-// - 1 byte version number, currently 0x00
+// - 1 byte version number, currently 0x01
 // - all other bytes (5..7) are reserved and filled with 0s
 
 // DIRECTORY
@@ -94,7 +94,8 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version);
 //
 // If the generation number overflows, all blocks start at generation `0`
 // meaning that the entire bitmap block is overwritten.
-
+// Version 1:
+//  - switched from Zig2 to Zig4
 // Version 0:
 // Many features are not yet implemented.
 // We start with hardcoded values:
@@ -115,6 +116,7 @@ const size_t ZFS_BLOCK_SIZE      = 256;
 const size_t ZFS_ENTRY_SIZE      = 8;    // each entry is 32 bytes
 const size_t ZFS_ENTRIES         = 30;
 const uint32_t ZFS_SIGNATURE     = 0x6D736154;    // 'Tasm'
+const uint8_t ZFS_VERSION        = 0x01;
 
 
 /*********************************************************************************************\
@@ -156,7 +158,7 @@ public:
 
   ZFS_Root_Entry() :
     signature(ZFS_SIGNATURE),    // 'Tasm'
-    version(0),
+    version(ZFS_VERSION),
     reserved{}
     {};
 };
@@ -210,8 +212,8 @@ public:
 \*********************************************************************************************/
 
 void ZFS_Dir_Block::format(void) {
-  // entry 0 - 'zig2'
-  e[0].name = ZIGB_NAME2;
+  // entry 0 - 'zig4'
+  e[0].name = ZIGB_NAME4;
   e[0].length = 0;
   e[0].blk_start = 2;             // start at block 2 to 32
   // entry 1 - 'dat2'
@@ -403,6 +405,15 @@ void ZFS::initOrFormat(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM signature 0x%08X is incorrect, formatting"), dir->b0.signature);
     format();
   }
+
+  if (dir->b0.version == ZFS_VERSION) {
+    // Good
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM version 0x%08X is correct"), dir->b0.version);
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "EEPROM version 0x%08X is incorrect, formatting"), dir->b0.version);
+    format();
+  }
+
   delete dir;
 
   zigbee.eeprom_ready = true;
