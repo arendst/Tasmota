@@ -11,7 +11,6 @@ All notable changes to this project will be documented in this file.
 - Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm (#17021)
 
 ### Changed
-- Default Flash Mode changed from ``DOUT`` to ``DIO`` for ESP8266/ESP8285
 
 ### Fixed
 
