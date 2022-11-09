@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.2.0.3
+## Changelog v12.2.0.4
 ### Added
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
@@ -138,7 +138,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Serial initialization for baudrate and config [#16970](https://github.com/arendst/Tasmota/issues/16970)
 - ModbusBridge buffer overflow [#16979](https://github.com/arendst/Tasmota/issues/16979)
 - Default serial bridge configuration from 5N1 to 8N1 regression from v10.1.0.3
-
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)

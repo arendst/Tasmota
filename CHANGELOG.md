@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.3]
+## [12.2.0.4]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Reverted Flash Mode back from ``DIO`` to ``DOUT`` for ESP8266/ESP8285 (#17019)
+
+### Fixed
+
+### Removed
+
+## [12.2.0.3] 20221109
 ### Added
 - Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid (#17011)
 
@@ -12,10 +24,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Default Flash Mode changed from ``DOUT`` to ``DIO`` for ESP8266/ESP8285
-
-### Fixed
-
-### Removed
 
 ## [12.2.0.2] 20221107
 ### Added
