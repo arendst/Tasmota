@@ -130,7 +130,7 @@ void DingtianLoop()
     }
     ResponseAppend_P(PSTR("}}"));
     if (first_done) {
-      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("DINGTIAN_CHG"));
+      MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR("DINGTIAN_CHG"));
     }
   }
 }
