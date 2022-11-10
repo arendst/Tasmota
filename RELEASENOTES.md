@@ -126,7 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)
 
 ### Changed
-- ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
+- ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Compiling with reduced boards manifests in favour of Autoconfig [#16848](https://github.com/arendst/Tasmota/issues/16848)
