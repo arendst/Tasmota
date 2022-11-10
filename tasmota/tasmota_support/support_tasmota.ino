@@ -1854,8 +1854,7 @@ void SerialInput(void)
     } else {
       ResponseAppend_P(PSTR("\""));
       if (Settings->flag.mqtt_serial_raw) {
-        char hex_char[(TasmotaGlobal.serial_in_byte_counter * 2) + 2];
-        ResponseAppend_P(ToHex_P((unsigned char*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter, hex_char, sizeof(hex_char)));
+        ResponseAppend_P(PSTR("%*_H"), TasmotaGlobal.serial_in_byte_counter, TasmotaGlobal.serial_in_buffer);
       } else {
         ResponseAppend_P(EscapeJSONString(TasmotaGlobal.serial_in_buffer).c_str());
       }

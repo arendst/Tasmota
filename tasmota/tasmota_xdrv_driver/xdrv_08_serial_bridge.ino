@@ -158,8 +158,7 @@ void SerialBridgeInput(void) {
     } else {
       ResponseAppend_P(PSTR("\""));
       if (serial_bridge_raw) {
-        char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
-        ResponseAppend_P(ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)));
+        ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
       } else {
         ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
       }
@@ -171,7 +170,7 @@ void SerialBridgeInput(void) {
        XdrvRulesProcess(0);
     } else {
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-    }    
+    }
     serial_bridge_in_byte_counter = 0;
   }
 }
