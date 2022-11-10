@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.4]
 ### Added
+- Support for Plantower PMSx003T AQI models with temperature and humidity (#16971)
+- Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
 
 ### Breaking Changed
 
@@ -13,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Core) from v2.0.5.2 to v2.0.5.3 (#17034)
 
 ### Fixed
+- SenseAir S8 module detection (#17033)
 
 ### Removed
 

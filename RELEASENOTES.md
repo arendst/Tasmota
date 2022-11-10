@@ -33,9 +33,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.5**.
+This release will be supported from ESP32/Arduino library Core version **2.0.5.3**.
 
-Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.5 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.5.3 have been removed.
 
 ## Support of TLS
 
@@ -77,7 +77,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.5**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.5.3**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -110,13 +110,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v12.2.0.4
 ### Added
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
-- Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
+- Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Support for Shelly Pro 1/1PM and 2/2PM [#16773](https://github.com/arendst/Tasmota/issues/16773)
 - Support for up to four DS18x20 GPIOs by md5sum-as [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk [#16938](https://github.com/arendst/Tasmota/issues/16938)
 - Support for NTAG2xx tags read and write on PN532 NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)
+- Support for Plantower PMSx003T AQI models with temperature and humidity [#16971](https://github.com/arendst/Tasmota/issues/16971)
 - Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid [#17011](https://github.com/arendst/Tasmota/issues/17011)
+- Support for Dingtian x595 shift register based relay boards by Barbudor [#17032](https://github.com/arendst/Tasmota/issues/17032)
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
@@ -133,11 +135,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ADE7953 monitoring from instant power to accumulated energy [#16941](https://github.com/arendst/Tasmota/issues/16941)
 
 ### Fixed
+- Serial bridge default serial configuration from 5N1 to 8N1 regression from v10.1.0.3
 - BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 [#16914](https://github.com/arendst/Tasmota/issues/16914)
 - Serial initialization for baudrate and config [#16970](https://github.com/arendst/Tasmota/issues/16970)
 - ModbusBridge buffer overflow [#16979](https://github.com/arendst/Tasmota/issues/16979)
-- Default serial bridge configuration from 5N1 to 8N1 regression from v10.1.0.3
+- SenseAir S8 module detection [#17033](https://github.com/arendst/Tasmota/issues/17033)
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)
