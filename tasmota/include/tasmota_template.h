@@ -200,6 +200,7 @@ enum UserSelectablePins {
   GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
   GPIO_DALI_RX, GPIO_DALI_TX,          // Dali
   GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
+  GPIO_DINGTIAN_CLK, GPIO_DINGTIAN_SDI, GPIO_DINGTIAN_Q7, GPIO_DINGTIAN_PL, GPIO_DINGTIAN_RCK,  // Dingtian relay board - 595's & 165's pins
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -447,6 +448,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7953_CS "|"
   D_SENSOR_DALI_RX "|" D_SENSOR_DALI_TX "|"
   D_SENSOR_BP1658CJ_CLK "|" D_SENSOR_BP1658CJ_DAT "|"
+  D_GPIO_DINGTIAN_CLK "|" D_GPIO_DINGTIAN_SDI "|" D_GPIO_DINGTIAN_Q7 "|" D_GPIO_DINGTIAN_PL "|" D_GPIO_DINGTIAN_RCK "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -462,6 +464,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_SM2335_DAT   16
 #define MAX_DSB          4
 #define MAX_BP1658CJ_DAT 16
+#define MAX_DINGTIAN_SHIFT  4
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -1110,6 +1113,14 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SHIFT595_RCLK),
   AGPIO(GPIO_SHIFT595_OE),
   AGPIO(GPIO_SHIFT595_SER),
+#endif
+
+#if defined (ESP32) && defined(USE_DINGTIAN_RELAY)
+  AGPIO(GPIO_DINGTIAN_CLK) + MAX_DINGTIAN_SHIFT, // Dingtian Relay board - 8,16,24 or 32 relays & inputs
+  AGPIO(GPIO_DINGTIAN_SDI),
+  AGPIO(GPIO_DINGTIAN_Q7),
+  AGPIO(GPIO_DINGTIAN_PL),
+  AGPIO(GPIO_DINGTIAN_RCK),
 #endif
 };
 
