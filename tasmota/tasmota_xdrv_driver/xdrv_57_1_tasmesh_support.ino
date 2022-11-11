@@ -218,7 +218,7 @@ void MESHsendPeerList(void) {      // We send this list only to the peers, that 
   MESH.sendPacket.chunks = 1;
   MESH.sendPacket.chunkSize = _idx;
   MESH.sendPacket.TTL = 1;
-//  AddLogBuffer(LOG_LEVEL_INFO, MESH.sendPacket.payload, MESH.sendPacket.chunkSize);
+//  AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H"), MESH.sendPacket.chunkSize, MESH.sendPacket.payload);
   MESHsendPacket(&MESH.sendPacket);
 }
 
@@ -342,8 +342,7 @@ bool MESHencryptPayload(mesh_packet_t *_packet, int _encrypt) {
   size_t _size = _packet->chunkSize;
   char _tag[16];
 
-// AddLog(LOG_LEVEL_DEBUG, PSTR("cc: %u, _size: %u"), _counter,_size);
-// AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)_tag,16);
+// AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: cc %u, _size %u, _tag %16_H"), _counter,_size,(uint8_t*)_tag);
 
   br_chacha20_run bc = br_chacha20_ct_run;
 

@@ -65,8 +65,7 @@ void CB_MESHDataReceived(const uint8_t *MAC, const uint8_t *packet, int len) {
       MESHencryptPayload(_recvPacket, 0); //decrypt it and check
       if (memcmp(_recvPacket->payload, MESH.broker, 6) == 0) {
         MESHaddPeer((uint8_t*)MAC);
-//        AddLog(LOG_LEVEL_INFO, PSTR("MSH: Rcvd topic %s"), (char*)_recvPacket->payload + 6);
-//        AddLogBuffer(LOG_LEVEL_INFO,(uint8_t *)&MESH.packetToConsume.front().payload,MESH.packetToConsume.front().chunkSize+5);
+//        AddLog(LOG_LEVEL_INFO, PSTR("MSH: Rcvd topic %s, payload %*_H"), (char*)_recvPacket->payload + 6, MESH.packetToConsume.front().chunkSize+5, (uint8_t *)&MESH.packetToConsume.front().payload);
         for (auto &_peer : MESH.peers) {
           if (memcmp(_peer.MAC, _recvPacket->sender, 6) == 0) {
             strcpy(_peer.topic, (char*)_recvPacket->payload + 6);
@@ -340,8 +339,7 @@ bool MESHrouteMQTTtoMESH(const char* _topic, char* _data, bool _retained) {
     }
     MESH.sendPacket.chunkSize += _byteLeftInChunk;
     MESH.packetToResend.push(MESH.sendPacket);
-//    AddLog(LOG_LEVEL_INFO, PSTR("MSH: chunk:%u, size: %u"),MESH.sendPacket.chunk,MESH.sendPacket.chunkSize);
-//    AddLogBuffer(LOG_LEVEL_INFO, (uint8_t*)MESH.sendPacket.payload, MESH.sendPacket.chunkSize);
+//    AddLog(LOG_LEVEL_INFO, PSTR("MSH: chunk %u, size %u, payload %*_H"),MESH.sendPacket.chunk,MESH.sendPacket.chunkSize,MESH.sendPacket.chunkSize,(uint8_t*)MESH.sendPacket.payload);
     if (MESH.sendPacket.chunk == MESH.sendPacket.chunks) {
 //      AddLog(LOG_LEVEL_INFO, PSTR("MSH: Too many chunks %u"), MESH.sendPacket.chunk +1);
     }

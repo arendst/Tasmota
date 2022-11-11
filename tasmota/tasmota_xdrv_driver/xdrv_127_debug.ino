@@ -659,7 +659,7 @@ void CmndI2cWrite(void)
     }
 
     if (index > 1) {
-      AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+      AddLog(LOG_LEVEL_INFO, PSTR("DBG: CmndI2cWrite %*_H"), index, buffer);
 
       Wire.beginTransmission(buffer[0]);
       for (uint32_t i = 1; i < index; i++) {
@@ -698,7 +698,7 @@ void CmndI2cRead(void)
         buffer[index++] = Wire.read();
       }
       if (index > 0) {
-        AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+        AddLog(LOG_LEVEL_INFO, PSTR("DBG: CmndI2cRead %*_H"), index, buffer);
       }
     }
   }

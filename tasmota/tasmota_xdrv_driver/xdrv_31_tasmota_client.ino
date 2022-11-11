@@ -238,15 +238,13 @@ uint8_t TasmotaClient_receiveData(char* buffer, int size) {
   }
   if (255 == index) { index = 0; }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData"));
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, index);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData %*_H"), index, (uint8_t*)buffer);
 
   return index;
 }
 
 uint8_t TasmotaClient_sendBytes(uint8_t* bytes, int count) {
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendBytes"));
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&bytes, count);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendBytes %*_H"), count, (uint8_t*)&bytes);
 
   TasmotaClient_Serial->write(bytes, count);
   TasmotaClient_waitForSerialData(2, TASMOTA_CLIENT_TIMEOUT);
@@ -334,7 +332,7 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
     memcpy(flash_buffer, data + read, sizeof(flash_buffer));
     read = read + sizeof(flash_buffer);
 
-//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)flash_buffer, 32);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: Flash %32_H"), (uint8_t*)flash_buffer);
 
     for (uint32_t ca = 0; ca < sizeof(flash_buffer); ca++) {
       processed++;
@@ -456,8 +454,7 @@ void TasmotaClient_sendCmnd(uint8_t cmnd, uint8_t param) {
   memcpy(&buffer[1], &TClientCommand, sizeof(TClientCommand));
   buffer[sizeof(TClientCommand)+1] = CMND_END;
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendCmnd"));
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buffer, sizeof(buffer));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: SendCmnd %*_H"), sizeof(buffer), (uint8_t*)&buffer);
 
   for (uint32_t ca = 0; ca < sizeof(buffer); ca++) {
     TasmotaClient_Serial->write(buffer[ca]);

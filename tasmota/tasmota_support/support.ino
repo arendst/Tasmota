@@ -383,7 +383,7 @@ char* Unescape(char* buffer, uint32_t* size)
   int32_t end_size = *size;
   uint8_t che = 0;
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: UnescapeIn %*_H"), *size, (uint8_t*)buffer);
 
   while (start_size > 0) {
     uint8_t ch = *read++;
@@ -427,7 +427,7 @@ char* Unescape(char* buffer, uint32_t* size)
   }
   *size = end_size;
   *write++ = 0;   // add the end string pointer reference
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: UnescapeOut %*_H"), *size, (uint8_t*)buffer);
 
   return buffer;
 }
@@ -1479,7 +1479,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
     memcpy_P(&template8, &kModules8285[module_template - TMP_WEMOS], sizeof(template8));
   }
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&template8, sizeof(mytmplt8285));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: GetInternalTemplate %*_H"), sizeof(mytmplt8285), (uint8_t *)&template8);
 
   // template16  = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc,Flg
   uint16_t template16[(sizeof(mytmplt) / 2)] = { GPIO_NONE };
@@ -1500,8 +1500,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   }
   memcpy(ptr, &template16[index], size);
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d, %*_V"), option, size / 2, (uint8_t *)ptr);
 }
 #endif  // ESP8266
 
@@ -1528,7 +1527,7 @@ void TemplateGpios(myio *gp)
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TemplateGpiosIn %*_H"), sizeof(mycfgio), (uint8_t *)&src);
 
   // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
@@ -1550,7 +1549,7 @@ void TemplateGpios(myio *gp)
   }
   // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TemplateGpiosOut %*_H"), sizeof(myio), (uint8_t *)gp);
 }
 
 gpio_flag ModuleFlag(void)
@@ -1757,16 +1756,14 @@ bool JsonTemplate(char* dataBuf)
     }
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted"));
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings->user_template, sizeof(Settings->user_template) / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Converted %*_V"), sizeof(Settings->user_template) / 2, (uint8_t*)&Settings->user_template);
 
   return true;
 }
 
 void TemplateJson(void)
 {
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show"));
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)&Settings->user_template, sizeof(Settings->user_template) / 2, 2);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show %*_V"), sizeof(Settings->user_template) / 2, (uint8_t*)&Settings->user_template);
 
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
@@ -2767,21 +2764,6 @@ void AddLogSerial(uint32_t loglevel)
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
-}
-
-void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
-  char log_data[4 + (count * size * 3)];
-
-  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
-  for (uint32_t i = 0; i < count; i++) {
-    if (1 == size) {  // uint8_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
-    } else {          // uint16_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
-    }
-    buffer += size;
-  }
-  AddLogData(loglevel, log_data);
 }
 
 void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {

@@ -105,7 +105,7 @@ uint32_t rf_search_and_write(uint8_t *data, size_t size) {
     if (rec_end == sizeof(buf)) { return 9; }  // File too large - Failed to decode RF firmware
     rec_size = rec_end - rec_start;
 
-//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf + rec_start, rec_size);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: %*_H"), rec_size, (uint8_t*)&buf + rec_start);
 
     err = rf_decode_and_write(buf + rec_start, rec_size);
     if (err != 0) { return err; }
