@@ -453,6 +453,12 @@ bool Xdrv21(uint32_t function)
           numOfWemoSwitch++;
         }
         break;
+      case FUNC_NETWORK_UP:
+        UdpConnect();
+        break;
+      case FUNC_NETWORK_DOWN:
+        UdpDisconnect();
+        break;
     }
   }
   return result;

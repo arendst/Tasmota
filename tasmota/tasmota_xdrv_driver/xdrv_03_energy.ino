@@ -1415,6 +1415,12 @@ bool Xdrv03(uint32_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kEnergyCommands, EnergyCommand);
         break;
+      case FUNC_NETWORK_UP:
+        XnrgCall(FUNC_NETWORK_UP);
+        break;
+      case FUNC_NETWORK_DOWN:
+        XnrgCall(FUNC_NETWORK_DOWN);
+        break;
     }
   }
   return result;
