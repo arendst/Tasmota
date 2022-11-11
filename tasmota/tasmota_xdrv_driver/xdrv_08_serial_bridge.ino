@@ -189,6 +189,9 @@ void SerialBridgeInit(void) {
       }
       SerialBridgeSerial->flush();
       SerialBridgePrintf("\r\n");
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SBR: Serial UART%d"), SerialBridgeSerial->getUart());
+#endif
     }
   }
 }

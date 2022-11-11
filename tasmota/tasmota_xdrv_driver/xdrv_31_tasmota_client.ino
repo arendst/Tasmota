@@ -399,6 +399,9 @@ void TasmotaClient_Init(void) {
         if (TasmotaClient_Serial->hardwareSerial()) {
           ClaimSerial();
         }
+#ifdef ESP32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TCL: Serial UART%d"), TasmotaClient_Serial->getUart());
+#endif
         if (PinUsed(GPIO_TASMOTACLIENT_RST_INV)) {
           SetPin(Pin(GPIO_TASMOTACLIENT_RST_INV), AGPIO(GPIO_TASMOTACLIENT_RST));
           TClient.inverted = HIGH;
