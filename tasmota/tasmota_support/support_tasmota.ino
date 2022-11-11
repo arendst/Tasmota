@@ -1569,76 +1569,81 @@ void Every250mSeconds(void)
       WifiDisable();
     }
     break;
-  case 3:                                                 // Every x.75 second
-    if (!TasmotaGlobal.global_state.network_down) {
+  case 3:
+    {
+      // is there a network state change since last time, if so send events to modules
+      static bool network_was_down = true;                     // keep track of the previous state of network
+      bool network_state_changed = (network_was_down != (bool)TasmotaGlobal.global_state.network_down);   // network state changed from last tick
+      network_was_down = TasmotaGlobal.global_state.network_down;
+
+      if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-      if (OtaFactoryRead()) {
-        OtaFactoryWrite(false);
-        TasmotaGlobal.ota_state_flag = 3;
-      }
+        if (OtaFactoryRead()) {
+          OtaFactoryWrite(false);
+          TasmotaGlobal.ota_state_flag = 3;
+        }
 #endif
-      if (1 == RtcSettings.ota_loader) {
-        RtcSettings.ota_loader = 0;
-        TasmotaGlobal.ota_state_flag = 3;
-      }
+        if (1 == RtcSettings.ota_loader) {
+          RtcSettings.ota_loader = 0;
+          TasmotaGlobal.ota_state_flag = 3;
+        }
 #endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
-      StartMdns();
+        StartMdns();
 #endif  // USE_DISCOVERY
 
 #ifdef USE_WEBSERVER
-      if (Settings->webserver) {
+        if (Settings->webserver) {
 
 #ifdef ESP8266
-        if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver, WiFi.localIP()); }
+          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver, WiFi.localIP()); }
 #endif  // ESP8266
 #ifdef ESP32
 #ifdef USE_ETHERNET
-        StartWebserver(Settings->webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
+          StartWebserver(Settings->webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
 #else
-        StartWebserver(Settings->webserver, WiFi.localIP());
+          StartWebserver(Settings->webserver, WiFi.localIP());
 #endif
 #endif  // ESP32
 
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-        MdnsAddServiceHttp();
+          MdnsAddServiceHttp();
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
-      } else {
-        StopWebserver();
-      }
-#ifdef USE_EMULATION
-      if (Settings->flag2.emulation) { UdpConnect(); }
-#endif  // USE_EMULATION
+
+        } else {
+          StopWebserver();
+        }
 #endif  // USE_WEBSERVER
 
 #ifdef USE_DEVICE_GROUPS
-      DeviceGroupsStart();
+        DeviceGroupsStart();
 #endif  // USE_DEVICE_GROUPS
 
-#ifdef USE_KNX
-      if (!knx_started && Settings->flag.knx_enabled) {  // CMND_KNX_ENABLED
-        KNXStart();
-        knx_started = true;
-      }
-#endif  // USE_KNX
+        // send FUNC_NETWORK_UP to all modules
+        if (network_state_changed) {
+          // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
+          XdrvCall(FUNC_NETWORK_UP);
+          XsnsCall(FUNC_NETWORK_UP);
+        }
 
-      MqttCheck();
-    } else {
-#ifdef USE_EMULATION
-      UdpDisconnect();
-#endif  // USE_EMULATION
+        MqttCheck();
+      } else {
 
 #ifdef USE_DEVICE_GROUPS
-      DeviceGroupsStop();
+       DeviceGroupsStop();
 #endif  // USE_DEVICE_GROUPS
 
-#ifdef USE_KNX
-      knx_started = false;
-#endif  // USE_KNX
+        // send FUNC_NETWORK_UP to all modules
+        if (network_state_changed) {
+          // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
+          XdrvCall(FUNC_NETWORK_DOWN);
+          XsnsCall(FUNC_NETWORK_DOWN);
+        }
+      }                                           // Every x.75 second
     }
     break;
   }

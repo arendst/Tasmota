@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Plantower PMSx003T AQI models with temperature and humidity (#16971)
 - Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
+- Added ``FUNC_NETWORK_UP`` and ``FUNC_NETWORK_DOWN`` events
 
 ### Breaking Changed
 

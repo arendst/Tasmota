@@ -51,6 +51,8 @@ FUNC_SET_CHANNELS           |      |  2   |      |      |  1   |
 FUNC_SET_SCHEME             |      |      |      |      |  x   |
 FUNC_HOTPLUG_SCAN           |      |      |  x   |      |      |
 FUNC_DEVICE_GROUP_ITEM      |      |  x   |      |      |      |
+FUNC_NETWORK_UP             |      |  1   |  2   |  3   |  4   | Wifi or ETH network just went up (received even if webserver is not enabled)
+FUNC_NETWORK_DOWN           |      |  1   |  2   |  3   |  4   | Wifi or ETH network just went down (received even if webserver is not enabled)
 
 The numbers represent the sequence of execution
 

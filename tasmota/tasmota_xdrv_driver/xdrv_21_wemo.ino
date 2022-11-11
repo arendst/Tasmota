@@ -354,6 +354,12 @@ bool Xdrv21(uint32_t function)
         WebServer_on(PSTR("/metainfoservice.xml"), HandleUpnpMetaService);
         WebServer_on(PSTR("/setup.xml"), HandleUpnpSetupWemo);
         break;
+      case FUNC_NETWORK_UP:
+        UdpConnect();
+        break;
+      case FUNC_NETWORK_DOWN:
+        UdpDisconnect();
+        break;
     }
   }
   return result;

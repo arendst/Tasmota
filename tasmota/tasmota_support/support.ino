@@ -21,10 +21,6 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-#ifdef USE_KNX
-bool knx_started = false;
-#endif  // USE_KNX
-
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/

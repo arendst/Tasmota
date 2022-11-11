@@ -1162,6 +1162,12 @@ bool Xdrv20(uint32_t function)
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/description.xml"), HandleUpnpSetupHue);
         break;
+      case FUNC_NETWORK_UP:
+        UdpConnect();
+        break;
+      case FUNC_NETWORK_DOWN:
+        UdpDisconnect();
+        break;
     }
   }
   return result;
