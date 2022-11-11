@@ -1626,8 +1626,7 @@ void Every250mSeconds(void)
         // send FUNC_NETWORK_UP to all modules
         if (network_state_changed) {
           // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
-          XdrvCall(FUNC_NETWORK_UP);
-          XsnsCall(FUNC_NETWORK_UP);
+          XdrvXsnsCall(FUNC_NETWORK_UP);
         }
 
         MqttCheck();
@@ -1640,8 +1639,7 @@ void Every250mSeconds(void)
         // send FUNC_NETWORK_UP to all modules
         if (network_state_changed) {
           // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
-          XdrvCall(FUNC_NETWORK_DOWN);
-          XsnsCall(FUNC_NETWORK_DOWN);
+          XdrvXsnsCall(FUNC_NETWORK_DOWN);
         }
       }                                           // Every x.75 second
     }
