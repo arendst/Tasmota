@@ -299,6 +299,27 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
+/*
+          case 'V':     // 2-byte values, decimals indicates the length, default 2
+            {
+              if (decimals < 0) { decimals = 0; }
+              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              else if (decimals > 0) {
+                uint32_t val_size = decimals*6 + 2;
+                char * val_char = (char*) malloc(val_size);
+                val_char[0] = '\0';
+                for (uint32_t count = 0; count < decimals; count++) {
+                  uint32_t value = pgm_read_byte((const uint8_t *)cur_val +1) << 8 | pgm_read_byte((const uint8_t *)cur_val);
+                  snprintf_P(val_char, val_size, PSTR("%s%s%d"), val_char, (count)?",":"", value);
+                  cur_val += 2;
+                }
+                new_val_str = val_char;
+                allocs[alloc_idx++] = new_val_str;
+                // Serial.printf("> values=%s\n", hex_char);
+              }
+            }
+            break;
+*/
           // case 'D':
           //   decimals = *(int32_t*)cur_val_ptr;
           //   break;

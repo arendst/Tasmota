@@ -116,11 +116,11 @@ String GetDeviceHardware(void) {
   bool r0_4 = efuse0 & (1 << 4);                   // ESP8285
   bool r2_16 = efuse2 & (1 << 16);                 // ESP8285
   if (r0_4 || r2_16) {                             // ESP8285
-    //                                                                      1M 2M 2M 4M
-    //   r0_4                                                               1  1  0  0
-    bool r3_25 = efuse3 & (1 << 25);               // ESP8285 flash matrix  0  0  1  1
-    bool r3_26 = efuse3 & (1 << 26);               // ESP8285 flash matrix  0  1  0  1
-    bool r3_27 = efuse3 & (1 << 27);               // ESP8285 flash matrix  0  0  0  0
+    //                                                              1M 2M 2M 4M flash size
+    //   r0_4                                                       1  1  0  0
+    bool r3_25 = efuse3 & (1 << 25);               // flash matrix  0  0  1  1
+    bool r3_26 = efuse3 & (1 << 26);               // flash matrix  0  1  0  1
+    bool r3_27 = efuse3 & (1 << 27);               // flash matrix  0  0  0  0
     uint32_t pkg_version = 0;
     if (!r3_27) {
       if (r0_4 && !r3_25) {
@@ -654,11 +654,9 @@ uint8_t* FlashDirectAccess(void) {
   uint32_t address = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
   uint8_t* data = EspFlashMmap(address);
 /*
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
-
   uint8_t buf[32];
   memcpy(buf, data, sizeof(buf));
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf, 32);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X, Data %*_H"), address, data, sizeof(buf), (uint8_t*)&buf);
 */
   return data;
 }
