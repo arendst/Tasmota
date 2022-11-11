@@ -1566,6 +1566,7 @@ bool Xdrv16(uint8_t function) {
   else if (Tuya.active) {
     switch (function) {
       case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         if (TuyaSerial) { TuyaSerialInput(); }
         break;
       case FUNC_PRE_INIT:

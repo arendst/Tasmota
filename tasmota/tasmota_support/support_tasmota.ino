@@ -221,6 +221,16 @@ void ZeroCrossInit(uint32_t offset) {
 
 /********************************************************************************************/
 
+void XdrvXsnsCall(uint32_t function) {
+  XdrvCall(function);
+  XsnsCall(function);
+}
+
+void XsnsXdrvCall(uint32_t function) {
+  XsnsCall(function);
+  XdrvCall(function);
+}
+
 void SetLatchingRelay(power_t lpower, uint32_t state) {
   // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
   // TasmotaGlobal.power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
@@ -276,8 +286,7 @@ void SetDevicePower(power_t rpower, uint32_t source) {
   }
 
   XdrvMailbox.index = rpower;
-  XdrvCall(FUNC_SET_POWER);               // Signal power state
-  XsnsCall(FUNC_SET_POWER);               // Signal power state
+  XdrvXsnsCall(FUNC_SET_POWER);           // Signal power state
 
   XdrvMailbox.index = rpower;
   XdrvMailbox.payload = source;
@@ -889,8 +898,7 @@ void GetSensorValues(void) {
   char *start = ResponseData();
   int data_start = ResponseLength();
 
-  XsnsCall(FUNC_JSON_APPEND);
-  XdrvCall(FUNC_JSON_APPEND);
+  XsnsXdrvCall(FUNC_JSON_APPEND);
 
   if (data_start == ResponseLength()) { return; }
 
@@ -1137,8 +1145,7 @@ void PerformEverySecond(void)
         MqttPublishTeleState();
         MqttPublishTeleperiodSensor();
 
-        XsnsCall(FUNC_AFTER_TELEPERIOD);
-        XdrvCall(FUNC_AFTER_TELEPERIOD);
+        XsnsXdrvCall(FUNC_AFTER_TELEPERIOD);
       } else {
         // Global values (Temperature, Humidity and Pressure) update every 10 seconds
         if (!(TasmotaGlobal.tele_period % 10)) {

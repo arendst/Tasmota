@@ -619,8 +619,7 @@ void setup(void) {
   }
 #endif // USE_BERRY
 
-  XdrvCall(FUNC_PRE_INIT);
-  XsnsCall(FUNC_PRE_INIT);
+  XdrvXsnsCall(FUNC_PRE_INIT);
 
   TasmotaGlobal.init_state = INIT_GPIOS;
 
@@ -638,8 +637,7 @@ void setup(void) {
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
-  XdrvCall(FUNC_INIT);
-  XsnsCall(FUNC_INIT);
+  XdrvXsnsCall(FUNC_INIT);
 #ifdef USE_SCRIPT
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
@@ -684,6 +682,7 @@ void SleepDelay(uint32_t mseconds) {
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TimeReached(wait) && !Serial.available() && !TasmotaGlobal.skip_sleep) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+      XdrvCall(FUNC_SLEEP_LOOP);
       delay(1);
     }
   } else {
@@ -692,8 +691,7 @@ void SleepDelay(uint32_t mseconds) {
 }
 
 void Scheduler(void) {
-  XdrvCall(FUNC_LOOP);
-  XsnsCall(FUNC_LOOP);
+  XdrvXsnsCall(FUNC_LOOP);
 
 // check LEAmDNS.h
 // MDNS.update() needs to be called in main loop
@@ -721,32 +719,28 @@ void Scheduler(void) {
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
-    XdrvCall(FUNC_EVERY_50_MSECOND);
-    XsnsCall(FUNC_EVERY_50_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_50_MSECOND);
   }
 
   static uint32_t state_100msecond = 0;            // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
-    XdrvCall(FUNC_EVERY_100_MSECOND);
-    XsnsCall(FUNC_EVERY_100_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_100_MSECOND);
   }
 
   static uint32_t state_250msecond = 0;            // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
-    XdrvCall(FUNC_EVERY_250_MSECOND);
-    XsnsCall(FUNC_EVERY_250_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_250_MSECOND);
   }
 
   static uint32_t state_second = 0;                // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
-    XdrvCall(FUNC_EVERY_SECOND);
-    XsnsCall(FUNC_EVERY_SECOND);
+    XdrvXsnsCall(FUNC_EVERY_SECOND);
   }
 
   if (!TasmotaGlobal.serial_local) { SerialInput(); }

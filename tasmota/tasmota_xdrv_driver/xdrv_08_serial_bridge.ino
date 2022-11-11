@@ -293,6 +293,7 @@ bool Xdrv08(uint8_t function) {
   else if (serial_bridge_buffer) {
     switch (function) {
       case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         SerialBridgeInput();
         break;
       case FUNC_COMMAND:

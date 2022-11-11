@@ -597,8 +597,7 @@ void StartWebserver(int type, IPAddress ipweb)
 //      Webserver->on(F("/u2"), HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
 #ifndef FIRMWARE_MINIMAL
-      XdrvCall(FUNC_WEB_ADD_HANDLER);
-      XsnsCall(FUNC_WEB_ADD_HANDLER);
+      XdrvXsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
 
       if (!Web.initial_config) {
@@ -1085,8 +1084,7 @@ uint32_t WebUseManagementSubmenu(void) {
 
   if (!management_count) {
     XdrvMailbox.index = 1;
-    XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
-    XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XdrvXsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
     XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
     management_count = XdrvMailbox.index;
   }
@@ -1288,8 +1286,7 @@ void HandleRoot(void)
   }
 
 #ifndef FIRMWARE_MINIMAL
-  XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
 #endif  // Not FIRMWARE_MINIMAL
 
   if (HTTP_ADMIN == Web.state) {
@@ -1442,8 +1439,7 @@ bool HandleRootStatusRefresh(void)
   }
 #endif // USE_ZIGBEE
 
-  XsnsCall(FUNC_WEB_GET_ARG);
-  XdrvCall(FUNC_WEB_GET_ARG);
+  XsnsXdrvCall(FUNC_WEB_GET_ARG);
 
 #ifdef USE_WEB_SSE
   WSContentBegin(200, CT_STREAM);
@@ -1455,8 +1451,7 @@ bool HandleRootStatusRefresh(void)
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
   }
-  XsnsCall(FUNC_WEB_SENSOR);
-  XdrvCall(FUNC_WEB_SENSOR);
+  XsnsXdrvCall(FUNC_WEB_SENSOR);
 
   WSContentSend_P(PSTR("</table>"));
 
@@ -1522,8 +1517,7 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_MODULE);
   WSContentButton(BUTTON_WIFI);
 
-  XdrvCall(FUNC_WEB_ADD_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_BUTTON);
 
   WSContentButton(BUTTON_LOGGING);
   WSContentButton(BUTTON_OTHER);
@@ -3106,8 +3100,7 @@ void HandleManagement(void)
   WSContentButton(BUTTON_CONSOLE);
 
   XdrvMailbox.index = 0;
-  XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
 
   WSContentSend_P(PSTR("<div></div>"));            // 5px padding
   XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
