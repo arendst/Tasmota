@@ -614,7 +614,7 @@ bool CLLFlashFirmware(uint8_t* data, uint32_t size)
         uint32_t block = 0;
         unsigned int addr = 0x0000;
         AddLog(LOG_LEVEL_INFO,PSTR("CCL: will flash ...."));
-        AddLog(LOG_LEVEL_DEBUG,PSTR("CCL: data %16_H"), data); // quick check to compare with a hex editor
+        AddLogBuffer(LOG_LEVEL_DEBUG,data,16); // quick check to compare with a hex editor
 
         while((block*512)<size)
         {

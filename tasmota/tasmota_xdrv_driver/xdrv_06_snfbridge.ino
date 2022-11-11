@@ -197,7 +197,7 @@ void SonoffBridgeReceived(void)
   char rfkey[8];
   char stemp[16];
 
-  AddLogSerial(LOG_LEVEL_DEBUG);
+  AddLogSerial();
 
   if (0xA2 == TasmotaGlobal.serial_in_buffer[0]) {       // Learn timeout
     SonoffBridgeLearnFailed();

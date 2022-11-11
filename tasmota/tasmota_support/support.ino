@@ -2750,15 +2750,13 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
   }
 }
 
-void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
-{
+void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count) {
   char hex_char[(count * 3) + 2];
   AddLog(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
 }
 
-void AddLogSerial(uint32_t loglevel)
-{
-  AddLogBuffer(loglevel, (uint8_t*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
+void AddLogSerial() {
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
 }
 
 void AddLogMissed(const char *sensor, uint32_t misses)

@@ -452,11 +452,9 @@ void MESHevery50MSecond(void) {
   //   // pass the packets
   // }
   if (MESH.packetToConsume.size() > 0) {
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("_"));
-//    AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t *)&MESH.packetToConsume.front(), 15);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: _ %15_H"), (uint8_t *)&MESH.packetToConsume.front());
     for (auto &_headerBytes : MESH.packetsAlreadyReceived) {
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("."));
-//      AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t *)_headerBytes.raw, 15);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: . %15_H"), (uint8_t *)_headerBytes.raw);
       if (memcmp(MESH.packetToConsume.front().sender, _headerBytes.raw, 15) == 0) {
         MESH.packetToConsume.pop();
         return;
@@ -465,21 +463,20 @@ void MESHevery50MSecond(void) {
     mesh_first_header_bytes _bytes;
     memcpy(_bytes.raw, &MESH.packetToConsume.front(), 15);
     MESH.packetsAlreadyReceived.push_back(_bytes);
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("..."));
-//    AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t *)_bytes.raw, 15);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: ... %15_H"), (uint8_t *)_bytes.raw);
     if (MESH.packetsAlreadyReceived.size() > MESH_MAX_PACKETS) {
       MESH.packetsAlreadyReceived.erase(MESH.packetsAlreadyReceived.begin());
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Erase received data"));
     }
 
     // do something on the node
-    // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t *)&MESH.packetToConsume.front(), 30);
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: %30_H), (uint8_t *)&MESH.packetToConsume.front());
 
     MESHencryptPayload(&MESH.packetToConsume.front(), 0);
     switch (MESH.packetToConsume.front().type) {
       // case PACKET_TYPE_REGISTER_NODE:
       //   AddLog(LOG_LEVEL_INFO, PSTR("MSH: received topic: %s"), (char*)MESH.packetToConsume.front().payload + 6);
-      //   // AddLogBuffer(LOG_LEVEL_INFO,(uint8_t *)&MESH.packetToConsume.front().payload,MESH.packetToConsume.front().chunkSize+5);
+      //   // AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize+5, (uint8_t *)&MESH.packetToConsume.front().payload);
       //   for(auto &_peer : MESH.peers){
       //     if(memcmp(_peer.MAC,MESH.packetToConsume.front().sender,6)==0){
       //       strcpy(_peer.topic,(char*)MESH.packetToConsume.front().payload+6);
@@ -532,7 +529,7 @@ void MESHevery50MSecond(void) {
           }
         } else {
 //          AddLog(LOG_LEVEL_INFO, PSTR("MSH: chunk: %u size: %u"), MESH.packetToConsume.front().chunk, MESH.packetToConsume.front().chunkSize);
-//          if (MESH.packetToConsume.front().chunk==0) AddLogBuffer(LOG_LEVEL_INFO,(uint8_t *)&MESH.packetToConsume.front().payload,MESH.packetToConsume.front().chunkSize);
+//          if (MESH.packetToConsume.front().chunk==0) AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
           char * _data = (char*)MESH.packetToConsume.front().payload + strlen((char*)MESH.packetToConsume.front().payload) +1;
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Publish packet"));
           MqttPublishPayload((char*)MESH.packetToConsume.front().payload, _data);
@@ -546,7 +543,7 @@ void MESHevery50MSecond(void) {
             }
             idx++;
           }
-//          AddLogBuffer(LOG_LEVEL_INFO,(uint8_t *)&MESH.packetToConsume.front().payload,MESH.packetToConsume.front().chunkSize);
+//          AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
         }
         break;
       default:
