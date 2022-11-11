@@ -235,7 +235,7 @@ void Sdm630DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg10(uint8_t function)
+bool Xnrg10(uint32_t function)
 {
   bool result = false;
 

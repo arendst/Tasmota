@@ -422,7 +422,7 @@ bool PAJ7620CommandSensor(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns50(uint8_t function)
+bool Xsns50(uint32_t function)
 {
   if (!I2cEnabled(XI2C_34)) { return false; }
 

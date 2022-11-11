@@ -284,7 +284,7 @@ void CmndSSerialConfig(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv08(uint8_t function) {
+bool Xdrv08(uint32_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

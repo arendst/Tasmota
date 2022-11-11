@@ -173,7 +173,7 @@ bool SonoffD1ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv37(uint8_t function)
+bool Xdrv37(uint32_t function)
 {
   bool result = false;
 

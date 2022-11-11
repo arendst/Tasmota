@@ -211,7 +211,7 @@ void TfmpShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns86(byte callback_id)
+bool Xsns86(uint32_t callback_id)
 {
     bool result = false;
     if (FUNC_INIT == callback_id)

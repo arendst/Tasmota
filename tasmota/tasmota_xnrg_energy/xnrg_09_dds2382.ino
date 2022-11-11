@@ -110,7 +110,7 @@ void Dds2382DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg09(uint8_t function)
+bool Xnrg09(uint32_t function)
 {
   bool result = false;
 

@@ -668,7 +668,7 @@ bool Cse7761Command(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg19(uint8_t function) {
+bool Xnrg19(uint32_t function) {
   bool result = false;
 
   switch (function) {

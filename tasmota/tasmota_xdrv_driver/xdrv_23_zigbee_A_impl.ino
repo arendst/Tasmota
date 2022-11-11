@@ -2377,7 +2377,7 @@ void ZigbeeShowMap(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv23(uint8_t function) {
+bool Xdrv23(uint32_t function) {
   if (TasmotaGlobal.gpio_optiona.enable_ccloader) { return false; }
 
   bool result = false;

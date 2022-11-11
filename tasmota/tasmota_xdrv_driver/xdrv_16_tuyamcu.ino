@@ -1535,7 +1535,7 @@ void TuyaAddButton(void) {
 
 #ifdef USE_ENERGY_SENSOR
 
-bool Xnrg32(uint8_t function)
+bool Xnrg32(uint32_t function)
 {
   bool result = false;
 
@@ -1556,7 +1556,7 @@ bool Xnrg32(uint8_t function)
 }
 #endif  // USE_ENERGY_SENSOR
 
-bool Xdrv16(uint8_t function) {
+bool Xdrv16(uint32_t function) {
   bool result = false;
 
   if (FUNC_MODULE_INIT == function) {

@@ -126,7 +126,7 @@ void Esp32SensorShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns127(uint8_t function) {
+bool Xsns127(uint32_t function) {
   bool result = false;
 
   switch (function) {

@@ -758,7 +758,7 @@ void PN532_Show(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns40(uint8_t function) {
+bool Xsns40(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

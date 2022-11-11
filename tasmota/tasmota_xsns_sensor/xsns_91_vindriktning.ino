@@ -165,7 +165,7 @@ void VindriktningShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns91(uint8_t function) {
+bool Xsns91(uint32_t function) {
   bool result = false;
 
   if (Vindriktning.type) {

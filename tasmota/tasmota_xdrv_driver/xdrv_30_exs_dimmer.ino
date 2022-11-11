@@ -585,7 +585,7 @@ void CmndExsState(void)
  * Interface
  */
 
-bool Xdrv30(uint8_t function)
+bool Xdrv30(uint32_t function)
 {
   bool result = false;
 

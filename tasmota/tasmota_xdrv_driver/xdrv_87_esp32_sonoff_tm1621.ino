@@ -566,7 +566,7 @@ void CmndDspSpeed(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv87(uint8_t function) {
+bool Xdrv87(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

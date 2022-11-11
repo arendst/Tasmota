@@ -581,7 +581,7 @@ void sns_opentherm_blor_cmd(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns69(uint8_t function)
+bool Xsns69(uint32_t function)
 {
     bool result = false;
     if (FUNC_INIT == function)

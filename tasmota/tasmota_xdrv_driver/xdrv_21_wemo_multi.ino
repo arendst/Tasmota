@@ -427,7 +427,7 @@ void WemoRespondToMSearch(int echo_type) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv21(uint8_t function)
+bool Xdrv21(uint32_t function)
 {
   bool result = false;
 

@@ -148,7 +148,7 @@ void My92x1ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt02(uint8_t function)
+bool Xlgt02(uint32_t function)
 {
   bool result = false;
 

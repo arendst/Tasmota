@@ -229,7 +229,7 @@ void CmndBuzzer(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv24(uint8_t function) {
+bool Xdrv24(uint32_t function) {
   bool result = false;
 
   if (Buzzer.active) {

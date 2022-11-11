@@ -1745,7 +1745,7 @@ void EQ3DiscoveryOneEQ3(){
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv85(uint8_t function)
+bool Xdrv85(uint32_t function)
 {
   bool result = false;
 

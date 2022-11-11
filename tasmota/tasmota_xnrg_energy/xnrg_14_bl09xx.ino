@@ -404,7 +404,7 @@ void Bl09XXShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg14(uint8_t function) {
+bool Xnrg14(uint32_t function) {
   bool result = false;
 
   switch (function) {

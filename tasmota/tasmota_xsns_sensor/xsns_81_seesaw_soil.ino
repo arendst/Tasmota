@@ -328,7 +328,7 @@ void seeSoilName(int no, char *name, int len)   // generates a sensor name
  * Interface
 \*********************************************************************************************/
 
-bool Xsns81(uint8_t function)
+bool Xsns81(uint32_t function)
 {
   if (!I2cEnabled(XI2C_56)) { return false; }
   bool result = false;

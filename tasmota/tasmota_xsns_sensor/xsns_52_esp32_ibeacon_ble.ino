@@ -562,7 +562,7 @@ void ibeacon_mqtt(const char *mac,const char *rssi,const char *uid,const char *m
  * Interface
 \*********************************************************************************************/
 
-bool Xsns52(byte function)
+bool Xsns52(uint32_t function)
 {
   bool result = false;
 

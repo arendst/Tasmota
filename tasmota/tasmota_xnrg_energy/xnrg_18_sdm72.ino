@@ -207,7 +207,7 @@ void Sdm72Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg18(uint8_t function)
+bool Xnrg18(uint32_t function)
 {
   bool result = false;
 

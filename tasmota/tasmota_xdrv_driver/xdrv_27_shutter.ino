@@ -1718,7 +1718,7 @@ void  CmndShutterTiltIncDec(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv27(uint8_t function)
+bool Xdrv27(uint32_t function)
 {
   bool result = false;
 

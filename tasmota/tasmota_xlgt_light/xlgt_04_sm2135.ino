@@ -70,7 +70,7 @@ enum Sm2135Color { SM2135_WCGRB,         //  1 (4064) - Action LSC GRB (20mA) an
                    SM2135_WCBGR15W,      //  6 (4069) - BGR (45mA) and CW (60mA)
                    SM2135_WCBRG_SETALL,  //  7 (4070) - Fitop 10W RGBCCT BRG (15mA) and CW (40mA)
                    SM2135_RESERVED_8,    //  8 (4071) - Reserved - currently fallsback to 2
-                   SM2135_WCGRB_ALL,     //  9 (4072) - GRB (20mA) and CW (15mA) like 1 but reset either RGB or CW
+                   SM2135_WCGRB_ALL,     //  9 (4072) - Qualitel GRB (20mA) and CW (15mA) like 1 but reset either RGB or CW
                    SM2135_WCBGR_ALL      // 10 (4073) - BGR (20mA) and CW (15mA) like 2 but reset either RGB or CW
                  };
 
@@ -227,7 +227,7 @@ void Sm2135ModuleSelected(void)
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
     Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
-    // See #define MAX_SM2135_DAT 7 in tasmota_template.h
+    // See #define MAX_SM2135_DAT 10 in tasmota_template.h
     Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 9
 
     // Legacy support of model selection
@@ -271,7 +271,7 @@ void Sm2135ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt04(uint8_t function)
+bool Xlgt04(uint32_t function)
 {
   bool result = false;
 

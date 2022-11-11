@@ -18,9 +18,9 @@
 */
 
 #ifdef XFUNC_PTR_IN_ROM
-bool (* const xdrv_func_ptr[])(uint8_t) PROGMEM = {   // Driver Function Pointers
+bool (* const xdrv_func_ptr[])(uint32_t) PROGMEM = {   // Driver Function Pointers
 #else
-bool (* const xdrv_func_ptr[])(uint8_t) = {   // Driver Function Pointers
+bool (* const xdrv_func_ptr[])(uint32_t) = {   // Driver Function Pointers
 #endif
 
 #ifdef XDRV_01
@@ -1063,8 +1063,7 @@ const uint8_t kXdrvList[] = {
 
 /*********************************************************************************************/
 
-void XsnsDriverState(void)
-{
+void XsnsDriverState(void) {
   ResponseAppend_P(PSTR(",\"Drivers\":\""));  // Use string for future enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXdrvList); i++) {
 #ifdef XFUNC_PTR_IN_ROM
@@ -1099,8 +1098,7 @@ bool XdrvRulesProcess(bool teleperiod) {
 }
 
 #ifdef USE_DEBUG_DRIVER
-void ShowFreeMem(const char *where)
-{
+void ShowFreeMem(const char *where) {
   char stemp[30];
   snprintf_P(stemp, sizeof(stemp), where);
   XdrvMailbox.data = stemp;
@@ -1112,8 +1110,7 @@ void ShowFreeMem(const char *where)
  * Function call to single xdrv
 \*********************************************************************************************/
 
-bool XdrvCallDriver(uint32_t driver, uint8_t Function)
-{
+bool XdrvCallDriver(uint32_t driver, uint32_t function) {
   for (uint32_t x = 0; x < xdrv_present; x++) {
 #ifdef XFUNC_PTR_IN_ROM
     uint32_t listed = pgm_read_byte(kXdrvList + x);
@@ -1121,7 +1118,7 @@ bool XdrvCallDriver(uint32_t driver, uint8_t Function)
     uint32_t listed = kXdrvList[x];
 #endif
     if (driver == listed) {
-      return xdrv_func_ptr[x](Function);
+      return xdrv_func_ptr[x](function);
     }
   }
   return false;
@@ -1131,11 +1128,10 @@ bool XdrvCallDriver(uint32_t driver, uint8_t Function)
  * Function call to all xdrv
 \*********************************************************************************************/
 
-bool XdrvCall(uint8_t Function)
-{
+bool XdrvCall(uint32_t function) {
   bool result = false;
 
-//  DEBUG_TRACE_LOG(PSTR("DRV: %d"), Function);
+//  DEBUG_TRACE_LOG(PSTR("DRV: %d"), function);
 
   uint32_t profile_driver_start = millis();
 
@@ -1143,7 +1139,7 @@ bool XdrvCall(uint8_t Function)
 
     uint32_t profile_function_start = millis();
 
-    result = xdrv_func_ptr[x](Function);
+    result = xdrv_func_ptr[x](function);
 
 #ifdef USE_PROFILE_FUNCTION
 #ifdef XFUNC_PTR_IN_ROM
@@ -1151,25 +1147,25 @@ bool XdrvCall(uint8_t Function)
 #else
       uint32_t index = kXdrvList[x];
 #endif
-    PROFILE_FUNCTION("drv", index, Function, profile_function_start);
+    PROFILE_FUNCTION("drv", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
-    if (result && ((FUNC_COMMAND == Function) ||
-                   (FUNC_COMMAND_DRIVER == Function) ||
-                   (FUNC_MQTT_DATA == Function) ||
-                   (FUNC_RULES_PROCESS == Function) ||
-                   (FUNC_BUTTON_PRESSED == Function) ||
-                   (FUNC_SERIAL == Function) ||
-                   (FUNC_MODULE_INIT == Function) ||
-                   (FUNC_SET_CHANNELS == Function) ||
-                   (FUNC_PIN_STATE == Function) ||
-                   (FUNC_SET_DEVICE_POWER == Function)
+    if (result && ((FUNC_COMMAND == function) ||
+                   (FUNC_COMMAND_DRIVER == function) ||
+                   (FUNC_MQTT_DATA == function) ||
+                   (FUNC_RULES_PROCESS == function) ||
+                   (FUNC_BUTTON_PRESSED == function) ||
+                   (FUNC_SERIAL == function) ||
+                   (FUNC_MODULE_INIT == function) ||
+                   (FUNC_SET_CHANNELS == function) ||
+                   (FUNC_PIN_STATE == function) ||
+                   (FUNC_SET_DEVICE_POWER == function)
                   )) {
       break;
     }
   }
 
-  PROFILE_DRIVER("drv", Function, profile_driver_start);
+  PROFILE_DRIVER("drv", function, profile_driver_start);
 
   return result;
 }

@@ -103,7 +103,7 @@ void MPU_Every_Second(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns85(uint8_t function) {
+bool Xsns85(uint32_t function) {
   if (!I2cEnabled(XI2C_58)) { return false; }
 
   bool result = false;

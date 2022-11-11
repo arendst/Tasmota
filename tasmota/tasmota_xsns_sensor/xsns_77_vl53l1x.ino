@@ -158,7 +158,7 @@ void Vl53l1Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns77(uint8_t function) {
+bool Xsns77(uint32_t function) {
   if (!I2cEnabled(XI2C_54)) { return false; }
 
   bool result = false;

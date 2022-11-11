@@ -2003,7 +2003,7 @@ void MqttSaveSettings(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv02(uint8_t function)
+bool Xdrv02(uint32_t function)
 {
   bool result = false;
 

@@ -826,7 +826,7 @@ void AH3935Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns67(uint8_t function) {
+bool Xsns67(uint32_t function) {
   if (!I2cEnabled(XI2C_48)) { return false; }
   bool result = false;
   if (FUNC_INIT == function) {

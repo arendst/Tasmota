@@ -11116,7 +11116,7 @@ void script_add_subpage(uint8_t num) {
 
 
 
-bool Xdrv10(uint8_t function)
+bool Xdrv10(uint32_t function)
 {
   bool result = false;
   glob_script_mem.event_handeled = false;

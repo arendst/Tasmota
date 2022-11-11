@@ -1149,7 +1149,7 @@ void HandleHueApi(String *path)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv20(uint8_t function)
+bool Xdrv20(uint32_t function)
 {
   bool result = false;
 

@@ -206,7 +206,7 @@ bool PS16DZModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv19(uint8_t function)
+bool Xdrv19(uint32_t function)
 {
   bool result = false;
 

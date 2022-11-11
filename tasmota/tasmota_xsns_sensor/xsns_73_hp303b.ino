@@ -142,7 +142,7 @@ void HP303B_Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns73(uint8_t function)
+bool Xsns73(uint32_t function)
 {
   if (!I2cEnabled(XI2C_52)) { return false; }
 

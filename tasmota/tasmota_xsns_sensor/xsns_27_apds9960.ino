@@ -1992,7 +1992,7 @@ bool APDS9960CommandSensor(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns27(uint8_t function) {
+bool Xsns27(uint32_t function) {
   if (!I2cEnabled(XI2C_21)) { return false; }
 
   bool result = false;

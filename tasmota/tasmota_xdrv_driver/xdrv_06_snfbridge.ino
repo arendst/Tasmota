@@ -128,6 +128,9 @@ uint8_t rf_erase_flash(void) {
     }
     err = c2_device_erase();
     if (err != C2_SUCCESS) {
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("RFB: Device erase error %d"), err);
+
       if (i < 3) {
         c2_reset();              // Reset RF chip and try again
       } else {
@@ -535,7 +538,7 @@ void SonoffBridgeWebGetArg(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv06(uint8_t function)
+bool Xdrv06(uint32_t function)
 {
   bool result = false;
 

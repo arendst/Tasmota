@@ -2441,7 +2441,7 @@ float map_double(float x, float in_min, float in_max, float out_min, float out_m
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv10(uint8_t function)
+bool Xdrv10(uint32_t function)
 {
   bool result = false;
 

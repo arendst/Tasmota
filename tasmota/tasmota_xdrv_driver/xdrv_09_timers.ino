@@ -946,7 +946,7 @@ void TimerSaveSettings(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv09(uint8_t function)
+bool Xdrv09(uint32_t function)
 {
   bool result = false;
 

@@ -147,7 +147,7 @@ bool PzemDcCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg06(uint8_t function)
+bool Xnrg06(uint32_t function)
 {
   bool result = false;
 

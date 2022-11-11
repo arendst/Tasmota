@@ -342,7 +342,7 @@ void HandleUpnpSetupWemo(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv21(uint8_t function)
+bool Xdrv21(uint32_t function)
 {
   bool result = false;
 

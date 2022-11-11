@@ -118,7 +118,7 @@ void EpdRefresh42()  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp06(uint8_t function)
+bool Xdsp06(uint32_t function)
 {
   bool result = false;
 

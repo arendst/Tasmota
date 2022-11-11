@@ -459,7 +459,7 @@ void TS_RotConvert(int16_t *x, int16_t *y) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv55(uint8_t function) {
+bool Xdrv55(uint32_t function) {
   bool result = false;
 
   switch (function) {

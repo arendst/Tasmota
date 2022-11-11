@@ -325,7 +325,7 @@ void CmndDSAlias(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns05(uint8_t function) {
+bool Xsns05(uint32_t function) {
   bool result = false;
 
   if (PinUsed(GPIO_DSB, GPIO_ANY)) {

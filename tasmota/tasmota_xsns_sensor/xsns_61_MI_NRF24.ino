@@ -1966,7 +1966,7 @@ void MINRFShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns61(uint8_t function)
+bool Xsns61(uint32_t function)
 {
   bool result = false;
   if (NRF24.chipType) {

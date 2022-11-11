@@ -755,7 +755,7 @@ void Ade7880Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg23(uint8_t function) {
+bool Xnrg23(uint32_t function) {
   if (!I2cEnabled(XI2C_65)) { return false; }
 
   bool result = false;

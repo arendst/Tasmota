@@ -267,7 +267,7 @@ void Sdm230Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg21(uint8_t function)
+bool Xnrg21(uint32_t function)
 {
   bool result = false;
 

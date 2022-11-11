@@ -108,7 +108,7 @@ void LMT01_Show(bool Json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns74(uint8_t function)
+bool Xsns74(uint32_t function)
 {
   bool result = false;
 

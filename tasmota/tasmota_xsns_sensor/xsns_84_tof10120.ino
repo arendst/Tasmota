@@ -109,7 +109,7 @@ void Tof10120Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns84(uint8_t function) {
+bool Xsns84(uint32_t function) {
   if (!I2cEnabled(XI2C_57)) { return false; }
 
   bool result = false;

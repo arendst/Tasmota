@@ -3583,7 +3583,7 @@ int ExtRestartBLEIfEnabled(){
   return 0;
 }
 
-bool Xdrv79(uint8_t function)
+bool Xdrv79(uint32_t function)
 {
   //if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 

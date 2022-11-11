@@ -1119,7 +1119,7 @@ void CmndModbusTCPConnect(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv63(uint8_t function)
+bool Xdrv63(uint32_t function)
 {
   bool result = false;
 

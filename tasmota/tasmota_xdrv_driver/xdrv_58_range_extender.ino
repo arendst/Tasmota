@@ -344,7 +344,7 @@ void rngxSetupNAPT(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv58(uint8_t function)
+bool Xdrv58(uint32_t function)
 {
   bool result = false;
 

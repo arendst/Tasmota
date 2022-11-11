@@ -3785,7 +3785,7 @@ void SML_CounterSaveState(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns53(byte function) {
+bool Xsns53(uint32_t function) {
   bool result = false;
     switch (function) {
       case FUNC_INIT:

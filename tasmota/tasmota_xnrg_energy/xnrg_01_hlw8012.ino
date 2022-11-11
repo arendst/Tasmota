@@ -312,7 +312,7 @@ bool HlwCommand(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg01(uint8_t function) {
+bool Xnrg01(uint32_t function) {
   bool result = false;
 
   switch (function) {

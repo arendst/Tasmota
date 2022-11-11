@@ -152,7 +152,7 @@ void Ddsu666DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg11(uint8_t function)
+bool Xnrg11(uint32_t function)
 {
   bool result = false;
 

@@ -2631,7 +2631,7 @@ void CmndSSPMPowerOnState(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv86(uint8_t function) {
+bool Xdrv86(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

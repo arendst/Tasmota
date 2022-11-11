@@ -647,7 +647,7 @@ bool McpCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg04(uint8_t function)
+bool Xnrg04(uint32_t function)
 {
   bool result = false;
 

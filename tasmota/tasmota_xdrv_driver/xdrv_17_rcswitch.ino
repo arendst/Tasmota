@@ -229,7 +229,7 @@ void CmndRfTimeOut(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv17(uint8_t function)
+bool Xdrv17(uint32_t function)
 {
   bool result = false;
 

@@ -556,7 +556,7 @@ bool DaliJsonParse()
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv89(uint8_t function)
+bool Xdrv89(uint32_t function)
 {
     bool result = false;
 

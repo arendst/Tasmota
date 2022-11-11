@@ -224,7 +224,7 @@ bool TimepropCommand()
 
 #define XDRV_48       48
 
-bool Xdrv48(byte function) {
+bool Xdrv48(uint32_t function) {
   bool result = false;
 
   switch (function) {

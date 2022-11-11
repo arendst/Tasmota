@@ -331,7 +331,7 @@ bool ADS1115_Command(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns12(uint8_t function)
+bool Xsns12(uint32_t function)
 {
   if (!I2cEnabled(XI2C_13)) { return false; }
 

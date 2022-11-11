@@ -363,7 +363,7 @@ void PmsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns18(uint8_t function)
+bool Xsns18(uint32_t function)
 {
   bool result = false;
 

@@ -420,7 +420,7 @@ void PIDRun(void) {
 
 #define XDRV_49       49
 
-bool Xdrv49(byte function) {
+bool Xdrv49(uint32_t function) {
   bool result = false;
 
   switch (function) {

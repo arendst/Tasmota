@@ -831,7 +831,7 @@ void CmndShdWarmupTime(void)
 \*********************************************************************************************/
 
 #ifdef USE_ENERGY_SENSOR
-bool Xnrg31(uint8_t function) {
+bool Xnrg31(uint32_t function) {
   bool result = false;
 
   if (Shd.present) {
@@ -852,7 +852,7 @@ bool Xnrg31(uint8_t function) {
  * Driver Interface
 \*********************************************************************************************/
 
-bool Xdrv45(uint8_t function) {
+bool Xdrv45(uint32_t function) {
   bool result = false;
 
   if (FUNC_MODULE_INIT == function) {

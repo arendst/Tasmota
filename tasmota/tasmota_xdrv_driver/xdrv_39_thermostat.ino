@@ -2084,7 +2084,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv39(uint8_t function)
+bool Xdrv39(uint32_t function)
 {
   bool result = false;
   uint8_t ctr_output;

@@ -531,7 +531,7 @@ void TasmotaClient_ProcessIn(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv31(uint8_t function) {
+bool Xdrv31(uint32_t function) {
   bool result = false;
 
   switch (function) {

@@ -645,7 +645,7 @@ void BMP_EnterSleep(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns09(uint8_t function)
+bool Xsns09(uint32_t function)
 {
   if (!I2cEnabled(XI2C_10)) { return false; }
 

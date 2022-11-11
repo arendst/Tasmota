@@ -26,7 +26,7 @@
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp18(uint8_t function) {
+bool Xdsp18(uint32_t function) {
   bool result = false;
 
   switch (function) {

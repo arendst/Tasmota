@@ -279,7 +279,7 @@ bool CseCommand(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg02(uint8_t function) {
+bool Xnrg02(uint32_t function) {
   bool result = false;
 
   switch (function) {

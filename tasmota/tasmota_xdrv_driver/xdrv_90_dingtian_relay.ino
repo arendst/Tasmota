@@ -179,7 +179,7 @@ void DingtianShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv90(uint8_t function) {
+bool Xdrv90(uint32_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

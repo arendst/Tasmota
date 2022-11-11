@@ -157,7 +157,7 @@ void SM2335ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt09(uint8_t function)
+bool Xlgt09(uint32_t function)
 {
   bool result = false;
 

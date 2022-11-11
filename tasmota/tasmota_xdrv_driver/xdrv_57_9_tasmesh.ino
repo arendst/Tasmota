@@ -814,7 +814,7 @@ void CmndMeshInterval(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv57(uint8_t function) {
+bool Xdrv57(uint32_t function) {
   bool result = false;
 
   switch (function) {

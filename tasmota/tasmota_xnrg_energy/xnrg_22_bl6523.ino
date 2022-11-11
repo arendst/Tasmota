@@ -330,7 +330,7 @@ void Bl6523DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg22(uint8_t function)
+bool Xnrg22(uint32_t function)
 {
   bool result = false;
 

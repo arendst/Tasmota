@@ -160,7 +160,7 @@ void BP1658CJModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt10(uint8_t function)
+bool Xlgt10(uint32_t function)
 {
   bool result = false;
 

@@ -1298,7 +1298,7 @@ void CmndKnxCb(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv11(uint8_t function)
+bool Xdrv11(uint32_t function)
 {
   bool result = false;
     switch (function) {

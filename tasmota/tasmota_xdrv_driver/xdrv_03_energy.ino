@@ -1384,7 +1384,7 @@ void EnergyShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv03(uint8_t function)
+bool Xdrv03(uint32_t function)
 {
   bool result = false;
 
@@ -1420,7 +1420,7 @@ bool Xdrv03(uint8_t function)
   return result;
 }
 
-bool Xsns03(uint8_t function)
+bool Xsns03(uint32_t function)
 {
   bool result = false;
 

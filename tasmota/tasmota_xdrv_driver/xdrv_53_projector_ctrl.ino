@@ -439,7 +439,7 @@ projector_ctrl_set_power(struct projector_ctrl_softc_s *sc)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv53(uint8_t function) {
+bool Xdrv53(uint32_t function) {
 	bool result;
 	struct projector_ctrl_softc_s *sc;
 

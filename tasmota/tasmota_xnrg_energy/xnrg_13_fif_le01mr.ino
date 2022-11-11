@@ -282,7 +282,7 @@ void FifLEShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg13(uint8_t function)
+bool Xnrg13(uint32_t function)
 {
   bool result = false;
 

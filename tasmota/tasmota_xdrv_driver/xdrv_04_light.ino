@@ -3395,7 +3395,7 @@ void CmndUndocA(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv04(uint8_t function)
+bool Xdrv04(uint32_t function)
 {
   bool result = false;
 

@@ -395,7 +395,7 @@ void CmndCounterDebounceHigh(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns01(uint8_t function)
+bool Xsns01(uint32_t function)
 {
   bool result = false;
 

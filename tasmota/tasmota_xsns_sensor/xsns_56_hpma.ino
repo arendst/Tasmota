@@ -113,7 +113,7 @@ void HpmaShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns56(uint8_t function)
+bool Xsns56(uint32_t function)
 {
   bool result = false;
 

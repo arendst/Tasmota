@@ -771,7 +771,7 @@ void CmndWidth(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt01(uint8_t function)
+bool Xlgt01(uint32_t function)
 {
   bool result = false;
 

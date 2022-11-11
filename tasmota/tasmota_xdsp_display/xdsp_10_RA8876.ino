@@ -297,7 +297,7 @@ Serial.print("Text test took "); Serial.print(elapsedtime); Serial.println(" ms"
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdsp10(uint8_t function)
+bool Xdsp10(uint32_t function)
 {
   bool result = false;
 

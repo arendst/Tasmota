@@ -278,7 +278,7 @@ void EPD47_CheckTouch(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp16(uint8_t function)
+bool Xdsp16(uint32_t function)
 {
   bool result = false;
 

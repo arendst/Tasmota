@@ -166,7 +166,7 @@ void Am2320Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns88(uint8_t function)
+bool Xsns88(uint32_t function)
 {
   if (!I2cEnabled(XI2C_60)) { return false; }
 

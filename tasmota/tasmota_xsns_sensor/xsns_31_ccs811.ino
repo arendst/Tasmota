@@ -105,7 +105,7 @@ void CCS811Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns31(uint8_t function)
+bool Xsns31(uint32_t function)
 {
   if (!I2cEnabled(XI2C_24)) { return false; }
 

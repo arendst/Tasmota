@@ -166,7 +166,7 @@ void bs814_publish(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv51(uint8_t function) {
+bool Xdrv51(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

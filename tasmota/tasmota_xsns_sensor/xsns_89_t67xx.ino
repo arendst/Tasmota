@@ -297,7 +297,7 @@ T67XX t67xx;
  * Interface
 \*********************************************************************************************/
 
-bool Xsns89(uint8_t function)
+bool Xsns89(uint32_t function)
 {
   uint16_t ppm = 0;
   if (!I2cEnabled(XI2C_61))

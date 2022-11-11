@@ -149,7 +149,7 @@ bool PzemAcCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg05(uint8_t function)
+bool Xnrg05(uint32_t function)
 {
   bool result = false;
 

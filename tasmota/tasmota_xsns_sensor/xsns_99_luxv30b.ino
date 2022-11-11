@@ -121,7 +121,7 @@ class LuxV30b {
     void Detect();
     bool Found();
     void Read();
-    void Show(uint8_t function);
+    void Show(uint32_t function);
   private:
     float Lux();
     bool _found;
@@ -164,7 +164,7 @@ float LuxV30b::Lux() {
   return ((float)_lux * 1.4) / 1000;
 }
 
-void LuxV30b::Show(uint8_t function) {
+void LuxV30b::Show(uint32_t function) {
 //  if (0 < Lux()) {
   if (_lux) {
     char lux[FLOATSZ];
@@ -190,7 +190,7 @@ LuxV30b Luxv30b;
  * Interface
 \*********************************************************************************************/
 
-bool Xsns99(uint8_t function) {
+bool Xsns99(uint32_t function) {
   if (!I2cEnabled(XI2C_70)) { return false; }
 
   bool result = false;

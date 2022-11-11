@@ -205,7 +205,7 @@ void CmndDeepsleepTime(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv29(uint8_t function)
+bool Xdrv29(uint32_t function)
 {
   bool result = false;
 

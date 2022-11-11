@@ -229,7 +229,7 @@ void Vl53l0Show(boolean json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns45(byte function) {
+bool Xsns45(uint32_t function) {
   if (!I2cEnabled(XI2C_31)) { return false; }
 
   bool result = false;

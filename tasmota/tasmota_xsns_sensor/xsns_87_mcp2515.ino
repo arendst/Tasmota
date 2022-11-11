@@ -407,7 +407,7 @@ void MCP2515_Show(bool Json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns87(uint8_t function)
+bool Xsns87(uint32_t function)
 {
   bool result = false;
 

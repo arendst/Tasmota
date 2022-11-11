@@ -297,7 +297,7 @@ void CmndEthSetIpConfig(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv82(uint8_t function) {
+bool Xdrv82(uint32_t function) {
   bool result = false;
 
   switch (function) {

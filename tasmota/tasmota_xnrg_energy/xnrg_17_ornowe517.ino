@@ -211,7 +211,7 @@ void We517DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg17(uint8_t function)
+bool Xnrg17(uint32_t function)
 {
   bool result = false;
 

@@ -399,7 +399,7 @@ void CmndMusicSync(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt05(uint8_t function)
+bool Xlgt05(uint32_t function)
 {
   bool result = false;
 

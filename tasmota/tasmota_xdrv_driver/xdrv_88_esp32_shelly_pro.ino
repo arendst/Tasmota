@@ -147,7 +147,7 @@ void ShellyProLedLinkWifiOff(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv88(uint8_t function) {
+bool Xdrv88(uint32_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

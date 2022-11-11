@@ -347,7 +347,7 @@ bool FlowRateMeterCommand(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns96(uint8_t function)
+bool Xsns96(uint32_t function)
 {
   bool result = false;
 

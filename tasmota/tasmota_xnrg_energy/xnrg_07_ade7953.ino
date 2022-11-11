@@ -764,7 +764,7 @@ bool Ade7953Command(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg07(uint8_t function) {
+bool Xnrg07(uint32_t function) {
   if (!I2cEnabled(XI2C_07) && (SPI_MOSI_MISO != TasmotaGlobal.spi_enabled)) { return false; }
 
   bool result = false;

@@ -249,7 +249,7 @@ void NovaSdsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns20(uint8_t function)
+bool Xsns20(uint32_t function)
 {
   bool result = false;
 

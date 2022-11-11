@@ -773,7 +773,7 @@ void EnergyModbusShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg29(uint8_t function) {
+bool Xnrg29(uint32_t function) {
   bool result = false;
 
   switch (function) {

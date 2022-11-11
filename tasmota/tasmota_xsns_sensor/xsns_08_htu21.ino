@@ -255,7 +255,7 @@ void HtuShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns08(uint8_t function)
+bool Xsns08(uint32_t function)
 {
   if (!I2cEnabled(XI2C_09)) { return false; }
 

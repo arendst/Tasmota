@@ -369,7 +369,7 @@ void Ina219Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns13(uint8_t function)
+bool Xsns13(uint32_t function)
 {
   if (!I2cEnabled(XI2C_14)) { return false; }
 

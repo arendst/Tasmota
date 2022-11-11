@@ -294,7 +294,7 @@ void Veml6070Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns11(uint8_t function)
+bool Xsns11(uint32_t function)
 {
   if (!I2cEnabled(XI2C_12)) { return false; }
 

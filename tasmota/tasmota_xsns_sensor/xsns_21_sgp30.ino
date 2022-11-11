@@ -143,7 +143,7 @@ void Sgp30Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns21(uint8_t function)
+bool Xsns21(uint32_t function)
 {
   if (!I2cEnabled(XI2C_18)) { return false; }
 

@@ -362,7 +362,7 @@ void MhzShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns15(uint8_t function)
+bool Xsns15(uint32_t function)
 {
   bool result = false;
 

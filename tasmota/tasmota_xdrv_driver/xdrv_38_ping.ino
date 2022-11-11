@@ -365,7 +365,7 @@ void CmndPing(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv38(uint8_t function)
+bool Xdrv38(uint32_t function)
 {
   bool result = false;
 

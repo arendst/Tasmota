@@ -272,7 +272,7 @@ void VEML6075Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns70(uint8_t function)
+bool Xsns70(uint32_t function)
 {
   if (!I2cEnabled(XI2C_49)) { return false; }
 
