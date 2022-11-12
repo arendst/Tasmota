@@ -1027,19 +1027,6 @@ void MqttPublishTeleperiodSensor(void) {
   }
 }
 
-void SkipSleep(bool state) {
-  if (state) {
-    TasmotaGlobal.skip_sleep += 2;
-  } else {
-    if (TasmotaGlobal.skip_sleep) {
-      TasmotaGlobal.skip_sleep--;
-    }
-    if (TasmotaGlobal.skip_sleep) {
-      TasmotaGlobal.skip_sleep--;
-    }
-  }
-}
-
 /*********************************************************************************************\
  * State loops
 \*********************************************************************************************/
@@ -1200,10 +1187,6 @@ void Every100mSeconds(void)
       }
 #endif  // ESP8266
     }
-  }
-
-  if (TasmotaGlobal.skip_sleep) {
-    TasmotaGlobal.skip_sleep--;                         // Clean up possible residue
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {

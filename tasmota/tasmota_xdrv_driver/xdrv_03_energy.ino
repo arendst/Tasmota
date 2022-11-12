@@ -1394,6 +1394,7 @@ bool Xdrv03(uint32_t function)
   else if (TasmotaGlobal.energy_driver) {
     switch (function) {
       case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         XnrgCall(FUNC_LOOP);
         break;
       case FUNC_EVERY_250_MSECOND:

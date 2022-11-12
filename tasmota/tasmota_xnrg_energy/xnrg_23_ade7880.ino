@@ -536,7 +536,6 @@ void Ade7880Cycle(void) {
 
 void Ade7880Service0(void) {
   // Poll sequence
-  SkipSleep(false);
   Ade7880Cycle();
   Ade7880.watchdog = 0;
   Ade7880.irq0_state = 0;
@@ -546,7 +545,6 @@ void IRAM_ATTR Ade7880Isr0(void) {
   // Poll sequence
   if (!Ade7880.irq0_state) {
     Ade7880.irq0_state = 1;
-    SkipSleep(true);
   }
 }
 
