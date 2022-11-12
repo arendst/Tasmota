@@ -73,7 +73,8 @@ void SerialBridgePrintf(PGM_P formatP, ...) {
     va_end(arg);
     if (data == nullptr) { return; }
 
-    SerialBridgeSerial->printf(data);
+//    SerialBridgeSerial->printf(data);  // This resolves "MqttClientMask":"DVES_%06X" into "DVES_000002"
+    SerialBridgeSerial->print(data);  // This does not resolve "DVES_%06X"
     free(data);
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
