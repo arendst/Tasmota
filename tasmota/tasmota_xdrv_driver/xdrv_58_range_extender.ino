@@ -35,10 +35,14 @@ CONFIG_LWIP_IP_FORWARD option set, and optionally CONFIG_LWIP_IPV4_NAPT.
 If you want to support NAPT (removing the need for routes on a core router):
 #define USE_WIFI_RANGE_EXTENDER_NAPT
 
+If you want to list AP clients (MAC and IP) with command RgxClients:
+#define USE_WIFI_RANGE_EXTENDER_CLIENTS
+
 
 An example full static configuration:
 #define USE_WIFI_RANGE_EXTENDER
 #define USE_WIFI_RANGE_EXTENDER_NAPT
+#define USE_WIFI_RANGE_EXTENDER_CLIENTS
 #define WIFI_RGX_STATE 1
 #define WIFI_RGX_NAPT 1
 #define WIFI_RGX_SSID "rangeextender"
@@ -92,6 +96,10 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
                                        "|"
                                        "NAPT"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
+                                       "|"
+                                       "Clients"
+#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
                                        "|"
                                        "Address"
                                        "|"
@@ -104,6 +112,9 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
+    &CmndRgxClients,
+#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
     &CmndRgxAddresses,
     &CmndRgxAddresses,
 };
@@ -160,6 +171,30 @@ void RgxCheckConfig(void)
     RgxSettings.status = RGX_CONFIG_INCOMPLETE;
   }
 }
+
+#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
+#include "esp_wifi.h"
+
+void CmndRgxClients(void)
+{
+  wifi_sta_list_t wifi_sta_list = {0};
+  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+
+  esp_wifi_ap_get_sta_list(&wifi_sta_list);
+  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+
+  Response_P(PSTR("["));
+  const char *sep = "";
+  for (int i=0; i<adapter_sta_list.num; i++)
+  {
+    const uint8_t *m = adapter_sta_list.sta[i].mac;
+    ResponseAppend_P(PSTR("%s{\"" D_JSON_MAC "\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"" D_CMND_IPADDRESS "\":\"%_I\"}"), 
+      sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip);
+    sep = ",";
+  }
+  ResponseAppend_P(PSTR("]")); 
+}
+#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
 
 void CmndRgxState(void)
 {
