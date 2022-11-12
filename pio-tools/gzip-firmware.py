@@ -1,11 +1,17 @@
 Import("env")
 import os
 import shutil
-import gzip
 import pathlib
-
 import tasmotapiolib
 
+# Upgrade pip
+env.Execute("$PYTHONEXE -m pip install --upgrade pip")
+# Install zopfli gz compressor from the PyPi registry
+env.Execute("$PYTHONEXE -m pip install zopfli")
+
+# Import zoepfli compress
+from zopfli.gzip import compress
+import gzip
 
 def map_gzip(source, target, env):
     # create string with location and file names based on variant
@@ -45,8 +51,9 @@ if env["PIOPLATFORM"] != "espressif32":
 
         # write gzip firmware file
         with open(bin_file, "rb") as fp:
-            with gzip.open(gzip_file, "wb", compresslevel=9) as f:
-                shutil.copyfileobj(fp, f)
+            with open(gzip_file, "wb") as f:
+                zopfli_gz = compress(fp.read())
+                f.write(zopfli_gz)
 
         ORG_FIRMWARE_SIZE = bin_file.stat().st_size
         GZ_FIRMWARE_SIZE = gzip_file.stat().st_size
