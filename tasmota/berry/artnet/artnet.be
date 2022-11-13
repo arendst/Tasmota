@@ -38,6 +38,15 @@ class ArtNet
     tasmota.global.sleep = 5
   end
 
+  def stop()
+    import introspect
+    # if usd_server has a stop() method, call it
+    if introspect.get(self.udp_server, "stop")
+      self.udp_server.stop()
+    end
+    self.matrix.clear()
+  end
+
   def fast_loop()
     var universe_start = self.universe_start
     var universe_end = self.universe_end
@@ -80,6 +89,50 @@ class ArtNet
     if dirty
       self.matrix.dirty()
       self.matrix.show()
+    end
+  end
+
+  static def read_persist()
+    import persist
+    var conf = dyn()
+
+    conf.gpio = persist.find("artnet_gpio", 0)      # gpio number from template
+    conf.rows = persist.find("artnet_rows", 5)      # number of rows (min: 1)
+    conf.cols = persist.find("artnet_cols", 5)      # number of columns (min: 1)
+    conf.offs = persist.find("artnet_offs", 0)      # offset in the led strip where the matrix starts (min: 0)
+    conf.alt  = persist.find("artnet_alt", false)   # are the rows in alternate directions
+
+    conf.univ = persist.find("artnet_univ", 0)      # start universe
+
+    # conf.addr = persist.find("artnet_addr", "uni")  # listening mode, either 'uni' or 'multi' for multicast
+    conf.port = persist.find("artnet_port", 6454)   # UDP port number
+
+    conf.auto = persist.find("artnet_auto", true)  # autorun at startup
+    return conf
+  end
+
+  static def run_from_conf()
+    import persist
+
+    var conf = ArtNet.read_persist()
+    var r = conf.rows
+    var c = conf.cols
+
+    var strip = Leds(r * c, gpio.pin(gpio.WS2812, conf.gpio))
+    var matrix = strip.create_matrix(r, c, conf.offs)
+    if conf.alt  matrix.set_alternate(true)
+    end
+    var dmx = ArtNet(matrix, conf.univ, conf.port)
+
+    global._artnet = dmx
+  end
+
+  static def stop_global()
+    var dmx = global._artnet
+    if type(dmx) == 'instance'
+      dmx.stop()
+      global._artnet = nil  # dereference
+      tasmota.gc()          # force gc
     end
   end
 end

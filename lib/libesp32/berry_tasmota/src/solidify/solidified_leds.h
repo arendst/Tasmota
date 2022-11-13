@@ -1308,8 +1308,8 @@ be_local_closure(Leds_matrix_is_dirty,   /* name */
 ********************************************************************/
 be_local_closure(Leds_matrix_set_bytes,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
-    4,                          /* argc */
+    13,                          /* nstack */
+    5,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -1325,21 +1325,24 @@ be_local_closure(Leds_matrix_set_bytes,   /* name */
     }),
     &be_const_str_set_bytes,
     &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
-      0x88100100,  //  0000  GETMBR	R4	R0	K0
-      0x88140101,  //  0001  GETMBR	R5	R0	K1
-      0x08100805,  //  0002  MUL	R4	R4	R5
-      0x88140102,  //  0003  GETMBR	R5	R0	K2
-      0x08180204,  //  0004  MUL	R6	R1	R4
-      0x00140A06,  //  0005  ADD	R5	R5	R6
-      0x88180103,  //  0006  GETMBR	R6	R0	K3
-      0x8C180D04,  //  0007  GETMET	R6	R6	K4
-      0x5C200A00,  //  0008  MOVE	R8	R5
-      0x5C240400,  //  0009  MOVE	R9	R2
-      0x5C280600,  //  000A  MOVE	R10	R3
-      0x5C2C0800,  //  000B  MOVE	R11	R4
-      0x7C180A00,  //  000C  CALL	R6	5
-      0x80000000,  //  000D  RET	0
+    ( &(const binstruction[17]) {  /* code */
+      0x88140100,  //  0000  GETMBR	R5	R0	K0
+      0x88180101,  //  0001  GETMBR	R6	R0	K1
+      0x08140A06,  //  0002  MUL	R5	R5	R6
+      0x24180805,  //  0003  GT	R6	R4	R5
+      0x781A0000,  //  0004  JMPF	R6	#0006
+      0x5C100A00,  //  0005  MOVE	R4	R5
+      0x88180102,  //  0006  GETMBR	R6	R0	K2
+      0x081C0205,  //  0007  MUL	R7	R1	R5
+      0x00180C07,  //  0008  ADD	R6	R6	R7
+      0x881C0103,  //  0009  GETMBR	R7	R0	K3
+      0x8C1C0F04,  //  000A  GETMET	R7	R7	K4
+      0x5C240C00,  //  000B  MOVE	R9	R6
+      0x5C280400,  //  000C  MOVE	R10	R2
+      0x5C2C0600,  //  000D  MOVE	R11	R3
+      0x5C300800,  //  000E  MOVE	R12	R4
+      0x7C1C0A00,  //  000F  CALL	R7	5
+      0x80000000,  //  0010  RET	0
     })
   )
 );
