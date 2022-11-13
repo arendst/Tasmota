@@ -45,6 +45,10 @@
 #define TUYA_DIMMER_ID         0
 #endif
 
+//#define TUYA_MORE_DEBUG
+
+/*********************************************************************************************/
+
 #define TUYA_CMD_HEARTBEAT          0x00
 #define TUYA_CMD_QUERY_PRODUCT      0x01
 #define TUYA_CMD_MCU_CONF           0x02
@@ -108,8 +112,6 @@
 // uses subcommands, 01->learning, 02->data, 03->report.
 #define TUYA_CMD_RF                 0x33 // not implemented
 
-
-
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
 #define TUYA_LOW_POWER_CMD_WIFI_RESET   0x03
 #define TUYA_LOW_POWER_CMD_WIFI_CONFIG  0x04
@@ -128,15 +130,7 @@
 
 #define TUYA_BYTE_TIMEOUT_MS   500
 
-#define TUYA_MORE_DEBUG
-
-
-
-#include <TasmotaSerial.h>
-
-
 #define TUYAREAD32FROMPTR(x) (((uint8_t*)x)[0] << 24 | ((uint8_t*)x)[1] << 16 | ((uint8_t*)x)[2] << 8 | ((uint8_t*)x)[3])
-
 
 enum {
   TUYA_STARTUP_STATE_INIT = 0,
@@ -164,7 +158,7 @@ enum {
 
 };
 
-
+#include <TasmotaSerial.h>
 TasmotaSerial *TuyaSerial = nullptr;
 
 #define TUYA_MAX_STORED_DPs 10
@@ -268,7 +262,6 @@ TUYA_STRUCT *pTuya = (TUYA_STRUCT *)0;
 //void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0);
 
 void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value, int len);
-
 
 int init_tuya_struct() {
   if (pTuya) return 0;  // done already
