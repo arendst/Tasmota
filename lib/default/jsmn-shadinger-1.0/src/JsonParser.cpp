@@ -370,6 +370,9 @@ uint64_t JsonParserToken::getULong(void) const { return getULong(0); }
 float JsonParserToken::getFloat(void) const { return getFloat(0); }
 const char * JsonParserToken::getStr(void) const { return getStr(""); }
 
+bool JsonParserObject::getBool(const char * needle, bool val) const {
+  return (*this)[needle].getBool(val);
+}
 int32_t JsonParserObject::getInt(const char * needle, int32_t val) const {
   return (*this)[needle].getInt(val);
 }
