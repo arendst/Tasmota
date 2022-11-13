@@ -571,6 +571,9 @@
 #define USE_DGR_LIGHT_SEQUENCE                   // Add support for device group light sequencing (requires USE_DEVICE_GROUPS) (+0k2 code)
 //#define USE_LSC_MCSL                             // Add support for GPE Multi color smart light as sold by Action in the Netherlands (+1k1 code)
 
+// #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
+  #define USE_LIGHT_ARTNET_MCAST 239,255,25,54   // Multicast address used to listen: 239.255.25.24
+
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
 

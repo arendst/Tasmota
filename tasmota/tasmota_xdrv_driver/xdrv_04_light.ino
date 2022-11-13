@@ -135,7 +135,7 @@ const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 const char kLightCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_CHANNELREMAP "|" D_SO_MULTIPWM "|" D_SO_ALEXACTRANGE "|" D_SO_POWERONFADE "|" D_SO_PWMCT "|"
-  D_SO_WHITEBLEND "|"
+  D_SO_WHITEBLEND "|" D_SO_ARTNET_AUTORUN "|"
   // Other commands
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
@@ -150,11 +150,14 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DGR_LIGHT_SEQUENCE
   "|" D_CMND_SEQUENCE_OFFSET
 #endif  // USE_DGR_LIGHT_SEQUENCE
+#ifdef USE_LIGHT_ARTNET
+  "|" D_CMND_ARTNET_START "|" D_CMND_ARTNET_STOP "|" D_CMND_ARTNET_CONFIG
+#endif
    "|UNDOCA" ;
 
 SO_SYNONYMS(kLightSynonyms,
   37, 68, 82, 91, 92,
-  105,
+  105, 148,
 );
 
 void (* const LightCommand[])(void) PROGMEM = {
@@ -171,6 +174,9 @@ void (* const LightCommand[])(void) PROGMEM = {
 #ifdef USE_DGR_LIGHT_SEQUENCE
   &CmndSequenceOffset,
 #endif  // USE_DGR_LIGHT_SEQUENCE
+#ifdef USE_LIGHT_ARTNET
+  &CmndArtNetStart, &CmndArtNetStop, &CmndArtNetConfig,
+#endif
   &CmndUndocA };
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
@@ -1862,7 +1868,7 @@ void LightAnimate(void)
         break;
 #endif
       default:
-        XlgtCall(FUNC_SET_SCHEME);
+          XlgtCall(FUNC_SET_SCHEME);
     }
 
 #ifdef USE_DEVICE_GROUPS
@@ -2229,6 +2235,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   XdrvMailbox.data = (char*)cur_col;
   XdrvMailbox.topic = (char*)scale_col;
   XdrvMailbox.command = (char*)cur_col_10;
+#ifdef USE_LIGHT_ARTNET
+  if (ArtNetSetChannels()) { /* Serviced */}
+  else
+#endif
   if (XlgtCall(FUNC_SET_CHANNELS)) { /* Serviced */ }
   else if (XdrvCall(FUNC_SET_CHANNELS)) { /* Serviced */ }
   XdrvMailbox.data = tmp_data;
@@ -3413,6 +3423,9 @@ bool Xdrv04(uint32_t function)
             LightSetOutputs(Light.fade_cur_10);
           }
         }
+#ifdef USE_LIGHT_ARTNET
+        ArtNetLoop();
+#endif // USE_LIGHT_ARTNET
         break;
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
@@ -3427,12 +3440,6 @@ bool Xdrv04(uint32_t function)
         break;
       case FUNC_BUTTON_MULTI_PRESSED:
         result = XlgtCall(FUNC_BUTTON_MULTI_PRESSED);
-        break;
-      case FUNC_NETWORK_UP:
-        XlgtCall(FUNC_NETWORK_UP);
-        break;
-      case FUNC_NETWORK_DOWN:
-        XlgtCall(FUNC_NETWORK_DOWN);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_MAIN_BUTTON:
@@ -3451,6 +3458,21 @@ bool Xdrv04(uint32_t function)
       case FUNC_PRE_INIT:
         LightInit();
         break;
+#ifdef USE_LIGHT_ARTNET
+    case FUNC_JSON_APPEND:
+      ArtNetJSONAppend();
+      break;
+    case FUNC_NETWORK_UP:
+      if (Settings->flag6.artnet_autorun) {
+        if (!ArtNetStart()) {
+          Settings->flag6.artnet_autorun = false;   // disable autorun if it failed, avoid nasty loop errors
+        }
+      }
+      break;
+    case FUNC_NETWORK_DOWN:
+      ArtNetStop();
+      break;
+#endif // USE_LIGHT_ARTNET
     }
   }
   return result;

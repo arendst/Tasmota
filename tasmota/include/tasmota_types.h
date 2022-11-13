@@ -181,7 +181,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption146 .. SetOption177
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
     uint32_t mqtt_disable_sserialrec : 1;  // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead.
-    uint32_t spare02 : 1;                  // bit 2
+    uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
     uint32_t spare03 : 1;                  // bit 3
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5
@@ -722,14 +722,14 @@ typedef struct {
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
+  uint8_t       ex_user_template8[5];      // 72F  14 bytes (ESP8266) - Free since 9.0.0.1 - only 5 bytes referenced now
 #endif  // ESP8266
 #ifdef ESP32
   uint8_t       webcam_clk;                // 72F
   WebCamCfg2    webcam_config2;            // 730
-
-  uint8_t       free_esp32_734[9];         // 734
 #endif  // ESP32
+  uint16_t      artnet_universe;           // 734
+  uint8_t       free_esp32_734[7];         // 736
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
