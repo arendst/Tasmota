@@ -3,14 +3,6 @@ import os
 import shutil
 import pathlib
 import tasmotapiolib
-
-# Upgrade pip
-env.Execute("$PYTHONEXE -m pip install --upgrade pip")
-# Install zopfli gz compressor from the PyPi registry
-env.Execute("$PYTHONEXE -m pip install zopfli")
-
-# Import zoepfli compress
-from zopfli.gzip import compress
 import gzip
 
 def map_gzip(source, target, env):
@@ -39,7 +31,7 @@ if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ, env):
 
 # gzip only for ESP8266
 if env["PIOPLATFORM"] != "espressif32":
-
+    from zopfli.gzip import compress
     def bin_gzip(source, target, env):
         # create string with location and file names based on variant
         bin_file = tasmotapiolib.get_final_bin_path(env)
