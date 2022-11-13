@@ -669,20 +669,37 @@ void Ws2812ShowScheme(void)
   }
 }
 
-void Ws2812ModuleSelected(void)
+bool Ws2812ReinitStrip(void)
 {
+  if (strip != nullptr) {
+    Ws2812Clear();
+    if (!strip->CanShow()) {
+      // we're doing DMA, so wait for a decent amount of time
+      delay(10);
+    }
+    delete strip;
+    strip = nullptr;
+  }
+
 #if (USE_WS2812_HARDWARE == NEO_HW_P9813)
   if (PinUsed(GPIO_P9813_CLK) && PinUsed(GPIO_P9813_DAT)) {  // RGB led
-    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_P9813_CLK), Pin(GPIO_P9813_DAT));
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(Settings->light_pixels, Pin(GPIO_P9813_CLK), Pin(GPIO_P9813_DAT));
 #else
   if (PinUsed(GPIO_WS2812)) {  // RGB led
     // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
-    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_WS2812));
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(Settings->light_pixels, Pin(GPIO_WS2812));
 #endif  // NEO_HW_P9813
     strip->Begin();
 
     Ws2812Clear();
+    return true;
+  }
+  return false;
+}
 
+void Ws2812ModuleSelected(void)
+{
+  if (Ws2812ReinitStrip()) {
     Ws2812.scheme_offset = Light.max_scheme +1;
     Light.max_scheme += WS2812_SCHEMES;
 
@@ -725,7 +742,7 @@ void CmndPixels(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
     Settings->light_pixels = XdrvMailbox.payload;
     Settings->light_rotation = 0;
-    Ws2812Clear();
+    Ws2812ReinitStrip();
     Light.update = true;
   }
   ResponseCmndNumber(Settings->light_pixels);
@@ -735,7 +752,7 @@ void CmndStepPixels(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
     Settings->light_step_pixels = (XdrvMailbox.payload > WS2812_MAX_LEDS) ? WS2812_MAX_LEDS :  XdrvMailbox.payload;
-    Ws2812Clear();
+    Ws2812ReinitStrip();
     Light.update = true;
   }
   ResponseCmndNumber(Settings->light_step_pixels);
@@ -766,6 +783,33 @@ void CmndWidth(void)
     }
   }
 }
+
+/*********************************************************************************************\
+ * Internal calls for ArtNet
+\*********************************************************************************************/
+// check is the Neopixel strip is configured
+bool Ws2812StripConfigured(void) {
+  return strip != nullptr;
+}
+size_t Ws2812StripGetPixelSize(void) {
+  return strip->PixelSize();
+}
+// return true if strip was dirty and an actual refresh was triggered
+bool Ws2812StripRefresh(void) {
+  if (strip->IsDirty()) {
+    strip->Show();
+    return true;
+  } else {
+    return false;
+  }
+}
+void Ws2812CopyPixels(const uint8_t *buf, size_t len, size_t offset_in_matrix) {
+  uint8_t *pixels = strip->Pixels();
+  memmove(&pixels[offset_in_matrix], buf, len);
+  strip->Dirty();
+}
+
+
 
 /*********************************************************************************************\
  * Interface
