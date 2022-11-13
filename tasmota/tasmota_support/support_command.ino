@@ -329,6 +329,7 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
   // cmnd: "var1=1"    = stopic "var1" and svalue "=1"
   SHOW_FREE_MEM(PSTR("ExecuteCommand"));
   ShowSource(source);
+  TasmotaGlobal.last_command_source = source;
 
   const char *pos = cmnd;
   while (*pos && isspace(*pos)) {

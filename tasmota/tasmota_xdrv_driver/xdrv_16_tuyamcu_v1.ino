@@ -18,7 +18,10 @@
 */
 
 #ifdef USE_LIGHT
-#ifdef USE_TUYA_MCU
+#ifdef USE_TUYA_MCU_V1
+/*********************************************************************************************\
+ * Tuya MCU V1
+\*********************************************************************************************/
 
 #define XDRV_16                16
 #define XNRG_32                32   // Needs to be the last XNRG_xx
@@ -551,7 +554,7 @@ void TuyaSendHexString(uint8_t id, char data[]) {
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
 
-void TuyaSendString(uint8_t id, char data[]) {
+void TuyaSendString(uint8_t id, const char data[]) {
 
   uint16_t len = strlen(data);
   uint16_t payload_len = 4 + len;
