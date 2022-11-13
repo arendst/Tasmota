@@ -318,10 +318,11 @@ class Leds : Leds_ntv
 
       # setbytes(row, bytes)
       # sets the raw bytes for `row`, copying at most 3 or 4 x col  bytes
-      def set_bytes(row, buf, offset)
+      def set_bytes(row, buf, offset, len)
         var h_bytes = self.h * self.pix_size
+        if (len > h_bytes)  len = h_bytes end
         var offset_in_matrix = self.offset + row * h_bytes
-        self.pix_buffer.setbytes(offset_in_matrix, buf, offset, h_bytes)
+        self.pix_buffer.setbytes(offset_in_matrix, buf, offset, len)
       end
 
       # Leds_matrix specific
