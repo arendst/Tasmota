@@ -35,8 +35,7 @@ CONFIG_LWIP_IP_FORWARD option set, and optionally CONFIG_LWIP_IPV4_NAPT.
 If you want to support NAPT (removing the need for routes on a core router):
 #define USE_WIFI_RANGE_EXTENDER_NAPT
 
-If you want to list AP clients (MAC and IP) with command RgxClients:
-#define USE_WIFI_RANGE_EXTENDER_CLIENTS
+List AP clients (MAC, IP and RSSI) with command RgxClients on ESP32
 
 
 An example full static configuration:
@@ -96,8 +95,10 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
                                        "|"
                                        "NAPT"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+#ifdef ESP32
                                        "|"
                                        "Clients"
+#endif // ESP32
                                        "|"
                                        "Address"
                                        "|"
@@ -110,7 +111,9 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+#ifdef ESP32
     &CmndRgxClients,
+#endif // ESP32
     &CmndRgxAddresses,
     &CmndRgxAddresses,
 };
@@ -169,6 +172,7 @@ void RgxCheckConfig(void)
   }
 }
 
+#ifdef ESP32
 void CmndRgxClients(void)
 {
   wifi_sta_list_t wifi_sta_list = {0};
@@ -182,12 +186,13 @@ void CmndRgxClients(void)
   for (int i=0; i<adapter_sta_list.num; i++)
   {
     const uint8_t *m = adapter_sta_list.sta[i].mac;
-    ResponseAppend_P(PSTR("%s\"%02x:%02x:%02x:%02x:%02x:%02x\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"RSSI\":%d}"), 
+    ResponseAppend_P(PSTR("%s\"%02x:%02x:%02x:%02x:%02x:%02x\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":%d}"),
       sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
     sep = ",";
   }
-  ResponseAppend_P(PSTR("}}")); 
+  ResponseAppend_P(PSTR("}}"));
 }
+#endif // ESP32
 
 void CmndRgxState(void)
 {
