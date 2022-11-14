@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Plantower PMSx003T AQI models with temperature and humidity (#16971)
 - Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
-- Added ``FUNC_NETWORK_UP`` and ``FUNC_NETWORK_DOWN`` events
-- Added WS2812 and Light ArtNet DMX control over UDP port 6454
+- New ``FUNC_NETWORK_UP`` and ``FUNC_NETWORK_DOWN`` events
+- WS2812 and Light ArtNet DMX control over UDP port 6454 (#17059)
 
 ### Breaking Changed
 
@@ -16,7 +16,8 @@ All notable changes to this project will be documented in this file.
 - Reverted Flash Mode back from ``DIO`` to ``DOUT`` for ESP8266/ESP8285 (#17019)
 - ESP32 Framework (Core) from v2.0.5.2 to v2.0.5.3 (#17034)
 - TuyaMcu rewrite by btsimonh (#17051)
-- WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds
+- WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds (#17055)
+- ESP8266 core library rename from v2.7.4.9 to v2.7.4
 
 ### Fixed
 - SenseAir S8 module detection (#17033)
