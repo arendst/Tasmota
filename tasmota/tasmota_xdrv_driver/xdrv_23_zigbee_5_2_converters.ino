@@ -717,20 +717,24 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
     Z_attribute_synonym syn = Z_plugin_matchAttributeSynonym(device.modelId, device.manufacturerId,
                                                               attr.cluster, attr.attr_id);
     if (syn.found()) {
-      attr.setKeyId(syn.new_cluster, syn.new_attribute);
-      if ((syn.multiplier != 1 && syn.multiplier != 0) || (syn.divider != 1 && syn.divider != 0) || (syn.base != 0)) {
-        // we need to change the value
-        float fval = attr.getFloat();
-        if (syn.multiplier != 1 && syn.multiplier != 0) {
-          fval = fval * syn.multiplier;
+      if (syn.new_attribute == 0xFFFF) {    // if attr is 0xFFFF, remove attribute
+        attr_list.removeAttribute(&attr);
+      } else {
+        attr.setKeyId(syn.new_cluster, syn.new_attribute);
+        if ((syn.multiplier != 1 && syn.multiplier != 0) || (syn.divider != 1 && syn.divider != 0) || (syn.base != 0)) {
+          // we need to change the value
+          float fval = attr.getFloat();
+          if (syn.multiplier != 1 && syn.multiplier != 0) {
+            fval = fval * syn.multiplier;
+          }
+          if (syn.divider != 1 && syn.divider != 0) {
+            fval = fval / syn.divider;
+          }
+          if (syn.base != 0) {
+            fval = fval + syn.base;
+          }
+          attr.setFloat(fval);
         }
-        if (syn.divider != 1 && syn.divider != 0) {
-          fval = fval / syn.divider;
-        }
-        if (syn.base != 0) {
-          fval = fval + syn.base;
-        }
-        attr.setFloat(fval);
       }
     }
   }
@@ -1188,9 +1192,6 @@ void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribu
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {
     attr.setKeyId(0x000C, 0xFF55);    // change to AqaraRotate
-  }
-  if (modelId.startsWith(F("lumi.plug"))) {
-    attr.setKeyId(0x0702, 0x0000);    // change to EnergyTotal
   }
   if (modelId.startsWith(F("lumi.ctrl"))) {
     attr.setKeyId(0x0B04, 0x050B);    // change to ActivePower
