@@ -96,10 +96,8 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
                                        "|"
                                        "NAPT"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
-#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
                                        "|"
                                        "Clients"
-#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
                                        "|"
                                        "Address"
                                        "|"
@@ -112,9 +110,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
-#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
     &CmndRgxClients,
-#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
     &CmndRgxAddresses,
     &CmndRgxAddresses,
 };
@@ -133,6 +129,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #ifdef ESP32
 #include "lwip/lwip_napt.h"
 #include <dhcpserver/dhcpserver.h>
+#include "esp_wifi.h"
 #endif // ESP32
 
 #define RGX_NOT_CONFIGURED 0
@@ -172,29 +169,25 @@ void RgxCheckConfig(void)
   }
 }
 
-#ifdef USE_WIFI_RANGE_EXTENDER_CLIENTS
-#include "esp_wifi.h"
-
 void CmndRgxClients(void)
 {
   wifi_sta_list_t wifi_sta_list = {0};
   tcpip_adapter_sta_list_t adapter_sta_list = {0};
-
+  
   esp_wifi_ap_get_sta_list(&wifi_sta_list);
   tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
 
-  Response_P(PSTR("["));
+  Response_P(PSTR("{\"RgxClients\":{"));
   const char *sep = "";
   for (int i=0; i<adapter_sta_list.num; i++)
   {
     const uint8_t *m = adapter_sta_list.sta[i].mac;
-    ResponseAppend_P(PSTR("%s{\"" D_JSON_MAC "\":\"%02x:%02x:%02x:%02x:%02x:%02x\",\"" D_CMND_IPADDRESS "\":\"%_I\"}"), 
+    ResponseAppend_P(PSTR("%s\"%02x:%02x:%02x:%02x:%02x:%02x\":{\"" D_CMND_IPADDRESS "\":\"%_I\"}"), 
       sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip);
     sep = ",";
   }
-  ResponseAppend_P(PSTR("]")); 
+  ResponseAppend_P(PSTR("}}")); 
 }
-#endif // USE_WIFI_RANGE_EXTENDER_CLIENTS
 
 void CmndRgxState(void)
 {
