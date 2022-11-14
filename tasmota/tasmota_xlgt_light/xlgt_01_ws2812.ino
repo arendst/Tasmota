@@ -785,7 +785,7 @@ void CmndWidth(void)
 }
 
 /*********************************************************************************************\
- * Internal calls for ArtNet
+ * Internal calls for Art-Net
 \*********************************************************************************************/
 // check is the Neopixel strip is configured
 bool Ws2812StripConfigured(void) {
