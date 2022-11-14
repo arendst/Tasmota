@@ -127,7 +127,7 @@ typedef struct {
 } TRtcReboot;
 TRtcReboot RtcReboot;
 #ifdef ESP32
-RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+static RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
 #endif  // ESP32
 
 typedef struct {
@@ -154,7 +154,7 @@ typedef struct {
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32
-RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+static RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
 #endif  // ESP32
 
 struct TIME_T {
