@@ -17,7 +17,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Core) from v2.0.5.2 to v2.0.5.3 (#17034)
 - TuyaMcu rewrite by btsimonh (#17051)
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds (#17055)
-- ESP8266 core library rename from v2.7.4.9 to v2.7.4
 
 ### Fixed
 - SenseAir S8 module detection (#17033)

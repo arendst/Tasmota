@@ -31,11 +31,11 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 This release will be supported from ESP32/Arduino library Core version **2.0.5.3**.
 
-Support of ESP8266 Core versions before 2.7.4 and ESP32 Core versions before 2.0.5.3 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.5.3 have been removed.
 
 ## Support of TLS
 
@@ -52,7 +52,7 @@ Easy initial installation of Tasmota can be performed using the [Tasmota WebInst
 ## Provided Binary Downloads
 
 ### ESP8266 or ESP8285 based
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
 - **tasmota4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
@@ -129,7 +129,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)
 
 ### Changed
-- ESP8266 core library rename from v2.7.4.9 to v2.7.4
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
