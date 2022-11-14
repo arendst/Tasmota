@@ -186,7 +186,7 @@ void CmndRgxClients(void)
   for (int i=0; i<adapter_sta_list.num; i++)
   {
     const uint8_t *m = adapter_sta_list.sta[i].mac;
-    ResponseAppend_P(PSTR("%s\"%02x:%02x:%02x:%02x:%02x:%02x\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":%d}"),
+    ResponseAppend_P(PSTR("%s\"%02X%02X%02X%02X%02X%02X\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":%d}"),
       sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
     sep = ",";
   }
