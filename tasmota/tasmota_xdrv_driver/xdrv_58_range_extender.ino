@@ -94,6 +94,8 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
                                        "|"
                                        "NAPT"
+                                       "|"
+                                       "Port"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 #ifdef ESP32
                                        "|"
@@ -110,6 +112,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
     &CmndRgxPassword,
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
+    &CmndRgxPort,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 #ifdef ESP32
     &CmndRgxClients,
@@ -124,7 +127,6 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #endif // ESP8266
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
-#include <ESP8266WiFi.h>
 #include <lwip/dns.h>
 #ifdef ESP8266
 #include <dhcpserver.h>
@@ -271,7 +273,52 @@ void CmndRgxNAPT(void)
     }
   }
   ResponseCmndStateText(Settings->sbflag1.range_extender_napt);
-};
+}
+
+void CmndRgxPort(void)
+{
+  char *tok, *state, *parm_mac;
+  uint16_t gw, dst;
+  uint8_t proto = 0;
+
+  Response_P(PSTR("ERROR"));
+
+  if (ArgC()!=4) return;
+  if ((tok = strtok_r(XdrvMailbox.data, ", ", &state)) == 0) return;
+  if (strcasecmp("TCP", tok) == 0) proto = IP_PROTO_TCP;
+  if (strcasecmp("UDP", tok) == 0) proto = IP_PROTO_UDP;
+  if (!proto) return;
+  if ((tok = strtok_r(0, ", ", &state)) == 0) return;
+  if ((gw = strtoul(tok, nullptr, 0)) == 0) return;
+  if ((parm_mac = strtok_r(0, ", ", &state)) == 0) return;
+  if ((tok = strtok_r(0, ", ", &state)) == 0) return;
+  if ((dst = strtoul(tok, nullptr, 0)) == 0) return;
+
+#ifdef ESP32
+  wifi_sta_list_t wifi_sta_list = {0};
+  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+
+  esp_wifi_ap_get_sta_list(&wifi_sta_list);
+  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+
+  for (int i=0; i<adapter_sta_list.num; i++)
+  {
+    char list_mac[13];
+    const uint8_t *m = adapter_sta_list.sta[i].mac;
+    snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), m[0], m[1], m[2], m[3], m[4], m[5]);
+    if (strcasecmp(list_mac, parm_mac) == 0)
+    {
+      if (ip_portmap_add(proto, (uint32_t)WiFi.localIP(), gw, adapter_sta_list.sta[i].ip.addr, dst))
+      {
+        Response_P(PSTR("OK %s %_I:%u -> %_I:%u"), 
+          (proto == IP_PROTO_TCP) ? "TCP" : "UDP", (uint32_t)WiFi.localIP(), gw, adapter_sta_list.sta[i].ip.addr, dst);
+        return;
+      }
+      break;
+    }
+  }
+#endif // ESP32
+}
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
 void ResponseRgxConfig(void)
