@@ -110,6 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v12.2.0.4
 ### Added
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
+- Command ``SwitchMode 16`` sending only MQTT message on inverted switch change [#17028](https://github.com/arendst/Tasmota/issues/17028)
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Support for Shelly Pro 1/1PM and 2/2PM [#16773](https://github.com/arendst/Tasmota/issues/16773)
@@ -130,12 +131,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
+- ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Compiling with reduced boards manifests in favour of Autoconfig [#16848](https://github.com/arendst/Tasmota/issues/16848)
 - ADE7953 monitoring from instant power to accumulated energy [#16941](https://github.com/arendst/Tasmota/issues/16941)
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds [#17055](https://github.com/arendst/Tasmota/issues/17055)
+- Zigbee improved Aqara plug support and completed cluster 0x0702 [#17073](https://github.com/arendst/Tasmota/issues/17073)
 
 ### Fixed
 - Serial bridge default serial configuration from 5N1 to 8N1 regression from v10.1.0.3

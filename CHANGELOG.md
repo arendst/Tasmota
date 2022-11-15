@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
 - New ``FUNC_NETWORK_UP`` and ``FUNC_NETWORK_DOWN`` events
 - WS2812 and Light Art-Net DMX control over UDP port 6454 (#17059)
+- Command ``SwitchMode 16`` sending only MQTT message on inverted switch change (#17028)
 
 ### Breaking Changed
 
@@ -17,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Core) from v2.0.5.2 to v2.0.5.3 (#17034)
 - TuyaMcu rewrite by btsimonh (#17051)
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds (#17055)
-- Zigbee improved Aqara plug support and completed cluster 0x0702
+- Zigbee improved Aqara plug support and completed cluster 0x0702 (#17073)
 - ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
 
 ### Fixed
