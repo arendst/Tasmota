@@ -852,7 +852,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_DINGTIAN_RELAY
     feature9 |= 0x00000100;  // xdrv_90_dingtian_relay.ino
 #endif
-//    feature9 |= 0x00000200;
+#if defined(USE_I2C) && defined(USE_HMC5883L)
+    feature9 |= 0x00000200;  // xsns_101_hmc5883l.ino
+#endif
 //    feature9 |= 0x00000400;
 //    feature9 |= 0x00000800;
 

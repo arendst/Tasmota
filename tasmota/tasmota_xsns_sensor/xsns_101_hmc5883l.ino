@@ -1,7 +1,7 @@
 /*
   xsns_101_hmc5883l.ino - HMC5883L 3-Axis Digital Compass sensor support for Tasmota
-  (inspired by Helge Scheunemann)
-  Copyright (C) 2022 Andreas Achtzehn
+
+  Copyright (C) 2022  Andreas Achtzehn (inspired by Helge Scheunemann)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@
 \*********************************************************************************************/
 
 // Define driver ID
-#define XSNS_101                         101
-#define XI2C_73                          73  // See I2CDEVICES.md
+#define XSNS_101                        101
+#define XI2C_73                         73  // See I2CDEVICES.md
 
 /* The default I2C address of this chip */
 #define HMC5883L_ADDR                   0x1E
@@ -45,8 +45,8 @@
 #define HMC5883L_CONFIG_B               0x01
 #define HMC5883L_MODE                   0x02
 #define HMC5883L_CHIP_ID_A              0x0A
-#define HMC5883L_CHIP_ID_B		0x0B
-#define HMC5883L_CHIP_ID_C		0x0C
+#define HMC5883L_CHIP_ID_B              0x0B
+#define HMC5883L_CHIP_ID_C              0x0C
 
 /* Bit values for the STATUS register */
 const uint8_t HMC5883L_STATUS_RDY             	= 0b00000001;
@@ -104,25 +104,26 @@ bool HMC5883L_SetConfig() {
 
   uint8_t cfgB = (( (HMC5883L->gain            ) << HMC5883L_CONFIG_B_GAIN_SHIFT  ) & HMC5883L_CONFIG_B_GAIN_MASK  );
 
-  AddLog(LOG_LEVEL_INFO,"HMC5883L: CONFIG A: %#X CONFIG B: %#X MODE: %#X",cfgA, cfgB, HMC5883L->mode);
+  AddLog(LOG_LEVEL_INFO,"HMC: CONFIG A: %#X CONFIG B: %#X MODE: %#X", cfgA, cfgB, HMC5883L->mode);
 
-  if (I2cWrite8(HMC5883L_ADDR, HMC5883L_CONFIG_A, cfgA ) == false) { 
-	AddLog(LOG_LEVEL_INFO,"HMC5883L: Setting CONFIG A failed.");
-	return false; 
+  if (I2cWrite8(HMC5883L_ADDR, HMC5883L_CONFIG_A, cfgA ) == false) {
+    AddLog(LOG_LEVEL_INFO,"HMC: Setting CONFIG A failed");
+    return false;
   }
-  if (I2cWrite8(HMC5883L_ADDR, HMC5883L_CONFIG_B, cfgB ) == false) { 
-	AddLog(LOG_LEVEL_INFO,"HMC5883L: Setting CONFIG B failed.");
-	return false; 
+  if (I2cWrite8(HMC5883L_ADDR, HMC5883L_CONFIG_B, cfgB ) == false) {
+    AddLog(LOG_LEVEL_INFO,"HMC: Setting CONFIG B failed");
+    return false;
   }
   if (HMC5883L->mode == HMC5883L_MODE_CONT) {
-  	if (I2cWrite8(HMC5883L_ADDR, HMC5883L_MODE, HMC5883L_MODE_CONT ) == false)
-            { AddLog(LOG_LEVEL_INFO,"HMC5883L: Setting continuous mode failed.");
-	      return false; }
+    if (I2cWrite8(HMC5883L_ADDR, HMC5883L_MODE, HMC5883L_MODE_CONT ) == false) {
+      AddLog(LOG_LEVEL_INFO,"HMC: Setting continuous mode failed");
+      return false;
+    }
   }
   return true;
 }
 
-// Initialize the device  
+// Initialize the device
 void HMC5883L_Init() {
   if (!I2cSetDevice(HMC5883L_ADDR)) { return; }
 
@@ -142,11 +143,13 @@ void HMC5883L_Init() {
 //Read the magnetic data
 void HMC5883L_ReadData(void) {
   if (HMC5883L->mode == HMC5883L_MODE_SINGLE) {
-        if (I2cWrite8(HMC5883L_ADDR, HMC5883L_MODE, HMC5883L_MODE_SINGLE ) == false)
-            { return; }
+    if (I2cWrite8(HMC5883L_ADDR, HMC5883L_MODE, HMC5883L_MODE_SINGLE ) == false) { return; }
   }
-  
-  while (!(I2cRead8(HMC5883L_ADDR, HMC5883L_STATUS) & HMC5883L_STATUS_RDY)) { }  // Chip not yet ready, next round try again
+
+  uint32_t timeout = millis() + 20;
+  while (!(I2cRead8(HMC5883L_ADDR, HMC5883L_STATUS) & HMC5883L_STATUS_RDY)) {
+    if (millis() > timeout) { return; }  // Chip not yet ready, next round try again
+  }
 
   HMC5883L->MX = I2cReadS16(HMC5883L_ADDR, HMC5883L_X_MSB);  // Select starting with MSB register
   HMC5883L->MY = I2cReadS16(HMC5883L_ADDR, HMC5883L_Y_MSB);
@@ -184,32 +187,32 @@ bool HMC5883L_Command() {
   bool commandKnown = false;
   char cmd[20];
   char ss2[20];
-  
+
   subStr(cmd, XdrvMailbox.data, ",", 1);
   int8_t value = atoi(subStr(ss2, XdrvMailbox.data, ",", 2));
 
-  if (strcmp(cmd,"GAIN")) { 
+  if (strcmp(cmd,"GAIN")) {
     HMC5883L->gain = value;
-    commandKnown = true;  
-  }
-  if (strcmp(cmd,"AVG")) { 
-    HMC5883L->average_mode = value;  
     commandKnown = true;
   }
-  if (strcmp(cmd,"RATE")) { 
-    HMC5883L->data_rate = value;  
+  if (strcmp(cmd,"AVG")) {
+    HMC5883L->average_mode = value;
     commandKnown = true;
   }
-  if (strcmp(cmd,"MMODE")) {                                   
-    HMC5883L->measurement_mode = value;                                       
+  if (strcmp(cmd,"RATE")) {
+    HMC5883L->data_rate = value;
     commandKnown = true;
   }
-  
-  //AddLog(LOG_LEVEL_INFO,PSTR(D_LOG_I2C "HMC5883L: cmd: (%s) value: %d cmdKnown: %d"), cmd, value,commandKnown);
+  if (strcmp(cmd,"MMODE")) {
+    HMC5883L->measurement_mode = value;
+    commandKnown = true;
+  }
+
+  //AddLog(LOG_LEVEL_INFO,PSTR(D_LOG_I2C "HMC: cmd: (%s) value: %d cmdKnown: %d"), cmd, value,commandKnown);
 
   if (commandKnown == false) { return false; }
-  
-  AddLog(LOG_LEVEL_INFO,PSTR(D_LOG_I2C "HMC5883L: Reconfiguring."));
+
+  AddLog(LOG_LEVEL_INFO,PSTR(D_LOG_I2C "HMC: Reconfiguring."));
 
   return HMC5883L_SetConfig();
 }
@@ -227,8 +230,9 @@ bool Xsns101(uint32_t function) {
   else if (HMC5883L != nullptr) {
     switch (function) {
       case FUNC_COMMAND_SENSOR:
-        if (XSNS_101 == XdrvMailbox.index)
-	  return HMC5883L_Command();  // Return true on success
+        if (XSNS_101 == XdrvMailbox.index) {
+          return HMC5883L_Command();  // Return true on success
+        }
         break;
       case FUNC_JSON_APPEND:
       	HMC5883L_Show(1);
