@@ -312,7 +312,6 @@ void CmndRgxPort(void)
       {
         Response_P(PSTR("OK %s %_I:%u -> %_I:%u"), 
           (proto == IP_PROTO_TCP) ? "TCP" : "UDP", (uint32_t)WiFi.localIP(), gw, adapter_sta_list.sta[i].ip.addr, dst);
-        return;
       }
       break;
     }
