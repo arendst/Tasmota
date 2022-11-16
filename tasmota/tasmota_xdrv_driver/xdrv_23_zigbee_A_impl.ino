@@ -21,7 +21,7 @@
 
 #define XDRV_23                    23
 
-#define ZIGBEE_DOC    // enable special functions used for Zigbee documentation generation - generally not useful
+// #define ZIGBEE_DOC    // enable special functions used for Zigbee documentation generation - generally not useful
 
 #include "UnishoxStrings.h"
 
@@ -1467,7 +1467,7 @@ void CmndZbAttrDump(void) {
     }
   }
   AddLog(LOG_LEVEL_INFO, PSTR(""));
-  
+
   ResponseCmndDone();
 }
 #endif // ZIGBEE_DOC
