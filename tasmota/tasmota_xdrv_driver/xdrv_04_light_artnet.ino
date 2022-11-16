@@ -413,12 +413,29 @@ void ArtNetStop(void) {
 
 void CmndArtNetStop(void) {
   ArtNetStop();
+  Settings->flag6.artnet_autorun = false;
   // restore default scheme
   Settings->light_scheme = LS_POWER;
   // Restore sleep value
   TasmotaGlobal.sleep = Settings->sleep;
   // OK
   ResponseCmndDone();
+}
+
+void CmndArtNet(void) {
+  if (0 == XdrvMailbox.payload) {
+    ArtNetStop();
+    Settings->flag6.artnet_autorun = false;    // SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
+//    Settings->light_scheme = LS_POWER;         // restore default scheme
+    TasmotaGlobal.sleep = Settings->sleep;     // Restore sleep value
+    Light.update = true;                       // Restore old color
+  }
+  if (1 == XdrvMailbox.payload) {
+    if (!ArtNetStart()) {
+      Settings->flag6.artnet_autorun = false;  // SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
+    }
+  }
+  ResponseCmndStateText(artnet_udp_connected & Settings->flag6.artnet_autorun);
 }
 
 #endif // USE_LIGHT_ARTNET

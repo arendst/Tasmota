@@ -502,6 +502,7 @@
 #define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
 #define D_CMND_STEPPIXELS "StepPixels"
+#define D_CMND_ARTNET "ArtNet"
 #define D_CMND_ARTNET_START "ArtNetStart"
 #define D_CMND_ARTNET_STOP "ArtNetStop"
 #define D_CMND_ARTNET_CONFIG "ArtNetConfig"
