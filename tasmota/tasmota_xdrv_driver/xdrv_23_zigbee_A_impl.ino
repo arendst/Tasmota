@@ -21,6 +21,8 @@
 
 #define XDRV_23                    23
 
+// #define ZIGBEE_DOC    // enable special functions used for Zigbee documentation generation - generally not useful
+
 #include "UnishoxStrings.h"
 
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
@@ -41,6 +43,9 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN "|" D_CMND_ZIGBEE_ENROLL "|" D_CMND_ZIGBEE_CIE "|"
   D_CMND_ZIGBEE_LOAD "|" D_CMND_ZIGBEE_UNLOAD "|" D_CMND_ZIGBEE_LOADDUMP
+#ifdef ZIGBEE_DOC
+   "|" D_CMND_ZIGBEE_ATTRDUMP
+#endif // ZIGBEE_DOC
   ;
 
 SO_SYNONYMS(kZbSynonyms,
@@ -64,6 +69,9 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbConfig, &CmndZbData, &CmndZbScan,
   &CmndZbenroll, &CmndZbcie,
   &CmndZbLoad, &CmndZbUnload, &CmndZbLoadDump,
+#ifdef ZIGBEE_DOC
+  &CmndZbAttrDump,
+#endif // ZIGBEE_DOC
   };
 
 /********************************************************************************************/
@@ -1119,8 +1127,16 @@ void CmndZbProbe(void) {
 //
 void CmndZbProbeOrPing(boolean probe) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload).shortaddr;
-  if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+  uint16_t parsed_shortaddr = BAD_SHORTADDR;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, &parsed_shortaddr, nullptr, XdrvMailbox.payload).shortaddr;
+  if (BAD_SHORTADDR == shortaddr) {
+    if (BAD_SHORTADDR == parsed_shortaddr) {      // second chance if we provided 0x.... address for a device not in the list
+      ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE));
+      return;
+    } else {
+      shortaddr = parsed_shortaddr;
+    }
+  }
 
   // set a timer for Reachable - 2s default value
   zigbee_devices.setTimer(shortaddr, 0, Z_CAT_REACHABILITY_TIMEOUT, 0, 0, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
@@ -1416,6 +1432,45 @@ void CmndZbLoadDump(void) {
   ZbLoadDump();
   ResponseCmndDone();
 }
+
+#ifdef ZIGBEE_DOC
+// Command `ZbAttrDump`
+// Dump all the attribute aliases for documentation purpose
+//
+void CmndZbAttrDump(void) {
+  // does not require Zigbee to actually run
+  AddLog(LOG_LEVEL_INFO, PSTR("Alias|Cluster|Attribute|Type"));
+  AddLog(LOG_LEVEL_INFO, PSTR(":---|:---|:---|:---"));
+  for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
+    const Z_AttributeConverter *converter = &Z_PostProcess[i];
+    if (0 == pgm_read_word(&converter->name_offset)) { continue; }
+    const char * alias = Z_strings + pgm_read_word(&converter->name_offset);
+    uint16_t cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
+    uint16_t attrid = pgm_read_word(&converter->attribute);
+    uint8_t attrtype = pgm_read_byte(&converter->type);
+    char type_name[16];
+    Z_getTypeByNumber(type_name, sizeof(type_name), attrtype);
+    AddLog(LOG_LEVEL_INFO, PSTR("`%s`|0x%04X|0x%04X|%%%02X - %s"), alias, cluster, attrid, attrtype, type_name);
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR(""));
+
+  AddLog(LOG_LEVEL_INFO, PSTR("Alias|Cluster|Command"));
+  AddLog(LOG_LEVEL_INFO, PSTR(":---|:---|:---"));
+  for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
+    const Z_CommandConverter *conv = &Z_Commands[i];
+    const char * alias = Z_strings + pgm_read_word(&conv->tasmota_cmd_offset);
+    uint16_t cluster = pgm_read_word(&conv->cluster);
+    uint8_t direction = pgm_read_byte(&conv->direction);
+    uint8_t cmd = pgm_read_byte(&conv->cmd);
+    if (direction & 0x01) {   // only coordinator to device
+      AddLog(LOG_LEVEL_INFO, PSTR("`%s`|0x%04X|0x%02X"), alias, cluster, cmd);
+    }
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR(""));
+
+  ResponseCmndDone();
+}
+#endif // ZIGBEE_DOC
 
 //
 // Command `ZbScan`
