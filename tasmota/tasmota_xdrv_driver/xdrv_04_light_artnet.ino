@@ -381,18 +381,6 @@ bool ArtNetStart(void) {
   return true;
 }
 
-//
-// Command `ArtNetStart`
-// Params: XXX
-//
-void CmndArtNetStart(void) {
-  if (ArtNetStart()) {
-    ResponseCmndDone();
-  } else {
-    ResponseCmndError();
-  }
-}
-
 // Stop the ArtNet UDP flow and disconnect server
 void ArtNetStop(void) {
   artnet_udp_connected = false;
@@ -409,17 +397,6 @@ void ArtNetStop(void) {
     free((void*)packets_per_row);
     packets_per_row = nullptr;
   }
-}
-
-void CmndArtNetStop(void) {
-  ArtNetStop();
-  Settings->flag6.artnet_autorun = false;
-  // restore default scheme
-  Settings->light_scheme = LS_POWER;
-  // Restore sleep value
-  TasmotaGlobal.sleep = Settings->sleep;
-  // OK
-  ResponseCmndDone();
 }
 
 void CmndArtNet(void) {

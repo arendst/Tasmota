@@ -151,7 +151,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
   "|" D_CMND_SEQUENCE_OFFSET
 #endif  // USE_DGR_LIGHT_SEQUENCE
 #ifdef USE_LIGHT_ARTNET
-  "|" D_CMND_ARTNET "|" D_CMND_ARTNET_START "|" D_CMND_ARTNET_STOP "|" D_CMND_ARTNET_CONFIG
+  "|" D_CMND_ARTNET "|" D_CMND_ARTNET_CONFIG
 #endif
    "|UNDOCA" ;
 
@@ -175,7 +175,7 @@ void (* const LightCommand[])(void) PROGMEM = {
   &CmndSequenceOffset,
 #endif  // USE_DGR_LIGHT_SEQUENCE
 #ifdef USE_LIGHT_ARTNET
-  &CmndArtNet, &CmndArtNetStart, &CmndArtNetStop, &CmndArtNetConfig,
+  &CmndArtNet, &CmndArtNetConfig,
 #endif
   &CmndUndocA };
 
