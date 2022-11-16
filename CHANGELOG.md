@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Plantower PMSx003T AQI models with temperature and humidity (#16971)
 - Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
 - New ``FUNC_NETWORK_UP`` and ``FUNC_NETWORK_DOWN`` events
-- WS2812 and Light Art-Net DMX control over UDP port 6454 (#17059)
+- WS2812 and Light ArtNet DMX control over UDP port 6454 (#17059)
 - Command ``SwitchMode 16`` sending only MQTT message on inverted switch change (#17028)
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn (#17069)
 - Berry add ``udp->close()`` method (#17094)
@@ -44,9 +44,9 @@ All notable changes to this project will be documented in this file.
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
 - Support for NTAG2xx tags read and write on PN532 NFC reader (#16939)
 - Berry ``bytes().reverse()`` method (#16977)
-- ESP32 Support for DMX Art-Net Led matrix animations (#16984)
+- ESP32 Support for DMX ArtNet Led matrix animations (#16984)
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
-- ESP32 DMX Art-Net optimization to avoid any object allocation and avoid garbage collector pauses
+- ESP32 DMX ArtNet optimization to avoid any object allocation and avoid garbage collector pauses
 - Berry add ``dyn`` class
 
 ### Changed
@@ -69,7 +69,7 @@ All notable changes to this project will be documented in this file.
 - Berry add `bytes().setbytes()` (#16892)
 - Support for Shelly Pro 1/1PM and 2/2PM (#16773)
 - Add Zigbee router firmware for Sonoff ZBBridgePro (#16900)
-- Prepare for DMX Art-Net support on ESP32
+- Prepare for DMX ArtNet support on ESP32
 
 ### Changed
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
