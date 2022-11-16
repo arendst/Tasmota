@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Command ``SwitchMode 16`` sending only MQTT message on inverted switch change (#17028)
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn (#17069)
 - Berry add ``udp->close()`` method (#17094)
+- Command ``RgxClients`` for range extender clients list (#17048)
+- Command ``RgxPort [tcp|udp], gateway_port, client_mac, client_port`` for range extender port forwardings (#17092)
 
 ### Breaking Changed
 

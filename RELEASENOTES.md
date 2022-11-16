@@ -110,6 +110,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v12.2.0.4
 ### Added
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
+- Command ``RgxClients`` for range extender clients list [#17048](https://github.com/arendst/Tasmota/issues/17048)
+- Command ``RgxPort [tcp|udp], gateway_port, client_mac, client_port`` for range extender port forwardings [#17092](https://github.com/arendst/Tasmota/issues/17092)
 - Command ``SwitchMode 16`` sending only MQTT message on inverted switch change [#17028](https://github.com/arendst/Tasmota/issues/17028)
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
