@@ -689,6 +689,7 @@
 #define D_CMND_ZIGBEE_LOAD "Load"
 #define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
 #define D_CMND_ZIGBEE_UNLOAD "Unload"
+#define D_CMND_ZIGBEE_ATTRDUMP "AttrDump"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
