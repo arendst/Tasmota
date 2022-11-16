@@ -502,8 +502,7 @@
 #define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
 #define D_CMND_STEPPIXELS "StepPixels"
-#define D_CMND_ARTNET_START "ArtNetStart"
-#define D_CMND_ARTNET_STOP "ArtNetStop"
+#define D_CMND_ARTNET "ArtNet"
 #define D_CMND_ARTNET_CONFIG "ArtNetConfig"
 #define D_SO_ARTNET_AUTORUN "ArtNetAutorun"
 #define D_CMND_RGBWWTABLE "RGBWWTable"
@@ -689,6 +688,7 @@
 #define D_CMND_ZIGBEE_LOAD "Load"
 #define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
 #define D_CMND_ZIGBEE_UNLOAD "Unload"
+#define D_CMND_ZIGBEE_ATTRDUMP "AttrDump"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"

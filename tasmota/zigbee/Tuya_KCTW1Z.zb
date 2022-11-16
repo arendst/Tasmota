@@ -1,0 +1,5 @@
+#Z2Tv1
+# Tuya fix humidity by 10 
+# https://zigbee.blakadder.com/Tuya_KCTW1Z.html
+:TS0201,_TZ3000_ywagc4rj
+0405/0000=0405/0000,mul:10

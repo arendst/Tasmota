@@ -288,7 +288,7 @@ a_features = [[
     ],[
     "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
     "USE_MODBUS_ENERGY","USE_SHELLY_PRO","USE_DALI","USE_BP1658CJ",
-    "USE_DINGTIAN_RELAY","","","",
+    "USE_DINGTIAN_RELAY","USE_HMC5883L","","",
     "","","","",
     "","","","",
     "","","","",

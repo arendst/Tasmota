@@ -107,3 +107,4 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   70  | USE_LUXV30B         | xsns_99  | LUXV30B  | 0x4A        | DFRobot SEN0390 V30B lux sensor
   71  | USE_QMC5883L        | xsns_33  | QMC5883L | 0x0D        | Magnetic Field Sensor
   72  | USE_INA3221         | xsns_100 | INA3221  | 0x40-0x43   | 3-channels Voltage and Current sensor
+  73  | USE_HMC5883L        | xsns_101 | HMC5883L | 0x1E        | 3-channels Magnetic Field Sensor

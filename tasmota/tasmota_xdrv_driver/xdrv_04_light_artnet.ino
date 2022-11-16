@@ -145,9 +145,9 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
 
   if (artnet_conf.matrix) {
     // Ws2812 led strip
-    size_t pix_size = Ws2812StripGetPixelSize(); 
+    size_t pix_size = Ws2812StripGetPixelSize();
     datalen = datalen - (datalen % pix_size);
-    
+
     if (artnet_conf.alt && (row % 2)) {
       for (int32_t i = idx, j = idx + datalen - pix_size; i < j; i += pix_size, j -= pix_size) {
           for (int32_t k = 0; k < pix_size; k++) {
@@ -223,9 +223,9 @@ void ArtNetLoop(void)
     packet_len = ArtNetUdp->parsePacket();
     packet_ready = (packet_len > 0);
     while (packet_ready) {
-      uint8_t packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
+      uint8_t packet_buffer[WS2812_ARTNET_UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
-      packet_len = ArtNetUdp->read(packet_buffer, UDP_BUFFER_SIZE);
+      packet_len = ArtNetUdp->read(packet_buffer, WS2812_ARTNET_UDP_BUFFER_SIZE);
       ArtNetUdp->flush();   // Finish reading the current packet
 #endif
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet %*_H (%d)"), 32, packet_buffer, packet_len);
@@ -237,7 +237,7 @@ void ArtNetLoop(void)
       packet_ready = ArtNetUdp->next();
       if (!packet_ready) {
         // if no more incoming packet, still wait for 20 microseconds
-        delay(1);   // delayMicroseconds seems broken, need to 
+        delay(1);   // delayMicroseconds seems broken, need to
         packet_ready = ArtNetUdp->next();
       }
 #else
@@ -291,13 +291,13 @@ void CmndArtNetConfig() {
     ArtNetStop();
   }
   ArtNetLoadSettings();
-  
+
   TrimSpace(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
     JsonParser parser(XdrvMailbox.data);
     JsonParserObject root = parser.getRootObject();
     if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
-    
+
     artnet_conf.rows  = root.getUInt(PSTR("Rows"), artnet_conf.rows);
     artnet_conf.cols  = root.getUInt(PSTR("Cols"), artnet_conf.cols);
     artnet_conf.offs  = root.getUInt(PSTR("Offset"), artnet_conf.offs);
@@ -381,18 +381,6 @@ bool ArtNetStart(void) {
   return true;
 }
 
-//
-// Command `ArtNetStart`
-// Params: XXX
-//
-void CmndArtNetStart(void) {
-  if (ArtNetStart()) {
-    ResponseCmndDone();
-  } else {
-    ResponseCmndError();
-  }
-}
-
 // Stop the ArtNet UDP flow and disconnect server
 void ArtNetStop(void) {
   artnet_udp_connected = false;
@@ -411,14 +399,20 @@ void ArtNetStop(void) {
   }
 }
 
-void CmndArtNetStop(void) {
-  ArtNetStop();
-  // restore default scheme
-  Settings->light_scheme = LS_POWER;
-  // Restore sleep value
-  TasmotaGlobal.sleep = Settings->sleep;
-  // OK
-  ResponseCmndDone();
+void CmndArtNet(void) {
+  if (0 == XdrvMailbox.payload) {
+    ArtNetStop();
+    Settings->flag6.artnet_autorun = false;    // SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
+//    Settings->light_scheme = LS_POWER;         // restore default scheme
+    TasmotaGlobal.sleep = Settings->sleep;     // Restore sleep value
+    Light.update = true;                       // Restore old color
+  }
+  if (1 == XdrvMailbox.payload) {
+    if (!ArtNetStart()) {
+      Settings->flag6.artnet_autorun = false;  // SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
+    }
+  }
+  ResponseCmndStateText(artnet_udp_connected & Settings->flag6.artnet_autorun);
 }
 
 #endif // USE_LIGHT_ARTNET

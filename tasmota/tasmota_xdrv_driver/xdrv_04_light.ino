@@ -151,7 +151,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
   "|" D_CMND_SEQUENCE_OFFSET
 #endif  // USE_DGR_LIGHT_SEQUENCE
 #ifdef USE_LIGHT_ARTNET
-  "|" D_CMND_ARTNET_START "|" D_CMND_ARTNET_STOP "|" D_CMND_ARTNET_CONFIG
+  "|" D_CMND_ARTNET "|" D_CMND_ARTNET_CONFIG
 #endif
    "|UNDOCA" ;
 
@@ -175,7 +175,7 @@ void (* const LightCommand[])(void) PROGMEM = {
   &CmndSequenceOffset,
 #endif  // USE_DGR_LIGHT_SEQUENCE
 #ifdef USE_LIGHT_ARTNET
-  &CmndArtNetStart, &CmndArtNetStop, &CmndArtNetConfig,
+  &CmndArtNet, &CmndArtNetConfig,
 #endif
   &CmndUndocA };
 
@@ -1962,7 +1962,7 @@ void LightAnimate(void)
             Light.fade_start_10[channel_ct] = Light.fade_end_10[channel_ct];
           }
         }
-      
+
         Light.fade_running = true;
         Light.fade_duration = 0;    // set the value to zero to force a recompute
         Light.fade_start = 0;

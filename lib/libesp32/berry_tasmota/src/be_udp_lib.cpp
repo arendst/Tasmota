@@ -37,7 +37,7 @@ extern "C" {
     return be_call_c_func(vm, (void*) &be_udp_deinit_ntv, "=.p", "");
   }
 
-  // udp.begin(address:string, port:int) -> nil
+  // udp.begin(address:string, port:int) -> bool
   int32_t be_udp_begin_ntv(WiFiUDP *udp, const char *host, int32_t port) {
     IPAddress addr((uint32_t)0);
     // if no host or host is "" then we defult to INADDR_ANY (0.0.0.0)
@@ -48,6 +48,14 @@ extern "C" {
   }
   int32_t be_udp_begin(struct bvm *vm) {
     return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".si");
+  }
+
+  // udp.stop() -> nil
+  void be_udp_stop_ntv(WiFiUDP *udp) {
+    udp->stop();
+  }
+  int32_t be_udp_stop(struct bvm *vm) {
+    return be_call_c_func(vm, (void*) &be_udp_stop_ntv, "b", ".");
   }
 
   // udp.begin_multicast(address:string, port:int) -> nil
@@ -159,6 +167,7 @@ class be_class_udp (scope: global, name: udp) {
     begin, func(be_udp_begin)
     begin_multicast, func(be_udp_begin_mcast)
     read, func(be_udp_read)
+    close, func(be_udp_stop)
 }
 @const_object_info_end */
 

@@ -97,10 +97,8 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
                                        "|"
                                        "Port"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
-#ifdef ESP32
                                        "|"
                                        "Clients"
-#endif // ESP32
                                        "|"
                                        "Address"
                                        "|"
@@ -114,9 +112,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
     &CmndRgxNAPT,
     &CmndRgxPort,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
-#ifdef ESP32
     &CmndRgxClients,
-#endif // ESP32
     &CmndRgxAddresses,
     &CmndRgxAddresses,
 };
@@ -173,17 +169,18 @@ void RgxCheckConfig(void)
   }
 }
 
-#ifdef ESP32
 void CmndRgxClients(void)
 {
+  Response_P(PSTR("{\"RgxClients\":{"));
+  const char *sep = "";
+
+#if defined(ESP32)
   wifi_sta_list_t wifi_sta_list = {0};
   tcpip_adapter_sta_list_t adapter_sta_list = {0};
 
   esp_wifi_ap_get_sta_list(&wifi_sta_list);
   tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
 
-  Response_P(PSTR("{\"RgxClients\":{"));
-  const char *sep = "";
   for (int i=0; i<adapter_sta_list.num; i++)
   {
     const uint8_t *m = adapter_sta_list.sta[i].mac;
@@ -191,9 +188,21 @@ void CmndRgxClients(void)
       sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
     sep = ",";
   }
+#elif defined(ESP8266)
+  struct station_info *station = wifi_softap_get_station_info();
+  while (station)
+  {
+    const uint8_t *m = station->bssid;
+    ResponseAppend_P(PSTR("%s\"%02X%02X%02X%02X%02X%02X\":{\"" D_CMND_IPADDRESS "\":\"%_I\"}"),
+      sep, m[0], m[1], m[2], m[3], m[4], m[5], station->ip.addr);
+    sep = ",";
+    station = STAILQ_NEXT(station, next);
+  }
+  wifi_softap_free_station_info();
+#endif
+
   ResponseAppend_P(PSTR("}}"));
 }
-#endif // ESP32
 
 void CmndRgxState(void)
 {
