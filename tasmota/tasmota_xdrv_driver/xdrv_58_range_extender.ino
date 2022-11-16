@@ -302,7 +302,7 @@ void CmndRgxPort(void)
   if ((tok = strtok_r(0, ", ", &state)) == 0) return;
   if ((dst = strtoul(tok, nullptr, 0)) == 0) return;
 
-#ifdef ESP32
+#if defined(ESP32)
   wifi_sta_list_t wifi_sta_list = {0};
   tcpip_adapter_sta_list_t adapter_sta_list = {0};
 
@@ -324,7 +324,26 @@ void CmndRgxPort(void)
       break;
     }
   }
-#endif // ESP32
+#elif defined(ESP8266)
+  struct station_info *station = wifi_softap_get_station_info();
+  while (station)
+  {
+    char list_mac[13];
+    const uint8_t *m = station->bssid;
+    snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), m[0], m[1], m[2], m[3], m[4], m[5]);
+    if (strcasecmp(list_mac, parm_mac) == 0)
+    {
+      if (ip_portmap_add(proto, (uint32_t)WiFi.localIP(), gw, station->ip.addr, dst))
+      {
+        Response_P(PSTR("OK %s %_I:%u -> %_I:%u"), 
+          (proto == IP_PROTO_TCP) ? "TCP" : "UDP", (uint32_t)WiFi.localIP(), gw, station->ip.addr, dst);
+      }
+      break;
+    }
+    station = STAILQ_NEXT(station, next);
+  }
+  wifi_softap_free_station_info();
+#endif // ESP8266
 }
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
