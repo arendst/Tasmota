@@ -167,7 +167,7 @@ class be_class_udp (scope: global, name: udp) {
     begin, func(be_udp_begin)
     begin_multicast, func(be_udp_begin_mcast)
     read, func(be_udp_read)
-    stop, func(be_udp_stop)
+    close, func(be_udp_stop)
 }
 @const_object_info_end */
 
