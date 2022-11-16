@@ -187,7 +187,7 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
     - name: Release
-      uses: jason2866/action-gh-release@v1.1
+      uses: jason2866/action-gh-release@v1.2
       #if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ github.run_number }}
