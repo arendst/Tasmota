@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
 - ESP32 Support for DMX ArtNet Led matrix animations [#16984](https://github.com/arendst/Tasmota/issues/16984)
+- ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER [#17112](https://github.com/arendst/Tasmota/issues/17112)
 
 ### Breaking Changed
 - Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)

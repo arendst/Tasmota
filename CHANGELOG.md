@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.5]
 ### Added
+- ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER (#17112)
 
 ### Breaking Changed
 
@@ -34,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds (#17055)
 - Zigbee improved Aqara plug support and completed cluster 0x0702 (#17073)
 - ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
-- Add parasitic power usage for DS18x20 on ESP32 defining W1_PARASITE_POWER
 
 ### Fixed
 - SenseAir S8 module detection (#17033)
