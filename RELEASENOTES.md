@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.2.0.4
+## Changelog v12.2.0.5
 ### Added
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
 - Command ``RgxClients`` for range extender clients list [#17048](https://github.com/arendst/Tasmota/issues/17048)
@@ -149,6 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 [#16914](https://github.com/arendst/Tasmota/issues/16914)
 - Serial initialization for baudrate and config [#16970](https://github.com/arendst/Tasmota/issues/16970)
 - ModbusBridge buffer overflow [#16979](https://github.com/arendst/Tasmota/issues/16979)
+- ModbusBridge baudrates over 76500 baud [#17106](https://github.com/arendst/Tasmota/issues/17106)
 - SenseAir S8 module detection [#17033](https://github.com/arendst/Tasmota/issues/17033)
 
 ### Removed

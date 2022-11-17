@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.4]
+## [12.2.0.5]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+- ModbusBridge baudrates over 76500 baud (#17106)
+
+### Removed
+
+## [12.2.0.4] 20221117
 ### Added
 - Support for Plantower PMSx003T AQI models with temperature and humidity (#16971)
 - Support for Dingtian x595/x165 shift register based relay boards by Barbudor (#17032)
@@ -14,8 +26,6 @@ All notable changes to this project will be documented in this file.
 - Berry add ``udp->close()`` method (#17094)
 - Command ``RgxClients`` for range extender clients list (#17048)
 - Command ``RgxPort [tcp|udp], gateway_port, client_mac, client_port`` for range extender port forwardings (#17092)
-
-### Breaking Changed
 
 ### Changed
 - Reverted Flash Mode back from ``DIO`` to ``DOUT`` for ESP8266/ESP8285 (#17019)
