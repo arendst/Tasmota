@@ -240,6 +240,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
       "<modelNumber>3.1415</modelNumber>"
       "<UDN>uuid:{x2</UDN>"
       "<serialNumber>{x3</serialNumber>"
+      "<presentationURL>http://{x4:80/</presentationURL>"
       "<binaryState>0</binaryState>"
       "<serviceList>"
         "<service>"
@@ -335,6 +336,9 @@ void HandleUpnpSetupWemo(void)
   setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1));
   setup_xml.replace("{x2", WemoUuid());
   setup_xml.replace("{x3", WemoSerialnumber());
+
+  setup_xml.replace("{x4", WiFi.localIP().toString());
+
   WSSend(200, CT_XML, setup_xml);
 }
 
