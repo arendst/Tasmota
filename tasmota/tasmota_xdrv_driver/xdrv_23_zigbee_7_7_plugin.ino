@@ -125,6 +125,200 @@ bool Zb_readline(class File *f, char* buf, size_t size) {
 extern FS *ffsp;
 #endif
 
+bool ZbLoad_inner(const char *filename, File &fp) {
+  char * filename_imported = nullptr;
+  Z_plugin_template * tmpl = nullptr;   // current template with matchers and attributes
+  bool new_matchers = false;            // indicates that we have finished the current matchers
+  char buf_line[96];        // max line is 96 bytes (comments don't count)
+
+  // read the first 6 chars
+  bool invalid_header = false;
+  static const char Z2T_HEADER_V1[] PROGMEM = "#Z2Tv1";
+  for (uint32_t i = 0; i < 6; i++) {
+    int c = fp.read();
+    if (c < 0) {
+      invalid_header = true;
+      break;
+    }
+    buf_line[i] = c;
+    buf_line[i+1] = 0;
+  }
+  if (!invalid_header) {
+    if (strcmp_P(buf_line, Z2T_HEADER_V1) != 0) {
+      invalid_header = true;
+    }
+  }
+
+  if (invalid_header) {
+    AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' invalid header", filename);
+    return false;
+  }
+
+  // parse line by line
+  while (1) {
+    if (!Zb_readline(&fp, buf_line, sizeof(buf_line))) {
+      // EOF
+      break;
+    }
+
+    // at first valid line, we instanciate a new plug-in instance and assign a filemane
+    if (filename_imported == nullptr) {
+      // allocate only once the filename for multiple entries
+      // freed only by `ZbUnload`
+      filename_imported = (char*) malloc(strlen(filename)+1);
+      strcpy(filename_imported, filename);
+    }
+
+    // there is a non-empty line, containing no space/tab/crlf
+    // depending on the first char, parse either device name or cluster/attribute+name
+    if (buf_line[0] == ':') {
+      if (tmpl == nullptr || new_matchers) {
+        tmpl = &g_plugin_templates.addToLast();
+        tmpl->filename = filename_imported;
+        new_matchers = false;
+      }
+      // parse device name
+      char *rest = buf_line + 1;    // skip first char ':'
+      char *token = strtok_r(rest, ",", &rest);
+      Z_plugin_matcher & matcher = tmpl->matchers.addToLast();
+      if (token != nullptr) {
+        matcher.setModel(token);
+      }
+      token = strtok_r(rest, ",", &rest);
+      if (token != nullptr) {
+        matcher.setManuf(token);
+      }
+    } else {
+      if (tmpl == nullptr) {
+        continue;
+      }
+      new_matchers = true;
+      char *rest = buf_line;
+      char *token = strtok_r(rest, ",", &rest);
+      if (token == nullptr) {
+        continue;
+      }
+
+      // detect if token contains '=', if yes it is a synonym
+      char * delimiter_equal = strchr(token, '=');
+
+      if (delimiter_equal == nullptr) {
+        // NORMAL ATTRIBUTE
+        // token is of from '0000/0000' or '0000/0000%00'
+        char * delimiter_slash = strchr(token, '/');
+        char * delimiter_percent = strchr(token, '%');
+        if (delimiter_slash == nullptr || (delimiter_percent != nullptr && delimiter_slash > delimiter_percent)) {
+          AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' wrong delimiter '%s'", filename, token);
+        }
+
+        uint16_t attr_id = 0xFFFF;
+        uint16_t cluster_id = 0xFFFF;
+        uint8_t  type_id = Zunk;
+        int8_t   multiplier = 1;
+        int8_t   divider = 1;
+        int16_t  base = 0;
+        char *   name = nullptr;
+        uint16_t manuf = 0;
+
+        cluster_id = strtoul(token, &delimiter_slash, 16);
+        if (!delimiter_percent) {
+          attr_id = strtoul(delimiter_slash+1, nullptr, 16);
+        } else {
+          attr_id = strtoul(delimiter_slash+1, &delimiter_percent, 16);
+          type_id = Z_getTypeByName(delimiter_percent+1);
+        }
+        // NAME of the attribute
+        token = strtok_r(rest, ",", &rest);
+        if (token == nullptr) {
+          AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' ignore missing name '%s'", filename, buf_line);
+          continue;
+        }
+        name = token;
+        // ADDITIONAL ELEMENTS?
+        // Ex: `manuf:1037`
+        while (token = strtok_r(rest, ",", &rest)) {
+          char * sub_token;
+          // look for multiplier
+          if (sub_token = Z_subtoken(token, Z_MUL))  {
+            multiplier = strtol(sub_token, nullptr, 10);
+          }
+          // look for divider
+          else if (sub_token = Z_subtoken(token, Z_DIV))  {
+            divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+          }
+          // look for offset (base)
+          else if (sub_token = Z_subtoken(token, Z_ADD))  {
+            base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+          }
+          // look for `manuf:HHHH`
+          else if (sub_token = Z_subtoken(token, Z_MANUF))  {
+            manuf = strtoul(sub_token, nullptr, 16);
+          }
+          else {
+            AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
+          }
+        }
+        
+        // token contains the name of the attribute
+        Z_plugin_attribute & plugin_attr = tmpl->attributes.addToLast();
+        plugin_attr.cluster = cluster_id;
+        plugin_attr.attribute = attr_id;
+        plugin_attr.type = type_id;
+        plugin_attr.setName(name);
+        plugin_attr.multiplier = multiplier;
+        plugin_attr.divider = divider;
+        plugin_attr.base = base;
+        plugin_attr.manuf = manuf;
+      } else {
+        // ATTRIBUTE SYNONYM
+        // token is of from '0000/0000=0000/0000,1'
+        char * rest2 = token;
+        char * tok2 = strtok_r(rest2, "=", &rest2);
+        char * delimiter_slash = strchr(tok2, '/');
+        uint16_t cluster_id = strtoul(tok2, &delimiter_slash, 16);
+        uint16_t attr_id = strtoul(delimiter_slash+1, nullptr, 16);
+        tok2 = strtok_r(rest2, "=", &rest2);
+        char * delimiter_slash2 = strchr(tok2, '/');
+        uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
+        uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
+        int8_t multiplier = 1;
+        int8_t divider = 1;
+        int16_t base = 0;
+
+        // ADDITIONAL ELEMENTS?
+        while (token = strtok_r(rest, ",", &rest)) {
+          char * sub_token;
+          // look for multiplier
+          if (sub_token = Z_subtoken(token, Z_MUL))  {
+            multiplier = strtol(sub_token, nullptr, 10);
+          }
+          // look for divider
+          else if (sub_token = Z_subtoken(token, Z_DIV))  {
+            divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+          }
+          // look for offset (base)
+          else if (sub_token = Z_subtoken(token, Z_ADD))  {
+            base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+          }
+          else {
+            AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
+          }
+        }
+        // create the synonym
+        Z_attribute_synonym & syn = tmpl->synonyms.addToLast();
+        syn.cluster = cluster_id;
+        syn.attribute = attr_id;
+        syn.new_cluster = new_cluster_id;
+        syn.new_attribute = new_attr_id;
+        syn.multiplier = multiplier;
+        syn.divider = divider;
+        syn.base = base;
+      }
+    }
+  }
+  return true;
+}
+
 // load a file from filesystem
 // returns `true` if success
 bool ZbLoad(const char *filename_raw) {
@@ -147,196 +341,7 @@ bool ZbLoad(const char *filename_raw) {
       return false;
     }
 
-    char * filename_imported = nullptr;
-    Z_plugin_template * tmpl = nullptr;   // current template with matchers and attributes
-    bool new_matchers = false;            // indicates that we have finished the current matchers
-    char buf_line[96];        // max line is 96 bytes (comments don't count)
-
-    // read the first 6 chars
-    bool invalid_header = false;
-    static const char Z2T_HEADER_V1[] PROGMEM = "#Z2Tv1";
-    for (uint32_t i = 0; i < 6; i++) {
-      int c = fp.read();
-      if (c < 0) {
-        invalid_header = true;
-        break;
-      }
-      buf_line[i] = c;
-      buf_line[i+1] = 0;
-    }
-    if (!invalid_header) {
-      if (strcmp_P(buf_line, Z2T_HEADER_V1) != 0) {
-        invalid_header = true;
-      }
-    }
-
-    if (invalid_header) {
-      AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' invalid header", filename_raw);
-      return false;
-    }
-
-    // parse line by line
-    while (1) {
-      if (!Zb_readline(&fp, buf_line, sizeof(buf_line))) {
-        // EOF
-        break;
-      }
-
-      // at first valid line, we instanciate a new plug-in instance and assign a filemane
-      if (filename_imported == nullptr) {
-        // allocate only once the filename for multiple entries
-        // freed only by `ZbUnload`
-        filename_imported = (char*) malloc(strlen(filename.c_str())+1);
-        strcpy(filename_imported, filename.c_str());
-      }
-
-      // there is a non-empty line, containing no space/tab/crlf
-      // depending on the first char, parse either device name or cluster/attribute+name
-      if (buf_line[0] == ':') {
-        if (tmpl == nullptr || new_matchers) {
-          tmpl = &g_plugin_templates.addToLast();
-          tmpl->filename = filename_imported;
-          new_matchers = false;
-        }
-        // parse device name
-        char *rest = buf_line + 1;    // skip first char ':'
-        char *token = strtok_r(rest, ",", &rest);
-        Z_plugin_matcher & matcher = tmpl->matchers.addToLast();
-        if (token != nullptr) {
-          matcher.setModel(token);
-        }
-        token = strtok_r(rest, ",", &rest);
-        if (token != nullptr) {
-          matcher.setManuf(token);
-        }
-      } else {
-        if (tmpl == nullptr) {
-          continue;
-        }
-        new_matchers = true;
-        char *rest = buf_line;
-        char *token = strtok_r(rest, ",", &rest);
-        if (token == nullptr) {
-          continue;
-        }
-
-        // detect if token contains '=', if yes it is a synonym
-        char * delimiter_equal = strchr(token, '=');
-
-        if (delimiter_equal == nullptr) {
-          // NORMAL ATTRIBUTE
-          // token is of from '0000/0000' or '0000/0000%00'
-          char * delimiter_slash = strchr(token, '/');
-          char * delimiter_percent = strchr(token, '%');
-          if (delimiter_slash == nullptr || (delimiter_percent != nullptr && delimiter_slash > delimiter_percent)) {
-            AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' wrong delimiter '%s'", filename_raw, token);
-          }
-
-          uint16_t attr_id = 0xFFFF;
-          uint16_t cluster_id = 0xFFFF;
-          uint8_t  type_id = Zunk;
-          int8_t   multiplier = 1;
-          int8_t   divider = 1;
-          int16_t  base = 0;
-          char *   name = nullptr;
-          uint16_t manuf = 0;
-
-          cluster_id = strtoul(token, &delimiter_slash, 16);
-          if (!delimiter_percent) {
-            attr_id = strtoul(delimiter_slash+1, nullptr, 16);
-          } else {
-            attr_id = strtoul(delimiter_slash+1, &delimiter_percent, 16);
-            type_id = Z_getTypeByName(delimiter_percent+1);
-          }
-          // NAME of the attribute
-          token = strtok_r(rest, ",", &rest);
-          if (token == nullptr) {
-            AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' ignore missing name '%s'", filename_raw, buf_line);
-            continue;
-          }
-          name = token;
-          // ADDITIONAL ELEMENTS?
-          // Ex: `manuf:1037`
-          while (token = strtok_r(rest, ",", &rest)) {
-            char * sub_token;
-            // look for multiplier
-            if (sub_token = Z_subtoken(token, Z_MUL))  {
-              multiplier = strtol(sub_token, nullptr, 10);
-            }
-            // look for divider
-            else if (sub_token = Z_subtoken(token, Z_DIV))  {
-              divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
-            }
-            // look for offset (base)
-            else if (sub_token = Z_subtoken(token, Z_ADD))  {
-              base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
-            }
-            // look for `manuf:HHHH`
-            else if (sub_token = Z_subtoken(token, Z_MANUF))  {
-              manuf = strtoul(sub_token, nullptr, 16);
-            }
-            else {
-              AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
-            }
-          }
-          
-          // token contains the name of the attribute
-          Z_plugin_attribute & plugin_attr = tmpl->attributes.addToLast();
-          plugin_attr.cluster = cluster_id;
-          plugin_attr.attribute = attr_id;
-          plugin_attr.type = type_id;
-          plugin_attr.setName(name);
-          plugin_attr.multiplier = multiplier;
-          plugin_attr.divider = divider;
-          plugin_attr.base = base;
-          plugin_attr.manuf = manuf;
-        } else {
-          // ATTRIBUTE SYNONYM
-          // token is of from '0000/0000=0000/0000,1'
-          char * rest2 = token;
-          char * tok2 = strtok_r(rest2, "=", &rest2);
-          char * delimiter_slash = strchr(tok2, '/');
-          uint16_t cluster_id = strtoul(tok2, &delimiter_slash, 16);
-          uint16_t attr_id = strtoul(delimiter_slash+1, nullptr, 16);
-          tok2 = strtok_r(rest2, "=", &rest2);
-          char * delimiter_slash2 = strchr(tok2, '/');
-          uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
-          uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
-          int8_t multiplier = 1;
-          int8_t divider = 1;
-          int16_t base = 0;
-
-          // ADDITIONAL ELEMENTS?
-          while (token = strtok_r(rest, ",", &rest)) {
-            char * sub_token;
-            // look for multiplier
-            if (sub_token = Z_subtoken(token, Z_MUL))  {
-              multiplier = strtol(sub_token, nullptr, 10);
-            }
-            // look for divider
-            else if (sub_token = Z_subtoken(token, Z_DIV))  {
-              divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
-            }
-            // look for offset (base)
-            else if (sub_token = Z_subtoken(token, Z_ADD))  {
-              base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
-            }
-            else {
-              AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
-            }
-          }
-          // create the synonym
-          Z_attribute_synonym & syn = tmpl->synonyms.addToLast();
-          syn.cluster = cluster_id;
-          syn.attribute = attr_id;
-          syn.new_cluster = new_cluster_id;
-          syn.new_attribute = new_attr_id;
-          syn.multiplier = multiplier;
-          syn.divider = divider;
-          syn.base = base;
-        }
-      }
-    }
+    return ZbLoad_inner(filename.c_str(), fp);
   } else {
     AddLog(LOG_LEVEL_ERROR, "ZIG: filesystem not enabled");
   }
@@ -447,6 +452,7 @@ void ZbLoadDump(void) {
 
 // Auto-load all files ending with '.zb'
 void ZbAutoload(void) {
+  ZbAutoLoadFromFlash();
 #ifdef USE_UFILESYS
   if (ffsp) {
     File dir = ffsp->open("/", "r");

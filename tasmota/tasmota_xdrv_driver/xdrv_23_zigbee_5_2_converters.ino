@@ -761,17 +761,6 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
         }
         break;
-      case 0x00010021:       // BatteryPercentage
-        if (modelId.startsWith(F("TRADFRI")) ||
-            modelId.startsWith(F("SYMFONISK"))) {
-          attr.setUInt(attr.getUInt() * 2);   // bug in IKEA remotes battery, need to double the value
-        }
-        break;
-      case 0x00060000:    // "Power" for lumi Door/Window is converted to "Contact"
-        if (modelId.startsWith(F("lumi.sensor_magnet"))) {
-          attr.setKeyId(0x0500, 0xFFF0 + ZA_Contact);    // change cluster and attribute to 0500/FFF0
-        }
-        break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
       case 0x02014008:    // Eurotronic Host Flags decoding
         {
