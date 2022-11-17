@@ -142,7 +142,6 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 typedef struct
 {
   uint8_t status = RGX_NOT_CONFIGURED;
-  uint16_t lastlinkcount = 0;
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
   bool napt_enabled = false;
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
@@ -369,7 +368,6 @@ void rngxSetup()
   WiFi.softAP(SettingsText(SET_RGX_SSID), SettingsText(SET_RGX_PASSWORD));
   AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi Extender AP Enabled with SSID: %s"), WiFi.softAPSSID().c_str());
   RgxSettings.status = RGX_SETUP_NAPT;
-  RgxSettings.lastlinkcount = Wifi.link_count;
 }
 
 void rngxSetupNAPT(void)
@@ -472,17 +470,11 @@ bool Xdrv58(uint32_t function)
       }
       else if (RgxSettings.status == RGX_CONFIGURED)
       {
-        if (Wifi.status != WL_CONNECTED)
+        if (Wifi.status == WL_CONNECTED && WiFi.getMode() != WIFI_AP_STA)
         {
-          // No longer connected, need to setup again
-          AddLog(LOG_LEVEL_INFO, PSTR("RGX: No longer connected, prepare to reconnect WiFi AP..."));
-          RgxSettings.status = RGX_NOT_CONFIGURED;
-        }
-        else if (RgxSettings.lastlinkcount != Wifi.link_count && WiFi.getMode() != WIFI_AP_STA)
-        {
-          // Assume WiFi has reconnected and been reconfigured, prepare to reconnect
-          AddLog(LOG_LEVEL_INFO, PSTR("RGX: Link count now: %d, WiFi.getMode(): %d, unconfigure..."), Wifi.link_count, WiFi.getMode());
-          RgxSettings.status = RGX_NOT_CONFIGURED;
+          // Should not happen... our AP is gone and only a restart will get it back properly
+          AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi mode is %d not %d. Restart..."), WiFi.getMode(), WIFI_AP_STA);
+          TasmotaGlobal.restart_flag = 2;
         }
       }
       break;
