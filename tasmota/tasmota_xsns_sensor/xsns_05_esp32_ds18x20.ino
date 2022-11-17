@@ -51,6 +51,9 @@ const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, MAX31850_CHIPID };
 
 struct {
+#ifdef W1_PARASITE_POWER
+  float temperature;
+#endif
   float temp_sum;
   uint16_t numread;
   uint8_t address[8];
@@ -130,9 +133,15 @@ void Ds18x20Convert(void) {
   for (uint32_t i = 0; i < DS18X20Data.gpios; i++) {
     ds = ds18x20_gpios[i];
     ds->reset();
+#ifdef W1_PARASITE_POWER
+    // With parasite power held wire high at the end for parasitically powered devices
+    ds->write(W1_SKIP_ROM, 1);        // Address all Sensors on Bus
+    ds->write(W1_CONVERT_TEMP, 1);    // start conversion, no parasite power on at the end
+#else
     ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
     ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
-//    delay(750);                   // 750ms should be enough for 12bit conv
+#endif
+//    delay(750);                     // 750ms should be enough for 12bit conv
   }
 }
 
@@ -147,7 +156,12 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
   ds = ds18x20_gpios[ds18x20_sensor[index].pins_id];
   ds->reset();
   ds->select(ds18x20_sensor[index].address);
+#ifdef W1_PARASITE_POWER
+    // With parasite power held wire high at the end for parasitically powered devices
+  ds->write(W1_READ_SCRATCHPAD, 1); // Read Scratchpad
+#else
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
+#endif
 
   for (uint32_t i = 0; i < 9; i++) {
     data[i] = ds->read();
@@ -157,6 +171,9 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
       case DS18S20_CHIPID: {
         int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
         t = ConvertTemp(tempS * 0.0625f - 0.250f);
+#ifdef W1_PARASITE_POWER
+        ds18x20_sensor[index].temperature = t;
+#endif
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
@@ -168,12 +185,18 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
           sign = -1;
         }
         t = ConvertTemp(sign * temp12 * 0.0625f);  // Divide by 16
+#ifdef W1_PARASITE_POWER
+        ds18x20_sensor[index].temperature = t;
+#endif
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
       case MAX31850_CHIPID: {
         int16_t temp14 = (data[1] << 8) + (data[0] & 0xFC);
         t = ConvertTemp(temp14 * 0.0625f);  // Divide by 16
+#ifdef W1_PARASITE_POWER
+        ds18x20_sensor[index].temperature = t;
+#endif
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
@@ -244,7 +267,13 @@ void Ds18x20Show(bool json) {
 
   uint8_t dsxflg = 0;
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+#ifdef W1_PARASITE_POWER
+    // With parasite power read one sensor at a time
+    if (ds18x20_sensor[i].valid) {
+      t = ds18x20_sensor[i].temperature;
+#else
     if (Ds18x20Read(i, t)) {           // Check if read failed
+#endif
       Ds18x20Name(i);
 
       if (json) {
