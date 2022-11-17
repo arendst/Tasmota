@@ -1607,6 +1607,9 @@ void SettingsDelta(void) {
       Settings->energy_voltage_calibration2 = Settings->energy_voltage_calibration;
       Settings->energy_current_calibration2 = Settings->energy_current_calibration;
     }
+    if (Settings->version < 0x0C020005) {  // 12.2.0.5
+      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

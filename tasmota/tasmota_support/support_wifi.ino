@@ -210,13 +210,20 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 #endif  // USE_EMULATION
 
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
-  if (WiFi.getMode() != WIFI_AP_STA)  // Preserve range extender connections
-  {
-    WiFi.disconnect(true);    // Delete SDK wifi config
+
+/*
+  // Replaced by below code (20221117)
+  WiFi.disconnect(true);    // Delete SDK wifi config
+  delay(200);
+  WifiSetMode(WIFI_STA);    // Disable AP mode
+*/
+  if (WiFi.getMode() != WIFI_AP_STA) {  // Preserve range extender connections (#17103)
+    WiFi.disconnect(true);  // Delete SDK wifi config
     delay(200);
 
-    WifiSetMode(WIFI_STA);    // Disable AP mode
+    WifiSetMode(WIFI_STA);  // Disable AP mode
   }
+
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G

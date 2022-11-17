@@ -21,6 +21,10 @@
 #ifdef USE_LIGHT
 #ifdef USE_LIGHT_ARTNET
 
+#ifndef USE_WS2812
+#define USE_WS2812                                    // needed since USE_LIGHT_ARTNET is enabled for ESP32 by default
+#endif
+
 #ifndef WS2812_ARTNET_UDP_BUFFER_SIZE
 #define WS2812_ARTNET_UDP_BUFFER_SIZE         140      // Max 30 columns with 4 bytes per pixel
 #endif
@@ -146,8 +150,12 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
   if (artnet_conf.matrix) {
     // Ws2812 led strip
     size_t pix_size = Ws2812StripGetPixelSize();
+    // check that datalen does not exceed the number of columns
+    if (datalen > artnet_conf.cols * pix_size) { datalen = artnet_conf.cols * pix_size; }
+    // round to exact number of pixels
     datalen = datalen - (datalen % pix_size);
 
+    size_t offset_in_matrix = 0;
     if (artnet_conf.alt && (row % 2)) {
       for (int32_t i = idx, j = idx + datalen - pix_size; i < j; i += pix_size, j -= pix_size) {
           for (int32_t k = 0; k < pix_size; k++) {
@@ -156,6 +164,7 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
               buf[j+k] = temp;
           }
       }
+      offset_in_matrix = artnet_conf.cols * pix_size - datalen; // add a potential offset if the frame is smaller than the columns
     }
 
     // process dimmer
@@ -179,7 +188,7 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
 
     // process pixels
     size_t h_bytes = artnet_conf.cols * pix_size;   // size in bytes of a single row
-    size_t offset_in_matrix = artnet_conf.offs * pix_size + row * h_bytes;
+    offset_in_matrix += artnet_conf.offs * pix_size + row * h_bytes;
     if (datalen > h_bytes) { datalen = h_bytes; }   // copy at most one line
 
     Ws2812CopyPixels(&buf[idx], datalen, offset_in_matrix);
@@ -366,6 +375,8 @@ bool ArtNetStart(void) {
           Settings->light_pixels = artnet_conf.rows * artnet_conf.cols + artnet_conf.offs;
           Settings->light_rotation = 0;
           Ws2812ReinitStrip();
+        } else {
+          Ws2812Clear();
         }
       }
 
