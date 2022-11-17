@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.5]
 ### Added
+- ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER (#17112)
 
 ### Breaking Changed
 

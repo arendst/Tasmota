@@ -365,6 +365,8 @@ void Energy200ms(void)
           Energy.kWhtoday[i] = 0;
           Energy.kWhtoday_offset[i] = 0;
           RtcSettings.energy_kWhtoday_ph[i] = 0;
+          Settings->energy_kWhtoday_ph[i] = 0;
+
           Energy.start_energy[i] = 0;
 //        Energy.kWhtoday_delta = 0;                                 // dont zero this, we need to carry the remainder over to tomorrow
           Energy.daily_sum_import_balanced = 0.0;
