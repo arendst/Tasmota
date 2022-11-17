@@ -21,6 +21,10 @@
 #ifdef USE_LIGHT
 #ifdef USE_LIGHT_ARTNET
 
+#ifndef USE_WS2812
+#define USE_WS2812                                    // needed since USE_LIGHT_ARTNET is enabled for ESP32 by default
+#endif
+
 #ifndef WS2812_ARTNET_UDP_BUFFER_SIZE
 #define WS2812_ARTNET_UDP_BUFFER_SIZE         140      // Max 30 columns with 4 bytes per pixel
 #endif
