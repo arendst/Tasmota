@@ -1554,11 +1554,6 @@ void Every250mSeconds(void)
     break;
   case 3:
     {
-      // is there a network state change since last time, if so send events to modules
-      static bool network_was_down = true;                     // keep track of the previous state of network
-      bool network_state_changed = (network_was_down != (bool)TasmotaGlobal.global_state.network_down);   // network state changed from last tick
-      network_was_down = TasmotaGlobal.global_state.network_down;
-
       if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
 #ifdef CONFIG_IDF_TARGET_ESP32C3
@@ -1607,23 +1602,19 @@ void Every250mSeconds(void)
 #endif  // USE_DEVICE_GROUPS
 
         // send FUNC_NETWORK_UP to all modules
-        if (network_state_changed) {
-          // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
-          XdrvXsnsCall(FUNC_NETWORK_UP);
-        }
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
+        XdrvXsnsCall(FUNC_NETWORK_UP);
 
         MqttCheck();
       } else {
 
 #ifdef USE_DEVICE_GROUPS
-       DeviceGroupsStop();
+        DeviceGroupsStop();
 #endif  // USE_DEVICE_GROUPS
 
-        // send FUNC_NETWORK_UP to all modules
-        if (network_state_changed) {
-          // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
-          XdrvXsnsCall(FUNC_NETWORK_DOWN);
-        }
+        // send FUNC_NETWORK_DOWN to all modules
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
+        XdrvXsnsCall(FUNC_NETWORK_DOWN);
       }                                           // Every x.75 second
     }
     break;

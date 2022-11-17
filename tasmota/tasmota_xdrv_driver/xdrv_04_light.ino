@@ -3463,14 +3463,10 @@ bool Xdrv04(uint32_t function)
       ArtNetJSONAppend();
       break;
     case FUNC_NETWORK_UP:
-      if (Settings->flag6.artnet_autorun) {
-        if (!ArtNetStart()) {
-          Settings->flag6.artnet_autorun = false;   // disable autorun if it failed, avoid nasty loop errors
-        }
-      }
+      ArtNetFuncNetworkUp();
       break;
     case FUNC_NETWORK_DOWN:
-      ArtNetStop();
+      ArtNetFuncNetworkDown();
       break;
 #endif // USE_LIGHT_ARTNET
     }

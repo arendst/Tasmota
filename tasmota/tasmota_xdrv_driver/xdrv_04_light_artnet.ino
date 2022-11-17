@@ -426,5 +426,29 @@ void CmndArtNet(void) {
   ResponseCmndStateText(artnet_udp_connected & Settings->flag6.artnet_autorun);
 }
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+bool artnet_network_up = false;
+
+void ArtNetFuncNetworkUp(void) {
+  if (!artnet_network_up) {
+    artnet_network_up = true;
+    if (Settings->flag6.artnet_autorun) {
+      if (!ArtNetStart()) {
+        Settings->flag6.artnet_autorun = false;   // disable autorun if it failed, avoid nasty loop errors
+      }
+    }
+  }
+}
+
+void ArtNetFuncNetworkDown(void) {
+  if (artnet_network_up) {
+    artnet_network_up = false;
+    ArtNetStop();
+  }
+}
+
 #endif // USE_LIGHT_ARTNET
 #endif // USE_LIGHT
