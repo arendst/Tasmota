@@ -2307,6 +2307,9 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = true;            /* direct response */
+    if (localShortAddr == 0x0000) {
+      zcl.direction = 1;          // if we are coordinator, then response is from client to server
+    }
     zcl.setTransac(transactseq);
     zcl.payload.addBuffer(buf);
     zigbeeZCLSendCmd(zcl);
