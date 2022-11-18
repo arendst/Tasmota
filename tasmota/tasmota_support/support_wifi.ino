@@ -217,12 +217,17 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   delay(200);
   WifiSetMode(WIFI_STA);    // Disable AP mode
 */
+#ifdef USE_WIFI_RANGE_EXTENDER
   if (WiFi.getMode() != WIFI_AP_STA) {  // Preserve range extender connections (#17103)
     WiFi.disconnect(true);  // Delete SDK wifi config
     delay(200);
-
     WifiSetMode(WIFI_STA);  // Disable AP mode
   }
+#else
+  WiFi.disconnect(true);    // Delete SDK wifi config
+  delay(200);
+  WifiSetMode(WIFI_STA);    // Disable AP mode
+#endif
 
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
