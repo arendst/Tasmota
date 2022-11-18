@@ -201,7 +201,6 @@ struct {
     uint32_t allwaysAggregate:1; // always show all known values of one sensor in brdigemode
     uint32_t noSummary:1;        // no sensor values at TELE-period
     uint32_t directBridgeMode:1; // send every received BLE-packet as a MQTT-message in real-time
-    uint32_t showRSSI:1;
     uint32_t activeScan:1;
     uint32_t ignoreBogusBattery:1;
     uint32_t minimalSummary:1;   // DEPRECATED!!
