@@ -27,6 +27,16 @@
 
 #define USE_SERIAL_BRIDGE_TEE
 
+#ifdef SERIAL_BRIDGE_BUFFER_SIZE
+const uint16_t SERIAL_BRIDGE_BUFSIZE = SERIAL_BRIDGE_BUFFER_SIZE;
+#else
+#ifdef ESP8266
+const uint16_t SERIAL_BRIDGE_BUFSIZE = MIN_INPUT_BUFFER_SIZE;     // 256
+#else
+const uint16_t SERIAL_BRIDGE_BUFSIZE = INPUT_BUFFER_SIZE;         // 800
+#endif  // ESP32
+#endif  // SERIAL_BRIDGE_BUFFER_SIZE
+
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALBUFFER "|" D_CMND_SSERIALCONFIG;
 
@@ -34,15 +44,6 @@ void (* const SerialBridgeCommand[])(void) PROGMEM = {
   &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialBuffer, &CmndSSerialConfig };
 
 #include <TasmotaSerial.h>
-
-#ifdef ESP8266
-const uint16_t SERIAL_BRIDGE_BUFFER_MIN_SIZE = TM_SERIAL_BUFFER_SIZE;  // 64  (TasmotaSerial.h)
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = MIN_INPUT_BUFFER_SIZE;      // 256
-#else
-const uint16_t SERIAL_BRIDGE_BUFFER_MIN_SIZE = MIN_INPUT_BUFFER_SIZE;  // 256
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = INPUT_BUFFER_SIZE;          // 800
-#endif
-
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
 unsigned long serial_bridge_polling_window = 0;
@@ -94,7 +95,7 @@ void SerialBridgeInput(void) {
       static bool serial_bridge_overrun = false;
 
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
-        if (serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) {      // Add char to string if it still fits
+        if (serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) {      // Add char to string if it still fits
           serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         } else {
           serial_bridge_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
@@ -128,12 +129,12 @@ void SerialBridgeInput(void) {
           ((Settings->serial_delimiter == 128) && !isprint(serial_in_byte))) &&  // Any char not between 32 and 127
           !serial_bridge_raw;                                                    // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
-        if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
+        if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) &&    // Add char to string if it still fits and ...
             !in_byte_is_delimiter) {                                             // Char is not a delimiter
           serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         }
 
-        if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFFER_SIZE -1) ||   // Send message when buffer is full or ...
+        if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFSIZE -1) ||   // Send message when buffer is full or ...
             in_byte_is_delimiter) {                                              // Char is delimiter
           serial_bridge_polling_window = 0;                                      // Publish now
           break;
@@ -182,13 +183,14 @@ void SerialBridgeInput(void) {
 
 void SerialBridgeInit(void) {
   if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
-    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);
+//    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);  // Default TM_SERIAL_BUFFER_SIZE (=64) size
+    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK, 0, MIN_INPUT_BUFFER_SIZE);  // 256
     if (SetSSerialBegin()) {
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
         serial_bridge_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM
       } else {
-        serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFFER_SIZE));
+        serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFSIZE));
       }
       SerialBridgeSerial->flush();
       SerialBridgePrintf("\r\n");
@@ -271,15 +273,15 @@ void CmndSSerialBuffer(void) {
     // between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
     CmndSerialBuffer();
   } else {
-    // ESP8266 (software serial): between TM_SERIAL_BUFFER_SIZE and SERIAL_BRIDGE_BUFFER_SIZE characters
+    // ESP8266 (software serial): between MIN_INPUT_BUFFER_SIZE and SERIAL_BRIDGE_BUFSIZE characters
     // ESP32 (hardware serial only): between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
     if (XdrvMailbox.data_len > 0) {
       size_t size = XdrvMailbox.payload;
-      if (XdrvMailbox.payload < SERIAL_BRIDGE_BUFFER_MIN_SIZE) {
-        size = SERIAL_BRIDGE_BUFFER_MIN_SIZE;          // 64 / 256
+      if (XdrvMailbox.payload < MIN_INPUT_BUFFER_SIZE) {
+        size = MIN_INPUT_BUFFER_SIZE;          // 256 / 256
       }
-      else if (XdrvMailbox.payload > SERIAL_BRIDGE_BUFFER_SIZE) {
-        size = SERIAL_BRIDGE_BUFFER_SIZE;              // 256 / 800
+      else if (XdrvMailbox.payload > SERIAL_BRIDGE_BUFSIZE) {
+        size = SERIAL_BRIDGE_BUFSIZE;      // 256 / 800
       }
       SerialBridgeSerial->setRxBufferSize(size);
     }
