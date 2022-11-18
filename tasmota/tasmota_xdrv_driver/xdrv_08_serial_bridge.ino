@@ -27,19 +27,21 @@
 
 #define USE_SERIAL_BRIDGE_TEE
 
-#ifdef ESP8266
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = MIN_INPUT_BUFFER_SIZE;
-#else
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = INPUT_BUFFER_SIZE;
-#endif
-
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALCONFIG;
+  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALBUFFER "|" D_CMND_SSERIALCONFIG;
 
 void (* const SerialBridgeCommand[])(void) PROGMEM = {
-  &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialConfig };
+  &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialBuffer, &CmndSSerialConfig };
 
 #include <TasmotaSerial.h>
+
+#ifdef ESP8266
+const uint16_t SERIAL_BRIDGE_BUFFER_MIN_SIZE = TM_SERIAL_BUFFER_SIZE;  // 64  (TasmotaSerial.h)
+const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = MIN_INPUT_BUFFER_SIZE;      // 256
+#else
+const uint16_t SERIAL_BRIDGE_BUFFER_MIN_SIZE = MIN_INPUT_BUFFER_SIZE;  // 256
+const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = INPUT_BUFFER_SIZE;          // 800
+#endif
 
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
@@ -261,6 +263,28 @@ void CmndSBaudrate(void) {
     SetSSerialBegin();
   }
   ResponseCmndNumber(Settings->sbaudrate * 300);
+}
+
+void CmndSSerialBuffer(void) {
+  // Allow non-pesistent serial receive buffer size change
+  if (SerialBridgeSerial->hardwareSerial()) {
+    // between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
+    CmndSerialBuffer();
+  } else {
+    // ESP8266 (software serial): between TM_SERIAL_BUFFER_SIZE and SERIAL_BRIDGE_BUFFER_SIZE characters
+    // ESP32 (hardware serial only): between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
+    if (XdrvMailbox.data_len > 0) {
+      size_t size = XdrvMailbox.payload;
+      if (XdrvMailbox.payload < SERIAL_BRIDGE_BUFFER_MIN_SIZE) {
+        size = SERIAL_BRIDGE_BUFFER_MIN_SIZE;          // 64 / 256
+      }
+      else if (XdrvMailbox.payload > SERIAL_BRIDGE_BUFFER_SIZE) {
+        size = SERIAL_BRIDGE_BUFFER_SIZE;              // 256 / 800
+      }
+      SerialBridgeSerial->setRxBufferSize(size);
+    }
+    ResponseCmndNumber(SerialBridgeSerial->getRxBufferSize());
+  }
 }
 
 void CmndSSerialConfig(void) {

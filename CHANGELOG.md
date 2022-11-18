@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.2.0.5]
 ### Added
 - ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER (#17112)
+- Command ``SSerialBuffer 64..256`` to change software serial bridge receive buffer size from default (64) to max local buffer size (256) (#17120)
 
 ### Breaking Changed
 
