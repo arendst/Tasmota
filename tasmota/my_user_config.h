@@ -779,7 +779,7 @@
 //#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
   #define SR04_MAX_SENSOR_DISTANCE  500          // Set sensor max detection distance
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+2k code)
 //  #define SERIAL_BRIDGE_BUFFER_SIZE 256          // Serial Bridge receive buffer size (Default ESP8266 = 256, ESP32 = 800)
 //#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+4.5k code)
 //#define USE_MODBUS_BRIDGE_TCP                    // Add support for software Modbus TCP Bridge (also enable Modbus TCP Bridge) (+2k code)
