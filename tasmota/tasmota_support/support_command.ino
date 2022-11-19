@@ -29,7 +29,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|"
-  D_CMND_SERIALBUFFER "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|" D_CMND_SERIALDELIMITER "|"
+  D_CMND_SERIALBUFFER "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|" D_CMND_SERIALDELIMITER "|" D_CMND_SERIALSTART "|" D_CMND_SERIALIGNORE "|"
   D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
@@ -68,7 +68,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport,
-  &CmndSerialBuffer, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig, &CmndSerialDelimiter,
+  &CmndSerialBuffer, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig, &CmndSerialDelimiter, &CmndSerialStart, &CmndSerialIgnore,
   &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
@@ -1913,6 +1913,44 @@ void CmndSerialDelimiter(void)
     }
   }
   ResponseCmndNumber(Settings->serial_delimiter);
+}
+
+void CmndSerialStart(void)
+{
+  uint8_t startLen;
+  // SerialStart 0 to disable
+  // SerialStart C1 to start only with C1
+  // SerialStart C1,C2 to start with C1, C2
+  // SerialStart C1,C2,C3 to start with C1, C2, C3
+  // SerialStart show current chars
+  // C1, C2, C3 must me numbers representing ascii code ("PID" = 80 73 68) serialstart 80,73,68
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t chars[sizeof(Settings->serialstart)-1] = {0};
+    startLen = ParseParameters(sizeof(Settings->serialstart)-1, chars);
+    memset(Settings->serialstart, 0, sizeof(Settings->serialstart)); //Reset
+    for (uint8_t i = 0; i < startLen; i++) {
+      Settings->serialstart[i] = chars[i];
+    }
+  }
+  startLen = strlen(Settings->serialstart);
+  char sAsciiCode[startLen*4 + 1]; //Max of 3 chars per ascii code + ',' + last '0'
+  sAsciiCode[0] = '\0';
+  for (uint8_t i = 0; i < startLen; i++) {
+    snprintf_P(sAsciiCode, sizeof(sAsciiCode), PSTR("%s%s%d"), sAsciiCode, (i > 0) ? "," : "", Settings->serialstart[i]);
+  }
+  ResponseCmndChar(sAsciiCode);
+}
+
+void CmndSerialIgnore(void)
+{
+  // SerialIgnore 0 to disable
+  // SerialIgnore X to "ignore" X serialrecieved messages
+  // SerialIgnore show current value
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 255)) {
+    Settings->serialignore = XdrvMailbox.payload;
+  }
+  TasmotaGlobal.serial_ignore_idx = 0;
+  ResponseCmndNumber(Settings->serialignore);
 }
 
 void CmndSyslog(void)

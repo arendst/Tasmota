@@ -731,7 +731,8 @@ typedef struct {
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
 
-  uint8_t       free_esp32_738[5];         // 738
+  char          serialstart[4];            // 738  Serial Start Chars
+  uint8_t       serialignore;              // 73C  Serial recieved messages to ignore
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E

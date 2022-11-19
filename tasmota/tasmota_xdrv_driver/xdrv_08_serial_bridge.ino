@@ -51,6 +51,8 @@ char *serial_bridge_buffer = nullptr;
 int serial_bridge_in_byte_counter = 0;
 bool serial_bridge_raw = false;
 
+uint8_t startCount = 0;
+
 /********************************************************************************************/
 
 bool SetSSerialBegin(void) {
@@ -89,6 +91,27 @@ void SerialBridgeInput(void) {
   while (SerialBridgeSerial->available()) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
+
+    //Check if SerialStart is configured
+    if (startCount != 255) {
+      if (Settings->serialstart[startCount]) {  //Check if != 0 and not buffering
+        if (Settings->serialstart[startCount] == serial_in_byte) {
+            startCount++;
+            if (!Settings->serialstart[startCount]) {  //Check if next char is 0 => we have found serialStart, and we can start to record buffer
+                serial_bridge_in_byte_counter = 0;
+                for (uint8_t i = 0; i < (startCount-1); i++) {  //startCount - 1 because the "last" char of serialstart will be added to buffer in next code
+                  serial_bridge_buffer[serial_bridge_in_byte_counter++] = Settings->serialstart[i];
+                }
+                startCount = 255; //Buffering, not try again to check serialstart
+            }            
+        } else {  //Start byte not good => forget data
+          startCount = 0; //Reset for next buffer start with
+          serial_bridge_in_byte_counter = 0;
+          return;  //We will check next char, next loop
+        }
+      }
+    }
+
 
 #ifdef USE_SERIAL_BRIDGE_TEE
     if (Settings->sbflag1.serbridge_console) {
@@ -156,26 +179,44 @@ void SerialBridgeInput(void) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
     bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
 
-    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
-    if (assume_json) {
-      ResponseAppend_P(serial_bridge_buffer);
-    } else {
-      ResponseAppend_P(PSTR("\""));
-      if (serial_bridge_raw) {
-        ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
-      } else {
-        ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
-      }
-      ResponseAppend_P(PSTR("\""));
-    }
-    ResponseJsonEnd();
+    TasmotaGlobal.serial_ignore_idx++; //Add one to count of ignore messages
+    if (!Settings->serialignore || (TasmotaGlobal.serial_ignore_idx == Settings->serialignore)) {  //If configured and we have reach serialIgnore value, then managed message
+        TasmotaGlobal.serial_ignore_idx = 0;  //Reset count for next time
+        if (SerialBridgeSerial->hardwareSerial()) {
+            Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":"));
+        } else {
+            Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
+        }
 
-    if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
-       XdrvRulesProcess(0);
-    } else {
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+        if (assume_json) {
+          ResponseAppend_P(serial_bridge_buffer);
+        } else {
+          ResponseAppend_P(PSTR("\""));
+          if (serial_bridge_raw) {
+            ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
+          } else {
+            ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
+          }
+          ResponseAppend_P(PSTR("\""));
+        }
+        ResponseJsonEnd();
+
+        if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
+          XdrvRulesProcess(0);
+        } else {
+          if (SerialBridgeSerial->hardwareSerial()) {
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
+          } else {
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+          }
+        }
+        if (!Settings->serialignore) {
+            //With serialignore each D_JSON_SERIALRECEIVED is better to delete and read again buffer
+              while (SerialBridgeSerial->available()) { SerialBridgeSerial->read(); }
+        }
     }
     serial_bridge_in_byte_counter = 0;
+    startCount = 0; //Reset for next buffer start with
   }
 }
 
