@@ -717,6 +717,7 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
     Z_attribute_synonym syn = Z_plugin_matchAttributeSynonym(device.modelId, device.manufacturerId,
                                                               attr.cluster, attr.attr_id);
     if (syn.found()) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ZIG: apply synonym %04X/%04X with %04X/%04X (mul:%i div:%i)"), attr.cluster, attr.attr_id, syn.new_cluster, syn.new_attribute, syn.multiplier, syn.divider);
       if (syn.new_attribute == 0xFFFF) {    // if attr is 0xFFFF, remove attribute
         attr_list.removeAttribute(&attr);
       } else {
