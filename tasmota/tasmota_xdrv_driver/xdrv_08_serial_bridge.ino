@@ -182,11 +182,7 @@ void SerialBridgeInput(void) {
     TasmotaGlobal.serial_ignore_idx++; //Add one to count of ignore messages
     if (!Settings->serialignore || (TasmotaGlobal.serial_ignore_idx == Settings->serialignore)) {  //If configured and we have reach serialIgnore value, then managed message
         TasmotaGlobal.serial_ignore_idx = 0;  //Reset count for next time
-        if (SerialBridgeSerial->hardwareSerial()) {
-            Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":"));
-        } else {
-            Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
-        }
+        Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
 
         if (assume_json) {
           ResponseAppend_P(serial_bridge_buffer);
@@ -204,14 +200,10 @@ void SerialBridgeInput(void) {
         if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
           XdrvRulesProcess(0);
         } else {
-          if (SerialBridgeSerial->hardwareSerial()) {
-            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-          } else {
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-          }
         }
         if (!Settings->serialignore) {
-            //With serialignore each D_JSON_SERIALRECEIVED is better to delete and read again buffer
+            //With serialignore each D_JSON_SSERIALRECEIVED is better to delete and read again buffer
               while (SerialBridgeSerial->available()) { SerialBridgeSerial->read(); }
         }
     }
