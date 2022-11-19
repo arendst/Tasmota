@@ -180,7 +180,7 @@ void CmndRfSend(void)
       for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(nullptr, ", ", &p)) {
         switch (i++) {
         case 0:
-          data = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+          data = strtoull(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
           break;
         case 1:
           bits = atoi(str);
