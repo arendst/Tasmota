@@ -615,7 +615,6 @@ void MI32PreInit(void) {
   MI32.option.noSummary = 0;
   MI32.option.minimalSummary = 0;
   MI32.option.directBridgeMode = 0;
-  MI32.option.showRSSI = 1;
   MI32.option.ignoreBogusBattery = 1; // from advertisements
 
   MI32loadCfg();
@@ -640,7 +639,7 @@ void MI32Init(void) {
     }
   }
 
-  if(MI32.mode.didGetConfig){
+  if(MI32.mode.didGetConfig && !Settings->flag5.zigbee_hide_bridge_topic){ // borrow SO125 1 to turn off HomeKit
     MI32.mode.didStartHAP = 0;
   #ifdef USE_MI_HOMEKIT
     MI32getSetupCodeFromMAC(MI32.hk_setup_code);
@@ -2096,6 +2095,7 @@ void MI32Show(bool json)
     if(!MI32.mode.triggeredTele){
       if(MI32.option.noSummary) return; // no message at TELEPERIOD
       }
+    if(TasmotaGlobal.masterlog_level == LOG_LEVEL_DEBUG_MORE) return; // we want to announce sensors unlinked to the ESP, check for LOG_LEVEL_DEBUG_MORE is medium-safe
     MI32suspendScanTask();
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       if(MI32.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;
@@ -2228,10 +2228,9 @@ void MI32Show(bool json)
           }
         }
       }
-      if (MI32.option.showRSSI) {
-        MI32ShowContinuation(&commaflg);
-        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].RSSI);
-      }
+      MI32ShowContinuation(&commaflg);
+      ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].RSSI);
+
       ResponseJsonEnd();
 
       MIBLEsensors[i].eventType.raw = 0;
@@ -2319,6 +2318,7 @@ int ExtStopBLE(){
         MI32Scan->stop();
         MI32.mode.deleteScanTask = 1;
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
+        while (MI32.mode.runningScan) yield();
       }
 #ifdef USE_MI_HOMEKIT
       if(MI32.mode.didStartHAP) {
@@ -2371,7 +2371,7 @@ bool Xsns62(uint32_t function)
       break;
 #ifdef USE_MI_EXT_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        if (MI32.mode.didGetConfig) WSContentSend_P(HTTP_BTN_MENU_MI32);
+        if (Settings->flag5.mi32_enable) WSContentSend_P(HTTP_BTN_MENU_MI32);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/m32"), MI32HandleWebGUI);
