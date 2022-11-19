@@ -283,14 +283,39 @@ void CmndRgxNAPT(void)
   ResponseCmndStateText(Settings->sbflag1.range_extender_napt);
 }
 
+// CmndRgxPort helper: Do port map and set response if successful
+void CmndRgxPortMap(uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
+{
+  uint32_t gw_ip = (uint32_t)WiFi.localIP();
+  if (ip_portmap_add(proto, gw_ip, gw_port, dst_ip, dst_port))
+  {
+    Response_P(PSTR("OK %s %_I:%u -> %_I:%u"),
+      (proto == IP_PROTO_TCP) ? "TCP" : "UDP", gw_ip, gw_port, dst_ip, dst_port);
+  }
+}
+
+// CmndRgxPort helper: If mac from esp list and mac from command parameters are the same try port map and return true
+bool CmndRgxPortMapCheck(const uint8_t *mac, const char *parm_mac, uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
+{
+  char list_mac[13];
+  snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  if (strcasecmp(list_mac, parm_mac) == 0)
+  {
+    CmndRgxPortMap(proto, gw_port, dst_ip, dst_port);
+    return true;
+  }
+  return false;
+}
+
 void CmndRgxPort(void)
 {
-  char *tok, *state, *parm_mac;
+  char *tok, *state, *parm_addr;
   uint16_t gw, dst;
   uint8_t proto = 0;
 
   Response_P(PSTR("ERROR"));
 
+  // Parameter parsing
   if (ArgC()!=4) return;
   if ((tok = strtok_r(XdrvMailbox.data, ", ", &state)) == 0) return;
   if (strcasecmp("TCP", tok) == 0) proto = IP_PROTO_TCP;
@@ -298,10 +323,22 @@ void CmndRgxPort(void)
   if (!proto) return;
   if ((tok = strtok_r(0, ", ", &state)) == 0) return;
   if ((gw = strtoul(tok, nullptr, 0)) == 0) return;
-  if ((parm_mac = strtok_r(0, ", ", &state)) == 0) return;
+  if ((parm_addr = strtok_r(0, ", ", &state)) == 0) return;
   if ((tok = strtok_r(0, ", ", &state)) == 0) return;
   if ((dst = strtoul(tok, nullptr, 0)) == 0) return;
 
+  // If forward address is an ip, then just do it...
+  // Useful for static IPs not used by the range extender dhcp server
+  // On ESP8266 the default dhcp ip range to avoid is .100-.200
+  // On ESP32 the default dhcp ip range to avoid is .2-.11
+  IPAddress ip;
+  if (ip.fromString(parm_addr))
+  {
+    CmndRgxPortMap(proto, gw, (uint32_t)ip, dst);
+    return;
+  }
+
+  // Forward address is a mac, find the associated ip...
 #if defined(ESP32)
   wifi_sta_list_t wifi_sta_list = {0};
   tcpip_adapter_sta_list_t adapter_sta_list = {0};
@@ -311,16 +348,8 @@ void CmndRgxPort(void)
 
   for (int i=0; i<adapter_sta_list.num; i++)
   {
-    char list_mac[13];
-    const uint8_t *m = adapter_sta_list.sta[i].mac;
-    snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), m[0], m[1], m[2], m[3], m[4], m[5]);
-    if (strcasecmp(list_mac, parm_mac) == 0)
+    if (CmndRgxPortMapCheck(adapter_sta_list.sta[i].mac, parm_addr, proto, gw, adapter_sta_list.sta[i].ip.addr, dst))
     {
-      if (ip_portmap_add(proto, (uint32_t)WiFi.localIP(), gw, adapter_sta_list.sta[i].ip.addr, dst))
-      {
-        Response_P(PSTR("OK %s %_I:%u -> %_I:%u"), 
-          (proto == IP_PROTO_TCP) ? "TCP" : "UDP", (uint32_t)WiFi.localIP(), gw, adapter_sta_list.sta[i].ip.addr, dst);
-      }
       break;
     }
   }
@@ -328,16 +357,8 @@ void CmndRgxPort(void)
   struct station_info *station = wifi_softap_get_station_info();
   while (station)
   {
-    char list_mac[13];
-    const uint8_t *m = station->bssid;
-    snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), m[0], m[1], m[2], m[3], m[4], m[5]);
-    if (strcasecmp(list_mac, parm_mac) == 0)
+    if (CmndRgxPortMapCheck(station->bssid, parm_addr, proto, gw, station->ip.addr, dst))
     {
-      if (ip_portmap_add(proto, (uint32_t)WiFi.localIP(), gw, station->ip.addr, dst))
-      {
-        Response_P(PSTR("OK %s %_I:%u -> %_I:%u"), 
-          (proto == IP_PROTO_TCP) ? "TCP" : "UDP", (uint32_t)WiFi.localIP(), gw, station->ip.addr, dst);
-      }
       break;
     }
     station = STAILQ_NEXT(station, next);
