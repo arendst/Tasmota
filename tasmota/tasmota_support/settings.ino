@@ -1609,6 +1609,7 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x0C020005) {  // 12.2.0.5
       Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->param[P_SERIAL_SKIP] = 0;
     }
 
     Settings->version = VERSION;

@@ -95,7 +95,7 @@ void SerialBridgeInput(void) {
       static bool serial_bridge_overrun = false;
 
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
-        if (serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) {      // Add char to string if it still fits
+        if (serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) {          // Add char to string if it still fits
           serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         } else {
           serial_bridge_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
@@ -129,12 +129,12 @@ void SerialBridgeInput(void) {
           ((Settings->serial_delimiter == 128) && !isprint(serial_in_byte))) &&  // Any char not between 32 and 127
           !serial_bridge_raw;                                                    // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
-        if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) &&    // Add char to string if it still fits and ...
+        if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) &&        // Add char to string if it still fits and ...
             !in_byte_is_delimiter) {                                             // Char is not a delimiter
           serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         }
 
-        if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFSIZE -1) ||   // Send message when buffer is full or ...
+        if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFSIZE -1) ||       // Send message when buffer is full or ...
             in_byte_is_delimiter) {                                              // Char is delimiter
           serial_bridge_polling_window = 0;                                      // Publish now
           break;
@@ -156,25 +156,31 @@ void SerialBridgeInput(void) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
     bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
 
-    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
-    if (assume_json) {
-      ResponseAppend_P(serial_bridge_buffer);
-    } else {
-      ResponseAppend_P(PSTR("\""));
-      if (serial_bridge_raw) {
-        ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
-      } else {
-        ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
-      }
-      ResponseAppend_P(PSTR("\""));
-    }
-    ResponseJsonEnd();
+    TasmotaGlobal.serial_skip++;                     // SetOption35  Skip number of serial messages received (default 0)
+    if (TasmotaGlobal.serial_skip >= Settings->param[P_SERIAL_SKIP]) {  // Handle intermediate changes to SetOption35
+      TasmotaGlobal.serial_skip = 0;
 
-    if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
-       XdrvRulesProcess(0);
-    } else {
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
+      if (assume_json) {
+        ResponseAppend_P(serial_bridge_buffer);
+      } else {
+        ResponseAppend_P(PSTR("\""));
+        if (serial_bridge_raw) {
+          ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
+        } else {
+          ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
+        }
+        ResponseAppend_P(PSTR("\""));
+      }
+      ResponseJsonEnd();
+
+      if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
+        XdrvRulesProcess(0);
+      } else {
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+      }
     }
+
     serial_bridge_in_byte_counter = 0;
   }
 }

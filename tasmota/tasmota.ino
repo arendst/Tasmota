@@ -323,6 +323,7 @@ struct TasmotaGlobal_t {
   uint8_t light_driver;                     // Light module configured
   uint8_t light_type;                       // Light types
   uint8_t serial_in_byte;                   // Received byte
+  uint8_t serial_skip;                      // Skip number of received messages
   uint8_t devices_present;                  // Max number of devices supported
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings->seriallog_level
