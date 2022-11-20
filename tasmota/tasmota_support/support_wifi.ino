@@ -218,7 +218,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   WifiSetMode(WIFI_STA);    // Disable AP mode
 */
 #ifdef USE_WIFI_RANGE_EXTENDER
-  if (WiFi.getMode() != WIFI_AP_STA) {  // Preserve range extender connections (#17103)
+  if (WiFi.getMode() != WIFI_AP_STA || !RgxApUp()) {  // Preserve range extender connections (#17103)
     WiFi.disconnect(true);  // Delete SDK wifi config
     delay(200);
     WifiSetMode(WIFI_STA);  // Disable AP mode
