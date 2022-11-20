@@ -126,7 +126,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid [#17011](https://github.com/arendst/Tasmota/issues/17011)
 - Support for Dingtian x595 shift register based relay boards by Barbudor [#17032](https://github.com/arendst/Tasmota/issues/17032)
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn [#17069](https://github.com/arendst/Tasmota/issues/17069)
-- Accept filename extensions to GUI file upload input fields [#16875](https://github.com/arendst/Tasmota/issues/16875)
 - WS2812 and Light ArtNet DMX control over UDP port 6454 [#17059](https://github.com/arendst/Tasmota/issues/17059)
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
@@ -141,6 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
 - ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
+- Accept filename extensions to GUI file upload input fields [#16875](https://github.com/arendst/Tasmota/issues/16875)
 - Serial Bridge default internal serial rx buffer size from 64 to 256 [#17120](https://github.com/arendst/Tasmota/issues/17120)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Compiling with reduced boards manifests in favour of Autoconfig [#16848](https://github.com/arendst/Tasmota/issues/16848)
