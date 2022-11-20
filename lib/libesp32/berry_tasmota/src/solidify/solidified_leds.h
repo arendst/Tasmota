@@ -1333,8 +1333,8 @@ be_local_closure(Leds_matrix_set_bytes,   /* name */
       0x781A0000,  //  0004  JMPF	R6	#0006
       0x5C100A00,  //  0005  MOVE	R4	R5
       0x88180102,  //  0006  GETMBR	R6	R0	K2
-      0x081C0205,  //  0007  MUL	R7	R1	R5
-      0x00180C07,  //  0008  ADD	R6	R6	R7
+      0x00180C01,  //  0007  ADD	R6	R6	R1
+      0x08180C05,  //  0008  MUL	R6	R6	R5
       0x881C0103,  //  0009  GETMBR	R7	R0	K3
       0x8C1C0F04,  //  000A  GETMET	R7	R7	K4
       0x5C240C00,  //  000B  MOVE	R9	R6

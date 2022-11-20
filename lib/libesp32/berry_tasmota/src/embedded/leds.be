@@ -321,7 +321,7 @@ class Leds : Leds_ntv
       def set_bytes(row, buf, offset, len)
         var h_bytes = self.h * self.pix_size
         if (len > h_bytes)  len = h_bytes end
-        var offset_in_matrix = self.offset + row * h_bytes
+        var offset_in_matrix = (self.offset + row) * h_bytes
         self.pix_buffer.setbytes(offset_in_matrix, buf, offset, len)
       end
 
