@@ -318,8 +318,8 @@ public:
   }
 
   uint8_t       type;             // zigbee type, Zunk by default
-  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
-  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint16_t      divider;          // divide by x (ignore if 0 or 1)
   int16_t       base;             // add x (ignore if 0)
   uint16_t      cluster;          // cluster number
   uint16_t      attribute;        // attribute number
@@ -354,8 +354,8 @@ public:
   uint16_t      attribute;        // attribute to match
   uint16_t      new_cluster;      // replace with this cluster
   uint16_t      new_attribute;    // replace with this attribute
-  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
-  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint16_t      divider;          // divide by x (ignore if 0 or 1)
   int16_t       base;           // add x (ignore if 0)
 };
 

@@ -386,7 +386,7 @@ bool ZbUnload(const char *filename_raw) {
 }
 
 // append modifiers like mul/div/manuf
-void Z_AppendModifiers(char * buf, size_t buf_len, int8_t multiplier, int8_t divider, int16_t base, uint16_t manuf) {
+void Z_AppendModifiers(char * buf, size_t buf_len, uint16_t multiplier, uint16_t divider, int16_t base, uint16_t manuf) {
   if (multiplier != 0 && multiplier != 1) {
     ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_MUL, multiplier);
   }
