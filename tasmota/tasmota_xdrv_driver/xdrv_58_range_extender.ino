@@ -149,6 +149,12 @@ typedef struct
 
 TRgxSettings RgxSettings;
 
+// externalize to be able to protect Rgx AP from teardown
+bool RgxApUp()
+{
+  return RgxSettings.status == RGX_CONFIGURED || RgxSettings.status == RGX_SETUP_NAPT;
+}
+
 // Check the current configuration is complete, updating RgxSettings.status
 void RgxCheckConfig(void)
 {
