@@ -156,8 +156,8 @@ void SerialBridgeInput(void) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
     bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
 
-    TasmotaGlobal.serial_skip++;                     // SetOption35  Skip number of serial messages received (default 0)
-    if (TasmotaGlobal.serial_skip >= Settings->param[P_SERIAL_SKIP]) {  // Handle intermediate changes to SetOption35
+    TasmotaGlobal.serial_skip++;                       // SetOption35  Skip number of serial messages received (default 0)
+    if (TasmotaGlobal.serial_skip > Settings->param[P_SERIAL_SKIP]) {  // Handle intermediate changes to SetOption35
       TasmotaGlobal.serial_skip = 0;
 
       Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
