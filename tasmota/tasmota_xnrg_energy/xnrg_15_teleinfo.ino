@@ -77,7 +77,7 @@ const char kContratName[] PROGMEM =
 
 // Received current contract value for legacy, standard mode has in clear text
 const char kContratValue[] PROGMEM =
-    "|BASE|HC..|EJP.|BBR"
+    "|BASE|HC..|EJP|BBR"
     ;
 
 // all tariff type for legacy, standard mode has in clear text
@@ -428,7 +428,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Find the contract index
                 for (contrat = CONTRAT_BAS ; contrat < CONTRAT_END ; contrat++) {
                     GetTextIndexed(contrat_value, sizeof(contrat_value), contrat, kContratValue);
-                    if (!strcmp(contrat_value, me->value)) {
+                    if (strstr(me->value, contrat_value)) {
                         break;
                     }
                 }
