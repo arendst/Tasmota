@@ -489,7 +489,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
       // If its in manual above 4.5°C and valve is open, set to heat
       if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"heat\"")); break; }
       // If its in manual above 4.5°C and valve is closed, set to off
-      if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"off\"")); break; }
+      if (((stat & 3) == 1) && (status[5] > 9)) { ResponseAppend_P(PSTR("\"off\"")); break; }
       //Fallback off
       ResponseAppend_P(PSTR("\"off\""));
       break;
