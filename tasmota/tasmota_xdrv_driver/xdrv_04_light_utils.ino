@@ -33,12 +33,15 @@ typedef struct gamma_table_t {
 
 const gamma_table_t ac_dimmer_table[] = {   // don't put in PROGMEM for performance reasons
   {    0,      0 },
+  {    1,     64 },
   {    5,    144 },
   {   10,    205 },
   {   50,    500 },
   {   90,    795 },
   {   95,    866 },
+  {   99,    936 },
   {  100,   1000 },
+  { 0xFFFF, 0xFFFF }          // fail-safe if out of range
   { 0xFFFF, 0xFFFF }          // fail-safe if out of range
 };
 
