@@ -480,16 +480,18 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
 
     ResponseAppend_P(PSTR(",\"hassmode\":"));
     do {
+      //HASS allowed modes [“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]
       //0201283B042A
-      // its in auto
+      // If its in auto or holiday, set to auto
       if ((stat & 3) == 0) { ResponseAppend_P(PSTR("\"auto\"")); break; }
-      // it's set to 'OFF'
+      // If its in manual and 4.5°C, set to off
       if (((stat & 3) == 1) && (status[5] == 9)) { ResponseAppend_P(PSTR("\"off\"")); break; }
-      // it's actively heating (valve open)
+      // If its in manual above 4.5°C and valve is open, set to heat
       if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"heat\"")); break; }
-      // it's achieved temp (valve closed)
-      if (((stat & 3) == 1) && (status[5] > 9)) { ResponseAppend_P(PSTR("\"idle\"")); break; }
-      ResponseAppend_P(PSTR("\"idle\""));
+      // If its in manual above 4.5°C and valve is closed, set to off
+      if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"off\"")); break; }
+      //Fallback off
+      ResponseAppend_P(PSTR("\"off\""));
       break;
     } while (0);
 
@@ -1271,16 +1273,16 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!strcmp(param, "auto")){
         d[1] = 0x00;
       }
-      if (!strcmp(param, "manual")){
+      if (!strcmp(param, "manual") || !strcmp(param, "heat" )){
         d[1] = 0x40;
       }
-      if (!strcmp(param, "on") || !strcmp(param, "heat")) {
+      if (!strcmp(param, "on")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "30";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
         return res2;
       }
-      if (!strcmp(param, "off") || !strcmp(param, "cool")) {
+      if (!strcmp(param, "off") || !strcmp(param, "cool") || !strcmp(param, "fan_only")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "4.5";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
