@@ -9,17 +9,20 @@ All notable changes to this project will be documented in this file.
 - Optional define ``SERIAL_BRIDGE_BUFFER_SIZE`` to set Serial Bridge internal buffer size (Default ESP8266 = 256, ESP32 = 800)
 - Command ``SSerialBuffer 256..SERIAL_BRIDGE_BUFFER_SIZE`` to change serial bridge rx buffer size (#17120)
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) (#17140)
+- Teleinfo TEMPO (BBR) contract (#17160)
 
 ### Breaking Changed
 
 ### Changed
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)
 - Accept filename extensions to GUI file upload input fields (#16875)
+- AC PWM dimmer lineair power distribution (#17177)
 
 ### Fixed
 - ModbusBridge baudrates over 76500 baud (#17106)
 
 ### Removed
+- Accept filename extensions to GUI file upload input fields as not functional in some browsers (#16875)
 
 ## [12.2.0.4] 20221117
 ### Added
