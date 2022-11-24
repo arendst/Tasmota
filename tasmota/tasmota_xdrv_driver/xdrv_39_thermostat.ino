@@ -428,6 +428,14 @@ void ThermostatCtrState(uint8_t ctr_output)
       break;
     // Ramp-up controller (predictive)
     case CTR_RAMP_UP:
+      // If ramp-up off time counter has been initialized
+      // AND ramp-up off time counter value reached
+      if ((Thermostat[ctr_output].time_ctr_checkpoint != 0) &&
+          (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint)) {
+        // Reset times
+        Thermostat[ctr_output].time_ctr_checkpoint = 0;
+        Thermostat[ctr_output].timestamp_rampup_start = TasmotaGlobal.uptime;
+      }
       break;
 #ifdef USE_PI_AUTOTUNING
     // PI autotune
