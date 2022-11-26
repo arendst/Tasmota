@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
 - Optional define ``SERIAL_BRIDGE_BUFFER_SIZE`` to set Serial Bridge internal buffer size (Default ESP8266 = 256, ESP32 = 800)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
+- Support for HLK-LD2410 24GHz smart wave motion sensor
 - Support for Shelly Pro 1/1PM and 2/2PM [#16773](https://github.com/arendst/Tasmota/issues/16773)
 - Support for up to four DS18x20 GPIOs by md5sum-as [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk [#16938](https://github.com/arendst/Tasmota/issues/16938)

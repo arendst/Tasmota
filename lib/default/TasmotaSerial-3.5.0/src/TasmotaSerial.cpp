@@ -162,11 +162,11 @@ size_t TasmotaSerial::setRxBufferSize(size_t size) {
   if (size != serial_buffer_size) {
     if (m_hardserial) {
       if (size > 256) {      // Default hardware serial Rx buffer size
-  #ifdef ESP8266
+#ifdef ESP8266
         serial_buffer_size = size;
         Serial.setRxBufferSize(serial_buffer_size);
-  #endif  // ESP8266
-  #ifdef ESP32
+#endif  // ESP8266
+#ifdef ESP32
         if (TSerial) {
           // RX Buffer can't be resized when Serial is already running
           serial_buffer_size = size;
@@ -176,7 +176,7 @@ size_t TasmotaSerial::setRxBufferSize(size_t size) {
           TSerial->setRxBufferSize(serial_buffer_size);
           Esp32Begin();
         }
-  #endif  // ESP32
+#endif  // ESP32
       }
     }
     else if (m_buffer) {
@@ -425,6 +425,9 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
       if (next != (int)m_out_pos) {
         m_buffer[m_in_pos] = rec;
         m_in_pos = next;
+      } else {
+        // Buffer overrun - exit and fix Hardware Watchdog in case of high speed flooding
+        break;
       }
 
       TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit

@@ -83,6 +83,9 @@
 #define D_DEBUG                "Debug"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
+#define D_MOVING_DISTANCE      "Moving Distance"
+#define D_STATIC_DISTANCE      "Static Distance"
+#define D_DETECT_DISTANCE      "Detect Distance"
 #define D_DISTANCE             "Distanza"
 #define D_DNS_SERVER           "Server DNS"
 #define D_DO                   "Ossigeno dissolto"
