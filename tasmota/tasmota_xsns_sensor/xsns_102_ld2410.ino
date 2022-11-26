@@ -10,20 +10,24 @@
 /*********************************************************************************************\
  * HLK-LD2410 24GHz smart wave motion sensor
  *
+ * LD2410Duration 0                            - Set factory default settings
+ * LD2410Duration 1..65535                     - Set no-one duration in seconds (default 5)
+ * LD2410MovingSens 50,50,40,30,20,15,15,15,15 - Set moving distance sensitivity for up to 9 gates (at 0.75 meter interval)
+ * LD2410StaticSens 0,0,40,40,30,30,20,20,20   - Set static distance sensitivity for up to 9 gates (at 0.75 meter interval)
+ *
  * Inspiration:
  * https://community.home-assistant.io/t/mmwave-wars-one-sensor-module-to-rule-them-all/453260/2
  * Resources:
  * https://drive.google.com/drive/folders/1p4dhbEJA3YubyIjIIC7wwVsSo8x29Fq-?spm=a2g0o.detail.1000023.17.93465697yFwVxH
  *
- * Basic comms using Serial Bridge:
- *   sbaudrate 256000
- *   serialdelimiter 254
- *   sserialsend5 FDFCFBFA0400FF00010004030201 -> {"SSerialReceived":"FDFCFBFA0800FF0100000100400004030201"}
- *   sserialsend5 FDFCFBFA0200610004030201 -> {"SSerialReceived":"FDFCFBFA1C0061010000AA0808083232281E140F0F0F0F000028281E1E141414050004030201"}
- *   sserialsend5 FDFCFBFA0200A00004030201 -> {"SSerialReceived":"FDFCFBFA0C00A0010000000107011615092204030201"}
+ * Internal info:
+ * - After a LD2410 serial command a response takes 50mS
+ * - After a LD2410 restart it takes at least 1000mS before commands are allowed
 \*********************************************************************************************/
 
 #define XSNS_102                         102
+
+#define LD2410_MAX_GATES                 8       // 0 to 8 (= 9) - DO NOT CHANGE
 
 #define LD2410_CMND_START_CONFIGURATION  0xFF
 #define LD2410_CMND_END_CONFIGURATION    0xFE
@@ -50,11 +54,17 @@ struct {
   uint16_t moving_distance;
   uint16_t static_distance;
   uint16_t detect_distance;
+  uint16_t no_one_duration;
+  uint8_t moving_sensitivity[LD2410_MAX_GATES +1];
+  uint8_t static_sensitivity[LD2410_MAX_GATES +1];
+  uint8_t max_moving_distance_gate;
+  uint8_t max_static_distance_gate;
   uint8_t moving_energy;
   uint8_t static_energy;
-  uint8_t init_step;
-  uint8_t init_retry;
+  uint8_t step;
+  uint8_t retry;
   uint8_t byte_counter;
+  uint8_t settings;
   bool valid_response;
 } LD2410;
 
@@ -107,8 +117,13 @@ void Ld1410HandleConfigData(void) {
     // FD FC FB FA 1C 00 61 01 00 00 AA 08 08 08 32 32 28 1E 14 0F 0F 0F 0F 00 00 28 28 1E 1E 14 14 14 05 00 04 03 02 01 - Default
     // header     |len  |cw cv|ack  |hd|dd|md|sd|moving sensitivity 0..8   |static sensitivity 0..8   |timed|trailer
     //            |   28|     |    0|  | 8| 8| 8|50 50 40 30 20 15 15 15 15| 0  0 40 40 30 30 20 20 20|    5|
-
-
+    LD2410.max_moving_distance_gate = LD2410.buffer[12];
+    LD2410.max_static_distance_gate = LD2410.buffer[13];
+    for (uint32_t i = 0; i <= LD2410_MAX_GATES; i++) {
+      LD2410. moving_sensitivity[i] = LD2410.buffer[14 +i];
+      LD2410.static_sensitivity[i] = LD2410.buffer[23 +i];
+    }
+    LD2410.no_one_duration = LD2410.buffer[33] << 8 | LD2410.buffer[32];
   }
   else if (LD2410_CMND_START_CONFIGURATION == LD2410.buffer[6]) {  // 0xFF
     //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
@@ -122,7 +137,7 @@ void Ld1410HandleConfigData(void) {
     // FD FC FB FA 0C 00 A0 01 00 00 00 01 07 01 16 15 09 22 04 03 02 01
     // header     |len  |ty|hd|ack  |ftype|major|minor      |trailer
     //            |   12|  | 1|    0|  256|  1.7|   22091516|
-    AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Firmware version V%d.%02d.%02d%02d%02d%02d"),  // Firmware version V1.07.22091516
+    AddLog(LOG_LEVEL_INFO, PSTR("LD2: Firmware version V%d.%02d.%02d%02d%02d%02d"),  // Firmware version V1.07.22091516
       ToBcd(LD2410.buffer[13]), ToBcd(LD2410.buffer[12]),
       ToBcd(LD2410.buffer[17]), ToBcd(LD2410.buffer[16]), ToBcd(LD2410.buffer[15]), ToBcd(LD2410.buffer[14]));
   }
@@ -201,90 +216,135 @@ void Ld2410SendCommand(uint32_t command, uint8_t *val, uint32_t val_len) {
 
   LD2410Serial->flush();
   LD2410Serial->write(buffer, len);
-//  LD2410Serial->flush();
 }
 
-void Ld2410SetConfigMode(bool state) {
-  if (state) {
-    uint8_t value[2] = { 0x01, 0x00 };
-    Ld2410SendCommand(LD2410_CMND_START_CONFIGURATION, value, sizeof(value));
-  } else {
-    Ld2410SendCommand(LD2410_CMND_END_CONFIGURATION, nullptr, 0);
-  }
+void Ld2410SetConfigMode(void) {                                // 0xFF
+  uint8_t value[2] = { 0x01, 0x00 };
+  Ld2410SendCommand(LD2410_CMND_START_CONFIGURATION, value, sizeof(value));
 }
 
-void Ld2410SetBaudrate(uint32_t index) {
+void Ld2410SetMaxDistancesAndNoneDuration(uint32_t max_moving_distance_range, uint32_t max_static_distance_range, uint32_t no_one_duration) {  // 0x60
+  // Distance range value can be set from 1 to 8 (distance gates of 0.75 meter)
+  // No-one duration value can be set from 1 to 65535 (seconds)
+  // 00 00 08 00 00 00 01 00 08 00 00 00 02 00 05 00 00 00
+  // motio|          8|stati|          8|durat|seconds
+  uint8_t lsb_nd = no_one_duration & 0xFF;
+  uint8_t msb_nd = (no_one_duration >> 8) & 0xFF;
+  uint8_t value[18] = { 0x00, 0x00, (uint8_t)max_moving_distance_range, 0x00, 0x00, 0x00, 0x01, 0x00, (uint8_t)max_static_distance_range, 0x00, 0x00, 0x00, 0x02, 0x00, lsb_nd, msb_nd, 0x00, 0x00 };
+  Ld2410SendCommand(LD2410_CMND_SET_DISTANCE, value, sizeof(value));
+}
+
+void Ld2410SetGateSensitivity(uint32_t gate, uint32_t moving_sensitivity, uint32_t static_sensitivity) {  // 0x64
+  // Sensitivity value can be set from 0 to 100 (%) for gates 0 to 8
+  // 00 00 03 00 00 00 01 00 28 00 00 00 02 00 28 00 00 00
+  // gate |          3|motio|         40|stati|         40
+  uint8_t value[18] = { 0x00, 0x00, (uint8_t)gate, 0x00, 0x00, 0x00, 0x01, 0x00, (uint8_t)moving_sensitivity, 0x00, 0x00, 0x00, 0x02, 0x00, (uint8_t)static_sensitivity, 0x00, 0x00, 0x00 };
+  Ld2410SendCommand(LD2410_CMND_SET_SENSITIVITY, value, sizeof(value));
+}
+
+void Ld2410SetAllSensitivity(uint32_t sensitivity) {            // 0x64
+  // Sensitivity value can be set from 0 to 100
+  // 00 00 FF FF 00 00 01 00 28 00 00 00 02 00 28 00 00 00
+  // gate |all gates  |motio|         40|stati|         40
+  uint8_t value[18] = { 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x01, 0x00, (uint8_t)sensitivity, 0x00, 0x00, 0x00, 0x02, 0x00, (uint8_t)sensitivity, 0x00, 0x00, 0x00 };
+  Ld2410SendCommand(LD2410_CMND_SET_SENSITIVITY, value, sizeof(value));
+}
+
+void Ld2410SetBaudrate(uint32_t index) {                        // 0xA1
   uint8_t value[2] = { (uint8_t)index, 0x00 };
   Ld2410SendCommand(LD2410_CMND_SET_BAUDRATE, value, sizeof(value));
 }
 
-void Ld2410SetAllSensitivity(uint32_t sensitivity) {
-  // 00 00 FF FF 00 00 01 00 28 00 00 00 02 00 28 00 00 00
-  // gates|all gates  |motio|sensitivity|stati|sensitivity
-  uint8_t lsb = sensitivity & 0xFF;
-  uint8_t msb = (sensitivity >> 8) & 0xFF;
-  uint8_t value[18] = { 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x01, 0x00, lsb, msb, 0x00, 0x00, 0x02, 0x00, lsb, msb, 0x00, 0x00 };
-  Ld2410SendCommand(LD2410_CMND_SET_SENSITIVITY, value, sizeof(value));
-}
-
 /********************************************************************************************/
 
-void Ld2410Every250MSecond(void) {
-  if (LD2410.init_step) {
-    LD2410.init_step--;
-    switch (LD2410.init_step) {
+void Ld2410Every100MSecond(void) {
+  if (LD2410.step) {
+    LD2410.step--;
+    switch (LD2410.step) {
+      // case 60: Set default settings
+      case 59:
+        Ld2410SetConfigMode();                                  // Stop running mode
+        break;
+      case 57:
+        Ld2410SendCommand(LD2410_CMND_FACTORY_RESET);
+        break;
+      case 56:
+        Ld2410SendCommand(LD2410_CMND_REBOOT);                  // Wait at least 1 second
+        break;
+      case 46:
+        LD2410.step = 7;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Settings factory reset"));
+        break;
+
+      // case 40: Save settings
+      case 39:
+        Ld2410SetConfigMode();                                  // Stop running mode
+        break;
+      case 37:
+        Ld2410SetMaxDistancesAndNoneDuration(8, 8, LD2410.no_one_duration);
+        break;
+      case 28 ... 36: {
+          uint32_t index = LD2410.step -28;
+          Ld2410SetGateSensitivity(index, LD2410.moving_sensitivity[index], LD2410.static_sensitivity[index]);
+        }
+        break;
+      case 27:
+        LD2410.step = 3;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Settings saved"));
+        break;
 /*
-      // POC using 57600 bps instead of default 256000 bps
-      case 20:
+      // case 24: pre-POC using 57600 bps instead of default 256000 bps
+      case 23:
         AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Switch to 57600 bps"));
         LD2410Serial->flush();
         LD2410Serial->begin(256000);
         break;
-      case 19:
-        Ld2410SetConfigMode(1);                                 // Stop running mode
+      case 21:
+        Ld2410SetConfigMode();                                  // Stop running mode
         break;
-      case 16:
+      case 19:
         Ld2410SetBaudrate(4);                                   // 57600 bps
         break;
-      case 14:
-        Ld2410SendCommand(LD2410_CMND_REBOOT, nullptr, 0);
+      case 18:
+        Ld2410SendCommand(LD2410_CMND_REBOOT);                  // Wait at least 1 second
         LD2410Serial->flush();
         LD2410Serial->begin(57600);
       break;
 */
-      case 10:
-        Ld2410SetConfigMode(1);                                 // Stop running mode
+      // case 7: Init
+      case 5:
+        Ld2410SetConfigMode();                                  // Stop running mode
         break;
-      case 7:
-        if (!LD2410.valid_response && LD2410.init_retry) {
-          LD2410.init_retry--;
-          if (LD2410.init_retry) {
-//            LD2410.init_step = 21;                              // Change baudrate
-            LD2410.init_step = 13;                              // Retry
+      case 3:
+        if (!LD2410.valid_response && LD2410.retry) {
+          LD2410.retry--;
+          if (LD2410.retry) {
+//            LD2410.step = 24;                                   // Change baudrate
+            LD2410.step = 7;                                    // Retry
           } else {
-            LD2410.init_step = 0;
+            LD2410.step = 0;
             AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Not detected"));
           }
         } else {
           Ld2410SendCommand(LD2410_CMND_GET_FIRMWARE);
         }
         break;
-      case 4:
+      case 2:
         Ld2410SendCommand(LD2410_CMND_READ_PARAMETERS);
         break;
       case 1:
-        Ld2410SetConfigMode(0);
+        Ld2410SendCommand(LD2410_CMND_END_CONFIGURATION);
         break;
     }
   } else {
-/*
-    // Four times a second might be too much to handle by rules
-    if (LD2410.moving_energy) {
-      // Send state change to be captured by rules
-      // {"Time":"2022-11-26T10:48:16","Switch1":"ON","LD2410":{"Distance":[125.0,0.0,0.0],"Energy":[0,100]}}
-      MqttPublishSensor();
+    if (1 == LD2410.settings) {
+      LD2410.settings = 0;
+      LD2410.step = 40;
     }
-*/
+    else if (2 == LD2410.settings) {
+      LD2410.settings = 0;
+      LD2410.step = 60;
+    }
   }
 }
 
@@ -298,14 +358,14 @@ void Ld2410EverySecond(void) {
 
 void Ld2410Detect(void) {
   if (PinUsed(GPIO_LD2410_RX) && PinUsed(GPIO_LD2410_TX)) {
-    LD2410.buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);
+    LD2410.buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);    // Default TM_SERIAL_BUFFER_SIZE (=64) size
     if (!LD2410.buffer) { return; }
-    LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);  // Default TM_SERIAL_BUFFER_SIZE (=64) size
+    LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);
     if (LD2410Serial->begin(256000)) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
 
-      LD2410.init_retry = 5;
-      LD2410.init_step = 13;
+      LD2410.retry = 4;
+      LD2410.step = 7;
     }
   }
 }
@@ -314,8 +374,67 @@ void Ld2410Detect(void) {
  * Commands
 \*********************************************************************************************/
 
+const char kLd2410Commands[] PROGMEM = "LD2410|"  // Prefix
+  "Duration|MovingSens|StaticSens";
 
+void (* const Ld2410Command[])(void) PROGMEM = {
+  &CmndLd2410Duration, &CmndLd2410MovingSensitivity, &CmndLd2410StaticSensitivity };
 
+void Ld2410Response(void) {
+  Response_P(PSTR("{\"LD2410\":{\"Duration\":%d,\"Moving\":{\"Gates\":%d,\"Sensitivity\":["),
+    LD2410.no_one_duration, LD2410.max_moving_distance_gate);
+  for (uint32_t i = 0; i <= LD2410_MAX_GATES; i++) {
+    ResponseAppend_P(PSTR("%s%d"), (i==0)?"":",", LD2410.moving_sensitivity[i]);
+  }
+  ResponseAppend_P(PSTR("]},\"Static\":{\"Gates\":%d,\"Sensitivity\":["), LD2410.max_static_distance_gate);
+  for (uint32_t i = 0; i <= LD2410_MAX_GATES; i++) {
+    ResponseAppend_P(PSTR("%s%d"), (i==0)?"":",", LD2410.static_sensitivity[i]);
+  }
+  ResponseAppend_P(PSTR("]}}}"));
+}
+
+void CmndLd2410Duration(void) {
+  // LD2410Duration 0  - Set default settings
+  if (0 == XdrvMailbox.payload) {
+    LD2410.settings = 2;
+  }
+  // LD2410Duration 5
+  else if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 65535)) {
+    LD2410.no_one_duration = XdrvMailbox.payload;
+    LD2410.settings = 1;
+  }
+  Ld2410Response();
+}
+
+void CmndLd2410MovingSensitivity(void) {
+  // LD2410MovingSens 50,50,40,30,20,15,15,15,15
+  uint32_t parm[LD2410_MAX_GATES +1] = { 0 };
+  uint32_t count = ParseParameters(LD2410_MAX_GATES +1, parm);
+  if (count) {
+    for (uint32_t i = 0; i < count; i++) {
+      if ((parm[i] >= 0) && (parm[i] <= 100)) {
+        LD2410.moving_sensitivity[i] = parm[i];
+      }
+    }
+    LD2410.settings = 1;
+  }
+  Ld2410Response();
+}
+
+void CmndLd2410StaticSensitivity(void) {
+  // LD2410StaticSens 0,0,40,40,30,30,20,20,20
+  uint32_t parm[LD2410_MAX_GATES +1] = { 0 };
+  uint32_t count = ParseParameters(LD2410_MAX_GATES +1, parm);
+  if (count) {
+    for (uint32_t i = 0; i < count; i++) {
+      if ((parm[i] >= 0) && (parm[i] <= 100)) {
+        LD2410.static_sensitivity[i] = parm[i];
+      }
+    }
+    LD2410.settings = 1;
+  }
+  Ld2410Response();
+}
 
 /*********************************************************************************************\
  * Presentation
@@ -359,8 +478,8 @@ bool Xsns102(uint32_t function) {
       case FUNC_SLEEP_LOOP:
         Ld2410Input();
         break;
-      case FUNC_EVERY_250_MSECOND:
-        Ld2410Every250MSecond();
+      case FUNC_EVERY_100_MSECOND:
+        Ld2410Every100MSecond();
         break;
       case FUNC_EVERY_SECOND:
         Ld2410EverySecond();
@@ -373,6 +492,9 @@ bool Xsns102(uint32_t function) {
         Ld2410Show(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_COMMAND:
+        result = DecodeCommand(kLd2410Commands, Ld2410Command);
+        break;
     }
   }
   return result;
