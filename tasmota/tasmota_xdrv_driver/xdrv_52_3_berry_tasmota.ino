@@ -256,6 +256,14 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: tasmota.hostname() -> string
+  //
+  int32_t l_hostname(struct bvm *vm);
+  int32_t l_hostname(struct bvm *vm) {
+    be_pushstring(vm, NetworkHostname());
+    be_return(vm);
+  }
+
   static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {
     be_newobject(vm, "map");
     be_map_insert_int(vm, "year", t->tm_year + 1900);
