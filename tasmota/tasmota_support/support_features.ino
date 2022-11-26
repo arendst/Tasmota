@@ -855,7 +855,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_HMC5883L)
     feature9 |= 0x00000200;  // xsns_101_hmc5883l.ino
 #endif
-//    feature9 |= 0x00000400;
+#ifdef USE_LD2410
+    feature9 |= 0x00000400;  // xsns_102_ld2410.ino
+#endif
 //    feature9 |= 0x00000800;
 
 //    feature9 |= 0x00001000;
