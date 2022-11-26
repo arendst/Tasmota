@@ -426,8 +426,8 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         m_buffer[m_in_pos] = rec;
         m_in_pos = next;
       } else {
-        // Buffer overrun - prep to exit and fix Hardware Watchdog in case of high speed flooding
-        loop_read = 0;
+        // Buffer overrun - exit and fix Hardware Watchdog in case of high speed flooding
+        break;
       }
 
       TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit
