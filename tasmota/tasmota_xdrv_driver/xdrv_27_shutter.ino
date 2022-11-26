@@ -391,18 +391,30 @@ void ShutterReportPosition(bool always, uint32_t index)
   uint32_t i = 0;
   uint32_t n = TasmotaGlobal.shutters_present;
   uint8_t shutter_running = 0;
+  for (i; i < n; i++) {
+    if (Shutter[i].direction != 0) {
+      shutter_running++;
+    }
+  }
+ 
+  // Allow function exit if nothing to report (99.9% use case)
+  if (!always && !shutter_running) return;
+
   if( index != MAX_SHUTTERS) {
     i = index;
     n = index+1;
+  } else {
+    i = 0;
   }
   for (i; i < n; i++) {
     //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d"), i+1,Shutter[i].real_position);
-    uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+    
     if (Shutter[i].direction != 0) {
       ShutterLogPos(i);
       shutter_running++;
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
+    uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     uint32_t target = ShutterRealToPercentPosition(Shutter[i].target_position, i);
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
   }
@@ -587,8 +599,7 @@ void ShutterUpdatePosition(void)
         Shutter[i].start_position = Shutter[i].real_position;
 
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
-        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0
-            && Settings->shutter_position[i] > 0 && Settings->shutter_position[i] < 100) {
+        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
           char databuf[1] = "";
           XdrvMailbox.data = databuf;
@@ -1199,6 +1210,10 @@ void CmndShutterPosition(void)
           return;
         }
       }
+
+      // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
+      if (XdrvMailbox.payload ==   0) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
+      if (XdrvMailbox.payload == 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       // webgui still send also on inverted shutter the native position.
