@@ -35,20 +35,6 @@ static void m_mdns_set_hostname(struct bvm *vm, const char * hostname) {
 }
 BE_FUNC_CTYPE_DECLARE(m_mdns_set_hostname, "", "@s")
 
-bbool be_ismapinstance(bvm *vm, int rel_index)
-{
-    bbool ret = bfalse;
-    int index = be_absindex(vm, rel_index);
-    if (be_isinstance(vm, index)) {
-        be_getbuiltin(vm, "map");
-        if (be_isderived(vm, index)) {
-            ret = btrue;
-        }
-        be_pop(vm, 1);
-    }
-    return ret;
-}
-
 //
 // `mdns.add_service(service:string, proto:string, port:int, txt:map) -> nil`
 //
@@ -56,7 +42,6 @@ bbool be_ismapinstance(bvm *vm, int rel_index)
 //    import mdns mdns.add_service("_arduino","_tcp",1111, {"board":"tasmota", "tcp_check":"no", "ssh_upload":"no", "auth_upload":"no"})
 //
 //    import mdns mdns.add_service("_matterc","_udp", 5540, {"VP":"65521+32768", "SII":5000, "SAI":300, "T":1, "D":3840, "CM":1, "PH":33, "PI":""})
-// VP=65521+32768 SII=5000 SAI=300 T=1 D=3840 CM=1 PH=33 PI=
 static int32_t m_mdns_add_service(struct bvm *vm) {
   int32_t top = be_top(vm);
   if (top >= 3 && be_isstring(vm, 1) && be_isstring(vm, 2) && be_isint(vm, 3)) {
