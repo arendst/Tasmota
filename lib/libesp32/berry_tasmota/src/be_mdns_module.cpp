@@ -15,6 +15,7 @@
 
 //
 // `mdsn.start([hostname:string]) -> nil`
+// start or restart mdns, specify hostname or use tasmota.hostname() if none provided (default)
 extern char* NetworkHostname(void);
 static void m_mdns_start(struct bvm *vm, const char* hostname) {
   esp_err_t err = mdns_init();
@@ -32,13 +33,16 @@ static void m_mdns_start(struct bvm *vm, const char* hostname) {
 BE_FUNC_CTYPE_DECLARE(m_mdns_start, "", "@[s]")
 
 //
-// `msdn.stop() -> nil``
+// `msdn.stop() -> nil`
+// free all mdns resources
 static void m_mdns_stop(void) {
   mdns_free();
 }
 BE_FUNC_CTYPE_DECLARE(m_mdns_stop, "", "")
 
-
+//
+// `mdns.set_hostname(hostname:string) -> nil`
+// change the hostname
 static void m_mdns_set_hostname(struct bvm *vm, const char * hostname) {
   esp_err_t err = mdns_hostname_set(hostname);
   if (err != ESP_OK) {
@@ -49,6 +53,8 @@ BE_FUNC_CTYPE_DECLARE(m_mdns_set_hostname, "", "@s")
 
 //
 // `mdns.add_service(service:string, proto:string, port:int, txt:map) -> nil`
+//
+// add a service declaration using the current hostname as instance name, and specify TXT fields as a `map`
 //
 // Test:
 //    import mdns mdns.add_service("_arduino","_tcp",1111, {"board":"tasmota", "tcp_check":"no", "ssh_upload":"no", "auth_upload":"no"})
