@@ -208,6 +208,31 @@ BERRY_API bbool be_isinstance(bvm *vm, int index)
     return var_isinstance(v);
 }
 
+static bbool be_isinstanceofbuiltin(bvm *vm, int rel_index, const char *classname)
+{
+    bbool ret = bfalse;
+    int index = be_absindex(vm, rel_index);
+    if (be_isinstance(vm, index)) {
+        be_getbuiltin(vm, classname);
+        if (be_isderived(vm, index)) {
+            ret = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return ret;
+}
+
+BERRY_API bbool be_ismapinstance(bvm *vm, int index)
+{
+    return be_isinstanceofbuiltin(vm, index, "map");
+}
+
+BERRY_API bbool be_islistinstance(bvm *vm, int index)
+{
+    return be_isinstanceofbuiltin(vm, index, "list");
+}
+
+
 BERRY_API bbool be_ismodule(bvm *vm, int index)
 {
     bvalue *v = be_indexof(vm, index);
