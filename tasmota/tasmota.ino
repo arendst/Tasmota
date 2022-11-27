@@ -683,7 +683,7 @@ void SleepDelay(uint32_t mseconds) {
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
-      XdrvCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
+      XdrvXsnsCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
       delay(1);
     }
   } else {
