@@ -208,7 +208,7 @@ BERRY_API bbool be_isinstance(bvm *vm, int index)
     return var_isinstance(v);
 }
 
-BERRY_API bbool be_isinstanceofbuiltin(bvm *vm, int rel_index, const char *classname)
+static bbool be_isinstanceofbuiltin(bvm *vm, int rel_index, const char *classname)
 {
     bbool ret = bfalse;
     int index = be_absindex(vm, rel_index);

@@ -464,7 +464,6 @@ BERRY_API bbool be_isfunction(bvm *vm, int index);
 BERRY_API bbool be_isproto(bvm *vm, int index);
 BERRY_API bbool be_isclass(bvm *vm, int index);
 BERRY_API bbool be_isinstance(bvm *vm, int index);
-BERRY_API bbool be_isinstanceofbuiltin(bvm *vm, int index, const char *classname);
 BERRY_API bbool be_ismapinstance(bvm *vm, int index);
 BERRY_API bbool be_islistinstance(bvm *vm, int index);
 BERRY_API bbool be_ismodule(bvm *vm, int index);
