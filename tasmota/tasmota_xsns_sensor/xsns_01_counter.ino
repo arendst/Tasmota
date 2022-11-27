@@ -277,7 +277,7 @@ void SyncACDimmer(void)
         // reset trigger for PWM sync
         ac_zero_cross_dimmer.startReSync = false;
         // calculate timeoffset to fire PWM based on Dimmer
-        phaseStart_ToBeClockCycles = (ac_zero_cross_dimmer.tobe_cycle_timeClockCycles * (1024 - (Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
+        phaseStart_ToBeClockCycles = (ac_zero_cross_dimmer.tobe_cycle_timeClockCycles * (1024 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
 
         // Limit range to avoid overshoot and undershoot
         phaseStart_ToBeClockCycles = tmin(tmax(phaseStart_ToBeClockCycles, 160000), 0.95* ac_zero_cross_dimmer.tobe_cycle_timeClockCycles);
@@ -322,9 +322,8 @@ void SyncACDimmer(void)
 
 #endif  // ESP32
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d], shift: %d, dimm_time_CCs %d, phaseShift_CCs %d, currentPWMcylce: %lu, current_cycle_CC: %lu, lastcc %lu, currentSteps %lu, currDIM %lu, last delta:%lu"),
-                                             i, ac_zero_cross_dimmer.currentShiftClockCycle[i], phaseStart_ToBeClockCycles,phaseShift_ClockCycles,ac_zero_cross_dimmer.currentPWMCycleCount[i],ac_zero_cross_dimmer.current_cycle_ClockCycles , ac_zero_cross_dimmer.lastCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i],phaseStart_ActualClockCycles);
-        // Light fading
+         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d], shift: %d, dimm_time_CCs %d, phaseShift_CCs %d, currentPWMcylce: %lu, current_cycle_CC: %lu, lastcc %lu, currentSteps %lu, currDIM %lu, last delta:%lu"),
+                                             i, ac_zero_cross_dimmer.currentShiftClockCycle[i], phaseStart_ToBeClockCycles,phaseShift_ClockCycles,ac_zero_cross_dimmer.currentPWMCycleCount[i],ac_zero_cross_dimmer.current_cycle_ClockCycles , ac_zero_cross_dimmer.lastCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i],phaseStart_ActualClockCycles);        // Light fading
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d], curr: %d, final: %d, fading: %d, phase-shift: %d, ON/OFF: %d"),i, Light.fade_cur_10[i], Light.fade_start_10[i], Light.fade_running, phaseStart_ToBeClockCycles,ac_zero_cross_dimmer.PWM_ON[i]);
 
       } // do sync onchannel
