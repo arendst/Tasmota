@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) (#17140)
 - Teleinfo TEMPO (BBR) contract (#17160)
 - Support for HLK-LD2410 24GHz smart wave motion sensor
+- Berry add module ``mdns``
 
 ### Breaking Changed
 
