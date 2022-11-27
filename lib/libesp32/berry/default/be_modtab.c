@@ -175,8 +175,8 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(BLE),
 #endif //USE_MI_ESP32
 #ifdef USE_DISCOVERY
-#endif // USE_DISCOVERY
     &be_native_module(mdns),
+#endif // USE_DISCOVERY
 #endif // TASMOTA
     /* user-defined modules register end */
     NULL /* do not remove */

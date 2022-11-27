@@ -13,19 +13,31 @@
 #include "mdns.h"
 #include <string.h>
 
+//
+// `mdsn.start([hostname:string]) -> nil`
 extern char* NetworkHostname(void);
-static int32_t m_mdns_init(struct bvm *vm) {
+static void m_mdns_start(struct bvm *vm, const char* hostname) {
   esp_err_t err = mdns_init();
   if (err != ESP_OK) {
     be_raisef(vm, "internal_error", "could not initialize mdns err=%i", err);
   }
-  err = mdns_hostname_set(NetworkHostname());
+  if (hostname == NULL) {
+    hostname = NetworkHostname();   // revert to default hostname if none is specified
+  }
+  err = mdns_hostname_set(hostname);
   if (err != ESP_OK) {
     be_raisef(vm, "internal_error", "could not set hostname err=%i", err);
   }
-  be_pushvalue(vm, 1);    // push the value of first arg which is the module itself
-  be_return(vm);
 }
+BE_FUNC_CTYPE_DECLARE(m_mdns_start, "", "@[s]")
+
+//
+// `msdn.stop() -> nil``
+static void m_mdns_stop(void) {
+  mdns_free();
+}
+BE_FUNC_CTYPE_DECLARE(m_mdns_stop, "", "")
+
 
 static void m_mdns_set_hostname(struct bvm *vm, const char * hostname) {
   esp_err_t err = mdns_hostname_set(hostname);
@@ -99,7 +111,8 @@ static int32_t m_mdns_add_service(struct bvm *vm) {
 
 /* @const_object_info_begin
 module mdns (scope: global) {
-    init, func(m_mdns_init)
+    start, ctype_func(m_mdns_start)
+    stop, ctype_func(m_mdns_stop)
     set_hostname, ctype_func(m_mdns_set_hostname)
     add_service, func(m_mdns_add_service)
 }
