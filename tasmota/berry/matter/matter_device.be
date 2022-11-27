@@ -3,7 +3,11 @@ class matter_device
   var packet
 
   def init()
-    tasmota.add_rule("Wifi#Connected", def () self.start_mdns() end)
+    if tasmota.eth().find('ip') != nil || tasmota.wifi().find('ip') != nil
+      self.start_mdns()
+    else
+      tasmota.add_rule("Wifi#Connected", def () self.start_mdns() end)
+    end
     tasmota.add_driver(self)
   end
 
