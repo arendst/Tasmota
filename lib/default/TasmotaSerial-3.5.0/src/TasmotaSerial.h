@@ -60,7 +60,8 @@ class TasmotaSerial : public Stream {
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
 #endif
-    bool isValid() { return m_valid; }
+    bool isValid(void) { return m_valid; }
+    bool overflow(void);
 
     using Print::write;
 
@@ -89,6 +90,7 @@ class TasmotaSerial : public Stream {
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
+    bool m_overflow;
     bool m_high_speed = false;
     bool m_very_high_speed = false;   // above 100000 bauds
     uint8_t *m_buffer = nullptr;

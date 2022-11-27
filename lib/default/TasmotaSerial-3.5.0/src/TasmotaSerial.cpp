@@ -48,6 +48,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_valid = false;
   m_hardserial = false;
   m_hardswap = false;
+  m_overflow = false;
   m_stop_bits = 1;
   m_nwmode = nwmode;
   serial_buffer_size = buffer_size;
@@ -267,6 +268,21 @@ bool TasmotaSerial::hardwareSerial(void) {
 #endif  // ESP32
 }
 
+bool TasmotaSerial::overflow(void) {
+  if (m_hardserial) {
+#ifdef ESP8266
+    return Serial.hasOverrun();  // Returns then clear overrun flag
+#endif  // ESP8266
+#ifdef ESP32
+    return false;  // Not implemented
+#endif  // ESP32
+  } else {
+    bool res = m_overflow;
+    m_overflow = false;
+    return res;
+  }
+}
+
 void TasmotaSerial::flush(void) {
   if (m_hardserial) {
 #ifdef ESP8266
@@ -305,6 +321,7 @@ int TasmotaSerial::read(void) {
 #endif  // ESP32
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
+//    m_overflow = false;
     uint32_t ch = m_buffer[m_out_pos];
     m_out_pos = (m_out_pos +1) % serial_buffer_size;
     return ch;
@@ -321,6 +338,7 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
 #endif  // ESP32
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) { return 0; }
+//    m_overflow = false;
     size_t count = 0;
     for( ; size && (m_in_pos == m_out_pos) ; --size, ++count) {
       *buffer++ = m_buffer[m_out_pos];
@@ -427,6 +445,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         m_in_pos = next;
       } else {
         // Buffer overrun - exit and fix Hardware Watchdog in case of high speed flooding
+        m_overflow = true;
         break;
       }
 

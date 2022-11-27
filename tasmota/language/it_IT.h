@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 10.11.2022
+ * Updated until v9.4.0.1 - Last update 27.11.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -83,9 +83,9 @@
 #define D_DEBUG                "Debug"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
-#define D_MOVING_DISTANCE      "Moving Distance"
-#define D_STATIC_DISTANCE      "Static Distance"
-#define D_DETECT_DISTANCE      "Detect Distance"
+#define D_MOVING_DISTANCE      "Distanza in movimento"
+#define D_STATIC_DISTANCE      "Distanza statica"
+#define D_DETECT_DISTANCE      "Rileva distanza"
 #define D_DISTANCE             "Distanza"
 #define D_DNS_SERVER           "Server DNS"
 #define D_DO                   "Ossigeno dissolto"

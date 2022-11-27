@@ -21,7 +21,7 @@
  * https://drive.google.com/drive/folders/1p4dhbEJA3YubyIjIIC7wwVsSo8x29Fq-?spm=a2g0o.detail.1000023.17.93465697yFwVxH
  *
  * Internal info:
- * - After a LD2410 serial command a response takes 50mS
+ * - After a LD2410 serial command a response takes about 10mS
  * - After a LD2410 restart it takes at least 1000mS before commands are allowed
 \*********************************************************************************************/
 
@@ -40,6 +40,8 @@
 #define LD2410_CMND_SET_BAUDRATE         0xA1
 #define LD2410_CMND_FACTORY_RESET        0xA2
 #define LD2410_CMND_REBOOT               0xA3
+#define LD2410_CMND_SET_BLUETOOTH        0xA4
+#define LD2410_CMND_GET_BLUETOOTH_MAC    0xA5
 
 const uint8_t LD2410_config_header[4] = {0xFD, 0xFC, 0xFB, 0xFA};
 const uint8_t LD2410_config_footer[4] = {0x04, 0x03, 0x02, 0x01};
@@ -151,6 +153,11 @@ bool Ld2410Match(const uint8_t *header, uint32_t offset) {
 }
 
 void Ld2410Input(void) {
+
+  if (LD2410Serial->overflow()) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Serial buffer overrun"));
+  }
+
   while (LD2410Serial->available()) {
     yield();                                                    // Fix watchdogs
 
@@ -178,6 +185,11 @@ void Ld2410Input(void) {
       if (target_header) {                                      // F4F3F2F1
         if (Ld2410Match(LD2410_target_footer, len -4)) {        // F8F7F6F5
           Ld1410HandleTargetData();
+
+          // Break to test Hardware Watchdog due to buffer overrun
+          LD2410.byte_counter = 0;
+          break;
+
         }
       }
       else if (config_header) {                                 // FDFCFBFA
@@ -271,8 +283,8 @@ void Ld2410Every100MSecond(void) {
       case 56:
         Ld2410SendCommand(LD2410_CMND_REBOOT);                  // Wait at least 1 second
         break;
-      case 46:
-        LD2410.step = 7;
+      case 51:
+        LD2410.step = 12;
         AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Settings factory reset"));
         break;
 
@@ -311,7 +323,7 @@ void Ld2410Every100MSecond(void) {
         LD2410Serial->begin(57600);
       break;
 */
-      // case 7: Init
+      // case 12: Init
       case 5:
         Ld2410SetConfigMode();                                  // Stop running mode
         break;
@@ -365,7 +377,7 @@ void Ld2410Detect(void) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
 
       LD2410.retry = 4;
-      LD2410.step = 7;
+      LD2410.step = 12;
     }
   }
 }
