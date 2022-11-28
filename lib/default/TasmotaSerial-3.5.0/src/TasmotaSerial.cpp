@@ -321,7 +321,6 @@ int TasmotaSerial::read(void) {
 #endif  // ESP32
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
-//    m_overflow = false;
     uint32_t ch = m_buffer[m_out_pos];
     m_out_pos = (m_out_pos +1) % serial_buffer_size;
     return ch;
@@ -338,9 +337,8 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
 #endif  // ESP32
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) { return 0; }
-//    m_overflow = false;
     size_t count = 0;
-    for( ; size && (m_in_pos == m_out_pos) ; --size, ++count) {
+    for( ; size && (m_in_pos != m_out_pos) ; --size, ++count) {
       *buffer++ = m_buffer[m_out_pos];
       m_out_pos = (m_out_pos +1) % serial_buffer_size;
     }
@@ -359,6 +357,11 @@ int TasmotaSerial::available(void) {
   } else {
     int avail = m_in_pos - m_out_pos;
     if (avail < 0) avail += serial_buffer_size;
+
+//    if (!avail) {
+//      optimistic_yield(10000);
+//    }
+
     return avail;
   }
 }
