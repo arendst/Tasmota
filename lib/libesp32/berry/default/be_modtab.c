@@ -227,6 +227,8 @@ be_extern_native_class(lv_wifi_arcs);
 be_extern_native_class(lv_wifi_arcs_icon);
 be_extern_native_class(lv_clock);
 be_extern_native_class(lv_clock_icon);
+// Matter support
+be_extern_native_class(Matter_Clusters);
 
 be_extern_native_class(int64);
 
@@ -300,6 +302,10 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_BERRY_INT64
     &be_native_class(int64),
 #endif
+#ifdef USE_MATTER_DEVICE
+    &be_native_class(Matter_Clusters),
+#endif // USE_MATTER_DEVICE
+
 #endif // TASMOTA
     NULL, /* do not remove */
 };
