@@ -76,6 +76,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define MAX_SARRAY_NUM 32
 #endif
 
+void Draw_jpeg(uint8_t *mem, uint16_t jpgsize, uint16_t xp, uint16_t yp, uint8_t scale);
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 char *web_send_line(char mc, char *lp);
@@ -182,7 +183,7 @@ void Script_ticker4_end(void) {
 #endif
 
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
-extern uint8_t sml_json_enable;
+extern uint8_t sml_options;
 #endif
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
@@ -1876,6 +1877,117 @@ if (hsv.S == 0) {
 	return rgb;
 }
 #endif //USE_LIGHT
+
+#ifdef ESP32
+#ifdef JPEG_PICTS
+#ifdef STREAM_JPEG_PICTS
+struct JPG_TASK {
+  char boundary[40];
+  bool draw;
+  uint8_t scale;
+  uint16_t xp;
+  uint16_t yp;
+  WiFiClient stream;
+  HTTPClient http;
+} jpg_task;
+
+// "e8b8c539-047d-4777-a985-fbba6edff11e"
+
+int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t scale) {
+  char hbuff[64];
+  int32_t httpCode = 0;
+  const char * headerKeys[] = {"Content-Type", "Content-Length"} ;
+  const size_t numberOfHeaders = 2;
+
+  switch (sel) {
+    case 0:
+      // open
+      jpg_task.boundary[0] = 0;
+      jpg_task.draw = false;
+      jpg_task.xp = xp;
+      jpg_task.yp = yp;
+      jpg_task.scale = scale;
+      sprintf(hbuff,"http://%s", url);
+      jpg_task.http.begin(jpg_task.stream, hbuff);
+      jpg_task.http.collectHeaders(headerKeys, numberOfHeaders);
+      httpCode = jpg_task.http.GET();
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+        String boundary = jpg_task.http.header(headerKeys[0]);
+        char *cp = strchr(boundary.c_str(), '=');
+        if (cp) {
+          strcpy(jpg_task.boundary,cp + 1);
+        }
+      } else {
+        AddLog(LOG_LEVEL_INFO,PSTR("HTTP error %d = %s"), httpCode, jpg_task.http.errorToString(httpCode).c_str());
+      }
+      return httpCode;
+      break;
+    case 1:
+      // close
+      jpg_task.stream.stop();
+      jpg_task.http.end();
+      break;
+    case 2:
+      // get next frame
+      /*Wc.client.print("--" BOUNDARY "\r\n");
+      Wc.client.printf("Content-Type: image/jpeg\r\n"
+        "Content-Length: %d\r\n"
+        "\r\n", static_cast<int>(_jpg_buf_len));
+        */
+      {
+        if (jpg_task.http.connected()) {
+          char inbuff[64];
+          memset(inbuff, 0, sizeof(inbuff));
+          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          if (inbuff[0] == '\r') {
+            memset(inbuff, 0, sizeof(inbuff));
+            jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          }
+          //AddLog(LOG_LEVEL_INFO, PSTR("boundary = %s"), inbuff);
+          memset(inbuff, 0, sizeof(inbuff));
+          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          //AddLog(LOG_LEVEL_INFO, PSTR("type = %s"), inbuff);
+          memset(inbuff, 0, sizeof(inbuff));
+          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          //AddLog(LOG_LEVEL_INFO, PSTR("size = %s"), inbuff);
+          char *cp = strchr(inbuff, ':');
+          uint16_t size = 0;
+          if (cp) {
+            size = atoi(cp + 1);
+          }
+          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+
+          if (size > 0) {
+            //AddLog(LOG_LEVEL_INFO, PSTR("size = %d"), size);
+            uint8_t *buff = (uint8_t *)special_malloc(size);
+            if (buff) {
+              jpg_task.stream.readBytes(buff, size);
+            }
+            if (jpg_task.draw) {
+              Draw_jpeg(buff, size, jpg_task.xp, jpg_task.yp, jpg_task.scale);
+            }
+            if (buff) {
+              free(buff);
+            }
+          }
+          return size;
+        }
+      }
+      break;
+    case 3:
+      // stop drawing
+      jpg_task.draw = false;
+      break;
+    case 4:
+      // resume drawing
+      jpg_task.draw = true;
+      break;
+  }
+  return 0;
+}
+#endif // STREAM_JPEG_PICTS
+#endif // JPEG_PICTS
+#endif // ESP32
 
 
 #ifdef USE_ANGLE_FUNC
@@ -3575,12 +3687,41 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif // ESP32
         break;
 
+#ifdef ESP32
+#ifdef JPEG_PICTS
+#ifdef STREAM_JPEG_PICTS
+      case 'j':
+        if (!strncmp(lp, "jpg(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          uint8_t selector = fvar;
+          switch (selector) {
+            case 0:
+              // start streaming
+              char url[SCRIPT_MAXSSIZE];
+              lp = GetStringArgument(lp, OPER_EQU, url, 0);
+              float xp, yp, scale ;
+              lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
+              lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
+              lp = GetNumericArgument(lp, OPER_EQU, &scale, 0);
+              fvar = fetch_jpg(0, url, xp, yp, scale);
+              break;
+            default:
+              // other cmds
+              fvar = fetch_jpg(selector, 0, 0, 0, 0);
+              break;
+          }
+          goto nfuncexit;
+        }
+        break;
+#endif // STREAM_JPEG_PICTS
+#endif // JPEG_PICTS
+#endif // ESP32
+
 #ifdef USE_KNX
       case 'k':
         if (!strncmp(lp, "knx(", 4)) {
           float type;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &type, gv);
-          SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           KnxSensor(type, fvar);
@@ -3942,6 +4083,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
+        if (!strncmp(lp, "rax", 3)) {
+          TasmotaGlobal.no_autoexec = 0;
+          goto exit;
+        }
         break;
 
       case 's':
@@ -4219,7 +4364,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto nfuncexit;
         }
         if (!strncmp(vname, "smlj", 4)) {
-          fvar = sml_json_enable;
+          fvar = sml_options;
           tind->index = SML_JSON_ENABLE;
           goto exit_settable;
         }
@@ -6663,7 +6808,7 @@ getnext:
                             break;
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
                           case SML_JSON_ENABLE:
-                            sml_json_enable = *dfvar;
+                            sml_options = *dfvar;
                             break;
 #endif
                         }
@@ -8047,7 +8192,7 @@ bool ScriptCommand(void) {
         float *fpd = 0;
         uint16_t alend;
         char *cp = get_array_by_name(lp, &fpd, &alend, 0);
-        if (fpd && cp) {
+        if (fpd && cp && (!strchr(lp, '[')) ) {
           // is array
           Response_P(PSTR("{\"script\":{\"%s\":["), lp);
           for (uint16_t cnt = 0; cnt < alend; cnt++) {
@@ -9948,13 +10093,15 @@ exgc:
             hmflg = 1;
             cp++;
           }
+          // cnth2016/240
+
           //todflg=atoi(&label[3]);
           todflg = strtol(cp, &cp, 10);
           if (!hmflg) {
             if (todflg >= entries) todflg = entries - 1;
             if (todflg < 0) todflg = 0;
           }
-          if (*cp=='/') {
+          if (*cp == '/') {
             cp++;
             divflg = strtol(cp, &cp, 10);
           }

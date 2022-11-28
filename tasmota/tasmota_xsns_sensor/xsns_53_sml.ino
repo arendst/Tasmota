@@ -543,7 +543,11 @@ char meter_id[MAX_METERS][METER_ID_SIZE];
 uint8_t sml_send_blocks;
 uint8_t sml_100ms_cnt;
 uint8_t sml_desc_cnt;
-uint8_t sml_json_enable = 1;
+
+#define SML_OPTIONS_JSON_ENABLE 1
+#define SML_OPTIONS_OBIS_LINE 2
+uint8_t sml_options = SML_OPTIONS_JSON_ENABLE;
+
 
 #ifdef USE_SML_MEDIAN_FILTER
 // median filter, should be odd size
@@ -1613,11 +1617,15 @@ void sml_empty_receiver(uint32_t meters) {
 
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
-#ifndef SML_OBIS_LINE
-  if (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') {
-#else
-  if (meter_desc_p[meters].type!= 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') {
-#endif
+
+  bool shift;
+  if (!(sml_options & SML_OPTIONS_OBIS_LINE)) {
+    shift = (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v');
+  } else {
+    shift = (meter_desc_p[meters].type != 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v');
+  }
+
+  if (shift) {
     // shift in
     for (count = 0; count < SML_BSIZ - 1; count++) {
       smltbuf[meters][count] = smltbuf[meters][count + 1];
@@ -1626,20 +1634,20 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint8_t iob = (uint8_t)meter_ss[meters]->read();
 
   if (meter_desc_p[meters].type == 'o') {
-#ifndef SML_OBIS_LINE
-    smltbuf[meters][SML_BSIZ-1] = iob & 0x7f;
-#else
-    iob &= 0x7f;
-    smltbuf[meters][meter_spos[meters]] = iob;
-    meter_spos[meters]++;
-    if (meter_spos[meters] >= SML_BSIZ) {
-      meter_spos[meters] = 0;
+    if (!(sml_options & SML_OPTIONS_OBIS_LINE)) {
+      smltbuf[meters][SML_BSIZ-1] = iob & 0x7f;
+    } else {
+      iob &= 0x7f;
+      smltbuf[meters][meter_spos[meters]] = iob;
+      meter_spos[meters]++;
+      if (meter_spos[meters] >= SML_BSIZ) {
+        meter_spos[meters] = 0;
+      }
+      if ((iob == 0x0a) || (iob == 0x0d)) {
+        SML_Decode(meters);
+        meter_spos[meters] = 0;
+      }
     }
-    if ((iob == 0x0a) || (iob == 0x0d)) {
-      SML_Decode(meters);
-      meter_spos[meters] = 0;
-    }
-#endif
   } else if (meter_desc_p[meters].type=='s') {
     smltbuf[meters][SML_BSIZ-1]=iob;
   } else if (meter_desc_p[meters].type=='r') {
@@ -1750,11 +1758,10 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 		}
   }
   sb_counter++;
-#ifndef SML_OBIS_LINE
-  if (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') SML_Decode(meters);
-#else
-  if (meter_desc_p[meters].type != 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') SML_Decode(meters);
-#endif
+
+  if (shift) {
+    SML_Decode(meters);
+  }
 }
 
 
@@ -3810,7 +3817,7 @@ bool Xsns53(uint32_t function) {
         break;
 #endif // USE_SCRIPT
       case FUNC_JSON_APPEND:
-        if (sml_json_enable) {
+        if (sml_options & SML_OPTIONS_JSON_ENABLE) {
           SML_Show(1);
         }
         break;
