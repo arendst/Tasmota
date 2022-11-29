@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.2.0.5
+## Changelog v12.2.0.6
 ### Added
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) [#17140](https://github.com/arendst/Tasmota/issues/17140)
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Teleinfo TEMPO (BBR) contract [#17160](https://github.com/arendst/Tasmota/issues/17160)
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
+- Berry ``mdns`` module [#17202](https://github.com/arendst/Tasmota/issues/17202)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
 - ESP32 Support for DMX ArtNet Led matrix animations [#16984](https://github.com/arendst/Tasmota/issues/16984)
 - ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER [#17112](https://github.com/arendst/Tasmota/issues/17112)
@@ -152,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Zigbee improved Aqara plug support and completed cluster 0x0702 [#17073](https://github.com/arendst/Tasmota/issues/17073)
 
 ### Fixed
+- TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
 - Serial bridge default serial configuration from 5N1 to 8N1 regression from v10.1.0.3
 - BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 [#16914](https://github.com/arendst/Tasmota/issues/16914)
