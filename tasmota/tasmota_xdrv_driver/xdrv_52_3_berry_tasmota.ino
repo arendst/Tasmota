@@ -220,6 +220,11 @@ extern "C" {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
           show_rssi = true;
         }
+        ipv6_addr = WifiGetIPv6LinkLocal();
+        if (ipv6_addr != "") {
+          be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+          show_rssi = true;
+        }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
