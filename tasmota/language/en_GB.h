@@ -358,7 +358,7 @@
 #define D_PROGRAM_VERSION "Program Version"
 #define D_BUILD_DATE_AND_TIME "Build Date & Time"
 #define D_CORE_AND_SDK_VERSION "Core/SDK Version"
-#define D_FLASH_WRITE_COUNT "Flash write Count"
+#define D_FLASH_WRITE_COUNT "Flash Write Count"
 #define D_MAC_ADDRESS "MAC Address"
 #define D_MQTT_HOST "MQTT Host"
 #define D_MQTT_PORT "MQTT Port"
