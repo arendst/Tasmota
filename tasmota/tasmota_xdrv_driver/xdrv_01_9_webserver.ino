@@ -2362,7 +2362,11 @@ void HandleInformation(void)
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Global }2%s"), ipv6_addr.c_str());
+    }
+    ipv6_addr = WifiGetIPv6LinkLocal();
+    if (ipv6_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Link-Local }2%s"), ipv6_addr.c_str());
     }
 #endif  // LWIP_IPV6 = 1
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {

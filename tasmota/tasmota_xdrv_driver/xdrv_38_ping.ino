@@ -131,12 +131,7 @@ extern "C" {
     if ((p->len == p->tot_len) && (p->next == nullptr)) {
       ip_addr_t ping_target;
       struct icmp_echo_hdr *iecho;
-#ifdef ESP8266
-      ping_target.addr = ping->ip;
-#endif  // ESP8266
-#ifdef ESP32
       ip_addr_set_ip4_u32(&ping_target, ping->ip);
-#endif  // ESP32
       iecho = (struct icmp_echo_hdr *) p->payload;
 
       t_ping_prepare_echo(iecho, ping_size, ping);
@@ -171,12 +166,7 @@ extern "C" {
   // Reveived packet
   //
   static uint8_t ICACHE_FLASH_ATTR t_ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr) {
-#ifdef ESP8266
-    Ping_t *ping = t_ping_find(addr->addr);
-#endif  // ESP8266
-#ifdef ESP32
-    Ping_t *ping = t_ping_find(addr->u_addr.ip4.addr);
-#endif  // ESP32
+    Ping_t *ping = t_ping_find(ip_addr_get_ip4_u32(addr));
 
     if (nullptr == ping) {    // unknown source address
       return 0;               // don't eat the packet and ignore it

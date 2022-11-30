@@ -19,9 +19,6 @@
 #pragma once
 #include <WiFi.h>
 
-// sorry, no <AddrList.h>
-#undef LWIP_IPV6
-
 #define ENC_TYPE_NONE 	WIFI_AUTH_OPEN
 #define ENC_TYPE_WEP  	WIFI_AUTH_WEP
 #define ENC_TYPE_CCMP  	WIFI_AUTH_WPA2_PSK

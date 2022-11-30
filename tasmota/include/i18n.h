@@ -110,6 +110,8 @@
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
+#define D_JSON_IP6_GLOBAL "IP6Global"
+#define D_JSON_IP6_LOCAL "IP6Local"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"

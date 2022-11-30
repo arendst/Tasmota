@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Teleinfo TEMPO (BBR) contract (#17160)
 - Support for HLK-LD2410 24GHz smart wave motion sensor
 - Berry ``mdns`` module (#17202)
+- IPv6 preview for ESP32, also working for ESP8266
 
 ### Changed
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)

@@ -42,7 +42,11 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #if LWIP_IPV6
-#include <AddrList.h>                      // IPv6 DualStack
+  #ifdef ESP8266
+    #include <AddrList.h>                      // IPv6 DualStack
+  #else
+    #include <AddrList46.h>                      // IPv6 DualStack
+  #endif
 #endif  // LWIP_IPV6=1
 
 int WifiGetRssiAsQuality(int rssi) {
@@ -263,20 +267,6 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
   if (Settings->flag5.wait_for_wifi_result) {  // SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     WiFi.waitForConnectResult(1000);  // https://github.com/arendst/Tasmota/issues/14985
   }
-
-#if LWIP_IPV6
-  for (bool configured = false; !configured;) {
-    uint16_t cfgcnt = 0;
-    for (auto addr : addrList) {
-      if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
-        break;  // IPv6 is mandatory but stop after 15 seconds
-      }
-      delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
-      cfgcnt++;
-    }
-  }
-#endif  // LWIP_IPV6=1
 }
 
 void WifiBeginAfterScan(void)
@@ -473,19 +463,55 @@ void WifiSetState(uint8_t state)
 }
 
 #if LWIP_IPV6
+// Returns only IPv6 global address (no loopback and no link-local)
 String WifiGetIPv6(void)
 {
   for (auto a : addrList) {
-    if(!a.isLocal() && a.isV6()) return a.toString();
+    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && !a.isLocal() && a.isV6()) return a.toString();
   }
   return "";
+}
+
+String WifiGetIPv6LinkLocal(void)
+{
+  for (auto a : addrList) {
+    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && a.isLocal() && a.isV6()) return a.toString();
+  }
+  return "";
+}
+
+// add an IPv6 link-local address to all netif
+void CreateLinkLocalIPv6(void)
+{
+#ifdef ESP32
+  for (auto intf = esp_netif_next(NULL); intf != NULL; intf = esp_netif_next(intf)) {
+    esp_netif_create_ip6_linklocal(intf);
+  }
+#endif // ESP32
+}
+
+void WifiDumpAddressesIPv6(void)
+{
+  for (auto a: addrList)
+    AddLog(LOG_LEVEL_DEBUG, PSTR("IF='%s' index=%d legacy=%d IPv4=%d local=%d addr='%s'"),
+              a.ifname().c_str(),
+              a.ifnumber(),
+              a.isLegacy(),
+              a.addr().isV4(),
+              a.addr().isLocal(),
+              a.toString().c_str());
 }
 #endif  // LWIP_IPV6=1
 
 // Check to see if we have any routable IP address
 bool WifiHasIP(void) {
-#ifdef LWIP2_IPV6
-  return !a.isLocal();
+#if LWIP_IPV6
+  for (auto a : addrList) {
+    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && !a.isLocal()) {
+      return true;
+    }
+  }
+  return false;
 #else
   return (uint32_t)WiFi.localIP() != 0;
 #endif
@@ -504,6 +530,11 @@ void WifiCheckIp(void) {
       Settings->ipv4_address[2] = (uint32_t)WiFi.subnetMask();
       Settings->ipv4_address[3] = (uint32_t)WiFi.dnsIP();
       Settings->ipv4_address[4] = (uint32_t)WiFi.dnsIP(1);
+#if LWIP_IPV6
+      // create Link-local address
+      CreateLinkLocalIPv6();
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "IPv6 Link-Local %s"), WifiGetIPv6LinkLocal().c_str());
+#endif // LWIP_IPV6
 
       // Save current AP parameters for quick reconnect
       Settings->wifi_channel = WiFi.channel();
