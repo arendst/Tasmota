@@ -67,6 +67,7 @@ struct {
   uint8_t step;
   uint8_t retry;
   uint8_t settings;
+  uint8_t byte_counter;
   bool valid_response;
 } LD2410;
 
@@ -93,13 +94,13 @@ void Ld1410HandleTargetData(void) {
     LD2410.static_distance = LD2410.buffer[13] << 8 | LD2410.buffer[12];
     LD2410.static_energy = LD2410.buffer[14];
     LD2410.detect_distance = LD2410.buffer[16] << 8 | LD2410.buffer[15];
-
+/*
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Type %d, State %d, Moving %d/%d%%, Static %d/%d%%, Detect %d"),
       LD2410.buffer[6], LD2410.buffer[8],
       LD2410.moving_distance, LD2410.moving_energy,
       LD2410.static_distance, LD2410.static_energy,
       LD2410.detect_distance);
-
+*/
     if (0x01 == LD2410.buffer[6]) {                             // Engineering mode data
       // Adds 22 extra bytes of data
 
@@ -153,6 +154,8 @@ bool Ld2410Match(const uint8_t *header, uint32_t offset) {
 }
 
 void Ld2410Input(void) {
+/*
+  // Works with TasmotaSerial as SoftwareSerial but fails with HardwareSerial
   uint32_t size = LD2410Serial->read(LD2410.buffer, LD2410_BUFFER_SIZE);
   if (size) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), size, LD2410.buffer);
@@ -175,6 +178,56 @@ void Ld2410Input(void) {
       }
     }
   }
+*/
+  // Works with TasmotaSerial and HardwareSerial
+  while (LD2410Serial->available()) {
+    yield();                                                    // Fix watchdogs
+
+    LD2410.buffer[LD2410.byte_counter++] = LD2410Serial->read();
+    if (LD2410.byte_counter < 4) { continue; }                  // Need first four header bytes
+
+    uint32_t header_start = LD2410.byte_counter -4;             // Fix interrupted header transmits
+    bool target_header = (Ld2410Match(LD2410_target_header, header_start));  // F4F3F2F1
+    bool config_header = (Ld2410Match(LD2410_config_header, header_start));  // FDFCFBFA
+    if ((target_header || config_header) && (header_start != 0)) {
+      memmove(LD2410.buffer, LD2410.buffer + header_start, 4);  // Sync buffer with header
+      LD2410.byte_counter = 4;
+    }
+    if (LD2410.byte_counter < 6) { continue; }                  // Need packet size bytes
+
+    target_header = (Ld2410Match(LD2410_target_header, 0));     // F4F3F2F1
+    config_header = (Ld2410Match(LD2410_config_header, 0));     // FDFCFBFA
+    if (target_header || config_header) {
+      uint32_t len = LD2410.buffer[4] +10;                      // Total packet size
+      if (len > LD2410_BUFFER_SIZE) { 
+        LD2410.byte_counter = 0;                                // Invalid data
+        break;                                                  // Exit loop to satisfy yields
+      }
+      if (LD2410.byte_counter < len) { continue; }              // Need complete packet
+
+//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
+
+      if (target_header) {                                      // F4F3F2F1
+
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
+
+        if (Ld2410Match(LD2410_target_footer, len -4)) {        // F8F7F6F5
+          Ld1410HandleTargetData();
+        }
+      }
+      else if (config_header) {                                 // FDFCFBFA
+
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
+
+        if (Ld2410Match(LD2410_config_footer, len -4)) {        // 04030201
+          Ld1410HandleConfigData();
+        }
+      }
+    }
+    LD2410.byte_counter = 0;                                    // Finished or bad received footer
+    break;                                                      // Exit loop to satisfy yields
+  }
+  // If here then LD2410.byte_counter could still be partial correct for next loop
 }
 
 void Ld2410SendCommand(uint32_t command, uint8_t *val = nullptr, uint32_t val_len = 0);
