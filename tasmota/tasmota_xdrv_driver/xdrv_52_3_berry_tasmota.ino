@@ -220,6 +220,11 @@ extern "C" {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
           show_rssi = true;
         }
+        ipv6_addr = WifiGetIPv6LinkLocal();
+        if (ipv6_addr != "") {
+          be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+          show_rssi = true;
+        }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
@@ -254,6 +259,14 @@ extern "C" {
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.hostname() -> string
+  //
+  int32_t l_hostname(struct bvm *vm);
+  int32_t l_hostname(struct bvm *vm) {
+    be_pushstring(vm, NetworkHostname());
+    be_return(vm);
   }
 
   static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {

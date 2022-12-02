@@ -77,6 +77,7 @@
 
 #include <IPAddress.h>
 #include <lwip/netif.h>
+#include "IPAddress46.h"
 
 #if LWIP_IPV6
 #define IF_NUM_ADDRESSES (1 + LWIP_IPV6_NUM_ADDRESSES)
@@ -84,80 +85,63 @@
 #define IF_NUM_ADDRESSES (1)
 #endif
 
-
 namespace esp8266
 {
-
 namespace AddressListImplementation
 {
-
-
 struct netifWrapper
 {
-    netifWrapper (netif* netif) : _netif(netif), _num(-1) {}
-    netifWrapper (const netifWrapper& o) : _netif(o._netif), _num(o._num) {}
+  netifWrapper (netif* netif) : _netif(netif), _num(-1) {}
+  netifWrapper (const netifWrapper& o) : _netif(o._netif), _num(o._num) {}
 
-    netifWrapper& operator= (const netifWrapper& o)
-    {
-        _netif = o._netif;
-        _num = o._num;
-        return *this;
-    }
+  netifWrapper& operator= (const netifWrapper& o)
+  {
+      _netif = o._netif;
+      _num = o._num;
+      return *this;
+  }
 
-    bool equal(const netifWrapper& o)
-    {
-        return _netif == o._netif && (!_netif || _num == o._num);
-    }
+  bool equal(const netifWrapper& o)
+  {
+      return _netif == o._netif && (!_netif || _num == o._num);
+  }
 
-    // address properties
-    class IPAddress4 : public IPAddress
-    {
-        public:
-        bool isV6() const
-        {
-            return false;
-        }
-        bool isLocal() const
-        {
-            return false;
-        }
-    };
-    IPAddress4 addr () const         { return ipFromNetifNum(); }
-    bool isLegacy () const          { return _num == 0; }
-    //bool isLocal () const           { return addr().isLocal(); }
-    bool isV4 () const              { return addr().isV4(); }
-    bool isV6 () const              { return !addr().isV4(); }
-    String toString() const         { return addr().toString(); }
+  IPAddress46 addr () const         { return ipFromNetifNum(); }
+  bool isLegacy () const          { return _num == 0; }
+  bool isLocal () const           { return addr().isLocal(); }
+  bool isV4 () const              { return addr().isV4(); }
+  bool isV6 () const              { return !addr().isV4(); }
+  String toString() const         { return addr().toString(); }
 
-    // related to legacy address (_num=0, ipv4)
-    IPAddress ipv4 () const         { return _netif->ip_addr; }
-    IPAddress netmask () const      { return _netif->netmask; }
-    IPAddress gw () const           { return _netif->gw; }
+  // related to legacy address (_num=0, ipv4)
+  IPAddress46 ipv4 () const         { return _netif->ip_addr; }
+  IPAddress46 netmask () const      { return _netif->netmask; }
+  IPAddress46 gw () const           { return _netif->gw; }
 
-    // common to all addresses of this interface
-    String ifname () const          { return String(_netif->name[0]) + _netif->name[1]; }
-    const char* ifhostname () const { return _netif->hostname?: emptyString.c_str(); }
-    const char* ifmac () const      { return (const char*)_netif->hwaddr; }
-    int ifnumber () const           { return _netif->num; }
-    bool ifUp () const              { return !!(_netif->flags & NETIF_FLAG_UP); }
-    const netif* interface () const { return _netif; }
+  // common to all addresses of this interface
+  String ifname () const          { return String(_netif->name[0]) + _netif->name[1]; }
+  const char* ifhostname () const { return _netif->hostname?: emptyString.c_str(); }
+  const char* ifmac () const      { return (const char*)_netif->hwaddr; }
+  int ifnumber () const           { return _netif->num; }
+  bool ifUp () const              { return !!(_netif->flags & NETIF_FLAG_UP); }
+  const netif* interface () const { return _netif; }
 
-    const ip_addr_t* ipFromNetifNum () const
-    {
+  const ip_addr_t* ipFromNetifNum () const
+  {
 #if LWIP_IPV6
-        return _num ? &_netif->ip6_addr[_num - 1] : &_netif->ip_addr;
+      return _num ? &_netif->ip6_addr[_num - 1] : &_netif->ip_addr;
 #else
-        return &_netif->ip_addr;
+      return &_netif->ip_addr;
 #endif
-    }
+  }
 
-    // lwIP interface
-    netif* _netif;
+  // lwIP interface
+  netif* _netif;
 
-    // address index within interface
-    // 0: legacy address (IPv4)
-    // n>0: (_num-1) is IPv6 index for netif->ip6_addr[]
-    int _num;
+  // address index within interface
+  // 0: legacy address (IPv4)
+  // n>0: (_num-1) is IPv6 index for netif->ip6_addr[]
+  int _num;
 };
 
 
@@ -223,11 +207,10 @@ inline AddressList::const_iterator begin (const AddressList& a) { return a.begin
 inline AddressList::const_iterator   end (const AddressList& a) { return a.end(); }
 
 
-} // AddressListImplementation
+} // namespace AddressListImplementation
+} // namespace esp8266
 
-} // esp8266
-
-extern AddressList addrList;
+extern esp8266::AddressListImplementation::AddressList addrList;
 
 
 #endif

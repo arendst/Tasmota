@@ -801,14 +801,23 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
+    // WifiDumpAddressesIPv6();
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\""),
+                          D_JSON_MAC "\":\"%s\""
+#if LWIP_IPV6
+                          ",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\""
+#endif // LWIP_IPV6
+                          ),
                           TasmotaGlobal.hostname,
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          WiFi.macAddress().c_str());
+                          WiFi.macAddress().c_str()
+#if LWIP_IPV6
+                          ,WifiGetIPv6().c_str(), WifiGetIPv6LinkLocal().c_str()
+#endif // LWIP_IPV6
+                          );
 #ifdef USE_TASMESH
     ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
 #endif  // USE_TASMESH

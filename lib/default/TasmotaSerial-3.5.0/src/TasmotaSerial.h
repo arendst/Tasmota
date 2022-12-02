@@ -51,6 +51,9 @@ class TasmotaSerial : public Stream {
     size_t write(uint8_t byte) override;
     int read(void) override;
     size_t read(char* buffer, size_t size);
+    size_t read(uint8_t* buffer, size_t size) {
+      return read(reinterpret_cast<char*>(buffer), size);
+    }
     int available(void) override;
     void flush(void) override;
 
@@ -60,17 +63,19 @@ class TasmotaSerial : public Stream {
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
 #endif
-    bool isValid() { return m_valid; }
+    bool isValid(void) { return m_valid; }
+    bool overflow(void);
 
     using Print::write;
 
   private:
     bool isValidGPIOpin(int pin);
+    size_t txWrite(uint8_t byte);
+    void _fast_write(uint8_t b);      // IRAM minimized version
 #ifdef ESP32
     bool freeUart(void);
     void Esp32Begin(void);
 #endif
-    size_t txWrite(uint8_t byte);
 
     // Member variables
     int m_rx_pin;
@@ -89,12 +94,10 @@ class TasmotaSerial : public Stream {
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
+    bool m_overflow;
     bool m_high_speed = false;
     bool m_very_high_speed = false;   // above 100000 bauds
     uint8_t *m_buffer = nullptr;
-
-    void _fast_write(uint8_t b);      // IRAM minimized version
-
 #ifdef ESP32
     uint32_t m_speed;
     uint32_t m_config;

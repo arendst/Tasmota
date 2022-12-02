@@ -488,7 +488,7 @@
 // -- mDNS ----------------------------------------
 //#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
-  #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
+  // #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found) - disabled by default because it causes blocked repeated 3000ms pauses
 
 // -- Time ----------------------------------------
 #define USE_TIMERS                               // Add support for up to 16 timers (+2k2 code)
@@ -811,6 +811,7 @@
 //#define USE_VINDRIKTNING                         // Add support for IKEA VINDRIKTNING particle concentration sensor (+0k6 code)
 //  #define VINDRIKTNING_SHOW_PM1                  // Display undocumented/supposed PM1.0 values
 //  #define VINDRIKTNING_SHOW_PM10                 // Display undocumented/supposed PM10 values
+//#define USE_LD2410                               // Add support for HLK-LD2410 24GHz smart wave motion sensor (+2k8 code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)
@@ -1193,7 +1194,7 @@
  * Mutual exclude options
 \*********************************************************************************************/
 
-#if defined(USE_DISCOVERY) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
+#if defined(ESP8266) && defined(USE_DISCOVERY) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 

@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.2.0.5
+## Changelog v12.2.0.6
 ### Added
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) [#17140](https://github.com/arendst/Tasmota/issues/17140)
 - Command ``SetOption47 1..255`` to delay power on relay state in seconds reducing power surge. ``SO47 1`` delays until network connected. ``SO47 2`` delays until mqtt connected
@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command NeoPool ``NPFiltration 2`` toggle [#16859](https://github.com/arendst/Tasmota/issues/16859)
 - Optional define ``SERIAL_BRIDGE_BUFFER_SIZE`` to set Serial Bridge internal buffer size (Default ESP8266 = 256, ESP32 = 800)
 - Support for two phase power calibration using commands ``PowerSet2``, ``VoltageSet2`` and ``CurrentSet2``
+- Support for HLK-LD2410 24GHz smart wave motion sensor
 - Support for Shelly Pro 1/1PM and 2/2PM [#16773](https://github.com/arendst/Tasmota/issues/16773)
 - Support for up to four DS18x20 GPIOs by md5sum-as [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk [#16938](https://github.com/arendst/Tasmota/issues/16938)
@@ -127,8 +128,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for Dingtian x595 shift register based relay boards by Barbudor [#17032](https://github.com/arendst/Tasmota/issues/17032)
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn [#17069](https://github.com/arendst/Tasmota/issues/17069)
 - WS2812 and Light ArtNet DMX control over UDP port 6454 [#17059](https://github.com/arendst/Tasmota/issues/17059)
+- Teleinfo TEMPO (BBR) contract [#17160](https://github.com/arendst/Tasmota/issues/17160)
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
+- Berry ``mdns`` module [#17202](https://github.com/arendst/Tasmota/issues/17202)
 - Zigbee router firmware for Sonoff ZBBridgePro [#16900](https://github.com/arendst/Tasmota/issues/16900)
 - ESP32 Support for DMX ArtNet Led matrix animations [#16984](https://github.com/arendst/Tasmota/issues/16984)
 - ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER [#17112](https://github.com/arendst/Tasmota/issues/17112)
@@ -140,16 +143,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
 - ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)
-- Accept filename extensions to GUI file upload input fields [#16875](https://github.com/arendst/Tasmota/issues/16875)
 - Serial Bridge default internal serial rx buffer size from 64 to 256 [#17120](https://github.com/arendst/Tasmota/issues/17120)
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 - Compiling with reduced boards manifests in favour of Autoconfig [#16848](https://github.com/arendst/Tasmota/issues/16848)
 - ADE7953 monitoring from instant power to accumulated energy [#16941](https://github.com/arendst/Tasmota/issues/16941)
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds [#17055](https://github.com/arendst/Tasmota/issues/17055)
+- AC PWM dimmer lineair power distribution [#17177](https://github.com/arendst/Tasmota/issues/17177)
 - Zigbee improved Aqara plug support and completed cluster 0x0702 [#17073](https://github.com/arendst/Tasmota/issues/17073)
 
 ### Fixed
+- TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
 - Serial bridge default serial configuration from 5N1 to 8N1 regression from v10.1.0.3
 - BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
 - Deduplicate code and fix %timer n% rule regression from v12.2.0 [#16914](https://github.com/arendst/Tasmota/issues/16914)

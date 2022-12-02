@@ -31,7 +31,7 @@ void StartMdns(void) {
     if (!Mdns.begun) {
       MDNS.end(); // close existing or MDNS.begin will fail
       Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s '%s.local'"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED), TasmotaGlobal.hostname);
     }
   }
 }
