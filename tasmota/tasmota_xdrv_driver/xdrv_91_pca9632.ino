@@ -83,16 +83,16 @@ uint8_t PCA9632_GetPWMvalue(uint8_t pwm, bool inverted) {
 }
 
 void PCA9632_SetPWM_Reg(uint8_t pin, uint16_t on, uint16_t off) {
-  uint8_t led_reg = PCA9685_REG_LED0_ON_L + 4 * pin;
+  /*uint8_t led_reg = PCA9685_REG_LED0_ON_L + 4 * pin;
   uint32_t led_data = 0;
   I2cWrite8(USE_PCA9632_ADDR, led_reg, on);
   I2cWrite8(USE_PCA9632_ADDR, led_reg+1, (on >> 8));
   I2cWrite8(USE_PCA9632_ADDR, led_reg+2, off);
-  I2cWrite8(USE_PCA9632_ADDR, led_reg+3, (off >> 8));
+  I2cWrite8(USE_PCA9632_ADDR, led_reg+3, (off >> 8));*/
 }
 
 void PCA9632_SetPWM(uint8_t pin, uint8_t pwm, bool inverted) {
-  uint8_t pwm_val = PCA9685_GetPWMvalue(pwm, inverted);
+  uint8_t pwm_val = PCA9632_GetPWMvalue(pwm, inverted);
   if (255 == pwm_val) {
     PCA9632_SetPWM_Reg(pin, 255, 0); // Special use additional bit causes channel to turn on completely without PWM
   } else {
@@ -151,7 +151,7 @@ bool PCA9632_Command(void)
         }
         uint16_t pwm = atoi(ArgV(argument, 3));
         if ((pin >= 0 && pin <= 3 || pin==61) && (pwm >= 0 && pwm <= 255)) {
-          PCA9632_SetPWM(pin, pwm, pca9685_inverted);
+          PCA9632_SetPWM(pin, pwm, pca9632_inverted);
           Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
           serviced = true;
           return serviced;
@@ -175,7 +175,7 @@ void PCA9632_OutputTelemetry(bool telemetry)
   }
 }
 
-bool Xdrv15(uint32_t function)
+bool Xdrv91(uint32_t function)
 {
   if (!I2cEnabled(XI2C_74)) { return false; }
 
