@@ -35,3 +35,7 @@ lib/libesp32/berry/berry
 .vscode/launch.json
 *.bak
 *.code-workspace
+
+cmake-build-debug
+.idea
+CMakeLists.txt
