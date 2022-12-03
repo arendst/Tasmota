@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn [#17069](https://github.com/arendst/Tasmota/issues/17069)
 - WS2812 and Light ArtNet DMX control over UDP port 6454 [#17059](https://github.com/arendst/Tasmota/issues/17059)
 - Teleinfo TEMPO (BBR) contract [#17160](https://github.com/arendst/Tasmota/issues/17160)
+- Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge [#17247](https://github.com/arendst/Tasmota/issues/17247)
 - Berry ``bytes().setbytes()`` method [#16892](https://github.com/arendst/Tasmota/issues/16892)
 - Berry ``bytes().reverse()`` method [#16977](https://github.com/arendst/Tasmota/issues/16977)
 - Berry ``mdns`` module [#17202](https://github.com/arendst/Tasmota/issues/17202)
@@ -140,6 +141,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Redesign distance sensors VL53LXX, TOF10120, HRXL and DYP to use cm instead of mm [#17021](https://github.com/arendst/Tasmota/issues/17021)
 
 ### Changed
+- TasmotaSerial library from v3.5.0 to v3.6.0
 - ESP32 Framework (Core) from v2.0.5 to v2.0.5.3
 - ESP32 LVGL library from v8.3.2 to v8.3.3 (no functional change)
 - ESP32 NimBLE library from v1.4.0 to v1.4.1 [#16775](https://github.com/arendst/Tasmota/issues/16775)

@@ -214,7 +214,7 @@ void FifLEEvery250ms(void)
 
 void FifLESnsInit(void)
 {
-  FifLEModbus = new TasmotaModbus(Pin(GPIO_LE01MR_RX), Pin(GPIO_LE01MR_TX));
+  FifLEModbus = new TasmotaModbus(Pin(GPIO_LE01MR_RX), Pin(GPIO_LE01MR_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = FifLEModbus->Begin(LE01MR_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }

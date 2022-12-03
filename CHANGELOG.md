@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.6]
 ### Added
+- Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
 
 ### Breaking Changed
 
 ### Changed
+- TasmotaSerial library from v3.5.0 to v3.6.0
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0

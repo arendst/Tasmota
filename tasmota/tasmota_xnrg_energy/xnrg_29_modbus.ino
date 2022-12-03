@@ -663,7 +663,7 @@ bool EnergyModbusRegisters(void) {
 
 void EnergyModbusSnsInit(void) {
   if (EnergyModbusRegisters()) {
-    EnergyModbus = new TasmotaModbus(Pin(GPIO_NRG_MBS_RX), Pin(GPIO_NRG_MBS_TX));
+    EnergyModbus = new TasmotaModbus(Pin(GPIO_NRG_MBS_RX), Pin(GPIO_NRG_MBS_TX), Pin(GPIO_NRG_MBS_TX_ENA));
     uint8_t result = EnergyModbus->Begin(NrgMbsParam.serial_bps, NrgMbsParam.serial_config);
     if (result) {
       if (2 == result) { ClaimSerial(); }

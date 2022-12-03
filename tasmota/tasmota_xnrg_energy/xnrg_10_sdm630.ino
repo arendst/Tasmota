@@ -213,7 +213,7 @@ void SDM630Every250ms(void)
 
 void Sdm630SnsInit(void)
 {
-  Sdm630Modbus = new TasmotaModbus(Pin(GPIO_SDM630_RX), Pin(GPIO_SDM630_TX));
+  Sdm630Modbus = new TasmotaModbus(Pin(GPIO_SDM630_RX), Pin(GPIO_SDM630_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = Sdm630Modbus->Begin(SDM630_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
