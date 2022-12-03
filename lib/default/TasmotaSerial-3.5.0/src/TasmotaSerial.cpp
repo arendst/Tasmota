@@ -44,6 +44,24 @@ static uint32_t tasmota_serial_uart_bitmap = 0;      // Assigned UARTs
 
 #endif  // ESP32
 
+
+#ifndef USE_MAX485
+#define USE_MAX485
+#endif
+
+#ifndef MAX485_DE_PIN
+// GPIO 0 = D3
+#define MAX485_DE_PIN 0
+#endif
+
+#define DEBUG_MAX485
+
+#ifdef DEBUG_MAX485
+// Tasmota Logging
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+#endif
+
 TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback, int nwmode, int buffer_size) {
   m_valid = false;
   m_hardserial = false;
@@ -194,6 +212,13 @@ size_t TasmotaSerial::setRxBufferSize(size_t size) {
 }
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
+#ifdef USE_MAX485
+  pinMode(MAX485_DE_PIN, OUTPUT);
+  digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as output"));
+#endif
+#endif
   if (!m_valid) { return false; }
 
   if (m_hardserial) {
@@ -374,6 +399,12 @@ int TasmotaSerial::available(void) {
 #define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 
 void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
+#ifdef USE_MAX485
+digitalWrite(MAX485_DE_PIN, HIGH);
+#ifdef DEBUG_MAX485
+AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as HIGH"));
+#endif
+#endif
   uint32_t wait = m_bit_time;
   uint32_t start = ESP.getCycleCount();
   // Start bit;
@@ -389,18 +420,56 @@ void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
   for (uint32_t i = 0; i < m_stop_bits; i++) {
     TM_SERIAL_WAIT_SND_FAST;
   }
+#ifdef USE_MAX485
+  delay(1);
+  digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as LOW"));
+#endif
+#endif
 }
 
 size_t TasmotaSerial::write(uint8_t b) {
+#ifdef USE_MAX485
+  digitalWrite(MAX485_DE_PIN, HIGH);
+#ifdef DEBUG_MAX485
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as HIGH"));
+#endif
+#endif
   if (m_hardserial) {
 #ifdef ESP8266
-    return Serial.write(b);
+  size_t r =  Serial.write(b);
+#ifdef USE_MAX485
+  delay(1);
+  digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as LOW"));
+#endif
+#endif
+    return r;
 #endif  // ESP8266
 #ifdef ESP32
-    return TSerial->write(b);
+  size_t r =  TSerial->write(b);
+#ifdef USE_MAX485
+  delay(1);
+  digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as LOW"));
+#endif
+#endif
+    return r;
 #endif  // ESP32
   } else {
-    if (-1 == m_tx_pin) return 0;
+    if (-1 == m_tx_pin) {
+#ifdef USE_MAX485
+      delay(1);
+      digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as LOW"));
+#endif
+#endif
+      return 0;
+    }
     if (m_high_speed) {
       cli();  // Disable interrupts in order to get a clean transmit
       _fast_write(b);
@@ -424,7 +493,13 @@ size_t TasmotaSerial::write(uint8_t b) {
         TM_SERIAL_WAIT_SND;
       }
     }
-
+#ifdef USE_MAX485
+    delay(1);
+    digitalWrite(MAX485_DE_PIN, LOW);
+#ifdef DEBUG_MAX485
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: SET MAX485_DE_PIN as LOW"));
+#endif
+#endif
     return 1;
   }
 }
