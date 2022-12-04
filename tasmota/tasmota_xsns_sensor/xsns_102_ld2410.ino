@@ -80,37 +80,39 @@ uint32_t ToBcd(uint32_t value) {
 /********************************************************************************************/
 
 void Ld1410HandleTargetData(void) {
-  //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
-  // F4 F3 F2 F1 0D 00 02 AA 00 00 00 00 00 00 37 00 00 55 00 F8 F7 F6 F5 - No target
-  // F4 F3 F2 F1 0D 00 02 AA 00 45 00 3E 00 00 3A 00 00 55 00 F8 F7 F6 F5 - No target
-  // F4 F3 F2 F1 0D 00 02 AA 03 46 00 34 00 00 3C 00 00 55 00 F8 F7 F6 F5 - Movement and Stationary target
-  // F4 F3 F2 F1 0D 00 02 AA 02 54 00 00 00 00 64 00 00 55 00 F8 F7 F6 F5 - Stationary target
-  // F4 F3 F2 F1 0D 00 02 AA 02 96 00 00 00 00 36 00 00 55 00 F8 F7 F6 F5 - Stationary target
-  // F4 F3 F2 F1 0D 00 02 AA 03 2A 00 64 00 00 64 00 00 55 00 F8 F7 F6 F5 - Movement and Stationary target
-  // header     |len  |dt|hd|st|movin|me|stati|se|detec|tr|ck|trailer
-  if (LD2410.buffer[8] != 0x00) {                               // Movement and/or Stationary target
-    LD2410.moving_distance = LD2410.buffer[10] << 8 | LD2410.buffer[9];
-    LD2410.moving_energy = LD2410.buffer[11];
-    LD2410.static_distance = LD2410.buffer[13] << 8 | LD2410.buffer[12];
-    LD2410.static_energy = LD2410.buffer[14];
-    LD2410.detect_distance = LD2410.buffer[16] << 8 | LD2410.buffer[15];
-/*
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Type %d, State %d, Moving %d/%d%%, Static %d/%d%%, Detect %d"),
-      LD2410.buffer[6], LD2410.buffer[8],
-      LD2410.moving_distance, LD2410.moving_energy,
-      LD2410.static_distance, LD2410.static_energy,
-      LD2410.detect_distance);
-*/
-    if (0x01 == LD2410.buffer[6]) {                             // Engineering mode data
-      // Adds 22 extra bytes of data
+  if ((0x0D == LD2410.buffer[4]) && (0x55 == LD2410.buffer[17])) {  // Add bad reception detection
+    //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+    // F4 F3 F2 F1 0D 00 02 AA 00 00 00 00 00 00 37 00 00 55 00 F8 F7 F6 F5 - No target
+    // F4 F3 F2 F1 0D 00 02 AA 00 45 00 3E 00 00 3A 00 00 55 00 F8 F7 F6 F5 - No target
+    // F4 F3 F2 F1 0D 00 02 AA 03 46 00 34 00 00 3C 00 00 55 00 F8 F7 F6 F5 - Movement and Stationary target
+    // F4 F3 F2 F1 0D 00 02 AA 02 54 00 00 00 00 64 00 00 55 00 F8 F7 F6 F5 - Stationary target
+    // F4 F3 F2 F1 0D 00 02 AA 02 96 00 00 00 00 36 00 00 55 00 F8 F7 F6 F5 - Stationary target
+    // F4 F3 F2 F1 0D 00 02 AA 03 2A 00 64 00 00 64 00 00 55 00 F8 F7 F6 F5 - Movement and Stationary target
+    // header     |len  |dt|hd|st|movin|me|stati|se|detec|tr|ck|trailer
+    if (LD2410.buffer[8] != 0x00) {                               // Movement and/or Stationary target
+      LD2410.moving_distance = LD2410.buffer[10] << 8 | LD2410.buffer[9];
+      LD2410.moving_energy = LD2410.buffer[11];
+      LD2410.static_distance = LD2410.buffer[13] << 8 | LD2410.buffer[12];
+      LD2410.static_energy = LD2410.buffer[14];
+      LD2410.detect_distance = LD2410.buffer[16] << 8 | LD2410.buffer[15];
+  /*
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Type %d, State %d, Moving %d/%d%%, Static %d/%d%%, Detect %d"),
+        LD2410.buffer[6], LD2410.buffer[8],
+        LD2410.moving_distance, LD2410.moving_energy,
+        LD2410.static_distance, LD2410.static_energy,
+        LD2410.detect_distance);
+  */
+      if (0x01 == LD2410.buffer[6]) {                             // Engineering mode data
+        // Adds 22 extra bytes of data
 
+      }
+    } else {
+      LD2410.moving_distance = 0;
+      LD2410.moving_energy = 0;
+      LD2410.static_distance = 0;
+      LD2410.static_energy = 0;
+      LD2410.detect_distance = 0;
     }
-  } else {
-    LD2410.moving_distance = 0;
-    LD2410.moving_energy = 0;
-    LD2410.static_distance = 0;
-    LD2410.static_energy = 0;
-    LD2410.detect_distance = 0;
   }
 }
 
@@ -403,7 +405,6 @@ void Ld2410Detect(void) {
     LD2410.buffer = (uint8_t*)malloc(LD2410_BUFFER_SIZE);    // Default 64
     if (!LD2410.buffer) { return; }
     LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);
-//    LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2, 1);
     if (LD2410Serial->begin(256000)) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
 
