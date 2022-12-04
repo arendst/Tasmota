@@ -1064,9 +1064,12 @@ uint64_t WifiGetNtp(void) {
 // Respond to some Arduino/esp-idf events for better IPv6 support
 // --------------------------------------------------------------------------------
 #ifdef ESP32
+#include "IPAddress46.h"
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
+
+#if LWIP_IPV6
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
     case ARDUINO_EVENT_ETH_GOT_IP6:
     {
@@ -1076,7 +1079,7 @@ void WifiEvents(arduino_event_t *event) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: IPv6 %s %s"), addr.isLocal() ? PSTR("Link-Local") : PSTR("Global"), addr.toString().c_str());
     }
     break;
-
+#endif // LWIP_IPV6
     case ARDUINO_EVENT_ETH_GOT_IP:
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
     {
