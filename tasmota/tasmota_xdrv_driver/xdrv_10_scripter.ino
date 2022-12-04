@@ -9209,7 +9209,7 @@ uint16_t cipos = 0;
     if (*lp == ')' || *lp == 0) break;
     char *lp1 = lp;
     float sysvar;
-    lp=isvar(lp, &vtype, &ind, &sysvar, 0, 0);
+    lp = isvar(lp, &vtype, &ind, &sysvar, 0, 0);
     if (vtype != VAR_NV) {
       SCRIPT_SKIP_SPACES
       uint8_t index = glob_script_mem.type[ind.index].index;
@@ -9958,12 +9958,12 @@ exgc:
           lp++;
           strcpy_P(stacked,"true");
         }
-        if (*lp=='2') {
+        if (*lp == '2') {
           lp++;
           nanum = 2;
           y2f = 1;
         }
-        if (*lp=='t') {
+        if (*lp == 't') {
           lp++;
           tonly = 1;
         }
@@ -9982,6 +9982,7 @@ exgc:
             if (!ind.bits.constant && glob_script_mem.type[ind.index].bits.is_filter) {
               // is 1. array
               lp = slp;
+              max_entries = 0;
             }
           }
         }
@@ -10009,7 +10010,7 @@ exgc:
         // we know how many arrays and the number of entries
         //Serial.printf("arrays %d\n",anum);
         //Serial.printf("entries %d\n",entries);
-        if (gs_ctype=='T') {
+        if (gs_ctype == 'T') {
           if (anum && !(entries & 1)) {
             WSContentSend_P(SCRIPT_MSG_GTABLEa);
             char label[SCRIPT_MAXSSIZE];
@@ -10017,7 +10018,7 @@ exgc:
             SCRIPT_SKIP_SPACES
             char lab2[SCRIPT_MAXSSIZE];
             lab2[0] = 0;
-            if (*lp!=')') {
+            if (*lp != ')') {
               lp = GetStringArgument(lp, OPER_EQU, lab2, 0);
               WSContentSend_P(SCRIPT_MSG_GTABLEe);
             } else {
@@ -10068,6 +10069,7 @@ exgc:
           //goto nextwebline;
         }
       } else {
+
         // we need to fetch the labels now
         WSContentSend_P(SCRIPT_MSG_GTABLEa);
         lp = gc_send_labels(lp, anum);
@@ -10121,7 +10123,6 @@ exgc:
           divflg = entries / segments;
           if (!divflg) divflg = 1;
         }
-
         uint32_t aind = ipos;
         if (aind >= entries) aind = entries - 1;
         for (uint32_t cnt = 0; cnt < entries; cnt++) {
