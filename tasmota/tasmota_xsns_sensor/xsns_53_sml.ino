@@ -80,6 +80,14 @@
 #define DJ_VAVG "Volt_avg"
 #define DJ_COUNTER "Count"
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t trxenpol : 1;  // string or number
+    uint8_t trxen : 1;
+    uint8_t trxenpin : 6;
+  };
+} TRX_EN_TYPE;
 
 struct METER_DESC {
   int8_t srcpin;
@@ -94,6 +102,7 @@ struct METER_DESC {
   uint8_t max_index;
   char *script_str;
   uint8_t sopt;
+  TRX_EN_TYPE trx_en;
 #ifdef USE_SML_SPECOPT
   uint32_t so_obis1;
   uint32_t so_obis2;
@@ -1618,6 +1627,10 @@ void sml_empty_receiver(uint32_t meters) {
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
 
+#ifdef SML_OBIS_LINE
+  sml_options |= SML_OPTIONS_OBIS_LINE;
+#endif
+
   bool shift;
   if (!(sml_options & SML_OPTIONS_OBIS_LINE)) {
     shift = (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v');
@@ -2937,10 +2950,35 @@ dddef_exit:
           }
           if (*lp == ',') {
             lp++;
+            // get TRX pin
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX in meter number %d"), script_meter_desc[index].trxpin, index + 1);
               goto dddef_exit;
+            }
+            // optional transmit enable pin
+            if (*lp == '(') {
+              lp++;
+              if (*lp == 'i') {
+                lp++;
+                script_meter_desc[index].trx_en.trxenpol = 1;
+              } else {
+                script_meter_desc[index].trx_en.trxenpol = 0;
+              }
+              script_meter_desc[index].trx_en.trxenpin = strtol(lp, &lp, 10);
+              if (*lp != ')') {
+                goto dddef_exit;
+              }
+              lp++;
+              if (Gpio_used(script_meter_desc[index].trx_en.trxenpin)) {
+                AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX enable in meter number %d"), script_meter_desc[index].trx_en.trxenpin, index + 1);
+                goto dddef_exit;
+              }
+              script_meter_desc[index].trx_en.trxen = 1;
+              pinMode(script_meter_desc[index].trx_en.trxenpin, OUTPUT);
+              digitalWrite(script_meter_desc[index].trx_en.trxenpin, script_meter_desc[index].trx_en.trxenpol);
+            } else {
+              script_meter_desc[index].trx_en.trxen = 0;
             }
             if (*lp != ',') goto next_line;
             lp++;
@@ -3607,8 +3645,18 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     slen += 6;
   }
 
+  if (script_meter_desc[meter].trx_en.trxen) {
+    digitalWrite(script_meter_desc[meter].trx_en.trxenpin, script_meter_desc[meter].trx_en.trxenpol ^ 1);
+  }
   meter_ss[meter]->flush();
   meter_ss[meter]->write(sbuff, slen);
+
+  if (script_meter_desc[meter].trx_en.trxen) {
+    // must wait for all data sent
+    meter_ss[meter]->flush();
+    digitalWrite(script_meter_desc[meter].trx_en.trxenpin, script_meter_desc[meter].trx_en.trxenpol);
+  }
+
   if (dump2log) {
 #ifdef SML_DUMP_OUT_ALL
     Hexdump(sbuff, slen);
