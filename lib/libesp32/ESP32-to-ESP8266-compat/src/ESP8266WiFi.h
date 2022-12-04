@@ -50,6 +50,8 @@ public:
     static void forceSleepBegin();
     static void forceSleepWake();
     static bool getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t* &bssid, int32_t &channel, bool &hidden_scan);
+
+    bool IPv6(bool state);          // make sure it always exists even with older Arduino framework
 };
 
 void wifi_station_disconnect();

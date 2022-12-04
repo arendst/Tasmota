@@ -91,6 +91,16 @@ bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int3
     return WiFi.getNetworkInfo(i, ssid, encType, rssi, bssid, channel);
 }
 
+// from https://github.com/espressif/arduino-esp32/pull/7520
+static const int WIFI_WANT_IP6_BIT_ALT = BIT15;
+bool WiFiClass32::IPv6(bool state) {
+  if (state)
+    WiFiGenericClass::setStatusBits(WIFI_WANT_IP6_BIT_ALT);
+  else
+    WiFiGenericClass::clearStatusBits(WIFI_WANT_IP6_BIT_ALT);
+  return true;
+}
+
 void wifi_station_disconnect() {
     // erase ap: empty ssid, ...
     WiFi.disconnect(true, true);

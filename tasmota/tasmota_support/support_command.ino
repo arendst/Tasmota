@@ -802,7 +802,9 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
-    // WifiDumpAddressesIPv6();
+#if LWIP_IPV6
+    if (5 == payload) { WifiDumpAddressesIPv6(); }
+#endif // LWIP_IPV6
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
