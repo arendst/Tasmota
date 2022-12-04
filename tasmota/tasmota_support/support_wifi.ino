@@ -740,7 +740,7 @@ void WifiConnect(void)
     WiFi.onEvent(WifiEvents);   // register event listener only once
     wifi_event_registered = true;
   }
-#endif ESP32
+#endif // ESP32
   WifiSetState(0);
   WifiSetOutputPower();
 
@@ -1099,4 +1099,4 @@ void WifiEvents(arduino_event_t *event) {
       break;
   }
 }
-#endif ESP32
+#endif // ESP32
