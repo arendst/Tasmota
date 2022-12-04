@@ -199,13 +199,13 @@ void Ld2410Input(void) {
     config_header = (Ld2410Match(LD2410_config_header, 0));     // FDFCFBFA
     if (target_header || config_header) {
       uint32_t len = LD2410.buffer[4] +10;                      // Total packet size
-      if (len > LD2410_BUFFER_SIZE) { 
+      if (len > LD2410_BUFFER_SIZE) {
         LD2410.byte_counter = 0;                                // Invalid data
         break;                                                  // Exit loop to satisfy yields
       }
       if (LD2410.byte_counter < len) { continue; }              // Need complete packet
 
-//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
 
       if (target_header) {                                      // F4F3F2F1
 
@@ -217,10 +217,11 @@ void Ld2410Input(void) {
       }
       else if (config_header) {                                 // FDFCFBFA
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Rcvd %*_H"), len, LD2410.buffer);
 
         if (Ld2410Match(LD2410_config_footer, len -4)) {        // 04030201
           Ld1410HandleConfigData();
+          LD2410Serial->setReadChunkMode(0);                    // Disable chunk mode fixing Hardware Watchdogs
         }
       }
     }
@@ -254,6 +255,7 @@ void Ld2410SendCommand(uint32_t command, uint8_t *val, uint32_t val_len) {
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Send %*_H"), len, buffer);
 
+  LD2410Serial->setReadChunkMode(1);                            // Enable chunk mode introducing possible Hardware Watchdogs
   LD2410Serial->flush();
   LD2410Serial->write(buffer, len);
 }
@@ -401,6 +403,7 @@ void Ld2410Detect(void) {
     LD2410.buffer = (uint8_t*)malloc(LD2410_BUFFER_SIZE);    // Default 64
     if (!LD2410.buffer) { return; }
     LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);
+//    LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2, 1);
     if (LD2410Serial->begin(256000)) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
 

@@ -55,6 +55,7 @@ class TasmotaSerial : public Stream {
     size_t read(uint8_t* buffer, size_t size) {
       return read(reinterpret_cast<char*>(buffer), size);
     }
+    void setReadChunkMode(bool mode);
     int available(void) override;
     void flush(void) override;
 

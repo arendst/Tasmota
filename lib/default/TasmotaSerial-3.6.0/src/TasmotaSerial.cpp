@@ -283,6 +283,10 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   return m_valid;
 }
 
+void TasmotaSerial::setReadChunkMode(bool mode) {
+  m_very_high_speed = mode;
+}
+
 bool TasmotaSerial::hardwareSerial(void) {
 #ifdef ESP8266
   return m_hardserial;
@@ -345,7 +349,9 @@ int TasmotaSerial::read(void) {
     return TSerial->read();
 #endif  // ESP32
   } else {
-    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
+      return -1;
+    }
     uint32_t ch = m_buffer[m_out_pos];
     m_out_pos = (m_out_pos +1) % serial_buffer_size;
     return ch;
@@ -361,7 +367,9 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
     return TSerial->read(buffer, size);
 #endif  // ESP32
   } else {
-    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) { return 0; }
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
+      return 0;
+    }
     size_t count = 0;
     for( ; size && (m_in_pos != m_out_pos) ; --size, ++count) {
       *buffer++ = m_buffer[m_out_pos];
@@ -461,14 +469,17 @@ size_t TasmotaSerial::write(uint8_t b) {
 }
 
 void IRAM_ATTR TasmotaSerial::rxRead(void) {
-  uint32_t m_out_pos_fixed = m_out_pos;
   if (!m_nwmode) {
-    int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
-    uint32_t bit_mask = 0x01 << (m_data_bits -1);
+    uint32_t start = ESP.getCycleCount();
     // Advance the starting point for the samples but compensate for the
     // initial delay which occurs before the interrupt is delivered
     uint32_t wait = m_bit_start_time;
-    uint32_t start = ESP.getCycleCount();
+    // Decide to read as much data as buffer can hold or a single byte
+    // The first option may keep interrupt busy too long resulting in Hardware Watchdog
+    // The second option may receive ocasional invalid data
+    // User control by function setReadChunkMode()
+    int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
+    uint32_t bit_mask = 0x01 << (m_data_bits -1);
     while (loop_read-- > 0) {    // try to receive all consecutive bytes in a row
       uint32_t rec = 0;
       for (uint32_t i = 0; i < m_data_bits; i++) {
@@ -478,7 +489,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
       }
       // Store the received value in the buffer unless we have an overflow
       uint32_t next = (m_in_pos + 1) % serial_buffer_size;
-      if (next != m_out_pos_fixed) {
+      if (next != m_out_pos) {
         m_buffer[m_in_pos] = rec;
         m_in_pos = next;
       } else {
@@ -547,7 +558,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         }
         //stobyte(0,ssp->ss_byte>>1);
         uint32_t next = (m_in_pos + 1) % serial_buffer_size;
-        if (next != m_out_pos_fixed) {
+        if (next != m_out_pos) {
           m_buffer[m_in_pos] = ss_byte >> 1;
           m_in_pos = next;
         }
@@ -561,7 +572,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         // bit zero was 0,
         //stobyte(0,ssp->ss_byte>>1);
         uint32_t next = (m_in_pos + 1) % serial_buffer_size;
-        if (next != m_out_pos_fixed) {
+        if (next != m_out_pos) {
           m_buffer[m_in_pos] = ss_byte >> 1;
           m_in_pos = next;
         }
