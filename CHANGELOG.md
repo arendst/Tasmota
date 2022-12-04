@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.2.0.6]
 ### Added
 - Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
+- Berry crypto module, with AES_GCM by default and EC_CC25519 optional
 
 ### Breaking Changed
 
