@@ -730,6 +730,10 @@ void WifiEnable(void) {
 //#include <sntp.h>                       // sntp_servermode_dhcp()
 //#endif  // ESP8266
 
+#ifdef ESP32
+void WifiEvents(arduino_event_t *event);
+#endif
+
 void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
@@ -1061,7 +1065,6 @@ uint64_t WifiGetNtp(void) {
 // --------------------------------------------------------------------------------
 #ifdef ESP32
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
-void WifiEvents(arduino_event_t *event);
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
