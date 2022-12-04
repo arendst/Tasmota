@@ -1061,6 +1061,7 @@ uint64_t WifiGetNtp(void) {
 // --------------------------------------------------------------------------------
 #ifdef ESP32
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
+void WifiEvents(arduino_event_t *event);
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
