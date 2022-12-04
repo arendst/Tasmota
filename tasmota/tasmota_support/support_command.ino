@@ -412,7 +412,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
   bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
   if (!binary_data) {
-    if (strstr_P(type, PSTR("SERIALSEND")) == nullptr) {  // Do not skip leading spaces on (s)serialsend
+    bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
+    if (!keep_spaces) {
       while (*dataBuf && isspace(*dataBuf)) {
         dataBuf++;                           // Skip leading spaces in data
         data_len--;
@@ -1880,8 +1881,8 @@ void CmndSerialBuffer(void) {
 #endif
 }
 
-void CmndSerialSend(void)
-{
+void CmndSerialSend(void) {
+  if (XdrvMailbox.index > 9) { XdrvMailbox.index -= 10; }
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     SetSeriallog(LOG_LEVEL_NONE);
     Settings->flag.mqtt_serial = 1;                                  // CMND_SERIALSEND and CMND_SERIALLOG

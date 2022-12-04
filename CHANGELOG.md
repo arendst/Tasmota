@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - TasmotaSerial library from v3.5.0 to v3.6.0
+- Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` (#16723)
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0

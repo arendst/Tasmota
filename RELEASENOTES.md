@@ -153,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - WS2812 sends signal to only ``Pixels`` leds instead of sending to 512 leds [#17055](https://github.com/arendst/Tasmota/issues/17055)
 - AC PWM dimmer lineair power distribution [#17177](https://github.com/arendst/Tasmota/issues/17177)
 - Zigbee improved Aqara plug support and completed cluster 0x0702 [#17073](https://github.com/arendst/Tasmota/issues/17073)
+- Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` [#16723](https://github.com/arendst/Tasmota/issues/16723
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
