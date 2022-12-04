@@ -972,7 +972,7 @@ void CmndEnergyConfig(void) {
 #ifdef USE_ENERGY_MARGIN_DETECTION
 void CmndPowerDelta(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32000)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 32000)) {
       Settings->energy_power_delta[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
     ResponseCmndIdxNumber(Settings->energy_power_delta[XdrvMailbox.index -1]);
@@ -980,42 +980,42 @@ void CmndPowerDelta(void) {
 }
 
 void CmndPowerLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_min_power = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_min_power);
 }
 
 void CmndPowerHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power);
 }
 
 void CmndVoltageLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 501)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
     Settings->energy_min_voltage = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_min_voltage);
 }
 
 void CmndVoltageHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 501)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
     Settings->energy_max_voltage = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_voltage);
 }
 
 void CmndCurrentLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 16001)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
     Settings->energy_min_current = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_min_current);
 }
 
 void CmndCurrentHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 16001)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
     Settings->energy_max_current = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_current);
@@ -1023,35 +1023,35 @@ void CmndCurrentHigh(void) {
 
 #ifdef USE_ENERGY_POWER_LIMIT
 void CmndMaxPower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power_limit = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power_limit);
 }
 
 void CmndMaxPowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power_limit_hold = (1 == XdrvMailbox.payload) ? MAX_POWER_HOLD : XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power_limit_hold);
 }
 
 void CmndMaxPowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power_limit_window = (1 == XdrvMailbox.payload) ? MAX_POWER_WINDOW : XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power_limit_window);
 }
 
 void CmndSafePower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power_safe_limit = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power_safe_limit);
 }
 
 void CmndSafePowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_power_safe_limit_hold = (1 == XdrvMailbox.payload) ? SAFE_POWER_HOLD : XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->energy_max_power_safe_limit_hold);
@@ -1065,7 +1065,7 @@ void CmndSafePowerWindow(void) {
 }
 
 void CmndMaxEnergy(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
     Settings->energy_max_energy = XdrvMailbox.payload;
     Energy.max_energy_state  = 3;
   }
