@@ -213,6 +213,9 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #endif  // USE_EMULATION
 
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
+#if LWIP_IPV6 && defined(ESP32)
+  WiFi.IPv6(true);
+#endif
 
 #ifdef USE_WIFI_RANGE_EXTENDER
   if (WiFi.getMode() != WIFI_AP_STA || !RgxApUp()) {  // Preserve range extender connections (#17103)
@@ -518,6 +521,17 @@ bool WifiHasIP(void) {
 }
 
 void WifiCheckIp(void) {
+#if LWIP_IPV6
+  if (WL_CONNECTED == WiFi.status()) {
+    if (!Wifi.ipv6_local_link_called) {
+      WiFi.enableIpV6();
+      Wifi.ipv6_local_link_called = true;
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: calling enableIpV6"));
+    }
+    
+  }
+#endif
+
   if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
@@ -530,11 +544,6 @@ void WifiCheckIp(void) {
       Settings->ipv4_address[2] = (uint32_t)WiFi.subnetMask();
       Settings->ipv4_address[3] = (uint32_t)WiFi.dnsIP();
       Settings->ipv4_address[4] = (uint32_t)WiFi.dnsIP(1);
-#if LWIP_IPV6
-      // create Link-local address
-      CreateLinkLocalIPv6();
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "IPv6 Link-Local %s"), WifiGetIPv6LinkLocal().c_str());
-#endif // LWIP_IPV6
 
       // Save current AP parameters for quick reconnect
       Settings->wifi_channel = WiFi.channel();
@@ -721,10 +730,21 @@ void WifiEnable(void) {
 //#include <sntp.h>                       // sntp_servermode_dhcp()
 //#endif  // ESP8266
 
+#ifdef ESP32
+void WifiEvents(arduino_event_t *event);
+#endif
+
 void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
 
+#ifdef ESP32
+  static bool wifi_event_registered = false;
+  if (!wifi_event_registered) {
+    WiFi.onEvent(WifiEvents);   // register event listener only once
+    wifi_event_registered = true;
+  }
+#endif // ESP32
   WifiSetState(0);
   WifiSetOutputPower();
 
@@ -1039,3 +1059,51 @@ uint64_t WifiGetNtp(void) {
   ntp_server_id++;                                  // Next server next time
   return 0;
 }
+
+// --------------------------------------------------------------------------------
+// Respond to some Arduino/esp-idf events for better IPv6 support
+// --------------------------------------------------------------------------------
+#ifdef ESP32
+#include "IPAddress46.h"
+// typedef void (*WiFiEventSysCb)(arduino_event_t *event);
+void WifiEvents(arduino_event_t *event) {
+  switch (event->event_id) {
+
+#if LWIP_IPV6
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
+    case ARDUINO_EVENT_ETH_GOT_IP6:
+    {
+      ip_addr_t ip_addr6;
+      ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
+      IPAddress46 addr(ip_addr6);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: IPv6 %s %s"), addr.isLocal() ? PSTR("Link-Local") : PSTR("Global"), addr.toString().c_str());
+    }
+    break;
+#endif // LWIP_IPV6
+    case ARDUINO_EVENT_ETH_GOT_IP:
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+    {
+      ip_addr_t ip_addr4;
+      ip_addr_copy_from_ip4(ip_addr4, event->event_info.got_ip.ip_info.ip);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: IPv4 %_I, mask %_I, gateway %_I"),
+              event->event_info.got_ip.ip_info.ip.addr,
+              event->event_info.got_ip.ip_info.netmask.addr,
+              event->event_info.got_ip.ip_info.gw.addr);
+
+    }
+    break;
+
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Received ARDUINO_EVENT_WIFI_STA_CONNECTED"));
+      Wifi.ipv6_local_link_called = false;    // not sure if this is needed, make sure link-local is restored at each reconnect
+      break;
+    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+    case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
+      Wifi.ipv6_local_link_called = false;
+      break;
+
+    default:
+      break;
+  }
+}
+#endif // ESP32

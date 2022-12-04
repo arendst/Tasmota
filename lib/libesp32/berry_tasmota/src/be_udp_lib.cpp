@@ -15,21 +15,25 @@
 
 #include <Arduino.h>
 #include <WiFiGeneric.h>
-#include <WiFiUdp.h>
+#include <WiFiUdp46.h>
 #include "be_mapping.h"
+
+// Tasmota Logging
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
 extern "C" {
 
   // init()
-  WiFiUDP *be_udp_init_ntv(void) {
-    return new WiFiUDP();
+  WiFiUDP46 *be_udp_init_ntv(void) {
+    return new WiFiUDP46();
   }
   int32_t be_udp_init(struct bvm *vm) {
     return be_call_c_func(vm, (void*) &be_udp_init_ntv, "+.p", "");
   }
 
   // deinit()
-  void *be_udp_deinit_ntv(WiFiUDP *udp) {
+  void *be_udp_deinit_ntv(WiFiUDP46 *udp) {
     if (udp != nullptr) { delete udp; }
     return nullptr;
   }
@@ -38,20 +42,22 @@ extern "C" {
   }
 
   // udp.begin(address:string, port:int) -> bool
-  int32_t be_udp_begin_ntv(WiFiUDP *udp, const char *host, int32_t port) {
-    IPAddress addr((uint32_t)0);
-    // if no host or host is "" then we defult to INADDR_ANY (0.0.0.0)
-    if(host && (*host != 0) && !WiFiGenericClass::hostByName(host, addr)){
-        return 0;
-    }
+  int32_t be_udp_begin_ntv(WiFiUDP46 *udp, int32_t port) {   
+    IPAddress46 addr;
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin listening to '%s'", addr.toString().c_str());
     return udp->begin(addr, port);
   }
   int32_t be_udp_begin(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".si");
+    if (be_top(vm) >= 3 && be_isstring(vm, 2)) {
+      // legacy string parameter, now ignored
+      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".-i");
+    } else {
+      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".i");
+    }
   }
 
   // udp.stop() -> nil
-  void be_udp_stop_ntv(WiFiUDP *udp) {
+  void be_udp_stop_ntv(WiFiUDP46 *udp) {
     udp->stop();
   }
   int32_t be_udp_stop(struct bvm *vm) {
@@ -59,23 +65,24 @@ extern "C" {
   }
 
   // udp.begin_multicast(address:string, port:int) -> nil
-  int32_t be_udp_begin_mcast_ntv(WiFiUDP *udp, const char *host, int32_t port) {
-    IPAddress addr((uint32_t)0);
-    if(!WiFiGenericClass::hostByName(host, addr)){
+  int32_t be_udp_begin_mcast_ntv(WiFiUDP46 *udp, const char *host, int32_t port) {
+    IPAddress46 addr;
+    if(!WiFiGeneric46::hostByName(host, addr)){
         return 0;
     }
-    return udp->WiFiUDP::beginMulticast(addr, port);
+    return udp->WiFiUDP46::beginMulticast(addr, port);
   }
   int32_t be_udp_begin_mcast(struct bvm *vm) {
     return be_call_c_func(vm, (void*) &be_udp_begin_mcast_ntv, "b", ".si");
   }
 
   // udp.send(address:string, port:int, payload:bytes) -> bool
-  int32_t be_udp_send_ntv(WiFiUDP *udp, const char *host, int32_t port, const uint8_t* buf, int32_t len) {
-    IPAddress addr((uint32_t)0);
-    if (!WiFiGenericClass::hostByName(host, addr)){
+  int32_t be_udp_send_ntv(WiFiUDP46 *udp, const char *host, int32_t port, const uint8_t* buf, int32_t len) {
+    IPAddress46 addr;
+    if (!WiFiGeneric46::hostByName(host, addr)){
         return 0;
     }
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin got host '%s'", addr.toString().c_str());
     if (!udp->beginPacket(addr, port)) { return 0; }
     int bw = udp->write(buf, len);
     if (!bw) { return 0; }
@@ -87,7 +94,7 @@ extern "C" {
   }
 
   // udp.send_multicast(payload:bytes) -> bool
-  int32_t be_udp_send_mcast_ntv(WiFiUDP *udp, const uint8_t* buf, int32_t len) {
+  int32_t be_udp_send_mcast_ntv(WiFiUDP46 *udp, const uint8_t* buf, int32_t len) {
     if (!udp->beginMulticastPacket()) { return 0; }
     int bw = udp->write(buf, len);
     if (!bw) { return 0; }
@@ -100,7 +107,7 @@ extern "C" {
 
   // udp.read() -> bytes or nil
   int32_t be_udp_read(struct bvm *vm) {
-    WiFiUDP *udp = (WiFiUDP*) be_convert_single_elt(vm, 1, NULL, NULL);
+    WiFiUDP46 *udp = (WiFiUDP46*) be_convert_single_elt(vm, 1, NULL, NULL);
     if (udp->parsePacket()) {
       int btr = udp->available();   // btr contains the size of bytes_to_read
 
@@ -128,7 +135,7 @@ extern "C" {
       int32_t btr2 = udp->read(buf, btr);
 
       // set remotet ip
-      IPAddress remote_ip = udp->remoteIP();
+      IPAddress46 remote_ip = udp->remoteIP();
       be_pushstring(vm, remote_ip.toString().c_str());
       be_setmember(vm, 1, "remote_ip");
       be_pop(vm, 1);

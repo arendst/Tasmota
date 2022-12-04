@@ -123,7 +123,7 @@ class IPAddress46: public Printable {
         static bool isValid(const char* arg);
 
         friend class EthernetClass;
-        friend class UDP;
+        friend class UDP46;
         friend class Client;
         friend class Server;
         friend class DhcpClass;
@@ -179,6 +179,20 @@ class IPAddress46: public Printable {
 
     protected:
         bool fromString4(const char *address);
+};
+
+// --------------------------------------------------------------------------------
+// We need to create a subclass of WiFiGenericClass to access protected methods
+// --------------------------------------------------------------------------------
+#include "WiFiGeneric.h"
+
+class WiFiGeneric46 : public WiFiGenericClass
+{
+  public:
+    WiFiGeneric46() {};
+
+    static int hostByName(const char *aHostname, IPAddress46 &aResult);
+    static void DnsDone(void) { setStatusBits(WIFI_DNS_DONE_BIT); };
 };
 
 #endif // __IPADDRESS46_H

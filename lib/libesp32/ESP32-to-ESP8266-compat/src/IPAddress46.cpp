@@ -45,17 +45,27 @@
 #include <Print.h>
 #include <StreamString.h>
 
+// Tasmota Logging
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
 IPAddress46::IPAddress46(const IPAddress46& from)
 {
     ip_addr_copy(_ip, from._ip);
 }
 
 IPAddress46::IPAddress46() {
-    _ip = *IP_ANY_TYPE; // lwIP's v4-or-v6 generic address
+#if LWIP_IPV6
+  _ip = *IP6_ADDR_ANY;
+#else
+  _ip = *IP_ADDR_ANY;
+#endif
+    // _ip = *IP_ANY_TYPE; // lwIP's v4-or-v6 generic address
 }
 
 bool IPAddress46::isSet () const {
-    return !ip_addr_isany(&_ip) && ((*this) != IPADDR_NONE);
+    return !IP_IS_ANY_TYPE_VAL(_ip);
+    // return !ip_addr_isany(&_ip) && ((*this) != IPADDR_NONE);
 }
 
 IPAddress46::IPAddress46(uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet) {
@@ -152,8 +162,8 @@ bool IPAddress46::operator==(const uint8_t* addr) const {
 size_t IPAddress46::printTo(Print& p) const {
     size_t n = 0;
 
-    if (!isSet())
-        return p.print(F("(IP unset)"));
+    // if (!isSet())
+    //     return p.print(F("(IP unset)"));
 
 #if LWIP_IPV6
     if (isV6()) {
@@ -265,6 +275,57 @@ bool IPAddress46::fromString6(const char *address) {
 
     setV6();
     return true;
+}
+
+// --------------------------------------------------
+// Get host by name working for IPv6
+// --------------------------------------------------
+#include "lwip/dns.h"
+
+/**
+ * DNS callback
+ * @param name
+ * @param ipaddr
+ * @param callback_arg
+ */
+static void wifi_dns_found_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
+{
+    if(ipaddr) {
+      (*reinterpret_cast<IPAddress46*>(callback_arg)) = IPAddress46(ipaddr);
+    }
+    WiFiGeneric46::DnsDone();
+    // xEventGroupSetBits(_arduino_event_group, WIFI_DNS_DONE_BIT);
+}
+
+int WiFiGeneric46::hostByName(const char* aHostname, IPAddress46& aResult) {
+  ip_addr_t addr;
+  aResult = static_cast<uint32_t>(INADDR_NONE);
+  waitStatusBits(WIFI_DNS_IDLE_BIT, 16000);
+  clearStatusBits(WIFI_DNS_IDLE_BIT | WIFI_DNS_DONE_BIT);
+  err_t err = dns_gethostbyname_addrtype(aHostname, &addr, &wifi_dns_found_callback, &aResult, LWIP_DNS_ADDRTYPE_DEFAULT);
+  AddLog(LOG_LEVEL_DEBUG, "WIF: WiFiGeneric46::hostByName err=%i", err);
+
+  if(err == ERR_OK) {
+      aResult = IPAddress46(&addr);
+
+      if (!aResult.isSet()) {
+#if LWIP_IPV6
+        aResult.setV6();
+#else
+        aResult.setV4();
+#endif
+      }
+  } else if(err == ERR_INPROGRESS) {
+    waitStatusBits(WIFI_DNS_DONE_BIT, 15000);  //real internal timeout in lwip library is 14[s]
+    clearStatusBits(WIFI_DNS_DONE_BIT);
+  }
+  setStatusBits(WIFI_DNS_IDLE_BIT);
+
+  if(err == ERR_OK) {
+    AddLog(LOG_LEVEL_DEBUG, "WIF: WiFiGeneric46::hostByName Host: %s IP: %s", aHostname ? aHostname : "<null>", aResult.toString().c_str());
+    return 1;
+  }
+  return 0;
 }
 
 #endif
