@@ -734,11 +734,13 @@ void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
 
+#ifdef ESP32
   static bool wifi_event_registered = false;
   if (!wifi_event_registered) {
     WiFi.onEvent(WifiEvents);   // register event listener only once
     wifi_event_registered = true;
   }
+#endif ESP32
   WifiSetState(0);
   WifiSetOutputPower();
 
@@ -1057,6 +1059,7 @@ uint64_t WifiGetNtp(void) {
 // --------------------------------------------------------------------------------
 // Respond to some Arduino/esp-idf events for better IPv6 support
 // --------------------------------------------------------------------------------
+#ifdef ESP32
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
@@ -1096,3 +1099,4 @@ void WifiEvents(arduino_event_t *event) {
       break;
   }
 }
+#endif ESP32
