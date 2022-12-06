@@ -1212,8 +1212,8 @@ void CmndShutterPosition(void)
       }
 
       // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
-      if (XdrvMailbox.payload ==   0) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
-      if (XdrvMailbox.payload == 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
+      if (XdrvMailbox.payload ==   0 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  > 0  ) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
+      if (XdrvMailbox.payload == 100 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  < 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       // webgui still send also on inverted shutter the native position.
