@@ -6025,7 +6025,9 @@ int16_t retval;
   if (!glob_script_mem.scriptptr) {
     return -99;
   }
-  if (tasm_cmd_activ && tlen > 0) return 0;
+  //if (tasm_cmd_activ && tlen > 0) return 0;
+  if (tasm_cmd_activ) return 0;
+
   struct GVARS gv;
   gv.jo = 0;
   retval = Run_script_sub(type, tlen, &gv);
@@ -6040,7 +6042,8 @@ int16_t retval;
       return -99;
     }
 
-    if (tasm_cmd_activ && tlen>0) return 0;
+    //if (tasm_cmd_activ && tlen>0) return 0;
+    if (tasm_cmd_activ) return 0;
 
     struct GVARS gv;
 
@@ -7712,14 +7715,14 @@ else light_status += "true";
 light_status += ",";
 break;
 */
-
+String GetHueDeviceId(uint16_t id, uint8_t ep);
 
 void Script_HueStatus(String *response, uint16_t hue_devs) {
 
   if (hue_script[hue_devs].type=='p') {
     *response += FPSTR(SCRIPT_HUE_LIGHTS_STATUS_JSON2);
     response->replace("{j1", hue_script[hue_devs].name);
-    response->replace("{j2", GetHueDeviceId(hue_devs));
+    response->replace("{j2", GetHueDeviceId(hue_devs, 0));
     uint8_t pwr = glob_script_mem.fvars[hue_script[hue_devs].index[0] - 1];
     response->replace("{state}", (pwr ? "true" : "false"));
     return;
@@ -7793,7 +7796,7 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
 
   response->replace("{light_status}", light_status);
   response->replace("{j1", hue_script[hue_devs].name);
-  response->replace("{j2", GetHueDeviceId(hue_devs));
+  response->replace("{j2", GetHueDeviceId(hue_devs, 0));
 
 }
 
