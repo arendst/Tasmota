@@ -1366,12 +1366,14 @@ void CmndShutterMotorDelay(void)
 
 void CmndShutterMode(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
-    ShutterGlobal.position_mode =  XdrvMailbox.payload;
-    Settings->shutter_mode =  XdrvMailbox.payload;
-    ShutterInit();
+  if ( XdrvMailbox.index == 1) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
+      ShutterGlobal.position_mode =  XdrvMailbox.payload;
+      Settings->shutter_mode =  XdrvMailbox.payload;
+      ShutterInit();
+    }
+    ResponseCmndNumber(ShutterGlobal.position_mode);
   }
-  ResponseCmndNumber(ShutterGlobal.position_mode);
 }
 
 void CmndShutterRelay(void)
