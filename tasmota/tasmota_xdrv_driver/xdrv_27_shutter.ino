@@ -1378,7 +1378,14 @@ void CmndShutterMode(void)
 
 void CmndShutterRelay(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
+  if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
+    // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
+    Response_P(PSTR("{"));
+    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+      ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i)?",":"", i+1,Settings->shutter_startrelay[i]);
+    }
+    ResponseAppend_P(PSTR("}"));
+  } else if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
       Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
       if (XdrvMailbox.payload > 0) {
