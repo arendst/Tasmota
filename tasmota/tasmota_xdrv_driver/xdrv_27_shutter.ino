@@ -1378,27 +1378,25 @@ void CmndShutterMode(void)
 
 void CmndShutterRelay(void)
 {
-  if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
-    // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
-    Response_P(PSTR("{"));
-    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-      ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i)?",":"", i+1,Settings->shutter_startrelay[i]);
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
+    Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
+    if (XdrvMailbox.payload > 0) {
+      ShutterGlobal.RelayShutterMask |= 3 << (XdrvMailbox.payload - 1);
+    } else {
+      ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
     }
-    ResponseAppend_P(PSTR("}"));
-  } else if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
-      Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      if (XdrvMailbox.payload > 0) {
-        ShutterGlobal.RelayShutterMask |= 3 << (XdrvMailbox.payload - 1);
-      } else {
-        ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
-      }
-      Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      ShutterInit();
-      // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
-    }
-    ResponseCmndIdxNumber(Settings->shutter_startrelay[XdrvMailbox.index -1]);
+    Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
+    ShutterInit();
+    // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
   }
+  uint32_t start = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?0:XdrvMailbox.index -1;
+  uint32_t end   = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?TasmotaGlobal.shutters_present:XdrvMailbox.index;
+  // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
+  Response_P(PSTR("{"));
+  for (uint32_t i = start; i < end; i++) {
+    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i)?",":"", i+1,Settings->shutter_startrelay[i]);
+  }
+  ResponseAppend_P(PSTR("}"));
 }
 
 void CmndShutterButton(void)
