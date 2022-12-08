@@ -1366,7 +1366,7 @@ void CmndShutterMotorDelay(void)
 
 void CmndShutterMode(void)
 {
-  if ( XdrvMailbox.index == 1) {
+  if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
       ShutterGlobal.position_mode =  XdrvMailbox.payload;
       Settings->shutter_mode =  XdrvMailbox.payload;
