@@ -469,6 +469,7 @@ struct SCRIPT_MEM {
     char *fast_script = 0;
     char *event_script = 0;
     char *html_script = 0;
+    char *teleperiod = 0;
     char *web_pages[10];
     uint32_t script_lastmillis;
     bool event_handeled = false;
@@ -6025,8 +6026,7 @@ int16_t retval;
   if (!glob_script_mem.scriptptr) {
     return -99;
   }
-  //if (tasm_cmd_activ && tlen > 0) return 0;
-  if (tasm_cmd_activ) return 0;
+  if (tasm_cmd_activ && tlen >= 0) return 0;
 
   struct GVARS gv;
   gv.jo = 0;
@@ -6042,8 +6042,7 @@ int16_t retval;
       return -99;
     }
 
-    //if (tasm_cmd_activ && tlen>0) return 0;
-    if (tasm_cmd_activ) return 0;
+    if (tasm_cmd_activ && tlen >= 0) return 0;
 
     struct GVARS gv;
 
@@ -7065,7 +7064,8 @@ void ScripterEvery100ms(void) {
     if (ResponseLength()) {
       ResponseJsonStart();
       ResponseJsonEnd();
-      Run_Scripter(">T", 2, ResponseData());
+      //Run_Scripter(">T", 2, ResponseData());
+      if (glob_script_mem.teleperiod) Run_Scripter(glob_script_mem.teleperiod, 0, ResponseData());
     }
   }
   if (bitRead(Settings->rule_enabled, 0)) {
@@ -7557,6 +7557,7 @@ void set_callbacks() {
   if (Run_Scripter1(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
   if (Run_Scripter1(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
   if (Run_Scripter1(">C", -2, 0) == 99) {glob_script_mem.html_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.html_script = 0;}
+  if (Run_Scripter1(">T", -2, 0) == 99) {glob_script_mem.teleperiod = glob_script_mem.section_ptr + 2;} else {glob_script_mem.teleperiod = 0;}
 }
 
 void set_wpages(char *id, uint16_t index) {
@@ -11477,7 +11478,8 @@ bool Xdrv10(uint32_t function)
     case FUNC_TELEPERIOD_RULES_PROCESS:
       if (bitRead(Settings->rule_enabled, 0)) {
         if (ResponseLength()) {
-          Run_Scripter(">T", 2, ResponseData());
+          //Run_Scripter(">T", 2, ResponseData());
+          if (glob_script_mem.teleperiod) Run_Scripter(glob_script_mem.teleperiod, 0, ResponseData());
         }
       }
       break;
