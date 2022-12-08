@@ -85,19 +85,29 @@
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;
 
-void EthernetEvent(WiFiEvent_t event) {
-  switch (event) {
+void EthernetEvent(arduino_event_t *event);
+void EthernetEvent(arduino_event_t *event) {
+  switch (event->event_id) {
     case ARDUINO_EVENT_ETH_START:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: " D_ATTEMPTING_CONNECTION));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH D_ATTEMPTING_CONNECTION));
       ETH.setHostname(eth_hostname);
       break;
+
     case ARDUINO_EVENT_ETH_CONNECTED:
-      AddLog(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
-        ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
+#if LWIP_IPV6
+      ETH.enableIpV6();   // enable Link-Local 
+#endif
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH D_CONNECTED " at %dMbps%s, Mac %s, Hostname %s"),
+        ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "",
+        ETH.macAddress().c_str(), eth_hostname
+        );
+        
+      // AddLog(LOG_LEVEL_DEBUG, D_LOG_ETH "ETH.enableIpV6() -> %i", ETH.enableIpV6());
       break;
+      
     case ARDUINO_EVENT_ETH_GOT_IP:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %_I, Hostname %s"),
-        ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
+      // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Mac %s, IPAddress %_I, Hostname %s"),
+      //   ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
       Settings->eth_ipv4_address[1] = (uint32_t)ETH.gatewayIP();
       Settings->eth_ipv4_address[2] = (uint32_t)ETH.subnetMask();
       if (0 == Settings->eth_ipv4_address[0]) {  // At this point ETH.dnsIP() are NOT correct unless DHCP
@@ -107,15 +117,18 @@ void EthernetEvent(WiFiEvent_t event) {
       TasmotaGlobal.rules_flag.eth_connected = 1;
       TasmotaGlobal.global_state.eth_down = 0;
       break;
+
     case ARDUINO_EVENT_ETH_DISCONNECTED:
-      AddLog(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Disconnected"));
       TasmotaGlobal.rules_flag.eth_disconnected = 1;
       TasmotaGlobal.global_state.eth_down = 1;
       break;
+
     case ARDUINO_EVENT_ETH_STOP:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Stopped"));
       TasmotaGlobal.global_state.eth_down = 1;
       break;
+
     default:
       break;
   }
@@ -130,10 +143,21 @@ void EthernetSetIp(void) {
              Settings->eth_ipv4_address[4]);      // IPAddress dns2
 }
 
+// Returns only IPv6 global address (no loopback and no link-local)
+String EthernetGetIPv6(void)
+{
+  return WifiFindIPv6(false, "en");
+}
+
+String EthernetGetIPv6LinkLocal(void)
+{
+  return WifiFindIPv6(true, "en");
+}
+
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
   if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: No ETH MDC and/or ETH MDIO GPIO defined"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and/or ETH MDIO GPIO defined"));
     return;
   }
 
@@ -180,7 +204,7 @@ void EthernetInit(void) {
   delay(1);
 #endif // CONFIG_IDF_TARGET_ESP32
   if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
     return;
   };
 

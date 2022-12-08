@@ -466,21 +466,34 @@ void WifiSetState(uint8_t state)
 }
 
 #if LWIP_IPV6
+//
+// Scan through all interfaces to find a global or local IPv6 address
+// Arg:
+//    is_local: is the address Link-Local (true) or Global (false)
+//    if_type: possible values are "st" for Wifi STA, "en" for Ethernet, "lo" for localhost (not useful)
+static String WifiFindIPv6(bool is_local, const char * if_type = "st") {
+  for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
+    if (intf->name[0] == if_type[0] && intf->name[1] == if_type[1]) {
+      for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+        ip_addr_t *ipv6 = &intf->ip6_addr[i];
+        if (IP_IS_V6_VAL(*ipv6) && !ip_addr_isloopback(ipv6) && ((bool)ip_addr_islinklocal(ipv6) == is_local)) {
+          return IPAddress46(ipv6).toString();
+        }
+      }
+    }
+  }
+  return String();
+}
+
 // Returns only IPv6 global address (no loopback and no link-local)
 String WifiGetIPv6(void)
 {
-  for (auto a : addrList) {
-    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && !a.isLocal() && a.isV6()) return a.toString();
-  }
-  return "";
+  return WifiFindIPv6(false, "st");
 }
 
 String WifiGetIPv6LinkLocal(void)
 {
-  for (auto a : addrList) {
-    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && a.isLocal() && a.isV6()) return a.toString();
-  }
-  return "";
+  return WifiFindIPv6(true, "st");
 }
 
 // add an IPv6 link-local address to all netif
@@ -493,16 +506,18 @@ void CreateLinkLocalIPv6(void)
 #endif // ESP32
 }
 
+// 
 void WifiDumpAddressesIPv6(void)
 {
-  for (auto a: addrList)
-    AddLog(LOG_LEVEL_DEBUG, PSTR("IF='%s' index=%d legacy=%d IPv4=%d local=%d addr='%s'"),
-              a.ifname().c_str(),
-              a.ifnumber(),
-              a.isLegacy(),
-              a.addr().isV4(),
-              a.addr().isLocal(),
-              a.toString().c_str());
+  for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
+    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv4 %s", intf->name[0], intf->name[1], IPAddress46(intf->ip_addr).toString().c_str());
+    for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+      if (!ip_addr_isany_val(intf->ip6_addr[i]))
+        AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv6 %s %s", intf->name[0], intf->name[1],
+                                IPAddress46(intf->ip6_addr[i]).toString().c_str(),
+                                ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "");
+    }
+  }
 }
 #endif  // LWIP_IPV6=1
 
@@ -738,7 +753,7 @@ void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
 
-#ifdef ESP32
+#if defined(ESP32) && !defined(FIRMWARE_MINIMAL)
   static bool wifi_event_registered = false;
   if (!wifi_event_registered) {
     WiFi.onEvent(WifiEvents);   // register event listener only once
@@ -895,6 +910,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
     if (WiFi.hostByName(aHostname, aResult)) {
       // Host name resolved
       if (0xFFFFFFFF != (uint32_t)aResult) {
+        AddLog(LOG_LEVEL_DEBUG, "WIF: Resolving '%s' (%s)", aHostname, aResult.toString().c_str());
         return true;
       }
     }
@@ -903,6 +919,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
     uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[3] : Settings->ipv4_address[3];
     DnsClient.begin((IPAddress)dns_address);
     if (1 == DnsClient.getHostByName(aHostname, aResult)) {
+      AddLog(LOG_LEVEL_DEBUG, "WIF: Resolving '%s' (%s)", aHostname, aResult.toString().c_str());
       return true;
     }
   }
@@ -1076,16 +1093,19 @@ void WifiEvents(arduino_event_t *event) {
       ip_addr_t ip_addr6;
       ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
       IPAddress46 addr(ip_addr6);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: IPv6 %s %s"), addr.isLocal() ? PSTR("Link-Local") : PSTR("Global"), addr.toString().c_str());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
+             event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
+             addr.isLocal() ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
     }
     break;
 #endif // LWIP_IPV6
-    case ARDUINO_EVENT_ETH_GOT_IP:
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+    case ARDUINO_EVENT_ETH_GOT_IP:
     {
       ip_addr_t ip_addr4;
       ip_addr_copy_from_ip4(ip_addr4, event->event_info.got_ip.ip_info.ip);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: IPv4 %_I, mask %_I, gateway %_I"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv4 %_I, mask %_I, gateway %_I"),
+             event->event_id == ARDUINO_EVENT_ETH_GOT_IP ? "ETH" : "WIF",
               event->event_info.got_ip.ip_info.ip.addr,
               event->event_info.got_ip.ip_info.netmask.addr,
               event->event_info.got_ip.ip_info.gw.addr);
