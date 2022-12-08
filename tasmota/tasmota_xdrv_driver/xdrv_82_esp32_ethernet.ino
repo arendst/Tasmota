@@ -85,6 +85,7 @@
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;
 
+void EthernetEvent(arduino_event_t *event);
 void EthernetEvent(arduino_event_t *event) {
   switch (event->event_id) {
     case ARDUINO_EVENT_ETH_START:
