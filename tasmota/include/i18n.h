@@ -808,6 +808,7 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_ETH "ETH: "          // Ethernet
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language

@@ -828,11 +828,20 @@ void CmndStatus(void)
     ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\"}"),
+                          D_JSON_MAC "\":\"%s\""
+
+#if LWIP_IPV6
+                          ",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\""
+#endif // LWIP_IPV6
+                          "}"),
                           EthernetHostname(),
                           (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
                           Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4],
-                          EthernetMacAddress().c_str());
+                          EthernetMacAddress().c_str()
+#if LWIP_IPV6
+                          ,EthernetGetIPv6().c_str(), EthernetGetIPv6LinkLocal().c_str()
+#endif // LWIP_IPV6
+                          );
 #endif  // USE_ETHERNET
     ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());

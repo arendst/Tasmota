@@ -2362,11 +2362,11 @@ void HandleInformation(void)
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Global }2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Global (wifi)}2%s"), ipv6_addr.c_str());
     }
     ipv6_addr = WifiGetIPv6LinkLocal();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Link-Local }2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Local (wifi)}2%s"), ipv6_addr.c_str());
     }
 #endif  // LWIP_IPV6 = 1
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
@@ -2387,6 +2387,16 @@ void HandleInformation(void)
       WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
+#if LWIP_IPV6
+    String ipv6_eth_addr = EthernetGetIPv6();
+    if (ipv6_eth_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Global (eth)}2%s"), ipv6_eth_addr.c_str());
+    }
+    ipv6_eth_addr = EthernetGetIPv6LinkLocal();
+    if (ipv6_eth_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Local (eth)}2%s"), ipv6_eth_addr.c_str());
+    }
+#endif  // LWIP_IPV6 = 1
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
   }
