@@ -80,7 +80,7 @@ void CmndHotPlugTime(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv32(uint8_t function)
+bool Xdrv32(uint32_t function)
 {
   bool result = false;
 

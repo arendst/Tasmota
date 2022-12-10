@@ -185,24 +185,22 @@ const char HTTP_SNS_SIGNALSTRENGTH[] PROGMEM = "{s}%s " D_SIGNALSTRENGTH "{m}%d{
 const char HTTP_SNS_CHIPTEMPERATURE[] PROGMEM = "{s}%s " D_CHIPTEMPERATURE "{m}%d " D_UNIT_DEGREE "%c{e}";
 #endif  // USE_WEBSERVER
 
-void TfmpShow(bool json)
-{
+void TfmpShow(bool json) {
     char sensor_name[12];
     strcpy_P(sensor_name, "TFminiPlus");
-    char distance_chr[FLOATSZ];
-    dtostrfd(tfminiplus_sensor.distance, 3, distance_chr);
+    float distance = (float)tfminiplus_sensor.distance;  // cm
 
     if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":\"%s\",\"" D_JSON_SIGNALSTRENGTH "\":\"%d\",\"" D_JSON_CHIPTEMPERATURE "\":%d}"),
-            sensor_name, distance_chr, tfminiplus_sensor.sigstrength, tfminiplus_sensor.chiptemp);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":\"%1_f\",\"" D_JSON_SIGNALSTRENGTH "\":\"%d\",\"" D_JSON_CHIPTEMPERATURE "\":%d}"),
+            sensor_name, &distance, tfminiplus_sensor.sigstrength, tfminiplus_sensor.chiptemp);
 #ifdef USE_DOMOTICZ
         if (0 == TasmotaGlobal.tele_period) {
-            DomoticzSensor(DZ_COUNT, distance_chr);
+            DomoticzFloatSensor(DZ_COUNT, distance);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_P(HTTP_SNS_DISTANCE_CM, sensor_name, distance_chr);
+        WSContentSend_P(HTTP_SNS_F_DISTANCE_CM, sensor_name, &distance);
         WSContentSend_P(HTTP_SNS_SIGNALSTRENGTH, sensor_name, tfminiplus_sensor.sigstrength);
         WSContentSend_P(HTTP_SNS_CHIPTEMPERATURE, sensor_name, tfminiplus_sensor.chiptemp, TempUnit());
 #endif  // USE_WEBSERVER
@@ -213,7 +211,7 @@ void TfmpShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns86(byte callback_id)
+bool Xsns86(uint32_t callback_id)
 {
     bool result = false;
     if (FUNC_INIT == callback_id)

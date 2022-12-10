@@ -116,7 +116,7 @@ void Tsl2561Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns16(uint8_t function)
+bool Xsns16(uint32_t function)
 {
   if (!I2cEnabled(XI2C_16)) { return false; }
 

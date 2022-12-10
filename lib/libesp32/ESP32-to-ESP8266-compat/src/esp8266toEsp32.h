@@ -137,8 +137,6 @@ typedef int SerialConfig;
 //#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))
 #define PortUdp_write(log_data, n) PortUdp.write((const uint8_t *)(log_data), n)
 
-#undef LWIP_IPV6
-
 #define REASON_DEFAULT_RST      0  // "Power on"                normal startup by power on
 #define REASON_WDT_RST          1  // "Hardware Watchdog"       hardware watch dog reset
 #define REASON_EXCEPTION_RST    2  // "Exception"               exception reset, GPIO status won’t change

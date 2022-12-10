@@ -434,7 +434,7 @@ bool TTGO_button(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv83(uint8_t function) {
+bool Xdrv83(uint32_t function) {
   bool result = false;
 
   switch (function) {

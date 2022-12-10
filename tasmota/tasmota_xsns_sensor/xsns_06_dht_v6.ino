@@ -26,7 +26,9 @@
 
 #define XSNS_06          6
 
+#ifndef DHT_MAX_SENSORS
 #define DHT_MAX_SENSORS  4
+#endif
 #define DHT_MAX_RETRY    8
 
 uint32_t dht_maxcycles;
@@ -369,7 +371,7 @@ void DhtShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns06(uint8_t function) {
+bool Xsns06(uint32_t function) {
   bool result = false;
 
   if (dht_active) {

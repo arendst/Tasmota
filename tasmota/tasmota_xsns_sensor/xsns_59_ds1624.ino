@@ -203,7 +203,7 @@ void DS1624Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns59(uint8_t function)
+bool Xsns59(uint32_t function)
 {
   if (!I2cEnabled(XI2C_42)) { return false; }
 

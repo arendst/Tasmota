@@ -19,7 +19,6 @@
 
 
 #ifdef USE_BERRY
-#ifdef USE_ALEXA_AVS
 
 #include <berry.h>
 #include "be_mem.h"
@@ -34,6 +33,7 @@ extern "C" {
   // `AES_GCM.init(secret_key:bytes(32), iv:bytes(12)) -> instance`
   int32_t m_aes_gcm_init(struct bvm *vm);
   int32_t m_aes_gcm_init(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_GCM
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 3 && be_isinstance(vm, 2) && be_isinstance(vm, 3)) {
       do {
@@ -77,11 +77,15 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_AES_GCM
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 
   int32_t m_aes_gcm_encryt(bvm *vm);
   int32_t m_aes_gcm_decryt(bvm *vm);
   int32_t m_aes_gcm_encrypt_or_decryt(bvm *vm, int encrypt) {
+#ifdef USE_BERRY_CRYPTO_AES_GCM
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isinstance(vm, 2)) {
       do {
@@ -111,15 +115,27 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_AES_GCM
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_GCM
   }
   int32_t m_aes_gcm_encryt(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_GCM
     return m_aes_gcm_encrypt_or_decryt(vm, 1);
+#else // USE_BERRY_CRYPTO_AES_GCM
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_GCM
   }
   int32_t m_aes_gcm_decryt(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_GCM
     return m_aes_gcm_encrypt_or_decryt(vm, 0);
+#else // USE_BERRY_CRYPTO_AES_GCM
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 
   int32_t m_aes_gcm_tag(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_GCM
     do {
       be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
 
@@ -137,6 +153,9 @@ extern "C" {
       // success
     } while (0);
     be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_AES_GCM
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 }
 
@@ -151,6 +170,7 @@ extern "C" {
   // Computes the public key from a completely random private key of 32 bytes
   int32_t m_ec_c25519_pubkey(bvm *vm);
   int32_t m_ec_c25519_pubkey(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_EC_C25519
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isbytes(vm, 2)) {
       size_t buf_len = 0;
@@ -173,12 +193,16 @@ extern "C" {
       be_raise(vm, "value_error", "invalid input");
     }
     be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_EC_C25519
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_EC_C25519
   }
 
   // crypto.EC_C25519().shared_key(my_private_key:bytes(32), their_public_key:bytes(32)) -> bytes(32)
   // Computes the shared pre-key. Normally this shared pre-key is hashed with another algorithm.
   int32_t m_ec_c25519_sharedkey(bvm *vm);
   int32_t m_ec_c25519_sharedkey(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_EC_C25519
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 3 && be_isbytes(vm, 2) && be_isbytes(vm, 3)) {
       size_t sk_len = 0;
@@ -204,8 +228,10 @@ extern "C" {
       be_raise(vm, "value_error", "invalid input");
     }
     be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_EC_C25519
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_EC_C25519
   }
 }
 
-#endif // USE_ALEXA_AVS
 #endif  // USE_BERRY

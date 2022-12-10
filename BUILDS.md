@@ -68,6 +68,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SM2135                | - | x / - | x | x | - | x |
 | USE_SM2335                | - | x / - | x | x | - | x |
 | USE_BP5758D               | - | x / - | x | x | - | x |
+| USE_BP1658CJ              | - | x / - | x | x | - | x |
 | USE_SONOFF_L1             | - | x / - | x | x | - | x |
 | USE_ELECTRIQ_MOODL        | - | x / - | x | x | - | x |
 |                           |   |       |   |   |   |   |
@@ -177,10 +178,13 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_DS3502                | - | - / - | - | - | - | - |
 | USE_HYT                   | - | - / - | - | - | - | - |
 | USE_LUXV30B               | - | - / - | - | - | - | - |
+| USE_HMC5883L              | - | - / - | - | - | - | - |
+| USE_QMC5883L              | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | Feature or Sensor         | l | t     | k | s | i | d | Remarks
 | USE_SPI                   | - | - / - | - | - | - | x |
 | USE_RC522                 | - | - / - | - | - | - | - |
+| USE_CANSNIFFER            | - | - / - | - | - | - | - |
 | USE_MHZ19                 | - | - / x | - | x | - | - |
 | USE_SENSEAIR              | - | - / x | - | x | - | - |
 | USE_PMS5003               | - | - / x | - | x | - | - |
@@ -201,6 +205,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MIEL_HVAC             | - | - / - | - | - | - | - |
 | USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
 | USE_AS608                 | - | - / - | - | - | - | - |
+| USE_LD2410                | - | - / - | - | - | - | - |
 | USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge / zbbrdgpro
 |                           |   |       |   |   |   |   |
 | USE_NRF24                 | - | - / - | - | - | - | - |
@@ -254,5 +259,9 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_I2S_AUDIO             |   |   / - |   |   |   |   |
 | USE_TTGO_WATCH            |   |   / - |   |   |   |   |
 | USE_SONOFF_SPM            |   |   / x |   |   |   |   |
+| USE_DISPLAY_TM1621_SONOFF |   |   / x |   |   |   |   |
+| USE_SHELLY_PRO            |   |   / x |   |   |   |   |
+| USE_DALI                  |   |   / - |   |   |   |   |
+| USE_DINGTIAN_RELAY        |   |   / - |   |   |   |   |
 
 * USE_MQTT_TLS is enabled by default in every ESP32 variants

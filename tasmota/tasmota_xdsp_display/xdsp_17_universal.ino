@@ -481,7 +481,7 @@ void UDISP_Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp17(uint8_t function) {
+bool Xdsp17(uint32_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {

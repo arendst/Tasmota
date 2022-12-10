@@ -318,8 +318,8 @@ public:
   }
 
   uint8_t       type;             // zigbee type, Zunk by default
-  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
-  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint16_t      divider;          // divide by x (ignore if 0 or 1)
   int16_t       base;             // add x (ignore if 0)
   uint16_t      cluster;          // cluster number
   uint16_t      attribute;        // attribute number
@@ -354,8 +354,8 @@ public:
   uint16_t      attribute;        // attribute to match
   uint16_t      new_cluster;      // replace with this cluster
   uint16_t      new_attribute;    // replace with this attribute
-  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
-  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint16_t      divider;          // divide by x (ignore if 0 or 1)
   int16_t       base;           // add x (ignore if 0)
 };
 
@@ -732,7 +732,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx000F, 0x002E,  Z_(BinaryInInactiveText),Cm1, 0 },
   { Zbool,    Cx000F, 0x0051,  Z_(BinaryInOutOfService),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0054,  Z_(BinaryInPolarity),    Cm1, 0 },
-  { Zstring,  Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
+  { Zbool,    Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
   // { 0xFF, Cx000F, 0x0057,  (BinaryInPriorityArray),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0067,  Z_(BinaryInReliability), Cm1, 0 },
   { Zmap8,    Cx000F, 0x006F,  Z_(BinaryInStatusFlags), Cm1, 0 },
@@ -1129,7 +1129,35 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0500, 0xFFF0 + ZA_GlassBreak, Z_(GlassBreak),Cm1, 0 },
 
   // Metering (Smart Energy) cluster
-  { Zuint48,  Cx0702, 0x0000,  Z_(EnergyTotal),          Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0000,  Z_(CurrentSummationDelivered),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0001,  Z_(CurrentSummationReceived),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0002,  Z_(CurrentMaxDemandDelivered),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0003,  Z_(CurrentMaxDemandReceived),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0004,  Z_(DFTSummation),         Cm1, 0 },
+  { Zuint16,  Cx0702, 0x0005,  Z_(DailyFreezeTime),      Cm1, 0 },
+  { Zint8,    Cx0702, 0x0006,  Z_(PowerFactor),          Cm1, 0 },
+  { ZUTC,     Cx0702, 0x0007,  Z_(ReadingSnapShotTime),  Cm1, 0 },
+  { ZUTC,     Cx0702, 0x0008,  Z_(CurrentMaxDemandDeliveredTime),Cm1, 0 },
+  { ZUTC,     Cx0702, 0x0009,  Z_(CurrentMaxDemandReceivedTime),Cm1, 0 },
+  { Zuint8,   Cx0702, 0x000A,  Z_(DefaultUpdatePeriod),  Cm1, 0 },
+  { Zuint8,   Cx0702, 0x000B,  Z_(FastPollUpdatePeriod), Cm1, 0 },
+  { Zuint48,  Cx0702, 0x000C,  Z_(CurrentBlockPeriodConsumptionDelivered),Cm1, 0 },
+  { Zuint24,  Cx0702, 0x000D,  Z_(DailyConsumptionTarget),Cm1, 0 },
+  { Zenum8,   Cx0702, 0x000E,  Z_(CurrentBlock),         Cm1, 0 },
+  { Zenum8,   Cx0702, 0x000F,  Z_(ProfileIntervalPeriod),Cm1, 0 },
+  { Zuint16,  Cx0702, 0x0010,  Z_(IntervalReadReportingPeriod),Cm1, 0 },
+  { Zuint16,  Cx0702, 0x0011,  Z_(PresetReadingTime),    Cm1, 0 },
+  { Zuint16,  Cx0702, 0x0012,  Z_(VolumePerReport),      Cm1, 0 },
+  { Zuint8,   Cx0702, 0x0013,  Z_(FlowRestriction),      Cm1, 0 },
+  { Zenum8,   Cx0702, 0x0014,  Z_(SupplyStatus),         Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0015,  Z_(CurrentInletEnergyCarrierSummation),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0016,  Z_(CurrentOutletEnergyCarrierSummation),Cm1, 0 },
+  { Zint24,   Cx0702, 0x0017,  Z_(InletTemperature),     Cm1, 0 },
+  { Zint24,   Cx0702, 0x0018,  Z_(OutletTemperature),    Cm1, 0 },
+  { Zint24,   Cx0702, 0x0019,  Z_(ControlTemperature),   Cm1, 0 },
+  { Zint24,   Cx0702, 0x001A,  Z_(CurrentInletEnergyCarrierDemand),Cm1, 0 },
+  { Zint24,   Cx0702, 0x001B,  Z_(CurrentOutletEnergyCarrierDemand),Cm1, 0 },
+  { Zuint48,  Cx0702, 0x001C,  Z_(PreviousBlockPeriodConsumptionDelivered),Cm1, 0 },
 
   // Meter Identification cluster
   { Zstring,  Cx0B01, 0x0000,  Z_(CompanyName),          Cm1, 0 },

@@ -221,6 +221,16 @@ void ZeroCrossInit(uint32_t offset) {
 
 /********************************************************************************************/
 
+void XdrvXsnsCall(uint32_t function) {
+  XdrvCall(function);
+  XsnsCall(function);
+}
+
+void XsnsXdrvCall(uint32_t function) {
+  XsnsCall(function);
+  XdrvCall(function);
+}
+
 void SetLatchingRelay(power_t lpower, uint32_t state) {
   // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
   // TasmotaGlobal.power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
@@ -240,6 +250,11 @@ void SetLatchingRelay(power_t lpower, uint32_t state) {
 }
 
 void SetDevicePower(power_t rpower, uint32_t source) {
+  if (TasmotaGlobal.power_on_delay) {
+    TasmotaGlobal.power_on_delay_state = rpower;
+    return;
+  }
+
   ShowSource(source);
   TasmotaGlobal.last_source = source;
 
@@ -271,8 +286,7 @@ void SetDevicePower(power_t rpower, uint32_t source) {
   }
 
   XdrvMailbox.index = rpower;
-  XdrvCall(FUNC_SET_POWER);               // Signal power state
-  XsnsCall(FUNC_SET_POWER);               // Signal power state
+  XdrvXsnsCall(FUNC_SET_POWER);           // Signal power state
 
   XdrvMailbox.index = rpower;
   XdrvMailbox.payload = source;
@@ -384,7 +398,7 @@ void SetPowerOnState(void)
     SetDevicePower(1, SRC_RESTART);
   } else {
     power_t devices_mask = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
-    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
+    if (ResetReasonPowerOn()) {
       switch (Settings->poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -422,7 +436,8 @@ void SetPowerOnState(void)
   uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
-    if (!Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+    if (!Settings->flag3.no_power_feedback &&  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+        !TasmotaGlobal.power_on_delay) {       // SetOption47 - Delay switching relays to reduce power surge at power on
       if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
         if (bitRead(TasmotaGlobal.rel_bistable, port)) {
           port++;                              // Skip both bistable relays as always 0
@@ -517,8 +532,13 @@ void SetLedPowerAll(uint32_t state)
   }
 }
 
-void SetLedLink(uint32_t state)
-{
+void SetLedLink(uint32_t state) {
+#ifdef ESP32
+  uint32_t index = XdrvMailbox.index;
+  XdrvMailbox.index = state;
+  XdrvCall(FUNC_LED_LINK);
+  XdrvMailbox.index = index;
+#endif  // ESP32
   int led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = TasmotaGlobal.ledlnk_inverted;
   if (-1 == led_pin) {                    // Legacy - LED1 is status
@@ -878,8 +898,7 @@ void GetSensorValues(void) {
   char *start = ResponseData();
   int data_start = ResponseLength();
 
-  XsnsCall(FUNC_JSON_APPEND);
-  XdrvCall(FUNC_JSON_APPEND);
+  XsnsXdrvCall(FUNC_JSON_APPEND);
 
   if (data_start == ResponseLength()) { return; }
 
@@ -1008,19 +1027,6 @@ void MqttPublishTeleperiodSensor(void) {
   }
 }
 
-void SkipSleep(bool state) {
-  if (state) {
-    TasmotaGlobal.skip_sleep += 2;
-  } else {
-    if (TasmotaGlobal.skip_sleep) {
-      TasmotaGlobal.skip_sleep--;
-    }
-    if (TasmotaGlobal.skip_sleep) {
-      TasmotaGlobal.skip_sleep--;
-    }
-  }
-}
-
 /*********************************************************************************************\
  * State loops
 \*********************************************************************************************/
@@ -1049,6 +1055,29 @@ void PerformEverySecond(void)
 #ifdef USE_DEEPSLEEP
     }
 #endif
+  }
+
+  if (TasmotaGlobal.power_on_delay) {
+    if (1 == Settings->param[P_POWER_ON_DELAY2]) {       // SetOption47 1
+      // Allow relay power on once network is available
+      if (!TasmotaGlobal.global_state.network_down) {
+        TasmotaGlobal.power_on_delay = 0;
+      }
+    }
+    else if (2 == Settings->param[P_POWER_ON_DELAY2]) {  // SetOption47 2
+      // Allow relay power on once mqtt is available
+      if (!TasmotaGlobal.global_state.mqtt_down) {
+        TasmotaGlobal.power_on_delay = 0;
+      }
+    }
+    else {                                               // SetOption47 3..255
+      // Allow relay power on after x seconds
+      TasmotaGlobal.power_on_delay--;
+    }
+    if (!TasmotaGlobal.power_on_delay && TasmotaGlobal.power_on_delay_state) {
+      // Set relays according to last SetDevicePower() request
+      SetDevicePower(TasmotaGlobal.power_on_delay_state, SRC_SO47);
+    }
   }
 
   if (TasmotaGlobal.mqtt_cmnd_blocked_reset) {
@@ -1103,8 +1132,7 @@ void PerformEverySecond(void)
         MqttPublishTeleState();
         MqttPublishTeleperiodSensor();
 
-        XsnsCall(FUNC_AFTER_TELEPERIOD);
-        XdrvCall(FUNC_AFTER_TELEPERIOD);
+        XsnsXdrvCall(FUNC_AFTER_TELEPERIOD);
       } else {
         // Global values (Temperature, Humidity and Pressure) update every 10 seconds
         if (!(TasmotaGlobal.tele_period % 10)) {
@@ -1159,10 +1187,6 @@ void Every100mSeconds(void)
       }
 #endif  // ESP8266
     }
-  }
-
-  if (TasmotaGlobal.skip_sleep) {
-    TasmotaGlobal.skip_sleep--;                         // Clean up possible residue
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
@@ -1528,76 +1552,70 @@ void Every250mSeconds(void)
       WifiDisable();
     }
     break;
-  case 3:                                                 // Every x.75 second
-    if (!TasmotaGlobal.global_state.network_down) {
+  case 3:
+    {
+      if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-      if (OtaFactoryRead()) {
-        OtaFactoryWrite(false);
-        TasmotaGlobal.ota_state_flag = 3;
-      }
+        if (OtaFactoryRead()) {
+          OtaFactoryWrite(false);
+          TasmotaGlobal.ota_state_flag = 3;
+        }
 #endif
-      if (1 == RtcSettings.ota_loader) {
-        RtcSettings.ota_loader = 0;
-        TasmotaGlobal.ota_state_flag = 3;
-      }
+        if (1 == RtcSettings.ota_loader) {
+          RtcSettings.ota_loader = 0;
+          TasmotaGlobal.ota_state_flag = 3;
+        }
 #endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
-      StartMdns();
+        StartMdns();
 #endif  // USE_DISCOVERY
 
 #ifdef USE_WEBSERVER
-      if (Settings->webserver) {
+        if (Settings->webserver) {
 
 #ifdef ESP8266
-        if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver, WiFi.localIP()); }
+          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver, WiFi.localIP()); }
 #endif  // ESP8266
 #ifdef ESP32
 #ifdef USE_ETHERNET
-        StartWebserver(Settings->webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
+          StartWebserver(Settings->webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
 #else
-        StartWebserver(Settings->webserver, WiFi.localIP());
+          StartWebserver(Settings->webserver, WiFi.localIP());
 #endif
 #endif  // ESP32
 
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-        MdnsAddServiceHttp();
+          MdnsAddServiceHttp();
 #endif  // WEBSERVER_ADVERTISE
 #endif  // USE_DISCOVERY
-      } else {
-        StopWebserver();
-      }
-#ifdef USE_EMULATION
-      if (Settings->flag2.emulation) { UdpConnect(); }
-#endif  // USE_EMULATION
+
+        } else {
+          StopWebserver();
+        }
 #endif  // USE_WEBSERVER
 
 #ifdef USE_DEVICE_GROUPS
-      DeviceGroupsStart();
+        DeviceGroupsStart();
 #endif  // USE_DEVICE_GROUPS
 
-#ifdef USE_KNX
-      if (!knx_started && Settings->flag.knx_enabled) {  // CMND_KNX_ENABLED
-        KNXStart();
-        knx_started = true;
-      }
-#endif  // USE_KNX
+        // send FUNC_NETWORK_UP to all modules
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
+        XdrvXsnsCall(FUNC_NETWORK_UP);
 
-      MqttCheck();
-    } else {
-#ifdef USE_EMULATION
-      UdpDisconnect();
-#endif  // USE_EMULATION
+        MqttCheck();
+      } else {
 
 #ifdef USE_DEVICE_GROUPS
-      DeviceGroupsStop();
+        DeviceGroupsStop();
 #endif  // USE_DEVICE_GROUPS
 
-#ifdef USE_KNX
-      knx_started = false;
-#endif  // USE_KNX
+        // send FUNC_NETWORK_DOWN to all modules
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
+        XdrvXsnsCall(FUNC_NETWORK_DOWN);
+      }                                           // Every x.75 second
     }
     break;
   }
@@ -1820,8 +1838,7 @@ void SerialInput(void)
     } else {
       ResponseAppend_P(PSTR("\""));
       if (Settings->flag.mqtt_serial_raw) {
-        char hex_char[(TasmotaGlobal.serial_in_byte_counter * 2) + 2];
-        ResponseAppend_P(ToHex_P((unsigned char*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter, hex_char, sizeof(hex_char)));
+        ResponseAppend_P(PSTR("%*_H"), TasmotaGlobal.serial_in_byte_counter, TasmotaGlobal.serial_in_buffer);
       } else {
         ResponseAppend_P(EscapeJSONString(TasmotaGlobal.serial_in_buffer).c_str());
       }
@@ -2039,7 +2056,20 @@ void GpioInit(void)
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.gpio_pin, nitems(TasmotaGlobal.gpio_pin), sizeof(TasmotaGlobal.gpio_pin[0]));
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %*_V"), nitems(TasmotaGlobal.gpio_pin), (uint8_t*)TasmotaGlobal.gpio_pin);
+
+  if (ResetReasonPowerOn()) {
+    TasmotaGlobal.power_on_delay = Settings->param[P_POWER_ON_DELAY2];  // SetOption47 - Delay switching relays to reduce power surge at power on
+    if (TasmotaGlobal.power_on_delay) {
+      // This is the earliest possibility to disable relays connected to esp8266/esp32 gpios at power up to reduce power surge
+      for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+        if (PinUsed(GPIO_REL1, i)) {
+          DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);  // Off
+        }
+      }
+      AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO47 %d Power off relays"), Settings->param[P_POWER_ON_DELAY2]);
+    }
+  }
 
   analogWriteRange(Settings->pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
@@ -2164,7 +2194,11 @@ void GpioInit(void)
     }
   }
 
-  delay(Settings->param[P_POWER_ON_DELAY] * 10);  // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
+  if (Settings->param[P_POWER_ON_DELAY]) {                 // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
+    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %d msec"), init_delay);
+    delay(init_delay);
+  }
 
 #ifdef USE_I2C
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));

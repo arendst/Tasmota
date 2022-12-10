@@ -277,7 +277,7 @@ void HdcShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns65(uint8_t function)
+bool Xsns65(uint32_t function)
 {
   if (!I2cEnabled(XI2C_45)) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("Xsns65: I2C driver not enabled for this device."));

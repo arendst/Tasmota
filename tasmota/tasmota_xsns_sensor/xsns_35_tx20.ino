@@ -581,7 +581,7 @@ void Tx2xShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns35(uint8_t function)
+bool Xsns35(uint32_t function)
 {
   bool result = false;
 

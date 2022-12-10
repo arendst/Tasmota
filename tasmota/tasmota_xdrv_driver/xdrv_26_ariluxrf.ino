@@ -170,7 +170,7 @@ void AriluxRfDisable(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv26(uint8_t function)
+bool Xdrv26(uint32_t function)
 {
   bool result = false;
 

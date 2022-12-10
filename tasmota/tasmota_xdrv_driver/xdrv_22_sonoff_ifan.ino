@@ -174,7 +174,7 @@ bool SonoffIfanSerialInput(void)
       // AA 55 01 04 00 01 04 0A - Light
       // AA 55 01 06 00 01 01 09 - Buzzer
       // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
-      AddLogSerial(LOG_LEVEL_DEBUG);
+      AddLogSerial();
       uint8_t crc = 0;
       for (uint32_t i = 2; i < 7; i++) {
         crc += TasmotaGlobal.serial_in_buffer[i];
@@ -244,8 +244,7 @@ void SonoffIfanUpdate(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv22(uint8_t function)
-{
+bool Xdrv22(uint32_t function) {
   bool result = false;
 
   if (IsModuleIfan()) {

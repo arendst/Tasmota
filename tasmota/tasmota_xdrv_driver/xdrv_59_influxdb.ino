@@ -561,7 +561,7 @@ void CmndInfluxDbPeriod(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv59(uint8_t function) {
+bool Xdrv59(uint32_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

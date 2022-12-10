@@ -181,7 +181,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption146 .. SetOption177
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
     uint32_t mqtt_disable_sserialrec : 1;  // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead.
-    uint32_t spare02 : 1;                  // bit 2
+    uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
     uint32_t spare03 : 1;                  // bit 3
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5
@@ -268,7 +268,7 @@ typedef union {
     uint32_t spare25 : 1;                  // bit 25
     uint32_t spare26 : 1;                  // bit 26
     uint32_t spare27 : 1;                  // bit 27
-    uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) - 
+    uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
   };
 } SysMBitfield2;
@@ -549,10 +549,9 @@ typedef struct {
   uint32_t      energy_power_calibration;    // 364
   uint32_t      energy_voltage_calibration;  // 368
   uint32_t      energy_current_calibration;  // 36C
-  uint32_t      ex_energy_kWhtoday;        // 370
-  uint32_t      ex_energy_kWhyesterday;    // 374
-  uint16_t      energy_kWhdoy;             // 378
-  uint16_t      energy_min_power;          // 37A
+  uint32_t      energy_power_calibration2;   // 370 - ex_energy_kWhtoday
+  uint32_t      energy_voltage_calibration2; // 374 - ex_energy_kWhyesterday
+  uint32_t      energy_current_calibration2; // 378 - ex_energy_kWhdoy, ex_energy_min_power
   uint16_t      energy_max_power;          // 37C
   uint16_t      energy_min_voltage;        // 37E
   uint16_t      energy_max_voltage;        // 380
@@ -573,8 +572,9 @@ typedef struct {
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
   SOBitfield3   flag3;                     // 3A0
-
-  uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
+  uint16_t      energy_kWhdoy;             // 3A4
+  uint16_t      energy_min_power;          // 3A6
+  uint32_t      pn532_password;            // 3A8 - ex_switchmode4-7, Free since 9.2.0.6
 
 #ifdef CONFIG_IDF_TARGET_ESP32S3
   // ------------------------------------
@@ -687,15 +687,15 @@ typedef struct {
   uint16_t      mqtt_socket_timeout;       // 52E
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
-  uint16_t      ex_pulse_timer[8];         // 532  Free since 11.0.0.3
+
+  uint16_t      ex_pulse_timer[8];         // 532  ex_pulse_timer free since 11.0.0.3
+
   uint16_t      button_debounce;           // 542
   uint32_t      ipv4_address[5];           // 544
   uint32_t      ipv4_rgx_address;          // 558
   uint32_t      ipv4_rgx_subnetmask;       // 55C
   uint16_t      pwm_value_ext[16-5];       // 560  Extension to pwm_value to store up to 16 PWM for ESP32. This array stores values 5..15
-
-  uint8_t       free_576[2];               // 576
-
+  uint16_t      pn532_pack;                // 576
   int32_t       weight_offset;             // 578
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 57C
   SysMBitfield1 flag2;                     // 5BC
@@ -722,14 +722,16 @@ typedef struct {
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
+  uint8_t       ex_user_template8[5];      // 72F  14 bytes (ESP8266) - Free since 9.0.0.1 - only 5 bytes referenced now
 #endif  // ESP8266
 #ifdef ESP32
   uint8_t       webcam_clk;                // 72F
   WebCamCfg2    webcam_config2;            // 730
-
-  uint8_t       free_esp32_734[9];         // 734
 #endif  // ESP32
+  uint16_t      artnet_universe;           // 734
+  uint16_t      modbus_sbaudrate;          // 736
+
+  uint8_t       free_esp32_738[5];         // 738
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -830,18 +832,22 @@ typedef struct {
   uint8_t       shd_warmup_time;           // F5E
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
-  uint8_t       modbus_sbaudrate;          // F61
+
+  uint8_t       ex_modbus_sbaudrate;       // F61  - v12.2.0.5
+
   uint8_t       modbus_sconfig;            // F62
 
   uint8_t       free_f63[13];              // F63 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
-  uint32_t      touch_threshold;           // F70  
+  uint32_t      touch_threshold;           // F70
   SOBitfield6   flag6;                     // F74
   uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88
+
   uint32_t      ex_energy_kWhtotal;        // F9C
+
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8

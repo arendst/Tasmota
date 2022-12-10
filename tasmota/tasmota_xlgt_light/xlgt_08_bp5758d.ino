@@ -114,6 +114,7 @@ bool Bp5758dSetChannels(void) {
   if (cur_col_10[0]==0 && cur_col_10[1]==0 && cur_col_10[2]==0 && cur_col_10[3]==0 && cur_col_10[4]==0) {
     Bp5758dStart(BP5758D_ADDR_SETUP);
     Bp5758dWrite(BP5758D_DISABLE_OUTPUTS_ALL);
+    Bp5758dStop();
     Bp5758dStart(BP5758D_ADDR_SLEEP);
     Bp5758dStop();
     bIsSleeping = true;
@@ -186,7 +187,7 @@ void Bp5758dModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt08(uint8_t function)
+bool Xlgt08(uint32_t function)
 {
   bool result = false;
 

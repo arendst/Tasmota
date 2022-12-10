@@ -18,6 +18,10 @@
 #include <WiFiUdp.h>
 #include "be_mapping.h"
 
+// Tasmota Logging
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
 extern "C" {
 
   // init()
@@ -37,22 +41,32 @@ extern "C" {
     return be_call_c_func(vm, (void*) &be_udp_deinit_ntv, "=.p", "");
   }
 
-  // udp.begin(address:string, port:int) -> nil
-  int32_t be_udp_begin_ntv(WiFiUDP *udp, const char *host, int32_t port) {
-    IPAddress addr((uint32_t)0);
-    // if no host or host is "" then we defult to INADDR_ANY (0.0.0.0)
-    if(host && (*host != 0) && !WiFiGenericClass::hostByName(host, addr)){
-        return 0;
-    }
+  // udp.begin(address:string, port:int) -> bool
+  int32_t be_udp_begin_ntv(WiFiUDP *udp, int32_t port) {   
+    IPAddress addr;
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin listening to '%s'", addr.toString().c_str());
     return udp->begin(addr, port);
   }
   int32_t be_udp_begin(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".si");
+    if (be_top(vm) >= 3 && be_isstring(vm, 2)) {
+      // legacy string parameter, now ignored
+      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".-i");
+    } else {
+      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".i");
+    }
+  }
+
+  // udp.stop() -> nil
+  void be_udp_stop_ntv(WiFiUDP *udp) {
+    udp->stop();
+  }
+  int32_t be_udp_stop(struct bvm *vm) {
+    return be_call_c_func(vm, (void*) &be_udp_stop_ntv, "b", ".");
   }
 
   // udp.begin_multicast(address:string, port:int) -> nil
   int32_t be_udp_begin_mcast_ntv(WiFiUDP *udp, const char *host, int32_t port) {
-    IPAddress addr((uint32_t)0);
+    IPAddress addr;
     if(!WiFiGenericClass::hostByName(host, addr)){
         return 0;
     }
@@ -64,10 +78,11 @@ extern "C" {
 
   // udp.send(address:string, port:int, payload:bytes) -> bool
   int32_t be_udp_send_ntv(WiFiUDP *udp, const char *host, int32_t port, const uint8_t* buf, int32_t len) {
-    IPAddress addr((uint32_t)0);
+    IPAddress addr;
     if (!WiFiGenericClass::hostByName(host, addr)){
         return 0;
     }
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin got host '%s'", addr.toString().c_str());
     if (!udp->beginPacket(addr, port)) { return 0; }
     int bw = udp->write(buf, len);
     if (!bw) { return 0; }
@@ -94,10 +109,30 @@ extern "C" {
   int32_t be_udp_read(struct bvm *vm) {
     WiFiUDP *udp = (WiFiUDP*) be_convert_single_elt(vm, 1, NULL, NULL);
     if (udp->parsePacket()) {
-      int btr = udp->available();
-      uint8_t * buf = (uint8_t*) be_pushbuffer(vm, btr);
+      int btr = udp->available();   // btr contains the size of bytes_to_read
+
+      int argc = be_top(vm);
+      if (argc >= 2 && be_isbytes(vm, 2)) {
+        // we have already a bytes() buffer
+        be_pushvalue(vm, 2);    // push on top
+        // resize to btr
+        be_getmember(vm, -1, "resize");
+        be_pushvalue(vm, -2);
+        be_pushint(vm, btr);
+        be_call(vm, 2);
+        be_pop(vm, 3);
+      } else {
+        be_pushbytes(vm, nullptr, btr); // allocate a buffer of size btr filled with zeros
+      }
+
+      // get the address of the buffer
+      be_getmember(vm, -1, "_buffer");
+      be_pushvalue(vm, -2);
+      be_call(vm, 1);
+      uint8_t * buf = (uint8_t*) be_tocomptr(vm, -2);
+      be_pop(vm, 2);
+
       int32_t btr2 = udp->read(buf, btr);
-      be_pushbytes(vm, buf, btr2);
 
       // set remotet ip
       IPAddress remote_ip = udp->remoteIP();
@@ -139,6 +174,7 @@ class be_class_udp (scope: global, name: udp) {
     begin, func(be_udp_begin)
     begin_multicast, func(be_udp_begin_mcast)
     read, func(be_udp_read)
+    close, func(be_udp_stop)
 }
 @const_object_info_end */
 

@@ -124,8 +124,7 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
   char rc;
 
 #ifdef EXS_DEBUG
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: Tx Packet:"));
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)data, len);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: Tx Packet %*_H"), len, (uint8_t *)data);
 #endif
 
   while (retries)
@@ -363,8 +362,7 @@ bool ExsModuleSelected(void)
 bool ExsSetChannels(void)
 {
 #ifdef EXS_DEBUG
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: SetChannels:"));
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)XdrvMailbox.data, XdrvMailbox.data_len);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: SetChannels %*_H"), XdrvMailbox.data_len, (uint8_t *)XdrvMailbox.data);
 #endif
 
   Exs.dimm[0] = ((uint8_t *)XdrvMailbox.data)[0];
@@ -456,8 +454,7 @@ void ExsSerialInput(void)
         Exs.cmd_status = 0;
 
 #ifdef EXS_DEBUG
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: CRC: 0x%02x, RX Packet:"), crc);
-        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)Exs.buffer, Exs.byte_counter);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("EXS: CRC 0x%02x, RX Packet %*_H"), crc, Exs.byte_counter, (uint8_t *)Exs.buffer);
 #endif
 
         if (Exs.buffer[0] == crc)
@@ -585,7 +582,7 @@ void CmndExsState(void)
  * Interface
  */
 
-bool Xdrv30(uint8_t function)
+bool Xdrv30(uint32_t function)
 {
   bool result = false;
 

@@ -1109,7 +1109,7 @@ void UfsEditorUpload(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv50(uint8_t function) {
+bool Xdrv50(uint32_t function) {
   bool result = false;
 
   switch (function) {

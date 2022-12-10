@@ -841,7 +841,7 @@ void CmndAdcParam(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns02(uint8_t function) {
+bool Xsns02(uint32_t function) {
   bool result = false;
 
   switch (function) {

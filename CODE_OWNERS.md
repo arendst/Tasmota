@@ -71,17 +71,129 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_60_shift595           | Jacek Ziółkowski
 | xdrv_61_ds3502             | f-reiling
 | xdrv_62_improv             | @arendst
+| xdrv_63_modbus_bridge      | @jeroenst
+|                            |
 | xdrv_79_esp32_ble          | @staars, @btsimonh
 | xdrv_81_esp32_webcam       | @gemu, @philrich
 | xdrv_82_esp32_ethernet     | @arendst
 | xdrv_83_esp32_watch        | @gemu
 | xdrv_85_esp32_ble_eq3_trv  | @btsimonh
 | xdrv_86_esp32_sonoff_spm   | @arendst
+| xdrv_87_esp32_sonoff_tm1621 | @arendst
+| xdrv_88_esp32_shelly_pro   | @arendst
+| xdrv_89_esp32_dali         | @eeak
+| xdrv_90_esp32_dingtian_relay | @barbudor
+|                            |
+| xdrv_122_file_settings_demo | @arendst
+| xdrv_127_debug             | @arendst
 |                            |
 | Tasmota Sensors            |
 |                            |
 | xsns_01_counter            | @arendst, @stefanbode
+| xsns_02_analog             | @arendst, @barbudor
+| xsns_03_energy             | @arendst
+| xsns_04_snfsc              | @arendst
+| xsns_05_ds18x20            | @arendst
+| xsns_06_dht                | @arendst
+| xsns_07_sht1x              | @arendst
+| xsns_08_htu                | Heiko Krupp
+| xsns_09_bmp                | @arendst
+| xsns_10_bh1750             | @arendst
+| xsns_11_veml6070           | @mike2nl
+| xsns_12_ads1115            | @syssi, @stefanbode
+| xsns_13_ina219             | @stefanbode
+| xsns_14_sht3x              | Stefan Tibus
+| xsns_15_mhz19              | @arendst
+| xsns_16_tsl2561            | Joachim Banzhaf
+| xsns_17_senseair           | @arendst
+| xsns_18_pms5003            | @arendst
+| xsns_19_mgs                | @palich2000
+| xsns_20_novasds            | Norbert Richter
+| xsns_21_sgp30              | Gerhard Mutz
+| xsns_22_sr04               | Nuno Ferreira, @arendst
+| xsns_23                    |
+| xsns_24_si1145             |
+| xsns_25                    |
+| xsns_26_lm75ad             | Andre Thomas
+| xsns_27_apds9960           | Shawn Hymel
+| xsns_28_tm1638             | @arendst
+| xsns_29_mcp230xx           | Andre Thomas
+| xsns_30_mpr121             | Rene 'Renne' Bartsch
+| xsns_31_ccs811             | Gerhard Mutz
+| xsns_32_mpu6050            | Oliver Welter
+| xsns_33_qmc5883l           | Helge Scheunemann
+| xsns_34_hx711              | @arendst
+| xsns_35_tx20               | Thomas Eckerstorfer, Norbert Richter
+| xsns_36_mgc3130            | Christian Baars
+| xsns_37_rfsensor           | @arendst
+| xsns_38_az7798             | @adebeun
+| xsns_39_max31855           | Markus Past
+| xsns_40_pn532              | Andre Thomas, @md5sum-as
+| xsns_41_max44009           | @llagendijk
+| xsns_42_scd30              | @frogmore42
+| xsns_43_hre                | Jon Little
+| xsns_44_sps30              | Gerhard Mutz
+| xsns_45_vl53l0x            | Gerhard Mutz, Adrian Scillato
+| xsns_46_mlx90614           | Gerhard Mutz
+| xsns_47_max31865           | Alberto Lopez Siemens
+| xsns_48_chirp              | Christian Baars
+| xsns_49                    |
+| xsns_50_paj7620            | Christian Baars
+| xsns_51_rdm6300            | Gerhard Mutz
+| xsns_52_esp32_ibeacon      | Gerhard Mutz, @btsimonh
+| xsns_52_ibeacon            | Gerhard Mutz
+| xsns_53_sml                | Gerhard Mutz
+| xsns_54_ina226             | Stephen Rodgers
+| xsns_55_hih_series         |
+| xsns_56_hpma               | David Hunt
+| xsns_57_tsl2591            | Markus Bösling
+| xsns_58_dht12              | Stefan Oskam
+| xsns_59_ds1624             | Leonid Myravje
+| xsns_60_gps                | Christian Baars, Adrian Scillato
+| xsns_61_mi_nrf24           | Christian Baars
+| xsns_62_mi_hm10            | Christian Baars
+| xsns_62_esp32_mi           | Christian Baars
+| xsns_63_aht1x              | Martin Wagner
+| xsns_64_hrxl               | Jon Little
+| xsns_65_hdc1080            | Luis Teixeira
+| xsns_66_iaq                | Christian Baars
+| xsns_67_as3935             | Martin Wagner
+| xsns_68_windmeter          | Matteo Albinola
+| xsns_69_opentherm          | Yuriy Sannikov
+| xsns_70_veml6075           | Martin Wagner
+| xsns_71_veml7700           | Martin Wagner
+| xsns_72_mcp9808            | Martin Wagner
+| xsns_73_hp303b             | @rjaakke
+| xsns_74_lmt01              | @justifiably
+| xsns_75_prometheus         | @marius, @mhansen, @hansmi
+| xsns_76_dyp                | Janusz Kostorz
+| xsns_77_vl53l1x            | Rui Marinho, @Jason2866
 | xsns_78_ezo                | Christopher Tremblay
+| xsns_79_as608              | @boaschti
+| xsns_80_mfrc522            | @arendst
+| xsns_81_seesaw_soil        | Wayne Ross, Peter Franck
+| xsns_82_wiegand            | Sigurd Leuther
+| xsns_83_neopool            | Norbert Richter
+| xsns_84_tof10120           | Cyril Pawelko
+| xsns_85_mpu6886            | @s-hadinger
+| xsns_86_tfminiplus         | Raphael Breiting
+| xsns_87_can_sniffer        | @kwiatek6324, Marius Bezuidenhout
+| xsns_87_mcp2515            | Marius Bezuidenhout
+| xsns_88_am2320             | Lars Wessels
+| xsns_89_t67xx              | Alexander Savchenko
+| xsns_90_hrg15              | Wouter Breukink
+| xsns_91_vindriktning       | Marcel Ritter
+| xsns_92_scd40              | @frogmore42, @arnold-n
+| xsns_93_hm330x             | @barbudor
+| xsns_94_hdc2010            | Luc Boudreau
+| xsns_95_cm1107             | @maksim
+| xsns_96_flowratemeter      | Norbert Richter
+| xsns_97_hyt                | Thomas Schnittcher, Adjan Kretz
+| xsns_98_sgp40              | Jean-Pierre Deschamps
+| xsns_99_luxv30b            | Marius Bezuidenhout
+| xsns_100_ina3221           | @barbudor
+| xsns_101_hmc5883l          | Andreas Achtzehn
+| xsns_102_ld2410            | @arendst
 |                            |
 | Libraries                  |
 |                            |

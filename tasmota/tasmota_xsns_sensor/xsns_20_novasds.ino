@@ -1,7 +1,7 @@
 /*
   xsns_20_novasds.ino - Nova SDS011/SDS021 particle concentration sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -249,7 +249,7 @@ void NovaSdsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns20(uint8_t function)
+bool Xsns20(uint32_t function)
 {
   bool result = false;
 

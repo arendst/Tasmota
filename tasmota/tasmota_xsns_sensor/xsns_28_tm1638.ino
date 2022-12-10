@@ -198,7 +198,7 @@ void TmShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns28(uint8_t function)
+bool Xsns28(uint32_t function)
 {
   bool result = false;
 

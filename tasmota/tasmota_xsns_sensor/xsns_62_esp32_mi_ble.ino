@@ -3530,7 +3530,7 @@ void MI32Show(bool json)
 \*********************************************************************************************/
 #define WEB_HANDLE_MI32 "mikey"
 
-bool Xsns62(uint8_t function)
+bool Xsns62(uint32_t function)
 {
 //  if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
 //  return false;

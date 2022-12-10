@@ -17,29 +17,40 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_I2C
+#if defined(ESP32) && defined(USE_SPI)
+#define USE_ESP32_SPI
+#endif
+#if defined(USE_I2C) || defined(USE_ESP32_SPI)
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy used in Shelly 2.5 (model 1), Shelly EM (model 2) and Shelly Plus 2PM (model 3)
+ * ADE7953 - Energy used in Shelly 2.5 (model 1), Shelly EM (model 2), Shelly Plus 2PM (model 3), Shelly Pro 1PM (model 4) and Shelly Pro 2PM (model 5)
  *
  * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3458,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
  * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
+ * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
+ * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350;AdcParam2 2,10000,10000,3350"}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
  * Model differences:
- * Function                        Model1  Model2  Model3   Remark
- * ------------------------------  ------  ------  -------  -------------------------------------------------
- * Shelly                          2.5     EM      Plus2PM
- * Current measurement device      shunt   CT      shunt    CT = Current Transformer
- * Swapped channel A/B             Yes     No      No       Defined by hardware design - Fixed by Tasmota
- * Support Export Active           No      Yes     No       Only EM supports correct negative value detection
- * Show negative (reactive) power  No      Yes     No       Only EM supports correct negative value detection
- * Default phase calibration       0       200     0        CT needs different phase calibration than shunts
- * Default reset pin on ESP8266    -       16      -        Legacy support. Replaced by GPIO ADE7953RST
+ * Function                        Model1   Model2   Model3   Model4  Model5  Remark
+ * ------------------------------  -------  -------  -------  ------  ------  -------------------------------------------------
+ * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM
+ * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32
+ * Interface                       I2C      I2C      I2C      SPI     SPI     Interface type used
+ * Number of ADE9753 chips         1        1        1        1       2       Count of ADE9753 chips
+ * ADE9753 IRQ                     1        2        3        4       5       Index defines model number
+ * Current measurement device      shunt    CT       shunt    shunt   shunt   CT = Current Transformer
+ * Common voltage                  Yes      Yes      Yes      No      No      Show common voltage in GUI/JSON
+ * Common frequency                Yes      Yes      Yes      No      No      Show common frequency in GUI/JSON
+ * Swapped channel A/B             Yes      No       No       No      No      Defined by hardware design - Fixed by Tasmota
+ * Support Export Active           No       Yes      No       No      No      Only EM supports correct negative value detection
+ * Show negative (reactive) power  No       Yes      No       No      No      Only EM supports correct negative value detection
+ * Default phase calibration       0        200      0        0       0       CT needs different phase calibration than shunts
+ * Default reset pin on ESP8266    -        16       -        -       -       Legacy support. Replaced by GPIO ADE7953RST
  *
  * I2C Address: 0x38
  *********************************************************************************************
@@ -58,6 +69,8 @@
 
 /*********************************************************************************************/
 
+#define ADE7953_ACCU_ENERGY                  // Use accumulating energy instead of instant power
+
 //#define ADE7953_DUMP_REGS
 
 #define ADE7953_PREF              1540       // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
@@ -66,11 +79,10 @@
 
 // Default calibration parameters can be overridden by a rule as documented above.
 #define ADE7953_GAIN_DEFAULT      4194304    // = 0x400000 range 2097152 (min) to 6291456 (max)
-
 #define ADE7953_PHCAL_DEFAULT     0          // = range -383 to 383 - Default phase calibration for Shunts
 #define ADE7953_PHCAL_DEFAULT_CT  200        // = range -383 to 383 - Default phase calibration for Current Transformers (Shelly EM)
 
-enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM };
+enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM, ADE7953_SHELLY_PRO_1PM, ADE7953_SHELLY_PRO_2PM };
 
 enum Ade7953_8BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
@@ -175,57 +187,50 @@ enum Ade7953_32BitRegisters {
 };
 
 enum Ade7953CalibrationRegisters {
-  ADE7953_CAL_AVGAIN,
-  ADE7953_CAL_BVGAIN,
-  ADE7953_CAL_AIGAIN,
-  ADE7953_CAL_BIGAIN,
-  ADE7953_CAL_AWGAIN,
-  ADE7953_CAL_BWGAIN,
-  ADE7953_CAL_AVAGAIN,
-  ADE7953_CAL_BVAGAIN,
-  ADE7953_CAL_AVARGAIN,
-  ADE7953_CAL_BVARGAIN,
-  ADE7943_CAL_PHCALA,
-  ADE7943_CAL_PHCALB
+  ADE7953_CAL_VGAIN,
+  ADE7953_CAL_IGAIN,
+  ADE7953_CAL_WGAIN,
+  ADE7953_CAL_VAGAIN,
+  ADE7953_CAL_VARGAIN,
+  ADE7943_CAL_PHCAL
 };
 
-const uint16_t Ade7953CalibRegs[] {
-  ADE7953_AVGAIN,
-  ADE7953_BVGAIN,
-  ADE7953_AIGAIN,
-  ADE7953_BIGAIN,
-  ADE7953_AWGAIN,
-  ADE7953_BWGAIN,
-  ADE7953_AVAGAIN,
-  ADE7953_BVAGAIN,
-  ADE7953_AVARGAIN,
-  ADE7953_BVARGAIN,
-  ADE7943_PHCALA,
-  ADE7943_PHCALB
+const uint8_t  ADE7953_CALIBREGS = 6;
+const uint16_t Ade7953CalibRegs[2][ADE7953_CALIBREGS] {
+  { ADE7953_AVGAIN, ADE7953_AIGAIN, ADE7953_AWGAIN, ADE7953_AVAGAIN, ADE7953_AVARGAIN, ADE7943_PHCALA },
+  { ADE7953_BVGAIN, ADE7953_BIGAIN, ADE7953_BWGAIN, ADE7953_BVAGAIN, ADE7953_BVARGAIN, ADE7943_PHCALB }
 };
 
-const uint16_t Ade7953Registers[] {
-  ADE7953_IRMSA,   // IRMSA - RMS current channel A
-  ADE7953_AWATT,   // AWATT - Active power channel A
-  ADE7953_AVA,     // AVA - Apparent power channel A
-  ADE7953_AVAR,    // AVAR - Reactive power channel A
-  ADE7953_IRMSB,   // IRMSB - RMS current channel B
-  ADE7953_BWATT,   // BWATT - Active power channel B
-  ADE7953_BVA,     // BVA - Apparent power channel B
-  ADE7953_BVAR,    // BVAR - Reactive power channel B
-  ADE7953_VRMS,    // VRMS - RMS voltage (Both channels)
-  ADE7943_Period,  // Period - 16-bit unsigned period register
-  ADE7953_ACCMODE  // ACCMODE - Accumulation mode
+const uint8_t  ADE7953_REGISTERS = 6;
+const uint16_t Ade7953Registers[2][ADE7953_REGISTERS] {
+#ifdef ADE7953_ACCU_ENERGY
+  { ADE7953_IRMSA, ADE7953_AENERGYA, ADE7953_APENERGYA, ADE7953_RENERGYA, ADE7953_VRMS, ADE7943_Period },
+  { ADE7953_IRMSB, ADE7953_AENERGYB, ADE7953_APENERGYB, ADE7953_RENERGYB, ADE7953_VRMS, ADE7943_Period }
+#else   // No ADE7953_ACCU_ENERGY
+  { ADE7953_IRMSA, ADE7953_AWATT, ADE7953_AVA, ADE7953_AVAR, ADE7953_VRMS, ADE7943_Period },
+  { ADE7953_IRMSB, ADE7953_BWATT, ADE7953_BVA, ADE7953_BVAR, ADE7953_VRMS, ADE7943_Period }
+#endif  // ADE7953_ACCU_ENERGY
 };
+
+#ifdef ADE7953_ACCU_ENERGY
+const float ADE7953_LSB_PER_WATTSECOND = 2.5;
+const float ADE7953_POWER_CORRECTION = 23.41494;  // See https://github.com/arendst/Tasmota/pull/16941
+#else   // No ADE7953_ACCU_ENERGY
+const float ADE7953_LSB_PER_WATTSECOND = 44;
+#endif  // ADE7953_ACCU_ENERGY
 
 struct Ade7953 {
-  uint32_t voltage_rms = 0;
-  uint32_t period = 0;
+  uint32_t voltage_rms[2] = { 0, 0 };
   uint32_t current_rms[2] = { 0, 0 };
   uint32_t active_power[2] = { 0, 0 };
-  int32_t calib_data[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
+  int32_t calib_data[2][ADE7953_CALIBREGS];
   uint8_t init_step = 0;
-  uint8_t model = 0;                              // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM
+  uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM
+  uint8_t cs_index;
+#ifdef USE_ESP32_SPI
+  SPISettings spi_settings;
+  int8_t pin_cs[2];
+#endif  // USE_ESP32_SPI
 } Ade7953;
 
 int Ade7953RegSize(uint16_t reg) {
@@ -248,131 +253,216 @@ int Ade7953RegSize(uint16_t reg) {
 void Ade7953Write(uint16_t reg, uint32_t val) {
   int size = Ade7953RegSize(reg);
   if (size) {
-    Wire.beginTransmission(ADE7953_ADDR);
-    Wire.write((reg >> 8) & 0xFF);
-    Wire.write(reg & 0xFF);
-    while (size--) {
-      Wire.write((val >> (8 * size)) & 0xFF);     // Write data, MSB first
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Write %08X"), val);
+
+#ifdef USE_ESP32_SPI
+    if (Ade7953.pin_cs[0] >= 0) {
+      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
+      delayMicroseconds(1);                          // CS 1uS to SCLK edge
+      SPI.beginTransaction(Ade7953.spi_settings);
+      SPI.transfer16(reg);
+      SPI.transfer(0x00);                            // Write
+      while (size--) {
+        SPI.transfer((val >> (8 * size)) & 0xFF);    // Write data, MSB first
+      }
+      SPI.endTransaction();
+      delayMicroseconds(2);                          // CS high 1.2uS after SCLK edge (when writing to COMM_LOCK bit)
+      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
+    } else {
+#endif  // USE_ESP32_SPI
+      Wire.beginTransmission(ADE7953_ADDR);
+      Wire.write((reg >> 8) & 0xFF);
+      Wire.write(reg & 0xFF);
+      while (size--) {
+        Wire.write((val >> (8 * size)) & 0xFF);      // Write data, MSB first
+      }
+      Wire.endTransmission();
+      delayMicroseconds(5);                          // Bus-free time minimum 4.7us
+#ifdef USE_ESP32_SPI
     }
-    Wire.endTransmission();
-    delayMicroseconds(5);                         // Bus-free time minimum 4.7us
+#endif  // USE_ESP32_SPI
   }
 }
 
 int32_t Ade7953Read(uint16_t reg) {
-	uint32_t response = 0;
+  uint32_t response = 0;
 
   int size = Ade7953RegSize(reg);
   if (size) {
-    Wire.beginTransmission(ADE7953_ADDR);
-    Wire.write((reg >> 8) & 0xFF);
-    Wire.write(reg & 0xFF);
-    Wire.endTransmission(0);
-    Wire.requestFrom(ADE7953_ADDR, size);
-    if (size <= Wire.available()) {
-      for (uint32_t i = 0; i < size; i++) {
-        response = response << 8 | Wire.read();   // receive DATA (MSB first)
+#ifdef USE_ESP32_SPI
+    if (Ade7953.pin_cs[0] >= 0) {
+      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
+      delayMicroseconds(1);                          // CS 1uS to SCLK edge
+      SPI.beginTransaction(Ade7953.spi_settings);
+      SPI.transfer16(reg);
+      SPI.transfer(0x80);                            // Read
+      while (size--) {
+        response = response << 8 | SPI.transfer(0);  // receive DATA (MSB first)
       }
+      SPI.endTransaction();
+      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
+    } else {
+#endif  // USE_ESP32_SPI
+      Wire.beginTransmission(ADE7953_ADDR);
+      Wire.write((reg >> 8) & 0xFF);
+      Wire.write(reg & 0xFF);
+      Wire.endTransmission(0);
+      Wire.requestFrom(ADE7953_ADDR, size);
+      if (size <= Wire.available()) {
+        for (uint32_t i = 0; i < size; i++) {
+          response = response << 8 | Wire.read();    // receive DATA (MSB first)
+        }
+      }
+#ifdef USE_ESP32_SPI
     }
+#endif  // USE_ESP32_SPI
   }
-	return response;
+  return response;
 }
 
 #ifdef ADE7953_DUMP_REGS
 void Ade7953DumpRegs(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                  SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: ***             SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"));
   char data[200] = { 0 };
   for (uint32_t i = 0; i < 10; i++) {
     int32_t value = Ade7953Read(ADE7953_SAGCYC + i);
     snprintf_P(data, sizeof(data), PSTR("%s      %02X"), data, value);  // 8-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x000..009%s"), data);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                  ZXTOUT LINECYC  CONFIG  CF1DEN  CF2DEN  Resrvd  Resrvd  CFMODE  PHCALA  PHCALB     PFA     PFB  ANGLEA  ANGLEB  Period"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** 0x000..009%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: ***             ZXTOUT LINECYC  CONFIG  CF1DEN  CF2DEN  Resrvd  Resrvd  CFMODE  PHCALA  PHCALB     PFA     PFB  ANGLEA  ANGLEB  Period"));
   data[0] = '\0';
   for (uint32_t i = 0; i < 15; i++) {
     int32_t value = Ade7953Read(ADE7953_ZXTOUT + i);
     snprintf_P(data, sizeof(data), PSTR("%s    %04X"), data, value);  // 16-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x100..10E%s"), data);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                   IGAIN   VGAIN   WGAIN VARGAIN  VAGAIN  Resrvd  IRMSOS  Resrvd  VRMSOS  WATTOS   VAROS    VAOS"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** 0x100..10E%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: ***              IGAIN   VGAIN   WGAIN VARGAIN  VAGAIN  Resrvd  IRMSOS  Resrvd  VRMSOS  WATTOS   VAROS    VAOS"));
   data[0] = '\0';
   for (uint32_t i = 0; i < 12; i++) {
     int32_t value = Ade7953Read(ADE7953_AIGAIN + i);
     snprintf_P(data, sizeof(data), PSTR("%s  %06X"), data, value);  // 24-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x380..38B%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** 0x380..38B%s"), data);
   data[0] = '\0';
   for (uint32_t i = 0; i < 12; i++) {
     int32_t value = Ade7953Read(ADE7953_BIGAIN + i);
     snprintf_P(data, sizeof(data), PSTR("%s  %06X"), data, value);  // 24-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x38C..397%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** 0x38C..397%s"), data);
 }
 #endif  // ADE7953_DUMP_REGS
 
+void Ade7953SetCalibration(uint32_t regset, uint32_t calibset) {
+  Ade7953.cs_index = calibset;
+  for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
+    int32_t value = Ade7953.calib_data[calibset][i];
+    if (ADE7943_CAL_PHCAL == i) {
+//      if (ADE7953_PHCAL_DEFAULT == value) { continue; }  // ADE7953 reset does NOT always reset all registers
+      if (value < 0) {
+        value = abs(value) + 0x200;                  // Add sign magnitude
+      }
+    }
+//    if (ADE7953_GAIN_DEFAULT == value) { continue; }  // ADE7953 reset does NOT always reset all registers
+    Ade7953Write(Ade7953CalibRegs[regset][i], value);
+  }
+}
+
 void Ade7953Init(void) {
+  uint32_t chips = 1;
+#ifdef USE_ESP32_SPI
+  chips = (Ade7953.pin_cs[1] >= 0) ? 2 : 1;
+#endif  // USE_ESP32_SPI
+  for (uint32_t chip = 0; chip < chips; chip++) {
+    Ade7953.cs_index = chip;
+
 #ifdef ADE7953_DUMP_REGS
-  Ade7953DumpRegs();
+    Ade7953DumpRegs();
 #endif  // ADE7953_DUMP_REGS
 
-  Ade7953Write(ADE7953_CONFIG, 0x0004);           // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
-  Ade7953Write(0x0FE, 0x00AD);                    // Unlock register 0x120
-  Ade7953Write(0x120, 0x0030);                    // Configure optimum setting
+    Ade7953Write(ADE7953_CONFIG, 0x0004);            // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
+    Ade7953Write(0x0FE, 0x00AD);                     // Unlock register 0x120
+    Ade7953Write(0x120, 0x0030);                     // Configure optimum setting
+#ifdef USE_ESP32_SPI
+//    int32_t value = Ade7953Read(0x702);              // Silicon version
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
+#endif  // USE_ESP32_SPI
+  }
 
-  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
-    if (i >= ADE7943_CAL_PHCALA) {
-      int16_t phasecal = Ade7953.calib_data[i];
-      if (phasecal < 0) {
-        phasecal = abs(phasecal) + 0x200;         // Add sign magnitude
-      }
-      Ade7953Write(Ade7953CalibRegs[i], phasecal);
-    } else {
-      Ade7953Write(Ade7953CalibRegs[i], Ade7953.calib_data[i]);
-    }
+  Ade7953SetCalibration(0, 0);                       // First ADE7953 A registers set with calibration set 0
+#ifdef USE_ESP32_SPI
+  if (Ade7953.pin_cs[1] >= 0) {                      // Second ADE7953 using SPI
+    Ade7953SetCalibration(0, 1);                     // Second ADE7953 A registers set with calibration set 1
   }
-  int32_t regs[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
-  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
-    regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
-    if (i >= ADE7943_CAL_PHCALA) {
-      if (regs[i] >= 0x0200) {
-        regs[i] &= 0x01FF;                        // Clear sign magnitude
-        regs[i] *= -1;                            // Make negative
+  else if (Ade7953.pin_cs[0] == -1)                  // No first ADE7953 using SPI so set register set B
+#endif  // USE_ESP32_SPI
+    Ade7953SetCalibration(1, 1);                     // First ADE7953 B register set with calibration set 1
+
+  int32_t regs[ADE7953_CALIBREGS];
+  for (uint32_t chip = 0; chip < chips; chip++) {
+    Ade7953.cs_index = chip;
+    for (uint32_t channel = 0; channel < 2; channel++) {
+      for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
+        regs[i] = Ade7953Read(Ade7953CalibRegs[channel][i]);
+        if (ADE7943_CAL_PHCAL == i) {
+          if (regs[i] >= 0x0200) {
+            regs[i] &= 0x01FF;                       // Clear sign magnitude
+            regs[i] *= -1;                           // Make negative
+          }
+        }
       }
+#ifdef USE_ESP32_SPI
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Chip%d CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"), chip +1, 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
+#else
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"), 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
+#endif  // USE_ESP32_SPI
     }
-  }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs aV %d, bV %d, aI %d, bI %d, aW %d, bW %d, aVA %d, bVA %d, aVAr %d, bVAr %d, aP %d, bP %d"),
-    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], regs[11]);
+
 #ifdef ADE7953_DUMP_REGS
-  Ade7953DumpRegs();
+    Ade7953DumpRegs();
 #endif  // ADE7953_DUMP_REGS
+  }
 }
 
 void Ade7953GetData(void) {
-  uint32_t acc_mode;
-  int32_t reg[2][4];
-  for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
-    int32_t value = Ade7953Read(Ade7953Registers[i]);
-    if (8 == i) {
-      Ade7953.voltage_rms = value;                // RMS voltage (both channels)
-    } else if (9 == i) {
-      Ade7953.period = value;                     // Period
-    } else if (10 == i) {
-      acc_mode = value;                           // Accumulation mode
-    } else {
-      uint32_t reg_index = i >> 2;                // 0 or 1
-      reg[(ADE7953_SHELLY_25 == Ade7953.model) ? !reg_index : reg_index][i &3] = value;  // IRMS, WATT, VA, VAR
+  uint32_t acc_mode = 0;
+  int32_t reg[2][ADE7953_REGISTERS];
+
+#ifdef USE_ESP32_SPI
+  if (Ade7953.pin_cs[0] >= 0) {
+    for (uint32_t chip = 0; chip < 2; chip++) {
+      if (Ade7953.pin_cs[chip] < 0) { continue; }
+      Ade7953.cs_index = chip;
+      for (uint32_t i = 0; i < ADE7953_REGISTERS; i++) {
+        reg[chip][i] = Ade7953Read(Ade7953Registers[0][i]);  // IRMS, WATT, VA, VAR, VRMS, Period
+      }
     }
+  } else {
+#endif  // USE_ESP32_SPI
+    for (uint32_t channel = 0; channel < 2; channel++) {
+      uint32_t channel_swap = (ADE7953_SHELLY_25 == Ade7953.model) ? !channel : channel;
+      for (uint32_t i = 0; i < ADE7953_REGISTERS; i++) {
+        reg[channel_swap][i] = Ade7953Read(Ade7953Registers[channel][i]);
+      }
+    }
+    acc_mode = Ade7953Read(ADE7953_ACCMODE);         // Accumulation mode
+#ifdef USE_ESP32_SPI
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
-    acc_mode, Ade7953.voltage_rms, Ade7953.period,
+#endif  // USE_ESP32_SPI
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, %d, Period %d, %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
+    acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
     reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
+
+  // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
+  if (Ade7953.init_step) { return; }
 
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
   for (uint32_t channel = 0; channel < 2; channel++) {
+    Ade7953.voltage_rms[channel] = reg[channel][4];
     Ade7953.current_rms[channel] = reg[channel][0];
-    if (Ade7953.current_rms[channel] < 2000) {    // No load threshold (20mA)
+    if (Ade7953.current_rms[channel] < 2000) {        // No load threshold (20mA)
       Ade7953.current_rms[channel] = 0;
       Ade7953.active_power[channel] = 0;
     } else {
@@ -385,53 +475,55 @@ void Ade7953GetData(void) {
     }
   }
 
-  if (Energy.power_on) {                          // Powered on
-    float divider = (Ade7953.calib_data[ADE7953_CAL_AVGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
-    Energy.voltage[0] = (float)Ade7953.voltage_rms / divider;
-    Energy.frequency[0] = 223750.0f / ((float)Ade7953.period + 1);
-
+  if (Energy.power_on) {                              // Powered on
+    float divider;
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      divider = (Ade7953.calib_data[ADE7953_CAL_AWGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+
+      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
+#ifdef ADE7953_ACCU_ENERGY
+      power_calibration /= ADE7953_POWER_CORRECTION;
+#endif  // ADE7953_ACCU_ENERGY
+      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION);
+      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) * 10;
+
+      Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
+      Energy.voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[ADE7953_CAL_AVARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
-        if (bitRead(acc_mode, 10 +channel)) {     // APSIGN
+        if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
           Energy.active_power[channel] *= -1;
         }
-        if (bitRead(acc_mode, 12 +channel)) {     // VARSIGN
+        if (bitRead(acc_mode, 12 +channel)) {        // VARSIGN
           Energy.reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[ADE7953_CAL_AVAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        divider = (Ade7953.calib_data[ADE7953_CAL_AIGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : (Settings->energy_current_calibration * 10);
+        divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : current_calibration;
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / divider;
         Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
       }
     }
     EnergyUpdateToday();
-/*
-  } else {  // Powered off
-    Energy.data_valid[0] = ENERGY_WATCHDOG;
-    Energy.data_valid[1] = ENERGY_WATCHDOG;
-*/
   }
 }
 
 void Ade7953EnergyEverySecond(void) {
-	if (Ade7953.init_step) {
-    if (1 == Ade7953.init_step) {
-      Ade7953Init();
-	  }
+  if (Ade7953.init_step) {
+    if (2 == Ade7953.init_step) { Ade7953Init(); }
+    if (1 == Ade7953.init_step) { Ade7953GetData(); }  // Read registers but do not display yet
     Ade7953.init_step--;
-	}	else {
-		Ade7953GetData();
-	}
+  } else {
+    Ade7953GetData();
+  }
 }
 
 /*********************************************************************************************/
@@ -439,11 +531,12 @@ void Ade7953EnergyEverySecond(void) {
 bool Ade7953SetDefaults(const char* json) {
   // {"angles":{"angle0":180,"angle1":176}}
   // {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}}
+  // {"rms":{"current_a":21865738,"current_b":1558533,"voltage_a":1599149,"voltage_b":1597289},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":106692616,"b":3540894}}}
   uint32_t len = strlen(json) +1;
-  if (len < 7) { return false; }                  // Too short
+  if (len < 7) { return false; }                     // Too short
 
   char json_buffer[len];
-  memcpy(json_buffer, json, len);                 // Keep original safe
+  memcpy(json_buffer, json, len);                    // Keep original safe
   JsonParser parser(json_buffer);
   JsonParserObject root = parser.getRootObject();
   if (!root) {
@@ -457,57 +550,64 @@ bool Ade7953SetDefaults(const char* json) {
   if (rms) {
     val = rms[PSTR("voltage")];
     if (val) {
-      Ade7953.calib_data[ADE7953_CAL_AVGAIN] = val.getInt();
-      Ade7953.calib_data[ADE7953_CAL_BVGAIN] = Ade7953.calib_data[ADE7953_CAL_AVGAIN];
+      Ade7953.calib_data[0][ADE7953_CAL_VGAIN] = val.getInt();
+      Ade7953.calib_data[1][ADE7953_CAL_VGAIN] = Ade7953.calib_data[0][ADE7953_CAL_VGAIN];
     }
+#ifdef USE_ESP32_SPI
+    val = rms[PSTR("voltage_a")];
+    if (val) { Ade7953.calib_data[0][ADE7953_CAL_VGAIN] = val.getInt(); }
+    val = rms[PSTR("voltage_b")];
+    if (val) { Ade7953.calib_data[1][ADE7953_CAL_VGAIN] = val.getInt(); }
+#endif  // USE_ESP32_SPI
     val = rms[PSTR("current_a")];
-    if (val) { Ade7953.calib_data[ADE7953_CAL_AIGAIN] = val.getInt(); }
+    if (val) { Ade7953.calib_data[0][ADE7953_CAL_IGAIN] = val.getInt(); }
     val = rms[PSTR("current_b")];
-    if (val) { Ade7953.calib_data[ADE7953_CAL_BIGAIN] = val.getInt(); }
+    if (val) { Ade7953.calib_data[1][ADE7953_CAL_IGAIN] = val.getInt(); }
   }
   JsonParserObject angles = root[PSTR("angles")].getObject();
   if (angles) {
     val = angles[PSTR("angle0")];
-    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALA] = val.getInt(); }
+    if (val) { Ade7953.calib_data[0][ADE7943_CAL_PHCAL] = val.getInt(); }
     val = angles[PSTR("angle1")];
-    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALB] = val.getInt(); }
+    if (val) { Ade7953.calib_data[1][ADE7943_CAL_PHCAL] = val.getInt(); }
   }
   JsonParserObject powers = root[PSTR("powers")].getObject();
   if (powers) {
     JsonParserObject totactive = powers[PSTR("totactive")].getObject();
     if (totactive) {
       val = totactive[PSTR("a")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_AWGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[0][ADE7953_CAL_WGAIN] = val.getInt(); }
       val = totactive[PSTR("b")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_BWGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[1][ADE7953_CAL_WGAIN] = val.getInt(); }
     }
     JsonParserObject apparent = powers[PSTR("apparent")].getObject();
     if (apparent) {
       val = apparent[PSTR("a")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_AVAGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[0][ADE7953_CAL_VAGAIN] = val.getInt(); }
       val = apparent[PSTR("b")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_BVAGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[1][ADE7953_CAL_VAGAIN] = val.getInt(); }
     }
     JsonParserObject reactive = powers[PSTR("reactive")].getObject();
     if (reactive) {
       val = reactive[PSTR("a")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_AVARGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[0][ADE7953_CAL_VARGAIN] = val.getInt(); }
       val = reactive[PSTR("b")];
-      if (val) { Ade7953.calib_data[ADE7953_CAL_BVARGAIN] = val.getInt(); }
+      if (val) { Ade7953.calib_data[1][ADE7953_CAL_VARGAIN] = val.getInt(); }
     }
   }
   return true;
 }
 
 void Ade7953Defaults(void) {
-  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
-    if (i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t) -2) {
-      Ade7953.calib_data[i] = ADE7953_GAIN_DEFAULT;
-    } else {
-      Ade7953.calib_data[i] = (ADE7953_SHELLY_EM == Ade7953.model) ? ADE7953_PHCAL_DEFAULT_CT : ADE7953_PHCAL_DEFAULT;
+  for (uint32_t channel = 0; channel < 2; channel++) {
+    for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
+      if (ADE7943_CAL_PHCAL == i) {
+        Ade7953.calib_data[channel][i] = (ADE7953_SHELLY_EM == Ade7953.model) ? ADE7953_PHCAL_DEFAULT_CT : ADE7953_PHCAL_DEFAULT;
+      } else {
+        Ade7953.calib_data[channel][i] = ADE7953_GAIN_DEFAULT;
+      }
     }
   }
-
 #ifdef USE_RULES
   // rule3 on file#calib.dat do {"angles":{"angle0":180,"angle1":176}} endon
   String calib = RuleLoadFile("CALIB.DAT");
@@ -519,12 +619,13 @@ void Ade7953Defaults(void) {
 }
 
 void Ade7953DrvInit(void) {
-  if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
+  if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {         // Irq is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
-    pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
-    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM), 2 (3 = Shelly Plus 2PM)
+    pinMode(pin_irq, INPUT);                         // Related to resetPins() - Must be set to input
+    // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM), 2 (3 = Shelly Plus 2PM), 3 (4 = Shelly Pro 1PM), 4 (5 = Shelly Pro 2PM)
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);
 
-    int pin_reset = Pin(GPIO_ADE7953_RST);        // -1 if not defined
+    int pin_reset = Pin(GPIO_ADE7953_RST);           // -1 if not defined
 #ifdef ESP8266
     if (ADE7953_SHELLY_EM == Ade7953.model) {
       if (-1 == pin_reset) {
@@ -532,35 +633,80 @@ void Ade7953DrvInit(void) {
       }
     }
 #endif
-    if (pin_reset > -1) {
-      pinMode(pin_reset, OUTPUT);                 // Reset pin ADE7953
+    if (pin_reset >= 0) {
       digitalWrite(pin_reset, 0);
-      delay(1);
+      pinMode(pin_reset, OUTPUT);                    // Reset pin ADE7953
+      delay(1);                                      // To initiate a hardware reset, this pin must be brought low for a minimum of 10 μs.
       digitalWrite(pin_reset, 1);
-      pinMode(pin_reset, INPUT);
+      if (Ade7953.model < ADE7953_SHELLY_PRO_1PM) {
+        pinMode(pin_reset, INPUT);
+      }
     }
+    delay(100);                                      // Need 100mS to init ADE7953
 
-    delay(100);                                   // Need 100mS to init ADE7953
-    if (I2cSetDevice(ADE7953_ADDR)) {
-      if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-        Settings->energy_power_calibration = ADE7953_PREF;
-        Settings->energy_voltage_calibration = ADE7953_UREF;
-        Settings->energy_current_calibration = ADE7953_IREF;
+#ifdef USE_ESP32_SPI
+    Ade7953.pin_cs[0] = -1;
+    Ade7953.pin_cs[1] = -1;
+    if (Ade7953.model >= ADE7953_SHELLY_PRO_1PM) {   // SPI
+      if (PinUsed(GPIO_ADE7953_CS)) {                // ADE7953 CS1 enabled (Pro 1PM/2PM)
+        Ade7953.pin_cs[0] = Pin(GPIO_ADE7953_CS);
+        digitalWrite(Ade7953.pin_cs[0], 1);          // ADE7953 CS1 enabled (Pro 2PM)
+        pinMode(Ade7953.pin_cs[0], OUTPUT);
+        Ade7953.pin_cs[1] = Pin(GPIO_ADE7953_CS, 1);
+        if (Ade7953.pin_cs[1] > -1) {                // ADE7953 CS2 enabled (Pro 2PM)
+          digitalWrite(Ade7953.pin_cs[1], 1);
+          pinMode(Ade7953.pin_cs[1], OUTPUT);
+        } else {
+          Ade7953.model = ADE7953_SHELLY_PRO_1PM;
+        }
+        Ade7953.cs_index = 0;
+        SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+        Ade7953.spi_settings = SPISettings(1000000, MSBFIRST, SPI_MODE0);  // Set up SPI at 1MHz, MSB first, Capture at rising edge
+        AddLog(LOG_LEVEL_INFO, PSTR("SPI: ADE7953 found"));
+      } else {
+        return;                                       // No CS pin defined
+      }
+    } else {
+#endif  // USE_ESP32_SPI
+      if (!I2cSetDevice(ADE7953_ADDR)) {
+        return;
       }
       I2cSetActiveFound(ADE7953_ADDR, "ADE7953");
-
-      Ade7953Defaults();
-
-      Ade7953.init_step = 2;
-      Energy.phase_count = 2;                     // Handle two channels as two phases
-      Energy.voltage_common = true;               // Use common voltage
-      Energy.frequency_common = true;             // Use common frequency
-      Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
-      if (ADE7953_SHELLY_EM == Ade7953.model) {
-        Energy.local_energy_active_export = true;
-      }
-      TasmotaGlobal.energy_driver = XNRG_07;
+#ifdef USE_ESP32_SPI
     }
+#endif  // USE_ESP32_SPI
+
+    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
+      Settings->energy_power_calibration = ADE7953_PREF;
+      Settings->energy_voltage_calibration = ADE7953_UREF;
+      Settings->energy_current_calibration = ADE7953_IREF;
+      Settings->energy_power_calibration2 = ADE7953_PREF;
+      Settings->energy_voltage_calibration2 = ADE7953_UREF;
+      Settings->energy_current_calibration2 = ADE7953_IREF;
+    }
+
+    Ade7953Defaults();
+
+    Ade7953.init_step = 3;
+
+//    Energy.phase_count = 1;
+//    Energy.voltage_common = false;
+//    Energy.frequency_common = false;
+//    Energy.use_overtemp = false;
+    if (ADE7953_SHELLY_PRO_1PM == Ade7953.model) {
+    } else {
+      Energy.phase_count = 2;                        // Handle two channels as two phases
+      if (ADE7953_SHELLY_PRO_2PM == Ade7953.model) {
+      } else {
+        Energy.voltage_common = true;                // Use common voltage
+        Energy.frequency_common = true;              // Use common frequency
+      }
+    }
+    Energy.use_overtemp = true;                      // Use global temperature for overtemp detection
+    if (ADE7953_SHELLY_EM == Ade7953.model) {
+      Energy.local_energy_active_export = true;
+    }
+    TasmotaGlobal.energy_driver = XNRG_07;
   }
 }
 
@@ -584,26 +730,32 @@ bool Ade7953Command(void) {
   }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
-      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings->energy_power_calibration = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+      if ((value > 100) && (value < 200000)) {       // Between 1W and 2000W
+#ifdef ADE7953_ACCU_ENERGY
+        float power_calibration = (float)(Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+        power_calibration *= ADE7953_POWER_CORRECTION;
+        XdrvMailbox.payload = (uint32_t)power_calibration;  // 0.00 W
+#else   // No ADE7953_ACCU_ENERGY
+        XdrvMailbox.payload = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+#endif  // ADE7953_ACCU_ENERGY
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
-    if (XdrvMailbox.data_len && Ade7953.voltage_rms) {
-      if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
-        Settings->energy_voltage_calibration = (Ade7953.voltage_rms * 100) / value;  // 0.00 V
+    if (XdrvMailbox.data_len && Ade7953.voltage_rms[channel]) {
+      if ((value > 10000) && (value < 26000)) {      // Between 100V and 260V
+        XdrvMailbox.payload = (Ade7953.voltage_rms[channel] * 100) / value;  // 0.00 V
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
-      if ((value > 2000) && (value < 1000000)) {  // Between 20mA and 10A
-        Settings->energy_current_calibration = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
+      if ((value > 2000) && (value < 1000000)) {     // Between 20mA and 10A
+        XdrvMailbox.payload = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
       }
     }
   }
-  else serviced = false;  // Unknown command
+  else serviced = false;                             // Unknown command
 
   return serviced;
 }
@@ -612,8 +764,8 @@ bool Ade7953Command(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg07(uint8_t function) {
-  if (!I2cEnabled(XI2C_07)) { return false; }
+bool Xnrg07(uint32_t function) {
+  if (!I2cEnabled(XI2C_07) && (SPI_MOSI_MISO != TasmotaGlobal.spi_enabled)) { return false; }
 
   bool result = false;
 
@@ -633,4 +785,4 @@ bool Xnrg07(uint8_t function) {
 
 #endif  // USE_ADE7953
 #endif  // USE_ENERGY_SENSOR
-#endif  // USE_I2C
+#endif  // USE_I2C or USE_ESP_SPI

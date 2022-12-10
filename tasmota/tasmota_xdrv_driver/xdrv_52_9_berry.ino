@@ -231,6 +231,7 @@ void BerryObservability(bvm *vm, int event...) {
                                 slots_used_before_gc, slots_allocated_before_gc,
                                 slots_used_after_gc, slots_allocated_after_gc);
 
+#ifdef UBE_BERRY_DEBUG_GC
         // Add more in-deptch metrics
         AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC timing (us) 1:%i 2:%i 3:%i 4:%i 5:%i total:%i",
             vm->micros_gc1 - vm->micros_gc0,
@@ -254,6 +255,7 @@ void BerryObservability(bvm *vm, int event...) {
             vm->gc_mark_module,
             vm->gc_mark_comobj
         );
+#endif
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
@@ -713,7 +715,7 @@ void HandleBerryConsole(void)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv52(uint8_t function)
+bool Xdrv52(uint32_t function)
 {
   bool result = false;
 

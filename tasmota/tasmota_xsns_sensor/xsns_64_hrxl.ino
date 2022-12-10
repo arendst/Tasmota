@@ -25,71 +25,55 @@
  * Hardware Serial will be selected if GPIO1 = [HRXL Rx]
 \*********************************************************************************************/
 
-#define XSNS_64                      64
-
-#include <TasmotaSerial.h>
+#define XSNS_64                  64
 
 #define HRXL_READ_TIMEOUT        400 // us; enough for 6 bytes@9600bps
 
+#include <TasmotaSerial.h>
 TasmotaSerial *HRXLSerial = nullptr;
 
 uint32_t hrxl_distance_mm = 0;  // distance, mm
-bool hrxl_found = false;
 
 /*********************************************************************************************/
 
-void HRXLInit(void)
-{
-    hrxl_found = false;
-    if (PinUsed(GPIO_HRXL_RX))
-    {
-        HRXLSerial = new TasmotaSerial(Pin(GPIO_HRXL_RX), -1, 1);
-        if (HRXLSerial->begin(9600))
-        {
-            if (HRXLSerial->hardwareSerial())
-                ClaimSerial();
-            hrxl_found = true;
-            HRXLSerial->setTimeout(HRXL_READ_TIMEOUT);
-        }
+void HRXLInit(void) {
+  if (PinUsed(GPIO_HRXL_RX)) {
+    HRXLSerial = new TasmotaSerial(Pin(GPIO_HRXL_RX), -1, 1);
+    if (HRXLSerial->begin(9600)) {
+      if (HRXLSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
+      HRXLSerial->setTimeout(HRXL_READ_TIMEOUT);
     }
+  }
 }
 
-void HRXLEverySecond(void)
-{
-    if (!hrxl_found)
-        return;
-
-    int num_read=0;
-    int sum=0;
-    while (HRXLSerial->available()>5)
-    {
-        if (HRXLSerial->read() != 'R')
-            continue;
-
-        int d = HRXLSerial->parseInt();
-        if (d >= 30 && d<=5000)
-        {
-            sum += d;
-            num_read++;
-        }
+void HRXLEverySecond(void) {
+  int num_read = 0;
+  int sum = 0;
+  while (HRXLSerial->available() > 5) {
+    if (HRXLSerial->read() != 'R') {
+      continue;
     }
-    if (num_read>1)
-        hrxl_distance_mm = int(sum / num_read);
-
+    int d = HRXLSerial->parseInt();
+    if (d >= 30 && d <= 5000) {
+      sum += d;
+      num_read++;
+    }
+  }
+  if (num_read > 1) {
+    hrxl_distance_mm = int(sum / num_read);  // mm
+  }
 }
 
-
-void HRXLShow(bool json)
-{
+void HRXLShow(bool json) {
    char types[5] = "HRXL";
-   if (json)
-   {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_DISTANCE "\":%d}"), types, hrxl_distance_mm);
+   float distance = (float)hrxl_distance_mm / 10;  // cm
+   if (json) {
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &distance);
 #ifdef USE_WEBSERVER
-   }
-   else
-   {
-      WSContentSend_PD(HTTP_SNS_RANGE, types, hrxl_distance_mm);
+   } else {
+      WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, types, &distance);
 #endif  // USE_WEBSERVER
    }
 }
@@ -98,15 +82,12 @@ void HRXLShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns64(uint8_t function)
-{
-   if (!PinUsed(GPIO_HRXL_RX)) { return false; }
-
-   switch (function)
-   {
-      case FUNC_INIT:
-         HRXLInit();
-         break;
+bool Xsns64(uint32_t function) {
+  if (FUNC_INIT == function) {
+    HRXLInit();
+  }
+  else if (HRXLSerial) {
+    switch (function) {
       case FUNC_EVERY_SECOND:
          HRXLEverySecond();
          break;
@@ -118,8 +99,9 @@ bool Xsns64(uint8_t function)
          HRXLShow(0);
          break;
 #endif  // USE_WEBSERVER
-   }
-   return false;
+    }
+  }
+  return false;
 }
 
 #endif  // USE_HRXL

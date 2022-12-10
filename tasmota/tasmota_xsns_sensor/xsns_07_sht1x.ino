@@ -184,7 +184,7 @@ void ShtShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns07(uint8_t function) {
+bool Xsns07(uint32_t function) {
   if (!I2cEnabled(XI2C_08)) { return false; }
 
   bool result = false;

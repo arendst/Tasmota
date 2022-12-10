@@ -177,7 +177,7 @@ void SDM120Every250ms(void)
 
 void Sdm120SnsInit(void)
 {
-  Sdm120Modbus = new TasmotaModbus(Pin(GPIO_SDM120_RX), Pin(GPIO_SDM120_TX));
+  Sdm120Modbus = new TasmotaModbus(Pin(GPIO_SDM120_RX), Pin(GPIO_SDM120_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = Sdm120Modbus->Begin(SDM120_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
@@ -261,7 +261,7 @@ void Sdm220Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg08(uint8_t function)
+bool Xnrg08(uint32_t function)
 {
   bool result = false;
 

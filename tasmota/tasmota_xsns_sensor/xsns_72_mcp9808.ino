@@ -103,7 +103,7 @@ void MCP9808Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns72(uint8_t function)
+bool Xsns72(uint32_t function)
 {
   if (!I2cEnabled(XI2C_51)) { return false; }
   bool result = false;

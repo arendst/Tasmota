@@ -1,5 +1,5 @@
 /*
-  xsns_77_vl53l1x_device[0].ino - VL53L1X sensor support for Tasmota
+  xsns_77_vl53l1x.ino - VL53L1X sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends, Rui Marinho and Johann Obermeier
 
@@ -123,39 +123,30 @@ void Vl53l1Every_250MSecond(void) {
 
 #ifdef USE_DOMOTICZ
 void Vl53l1Every_Second(void) {
-  char distance[FLOATSZ];
-  dtostrfd((float)vl53l1x_data[0].distance / 10, 1, distance);
-  DomoticzSensor(DZ_ILLUMINANCE, distance);
+  float distance = (float)vl53l1x_data[0].distance / 10;  // cm
+  DomoticzFloatSensor(DZ_ILLUMINANCE, distance);
 }
 #endif  // USE_DOMOTICZ
 
 void Vl53l1Show(bool json) {
   uint32_t i, xshut;
   for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1) {
+    char types[12] = "VL53L1X";
+    if (VL53L1X_xshut) {
+      snprintf_P(types, sizeof(types), PSTR("VL53L1X%c%d"), IndexSeparator(), i +1);
+    }
+    float distance = (float)vl53l1x_data[i].distance / 10;  // cm
     if (xshut & VL53L1X_detected) {
       if (json) {
-        if (0 == VL53L1X_xshut) {
-          ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_data[i].distance);
-        }
-        else {
-          ResponseAppend_P(PSTR(",\"VL53L1X%c%d\":{\"" D_JSON_DISTANCE "\":%d}"), IndexSeparator(), i+1, vl53l1x_data[i].distance);
-        }
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &distance);
 #ifdef USE_DOMOTICZ
         if (0 == TasmotaGlobal.tele_period) {
           Vl53l1Every_Second();
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-      }
-      else {
-        if (0 == VL53L1X_xshut) {
-          WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_data[i].distance);
-        }
-        else {
-          char tmpstr[12];
-          sprintf(tmpstr, PSTR("VL53L1X%c%d"), IndexSeparator(), i+1);
-          WSContentSend_PD(HTTP_SNS_DISTANCE, tmpstr, vl53l1x_data[i].distance);
-        }
+      } else {
+        WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, types, &distance);
 #endif
       }
     } // if detected
@@ -167,7 +158,7 @@ void Vl53l1Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns77(uint8_t function) {
+bool Xsns77(uint32_t function) {
   if (!I2cEnabled(XI2C_54)) { return false; }
 
   bool result = false;

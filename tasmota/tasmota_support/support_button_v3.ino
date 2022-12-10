@@ -473,6 +473,11 @@ void ButtonHandler(void) {
                             valid_relay = (Button.press_counter[button_index] <= TasmotaGlobal.devices_present);
                           }
 #endif  // ESP8266
+#ifdef USE_SHELLY_PRO
+                          if (TasmotaGlobal.gpio_optiona.shelly_pro) {
+                            valid_relay = (Button.press_counter[button_index] <= TasmotaGlobal.devices_present);
+                          }
+#endif  // USE_SHELLY_PRO
                           if ((Button.press_counter[button_index] > 1) && valid_relay && (Button.press_counter[button_index] <= MAX_RELAY_BUTTON1)) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
 //                            AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));

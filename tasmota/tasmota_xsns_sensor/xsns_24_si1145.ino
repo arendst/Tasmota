@@ -369,7 +369,7 @@ void Si1145Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns24(uint8_t function)
+bool Xsns24(uint32_t function)
 {
   if (!I2cEnabled(XI2C_19)) { return false; }
 

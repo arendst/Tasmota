@@ -1,11 +1,9 @@
 Import("env")
 import os
 import shutil
-import gzip
 import pathlib
-
 import tasmotapiolib
-
+import gzip
 
 def map_gzip(source, target, env):
     # create string with location and file names based on variant
@@ -33,7 +31,7 @@ if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ, env):
 
 # gzip only for ESP8266
 if env["PIOPLATFORM"] != "espressif32":
-
+    from zopfli.gzip import compress
     def bin_gzip(source, target, env):
         # create string with location and file names based on variant
         bin_file = tasmotapiolib.get_final_bin_path(env)
@@ -45,8 +43,9 @@ if env["PIOPLATFORM"] != "espressif32":
 
         # write gzip firmware file
         with open(bin_file, "rb") as fp:
-            with gzip.open(gzip_file, "wb", compresslevel=9) as f:
-                shutil.copyfileobj(fp, f)
+            with open(gzip_file, "wb") as f:
+                zopfli_gz = compress(fp.read())
+                f.write(zopfli_gz)
 
         ORG_FIRMWARE_SIZE = bin_file.stat().st_size
         GZ_FIRMWARE_SIZE = gzip_file.stat().st_size

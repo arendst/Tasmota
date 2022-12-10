@@ -582,7 +582,7 @@ void solaxX1_Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg12(uint8_t function)
+bool Xnrg12(uint32_t function)
 {
   bool result = false;
 

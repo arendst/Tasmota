@@ -105,7 +105,7 @@ uint32_t rf_search_and_write(uint8_t *data, size_t size) {
     if (rec_end == sizeof(buf)) { return 9; }  // File too large - Failed to decode RF firmware
     rec_size = rec_end - rec_start;
 
-//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf + rec_start, rec_size);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: %*_H"), rec_size, (uint8_t*)&buf + rec_start);
 
     err = rf_decode_and_write(buf + rec_start, rec_size);
     if (err != 0) { return err; }
@@ -128,6 +128,9 @@ uint8_t rf_erase_flash(void) {
     }
     err = c2_device_erase();
     if (err != C2_SUCCESS) {
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("RFB: Device erase error %d"), err);
+
       if (i < 3) {
         c2_reset();              // Reset RF chip and try again
       } else {
@@ -194,7 +197,7 @@ void SonoffBridgeReceived(void)
   char rfkey[8];
   char stemp[16];
 
-  AddLogSerial(LOG_LEVEL_DEBUG);
+  AddLogSerial();
 
   if (0xA2 == TasmotaGlobal.serial_in_buffer[0]) {       // Learn timeout
     SonoffBridgeLearnFailed();
@@ -535,7 +538,7 @@ void SonoffBridgeWebGetArg(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv06(uint8_t function)
+bool Xdrv06(uint32_t function)
 {
   bool result = false;
 

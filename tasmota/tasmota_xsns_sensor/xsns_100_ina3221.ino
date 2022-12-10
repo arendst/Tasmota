@@ -418,7 +418,7 @@ void Ina3221Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns100(uint8_t function)
+bool Xsns100(uint32_t function)
 {
   if (!I2cEnabled(XI2C_72)) { return false; }
 

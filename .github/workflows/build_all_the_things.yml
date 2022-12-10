@@ -28,7 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -44,7 +46,7 @@ jobs:
           path: ./build_output
 
   os-check-mac:
-    runs-on: macos-latest
+    runs-on: macOS-12
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
@@ -54,7 +56,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -109,9 +113,15 @@ jobs:
           - tasmota32s3-safeboot
           - tasmota32s3cdc-safeboot
     steps:
+      - name: Sleep a while, try to start MacOS / Windows CI env first
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '1m'
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -137,7 +147,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel

@@ -31,6 +31,19 @@ typedef struct gamma_table_t {
   uint16_t to_gamma;
 } gamma_table_t;
 
+const gamma_table_t ac_dimmer_table[] = {   // don't put in PROGMEM for performance reasons
+  {     0,      0 },
+  {    10,     64 },
+  {    50,    175 },
+  {   100,    235 },
+  {   500,    485 },
+  {   900,    704 },
+  {   950,    748 },
+  {   990,    850 },
+  {  1024,   1024 },
+  { 0xFFFF, 0xFFFF }          // fail-safe if out of range
+};
+
 const gamma_table_t gamma_table[] = {   // don't put in PROGMEM for performance reasons
   {    1,      1 },
   {    4,      1 },
@@ -316,6 +329,11 @@ uint16_t ledGammaReverse_internal(uint16_t vg, const struct gamma_table_t *gt_pt
     from_src = to_src;
     from_gamma = to_gamma;
   }
+}
+
+// 10 bits power select to 10 bits timing based on sinus curve
+uint16_t ac_zero_cross_power(uint16_t v) {
+  return ledGamma_internal(v, ac_dimmer_table);
 }
 
 // 10 bits in, 10 bits out

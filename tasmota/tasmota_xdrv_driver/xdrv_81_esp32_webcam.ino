@@ -191,8 +191,9 @@ bool WcPinUsed(void) {
   }
   if (!PinUsed(GPIO_WEBCAM_XCLK) || !PinUsed(GPIO_WEBCAM_PCLK) ||
       !PinUsed(GPIO_WEBCAM_VSYNC) || !PinUsed(GPIO_WEBCAM_HREF) ||
-      !PinUsed(GPIO_WEBCAM_SIOD) || !PinUsed(GPIO_WEBCAM_SIOC)) {
-    pin_used = false;
+      ((!PinUsed(GPIO_WEBCAM_SIOD) || !PinUsed(GPIO_WEBCAM_SIOC)) && !TasmotaGlobal.i2c_enabled_2)    // preferred option is to reuse and share I2Cbus 2
+      ) { 
+        pin_used = false;
   }
   return pin_used;
 }
@@ -341,8 +342,14 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_pclk = Pin(GPIO_WEBCAM_PCLK);      // PCLK_GPIO_NUM;
     config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC);    // VSYNC_GPIO_NUM;
     config.pin_href = Pin(GPIO_WEBCAM_HREF);      // HREF_GPIO_NUM;
-    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD);  // SIOD_GPIO_NUM;
-    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  // SIOC_GPIO_NUM;
+    config.pin_sccb_sda = Pin(GPIO_WEBCAM_SIOD);  // SIOD_GPIO_NUM; - unset to use shared I2C bus 2
+    config.pin_sccb_scl = Pin(GPIO_WEBCAM_SIOC);  // SIOC_GPIO_NUM;
+    if(TasmotaGlobal.i2c_enabled_2){              // configure SIOD and SIOC as SDA,2 and SCL,2
+      config.sccb_i2c_port = 1;                   // reuse initialized bus 2, can be shared now
+      if(config.pin_sccb_sda < 0){                // GPIO_WEBCAM_SIOD must not be set to really make it happen
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: use I2C bus 2"));
+      }
+    }
     config.pin_pwdn = Pin(GPIO_WEBCAM_PWDN);       // PWDN_GPIO_NUM;
     config.pin_reset = Pin(GPIO_WEBCAM_RESET);    // RESET_GPIO_NUM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Template pin config"));
@@ -1415,7 +1422,7 @@ void WcStatsShow(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv81(uint8_t function) {
+bool Xdrv81(uint32_t function) {
   bool result = false;
 
   switch (function) {

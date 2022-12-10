@@ -26,6 +26,7 @@
  * Hardware Serial will be selected if GPIO3 = [PMS5003]
  * You can either support PMS3003 or PMS5003-7003 at one time. To enable the PMS3003 support
  * you must enable the define PMS_MODEL_PMS3003 on your configuration file.
+ * For PMSx003T models that report temperature and humidity define PMS_MODEL_PMS5003T
 \*********************************************************************************************/
 
 #define XSNS_18             18
@@ -75,7 +76,12 @@ struct pmsX003data {
 #ifdef PMS_MODEL_PMS3003
   uint16_t reserved1, reserved2, reserved3;
 #else
-  uint16_t particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um;
+  uint16_t particles_03um, particles_05um, particles_10um, particles_25um;
+#ifdef PMS_MODEL_PMS5003T
+  uint16_t temperature10x, humidity10x;
+#else
+  uint16_t particles_50um, particles_100um;
+#endif // PMS_MODEL_PMS5003T
   uint16_t unused;
 #endif  // PMS_MODEL_PMS3003
   uint16_t checksum;
@@ -289,24 +295,40 @@ const char HTTP_PMS5003_SNS[] PROGMEM =
   "{s}PMS5003 " D_PARTICALS_BEYOND " 0.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
+#ifdef PMS_MODEL_PMS5003T
+  "{s}PMS5003 " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}"
+  "{s}PMS5003 " D_HUMIDITY "{m}%*_f " D_UNIT_PERCENT "{e}";
+#else
   "{s}PMS5003 " D_PARTICALS_BEYOND " 5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // PMS_MODEL_PMS5003T
 #endif  // PMS_MODEL_PMS3003
 #endif  // USE_WEBSERVER
 
 void PmsShow(bool json)
 {
   if (Pms.valid) {
+#ifdef PMS_MODEL_PMS5003T
+    float temperature = ConvertTemp(pms_data.temperature10x/10.0);
+    float humidity = ConvertHumidity(pms_data.humidity10x/10.0);
+#endif // PMS_MODEL_PMS5003T
     if (json) {
 #ifdef PMS_MODEL_PMS3003
       ResponseAppend_P(PSTR(",\"PMS3003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d}"),
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
 #else
-      ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
+      ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,"),
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
-        pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
+        pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um);
+#ifdef PMS_MODEL_PMS5003T
+      ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f}"),
+        Settings->flag2.temperature_resolution, &temperature, Settings->flag2.humidity_resolution, &humidity);
+#else
+      ResponseAppend_P(PSTR("\"PB5\":%d,\"PB10\":%d}"),
+        pms_data.particles_50um, pms_data.particles_100um);
+#endif  // PMS_MODEL_PMS5003T
 #endif  // PMS_MODEL_PMS3003
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
@@ -322,6 +344,10 @@ void PmsShow(bool json)
         WSContentSend_PD(HTTP_PMS3003_SNS,
 //        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+#elif defined(PMS_MODEL_PMS5003T)
+        WSContentSend_PD(HTTP_PMS5003_SNS,
+        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
+        pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, Settings->flag2.temperature_resolution, &temperature, TempUnit(), Settings->flag2.humidity_resolution, &humidity);
 #else
         WSContentSend_PD(HTTP_PMS5003_SNS,
 //        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
@@ -337,7 +363,7 @@ void PmsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns18(uint8_t function)
+bool Xsns18(uint32_t function)
 {
   bool result = false;
 

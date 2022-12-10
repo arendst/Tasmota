@@ -284,7 +284,7 @@ bool SPS30_cmd(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns44(byte function)
+bool Xsns44(uint32_t function)
 {
   if (!I2cEnabled(XI2C_30)) { return false; }
 

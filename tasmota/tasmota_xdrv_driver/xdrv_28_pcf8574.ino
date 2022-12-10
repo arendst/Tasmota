@@ -308,7 +308,7 @@ void Pcf8574SaveSettings(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv28(uint8_t function)
+bool Xdrv28(uint32_t function)
 {
   if (!I2cEnabled(XI2C_02)) { return false; }
 

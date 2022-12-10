@@ -104,7 +104,7 @@
  *
  * Restrictions:
  * - Supports Modbus floating point registers
- * - Max number of uer defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
+ * - Max number of user defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
  *
  * To do:
  * - Support all three rule slots
@@ -663,7 +663,7 @@ bool EnergyModbusRegisters(void) {
 
 void EnergyModbusSnsInit(void) {
   if (EnergyModbusRegisters()) {
-    EnergyModbus = new TasmotaModbus(Pin(GPIO_NRG_MBS_RX), Pin(GPIO_NRG_MBS_TX));
+    EnergyModbus = new TasmotaModbus(Pin(GPIO_NRG_MBS_RX), Pin(GPIO_NRG_MBS_TX), Pin(GPIO_NRG_MBS_TX_ENA));
     uint8_t result = EnergyModbus->Begin(NrgMbsParam.serial_bps, NrgMbsParam.serial_config);
     if (result) {
       if (2 == result) { ClaimSerial(); }
@@ -750,18 +750,19 @@ void EnergyModbusShow(bool json) {
         values[j] = NrgMbsUser[i].data[j];
       }
       uint32_t resolution = EnergyModbusResolution(NrgMbsUser[i].resolution);
+      uint32_t single = (!isnan(NrgMbsUser[i].data[1]) && !isnan(NrgMbsUser[i].data[2])) ? 0 : 1;
 
 #ifdef ENERGY_MODBUS_DEBUG_SHOW
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: resolution %d -> %d"), NrgMbsUser[i].resolution, resolution);
 #endif
 
       if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":%s"), NrgMbsUser[i].json_name, EnergyFormat(value_chr, values, resolution));
+        ResponseAppend_P(PSTR(",\"%s\":%s"), NrgMbsUser[i].json_name, EnergyFormat(value_chr, values, resolution, single));
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
           NrgMbsUser[i].gui_name,
-          WebEnergyFormat(value_chr, values, resolution),
+          WebEnergyFormat(value_chr, values, resolution, single),
           NrgMbsUser[i].gui_unit);
 #endif  // USE_WEBSERVER
       }
@@ -773,7 +774,7 @@ void EnergyModbusShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg29(uint8_t function) {
+bool Xnrg29(uint32_t function) {
   bool result = false;
 
   switch (function) {

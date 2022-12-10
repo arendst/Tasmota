@@ -118,11 +118,14 @@ void DeepSleepPrepare(void)
     RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000), 11000);
   }
 
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DSL: Time %ld, next %ld, slip %ld"), timeslip, RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
   // It may happen that wakeup in just <5 seconds in future
   // In this case also add deepsleep to nextwakeup
   if (RtcSettings.nextwakeup <= (LocalTime() + DEEPSLEEP_MIN_TIME)) {
-    // ensure nextwakeup is at least in the future
+    // ensure nextwakeup is at least in the future, and add 5%
     RtcSettings.nextwakeup += (((LocalTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings->deepsleep) + 1) * Settings->deepsleep;
+    RtcSettings.nextwakeup += Settings->deepsleep * 0.05;
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DSL: Time too short: time %ld, next %ld, slip %ld"), timeslip, RtcSettings.nextwakeup, RtcSettings.deepsleep_slip);
   }
 
   String dt = GetDT(RtcSettings.nextwakeup);  // 2017-03-07T11:08:02
@@ -202,7 +205,7 @@ void CmndDeepsleepTime(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv29(uint8_t function)
+bool Xdrv29(uint32_t function)
 {
   bool result = false;
 

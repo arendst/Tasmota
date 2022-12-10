@@ -93,29 +93,31 @@ const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM = "\x3D\x3C\x79\x93\xE3\x36\x16\x0
                             "\xD0\xEC\x05\x4C\xFC\xFC\x3D\x0E\xC0\x43\xD8\xCE\xC0\x45\xE1\xA0\xFC\x9C\x29\x1B"
                             "\x8D";
 
-//<?xml version="1.0"?><root xmlns="urn:Belkin:device-1-0"><device><deviceType>urn:Belkin:device:controllee:1</deviceType><friendlyName>{x1</friendlyName><manufacturer>Belkin International Inc.</manufacturer><modelName>Socket</modelName><modelNumber>3.1415</modelNumber><UDN>uuid:{x2</UDN><serialNumber>{x3</serialNumber><binaryState>0</binaryState><serviceList><service><serviceType>urn:Belkin:service:basicevent:1</serviceType><serviceId>urn:Belkin:serviceId:basicevent1</serviceId><controlURL>/upnp/control/basicevent1</controlURL><eventSubURL>/upnp/event/basicevent1</eventSubURL><SCPDURL>/eventservice.xml</SCPDURL></service><service><serviceType>urn:Belkin:service:metainfo:1</serviceType><serviceId>urn:Belkin:serviceId:metainfo1</serviceId><controlURL>/upnp/control/metainfo1</controlURL><eventSubURL>/upnp/event/metainfo1</eventSubURL><SCPDURL>/metainfoservice.xml</SCPDURL></service></serviceList></device></root>\r\n
-//Successfully compressed from 923 to 392 bytes (-57.5%)
-const size_t WEMO_SETUP_XML_SIZE = 923;
+//<?xml version="1.0"?><root xmlns="urn:Belkin:device-1-0"><device><deviceType>urn:Belkin:device:controllee:1</deviceType><friendlyName>{x1</friendlyName><manufacturer>Belkin International Inc.</manufacturer><modelName>Socket</modelName><modelNumber>3.1415</modelNumber><UDN>uuid:{x2</UDN><serialNumber>{x3</serialNumber><presentationURL>http://{x4:80/</presentationURL><binaryState>0</binaryState><serviceList><service><serviceType>urn:Belkin:service:basicevent:1</serviceType><serviceId>urn:Belkin:serviceId:basicevent1</serviceId><controlURL>/upnp/control/basicevent1</controlURL><eventSubURL>/upnp/event/basicevent1</eventSubURL><SCPDURL>/eventservice.xml</SCPDURL></service><service><serviceType>urn:Belkin:service:metainfo:1</serviceType><serviceId>urn:Belkin:serviceId:metainfo1</serviceId><controlURL>/upnp/control/metainfo1</controlURL><eventSubURL>/upnp/event/metainfo1</eventSubURL><SCPDURL>/metainfoservice.xml</SCPDURL></service></serviceList></device></root>\r\n
+//Successfully compressed from 972 to 426 bytes (-56.2%)
+const size_t WEMO_SETUP_XML_SIZE = 972;
 const char WEMO_SETUP_XML[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\xCD\xFF\xDB\x9C\x7C\x3D\x87\x21\xD1\x9E\xC3\xB4\x7E\x1E"
-                            "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\x21\xCC\x23\x4D\xE3\xCC\x46"
-                            "\x67\xA1\xB3\xAC\xE4\x3A\xD9\xEC\x3F\x0F\x42\x04\x19\x20\x87\x10\xA8\xC8\x63\x3F"
-                            "\x01\x33\x07\x3C\xC3\xCE\xAF\xE0\x41\x36\x79\x9C\x87\xA1\xD8\x40\x8D\x83\x9E\x86"
-                            "\x3F\xAF\x84\x08\xC8\xBA\xC6\xB3\xF0\xF6\x9B\x0E\x43\xD0\xEC\x20\x48\x9C\x7A\x0D"
-                            "\xBE\x16\x62\xC3\xA1\x7F\x7F\x3F\x01\x07\x31\x45\xBD\x4F\xFD\x75\xB9\xD6\x12\x2D"
-                            "\xE0\xCE\x87\xA1\xD8\x09\x18\x21\xE8\x37\x04\x61\x17\x58\xD6\x7E\x17\xB0\x33\x47"
-                            "\x47\xA1\xD8\x08\xB3\x81\x0A\xC8\xB1\xA3\x9F\xCF\xC3\x96\x74\x99\x34\x81\x0E\xD8"
-                            "\x20\xD0\x3D\x08\x59\x08\x5C\x7E\x0B\x17\xA2\x1E\x67\xB4\xD8\x72\x8F\x43\xB0\x88"
-                            "\x59\x08\x5C\x7E\x1E\x9E\x7F\xDB\x04\x3B\xA7\xB4\xD8\x72\xCF\x43\xB0\x81\x22\x71"
-                            "\xE8\x3B\x7A\xFE\x64\x5E\xAB\xA6\x7E\x1C\x67\xA1\xD8\x40\x8F\x2C\xF4\xF3\xF9\x9E"
-                            "\x86\xC8\x2D\xF5\x02\x24\x90\x44\x8A\x09\x7C\x46\x82\x15\x33\xCC\x75\xFB\x43\x66"
-                            "\x6F\xA8\xF3\x39\x0F\x43\xB0\x81\x1F\x09\x04\x3C\x58\xB4\x40\x4E\xC5\x0B\x44\x04"
-                            "\x6C\x58\x11\x71\x52\xD1\x0F\xC3\xD0\x10\xB8\xE0\x21\x65\xF2\x08\xFC\x3B\x05\x8C"
-                            "\xE1\x87\x60\x21\x4D\x3B\x01\x23\x0D\x04\x6C\x08\xF4\x66\x6F\xA8\xBC\x2C\x70\x22"
-                            "\xE1\xEC\xCD\xF5\x02\x4E\x1A\x08\xF8\x09\xE8\x45\xE0\xC6\x08\x2F\xE1\x11\xF8\x08"
-                            "\x34\x81\x0B\x59\x3A\x1B\x06\x84\x7A\x1D\x80\x87\x5C\x11\x37\x2A\x01\x60\xBC\x34"
-                            "\x0D\x75\x7B\xC6\x30\x18\x5F\x0C\xC0\x87\x8A\x03\x02\xE1\x90\x11\xB0\xB0\x5F\xE1"
-                            "\x88\x11\xB0\xB0\x51\xE1\x80\x10\xEE\x82\xDF\x0C\x60\x87\x18\x10\x79\x7D\x04\x2E"
-                            "\x83\xD1\xF8\x7A\x1D\x9F\xCC\xA3\xF2\x70\xA4\x6E";
+                             "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\x21\xCC\x23\x4D\xE3\xCC\x46"
+                             "\x67\xA1\xB3\xAC\xE4\x3A\xD9\xEC\x3F\x0F\x42\x04\x19\x20\x87\x10\xA8\xC8\x63\x3F"
+                             "\x01\x33\x07\x3C\xC3\xCE\xAF\xE0\x41\x36\x79\x9C\x87\xA1\xD8\x40\x8D\x83\x9E\x86"
+                             "\x3F\xAF\x84\x08\xC8\xBA\xC6\xB3\xF0\xF6\x9B\x0E\x43\xD0\xEC\x20\x48\x9C\x7A\x0D"
+                             "\xBE\x16\x62\xC3\xA1\x7F\x7F\x3F\x01\x07\x31\x45\xBD\x4F\xFD\x75\xB9\xD6\x12\x2D"
+                             "\xE0\xCE\x87\xA1\xD8\x09\x18\x21\xE8\x37\x04\x61\x17\x58\xD6\x7E\x17\xB0\x33\x47"
+                             "\x47\xA1\xD8\x08\xB3\x81\x0A\xC8\xB1\xA3\x9F\xCF\xC3\x96\x74\x99\x34\x81\x0E\xD8"
+                             "\x20\xD0\x3D\x08\x59\x08\x5C\x7E\x0B\x17\xA2\x1E\x67\xB4\xD8\x72\x8F\x43\xB0\x88"
+                             "\x59\x08\x5C\x7E\x1E\x9E\x7F\xDB\x04\x3B\xA7\xB4\xD8\x72\xCF\x43\xB0\x81\x22\x71"
+                             "\xE8\x33\xEF\xCF\xAA\xEB\x73\x88\x59\x7C\x82\x3F\x05\x55\x0C\x3C\xCE\xC3\xB0\xF6"
+                             "\x9B\x0E\x61\xE7\xF6\x76\x1E\x87\x61\x02\x5D\xC3\xD0\x76\xF5\xFC\xC8\xBD\x57\x4C"
+                             "\xFC\x38\xCF\x43\xB0\x81\x1E\x59\xE9\xE7\xF3\x3D\x0D\x90\x5B\xEA\x04\x49\x20\x89"
+                             "\x14\x12\xF8\xBE\x04\x2A\x2B\x67\x98\xEB\xF6\x86\xCC\xDF\x51\xE6\x72\x1E\x87\x61"
+                             "\x02\x3E\x12\x08\x78\xB1\x68\x80\x9D\x8A\x16\x88\x08\xD8\xB0\x22\xE2\xA5\xA2\x1F"
+                             "\x87\xA0\x21\x72\x22\x42\xCB\xE4\x11\xF8\x76\x0B\x19\xC3\x0E\xC0\x42\x9A\x76\x02"
+                             "\x46\x1A\x08\xD8\x11\xE8\xCC\xDF\x51\x78\x58\xE0\x45\xC3\xD9\x9B\xEA\x04\x9C\x34"
+                             "\x11\xF0\x13\xD0\x8B\xC1\x8C\x10\x5F\xC2\x23\xF0\x10\x69\x02\x16\xB2\x74\x36\x0D"
+                             "\x08\xF4\x3B\x01\x0E\xB8\x22\x6E\x2A\x01\xC1\x78\x68\x1A\xEA\xF7\x8C\x60\x30\xBE"
+                             "\x19\x81\x0F\x14\x06\x05\xC3\x20\x23\x61\x60\xBF\xC3\x10\x23\x61\x60\xA3\xC3\x2A"
+                             "\x01\x21\xDD\x05\xBE\x18\xC1\x0E\x30\x20\xF2\xFA\x08\x5D\x0A\xB3\xF0\xF4\x3B\x3F"
+                             "\x99\x47\xE4\xE1\x48\xDC";
 #else
 const char WEMO_EVENTSERVICE_XML[] PROGMEM =
   "<scpd xmlns=\"urn:Belkin:service-1-0\">"
@@ -203,6 +205,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
       "<modelNumber>3.1415</modelNumber>"
       "<UDN>uuid:{x2</UDN>"
       "<serialNumber>{x3</serialNumber>"
+      "<presentationURL>http://{x4:80/</presentationURL>"
       "<binaryState>0</binaryState>"
       "<serviceList>"
         "<service>"
@@ -396,6 +399,9 @@ private:
     setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1 + (_deviceId - 1)));
     setup_xml.replace("{x2", WemoUuid());
     setup_xml.replace("{x3", WemoSerialnumber());
+
+    setup_xml.replace("{x4", WiFi.localIP().toString());
+
     InternalWSSend(200, CT_XML, setup_xml);
 #ifdef USE_EMULATION_WEMO_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR("WMO: Sending device #%d: %s"), _deviceId, setup_xml.c_str());
@@ -427,7 +433,7 @@ void WemoRespondToMSearch(int echo_type) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv21(uint8_t function)
+bool Xdrv21(uint32_t function)
 {
   bool result = false;
 
@@ -452,6 +458,12 @@ bool Xdrv21(uint8_t function)
           wemoDevice[numOfWemoSwitch]->RegisterHandlers();
           numOfWemoSwitch++;
         }
+        break;
+      case FUNC_NETWORK_UP:
+        UdpConnect();
+        break;
+      case FUNC_NETWORK_DOWN:
+        UdpDisconnect();
         break;
     }
   }

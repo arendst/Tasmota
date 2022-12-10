@@ -878,7 +878,7 @@ bool UBXCmd(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns60(uint8_t function)
+bool Xsns60(uint32_t function)
 {
   bool result = false;
 

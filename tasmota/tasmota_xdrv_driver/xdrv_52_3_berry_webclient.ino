@@ -76,9 +76,9 @@ String wc_UrlEncode(const String& text) {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import webclient
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: ``
@@ -428,6 +428,75 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // wc.PUT(string | bytes) -> httpCode:int
+  int32_t wc_PUT(struct bvm *vm);
+  int32_t wc_PUT(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      const char * buf = nullptr;
+      size_t buf_len = 0;
+      if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        buf_len = strlen(buf);
+      } else { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &buf_len);
+      }
+      uint32_t http_connect_time = millis();
+      int32_t httpCode = cl->PUT((uint8_t*)buf, buf_len);
+      wc_errorCodeMessage(httpCode, http_connect_time);
+      be_pushint(vm, httpCode);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // wc.PATCH(string | bytes) -> httpCode:int
+  int32_t wc_PATCH(struct bvm *vm);
+  int32_t wc_PATCH(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      const char * buf = nullptr;
+      size_t buf_len = 0;
+      if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        buf_len = strlen(buf);
+      } else { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &buf_len);
+      }
+      uint32_t http_connect_time = millis();
+      int32_t httpCode = cl->PATCH((uint8_t*)buf, buf_len);
+      wc_errorCodeMessage(httpCode, http_connect_time);
+      be_pushint(vm, httpCode);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // wc.DELETE(string | bytes) -> httpCode:int
+  int32_t wc_DELETE(struct bvm *vm);
+  int32_t wc_DELETE(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      const char * buf = nullptr;
+      size_t buf_len = 0;
+      if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        buf_len = strlen(buf);
+      } else { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &buf_len);
+      }
+      uint32_t http_connect_time = millis();
+      int32_t httpCode = cl->DELETE((uint8_t*)buf, buf_len);
+      wc_errorCodeMessage(httpCode, http_connect_time);
+      be_pushint(vm, httpCode);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   int32_t wc_getstring(struct bvm *vm);
   int32_t wc_getstring(struct bvm *vm) {
     HTTPClientLight * cl = wc_getclient(vm);
@@ -547,7 +616,7 @@ extern "C" {
         be_raisef(vm, "internal_error", "failed, written %i bytes vs %i", written, size);
       }
       AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing succesful");
-      
+
       be_pushint(vm, written);
       be_return(vm);  /* return code */
     }

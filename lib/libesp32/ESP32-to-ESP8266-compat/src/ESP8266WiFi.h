@@ -19,9 +19,6 @@
 #pragma once
 #include <WiFi.h>
 
-// sorry, no <AddrList.h>
-#undef LWIP_IPV6
-
 #define ENC_TYPE_NONE 	WIFI_AUTH_OPEN
 #define ENC_TYPE_WEP  	WIFI_AUTH_WEP
 #define ENC_TYPE_CCMP  	WIFI_AUTH_WPA2_PSK
@@ -53,6 +50,8 @@ public:
     static void forceSleepBegin();
     static void forceSleepWake();
     static bool getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t* &bssid, int32_t &channel, bool &hidden_scan);
+
+    bool IPv6(bool state);          // make sure it always exists even with older Arduino framework
 };
 
 void wifi_station_disconnect();

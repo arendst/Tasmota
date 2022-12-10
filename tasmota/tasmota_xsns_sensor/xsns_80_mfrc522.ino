@@ -160,7 +160,7 @@ bool RC522Command(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns80(uint8_t function) {
+bool Xsns80(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

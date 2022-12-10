@@ -119,7 +119,7 @@ void CmndSetRPM(void) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv25(uint8_t function)
+bool Xdrv25(uint32_t function)
 {
   bool result = false;
   if (PinUsed(GPIO_A4988_DIR) && PinUsed(GPIO_A4988_STP)) {

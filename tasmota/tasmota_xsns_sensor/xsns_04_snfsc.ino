@@ -148,7 +148,7 @@ void SonoffScShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns04(uint8_t function)
+bool Xsns04(uint32_t function)
 {
   bool result = false;
 

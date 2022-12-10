@@ -432,7 +432,7 @@ void CmndRtcNtpServer(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv56(uint8_t function) {
+bool Xdrv56(uint32_t function) {
   bool result = false;
 
 #ifdef RTC_NTP_SERVER

@@ -790,7 +790,7 @@ void CmndPWMDimmerPWMs(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv35(uint8_t function)
+bool Xdrv35(uint32_t function)
 {
   bool result = false;
 

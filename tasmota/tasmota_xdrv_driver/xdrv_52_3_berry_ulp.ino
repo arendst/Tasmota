@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_ulp.ino - Berry scripting language, ULP support for ESP32
+  xdrv_52_3_berry_ulp.ino - Berry scripting language, ULP support for ESP32, ESP32S2, ESP32S3
 
   Copyright (C) 2021 Stephan Hadinger & Christian Baars, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -21,9 +21,21 @@
 #ifdef USE_BERRY_ULP
 #include <berry.h>
 
-#if defined(USE_BERRY_ULP) && defined(CONFIG_IDF_TARGET_ESP32)
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
 
+#if defined(CONFIG_IDF_TARGET_ESP32)
 #include "esp32/ulp.h"
+#endif // esp32
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+#include "esp32s2/ulp.h"
+#include "esp32s2/ulp_riscv.h"
+#include "esp32s2/ulp_riscv_adc.h"
+#endif // s2
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#include "esp32s3/ulp.h"
+#include "esp32s3/ulp_riscv.h"
+#include "esp32s3/ulp_riscv_adc.h"
+#endif //s3
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
@@ -36,7 +48,11 @@ extern "C" {
   //
   // `ULP.run() -> nil`
   void be_ULP_run(int32_t entry) {
+#if defined(CONFIG_IDF_TARGET_ESP32)
     ulp_run(entry);       // entry point should be at the beginning of program
+#else // S2 or S3
+    ulp_riscv_run();
+#endif
   }
 
   // `ULP.wake_period(period_index:int, period_us:int) -> nil`
@@ -52,7 +68,11 @@ extern "C" {
 
   // `ULP.get_mem(position:int) -> int`
   int32_t be_ULP_get_mem(int32_t pos) {
-    return RTC_SLOW_MEM[pos] & 0xFFFF;    // only low 16 bits are used
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    return RTC_SLOW_MEM[pos] & 0xFFFF;  // only low 16 bits are used
+#else
+    return RTC_SLOW_MEM[pos];           // full 32bit for RISCV ULP
+#endif
   }
 
   // `ULP.gpio_init(pin:int, mode:int) -> rtc_pin:int`
@@ -70,25 +90,40 @@ extern "C" {
   // `ULP.adc_config(channel:int, attenuation:int, width:int) -> nil`
   // 
   // enums: channel 0-7, attenuation 0-3, width  0-3
-  void be_ULP_adc_config(struct bvm *vm, adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width) {
-    esp_err_t err = adc1_config_channel_atten(channel, attenuation);
-    err += adc1_config_width(width);
+  void be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width) {
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    esp_err_t err = adc1_config_channel_atten((adc1_channel_t)channel, (adc_atten_t)attenuation);
+    err += adc1_config_width((adc_bits_width_t)width);
     if (err != ESP_OK) {
       be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
     } else {
         adc1_ulp_enable();
     }
+#else // S2 or S3
+    ulp_riscv_adc_cfg_t cfg = {
+      .channel = (adc_channel_t)channel,
+      .atten   = (adc_atten_t)attenuation,
+      .width   = (adc_bits_width_t)width
+    };
+    esp_err_t err = ulp_riscv_adc_init(&cfg);
+    if (err != ESP_OK) {
+      be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
+    }
+#endif
   }
 
   /**
    * @brief Load a Berry byte buffer containing a ULP program as raw byte data
    * 
    * @param vm as `ULP.load(code:bytes) -> nil`
-   * @return void 
+   * @return void for ESP32 or binary type as int32_t on RISCV capable SOC's
    */
   void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size) {
-    // AddLog(LOG_LEVEL_INFO, "ULP: load addr=%p size=%i %*_H", buf, size/4, size, buf);
-    esp_err_t err = ulp_load_binary(0, buf, size / 4);
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    esp_err_t err = ulp_load_binary(0, buf, size / 4); // FSM type only, specific header, size in long words
+#else // S2 or S3
+    esp_err_t err = ulp_riscv_load_binary(buf, size); // there are no header bytes, just load and hope for a valid binary - size in bytes
+#endif // defined(CONFIG_IDF_TARGET_ESP32)
     if (err != ESP_OK) {
       be_raisef(vm, "ulp_load_error", "ULP: invalid code err=%i", err);
     }
@@ -109,10 +144,9 @@ extern "C" {
     esp_deep_sleep_start();
   }
 
-
 } //extern "C"
 
-#endif //CONFIG_IDF_TARGET_ESP32
+#endif //CONFIG_IDF_TARGET_ESP32 .. S2 .. S3
 
 #endif  // USE_BERRY_ULP
 #endif  // USE_BERRY

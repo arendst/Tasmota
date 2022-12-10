@@ -597,8 +597,7 @@ void StartWebserver(int type, IPAddress ipweb)
 //      Webserver->on(F("/u2"), HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
 #ifndef FIRMWARE_MINIMAL
-      XdrvCall(FUNC_WEB_ADD_HANDLER);
-      XsnsCall(FUNC_WEB_ADD_HANDLER);
+      XdrvXsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
 
       if (!Web.initial_config) {
@@ -611,7 +610,7 @@ void StartWebserver(int type, IPAddress ipweb)
     Webserver->begin(); // Web server start
   }
   if (Web.state != type) {
-#if LWIP_IPV6
+#ifdef USE_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr!="") {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I and IPv6 global address %s "),
@@ -623,7 +622,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #else
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
       NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
-#endif // LWIP_IPV6 = 1
+#endif // USE_IPV6
     TasmotaGlobal.rules_flag.http_init = 1;
     Web.state = type;
   }
@@ -1085,8 +1084,7 @@ uint32_t WebUseManagementSubmenu(void) {
 
   if (!management_count) {
     XdrvMailbox.index = 1;
-    XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
-    XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+    XdrvXsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
     XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
     management_count = XdrvMailbox.index;
   }
@@ -1288,8 +1286,7 @@ void HandleRoot(void)
   }
 
 #ifndef FIRMWARE_MINIMAL
-  XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
 #endif  // Not FIRMWARE_MINIMAL
 
   if (HTTP_ADMIN == Web.state) {
@@ -1442,8 +1439,7 @@ bool HandleRootStatusRefresh(void)
   }
 #endif // USE_ZIGBEE
 
-  XsnsCall(FUNC_WEB_GET_ARG);
-  XdrvCall(FUNC_WEB_GET_ARG);
+  XsnsXdrvCall(FUNC_WEB_GET_ARG);
 
 #ifdef USE_WEB_SSE
   WSContentBegin(200, CT_STREAM);
@@ -1455,8 +1451,7 @@ bool HandleRootStatusRefresh(void)
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
   }
-  XsnsCall(FUNC_WEB_SENSOR);
-  XdrvCall(FUNC_WEB_SENSOR);
+  XsnsXdrvCall(FUNC_WEB_SENSOR);
 
   WSContentSend_P(PSTR("</table>"));
 
@@ -1522,8 +1517,7 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_MODULE);
   WSContentButton(BUTTON_WIFI);
 
-  XdrvCall(FUNC_WEB_ADD_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_BUTTON);
 
   WSContentButton(BUTTON_LOGGING);
   WSContentButton(BUTTON_OTHER);
@@ -2365,12 +2359,16 @@ void HandleInformation(void)
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
-#if LWIP_IPV6
+#ifdef USE_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Global (wifi)}2%s"), ipv6_addr.c_str());
     }
-#endif  // LWIP_IPV6 = 1
+    ipv6_addr = WifiGetIPv6LinkLocal();
+    if (ipv6_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Local (wifi)}2%s"), ipv6_addr.c_str());
+    }
+#endif  // USE_IPV6
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
       WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
@@ -2389,6 +2387,16 @@ void HandleInformation(void)
       WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
+#ifdef USE_IPV6
+    String ipv6_eth_addr = EthernetGetIPv6();
+    if (ipv6_eth_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Global (eth)}2%s"), ipv6_eth_addr.c_str());
+    }
+    ipv6_eth_addr = EthernetGetIPv6LinkLocal();
+    if (ipv6_eth_addr != "") {
+      WSContentSend_P(PSTR("}1 IPv6 Local (eth)}2%s"), ipv6_eth_addr.c_str());
+    }
+#endif  // USE_IPV6
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
   }
@@ -2853,8 +2861,7 @@ void HandleUploadLoop(void) {
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Write a block
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d"), upload.currentSize);
-//      AddLogBuffer(LOG_LEVEL_DEBUG, upload.buf, 32);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d, Data '%32_H'"), upload.currentSize, upload.buf);
       Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
       if (Web.upload_error != 0) { return; }
     }
@@ -3106,8 +3113,7 @@ void HandleManagement(void)
   WSContentButton(BUTTON_CONSOLE);
 
   XdrvMailbox.index = 0;
-  XdrvCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
-  XsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
+  XdrvXsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
 
   WSContentSend_P(PSTR("<div></div>"));            // 5px padding
   XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
@@ -3696,7 +3702,7 @@ void CmndCors(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv01(uint8_t function)
+bool Xdrv01(uint32_t function)
 {
   bool result = false;
 

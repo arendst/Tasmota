@@ -591,7 +591,7 @@ void MLX90640Show(uint8_t json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv43(uint8_t function)
+bool Xdrv43(uint32_t function)
 {
   bool result = false;
 

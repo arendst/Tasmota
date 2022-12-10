@@ -173,11 +173,12 @@
 #endif
 #define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
   //#define PMS_MODEL_PMS3003                      // Enable support of PMS3003 instead of PMS5003/PMS7003 (needs the USE_PMS5003 above)
+  //#define PMS_MODEL_PMS5003T                     // Enable support for PMSx003T models that report temperature and humidity (needs the USE_PMS5003 above)
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+2k code)
 //#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)
 #define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger

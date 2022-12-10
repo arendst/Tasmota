@@ -98,7 +98,7 @@ void CmndShift595Devices(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv60(uint8_t function) {
+bool Xdrv60(uint32_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

@@ -294,7 +294,7 @@ void CmndFpCount(void) {
 * Interface
 \*********************************************************************************************/
 
-bool Xsns79(uint8_t function) {
+bool Xsns79(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

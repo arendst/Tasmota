@@ -22,7 +22,7 @@
     "espidf",
     "arduino"
   ],
-  "name": "Espressif Generic ESP32-S2 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+  "name": "Espressif Generic ESP32-S2 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [

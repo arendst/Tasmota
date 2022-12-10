@@ -334,8 +334,7 @@ void TM1621Init(void) {
 uint32_t TM1621GetSensors(bool refresh) {
   if (refresh) {
     ResponseClear();
-    XsnsCall(FUNC_JSON_APPEND);
-    XdrvCall(FUNC_JSON_APPEND);
+    XsnsXdrvCall(FUNC_JSON_APPEND);
     ResponseJsonStart();  // Overwrite first comma
     ResponseJsonEnd();    // Append }
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TM1: Sensors %s"), ResponseData());
@@ -567,7 +566,7 @@ void CmndDspSpeed(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv87(uint8_t function) {
+bool Xdrv87(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

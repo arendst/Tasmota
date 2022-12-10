@@ -529,7 +529,7 @@ void Ina226Show(bool json)
  * @post    None.
  *
  */
-bool Xsns54(byte callback_id)
+bool Xsns54(uint32_t callback_id)
 {
   if (!I2cEnabled(XI2C_35)) { return false; }
 
