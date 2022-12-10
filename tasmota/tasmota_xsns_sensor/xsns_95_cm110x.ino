@@ -1,7 +1,7 @@
 /*
   XSNS_95_cm1107.ino - CM1107(B) CO2 sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2022  Maksim
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Filter usage
  *
  * Select filter usage on low stability readings
- * 
+ *
  * *******************************************************************************************
  * Some CM11 models has manual or continuos modes - this logic not implemented.
 \*********************************************************************************************/
@@ -42,8 +42,8 @@ enum CM11FilterOptions {CM1107_FILTER_OFF, CM1107_FILTER_FAST, CM1107_FILTER_MED
 #endif
 /*********************************************************************************************\
  * Source: https://en.gassensor.com.cn/CO2Sensor/list.html (pdf for 1106/1107/1109 sensors)
- *  
- * 
+ *
+ *
  * Automatic Baseline Correction (ABC logic function) is enabled by default but may be disabled with command
  * Sensor95 0
  * and enabled again with command
@@ -137,7 +137,7 @@ size_t CM11SendCmd(uint8_t command_id)
   memcpy_P(&cm11_send[1], kCM11Commands[command_id], (len+1) * sizeof(uint8_t));
 
   cm11_send[len+2] = CM11CalculateChecksum(cm11_send,0, len+2);
-  
+
 #ifdef DEBUG_TASMOTA_SENSOR
   char cmdFull[len+30];// = {0};
   memset( cmdFull, 0, (len+3)*sizeof(char) );
@@ -175,7 +175,7 @@ bool CM11CheckAndApplyFilter(uint16_t ppm, uint8_t drift)
    }else {
     difference >>=cm11_filter;
   }
-  
+
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "CM11 diff: %d"),difference);
   cm11_last_ppm = static_cast<uint16_t>(cm11_last_ppm + difference);
   return true;
@@ -243,7 +243,7 @@ void CM11EverySecond(void)
     if (cm11_response[2]==cmd_read[1]){  //0x01 - read command
       uint16_t ppm = (cm11_response[3] << 8) | cm11_response[4];
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "CM11 PPM: %u"),ppm);
-      if (ppm ==550) { // Preheating mode, fixed value. 
+      if (ppm ==550) { // Preheating mode, fixed value.
       //DOCs says that preheating is cm11_response[5] & (1 << 0)) ==1 (first bit ==1), but mine sensor (CM1107, sw V1.07.0.02 )
       // set first bit 0 when preheating at switch to 1 then finished.
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "CM11 preheating"));
@@ -294,7 +294,7 @@ void CM11EverySecond(void)
         sprintf_P(cm11_serial_number+i*2,"%04u", v); //print int value to result str
       }
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "Serial number: %s"),cm11_serial_number);
-    }   
+    }
 
   }
 }
@@ -328,7 +328,7 @@ bool CM11CommandSensor(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_95, CM11_ABC_ENABLED);
       break;
     case 2:
-      CM11SendCmd(CM11_CMND_ZEROPOINT); 
+      CM11SendCmd(CM11_CMND_ZEROPOINT);
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_95, D_JSON_ZERO_POINT_CALIBRATION);
       break;
     case 3:

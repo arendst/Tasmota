@@ -1,5 +1,5 @@
 /*
-  xsns_77_vl53l1x_device[0].ino - VL53L1X sensor support for Tasmota
+  xsns_77_vl53l1x.ino - VL53L1X sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends, Rui Marinho and Johann Obermeier
 
