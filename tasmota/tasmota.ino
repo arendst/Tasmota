@@ -32,6 +32,13 @@
 #include "include/i18n.h"                   // Language support configured by my_user_config.h
 #include "include/tasmota_template.h"       // Hardware configuration
 
+// ------------------------------------------------------------------------------------------
+// If IPv6 is not support by the underlying esp-idf, disable it
+// ------------------------------------------------------------------------------------------
+#if !LWIP_IPV6
+  #undef USE_IPV6
+#endif
+
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
@@ -494,7 +501,7 @@ void setup(void) {
 #ifdef ESP32
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
-  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
   if (FoundPSRAM() && !CanUsePSRAM()) {
     AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));

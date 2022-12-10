@@ -41,13 +41,6 @@ const uint8_t WIFI_CHECK_SEC = 20;         // seconds
 const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
-#if LWIP_IPV6
-  #ifdef ESP8266
-    #include <AddrList.h>                      // IPv6 DualStack
-  #else
-    #include <AddrList46.h>                      // IPv6 DualStack
-  #endif
-#endif  // LWIP_IPV6=1
 
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
@@ -213,7 +206,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #endif  // USE_EMULATION
 
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
-#if LWIP_IPV6 && defined(ESP32)
+#if defined(USE_IPV6) && defined(ESP32)
   WiFi.IPv6(true);
 #endif
 
@@ -465,7 +458,7 @@ void WifiSetState(uint8_t state)
   }
 }
 
-#if LWIP_IPV6
+#ifdef USE_IPV6
 //
 // Scan through all interfaces to find a global or local IPv6 address
 // Arg:
@@ -476,8 +469,8 @@ static String WifiFindIPv6(bool is_local, const char * if_type = "st") {
     if (intf->name[0] == if_type[0] && intf->name[1] == if_type[1]) {
       for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         ip_addr_t *ipv6 = &intf->ip6_addr[i];
-        if (IP_IS_V6_VAL(*ipv6) && !ip_addr_isloopback(ipv6) && ((bool)ip_addr_islinklocal(ipv6) == is_local)) {
-          return IPAddress46(ipv6).toString();
+        if (IP_IS_V6_VAL(*ipv6) && !ip_addr_isloopback(ipv6) && !ip_addr_isany(ipv6) && ((bool)ip_addr_islinklocal(ipv6) == is_local)) {
+          return IPAddress(ipv6).toString();
         }
       }
     }
@@ -510,33 +503,28 @@ void CreateLinkLocalIPv6(void)
 void WifiDumpAddressesIPv6(void)
 {
   for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
-    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv4 %s", intf->name[0], intf->name[1], IPAddress46(intf->ip_addr).toString().c_str());
+    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv4 %s", intf->name[0], intf->name[1], IPAddress(intf->ip_addr).toString().c_str());
     for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (!ip_addr_isany_val(intf->ip6_addr[i]))
         AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv6 %s %s", intf->name[0], intf->name[1],
-                                IPAddress46(intf->ip6_addr[i]).toString().c_str(),
+                                IPAddress(intf->ip6_addr[i]).toString().c_str(),
                                 ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "");
     }
   }
 }
-#endif  // LWIP_IPV6=1
+#endif  // USE_IPV6
 
 // Check to see if we have any routable IP address
 bool WifiHasIP(void) {
-#if LWIP_IPV6
-  for (auto a : addrList) {
-    if(!ip_addr_isloopback((ip_addr_t*)a.addr()) && !a.isLocal()) {
-      return true;
-    }
-  }
-  return false;
+#ifdef USE_IPV6
+  return !WiFi.localIP().isAny();
 #else
   return (uint32_t)WiFi.localIP() != 0;
-#endif
+#endif // USE_IPV6
 }
 
 void WifiCheckIp(void) {
-#if LWIP_IPV6
+#ifdef USE_IPV6
   if (WL_CONNECTED == WiFi.status()) {
     if (!Wifi.ipv6_local_link_called) {
       WiFi.enableIpV6();
@@ -545,7 +533,7 @@ void WifiCheckIp(void) {
     }
     
   }
-#endif
+#endif // USE_IPV6
 
   if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
@@ -1081,24 +1069,23 @@ uint64_t WifiGetNtp(void) {
 // Respond to some Arduino/esp-idf events for better IPv6 support
 // --------------------------------------------------------------------------------
 #ifdef ESP32
-#include "IPAddress46.h"
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
 
-#if LWIP_IPV6
+#ifdef USE_IPV6
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
     case ARDUINO_EVENT_ETH_GOT_IP6:
     {
       ip_addr_t ip_addr6;
       ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
-      IPAddress46 addr(ip_addr6);
+      IPAddress addr(ip_addr6);
       AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
              event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
              addr.isLocal() ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
     }
     break;
-#endif // LWIP_IPV6
+#endif // USE_IPV6
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
     case ARDUINO_EVENT_ETH_GOT_IP:
     {

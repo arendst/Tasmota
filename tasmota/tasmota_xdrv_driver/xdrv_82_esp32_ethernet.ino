@@ -94,9 +94,9 @@ void EthernetEvent(arduino_event_t *event) {
       break;
 
     case ARDUINO_EVENT_ETH_CONNECTED:
-#if LWIP_IPV6
+#ifdef USE_IPV6
       ETH.enableIpV6();   // enable Link-Local 
-#endif
+#endif // USE_IPV6
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH D_CONNECTED " at %dMbps%s, Mac %s, Hostname %s"),
         ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "",
         ETH.macAddress().c_str(), eth_hostname
@@ -143,6 +143,7 @@ void EthernetSetIp(void) {
              Settings->eth_ipv4_address[4]);      // IPAddress dns2
 }
 
+#ifdef USE_IPV6
 // Returns only IPv6 global address (no loopback and no link-local)
 String EthernetGetIPv6(void)
 {
@@ -153,6 +154,7 @@ String EthernetGetIPv6LinkLocal(void)
 {
   return WifiFindIPv6(true, "en");
 }
+#endif // USE_IPV6
 
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }

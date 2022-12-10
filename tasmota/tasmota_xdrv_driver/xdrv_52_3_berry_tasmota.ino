@@ -214,7 +214,7 @@ extern "C" {
       if (Settings->flag4.network_wifi) {
         int32_t rssi = WiFi.RSSI();
         bool show_rssi = false;
-#if LWIP_IPV6
+#ifdef USE_IPV6
         String ipv6_addr = WifiGetIPv6();
         if (ipv6_addr != "") {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
@@ -225,10 +225,10 @@ extern "C" {
           be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
           show_rssi = true;
         }
-#endif
+#endif // USE_IPV6
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
-          be_map_insert_str(vm, "ip", IPAddress46((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
+          be_map_insert_str(vm, "ip", IPAddress((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
           show_rssi = true;
         }
         if (show_rssi) {
@@ -252,9 +252,9 @@ extern "C" {
 #ifdef USE_ETHERNET
       if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
         be_map_insert_str(vm, "mac", EthernetMacAddress().c_str());
-        be_map_insert_str(vm, "ip", IPAddress46((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
+        be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
       }
-#if LWIP_IPV6
+#ifdef USE_IPV6
       String ipv6_addr = EthernetGetIPv6();
       if (ipv6_addr != "") {
         be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
@@ -263,8 +263,8 @@ extern "C" {
       if (ipv6_addr != "") {
         be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
       }
-#endif
-#endif
+#endif // USE_IPV6
+#endif // USE_ETHERNET
       be_pop(vm, 1);
       be_return(vm);
     }
