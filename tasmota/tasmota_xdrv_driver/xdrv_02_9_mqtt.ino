@@ -971,10 +971,10 @@ void MqttConnected(void) {
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
             TasmotaGlobal.hostname, (uint32_t)WiFi.localIP());
-#if LWIP_IPV6
+#ifdef USE_IPV6
           ResponseAppend_P(PSTR(",\"" D_JSON_IP6_GLOBAL "\":\"%s\""), WifiGetIPv6().c_str());
           ResponseAppend_P(PSTR(",\"" D_JSON_IP6_LOCAL "\":\"%s\""), WifiGetIPv6LinkLocal().c_str());
-#endif  // LWIP_IPV6 = 1
+#endif  // USE_IPV6
         }
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
         if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
