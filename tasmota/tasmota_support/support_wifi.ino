@@ -893,9 +893,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   }
 #else
   // DnsClient can't do one-shot mDNS queries so use WiFi.hostByName() for *.local
-#ifdef USE_IPV6
-  aResult.setV4();    // force IPv4 result for now, until DNS is updated to IPv6
-#endif
+  aResult = (uint32_t) 0x00000000L;    // indirectly force to be IPv4, since the client touches the binary format later
   size_t hostname_len = strlen(aHostname);
   if (strstr_P(aHostname, PSTR(".local")) == &aHostname[hostname_len] - 6) {
     if (WiFi.hostByName(aHostname, aResult)) {
