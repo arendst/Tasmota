@@ -254,7 +254,7 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
           //uint16_t addon = ( realpercent*10 - Settings->shuttercoeff[j-1][index] ) * Shutter[index].open_max * (calibrate_pos[j+1] - calibrate_pos[j]) / (Settings->shuttercoeff[j][index] -Settings->shuttercoeff[j-1][index]) / 100;
           //AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Realpercent TEMP2: %d %%, delta %d, %d, coeff %d"), addon,( realpos - (Shutter[index].open_max * calibrate_pos[j] / 100) ) , (calibrate_pos[j+1] - calibrate_pos[j])* Shutter[index].open_max/100, (Settings->shuttercoeff[j][index] -Settings->shuttercoeff[j-1][index]));
          realpercent += SHT_DIV_ROUND(((int64_t)realpos - SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[j], 100)) * (Settings->shuttercoeff[j][index] - Settings->shuttercoeff[j-1][index]), (calibrate_pos[j+1] - calibrate_pos[j])/10*Shutter[index].open_max) ;
-	}
+	      }
         break;
       }
     }
@@ -690,7 +690,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterGlobal.start_reported = 0;
     Shutter[i].tilt_real_pos = tmax(tmin(Shutter[i].tilt_real_pos,Shutter[i].tilt_config[1]),Shutter[i].tilt_config[0]);
     Shutter[i].tilt_start_pos =  Shutter[i].tilt_real_pos;
-    if (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0] != 0) {  
+    if (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0] != 0) {
       Shutter[i].venetian_delay = SHT_DIV_ROUND((direction > 0 ? Shutter[i].tilt_config[1]-Shutter[i].tilt_real_pos : Shutter[i].tilt_real_pos-Shutter[i].tilt_config[0]) * Shutter[i].tilt_config[2], Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]);
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , direction ,ShutterGlobal.open_velocity_max );
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Dur: %d, StartP: %d, TgtP: %d"),
@@ -864,6 +864,7 @@ void ShutterButtonHandler(void)
   }
 
   if (NOT_PRESSED == button) {
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
     if (Shutter[shutter_index].direction && (Button.hold_timer[button_index] > 0 && (!Settings->flag.button_single || Button.hold_timer[button_index] > 20))) {
       XdrvMailbox.index = shutter_index +1;
       XdrvMailbox.payload = XdrvMailbox.index;
@@ -1062,7 +1063,7 @@ void ShutterToggle(bool dir)
 void CmndShutterOpen(void)
 {
   //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload open: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
-  if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
+  if ((!XdrvMailbox.usridx) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
   XdrvMailbox.payload = 100;
@@ -1085,11 +1086,10 @@ void CmndShutterStopOpen(void)
 void CmndShutterClose(void)
 {
   //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Payload close: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
-  if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
+  if ((!XdrvMailbox.usridx) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
   XdrvMailbox.payload = 0;
-  XdrvMailbox.data_len = 0;
   TasmotaGlobal.last_source = SRC_WEBGUI;
   CmndShutterPosition();
 }
@@ -1143,14 +1143,15 @@ void CmndShutterStopToggleDir(void)
 void CmndShutterStop(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Try Stop %d: dir: %d"), XdrvMailbox.index, Shutter[XdrvMailbox.index -1].direction);
     if (!(Settings->shutter_options[XdrvMailbox.index-1] & 2)) {
-      if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
+      if ((!XdrvMailbox.usridx) && (XdrvMailbox.payload != -99)) {
         XdrvMailbox.index = XdrvMailbox.payload;
       }
       uint32_t i = XdrvMailbox.index -1;
       if (Shutter[i].direction != 0) {
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
         Shutter[i].target_position = Shutter[i].real_position;
       }
       if (XdrvMailbox.command)
@@ -1182,17 +1183,17 @@ void CmndShutterPosition(void)
     if (!(Settings->shutter_options[XdrvMailbox.index-1] & 2)) {
       uint32_t index = XdrvMailbox.index-1;
       //limit the payload
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pos. in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pos. payload <%s> (%d), payload %d, idx %d (%d), src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, XdrvMailbox.usridx, TasmotaGlobal.last_source );
 
       // value 0 with data_len > 0 can mean Open
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
-      if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
-        //UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
+      // STOP will come with payload 0 because predefined value in TASMOTA
+      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
+        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
         }
-        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
+        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
           CmndShutterClose();
           return;
         }
@@ -1205,6 +1206,7 @@ void CmndShutterPosition(void)
           return;
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter[index].direction) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
+          // Back to normal: all -99 if not a clear position
           XdrvMailbox.payload = -99;
           CmndShutterStop();
           return;
@@ -1293,16 +1295,11 @@ void CmndShutterPosition(void)
         } // if (Shutter[i].direction[index] != new_shutterdirection)
       } else {
         target_pos_percent = ShutterRealToPercentPosition(Shutter[index].real_position, index);
-        ShutterReportPosition(true, index);
       }
+      index = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?MAX_SHUTTERS:index;
+      ShutterReportPosition(true, index);
+      ShutterGlobal.start_reported = 1;
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
-
-      // As this function is called three times from outside the command handler
-      // XdrvMailbox.command may not point to a char string resulting in exception 29 on strcpy
-      char command[CMDSZ] = { 0 };
-      XdrvMailbox.command = command;
-      strcpy(XdrvMailbox.command, D_CMND_SHUTTER_POSITION);
-      ResponseCmndIdxNumber((Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
       ShutterReportPosition(true, MAX_SHUTTERS);
       if (XdrvMailbox.command)
@@ -1366,30 +1363,37 @@ void CmndShutterMotorDelay(void)
 
 void CmndShutterMode(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
-    ShutterGlobal.position_mode =  XdrvMailbox.payload;
-    Settings->shutter_mode =  XdrvMailbox.payload;
-    ShutterInit();
+  if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
+      ShutterGlobal.position_mode =  XdrvMailbox.payload;
+      Settings->shutter_mode =  XdrvMailbox.payload;
+      ShutterInit();
+    }
+    ResponseCmndNumber(ShutterGlobal.position_mode);
   }
-  ResponseCmndNumber(ShutterGlobal.position_mode);
 }
 
 void CmndShutterRelay(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
-      Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      if (XdrvMailbox.payload > 0) {
-        ShutterGlobal.RelayShutterMask |= 3 << (XdrvMailbox.payload - 1);
-      } else {
-        ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
-      }
-      Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      ShutterInit();
-      // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
+    Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
+    if (XdrvMailbox.payload > 0) {
+      ShutterGlobal.RelayShutterMask |= 3 << (XdrvMailbox.payload - 1);
+    } else {
+      ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
     }
-    ResponseCmndIdxNumber(Settings->shutter_startrelay[XdrvMailbox.index -1]);
+    Settings->shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
+    ShutterInit();
+    // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
   }
+  uint32_t start = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?0:XdrvMailbox.index -1;
+  uint32_t end   = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?TasmotaGlobal.shutters_present:XdrvMailbox.index;
+  // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
+  Response_P(PSTR("{"));
+  for (uint32_t i = start; i < end; i++) {
+    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i)?",":"", i+1,Settings->shutter_startrelay[i]);
+  }
+  ResponseAppend_P(PSTR("}"));
 }
 
 void CmndShutterButton(void)
@@ -1676,22 +1680,18 @@ void CmndShutterSetTilt(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.payload != -99 ) {
       Shutter[XdrvMailbox.index -1].tilt_target_pos = tmin(tmax(XdrvMailbox.payload, Shutter[XdrvMailbox.index -1].tilt_config[0]), Shutter[XdrvMailbox.index -1].tilt_config[1]);
-      XdrvMailbox.payload = -99;
     }
-    if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) ) {
-        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[3]; // open position
-        XdrvMailbox.payload = -99;
-      }
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) ) {
-        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[4];  // close position
-        XdrvMailbox.payload = -99;
-      }
+    // assuming OPEN=100=tilt_config[3]/CLOSE=0=tilt_config[4]
+    if (XdrvMailbox.data_len > 3 && XdrvMailbox.payload >= 0 ) {
+      Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[XdrvMailbox.payload?3:4];
     }
   }
   XdrvMailbox.data[0] = '\0';
   AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltTarget %d, payload %d"), Shutter[XdrvMailbox.index -1].tilt_target_pos,XdrvMailbox.payload);
   Shutter[XdrvMailbox.index -1].tiltmoving = 1;
+  // Avoid shutterposition try to interpret "open/close or payload"
+  XdrvMailbox.data_len = 0;
+  XdrvMailbox.payload = -99;
   CmndShutterPosition();
 }
 
