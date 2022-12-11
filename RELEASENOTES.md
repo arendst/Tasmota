@@ -165,6 +165,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ModbusBridge baudrates over 76500 baud [#17106](https://github.com/arendst/Tasmota/issues/17106)
 - SenseAir S8 module detection [#17033](https://github.com/arendst/Tasmota/issues/17033)
 - RCSwitch exception 0/6 on some protocols [#17285](https://github.com/arendst/Tasmota/issues/17285)
+- ESP32 exception 28 when RtcNtpServer is enabled on restart [#17338](https://github.com/arendst/Tasmota/issues/17338)
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)

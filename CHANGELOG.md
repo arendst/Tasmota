@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
 - RCSwitch exception 0/6 on some protocols (#17285)
+- ESP32 exception 28 when RtcNtpServer is enabled on restart (#17338)
 
 ### Removed
 
