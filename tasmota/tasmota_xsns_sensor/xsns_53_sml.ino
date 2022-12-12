@@ -2376,7 +2376,7 @@ void SML_Decode(uint8_t index) {
                 mp++;
               } else {
                 uint16_t pos = smltbuf[mindex][2] + 3;
-                if (pos > 32) pos = 32;
+                if (pos > (SML_BSIZ-2)) pos = SML_BSIZ-2;
                 uint16_t crc = MBUS_calculateCRC(&smltbuf[mindex][0], pos, 0xFFFF);
                 if (lowByte(crc) != smltbuf[mindex][pos]) goto nextsect;
                 if (highByte(crc) != smltbuf[mindex][pos + 1]) goto nextsect;
