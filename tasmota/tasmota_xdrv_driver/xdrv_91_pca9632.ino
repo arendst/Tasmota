@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * PCA9632 - 4-channel 4-bit pwm driver
  *
- * I2C Address: 0x60
+ * I2C Address: 0x60 .. 0x63
 \*********************************************************************************************/
 
 #define XDRV_91                     91
@@ -30,75 +30,81 @@
 
 #define PCA9632_REG_MODE1           0x00
 #define PCA9632_REG_MODE2           0x01
-#define PCA9632_REG_PWM0            0x02
-#define PCA9632_REG_PWM1            0x03
-#define PCA9632_REG_PWM2            0x04
-#define PCA9632_REG_PWM3            0x05
+#define PCA9632_REG_PWM_BASE        0x02
+#define PCA9632_REG_PWM_1           PCA9632_REG_PWM_BASE + 0
+#define PCA9632_REG_PWM_2           PCA9632_REG_PWM_BASE + 1
+#define PCA9632_REG_PWM_3           PCA9632_REG_PWM_BASE + 2
+#define PCA9632_REG_PWM_4           PCA9632_REG_PWM_BASE + 3
 #define PCA9632_REG_GRPPWM          0x06
 #define PCA9632_REG_GRPGREQ         0x07
 #define PCA9632_REG_LEDOUT          0x08
 
 #ifndef USE_PCA9632_ADDR
-  #define USE_PCA9632_ADDR          0x60
+  #define USE_PCA9632_ADDR          0x62
 #endif
 
 bool pca9632_inverted = false; // invert PWM for open-collector load
 bool pca9632_detected = false;
 uint8_t pca9632_pin_pwm_value[4];
 
-void PCA9632_Detect(void)
+bool PCA9632_Detect(void)
 {
-  if (!I2cSetDevice(USE_PCA9632_ADDR)) { return; }
-
-  uint8_t buffer;
-  if (I2cValidRead8(&buffer, USE_PCA9632_ADDR, PCA9632_REG_MODE1)) {
-    I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x20);
+  if (I2cSetDevice(USE_PCA9632_ADDR)) {
+    uint8_t buffer;
     if (I2cValidRead8(&buffer, USE_PCA9632_ADDR, PCA9632_REG_MODE1)) {
-      if (0x20 == buffer) {
-        pca9632_detected = true;
-        I2cSetActiveFound(USE_PCA9632_ADDR, "PCA9632");
-        PCA9632_Reset(); // Reset the controller
+      I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x10);
+      if (I2cValidRead8(&buffer, USE_PCA9632_ADDR, PCA9632_REG_MODE1)) {
+        if (0x10 == buffer) {
+          I2cSetActiveFound(USE_PCA9632_ADDR, "PCA9632");
+          PCA9632_Reset(); // Reset the controller
+          return pca9632_detected = true;
+        }
       }
     }
   }
+
+  return false;
+}
+
+void PCA9632_Init(void)
+{
+  // configure none inverted and totem pole
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE2, 0x14);
+
+  // turn off sleep mode
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x1);
 }
 
 void PCA9632_Reset(void)
 {
-  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x80);
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x6);
   pca9632_inverted = false;
-  for (uint32_t pin=0;pin<4;pin++) {
-    PCA9632_SetPWM(pin,0,pca9632_inverted);
-    pca9632_pin_pwm_value[pin] = PCA9632_GetPWMvalue(0, pca9632_inverted);
+  for (uint32_t pin = 0; pin < 4; pin++) {
+    PCA9632_SetPWM(pin, 0);
+    pca9632_pin_pwm_value[pin] = 0;
   }
   Response_P(PSTR("{\"PCA9632\":{\"RESET\":\"OK\"}}"));
 }
 
-uint8_t PCA9632_GetPWMvalue(uint8_t pwm, bool inverted) {
-  uint8_t pwm_val = pwm;
-  if (inverted) {
-    pwm_val = 255-pwm;
+bool PCA9632_SetInvert(bool on) {
+  uint8_t buffer;
+  if(I2cValidRead8(&buffer, USE_PCA9632_ADDR, PCA9632_REG_MODE2)) {
+    I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE2, buffer | ((on ? 1 : 0) >> 4));
   }
-  return pwm_val;
+  return on;
 }
 
-void PCA9632_SetPWM_Reg(uint8_t pin, uint16_t on, uint16_t off) {
-  /*uint8_t led_reg = PCA9685_REG_LED0_ON_L + 4 * pin;
-  uint32_t led_data = 0;
-  I2cWrite8(USE_PCA9632_ADDR, led_reg, on);
-  I2cWrite8(USE_PCA9632_ADDR, led_reg+1, (on >> 8));
-  I2cWrite8(USE_PCA9632_ADDR, led_reg+2, off);
-  I2cWrite8(USE_PCA9632_ADDR, led_reg+3, (off >> 8));*/
+void PCA9632_SetPWM(uint8_t pin, uint16_t pwm) {
+  if (pwm > 255) {
+    pwm = 255;
+  }
+
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_PWM_BASE + pin, pwm);
+  pca9632_pin_pwm_value[pin] = pwm;
 }
 
-void PCA9632_SetPWM(uint8_t pin, uint8_t pwm, bool inverted) {
-  uint8_t pwm_val = PCA9632_GetPWMvalue(pwm, inverted);
-  if (255 == pwm_val) {
-    PCA9632_SetPWM_Reg(pin, 255, 0); // Special use additional bit causes channel to turn on completely without PWM
-  } else {
-    PCA9632_SetPWM_Reg(pin, 0, pwm_val);
-  }
-  pca9632_pin_pwm_value[pin] = pwm_val;
+void PCA9632_Enable(bool enable) {
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_LEDOUT, enable ? 0xFF : 0x0);
 }
 
 bool PCA9632_Command(void)
@@ -125,11 +131,11 @@ bool PCA9632_Command(void)
 
   if (!strcmp(ArgV(argument, 1),"INVERT")) {
     if (paramcount > 1) {
-      pca9632_inverted = (1 == atoi(ArgV(argument, 2)));
-      Response_P(PSTR("{\"PCA9632\":{\"INVERT\":%i, \"Result\":\"OK\"}}"), pca9632_inverted?1:0);
+      pca9632_inverted = PCA9632_SetInvert(1 == atoi(ArgV(argument, 2)));
+      Response_P(PSTR("{\"PCA9632\":{\"INVERT\":%i, \"Result\":\"OK\"}}"), pca9632_inverted);
       return serviced;
     } else { // No parameter was given for invert, so we return current setting
-      Response_P(PSTR("{\"PCA9632\":{\"INVERT\":%i}}"), pca9632_inverted?1:0);
+      Response_P(PSTR("{\"PCA9632\":{\"INVERT\":%i}}"), pca9632_inverted);
       return serviced;
     }
   }
@@ -138,26 +144,34 @@ bool PCA9632_Command(void)
       uint8_t pin = atoi(ArgV(argument, 2));
       if (paramcount > 2) {
         if (!strcmp(ArgV(argument, 3), "ON")) {
-          PCA9632_SetPWM(pin, 255, pca9632_inverted);
-          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"),pin,255);
+          PCA9632_SetPWM(pin, 255);
+          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"), pin, 255);
           serviced = true;
           return serviced;
         }
         if (!strcmp(ArgV(argument, 3), "OFF")) {
-          PCA9632_SetPWM(pin, 0, pca9632_inverted);
-          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
+          PCA9632_SetPWM(pin, 0);
+          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"), pin, 0);
           serviced = true;
           return serviced;
         }
         uint16_t pwm = atoi(ArgV(argument, 3));
-        if ((pin >= 0 && pin <= 3 || pin==61) && (pwm >= 0 && pwm <= 255)) {
-          PCA9632_SetPWM(pin, pwm, pca9632_inverted);
-          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
+        if ((pin >= 0 && pin <= 3) && (pwm >= 0 && pwm <= 255)) {
+          PCA9632_SetPWM(pin, pwm);
+          Response_P(PSTR("{\"PCA9632\":{\"PIN\":%i,\"PWM\":%i}}"), pin, pwm);
           serviced = true;
           return serviced;
         }
       }
     }
+  }
+  if (!strcmp(ArgV(argument, 1),"ENABLE")) {
+    PCA9632_Enable(true);
+    Response_P(PSTR("{\"PCA9632\":{\"ENABLE\":true}}"));
+  }
+  if (!strcmp(ArgV(argument, 1),"DISABLE")) {
+    PCA9632_Enable(false);
+    Response_P(PSTR("{\"PCA9632\":{\"ENABLE\":false}}"));
   }
   return serviced;
 }
@@ -165,9 +179,8 @@ bool PCA9632_Command(void)
 void PCA9632_OutputTelemetry(bool telemetry)
 {
   ResponseAppend_P(PSTR("\"INVERT\":%i,"), pca9632_inverted?1:0);
-  for (uint32_t pin=0;pin<4;pin++) {
-    uint16_t pwm_val = PCA9632_GetPWMvalue(pca9632_pin_pwm_value[pin], pca9632_inverted); // return logical (possibly inverted) pwm value
-    ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pwm_val);
+  for (uint32_t pin = 0; pin < 4; pin++) {
+    ResponseAppend_P(PSTR("\"PWM%i\":%i,"), pin, pca9632_pin_pwm_value[pin]);
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));
   if (telemetry) {
@@ -182,7 +195,9 @@ bool Xdrv91(uint32_t function)
   bool result = false;
 
   if (FUNC_INIT == function) {
-    PCA9632_Detect();
+    if (PCA9632_Detect()) {
+      PCA9632_Init();
+    }
   }
   else if (pca9632_detected) {
     switch (function) {
