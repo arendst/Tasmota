@@ -915,11 +915,14 @@
 #define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
 #define D_SENSOR_FLOWRATEMETER "Flowrate"
+#define D_SENSOR_ME007_TRIG    "ME007 Tri"
+#define D_SENSOR_ME007_RX      "ME007 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CELSIUS "C"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_METER "m"
 #define D_UNIT_DEGREE "°"
 #define D_UNIT_FAHRENHEIT "F"
 #define D_UNIT_FPS "FPS"
