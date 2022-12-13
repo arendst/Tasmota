@@ -8,13 +8,11 @@
 *.o
 *.gcno
 *.gcda
-*.out
 
 ## Project files ######
 .platformio
 .pio
 .clang_complete
-.clang-format
 .gcc-flags.json
 .cache
 data
