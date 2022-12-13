@@ -330,8 +330,6 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SR04_TRIG),      // SR04 Tri/TXgger pin
   AGPIO(GPIO_SR04_ECHO),      // SR04 Ech/RXo pin
-  AGPIO(GPIO_ME007_RX),       // ME007 Rx pin
-  AGPIO(GPIO_ME007_TRIG),     // ME007 Trigger pin
   AGPIO(GPIO_SDM120_TX),      // SDM120 Serial interface
   AGPIO(GPIO_SDM120_RX),      // SDM120 Serial interface
   AGPIO(GPIO_SDM630_TX),      // SDM630 Serial interface
