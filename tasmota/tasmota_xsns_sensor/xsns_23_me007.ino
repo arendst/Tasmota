@@ -38,8 +38,8 @@
 
 #define ME007_VERSION                      "1.0.0"                                              /**< Driver version X.Y.Z: X:Major, Y: Minor, Z: Patch */
 
-#define ME007_DEBUG_MSG_TAG                "ME007: "
-#define ME007_WS_MQTT_MSG_TAG              "ME007"
+#define ME007_DEBUG_MSG_TAG                "ME7: "
+#define ME007_WS_MQTT_MSG_TAG              "ME7"
 #define ME007_SENSOR_ERROR_CNT_CURRENT_TAG "ErrorCounterCurrent"
 #define ME007_SENSOR_ERROR_CNT_TOTAL_TAG   "ErrorCounterTotal"
 #define ME007_SENSOR_VERSION_TAG           "DriverVersion"
