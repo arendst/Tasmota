@@ -108,4 +108,4 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   71  | USE_QMC5883L        | xsns_33  | QMC5883L | 0x0D        | Magnetic Field Sensor
   72  | USE_INA3221         | xsns_100 | INA3221  | 0x40-0x43   | 3-channels Voltage and Current sensor
   73  | USE_HMC5883L        | xsns_101 | HMC5883L | 0x1E        | 3-channels Magnetic Field Sensor
-  74  | USE_PCA9632        | xdrv_91 | PCA9632 | 0x60        | 4-channel 4-bit pwm driver
+  74  | USE_PCA9632        | xdrv_91 | PCA9632 | 0x60 - 0x63  | 4-channel 8-bit pwm driver
