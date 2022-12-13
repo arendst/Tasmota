@@ -922,7 +922,6 @@
 #define D_UNIT_AMPERE "安培"
 #define D_UNIT_CELSIUS "C"
 #define D_UNIT_CENTIMETER "cm"
-#define D_UNIT_METER "m"
 #define D_UNIT_DEGREE "°"
 #define D_UNIT_FAHRENHEIT "F"
 #define D_UNIT_FPS "FPS"

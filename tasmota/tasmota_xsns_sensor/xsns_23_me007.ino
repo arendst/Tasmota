@@ -48,7 +48,6 @@
 #ifndef ME007_MAX_SENSOR_DISTANCE
 #define ME007_MAX_SENSOR_DISTANCE          800U                                                 /**< Maximum measurement distance @unit cm */
 #endif
-#define ME007_WS_SCALE_SWITCH_THRESH       100U                                                  /**< @unit Distance threshold to switch between cm/m to be displayed on web-interface */
 #define ME007_SERIAL_IF_BAUD_RATE          9600U                                                 /**< Serial interface baud rate @unit Baud */
 #define ME007_SERIAL_SOF                   0xFF                                                  /**< Start of frame indicator (header) */
 #define ME007_SERIAL_FRAME_SIZE            6U                                                    /**< Total frame size: Header (1Byte) + Distance (2 byte) + Temperature (2 byte) + Checksum (1 byte) = 6 byte */
@@ -476,20 +475,9 @@ void me007_show( const ME007_SHOW_TYPE type_e )
         break;
 #ifdef USE_WEBSERVER
     case ME007_SHOW_TYPE_WS:
-        if ( ME007_WS_SCALE_SWITCH_THRESH > me007_data_s.distance_cm_f32 )
-        {
-            WSContentSend_PD( HTTP_SNS_F_DISTANCE_CM,
-                              ME007_WS_MQTT_MSG_TAG,
-                              &me007_data_s.distance_cm_f32 );
-        }
-        else
-        {
-            /* Convert distance to meter */
-            float ws_distance_f32 = me007_data_s.distance_cm_f32 / 100.0F;
-            WSContentSend_PD( HTTP_SNS_F_DISTANCE_M,
-                              ME007_WS_MQTT_MSG_TAG,
-                              &ws_distance_f32 );
-        }
+        WSContentSend_PD( HTTP_SNS_F_DISTANCE_CM,
+                            ME007_WS_MQTT_MSG_TAG,
+                            &me007_data_s.distance_cm_f32 );
 
         WSContentSend_PD( HTTP_SNS_F_TEMP,
                           ME007_WS_MQTT_MSG_TAG,

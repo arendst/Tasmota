@@ -922,7 +922,6 @@
 #define D_UNIT_AMPERE                    "А"
 #define D_UNIT_CELSIUS                   "C"
 #define D_UNIT_CENTIMETER                "cм"
-#define D_UNIT_METER                     "м"
 #define D_UNIT_DEGREE                     "°"
 #define D_UNIT_FAHRENHEIT "F"
 #define D_UNIT_FPS "FPS"
