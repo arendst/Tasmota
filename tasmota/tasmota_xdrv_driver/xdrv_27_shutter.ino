@@ -1423,7 +1423,7 @@ void CmndShutterRelay(void)
   // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
   Response_P(PSTR("{"));
   for (uint32_t i = start; i < end; i++) {
-    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i)?",":"", i+1,Settings->shutter_startrelay[i]);
+    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i>start)?",":"", i+1,Settings->shutter_startrelay[i]);
   }
   ResponseAppend_P(PSTR("}"));
 }
