@@ -310,7 +310,11 @@ void PingResponsePoll(void) {
                         "}}}"),
                         ping->hostname.c_str(),
                         success ? PSTR("true") : PSTR("false"),
+#ifdef USE_IPV6
                         IPAddress(ping->ip).toString().c_str(),
+#else
+                        IPAddress(ip_addr_get_ip4_u32(&ping->ip)).toString().c_str(),
+#endif
                         // ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
                         success,
                         ping->timeout_count,
