@@ -172,7 +172,7 @@ extern "C" {
       return 0;               // don't eat the packet and ignore it
     }
 
-    if (pbuf_header( p, -PBUF_IP_HLEN)==0) {
+    if (pbuf_header( p, -PBUF_TRANSPORT_HLEN)==0) {
       struct icmp_echo_hdr *iecho;
       iecho = (struct icmp_echo_hdr *)p->payload;
 
