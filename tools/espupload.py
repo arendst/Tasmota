@@ -1,6 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # espupload by Theo Arends - 20170103
+# modified by Pascal Gollor - 2022-08-05
 #
 # Uploads binary file to OTA server
 #
