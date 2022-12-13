@@ -517,8 +517,14 @@ void WifiDumpAddressesIPv6(void)
 // Check to see if we have any routable IP address
 bool WifiHasIP(void) {
 #ifdef USE_IPV6
+#ifdef ESP32
   return !WiFi.localIP().isAny();
+#else // ESP32
+  const ip_addr_t &ipaddr = (ip_addr_t)WiFi.localIP();
+  return !ip_addr_isany_val(ipaddr);
+#endif // ESP32
 #else
+  // IPv4 only
   return (uint32_t)WiFi.localIP() != 0;
 #endif // USE_IPV6
 }
@@ -526,12 +532,13 @@ bool WifiHasIP(void) {
 void WifiCheckIp(void) {
 #ifdef USE_IPV6
   if (WL_CONNECTED == WiFi.status()) {
+#ifdef ESP32
     if (!Wifi.ipv6_local_link_called) {
       WiFi.enableIpV6();
       Wifi.ipv6_local_link_called = true;
       // AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: calling enableIpV6"));
     }
-    
+#endif
   }
 #endif // USE_IPV6
 
