@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 exception 28 when RtcNtpServer is enabled on restart (#17338)
 - Analog MQ exception 28 on restart (#17271)
 - ESP32 fix ``Ping``
+- MQTT now uses Tasmota's DNS resolver instead of LWIP
 
 ### Removed
 
