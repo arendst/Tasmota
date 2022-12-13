@@ -783,8 +783,8 @@
   #define STARTING_OFFSET      30                // Turn on NovaSDS XX-seconds before tele_period is reached
 //#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor (+1k4)
 // #define USE_SR04                                   // Add support for HC-SR04 ultrasonic devices (+1k code)
-  // #define SR04_MAX_SENSOR_DISTANCE  500            // Set sensor max detection distance
-// #define USE_ME007                                  // Add support for ME007 ultrasonic devices (+???k code)
+  //  #define SR04_MAX_SENSOR_DISTANCE  500            // Set sensor max detection distance
+// #define USE_ME007                                  // Add support for ME007 ultrasonic devices (+1k5 code)
   // #define ME007_MAX_SENSOR_DISTANCE  800           // Set sensor max detection distance
   // #define ME007_ENABLE_MEDIAN_FILTER               // Enables that distance measurements are filtered with an median filter of length 5
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
