@@ -14,14 +14,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - TasmotaSerial library from v3.5.0 to v3.6.0
 - Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` (#16723)
+- MQTT now uses Tasmota's DNS resolver instead of LWIP (#17387)
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
 - RCSwitch exception 0/6 on some protocols (#17285)
 - ESP32 exception 28 when RtcNtpServer is enabled on restart (#17338)
 - Analog MQ exception 28 on restart (#17271)
-- ESP32 fix ``Ping``
-- MQTT now uses Tasmota's DNS resolver instead of LWIP
+- ESP32 fix ``Ping`` (#17373)
 
 ### Removed
 

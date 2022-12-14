@@ -154,6 +154,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - AC PWM dimmer lineair power distribution [#17177](https://github.com/arendst/Tasmota/issues/17177)
 - Zigbee improved Aqara plug support and completed cluster 0x0702 [#17073](https://github.com/arendst/Tasmota/issues/17073)
 - Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` [#16723](https://github.com/arendst/Tasmota/issues/16723
+- MQTT now uses Tasmota's DNS resolver instead of LWIP [#17387](https://github.com/arendst/Tasmota/issues/17387
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
