@@ -111,7 +111,7 @@ struct SHUTTER {
   uint16_t min_realPositionChange = 0; // minimum change of the position before the shutter operates. different for PWM and time based operations
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
   uint16_t last_reported_time =0;
-  uint32_t last_stop_time = 0;      // record
+  uint32_t last_stop_time = 0;      // record the last time the relay was switched off
 } Shutter[MAX_SHUTTERS];
 
 struct SHUTTERGLOBAL {
@@ -583,15 +583,21 @@ void ShutterPowerOff(uint8_t i)
     TasmotaGlobal.save_data_counter = Settings->save_data;
   }
   //delay(MOTOR_STOP_TIME);
-  ShutterWaitForMotorStop(i+1);
+  Shutter[i].last_stop_time = millis();
 }
 
 void ShutterWaitForMotorStop(uint8_t index)
 {
-  Shutter[index-1].last_stop_time = millis();
+  Shutter[index-1].last_stop_time = millis(); 
+  ShutterWaitForMotorStart(index);
+}
+
+void ShutterWaitForMotorStart(uint8_t index)
+{
   while (millis() < Shutter[index-1].last_stop_time + Settings->shutter_motorstop) {
     loop();
   }
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done")); 
 }
 
 void ShutterUpdatePosition(void)
@@ -684,6 +690,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterGlobal.skip_relay_change = 1;
   } else {
     Shutter[i].pwm_velocity = 0;
+    ShutterWaitForMotorStart(i+1);
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
@@ -727,6 +734,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
+  
   Shutter[i].direction = direction; // Last action. This causes RTC to start.
 }
 
@@ -1212,7 +1220,7 @@ void CmndShutterPosition(void)
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
       // STOP will come with payload 0 because predefined value in TASMOTA
       if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
-	// set len to 0 to avoid loop on close where payload is 0
+        // set len to 0 to avoid loop on close where payload is 0
         XdrvMailbox.data_len = 0;
         if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
