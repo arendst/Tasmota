@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for BP1658CJ RGBCW led bulbs like Orein OS0100411267 by Cossid [#17011](https://github.com/arendst/Tasmota/issues/17011)
 - Support for Dingtian x595 shift register based relay boards by Barbudor [#17032](https://github.com/arendst/Tasmota/issues/17032)
 - Support for HMC5883L 3-Axis Digital Compass sensor by Andreas Achtzehn [#17069](https://github.com/arendst/Tasmota/issues/17069)
+- Support for ME007-ULS narrow FoV ultrasonic distance sensor by Mathias Buder [#17376](https://github.com/arendst/Tasmota/issues/17376)
 - WS2812 and Light ArtNet DMX control over UDP port 6454 [#17059](https://github.com/arendst/Tasmota/issues/17059)
 - Teleinfo TEMPO (BBR) contract [#17160](https://github.com/arendst/Tasmota/issues/17160)
 - Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge [#17247](https://github.com/arendst/Tasmota/issues/17247)

@@ -385,15 +385,15 @@ void me007_sort_asc( float* const p_list, const uint8_t size_u8 )
 void me007_read_value( void )
 {
     float distance_cm_f32 = 0.0F;
-    #ifdef ME007_ENABLE_MEDIAN_FILTER
+#ifdef ME007_ENABLE_MEDIAN_FILTER
     float distance_buffer_vf32[ME007_MEDIAN_FILTER_SIZE] = {0.0F};
-    #endif
+#endif
 
     /* Record some sensor measurements */
-    #ifdef ME007_ENABLE_MEDIAN_FILTER
+#ifdef ME007_ENABLE_MEDIAN_FILTER
     for ( uint8_t idx_u8 = 0U; idx_u8 < ME007_MEDIAN_FILTER_SIZE; ++idx_u8 )
     {
-    #endif
+#endif
         ME007_ERROR_TYPE status_e = me007_measure( &distance_cm_f32,
                                                    &me007_data_s.temperature_deg_f32 );
 
@@ -401,12 +401,12 @@ void me007_read_value( void )
         {
         case ME007_ERROR_TYPE_NONE:
 
-            #ifdef ME007_ENABLE_MEDIAN_FILTER
+#ifdef ME007_ENABLE_MEDIAN_FILTER
             /* Store valid distance measurement into histogram buffer */
             distance_buffer_vf32[idx_u8] = distance_cm_f32;
-            #else
+#else
             me007_data_s.distance_cm_f32 = distance_cm_f32;
-            #endif
+#endif
 
             if ( 0U < me007_data_s.error_cnt_current_u8 )
             {
@@ -438,12 +438,12 @@ void me007_read_value( void )
                                 me007_data_s.error_cnt_current_u8,
                                 me007_data_s.error_cnt_total_u16 );
 
+#ifdef ME007_ENABLE_MEDIAN_FILTER
         /* Add small delay between measurement */
         if ( ( ME007_MEDIAN_FILTER_SIZE - 1U ) > idx_u8 )
         {
             delay( ME007_MEDIAN_FILTER_MEASURE_DELAY );
         }
-    #ifdef ME007_ENABLE_MEDIAN_FILTER
     }
 
     /* Sort median filter buffer and assign median value to current distance measurement */
@@ -451,7 +451,7 @@ void me007_read_value( void )
 
     /* Update distance measurement */
     me007_data_s.distance_cm_f32 = distance_buffer_vf32[ME007_MEDIAN_FILTER_MEDIAN_IDX];
-    #endif
+#endif
 
 }
 
