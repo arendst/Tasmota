@@ -1212,6 +1212,8 @@ void CmndShutterPosition(void)
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
       // STOP will come with payload 0 because predefined value in TASMOTA
       if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
+	// set len to 0 to avoid loop on close where payload is 0
+        XdrvMailbox.data_len = 0;
         if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
