@@ -264,6 +264,8 @@
   #define USE_MI_ESP32                           // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif // enable USE_MI_HOMEKIT
 
+#define USE_ETHERNET                             // Add support for ethernet (+20k code
+
 #endif  // FIRMWARE_BLUETOOTH
 
 /*********************************************************************************************\
@@ -453,6 +455,8 @@
 //#define USE_RDM6300                              // Add support for RDM6300 125kHz RFID Reader (+0k8)
 
 #define USE_IR_REMOTE
+
+#define USE_ETHERNET                             // Add support for ethernet (+20k code
 
 #endif  // FIRMWARE_TASMOTA_LVGL *******************************************************************
 
