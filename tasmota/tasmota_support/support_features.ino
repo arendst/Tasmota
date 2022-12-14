@@ -858,7 +858,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_LD2410
     feature9 |= 0x00000400;  // xsns_102_ld2410.ino
 #endif
-//    feature9 |= 0x00000800;
+#ifdef USE_ME007
+    feature9 |= 0x00000800;  // xsns_23_me007.ino
+#endif
 
 //    feature9 |= 0x00001000;
 //    feature9 |= 0x00002000;

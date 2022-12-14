@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
 - Berry crypto module, with AES_GCM by default and EC_CC25519 optional
 - IPv6 support for Ethernet (ESP32)
+- Support for ME007-ULS narrow FoV ultrasonic distance sensor by Mathias Buder (#17376)
 
 ### Changed
 - TasmotaSerial library from v3.5.0 to v3.6.0

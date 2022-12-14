@@ -219,6 +219,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_IR_REMOTE_FULL        | - | - / - | - | - | x | - | Enable ALL protocols
 |                           |   |       |   |   |   |   |
 | USE_SR04                  | - | - / - | - | x | - | - |
+| USE_ME007                 | - | - / - | - | - | - | - |
 | USE_DYP                   | - | - / - | - | - | - | - |
 | USE_TM1638                | - | - / x | - | x | - | - |
 | USE_HX711                 | - | - / x | - | x | - | - |

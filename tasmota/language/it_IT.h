@@ -915,6 +915,8 @@
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
 #define D_SENSOR_FLOWRATEMETER          "Portata"
+#define D_SENSOR_ME007_TRIG             "ME007 - Tri"
+#define D_SENSOR_ME007_RX               "ME007 - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
