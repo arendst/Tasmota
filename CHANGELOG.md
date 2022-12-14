@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - TasmotaSerial library from v3.5.0 to v3.6.0
 - Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` (#16723)
 - MQTT now uses Tasmota's DNS resolver instead of LWIP (#17387)
+- Shutter bug fixes and functionality upgrade (#17380)
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
