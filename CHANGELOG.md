@@ -3,14 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.6]
+## [12.3.0.1]
+
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [Released]
+
+## [12.3.0] 20221215
+- Release Percy
+
+## [12.2.0.6] 20221215
 ### Added
 - Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
 - Berry crypto module, with AES_GCM by default and EC_CC25519 optional
 - IPv6 support for Ethernet (ESP32)
 - Support for ME007-ULS narrow FoV ultrasonic distance sensor by Mathias Buder (#17376)
-
-### Breaking Changed
 
 ### Changed
 - TasmotaSerial library from v3.5.0 to v3.6.0
@@ -24,8 +39,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 exception 28 when RtcNtpServer is enabled on restart (#17338)
 - Analog MQ exception 28 on restart (#17271)
 - ESP32 fix ``Ping`` (#17373)
-
-### Removed
 
 ## [12.2.0.5] 20221129
 ### Added
@@ -71,8 +84,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - SenseAir S8 module detection (#17033)
-
-### Removed
 
 ## [12.2.0.3] 20221109
 ### Added
@@ -125,8 +136,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 (#16850)
-
-## [Released]
 
 ## [12.2.0] 20221017
 - Release Patrick
