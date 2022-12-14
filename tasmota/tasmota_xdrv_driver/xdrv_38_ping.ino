@@ -45,7 +45,7 @@ extern "C" {
   const uint32_t Ping_coarse = 1000;        // interval between sending packets, 1 packet every second
 
   typedef struct Ping_t {
-    uint32      ip;                 // target IPv4 address
+    ip_addr_t   ip;                 // target IPv4 address
     Ping_t      *next;              // next object in linked list
     uint16_t    seq_num;            // next sequence number
     uint16_t    seqno;              // reject a packet already received
@@ -71,10 +71,11 @@ extern "C" {
   //
   // find the ping structure corresponding to the specified IP, or nullptr if not found
   //
-  Ping_t ICACHE_FLASH_ATTR * t_ping_find(uint32_t ip) {
+  Ping_t ICACHE_FLASH_ATTR * t_ping_find(const ip_addr_t *ip) {
     Ping_t *ping = ping_head;
     while (ping != nullptr) {
-      if (ping->ip == ip) {
+      if (ip_addr_cmp(&ping->ip, ip)) {
+      // if (ping->ip == ip) {
         return ping;
       }
       ping = ping->next;
@@ -129,13 +130,11 @@ extern "C" {
     p = pbuf_alloc(PBUF_IP, ping_size, PBUF_RAM);
     if (!p) { return; }
     if ((p->len == p->tot_len) && (p->next == nullptr)) {
-      ip_addr_t ping_target;
       struct icmp_echo_hdr *iecho;
-      ip_addr_set_ip4_u32(&ping_target, ping->ip);
-      iecho = (struct icmp_echo_hdr *) p->payload;
 
+      iecho = (struct icmp_echo_hdr *) p->payload;
       t_ping_prepare_echo(iecho, ping_size, ping);
-      raw_sendto(raw, p, &ping_target);
+      raw_sendto(raw, p, &ping->ip);
     }
     pbuf_free(p);
   }
@@ -166,7 +165,7 @@ extern "C" {
   // Reveived packet
   //
   static uint8_t ICACHE_FLASH_ATTR t_ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr) {
-    Ping_t *ping = t_ping_find(ip_addr_get_ip4_u32(addr));
+    Ping_t *ping = t_ping_find(addr);
 
     if (nullptr == ping) {    // unknown source address
       return 0;               // don't eat the packet and ignore it
@@ -234,14 +233,18 @@ extern "C" {
   // -2: unable to resolve address
   int32_t t_ping_start(const char *hostname, uint32_t count) {
     IPAddress ipfull;
-    if (!WifiHostByName(hostname, ipfull)) {
-      ipfull = 0xFFFFFFFF;
-    }
+    bool host_resolved = WifiHostByName(hostname, ipfull);
 
-    uint32_t ip = ipfull;
+    ip_addr_t ip;
+    ip_addr_set_any_val(false, ip);
+#ifdef USE_IPV6
+    ip = (ip_addr_t)ipfull;
+#else
+    ip_addr_set_ip4_u32_val(ip, (uint32_t)ipfull);
+#endif
 
     // check if pings are already ongoing for this IP
-    if (0xFFFFFFFF != ip && t_ping_find(ip)) {
+    if (host_resolved && t_ping_find(&ip)) {
       return -1;
     }
 
@@ -259,7 +262,7 @@ extern "C" {
     ping->next = ping_head;
     ping_head = ping;         // insert at head
 
-    if (0xFFFFFFFF == ip) { // If invalid address, set as completed
+    if (!host_resolved) { // If invalid address, set as completed
       ping->done = true;
       return -2;
     }
@@ -285,9 +288,9 @@ void PingResponsePoll(void) {
   while (ping != nullptr) {
     if (ping->done) {
       uint32_t success = ping->success_count;
-      uint32_t ip = ping->ip;
+      bool resolved = !ip_addr_isany_val(ping->ip);
 
-      if (0xFFFFFFFF == ip) {
+      if (!resolved) {
         Response_P(PSTR("{\"" D_JSON_PING "\":{\"%s\":{"
                         "\"Reachable\":false"
                         ",\"IP\":\"\""
@@ -298,7 +301,7 @@ void PingResponsePoll(void) {
       } else {
         Response_P(PSTR("{\"" D_JSON_PING "\":{\"%s\":{"
                         "\"Reachable\":%s"
-                        ",\"IP\":\"%d.%d.%d.%d\""
+                        ",\"IP\":\"%s\""
                         ",\"Success\":%d"
                         ",\"Timeout\":%d"
                         ",\"MinTime\":%d"
@@ -307,7 +310,12 @@ void PingResponsePoll(void) {
                         "}}}"),
                         ping->hostname.c_str(),
                         success ? PSTR("true") : PSTR("false"),
-                        ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
+#ifdef USE_IPV6
+                        IPAddress(ping->ip).toString().c_str(),
+#else
+                        IPAddress(ip_addr_get_ip4_u32(&ping->ip)).toString().c_str(),
+#endif
+                        // ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
                         success,
                         ping->timeout_count,
                         success ? ping->min_time : 0,

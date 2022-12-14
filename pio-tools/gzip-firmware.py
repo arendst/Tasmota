@@ -29,8 +29,7 @@ def map_gzip(source, target, env):
 if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ, env):
     env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [map_gzip])
 
-# gzip only for ESP8266
-if env["PIOPLATFORM"] != "espressif32":
+if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATFORM"] != "espressif32":
     from zopfli.gzip import compress
     def bin_gzip(source, target, env):
         # create string with location and file names based on variant
@@ -50,7 +49,7 @@ if env["PIOPLATFORM"] != "espressif32":
         ORG_FIRMWARE_SIZE = bin_file.stat().st_size
         GZ_FIRMWARE_SIZE = gzip_file.stat().st_size
 
-        if ORG_FIRMWARE_SIZE > 995326:
+        if ORG_FIRMWARE_SIZE > 995326 and env["PIOPLATFORM"] != "espressif32":
             print(
                 "\u001b[31;1m!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! \u001b[0m".format(
                     ORG_FIRMWARE_SIZE

@@ -194,7 +194,11 @@ extern "C" {
         timeout = be_toint(vm, 4);
       }
       // open connection
-      bool success = tcp->connect(address, port, timeout);
+      IPAddress ipaddr;
+      bool success = WifiHostByName(address, ipaddr);
+      if (success) {
+        success = tcp->connect(ipaddr, port, timeout);
+      }
       be_pushbool(vm, success);
       be_return(vm);  /* return self */
     }
