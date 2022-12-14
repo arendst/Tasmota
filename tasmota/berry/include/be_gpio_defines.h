@@ -149,6 +149,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "MCP39F5_RST", (int32_t) GPIO_MCP39F5_RST },
     { "MCP39F5_RX", (int32_t) GPIO_MCP39F5_RX },
     { "MCP39F5_TX", (int32_t) GPIO_MCP39F5_TX },
+    { "ME007_RX", (int32_t) GPIO_ME007_RX },
+    { "ME007_TRIG", (int32_t) GPIO_ME007_TRIG },
     { "MGC3130_RESET", (int32_t) GPIO_MGC3130_RESET },
     { "MGC3130_XFER", (int32_t) GPIO_MGC3130_XFER },
     { "MHZ_RXD", (int32_t) GPIO_MHZ_RXD },
