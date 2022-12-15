@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Zigbee fix crash on ESP8266 #17397
 
 ### Removed
 

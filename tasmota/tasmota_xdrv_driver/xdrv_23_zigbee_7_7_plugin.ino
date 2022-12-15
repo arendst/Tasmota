@@ -165,8 +165,8 @@ bool ZbLoad_inner(const char *filename, File &fp) {
     if (filename_imported == nullptr) {
       // allocate only once the filename for multiple entries
       // freed only by `ZbUnload`
-      filename_imported = (char*) malloc(strlen(filename)+1);
-      strcpy(filename_imported, filename);
+      filename_imported = (char*) malloc(strlen_P(filename)+1);
+      strcpy_P(filename_imported, filename);
     }
 
     // there is a non-empty line, containing no space/tab/crlf
