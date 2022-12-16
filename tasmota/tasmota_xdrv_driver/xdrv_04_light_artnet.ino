@@ -139,9 +139,9 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: opcode=0x%04X procotol=%i universe=%i datalen=%i univ_start=%i univ_end=%i"), opcode, protocol, universe, datalen, artnet_conf.univ, artnet_conf.univ + artnet_conf.rows);
   if (opcode != 0x5000 || protocol != 14) { return; }
 
-  if (len + 18 < datalen) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DMX: packet is truncated, ignoring packet"));
-  }
+//  if (len + 18 < datalen) {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DMX: packet is truncated. Expected: %u Bytes, Received: %u Bytes."), datalen, len + 18);
+//  }
 
   if (universe < artnet_conf.univ || universe >= artnet_conf.univ + artnet_conf.rows) { return; }  // universe is not ours, ignore
   size_t idx = 18;      // start of payload data in the UDP frame
@@ -194,11 +194,12 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
     Ws2812CopyPixels(&buf[idx], datalen, offset_in_matrix);
   } else {
     // single light
-    uint8_t r8 = buf[idx+1];
-    uint8_t g8 = buf[idx];
-    uint8_t b8 = buf[idx+2];
-    uint8_t w8 = buf[idx+3];
-    uint8_t ww8 = buf[idx+4];
+    size_t offsidx = artnet_conf.offs + idx;
+    uint8_t r8 = buf[offsidx+1];
+    uint8_t g8 = buf[offsidx];
+    uint8_t b8 = buf[offsidx+2];
+    uint8_t w8 = buf[offsidx+3];
+    uint8_t ww8 = buf[offsidx+4];
     // scale dimmer values to RGBWWTable calibration
     uint16_t r_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[0]) * 4;
     uint16_t g_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[1]) * 4;
