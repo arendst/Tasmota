@@ -72,7 +72,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.3.0
+- http://ota.tasmota.com/tasmota/release-12.3.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -97,7 +97,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota32/release-12.3.0
+- http://ota.tasmota.com/tasmota32/release-12.3.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.3.0 Percy
+## Changelog v12.3.1 Percy
 
 ### Added
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) [#17140](https://github.com/arendst/Tasmota/issues/17140)
@@ -157,6 +157,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` [#16723](https://github.com/arendst/Tasmota/issues/16723
 - Shutter bug fixes and functionality upgrade [#17380](https://github.com/arendst/Tasmota/issues/17380
 - MQTT now uses Tasmota's DNS resolver instead of LWIP [#17387](https://github.com/arendst/Tasmota/issues/17387
+- ESP32 initial otaurl from http to https
 
 ### Fixed
 - TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
@@ -170,6 +171,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Analog MQ exception 28 on restart [#17271](https://github.com/arendst/Tasmota/issues/17271)
 - RCSwitch exception 0/6 on some protocols [#17285](https://github.com/arendst/Tasmota/issues/17285)
 - ESP32 exception 28 when RtcNtpServer is enabled on restart [#17338](https://github.com/arendst/Tasmota/issues/17338)
+- ESP8266 zigbee exception 3 regression from v12.3.0 [#17397](https://github.com/arendst/Tasmota/issues/17397)
 
 ### Removed
 - Define ``USE_PN532_DATA_RAW`` from NFC reader [#16939](https://github.com/arendst/Tasmota/issues/16939)

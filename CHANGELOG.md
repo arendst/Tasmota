@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [12.3.1] 20221216
+- Release Percy
+
+## [12.3.0.1] 20221216
+### Changed
+- ESP32 initial otaurl from http to https
+
+### Fixed
+- ESP8266 zigbee exception 3 regression from v12.3.0 (#17397)
+
 ## [12.3.0] 20221215
 - Release Percy
 
