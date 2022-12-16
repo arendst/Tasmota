@@ -175,7 +175,7 @@ jobs:
           path: ./build_output
 
   Upload:
-    needs: [base-images, language-images]
+    needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
