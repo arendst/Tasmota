@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.3.1.1] 20221216
 ### Added
+- Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266
 
 ### Breaking Changed
 

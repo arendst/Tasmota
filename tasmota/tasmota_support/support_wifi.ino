@@ -500,6 +500,7 @@ void CreateLinkLocalIPv6(void)
 }
 
 // 
+#include "lwip/dns.h"
 void WifiDumpAddressesIPv6(void)
 {
   for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
@@ -511,6 +512,8 @@ void WifiDumpAddressesIPv6(void)
                                 ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "");
     }
   }
+  AddLog(LOG_LEVEL_DEBUG, "WIF: DNS(0): %s", IPAddress(dns_getserver(0)).toString().c_str());
+  AddLog(LOG_LEVEL_DEBUG, "WIF: DNS(1): %s", IPAddress(dns_getserver(1)).toString().c_str());
 }
 #endif  // USE_IPV6
 
@@ -890,37 +893,56 @@ void wifiKeepAlive(void) {
 }
 #endif  // ESP8266
 
+// expose a function to be called by WiFi32
+int32_t WifiDNSGetTimeout(void) {
+  return Settings->dns_timeout;
+}
+// read Settings for DNS IPv6 priority
+bool WifiDNSGetIPv6Priority(void) {
+#ifdef USE_IPV6
+  // we prioritize IPv6 only if a global IPv6 address is available, otherwise revert to IPv4 if we have one as well
+  // Any change in logic needs to clear the DNS cache
+  static bool had_v6prio = false;
+
+  const ip_addr_t &local_ip = (ip_addr_t)WiFi.localIP();
+  bool has_v4 = !ip_addr_isany_val(local_ip) && IP_IS_V4_VAL(local_ip);
+  bool has_v6 = WifiGetIPv6().length() != 0;
+#ifdef USE_ETHERNET
+  const ip_addr_t &local_ip_eth = (ip_addr_t)EthernetLocalIP();
+  has_v4 = has_v4 || (!ip_addr_isany_val(local_ip_eth) && IP_IS_V4_VAL(local_ip_eth));
+  has_v6 = has_v6 ||  EthernetGetIPv6().length() != 0;
+#endif
+
+  bool v6prio = Settings->flag6.dns_ipv6_priority;
+  // AddLog(LOG_LEVEL_DEBUG, "WIF: v6 priority was %i, now is %i, has_v4=%i has_v6=%i", had_v6prio, v6prio, has_v4, has_v6);
+
+  if (has_v4 && !has_v6 && v6prio) {
+    v6prio = false;   // revert to IPv4 first
+  }
+
+  // any change of state requires a dns cache clear
+  if (had_v6prio != v6prio) {
+    dns_clear_cache();
+    had_v6prio = v6prio;
+  }
+
+  return v6prio;
+#endif // USE_IPV6
+  return false;
+}
+
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
-#ifdef ESP8266
-  if (WiFi.hostByName(aHostname, aResult, Settings->dns_timeout)) {
+  uint32_t dns_start = millis();
+  bool success = WiFi.hostByName(aHostname, aResult, Settings->dns_timeout);
+  uint32_t dns_end = millis();
+  if (success) {
     // Host name resolved
     if (0xFFFFFFFF != (uint32_t)aResult) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
       return true;
     }
   }
-#else
-  // DnsClient can't do one-shot mDNS queries so use WiFi.hostByName() for *.local
-  aResult = (uint32_t) 0x00000000L;    // indirectly force to be IPv4, since the client touches the binary format later
-  size_t hostname_len = strlen(aHostname);
-  if (strstr_P(aHostname, PSTR(".local")) == &aHostname[hostname_len] - 6) {
-    if (WiFi.hostByName(aHostname, aResult)) {
-      // Host name resolved
-      if (0xFFFFFFFF != (uint32_t)aResult) {
-        AddLog(LOG_LEVEL_DEBUG, "WIF: Resolving '%s' (%s)", aHostname, aResult.toString().c_str());
-        return true;
-      }
-    }
-  } else {
-    // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
-    uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[3] : Settings->ipv4_address[3];
-    DnsClient.begin((IPAddress)dns_address);
-    if (1 == DnsClient.getHostByName(aHostname, aResult)) {
-      AddLog(LOG_LEVEL_DEBUG, "WIF: Resolving '%s' (%s)", aHostname, aResult.toString().c_str());
-      return true;
-    }
-  }
-#endif
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Unable to resolve '%s'"), aHostname);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "DNS failed for %s after %i ms"), aHostname, dns_end - dns_start);
   return false;
 }
 
@@ -1091,6 +1113,7 @@ void WifiEvents(arduino_event_t *event) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
              event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
              addr.isLocal() ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
+      WiFi.saveDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
     }
     break;
 #endif // USE_IPV6
@@ -1104,7 +1127,7 @@ void WifiEvents(arduino_event_t *event) {
               event->event_info.got_ip.ip_info.ip.addr,
               event->event_info.got_ip.ip_info.netmask.addr,
               event->event_info.got_ip.ip_info.gw.addr);
-
+      WiFi.saveDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
     }
     break;
 
@@ -1114,6 +1137,7 @@ void WifiEvents(arduino_event_t *event) {
       break;
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
     case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
+      WiFi.restoreDNS();    // internal calls to reconnect can zero the DNS servers, restore the previous values
       Wifi.ipv6_local_link_called = false;
       break;
 
