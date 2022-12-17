@@ -158,6 +158,83 @@ extern "C" {
 #endif // USE_BERRY_CRYPTO_AES_GCM
   }
 }
+/*********************************************************************************************\
+ * SHA256 class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  // `SHA256.init() -> nil`
+  int32_t m_hash_sha256_init(struct bvm *vm);
+  int32_t m_hash_sha256_init(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_SHA256
+    // Initialize a SHA256 context
+    br_sha256_context * ctx = (br_sha256_context *) be_os_malloc(sizeof(br_sha256_context));
+    if (!ctx) {
+      be_throw(vm, BE_MALLOC_FAIL);
+    }
+    br_sha256_init(ctx);
+
+    be_newcomobj(vm, ctx, &be_commonobj_destroy_generic);
+    be_setmember(vm, 1, ".p");
+    be_return_nil(vm);
+#else // USE_BERRY_CRYPTO_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_SHA256
+  }
+
+  // `<instance:SHA256>.update(content:bytes()) -> nil`
+  //
+  // Add raw bytes to the hash calculation
+  int32_t m_hash_sha256_update(struct bvm *vm);
+  int32_t m_hash_sha256_update(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_SHA256
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isinstance(vm, 2)) {
+      do {
+        be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
+        if (!be_isderived(vm, 2)) break;
+        size_t length = 0;
+        const void * bytes = be_tobytes(vm, 2, &length);
+        if (!bytes) break;
+
+        be_getmember(vm, 1, ".p");
+        br_sha256_context * ctx;
+        ctx = (br_sha256_context *) be_tocomptr(vm, -1);
+        if (!ctx) break;
+
+        if (length > 0) {
+          br_sha256_update(ctx, bytes, length);
+        }
+        be_return_nil(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, "value_error", NULL);
+#else // USE_BERRY_CRYPTO_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_SHA256
+  }
+
+  // `<instance:SHA256>.finish() -> bytes()`
+  //
+  // Add raw bytes to the MD5 calculation
+  int32_t m_hash_sha256_out(struct bvm *vm);
+  int32_t m_hash_sha256_out(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_SHA256
+    be_getmember(vm, 1, ".p");
+    br_sha256_context * ctx;
+    ctx = (br_sha256_context *) be_tocomptr(vm, -1);
+
+    uint8_t output[32];
+    br_sha256_out(ctx, output);
+    be_pushbytes(vm, output, sizeof(output));
+    be_return(vm);
+#else // USE_BERRY_CRYPTO_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_SHA256
+  }
+}
 
 /*********************************************************************************************\
  * EC C25519 class

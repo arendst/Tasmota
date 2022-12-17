@@ -1107,6 +1107,7 @@
   // Berry crypto extensions below:
   #define USE_BERRY_CRYPTO_AES_GCM               // enable AES GCM 256 bits
   // #define USE_BERRY_CRYPTO_EC_C25519             // enable Elliptic Curve C C25519
+  #define USE_BERRY_CRYPTO_SHA256                // enable SHA256 hash function
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
