@@ -113,10 +113,6 @@ jobs:
           - tasmota32s3-safeboot
           - tasmota32s3cdc-safeboot
     steps:
-      - name: Sleep a while, try to start MacOS / Windows CI env first
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '1m'
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
