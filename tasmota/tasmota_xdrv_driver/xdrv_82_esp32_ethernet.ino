@@ -116,6 +116,7 @@ void EthernetEvent(arduino_event_t *event) {
       }
       TasmotaGlobal.rules_flag.eth_connected = 1;
       TasmotaGlobal.global_state.eth_down = 0;
+      WiFi.saveDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
       break;
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:

@@ -2516,7 +2516,6 @@ void CmndDnsTimeout(void) {
   // Set timeout between 100 and 20000 mSec
   if ((XdrvMailbox.payload >= 100) && (XdrvMailbox.payload <= 20000)) {
     Settings->dns_timeout = XdrvMailbox.payload;
-    DnsClient.setTimeout(Settings->dns_timeout);
   }
   ResponseCmndNumber(Settings->dns_timeout);
 }

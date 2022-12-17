@@ -28,6 +28,55 @@
 #undef WiFi
 #endif
 
+#include "tasmota_options.h"
+#include "lwip/dns.h"
+
+wl_status_t WiFiClass32::begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity, const char* wpa2_username, const char *wpa2_password, const char* ca_pem, const char* client_crt, const char* client_key, int32_t channel, const uint8_t* bssid, bool connect) {
+  saveDNS();
+  wl_status_t ret = WiFiClass::begin(wpa2_ssid, method, wpa2_identity, wpa2_username, wpa2_password, ca_pem, client_crt, client_key, channel, bssid, connect);
+  restoreDNS();
+  return ret;
+}
+
+wl_status_t WiFiClass32::begin(const char* ssid, const char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
+  saveDNS();
+  wl_status_t ret = WiFiClass::begin(ssid, passphrase, channel, bssid, connect);
+  restoreDNS();
+  return ret;
+}
+
+wl_status_t WiFiClass32::begin(char* ssid, char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
+  saveDNS();
+  wl_status_t ret = WiFiClass::begin(ssid, passphrase, channel, bssid, connect);
+  restoreDNS();
+  return ret;
+}
+wl_status_t WiFiClass32::begin() {
+  saveDNS();
+  wl_status_t ret = WiFiClass::begin();
+  restoreDNS();
+  return ret;
+}
+
+void WiFiClass32::saveDNS(void) {
+  // save the DNS servers
+  for (uint32_t i=0; i<DNS_MAX_SERVERS; i++) {
+    const ip_addr_t * ip = dns_getserver(i);
+    if (!ip_addr_isany(ip)) {
+      dns_save[i] = *ip;
+    }
+  }
+}
+
+void WiFiClass32::restoreDNS(void) {
+  // restore DNS server if it was removed
+  for (uint32_t i=0; i<DNS_MAX_SERVERS; i++) {
+    if (ip_addr_isany(dns_getserver(i))) {
+      dns_setserver(i, &dns_save[i]);
+    }
+  }
+}
+
 void WiFiClass32::setSleepMode(int iSleepMode) {
   // WIFI_LIGHT_SLEEP and WIFI_MODEM_SLEEP
   WiFi.setSleep(iSleepMode != WIFI_NONE_SLEEP);
@@ -91,14 +140,89 @@ bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int3
     return WiFi.getNetworkInfo(i, ssid, encType, rssi, bssid, channel);
 }
 
-// from https://github.com/espressif/arduino-esp32/pull/7520
-static const int WIFI_WANT_IP6_BIT_ALT = BIT15;
-bool WiFiClass32::IPv6(bool state) {
-  if (state)
-    WiFiGenericClass::setStatusBits(WIFI_WANT_IP6_BIT_ALT);
-  else
-    WiFiGenericClass::clearStatusBits(WIFI_WANT_IP6_BIT_ALT);
-  return true;
+//
+// Manage dns callbacks from lwip DNS resolver.
+// We need a trick here, because the callback may be called after we timed-out and
+// launched a new request. We need to discard outdated responses.
+//
+// We use a static ip_addr_t (anyways we don't support multi-threading)
+// and use a counter so the callback can check if it's responding to the current
+// request or to an old one (hence discard)
+//
+// It's not an issue to have old requests in flight. LWIP has a default limit of 4
+// DNS requests in flight.
+// If the buffer for in-flight requests is full, LWIP removes the oldest from the list.
+// (it does not block new DNS resolutions)
+static ip_addr_t dns_ipaddr;
+static volatile uint32_t ip_addr_counter = 0;   // counter for requests
+extern int32_t WifiDNSGetTimeout(void);
+extern bool WifiDNSGetIPv6Priority(void);
+
+static void wifi32_dns_found_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
+{
+  // Serial.printf("DNS: cb name=%s ipaddr=%s arg=%i counter=%i\n", name ? name : "<null>", IPAddress(ipaddr).toString().c_str(), (int) callback_arg, ip_addr_counter);
+  uint32_t cb_counter = (uint32_t) callback_arg;
+  if (cb_counter != ip_addr_counter) { return; }    // the response is from a previous request, ignore
+
+  if (ipaddr != nullptr) {
+    dns_ipaddr = *ipaddr;
+  } else {
+    dns_ipaddr = *IP4_ADDR_ANY;   // set to IPv4 0.0.0.0
+  }
+  WiFiClass32::dnsDone();
+  // AddLog(LOG_LEVEL_DEBUG, "WIF: dns_found=%s", ipaddr ? IPAddress(*ipaddr).toString().c_str() : "<null>");
+}
+// We need this helper method to access protected methods from WiFiGeneric
+void WiFiClass32::dnsDone(void) {
+  setStatusBits(WIFI_DNS_DONE_BIT);
+}
+
+/**
+ * Resolve the given hostname to an IP address.
+ * @param aHostname     Name to be resolved
+ * @param aResult       IPAddress structure to store the returned IP address
+ * @return 1 if aIPAddrString was successfully converted to an IP address,
+ *          else error code
+ */
+int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t timer_ms)
+{
+  ip_addr_t addr;
+  aResult = (uint32_t) 0;     // by default set to IPv4 0.0.0.0
+  dns_ipaddr = *IP4_ADDR_ANY;  // by default set to IPv4 0.0.0.0
+  
+  ip_addr_counter++;      // increase counter, from now ignore previous responses
+  clearStatusBits(WIFI_DNS_IDLE_BIT | WIFI_DNS_DONE_BIT);
+  uint8_t v4v6priority = LWIP_DNS_ADDRTYPE_IPV4;
+#ifdef USE_IPV6
+  v4v6priority = WifiDNSGetIPv6Priority() ? LWIP_DNS_ADDRTYPE_IPV6_IPV4 : LWIP_DNS_ADDRTYPE_IPV4_IPV6;
+#endif // USE_IPV6
+  err_t err = dns_gethostbyname_addrtype(aHostname, &dns_ipaddr, &wifi32_dns_found_callback, (void*) ip_addr_counter, v4v6priority);
+  // Serial.printf("DNS: dns_gethostbyname_addrtype errg=%i counter=%i\n", err, ip_addr_counter);
+  if(err == ERR_OK && !ip_addr_isany_val(dns_ipaddr)) {
+#ifdef USE_IPV6
+    aResult = dns_ipaddr;
+#else // USE_IPV6
+    aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
+#endif // USE_IPV6
+  } else if(err == ERR_INPROGRESS) {
+    waitStatusBits(WIFI_DNS_DONE_BIT, timer_ms);  //real internal timeout in lwip library is 14[s]
+    clearStatusBits(WIFI_DNS_DONE_BIT);
+  }
+  
+  if (!ip_addr_isany_val(dns_ipaddr)) {
+#ifdef USE_IPV6
+    aResult = dns_ipaddr;
+#else // USE_IPV6
+    aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
+#endif // USE_IPV6
+    return true;
+  }
+  return false;
+}
+
+int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult)
+{
+  return hostByName(aHostname, aResult, WifiDNSGetTimeout());
 }
 
 void wifi_station_disconnect() {
