@@ -260,12 +260,11 @@
     #undef USE_MI_HOMEKIT
   #endif // disable USE_MI_HOMEKIT
 #else
+  #define USE_ETHERNET                             // Add support for ethernet (+20k code)
   #define USE_BLE_ESP32                          // Enable full BLE driver
   #define USE_EQ3_ESP32
   #define USE_MI_ESP32                           // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif // enable USE_MI_HOMEKIT
-
-#define USE_ETHERNET                             // Add support for ethernet (+20k code
 
 #endif  // FIRMWARE_BLUETOOTH
 
