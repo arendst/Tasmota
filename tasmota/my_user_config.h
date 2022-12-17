@@ -407,9 +407,8 @@
 
 // -- IPv6 support -------------------------------
 // #define USE_IPV6                                 // Enable IPv6 support (if the underlying esp-idf is also configured to support it)
-                                                 // Code size increase:
-                                                 //   ESP8266: tbd
-                                                 //   ESP32: tbd
+                                                 // Code size increase: ESP8266: +34.5kb
+                                                 // Enabled by default on ESP32 and variants
 
 // -- ESP-NOW -------------------------------------
 //#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)

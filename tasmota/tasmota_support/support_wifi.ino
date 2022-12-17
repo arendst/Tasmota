@@ -922,7 +922,9 @@ bool WifiDNSGetIPv6Priority(void) {
 
   // any change of state requires a dns cache clear
   if (had_v6prio != v6prio) {
-    dns_clear_cache();
+#ifdef ESP32
+    dns_clear_cache();    // this function doesn't exist in LWIP used by ESP8266
+#endif
     had_v6prio = v6prio;
   }
 
