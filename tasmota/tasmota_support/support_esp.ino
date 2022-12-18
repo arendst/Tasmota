@@ -623,6 +623,9 @@ uint32_t ESP_getFreeHeap(void) {
 
 uint32_t ESP_getMaxAllocHeap(void) {
   // arduino returns IRAM but we want only DRAM
+#ifdef RGB_DISPLAY
+  return ESP_getFreeHeap();
+#endif
   uint32_t free_block_size = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   if (free_block_size > 100) { free_block_size -= 100; }
   return free_block_size;
