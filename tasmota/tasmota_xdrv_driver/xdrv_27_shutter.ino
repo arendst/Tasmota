@@ -395,7 +395,7 @@ void ShutterInit(void)
     Settings->shutter_accuracy = 1;
     Settings->shutter_mode = ShutterGlobal.position_mode;
     // initialize MotorStop time with 500ms if not set
-    Settings->shutter_motorstop = Settings->shutter_motorstop == 0?500:Settings->shutter_motorstop;
+    Settings->shutter_motorstop = Settings->shutter_motorstop == 0?500:Settings->shutter_motorstop>60000?500:Settings->shutter_motorstop;
   }
 }
 
@@ -1754,7 +1754,7 @@ void CmndShutterTiltConfig(void)
       ShutterInit();
     }
     char setting_chr[30] = "0";
-    snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), XdrvMailbox.index -1,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
+    snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
     ResponseCmndIdxChar(setting_chr);
     AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltConfig %d, min: %d, max %d, runtime %d, close_pos: %d, open_pos: %d"), XdrvMailbox.index ,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
   }
