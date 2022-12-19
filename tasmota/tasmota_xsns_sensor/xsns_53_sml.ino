@@ -80,6 +80,14 @@
 #define DJ_VAVG "Volt_avg"
 #define DJ_COUNTER "Count"
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t trxenpol : 1;  // string or number
+    uint8_t trxen : 1;
+    uint8_t trxenpin : 6;
+  };
+} TRX_EN_TYPE;
 
 struct METER_DESC {
   int8_t srcpin;
@@ -94,6 +102,7 @@ struct METER_DESC {
   uint8_t max_index;
   char *script_str;
   uint8_t sopt;
+  TRX_EN_TYPE trx_en;
 #ifdef USE_SML_SPECOPT
   uint32_t so_obis1;
   uint32_t so_obis2;
@@ -543,7 +552,11 @@ char meter_id[MAX_METERS][METER_ID_SIZE];
 uint8_t sml_send_blocks;
 uint8_t sml_100ms_cnt;
 uint8_t sml_desc_cnt;
-uint8_t sml_json_enable = 1;
+
+#define SML_OPTIONS_JSON_ENABLE 1
+#define SML_OPTIONS_OBIS_LINE 2
+uint8_t sml_options = SML_OPTIONS_JSON_ENABLE;
+
 
 #ifdef USE_SML_MEDIAN_FILTER
 // median filter, should be odd size
@@ -1613,11 +1626,19 @@ void sml_empty_receiver(uint32_t meters) {
 
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
-#ifndef SML_OBIS_LINE
-  if (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') {
-#else
-  if (meter_desc_p[meters].type!= 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') {
+
+#ifdef SML_OBIS_LINE
+  sml_options |= SML_OPTIONS_OBIS_LINE;
 #endif
+
+  bool shift;
+  if (!(sml_options & SML_OPTIONS_OBIS_LINE)) {
+    shift = (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v');
+  } else {
+    shift = (meter_desc_p[meters].type != 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v');
+  }
+
+  if (shift) {
     // shift in
     for (count = 0; count < SML_BSIZ - 1; count++) {
       smltbuf[meters][count] = smltbuf[meters][count + 1];
@@ -1626,20 +1647,20 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint8_t iob = (uint8_t)meter_ss[meters]->read();
 
   if (meter_desc_p[meters].type == 'o') {
-#ifndef SML_OBIS_LINE
-    smltbuf[meters][SML_BSIZ-1] = iob & 0x7f;
-#else
-    iob &= 0x7f;
-    smltbuf[meters][meter_spos[meters]] = iob;
-    meter_spos[meters]++;
-    if (meter_spos[meters] >= SML_BSIZ) {
-      meter_spos[meters] = 0;
+    if (!(sml_options & SML_OPTIONS_OBIS_LINE)) {
+      smltbuf[meters][SML_BSIZ-1] = iob & 0x7f;
+    } else {
+      iob &= 0x7f;
+      smltbuf[meters][meter_spos[meters]] = iob;
+      meter_spos[meters]++;
+      if (meter_spos[meters] >= SML_BSIZ) {
+        meter_spos[meters] = 0;
+      }
+      if ((iob == 0x0a) || (iob == 0x0d)) {
+        SML_Decode(meters);
+        meter_spos[meters] = 0;
+      }
     }
-    if ((iob == 0x0a) || (iob == 0x0d)) {
-      SML_Decode(meters);
-      meter_spos[meters] = 0;
-    }
-#endif
   } else if (meter_desc_p[meters].type=='s') {
     smltbuf[meters][SML_BSIZ-1]=iob;
   } else if (meter_desc_p[meters].type=='r') {
@@ -1683,7 +1704,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
         meter_spos[meters] = 0;
       }
       // modbus
-      if (meter_spos[meters] >= 8) {
+      if (meter_spos[meters] >= 3) {
         uint32_t mlen = smltbuf[meters][2] + 5;
         if (mlen > SML_BSIZ) mlen = SML_BSIZ;
         if (meter_spos[meters] >= mlen) {
@@ -1750,11 +1771,10 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 		}
   }
   sb_counter++;
-#ifndef SML_OBIS_LINE
-  if (meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') SML_Decode(meters);
-#else
-  if (meter_desc_p[meters].type != 'o' && meter_desc_p[meters].type != 'e' && meter_desc_p[meters].type != 'm' && meter_desc_p[meters].type != 'M' && meter_desc_p[meters].type != 'k' && meter_desc_p[meters].type != 'p' && meter_desc_p[meters].type != 'R' && meter_desc_p[meters].type != 'v') SML_Decode(meters);
-#endif
+
+  if (shift) {
+    SML_Decode(meters);
+  }
 }
 
 
@@ -2356,7 +2376,7 @@ void SML_Decode(uint8_t index) {
                 mp++;
               } else {
                 uint16_t pos = smltbuf[mindex][2] + 3;
-                if (pos > 32) pos = 32;
+                if (pos > (SML_BSIZ-2)) pos = SML_BSIZ-2;
                 uint16_t crc = MBUS_calculateCRC(&smltbuf[mindex][0], pos, 0xFFFF);
                 if (lowByte(crc) != smltbuf[mindex][pos]) goto nextsect;
                 if (highByte(crc) != smltbuf[mindex][pos + 1]) goto nextsect;
@@ -2930,10 +2950,35 @@ dddef_exit:
           }
           if (*lp == ',') {
             lp++;
+            // get TRX pin
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX in meter number %d"), script_meter_desc[index].trxpin, index + 1);
               goto dddef_exit;
+            }
+            // optional transmit enable pin
+            if (*lp == '(') {
+              lp++;
+              if (*lp == 'i') {
+                lp++;
+                script_meter_desc[index].trx_en.trxenpol = 1;
+              } else {
+                script_meter_desc[index].trx_en.trxenpol = 0;
+              }
+              script_meter_desc[index].trx_en.trxenpin = strtol(lp, &lp, 10);
+              if (*lp != ')') {
+                goto dddef_exit;
+              }
+              lp++;
+              if (Gpio_used(script_meter_desc[index].trx_en.trxenpin)) {
+                AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX enable in meter number %d"), script_meter_desc[index].trx_en.trxenpin, index + 1);
+                goto dddef_exit;
+              }
+              script_meter_desc[index].trx_en.trxen = 1;
+              pinMode(script_meter_desc[index].trx_en.trxenpin, OUTPUT);
+              digitalWrite(script_meter_desc[index].trx_en.trxenpin, script_meter_desc[index].trx_en.trxenpol);
+            } else {
+              script_meter_desc[index].trx_en.trxen = 0;
             }
             if (*lp != ',') goto next_line;
             lp++;
@@ -3600,8 +3645,18 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     slen += 6;
   }
 
+  if (script_meter_desc[meter].trx_en.trxen) {
+    digitalWrite(script_meter_desc[meter].trx_en.trxenpin, script_meter_desc[meter].trx_en.trxenpol ^ 1);
+  }
   meter_ss[meter]->flush();
   meter_ss[meter]->write(sbuff, slen);
+
+  if (script_meter_desc[meter].trx_en.trxen) {
+    // must wait for all data sent
+    meter_ss[meter]->flush();
+    digitalWrite(script_meter_desc[meter].trx_en.trxenpin, script_meter_desc[meter].trx_en.trxenpol);
+  }
+
   if (dump2log) {
 #ifdef SML_DUMP_OUT_ALL
     Hexdump(sbuff, slen);
@@ -3785,7 +3840,7 @@ void SML_CounterSaveState(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns53(byte function) {
+bool Xsns53(uint32_t function) {
   bool result = false;
     switch (function) {
       case FUNC_INIT:
@@ -3810,7 +3865,7 @@ bool Xsns53(byte function) {
         break;
 #endif // USE_SCRIPT
       case FUNC_JSON_APPEND:
-        if (sml_json_enable) {
+        if (sml_options & SML_OPTIONS_JSON_ENABLE) {
           SML_Show(1);
         }
         break;

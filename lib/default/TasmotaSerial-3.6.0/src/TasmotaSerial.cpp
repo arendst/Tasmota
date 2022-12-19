@@ -46,14 +46,18 @@ static uint32_t tasmota_serial_uart_bitmap = 0;      // Assigned UARTs
 
 TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback, int nwmode, int buffer_size) {
   m_valid = false;
+  m_tx_enable_valid = false;
   m_hardserial = false;
   m_hardswap = false;
+  m_overflow = false;
+  m_data_bits = 8;
   m_stop_bits = 1;
   m_nwmode = nwmode;
   serial_buffer_size = buffer_size;
   m_rx_pin = receive_pin;
   m_tx_pin = transmit_pin;
-  m_in_pos = m_out_pos = 0;
+  m_in_pos = 0;
+  m_out_pos = 0;
 #ifdef ESP8266
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
@@ -95,7 +99,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
 void TasmotaSerial::end(bool turnOffDebug) {
 #ifdef ESP8266
   if (m_hardserial) {
-    Serial.end();
+//    Serial.end();  // Keep active for logging
   } else {
     if (m_rx_pin > -1) {
       detachInterrupt(m_rx_pin);
@@ -120,7 +124,23 @@ TasmotaSerial::~TasmotaSerial(void) {
 }
 
 bool TasmotaSerial::isValidGPIOpin(int pin) {
+#ifdef ESP8266
   return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
+#endif
+#ifdef ESP32
+  return GPIO_IS_VALID_OUTPUT_GPIO(pin);
+#endif
+}
+
+void TasmotaSerial::setTransmitEnablePin(int tx_enable_pin) {
+  if ((tx_enable_pin > -1) && isValidGPIOpin(tx_enable_pin)) {
+    m_tx_enable_valid = true;
+    m_tx_enable_pin = tx_enable_pin;
+    pinMode(m_tx_enable_pin, OUTPUT);
+    digitalWrite(m_tx_enable_pin, LOW);
+  } else {
+    m_tx_enable_valid = false;
+  }
 }
 
 #ifdef ESP32
@@ -134,12 +154,70 @@ bool TasmotaSerial::freeUart(void) {
   }
   return false;
 }
+
+void TasmotaSerial::Esp32Begin(void) {
+  TSerial->begin(m_speed, m_config, m_rx_pin, m_tx_pin);
+  // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
+  if (m_speed <= 9600) {
+    // At 9600, 10 chars are ~10ms
+    uart_set_rx_full_threshold(m_uart, 10);
+  } else if (m_speed < 115200) {
+    // At 19200, 120 chars are ~60ms
+    // At 76800, 120 chars are ~15ms
+    uart_set_rx_full_threshold(m_uart, 120);
+  } else {
+    // At 115200, 256 chars are ~20ms
+    // Zigbee requires to keep frames together, i.e. 256 bytes max
+    uart_set_rx_full_threshold(m_uart, 256);
+  }
+  // For bitrate below 115200, set the Rx time out to 6 chars instead of the default 10
+  if (m_speed < 115200) {
+    // At 76800 the timeout is ~1ms
+    uart_set_rx_timeout(m_uart, 6);
+  }
+}
 #endif
+
+size_t TasmotaSerial::setRxBufferSize(size_t size) {
+  if (size != serial_buffer_size) {
+    if (m_hardserial) {
+      if (size > 256) {      // Default hardware serial Rx buffer size
+#ifdef ESP8266
+        serial_buffer_size = size;
+        Serial.setRxBufferSize(serial_buffer_size);
+#endif  // ESP8266
+#ifdef ESP32
+        if (TSerial) {
+          // RX Buffer can't be resized when Serial is already running
+          serial_buffer_size = size;
+          TSerial->flush();
+          TSerial->end();
+          delay(10);         // Allow time to cleanup queues - if not used hangs ESP32
+          TSerial->setRxBufferSize(serial_buffer_size);
+          Esp32Begin();
+        }
+#endif  // ESP32
+      }
+    }
+    else if (m_buffer) {
+      uint8_t *m_buffer_temp = (uint8_t*)malloc(size);  // Allocate new buffer
+      if (m_buffer_temp) {                              // If succesful de-allocate old buffer
+        free(m_buffer);
+        m_buffer = m_buffer_temp;
+        serial_buffer_size = size;
+      }
+    }
+  }
+  return serial_buffer_size;
+}
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   if (!m_valid) { return false; }
 
   if (m_hardserial) {
+    if (serial_buffer_size < 256) {
+      serial_buffer_size = 256;
+    }
 #ifdef ESP8266
     Serial.flush();
     Serial.begin(speed, (SerialConfig)config);
@@ -157,10 +235,10 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
         TSerial = new HardwareSerial(m_uart);
 #else
         if (0 == m_uart) {
-            Serial.flush();
-            Serial.end();
-            delay(10);             // Allow time to cleanup queues - if not used hangs ESP32
-            TSerial = &Serial;
+          Serial.flush();
+          Serial.end();
+          delay(10);             // Allow time to cleanup queues - if not used hangs ESP32
+          TSerial = &Serial;
         } else {
           TSerial = new HardwareSerial(m_uart);
         }
@@ -173,34 +251,23 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
         return m_valid;            // As we currently only support hardware serial on ESP32 it's safe to exit here
       }
     }
-    TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
-    // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
-    if (speed <= 9600) {
-      // At 9600, 10 chars are ~10ms
-      uart_set_rx_full_threshold(m_uart, 10);
-    } else if (speed < 115200) {
-      // At 19200, 120 chars are ~60ms
-      // At 76800, 120 chars are ~15ms
-      uart_set_rx_full_threshold(m_uart, 120);
-    } else {
-      // At 115200, 256 chars are ~20ms
-      // Zigbee requires to keep frames together, i.e. 256 bytes max
-      uart_set_rx_full_threshold(m_uart, 256);
-    }
-    // For bitrate below 115200, set the Rx time out to 6 chars instead of the default 10
-    if (speed < 115200) {
-      // At 76800 the timeout is ~1ms
-      uart_set_rx_timeout(m_uart, 6);
-    }
+    m_speed = speed;
+    m_config = config;
+    Esp32Begin();
 //    Serial.printf("TSR: Using UART%d\n", m_uart);
 #endif  // ESP32
   } else {
+    // #define UART_NB_BIT_5         0B00000000
+    // #define UART_NB_BIT_6         0B00000100
+    // #define UART_NB_BIT_7         0B00001000
+    // #define UART_NB_BIT_8         0B00001100
+    m_data_bits = 5 + ((config &0x0C) >> 2);
     // Software serial fakes two stop bits if either stop bits is 2 or parity is not None
     // #define UART_NB_STOP_BIT_0    0B00000000
     // #define UART_NB_STOP_BIT_1    0B00010000
     // #define UART_NB_STOP_BIT_15   0B00100000
     // #define UART_NB_STOP_BIT_2    0B00110000
-    m_stop_bits = ((config &0x30) >> 5) +1;
+    m_stop_bits = 1 + ((config &0x30) >> 5);
     // #define UART_PARITY_NONE      0B00000000
     // #define UART_PARITY_EVEN      0B00000010
     // #define UART_PARITY_ODD       0B00000011
@@ -216,6 +283,10 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   return m_valid;
 }
 
+void TasmotaSerial::setReadChunkMode(bool mode) {
+  m_very_high_speed = mode;
+}
+
 bool TasmotaSerial::hardwareSerial(void) {
 #ifdef ESP8266
   return m_hardserial;
@@ -223,6 +294,21 @@ bool TasmotaSerial::hardwareSerial(void) {
 #ifdef ESP32
   return (0 == m_uart);  // We prefer UART1 and UART2 and keep UART0 for debugging
 #endif  // ESP32
+}
+
+bool TasmotaSerial::overflow(void) {
+  if (m_hardserial) {
+#ifdef ESP8266
+    return Serial.hasOverrun();  // Returns then clear overrun flag
+#endif  // ESP8266
+#ifdef ESP32
+    return false;  // Not implemented
+#endif  // ESP32
+  } else {
+    bool res = m_overflow;
+    m_overflow = false;
+    return res;
+  }
 }
 
 void TasmotaSerial::flush(void) {
@@ -235,7 +321,8 @@ void TasmotaSerial::flush(void) {
     while (TSerial->available()) { TSerial->read(); }
 #endif  // ESP32
   } else {
-    m_in_pos = m_out_pos = 0;
+    m_in_pos = 0;
+    m_out_pos = 0;
   }
 }
 
@@ -262,7 +349,9 @@ int TasmotaSerial::read(void) {
     return TSerial->read();
 #endif  // ESP32
   } else {
-    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
+      return -1;
+    }
     uint32_t ch = m_buffer[m_out_pos];
     m_out_pos = (m_out_pos +1) % serial_buffer_size;
     return ch;
@@ -278,9 +367,11 @@ size_t TasmotaSerial::read(char* buffer, size_t size) {
     return TSerial->read(buffer, size);
 #endif  // ESP32
   } else {
-    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) { return 0; }
+    if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) {
+      return 0;
+    }
     size_t count = 0;
-    for( ; size && (m_in_pos == m_out_pos) ; --size, ++count) {
+    for( ; size && (m_in_pos != m_out_pos) ; --size, ++count) {
       *buffer++ = m_buffer[m_out_pos];
       m_out_pos = (m_out_pos +1) % serial_buffer_size;
     }
@@ -299,13 +390,18 @@ int TasmotaSerial::available(void) {
   } else {
     int avail = m_in_pos - m_out_pos;
     if (avail < 0) avail += serial_buffer_size;
+
+//    if (!avail) {
+//      optimistic_yield(10000);
+//    }
+
     return avail;
   }
 }
 
-#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < (wait + start)) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
+#define TM_SERIAL_WAIT_SND      { while (ESP.getCycleCount() < (wait + start)) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
 #define TM_SERIAL_WAIT_SND_FAST { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
-#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV      { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 
 void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
@@ -314,7 +410,7 @@ void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
   // Start bit;
   digitalWrite(m_tx_pin, LOW);
   TM_SERIAL_WAIT_SND_FAST;
-  for (uint32_t i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < m_data_bits; i++) {
     digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
     TM_SERIAL_WAIT_SND_FAST;
     b >>= 1;
@@ -327,15 +423,20 @@ void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
 }
 
 size_t TasmotaSerial::write(uint8_t b) {
+  if (!m_hardserial && (-1 == m_tx_pin)) { return 0; }
+
+  if (m_tx_enable_valid) {
+    digitalWrite(m_tx_enable_pin, HIGH);
+  }
+  size_t size = 0;
   if (m_hardserial) {
 #ifdef ESP8266
-    return Serial.write(b);
+    size = Serial.write(b);
 #endif  // ESP8266
 #ifdef ESP32
-    return TSerial->write(b);
+    size = TSerial->write(b);
 #endif  // ESP32
   } else {
-    if (-1 == m_tx_pin) return 0;
     if (m_high_speed) {
       cli();  // Disable interrupts in order to get a clean transmit
       _fast_write(b);
@@ -347,7 +448,7 @@ size_t TasmotaSerial::write(uint8_t b) {
       // Start bit;
       digitalWrite(m_tx_pin, LOW);
       TM_SERIAL_WAIT_SND;
-      for (uint32_t i = 0; i < 8; i++) {
+      for (uint32_t i = 0; i < m_data_bits; i++) {
         digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
         TM_SERIAL_WAIT_SND;
         b >>= 1;
@@ -359,30 +460,43 @@ size_t TasmotaSerial::write(uint8_t b) {
         TM_SERIAL_WAIT_SND;
       }
     }
-
-    return 1;
+    size = 1;
   }
+  if (m_tx_enable_valid) {
+    delay(1);
+    digitalWrite(m_tx_enable_pin, LOW);
+  }
+  return size;
 }
 
 void IRAM_ATTR TasmotaSerial::rxRead(void) {
   if (!m_nwmode) {
-    int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
+    uint32_t start = ESP.getCycleCount();
     // Advance the starting point for the samples but compensate for the
     // initial delay which occurs before the interrupt is delivered
     uint32_t wait = m_bit_start_time;
-    uint32_t start = ESP.getCycleCount();
-    while (loop_read-- > 0) {    // try to receveive all consecutive bytes in a raw
+    // Decide to read as much data as buffer can hold or a single byte
+    // The first option may keep interrupt busy too long resulting in Hardware Watchdog
+    // The second option may receive ocasional invalid data
+    // User control by function setReadChunkMode()
+    int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
+    uint32_t bit_mask = 0x01 << (m_data_bits -1);
+    while (loop_read-- > 0) {    // try to receive all consecutive bytes in a row
       uint32_t rec = 0;
-      for (uint32_t i = 0; i < 8; i++) {
+      for (uint32_t i = 0; i < m_data_bits; i++) {
         TM_SERIAL_WAIT_RCV;
         rec >>= 1;
-        if (digitalRead(m_rx_pin)) rec |= 0x80;
+        if (digitalRead(m_rx_pin)) rec |= bit_mask;
       }
       // Store the received value in the buffer unless we have an overflow
-      uint32_t next = (m_in_pos+1) % serial_buffer_size;
-      if (next != (int)m_out_pos) {
+      uint32_t next = (m_in_pos + 1) % serial_buffer_size;
+      if (next != m_out_pos) {
         m_buffer[m_in_pos] = rec;
         m_in_pos = next;
+      } else {
+        // Buffer overrun - exit
+        m_overflow = true;
+        loop_read = 0;
       }
 
       TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit
@@ -415,6 +529,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
     // it gets set even when interrupts are disabled
     GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rx_pin);
   } else {
+    // Currently supports 8-bit data only
     uint32_t diff;
     uint32_t level;
 
@@ -444,7 +559,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         }
         //stobyte(0,ssp->ss_byte>>1);
         uint32_t next = (m_in_pos + 1) % serial_buffer_size;
-        if (next != (uint32_t)m_out_pos) {
+        if (next != m_out_pos) {
           m_buffer[m_in_pos] = ss_byte >> 1;
           m_in_pos = next;
         }
@@ -458,7 +573,7 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
         // bit zero was 0,
         //stobyte(0,ssp->ss_byte>>1);
         uint32_t next = (m_in_pos + 1) % serial_buffer_size;
-        if (next != (uint32_t)m_out_pos) {
+        if (next != m_out_pos) {
           m_buffer[m_in_pos] = ss_byte >> 1;
           m_in_pos = next;
         }

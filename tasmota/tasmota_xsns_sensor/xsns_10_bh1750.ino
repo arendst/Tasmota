@@ -193,7 +193,7 @@ void Bh1750Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns10(uint8_t function) {
+bool Xsns10(uint32_t function) {
   if (!I2cEnabled(XI2C_11)) { return false; }
 
   bool result = false;

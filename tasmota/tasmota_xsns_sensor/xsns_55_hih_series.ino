@@ -104,7 +104,7 @@ void Hih6Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns55(uint8_t function)
+bool Xsns55(uint32_t function)
 {
   if (!I2cEnabled(XI2C_36)) { return false; }
 

@@ -949,6 +949,109 @@ static int m_setfloat(bvm *vm)
     be_return_nil(vm);
 }
 
+/*
+ * Fills a buffer with another buffer.
+ *
+ * This is meant to be very flexible and avoid loops
+ * 
+ * `setbytes(index:int, fill:bytes [, from:int, len:int]) -> nil`
+ * 
+ */
+static int m_setbytes(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+    if (argc >=3 && be_isint(vm, 2) && (be_isbytes(vm, 3))) {
+        int32_t idx = be_toint(vm, 2);
+        size_t from_len_total;
+        const uint8_t* buf_ptr = (const uint8_t*) be_tobytes(vm, 3, &from_len_total);
+        if (idx < 0) { idx = 0; }
+        if (idx >= attr.len) { idx = attr.len; }
+
+        int32_t from_byte = 0;
+        if (argc >= 4 && be_isint(vm, 4)) {
+            from_byte = be_toint(vm, 4);
+            if (from_byte < 0) { from_byte = 0; }
+            if ((size_t)from_byte >= from_len_total) { from_byte = from_len_total; }
+        }
+
+        int32_t from_len = from_len_total - from_byte;
+        if (argc >= 5 && be_isint(vm, 5)) {
+            from_len = be_toint(vm, 5);
+            if (from_len < 0) { from_len = 0; }
+            if (from_len >= (int32_t)from_len_total) { from_len = from_len_total; }
+        }
+        if (idx + from_len >= attr.len) { from_len = attr.len - idx; }
+
+        // all parameters ok
+        if (from_len > 0) {
+            memmove(attr.bufptr + idx, buf_ptr + from_byte, from_len);
+        }
+    }
+    be_return_nil(vm);
+}
+
+
+/*
+ * Reverses in-place a sub-buffer composed of groups of n-bytes packets
+ *
+ * This is useful for pixel manipulation when displaying RGB pixels
+ * 
+ * `reverse([index:int, len:int, grouplen:int]) -> self`
+ * 
+ */
+static int m_reverse(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+
+    int32_t idx = 0;            /* start from index 0 */
+    int32_t len = attr.len;     /* entire len */
+    int32_t grouplen = 1;       /* default to 1-byte group */
+
+    if (argc >= 2 && be_isint(vm, 2)) {
+        idx = be_toint(vm, 2);
+        if (idx < 0) { idx = 0; }               /* railguards */
+        if (idx > attr.len) { idx = attr.len; }
+    }
+    if (argc >= 3 && be_isint(vm, 3)) {
+        len = be_toint(vm, 3);
+        if (len < 0) { len = attr.len - idx; }  /* negative len means */
+    }
+    if (idx + len >= attr.len) { len = attr.len - idx; }
+
+    // truncate len to multiple of grouplen
+    if (argc >= 4 && be_isint(vm, 4)) {
+        grouplen = be_toint(vm, 4);
+        if (grouplen <= 0) { grouplen = 1; }
+    }
+    len = len - (len % grouplen);
+
+    // apply reverse
+    if (len > 0) {
+        if (grouplen == 1) {
+            /* fast version if simple byte inversion */
+            for (int32_t i = idx, j = idx + len -1; i < j; i++, j--) {
+                uint8_t temp = attr.bufptr[i];
+                attr.bufptr[i] = attr.bufptr[j];
+                attr.bufptr[j] = temp;
+            }
+        } else {
+            for (int32_t i = idx, j = idx + len - grouplen; i < j; i += grouplen, j -= grouplen) {
+                for (int32_t k = 0; k < grouplen; k++) {
+                    uint8_t temp = attr.bufptr[i+k];
+                    attr.bufptr[i+k] = attr.bufptr[j+k];
+                    attr.bufptr[j+k] = temp;
+                }
+            }
+        }
+    }
+    be_pushvalue(vm, 1);    /* push bytes object */
+    be_return(vm);
+}
+
 static int m_setitem(bvm *vm)
 {
     int argc = be_top(vm);
@@ -1575,6 +1678,7 @@ void be_load_byteslib(bvm *vm)
         { "geti", m_geti },
         { "set", m_set },
         { "seti", m_set },      // setters for signed and unsigned are identical
+        { "setbytes", m_setbytes },
         { "getfloat", m_getfloat },
         { "setfloat", m_setfloat },
         { "item", m_item },
@@ -1582,6 +1686,7 @@ void be_load_byteslib(bvm *vm)
         { "size", m_size },
         { "resize", m_resize },
         { "clear", m_clear },
+        { "reverse", m_reverse },
         { "copy", m_copy },
         { "+", m_merge },
         { "..", m_connect },
@@ -1621,11 +1726,13 @@ class be_class_bytes (scope: global, name: bytes) {
     setfloat, func(m_setfloat)
     set, func(m_set)
     seti, func(m_set)
+    setbytes, func(m_setbytes)
     item, func(m_item)
     setitem, func(m_setitem)
     size, func(m_size)
     resize, func(m_resize)
     clear, func(m_clear)
+    reverse, func(m_reverse)
     copy, func(m_copy)
     +, func(m_merge)
     .., func(m_connect)

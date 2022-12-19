@@ -412,13 +412,11 @@ const uint8_t kI2cList[] = {
 
 /*********************************************************************************************/
 
-bool I2cEnabled(uint32_t i2c_index)
-{
+bool I2cEnabled(uint32_t i2c_index) {
   return (TasmotaGlobal.i2c_enabled && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
 }
 
-void I2cDriverState(void)
-{
+void I2cDriverState(void) {
   ResponseAppend_P(PSTR("\""));  // Use string for enable/disable signal
   for (uint32_t i = 0; i < sizeof(kI2cList); i++) {
 #ifdef XFUNC_PTR_IN_ROM

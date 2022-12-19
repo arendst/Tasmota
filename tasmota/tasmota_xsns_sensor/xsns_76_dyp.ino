@@ -18,7 +18,6 @@
 */
 
 #ifdef USE_DYP
-
 /*********************************************************************************************\
  * DYP ME007 ultrasonic distance sensor (300...4000mm), serial version
  *
@@ -28,13 +27,11 @@
  *      300...4000 for measured distance
  *      4999 for distance above 4000mm
  *      5999 for not connected sensor
- *
 \*********************************************************************************************/
 
-#define XSNS_76 76
+#define XSNS_76     76
 
 #include <TasmotaSerial.h>
-
 TasmotaSerial *DYPSerial = nullptr;
 
 #define DYP_CRCERROR -1
@@ -44,27 +41,22 @@ TasmotaSerial *DYPSerial = nullptr;
 #define DYP_ABOVEMAX 4999
 #define DYP_NOSENSOR 5999
 
-uint16_t DYPDistance = 0;   // distance in milimeters
-bool DYPSensor = false;     // sensor available
+uint16_t DYPDistance = 0;   // distance in millimeters
 
 /*********************************************************************************************/
 
 void DYPInit(void) {
-  DYPSensor = false;
   if (PinUsed(GPIO_DYP_RX)) {
     DYPSerial = new TasmotaSerial(Pin(GPIO_DYP_RX), -1, 1);
     if (DYPSerial->begin(9600)) {
       if (DYPSerial->hardwareSerial()) {
         ClaimSerial();
       }
-      DYPSensor = true;
     }
   }
 }
 
 void DYPEverySecond(void) {
-  if (!DYPSensor) { return; }
-
   // check for serial data
   if (DYPSerial->available() < 6) {
     DYPDistance = DYP_NOSENSOR;
@@ -95,7 +87,7 @@ void DYPEverySecond(void) {
         if (data > DYP_MAX) {
           data = DYP_ABOVEMAX;
         }
-        DYPDistance = data;
+        DYPDistance = data;  // mm
       } else {
         DYPDistance = DYP_CRCERROR;
       }
@@ -104,12 +96,13 @@ void DYPEverySecond(void) {
 }
 
 void DYPShow(bool json) {
-  char types[5] = "DYP";
+  char types[4] = "DYP";
+  float distance = (float)DYPDistance / 10;  // cm
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_DISTANCE "\":%d}"), types, DYPDistance);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &distance);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_RANGE, types, DYPDistance);
+    WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, types, &distance);
 #endif  // USE_WEBSERVER
   }
 }
@@ -118,24 +111,24 @@ void DYPShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns76(uint8_t function) {
-  if (!PinUsed(GPIO_DYP_RX)) { return false; }
-
-  switch (function) {
-    case FUNC_INIT:
-        DYPInit();
-        break;
-    case FUNC_EVERY_SECOND:
-        DYPEverySecond();
-        break;
-    case FUNC_JSON_APPEND:
-        DYPShow(1);
-        break;
+bool Xsns76(uint32_t function) {
+  if (FUNC_INIT == function) {
+    DYPInit();
+  }
+  else if (DYPSerial) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+          DYPEverySecond();
+          break;
+      case FUNC_JSON_APPEND:
+          DYPShow(1);
+          break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-        DYPShow(0);
-        break;
+      case FUNC_WEB_SENSOR:
+          DYPShow(0);
+          break;
 #endif  // USE_WEBSERVER
+    }
   }
   return false;
 }

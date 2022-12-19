@@ -187,7 +187,7 @@ void Bp5758dModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt08(uint8_t function)
+bool Xlgt08(uint32_t function)
 {
   bool result = false;
 

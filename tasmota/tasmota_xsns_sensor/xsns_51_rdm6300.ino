@@ -145,7 +145,7 @@ void RDM6300Show(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns51(byte function) {
+bool Xsns51(uint32_t function) {
   bool result = false;
 
   switch (function) {

@@ -124,7 +124,7 @@ void IAQ_Show(uint8_t json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns66(byte function)
+bool Xsns66(uint32_t function)
 {
   if (!I2cEnabled(XI2C_46)) { return false; }
 

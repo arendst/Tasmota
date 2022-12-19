@@ -395,7 +395,7 @@ if (PinUsed(GPIO_MP3_DFR562_BUSY))                // optional MP3 player busy pi
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv14(uint8_t function)
+bool Xdrv14(uint32_t function)
 {
   bool result = false;
 

@@ -164,7 +164,7 @@ void ArmtronixSetWifiLed(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv18(uint8_t function)
+bool Xdrv18(uint32_t function)
 {
   bool result = false;
 

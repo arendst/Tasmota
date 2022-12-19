@@ -2302,7 +2302,7 @@ void HM10Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns62(uint8_t function)
+bool Xsns62(uint32_t function)
 {
   bool result = false;
 

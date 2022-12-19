@@ -35,10 +35,13 @@ CONFIG_LWIP_IP_FORWARD option set, and optionally CONFIG_LWIP_IPV4_NAPT.
 If you want to support NAPT (removing the need for routes on a core router):
 #define USE_WIFI_RANGE_EXTENDER_NAPT
 
+List AP clients (MAC, IP and RSSI) with command RgxClients on ESP32
+
 
 An example full static configuration:
 #define USE_WIFI_RANGE_EXTENDER
 #define USE_WIFI_RANGE_EXTENDER_NAPT
+#define USE_WIFI_RANGE_EXTENDER_CLIENTS
 #define WIFI_RGX_STATE 1
 #define WIFI_RGX_NAPT 1
 #define WIFI_RGX_SSID "rangeextender"
@@ -91,7 +94,11 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
                                        "|"
                                        "NAPT"
+                                       "|"
+                                       "Port"
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+                                       "|"
+                                       "Clients"
                                        "|"
                                        "Address"
                                        "|"
@@ -103,7 +110,9 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
     &CmndRgxPassword,
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
+    &CmndRgxPort,
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
+    &CmndRgxClients,
     &CmndRgxAddresses,
     &CmndRgxAddresses,
 };
@@ -114,7 +123,6 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #endif // ESP8266
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
-#include <ESP8266WiFi.h>
 #include <lwip/dns.h>
 #ifdef ESP8266
 #include <dhcpserver.h>
@@ -122,6 +130,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #ifdef ESP32
 #include "lwip/lwip_napt.h"
 #include <dhcpserver/dhcpserver.h>
+#include "esp_wifi.h"
 #endif // ESP32
 
 #define RGX_NOT_CONFIGURED 0
@@ -133,13 +142,18 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 typedef struct
 {
   uint8_t status = RGX_NOT_CONFIGURED;
-  uint16_t lastlinkcount = 0;
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
   bool napt_enabled = false;
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 } TRgxSettings;
 
 TRgxSettings RgxSettings;
+
+// externalize to be able to protect Rgx AP from teardown
+bool RgxApUp()
+{
+  return RgxSettings.status == RGX_CONFIGURED || RgxSettings.status == RGX_SETUP_NAPT;
+}
 
 // Check the current configuration is complete, updating RgxSettings.status
 void RgxCheckConfig(void)
@@ -159,6 +173,41 @@ void RgxCheckConfig(void)
   {
     RgxSettings.status = RGX_CONFIG_INCOMPLETE;
   }
+}
+
+void CmndRgxClients(void)
+{
+  Response_P(PSTR("{\"RgxClients\":{"));
+  const char *sep = "";
+
+#if defined(ESP32)
+  wifi_sta_list_t wifi_sta_list = {0};
+  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+
+  esp_wifi_ap_get_sta_list(&wifi_sta_list);
+  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+
+  for (int i=0; i<adapter_sta_list.num; i++)
+  {
+    const uint8_t *m = adapter_sta_list.sta[i].mac;
+    ResponseAppend_P(PSTR("%s\"%02X%02X%02X%02X%02X%02X\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":%d}"),
+      sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
+    sep = ",";
+  }
+#elif defined(ESP8266)
+  struct station_info *station = wifi_softap_get_station_info();
+  while (station)
+  {
+    const uint8_t *m = station->bssid;
+    ResponseAppend_P(PSTR("%s\"%02X%02X%02X%02X%02X%02X\":{\"" D_CMND_IPADDRESS "\":\"%_I\"}"),
+      sep, m[0], m[1], m[2], m[3], m[4], m[5], station->ip.addr);
+    sep = ",";
+    station = STAILQ_NEXT(station, next);
+  }
+  wifi_softap_free_station_info();
+#endif
+
+  ResponseAppend_P(PSTR("}}"));
 }
 
 void CmndRgxState(void)
@@ -238,7 +287,91 @@ void CmndRgxNAPT(void)
     }
   }
   ResponseCmndStateText(Settings->sbflag1.range_extender_napt);
-};
+}
+
+// CmndRgxPort helper: Do port map and set response if successful
+void CmndRgxPortMap(uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
+{
+  uint32_t gw_ip = (uint32_t)WiFi.localIP();
+  if (ip_portmap_add(proto, gw_ip, gw_port, dst_ip, dst_port))
+  {
+    Response_P(PSTR("OK %s %_I:%u -> %_I:%u"),
+      (proto == IP_PROTO_TCP) ? "TCP" : "UDP", gw_ip, gw_port, dst_ip, dst_port);
+  }
+}
+
+// CmndRgxPort helper: If mac from esp list and mac from command parameters are the same try port map and return true
+bool CmndRgxPortMapCheck(const uint8_t *mac, const char *parm_mac, uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
+{
+  char list_mac[13];
+  snprintf(list_mac, sizeof(list_mac), PSTR("%02X%02X%02X%02X%02X%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  if (strcasecmp(list_mac, parm_mac) == 0)
+  {
+    CmndRgxPortMap(proto, gw_port, dst_ip, dst_port);
+    return true;
+  }
+  return false;
+}
+
+void CmndRgxPort(void)
+{
+  char *tok, *state, *parm_addr;
+  uint16_t gw, dst;
+  uint8_t proto = 0;
+
+  Response_P(PSTR("ERROR"));
+
+  // Parameter parsing
+  if (ArgC()!=4) return;
+  if ((tok = strtok_r(XdrvMailbox.data, ", ", &state)) == 0) return;
+  if (strcasecmp("TCP", tok) == 0) proto = IP_PROTO_TCP;
+  if (strcasecmp("UDP", tok) == 0) proto = IP_PROTO_UDP;
+  if (!proto) return;
+  if ((tok = strtok_r(0, ", ", &state)) == 0) return;
+  if ((gw = strtoul(tok, nullptr, 0)) == 0) return;
+  if ((parm_addr = strtok_r(0, ", ", &state)) == 0) return;
+  if ((tok = strtok_r(0, ", ", &state)) == 0) return;
+  if ((dst = strtoul(tok, nullptr, 0)) == 0) return;
+
+  // If forward address is an ip, then just do it...
+  // Useful for static IPs not used by the range extender dhcp server
+  // On ESP8266 the default dhcp ip range to avoid is .100-.200
+  // On ESP32 the default dhcp ip range to avoid is .2-.11
+  IPAddress ip;
+  if (ip.fromString(parm_addr))
+  {
+    CmndRgxPortMap(proto, gw, (uint32_t)ip, dst);
+    return;
+  }
+
+  // Forward address is a mac, find the associated ip...
+#if defined(ESP32)
+  wifi_sta_list_t wifi_sta_list = {0};
+  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+
+  esp_wifi_ap_get_sta_list(&wifi_sta_list);
+  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+
+  for (int i=0; i<adapter_sta_list.num; i++)
+  {
+    if (CmndRgxPortMapCheck(adapter_sta_list.sta[i].mac, parm_addr, proto, gw, adapter_sta_list.sta[i].ip.addr, dst))
+    {
+      break;
+    }
+  }
+#elif defined(ESP8266)
+  struct station_info *station = wifi_softap_get_station_info();
+  while (station)
+  {
+    if (CmndRgxPortMapCheck(station->bssid, parm_addr, proto, gw, station->ip.addr, dst))
+    {
+      break;
+    }
+    station = STAILQ_NEXT(station, next);
+  }
+  wifi_softap_free_station_info();
+#endif // ESP8266
+}
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
 void ResponseRgxConfig(void)
@@ -281,7 +414,6 @@ void rngxSetup()
   WiFi.softAP(SettingsText(SET_RGX_SSID), SettingsText(SET_RGX_PASSWORD));
   AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi Extender AP Enabled with SSID: %s"), WiFi.softAPSSID().c_str());
   RgxSettings.status = RGX_SETUP_NAPT;
-  RgxSettings.lastlinkcount = Wifi.link_count;
 }
 
 void rngxSetupNAPT(void)
@@ -344,7 +476,7 @@ void rngxSetupNAPT(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv58(uint8_t function)
+bool Xdrv58(uint32_t function)
 {
   bool result = false;
 
@@ -384,17 +516,11 @@ bool Xdrv58(uint8_t function)
       }
       else if (RgxSettings.status == RGX_CONFIGURED)
       {
-        if (Wifi.status != WL_CONNECTED)
+        if (Wifi.status == WL_CONNECTED && WiFi.getMode() != WIFI_AP_STA)
         {
-          // No longer connected, need to setup again
-          AddLog(LOG_LEVEL_INFO, PSTR("RGX: No longer connected, prepare to reconnect WiFi AP..."));
-          RgxSettings.status = RGX_NOT_CONFIGURED;
-        }
-        else if (RgxSettings.lastlinkcount != Wifi.link_count && WiFi.getMode() != WIFI_AP_STA)
-        {
-          // Assume WiFi has reconnected and been reconfigured, prepare to reconnect
-          AddLog(LOG_LEVEL_INFO, PSTR("RGX: Link count now: %d, WiFi.getMode(): %d, unconfigure..."), Wifi.link_count, WiFi.getMode());
-          RgxSettings.status = RGX_NOT_CONFIGURED;
+          // Should not happen... our AP is gone and only a restart will get it back properly
+          AddLog(LOG_LEVEL_INFO, PSTR("RGX: WiFi mode is %d not %d. Restart..."), WiFi.getMode(), WIFI_AP_STA);
+          TasmotaGlobal.restart_flag = 2;
         }
       }
       break;

@@ -277,7 +277,7 @@ void CmndTCPConnect(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv41(uint8_t function)
+bool Xdrv41(uint32_t function)
 {
   bool result = false;
 

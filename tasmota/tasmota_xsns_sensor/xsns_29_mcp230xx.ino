@@ -903,7 +903,7 @@ void MCP230xx_SwitchRelay() {
    Interface
 \*********************************************************************************************/
 
-bool Xsns29(uint8_t function)
+bool Xsns29(uint32_t function)
 {
   if (!I2cEnabled(XI2C_22)) { return false; }
 

@@ -422,7 +422,7 @@ void SevensegRefresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp11(uint8_t function)
+bool Xdsp11(uint32_t function)
 {
   if (!I2cEnabled(XI2C_47)) { return false; }
 

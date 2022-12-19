@@ -84,15 +84,15 @@ void Tof10120Every_250MSecond(void) {
 
 #ifdef USE_DOMOTICZ
 void Tof10120Every_Second(void) {
-  char distance[FLOATSZ];
-  dtostrfd((float)tof10120_sensor.distance / 10, 1, distance);
-  DomoticzSensor(DZ_ILLUMINANCE, distance);
+  float distance = (float)tof10120_sensor.distance / 10;  // cm
+  DomoticzFloatSensor(DZ_ILLUMINANCE, distance);
 }
 #endif  // USE_DOMOTICZ
 
 void Tof10120Show(bool json) {
+  float distance = (float)tof10120_sensor.distance / 10;  // cm
   if (json) {
-    ResponseAppend_P(PSTR(",\"TOF10120\":{\"" D_JSON_DISTANCE "\":%d}"), tof10120_sensor.distance);
+    ResponseAppend_P(PSTR(",\"TOF10120\":{\"" D_JSON_DISTANCE "\":%1_f}"), &distance);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       Tof10120Every_Second();
@@ -100,7 +100,7 @@ void Tof10120Show(bool json) {
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("TOF10120"), tof10120_sensor.distance);
+    WSContentSend_PD(HTTP_SNS_F_DISTANCE_CM, PSTR("TOF10120"), &distance);
 #endif
   }
 }
@@ -109,7 +109,7 @@ void Tof10120Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns84(uint8_t function) {
+bool Xsns84(uint32_t function) {
   if (!I2cEnabled(XI2C_57)) { return false; }
 
   bool result = false;

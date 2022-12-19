@@ -20,9 +20,9 @@
 #ifdef USE_DISPLAY
 
 #ifdef XFUNC_PTR_IN_ROM
-bool (* const xdsp_func_ptr[])(uint8_t) PROGMEM = {   // Display Function Pointers
+bool (* const xdsp_func_ptr[])(uint32_t) PROGMEM = {   // Display Function Pointers
 #else
-bool (* const xdsp_func_ptr[])(uint8_t) = {   // Display Function Pointers
+bool (* const xdsp_func_ptr[])(uint32_t) = {   // Display Function Pointers
 #endif
 
 #ifdef XDSP_01
@@ -177,21 +177,19 @@ const uint8_t xdsp_present = sizeof(xdsp_func_ptr) / sizeof(xdsp_func_ptr[0]);  
  * FUNC_DISPLAY_DRAW_STRING
 \*********************************************************************************************/
 
-uint8_t XdspPresent(void)
-{
+uint8_t XdspPresent(void) {
   return xdsp_present;
 }
 
-bool XdspCall(uint8_t Function)
-{
+bool XdspCall(uint32_t function) {
   bool result = false;
 
-  DEBUG_TRACE_LOG(PSTR("DSP: %d"), Function);
+  DEBUG_TRACE_LOG(PSTR("DSP: %d"), function);
 
   for (uint32_t x = 0; x < xdsp_present; x++) {
-    result = xdsp_func_ptr[x](Function);
+    result = xdsp_func_ptr[x](function);
 
-    if (result && (FUNC_DISPLAY_MODEL == Function)) {
+    if (result && (FUNC_DISPLAY_MODEL == function)) {
       break;
     }
   }

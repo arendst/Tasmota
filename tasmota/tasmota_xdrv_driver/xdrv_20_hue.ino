@@ -1149,7 +1149,7 @@ void HandleHueApi(String *path)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv20(uint8_t function)
+bool Xdrv20(uint32_t function)
 {
   bool result = false;
 
@@ -1161,6 +1161,12 @@ bool Xdrv20(uint8_t function)
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/description.xml"), HandleUpnpSetupHue);
+        break;
+      case FUNC_NETWORK_UP:
+        UdpConnect();
+        break;
+      case FUNC_NETWORK_DOWN:
+        UdpDisconnect();
         break;
     }
   }

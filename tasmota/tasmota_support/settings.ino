@@ -45,7 +45,7 @@ void RtcSettingsSave(void) {
     if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
-//      RtcSettings.ex_energy_kWhtoday = Settings->ex_energy_kWhtoday;
+//      RtcSettings.ex_energy_kWhtoday = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
 //      RtcSettings.ex_energy_kWhtotal = Settings->ex_energy_kWhtotal;
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
@@ -367,8 +367,7 @@ void SettingsSaveAll(void) {
   } else {
     Settings->power = 0;
   }
-  XsnsCall(FUNC_SAVE_BEFORE_RESTART);
-  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
+  XsnsXdrvCall(FUNC_SAVE_BEFORE_RESTART);
   SettingsSave(0);
 }
 
@@ -603,8 +602,7 @@ void SettingsSave(uint8_t rotate) {
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef FIRMWARE_MINIMAL
-  XsnsCall(FUNC_SAVE_SETTINGS);
-  XdrvCall(FUNC_SAVE_SETTINGS);
+  XsnsXdrvCall(FUNC_SAVE_SETTINGS);
   UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
@@ -914,6 +912,7 @@ void SettingsDefaultSet2(void) {
   // Serial
   Settings->serial_config = TS_SERIAL_8N1;
   Settings->baudrate = APP_BAUDRATE / 300;
+  Settings->sserial_config = TS_SERIAL_8N1;
   Settings->sbaudrate = SOFT_BAUDRATE / 300;
   Settings->serial_delimiter = 0xff;
   Settings->seriallog_level = SERIAL_LOG_LEVEL;
@@ -1046,6 +1045,9 @@ void SettingsDefaultSet2(void) {
   Settings->energy_power_calibration = HLW_PREF_PULSE;
   Settings->energy_voltage_calibration = HLW_UREF_PULSE;
   Settings->energy_current_calibration = HLW_IREF_PULSE;
+  Settings->energy_power_calibration2 = HLW_PREF_PULSE;
+  Settings->energy_voltage_calibration2 = HLW_UREF_PULSE;
+  Settings->energy_current_calibration2 = HLW_IREF_PULSE;
 //  Settings->energy_kWhtoday_ph[0] = 0;
 //  Settings->energy_kWhtoday_ph[1] = 0;
 //  Settings->energy_kWhtoday_ph[2] = 0;
@@ -1468,7 +1470,7 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x09020006) {
       for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-        Settings->switchmode[i] = (i < 8) ? Settings->ex_switchmode[i] : SWITCH_MODE;
+        Settings->switchmode[i] = SWITCH_MODE;
       }
       for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
         Settings->interlock[i] = (i < 4) ? Settings->ds3502_state[i] : 0;
@@ -1532,8 +1534,8 @@ void SettingsDelta(void) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
       Settings->energy_kWhtotal_ph[0] = Settings->ex_energy_kWhtotal;
-      Settings->energy_kWhtoday_ph[0] = Settings->ex_energy_kWhtoday;
-      Settings->energy_kWhyesterday_ph[0] = Settings->ex_energy_kWhyesterday;
+      Settings->energy_kWhtoday_ph[0] = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
+      Settings->energy_kWhyesterday_ph[0] = Settings->energy_voltage_calibration2;  // = ex_energy_kWhyesterday
       RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.ex_energy_kWhtoday;
       RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.ex_energy_kWhtotal;
     }
@@ -1598,6 +1600,17 @@ void SettingsDelta(void) {
       Settings->webcam_clk = 20;
     }
 #endif  // ESP32
+    if (Settings->version < 0x0C020002) {  // 12.2.0.2
+      Settings->energy_kWhdoy = Settings->energy_current_calibration2 & 0xFFFF;
+      Settings->energy_min_power = (Settings->energy_current_calibration2 >> 16) & 0xFFFF;
+      Settings->energy_power_calibration2 = Settings->energy_power_calibration;
+      Settings->energy_voltage_calibration2 = Settings->energy_voltage_calibration;
+      Settings->energy_current_calibration2 = Settings->energy_current_calibration;
+    }
+    if (Settings->version < 0x0C020005) {  // 12.2.0.5
+      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->param[P_SERIAL_SKIP] = 0;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

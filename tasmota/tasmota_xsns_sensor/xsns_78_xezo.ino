@@ -306,7 +306,7 @@ private:
 
 // The main driver is the same for all devices.
 // What changes is the implementation of the class itself
-bool Xsns78(uint8_t function)
+bool Xsns78(uint32_t function)
 {
   if (!I2cEnabled(XI2C_55)) {
     return false;

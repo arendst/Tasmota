@@ -98,7 +98,7 @@ void HYT_Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns97(uint8_t function) {
+bool Xsns97(uint32_t function) {
   if (!I2cEnabled(XI2C_68)) { return false; }
 
   bool result = false;

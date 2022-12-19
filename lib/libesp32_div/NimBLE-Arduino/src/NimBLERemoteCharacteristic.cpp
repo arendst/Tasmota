@@ -616,7 +616,6 @@ bool NimBLERemoteCharacteristic::setNotify(uint16_t val, notify_callback notifyC
 
     NIMBLE_LOGD(LOG_TAG, "<< setNotify()");
 
-    response = true; // Always write with response as per Bluetooth core specification.
     return desc->writeValue((uint8_t *)&val, 2, response);
 } // setNotify
 

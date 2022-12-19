@@ -268,8 +268,7 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
     int retries = 3;
 
 #ifdef SHELLY_DIMMER_DEBUG
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Tx Packet:"));
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)data, len);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Tx Packet %*_H"), len, (uint8_t*)data);
 #endif  // SHELLY_DIMMER_DEBUG
 
     while (retries--)
@@ -694,8 +693,7 @@ bool ShdSerialInput(void)
             // finished
 #ifdef SHELLY_DIMMER_DEBUG
             Shd.byte_counter++;
-            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Rx Packet:"));
-            AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Shd.buffer, Shd.byte_counter);
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "Rx Packet %*_H"), Shd.byte_counter, Shd.buffer);
 #endif  // SHELLY_DIMMER_DEBUG
             Shd.byte_counter = 0;
 
@@ -707,9 +705,8 @@ bool ShdSerialInput(void)
         {
             // wrong data
 #ifdef SHELLY_DIMMER_DEBUG
-            AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Byte %i of received data frame is invalid. Rx Packet:"), Shd.byte_counter);
-            Shd.byte_counter++;
-            AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Shd.buffer, Shd.byte_counter);
+            AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Byte %i of received data frame is invalid. Rx Packet %*_H"), 
+              Shd.byte_counter, Shd.byte_counter +1, Shd.buffer);
 #endif  // SHELLY_DIMMER_DEBUG
             Shd.byte_counter = 0;
         }
@@ -739,8 +736,7 @@ bool ShdModuleSelected(void) {
 bool ShdSetChannels(void)
 {
 #ifdef SHELLY_DIMMER_DEBUG
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "SetChannels:"));
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t *)XdrvMailbox.data, XdrvMailbox.data_len);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(SHD_LOGNAME "SetChannels %*_H"), XdrvMailbox.data_len, (uint8_t *)XdrvMailbox.data);
 #endif  // SHELLY_DIMMER_DEBUG
 
     uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
@@ -831,7 +827,7 @@ void CmndShdWarmupTime(void)
 \*********************************************************************************************/
 
 #ifdef USE_ENERGY_SENSOR
-bool Xnrg31(uint8_t function) {
+bool Xnrg31(uint32_t function) {
   bool result = false;
 
   if (Shd.present) {
@@ -852,7 +848,7 @@ bool Xnrg31(uint8_t function) {
  * Driver Interface
 \*********************************************************************************************/
 
-bool Xdrv45(uint8_t function) {
+bool Xdrv45(uint32_t function) {
   bool result = false;
 
   if (FUNC_MODULE_INIT == function) {

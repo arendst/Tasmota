@@ -215,7 +215,7 @@ void ftc532_publish(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv47(uint8_t function) {
+bool Xdrv47(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

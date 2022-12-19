@@ -617,7 +617,7 @@ const char kWiegandCommands[] PROGMEM = "Wie|"  // No prefix
  * Interface
 \*********************************************************************************************/
 
-bool Xsns82(byte function) {
+bool Xsns82(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

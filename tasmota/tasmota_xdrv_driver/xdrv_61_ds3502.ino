@@ -73,7 +73,7 @@ void CmndWiper(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv61(uint8_t function) {
+bool Xdrv61(uint32_t function) {
   if (!I2cEnabled(XI2C_67)) { return false; }
 
   bool result = false;

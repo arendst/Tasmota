@@ -320,7 +320,7 @@ void Scd30Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns42(byte function) {
+bool Xsns42(uint32_t function) {
   if (!I2cEnabled(XI2C_29)) { return false; }
 
   bool result = false;

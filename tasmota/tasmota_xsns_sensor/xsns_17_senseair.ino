@@ -70,7 +70,7 @@ void Senseair250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SenseairModbus->Receive16BitRegister(&value);
       if (error) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir response error %d"), error);
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir read register %02X gave response error %d"), (uint16_t)start_addresses[senseair_read_state], error);
       } else {
         switch(senseair_read_state) {
           case 0:                // 0x1A (26) READ_TYPE_LOW - S8: fe 04 02 01 77 ec 92
@@ -104,15 +104,16 @@ void Senseair250ms(void)              // Every 250 mSec
             AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir temp adjustment %d"), value);
             break;
         }
-      }
-      senseair_read_state++;
-      if (2 == senseair_type) {  // S8
-        if (3 == senseair_read_state) {
-          senseair_read_state = 1;
-        }
-      } else {                   // K30, K70
-        if (sizeof(start_addresses) == senseair_read_state) {
-          senseair_read_state = 1;
+
+        senseair_read_state++;
+        if (2 == senseair_type) {  // S8
+          if (3 == senseair_read_state) {
+            senseair_read_state = 1;
+          }
+        } else {                   // K30, K70
+          if (sizeof(start_addresses) == senseair_read_state) {
+            senseair_read_state = 1;
+          }
         }
       }
     }
@@ -172,7 +173,7 @@ void SenseairShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns17(uint8_t function)
+bool Xsns17(uint32_t function)
 {
   bool result = false;
 

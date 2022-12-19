@@ -1,4 +1,7 @@
 # TouchScreen calibration
+#
+# rm DisplayCalibrate.tapp; zip -j -0 DisplayCalibrate.tapp ts_calibrate/*
+#
 var ts_calibrate = module("ts_calibrate")
 
 ts_calibrate.init = def (m)
@@ -104,8 +107,8 @@ ts_calibrate.init = def (m)
     end
 
     # draw cross
-    def draw_cross(x, y, size)
-      var sz2 = size / 2
+    def draw_cross(x, y, sz)
+      var sz2 = sz / 2
       self.p1.x = x - sz2
       self.p1.y = y
       self.p2.x = x + sz2

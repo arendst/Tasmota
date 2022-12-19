@@ -257,7 +257,7 @@ void hreShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xsns43(byte function)
+bool Xsns43(uint32_t function)
 {
    // If we don't have pins assigned give up quickly.
    if (!PinUsed(GPIO_HRE_CLOCK) || !PinUsed(GPIO_HRE_DATA)) { return false; }

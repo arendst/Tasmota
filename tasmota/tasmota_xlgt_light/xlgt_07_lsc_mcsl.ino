@@ -294,7 +294,7 @@ void LscMcWebGetArg(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt07(uint8_t function)
+bool Xlgt07(uint32_t function)
 {
   bool result = false;
 

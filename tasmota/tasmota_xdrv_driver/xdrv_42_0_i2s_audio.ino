@@ -679,7 +679,7 @@ void i2s_mp3_loop(void);
 void i2s_mp3_init(void);
 void MP3ShowStream(void);
 
-bool Xdrv42(uint8_t function) {
+bool Xdrv42(uint32_t function) {
   bool result = false;
 
   switch (function) {

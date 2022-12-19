@@ -52,6 +52,8 @@ uint8_t       Settings->knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, 
 
 #include <esp-knx-ip.h>         // KNX Library
 
+bool knx_started = false;
+
 address_t KNX_physs_addr;  // Physical KNX address of this device
 address_t KNX_addr;        // KNX Address converter variable
 
@@ -1298,7 +1300,7 @@ void CmndKnxCb(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv11(uint8_t function)
+bool Xdrv11(uint32_t function)
 {
   bool result = false;
     switch (function) {
@@ -1328,6 +1330,15 @@ bool Xdrv11(uint8_t function)
         break;
       case FUNC_PRE_INIT:
         KNX_INIT();
+        break;
+      case FUNC_NETWORK_UP:
+        if (!knx_started && Settings->flag.knx_enabled) {  // CMND_KNX_ENABLED
+          KNXStart();
+          knx_started = true;
+        }
+        break;
+      case FUNC_NETWORK_DOWN:
+        knx_started = false;
         break;
 //      case FUNC_SET_POWER:
 //        break;

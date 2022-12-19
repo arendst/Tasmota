@@ -599,7 +599,7 @@ bool MGC3130CommandSensor()
  * Interface
 \*********************************************************************************************/
 
-bool Xsns36(uint8_t function)
+bool Xsns36(uint32_t function)
 {
   if (!I2cEnabled(XI2C_27)) { return false; }
 

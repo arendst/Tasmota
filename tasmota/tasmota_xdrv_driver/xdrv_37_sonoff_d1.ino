@@ -99,7 +99,7 @@ bool SonoffD1SerialInput(void)
       // aa 55 01 04 00 0a 00 64 ff ff ff ff ff ff ff ff 6b - Power Off (with last dimmer 100%)
       // aa 55 01 04 00 0a 01 64 ff ff ff ff ff ff ff ff 6c - Power On (with last dimmer 100%)
 
-      AddLogSerial(LOG_LEVEL_DEBUG);
+      AddLogSerial();
       uint8_t crc = 0;
       for (uint32_t i = 2; i < SnfD1.receive_len -1; i++) {
         crc += TasmotaGlobal.serial_in_buffer[i];
@@ -173,7 +173,7 @@ bool SonoffD1ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv37(uint8_t function)
+bool Xdrv37(uint32_t function)
 {
   bool result = false;
 

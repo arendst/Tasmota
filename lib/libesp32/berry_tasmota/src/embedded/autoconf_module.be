@@ -316,7 +316,7 @@ autoconf_module.init = def (m)
           var line = f.readline()         # read each line, can contain a terminal '\n', empty if end of file
           if size(line) == 0 break end    # end of file
 
-          if line[-1] == "\n"  line = line[0..-2] end  # remove any trailing '\n'
+          while (size(line) > 0 && (line[-1] == "\n" || line[-1] == "\r")) line = line[0..-2] end  # remove any trailing '\n' or '\r'
           if size(line) > 0
             tasmota.cmd(line)             # run the command
           end

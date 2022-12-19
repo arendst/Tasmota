@@ -167,8 +167,7 @@ void Ssd1306Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp02(byte function)
-{
+bool Xdsp02(uint32_t function) {
   if (!I2cEnabled(XI2C_04)) { return false; }
 
   bool result = false;

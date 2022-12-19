@@ -20,9 +20,9 @@
 #ifdef USE_LIGHT
 
 #ifdef XFUNC_PTR_IN_ROM
-bool (* const xlgt_func_ptr[])(uint8_t) PROGMEM = {   // Light driver Function Pointers
+bool (* const xlgt_func_ptr[])(uint32_t) PROGMEM = {   // Light driver Function Pointers
 #else
-bool (* const xlgt_func_ptr[])(uint8_t) = {   // Light driver Function Pointers
+bool (* const xlgt_func_ptr[])(uint32_t) = {   // Light driver Function Pointers
 #endif
 
 #ifdef XLGT_01
@@ -94,8 +94,7 @@ const uint8_t xlgt_present = sizeof(xlgt_func_ptr) / sizeof(xlgt_func_ptr[0]);  
 
 uint8_t xlgt_active = 0;
 
-bool XlgtCall(uint8_t function)
-{
+bool XlgtCall(uint32_t function) {
   DEBUG_TRACE_LOG(PSTR("LGT: %d"), function);
 
   if (FUNC_MODULE_INIT == function) {

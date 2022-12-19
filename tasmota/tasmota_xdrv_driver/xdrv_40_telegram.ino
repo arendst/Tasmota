@@ -476,7 +476,7 @@ void CmndTmSend(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv40(uint8_t function)
+bool Xdrv40(uint32_t function)
 {
   bool result = false;
 

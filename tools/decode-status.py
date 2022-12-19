@@ -97,8 +97,8 @@ a_setoption = [[
     "(Rotary) Rotary step boundary (default 10)",
     "(IR) Base tolerance percentage for matching incoming IR messages (default 25, max 100)",
     "(Bistable) Pulse time in milliseconds for two coil bistable latching relays (default 40)",
-    "(not used) Tuya MCU power Id",
-    "(not used) Energy Tariff1 start hour",
+    "(PowerOn) Add delay of 10 x value milliseconds at power on",
+    "(PowerOn) Add delay of value seconds at power on before activating relays",
     "(not used) Energy Tariff2 start hour",
     "",
     ],[
@@ -287,8 +287,8 @@ a_features = [[
     "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
     ],[
     "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
-    "USE_MODBUS_ENERGY","","","",
-    "","","","",
+    "USE_MODBUS_ENERGY","USE_SHELLY_PRO","USE_DALI","USE_BP1658CJ",
+    "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
     "","","","",
     "","","","",
     "","","","",
@@ -321,7 +321,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.1.1.4 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.2.0.5 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

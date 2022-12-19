@@ -98,7 +98,7 @@ void Dht12Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns58(uint8_t function)
+bool Xsns58(uint32_t function)
 {
   if (!I2cEnabled(XI2C_41)) { return false; }
 

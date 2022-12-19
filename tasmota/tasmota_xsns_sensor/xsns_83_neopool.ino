@@ -2559,7 +2559,7 @@ void CmndNeopoolIONRes(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns83(uint8_t function)
+bool Xsns83(uint32_t function)
 {
   bool result = false;
 

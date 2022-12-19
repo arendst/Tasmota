@@ -1,5 +1,5 @@
 /*
-  xdrv_99_debug.ino - debug support for Tasmota
+  xdrv_127_debug.ino - debug support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -32,7 +32,7 @@
  * Needs file zzzz_debug.ino due to DEFINE processing
 \*********************************************************************************************/
 
-#define XDRV_99             99
+#define XDRV_127            127
 
 #ifndef CPU_LOAD_CHECK
 #define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
@@ -46,6 +46,7 @@
 #define D_CMND_CFGDUMP   "CfgDump"
 #define D_CMND_CFGPEEK   "CfgPeek"
 #define D_CMND_CFGPOKE   "CfgPoke"
+#define D_CMND_SHOWHEAP  "ShowHeap"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
@@ -62,6 +63,11 @@
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MEMDUMP "|" D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+  D_CMND_SHOWHEAP "|"
+#endif
+#endif
 #ifdef USE_WEBSERVER
   D_CMND_CFGXOR "|"
 #endif
@@ -77,6 +83,11 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
 
 void (* const DebugCommand[])(void) PROGMEM = {
   &CmndMemDump, &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+  &CmndShowHeap,
+#endif
+#endif
 #ifdef USE_WEBSERVER
   &CmndCfgXor,
 #endif
@@ -355,7 +366,6 @@ void DebugDump(uint32_t start, uint32_t size) {
   }
 }
 
-
 void DebugCfgDump(char* parms)
 {
   uint32_t CFG_COLS = 16;
@@ -522,6 +532,15 @@ void CmndCfgPoke(void)
   ResponseCmndDone();
 }
 
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+void CmndShowHeap(void) {
+  system_show_malloc();
+  ResponseCmndDone();
+}
+#endif
+#endif
+
 #ifdef USE_WEBSERVER
 void CmndCfgXor(void)
 {
@@ -640,7 +659,7 @@ void CmndI2cWrite(void)
     }
 
     if (index > 1) {
-      AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+      AddLog(LOG_LEVEL_INFO, PSTR("DBG: CmndI2cWrite %*_H"), index, buffer);
 
       Wire.beginTransmission(buffer[0]);
       for (uint32_t i = 1; i < index; i++) {
@@ -679,7 +698,7 @@ void CmndI2cRead(void)
         buffer[index++] = Wire.read();
       }
       if (index > 0) {
-        AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+        AddLog(LOG_LEVEL_INFO, PSTR("DBG: CmndI2cRead %*_H"), index, buffer);
       }
     }
   }
@@ -709,7 +728,7 @@ void CmndI2cClock(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv99(uint8_t function)
+bool Xdrv127(uint32_t function)
 {
   bool result = false;
 

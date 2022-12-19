@@ -386,7 +386,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 			}
 		}		// if->running
 	}			// for-loop i
-}				// void Mpr121Show(uint8_t function)
+}				// void Mpr121Show(uint32_t function)
 
 /*********************************************************************************************\
  * Interface
@@ -407,7 +407,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
  * @post    None.
  *
  */
-bool Xsns30(uint8_t function)
+bool Xsns30(uint32_t function)
 {
   if (!I2cEnabled(XI2C_23)) { return false; }
 

@@ -840,14 +840,27 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_MODBUS_ENERGY)
     feature9 |= 0x00000010;  // xnrg_29_modbus.ino
 #endif
-//    feature9 |= 0x00000020;
-//    feature9 |= 0x00000040;
-//    feature9 |= 0x00000080;
-
-//    feature9 |= 0x00000100;
-//    feature9 |= 0x00000200;
-//    feature9 |= 0x00000400;
-//    feature9 |= 0x00000800;
+#if defined(USE_SPI) && defined(USE_SHELLY_PRO)
+    feature9 |= 0x00000020;  // xdrv_88_esp32_shelly_pro.ino
+#endif
+#ifdef USE_DALI
+    feature9 |= 0x00000040;  // xdrv_89_esp32_dali.ino
+#endif
+#if defined(USE_LIGHT) && defined(USE_BP1658CJ)
+    feature9 |= 0x00000080;  // xlgt_10_bp1658cj.ino
+#endif
+#ifdef USE_DINGTIAN_RELAY
+    feature9 |= 0x00000100;  // xdrv_90_dingtian_relay.ino
+#endif
+#if defined(USE_I2C) && defined(USE_HMC5883L)
+    feature9 |= 0x00000200;  // xsns_101_hmc5883l.ino
+#endif
+#ifdef USE_LD2410
+    feature9 |= 0x00000400;  // xsns_102_ld2410.ino
+#endif
+#ifdef USE_ME007
+    feature9 |= 0x00000800;  // xsns_23_me007.ino
+#endif
 
 //    feature9 |= 0x00001000;
 //    feature9 |= 0x00002000;

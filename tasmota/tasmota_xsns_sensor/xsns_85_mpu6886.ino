@@ -1,5 +1,5 @@
 /*
-  xsns_84_tof10120.ino -MPU6886/MPU9250 accelerometer support for Tasmota
+  xsns_85_mpu6886.ino - MPU6886/MPU9250 accelerometer support for Tasmota
 
   Copyright (C) 2021  Stephan Hadinger and Theo Arends
 
@@ -103,7 +103,7 @@ void MPU_Every_Second(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns85(uint8_t function) {
+bool Xsns85(uint32_t function) {
   if (!I2cEnabled(XI2C_58)) { return false; }
 
   bool result = false;

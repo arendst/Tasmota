@@ -671,7 +671,7 @@ void CCLoadershow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv46(uint8_t function) {
+bool Xdrv46(uint32_t function) {
   if (!TasmotaGlobal.gpio_optiona.enable_ccloader) { return false; }
 
   bool result = false;

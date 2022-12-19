@@ -416,7 +416,7 @@ void IrRemoteCmndResponse(uint32_t error)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv05(uint8_t function)
+bool Xdrv05(uint32_t function)
 {
   bool result = false;
 

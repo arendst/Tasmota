@@ -155,7 +155,7 @@ void Sht3xShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns14(uint8_t function) {
+bool Xsns14(uint32_t function) {
   if (!I2cEnabled(XI2C_15)) { return false; }
 
   bool result = false;

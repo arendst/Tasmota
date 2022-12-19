@@ -218,7 +218,7 @@ bool Rg15Command(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns90(uint8_t function) {
+bool Xsns90(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {

@@ -574,7 +574,7 @@ void HandleHxAction(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns34(uint8_t function) {
+bool Xsns34(uint32_t function) {
   bool result = false;
 
   if (Hx.type) {

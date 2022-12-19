@@ -169,7 +169,7 @@ void MAX31855_Show(bool Json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns39(uint8_t function)
+bool Xsns39(uint32_t function)
 {
   bool result = false;
 

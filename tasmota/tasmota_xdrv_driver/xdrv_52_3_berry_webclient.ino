@@ -76,9 +76,9 @@ String wc_UrlEncode(const String& text) {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import webclient
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: ``
@@ -194,7 +194,11 @@ extern "C" {
         timeout = be_toint(vm, 4);
       }
       // open connection
-      bool success = tcp->connect(address, port, timeout);
+      IPAddress ipaddr;
+      bool success = WifiHostByName(address, ipaddr);
+      if (success) {
+        success = tcp->connect(ipaddr, port, timeout);
+      }
       be_pushbool(vm, success);
       be_return(vm);  /* return self */
     }
@@ -405,9 +409,15 @@ extern "C" {
     be_return(vm);  /* return code */
   }
 
-  // wc.POST(string | bytes) -> httpCode:int
-  int32_t wc_POST(struct bvm *vm);
-  int32_t wc_POST(struct bvm *vm) {
+  // Combined function for POST/PUT/PATCH/DELETE
+  enum {
+    wc_POST_op,
+    wc_PUT_op,
+    wc_PATCH_op,
+    wc_DELETE_op
+  };
+  int32_t wc_PostPutPatchDelete(struct bvm *vm, int32_t op);
+  int32_t wc_PostPutPatchDelete(struct bvm *vm, int32_t op) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
       HTTPClientLight * cl = wc_getclient(vm);
@@ -420,12 +430,52 @@ extern "C" {
         buf = (const char*) be_tobytes(vm, 2, &buf_len);
       }
       uint32_t http_connect_time = millis();
-      int32_t httpCode = cl->POST((uint8_t*)buf, buf_len);
+      int32_t httpCode;
+      switch (op) {
+        case wc_PUT_op:
+          httpCode = cl->PUT((uint8_t*)buf, buf_len);
+          break;
+        case wc_PATCH_op:
+          httpCode = cl->PATCH((uint8_t*)buf, buf_len);
+          break;
+        case wc_DELETE_op:
+          httpCode = cl->DELETE((uint8_t*)buf, buf_len);
+          break;
+        case wc_POST_op:
+        default:
+          httpCode = cl->POST((uint8_t*)buf, buf_len);
+          break;
+      }
       wc_errorCodeMessage(httpCode, http_connect_time);
       be_pushint(vm, httpCode);
       be_return(vm);  /* return code */
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+
+  // wc.POST(string | bytes) -> httpCode:int
+  int32_t wc_POST(struct bvm *vm);
+  int32_t wc_POST(struct bvm *vm) {
+    return wc_PostPutPatchDelete(vm, wc_POST_op);
+  }
+
+  // wc.PUT(string | bytes) -> httpCode:int
+  int32_t wc_PUT(struct bvm *vm);
+  int32_t wc_PUT(struct bvm *vm) {
+    return wc_PostPutPatchDelete(vm, wc_PUT_op);
+  }
+
+  // wc.PATCH(string | bytes) -> httpCode:int
+  int32_t wc_PATCH(struct bvm *vm);
+  int32_t wc_PATCH(struct bvm *vm) {
+    return wc_PostPutPatchDelete(vm, wc_PATCH_op);
+  }
+
+  // wc.DELETE(string | bytes) -> httpCode:int
+  int32_t wc_DELETE(struct bvm *vm);
+  int32_t wc_DELETE(struct bvm *vm) {
+    return wc_PostPutPatchDelete(vm, wc_DELETE_op);
   }
 
   int32_t wc_getstring(struct bvm *vm);
@@ -547,7 +597,7 @@ extern "C" {
         be_raisef(vm, "internal_error", "failed, written %i bytes vs %i", written, size);
       }
       AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing succesful");
-      
+
       be_pushint(vm, written);
       be_return(vm);  /* return code */
     }

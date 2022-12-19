@@ -39,6 +39,10 @@ class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
     virtual ~TasmotaSerial();
+    void setTransmitEnablePin(int tx_enable_pin);
+
+    size_t setRxBufferSize(size_t size);
+    size_t getRxBufferSize() { return serial_buffer_size; }
 
     bool begin(uint32_t speed = TM_SERIAL_BAUDRATE, uint32_t config = SERIAL_8N1);
     void end(bool turnOffDebug = true);
@@ -48,6 +52,10 @@ class TasmotaSerial : public Stream {
     size_t write(uint8_t byte) override;
     int read(void) override;
     size_t read(char* buffer, size_t size);
+    size_t read(uint8_t* buffer, size_t size) {
+      return read(reinterpret_cast<char*>(buffer), size);
+    }
+    void setReadChunkMode(bool mode);
     int available(void) override;
     void flush(void) override;
 
@@ -57,20 +65,25 @@ class TasmotaSerial : public Stream {
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
 #endif
-    bool isValid() { return m_valid; }
+    bool isValid(void) { return m_valid; }
+    bool overflow(void);
 
     using Print::write;
 
   private:
     bool isValidGPIOpin(int pin);
+    size_t txWrite(uint8_t byte);
+    void _fast_write(uint8_t b);      // IRAM minimized version
 #ifdef ESP32
     bool freeUart(void);
+    void Esp32Begin(void);
 #endif
-    size_t txWrite(uint8_t byte);
 
     // Member variables
     int m_rx_pin;
     int m_tx_pin;
+    int m_tx_enable_pin;
+    uint32_t m_data_bits;
     uint32_t m_stop_bits;
     uint32_t ss_byte;
     uint32_t ss_bstart;
@@ -80,18 +93,19 @@ class TasmotaSerial : public Stream {
     uint32_t m_bit_follow_metric = 0;
     uint32_t m_in_pos;
     uint32_t m_out_pos;
-    uint32_t serial_buffer_size;
+    uint32_t serial_buffer_size = TM_SERIAL_BUFFER_SIZE;
     bool m_valid;
+    bool m_tx_enable_valid;
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
+    bool m_overflow;
     bool m_high_speed = false;
     bool m_very_high_speed = false;   // above 100000 bauds
-    uint8_t *m_buffer;
-
-    void _fast_write(uint8_t b);      // IRAM minimized version
-
+    uint8_t *m_buffer = nullptr;
 #ifdef ESP32
+    uint32_t m_speed;
+    uint32_t m_config;
     HardwareSerial *TSerial;
     int m_uart = 0;
 #endif

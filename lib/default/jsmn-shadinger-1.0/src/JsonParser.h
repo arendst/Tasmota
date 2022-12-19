@@ -162,6 +162,7 @@ public:
   const char * findConstCharNull(const char * needle) const;
 
   // all-in-one methods: search for key (case insensitive), convert value and set default
+  bool getBool(const char *, bool val) const;
   int32_t getInt(const char *, int32_t) const;
   uint32_t getUInt(const char *, uint32_t) const;
   uint64_t getULong(const char *, uint64_t) const;

@@ -10,4 +10,4 @@ import os
 # pio >= 4.0.0
 env.Replace(UPLOADER=os.path.join("pio-tools", "espupload.py"))
 env.Replace(UPLOADERFLAGS="")
-env.Replace(UPLOADCMD="$UPLOADER -u $UPLOAD_PORT -f $SOURCES")
+env.Replace(UPLOADCMD="$PYTHONEXE $UPLOADER -u $UPLOAD_PORT -f $SOURCES")

@@ -1,5 +1,5 @@
 /*
-  xdrv_98_file_settings_demo.ino - Demo for Tasmota
+  xdrv_122_file_settings_demo.ino - Demo for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -174,7 +174,7 @@ void DrvDemoSettingsSave(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv98(uint8_t function) {
+bool Xdrv98(uint32_t function) {
   bool result = false;
 
   switch (function) {

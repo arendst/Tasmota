@@ -1284,7 +1284,7 @@ void TM1637Refresh(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp15(uint8_t function)
+bool Xdsp15(uint32_t function)
 {
   bool result = false;
 

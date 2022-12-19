@@ -314,7 +314,7 @@ bool Xsns68Cmnd(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns68(uint8_t function)
+bool Xsns68(uint32_t function)
 {
   bool result = false;
   if (PinUsed(GPIO_WINDMETER_SPEED)) {

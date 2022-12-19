@@ -169,7 +169,7 @@ void SSD1331Refresh(void) {     // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp14(uint8_t function) {
+bool Xdsp14(uint32_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {

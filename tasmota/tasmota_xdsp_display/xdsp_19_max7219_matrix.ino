@@ -305,7 +305,7 @@ bool MAX7291Matrix_showTime()
 #endif // USE_DISPLAY_MODES1TO5
 
 
-bool Xdsp19(uint8_t function)
+bool Xdsp19(uint32_t function)
 {
     bool result = false;
 

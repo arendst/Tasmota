@@ -1773,17 +1773,19 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     callBerryZigbeeDispatcher("attributes_refined", &zcl_received, &attr_list, srcaddr);
 #endif // USE_BERRY
 
-    if (defer_attributes) {
-      // Prepare for publish
-      if (zigbee_devices.jsonIsConflict(srcaddr, attr_list)) {
-        // there is conflicting values, force a publish of the previous message now and don't coalesce
-        zigbee_devices.jsonPublishFlush(srcaddr);
+    if (!attr_list.isEmpty()) {
+      if (defer_attributes) {
+        // Prepare for publish
+        if (zigbee_devices.jsonIsConflict(srcaddr, attr_list)) {
+          // there is conflicting values, force a publish of the previous message now and don't coalesce
+          zigbee_devices.jsonPublishFlush(srcaddr);
+        }
+        zigbee_devices.jsonAppend(srcaddr, attr_list);
+          zigbee_devices.setTimer(srcaddr, 0 /* groupaddr */, USE_ZIGBEE_COALESCE_ATTR_TIMER, 0 /*clusterid*/, srcendpoint, Z_CAT_READ_ATTR, 0, &Z_PublishAttributes);
+      } else {
+        // Publish immediately
+        zigbee_devices.jsonPublishNow(srcaddr, attr_list);
       }
-      zigbee_devices.jsonAppend(srcaddr, attr_list);
-      zigbee_devices.setTimer(srcaddr, 0 /* groupaddr */, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, Z_CAT_READ_ATTR, 0, &Z_PublishAttributes);
-    } else {
-      // Publish immediately
-      zigbee_devices.jsonPublishNow(srcaddr, attr_list);
     }
   }
 }
@@ -2307,6 +2309,9 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = true;            /* direct response */
+    if (localShortAddr == 0x0000) {
+      zcl.direction = 1;          // if we are coordinator, then response is from client to server
+    }
     zcl.setTransac(transactseq);
     zcl.payload.addBuffer(buf);
     zigbeeZCLSendCmd(zcl);

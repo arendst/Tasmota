@@ -197,7 +197,7 @@ void LcdRefresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp01(uint8_t function)
+bool Xdsp01(uint32_t function)
 {
   if (!I2cEnabled(XI2C_03)) { return false; }
 

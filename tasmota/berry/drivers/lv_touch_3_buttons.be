@@ -19,7 +19,7 @@ class lv_touch_3_buttons
   static ACTIVE_LOW = true
 
   # Arguments:
-  #   Physical GPIOs, generally through `gpio.pin(gpio.INPUT, 0), gpio.pin(gpio.INPUT, 1), gpio.pin(gpio.INPUT, 2)`
+  #   Physical GPIOs, generally through `gpio.pin(gpio.GPIO_INPUT, 0), gpio.pin(gpio.GPIO_INPUT, 1), gpio.pin(gpio.GPIO_INPUT, 2)`
   #
   # Pre-condition:
   #   LVGL must be already started
@@ -85,9 +85,9 @@ class lv_touch_3_buttons
   end
 end
 
-return lv_touch_3_buttons(gpio.pin(gpio.INPUT, 0), gpio.pin(gpio.INPUT, 1), gpio.pin(gpio.INPUT, 2), true)
+return lv_touch_3_buttons(gpio.pin(gpio.GPIO_INPUT, 0), gpio.pin(gpio.GPIO_INPUT, 1), gpio.pin(gpio.GPIO_INPUT, 2), true)
 
 #-
-lv_btn3 = lv_touch_3_buttons(gpio.pin(gpio.INPUT, 0), gpio.pin(gpio.INPUT, 1), gpio.pin(gpio.INPUT, 2), lv_touch_3_buttons.ACTIVE_LOW)
+lv_btn3 = lv_touch_3_buttons(gpio.pin(gpio.GPIO_INPUT, 0), gpio.pin(gpio.GPIO_INPUT, 1), gpio.pin(gpio.GPIO_INPUT, 2), lv_touch_3_buttons.ACTIVE_LOW)
 tasmota.add_driver(lv_btn3)
 -#

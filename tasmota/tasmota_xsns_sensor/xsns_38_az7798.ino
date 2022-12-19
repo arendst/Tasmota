@@ -1,7 +1,7 @@
 /*
   xsns_38_az7798.ino - AZ_Instrument 7798 CO2/temperature/humidity meter support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  adebeun
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -297,7 +297,7 @@ void AzShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns38(uint8_t function)
+bool Xsns38(uint32_t function)
 {
   bool result = false;
 

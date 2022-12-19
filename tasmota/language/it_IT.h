@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 05.10.2022
+ * Updated until v9.4.0.1 - Last update 07.12.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -83,6 +83,9 @@
 #define D_DEBUG                "Debug"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
+#define D_MOVING_DISTANCE      "Distanza in movimento"
+#define D_STATIC_DISTANCE      "Distanza statica"
+#define D_DETECT_DISTANCE      "Rileva distanza"
 #define D_DISTANCE             "Distanza"
 #define D_DNS_SERVER           "Server DNS"
 #define D_DO                   "Ossigeno dissolto"
@@ -511,6 +514,11 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS     "Trovata EEPROM ZBBridge all'indirizzo"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG        "Randomizzazione parametri Zigbee, controlla con \"ZbConfig\""
 
+// xdrv_89_dali.ino
+#define D_SENSOR_DALI_RX                  "Dali - RX"
+#define D_SENSOR_DALI_TX                  "Dali - TX"
+#define D_CONFIGURE_DALI                  "DALI - Config"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY      "Energia - oggi"
 #define D_ENERGY_YESTERDAY  "Energia  - ieri"
@@ -683,10 +691,12 @@
 #define D_SENSOR_SBR_TX                 "SerBr - TX"
 #define D_SENSOR_MBR_TX                 "ModBr - TX"
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
+#define D_SENSOR_MBR_TX_ENA             "ModBr - TX ON"
 #define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
-#define D_SENSOR_NRG_MBS_TX             "NrgModbus - TX"
-#define D_SENSOR_NRG_MBS_RX             "NrgModbus - RX"
+#define D_SENSOR_NRG_MBS_TX             "NrgMbs - TX"
+#define D_SENSOR_NRG_MBS_RX             "NrgMbs - RX"
+#define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ON"
 #define D_SENSOR_SDM72_TX               "SDM72 - TX"
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
@@ -697,6 +707,8 @@
 #define D_SENSOR_SDM630_RX              "SDM630 - RX"
 #define D_SENSOR_WE517_TX               "WE517 - TX"
 #define D_SENSOR_WE517_RX               "WE517 - RX"
+#define D_SENSOR_LD2410_TX              "LD2410 - TX"
+#define D_SENSOR_LD2410_RX              "LD2410 - RX"
 #define D_GPIO_TM1621_CS                "TM1621 - CS"
 #define D_GPIO_TM1621_WR                "TM1621 - WR"
 #define D_GPIO_TM1621_RD                "TM1621 - RD"
@@ -793,6 +805,8 @@
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
 #define D_SENSOR_SM2335_CLK             "SM2335 - CLK"
 #define D_SENSOR_SM2335_DAT             "SM2335 - DATI"
+#define D_SENSOR_BP1658CJ_CLK           "BP1658CJ - CLK"
+#define D_SENSOR_BP1658CJ_DAT           "BP1658CJ - DATI"
 #define D_SENSOR_BP5758D_CLK            "BP5758D - CLK"
 #define D_SENSOR_BP5758D_DAT            "BP5758D - DATI"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"
@@ -895,9 +909,16 @@
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
+#define D_GPIO_DINGTIAN_CLK             "Dingtian - CLK"
+#define D_GPIO_DINGTIAN_SDI             "Dingtian - SDI"
+#define D_GPIO_DINGTIAN_Q7              "Dingtian - Q7"
+#define D_GPIO_DINGTIAN_PL              "Dingtian - PL"
+#define D_GPIO_DINGTIAN_RCK             "Dingtian - RCK"
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
 #define D_SENSOR_FLOWRATEMETER          "Portata"
+#define D_SENSOR_ME007_TRIG             "ME007 - Tri"
+#define D_SENSOR_ME007_RX               "ME007 - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

@@ -283,7 +283,7 @@ void QMC5883L_Show(uint8_t json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns33(byte function) {
+bool Xsns33(uint32_t function) {
   if (!I2cEnabled(XI2C_71)) { return false; }
 
   if (FUNC_INIT == function) {

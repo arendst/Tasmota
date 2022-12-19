@@ -175,7 +175,7 @@ void Hdc2010SetMeasurementConfig() {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns94(uint8_t function)
+bool Xsns94(uint32_t function)
 {
   if (!I2cEnabled(XI2C_64)) {
     return false;
