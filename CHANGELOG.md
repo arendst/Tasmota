@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 (#17417)
 - Berry support for ``crypto.SHA256`` (#17430)
 - Support for RGB displays (#17414)
+- Berry add crypto AES_CTR, HDMAC_SHA256, MD5
 
 ### Breaking Changed
 

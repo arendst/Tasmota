@@ -25,7 +25,7 @@
 #include "be_object.h"
 
 /*********************************************************************************************\
- * AES class
+ * AES_GCM class
  * 
 \*********************************************************************************************/
 extern "C" {
@@ -158,6 +158,87 @@ extern "C" {
 #endif // USE_BERRY_CRYPTO_AES_GCM
   }
 }
+
+/*********************************************************************************************\
+ * AES_CTR class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  // `AES_CTR.init(secret_key:bytes(32)) -> instance`
+  int32_t m_aes_ctr_init(struct bvm *vm);
+  int32_t m_aes_ctr_init(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_CTR
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+      do {
+        size_t length = 0;
+        const void * bytes = be_tobytes(vm, 2, &length);
+        if (!bytes) break;
+        if (length != 32) {
+          be_raise(vm, "value_error", "Key size must be 32 bytes");
+        }
+
+        // Initialize an AES CTR structure with the secret key
+        br_aes_small_ctr_keys * ctr_ctx = (br_aes_small_ctr_keys *) be_os_malloc(sizeof(br_aes_small_ctr_keys));
+        if (!ctr_ctx) { be_throw(vm, BE_MALLOC_FAIL); }
+        br_aes_small_ctr_init(ctr_ctx, bytes, length);
+        be_newcomobj(vm, ctr_ctx, &be_commonobj_destroy_generic);
+        be_setmember(vm, 1, ".p1");
+
+        be_return_nil(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_AES_CTR
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_CTR
+  }
+
+  // `<instance:AES_CTR>.encrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
+  // `<instance:AES_CTR>.decrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
+  int32_t m_aes_ctr_run(bvm *vm);
+  int32_t m_aes_ctr_run(bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_AES_CTR
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4 && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isint(vm, 4)) {
+      do {
+        // get GCM context
+        be_getmember(vm, 1, ".p1");
+        br_aes_small_ctr_keys * ctx = (br_aes_small_ctr_keys *) be_tocomptr(vm, -1);
+        be_pop(vm, 1);
+
+        size_t iv_len;
+        const void * iv = be_tobytes(vm, 3, &iv_len);
+        if (iv_len != 12) { be_raise(vm, "value_error", "IV size must be 12 bytes"); }
+
+        uint32_t counter = be_toint(vm, 4);
+
+        // copy the input buffer
+        be_getmember(vm, 2, "copy");    // stack: bytes.copy()
+        be_pushvalue(vm, 2);            // stack: bytes.copy(), bytes instance
+        be_call(vm, 1);                 // call copy with self parameter
+        be_pop(vm, 1);                  // stack: clone of input bytes
+
+        size_t length = 0;
+        // we are changing bytes in place
+        void * bytes = (void*) be_tobytes(vm, -1, &length);
+        if (!bytes) break;
+
+        uint32_t next_counter = br_aes_small_ctr_run(ctx, iv, counter, bytes, length);
+
+        be_return(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_AES_CTR
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_AES_CTR
+  }
+}
+
 /*********************************************************************************************\
  * SHA256 class
  * 
@@ -233,6 +314,91 @@ extern "C" {
 #else // USE_BERRY_CRYPTO_SHA256
     be_raise(vm, "Not implemented", nullptr);
 #endif // USE_BERRY_CRYPTO_SHA256
+  }
+}
+
+/*********************************************************************************************\
+ * HMAC_SHA256 class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  // `HMAC_SHA256.init(key:bytes) -> nil`
+  int32_t m_hmac_sha256_init(struct bvm *vm);
+  int32_t m_hmac_sha256_init(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+      // Initialize a HMAC context
+      br_hmac_context * ctx = (br_hmac_context *) be_os_malloc(sizeof(br_hmac_context));
+      if (!ctx) {
+        be_throw(vm, BE_MALLOC_FAIL);
+      }
+      br_hmac_key_context keyCtx;   // keyCtx can be allocated on stack, it is not needed after `br_hmac_init`
+      size_t key_len;
+      const void *key = be_tobytes(vm, 2, &key_len);
+      br_hmac_key_init(&keyCtx, &br_sha256_vtable, key, key_len);
+      br_hmac_init(ctx, &keyCtx, 0);    // 0 is "natural output length"
+
+      be_newcomobj(vm, ctx, &be_commonobj_destroy_generic);
+      be_setmember(vm, 1, ".p");
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else // USE_BERRY_CRYPTO_HMAC_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_HMAC_SHA256
+  }
+
+  // `<instance:HMAC_SHA256>.update(content:bytes()) -> nil`
+  //
+  // Add raw bytes to the hash calculation
+  int32_t m_hmac_sha256_update(struct bvm *vm);
+  int32_t m_hmac_sha256_update(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isinstance(vm, 2)) {
+      do {
+        if (!be_isbytes(vm, 2)) break;
+        size_t length = 0;
+        const void * bytes = be_tobytes(vm, 2, &length);
+        if (!bytes) break;
+
+        be_getmember(vm, 1, ".p");
+        br_hmac_context * ctx;
+        ctx = (br_hmac_context *) be_tocomptr(vm, -1);
+        if (!ctx) break;
+
+        if (length > 0) {
+          br_hmac_update(ctx, bytes, length);
+        }
+        be_return_nil(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, "value_error", NULL);
+#else // USE_BERRY_CRYPTO_HMAC_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_HMAC_SHA256
+  }
+
+  // `<instance:SHA256>.finish() -> bytes()`
+  //
+  // Add raw bytes to the MD5 calculation
+  int32_t m_hmac_sha256_out(struct bvm *vm);
+  int32_t m_hmac_sha256_out(struct bvm *vm) {
+#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
+    be_getmember(vm, 1, ".p");
+    br_hmac_context * ctx;
+    ctx = (br_hmac_context *) be_tocomptr(vm, -1);
+
+    uint8_t output[32];
+    br_hmac_out(ctx, output);
+    be_pushbytes(vm, output, sizeof(output));
+    be_return(vm);
+#else // USE_BERRY_CRYPTO_HMAC_SHA256
+    be_raise(vm, "Not implemented", nullptr);
+#endif // USE_BERRY_CRYPTO_HMAC_SHA256
   }
 }
 
