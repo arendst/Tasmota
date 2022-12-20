@@ -123,7 +123,9 @@ void Pcf8574Init(void)
     Pcf8574.max_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
       uint8_t gpio = Pcf8574Read(idx);
+      gpio |= ~Settings->pcf8574_config[idx]; // TEST - Force input pullup
       Pcf8574.pin_mask[idx] = gpio;
+      Pcf8574Write(idx); // TEST - Force input pullup
 #ifdef USE_PCF8574_MQTTINPUT
       Pcf8574.last_input[idx] = gpio & ~Settings->pcf8574_config[idx];
 #endif // #ifdef USE_PCF8574_MQTTINPUT
