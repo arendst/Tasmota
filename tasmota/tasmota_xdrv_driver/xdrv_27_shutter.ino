@@ -309,7 +309,7 @@ void ShutterInit(void)
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Mode undef.. calculate..."));
         ShutterGlobal.position_mode = SHT_TIME;
         if (!relay_in_interlock) {
-          // temporary to maintain old functionality 
+          // temporary to maintain old functionality
           if (Settings->shutter_mode == SHT_UNDEF) {
             ShutterGlobal.position_mode = SHT_TIME_UP_DOWN;
           }
@@ -376,16 +376,16 @@ void ShutterInit(void)
           // Test is the relays are in interlock mode. Disable shuttermode if error
           if (!relay_in_interlock) {
             TasmotaGlobal.shutters_present = 0,
-            AddLog(LOG_LEVEL_ERROR, PSTR("SHT: ERROR: Shtr%d Relays are not in INTERLOCK. Pls read documentation. Shutter DISABLE. Fix and REBOOT"),i+1);
+            AddLog(LOG_LEVEL_ERROR, PSTR("SHT: ERROR: Shtr%d Relays are not in INTERLOCK. Pls read documentation. Shutter DISABLE. Fix and REBOOT"), i+1);
             return;
-          } 
+          }
         break;
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"),i+1,Shutter[i].min_realPositionChange,Shutter[i].min_TiltChange);
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"),i, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"), i+1, Shutter[i].min_realPositionChange, Shutter[i].min_TiltChange);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"), i+1, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init. Pos %d, Inv %d, Locked %d, Endstop enab %d, webButt inv %d, Motordel: %d"),
         i+1,  Shutter[i].real_position,
-        (Settings->shutter_options[i]&1) ? 1 : 0, (Settings->shutter_options[i]&2) ? 1 : 0, (Settings->shutter_options[i]&4) ? 1 : 0, (Settings->shutter_options[i]&8) ? 1 : 0, Shutter[i].motordelay);
+        (Settings->shutter_options[i] & 1) ? 1 : 0, (Settings->shutter_options[i] & 2) ? 1 : 0, (Settings->shutter_options[i] & 4) ? 1 : 0, (Settings->shutter_options[i] & 8) ? 1 : 0, Shutter[i].motordelay);
 
     } else {
       // terminate loop at first INVALID Shutter[i].
@@ -395,7 +395,7 @@ void ShutterInit(void)
     Settings->shutter_accuracy = 1;
     Settings->shutter_mode = ShutterGlobal.position_mode;
     // initialize MotorStop time with 500ms if not set
-    Settings->shutter_motorstop = Settings->shutter_motorstop == 0?500:Settings->shutter_motorstop>60000?500:Settings->shutter_motorstop;
+    Settings->shutter_motorstop = (Settings->shutter_motorstop == 0) ? 500 : Settings->shutter_motorstop;
   }
 }
 
@@ -410,7 +410,7 @@ void ShutterReportPosition(bool always, uint32_t index)
       shutter_running++;
     }
   }
- 
+
   // Allow function exit if nothing to report (99.9% use case)
   if (!always && !shutter_running) return;
 
@@ -422,7 +422,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   }
   for (i; i < n; i++) {
     //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d"), i+1,Shutter[i].real_position);
-    
+
     if (Shutter[i].direction != 0) {
       ShutterLogPos(i);
       shutter_running++;
@@ -588,7 +588,7 @@ void ShutterPowerOff(uint8_t i)
 
 void ShutterWaitForMotorStop(uint8_t index)
 {
-  Shutter[index-1].last_stop_time = millis(); 
+  Shutter[index-1].last_stop_time = millis();
   ShutterWaitForMotorStart(index);
 }
 
@@ -597,7 +597,7 @@ void ShutterWaitForMotorStart(uint8_t index)
   while (millis() < Shutter[index-1].last_stop_time + Settings->shutter_motorstop) {
     loop();
   }
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done")); 
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
 }
 
 void ShutterUpdatePosition(void)
@@ -734,7 +734,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
-  
+
   Shutter[i].direction = direction; // Last action. This causes RTC to start.
 }
 
@@ -1416,7 +1416,7 @@ void CmndShutterRelay(void)
     } else {
       ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: relold:%d index:%d, mode:%d, relaymask: %ld"), 
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: relold:%d index:%d, mode:%d, relaymask: %ld"),
     Settings->shutter_startrelay[XdrvMailbox.index -1] , XdrvMailbox.index ,Settings->shutter_mode, ShutterGlobal.RelayShutterMask );
     if (Settings->shutter_startrelay[XdrvMailbox.index -1] == 0 && XdrvMailbox.index == 1 && Settings->shutter_mode == SHT_UNDEF) {
       // first shutter was not defined, maybe init
