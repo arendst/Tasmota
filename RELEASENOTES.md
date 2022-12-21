@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.5.4 (IPv6 support)
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
+- Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)
 
 ### Fixed
 - Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)

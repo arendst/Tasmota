@@ -36,7 +36,7 @@ import shutil
 import argparse
 import requests
 
-#HOST_URL = "domus1:80/api/upload-arduino.php"
+# Default URL overwritten by [env] and/or [env:tasmota32_base] upload_port
 HOST_URL = "otaserver/ota/upload-tasmota.php"
 
 def main(args):
@@ -57,17 +57,27 @@ def main(args):
   # end if
 
   if not os.path.exists(args.image):
-    print('Sorry: the file %s does not exist', args.image)
+    print('Sorry: the file {} does not exist'.format(args.image))
     return 2
   # end if
 
-  # copy firmware.bin to tasmota.bin or tasmota32.bin
-  tname = os.path.normpath(os.path.dirname(args.image))
-  new_filename = tname + os.sep + os.path.basename(tname) + '.bin'
-  shutil.copy2(args.image, new_filename)
+  if args.image.find("firmware.bin") != -1:
+    # Legacy support for $SOURCE
+    # copy firmware.bin to tasmota.bin or tasmota32.bin
+    # C:\tmp\.pioenvs\tasmota-theo\firmware.bin
+    tname = os.path.normpath(os.path.dirname(args.image))
+    # C:\tmp\.pioenvs\tasmota-theo\tasmota-theo.bin
+    upload_file = tname + os.sep + os.path.basename(tname) + '.bin'
+    shutil.copy2(args.image, upload_file)
+  else:
+    # Support for bin_file and bin_gz_file
+    upload_file = args.image
+  # end if
+
+#  print('Debug filename in {}, upload {}'.format(args.image, upload_file))
 
   url = 'http://%s' % (args.host_url)
-  files = {'file': open(new_filename, 'rb')}
+  files = {'file': open(upload_file, 'rb')}
   req = requests.post(url, files=files)
   print(req.text)
 # end main
