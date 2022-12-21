@@ -44,6 +44,10 @@
  *                       2 = 4-byte signed
  *                       3 = 2-byte unsigned
  *                       4 = 4-byte unsigned
+ *                       5 = not used
+ *                       6 = 4-byte signed with swapped words
+ *                       7 = not used
+ *                       8 = 4-byte unsigned with swapped words
  *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
  *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A]) or
  *                   See additional defines like voltage.
@@ -72,6 +76,10 @@
  *                       2 = 4-byte signed
  *                       3 = 2-byte unsigned
  *                       4 = 4-byte unsigned
+ *                       5 = not used
+ *                       6 = 4-byte signed with swapped words
+ *                       7 = not used
+ *                       8 = 4-byte unsigned with swapped words
  *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
  *                   J - JSON register name (preferrably without spaces like "PhaseAngle")
  *                   G - GUI register name
@@ -146,6 +154,10 @@ enum EnergyModbusDataType { NRG_DT_FLOAT,              // 4-byte float
                             NRG_DT_S32,                // 4-byte signed
                             NRG_DT_U16,                // 2-byte unsigned
                             NRG_DT_U32,                // 4-byte unsigned
+                            NRG_DT_x16_nu1,
+                            NRG_DT_S32_SW,             // 4-byte signed with swapped words
+                            NRG_DT_x16_nu2,
+                            NRG_DT_U32_SW,             // 4-byte unsigned with swapped words
                             NRG_DT_MAX };
 
 enum EnergyModbusResolutions { NRG_RES_VOLTAGE = 21,   // V
@@ -289,8 +301,18 @@ void EnergyModbusLoop(void) {
           value = (float)value_buff;
           break;
         }
+        case NRG_DT_S32_SW: {
+          int32_t value_buff = ((int32_t)buffer[5])<<24 | ((uint32_t)buffer[6])<<16 | ((uint32_t)buffer[3])<<8 | buffer[4];
+          value = (float)value_buff;
+          break;
+        }
         case NRG_DT_U32: {
           uint32_t value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
+          value = (float)value_buff;
+          break;
+        }
+        case NRG_DT_U32_SW: {
+          uint32_t value_buff = ((uint32_t)buffer[5])<<24 | ((uint32_t)buffer[6])<<16 | ((uint32_t)buffer[3])<<8 | buffer[4];
           value = (float)value_buff;
           break;
         }
