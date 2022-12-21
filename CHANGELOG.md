@@ -3,21 +3,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.1] 20221216
+## [12.3.1.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+- Shutter default motorstop set to 0 (#17403)
+
+### Removed
+
+## [12.3.1.1] 20221221
 ### Added
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 (#17417)
 - Berry support for ``crypto.SHA256`` (#17430)
 - Support for RGB displays (#17414)
 - Berry add crypto AES_CTR, HDMAC_SHA256, MD5
 
-### Breaking Changed
-
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.5.4 (IPv6 support)
-
-### Fixed
-
-### Removed
 
 ## [Released]
 

@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.3.1.1
+## Changelog v12.3.1.2
 ### Added
 - Support for RGB displays [#17414](https://github.com/arendst/Tasmota/issues/17414)
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 [#17417](https://github.com/arendst/Tasmota/issues/17417)
@@ -120,5 +120,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 
 ### Fixed
+- Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)
 
 ### Removed
