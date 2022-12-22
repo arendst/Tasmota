@@ -1,7 +1,7 @@
+Import("env")
+
 import glob
 import os
-
-Import("env")
 
 def FindInoNodes(env):
     src_dir = glob.escape(env.subst("$PROJECT_SRC_DIR"))

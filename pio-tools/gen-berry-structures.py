@@ -1,6 +1,5 @@
 Import("env")
-env = DefaultEnvironment()
-platform = env.PioPlatform()
+
 import os
 import glob
 import subprocess
