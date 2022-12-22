@@ -674,6 +674,75 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * HKDF_HMAC_SHA256
+ * 
+\*********************************************************************************************/
+extern "C" {
+  // crypto.HKDF_HMAC_SHA256().derive(ikm:bytes(), salt:bytes(), info:bytes(), out_bytes:int) -> bytes(out_bytes)
+  // Derive key with HKDF based on HMAC SHA256
+  int32_t m_hkdf_hmac_sha256_derive(bvm *vm);
+  int32_t m_hkdf_hmac_sha256_derive(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4 && be_isbytes(vm, 1) && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isint(vm, 4)) {
+      size_t ikm_len;
+      const void * ikm = be_tobytes(vm, 1, &ikm_len);
+      if (ikm_len == 0) { be_raise(vm, "value_error", "ikm must not be empty"); }
+
+      size_t salt_len;
+      const void * salt = be_tobytes(vm, 2, &salt_len);
+      if (salt_len == 0) { salt = &br_hkdf_no_salt; }
+
+      size_t info_len;
+      const void * info = be_tobytes(vm, 3, &info_len);
+
+      int32_t out_bytes = be_toint(vm, 4);
+      if (out_bytes < 1 || out_bytes > 256) { be_raise(vm, "value_error", "invalid out_bytes"); }
+
+      br_hkdf_context hc;
+      br_hkdf_init(&hc, &br_sha256_vtable, salt, salt_len);
+      br_hkdf_inject(&hc, ikm, ikm_len);
+      br_hkdf_flip(&hc);
+      uint8_t out[out_bytes];
+      br_hkdf_produce(&hc, info, info_len, out, out_bytes);
+
+      be_pushbytes(vm, out, out_bytes);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+/* Test vectors
+# https://www.rfc-editor.org/rfc/rfc5869
+
+import crypto
+
+# Test Case 1
+hk = crypto.HKDF_HMAC_SHA256()
+ikm = bytes("0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B")
+salt = bytes("000102030405060708090A0B0C")
+info = bytes("F0F1F2F3F4F5F6F7F8F9")
+k = hk.derive(ikm, salt, info, 42)
+assert(k == bytes("3CB25F25FAACD57A90434F64D0362F2A2D2D0A90CF1A5A4C5DB02D56ECC4C5BF34007208D5B887185865"))
+
+# Test Case 2
+hk = crypto.HKDF_HMAC_SHA256()
+ikm  = bytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f")
+salt = bytes("606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf")
+info = bytes("b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff")
+k = hk.derive(ikm, salt, info, 82)
+assert(k == bytes("b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"))
+
+# Test Case 3
+hk = crypto.HKDF_HMAC_SHA256()
+ikm  = bytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
+salt = bytes()
+info = bytes()
+k = hk.derive(ikm, salt, info, 42)
+assert(k == bytes("8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8"))
+
+*/
+}
+
+/*********************************************************************************************\
  * PBKDF2_HMAC_SHA256
  * 
  * accelerate _f function
