@@ -1110,13 +1110,13 @@ void EnergySnsInit(void)
   XnrgCall(FUNC_INIT);
 
   if (TasmotaGlobal.energy_driver) {
-
+/*
     AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Rtc valid %d, kWhtoday_ph Rtc %d/%d/%d, Set %d/%d/%d"),
       RtcSettingsValid(),
       RtcSettings.energy_kWhtoday_ph[0],RtcSettings.energy_kWhtoday_ph[1],RtcSettings.energy_kWhtoday_ph[2],
       Settings->energy_kWhtoday_ph[0],Settings->energy_kWhtoday_ph[1],Settings->energy_kWhtoday_ph[2]
     );
-
+*/
     for (uint32_t i = 0; i < 3; i++) {
 //    Energy.kWhtoday_offset[i] = 0;   // Reset by EnergyDrvInit()
       // 20220805 - Change from https://github.com/arendst/Tasmota/issues/16118
