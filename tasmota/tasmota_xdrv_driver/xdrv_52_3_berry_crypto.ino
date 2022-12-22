@@ -40,6 +40,32 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * Random bytes generator
+ * 
+ * As long as Wifi or BLE is enable, it uses a hardware source for true randomnesss
+ * 
+\*********************************************************************************************/
+extern "C" {
+  // `crypto.random(num_bytes:int) -> bytes(num_bytes)`
+  //
+  // Generates a series of random bytes
+  int m_crypto_random(bvm *vm);
+  int m_crypto_random(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t n = be_toint(vm, 1);
+      if (n < 0 || n > 4096) { be_raise(vm, "value_error", ""); }
+
+      uint8_t rand_bytes[n];
+      esp_fill_random(rand_bytes, n);
+      be_pushbytes(vm, rand_bytes, n);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * AES_GCM class
  * 
 \*********************************************************************************************/

@@ -9,6 +9,7 @@
 #include "be_mapping.h"
 
 extern int be_class_crypto_member(bvm *vm);
+extern int m_crypto_random(bvm *vm);
 
 extern int m_aes_gcm_init(bvm *vm);
 extern int m_aes_gcm_encryt(bvm *vm);
@@ -145,6 +146,7 @@ class be_class_pbkdf2_hmac_sha256 (scope: global, name: PBKDF2_HMAC_SHA256) {
 
 module crypto (scope: global) {
   member, func(be_class_crypto_member)
+  random, func(m_crypto_random)
 }
 
 @const_object_info_end */
