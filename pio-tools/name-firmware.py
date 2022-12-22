@@ -1,9 +1,7 @@
 Import("env")
-Import("projenv")
-import os
+
 import shutil
 import pathlib
-
 import tasmotapiolib
 
 

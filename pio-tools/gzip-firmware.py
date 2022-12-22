@@ -1,7 +1,7 @@
 Import("env")
+
 import os
 import shutil
-import pathlib
 import tasmotapiolib
 import gzip
 
