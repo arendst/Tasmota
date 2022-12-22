@@ -48,7 +48,7 @@
  *                       6 = 4-byte signed with swapped words
  *                       7 = not used
  *                       8 = 4-byte unsigned with swapped words
- *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
+ *                   M - Multiply, if negative, or divide, if positive, the read register by 1 to 10000 - optional. default = 1
  *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A]) or
  *                   See additional defines like voltage.
  *   Power         - Active power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010]) or
@@ -80,7 +80,7 @@
  *                       6 = 4-byte signed with swapped words
  *                       7 = not used
  *                       8 = 4-byte unsigned with swapped words
- *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
+ *                   M - Multiply, if negative, or divide, if positive, the read register by 1 to 10000 - optional. default = 1
  *                   J - JSON register name (preferrably without spaces like "PhaseAngle")
  *                   G - GUI register name
  *                   U - GUI unit name
@@ -105,6 +105,7 @@
  * rule3 on file#modbus do {"Name":"SDM120","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM630","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":[0,2,4],"Current":[6,8,10],"Power":[12,14,16],"ApparentPower":[18,20,22],"ReactivePower":[24,26,28],"Factor":[30,32,34],"Frequency":70,"Total":342,"ExportActive":[352,354,356],"User":{"R":[346,348,350],"J":"ImportActive","G":"Import Active","U":"kWh","D":24}} endon
+ * rule3 on file#modbus do {"Name":"X3MIC","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"M":10},"Power":{"R":0x040e,"T":3,"M":1},"Total":{"R":0x0423,"T":8,"M":1000}} endon
  *
  * Note:
  * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 800
@@ -215,7 +216,7 @@ struct NRGMBSPARAM {
 
 typedef struct NRGMBSREGISTER {
   uint16_t address[ENERGY_MAX_PHASES];
-  uint16_t divider;
+  int16_t divider;
   uint32_t datatype;
 } NrgMbsRegister_t;
 NrgMbsRegister_t *NrgMbsReg = nullptr;
@@ -272,52 +273,80 @@ void EnergyModbusLoop(void) {
       */
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus error %d"), error);
     } else {
+      /* Modbus protocol format:
+      * SA = Device Address
+      * FC = Function Code
+      * BC = Byte count
+      * Fh = First or High word MSB
+      * Fl = First or High word LSB
+      * Sh = Second or Low word MSB
+      * Sl = Second or Low word LSB
+      * Cl = CRC lsb
+      * Ch = CRC msb
+      */
       Energy.data_valid[NrgMbsParam.phase] = 0;
 
-      //  0  1  2  3  4  5  6  7  8
-      // SA FC BC Fh Fl Sh Sl Cl Ch
-      // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
       float value;
       switch (NrgMbsReg[NrgMbsParam.state].datatype) {
-        case NRG_DT_FLOAT: {
+        case NRG_DT_FLOAT: {  // 0
+          //  0  1  2  3  4  5  6  7  8
+          // SA FC BC Fh Fl Sh Sl Cl Ch
+          // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
           ((uint8_t*)&value)[3] = buffer[3];   // Get float values
           ((uint8_t*)&value)[2] = buffer[4];
           ((uint8_t*)&value)[1] = buffer[5];
           ((uint8_t*)&value)[0] = buffer[6];
           break;
         }
-        case NRG_DT_S16: {
+        case NRG_DT_S16: {  // 1
+          //  0  1  2  3  4  5  6
+          // SA FC BC Fh Fl Cl Ch
           int16_t value_buff = ((int16_t)buffer[3])<<8 | buffer[4];
           value = (float)value_buff;
           break;
         }
-        case NRG_DT_U16: {
+        case NRG_DT_U16: {  // 3
+          //  0  1  2  3  4  5  6
+          // SA FC BC Fh Fl Cl Ch
           uint16_t value_buff = ((uint16_t)buffer[3])<<8 | buffer[4];
           value = (float)value_buff;
           break;
         }
-        case NRG_DT_S32: {
+        case NRG_DT_S32: {  // 2
+          //  0  1  2  3  4  5  6  7  8
+          // SA FC BC Fh Fl Sh Sl Cl Ch
           int32_t value_buff = ((int32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
           value = (float)value_buff;
           break;
         }
-        case NRG_DT_S32_SW: {
+        case NRG_DT_S32_SW: {  // 6
+          //  0  1  2  3  4  5  6  7  8
+          // SA FC BC Sh Sl Fh Fl Cl Ch
           int32_t value_buff = ((int32_t)buffer[5])<<24 | ((uint32_t)buffer[6])<<16 | ((uint32_t)buffer[3])<<8 | buffer[4];
           value = (float)value_buff;
           break;
         }
-        case NRG_DT_U32: {
+        case NRG_DT_U32: {  // 4
+          //  0  1  2  3  4  5  6  7  8
+          // SA FC BC Fh Fl Sh Sl Cl Ch
           uint32_t value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
           value = (float)value_buff;
           break;
         }
-        case NRG_DT_U32_SW: {
+        case NRG_DT_U32_SW: {  // 8
+          //  0  1  2  3  4  5  6  7  8
+          // SA FC BC Sh Sl Fh Fl Cl Ch
+          // 01 04 04 EB EC 00 0E 8E 51 = 977.9000 (Solax protocol X1&X3)
           uint32_t value_buff = ((uint32_t)buffer[5])<<24 | ((uint32_t)buffer[6])<<16 | ((uint32_t)buffer[3])<<8 | buffer[4];
           value = (float)value_buff;
           break;
         }
       }
-      value /= NrgMbsReg[NrgMbsParam.state].divider;
+      if (NrgMbsReg[NrgMbsParam.state].divider < 1) {
+        value *= (NrgMbsReg[NrgMbsParam.state].divider * -1);
+      } else {
+        value /= NrgMbsReg[NrgMbsParam.state].divider;
+      }
 
       switch (NrgMbsParam.state) {
         case NRG_MBS_VOLTAGE:
@@ -416,8 +445,8 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
   }
   val = user_add_value[PSTR("M")];               // Register divider
   if (val) {
-    // "M":1
-    NrgMbsReg[reg_index].divider = val.getUInt();
+    // "M":1 or "M":-10
+    NrgMbsReg[reg_index].divider = val.getInt();
   }
   val = user_add_value[PSTR("J")];               // JSON value name
   if (val) {
@@ -575,8 +604,8 @@ bool EnergyModbusReadRegisters(void) {
         }
         val = register_add_values[PSTR("M")];    // Register divider
         if (val) {
-          // "M":1
-          NrgMbsReg[names].divider = val.getUInt();
+          // "M":1 or "M":-10
+          NrgMbsReg[names].divider = val.getInt();
         }
       } else if (val.isArray()) {
         // "Voltage":[0,0,0]
@@ -658,7 +687,7 @@ bool EnergyModbusReadRegisters(void) {
     if (NrgMbsReg[i].datatype >= NRG_DT_MAX) {
       NrgMbsReg[i].datatype = ENERGY_MODBUS_DATATYPE;
     }
-    if (NrgMbsReg[i].divider < 1) {
+    if (0 == NrgMbsReg[i].divider) {
       NrgMbsReg[i].divider = ENERGY_MODBUS_DIVIDER;
     }
   }
