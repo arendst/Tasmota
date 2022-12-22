@@ -25,6 +25,21 @@
 #include "be_object.h"
 
 /*********************************************************************************************\
+ * members class
+ * 
+\*********************************************************************************************/
+extern "C" {
+  extern const be_const_member_t be_crypto_members[];
+  extern const size_t be_crypto_members_size;
+  // virtual member
+  int be_class_crypto_member(bvm *vm);
+  int be_class_crypto_member(bvm *vm) {
+    be_const_module_member_raise(vm, be_crypto_members, be_crypto_members_size);
+    be_return(vm);
+  }
+}
+
+/*********************************************************************************************\
  * AES_GCM class
  * 
 \*********************************************************************************************/
@@ -33,7 +48,6 @@ extern "C" {
   // `AES_GCM.init(secret_key:bytes(32), iv:bytes(12)) -> instance`
   int32_t m_aes_gcm_init(struct bvm *vm);
   int32_t m_aes_gcm_init(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_GCM
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 3 && be_isinstance(vm, 2) && be_isinstance(vm, 3)) {
       do {
@@ -77,15 +91,11 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_AES_GCM
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 
   int32_t m_aes_gcm_encryt(bvm *vm);
   int32_t m_aes_gcm_decryt(bvm *vm);
   int32_t m_aes_gcm_encrypt_or_decryt(bvm *vm, int encrypt) {
-#ifdef USE_BERRY_CRYPTO_AES_GCM
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isinstance(vm, 2)) {
       do {
@@ -115,27 +125,15 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_AES_GCM
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_GCM
   }
   int32_t m_aes_gcm_encryt(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_GCM
     return m_aes_gcm_encrypt_or_decryt(vm, 1);
-#else // USE_BERRY_CRYPTO_AES_GCM
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_GCM
   }
   int32_t m_aes_gcm_decryt(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_GCM
     return m_aes_gcm_encrypt_or_decryt(vm, 0);
-#else // USE_BERRY_CRYPTO_AES_GCM
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 
   int32_t m_aes_gcm_tag(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_GCM
     do {
       be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
 
@@ -153,9 +151,6 @@ extern "C" {
       // success
     } while (0);
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_AES_GCM
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_GCM
   }
 }
 
@@ -168,7 +163,6 @@ extern "C" {
   // `AES_CTR.init(secret_key:bytes(32)) -> instance`
   int32_t m_aes_ctr_init(struct bvm *vm);
   int32_t m_aes_ctr_init(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_CTR
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isbytes(vm, 2)) {
       do {
@@ -191,16 +185,12 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_AES_CTR
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_CTR
   }
 
   // `<instance:AES_CTR>.encrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
   // `<instance:AES_CTR>.decrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
   int32_t m_aes_ctr_run(bvm *vm);
   int32_t m_aes_ctr_run(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_AES_CTR
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 4 && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isint(vm, 4)) {
       do {
@@ -233,9 +223,6 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_AES_CTR
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_AES_CTR
   }
 }
 
@@ -248,7 +235,6 @@ extern "C" {
   // `SHA256.init() -> nil`
   int32_t m_hash_sha256_init(struct bvm *vm);
   int32_t m_hash_sha256_init(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_SHA256
     // Initialize a SHA256 context
     br_sha256_context * ctx = (br_sha256_context *) be_os_malloc(sizeof(br_sha256_context));
     if (!ctx) {
@@ -259,9 +245,6 @@ extern "C" {
     be_newcomobj(vm, ctx, &be_commonobj_destroy_generic);
     be_setmember(vm, 1, ".p");
     be_return_nil(vm);
-#else // USE_BERRY_CRYPTO_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_SHA256
   }
 
   // `<instance:SHA256>.update(content:bytes()) -> nil`
@@ -269,7 +252,6 @@ extern "C" {
   // Add raw bytes to the hash calculation
   int32_t m_hash_sha256_update(struct bvm *vm);
   int32_t m_hash_sha256_update(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_SHA256
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isinstance(vm, 2)) {
       do {
@@ -292,9 +274,6 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, "value_error", NULL);
-#else // USE_BERRY_CRYPTO_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_SHA256
   }
 
   // `<instance:SHA256>.finish() -> bytes()`
@@ -302,7 +281,6 @@ extern "C" {
   // Add raw bytes to the MD5 calculation
   int32_t m_hash_sha256_out(struct bvm *vm);
   int32_t m_hash_sha256_out(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_SHA256
     be_getmember(vm, 1, ".p");
     br_sha256_context * ctx;
     ctx = (br_sha256_context *) be_tocomptr(vm, -1);
@@ -311,9 +289,6 @@ extern "C" {
     br_sha256_out(ctx, output);
     be_pushbytes(vm, output, sizeof(output));
     be_return(vm);
-#else // USE_BERRY_CRYPTO_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_SHA256
   }
 }
 
@@ -326,7 +301,6 @@ extern "C" {
   // `HMAC_SHA256.init(key:bytes) -> nil`
   int32_t m_hmac_sha256_init(struct bvm *vm);
   int32_t m_hmac_sha256_init(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isbytes(vm, 2)) {
       // Initialize a HMAC context
@@ -345,9 +319,6 @@ extern "C" {
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_HMAC_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_HMAC_SHA256
   }
 
   // `<instance:HMAC_SHA256>.update(content:bytes()) -> nil`
@@ -355,7 +326,6 @@ extern "C" {
   // Add raw bytes to the hash calculation
   int32_t m_hmac_sha256_update(struct bvm *vm);
   int32_t m_hmac_sha256_update(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isinstance(vm, 2)) {
       do {
@@ -377,9 +347,6 @@ extern "C" {
       } while (0);
     }
     be_raise(vm, "value_error", NULL);
-#else // USE_BERRY_CRYPTO_HMAC_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_HMAC_SHA256
   }
 
   // `<instance:SHA256>.finish() -> bytes()`
@@ -387,7 +354,6 @@ extern "C" {
   // Add raw bytes to the MD5 calculation
   int32_t m_hmac_sha256_out(struct bvm *vm);
   int32_t m_hmac_sha256_out(struct bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_HMAC_SHA256
     be_getmember(vm, 1, ".p");
     br_hmac_context * ctx;
     ctx = (br_hmac_context *) be_tocomptr(vm, -1);
@@ -396,9 +362,221 @@ extern "C" {
     br_hmac_out(ctx, output);
     be_pushbytes(vm, output, sizeof(output));
     be_return(vm);
-#else // USE_BERRY_CRYPTO_HMAC_SHA256
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_HMAC_SHA256
+  }
+}
+
+/*********************************************************************************************\
+ * EC_P256 class
+ * 
+\*********************************************************************************************/
+#define BR_EC_P256_IMPL  br_ec_p256_m15  // BearSSL implementation for Curve P256
+extern "C" {
+  // crypto.EC_P256().public_key(private_key:bytes(32)) -> bytes(32)
+  // Computes the public key from a completely random private key of 32 bytes
+  int32_t m_ec_p256_pubkey(bvm *vm);
+  int32_t m_ec_p256_pubkey(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isbytes(vm, 1)) {
+      size_t sk_len = 0;
+      uint8_t * sk = (uint8_t*) be_tobytes(vm, 1, &sk_len);
+      if (sk_len == 32) {
+        br_ec_private_key br_sk = { BR_EC_secp256r1, sk, 32 };   // TODO
+
+        uint8_t pk_buf[80];
+        size_t ret = br_ec_compute_pub(&BR_EC_P256_IMPL, nullptr, pk_buf, &br_sk);
+        if (ret > 0) {
+          be_pushbytes(vm, pk_buf, ret);
+          be_return(vm);
+        }
+      }
+      be_raise(vm, "value_error", "invalid input");
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // crypto.EC_P256().shared_key(my_private_key:bytes(32), their_public_key:bytes(32)) -> bytes(32)
+  // Computes the shared pre-key. Normally this shared pre-key is hashed with another algorithm.
+  int32_t m_ec_p256_sharedkey(bvm *vm);
+  int32_t m_ec_p256_sharedkey(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 1) && be_isbytes(vm, 2)) {
+      size_t sk_len = 0;
+      const uint8_t * sk = (const uint8_t*) be_tobytes(vm, 1, &sk_len);
+      size_t pk_len = 0;
+      const uint8_t * pk_const = (const uint8_t*) be_tobytes(vm, 2, &pk_len);
+      if (sk_len != 32 || pk_len == 0 || pk_len > 65) {
+        be_raise(vm, "value_error", "Key size invalid");
+      }
+      uint8_t pk[pk_len];
+      memmove(pk, pk_const, pk_len);  /* copy to a non-const variable to receive the result */
+
+      if (BR_EC_P256_IMPL.mul(pk, pk_len, sk, sk_len, BR_EC_secp256r1)) {
+        /* return value (xoff is one, length is 32) */
+        be_pushbytes(vm, pk + 1, 32);
+        be_return(vm);
+      } else {
+        be_raise(vm, "internal_error", "internal bearssl error in mul()");
+      }
+      be_raise(vm, "value_error", "invalid input");
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+  
+  // We have generated the P256 order as a i15 encoding using 
+  // static const unsigned char P256_N[] PROGMEM = {
+  //   0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+  //   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  //   0xBC, 0xE6, 0xFA, 0xAD, 0xA7, 0x17, 0x9E, 0x84,
+  //   0xF3, 0xB9, 0xCA, 0xC2^, 0xFC, 0x63, 0x25, 0x51
+  // };
+  // uint16_t m[20] = {};
+  // br_i15_decode(m, P256_N, sizeof(P256_N));
+  // AddLog(LOG_LEVEL_INFO, ">>>: mod=%*_H", sizeof(m), m);
+  // 11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100
+
+  // N=bytes('11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100')
+  // import string
+  // s = ''
+  // while size(N) > 0
+  //   var n = N.get(0, 2)
+  //   s += string.format("0x%04X, ", n)
+  //   N = N[2..]
+  // end
+  // print(s)
+  static const uint16_t P256_N_I15[] PROGMEM = {
+    0x0111,
+    0x2551, 0x78C6, 0x2B0B, 0x1DCE, 0x684F, 0x62F3, 0x2B69, 0x737D,
+    0x7FBC, 0x7FFF, 0x7FFF, 0x7FFF, 0x0FFF, 0x0000, 0x4000, 0x7FFF,
+    0x7FFF, 0x0001,
+  };
+  extern void br_i15_decode(uint16_t *x, const void *src, size_t len);
+  extern void br_i15_decode_reduce(uint16_t *x, const void *src, size_t len, const uint16_t *m);
+  extern void br_i15_encode(void *dst, size_t len, const uint16_t *x);
+  extern uint32_t br_i15_sub(uint16_t *a, const uint16_t *b, uint32_t ctl);
+  // crypto.EC_P256().mod(data:bytes()) -> bytes(32)
+  // Reduces the big int to the modulus of P256 curve
+  int32_t m_ec_p256_mod(bvm *vm);
+  int32_t m_ec_p256_mod(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isbytes(vm, 1)) {
+      size_t data_len = 0;
+      uint8_t * data = (uint8_t*) be_tobytes(vm, 1, &data_len);
+      if (data_len == 0) { be_raise(vm, "value_error", "data must not be empty"); }
+
+      uint16_t data0[20] = {};
+      br_i15_decode_reduce(data0, data, data_len, P256_N_I15);
+      // AddLog(LOG_LEVEL_INFO, ">>>: data0=%*_H", sizeof(data0), data0);
+
+      uint8_t out[32] = {};
+      br_i15_encode(out, sizeof(out), data0);
+      // AddLog(LOG_LEVEL_INFO, ">>>: out=%*_H", sizeof(out), out);
+      // void br_i15_encode(void *dst, size_t len, const uint16_t *x);
+
+      be_pushbytes(vm, out, sizeof(out));
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // crypto.EC_P256().neg(data:bytes(32)) -> bytes(32)
+  // Negate a point coordinate modulus the order
+  int32_t m_ec_p256_neg(bvm *vm);
+  int32_t m_ec_p256_neg(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isbytes(vm, 1)) {
+      size_t data_len = 0;
+      uint8_t * data = (uint8_t*) be_tobytes(vm, 1, &data_len);
+      if (data_len == 0) { be_raise(vm, "value_error", "data must not be empty"); }
+
+      uint16_t data0[20] = {};
+      br_i15_decode_reduce(data0, data, data_len, P256_N_I15);
+      // AddLog(LOG_LEVEL_INFO, ">>>: data0=%*_H", sizeof(data0), data0);
+
+      uint16_t a[sizeof(P256_N_I15)/sizeof(uint16_t)];
+      memcpy(a, P256_N_I15, sizeof(P256_N_I15));      // copy generator to a
+
+      uint32_t carry = br_i15_sub(a, data0, 1);       // carry is always zero since the number if taken modulus the generator
+      // AddLog(LOG_LEVEL_INFO, ">>>: carry=%i data0=%*_H", carry, sizeof(data0), data0);
+
+      uint8_t out[32] = {};
+      br_i15_encode(out, sizeof(out), a);
+      // AddLog(LOG_LEVEL_INFO, ">>>: out=%*_H", sizeof(out), out);
+      // void br_i15_encode(void *dst, size_t len, const uint16_t *x);
+
+      be_pushbytes(vm, out, sizeof(out));
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+	uint32_t (*muladd)(unsigned char *A, const unsigned char *B, size_t len,
+		const unsigned char *x, size_t xlen,
+		const unsigned char *y, size_t ylen, int curve);
+
+  // crypto.EC_P256().mul(x:bytes(), A:bytes(65)) -> bytes(65)`
+  //
+  // The point `x*A` is computed.
+  // `x` is unsigned and MUST be lower than order (use mod if not sure)
+  // `A` must be bytes(65) and unencoded (starting with 0x04)
+  int32_t m_ec_p256_mul(bvm *vm);
+  int32_t m_ec_p256_mul(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 1) && be_isbytes(vm, 2)) {
+      size_t x_len = 0;
+      const uint8_t * x = (const uint8_t*) be_tobytes(vm, 1, &x_len);
+      if (x_len == 0) { be_raise(vm, "value_error", "x must not be empty"); }
+
+      size_t A_len = 0;
+      const uint8_t * A = (const uint8_t*) be_tobytes(vm, 2, &A_len);
+      if (A_len != 65 || (A_len > 0 && A[0] != 0x04)) { be_raise(vm, "value_error", "invalid A point"); }
+
+      uint8_t res[65];
+      memcpy(res, A, sizeof(res));    // copy A to res which will hold the result
+      uint32_t ret = BR_EC_P256_IMPL.mul(res, 65, x, x_len, BR_EC_secp256r1);
+      if (ret == 0) { be_raise(vm, "value_error", "muladd failed"); }
+
+      be_pushbytes(vm, res, sizeof(res));
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+  // crypto.EC_P256().muladd(x:bytes(), A:bytes(65), y:bytes(), B;bytes(65) or bytes(0)) -> bytes(65)`
+  //
+  // The point `x*A + y*B` is computed.
+  // If `B` is empty, the Generator is taken instead.
+  // `x` and `y` are unsigned and MUST be lower than order (use mod if not sure)
+  // `A` and `B` must be bytes(65) and unencoded (starting with 0x04)
+  int32_t m_ec_p256_muladd(bvm *vm);
+  int32_t m_ec_p256_muladd(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4 && be_isbytes(vm, 1) && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isbytes(vm, 4)) {
+      size_t x_len = 0;
+      const uint8_t * x = (const uint8_t*) be_tobytes(vm, 1, &x_len);
+      if (x_len == 0) { be_raise(vm, "value_error", "x must not be empty"); }
+      size_t y_len = 0;
+      const uint8_t * y = (const uint8_t*) be_tobytes(vm, 3, &y_len);
+      if (y_len == 0) { be_raise(vm, "value_error", "y must not be empty"); }
+
+      size_t A_len = 0;
+      const uint8_t * A = (const uint8_t*) be_tobytes(vm, 2, &A_len);
+      if (A_len != 65 || (A_len > 0 && A[0] != 0x04)) { be_raise(vm, "value_error", "invalid A point"); }
+      size_t B_len = 0;
+      const uint8_t * B = (const uint8_t*) be_tobytes(vm, 4, &B_len);
+      if (B_len == 0) {
+        B = nullptr;    // generator
+      } else {
+        if (B_len != 65 || (B_len > 0 && B[0] != 0x04)) { be_raise(vm, "value_error", "invalid A point"); }
+      }
+
+      uint8_t res[65];
+      memcpy(res, A, sizeof(res));    // copy A to res which will hold the result
+      uint32_t ret = BR_EC_P256_IMPL.muladd(res, B, 65, x, x_len, y, y_len, BR_EC_secp256r1);
+      if (ret == 0) { be_raise(vm, "value_error", "muladd failed"); }
+
+      be_pushbytes(vm, res, sizeof(res));
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 }
 
@@ -413,7 +591,6 @@ extern "C" {
   // Computes the public key from a completely random private key of 32 bytes
   int32_t m_ec_c25519_pubkey(bvm *vm);
   int32_t m_ec_c25519_pubkey(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_EC_C25519
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isbytes(vm, 2)) {
       size_t buf_len = 0;
@@ -436,16 +613,12 @@ extern "C" {
       be_raise(vm, "value_error", "invalid input");
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_EC_C25519
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_EC_C25519
   }
 
   // crypto.EC_C25519().shared_key(my_private_key:bytes(32), their_public_key:bytes(32)) -> bytes(32)
   // Computes the shared pre-key. Normally this shared pre-key is hashed with another algorithm.
   int32_t m_ec_c25519_sharedkey(bvm *vm);
   int32_t m_ec_c25519_sharedkey(bvm *vm) {
-#ifdef USE_BERRY_CRYPTO_EC_C25519
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 3 && be_isbytes(vm, 2) && be_isbytes(vm, 3)) {
       size_t sk_len = 0;
@@ -465,16 +638,64 @@ extern "C" {
           be_pushbytes(vm, pk, pk_len);
           be_return(vm);
         } else {
-          be_raise(vm, "internal_error", "internal bearssl error in 519_m15.mul()");
+          be_raise(vm, "internal_error", "internal bearssl error in mul()");
         }
       }
       be_raise(vm, "value_error", "invalid input");
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_BERRY_CRYPTO_EC_C25519
-    be_raise(vm, "Not implemented", nullptr);
-#endif // USE_BERRY_CRYPTO_EC_C25519
   }
 }
 
+/*********************************************************************************************\
+ * PBKDF2_HMAC_SHA256
+ * 
+ * accelerate _f function
+\*********************************************************************************************/
+extern "C" {
+  // _f(password:bytes(), salt_i:bytes(), c:int, res:bytes(32)) -> nil
+  int32_t m_pbkdf2_hmac_sha256_f(bvm *vm);
+  int32_t m_pbkdf2_hmac_sha256_f(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4 && be_isbytes(vm, 1) && be_isbytes(vm, 2) && be_isint(vm, 3) && be_isbytes(vm, 4)) {
+      size_t passwd_len;
+      const void * passwd = be_tobytes(vm, 1, &passwd_len);
+      if (passwd_len == 0) { be_raise(vm, "value_error", "passwd must not be empty"); }
+
+      size_t salt_len;
+      const void * salt = be_tobytes(vm, 2, &salt_len);
+      if (salt_len == 0) { be_raise(vm, "value_error", "salt must not be empty"); }
+
+      int32_t count = be_toint(vm, 3);
+      if (count < 1 || count > 10000) { be_raise(vm, "value_error", "invalid iterations number"); }
+
+      size_t res_len;
+      uint8_t * res = (uint8_t*) be_tobytes(vm, 4, &res_len);
+      if (res_len != 32) { be_raise(vm, "value_error", "res must be 32 bytes"); }
+
+      br_hmac_context ctx;
+      br_hmac_key_context keyCtx;   // keyCtx can be allocated on stack, it is not needed after `br_hmac_init`
+      br_hmac_key_init(&keyCtx, &br_sha256_vtable, passwd, passwd_len);
+      br_hmac_init(&ctx, &keyCtx, 0);    // 0 is "natural output length"
+
+      // iteration 1
+      br_hmac_update(&ctx, salt, salt_len);
+      br_hmac_out(&ctx, res);
+      uint8_t u[32];                    // rolling buffer
+      memcpy(u, res, 32);               // copy res into u
+
+      // further iterations
+      for (uint32_t i = 2; i <= count; i++) {
+        br_hmac_init(&ctx, &keyCtx, 0);    // reinit HMAC
+        br_hmac_update(&ctx, u, sizeof(u));
+        br_hmac_out(&ctx, u);
+        for (uint32_t j=0; j<32; j++) {
+          res[j] = res[j] ^ u[j];
+        }
+      }
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
 #endif  // USE_BERRY
