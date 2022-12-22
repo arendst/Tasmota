@@ -1611,6 +1611,9 @@ void SettingsDelta(void) {
       Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
       Settings->param[P_SERIAL_SKIP] = 0;
     }
+    if (Settings->version < 0x0C030102) {  // 12.3.1.2
+      Settings->shutter_motorstop = 0;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

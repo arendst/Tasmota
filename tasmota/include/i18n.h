@@ -110,6 +110,8 @@
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
+#define D_JSON_IP6_GLOBAL "IP6Global"
+#define D_JSON_IP6_LOCAL "IP6Local"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"
@@ -736,6 +738,7 @@
 #define D_CMND_SHUTTER_TILTCONFIG "TiltConfig"
 #define D_CMND_SHUTTER_SETTILT "Tilt"
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
+#define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -806,6 +809,7 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_ETH "ETH: "          // Ethernet
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language

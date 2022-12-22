@@ -558,7 +558,7 @@ void ModbusBridgeInit(void)
 {
   if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX))
   {
-    modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX));
+    modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX), Pin(GPIO_MBR_TX_ENA));
     ModbusBridgeBegin();
 #ifdef USE_MODBUS_BRIDGE_TCP
     // If TCP bridge is enabled allocate a TCP receive buffer

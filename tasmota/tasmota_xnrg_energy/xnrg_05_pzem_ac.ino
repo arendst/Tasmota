@@ -114,7 +114,7 @@ void PzemAcEverySecond(void)
 
 void PzemAcSnsInit(void)
 {
-  PzemAcModbus = new TasmotaModbus(Pin(GPIO_PZEM016_RX), Pin(GPIO_PZEM0XX_TX));
+  PzemAcModbus = new TasmotaModbus(Pin(GPIO_PZEM016_RX), Pin(GPIO_PZEM0XX_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }

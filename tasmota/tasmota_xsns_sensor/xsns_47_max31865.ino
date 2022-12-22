@@ -1,5 +1,5 @@
 /*
-  xsns_39_MAX31865.ino - MAX31865 thermocouple sensor support for Tasmota
+  xsns_47_max31865.ino - MAX31865 thermocouple sensor support for Tasmota
 
   Copyright (C) 2021  Alberto Lopez Siemens
 

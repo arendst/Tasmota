@@ -148,15 +148,15 @@ void IEM3000Every250ms(void)
           break;
 
         case 10:
-          Energy.import_active[0] = value;
+          Energy.import_active[0] = value64/1000.0;
           break;
         
         case 11:
-          Energy.import_active[1] = value;
+          Energy.import_active[1] = value64/1000.0;
           break;
 
         case 12:
-          Energy.import_active[2] = value;
+          Energy.import_active[2] = value64/1000.0;
           break;
 
         case 13:
@@ -181,7 +181,7 @@ void IEM3000Every250ms(void)
 
 void Iem3000SnsInit(void)
 {
-  Iem3000Modbus = new TasmotaModbus(Pin(GPIO_IEM3000_RX), Pin(GPIO_IEM3000_TX));
+  Iem3000Modbus = new TasmotaModbus(Pin(GPIO_IEM3000_RX), Pin(GPIO_IEM3000_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = Iem3000Modbus->Begin(IEM3000_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }

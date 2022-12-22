@@ -1,5 +1,5 @@
 /*
-  xdrv_90_dingtian_relay.ino - Dingtian 8, 16, 24 and 32 relays board based on 74x595+74x165
+  xdrv_90_esp32_dingtian_relay.ino - Dingtian 8, 16, 24 and 32 relays board based on 74x595+74x165
 
   Copyright (C) 2021 Barbudor
 

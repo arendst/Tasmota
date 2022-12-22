@@ -113,6 +113,7 @@
 #undef USE_NOVA_SDS                              // Disable support for SDS011 and SDS021 particle concentration sensor
 #undef USE_HPMA                                  // Disable support for Honeywell HPMA115S0 particle concentration sensor
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
+#undef USE_ME007                                 // Disable support for ME007 ultrasonic devices (+1k5 code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
 #undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
@@ -259,6 +260,7 @@
     #undef USE_MI_HOMEKIT
   #endif // disable USE_MI_HOMEKIT
 #else
+  #define USE_ETHERNET                             // Add support for ethernet (+20k code)
   #define USE_BLE_ESP32                          // Enable full BLE driver
   #define USE_EQ3_ESP32
   #define USE_MI_ESP32                           // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
@@ -443,6 +445,7 @@
 //#define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 //#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor
 //#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+//#define USE_ME007                                // Add support for ME007 ultrasonic devices (+1k5 code)
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+2k code)
 //#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)
@@ -453,6 +456,8 @@
 //#define USE_RDM6300                              // Add support for RDM6300 125kHz RFID Reader (+0k8)
 
 #define USE_IR_REMOTE
+
+#define USE_ETHERNET                             // Add support for ethernet (+20k code
 
 #endif  // FIRMWARE_TASMOTA_LVGL *******************************************************************
 
@@ -661,6 +666,7 @@
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+//#define USE_ME007                                // Add support for ME007 ultrasonic devices (+1k5 code)
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+2k code)
 #define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)

@@ -132,7 +132,7 @@ void DDSU666Every250ms(void)
 
 void Ddsu666SnsInit(void)
 {
-  Ddsu666Modbus = new TasmotaModbus(Pin(GPIO_DDSU666_RX), Pin(GPIO_DDSU666_TX));
+  Ddsu666Modbus = new TasmotaModbus(Pin(GPIO_DDSU666_RX), Pin(GPIO_DDSU666_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = Ddsu666Modbus->Begin(DDSU666_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }

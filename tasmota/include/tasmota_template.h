@@ -202,6 +202,8 @@ enum UserSelectablePins {
   GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
   GPIO_DINGTIAN_CLK, GPIO_DINGTIAN_SDI, GPIO_DINGTIAN_Q7, GPIO_DINGTIAN_PL, GPIO_DINGTIAN_RCK,  // Dingtian relay board - 595's & 165's pins
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
+  GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
+  GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -451,6 +453,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BP1658CJ_CLK "|" D_SENSOR_BP1658CJ_DAT "|"
   D_GPIO_DINGTIAN_CLK "|" D_GPIO_DINGTIAN_SDI "|" D_GPIO_DINGTIAN_Q7 "|" D_GPIO_DINGTIAN_PL "|" D_GPIO_DINGTIAN_RCK "|"
   D_SENSOR_LD2410_TX "|" D_SENSOR_LD2410_RX "|"
+  D_SENSOR_MBR_TX_ENA "|" D_SENSOR_NRG_MBS_TX_ENA "|"
+  D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -771,6 +775,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SR04_TRIG),                // SR04 Tri/TXgger pin
   AGPIO(GPIO_SR04_ECHO),                // SR04 Ech/RXo pin
 #endif
+#ifdef USE_ME007
+  AGPIO(GPIO_ME007_TRIG),              // ME007 Trigger pin (xsns_23_me007.ino)
+  AGPIO(GPIO_ME007_RX),                // ME007 Rx pin (xsns_23_me007.ino)
+#endif
 #ifdef USE_TM1638
   AGPIO(GPIO_TM1638CLK),                // TM1638 Clock
   AGPIO(GPIO_TM1638DIO),                // TM1638 Data I/O
@@ -822,6 +830,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MCP39F5_RX),               // MCP39F501 Serial interface (Shelly2)
   AGPIO(GPIO_MCP39F5_RST),              // MCP39F501 Reset (Shelly2)
 #endif
+  AGPIO(GPIO_NRG_MBS_TX_ENA),           // Generic Energy Modbus Transmit Enable
 #if defined(USE_PZEM004T) || defined(USE_PZEM_AC) || defined(USE_PZEM_DC)
   AGPIO(GPIO_PZEM0XX_TX),               // PZEM0XX Serial interface
 #endif
@@ -900,6 +909,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SBR_RX),                   // Serial Bridge Serial interface
 #endif
 #ifdef USE_MODBUS_BRIDGE
+  AGPIO(GPIO_MBR_TX_ENA),               // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_TX),                   // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_RX),                   // Modbus Bridge Serial interface
 #endif

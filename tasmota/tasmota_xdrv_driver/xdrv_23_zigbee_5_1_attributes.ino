@@ -732,7 +732,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx000F, 0x002E,  Z_(BinaryInInactiveText),Cm1, 0 },
   { Zbool,    Cx000F, 0x0051,  Z_(BinaryInOutOfService),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0054,  Z_(BinaryInPolarity),    Cm1, 0 },
-  { Zstring,  Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
+  { Zbool,    Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
   // { 0xFF, Cx000F, 0x0057,  (BinaryInPriorityArray),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0067,  Z_(BinaryInReliability), Cm1, 0 },
   { Zmap8,    Cx000F, 0x006F,  Z_(BinaryInStatusFlags), Cm1, 0 },

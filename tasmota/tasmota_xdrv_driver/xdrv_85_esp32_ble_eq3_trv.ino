@@ -32,6 +32,7 @@ trv 001A22092EE0 settemp 22.5
 
 trvperiod n - set polling period in seconds (default teleperiod at boot)
 trvonlyaliased *0/1 - only hear devices with BLEAlias set
+trvretries n - set the number of retries (default 4 at boot)
 trvMatchPrefix 0/*1 - if set, then it will add trvs to the seen list which have mac starting with :
   macs in macprefixes, currently only 001a22
 Note: anything with BLEAlias starting "EQ3" will be added to the seen list.
@@ -147,6 +148,7 @@ namespace EQ3_ESP32 {
 
 void CmndTrv(void);
 void CmndTrvPeriod(void);
+void CmndTrvRetries(void);
 void CmndTrvOnlyAliased(void);
 void CmndTrvMatchPrefix(void);
 void CmndTrvMinRSSI(void);
@@ -155,6 +157,7 @@ void CmndTrvHideFailedPoll(void);
 const char kEQ3_Commands[] PROGMEM = D_CMND_EQ3"|"
   "|"
   "period|"
+  "retries|"
   "onlyaliased|"
   "MatchPrefix|"
   "MinRSSI|"
@@ -163,6 +166,7 @@ const char kEQ3_Commands[] PROGMEM = D_CMND_EQ3"|"
 void (*const EQ3_Commands[])(void) PROGMEM = {
   &CmndTrv,
   &CmndTrvPeriod,
+  &CmndTrvRetries,
   &CmndTrvOnlyAliased,
   &CmndTrvMatchPrefix,
   &CmndTrvMinRSSI,
@@ -234,6 +238,7 @@ eq3_device_tag EQ3Devices[EQ3_NUM_DEVICESLOTS];
 SemaphoreHandle_t EQ3mutex = nullptr;
 
 int EQ3Period = 300;
+int EQ3Retries = 4;
 uint8_t EQ3OnlyAliased = 0;
 uint8_t EQ3MatchPrefix = 1;
 uint8_t opInProgress = 0;
@@ -365,7 +370,7 @@ int EQ3DoOp(){
   if (!opInProgress){
     if (opQueue.size()){
       op_t* op = opQueue[0];
-      if (EQ3Operation(op->addr, op->towrite, op->writelen, op->cmdtype, 4)){
+      if (EQ3Operation(op->addr, op->towrite, op->writelen, op->cmdtype, EQ3Retries)){
         opQueue.pop_front();
         opInProgress = 1;
         AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3 %s:Op dequeued len now %d"), addrStr(op->addr, (op->cmdtype & 0x80)), opQueue.size());
@@ -480,16 +485,18 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
 
     ResponseAppend_P(PSTR(",\"hassmode\":"));
     do {
+      //HASS allowed modes [“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]
       //0201283B042A
-      // its in auto
+      // If its in auto or holiday, set to auto
       if ((stat & 3) == 0) { ResponseAppend_P(PSTR("\"auto\"")); break; }
-      // it's set to 'OFF'
+      // If its in manual and 4.5°C, set to off
       if (((stat & 3) == 1) && (status[5] == 9)) { ResponseAppend_P(PSTR("\"off\"")); break; }
-      // it's actively heating (valve open)
+      // If its in manual above 4.5°C and valve is open, set to heat
       if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"heat\"")); break; }
-      // it's achieved temp (valve closed)
-      if (((stat & 3) == 1) && (status[5] > 9)) { ResponseAppend_P(PSTR("\"idle\"")); break; }
-      ResponseAppend_P(PSTR("\"idle\""));
+      // If its in manual above 4.5°C and valve is closed, set to off
+      if (((stat & 3) == 1) && (status[5] > 9)) { ResponseAppend_P(PSTR("\"off\"")); break; }
+      //Fallback off
+      ResponseAppend_P(PSTR("\"off\""));
       break;
     } while (0);
 
@@ -1271,16 +1278,16 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!strcmp(param, "auto")){
         d[1] = 0x00;
       }
-      if (!strcmp(param, "manual")){
+      if (!strcmp(param, "manual") || !strcmp(param, "heat" )){
         d[1] = 0x40;
       }
-      if (!strcmp(param, "on") || !strcmp(param, "heat")) {
+      if (!strcmp(param, "on")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "30";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
         return res2;
       }
-      if (!strcmp(param, "off") || !strcmp(param, "cool")) {
+      if (!strcmp(param, "off") || !strcmp(param, "cool") || !strcmp(param, "fan_only")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "4.5";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
@@ -1484,6 +1491,13 @@ void CmndTrvPeriod(void) {
     }
   }
   ResponseCmndNumber(EQ3Period);
+}
+
+void CmndTrvRetries(void) {
+  if (XdrvMailbox.data_len > 0) {
+    EQ3Retries = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(EQ3Retries);
 }
 
 void CmndTrvOnlyAliased(void){

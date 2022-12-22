@@ -130,7 +130,7 @@ void Sdm72Every250ms(void)
 
 void Sdm72SnsInit(void)
 {
-  Sdm72Modbus = new TasmotaModbus(Pin(GPIO_SDM72_RX), Pin(GPIO_SDM72_TX));
+  Sdm72Modbus = new TasmotaModbus(Pin(GPIO_SDM72_RX), Pin(GPIO_SDM72_TX), Pin(GPIO_NRG_MBS_TX_ENA));
   uint8_t result = Sdm72Modbus->Begin(SDM72_SPEED);
   if (result) {
     if (2 == result) {

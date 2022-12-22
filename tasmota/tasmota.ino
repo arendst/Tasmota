@@ -32,10 +32,16 @@
 #include "include/i18n.h"                   // Language support configured by my_user_config.h
 #include "include/tasmota_template.h"       // Hardware configuration
 
+// ------------------------------------------------------------------------------------------
+// If IPv6 is not support by the underlying esp-idf, disable it
+// ------------------------------------------------------------------------------------------
+#if !LWIP_IPV6
+  #undef USE_IPV6
+#endif
+
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
-#include <DnsClient.h>                      // Any getHostByName
 #ifdef ESP32
   #ifdef USE_TLS
   #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
@@ -118,6 +124,8 @@ struct WIFI {
   bool wifi_test_AP_TIMEOUT = false;
   bool wifi_Test_Restart = false;
   bool wifi_Test_Save_SSID2 = false;
+  // IPv6 support, not guarded with #if LWIP_IPV6 to avoid bloating code with ifdefs
+  bool ipv6_local_link_called = false;           // did we already enable IPv6 Local-Link address, needs to be redone at each reconnect
 } Wifi;
 
 typedef struct {
@@ -184,7 +192,6 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
-DNSClient DnsClient;
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
@@ -492,7 +499,7 @@ void setup(void) {
 #ifdef ESP32
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
-  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
   if (FoundPSRAM() && !CanUsePSRAM()) {
     AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));
@@ -625,7 +632,6 @@ void setup(void) {
   TasmotaGlobal.init_state = INIT_GPIOS;
 
   SetPowerOnState();
-  DnsClient.setTimeout(Settings->dns_timeout);
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),

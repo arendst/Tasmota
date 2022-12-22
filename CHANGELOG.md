@@ -3,7 +3,66 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.5]
+## [12.3.1.2]
+### Added
+- Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol
+
+### Breaking Changed
+
+### Changed
+- Tasmota OTA scripts now support both unzipped and gzipped file uploads (#17378)
+
+### Fixed
+- Shutter default motorstop set to 0 (#17403)
+
+### Removed
+
+## [12.3.1.1] 20221221
+### Added
+- Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 (#17417)
+- Berry support for ``crypto.SHA256`` (#17430)
+- Support for RGB displays (#17414)
+- Berry add crypto AES_CTR, HDMAC_SHA256, MD5
+
+### Changed
+- ESP32 Framework (Core) from v2.0.5.3 to v2.0.5.4 (IPv6 support)
+
+## [Released]
+
+## [12.3.1] 20221216
+- Release Percy
+
+## [12.3.0.1] 20221216
+### Changed
+- ESP32 initial otaurl from http to https
+
+### Fixed
+- ESP8266 zigbee exception 3 regression from v12.3.0 (#17397)
+
+## [12.3.0] 20221215
+- Release Percy
+
+## [12.2.0.6] 20221215
+### Added
+- Serial Modbus transmit enable GPIOs to all modbus energy drivers and modbus bridge (#17247)
+- Berry crypto module, with AES_GCM by default and EC_CC25519 optional
+- IPv6 support for Ethernet (ESP32)
+- Support for ME007-ULS narrow FoV ultrasonic distance sensor by Mathias Buder (#17376)
+
+### Changed
+- TasmotaSerial library from v3.5.0 to v3.6.0
+- Removed leading spaces on commands ``(S)SerialSend1 to 6`` but keep on duplicate commands ``(S)SerialSend11 to 16`` (#16723)
+- MQTT now uses Tasmota's DNS resolver instead of LWIP (#17387)
+- Shutter bug fixes and functionality upgrade (#17380)
+
+### Fixed
+- TasmotaSerial ``read(buffer, size)`` regression from v9.3.0
+- RCSwitch exception 0/6 on some protocols (#17285)
+- ESP32 exception 28 when RtcNtpServer is enabled on restart (#17338)
+- Analog MQ exception 28 on restart (#17271)
+- ESP32 fix ``Ping`` (#17373)
+
+## [12.2.0.5] 20221129
 ### Added
 - ESP32 DS18x20 parasitic power usage when defining W1_PARASITE_POWER (#17112)
 - Optional define ``SERIAL_BRIDGE_BUFFER_SIZE`` to set Serial Bridge internal buffer size (Default ESP8266 = 256, ESP32 = 800)
@@ -11,9 +70,8 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption35 0..255`` to skip number of received messages in Serial Bridge (default 0) (#17140)
 - Teleinfo TEMPO (BBR) contract (#17160)
 - Support for HLK-LD2410 24GHz smart wave motion sensor
-- Berry add module ``mdns``
-
-### Breaking Changed
+- Berry ``mdns`` module (#17202)
+- IPv6 preview for ESP32, also working for ESP8266
 
 ### Changed
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)
@@ -48,8 +106,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - SenseAir S8 module detection (#17033)
-
-### Removed
 
 ## [12.2.0.3] 20221109
 ### Added
@@ -102,8 +158,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 (#16850)
-
-## [Released]
 
 ## [12.2.0] 20221017
 - Release Patrick

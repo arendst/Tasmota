@@ -175,14 +175,20 @@ jobs:
           path: ./build_output
 
   Upload:
-    needs: [base-images, language-images]
+    needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/download-artifact@v3
+    - name: Download Tasmota firmwares
+      uses: actions/download-artifact@v3
       with:
         name: firmware
+        path: ./mv_firmware
+    - name: Download safeboot firmwares
+      uses: actions/download-artifact@v3
+      with:
+        name: firmware_safeboot
         path: ./mv_firmware
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/

@@ -584,7 +584,7 @@ void UBXSelectMode(uint16_t mode)
       UBX.mode.send_when_new = 0; // only TELE
       break;
     case 9:
-      if (timeServer.beginListening()) {
+      if (!TasmotaGlobal.global_state.network_down && timeServer.beginListening()) {
         UBX.mode.runningNTP = true;
       }
       break;
@@ -722,7 +722,7 @@ void UBXLoop50msec(void)
     }
   }
   // handle NTP-server
-  if(UBX.mode.runningNTP){
+  if(!TasmotaGlobal.global_state.network_down && UBX.mode.runningNTP){
     timeServer.processOneRequest(UBX.rec_buffer.values.time, UBX.state.timeOffset - NTP_MILLIS_OFFSET);
   }
 }

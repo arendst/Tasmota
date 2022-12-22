@@ -212,6 +212,7 @@ void SerialBridgeInit(void) {
 \*********************************************************************************************/
 
 void CmndSSerialSend(void) {
+  if (XdrvMailbox.index > 9) { XdrvMailbox.index -= 10; }
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     serial_bridge_raw = (XdrvMailbox.index > 3);
     Settings->sbflag1.serbridge_console = 0;                                // Disable console Tee

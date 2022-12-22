@@ -477,6 +477,7 @@ void DisplayText(void)
         escape = 1;
         cp++;
         // if string in buffer print it
+        dp -= decode_te(linebuf);
         if ((uint32_t)dp - (uint32_t)linebuf) {
           if (!fill) { *dp = 0; }
           if (col > 0 && lin > 0) {
@@ -585,12 +586,17 @@ void DisplayText(void)
             break;
 #ifdef USE_UFILESYS
           case 'P':
-            { char *ep=strchr(cp,':');
+            { char *ep = strchr(cp,':');
              if (ep) {
-               *ep=0;
+               *ep = 0;
                ep++;
-               Draw_RGB_Bitmap(cp,disp_xpos,disp_ypos, false);
-               cp=ep;
+               int16_t scale = 0;
+               if (isdigit(*ep)) {
+                 var = atoiv(ep, &scale);
+                 ep += var;
+               }
+               Draw_RGB_Bitmap(cp,disp_xpos,disp_ypos, scale, false);
+               cp = ep;
              }
             }
             break;
@@ -862,7 +868,7 @@ void DisplayText(void)
               cp = get_string(bbuff, sizeof(bbuff), cp);
               char unit[4];
               cp = get_string(unit, sizeof(unit), cp);
-	      decode_te(unit);
+	            decode_te(unit);
               define_dt_var(num, gxp, gyp, textbcol, textfcol, font, textsize, txlen, time, dp, bbuff, unit);
             }
           }
@@ -2271,7 +2277,7 @@ char ppath[16];
   } else {
     strcat(ppath, ".jpg");
   }
-  Draw_RGB_Bitmap(ppath, xp, yp, inverted);
+  Draw_RGB_Bitmap(ppath, xp, yp, 0, inverted);
 }
 #endif  // USE_TOUCH_BUTTONS
 
@@ -2281,51 +2287,62 @@ char ppath[16];
 #include "img_converters.h"
 #include "esp_jpg_decode.h"
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
+bool jpg2rgb565(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
 #endif // JPEG_PICTS
 #endif // ESP32
 
+//#define SLOW_RGB16
+
 #ifdef USE_UFILESYS
 extern FS *ufsp;
 #define XBUFF_LEN 128
-void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
+void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool inverted ) {
   if (!renderer) return;
   File fp;
-  char *ending = strrchr(file,'.');
-  if (!ending) return;
-  ending++;
-  char estr[8];
-  memset(estr,0,sizeof(estr));
-  for (uint32_t cnt=0; cnt<strlen(ending); cnt++) {
-    estr[cnt]=tolower(ending[cnt]);
+  char *ending = 0;
+  for (uint32_t cnt = strlen(file) - 1; cnt >= 0; cnt--) {
+    if (file[cnt] == '.') {
+      ending = &file[cnt + 1];
+      break;
+    }
   }
+  if (!ending) return;
+  char estr[8];
+  memset(estr, 0, sizeof(estr));
+  for (uint32_t cnt = 0; cnt < strlen(ending); cnt++) {
+    estr[cnt] = tolower(ending[cnt]);
+  }
+  estr[3] = 0;
 
   if (!strcmp(estr,"rgb")) {
     // special rgb format
-    fp=ufsp->open(file,FS_FILE_READ);
+    fp = ufsp->open(file, FS_FILE_READ);
     if (!fp) return;
     uint16_t xsize;
-    fp.read((uint8_t*)&xsize,2);
+    fp.read((uint8_t*)&xsize, 2);
     uint16_t ysize;
-    fp.read((uint8_t*)&ysize,2);
-#if 1
-    renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-    uint16_t rgb[xsize];
-    for (int16_t j=0; j<ysize; j++) {
-    //  for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
-        fp.read((uint8_t*)rgb,xsize*2);
-        renderer->pushColors(rgb,xsize,true);
-    //  }
-      OsWatchLoop();
+    fp.read((uint8_t*)&ysize, 2);
+#ifndef SLOW_RGB16
+    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+    uint16_t *rgb = (uint16_t *)special_malloc(xsize * 2);
+    if (rgb) {
+      //uint16_t rgb[xsize];
+      for (int16_t j = 0; j < ysize; j++) {
+        fp.read((uint8_t*)rgb, xsize * 2);
+        renderer->pushColors(rgb, xsize, true);
+        OsWatchLoop();
+      }
+      free(rgb);
     }
-    renderer->setAddrWindow(0,0,0,0);
+    renderer->setAddrWindow(0, 0, 0, 0);
 #else
-    for(int16_t j=0; j<ysize; j++) {
-      for(int16_t i=0; i<xsize; i++ ) {
+    for (int16_t j = 0; j < ysize; j++) {
+      for (int16_t i = 0; i < xsize; i++ ) {
         uint16_t rgb;
-        uint8_t res=fp.read((uint8_t*)&rgb,2);
+        uint8_t res = fp.read((uint8_t*)&rgb, 2);
         if (!res) break;
-        renderer->writePixel(xp+i,yp,rgb);
+        renderer->writePixel(xp + i, yp, rgb);
       }
       delay(0);
       OsWatchLoop();
@@ -2337,37 +2354,41 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
     // jpeg files on ESP32 with more memory
 #ifdef ESP32
 #ifdef JPEG_PICTS
-    fp=ufsp->open(file,FS_FILE_READ);
-    if (!fp) return;
+    fp = ufsp->open(file, FS_FILE_READ);
+    if (!fp) {
+      // try url
+      Draw_JPG_from_URL(file, xp, yp, scale);
+      return;
+    }
     uint32_t size = fp.size();
-    uint8_t *mem = (uint8_t *)special_malloc(size+4);
+    uint8_t *mem = (uint8_t *)special_malloc(size + 4);
     if (mem) {
-      uint8_t res=fp.read(mem, size);
+      uint8_t res = fp.read(mem, size);
       if (res) {
         uint16_t xsize;
         uint16_t ysize;
-        if (mem[0]==0xff && mem[1]==0xd8) {
+        if (mem[0] == 0xff && mem[1] == 0xd8) {
           get_jpeg_size(mem, size, &xsize, &ysize);
           //Serial.printf(" x,y,fs %d - %d - %d\n",xsize, ysize, size );
           if (xsize && ysize) {
-            uint8_t *out_buf = (uint8_t *)special_malloc((xsize*ysize*3)+4);
+            uint8_t *out_buf = (uint8_t *)special_malloc((xsize * ysize * 3) + 4);
             if (out_buf) {
-              uint16_t *pixb = (uint16_t *)special_malloc((xsize*2)+4);
+              uint16_t *pixb = (uint16_t *)special_malloc((xsize * 2) + 4);
               if (pixb) {
-                uint8_t *ob=out_buf;
+                uint8_t *ob = out_buf;
                 if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {
-                  renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-                  for(int32_t j=0; j<ysize; j++) {
-                    if (inverted==false) {
+                  renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+                  for (int32_t j = 0; j < ysize; j++) {
+                    if (inverted == false) {
                       rgb888_to_565(ob, pixb, xsize);
                     } else {
                       rgb888_to_565i(ob, pixb, xsize);
                     }
-                    ob+=xsize*3;
+                    ob += xsize * 3;
                     renderer->pushColors(pixb, xsize, true);
                     OsWatchLoop();
                   }
-                  renderer->setAddrWindow(0,0,0,0);
+                  renderer->setAddrWindow(0, 0, 0, 0);
                 }
                 free(out_buf);
                 free(pixb);
@@ -2385,6 +2406,77 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp, bool inverted ) {
 #endif // ESP32
   }
 }
+
+#ifdef ESP32
+#ifdef JPEG_PICTS
+#define JPG_DEFSIZE 150000
+void Draw_JPG_from_URL(char *url, uint16_t xp, uint16_t yp, uint8_t scale) {
+  uint8_t *mem = 0;
+  WiFiClient http_client;
+  HTTPClient http;
+  int32_t httpCode = 0;
+  String weburl = "http://" + UrlEncode(url);
+  http.begin(http_client, weburl);
+  httpCode = http.GET();
+  //AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %d %s"), httpCode , weburl.c_str());
+  uint32_t jpgsize = 0;
+  if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+    mem = (uint8_t *)special_malloc(JPG_DEFSIZE);
+    if (!mem) return;
+    uint8_t *jpgp = mem;
+    WiFiClient *stream = http.getStreamPtr();
+    int32_t len = http.getSize();
+    if (len < 0) len = 99999999;
+    while (http.connected() && (len > 0)) {
+      size_t size = stream->available();
+      if (size) {
+        if (size > JPG_DEFSIZE) {
+          size = JPG_DEFSIZE;
+        }
+        uint32_t read = stream->readBytes(jpgp, size);
+        len -= read;
+        jpgp  += read;
+        jpgsize += read;
+        //AddLog(LOG_LEVEL_INFO,PSTR("HTTP read %d - %d"), read, jpgsize);
+      }
+      delayMicroseconds(1);
+    }
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("HTTP ERROR %s"), http.getString().c_str());
+  }
+  http.end();
+  http_client.stop();
+
+  if (jpgsize) {
+    Draw_jpeg(mem, jpgsize, xp, yp, scale);
+  }
+  if (mem) free(mem);
+}
+
+void Draw_jpeg(uint8_t *mem, uint16_t jpgsize, uint16_t xp, uint16_t yp, uint8_t scale) {
+  if (mem[0] == 0xff && mem[1] == 0xd8) {
+    uint16_t xsize;
+    uint16_t ysize;
+    get_jpeg_size(mem, jpgsize, &xsize, &ysize);
+    //AddLog(LOG_LEVEL_INFO, PSTR("Pict size %d - %d - %d"), xsize, ysize, jpgsize);
+    scale &= 3;
+    uint8_t fac = 1 << scale;
+    xsize /= fac;
+    ysize /= fac;
+    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+    uint8_t *rgbmem = (uint8_t *)special_malloc(xsize * ysize * 2);
+    if (rgbmem) {
+      //jpg2rgb565(mem, jpgsize, rgbmem, JPG_SCALE_NONE);
+      jpg2rgb565(mem, jpgsize, rgbmem, (jpg_scale_t)scale);
+      renderer->pushColors((uint16_t*)rgbmem, xsize * ysize, true);
+      free(rgbmem);
+    }
+    renderer->setAddrWindow(0, 0, 0, 0);
+  }
+}
+#endif // JPEG_PICTS
+#endif // ESP32
+
 #endif // USE_UFILESYS
 
 /*********************************************************************************************\
