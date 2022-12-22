@@ -110,8 +110,8 @@ struct SHUTTER {
   uint16_t venetian_delay = 0; // Delay in steps before venetian shutter start physical moving. Based on tilt position
   uint16_t min_realPositionChange = 0; // minimum change of the position before the shutter operates. different for PWM and time based operations
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
-  uint16_t last_reported_time =0;
-  uint32_t last_stop_time = 0;      // record the last time the relay was switched off
+  uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
+  uint32_t last_stop_time = 0;         // record the last time the relay was switched off
 } Shutter[MAX_SHUTTERS];
 
 struct SHUTTERGLOBAL {
@@ -351,8 +351,15 @@ void ShutterInit(void)
       Shutter[i].lastdirection = (50 < Settings->shutter_position[i]) ? 1 : -1;
 
       // Venetian Blind
+      // ensure min is smaller than max
+      Settings->shutter_tilt_config[2][i] = Settings->shutter_tilt_config[0][i] >= Settings->shutter_tilt_config[1][i]?0:Settings->shutter_tilt_config[2][i];
+      //copy config to shutter
       for (uint8_t k=0; k<5; k++) {
         Shutter[i].tilt_config[k] =  Settings->shutter_tilt_config[k][i];
+      }
+      // wipe open/close position if duration is 0
+      if (Shutter[i].tilt_config[2]==0) {
+        Shutter[i].tilt_config[3] = Shutter[i].tilt_config[4] = 0;
       }
       Shutter[i].tilt_target_pos = Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
 
@@ -395,7 +402,7 @@ void ShutterInit(void)
     Settings->shutter_accuracy = 1;
     Settings->shutter_mode = ShutterGlobal.position_mode;
     // initialize MotorStop time with 500ms if not set
-    Settings->shutter_motorstop = (Settings->shutter_motorstop == 0) ? 500 : Settings->shutter_motorstop;
+    Settings->shutter_motorstop = (Settings->shutter_motorstop == 0) ? 500 : tmin(5000,Settings->shutter_motorstop);
   }
 }
 
@@ -1776,6 +1783,7 @@ void CmndShutterMotorStop(void)
   if (!XdrvMailbox.usridx) {
     if ((XdrvMailbox.payload >= 0) ) {
       Settings->shutter_motorstop = XdrvMailbox.payload;
+      ShutterInit();
     }
     ResponseCmndNumber(Settings->shutter_motorstop);
   }

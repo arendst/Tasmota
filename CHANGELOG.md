@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Shutter default motorstop set to 0 (#17403)
+- Shutter default tilt configuration (#17484)
 
 ### Removed
 
