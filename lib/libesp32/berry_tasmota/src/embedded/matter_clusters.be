@@ -1,4 +1,6 @@
-# true replaced with true
+# Matter clusters
+#
+# Needs to be reword, this structure is huge...
 #
 # imported from Python definition
 
