@@ -27,7 +27,7 @@
 
 /********************************************************************
 ** Subfile implementation
-** 
+**
 ** Takes a string point in Flash and turn it to a read-only file
 ********************************************************************/
 
@@ -106,6 +106,16 @@ public:
   const char* path() const {
     return "";
   }
+
+  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
+  bool seekDir(long position){
+    // ignore
+  }
+  String getNextFileName(void)
+  {
+    // ignore
+  }
+  #endif
 
   const char* name() const {
     return "<internal>";
