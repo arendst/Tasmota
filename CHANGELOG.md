@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol
 - Berry crypto add ``random`` to generate series of random bytes
 - Berry crypto add ``HKDF_HMAC_SHA256``
+- Support for up to 3 single phase modbus energy monitoring device using generic Energy Modbus driver
 
 ### Breaking Changed
 

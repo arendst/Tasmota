@@ -22,16 +22,17 @@
 /*********************************************************************************************\
  * Generic Modbus energy meter
  *
- * Using a rule file called modbus allows to easy configure modbus energy monitor devices up to three phases.
+ * - Supports single three phase device or three single phase devices of same model on bus.
+ * - Uses a rule file called modbus allowing for easy configuration of modbus energy monitor device(s).
  *
  * Value pair description:
  * {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A}
  * Modbus config parameters:
- *   Name          - Name of energy monitoring device
+ *   Name          - Name of energy monitoring device(s)
  *   Baud          - Baudrate of device modbus interface - optional. default is 9600
  *   Config        - Serial config parameters like 8N1 - 8 databits, No parity, 1 stop bit
- *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01)) - optional default = 1
- *   Function      - Modbus function code to access two registers - optional. default = 4
+ *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01) or up to three addresses ([1,2,3]) - optional. default = 1
+ *   Function      - Modbus function code to access registers - optional. default = 4
  * Tasmota default embedded register names:
  *   Voltage       - Voltage register entered as decimal or hexadecimal for one phase (0x0000) or up to three phases ([0x0000,0x0002,0x0004]) or
  *                   Additional defined parameters
@@ -120,6 +121,7 @@
  * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
  * rule3 on file#modbus do {"Name":"DDSU666","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":0x2000,"Current":0x2002,"Power":0x2004,"ReactivePower":0x2006,"Factor":0x200A,"Frequency":0x200E,"Total":0x4000,"ExportActive":0x400A} endon
  * rule3 on file#modbus do {"Name":"PZEM014","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"3 x PZEM014","Baud":9600,"Config":8N1","Address":[1,2,3],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
  * rule3 on file#modbus do {"Name":"Solax X3MIC","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"F":-1},"Power":{"R":0x040e,"T":3,"F":0},"Total":{"R":0x0423,"T":8,"F":-3}} endon
  *
  * Example using default Energy registers and some user defined registers:
@@ -139,9 +141,9 @@
  * To do:
  * - Support all three rule slots
  * - Support other modbus register like integers
- * - Support multiple devices on modbus
  *
  * Test set:
+ * rule3 on file#modbus do {"Name":"3 x PZEM014","Baud":9600,"Config":8N1","Address":[1,1],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
  * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
@@ -159,6 +161,7 @@
 #define ENERGY_MODBUS_CONFIG      TS_SERIAL_8N1        // Default Modbus serial configuration
 #define ENERGY_MODBUS_ADDR        1                    // Default Modbus device_address
 #define ENERGY_MODBUS_FUNC        0x04                 // Default Modbus function code
+#define ENERGY_MODBUS_MAX_DEVICES ENERGY_MAX_PHASES    // Support up to three single phase devices as three phases
 
 #define ENERGY_MODBUS_DATATYPE    0                    // Default Modbus datatype is 4-byte float
 #define ENERGY_MODBUS_DECIMALS    0                    // Default user decimal resolution
@@ -170,14 +173,15 @@
 
 const uint16_t nrg_mbs_reg_not_used = 0xFFFF;          // Odd number 65535 is unused register
 
+// Even data type is single (2-byte) register, Odd data type is double (4-byte) registers
 enum EnergyModbusDataType { NRG_DT_FLOAT,              // 0 = 4-byte float
                             NRG_DT_S16,                // 1 = 2-byte signed
                             NRG_DT_S32,                // 2 = 4-byte signed
                             NRG_DT_U16,                // 3 = 2-byte unsigned
                             NRG_DT_U32,                // 4 = 4-byte unsigned
-                            NRG_DT_x16_nu1,            // 5 =
+                            NRG_DT_x16_nu1,            // 5 = 2-byte
                             NRG_DT_S32_SW,             // 6 = 4-byte signed with swapped words
-                            NRG_DT_x16_nu2,            // 7 =
+                            NRG_DT_x16_nu2,            // 7 = 2-byte
                             NRG_DT_U32_SW,             // 8 = 4-byte unsigned with swapped words
                             NRG_DT_MAX };
 
@@ -224,7 +228,8 @@ Ticker ticker_energy_modbus;
 struct NRGMBSPARAM {
   uint32_t serial_bps;
   uint32_t serial_config;
-  uint8_t device_address;
+  uint8_t device_address[ENERGY_MODBUS_MAX_DEVICES];
+  uint8_t devices;
   uint8_t function;
   uint8_t total_regs;
   uint8_t user_adds;
@@ -267,6 +272,7 @@ void EnergyModbusLoop(void) {
   if (data_ready) {
     uint8_t buffer[15];  // At least 5 + (2 * 2) = 9
 
+    // Even data type is single register, Odd data type is double registers
     register_count = 2 - (NrgMbsReg[NrgMbsParam.state].datatype & 1);
     uint32_t error = EnergyModbus->ReceiveBuffer(buffer, register_count);
 
@@ -409,6 +415,7 @@ void EnergyModbusLoop(void) {
           }
       }
 
+      uint32_t phase = 0;
       do {
         NrgMbsParam.phase++;
         if (NrgMbsParam.phase >= Energy.phase_count) {
@@ -422,19 +429,34 @@ void EnergyModbusLoop(void) {
           }
         }
         delay(0);
-      } while (NrgMbsReg[NrgMbsParam.state].address[NrgMbsParam.phase] == nrg_mbs_reg_not_used);
+        if (NrgMbsParam.devices == 1) {
+          phase = NrgMbsParam.phase;
+        }
+      } while (NrgMbsReg[NrgMbsParam.state].address[phase] == nrg_mbs_reg_not_used);
     }
   } // end data ready
 
+
+  uint32_t address = 0;
+  uint32_t phase = NrgMbsParam.phase;
+  if (NrgMbsParam.devices > 1) {
+    address = NrgMbsParam.phase;
+    phase = 0;
+  }
   if (0 == NrgMbsParam.retry || data_ready) {
     NrgMbsParam.retry = 1;
+    // Even data type is single register, Odd data type is double registers
     register_count = 2 - (NrgMbsReg[NrgMbsParam.state].datatype & 1);
-    EnergyModbus->Send(NrgMbsParam.device_address, NrgMbsParam.function, NrgMbsReg[NrgMbsParam.state].address[NrgMbsParam.phase], register_count);
+    EnergyModbus->Send(NrgMbsParam.device_address[address], NrgMbsParam.function, NrgMbsReg[NrgMbsParam.state].address[phase], register_count);
   } else {
     NrgMbsParam.retry--;
 
 #ifdef ENERGY_MODBUS_DEBUG
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus state %d retry %d"), NrgMbsParam.state, NrgMbsParam.retry);
+    if (NrgMbsParam.devices > 1) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus retry device %d state %d"), NrgMbsParam.device_address[address], NrgMbsParam.state);
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus retry state %d phase %d"), NrgMbsParam.state, NrgMbsParam.phase);
+    }
 #endif
 
   }
@@ -463,6 +485,7 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
     return false;
   }
   if (phase > Energy.phase_count) {
+    NrgMbsParam.devices = 1;
     Energy.phase_count = phase;
   }
   val = user_add_value[PSTR("T")];               // Register data type
@@ -544,9 +567,11 @@ bool EnergyModbusReadRegisters(void) {
   if (!root) { return false; }                   // Invalid JSON
 
   // Init defaults
+  Energy.phase_count = 1;
   NrgMbsParam.serial_bps = ENERGY_MODBUS_SPEED;
   NrgMbsParam.serial_config = ENERGY_MODBUS_CONFIG;
-  NrgMbsParam.device_address = ENERGY_MODBUS_ADDR;
+  NrgMbsParam.device_address[0] = ENERGY_MODBUS_ADDR;
+  NrgMbsParam.devices = 1;
   NrgMbsParam.function = ENERGY_MODBUS_FUNC;
   NrgMbsParam.user_adds = 0;
 
@@ -598,7 +623,23 @@ bool EnergyModbusReadRegisters(void) {
   }
   val = root[PSTR("Address")];
   if (val) {
-    NrgMbsParam.device_address = val.getUInt();   // 1
+
+//    NrgMbsParam.device_address = val.getUInt();   // 1
+
+    NrgMbsParam.devices = 0;
+    if (val.isArray()) {
+      // "Address":[1,2,3]
+      JsonParserArray arr = val.getArray();
+      for (auto value : arr) {
+        NrgMbsParam.device_address[NrgMbsParam.devices] = value.getUInt();   // 1
+        NrgMbsParam.devices++;
+        if (NrgMbsParam.devices >= ENERGY_MODBUS_MAX_DEVICES) { break; }
+      }
+    } else if (val) {
+      // "Address":1
+      NrgMbsParam.device_address[0] = val.getUInt();
+      NrgMbsParam.devices++;
+    }
   }
   val = root[PSTR("Function")];
   if (val) {
@@ -669,6 +710,7 @@ bool EnergyModbusReadRegisters(void) {
         phase++;
       }
       if (phase > Energy.phase_count) {
+        NrgMbsParam.devices = 1;
         Energy.phase_count = phase;
       }
       switch(names) {
@@ -736,8 +778,16 @@ bool EnergyModbusReadRegisters(void) {
       NrgMbsReg[i].datatype = ENERGY_MODBUS_DATATYPE;
     }
   }
+  if (NrgMbsParam.devices > 1) {
+    Energy.phase_count = NrgMbsParam.devices;
+    Energy.voltage_common = false;        // Use no common voltage
+    Energy.frequency_common = false;      // Use no common frequency
+    Settings->flag5.energy_phase = 1;     // SetOption129 - (Energy) Show phase information
+  }
 
 #ifdef ENERGY_MODBUS_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Devices %d"), NrgMbsParam.devices);
+
   AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: RAM usage %d + %d + %d"), sizeof(NrgMbsParam), NrgMbsParam.total_regs * sizeof(NrgMbsRegister_t), NrgMbsParam.user_adds * sizeof(NrgMbsUser_t));
 #endif
 
