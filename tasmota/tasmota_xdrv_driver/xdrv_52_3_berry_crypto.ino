@@ -213,8 +213,8 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // `<instance:AES_CTR>.encrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
-  // `<instance:AES_CTR>.decrypt(content:bytes(), in:bytes(12), counter:int) -> nil`
+  // `<instance:AES_CTR>.encrypt(content:bytes(), in:bytes(12), counter:int) -> bytes()`
+  // `<instance:AES_CTR>.decrypt(content:bytes(), in:bytes(12), counter:int) -> bytes()`
   int32_t m_aes_ctr_run(bvm *vm);
   int32_t m_aes_ctr_run(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -273,7 +273,7 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  // `<instance:SHA256>.update(content:bytes()) -> nil`
+  // `<instance:SHA256>.update(content:bytes()) -> self`
   //
   // Add raw bytes to the hash calculation
   int32_t m_hash_sha256_update(struct bvm *vm);
@@ -295,7 +295,8 @@ extern "C" {
         if (length > 0) {
           br_sha256_update(ctx, bytes, length);
         }
-        be_return_nil(vm);
+        be_pushvalue(vm, 1);    // return self
+        be_return(vm);
         // success
       } while (0);
     }
@@ -347,7 +348,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // `<instance:HMAC_SHA256>.update(content:bytes()) -> nil`
+  // `<instance:HMAC_SHA256>.update(content:bytes()) -> self`
   //
   // Add raw bytes to the hash calculation
   int32_t m_hmac_sha256_update(struct bvm *vm);
@@ -368,7 +369,8 @@ extern "C" {
         if (length > 0) {
           br_hmac_update(ctx, bytes, length);
         }
-        be_return_nil(vm);
+        be_pushvalue(vm, 1);    // return self
+        be_return(vm);
         // success
       } while (0);
     }
@@ -397,7 +399,7 @@ extern "C" {
 \*********************************************************************************************/
 #define BR_EC_P256_IMPL  br_ec_p256_m15  // BearSSL implementation for Curve P256
 extern "C" {
-  // crypto.EC_P256().public_key(private_key:bytes(32)) -> bytes(32)
+  // crypto.EC_P256().public_key(private_key:bytes(32)) -> bytes(65)
   // Computes the public key from a completely random private key of 32 bytes
   int32_t m_ec_p256_pubkey(bvm *vm);
   int32_t m_ec_p256_pubkey(bvm *vm) {
@@ -420,7 +422,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // crypto.EC_P256().shared_key(my_private_key:bytes(32), their_public_key:bytes(32)) -> bytes(32)
+  // crypto.EC_P256().shared_key(my_private_key:bytes(32), their_public_key:bytes(65)) -> bytes(32)
   // Computes the shared pre-key. Normally this shared pre-key is hashed with another algorithm.
   int32_t m_ec_p256_sharedkey(bvm *vm);
   int32_t m_ec_p256_sharedkey(bvm *vm) {
@@ -534,10 +536,6 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-
-	uint32_t (*muladd)(unsigned char *A, const unsigned char *B, size_t len,
-		const unsigned char *x, size_t xlen,
-		const unsigned char *y, size_t ylen, int curve);
 
   // crypto.EC_P256().mul(x:bytes(), A:bytes(65)) -> bytes(65)`
   //
@@ -674,14 +672,14 @@ extern "C" {
 }
 
 /*********************************************************************************************\
- * HKDF_HMAC_SHA256
+ * HKDF_SHA256
  * 
 \*********************************************************************************************/
 extern "C" {
-  // crypto.HKDF_HMAC_SHA256().derive(ikm:bytes(), salt:bytes(), info:bytes(), out_bytes:int) -> bytes(out_bytes)
-  // Derive key with HKDF based on HMAC SHA256
-  int32_t m_hkdf_hmac_sha256_derive(bvm *vm);
-  int32_t m_hkdf_hmac_sha256_derive(bvm *vm) {
+  // crypto.HKDF_SHA256().derive(ikm:bytes(), salt:bytes(), info:bytes(), out_bytes:int) -> bytes(out_bytes)
+  // Derive key with HKDF based on SHA256
+  int32_t m_hkdf_sha256_derive(bvm *vm);
+  int32_t m_hkdf_sha256_derive(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 4 && be_isbytes(vm, 1) && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isint(vm, 4)) {
       size_t ikm_len;
@@ -716,7 +714,7 @@ extern "C" {
 import crypto
 
 # Test Case 1
-hk = crypto.HKDF_HMAC_SHA256()
+hk = crypto.HKDF_SHA256()
 ikm = bytes("0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B")
 salt = bytes("000102030405060708090A0B0C")
 info = bytes("F0F1F2F3F4F5F6F7F8F9")
@@ -724,7 +722,7 @@ k = hk.derive(ikm, salt, info, 42)
 assert(k == bytes("3CB25F25FAACD57A90434F64D0362F2A2D2D0A90CF1A5A4C5DB02D56ECC4C5BF34007208D5B887185865"))
 
 # Test Case 2
-hk = crypto.HKDF_HMAC_SHA256()
+hk = crypto.HKDF_SHA256()
 ikm  = bytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f")
 salt = bytes("606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf")
 info = bytes("b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff")
@@ -732,7 +730,7 @@ k = hk.derive(ikm, salt, info, 82)
 assert(k == bytes("b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"))
 
 # Test Case 3
-hk = crypto.HKDF_HMAC_SHA256()
+hk = crypto.HKDF_SHA256()
 ikm  = bytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
 salt = bytes()
 info = bytes()

@@ -40,7 +40,7 @@ extern int m_hmac_sha256_out(bvm *vm);
 
 extern int m_pbkdf2_hmac_sha256_f(bvm *vm);
 
-extern int m_hkdf_hmac_sha256_derive(bvm *vm);
+extern int m_hkdf_sha256_derive(bvm *vm);
 
 extern const bclass be_class_md5;
 
@@ -53,7 +53,7 @@ extern const bclass be_class_md5;
 #include "be_fixed_be_class_sha256.h"
 #include "be_fixed_be_class_hmac_sha256.h"
 #include "be_fixed_be_class_pbkdf2_hmac_sha256.h"
-#include "be_fixed_be_class_hkdf_hmac_sha256.h"
+#include "be_fixed_be_class_hkdf_sha256.h"
 #include "be_fixed_crypto.h"
 
 const be_const_member_t be_crypto_members[] = {
@@ -75,9 +75,9 @@ const be_const_member_t be_crypto_members[] = {
   { "/EC_P256", (intptr_t) &be_class_ec_p256 },
 #endif // USE_BERRY_CRYPTO_EC_P256
 
-#ifdef USE_BERRY_CRYPTO_HKDF_HMAC_SHA256
-  { "/HKDF_HMAC_SHA256", (intptr_t) &be_class_hkdf_hmac_sha256 },
-#endif // USE_BERRY_CRYPTO_HKDF_HMAC_SHA256
+#ifdef USE_BERRY_CRYPTO_HKDF_SHA256
+  { "/HKDF_SHA256", (intptr_t) &be_class_hkdf_sha256 },
+#endif // USE_BERRY_CRYPTO_HKDF_SHA256
 
 #ifdef USE_BERRY_CRYPTO_HMAC_SHA256
   { "/HMAC_SHA256", (intptr_t) &be_class_hmac_sha256 },
@@ -152,8 +152,8 @@ class be_class_pbkdf2_hmac_sha256 (scope: global, name: PBKDF2_HMAC_SHA256) {
     derive, closure(PBKDF2_HMAC_SHA256_closure)
 }
 
-class be_class_hkdf_hmac_sha256 (scope: global, name: HKDF_HMAC_SHA256) {
-    derive, static_func(m_hkdf_hmac_sha256_derive)
+class be_class_hkdf_sha256 (scope: global, name: HKDF_SHA256) {
+    derive, static_func(m_hkdf_sha256_derive)
 }
 
 module crypto (scope: global) {

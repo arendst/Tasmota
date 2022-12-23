@@ -25,7 +25,7 @@ int m_md5_init(bvm *vm) {
   be_return_nil(vm);
 }
 
-// `Md5.update(content:bytes()) -> nil`
+// `Md5.update(content:bytes()) -> self`
 //
 // Add raw bytes to the MD5 calculation
 int m_md5_update(bvm *vm);
@@ -45,7 +45,8 @@ int m_md5_update(bvm *vm) {
       if (length > 0) {
         esp_rom_md5_update(ctx, (const uint8_t*) bytes, length);
       }
-      be_return_nil(vm);
+      be_pushvalue(vm, 1);
+      be_return(vm);
       // success
     } while (0);
   }
