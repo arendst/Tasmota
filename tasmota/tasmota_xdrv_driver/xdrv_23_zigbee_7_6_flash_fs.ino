@@ -107,6 +107,7 @@ public:
     return "";
   }
 
+  #ifdef ESP32
   #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
   bool seekDir(long position){
     // ignore
@@ -116,6 +117,7 @@ public:
     // ignore
   }
   #endif
+  #endif // ESP32
 
   const char* name() const {
     return "<internal>";
