@@ -119,25 +119,27 @@
  * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A} endon
  * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
  * rule3 on file#modbus do {"Name":"DDSU666","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":0x2000,"Current":0x2002,"Power":0x2004,"ReactivePower":0x2006,"Factor":0x200A,"Frequency":0x200E,"Total":0x4000,"ExportActive":0x400A} endon
+ * rule3 on file#modbus do {"Name":"PZEM014","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"Solax X3MIC","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"F":-1},"Power":{"R":0x040e,"T":3,"F":0},"Total":{"R":0x0423,"T":8,"F":-3}} endon
  *
  * Example using default Energy registers and some user defined registers:
  * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
  * rule3 on file#modbus do {"Name":"SDM120","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM630","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":[0,2,4],"Current":[6,8,10],"Power":[12,14,16],"ApparentPower":[18,20,22],"ReactivePower":[24,26,28],"Factor":[30,32,34],"Frequency":70,"Total":342,"ExportActive":[352,354,356],"User":{"R":[346,348,350],"J":"ImportActive","G":"Import Active","U":"kWh","D":24}} endon
- * rule3 on file#modbus do {"Name":"X3MIC","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"F":-1},"Power":{"R":0x040e,"T":3,"F":0},"Total":{"R":0x0423,"T":8,"F":-3}} endon
  *
  * Note:
  * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 800
  * - Changes to rule file are only executed on restart
  *
  * Restrictions:
- * - Supports Modbus floating point registers
+ * - Supports Modbus single and double integer registers in addition to floating point registers
  * - Max number of user defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
  *
  * To do:
  * - Support all three rule slots
  * - Support other modbus register like integers
+ * - Support multiple devices on modbus
  *
  * Test set:
  * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"Total":[342,342,342]} endon
@@ -166,17 +168,17 @@
 //#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
 
-const uint16_t nrg_mbs_reg_not_used = 1;               // Odd number 1 is unused register
+const uint16_t nrg_mbs_reg_not_used = 0xFFFF;          // Odd number 65535 is unused register
 
-enum EnergyModbusDataType { NRG_DT_FLOAT,              // 4-byte float
-                            NRG_DT_S16,                // 2-byte signed
-                            NRG_DT_S32,                // 4-byte signed
-                            NRG_DT_U16,                // 2-byte unsigned
-                            NRG_DT_U32,                // 4-byte unsigned
-                            NRG_DT_x16_nu1,
-                            NRG_DT_S32_SW,             // 4-byte signed with swapped words
-                            NRG_DT_x16_nu2,
-                            NRG_DT_U32_SW,             // 4-byte unsigned with swapped words
+enum EnergyModbusDataType { NRG_DT_FLOAT,              // 0 = 4-byte float
+                            NRG_DT_S16,                // 1 = 2-byte signed
+                            NRG_DT_S32,                // 2 = 4-byte signed
+                            NRG_DT_U16,                // 3 = 2-byte unsigned
+                            NRG_DT_U32,                // 4 = 4-byte unsigned
+                            NRG_DT_x16_nu1,            // 5 =
+                            NRG_DT_S32_SW,             // 6 = 4-byte signed with swapped words
+                            NRG_DT_x16_nu2,            // 7 =
+                            NRG_DT_U32_SW,             // 8 = 4-byte unsigned with swapped words
                             NRG_DT_MAX };
 
 enum EnergyModbusResolutions { NRG_RES_VOLTAGE = 21,   // V
