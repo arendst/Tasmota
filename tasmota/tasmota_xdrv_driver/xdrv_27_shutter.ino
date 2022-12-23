@@ -402,7 +402,10 @@ void ShutterInit(void)
     Settings->shutter_accuracy = 1;
     Settings->shutter_mode = ShutterGlobal.position_mode;
     // initialize MotorStop time with 500ms if not set
-    Settings->shutter_motorstop = (Settings->shutter_motorstop == 0) ? 500 : tmin(5000,Settings->shutter_motorstop);
+    // typical not set start values are 0 and 65535
+    if (Settings->shutter_motorstop > 5000 || Settings->shutter_motorstop == 0) {
+        Settings->shutter_motorstop = 500;
+    }
   }
 }
 
