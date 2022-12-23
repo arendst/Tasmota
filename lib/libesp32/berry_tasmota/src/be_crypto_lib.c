@@ -45,6 +45,7 @@ extern int m_hkdf_sha256_derive(bvm *vm);
 extern const bclass be_class_md5;
 
 #include "solidify/solidified_crypto_pbkdf2_hmac_sha256.h"
+#include "solidify/solidified_crypto_spake2p_matter.h"
 
 #include "be_fixed_be_class_aes_gcm.h"
 #include "be_fixed_be_class_aes_ctr.h"
@@ -55,6 +56,16 @@ extern const bclass be_class_md5;
 #include "be_fixed_be_class_pbkdf2_hmac_sha256.h"
 #include "be_fixed_be_class_hkdf_sha256.h"
 #include "be_fixed_crypto.h"
+
+// Enable all the crypto required by Matter
+#ifdef USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  #undef USE_BERRY_CRYPTO_EC_P256
+  #define USE_BERRY_CRYPTO_EC_P256
+  #undef USE_BERRY_CRYPTO_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_HMAC_SHA256
+  #undef USE_BERRY_CRYPTO_HKDF_SHA256
+  #define USE_BERRY_CRYPTO_HKDF_SHA256
+#endif
 
 const be_const_member_t be_crypto_members[] = {
   // name with prefix '/' indicates a Berry class
@@ -92,6 +103,11 @@ const be_const_member_t be_crypto_members[] = {
 #ifdef USE_BERRY_CRYPTO_SHA256
   { "/SHA256", (intptr_t) &be_class_sha256 },
 #endif // USE_BERRY_CRYPTO_SHA256
+
+#ifdef USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  { "/SPAKE2P_Matter", (intptr_t) &be_class_SPAKE2P_Matter },
+#endif // USE_BERRY_CRYPTO_SPAKE2P_MATTER
+
 };
 const size_t be_crypto_members_size = sizeof(be_crypto_members)/sizeof(be_crypto_members[0]);
 
