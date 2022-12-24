@@ -31,6 +31,7 @@
  *   Name          - Name of energy monitoring device(s)
  *   Baud          - Baudrate of device modbus interface - optional. default is 9600
  *   Config        - Serial config parameters like 8N1 - 8 databits, No parity, 1 stop bit
+ *   Poll          - Time between modbus requests - optional. default is 200 milliseconds
  *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01) or up to three addresses ([1,2,3]) - optional. default = 1
  *   Function      - Modbus function code to access registers - optional. default = 4
  * Tasmota default embedded register names:
@@ -143,13 +144,15 @@
  * - Support other modbus register like integers
  *
  * Test set:
- * rule3 on file#modbus do {"Name":"3 x PZEM014","Baud":9600,"Config":8N1","Address":[1,1],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"GROWATT","Baud":9600,"Config":8N1","Address":11,"Function":4,"Voltage":{"R":[4110,4114,4118],"T":3,"F":-1},"Current":{"R":[4111,4115,4119],"T":3,"F":-1},"Power":{"R":[4112,4116,4120],"T":8,"F":-1},"Frequency":{"R":4109,"T":3,"F":-2},"Total":{"R":4124,"T":8,"F":-1},"User":[{"R":[4099,4103],"J":"VoltagePV","G":"Voltage PV","U":"V","D":21,"T":3,"F":-1},{"R":[4100,4104],"J":"CurrentPV","G":"Current PV","U":"A","D":22,"T":3,"F":-1},{"R":[4101,4105],"J":"PowerPV","G":"Power PV","U":"W","D":23,"T":8,"F":-1}]} endon
+ * rule3 on file#modbus do {"Name":"2 x PZEM014","Baud":9600,"Config":8N1","Address":[1,1],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
  * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test4","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test5","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM120 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"PZEM014 test1","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3},"User":{"R":0,"J":"VoltageTest","G":"Voltage test","U":"V","D":21,"T":3,"F":-1}} endon
  *
  * rule3 on file#modbus do {"Name":"SDM230 test6","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":0,"M":1},"Current":{"R":6,"T":0,"M":1},"Power":{"R":12,"T":0,"M":1},"Frequency":70,"Total":342} endon
  * rule3 on file#modbus do {"Name":"SDM230 test6","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":0,"F":0},"Current":{"R":6,"T":0,"F":0},"Power":{"R":12,"T":0,"F":0},"Frequency":70,"Total":342,"User":{"R":0x0048,"T":0,"F":-1,"J":"ImportActive","G":"Import Active","U":"kWh","D":24}} endon
@@ -167,6 +170,7 @@
 #define ENERGY_MODBUS_DECIMALS    0                    // Default user decimal resolution
 
 #define ENERGY_MODBUS_TICKER                           // Enable for ESP8266 when using softwareserial solving most modbus serial retries
+#define ENERGY_MODBUS_TICKER_POLL 200                  // Modbus poll time in ms between read register requests
 
 //#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
@@ -185,15 +189,15 @@ enum EnergyModbusDataType { NRG_DT_FLOAT,              // 0 = 4-byte float
                             NRG_DT_U32_SW,             // 8 = 4-byte unsigned with swapped words
                             NRG_DT_MAX };
 
-enum EnergyModbusResolutions { NRG_RES_VOLTAGE = 21,   // V
-                               NRG_RES_CURRENT,        // A
-                               NRG_RES_POWER,          // W, VA, VAr
-                               NRG_RES_ENERGY,         // kWh, kVAh, kVArh
-                               NRG_RES_FREQUENCY,      // Hz
-                               NRG_RES_TEMPERATURE,    // C, F
-                               NRG_RES_HUMIDITY,       // %
-                               NRG_RES_PRESSURE,       // hPa, mmHg
-                               NRG_RES_WEIGHT };       // Kg
+enum EnergyModbusResolutions { NRG_RES_VOLTAGE = 21,   // 21 = V
+                               NRG_RES_CURRENT,        // 22 = A
+                               NRG_RES_POWER,          // 23 = W, VA, VAr
+                               NRG_RES_ENERGY,         // 24 = kWh, kVAh, kVArh
+                               NRG_RES_FREQUENCY,      // 25 = Hz
+                               NRG_RES_TEMPERATURE,    // 26 = C, F
+                               NRG_RES_HUMIDITY,       // 27 = %
+                               NRG_RES_PRESSURE,       // 28 = hPa, mmHg
+                               NRG_RES_WEIGHT };       // 29 = Kg
 
 enum EnergyModbusRegisters { NRG_MBS_VOLTAGE,
                              NRG_MBS_CURRENT,
@@ -228,6 +232,7 @@ Ticker ticker_energy_modbus;
 struct NRGMBSPARAM {
   uint32_t serial_bps;
   uint32_t serial_config;
+  uint16_t ticker_poll;
   uint8_t device_address[ENERGY_MODBUS_MAX_DEVICES];
   uint8_t devices;
   uint8_t function;
@@ -436,7 +441,6 @@ void EnergyModbusLoop(void) {
     }
   } // end data ready
 
-
   uint32_t address = 0;
   uint32_t phase = NrgMbsParam.phase;
   if (NrgMbsParam.devices > 1) {
@@ -465,13 +469,15 @@ void EnergyModbusLoop(void) {
 }
 
 #ifdef USE_RULES
-bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add_index) {
-  // {"R":0x004E,"T":0,"F":0,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
-  uint32_t reg_index = NRG_MBS_MAX_REGS + add_index;
-  JsonParserToken val;
-  val = user_add_value[PSTR("R")];               // Register address
+uint32_t EnergyModbusReadRegisterInfo(JsonParserObject add_value, uint32_t reg_index) {
+  // {"R":0,"T":0,"F":0}
+  // {"R":[0,2,4],"T":0,"F":0}
+  // {"R":[0,2,4],"T":0,"M":10} - [LEGACY]
   uint32_t phase = 0;
+  JsonParserToken val;
+  val = add_value[PSTR("R")];                    // Register address
   if (val.isArray()) {
+    // [0,2,4]
     JsonParserArray address_arr = val.getArray();
     for (auto value : address_arr) {
       NrgMbsReg[reg_index].address[phase] = value.getUInt();
@@ -479,28 +485,23 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
       if (phase >= ENERGY_MAX_PHASES) { break; }
     }
   } else if (val) {
+    // 0
     NrgMbsReg[reg_index].address[0] = val.getUInt();
     phase++;
-  } else {
-    return false;
   }
-  if (phase > Energy.phase_count) {
-    NrgMbsParam.devices = 1;
-    Energy.phase_count = phase;
-  }
-  val = user_add_value[PSTR("T")];               // Register data type
+  val = add_value[PSTR("T")];                    // Register data type
   if (val) {
-    // "T":0
+    // 0
     NrgMbsReg[reg_index].datatype = val.getUInt();
   }
-  val = user_add_value[PSTR("F")];               // Register factor
+  val = add_value[PSTR("F")];                    // Register factor
   if (val) {
-    // "F":1 or "F":-2
+    // 1 or -2
     NrgMbsReg[reg_index].factor = val.getInt();
   }
-  val = user_add_value[PSTR("M")];               // [LEGACY] Register divider
+  val = add_value[PSTR("M")];                    // [LEGACY] Register divider
   if (val) {
-    // "M":1
+    // 1
     int32_t divider = val.getUInt();
     int factor = 0;
     while (divider > 1) {
@@ -509,6 +510,27 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
     }
     NrgMbsReg[reg_index].factor = factor;
   }
+  return phase;
+}
+
+bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add_index) {
+  // {"R":0x004E,"T":0,"F":0,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0}
+  // {"R":[0,2,4],"T":0,"F":0,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0}
+  uint32_t reg_index = NRG_MBS_MAX_REGS + add_index;
+
+  // {"R":0,"T":0,"F":0}
+  // {"R":[0,2,4],"T":0,"F":0}
+  // {"R":[0,2,4],"T":0,"M":10} - [LEGACY]
+  uint32_t phase = EnergyModbusReadRegisterInfo(user_add_value, reg_index);
+  if (!phase) {
+    return false;                                // No register entered so skip
+  }
+  if (phase > Energy.phase_count) {
+    Energy.phase_count = phase;
+    NrgMbsParam.devices = 1;                     // Only one device allowed with multiple phases
+  }
+
+  JsonParserToken val;
   val = user_add_value[PSTR("J")];               // JSON value name
   if (val) {
     NrgMbsUser[add_index].json_name = SetStr(val.getStr());
@@ -533,8 +555,8 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
   }
 
 #ifdef ENERGY_MODBUS_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X], T %d, F %d, J '%s', G '%s', U '%s', D %d"),
-    add_index,
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d (%s), R [%04X,%04X,%04X], T %d, F %d, J '%s', G '%s', U '%s', D %d"),
+    add_index, NrgMbsUser[add_index].json_name,
     NrgMbsReg[reg_index].address[0],
     NrgMbsReg[reg_index].address[1],
     NrgMbsReg[reg_index].address[2],
@@ -570,25 +592,28 @@ bool EnergyModbusReadRegisters(void) {
   Energy.phase_count = 1;
   NrgMbsParam.serial_bps = ENERGY_MODBUS_SPEED;
   NrgMbsParam.serial_config = ENERGY_MODBUS_CONFIG;
+  NrgMbsParam.ticker_poll = ENERGY_MODBUS_TICKER_POLL;
   NrgMbsParam.device_address[0] = ENERGY_MODBUS_ADDR;
   NrgMbsParam.devices = 1;
   NrgMbsParam.function = ENERGY_MODBUS_FUNC;
   NrgMbsParam.user_adds = 0;
 
+  // Detect buffer allocation
   JsonParserToken val;
   val = root[PSTR("User")];
   if (val) {
     if (val.isArray()) {
-      // "User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]
+      // [{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]
       NrgMbsParam.user_adds = val.size();
     } else {
-      // "User":{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
+      // {"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
       NrgMbsParam.user_adds = 1;
     }
   }
   NrgMbsParam.total_regs = NRG_MBS_MAX_REGS + NrgMbsParam.user_adds;
   NrgMbsReg = (NrgMbsRegister_t*)calloc(NrgMbsParam.total_regs, sizeof(NrgMbsRegister_t));
   if (NrgMbsReg == nullptr) { return false; }    // Unable to allocate variables on heap
+
   // Init defaults
   for (uint32_t i = 0; i < NrgMbsParam.total_regs; i++) {
     NrgMbsReg[i].datatype = ENERGY_MODBUS_DATATYPE;
@@ -612,23 +637,28 @@ bool EnergyModbusReadRegisters(void) {
     }
   }
 
+  // Get global parameters
   val = root[PSTR("Baud")];
   if (val) {
-    NrgMbsParam.serial_bps = val.getInt();        // 2400
+    NrgMbsParam.serial_bps = val.getInt();       // 2400
   }
   val = root[PSTR("Config")];
   if (val) {
     const char *serial_config = val.getStr();    // 8N1
     NrgMbsParam.serial_config = ConvertSerialConfig(ParseSerialConfig(serial_config));
   }
+  val = root[PSTR("Poll")];
+  if (val) {
+    NrgMbsParam.ticker_poll = val.getUInt();     // 200
+    if (NrgMbsParam.ticker_poll < 100) {         // Below 100 ms makes no sense as the comms usually is 9600bps
+      NrgMbsParam.ticker_poll = ENERGY_MODBUS_TICKER_POLL;
+    }
+  }
   val = root[PSTR("Address")];
   if (val) {
-
-//    NrgMbsParam.device_address = val.getUInt();   // 1
-
     NrgMbsParam.devices = 0;
     if (val.isArray()) {
-      // "Address":[1,2,3]
+      // [1,2,3]
       JsonParserArray arr = val.getArray();
       for (auto value : arr) {
         NrgMbsParam.device_address[NrgMbsParam.devices] = value.getUInt();   // 1
@@ -636,16 +666,17 @@ bool EnergyModbusReadRegisters(void) {
         if (NrgMbsParam.devices >= ENERGY_MODBUS_MAX_DEVICES) { break; }
       }
     } else if (val) {
-      // "Address":1
-      NrgMbsParam.device_address[0] = val.getUInt();
+      // 1
+      NrgMbsParam.device_address[0] = val.getUInt();  // 1
       NrgMbsParam.devices++;
     }
   }
   val = root[PSTR("Function")];
   if (val) {
-    NrgMbsParam.function = val.getUInt();         // 4
+    NrgMbsParam.function = val.getUInt();        // 4
   }
 
+  // Get default energy registers
   char register_name[32];
   Energy.voltage_available = false;              // Disable voltage is measured
   Energy.current_available = false;              // Disable current is measured
@@ -653,51 +684,17 @@ bool EnergyModbusReadRegisters(void) {
     val = root[GetTextIndexed(register_name, sizeof(register_name), names, kEnergyModbusValues)];
     if (val) {
       // "Voltage":0
-      // "Voltage":[0,0,0]
+      // "Voltage":[0,2,4]
       // "Voltage":{"R":0,"T":0,"F":0}
-      // "Voltage":{"R":[0,0,0],"T":0,"F":0}
+      // "Voltage":{"R":[0,2,4],"T":0,"F":0}
       uint32_t phase = 0;
       if (val.isObject()) {
-        // "Voltage":{"R":0,"T":0,"F":0}
-        // "Voltage":{"R":[0,0,0],"T":0,"F":0}
-        JsonParserObject register_add_values = val.getObject();
-        val = register_add_values[PSTR("R")];    // Register address
-        if (val.isArray()) {
-          // "R":[0,0,0]
-          JsonParserArray address_arr = val.getArray();
-          for (auto value : address_arr) {
-            NrgMbsReg[names].address[phase] = value.getUInt();
-            phase++;
-            if (phase >= ENERGY_MAX_PHASES) { break; }
-          }
-        } else if (val) {
-          // "R":0
-          NrgMbsReg[names].address[0] = val.getUInt();
-          phase++;
-        }
-        val = register_add_values[PSTR("T")];    // Register data type
-        if (val) {
-          // "T":0
-          NrgMbsReg[names].datatype = val.getUInt();
-        }
-        val = register_add_values[PSTR("F")];    // Register factor
-        if (val) {
-          // "F":1 or "F":-2
-          NrgMbsReg[names].factor = val.getInt();
-        }
-        val = register_add_values[PSTR("M")];    // [LEGACY] Register divider
-        if (val) {
-          // "M":1
-          int32_t divider = val.getUInt();
-          int factor = 0;
-          while (divider > 1) {
-            divider /= 10;
-            factor--;
-          }
-          NrgMbsReg[names].factor = factor;
-        }
+        // {"R":0,"T":0,"F":0}
+        // {"R":[0,2,4],"T":0,"F":0}
+        // {"R":[0,2,4],"T":0,"M":10} - [LEGACY]
+        phase = EnergyModbusReadRegisterInfo(val.getObject(), names);
       } else if (val.isArray()) {
-        // "Voltage":[0,0,0]
+        // [0,2,4]
         JsonParserArray arr = val.getArray();
         for (auto value : arr) {
           NrgMbsReg[names].address[phase] = value.getUInt();
@@ -705,14 +702,15 @@ bool EnergyModbusReadRegisters(void) {
           if (phase >= ENERGY_MAX_PHASES) { break; }
         }
       } else if (val) {
-        // "Voltage":0
+        // 0
         NrgMbsReg[names].address[0] = val.getUInt();
         phase++;
       }
       if (phase > Energy.phase_count) {
-        NrgMbsParam.devices = 1;
         Energy.phase_count = phase;
+        NrgMbsParam.devices = 1;                 // Only one device allowed with multiple phases
       }
+
       switch(names) {
         case NRG_MBS_VOLTAGE:
           Energy.voltage_available = true;       // Enable if voltage is measured
@@ -734,8 +732,8 @@ bool EnergyModbusReadRegisters(void) {
       }
 
 #ifdef ENERGY_MODBUS_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X], T %d, F %d"),
-        names,
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d (%s), R [%04X,%04X,%04X], T %d, F %d"),
+        names, register_name,
         NrgMbsReg[names].address[0],
         NrgMbsReg[names].address[1],
         NrgMbsReg[names].address[2],
@@ -746,11 +744,13 @@ bool EnergyModbusReadRegisters(void) {
     }
   }
 
-  // "User":{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
-  // "User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]
+  // Get user defined registers
+  // "User":{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0}
+  // "User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2,"T":0,"F":0}]
   val = root[PSTR("User")];
   if (val) {
     if (val.isArray()) {
+      // [{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2,"T":0,"F":0}]
       JsonParserArray user_adds_arr = val.getArray();
       uint32_t add_index = 0;
       for (auto user_add_values : user_adds_arr) {
@@ -763,6 +763,7 @@ bool EnergyModbusReadRegisters(void) {
         }
       }
     } else if (val) {
+      // {"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3,"T":0,"F":0}
       if (val.isObject()) {
         if (!EnergyModbusReadUserRegisters(val.getObject(), 0)) {
           AddLog(LOG_LEVEL_INFO, PSTR("NRG: Dropped JSON user input"));
@@ -773,12 +774,14 @@ bool EnergyModbusReadRegisters(void) {
     NrgMbsParam.total_regs = NRG_MBS_MAX_REGS + NrgMbsParam.user_adds;
   }
 
+  // Fix variable boundaries
   for (uint32_t i = 0; i < NrgMbsParam.total_regs; i++) {
     if (NrgMbsReg[i].datatype >= NRG_DT_MAX) {
       NrgMbsReg[i].datatype = ENERGY_MODBUS_DATATYPE;
     }
   }
   if (NrgMbsParam.devices > 1) {
+    // Multiple devices have no common values
     Energy.phase_count = NrgMbsParam.devices;
     Energy.voltage_common = false;        // Use no common voltage
     Energy.frequency_common = false;      // Use no common frequency
@@ -786,9 +789,11 @@ bool EnergyModbusReadRegisters(void) {
   }
 
 #ifdef ENERGY_MODBUS_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Devices %d"), NrgMbsParam.devices);
-
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: RAM usage %d + %d + %d"), sizeof(NrgMbsParam), NrgMbsParam.total_regs * sizeof(NrgMbsRegister_t), NrgMbsParam.user_adds * sizeof(NrgMbsUser_t));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Devices %d, RAM usage %d + %d + %d"),
+    NrgMbsParam.devices,
+    sizeof(NrgMbsParam),
+    NrgMbsParam.total_regs * sizeof(NrgMbsRegister_t),
+    NrgMbsParam.user_adds * sizeof(NrgMbsUser_t));
 #endif
 
 //  NrgMbsParam.state = 0;    // Set by calloc()
@@ -803,7 +808,7 @@ bool EnergyModbusRegisters(void) {
   if (EnergyModbusReadRegisters()) {
     return true;
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("NRG: No valid modbus data"));
+  AddLog(LOG_LEVEL_INFO, PSTR("NRG: No valid modbus rule data"));
   return false;
 }
 
@@ -815,7 +820,7 @@ void EnergyModbusSnsInit(void) {
       if (2 == result) { ClaimSerial(); }
 
 #ifdef ENERGY_MODBUS_TICKER
-      ticker_energy_modbus.attach_ms(200, EnergyModbusLoop);
+      ticker_energy_modbus.attach_ms(NrgMbsParam.ticker_poll, EnergyModbusLoop);
 #endif  // ENERGY_MODBUS_TICKER
 
       return;
