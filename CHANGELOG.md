@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads (#17378)
+- Change NTP default servers to dual-stack (IPv4/IPv6)
 
 ### Fixed
 - Shutter default motorstop set to 0 (#17403)
