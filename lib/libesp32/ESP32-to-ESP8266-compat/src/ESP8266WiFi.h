@@ -60,10 +60,12 @@ public:
     int hostByName(const char* aHostname, IPAddress& aResult, int32_t timer_ms);
     int hostByName(const char* aHostname, IPAddress& aResult);
 
-    void saveDNS(void);
-    void restoreDNS(void);
+    void scrubDNS(void);
 protected:
-    ip_addr_t dns_save[DNS_MAX_SERVERS] = {};
+    ip_addr_t dns_save4[DNS_MAX_SERVERS] = {};      // IPv4 DNS servers
+#ifdef USE_IPV6
+    ip_addr_t dns_save6[DNS_MAX_SERVERS] = {};      // IPv6 DNS servers
+#endif // USE_IPV6
 };
 
 void wifi_station_disconnect();
