@@ -804,44 +804,51 @@ void CmndStatus(void)
   if ((0 == payload) || (5 == payload)) {
 #ifdef USE_IPV6
     if (5 == payload) { WifiDumpAddressesIPv6(); }
-#endif // USE_IPV6
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%s\",\"" D_JSON_DNSSERVER "2\":\"%s\",\""
+                          D_JSON_MAC "\":\"%s\""
+                          ",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\""),
+                          TasmotaGlobal.hostname,
+                          (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
+                          DNSGetIPStr(0).c_str(), DNSGetIPStr(1).c_str(),
+                          WiFi.macAddress().c_str()
+                          ,WifiGetIPv6Str().c_str(), WifiGetIPv6LinkLocalStr().c_str());
+#else // USE_IPV6
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\""
-#ifdef USE_IPV6
-                          ",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\""
-#endif // USE_IPV6
-                          ),
+                          D_JSON_MAC "\":\"%s\""),
                           TasmotaGlobal.hostname,
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          WiFi.macAddress().c_str()
-#ifdef USE_IPV6
-                          ,WifiGetIPv6().c_str(), WifiGetIPv6LinkLocal().c_str()
+                          WiFi.macAddress().c_str());
 #endif // USE_IPV6
-                          );
 #ifdef USE_TASMESH
     ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
 #endif  // USE_TASMESH
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#ifdef USE_IPV6
+    ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%s\",\"" D_JSON_DNSSERVER "2\":\"%s\",\""
+                          D_JSON_MAC "\":\"%s\",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\"}"),
+                          EthernetHostname(),
+                          (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
+                          DNSGetIPStr(0).c_str(), DNSGetIPStr(1).c_str(),
+                          EthernetMacAddress().c_str(),
+                          EthernetGetIPv6Str().c_str(), EthernetGetIPv6LinkLocalStr().c_str());
+#else // USE_IPV6
     ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\""
-
-#ifdef USE_IPV6
-                          ",\"" D_JSON_IP6_GLOBAL "\":\"%s\",\"" D_JSON_IP6_LOCAL "\":\"%s\""
-#endif // USE_IPV6
-                          "}"),
+                          D_JSON_MAC "\":\"%s\"}"),
                           EthernetHostname(),
                           (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
                           Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4],
                           EthernetMacAddress().c_str()
-#ifdef USE_IPV6
-                          ,EthernetGetIPv6().c_str(), EthernetGetIPv6LinkLocal().c_str()
+
 #endif // USE_IPV6
-                          );
 #endif  // USE_ETHERNET
     ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());

@@ -570,7 +570,8 @@ void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP
 #endif  // ESP32
 }
 
-void StartWebserver(int type, IPAddress ipweb)
+// Always listens to all interfaces, so we don't need an IP address anymore
+void StartWebserver(int type)
 {
   if (!Settings->web_refresh) { Settings->web_refresh = HTTP_REFRESH_TIME; }
   if (!Web.state) {
@@ -610,19 +611,8 @@ void StartWebserver(int type, IPAddress ipweb)
     Webserver->begin(); // Web server start
   }
   if (Web.state != type) {
-#ifdef USE_IPV6
-    String ipv6_addr = WifiGetIPv6();
-    if (ipv6_addr!="") {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I and IPv6 global address %s "),
-        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb, ipv6_addr.c_str());
-    } else {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
-        NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
-    }
-#else
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %_I"),
-      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", (uint32_t)ipweb);
-#endif // USE_IPV6
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", IPGetListeningAddressStr().c_str());
     TasmotaGlobal.rules_flag.http_init = 1;
     Web.state = type;
   }
@@ -663,7 +653,7 @@ void WifiManagerBegin(bool reset_only)
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
   DnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
-  StartWebserver((reset_only ? HTTP_MANAGER_RESET_ONLY : HTTP_MANAGER), WiFi.softAPIP());
+  StartWebserver((reset_only ? HTTP_MANAGER_RESET_ONLY : HTTP_MANAGER));
 }
 
 void PollDnsWebserver(void)
@@ -700,12 +690,14 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
       referer.toUpperCase();
       String hostname = TasmotaGlobal.hostname;
       hostname.toUpperCase();
+      // TODO rework if IPv6
       if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)) {
         return true;
       }
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
       hostname = EthernetHostname();
       hostname.toUpperCase();
+      // TODO rework if IPv6
       if ((referer.indexOf(hostname) == 7) || (referer.indexOf(EthernetLocalIP().toString()) == 7)) {
         return true;
       }
@@ -898,7 +890,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 #else
   if ( Settings->flag3.gui_hostname_ip || ( (WiFi.getMode() == WIFI_AP_STA) && (!Web.initial_config) )  ) {
 #endif
-    bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
+    bool lip = WifiHasIP();
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     bool eip = false;
     if (lip || sip) {
@@ -910,7 +902,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
         (sip) ? WiFi.softAPIP().toString().c_str() : "");
     }
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
-    eip = (static_cast<uint32_t>(EthernetLocalIP()) != 0);
+    eip = EthernetHasIP();
     if (eip) {
       WSContentSend_P(PSTR("%s%s%s (%s)"),          // tasmota-eth.local (192.168.2.13)
         (lip || sip) ? PSTR("</br>") : PSTR("<h4>"),
@@ -1015,8 +1007,8 @@ void WebRestart(uint32_t type) {
 #if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
   // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
   if (3 == type) {
-    WSContentSend_P("setTimeout(function(){location.href='http://%_I';},%d);",
-      (uint32_t)WiFi.localIP(),
+    WSContentSend_P("setTimeout(function(){location.href='http://%s';},%d);",
+      IPForUrl(WiFi.localIP()).c_str(),
       HTTP_RESTART_RECONNECT_TIME
     );
   } else {
@@ -2360,11 +2352,11 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6
-    String ipv6_addr = WifiGetIPv6();
+    String ipv6_addr = WifiGetIPv6Str();
     if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Global (wifi)}2%s"), ipv6_addr.c_str());
     }
-    ipv6_addr = WifiGetIPv6LinkLocal();
+    ipv6_addr = WifiGetIPv6LinkLocalStr();
     if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Local (wifi)}2%s"), ipv6_addr.c_str());
     }
@@ -2378,21 +2370,26 @@ void HandleInformation(void)
   if (!TasmotaGlobal.global_state.wifi_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->ipv4_address[2]);
+#ifdef USE_IPV6
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%s"), DNSGetIPStr(0).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%s"), DNSGetIPStr(1).c_str());
+#else // USE_IPV6
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->ipv4_address[3]);
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->ipv4_address[4]);
+#endif // USE_IPV6
   }
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
-  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+  if (EthernetHasIP()) {
     if (show_hr) {
       WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6
-    String ipv6_eth_addr = EthernetGetIPv6();
+    String ipv6_eth_addr = EthernetGetIPv6Str();
     if (ipv6_eth_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Global (eth)}2%s"), ipv6_eth_addr.c_str());
     }
-    ipv6_eth_addr = EthernetGetIPv6LinkLocal();
+    ipv6_eth_addr = EthernetGetIPv6LinkLocalStr();
     if (ipv6_eth_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Local (eth)}2%s"), ipv6_eth_addr.c_str());
     }
@@ -2403,8 +2400,13 @@ void HandleInformation(void)
   if (!TasmotaGlobal.global_state.eth_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->eth_ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->eth_ipv4_address[2]);
+#ifdef USE_IPV6
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%s"), DNSGetIPStr(0).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%s"), DNSGetIPStr(1).c_str());
+#else // USE_IPV6
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->eth_ipv4_address[3]);
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->eth_ipv4_address[4]);
+#endif // USE_IPV6
   }
 #endif  // USE_ETHERNET
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
@@ -3724,7 +3726,7 @@ bool Xdrv01(uint32_t function)
           Wifi.wifi_test_AP_TIMEOUT = false;
           Wifi.wifi_test_counter = 0;
           Wifi.wifiTest = WIFI_TEST_FINISHED;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID " %s: " D_CONNECTED " - " D_IP_ADDRESS " %_I"), SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), (uint32_t)WiFi.localIP());
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_SSID " %s: " D_CONNECTED " - " D_IP_ADDRESS " %s"), SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), WiFi.localIP().toString().c_str());
 //          TasmotaGlobal.blinks = 255;                    // Signal wifi connection with blinks
           if (MAX_WIFI_OPTION != Wifi.old_wificonfig) {
             TasmotaGlobal.wifi_state_flag = Settings->sta_config = Wifi.old_wificonfig;

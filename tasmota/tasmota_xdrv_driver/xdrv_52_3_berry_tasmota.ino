@@ -215,12 +215,12 @@ extern "C" {
         int32_t rssi = WiFi.RSSI();
         bool show_rssi = false;
 #ifdef USE_IPV6
-        String ipv6_addr = WifiGetIPv6();
+        String ipv6_addr = WifiGetIPv6Str();
         if (ipv6_addr != "") {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
           show_rssi = true;
         }
-        ipv6_addr = WifiGetIPv6LinkLocal();
+        ipv6_addr = WifiGetIPv6LinkLocalStr();
         if (ipv6_addr != "") {
           be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
           show_rssi = true;
@@ -255,11 +255,11 @@ extern "C" {
         be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
       }
 #ifdef USE_IPV6
-      String ipv6_addr = EthernetGetIPv6();
+      String ipv6_addr = EthernetGetIPv6Str();
       if (ipv6_addr != "") {
         be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
       }
-      ipv6_addr = EthernetGetIPv6LinkLocal();
+      ipv6_addr = EthernetGetIPv6LinkLocalStr();
       if (ipv6_addr != "") {
         be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
       }

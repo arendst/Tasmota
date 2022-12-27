@@ -1576,14 +1576,10 @@ void Every250mSeconds(void)
         if (Settings->webserver) {
 
 #ifdef ESP8266
-          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver, WiFi.localIP()); }
+          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver); }
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef USE_ETHERNET
-          StartWebserver(Settings->webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
-#else
-          StartWebserver(Settings->webserver, WiFi.localIP());
-#endif
+          StartWebserver(Settings->webserver);
 #endif  // ESP32
 
 #ifdef USE_DISCOVERY
