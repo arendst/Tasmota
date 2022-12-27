@@ -80,6 +80,7 @@ Module             | LCode | Description
 73 PWM Dimmer      |   x   | Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM Dimmer Switches
 74 Sonoff D1       |   x   | Sonoff D1 Wi-Fi and RF Dimmer
 75 Sonoff ZbBridge |   x   | Sonoff Zigbee bridge
+76 PCA9232 RGBW    |       | PCA9632 RGBW PWM
 
 ### ESP32 based
 The following ESP32 based hardware modules are supported.
