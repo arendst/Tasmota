@@ -95,7 +95,6 @@ class TasmotaSerial : public Stream {
     uint32_t m_out_pos;
     uint32_t serial_buffer_size = TM_SERIAL_BUFFER_SIZE;
     bool m_valid;
-    bool m_tx_enable_valid;
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;

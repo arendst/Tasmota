@@ -66,6 +66,7 @@ class TasmotaModbus : public TasmotaSerial {
     uint8_t ReceiveCount(void) { return mb_len; }
 
   private:
+    int mb_tx_enable_pin;
     uint8_t mb_address;
     uint8_t mb_len;
 };
