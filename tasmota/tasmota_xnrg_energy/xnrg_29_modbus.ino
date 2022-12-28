@@ -103,9 +103,9 @@
  *                       3 - multiply by 1000
  *                       4 - multiply by 10000
  *                   M - [LEGACY - replaced by "F"] Divide register by 1 to 10000 - optional. default = 0 (no action)
- *                   J - JSON register name (preferrably without spaces like "PhaseAngle")
- *                   G - GUI register name
- *                   U - GUI unit name
+ *                   J - JSON register name (preferrably without spaces like "PhaseAngle") - mandatory. It needs to be different from the Tasmota default embedded register names
+ *                   G - GUI register name - optional. If not defined the register will not be shown in the GUI
+ *                   U - GUI unit name - optional. default is none
  *                   D - Number of decimals for floating point presentation (0 to 20) or a code correspondig to Tasmota resolution command settings:
  *                       21 - VoltRes (V)
  *                       22 - AmpRes (A)
@@ -539,20 +539,17 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
   val = user_add_value[PSTR("J")];               // JSON value name
   if (val) {
     NrgMbsUser[add_index].json_name = SetStr(val.getStr());
+    char json_name[32];
+    if (GetCommandCode(json_name, sizeof(json_name), NrgMbsUser[add_index].json_name, kEnergyModbusValues) > -1) {
+      return false;                              // Duplicate JSON name
+    }
   } else {
-    return false;
+    return false;                                // No mandatory JSON name
   }
   val = user_add_value[PSTR("G")];               // GUI value name
-  if (val) {
-    NrgMbsUser[add_index].gui_name = SetStr(val.getStr());
-  } else {
-    return false;
-  }
-  NrgMbsUser[add_index].gui_unit = EmptyStr;
+  NrgMbsUser[add_index].gui_name = (val) ? SetStr(val.getStr()) : EmptyStr;
   val = user_add_value[PSTR("U")];               // GUI value Unit
-  if (val) {
-    NrgMbsUser[add_index].gui_unit = SetStr(val.getStr());
-  }
+  NrgMbsUser[add_index].gui_unit = (val) ? SetStr(val.getStr()) : EmptyStr;
   NrgMbsUser[add_index].resolution = ENERGY_MODBUS_DECIMALS;
   val = user_add_value[PSTR("D")];               // Decimal resolution
   if (val) {
@@ -916,10 +913,12 @@ void EnergyModbusShow(bool json) {
         ResponseAppend_P(PSTR(",\"%s\":%s"), NrgMbsUser[i].json_name, EnergyFormat(value_chr, values, resolution, single));
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
-          NrgMbsUser[i].gui_name,
-          WebEnergyFormat(value_chr, values, resolution, single),
-          NrgMbsUser[i].gui_unit);
+        if (strlen(NrgMbsUser[i].gui_name)) {    // Skip empty GUI names
+          WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
+            NrgMbsUser[i].gui_name,
+            WebEnergyFormat(value_chr, values, resolution, single),
+            NrgMbsUser[i].gui_unit);
+        }
 #endif  // USE_WEBSERVER
       }
     }
