@@ -238,9 +238,9 @@ struct NRGMBSPARAM {
   uint8_t function;
   uint8_t total_regs;
   uint8_t user_adds;
-  uint8_t phase;
   uint8_t state;
   uint8_t retry;
+  int8_t phase;
   bool mutex;
 } NrgMbsParam;
 
@@ -419,45 +419,50 @@ void EnergyModbusLoop(void) {
             NrgMbsUser[NrgMbsParam.state - NRG_MBS_MAX_REGS].data[NrgMbsParam.phase] = value;
           }
       }
-
-      uint32_t phase = 0;
-      do {
-        NrgMbsParam.phase++;
-        if (NrgMbsParam.phase >= Energy.phase_count) {
-          NrgMbsParam.phase = 0;
-          NrgMbsParam.state++;
-          if (NrgMbsParam.state >= NrgMbsParam.total_regs) {
-            NrgMbsParam.state = 0;
-            NrgMbsParam.phase = 0;
-            EnergyUpdateTotal();                 // update every cycle after all registers have been read
-            break;
-          }
-        }
-        delay(0);
-        if (NrgMbsParam.devices == 1) {
-          phase = NrgMbsParam.phase;
-        }
-      } while (NrgMbsReg[NrgMbsParam.state].address[phase] == nrg_mbs_reg_not_used);
     }
   } // end data ready
 
-  uint32_t address = 0;
-  uint32_t phase = NrgMbsParam.phase;
-  if (NrgMbsParam.devices > 1) {
-    address = NrgMbsParam.phase;
-    phase = 0;
-  }
   if (0 == NrgMbsParam.retry || data_ready) {
     NrgMbsParam.retry = 1;
+
+    uint32_t address = 0;
+    uint32_t phase = 0;
+    do {
+      NrgMbsParam.phase++;
+      if (NrgMbsParam.phase >= Energy.phase_count) {
+        NrgMbsParam.phase = 0;
+        NrgMbsParam.state++;
+        if (NrgMbsParam.state >= NrgMbsParam.total_regs) {
+          NrgMbsParam.state = 0;
+          NrgMbsParam.phase = 0;
+          EnergyUpdateTotal();                 // update every cycle after all registers have been read
+        }
+      }
+      delay(0);
+      if (NrgMbsParam.devices == 1) {
+        phase = NrgMbsParam.phase;
+      } else {
+        address = NrgMbsParam.phase;
+      }
+    } while (NrgMbsReg[NrgMbsParam.state].address[phase] == nrg_mbs_reg_not_used);
+
     // Even data type is single register, Odd data type is double registers
     register_count = 2 - (NrgMbsReg[NrgMbsParam.state].datatype & 1);
+
+#ifdef ENERGY_MODBUS_DEBUG
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Modbus send Device %d, Function %d, Register %04X (%d/%d), Size %d"),
+      NrgMbsParam.device_address[address], NrgMbsParam.function,
+      NrgMbsReg[NrgMbsParam.state].address[phase], NrgMbsParam.state, phase,
+      register_count);
+#endif
+
     EnergyModbus->Send(NrgMbsParam.device_address[address], NrgMbsParam.function, NrgMbsReg[NrgMbsParam.state].address[phase], register_count);
   } else {
     NrgMbsParam.retry--;
 
 #ifdef ENERGY_MODBUS_DEBUG
     if (NrgMbsParam.devices > 1) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus retry device %d state %d"), NrgMbsParam.device_address[address], NrgMbsParam.state);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus retry device %d state %d"), NrgMbsParam.device_address[NrgMbsParam.phase], NrgMbsParam.state);
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus retry state %d phase %d"), NrgMbsParam.state, NrgMbsParam.phase);
     }
@@ -556,7 +561,7 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
 
 #ifdef ENERGY_MODBUS_DEBUG
   AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d (%s), R [%04X,%04X,%04X], T %d, F %d, J '%s', G '%s', U '%s', D %d"),
-    add_index, NrgMbsUser[add_index].json_name,
+    reg_index, NrgMbsUser[add_index].json_name,
     NrgMbsReg[reg_index].address[0],
     NrgMbsReg[reg_index].address[1],
     NrgMbsReg[reg_index].address[2],
@@ -797,7 +802,7 @@ bool EnergyModbusReadRegisters(void) {
 #endif
 
 //  NrgMbsParam.state = 0;    // Set by calloc()
-//  NrgMbsParam.phase = 0;
+  NrgMbsParam.phase = -1;
 
   return true;
 #endif  // USE_RULES
