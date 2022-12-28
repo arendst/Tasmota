@@ -31,11 +31,6 @@ TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int tx_enable_pi
 {
 //  setTransmitEnablePin(tx_enable_pin);
   mb_tx_enable_pin = tx_enable_pin;
-  if (mb_tx_enable_pin > -1) {
-    pinMode(mb_tx_enable_pin, OUTPUT);
-    digitalWrite(mb_tx_enable_pin, LOW);
-  }
-
   mb_address = 0;
 }
 
@@ -64,6 +59,10 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   if (begin(speed, config)) {
     result = 1;
     if (hardwareSerial()) { result = 2; }
+    if (mb_tx_enable_pin > -1) {
+      pinMode(mb_tx_enable_pin, OUTPUT);
+      digitalWrite(mb_tx_enable_pin, LOW);
+    }
   }
   return result;
 }
@@ -161,7 +160,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   write(frame, framepointer);
   if (mb_tx_enable_pin > -1) {
-    delay(1);
+    delayMicroseconds(800);  // delay(1) will exception here
     digitalWrite(mb_tx_enable_pin, LOW);
   }
   free(frame);
