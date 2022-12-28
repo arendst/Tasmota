@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 Framework (Core) from v2.0.5.4 to v2.0.6 (IPv6 support)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads (#17378)
 - Change NTP default servers to dual-stack (IPv4/IPv6)
 
