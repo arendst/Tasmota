@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Modbus transmit enable GPIO enabled once during write buffer
+- ESP8266 set GPIO's to input on power on fixing relay spikes [#17531](https://github.com/arendst/Tasmota/issues/17531)
 - Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)
 - Shutter default tilt configuration [#17484](https://github.com/arendst/Tasmota/issues/17484)
 

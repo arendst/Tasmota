@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Shutter default motorstop set to 0 (#17403)
 - Shutter default tilt configuration (#17484)
 - Modbus transmit enable GPIO enabled once during write buffer
+- ESP8266 set GPIO's to input on power on fixing relay spikes (#17531)
 
 ### Removed
 
