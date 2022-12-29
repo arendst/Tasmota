@@ -114,7 +114,7 @@ void Pcf8574Init(void)
   uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
   while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
 
-#ifdef USE_MCP230xx_ADDR
+#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
     if (USE_MCP230xx_ADDR == pcf8574_address) {
       AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
       pcf8574_address++;
