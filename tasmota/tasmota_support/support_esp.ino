@@ -34,21 +34,23 @@ extern struct rst_info resetInfo;
 }
 
 /*********************************************************************************************\
- * Core overrides executed directly by core
+ * Core overrides executed by core
 \*********************************************************************************************/
 
 // Add below line to tasmota_globals.h
 // extern "C" void resetPins();
-// This function is executed by core init() (as initPins()) in core_esp8266_wiring.cpp
-// 20221229 - Re-enabled with additional check to execute on power on only fixing short relay power on/off
-// 20?????? - Disabled for unknown reason
+//
+// This function overrules __resetPins() which is executed by core init() as initPins() in core_esp8266_wiring.cpp
+//
+// 20221229 - (v12.3.1.2) Enabled with additional check to execute on power on only to fix relay clicks on power on
+// 20200321 - (v8.2.0.1) Disable core functionality to fix relay clicks on restart after OTA - make function return without setting pinMode
 void resetPins() {
   if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
     // Only perform at power on
     for (int i = 0; i <= 5; ++i) {
       pinMode(i, INPUT);
     }
-    // pins 6-11 are used for the SPI flash interface
+    // pins 6-11 are used for the SPI flash interface ESP8266
     for (int i = 12; i <= 16; ++i) {
       pinMode(i, INPUT);
     }
