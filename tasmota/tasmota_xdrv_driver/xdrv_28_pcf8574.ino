@@ -55,10 +55,10 @@
 
 // Consitency tests - Checked across the complete range for the PCF8574/PCF8574A to allow override
 #if (PCF8574_ADDR1 < 0x20) || ((PCF8574_ADDR1 + PCF8574_ADDR1_COUNT - 1) > 0x27)
-#error PCF8574_ADDR1 and/or PCF8575_ADDR1_COUNT badly overriden. Fix your user_config_override._HAS_CHAR16_T_LANGUAGE_SUPPORT
+#error PCF8574_ADDR1 and/or PCF8574_ADDR1_COUNT badly overriden. Fix your user_config_override
 #endif
 #if (PCF8574_ADDR2 < 0x38) || ((PCF8574_ADDR2 + PCF8574_ADDR2_COUNT - 1) > 0x3F)
-#error PCF8574_ADDR2 and/or PCF8575_ADDR2_COUNT badly overriden. Fix your user_config_override._HAS_CHAR16_T_LANGUAGE_SUPPORT
+#error PCF8574_ADDR2 and/or PCF8574_ADDR2_COUNT badly overriden. Fix your user_config_override.
 #endif
 
 struct PCF8574 {
