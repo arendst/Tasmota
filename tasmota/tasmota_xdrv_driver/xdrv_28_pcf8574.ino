@@ -141,7 +141,7 @@ void Pcf8574Init(void)
 
     pcf8574_address++;
     if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) { // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
-      pcf8574_address = PCF8574_ADDR2 +1;
+      pcf8574_address = PCF8574_ADDR2;
     }
   }
   if (Pcf8574.type) {
