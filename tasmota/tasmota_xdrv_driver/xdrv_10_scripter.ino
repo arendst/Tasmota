@@ -52,6 +52,14 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #endif
 #define MAXNVARS MAXVARS-MAXSVARS
 
+#ifdef USE_SML_M
+#ifndef NO_USE_SML_SCRIPT_CMD
+// allows several sml cmds from scripts, as well as access to sml registers
+#undef USE_SML_SCRIPT_CMD
+#define USE_SML_SCRIPT_CMD
+#endif
+#endif // USE_SML_M
+
 #ifndef MAXFILT
 #define MAXFILT 5
 #endif
@@ -2645,6 +2653,7 @@ chknext:
         }
 #endif //USE_SCRIPT_TASK
 #endif //ESP32
+
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(lp, "cos(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
@@ -4309,8 +4318,18 @@ extern char *SML_GetSVal(uint32_t index);
           SCRIPT_SKIP_SPACES
           lp++;
           len = 0;
-          if (sp) strlcpy(sp, SML_GetSVal(fvar), glob_script_mem.max_ssize);
-          goto strexit;;
+          if (fvar > 0) {
+            if (sp) strlcpy(sp, SML_GetSVal(fvar), glob_script_mem.max_ssize);
+          } else {
+            char sbuff[SCRIPT_MAXSSIZE];
+            fvar = fabs(fvar);
+            if (fvar < 1) {
+              fvar = 1;
+            }
+            dtostrfd(SML_GetVal(fvar), glob_script_mem.script_dprec, sbuff);
+            if (sp) strlcpy(sp, sbuff, glob_script_mem.max_ssize);
+          }
+          goto strexit;
         }
         if (!strncmp(lp, "sml(", 4)) {
           float fvar1;
@@ -6064,7 +6083,8 @@ int16_t retval;
 
 #define SCRIPT_LOOP_NEST 3
 int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
-    uint8_t vtype = 0, sindex, xflg, globvindex, fromscriptcmd = 0;
+    uint8_t vtype = 0, sindex, xflg, fromscriptcmd = 0;
+    int16_t globvindex;
     // 22 bytes per nested loop
     uint8_t floop[SCRIPT_LOOP_NEST] = {0, 0, 0};
     int8_t loopdepth = -1;
@@ -6682,6 +6702,7 @@ getnext:
                         dfvar = &sysvar;
                         if (ind.bits.settable) {
                           sysv_type = ind.index;
+                          globvindex = -1;
                         } else {
                           sysv_type = 0;
                         }
@@ -6759,33 +6780,36 @@ getnext:
                               break;
                       }
                       // var was changed
-                      SetChanged(globvindex);
+                      if (globvindex >= 0) SetChanged(globvindex);
 #ifdef USE_SCRIPT_GLOBVARS
-                      if (glob_script_mem.type[globvindex].bits.global) {
-                        script_udp_sendvar(varname, dfvar, 0);
+                      if (globvindex >= 0 ) {
+                        if (glob_script_mem.type[globvindex].bits.global) {
+                          script_udp_sendvar(varname, dfvar, 0);
+                        }
                       }
 #endif //USE_SCRIPT_GLOBVARS
-                      if (glob_script_mem.type[globvindex].bits.is_filter) {
-                        if (globaindex >= 0) {
-                          Set_MFVal(glob_script_mem.type[globvindex].index, globaindex, *dfvar);
-                        } else {
-                          if (glob_script_mem.arres == 2) {
-                            // fetch var preset
-                            lp++;
-                            while (*lp && *lp != SCRIPT_EOL) {
-                              if (*lp == '}') {
-                                lp++;
-                                break;
+                      if (globvindex >= 0) {
+                        if (glob_script_mem.type[globvindex].bits.is_filter) {
+                          if (globaindex >= 0) {
+                            Set_MFVal(glob_script_mem.type[globvindex].index, globaindex, *dfvar);
+                          } else {
+                            if (glob_script_mem.arres == 2) {
+                              // fetch var preset
+                              lp++;
+                              while (*lp && *lp != SCRIPT_EOL) {
+                                if (*lp == '}') {
+                                  lp++;
+                                  break;
+                                }
+                                lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                                Set_MFilter(glob_script_mem.type[globvindex].index, fvar);
                               }
-                              lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-                              Set_MFilter(glob_script_mem.type[globvindex].index, fvar);
-                            }
-                          }  else {
+                            }  else {
                               Set_MFilter(glob_script_mem.type[globvindex].index, *dfvar);
+                            }
                           }
                         }
                       }
-
                       if (sysv_type) {
                         switch (sysv_type) {
                           case SCRIPT_LOGLEVEL:
@@ -6845,10 +6869,12 @@ getnext:
 #endif
                     if (!glob_script_mem.var_not_found) {
                       // var was changed
-                      SetChanged(globvindex);
+                      if (globvindex >= 0) SetChanged(globvindex);
 #ifdef USE_SCRIPT_GLOBVARS
-                      if (glob_script_mem.type[globvindex].bits.global) {
-                        script_udp_sendvar(varname, 0, str);
+                      if (globvindex >= 0) {
+                        if (glob_script_mem.type[globvindex].bits.global) {
+                          script_udp_sendvar(varname, 0, str);
+                        }
                       }
 #endif //USE_SCRIPT_GLOBVARS
                       if (saindex >= 0) {
