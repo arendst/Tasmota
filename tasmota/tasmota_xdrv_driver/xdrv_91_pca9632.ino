@@ -104,6 +104,7 @@ void PCA9632_SetPWM(uint8_t pin, uint16_t pwm) {
 }
 
 void PCA9632_Enable(bool enable) {
+  DEBUG_TRACE_LOG(PSTR("DRV: PCA9632 enable %d"), enable);
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_LEDOUT, enable ? 0xFF : 0x0);
 }
 

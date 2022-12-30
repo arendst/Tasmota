@@ -27,52 +27,44 @@
 
 #define XLGT_11             11
 
-#define D_LOG_PCA9632       "PCA9632: "
-
-struct PCA9632 {
-  int8_t pin_scl = 0;
-  int8_t pin_sda = 0;
-  bool enabled = false;
-} Pca9632;
-
-void PCA9632_L_SendBit(uint8_t v)
-{
-
-}
-
-void PCA9632_L_SendByte(uint8_t v)
-{
-
-}
-
-void PCA9632_L_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
-{
-
-}
-
-void PCA9632_L_Init(void)
-{
-
-}
-
 /********************************************************************************************/
 
-bool PCA9632_L_SetChannels(void)
+bool PCA9632_SetChannels(void)
 {
+
+  uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
+
+  DEBUG_TRACE_LOG(PSTR("LGT: PCA9632 %d - %d - %d - %d"), cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
+
+  bool enable = false;
+  for (uint8_t pin = 0; pin < 4; pin++) {
+
+    uint8_t value = cur_col[pin];
+
+    if (value > 0) {
+      enable |= true;
+    }
+
+    PCA9632_SetPWM(pin, value);
+
+  }
+
+  PCA9632_Enable(enable);
+
   return true;
 }
 
-bool PCA9632_L_ModuleSelected(void)
+bool PCA9632_ModuleSelected(void)
 {
-  if (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA)) {
-    Pca9632.pin_scl = Pin(GPIO_I2C_SCL);
-    Pca9632.pin_sda = Pin(GPIO_I2C_SDA);
+  DEBUG_TRACE_LOG(PSTR("LGT: PCA9632 ModuleSelected"));
 
+  if (PCA9632_Detect()) {
     PCA9632_Init();
 
     TasmotaGlobal.light_type += LST_RGBW;    // Add RGBW to be controlled by PCA9632
     TasmotaGlobal.light_driver = XLGT_11;
-    AddLog(LOG_LEVEL_INFO, PSTR("DBG: PCA9632 Found"));
+
+    AddLog(LOG_LEVEL_INFO, PSTR("LGT: PCA9632 Found"));
 
     return true;
   }
@@ -90,10 +82,10 @@ bool Xlgt11(uint32_t function)
 
   switch (function) {
     case FUNC_SET_CHANNELS:
-      result = PCA9632_L_SetChannels();
+      result = PCA9632_SetChannels();
       break;
     case FUNC_MODULE_INIT:
-      result = PCA9632_L_ModuleSelected();
+      result = PCA9632_ModuleSelected();
       break;
   }
   return result;
