@@ -319,6 +319,7 @@ void EnergyUpdateTotal(void) {
 
     if ((Energy.total[i] < (Energy.import_active[i] - 0.01f)) &&   // We subtract a little offset to avoid continuous updates
         Settings->flag3.hardware_energy_total) {    // SetOption72 - Enable hardware energy total counter as reference (#6561)
+      // The following calculation allows total usage (Energy.import_active[i]) up to +/-21474 kWh
       RtcSettings.energy_kWhtotal_ph[i] = (int32_t)((Energy.import_active[i] * 100000) - Energy.kWhtoday_offset[i] - Energy.kWhtoday[i]);
       Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
       Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100000;

@@ -280,10 +280,6 @@ void EnergyModbusLoop(void) {
     // Even data type is single register, Odd data type is double registers
     register_count = 2 - (NrgMbsReg[NrgMbsParam.state].datatype & 1);
     uint32_t error = EnergyModbus->ReceiveBuffer(buffer, register_count);
-
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Modbus register %d, phase %d, rcvd %*_H"),
-      NrgMbsParam.state, NrgMbsParam.phase, EnergyModbus->ReceiveCount(), buffer);
-
     if (error) {
       /* Return codes from TasmotaModbus.h:
       * 0 = No error
@@ -302,6 +298,10 @@ void EnergyModbusLoop(void) {
       * 13 = Register data not specified
       * 14 = To many registers
       */
+#ifdef ENERGY_MODBUS_DEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Modbus register %d, phase %d, rcvd %*_H"),
+        NrgMbsParam.state, NrgMbsParam.phase, EnergyModbus->ReceiveCount(), buffer);
+#endif
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus error %d"), error);
     } else {
       /* Modbus protocol format:
@@ -385,6 +385,10 @@ void EnergyModbusLoop(void) {
       } else {
         value *= factor;
       }
+
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Modbus register %d, phase %d, rcvd %*_H, T %d, F %d, value %4_f"),
+        NrgMbsParam.state, NrgMbsParam.phase, EnergyModbus->ReceiveCount(), buffer,
+        NrgMbsReg[NrgMbsParam.state].datatype, NrgMbsReg[NrgMbsParam.state].factor, &value);
 
       switch (NrgMbsParam.state) {
         case NRG_MBS_VOLTAGE:
