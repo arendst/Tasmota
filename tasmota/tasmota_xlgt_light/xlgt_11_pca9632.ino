@@ -30,8 +30,8 @@
 #define D_LOG_PCA9632       "PCA9632: "
 
 struct PCA9632 {
-  int8_t pin_clk = 0;
-  int8_t pin_dat = 0;
+  int8_t pin_scl = 0;
+  int8_t pin_sda = 0;
   bool enabled = false;
 } Pca9632;
 
@@ -64,15 +64,15 @@ bool PCA9632_L_SetChannels(void)
 
 bool PCA9632_L_ModuleSelected(void)
 {
-  if (PinUsed(GPIO_PCA9632_CLK) && PinUsed(GPIO_PCA9632_DAT)) {
-    Pca9632.pin_clk = Pin(GPIO_PCA9632_CLK);
-    Pca9632.pin_dat = Pin(GPIO_PCA9632_DAT);
+  if (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA)) {
+    Pca9632.pin_scl = Pin(GPIO_I2C_SCL);
+    Pca9632.pin_sda = Pin(GPIO_I2C_SDA);
 
     PCA9632_Init();
 
     TasmotaGlobal.light_type += LST_RGBW;    // Add RGBW to be controlled by PCA9632
     TasmotaGlobal.light_driver = XLGT_11;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: PCA9632 Found"));
+    AddLog(LOG_LEVEL_INFO, PSTR("DBG: PCA9632 Found"));
 
     return true;
   }
