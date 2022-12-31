@@ -29,33 +29,17 @@
 
 /********************************************************************************************/
 
-bool PCA9632_SetChannels(void)
-{
-
+bool PCA9632_SetChannels(void) {
   uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
 
   DEBUG_TRACE_LOG(PSTR("LGT: PCA9632 %d - %d - %d - %d"), cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
 
-  bool enable = false;
-  for (uint8_t pin = 0; pin < 4; pin++) {
-
-    uint8_t value = cur_col[pin];
-
-    if (value > 0) {
-      enable |= true;
-    }
-
-    PCA9632_SetPWM(pin, value);
-
-  }
-
-  PCA9632_Enable(enable);
+  PCA9632_Enable(PCA9632_SetPWM_Bulk(cur_col, 4));
 
   return true;
 }
 
-bool PCA9632_ModuleSelected(void)
-{
+bool PCA9632_ModuleSelected(void) {
   DEBUG_TRACE_LOG(PSTR("LGT: PCA9632 ModuleSelected"));
 
   if (PCA9632_Detect()) {
@@ -76,8 +60,7 @@ bool PCA9632_ModuleSelected(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xlgt11(uint32_t function)
-{
+bool Xlgt11(uint32_t function) {
   bool result = false;
 
   switch (function) {

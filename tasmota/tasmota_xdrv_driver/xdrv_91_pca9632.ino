@@ -38,17 +38,33 @@
 #define PCA9632_REG_GRPPWM          0x06
 #define PCA9632_REG_GRPGREQ         0x07
 #define PCA9632_REG_LEDOUT          0x08
+#define PCA9632_AUTO_INC            0x80
 
 #ifndef USE_PCA9632_ADDR
   #define USE_PCA9632_ADDR          0x62
+#endif
+
+#ifndef USE_PCA9632_CM_0
+  #define USE_PCA9632_CM_0 0
+#endif
+
+#ifndef USE_PCA9632_CM_1
+  #define USE_PCA9632_CM_1 1
+#endif
+
+#ifndef USE_PCA9632_CM_2
+  #define USE_PCA9632_CM_2 2
+#endif
+
+#ifndef USE_PCA9632_CM_3
+  #define USE_PCA9632_CM_3 3
 #endif
 
 bool pca9632_inverted = false; // invert PWM for open-collector load
 bool pca9632_detected = false;
 uint8_t pca9632_pin_pwm_value[4];
 
-bool PCA9632_Detect(void)
-{
+bool PCA9632_Detect(void) {
   if (I2cSetDevice(USE_PCA9632_ADDR)) {
     uint8_t buffer;
     if (I2cValidRead8(&buffer, USE_PCA9632_ADDR, PCA9632_REG_MODE1)) {
@@ -66,8 +82,7 @@ bool PCA9632_Detect(void)
   return false;
 }
 
-void PCA9632_Init(void)
-{
+void PCA9632_Init(void) {
   // configure none inverted and totem pole
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE2, 0x14);
 
@@ -75,11 +90,10 @@ void PCA9632_Init(void)
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x1);
 }
 
-void PCA9632_Reset(void)
-{
+void PCA9632_Reset(void) {
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_MODE1, 0x6);
   pca9632_inverted = false;
-  for (uint32_t pin = 0; pin < 4; pin++) {
+  for (uint8_t pin = 0; pin < 4; pin++) {
     PCA9632_SetPWM(pin, 0);
     pca9632_pin_pwm_value[pin] = 0;
   }
@@ -94,13 +108,40 @@ bool PCA9632_SetInvert(bool on) {
   return on;
 }
 
-void PCA9632_SetPWM(uint8_t pin, uint16_t pwm) {
-  if (pwm > 255) {
-    pwm = 255;
+bool PCA9632_SetPWM(uint8_t pin, uint8_t pwm) {
+  
+  uint8_t pin_mapping = PCA9632_PinMapping(pin);
+  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_PWM_BASE + pin_mapping, pwm);
+  pca9632_pin_pwm_value[pin_mapping] = pwm;
+
+  return pwm > 0;
+
+}
+
+bool PCA9632_SetPWM_Bulk(uint8_t *pwm, uint16_t len) {
+  uint8_t buffer[4];
+
+  // map the pwm values to the final pins
+  for (uint8_t pin = 0; pin < 4; pin++) {
+    uint8_t pin_mapping = PCA9632_PinMapping(pin);
+    buffer[pin_mapping] = pwm[pin];
   }
 
-  I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_PWM_BASE + pin, pwm);
-  pca9632_pin_pwm_value[pin] = pwm;
+  I2cWriteBuffer(USE_PCA9632_ADDR, PCA9632_REG_PWM_BASE | PCA9632_AUTO_INC, buffer, len);
+
+  // set the pwm values for later use
+  bool enable = false;
+  for (uint8_t pin = 0; pin < 4; pin++) {
+    uint8_t value = buffer[pin];
+
+    pca9632_pin_pwm_value[pin] = value;
+
+    if (value > 0) {
+      enable |= true;
+    }
+  }
+
+  return enable;
 }
 
 void PCA9632_Enable(bool enable) {
@@ -108,23 +149,22 @@ void PCA9632_Enable(bool enable) {
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_LEDOUT, enable ? 0xFF : 0x0);
 }
 
-bool PCA9632_Command(void)
-{
+bool PCA9632_Command(void) {
   bool serviced = true;
   bool validpin = false;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
-    paramcount=1;
+    paramcount = 1;
   } else {
     serviced = false;
     return serviced;
   }
   char argument[XdrvMailbox.data_len];
-  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
-  UpperCase(XdrvMailbox.data,XdrvMailbox.data);
+  UpperCase(XdrvMailbox.data, XdrvMailbox.data);
 
   if (!strcmp(ArgV(argument, 1),"RESET"))  {  PCA9632_Reset(); return serviced; }
 
@@ -177,11 +217,11 @@ bool PCA9632_Command(void)
   return serviced;
 }
 
-void PCA9632_OutputTelemetry(bool telemetry)
-{
+void PCA9632_OutputTelemetry(bool telemetry) {
   ResponseAppend_P(PSTR("\"INVERT\":%i,"), pca9632_inverted?1:0);
   for (uint32_t pin = 0; pin < 4; pin++) {
-    ResponseAppend_P(PSTR("\"PWM%i\":%i,"), pin, pca9632_pin_pwm_value[pin]);
+    uint8_t pin_mapping = PCA9632_PinMapping(pin);
+    ResponseAppend_P(PSTR("\"PWM%i\":%i,"), pin_mapping, pca9632_pin_pwm_value[pin_mapping]);
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));
   if (telemetry) {
@@ -189,8 +229,22 @@ void PCA9632_OutputTelemetry(bool telemetry)
   }
 }
 
-bool Xdrv91(uint32_t function)
-{
+uint8_t PCA9632_PinMapping(uint8_t pin) {
+  switch(pin) {
+    case 0:
+      return USE_PCA9632_CM_0;
+    case 1:
+      return USE_PCA9632_CM_1;
+    case 2:
+      return USE_PCA9632_CM_2;
+    case 3:
+      return USE_PCA9632_CM_3;
+    default:
+      return USE_PCA9632_CM_0;
+  }
+}
+
+bool Xdrv91(uint32_t function) {
   if (!I2cEnabled(XI2C_75)) { return false; }
 
   bool result = false;
