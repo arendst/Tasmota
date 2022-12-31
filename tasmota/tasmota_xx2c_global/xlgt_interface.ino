@@ -99,7 +99,6 @@ bool XlgtCall(uint32_t function) {
 
   if (FUNC_MODULE_INIT == function) {
     for (uint32_t x = 0; x < xlgt_present; x++) {
-      DEBUG_TRACE_LOG(PSTR("LGT: MODULE %d"), x);
       xlgt_func_ptr[x](function);
       if (TasmotaGlobal.light_driver) {
         xlgt_active = x;
