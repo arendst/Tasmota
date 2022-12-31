@@ -330,7 +330,7 @@
 
 #define USE_DISPLAY                              // Add Display Support (+2k code)
   #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
-  #define USE_DISPLAY_MAX7219                    // [DisplayModel 16] Enable MAX7219 7-segment module
+  #define USE_DISPLAY_MAX7219                    // [DisplayModel 19] Enable MAX7219 7-segment module
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY_MODES1TO5                  // Enable display mode 1 to 5 in addition to mode 0
@@ -339,6 +339,7 @@
   #define USE_DISPLAY_MATRIX                     // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
   #define USE_DISPLAY_SEVENSEG                   // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C addresses 0x70 - 0x77) (<+11k code)
   #define USE_DISPLAY_SH1106                     // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
+//  #define USE_DISPLAY_TM1650                     // [DisplayModel 20] [I2cDriver74] Enable TM1650 display (I2C addresses 0x24 - 0x27 and 0x34 - 0x37)
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
   #define USE_DISPLAY_ILI9341                    // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)

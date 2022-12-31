@@ -246,6 +246,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_DISPLAY_ST7789        | - | - / - | - | - | - | x |
 | USE_DISPLAY_TM1637        | - | - / - | - | - | - | x |
 | USE_DISPLAY_TM1621_SONOFF | - | - / x | - | - | - | - |
+| USE_DISPLAY_TM1650        | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | USE_FT5206                | - | - / - | - | - | - | - |
 | USE_FTC532                | - | - / - | - | - | - | - |
