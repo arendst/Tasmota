@@ -632,7 +632,7 @@
 //  #define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //    #define USE_PCA9685_ADDR 0x40                // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
 //    #define USE_PCA9685_FREQ 50                  // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
-//  #define USE_PCA9632                            // [I2cDriver91] Enable PCA9632 I2C HW PWM Driver
+//  #define USE_PCA9632                            // [I2cDriver75] Enable PCA9632 I2C HW PWM Driver
 //    #define USE_PCA9632_ADDR 0x60                // Define PCA9685 I2C Address to use (Must be within range 0x60 through 0x63 - set according to your wired setup)
 //    #define USE_PCA9632_CM_0 0                   // Mapping for channel 0
 //    #define USE_PCA9632_CM_1 1                   // Mapping for channel 1

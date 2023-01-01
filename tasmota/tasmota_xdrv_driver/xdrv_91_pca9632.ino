@@ -1,5 +1,5 @@
 /*
-  xdrv_15_pca9632.ino - Support for I2C PCA9632 4bit 8 pin hardware PWM driver on Tasmota
+  xdrv_91_pca9632.ino - Support for I2C PCA9632 4-channel 8-bit hardware PWM driver on Tasmota
 
   Copyright (C) 2022  Pascal Heinrich
 
@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_PCA9632
 /*********************************************************************************************\
- * PCA9632 - 4-channel 4-bit pwm driver
+ * PCA9632 - 4-channel 8-bit pwm driver
  *
  * I2C Address: 0x60 .. 0x63
 \*********************************************************************************************/
