@@ -121,6 +121,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_LM75AD                | - | - / x | - | x | - | - |
 | USE_APDS9960              | - | - / - | - | - | - | - |
 | USE_MCP230xx              | - | - / - | - | - | - | - |
+| USE_PCA9632               | - | - / - | - | - | - | - |
 | USE_PCA9685               | - | - / - | - | - | - | - |
 | USE_MPR121                | - | - / - | - | - | - | - |
 | USE_CCS811                | - | - / - | - | x | - | - |
