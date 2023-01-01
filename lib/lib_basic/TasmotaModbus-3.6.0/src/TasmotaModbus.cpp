@@ -157,10 +157,11 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   flush();
   if (mb_tx_enable_pin > -1) {
     digitalWrite(mb_tx_enable_pin, HIGH);
+    delayMicroseconds(10);  // delay(1) will exception here
   }
   write(frame, framepointer);
   if (mb_tx_enable_pin > -1) {
-    delayMicroseconds(800);  // delay(1) will exception here
+    delayMicroseconds(10);  // delay(1) will exception here
     digitalWrite(mb_tx_enable_pin, LOW);
   }
   free(frame);

@@ -424,6 +424,7 @@ size_t TasmotaSerial::write(uint8_t b) {
 
   if (m_tx_enable_pin > -1) {
     digitalWrite(m_tx_enable_pin, HIGH);
+    delayMicroseconds(10);  // delay(1) will exception here
   }
   size_t size = 0;
   if (m_hardserial) {
@@ -460,7 +461,7 @@ size_t TasmotaSerial::write(uint8_t b) {
     size = 1;
   }
   if (m_tx_enable_pin > -1) {
-    delayMicroseconds(800);  // delay(1) will exception here
+    delayMicroseconds(10);  // delay(1) will exception here
     digitalWrite(m_tx_enable_pin, LOW);
   }
   return size;
