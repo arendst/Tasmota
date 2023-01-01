@@ -1159,11 +1159,14 @@ bool RulesMqttData(void)
   }
   bool serviced = false;
   String sTopic = XdrvMailbox.topic;
-  String sData = XdrvMailbox.data;
+  String buData = XdrvMailbox.data;
   //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
+
+    String sData = buData;
+
     event_item = subscriptions.get(index);
 
     //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());

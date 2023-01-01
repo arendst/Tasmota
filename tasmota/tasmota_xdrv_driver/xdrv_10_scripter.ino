@@ -8260,7 +8260,7 @@ bool ScriptCommand(void) {
       Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
 #ifdef DEBUG_MQTT_EVENT
     } else if (CMND_SUBTEST == command_code) {
-      XdrvMailbox.topic = (char*)"tele";
+      XdrvMailbox.topic = (char*)"stat/tasmota/SENSOR";
       ScriptMqttData();
       serviced = true;
 #endif
@@ -8291,90 +8291,10 @@ void dateTime(uint16_t* date, uint16_t* time) {
 
 
 #ifdef SUPPORT_MQTT_EVENT
-/*
-//#define DEBUG_MQTT_EVENT
-// parser object, source keys, delimiter, float result or NULL, string result or NULL, string size
-uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, float *nres, char *sres, uint32_t slen) {
-  uint32_t res = 0;
-  const char *cp = spath;
-#ifdef DEBUG_JSON_PARSE_PATH
-  AddLog(LOG_LEVEL_INFO, PSTR("JSON: parsing json key: %s from json: %s"), cp, jpath);
-#endif
-  JsonParserObject obj = *jobj;
-  JsonParserObject lastobj = obj;
-  char selem[32];
-  uint8_t aindex = 0;
-  String value = "";
-  while (1) {
-    // read next element
-    for (uint32_t sp=0; sp<sizeof(selem)-1; sp++) {
-      if (!*cp || *cp==delim) {
-        selem[sp] = 0;
-        cp++;
-        break;
-      }
-      selem[sp] = *cp++;
-    }
-#ifdef DEBUG_JSON_PARSE_PATH
-    AddLog(LOG_LEVEL_INFO, PSTR("JSON: cmp current key: %s"), selem);
-#endif
-    // check for array
-    char *sp = strchr(selem,'[');
-    if (sp) {
-      *sp = 0;
-      aindex = atoi(sp+1);
-    }
 
-    // now check element
-    obj = obj[selem];
-    if (!obj.isValid()) {
-#ifdef DEBUG_JSON_PARSE_PATH
-      AddLog(LOG_LEVEL_INFO, PSTR("JSON: obj invalid: %s"), selem);
-#endif
-      JsonParserToken tok = lastobj[selem];
-      if (tok.isValid()) {
-        if (tok.isArray()) {
-          JsonParserArray array = JsonParserArray(tok);
-          value = array[aindex].getStr();
-          if (array.isNum()) {
-            if (nres) *nres=tok.getFloat();
-            res = 1;
-          } else {
-            res = 2;
-          }
-        } else {
-          value = tok.getStr();
-          if (tok.isNum()) {
-            if (nres) *nres=tok.getFloat();
-            res = 1;
-          } else {
-            res = 2;
-          }
-        }
-
-      }
-#ifdef DEBUG_JSON_PARSE_PATH
-      AddLog(LOG_LEVEL_INFO, PSTR("JSON: token invalid: %s"), selem);
-#endif
-      break;
-    }
-    if (obj.isObject()) {
-      lastobj = obj;
-      continue;
-    }
-    if (!*cp) break;
-  }
-  if (sres) {
-    strlcpy(sres,value.c_str(), slen);
-  }
-  return res;
-
-}
-*/
 #ifndef MQTT_EVENT_MSIZE
 #define MQTT_EVENT_MSIZE 256
 #endif // MQTT_EVENT_MSIZE
-
 
 
 /********************************************************************************************/
@@ -8387,8 +8307,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
  *      true      - The message is consumed.
  *      false     - The message is not in our list.
  */
-bool ScriptMqttData(void)
-{
+bool ScriptMqttData(void) {
   bool serviced = false;
   //toLog(">>> 1");
   //toLog(XdrvMailbox.data);
@@ -8396,7 +8315,7 @@ bool ScriptMqttData(void)
     return false;
   }
   String sTopic = XdrvMailbox.topic;
-  String sData = XdrvMailbox.data;
+  String buData = XdrvMailbox.data;
 
 #ifdef DEBUG_MQTT_EVENT
     AddLog(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
@@ -8407,6 +8326,8 @@ bool ScriptMqttData(void)
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
     uint8_t json_valid = 0;
+
+    String sData = buData;
 
 #ifdef DEBUG_MQTT_EVENT
     AddLog(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
