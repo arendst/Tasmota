@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.2]
+## [12.3.1.3]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
+
+### Fixed
+
+### Removed
+
+## [12.3.1.2] 20221231
 ### Added
 - Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol
 - Berry crypto add ``random`` to generate series of random bytes
@@ -12,8 +24,6 @@ All notable changes to this project will be documented in this file.
 - Berry crypto add ``SPAKE2P_Matter`` for Matter support
 - Support for IPv6 only networks on Ethernet (not yet Wifi)
 - Support for TM1650 display as used in some clocks by Stefan Oskamp (#17594)
-
-### Breaking Changed
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.4 to v2.0.6 (IPv6 support)
@@ -26,8 +36,6 @@ All notable changes to this project will be documented in this file.
 - Shutter default tilt configuration (#17484)
 - Modbus transmit enable GPIO enabled once during write buffer
 - ESP8266 set GPIO's to input on power on fixing relay spikes (#17531)
-
-### Removed
 
 ## [12.3.1.1] 20221221
 ### Added

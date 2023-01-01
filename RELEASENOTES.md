@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.3.1.2
+## Changelog v12.3.1.3
 ### Added
 - Support for up to 3 single phase modbus energy monitoring device using generic Energy Modbus driver- Support for RGB displays [#17414](https://github.com/arendst/Tasmota/issues/17414)
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 [#17417](https://github.com/arendst/Tasmota/issues/17417)
@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.6 (IPv6 support)
+- Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)
 
