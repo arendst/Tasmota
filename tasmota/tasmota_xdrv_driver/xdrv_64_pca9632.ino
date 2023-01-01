@@ -1,5 +1,5 @@
 /*
-  xdrv_91_pca9632.ino - Support for I2C PCA9632 4-channel 8-bit hardware PWM driver on Tasmota
+  xdrv_64_pca9632.ino - Support for I2C PCA9632 4-channel 8-bit hardware PWM driver on Tasmota
 
   Copyright (C) 2022  Pascal Heinrich
 
@@ -25,7 +25,7 @@
  * I2C Address: 0x60 .. 0x63
 \*********************************************************************************************/
 
-#define XDRV_91                     91
+#define XDRV_64                     64
 #define XI2C_75                     75  // See I2CDEVICES.md
 
 #define PCA9632_REG_MODE1           0x00
@@ -41,7 +41,7 @@
 #define PCA9632_AUTO_INC            0x80
 
 #ifndef USE_PCA9632_ADDR
-  #define USE_PCA9632_ADDR          0x62
+  #define USE_PCA9632_ADDR          0x60
 #endif
 
 #ifndef USE_PCA9632_CM_0
@@ -109,7 +109,7 @@ bool PCA9632_SetInvert(bool on) {
 }
 
 bool PCA9632_SetPWM(uint8_t pin, uint8_t pwm) {
-  
+
   uint8_t pin_mapping = PCA9632_PinMapping(pin);
   I2cWrite8(USE_PCA9632_ADDR, PCA9632_REG_PWM_BASE + pin_mapping, pwm);
   pca9632_pin_pwm_value[pin_mapping] = pwm;
@@ -244,7 +244,7 @@ uint8_t PCA9632_PinMapping(uint8_t pin) {
   }
 }
 
-bool Xdrv91(uint32_t function) {
+bool Xdrv64(uint32_t function) {
   if (!I2cEnabled(XI2C_75)) { return false; }
 
   bool result = false;
@@ -262,7 +262,7 @@ bool Xdrv91(uint32_t function) {
         }
         break;
       case FUNC_COMMAND_DRIVER:
-        if (XDRV_91 == XdrvMailbox.index) {
+        if (XDRV_64 == XdrvMailbox.index) {
           result = PCA9632_Command();
         }
         break;

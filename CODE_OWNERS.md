@@ -72,6 +72,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_61_ds3502             | f-reiling
 | xdrv_62_improv             | @arendst
 | xdrv_63_modbus_bridge      | @jeroenst
+| xdrv_64_pca9632            | Pascal Heinrich
 |                            |
 | xdrv_79_esp32_ble          | @staars, @btsimonh
 | xdrv_81_esp32_webcam       | @gemu, @philrich
