@@ -152,7 +152,9 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
   if (single > 1) {
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
-        input_sum += input[i];
+        if (!isnan(input[i])) {
+          input_sum += input[i];
+        }
       }
       input = &input_sum;
     } else {
@@ -176,7 +178,9 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
   if (single > 1) {                                      // Sum and/or Single column
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
-        input_sum += input[i];
+        if (!isnan(input[i])) {
+          input_sum += input[i];
+        }
       }
       input = &input_sum;
     } else {
@@ -317,7 +321,7 @@ void EnergyUpdateTotal(void) {
       Energy.kWhtoday[i] = (int32_t)((Energy.import_active[i] - Energy.start_energy[i]) * 100000);
     }
 
-    if ((Energy.total[i] < (Energy.import_active[i] - 0.01f)) &&   // We subtract a little offset to avoid continuous updates
+    if ((Energy.total[i] < (Energy.import_active[i] - 0.01f)) &&   // We subtract a little offset of 10Wh to avoid continuous updates
         Settings->flag3.hardware_energy_total) {                   // SetOption72 - Enable hardware energy total counter as reference (#6561)
       // The following calculation allows total usage (Energy.import_active[i]) up to +/-2147483.647 kWh
       RtcSettings.energy_kWhtotal_ph[i] = (int32_t)((Energy.import_active[i] * 1000) - ((Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100));
@@ -1255,10 +1259,11 @@ void EnergyShow(bool json) {
 */
 
     if (!isnan(Energy.export_active[0])) {
+      uint32_t single = (!isnan(Energy.export_active[1]) && !isnan(Energy.export_active[2])) ? 0 : 1;
       ResponseAppend_P(PSTR(",\"" D_JSON_TODAY_SUM_IMPORT "\":%s,\"" D_JSON_TODAY_SUM_EXPORT "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s"),
         EnergyFormat(value_chr, &Energy.daily_sum_import_balanced, Settings->flag2.energy_resolution, 1),
         EnergyFormat(value2_chr, &Energy.daily_sum_export_balanced, Settings->flag2.energy_resolution, 1),
-        EnergyFormat(value3_chr, Energy.export_active, Settings->flag2.energy_resolution));
+        EnergyFormat(value3_chr, Energy.export_active, Settings->flag2.energy_resolution, single));
       if (energy_tariff) {
         ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT D_CMND_TARIFF "\":%s"),
           EnergyFormat(value_chr, energy_return, Settings->flag2.energy_resolution, 6));
@@ -1380,7 +1385,8 @@ void EnergyShow(bool json) {
                                        WebEnergyFormat(value2_chr, energy_yesterday_ph, Settings->flag2.energy_resolution, 2),
                                        WebEnergyFormat(value3_chr, Energy.total, Settings->flag2.energy_resolution, 2));
     if (!isnan(Energy.export_active[0])) {
-      WSContentSend_PD(HTTP_ENERGY_SNS3, WebEnergyFormat(value_chr, Energy.export_active, Settings->flag2.energy_resolution, 2));
+      uint32_t single = (!isnan(Energy.export_active[1]) && !isnan(Energy.export_active[2])) ? 2 : 1;
+      WSContentSend_PD(HTTP_ENERGY_SNS3, WebEnergyFormat(value_chr, Energy.export_active, Settings->flag2.energy_resolution, single));
     }
 #ifdef USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_COL_SENSOR);
