@@ -219,6 +219,7 @@
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter (+2k code)
 //#define USE_TELEINFO                             // Add support for French Energy Provider metering telemetry (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
 //#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
+//#define USE_MODBUS_ENERGY                        // Add support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -325,6 +326,7 @@
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
   #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
   #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+  #undef USE_MODBUS_ENERGY                       // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 #undef USE_BLE_ESP32                             // (ESP32 only) Disable support for native BLE on ESP32 - use new driver
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
@@ -437,6 +439,7 @@
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
   #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
   #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+  #undef USE_MODBUS_ENERGY                       // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 //#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -621,6 +624,7 @@
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+#undef USE_MODBUS_ENERGY                         // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -775,6 +779,7 @@
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_BL6523                                // Disable support for BL6523 based energy monitor (+7k code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+#undef USE_MODBUS_ENERGY                         // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI

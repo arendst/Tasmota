@@ -89,7 +89,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_BL09XX                | - | x / x | x | x | - | - |
 | USE_TELEINFO              | - | - / - | - | - | - | - |
 | USE_IEM3000               | - | - / - | - | - | - | - |
-| USE_WE517                 | - | - / - | - | - | - | - |
+| USE_WE517                 | - | - / x | - | - | - | - |
+| USE_MODBUS_ENERGY         | - | - / x | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | USE_ADC_VCC               | x | - / - | - | - | x | - |
 | USE_COUNTER               | - | x / x | x | x | - | x |
