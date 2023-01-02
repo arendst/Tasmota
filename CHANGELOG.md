@@ -11,9 +11,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
+- Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
 
 ### Fixed
 - Energy dummy switched voltage and power regression from v12.2.0.2
+- Orno WE517 modbus serial config 8E1 setting (#17545)
 
 ### Removed
 
