@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
 
 ### Fixed
+- Energy dummy switched voltage and power regression from v12.2.0.2
 
 ### Removed
 
