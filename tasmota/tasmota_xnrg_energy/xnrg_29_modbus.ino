@@ -27,7 +27,117 @@
  *   - a rule file called modbus
  *   - a filesystem file called modbus.json
  *
- * See files configurations.md and value_pair_description.md in folder energy_modbus_configs
+ * Value pair description:
+ * {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A}
+ * Modbus config parameters:
+ *   Name          - Name of energy monitoring device(s)
+ *   Baud          - Baudrate of device modbus interface - optional. default is 9600
+ *   Config        - Serial config parameters like 8N1 - 8 databits, No parity, 1 stop bit
+ *   Poll          - Time between modbus requests - optional. default is 200 milliseconds
+ *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01) or up to three addresses ([1,2,3]) - optional. default = 1
+ *   Function      - Modbus function code to access registers - optional. default = 4
+ * Tasmota default embedded register names:
+ *   Voltage       - Voltage register entered as decimal or hexadecimal for one phase (0x0000) or up to three phases ([0x0000,0x0002,0x0004]) or
+ *                   Additional defined parameters
+ *                   Value pair description:
+ *                   {"R":0,"T":0,"F":0}
+ *                   R - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *                   T - Datatype - optional. default is 0 - float:
+ *                       0 - float
+ *                       1 = 2-byte signed
+ *                       2 = 4-byte signed
+ *                       3 = 2-byte unsigned
+ *                       4 = 4-byte unsigned
+ *                       5 = not used
+ *                       6 = 4-byte signed with swapped words
+ *                       7 = not used
+ *                       8 = 4-byte unsigned with swapped words
+ *                   F - Register factor positive for multiplication or negative for division - optional. default is 0 - no action
+ *                       -4 - divide by 10000
+ *                       -3 - divide by 1000
+ *                       -2 - divide by 100
+ *                       -1 - divide by 10
+ *                       0 - no action
+ *                       1 - multiply by 10
+ *                       2 - multiply by 100
+ *                       3 - multiply by 1000
+ *                       4 - multiply by 10000
+ *                   M - [LEGACY - replaced by "F"] Divide register by 1 to 10000 - optional. default = 0 (no action)
+ *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A]) or
+ *                   See additional defines like voltage.
+ *   Power         - Active power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010]) or
+ *                   See additional defines like voltage.
+ *   ApparentPower - Apparent power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010]) or
+ *                   See additional defines like voltage.
+ *   ReactivePower - Reactive power register entered as decimal or hexadecimal for one phase (0x0018) or up to three phases ([0x0018,0x001A,0x001C]) or
+ *                   See additional defines like voltage.
+ *   Factor        - Power factor register entered as decimal or hexadecimal for one phase (0x001E) or up to three phases ([0x001E,0x0020,0x0022]) or
+ *                   See additional defines like voltage.
+ *   Frequency     - Frequency register entered as decimal or hexadecimal for one phase (0x0046) or up to three phases ([0x0046,0x0048,0x004A]) or
+ *                   See additional defines like voltage.
+ *   Total         - Total active energy register entered as decimal or hexadecimal for one phase (0x0156) or up to three phases ([0x015A,0x015C,0x015E]) or
+ *                   See additional defines like voltage.
+ *   ExportActive  - Export active energy register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164]) or
+ *                   See additional defines like voltage.
+ * Optional user defined registers:
+ *   User          - Additional user defined registers
+ *                   Value pair description:
+ *                   "User":{"R":0x0024,"T":0,"F":0,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
+ *                   R - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *                   T - Datatype - optional. default is 0 - float:
+ *                       0 - float
+ *                       1 = 2-byte signed
+ *                       2 = 4-byte signed
+ *                       3 = 2-byte unsigned
+ *                       4 = 4-byte unsigned
+ *                       5 = not used
+ *                       6 = 4-byte signed with swapped words
+ *                       7 = not used
+ *                       8 = 4-byte unsigned with swapped words
+ *                   F - Register factor positive for multiplication or negative for division - optional. default is 0 - no action
+ *                       -4 - divide by 10000
+ *                       -3 - divide by 1000
+ *                       -2 - divide by 100
+ *                       -1 - divide by 10
+ *                       0 - no action
+ *                       1 - multiply by 10
+ *                       2 - multiply by 100
+ *                       3 - multiply by 1000
+ *                       4 - multiply by 10000
+ *                   M - [LEGACY - replaced by "F"] Divide register by 1 to 10000 - optional. default = 0 (no action)
+ *                   J - JSON register name (preferrably without spaces like "PhaseAngle") - mandatory. It needs to be different from the Tasmota default embedded register names
+ *                   G - GUI register name - optional. If not defined the register will not be shown in the GUI
+ *                   U - GUI unit name - optional. default is none
+ *                   D - Number of decimals for floating point presentation (0 to 20) or a code correspondig to Tasmota resolution command settings:
+ *                       21 - VoltRes (V)
+ *                       22 - AmpRes (A)
+ *                       23 - WattRes (W, VA, VAr)
+ *                       24 - EnergyRes (kWh, kVAh, kVArh)
+ *                       25 - FreqRes (Hz)
+ *                       26 - TempRes (C, F)
+ *                       27 - HumRes (%)
+ *                       28 - PressRes (hPa, mmHg)
+ *                       29 - WeightRes (Kg)
+ *
+ * Example using default Energy registers:
+ * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":"8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A} endon
+ * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":"8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
+ * rule3 on file#modbus do {"Name":"DDSU666","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":0x2000,"Current":0x2002,"Power":0x2004,"ReactivePower":0x2006,"Factor":0x200A,"Frequency":0x200E,"Total":0x4000,"ExportActive":0x400A} endon
+ * rule3 on file#modbus do {"Name":"PZEM014","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"3 x PZEM014","Baud":9600,"Config":"8N1","Address":[1,2,3],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"Solax X3MIC","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"F":-1},"Power":{"R":0x040e,"T":3,"F":0},"Total":{"R":0x0423,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"WE517","Baud":9600,"Config":"8E1","Address":1,"Function":3,"Voltage":[0xE,0x10,0x12],"Current":[0x16,0x18,0x1A],"Power":[0x1E,0x20,0x22],"ReactivePower":[0x26,0x28,0x2A],"Factor":[0x36,0x38,0x3A],"Frequency":0x14,"Total":0x100} endon
+ *
+ * Example using default Energy registers and some user defined registers:
+ * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":"8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
+ * rule3 on file#modbus do {"Name":"SDM120","Baud":2400,"Config":"8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":"8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM630","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":[0,2,4],"Current":[6,8,10],"Power":[12,14,16],"ApparentPower":[18,20,22],"ReactivePower":[24,26,28],"Factor":[30,32,34],"Frequency":70,"Total":342,"ExportActive":[352,354,356],"User":{"R":[346,348,350],"J":"ImportActive","G":"Import Active","U":"kWh","D":24}} endon
+ * rule3 on file#modbus do {"Name":"WE517","Baud":9600,"Config":"8E1","Address":1,"Function":3,"Voltage":[0xE,0x10,0x12],"Current":[0x16,0x18,0x1A],"Power":[0x1E,0x20,0x22],"ReactivePower":[0x26,0x28,0x2A],"Factor":[0x36,0x38,0x3A],"Frequency":0x14,"Total":0x100,"ExportActive":0x110,"User":[{"J":"ImportActive","G":"Import Active","R":0x108,"U":"kWh","D":24},{"J":"TotalPower","G":"Active Power Total","R":0x1C,"U":"W","D":23}]} endon
+ *
+ * Note:
+ * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 800
+ * - Changes to rule file are only executed on restart
  *
  * Restrictions:
  * - Supports Modbus single and double integer registers in addition to floating point registers
@@ -487,7 +597,7 @@ bool EnergyModbusReadRegisters(void) {
     if (TfsLoadFile(ENERGY_MODBUS_FILE, (uint8_t*)modbus_file, file_size -1)) {
       if (strlen(modbus_file) < ENERGY_MODBUS_MAX_FSIZE) {
         modbus = modbus_file;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from File"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from file"));
       }
     }
     free(modbus_file);
@@ -497,9 +607,16 @@ bool EnergyModbusReadRegisters(void) {
 #ifdef USE_RULES
   if (!modbus.length()) {
     modbus = RuleLoadFile("MODBUS");
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from Rule"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from rule"));
   }
 #endif  // USE_RULES
+
+#ifdef USE_SCRIPT
+  if (!modbus.length()) {
+    modbus = ScriptLoadSection(">y");
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from script"));
+  }
+#endif  // USE_SCRIPT
 
   if (!modbus.length()) { return false; }        // File not found
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
