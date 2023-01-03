@@ -350,14 +350,17 @@ void Energy200ms(void)
     if (RtcTime.valid) {
 
       if (!Energy.kWhtoday_offset_init && (RtcTime.day_of_year == Settings->energy_kWhdoy)) {
+        Energy.kWhtoday_offset_init = true;
         for (uint32_t i = 0; i < 3; i++) {
           Energy.kWhtoday_offset[i] = Settings->energy_kWhtoday_ph[i];
 //          RtcSettings.energy_kWhtoday_ph[i] = 0;
         }
-        Energy.kWhtoday_offset_init = true;
       }
 
-      if (LocalTime() == Midnight()) {
+      if ((LocalTime() == Midnight()) || (RtcTime.day_of_year > Settings->energy_kWhdoy)) {
+        Energy.kWhtoday_offset_init = true;
+        Settings->energy_kWhdoy = RtcTime.day_of_year;
+
         for (uint32_t i = 0; i < 3; i++) {
           Settings->energy_kWhyesterday_ph[i] = RtcSettings.energy_kWhtoday_ph[i];
 
