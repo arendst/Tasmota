@@ -243,7 +243,7 @@ bool EthernetGetIP(IPAddress *ip) {
     if (ip != nullptr) { *ip = lip; }
     return true;
   }
-  *ip = IPAddress();
+  if (ip != nullptr) { *ip = IPAddress(); }
   return false;
 #else
   // IPv4 only
