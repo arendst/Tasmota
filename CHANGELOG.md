@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.3.1.3]
 ### Added
 - Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich (#17557)
+- Berry `bytes()` now evaluates to `false` if empty
 
 ### Breaking Changed
 
