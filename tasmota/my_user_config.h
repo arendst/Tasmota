@@ -1120,7 +1120,8 @@
   // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
   // Berry crypto extensions below:
   #define USE_BERRY_CRYPTO_AES_GCM               // enable AES GCM 256 bits
-  // #define USE_BERRY_CRYPTO_AES_CTR               // enable AEC CTR 256 bits
+  // #define USE_BERRY_CRYPTO_AES_CCM               // enable AES CCM 128 bits
+  // #define USE_BERRY_CRYPTO_AES_CTR               // enable AES CTR 256 bits
   // #define USE_BERRY_CRYPTO_EC_P256               // enable EC P256r1
   // #define USE_BERRY_CRYPTO_EC_C25519             // enable Elliptic Curve C C25519
   #define USE_BERRY_CRYPTO_SHA256                // enable SHA256 hash function
