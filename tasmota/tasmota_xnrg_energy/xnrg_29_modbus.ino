@@ -23,7 +23,9 @@
  * Generic Modbus energy meter
  *
  * - Supports single three phase device or three single phase devices of same model on bus.
- * - Uses a rule file called modbus allowing for easy configuration of modbus energy monitor device(s).
+ * - For easy configuration of modbus energy monitor device(s) use:
+ *   - a rule file called modbus
+ *   - a filesystem file called modbus.json
  *
  * Value pair description:
  * {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A}
@@ -124,6 +126,7 @@
  * rule3 on file#modbus do {"Name":"PZEM014","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
  * rule3 on file#modbus do {"Name":"3 x PZEM014","Baud":9600,"Config":"8N1","Address":[1,2,3],"Function":4,"Voltage":{"R":0,"T":3,"F":-1},"Current":{"R":1,"T":8,"F":-3},"Power":{"R":3,"T":8,"F":-1},"Factor":{"R":8,"T":3,"F":-2},"Frequency":{"R":7,"T":3,"F":-1},"Total":{"R":5,"T":8,"F":-3}} endon
  * rule3 on file#modbus do {"Name":"Solax X3MIC","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":{"R":0x0404,"T":3,"F":-1},"Power":{"R":0x040e,"T":3,"F":0},"Total":{"R":0x0423,"T":8,"F":-3}} endon
+ * rule3 on file#modbus do {"Name":"WE517","Baud":9600,"Config":"8E1","Address":1,"Function":3,"Voltage":[0xE,0x10,0x12],"Current":[0x16,0x18,0x1A],"Power":[0x1E,0x20,0x22],"ReactivePower":[0x26,0x28,0x2A],"Factor":[0x36,0x38,0x3A],"Frequency":0x14,"Total":0x100} endon
  *
  * Example using default Energy registers and some user defined registers:
  * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":"8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
@@ -179,6 +182,9 @@
 
 //#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
+
+#define ENERGY_MODBUS_FILE        "/modbus.json"       // Modbus parameter file name used by filesystem
+#define ENERGY_MODBUS_MAX_FSIZE   1024                 // Modbus parameter file max size
 
 const uint16_t nrg_mbs_reg_not_used = 0xFFFF;          // Odd number 65535 is unused register
 
@@ -482,7 +488,6 @@ void EnergyModbusLoop(void) {
   NrgMbsParam.mutex = 0;
 }
 
-#ifdef USE_RULES
 uint32_t EnergyModbusReadRegisterInfo(JsonParserObject add_value, uint32_t reg_index) {
   // {"R":0,"T":0,"F":0}
   // {"R":[0,2,4],"T":0,"F":0}
@@ -581,11 +586,31 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
 
   return true;
 }
-#endif  // USE_RULES
 
 bool EnergyModbusReadRegisters(void) {
+  String modbus = "";
+
+#ifdef USE_UFILESYS
+  const size_t file_size = ENERGY_MODBUS_MAX_FSIZE;
+  char *modbus_file = (char*)calloc(file_size, 1);
+  if (modbus_file) {
+    if (TfsLoadFile(ENERGY_MODBUS_FILE, (uint8_t*)modbus_file, file_size -1)) {
+      if (strlen(modbus_file) < ENERGY_MODBUS_MAX_FSIZE) {
+        modbus = modbus_file;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from file"));
+      }
+    }
+    free(modbus_file);
+  }
+#endif  // USE_UFILESYS
+
 #ifdef USE_RULES
-  String modbus = RuleLoadFile("MODBUS");
+  if (!modbus.length()) {
+    modbus = RuleLoadFile("MODBUS");
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from rule"));
+  }
+#endif  // USE_RULES
+
   if (!modbus.length()) { return false; }        // File not found
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
 
@@ -811,15 +836,13 @@ bool EnergyModbusReadRegisters(void) {
   NrgMbsParam.phase = -1;
 
   return true;
-#endif  // USE_RULES
-  return false;
 }
 
 bool EnergyModbusRegisters(void) {
   if (EnergyModbusReadRegisters()) {
     return true;
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("NRG: No valid modbus rule data"));
+  AddLog(LOG_LEVEL_INFO, PSTR("NRG: No valid modbus data"));
   return false;
 }
 
