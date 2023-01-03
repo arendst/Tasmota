@@ -25,6 +25,7 @@
  * - Supports single three phase device or three single phase devices of same model on bus.
  * - For easy configuration of modbus energy monitor device(s) use:
  *   - a rule file called modbus
+ *   - a script using >y
  *   - a filesystem file called modbus.json
  *
  * See files configurations.md and value_pair_description.md in folder energy_modbus_configs
@@ -481,10 +482,9 @@ bool EnergyModbusReadRegisters(void) {
   String modbus = "";
 
 #ifdef USE_UFILESYS
-  const size_t file_size = ENERGY_MODBUS_MAX_FSIZE;
-  char *modbus_file = (char*)calloc(file_size, 1);
+  char *modbus_file = (char*)calloc(ENERGY_MODBUS_MAX_FSIZE, 1);
   if (modbus_file) {
-    if (TfsLoadFile(ENERGY_MODBUS_FILE, (uint8_t*)modbus_file, file_size -1)) {
+    if (TfsLoadFile(ENERGY_MODBUS_FILE, (uint8_t*)modbus_file, ENERGY_MODBUS_MAX_FSIZE -1)) {
       if (strlen(modbus_file) < ENERGY_MODBUS_MAX_FSIZE) {
         modbus = modbus_file;
         AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from File"));
@@ -504,7 +504,7 @@ bool EnergyModbusReadRegisters(void) {
 #ifdef USE_SCRIPT
   if (!modbus.length()) {
     modbus = ScriptLoadSection(">y");
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from script"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from Script"));
   }
 #endif  // USE_SCRIPT
 

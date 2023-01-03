@@ -6,7 +6,9 @@ Modbus JSON configuration data for use with generic Energy Modbus driver.
 
 1. Rule driven - copy the required JSON content to any rule buffer preceded with ``rule3 on file#modbus do `` and
   followed with `` endon``.
-2. File system driven - if a file system is present (every ESP32) create a file called ``modbus.json`` and copy the required JSON
+2. Script driven - copy the required JSON content to a script preceded with ``>y`` and
+  followed with ``#``.
+3. File system driven - if a file system is present (every ESP32) create a file called ``modbus.json`` and copy the required JSON
   content to it.
 
 ## Notes
