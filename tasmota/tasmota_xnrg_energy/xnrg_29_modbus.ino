@@ -618,6 +618,7 @@ bool EnergyModbusReadRegisters(void) {
   }
 #endif  // USE_SCRIPT
 
+
   if (!modbus.length()) { return false; }        // File not found
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
 
