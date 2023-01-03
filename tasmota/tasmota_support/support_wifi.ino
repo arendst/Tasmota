@@ -639,7 +639,7 @@ bool DNSGetIP(IPAddress *ip, uint32_t idx)
     if (ip != nullptr) { *ip = *ip_dns; }
     return true;
   }
-  *ip = *IP4_ADDR_ANY;
+  if (ip != nullptr) { *ip = *IP4_ADDR_ANY; }
   return false;
 }
 String DNSGetIPStr(uint32_t idx)
