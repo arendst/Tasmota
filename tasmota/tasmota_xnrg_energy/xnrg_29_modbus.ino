@@ -504,7 +504,7 @@ bool EnergyModbusReadRegisters(void) {
 #ifdef USE_SCRIPT
   if (!modbus.length()) {
     modbus = ScriptLoadSection(">y");
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Load from script"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from script"));
   }
 #endif  // USE_SCRIPT
 
