@@ -501,6 +501,13 @@ bool EnergyModbusReadRegisters(void) {
   }
 #endif  // USE_RULES
 
+#ifdef USE_SCRIPT
+  if (!modbus.length()) {
+    modbus = ScriptLoadSection(">y");
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from script"));
+  }
+#endif  // USE_SCRIPT
+
   if (!modbus.length()) { return false; }        // File not found
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
 
