@@ -633,14 +633,20 @@ void Ade7880Defaults(void) {
   Ade7880.calib_angle[1] = ADE7880_BPHCAL_INIT;
   Ade7880.calib_angle[2] = ADE7880_CPHCAL_INIT;
 
+  String calib = "";
+#ifdef USE_UFILESYS
+  calib = TfsLoadString("/calib.dat");
+#endif  // USE_UFILESYS
 #ifdef USE_RULES
   // rule3 on file#calib.dat do {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0} endon
-  String calib = RuleLoadFile("CALIB.DAT");
+  if (!calib.length()) {
+    calib = RuleLoadFile("CALIB.DAT");
+  }
+#endif  // USE_RULES
   if (calib.length()) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: File '%s'"), calib.c_str());
     Ade7880SetDefaults(calib.c_str());
   }
-#endif  // USE_RULES
 }
 
 void Ade7880DrvInit(void) {
