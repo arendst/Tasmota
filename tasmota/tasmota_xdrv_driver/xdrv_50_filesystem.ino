@@ -306,6 +306,16 @@ bool TfsFileExists(const char *fname){
   return yes;
 }
 
+size_t TfsFileSize(const char *fname){
+  if (!ffs_type) { return 0; }
+
+  File file = ffsp->open(fname, "r");
+  if (!file) { return 0; }
+  size_t flen = file.size();
+  file.close();
+  return flen;
+}
+
 bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
   if (!ffs_type) { return false; }
 #ifdef USE_WEBCAM
@@ -362,7 +372,6 @@ bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {
 
 bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
   if (!ffs_type) { return false; }
-  if (!TfsFileExists(fname)) { return false; }
 
   File file = ffsp->open(fname, "r");
   if (!file) {
@@ -371,13 +380,17 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
   }
 
   size_t flen = file.size();
-  if (len > flen){
-    len = flen;
-  }
-
+  if (len > flen) { len = flen; }           // Adjust requested length to smaller file length
   file.read(buf, len);
   file.close();
   return true;
+}
+
+String TfsLoadString(const char *fname) {
+  // Use a reasonable amount of stack space considering 4k/8k available on ESP8266/ESP32 and manageable string length
+  char buf[2048] = { 0 };                   // Prepare empty string of max 2047 characters on stack
+  TfsLoadFile(fname, (uint8_t*)buf, 2047);  // Leave last position as end of string ('\0')
+  return String(buf);                       // Received string or empty on error
 }
 
 bool TfsDeleteFile(const char *fname) {
@@ -825,7 +838,7 @@ void UfsListDir(char *path, uint8_t depth) {
           editpath[0]=0;
   #endif // GUI_TRASH_FILE
           ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, ppe, epe);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, epe, 
+          WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, epe,
                           HtmlEscape(name).c_str(), tstr.c_str(), entry.size(), delpath, editpath);
         }
         entry.close();

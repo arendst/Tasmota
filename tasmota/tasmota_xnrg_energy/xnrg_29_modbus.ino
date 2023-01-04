@@ -75,7 +75,6 @@
 //#define ENERGY_MODBUS_DEBUG_SHOW
 
 #define ENERGY_MODBUS_FILE        "/modbus.json"       // Modbus parameter file name used by filesystem
-#define ENERGY_MODBUS_MAX_FSIZE   1024                 // Modbus parameter file max size
 
 const uint16_t nrg_mbs_reg_not_used = 0xFFFF;          // Odd number 65535 is unused register
 
@@ -482,15 +481,9 @@ bool EnergyModbusReadRegisters(void) {
   String modbus = "";
 
 #ifdef USE_UFILESYS
-  char *modbus_file = (char*)calloc(ENERGY_MODBUS_MAX_FSIZE, 1);
-  if (modbus_file) {
-    if (TfsLoadFile(ENERGY_MODBUS_FILE, (uint8_t*)modbus_file, ENERGY_MODBUS_MAX_FSIZE -1)) {
-      if (strlen(modbus_file) < ENERGY_MODBUS_MAX_FSIZE) {
-        modbus = modbus_file;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from File"));
-      }
-    }
-    free(modbus_file);
+  modbus = TfsLoadString(ENERGY_MODBUS_FILE);
+  if (modbus.length()) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Loaded from File"));
   }
 #endif  // USE_UFILESYS
 
@@ -508,13 +501,12 @@ bool EnergyModbusReadRegisters(void) {
   }
 #endif  // USE_SCRIPT
 
-  if (!modbus.length()) { return false; }        // File not found
+  if (modbus.length() < 7) { return false; }     // File not found or Invalid JSON
+
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
 
   const char* json = modbus.c_str();
   uint32_t len = strlen(json) +1;
-  if (len < 7) { return false; }                 // Invalid JSON
-
   char json_buffer[len];
   memcpy(json_buffer, json, len);                // Keep original safe
   JsonParser parser(json_buffer);
