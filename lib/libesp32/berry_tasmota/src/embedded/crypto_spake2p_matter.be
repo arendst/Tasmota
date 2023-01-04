@@ -20,6 +20,7 @@ class SPAKE2P_Matter
   # var TT
   var Kmain
   var KcA, KcB, K_shared
+  var Ke                                  # specific to Matter
   var cA, cB
   # Matter values for key generation
   var A, B, Context
@@ -52,6 +53,7 @@ end
     var ec = crypto.EC_P256()
     self.x = ec.mod(x)
     self.pA = ec.muladd(self.w0, self.M, self.x, bytes() #- empty means generator -#)    # compute x*P+w0*M
+    return self.pA
   end
 
   # compute the shared values pB (done by Matter end-device)
@@ -63,6 +65,7 @@ end
     var ec = crypto.EC_P256()
     self.y = ec.mod(y)
     self.pB = ec.muladd(self.w0, self.N, self.y, bytes() #- empty means generator -#)    # compute y*P+w0*M
+    return self.pB
   end
 
   # compute Z and V for the Prover (Gateway), receiving pB from the verifier (end-device)
@@ -106,7 +109,10 @@ end
 
   # Need to know "Context, pA, pB, Z, V, w0"
   #
-  def compute_TT_hash()
+  # Arg:
+  #  matter_specific: if set to `true`, uses only half of the hash as implemented
+  #                   in reference code, but not compliant with SPAKE2+
+  def compute_TT_hash(matter_specific)
     class SPAKE_Hasher
       var hash
       # var complete        # complete value for the bytes -- will be removed in production code
@@ -145,13 +151,18 @@ end
 
     # self.TT = hasher.complete
     self.Kmain = hasher.out()
+    if matter_specific
+      self.Ke = self.Kmain[16..31]
+      self.Kmain = self.Kmain[0..15]
+    end
 
     # compute KcA and KcB
     var kdf = crypto.HKDF_SHA256()
     var KPV = kdf.derive(self.Kmain, bytes(), bytes().fromstring("ConfirmationKeys"), 64)
-    self.KcA = KPV[0..31]
-    self.KcB = KPV[32..63]
+    self.KcA = matter_specific ? KPV[0..15] : KPV[0..31]
+    self.KcB = matter_specific ? KPV[16..31] : KPV[32..63]
     self.K_shared = kdf.derive(self.Kmain, bytes(), bytes().fromstring("SharedKey"), 32)
+    # if matter_specific    self.K_shared = self.K_shared[0..15] end
 
     self.cA = crypto.HMAC_SHA256(self.KcA).update(self.pB).out()
     self.cB = crypto.HMAC_SHA256(self.KcB).update(self.pA).out()
