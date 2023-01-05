@@ -186,7 +186,7 @@ struct RULES {
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
 
-  char event_data[100];
+  char event_data[256];
 } Rules;
 
 char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
@@ -936,7 +936,7 @@ void RulesInit(void)
 void RulesEvery50ms(void)
 {
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
-    char json_event[120];
+    char json_event[300];
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
     if (Rules.new_power != Rules.old_power) {
