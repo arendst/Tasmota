@@ -126,6 +126,8 @@ You can contribute to Tasmota by
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
+<a href="https://www.buymeacoffee.com/tasmota"><img src="https://img.buymeacoffee.com/button-api/?text=Support Tasmota&emoji=&slug=tasmota&button_colour=FFDD00&font_colour=000000&font_family=Arial&outline_colour=000000&coffee_colour=ffffff" /></a>
+
 ## Credits
 
 People helping to keep the show on the road:
