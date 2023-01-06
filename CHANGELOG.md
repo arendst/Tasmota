@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Energy dummy switched voltage and power regression from v12.2.0.2
 - Orno WE517 modbus serial config 8E1 setting (#17545)
+- No IP address shown when in AP moode (#17599)
 
 ### Removed
 
