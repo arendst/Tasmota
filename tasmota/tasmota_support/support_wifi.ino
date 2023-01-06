@@ -761,6 +761,10 @@ bool WifiGetIP(IPAddress *ip) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
     return true;
   }
+  if ((uint32_t)WiFi.softAPIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.softAPIP(); }
+    return true;
+  }
   IPAddress lip;
   if (WifiGetIPv6(&lip)) {
     if (ip != nullptr) { *ip = lip; }
