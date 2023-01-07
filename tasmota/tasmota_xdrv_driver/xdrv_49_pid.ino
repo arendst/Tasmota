@@ -230,6 +230,9 @@ void PIDEverySecond() {
   // run the pid algorithm if Pid.run_pid_now is true or if the right number of seconds has passed or if too long has
   // elapsed since last pv update. If too long has elapsed the the algorithm will deal with that.
   if (Pid.run_pid_now  ||  Pid.current_time_secs - Pid.last_pv_update_secs > Pid.max_interval  ||  (Pid.update_secs != 0 && sec_counter++ % Pid.update_secs  ==  0)) {
+    if (!Pid.run_pid_now) {
+      PIDShowSensor();    // set actual process value
+    }
     PIDRun();
     Pid.run_pid_now = false;
   }
