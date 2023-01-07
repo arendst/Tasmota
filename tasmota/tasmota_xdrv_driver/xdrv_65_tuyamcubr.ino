@@ -24,6 +24,19 @@
  * Tuya MCU Bridge
  */
 
+/*
+ * TODO:
+ *
+ * - better relaying of the wifi/mqtt status to the MCU
+ * - handling wifi reset requests from the MCU
+ * - low power stuff?
+ * - support for (re)sending status updates and device info queries
+ * - supporting the raw and string Dp types
+ * - restarting the tuya mcu state machine?
+ * - restarting the rx state machine when no bytes are rxed for a while
+ * - time sync
+ */
+
 #define XDRV_65			65
 
 #ifndef nitems
