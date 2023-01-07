@@ -1429,11 +1429,6 @@ void Every250mSeconds(void)
 //        TasmotaGlobal.restart_flag = 2;                   // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_UPGRADE));
         AllowInterrupts(1);
-/*
-#ifdef USE_COUNTER
-        CounterInterruptDisable(false);
-#endif  // USE_COUNTER
-*/
       }
     }
     break;
