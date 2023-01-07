@@ -1,0 +1,49 @@
+{
+  "platformio-ide.toolbar": [
+    {
+      "text": "$(trash)",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Clean All"
+        }
+      ]
+    },
+    {
+      "text": "$(check)",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Build"
+        }
+      ]
+    },
+    {
+      "text": "$(zap)",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Upload"
+        }
+      ]
+    },
+    {
+      "text": "$(flame)",
+      "commands": [
+        {
+          "id": "platformio-ide.runPIOCoreCommand",
+          "args": "pio run -t erase_upload"
+        }
+      ]
+    },
+    {
+      "text": "$(device-desktop)",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Monitor"
+        }
+      ]
+    }
+  ]
+}
