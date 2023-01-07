@@ -106,6 +106,8 @@ private:
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
+    void SetLut_by_host(const unsigned char* lut);
+
     //void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 
