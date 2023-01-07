@@ -1029,7 +1029,7 @@ const char kOptions[] PROGMEM = "OFF|" D_OFF "|FALSE|" D_FALSE "|STOP|" D_STOP "
                                 "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                            // 2
                                 "BLINK|" D_BLINK "|"                                                          // 3
                                 "BLINKOFF|" D_BLINKOFF "|"                                                    // 4
-                                "UP|" D_OPEN  "|"                                                             // 100        
+                                "UP|" D_OPEN  "|"                                                             // 100
                                 "ALL" ;                                                                       // 255
 
 const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,0,0,
@@ -1126,6 +1126,22 @@ uint32_t WebColor(uint32_t i)
   uint32_t tcolor = (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2];
 
   return tcolor;
+}
+
+void AllowInterrupts(bool state) {
+  if (!state) {  // Stop interrupts
+    XdrvXsnsCall(FUNC_INTERRUPT_STOP);
+
+#ifdef USE_EMULATION
+    UdpDisconnect();
+#endif  // USE_EMULATION
+  } else {       // Start interrupts
+#ifdef USE_EMULATION
+    UdpConnect();
+#endif  // USE_EMULATION
+
+    XdrvXsnsCall(FUNC_INTERRUPT_START);
+  }
 }
 
 /*********************************************************************************************\

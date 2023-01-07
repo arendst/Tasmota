@@ -1219,11 +1219,6 @@ void Every100mSeconds(void)
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
-#ifdef USE_BLE_ESP32
-  // declare the fn
-  int ExtStopBLE();
-#endif  // USE_BLE_ESP32
-
 bool CommandsReady(void) {
   bool ready = BACKLOG_EMPTY ;
 #ifdef USE_UFILESYS
@@ -1303,18 +1298,11 @@ void Every250mSeconds(void)
         SettingsSave(1);                                  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
-#ifdef USE_BLE_ESP32
-        ExtStopBLE();
-#endif  // USE_BLE_ESP32
-#ifdef USE_COUNTER
-        CounterInterruptDisable(true);                    // Prevent OTA failures on 100Hz counter interrupts
-#endif  // USE_COUNTER
+        AllowInterrupts(0);
 #ifdef USE_WEBSERVER
-        if (Settings->webserver) StopWebserver();
+//        if (Settings->webserver) StopWebserver();       // 20230107 No more need for disabling webserver during OTA
 #endif  // USE_WEBSERVER
-#ifdef USE_ARILUX_RF
-        AriluxRfDisable();                                // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
+
         TasmotaGlobal.ota_state_flag = 92;
         ota_result = 0;
         char full_ota_url[200];
@@ -1440,9 +1428,12 @@ void Every250mSeconds(void)
         ResponseAppend_P(PSTR("\"}"));
 //        TasmotaGlobal.restart_flag = 2;                   // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_UPGRADE));
+        AllowInterrupts(1);
+/*
 #ifdef USE_COUNTER
         CounterInterruptDisable(false);
 #endif  // USE_COUNTER
+*/
       }
     }
     break;
@@ -1642,9 +1633,7 @@ void ArduinoOTAInit(void)
 #ifdef USE_WEBSERVER
     if (Settings->webserver) { StopWebserver(); }
 #endif  // USE_WEBSERVER
-#ifdef USE_ARILUX_RF
-    AriluxRfDisable();       // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
+    AllowInterrupts(0);
     if (Settings->flag.mqtt_enabled) {
       MqttDisconnect();      // SetOption3  - Enable MQTT
     }

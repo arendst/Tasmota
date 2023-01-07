@@ -126,6 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.6 (IPv6 support)
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
 - Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
+- Keep webserver enabled on command ``upload``
 - Increase rule event buffer from 100 to 256 characters [#16943](https://github.com/arendst/Tasmota/issues/16943)
 - TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)

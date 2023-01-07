@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
 - Increase rule event buffer from 100 to 256 characters (#16943)
 - All calls to atof() into CharToFloat() reducing code size by 8k
+- Keep webserver enabled on command ``upload``
 
 ### Fixed
 - Energy dummy switched voltage and power regression from v12.2.0.2

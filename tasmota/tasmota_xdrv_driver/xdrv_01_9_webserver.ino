@@ -2670,11 +2670,6 @@ void HandleUploadDone(void) {
   WSContentStop();
 }
 
-#if defined(USE_BLE_ESP32) || defined(USE_MI_ESP32)
-  // declare the fn
-  int ExtStopBLE();
-#endif
-
 void UploadServices(uint32_t start_service) {
   if (Web.upload_services_stopped != start_service) { return; }
   Web.upload_services_stopped = !start_service;
@@ -2685,31 +2680,11 @@ void UploadServices(uint32_t start_service) {
 /*
     MqttRetryCounter(0);
 */
-#ifdef USE_ARILUX_RF
-    AriluxRfInit();
-#endif  // USE_ARILUX_RF
-#ifdef USE_COUNTER
-    CounterInterruptDisable(false);
-#endif  // USE_COUNTER
-#ifdef USE_EMULATION
-    UdpConnect();
-#endif  // USE_EMULATION
-
+    AllowInterrupts(1);
   } else {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("UPL: Services disabled"));
 
-#ifdef USE_BLE_ESP32
-    ExtStopBLE();
-#endif
-#ifdef USE_EMULATION
-    UdpDisconnect();
-#endif  // USE_EMULATION
-#ifdef USE_COUNTER
-    CounterInterruptDisable(true);     // Prevent OTA failures on 100Hz counter interrupts
-#endif  // USE_COUNTER
-#ifdef USE_ARILUX_RF
-    AriluxRfDisable();                 // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
+    AllowInterrupts(0);
 /*
     MqttRetryCounter(60);
     if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
