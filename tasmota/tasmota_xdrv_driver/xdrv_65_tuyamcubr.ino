@@ -498,7 +498,7 @@ tuyamcubr_cmnd_data(struct tuyamcubr_softc *sc, uint8_t type)
 	data.h.len = htons(dt->t_len);
 	dt->t_wr(data.value, dp->dp_value);
 
-	tuyamcubr_send(sc, TUYA_CMD_SET_DP, &data, len);
+	tuyamcubr_send(sc, TUYAMCUBR_CMD_SET_DP, &data, len);
 
 	ResponseCmndNumber(dp->dp_value);
 
