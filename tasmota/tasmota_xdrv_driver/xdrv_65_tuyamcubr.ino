@@ -35,7 +35,7 @@
 				    __attribute__((__unused__))
 #endif
 
-#define TUYAMCUBR_LOGNAME		"TuyaMCUBr"
+#define TUYAMCUBR_LOGNAME		"TYB"
 #define TUYAMCUBR_FMT(_fmt)		PSTR(TUYAMCUBR_LOGNAME ": " _fmt)
 
 #define D_CMND_TUYAMCUBR_PREFIX		"TuyaMCU"
