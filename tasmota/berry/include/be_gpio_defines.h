@@ -294,6 +294,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "TM1638STB", (int32_t) GPIO_TM1638STB },
     { "TUYA_RX", (int32_t) GPIO_TUYA_RX },
     { "TUYA_TX", (int32_t) GPIO_TUYA_TX },
+    { "TUYAMCUBR_RX", (int32_t) GPIO_TUYAMCUBR_RX },
+    { "TUYAMCUBR_TX", (int32_t) GPIO_TUYAMCUBR_TX },
     { "TX2X_TXD_BLACK", (int32_t) GPIO_TX2X_TXD_BLACK },
     { "TXD", (int32_t) GPIO_TXD },
     { "VINDRIKTNING_RX", (int32_t) GPIO_VINDRIKTNING_RX },
