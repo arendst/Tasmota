@@ -522,12 +522,13 @@ tuyamcubr_cmnd_data(struct tuyamcubr_softc *sc, uint8_t type)
 	dt->t_wr(data.value, dp->dp_value);
 
 	tuyamcubr_send(sc, TUYAMCUBR_CMD_SET_DP, &data, len);
+	tuyamcubr_rule_dp(sc, dp);
 
 	ResponseCmndNumber(dp->dp_value);
 
 	/* SetOption59 */
 	if (Settings->flag3.hass_tele_on_power)
-		tuyamcubr_publish_dp(sc, dp, 0);
+		tuyamcubr_publish_dp(sc, dp);
 }
 
 static void
@@ -549,28 +550,33 @@ tuyamcubr_cmnd_data_enum(void)
 }
 
 static void
-tuyamcubr_publish_dp(struct tuyamcubr_softc *sc, const struct tuyamcubr_dp *dp,
-    int teleperiod)
+tuyamcubr_rule_dp(struct tuyamcubr_softc *sc, const struct tuyamcubr_dp *dp)
 {
-	const struct tuyamcubr_data_type *dt;
-	char topic[64]; /* how long is a (bit of) string? */
+	const struct tuyamcubr_data_type *dt =
+	    &tuyamcubr_data_types[dp->dp_type];
 
 	/* XXX this only handles numeric types */
 
-	dt = &tuyamcubr_data_types[dp->dp_type];
+	Response_P(PSTR("{\"%s\":{\"%s%u\":%u}}"),
+	    D_CMND_TUYAMCUBR_PREFIX,
+	    dt->t_name, dp->dp_id,
+	    dp->dp_value);
+	XdrvRulesProcess(0);
+}
+
+static void
+tuyamcubr_publish_dp(struct tuyamcubr_softc *sc, const struct tuyamcubr_dp *dp)
+{
+	const struct tuyamcubr_data_type *dt =
+	    &tuyamcubr_data_types[dp->dp_type];
+	char topic[64]; /* how long is a (bit of) string? */
+
+	/* XXX this only handles numeric types */
 
 	snprintf(topic, sizeof(topic), PSTR("%s%s%u"),
 	    D_CMND_TUYAMCUBR_PREFIX, dt->t_name, dp->dp_id);
 	Response_P(PSTR("%u"), dp->dp_value);
 	MqttPublishPrefixTopic_P(TELE, topic);
-
-	if (!teleperiod) {
-		Response_P(PSTR("{\"%s\":{\"%s%u\":%u}}"),
-		    D_CMND_TUYAMCUBR_PREFIX,
-		    dt->t_name, dp->dp_id,
-		    dp->dp_value);
-		XdrvRulesProcess(0);
-	}
 }
 
 static void
@@ -579,7 +585,7 @@ tuyamcubr_publish(struct tuyamcubr_softc *sc)
 	struct tuyamcubr_dp *dp;
 
 	STAILQ_FOREACH(dp, &sc->sc_dps, dp_entry)
-		tuyamcubr_publish_dp(sc, dp, 1);
+		tuyamcubr_publish_dp(sc, dp);
 }
 
 static void
@@ -767,7 +773,8 @@ tuyamcubr_recv_status(struct tuyamcubr_softc *sc, uint8_t v,
 		}
 
 		dp->dp_value = value;
-		tuyamcubr_publish_dp(sc, dp, 0);
+		tuyamcubr_rule_dp(sc, dp);
+		tuyamcubr_publish_dp(sc, dp);
 	} while (datalen > 0);
 }
 
