@@ -168,7 +168,7 @@ void Bmp180Read(uint8_t bmp_idx)
   I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_CONTROL, BMP180_TEMPERATURE,bus);
   delay(5); // 5ms conversion time
   int ut = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_RESULT,bus);
-#else  
+#else
   I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_CONTROL, BMP180_TEMPERATURE);
   delay(5); // 5ms conversion time
   int ut = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_RESULT);
@@ -318,7 +318,7 @@ void Bme280Read(uint8_t bmp_idx)
   int32_t adc_T = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_TEMPDATA,bmp_idx>>1);
 #else
   int32_t adc_T = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_TEMPDATA);
-#endif  
+#endif
   adc_T >>= 4;
 
   int32_t vart1 = ((((adc_T >> 3) - ((int32_t)Bme280CalibrationData[bmp_idx].dig_T1 << 1))) * ((int32_t)Bme280CalibrationData[bmp_idx].dig_T2)) >> 11;
@@ -329,9 +329,9 @@ void Bme280Read(uint8_t bmp_idx)
   bmp_sensors[bmp_idx].bmp_temperature = T / 100.0f;
 #ifdef ESP32
   int32_t adc_P = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_PRESSUREDATA,bmp_idx>>1);
-#else  
+#else
   int32_t adc_P = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_PRESSUREDATA);
-#endif  
+#endif
   adc_P >>= 4;
 
   int64_t var1 = ((int64_t)t_fine) - 128000;
@@ -497,16 +497,15 @@ void BmpDetect(void)
   if (!bmp_sensors) { return; }
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
-  for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) 
-  {    
+  for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
+    uint8_t bmp_type = 0;
 #ifdef ESP32
-    uint8_t bmp_type =0;
-    uint8_t bus= (i>=2) ? 1 : 0;
+    uint8_t bus = (i>=2) ? 1 : 0;
     if (!I2cSetDevice(bmp_addresses[i], bus)) { continue; }
     bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID, bus);
 #else
     if (!I2cSetDevice(bmp_addresses[i])) { continue; }
-    bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID));
+    bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
 #endif
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
@@ -536,7 +535,7 @@ void BmpDetect(void)
         I2cSetActiveFound(bmp_sensors[bmp_count].bmp_address, bmp_sensors[bmp_count].bmp_name,bus);
 #else
         I2cSetActiveFound(bmp_sensors[bmp_count].bmp_address, bmp_sensors[bmp_count].bmp_name);
-#endif        
+#endif
         bmp_count++;
       }
     }
@@ -572,7 +571,7 @@ void BmpShow(bool json)
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 #ifdef ESP32
       char name[12];
-      if (TasmotaGlobal.i2c_enabled_2) 
+      if (TasmotaGlobal.i2c_enabled_2)
       {
         strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(bmp_sensors[bmp_idx].bmp_name));
         uint8_t bus= (bmp_idx>=2) ? 1 : 0;
@@ -681,12 +680,12 @@ void BMP_EnterSleep(void)
         case BMP180_CHIPID:
         case BMP280_CHIPID:
         case BME280_CHIPID:
-#ifdef ESP32        
+#ifdef ESP32
           uint8_t bus= (bmp_idx>=2) ? 1 : 0;
           I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET,bus);
 #else
           I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET);
-#endif          
+#endif
           break;
         default:
           break;
