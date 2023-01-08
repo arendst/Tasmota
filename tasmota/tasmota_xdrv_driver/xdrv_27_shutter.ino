@@ -1373,9 +1373,12 @@ void CmndShutterOpenTime(void)
       Settings->shutter_opentime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Settings->shutter_opentime[XdrvMailbox.index -1]) / 10, 1, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Settings->shutter_opentime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
 
@@ -1386,9 +1389,12 @@ void CmndShutterCloseTime(void)
       Settings->shutter_closetime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Settings->shutter_closetime[XdrvMailbox.index -1]) / 10, 1, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Settings->shutter_closetime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
 
@@ -1400,9 +1406,12 @@ void CmndShutterMotorDelay(void)
       ShutterInit();
       //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr Init1. realdelay %d"),Shutter[XdrvMailbox.index -1].motordelay);
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2);
   }
 }
 
@@ -1443,7 +1452,7 @@ void CmndShutterRelay(void)
   // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
   Response_P(PSTR("{"));
   for (uint32_t i = start; i < end; i++) {
-    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i>start)?",":"", i+1,Settings->shutter_startrelay[i]);
+    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":%d"), (i>start)?",":"", i+1, Settings->shutter_startrelay[i]);
   }
   ResponseAppend_P(PSTR("}"));
 }
