@@ -66,7 +66,15 @@
  *     RuleTimer2 100
 \*********************************************************************************************/
 
-#define XDRV_10             10
+#define XDRV_10                 10
+
+#ifndef RULE_MAX_EVENTSZ
+#define RULE_MAX_EVENTSZ        100
+#endif
+
+#ifndef RULE_MAX_MQTT_EVENTSZ
+#define RULE_MAX_MQTT_EVENTSZ   256
+#endif
 
 //#define DEBUG_RULES
 
@@ -186,7 +194,7 @@ struct RULES {
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
 
-  char event_data[100];
+  char event_data[RULE_MAX_EVENTSZ];
 } Rules;
 
 char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
@@ -936,7 +944,7 @@ void RulesInit(void)
 void RulesEvery50ms(void)
 {
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
-    char json_event[120];
+    char json_event[RULE_MAX_EVENTSZ +16];  // Add 16 chars for {"Event": .. }
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
     if (Rules.new_power != Rules.old_power) {
@@ -1152,18 +1160,21 @@ void RulesSetPower(void)
  *      true      - The message is consumed.
  *      false     - The message is not in our list.
  */
-bool RulesMqttData(void)
-{
-  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
+bool RulesMqttData(void) {
+  if ((XdrvMailbox.data_len < 1) || (XdrvMailbox.data_len > RULE_MAX_MQTT_EVENTSZ)) {
     return false;
   }
   bool serviced = false;
   String sTopic = XdrvMailbox.topic;
-  String sData = XdrvMailbox.data;
+  String buData = XdrvMailbox.data;
   //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
+  char json_event[RULE_MAX_MQTT_EVENTSZ +32];  // Add chars for {"Event":{"<item.Event>": .. }
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
+
+    String sData = buData;
+
     event_item = subscriptions.get(index);
 
     //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
@@ -1198,8 +1209,15 @@ bool RulesMqttData(void)
         }
       }
       value.trim();
+
+/*
       //Create an new event. Cannot directly call RulesProcessEvent().
       snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+      // 20230107 Superseded by the following code
+*/
+      bool quotes = (value[0] != '{');
+      snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.Event.c_str(), (quotes)?"\"":"", value.c_str(), (quotes)?"\"":"");
+      RulesProcessEvent(json_event);
     }
   }
   return serviced;

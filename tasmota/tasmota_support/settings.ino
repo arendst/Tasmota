@@ -1614,6 +1614,20 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0C030102) {  // 12.3.1.2
       Settings->shutter_motorstop = 0;
     }
+    if (Settings->version < 0x0C030103) {  // 12.3.1.3
+      for (uint32_t i = 0; i < 3; i++) {
+        RtcSettings.energy_kWhtotal_ph[i] /= 100;
+        Settings->energy_kWhtotal_ph[i] /= 100;
+        RtcSettings.energy_kWhexport_ph[i] /= 100;
+        Settings->energy_kWhexport_ph[i] /= 100;
+        RtcSettings.energy_usage.usage1_kWhtotal /= 100;
+        RtcSettings.energy_usage.usage2_kWhtotal /= 100;
+        RtcSettings.energy_usage.return1_kWhtotal /= 100;
+        RtcSettings.energy_usage.return2_kWhtotal /= 100;
+        RtcSettings.energy_usage.last_return_kWhtotal /= 100;
+        RtcSettings.energy_usage.last_usage_kWhtotal /= 100;
+      }
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

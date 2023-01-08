@@ -27,10 +27,15 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 
 //#define TASMOTAMODBUSDEBUG
 
+#define TASMOTA_MODBUS_TX_ENABLE        // Use local Tx enable on write buffer
+
 TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int tx_enable_pin) : TasmotaSerial(receive_pin, transmit_pin, 2)
 {
-//  setTransmitEnablePin(tx_enable_pin);
-  mb_tx_enable_pin = tx_enable_pin;
+#ifdef TASMOTA_MODBUS_TX_ENABLE
+  mb_tx_enable_pin = tx_enable_pin;     // Use local Tx enable on write buffer
+#else
+  setTransmitEnablePin(tx_enable_pin);  // Use TasmotaSerial Tx enable on write byte
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   mb_address = 0;
 }
 
@@ -59,10 +64,12 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   if (begin(speed, config)) {
     result = 1;
     if (hardwareSerial()) { result = 2; }
+#ifdef TASMOTA_MODBUS_TX_ENABLE
     if (mb_tx_enable_pin > -1) {
       pinMode(mb_tx_enable_pin, OUTPUT);
       digitalWrite(mb_tx_enable_pin, LOW);
     }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   }
   return result;
 }
@@ -148,21 +155,25 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   buf = (uint8_t *)malloc(bufsize);
   memset(buf, 0, bufsize);
   uint16_t i;
-  for (i = 0; i < framepointer;i++)
+  for (i = 0; i < framepointer;i++) {
     snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",frame[i]);
+  }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: %s"), buf);
   free(buf);
 #endif
 
   flush();
+#ifdef TASMOTA_MODBUS_TX_ENABLE
   if (mb_tx_enable_pin > -1) {
     digitalWrite(mb_tx_enable_pin, HIGH);
   }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   write(frame, framepointer);
+#ifdef TASMOTA_MODBUS_TX_ENABLE
   if (mb_tx_enable_pin > -1) {
-    delayMicroseconds(800);  // delay(1) will exception here
     digitalWrite(mb_tx_enable_pin, LOW);
   }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   free(frame);
   return 0;
 }

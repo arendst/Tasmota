@@ -1029,7 +1029,7 @@ const char kOptions[] PROGMEM = "OFF|" D_OFF "|FALSE|" D_FALSE "|STOP|" D_STOP "
                                 "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                            // 2
                                 "BLINK|" D_BLINK "|"                                                          // 3
                                 "BLINKOFF|" D_BLINKOFF "|"                                                    // 4
-                                "UP|" D_OPEN  "|"                                                             // 100        
+                                "UP|" D_OPEN  "|"                                                             // 100
                                 "ALL" ;                                                                       // 255
 
 const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,0,0,
@@ -1126,6 +1126,22 @@ uint32_t WebColor(uint32_t i)
   uint32_t tcolor = (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2];
 
   return tcolor;
+}
+
+void AllowInterrupts(bool state) {
+  if (!state) {  // Stop interrupts
+    XdrvXsnsCall(FUNC_INTERRUPT_STOP);
+
+#ifdef USE_EMULATION
+    UdpDisconnect();
+#endif  // USE_EMULATION
+  } else {       // Start interrupts
+#ifdef USE_EMULATION
+    UdpConnect();
+#endif  // USE_EMULATION
+
+    XdrvXsnsCall(FUNC_INTERRUPT_START);
+  }
 }
 
 /*********************************************************************************************\
@@ -2154,339 +2170,6 @@ bool TimeReachedUsec(uint32_t timer)
   const long passed = TimePassedSinceUsec(timer);
   return (passed >= 0);
 }
-
-/*********************************************************************************************\
- * Basic I2C routines
-\*********************************************************************************************/
-
-#ifdef USE_I2C
-const uint8_t I2C_RETRY_COUNTER = 3;
-
-uint32_t i2c_active[4] = { 0 };
-uint32_t i2c_buffer = 0;
-
-bool I2cBegin(int sda, int scl, uint32_t frequency = 100000);
-bool I2cBegin(int sda, int scl, uint32_t frequency) {
-  bool result = true;
-#ifdef ESP8266
-  Wire.begin(sda, scl);
-#endif
-#ifdef ESP32
-#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
-  static bool reinit = false;
-  if (reinit) { Wire.end(); }
-#endif  // ESP_IDF_VERSION_MAJOR > 3
-  result = Wire.begin(sda, scl, frequency);
-#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
-  reinit = result;
-#endif  // ESP_IDF_VERSION_MAJOR > 3
-#endif
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
-  return result;
-}
-
-#ifdef ESP32
-bool I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
-bool I2c2Begin(int sda, int scl, uint32_t frequency) {
-  bool result = Wire1.begin(sda, scl, frequency);
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus2 %d"), result);
-  return result;
-}
-
-bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus = 0);
-bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus)
-#else
-bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
-#endif
-{
-  uint8_t retry = I2C_RETRY_COUNTER;
-  bool status = false;
-#ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  TwoWire & myWire = Wire;
-#endif
-
-  i2c_buffer = 0;
-  while (!status && retry) {
-    myWire.beginTransmission(addr);                       // start transmission to device
-    myWire.write(reg);                                    // sends register address to read from
-    if (0 == myWire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
-      myWire.requestFrom((int)addr, (int)size);           // send data n-bytes read
-      if (myWire.available() == size) {
-        for (uint32_t i = 0; i < size; i++) {
-          i2c_buffer = i2c_buffer << 8 | myWire.read();   // receive DATA
-        }
-        status = true;
-      }
-    }
-    retry--;
-  }
-  if (!retry) myWire.endTransmission();
-  return status;
-}
-
-bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
-{
-  bool status = I2cValidRead(addr, reg, 1);
-  *data = (uint8_t)i2c_buffer;
-  return status;
-}
-
-bool I2cValidRead16(uint16_t *data, uint8_t addr, uint8_t reg)
-{
-  bool status = I2cValidRead(addr, reg, 2);
-  *data = (uint16_t)i2c_buffer;
-  return status;
-}
-
-bool I2cValidReadS16(int16_t *data, uint8_t addr, uint8_t reg)
-{
-  bool status = I2cValidRead(addr, reg, 2);
-  *data = (int16_t)i2c_buffer;
-  return status;
-}
-
-bool I2cValidRead16LE(uint16_t *data, uint8_t addr, uint8_t reg)
-{
-  uint16_t ldata;
-  bool status = I2cValidRead16(&ldata, addr, reg);
-  *data = (ldata >> 8) | (ldata << 8);
-  return status;
-}
-
-bool I2cValidReadS16_LE(int16_t *data, uint8_t addr, uint8_t reg)
-{
-  uint16_t ldata;
-  bool status = I2cValidRead16LE(&ldata, addr, reg);
-  *data = (int16_t)ldata;
-  return status;
-}
-
-bool I2cValidRead24(int32_t *data, uint8_t addr, uint8_t reg)
-{
-  bool status = I2cValidRead(addr, reg, 3);
-  *data = i2c_buffer;
-  return status;
-}
-
-uint8_t I2cRead8(uint8_t addr, uint8_t reg)
-{
-  I2cValidRead(addr, reg, 1);
-  return (uint8_t)i2c_buffer;
-}
-
-uint16_t I2cRead16(uint8_t addr, uint8_t reg)
-{
-  I2cValidRead(addr, reg, 2);
-  return (uint16_t)i2c_buffer;
-}
-
-int16_t I2cReadS16(uint8_t addr, uint8_t reg)
-{
-  I2cValidRead(addr, reg, 2);
-  return (int16_t)i2c_buffer;
-}
-
-uint16_t I2cRead16LE(uint8_t addr, uint8_t reg)
-{
-  I2cValidRead(addr, reg, 2);
-  uint16_t temp = (uint16_t)i2c_buffer;
-  return (temp >> 8) | (temp << 8);
-}
-
-int16_t I2cReadS16_LE(uint8_t addr, uint8_t reg)
-{
-  return (int16_t)I2cRead16LE(addr, reg);
-}
-
-int32_t I2cRead24(uint8_t addr, uint8_t reg)
-{
-  I2cValidRead(addr, reg, 3);
-  return i2c_buffer;
-}
-
-#ifdef ESP32
-bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint32_t bus = 0);
-bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint32_t bus)
-#else
-bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
-#endif
-{
-  uint8_t x = I2C_RETRY_COUNTER;
-
-#ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  TwoWire & myWire = Wire;
-#endif
-
-  do {
-    myWire.beginTransmission((uint8_t)addr);              // start transmission to device
-    myWire.write(reg);                                    // sends register address to write to
-    uint8_t bytes = size;
-    while (bytes--) {
-      myWire.write((val >> (8 * bytes)) & 0xFF);          // write data
-    }
-    x--;
-  } while (myWire.endTransmission(true) != 0 && x != 0);  // end transmission
-  return (x);
-}
-
-bool I2cWrite8(uint8_t addr, uint8_t reg, uint16_t val)
-{
-   return I2cWrite(addr, reg, val, 1);
-}
-
-bool I2cWrite16(uint8_t addr, uint8_t reg, uint16_t val)
-{
-   return I2cWrite(addr, reg, val, 2);
-}
-
-int8_t I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
-{
-  Wire.beginTransmission((uint8_t)addr);
-  Wire.write((uint8_t)reg);
-  Wire.endTransmission();
-  if (len != Wire.requestFrom((uint8_t)addr, (uint8_t)len)) {
-    return 1;
-  }
-  while (len--) {
-    *reg_data = (uint8_t)Wire.read();
-    reg_data++;
-  }
-  return 0;
-}
-
-int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
-{
-  Wire.beginTransmission((uint8_t)addr);
-  Wire.write((uint8_t)reg);
-  while (len--) {
-    Wire.write(*reg_data);
-    reg_data++;
-  }
-  Wire.endTransmission();
-  return 0;
-}
-
-void I2cScan(uint32_t bus = 0);
-void I2cScan(uint32_t bus) {
-  // Return error codes defined in twi.h and core_esp8266_si2c.c
-  // I2C_OK                      0
-  // I2C_SCL_HELD_LOW            1 = SCL held low by another device, no procedure available to recover
-  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond client clock stretch time
-  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by client/another_master after n bits
-  // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
-  //                             5 = bus busy. Timeout
-  // https://www.arduino.cc/reference/en/language/functions/communication/wire/endtransmission/
-  // 0: success
-  // 1: data too long to fit in transmit buffer
-  // 2: received NACK on transmit of address
-  // 3: received NACK on transmit of data
-  // 4: other error
-  // 5: timeout
-
-  uint8_t error = 0;
-  uint8_t address = 0;
-  uint8_t any = 0;
-
-  Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
-  for (address = 1; address <= 127; address++) {
-#ifdef ESP32
-    if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
-    TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-    TwoWire & myWire = Wire;
-#endif
-    myWire.beginTransmission(address);
-    error = myWire.endTransmission();
-    if (0 == error) {
-      any = 1;
-      ResponseAppend_P(PSTR(" 0x%02x"), address);
-    }
-    else if (error != 2) {  // Seems to happen anyway using this scan
-      any = 2;
-      Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x"), error, address);
-      break;
-    }
-  }
-  if (any) {
-    ResponseAppend_P(PSTR("\"}"));
-  }
-  else {
-    Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
-  }
-}
-
-void I2cResetActive(uint32_t addr, uint32_t count = 1)
-{
-  addr &= 0x7F;         // Max I2C address is 127
-  count &= 0x7F;        // Max 4 x 32 bits available
-  while (count-- && (addr < 128)) {
-    i2c_active[addr / 32] &= ~(1 << (addr % 32));
-    addr++;
-  }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
-}
-
-void I2cSetActive(uint32_t addr, uint32_t count = 1)
-{
-  addr &= 0x7F;         // Max I2C address is 127
-  count &= 0x7F;        // Max 4 x 32 bits available
-  while (count-- && (addr < 128)) {
-    i2c_active[addr / 32] |= (1 << (addr % 32));
-    addr++;
-  }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
-}
-
-void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus = 0);
-void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus) {
-  I2cSetActive(addr);
-#ifdef ESP32
-  if (0 == bus) {
-    AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
-  } else {
-    AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT_PORT, types, addr, bus);
-  }
-#else
-  AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
-#endif // ESP32
-}
-
-bool I2cActive(uint32_t addr)
-{
-  addr &= 0x7F;         // Max I2C address is 127
-  if (i2c_active[addr / 32] & (1 << (addr % 32))) {
-    return true;
-  }
-  return false;
-}
-
-bool I2cSetDevice(uint32_t addr, uint32_t bus = 0);
-bool I2cSetDevice(uint32_t addr, uint32_t bus) {
-#ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  TwoWire & myWire = Wire;
-#endif
-  addr &= 0x7F;         // Max I2C address is 127
-  if (I2cActive(addr)) {
-    return false;       // If already active report as not present;
-  }
-  myWire.beginTransmission((uint8_t)addr);
-//  return (0 == myWire.endTransmission());
-  uint32_t err = myWire.endTransmission();
-  if (err && (err != 2)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x"), err, addr);
-  }
-  return (0 == err);
-}
-#endif  // USE_I2C
 
 /*********************************************************************************************\
  * Syslog

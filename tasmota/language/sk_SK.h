@@ -33,7 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-#define LANGUAGE_LCID 1029
+#define LANGUAGE_LCID 1051
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "sk"
 
@@ -917,6 +917,8 @@
 #define D_SENSOR_FLOWRATEMETER "Flowrate"
 #define D_SENSOR_ME007_TRIG    "ME007 Tri"
 #define D_SENSOR_ME007_RX      "ME007 Rx"
+#define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
+#define D_SENSOR_TUYAMCUBR_RX  "TuyaMCUBr Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

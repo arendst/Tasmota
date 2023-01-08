@@ -639,7 +639,7 @@ bool DNSGetIP(IPAddress *ip, uint32_t idx)
     if (ip != nullptr) { *ip = *ip_dns; }
     return true;
   }
-  *ip = *IP4_ADDR_ANY;
+  if (ip != nullptr) { *ip = *IP4_ADDR_ANY; }
   return false;
 }
 String DNSGetIPStr(uint32_t idx)
@@ -756,23 +756,23 @@ String IPForUrl(const IPAddress & ip)
 // IPv4 has always priority
 // Copy the value of the IP if pointer provided (optional)
 bool WifiGetIP(IPAddress *ip) {
-#ifdef USE_IPV6
   if ((uint32_t)WiFi.localIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
     return true;
   }
+  if ((uint32_t)WiFi.softAPIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.softAPIP(); }
+    return true;
+  }
+#ifdef USE_IPV6
   IPAddress lip;
   if (WifiGetIPv6(&lip)) {
     if (ip != nullptr) { *ip = lip; }
     return true;
   }
   if (ip != nullptr) { *ip = IPAddress(); }
-  return false;
-#else
-  // IPv4 only
-  if (ip != nullptr) { *ip = WiFi.localIP(); }
-  return (uint32_t)WiFi.localIP() != 0;
 #endif // USE_IPV6
+  return false;
 }
 
 bool WifiHasIP(void) {

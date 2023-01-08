@@ -3,7 +3,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.2]
+## [12.3.1.3]
+### Added
+- Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich (#17557)
+- Berry `bytes()` now evaluates to `false` if empty
+- Berry ``crypto.AES_CCM`` (required by Matter protocol)
+- ESP32 support for BMPxxx sensors on two I2C busses (#17643)
+
+### Breaking Changed
+
+### Changed
+- Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
+- Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
+- Increase rule event buffer from 100 to 256 characters (#16943)
+- All calls to atof() into CharToFloat() reducing code size by 8k
+- Keep webserver enabled on command ``upload``
+
+### Fixed
+- Energy dummy switched voltage and power regression from v12.2.0.2
+- Orno WE517 modbus serial config 8E1 setting (#17545)
+- No IP address shown when in AP mode regression from v12.3.1.1 (#17599)
+
+### Removed
+
+## [12.3.1.2] 20221231
 ### Added
 - Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol
 - Berry crypto add ``random`` to generate series of random bytes
@@ -11,21 +34,19 @@ All notable changes to this project will be documented in this file.
 - Support for up to 3 single phase modbus energy monitoring device using generic Energy Modbus driver
 - Berry crypto add ``SPAKE2P_Matter`` for Matter support
 - Support for IPv6 only networks on Ethernet (not yet Wifi)
-
-### Breaking Changed
+- Support for TM1650 display as used in some clocks by Stefan Oskamp (#17594)
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.4 to v2.0.6 (IPv6 support)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads (#17378)
-- Change NTP default servers to dual-stack (IPv4/IPv6)
+- NTP default servers to dual-stack (IPv4/IPv6)
+- Revert TuyaMcu rewrite by btsimonh as lack of support
 
 ### Fixed
 - Shutter default motorstop set to 0 (#17403)
 - Shutter default tilt configuration (#17484)
 - Modbus transmit enable GPIO enabled once during write buffer
 - ESP8266 set GPIO's to input on power on fixing relay spikes (#17531)
-
-### Removed
 
 ## [12.3.1.1] 20221221
 ### Added

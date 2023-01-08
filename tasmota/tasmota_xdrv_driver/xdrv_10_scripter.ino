@@ -2564,6 +2564,37 @@ chknext:
           }
           goto nfuncexit;
         }
+        if (!strncmp(lp, "ap(", 3)) {
+          //TasmotaGlobal.restart_flag = 216;
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
+          switch ((uint8_t)fvar) {
+            case 0:
+              { char ssid[SCRIPT_MAXSSIZE];
+              lp = GetStringArgument(lp, OPER_EQU, ssid, 0);
+              char pw[SCRIPT_MAXSSIZE];
+              lp = GetStringArgument(lp, OPER_EQU, pw, 0);
+              IPAddress local_IP(192,168,189,1);
+              IPAddress gateway(192,168,189,1);
+              IPAddress subnet(255,255,255,0);
+              // Begin Access Point
+              WiFi.softAPConfig(local_IP, gateway, subnet);
+              fvar = WiFi.softAP(ssid, pw);
+              }
+              break;
+            case 1:
+              fvar = WiFi.softAPdisconnect(true);
+              break;
+            case 2:
+              fvar = WiFi.disconnect(true);
+              break;
+          }
+
+          //Web.state = HTTP_ADMIN;
+          // 192.168.4.1
+          // WiFi.softAPIP();
+
+          goto nfuncexit;
+        }
         break;
 
       case 'b':
@@ -8260,7 +8291,7 @@ bool ScriptCommand(void) {
       Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
 #ifdef DEBUG_MQTT_EVENT
     } else if (CMND_SUBTEST == command_code) {
-      XdrvMailbox.topic = (char*)"tele";
+      XdrvMailbox.topic = (char*)"stat/tasmota/SENSOR";
       ScriptMqttData();
       serviced = true;
 #endif
@@ -8291,90 +8322,10 @@ void dateTime(uint16_t* date, uint16_t* time) {
 
 
 #ifdef SUPPORT_MQTT_EVENT
-/*
-//#define DEBUG_MQTT_EVENT
-// parser object, source keys, delimiter, float result or NULL, string result or NULL, string size
-uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, float *nres, char *sres, uint32_t slen) {
-  uint32_t res = 0;
-  const char *cp = spath;
-#ifdef DEBUG_JSON_PARSE_PATH
-  AddLog(LOG_LEVEL_INFO, PSTR("JSON: parsing json key: %s from json: %s"), cp, jpath);
-#endif
-  JsonParserObject obj = *jobj;
-  JsonParserObject lastobj = obj;
-  char selem[32];
-  uint8_t aindex = 0;
-  String value = "";
-  while (1) {
-    // read next element
-    for (uint32_t sp=0; sp<sizeof(selem)-1; sp++) {
-      if (!*cp || *cp==delim) {
-        selem[sp] = 0;
-        cp++;
-        break;
-      }
-      selem[sp] = *cp++;
-    }
-#ifdef DEBUG_JSON_PARSE_PATH
-    AddLog(LOG_LEVEL_INFO, PSTR("JSON: cmp current key: %s"), selem);
-#endif
-    // check for array
-    char *sp = strchr(selem,'[');
-    if (sp) {
-      *sp = 0;
-      aindex = atoi(sp+1);
-    }
 
-    // now check element
-    obj = obj[selem];
-    if (!obj.isValid()) {
-#ifdef DEBUG_JSON_PARSE_PATH
-      AddLog(LOG_LEVEL_INFO, PSTR("JSON: obj invalid: %s"), selem);
-#endif
-      JsonParserToken tok = lastobj[selem];
-      if (tok.isValid()) {
-        if (tok.isArray()) {
-          JsonParserArray array = JsonParserArray(tok);
-          value = array[aindex].getStr();
-          if (array.isNum()) {
-            if (nres) *nres=tok.getFloat();
-            res = 1;
-          } else {
-            res = 2;
-          }
-        } else {
-          value = tok.getStr();
-          if (tok.isNum()) {
-            if (nres) *nres=tok.getFloat();
-            res = 1;
-          } else {
-            res = 2;
-          }
-        }
-
-      }
-#ifdef DEBUG_JSON_PARSE_PATH
-      AddLog(LOG_LEVEL_INFO, PSTR("JSON: token invalid: %s"), selem);
-#endif
-      break;
-    }
-    if (obj.isObject()) {
-      lastobj = obj;
-      continue;
-    }
-    if (!*cp) break;
-  }
-  if (sres) {
-    strlcpy(sres,value.c_str(), slen);
-  }
-  return res;
-
-}
-*/
 #ifndef MQTT_EVENT_MSIZE
 #define MQTT_EVENT_MSIZE 256
 #endif // MQTT_EVENT_MSIZE
-
 
 
 /********************************************************************************************/
@@ -8387,8 +8338,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
  *      true      - The message is consumed.
  *      false     - The message is not in our list.
  */
-bool ScriptMqttData(void)
-{
+bool ScriptMqttData(void) {
   bool serviced = false;
   //toLog(">>> 1");
   //toLog(XdrvMailbox.data);
@@ -8396,7 +8346,7 @@ bool ScriptMqttData(void)
     return false;
   }
   String sTopic = XdrvMailbox.topic;
-  String sData = XdrvMailbox.data;
+  String buData = XdrvMailbox.data;
 
 #ifdef DEBUG_MQTT_EVENT
     AddLog(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
@@ -8407,6 +8357,8 @@ bool ScriptMqttData(void)
   for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
     uint8_t json_valid = 0;
+
+    String sData = buData;
 
 #ifdef DEBUG_MQTT_EVENT
     AddLog(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
@@ -10369,6 +10321,25 @@ void ScriptJsonAppend(void) {
 }
 #endif //USE_SCRIPT_JSON_EXPORT
 
+// returns section as string
+String ScriptLoadSection(const char *sect) {
+  uint16_t slen = strlen(sect);
+  if (Run_Scripter1(sect, -slen, 0) == 99) {
+    char *spo = glob_script_mem.section_ptr + slen;
+    char *sp = spo;
+    while (*sp) {
+      if (*sp == '#') {
+        *sp = 0;
+        String str = spo;
+        *sp = '#';
+        return str;
+      }
+      sp++;
+    }
+  }
+  return "";
+}
+
 
 bool RulesProcessEvent(const char *json_event) {
   if (bitRead(Settings->rule_enabled, 0)) {
@@ -10816,7 +10787,7 @@ void cpy2lf(char *dst, uint32_t dstlen, char *src) {
 #ifdef USE_SCRIPT_I2C
 uint8_t script_i2c_addr;
 TwoWire *script_i2c_wire;
-uint32_t script_i2c(uint8_t sel, uint32_t val, uint32_t val1) {
+uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
   uint32_t rval = 0;
   uint8_t bytes = 1;
 
@@ -10834,9 +10805,11 @@ uint32_t script_i2c(uint8_t sel, uint32_t val, uint32_t val1) {
       break;
     case 2:
       // read 1..4 bytes
-      script_i2c_wire->beginTransmission(script_i2c_addr);
-      script_i2c_wire->write(val);
-      script_i2c_wire->endTransmission();
+      if ((val & 0x8000) == 0) {
+        script_i2c_wire->beginTransmission(script_i2c_addr);
+        script_i2c_wire->write(val);
+        script_i2c_wire->endTransmission();
+      }
       script_i2c_wire->requestFrom((int)script_i2c_addr, (int)val1);
 
       for (uint8_t cnt = 0; cnt < val1; cnt++) {
@@ -10852,10 +10825,20 @@ uint32_t script_i2c(uint8_t sel, uint32_t val, uint32_t val1) {
       // write 1 .. 4 bytes
       bytes = sel - 9;
       script_i2c_wire->beginTransmission(script_i2c_addr);
-      script_i2c_wire->write(val);
-      for (uint8_t cnt = 0; cnt < bytes; cnt++) {
-        script_i2c_wire->write(val1);
-        val1 >>= 8;
+      if ((val & 0x8000) == 0) {
+        script_i2c_wire->write(val);
+      }
+      if ((val & 0x4000) == 0) {
+        for (uint8_t cnt = 0; cnt < bytes; cnt++) {
+          script_i2c_wire->write(val1);
+          val1 >>= 8;
+        }
+      } else {
+        uint32_t wval = 0;
+        for (uint8_t cnt = 0; cnt < bytes; cnt++) {
+          wval = val1 >> ((bytes - 1 - cnt) * 8);
+          script_i2c_wire->write(wval);
+        }
       }
       script_i2c_wire->endTransmission();
       break;

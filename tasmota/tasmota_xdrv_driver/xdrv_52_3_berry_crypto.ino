@@ -181,6 +181,122 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * AES_CCM class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  // `AES_CCM.init(secret_key:bytes(16 or 32), iv:bytes(7..13), aad:bytes(), data_len:int, tag_len:int) -> instance`
+  //
+  int32_t m_aes_ccm_init(struct bvm *vm);
+  int32_t m_aes_ccm_init(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 6 && be_isbytes(vm, 2) && be_isbytes(vm, 3) && be_isbytes(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6)) {
+      do {
+        size_t key_len = 0;
+        const void * key = be_tobytes(vm, 2, &key_len);
+        if (key_len != 32 && key_len != 16) {
+          be_raise(vm, "value_error", "Key size must be 16 or 32 bytes");
+        }
+
+        size_t nonce_len = 0;
+        const void * nonce = be_tobytes(vm, 3, &nonce_len);
+        if (nonce_len < 7 || nonce_len > 13) {
+          be_raise(vm, "value_error", "Nonce size must be 7..13");
+        }
+
+        size_t aad_len = 0;
+        const void * aad = be_tobytes(vm, 4, &aad_len);
+
+        int32_t data_len = be_toint(vm, 5);
+
+        int32_t tag_len = be_toint(vm, 6);
+        if (tag_len < 4 || tag_len > 16) {
+          be_raise(vm, "value_error", "Tag size must be 4..16");
+        }
+
+        // Initialize an AES CCM structure with the secret key
+        br_ccm_context * ccm_ctx = (br_ccm_context *) be_os_malloc(sizeof(br_ccm_context));
+        if (!ccm_ctx) { be_throw(vm, BE_MALLOC_FAIL); }
+
+        be_newcomobj(vm, ccm_ctx, &be_commonobj_destroy_generic);
+        be_setmember(vm, 1, ".p1");
+
+        br_aes_small_ctrcbc_keys * key_ctx = (br_aes_small_ctrcbc_keys *) be_os_malloc(sizeof(br_aes_small_ctrcbc_keys));
+        if (!key_ctx) { be_throw(vm, BE_MALLOC_FAIL); }
+        br_aes_small_ctrcbc_init(key_ctx, key, key_len);
+        be_newcomobj(vm, key_ctx, &be_commonobj_destroy_generic);
+        be_setmember(vm, 1, ".p2");
+
+        br_ccm_init(ccm_ctx, &key_ctx->vtable);
+        int ret = br_ccm_reset(ccm_ctx, nonce, nonce_len, aad_len, data_len, tag_len);
+        if (ret == 0) { be_raise(vm, "value_error", "br_ccm_reset failed"); }
+
+        br_ccm_aad_inject(ccm_ctx, aad, aad_len);
+        br_ccm_flip(ccm_ctx);
+
+        be_return_nil(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Finish injection of authentication data
+  int32_t m_aes_ccm_encrypt_or_decryt(bvm *vm, int encrypt);
+  int32_t m_aes_ccm_encryt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 1); }
+  int32_t m_aes_ccm_decryt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 0); }
+  int32_t m_aes_ccm_encrypt_or_decryt(bvm *vm, int encrypt) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+      do {
+        // get CCM context
+        be_getmember(vm, 1, ".p1");
+        br_ccm_context * ccm_ctx = (br_ccm_context *) be_tocomptr(vm, -1);
+        be_pop(vm, 1);
+
+        // copy the input buffer
+        be_getmember(vm, 2, "copy");    // stack: bytes.copy()
+        be_pushvalue(vm, 2);            // stack: bytes.copy(), bytes instance
+        be_call(vm, 1);                 // call copy with self parameter
+        be_pop(vm, 1);                  // stack: clone of input bytes
+
+        size_t length = 0;
+        // we are changing bytes in place
+        void * bytes = (void*) be_tobytes(vm, -1, &length);
+        if (!bytes) break;
+
+        br_ccm_run(ccm_ctx, encrypt, bytes, length);
+
+        be_return(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t m_aes_ccm_tag(bvm *vm) {
+    do {
+      be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
+
+      // get CCM context
+      be_getmember(vm, 1, ".p1");
+      br_ccm_context * ccm_ctx = (br_ccm_context *) be_tocomptr(vm, -1);
+      be_pop(vm, 1);
+
+      // create a bytes buffer of 16 bytes
+      uint8_t tag[16] = {};
+      br_ccm_get_tag(ccm_ctx, tag);
+      be_pushbytes(vm, tag, sizeof(tag));
+
+      be_return(vm);
+      // success
+    } while (0);
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * AES_CTR class
  * 
 \*********************************************************************************************/

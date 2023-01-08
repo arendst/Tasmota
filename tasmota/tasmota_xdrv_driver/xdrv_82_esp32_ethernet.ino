@@ -243,7 +243,7 @@ bool EthernetGetIP(IPAddress *ip) {
     if (ip != nullptr) { *ip = lip; }
     return true;
   }
-  *ip = IPAddress();
+  if (ip != nullptr) { *ip = IPAddress(); }
   return false;
 #else
   // IPv4 only
@@ -319,7 +319,7 @@ void CmndEthAddress(void) {
 }
 
 void CmndEthType(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 8)) {
     Settings->eth_type = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }

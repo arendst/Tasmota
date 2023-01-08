@@ -706,8 +706,9 @@
 //#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k1 code)
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter (+2k code)
 //#define USE_TELEINFO                             // Add support for French Energy Provider metering telemetry (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
-//#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
+#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
 #define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
+#define USE_MODBUS_ENERGY                        // Add support for generic modbus energy monitor using a user file in rule space (+5k code)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI

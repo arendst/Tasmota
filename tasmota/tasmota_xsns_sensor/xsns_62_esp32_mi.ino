@@ -2357,11 +2357,16 @@ bool Xsns62(uint32_t function)
       MI32EverySecond(false);
       break;
     case FUNC_SAVE_BEFORE_RESTART:
+    case FUNC_INTERRUPT_STOP:
       ExtStopBLE();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kMI32_Commands, MI32_Commands);
       break;
+/*
+    case FUNC_INTERRUPT_START:
+      break;
+*/
     case FUNC_JSON_APPEND:
       MI32Show(1);
       break;

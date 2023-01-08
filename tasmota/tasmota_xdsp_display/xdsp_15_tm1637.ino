@@ -351,7 +351,7 @@ bool CmndTM1637Number(bool clear)
     position = atoi(sPosition);
   case 1:
     subStr(sNum, XdrvMailbox.data, ",", 1);
-    num = atof(sNum);
+    num = CharToFloat(sNum);
   }
 
   if ((position < 0) || (position > (Settings->display_width - 1)))
@@ -450,7 +450,7 @@ bool CmndTM1637Float(bool clear)
     position = atoi(sPosition);
   case 1:
     subStr(sNum, XdrvMailbox.data, ",", 1);
-    fnum = atof(sNum);
+    fnum = CharToFloat(sNum);
   }
 
   if ((position < 0) || (position > (Settings->display_width - 1)))
