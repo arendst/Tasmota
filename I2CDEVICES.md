@@ -45,6 +45,7 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   22  | USE_MCP230xx        | xsns_29  | MCP23017 | 0x20 - 0x26 | 16-bit I/O expander
   23  | USE_MPR121          | xsns_30  | MPR121   | 0x5A - 0x5D | Proximity capacitive touch sensor
   24  | USE_CCS811          | xsns_31  | CCS811   | 0x5A        | Gas (TVOC) and air quality sensor
+  24' | USE_CCS811_V2       | xsns_31  | CCS811   | 0x5A - 0x5B | Gas (TVOC) and air quality sensor
   25  | USE_MPU6050         | xsns_32  | MPU6050  | 0x68 - 0x69 | 3-axis gyroscope and temperature sensor
   26  | USE_DS3231          | xsns_33  | DS3231   | 0x68        | Real time clock
   27  | USE_MGC3130         | xsns_36  | MGC3130  | 0x42        | Electric field sensor
