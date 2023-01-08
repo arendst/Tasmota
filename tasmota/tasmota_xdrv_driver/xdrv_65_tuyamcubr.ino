@@ -27,7 +27,6 @@
 /*
  * TODO:
  *
- * - better relaying of the wifi/mqtt status to the MCU
  * - handling wifi reset requests from the MCU
  * - low power stuff?
  * - support for (re)sending status updates and device info queries
@@ -84,6 +83,16 @@ CTASSERT(sizeof(struct tuyamcubr_header) == 6);
 #define TUYAMCUBR_CMD_INIT_UPGRADE	0x0a
 #define TUYAMCUBR_CMD_UPGRADE_PKG	0x0b
 #define TUYAMCUBR_CMD_SET_TIME		0x1c
+
+/* wifi state */
+
+#define TUYAMCUBR_NETWORK_STATUS_1	0x00 /* pairing in EZ mode */
+#define TUYAMCUBR_NETWORK_STATUS_2	0x01 /* pairing in AP mode */
+#define TUYAMCUBR_NETWORK_STATUS_3	0x02 /* WiFi */
+#define TUYAMCUBR_NETWORK_STATUS_4	0x03 /* WiFi + router */
+#define TUYAMCUBR_NETWORK_STATUS_5	0x04 /* WiFi + router + cloud*/
+#define TUYAMCUBR_NETWORK_STATUS_6	0x05 /* low power mode */
+#define TUYAMCUBR_NETWORK_STATUS_7	0x06 /* pairing in EZ+AP mode */
 
 /* set dp */
 
@@ -255,6 +264,7 @@ struct tuyamcubr_softc {
 	enum tuyamcubr_state	 sc_state;
 	unsigned int		 sc_deadline;
 	unsigned int		 sc_waiting;
+	uint8_t			 sc_network_status;
 
 	unsigned int		 sc_clock;
 	struct tuyamcubr_dps	 sc_dps;
@@ -625,8 +635,6 @@ static void
 tuyamcubr_recv_mode(struct tuyamcubr_softc *sc, uint8_t v,
     const uint8_t *data, size_t datalen)
 {
-	const uint8_t wifi_status[1] = { 0x04 }; /* XXX */
-
 	switch (sc->sc_state) {
 	case TUYAMCUBR_S_MODE:
 		switch (datalen) {
@@ -650,7 +658,7 @@ tuyamcubr_recv_mode(struct tuyamcubr_softc *sc, uint8_t v,
 
 		sc->sc_state = TUYAMCUBR_S_NET_STATUS;
 		tuyamcubr_send(sc, TUYAMCUBR_CMD_WIFI_STATE,
-		    wifi_status, sizeof(wifi_status));
+		    &sc->sc_network_status, sizeof(sc->sc_network_status));
 		break;
 	default:
 		AddLog(LOG_LEVEL_ERROR,
@@ -793,6 +801,38 @@ tuyamcubr_tick(struct tuyamcubr_softc *sc, unsigned int ms)
 }
 
 static void
+tuyamcubr_every_1sec(struct tuyamcubr_softc *sc)
+{
+	/* start with the assumption that wifi is configured */
+	uint8_t network_status = TUYAMCUBR_NETWORK_STATUS_3;
+
+	if (MqttIsConnected()) {
+		/* the device is connected to the "cloud" */
+		network_status = TUYAMCUBR_NETWORK_STATUS_5;
+	} else {
+		switch (WifiState()) {
+		case WIFI_MANAGER:
+			/* Pairing in AP mode */
+			network_status = TUYAMCUBR_NETWORK_STATUS_2;
+			break;
+		case WIFI_RESTART:
+			/* WiFi + router */
+			network_status = TUYAMCUBR_NETWORK_STATUS_4;
+			break;
+		}
+	}
+
+	if (sc->sc_network_status != network_status) {
+		sc->sc_network_status = network_status;
+
+		if (sc->sc_state == TUYAMCUBR_S_RUNNING) {
+			tuyamcubr_send(sc, TUYAMCUBR_CMD_WIFI_STATE,
+			    &network_status, sizeof(network_status));
+		}
+	}
+}
+
+static void
 tuyamcubr_pre_init(void)
 {
 	struct tuyamcubr_softc *sc;
@@ -818,6 +858,8 @@ tuyamcubr_pre_init(void)
 
 	sc->sc_state = TUYAMCUBR_S_START;
 	sc->sc_clock = 0;
+	sc->sc_network_status = (WifiState() == WIFI_MANAGER) ?
+	    TUYAMCUBR_NETWORK_STATUS_2 : TUYAMCUBR_NETWORK_STATUS_3;
 	STAILQ_INIT(&sc->sc_dps);
 
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_TUYAMCUBR_RX),
@@ -906,7 +948,9 @@ Xdrv65(uint32_t function)
 	case FUNC_EVERY_50_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_250_MSECOND:
+		break;
 	case FUNC_EVERY_SECOND:
+		tuyamcubr_every_1sec(sc);
 		break;
 
 #if 0
