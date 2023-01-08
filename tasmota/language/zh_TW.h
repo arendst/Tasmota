@@ -917,6 +917,8 @@
 #define D_SENSOR_FLOWRATEMETER "Flowrate"
 #define D_SENSOR_ME007_TRIG    "ME007 Tri"
 #define D_SENSOR_ME007_RX      "ME007 Rx"
+#define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
+#define D_SENSOR_TUYAMCUBR_RX  "TuyaMCUBr Rx"
 
 // Units
 #define D_UNIT_AMPERE "安培"
