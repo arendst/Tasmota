@@ -13,7 +13,11 @@
 
 const uint8_t I2C_RETRY_COUNTER = 3;
 
+#ifdef ESP8266
+uint32_t i2c_active[1][4] = { 0 };
+#else
 uint32_t i2c_active[2][4] = { 0 };
+#endif
 uint32_t i2c_buffer = 0;
 
 bool I2cBegin(int sda, int scl, uint32_t frequency = 100000);
