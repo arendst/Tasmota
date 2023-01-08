@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry crypto add ``random`` to generate series of random bytes
 - Berry crypto add ``HKDF_HMAC_SHA256``
 - Berry crypto add ``SPAKE2P_Matter`` for Matter support
+- ESP32 support for BMPxxx sensors on two I2C busses [#17643](https://github.com/arendst/Tasmota/issues/17643)
 
 ### Breaking Changed
 
