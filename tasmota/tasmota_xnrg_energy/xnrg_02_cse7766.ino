@@ -233,11 +233,15 @@ void CseSnsInit(void) {
   uint32_t option = GetPin(pin_rx) - AGPIO(GPIO_CSE7766_RX);
   uint32_t config = (1 == option) ? SERIAL_8N1 : SERIAL_8E1;
   if (CseSerial->begin(4800, config)) {
+    config = (1 == option) ? TS_SERIAL_8N1 : TS_SERIAL_8E1;
     if (CseSerial->hardwareSerial()) {
-      config = (1 == option) ? TS_SERIAL_8N1 : TS_SERIAL_8E1;
       SetSerial(4800, config);
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Serial UART%d set to %s 4800 bit/s"), CseSerial->getUart(), GetSerialConfig(config).c_str());
+#endif
+
     if (0 == Settings->param[P_CSE7766_INVALID_POWER]) {
       Settings->param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
