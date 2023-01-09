@@ -189,7 +189,7 @@ void We517SnsInit(void) {
   if (result) {
       if (2 == result) {
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 HW serial init 8E1 at %d baud"), WE517_SPEED);
-//          Serial.begin(WE517_SPEED, SERIAL_8E1);
+          Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }
       Energy.phase_count = 3;

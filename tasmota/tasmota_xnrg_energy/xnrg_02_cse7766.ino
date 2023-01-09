@@ -225,11 +225,17 @@ void CseEverySecond(void) {
 
 void CseSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-//  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), Pin(GPIO_CSE7766_TX), 1);
-  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), -1, 1);
-  if (CseSerial->begin(4800, SERIAL_8E1)) {
+  uint32_t pin_rx = Pin(GPIO_CSE7766_RX, GPIO_ANY);
+//  CseSerial = new TasmotaSerial(pin_rx, Pin(GPIO_CSE7766_TX), 1);
+  CseSerial = new TasmotaSerial(pin_rx, -1, 1);
+
+  // 0 (1 = RX1 (8E1)), 1 (2 = RX2 (8N1))
+  uint32_t option = GetPin(pin_rx) - AGPIO(GPIO_CSE7766_RX);
+  uint32_t config = (1 == option) ? SERIAL_8N1 : SERIAL_8E1;
+  if (CseSerial->begin(4800, config)) {
     if (CseSerial->hardwareSerial()) {
-      SetSerial(4800, TS_SERIAL_8E1);
+      config = (1 == option) ? TS_SERIAL_8N1 : TS_SERIAL_8E1;
+      SetSerial(4800, config);
       ClaimSerial();
     }
     if (0 == Settings->param[P_CSE7766_INVALID_POWER]) {
@@ -243,8 +249,8 @@ void CseSnsInit(void) {
 }
 
 void CseDrvInit(void) {
-//  if (PinUsed(GPIO_CSE7766_RX) && PinUsed(GPIO_CSE7766_TX)) {
-  if (PinUsed(GPIO_CSE7766_RX)) {
+//  if (PinUsed(GPIO_CSE7766_RX, GPIO_ANY) && PinUsed(GPIO_CSE7766_TX)) {
+  if (PinUsed(GPIO_CSE7766_RX, GPIO_ANY)) {
     Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
     if (Cse.rx_buffer != nullptr) {
       TasmotaGlobal.energy_driver = XNRG_02;

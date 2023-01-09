@@ -825,7 +825,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_CSE7766
   AGPIO(GPIO_CSE7766_TX),               // CSE7766 Serial interface (S31 and Pow R2)
-  AGPIO(GPIO_CSE7766_RX),               // CSE7766 Serial interface (S31 and Pow R2)
+  AGPIO(GPIO_CSE7766_RX) + 2,           // CSE7766 Serial interface (S31 and Pow R2) (1 = RX1 (8E1), 2 = RX2 (8N1))
 #endif
 #ifdef USE_MCP39F501
   AGPIO(GPIO_MCP39F5_TX),               // MCP39F501 Serial interface (Shelly2)
