@@ -870,8 +870,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_TUYAMCUBR
     feature9 |= 0x00004000;  // xdrv_65_tuyamcubr.ino
 #endif
-
-//    feature9 |= 0x00008000;
+#if defined(USE_I2C) && defined(USE_SEN5X)
+    feature9 |= 0x00008000;  // xsns_103_sen5x.ino
+#endif
 
 //    feature9 |= 0x00010000;
 //    feature9 |= 0x00020000;
