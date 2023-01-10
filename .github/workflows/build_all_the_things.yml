@@ -81,7 +81,7 @@ jobs:
       matrix:
         variant:
           - tasmota
-          - tasmota4M
+          - tasmota-4M
           - tasmota-display
           - tasmota-ir
           - tasmota-knx
