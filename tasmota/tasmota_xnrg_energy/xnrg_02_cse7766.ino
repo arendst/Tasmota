@@ -225,23 +225,13 @@ void CseEverySecond(void) {
 
 void CseSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  uint32_t pin_rx = Pin(GPIO_CSE7766_RX, GPIO_ANY);
-//  CseSerial = new TasmotaSerial(pin_rx, Pin(GPIO_CSE7766_TX), 1);
-  CseSerial = new TasmotaSerial(pin_rx, -1, 1);
-
-  // 0 (1 = RX1 (8E1)), 1 (2 = RX2 (8N1))
-  uint32_t option = GetPin(pin_rx) - AGPIO(GPIO_CSE7766_RX);
-  uint32_t config = (1 == option) ? SERIAL_8N1 : SERIAL_8E1;
-  if (CseSerial->begin(4800, config)) {
-    config = (1 == option) ? TS_SERIAL_8N1 : TS_SERIAL_8E1;
+//  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), Pin(GPIO_CSE7766_TX), 1);
+  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), -1, 1);
+  if (CseSerial->begin(4800, SERIAL_8E1)) {
     if (CseSerial->hardwareSerial()) {
-      SetSerial(4800, config);
+      SetSerial(4800, TS_SERIAL_8E1);
       ClaimSerial();
     }
-#ifdef ESP32
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Serial UART%d set to %s 4800 bit/s"), CseSerial->getUart(), GetSerialConfig(config).c_str());
-#endif
-
     if (0 == Settings->param[P_CSE7766_INVALID_POWER]) {
       Settings->param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
@@ -253,8 +243,8 @@ void CseSnsInit(void) {
 }
 
 void CseDrvInit(void) {
-//  if (PinUsed(GPIO_CSE7766_RX, GPIO_ANY) && PinUsed(GPIO_CSE7766_TX)) {
-  if (PinUsed(GPIO_CSE7766_RX, GPIO_ANY)) {
+//  if (PinUsed(GPIO_CSE7766_RX) && PinUsed(GPIO_CSE7766_TX)) {
+  if (PinUsed(GPIO_CSE7766_RX)) {
     Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
     if (Cse.rx_buffer != nullptr) {
       TasmotaGlobal.energy_driver = XNRG_02;

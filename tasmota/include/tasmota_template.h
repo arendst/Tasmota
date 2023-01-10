@@ -204,7 +204,7 @@ enum UserSelectablePins {
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
   GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
-  GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX,  // TuyaMCU Bridge
+  GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -825,7 +825,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_CSE7766
   AGPIO(GPIO_CSE7766_TX),               // CSE7766 Serial interface (S31 and Pow R2)
-  AGPIO(GPIO_CSE7766_RX) + 2,           // CSE7766 Serial interface (S31 and Pow R2) (1 = RX1 (8E1), 2 = RX2 (8N1))
+  AGPIO(GPIO_CSE7766_RX),               // CSE7766 Serial interface (S31 and Pow R2)
 #endif
 #ifdef USE_MCP39F501
   AGPIO(GPIO_MCP39F5_TX),               // MCP39F501 Serial interface (Shelly2)
