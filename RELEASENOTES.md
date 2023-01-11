@@ -55,7 +55,7 @@ Easy initial installation of Tasmota can be performed using the [Tasmota WebInst
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
-- **tasmota4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
+- **tasmota-4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
 - **tasmota-AD.bin** to **tasmota-VN.bin** = The Tasmota version in different languages for 1M+ flash.
 - **tasmota-lite.bin** = The Lite version without most drivers and sensors for 1M+ flash.
 - **tasmota-knx.bin** = The Knx version without some features but adds KNX support for 1M+ flash.
@@ -139,5 +139,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)
 - Shutter default tilt configuration [#17484](https://github.com/arendst/Tasmota/issues/17484)
 - Orno WE517 modbus serial config 8E1 setting [#17545](https://github.com/arendst/Tasmota/issues/17545)
+- Rename ``tasmota4M.bin`` to ``tasmota-4M.bin`` to solve use of ``tasmota-minimal.bin`` [#17674](https://github.com/arendst/Tasmota/issues/17674)
 
 ### Removed
