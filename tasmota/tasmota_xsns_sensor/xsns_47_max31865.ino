@@ -346,6 +346,7 @@ void MAX31865_GetResult(void) {
       uint16_t rtd;
 
       rtd = max31865[i].readRTD();
+      MAX31865_Result[i].ErrorCode = max31865[i].readFault();
       MAX31865_Result[i].Rtd = rtd;
       MAX31865_Result[i].PtdResistance = max31865[i].rtd_to_resistance(rtd, RefRes[i]);
       MAX31865_Result[i].PtdTemp = ConvertTemp(max31865[i].rtd_to_temperature(rtd, PtdRes[i], RefRes[i]) + PtdBias[i]);
