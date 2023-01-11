@@ -42,6 +42,7 @@
 #define TUYA_CMD_INITIATING_UPGRADE 0x0A
 #define TUYA_CMD_UPGRADE_PACKAGE    0x0B
 #define TUYA_CMD_SET_TIME           0x1C
+#define TUYA_CMD_GET_WIFI_STRENGTH  0x24
 
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
 #define TUYA_LOW_POWER_CMD_WIFI_RESET   0x03
@@ -116,7 +117,7 @@ void (* const TuyaCommand[])(void) PROGMEM = {
 };
 
 const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
-  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE
+  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE, TUYA_CMD_GET_WIFI_STRENGTH
 };
 
 /*********************************************************************************************\
@@ -1114,6 +1115,9 @@ void TuyaNormalPowerModePacketProcess(void)
       }
       TuyaRequestState(0);
       break;
+    case TUYA_CMD_GET_WIFI_STRENGTH: 
+      TuyaSetWifiStrength();
+      break;
 #ifdef USE_TUYA_TIME
     case TUYA_CMD_SET_TIME:
       TuyaSetTime();
@@ -1393,6 +1397,18 @@ void TuyaSetWifiLed(void)
   } else {
     TuyaSendCmd(TUYA_CMD_WIFI_STATE, &Tuya.wifi_state, 1);
   }
+}
+
+void TuyaSetWifiStrength(void) {
+  uint16_t payload_len = 1;
+  uint8_t payload_buffer[1];
+  int32_t rssi = WiFi.RSSI();
+  int signal_strength = WifiGetRssiAsQuality(rssi);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX MCU Get Wifi Strength -> sending %d"), signal_strength);
+  payload_buffer[0] = (uint8_t)signal_strength;
+
+  TuyaSendCmd(TUYA_CMD_GET_WIFI_STRENGTH, payload_buffer, payload_len);
 }
 
 #ifdef USE_TUYA_TIME
