@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry `bytes()` now evaluates to `false` if empty
 - Berry ``crypto.AES_CCM`` (required by Matter protocol)
 - ESP32 support for BMPxxx sensors on two I2C busses (#17643)
+- Berry add implicit ``_class`` parameter to static methods
 
 ### Breaking Changed
 

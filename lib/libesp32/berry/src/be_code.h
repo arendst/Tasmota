@@ -39,5 +39,6 @@ void be_code_import(bfuncinfo *finfo, bexpdesc *m, bexpdesc *v);
 int be_code_exblk(bfuncinfo *finfo, int depth);
 void be_code_catch(bfuncinfo *finfo, int base, int ecnt, int vcnt, int *jmp);
 void be_code_raise(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2);
+void be_code_implicit_class(bfuncinfo *finfo, bexpdesc *e, bclass *c);
 
 #endif
