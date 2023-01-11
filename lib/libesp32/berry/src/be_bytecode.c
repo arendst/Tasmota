@@ -206,7 +206,15 @@ static void save_constants(bvm *vm, void *fp, bproto *proto)
     bvalue *v = proto->ktab, *end;
     save_long(fp, proto->nconst); /* constants count */
     for (end = v + proto->nconst; v < end; ++v) {
-        save_value(vm, fp, v);
+        if ((v == proto->ktab) && (proto->varg & BE_VA_STATICMETHOD) && (v->type == BE_CLASS)) {
+            /* implicit `_class` parameter, output nil */
+            bvalue v_nil;
+            v_nil.v.i = 0;
+            v_nil.type = BE_NIL;
+            save_value(vm, fp, &v_nil);
+        } else {
+            save_value(vm, fp, v);
+        }
     }
 }
 
@@ -428,7 +436,15 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
         be_incrtop(vm);
         if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
             /* actual method */
-            bbool is_method = ((bproto*)var_toobj(value))->varg & BE_VA_METHOD;
+            bproto *proto = (bproto*)var_toobj(value);
+            bbool is_method = proto->varg & BE_VA_METHOD;
+            if (!is_method) {
+                if ((proto->nconst > 0) && (proto->ktab->type == BE_NIL)) {
+                    /* The first argument is nil so we replace with the class as implicit '_class' */
+                    proto->ktab->type = BE_CLASS;
+                    proto->ktab->v.p = c;
+                }
+            }
             be_class_method_bind(vm, c, name, var_toobj(value), !is_method);
         } else {
             /* no proto, static member set to nil */

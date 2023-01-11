@@ -282,7 +282,7 @@ static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, bproto *pr,
     if (pr->nconst > 0) {
         for (int k = 0; k < pr->nconst; k++) {
             if (var_type(&pr->ktab[k]) == BE_CLASS) {
-                if (k == 0 && (pr->varg & BE_VA_METHOD) == 0) {
+                if ((k == 0) && (pr->varg & BE_VA_STATICMETHOD)) {
                     // it is the implicit '_class' variable from a static method, don't dump the class
                 } else {
                     // output the class

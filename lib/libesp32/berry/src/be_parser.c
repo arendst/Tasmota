@@ -628,6 +628,7 @@ static bproto* funcbody(bparser *parser, bstring *name, bclass *c, int type)
         init_exp(&e2, ETCONST, 0);
         be_code_implicit_class(parser->finfo, &e2, c);
         be_code_setvar(parser->finfo, &e1, &e2);
+        finfo.proto->varg |= BE_VA_STATICMETHOD;
     }
     stmtlist(parser); /* parse statement without final `end` */
     end_func(parser); /* close function context */
