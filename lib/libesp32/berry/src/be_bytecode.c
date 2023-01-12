@@ -160,17 +160,19 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
 static void save_class(bvm *vm, void *fp, bclass *c)
 {
     bstring **vars;
-    int i, count = be_map_count(c->members);
+    int i, count = c->members ? be_map_count(c->members) : 0;
     int nvar = c->nvar - be_class_closure_count(c);
     save_string(fp, c->name);
     save_long(fp, nvar); /* member variables count */
     save_long(fp, count - nvar); /* method count */
-    vars = save_members(vm, fp, c, nvar);
-    if (vars != NULL) {
-        for (i = 0; i < nvar; ++i) {
-            save_string(fp, vars[i]);
+    if (count > 0) {
+        vars = save_members(vm, fp, c, nvar);
+        if (vars != NULL) {
+            for (i = 0; i < nvar; ++i) {
+                save_string(fp, vars[i]);
+            }
+            be_free(vm, vars, sizeof(bstring *) * nvar);
         }
-        be_free(vm, vars, sizeof(bstring *) * nvar);
     }
 }
 
