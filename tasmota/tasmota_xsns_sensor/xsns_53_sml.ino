@@ -681,98 +681,109 @@ void dump2log(void) {
       }
     }
   } else {
-    if (type == 'o') {
-      // obis
-      while (SML_SAVAILABLE) {
-        char c = SML_SREAD&0x7f;
-        if (c == '\n' || c == '\r') {
-          if (sml_globs.sml_logindex > 2) {
-            sml_globs.log_data[sml_globs.sml_logindex] = 0;
-            AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
-            sml_globs.log_data[0] = ':';
-            sml_globs.log_data[1] = ' ';
-            sml_globs.sml_logindex = 2;
-          }
-          continue;
-        }
-        sml_globs.log_data[sml_globs.sml_logindex] = c;
-        if (sml_globs.sml_logindex < SML_DUMP_SIZE - 2) {
-          sml_globs.sml_logindex++;
-        }
-      }
-    } else if (type == 'v') {
-      // vbus
-      uint8_t c;
-      while (SML_SAVAILABLE) {
-        c = SML_SREAD;
-        if (c == VBUS_SYNC) {
-          sml_globs.log_data[sml_globs.sml_logindex] = 0;
-          AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
-          sml_globs.log_data[0] = ':';
-          sml_globs.log_data[1] = ' ';
-          sml_globs.sml_logindex = 2;
-        }
-        sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
-        if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
-          sml_globs.sml_logindex += 3;
-        }
-      }
-    } else if (type == 'e') {
-      // ebus
-      uint8_t c, p;
-      while (SML_SAVAILABLE) {
-        c = SML_SREAD;
-        if (c == EBUS_SYNC) {
-          p = SML_SPEAK;
-          if (p != EBUS_SYNC && sml_globs.sml_logindex > 5) {
-            // new packet, plot last one
-            sml_globs.log_data[sml_globs.sml_logindex] = 0;
-            AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
-            strcpy(&sml_globs.log_data[0], ": aa ");
-            sml_globs.sml_logindex = 5;
-          }
-          continue;
-        }
-        sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
-        if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
-          sml_globs.sml_logindex += 3;
-        }
-      }
-    } else if (type == 's') {
-      // sml
-      uint8_t c;
-      while (SML_SAVAILABLE) {
-        c = SML_SREAD;
-        if (c == SML_SYNC) {
-          sml_globs.log_data[0] = ':';
-          sml_globs.log_data[1] = ' ';
-          sml_globs.sml_logindex = 2;
-        }
-        sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
-        if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
-          sml_globs.sml_logindex += 3;
-        }
-      }
-    } else {
-      // raw dump
-      d_lastms = millis();
-      sml_globs.log_data[0] = ':';
-      sml_globs.log_data[1] = ' ';
-      sml_globs.sml_logindex = 2;
-      while ((millis() - d_lastms) < 40) {
-        while (SML_SAVAILABLE) {
-          sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", SML_SREAD);
-					if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
-	          sml_globs.sml_logindex += 3;
-	        } else {
-						break;
-					}
-        }
-      }
-      if (sml_globs.sml_logindex > 2) {
-        sml_globs.log_data[sml_globs.sml_logindex] = 0;
-        AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
-      }
+		switch (type) {
+     	case 'o':
+      	// obis
+      	while (SML_SAVAILABLE) {
+        	char c = SML_SREAD&0x7f;
+        	if (c == '\n' || c == '\r') {
+          	if (sml_globs.sml_logindex > 2) {
+            	sml_globs.log_data[sml_globs.sml_logindex] = 0;
+            	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+            	sml_globs.log_data[0] = ':';
+            	sml_globs.log_data[1] = ' ';
+            	sml_globs.sml_logindex = 2;
+          	}
+          	continue;
+        	}
+        	sml_globs.log_data[sml_globs.sml_logindex] = c;
+        	if (sml_globs.sml_logindex < SML_DUMP_SIZE - 2) {
+          	sml_globs.sml_logindex++;
+        	}
+      	}
+				break;
+     	case 'v':
+      	// vbus
+				{ uint8_t c;
+      	while (SML_SAVAILABLE) {
+        	c = SML_SREAD;
+        	if (c == VBUS_SYNC) {
+          	sml_globs.log_data[sml_globs.sml_logindex] = 0;
+          	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+          	sml_globs.log_data[0] = ':';
+          	sml_globs.log_data[1] = ' ';
+          	sml_globs.sml_logindex = 2;
+        	}
+        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
+          	sml_globs.sml_logindex += 3;
+        	}
+      	}
+				}
+				break;
+     	case 'e':
+      	// ebus
+      	{ uint8_t c, p;
+      	while (SML_SAVAILABLE) {
+        	c = SML_SREAD;
+        	if (c == EBUS_SYNC) {
+          	p = SML_SPEAK;
+          	if (p != EBUS_SYNC && sml_globs.sml_logindex > 5) {
+            	// new packet, plot last one
+            	sml_globs.log_data[sml_globs.sml_logindex] = 0;
+            	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+            	strcpy(&sml_globs.log_data[0], ": aa ");
+            	sml_globs.sml_logindex = 5;
+          	}
+          	continue;
+        	}
+        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
+          	sml_globs.sml_logindex += 3;
+        	}
+      	}
+				}
+				break;
+     	case 's':
+      	// sml
+      	{ uint8_t c;
+      	while (SML_SAVAILABLE) {
+        	c = SML_SREAD;
+        	if (c == SML_SYNC) {
+						sml_globs.log_data[sml_globs.sml_logindex] = 0;
+          	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+          	sml_globs.log_data[0] = ':';
+          	sml_globs.log_data[1] = ' ';
+          	sml_globs.sml_logindex = 2;
+        	}
+        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
+          	sml_globs.sml_logindex += 3;
+        	}
+      	}
+				}
+				break;
+    	default:
+      	// raw dump
+      	d_lastms = millis();
+      	sml_globs.log_data[0] = ':';
+      	sml_globs.log_data[1] = ' ';
+      	sml_globs.sml_logindex = 2;
+      	while ((millis() - d_lastms) < 40) {
+        	while (SML_SAVAILABLE) {
+          	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", SML_SREAD);
+						if (sml_globs.sml_logindex < SML_DUMP_SIZE - 7) {
+	          	sml_globs.sml_logindex += 3;
+	        	} else {
+							break;
+						}
+        	}
+      	}
+      	if (sml_globs.sml_logindex > 2) {
+        	sml_globs.log_data[sml_globs.sml_logindex] = 0;
+        	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+      	}
+				break;
     }
   }
 }
