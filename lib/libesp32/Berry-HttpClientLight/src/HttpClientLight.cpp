@@ -39,6 +39,7 @@
 #include <base64.h>
 
 #include "HttpClientLight.h"
+#include "ESP8266WiFi.h"
 
 #ifdef USE_WEBCLIENT_HTTPS
 #include "WiFiClientSecureLightBearSSL.h"
@@ -1158,9 +1159,21 @@ bool HTTPClientLight::connect(void)
         return false;
     }
 #endif
-    if(!_client->connect(_host.c_str(), _port, _connectTimeout)) {
-        log_d("failed connect to %s:%u", _host.c_str(), _port);
-        return false;
+    if (_protocol == "https") {
+        if(!_client->connect(_host.c_str(), _port, _connectTimeout)) {
+            log_d("failed connect to %s:%u", _host.c_str(), _port);
+            return false;
+        }
+    } else {
+        IPAddress remote_addr;
+        // Add include "ESP8266WiFi.h" for this to work
+        if (!WiFi.hostByName(_host.c_str(), remote_addr)) {
+            return false;
+        }
+        if(!_client->connect(remote_addr, _port, _connectTimeout)) {
+            log_d("failed connect to %s:%u", _host.c_str(), _port);
+            return false;
+        }
     }
 
     // set Timeout for WiFiClient and for Stream::readBytesUntil() and Stream::readStringUntil()
