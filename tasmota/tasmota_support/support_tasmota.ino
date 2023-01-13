@@ -1290,7 +1290,8 @@ void Every250mSeconds(void)
     if (TasmotaGlobal.ota_state_flag && CommandsReady()) {
       TasmotaGlobal.ota_state_flag--;
       if (2 == TasmotaGlobal.ota_state_flag) {
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef ESP32
         OtaFactoryWrite(false);
 #endif
         RtcSettings.ota_loader = 0;                       // Try requested image first
@@ -1372,7 +1373,8 @@ void Every250mSeconds(void)
           } else
 #endif  // USE_WEBCLIENT_HTTPS
           if (EspSingleOtaPartition()) {
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef ESP32
             OtaFactoryWrite(true);
 #endif
             RtcSettings.ota_loader = 1;                 // Try safeboot image next
@@ -1542,10 +1544,12 @@ void Every250mSeconds(void)
     {
       if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef ESP32
         if (OtaFactoryRead()) {
           OtaFactoryWrite(false);
           TasmotaGlobal.ota_state_flag = 3;
+          AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
         }
 #endif
         if (1 == RtcSettings.ota_loader) {
