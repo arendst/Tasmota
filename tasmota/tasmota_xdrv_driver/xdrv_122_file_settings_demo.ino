@@ -18,7 +18,7 @@
 */
 
 // Enable this define to use this demo
-#define USE_DRV_FILE_DEMO
+//#define USE_DRV_FILE_DEMO
 
 #ifdef USE_DRV_FILE_DEMO
 /*********************************************************************************************\
