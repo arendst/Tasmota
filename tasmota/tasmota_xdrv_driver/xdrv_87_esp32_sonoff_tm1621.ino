@@ -459,6 +459,7 @@ void TM1621Show(void) {
             temperature = TM1621GetTemperatureValues(Tm1621.temp_sensors_rotate);
             ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%d"), Tm1621.temp_sensors_rotate);
           } else {
+            temperature = TM1621GetTemperatureValues(1);  // Fix in case GlobalTemp is set wrong (#17694)
             float temperature2 = TM1621GetTemperatureValues(2);
             ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &temperature2);
           }
