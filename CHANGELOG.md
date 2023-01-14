@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry ``crypto.AES_CCM`` (required by Matter protocol)
 - ESP32 support for BMPxxx sensors on two I2C busses (#17643)
 - Berry add implicit ``_class`` parameter to static methods
+- Berry add ``static class`` to declare inner classes
 
 ### Breaking Changed
 
