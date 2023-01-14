@@ -420,6 +420,9 @@ static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, void* fo
 {
     const char * class_name = str(cl->name);
 
+    /* pre-declare class to support '_class' implicit variable */
+    logfmt("\nextern const bclass be_class_%s;\n", class_name);
+
     /* iterate on members to dump closures */
     if (cl->members) {
         bmapnode *node;

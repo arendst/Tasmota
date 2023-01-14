@@ -4,6 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 
+extern const bclass be_class_Animate_rotate;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -75,6 +77,8 @@ be_local_class(Animate_rotate,
     (bstring*) &be_const_str_Animate_rotate
 );
 
+extern const bclass be_class_Animate_from_to;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -134,6 +138,8 @@ be_local_class(Animate_from_to,
     })),
     (bstring*) &be_const_str_Animate_from_to
 );
+
+extern const bclass be_class_Animate_back_forth;
 
 /********************************************************************
 ** Solidified function: init
@@ -216,6 +222,8 @@ be_local_class(Animate_back_forth,
     (bstring*) &be_const_str_Animate_back_forth
 );
 
+extern const bclass be_class_Animate_ins_goto;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -263,6 +271,8 @@ be_local_class(Animate_ins_goto,
     (bstring*) &be_const_str_Animate_ins_goto
 );
 
+extern const bclass be_class_Animate_ins_ramp;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -309,6 +319,8 @@ be_local_class(Animate_ins_ramp,
     })),
     (bstring*) &be_const_str_Animate_ins_ramp
 );
+
+extern const bclass be_class_Animate_engine;
 
 /********************************************************************
 ** Solidified function: run

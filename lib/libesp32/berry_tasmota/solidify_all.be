@@ -10,8 +10,8 @@ import solidify
 import string
 import re
 
-# import sys
-# sys.path().push('src/embedded')   # allow to import from src/embedded
+import sys
+sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
 var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,"

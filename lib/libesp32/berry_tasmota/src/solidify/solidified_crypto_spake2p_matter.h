@@ -4,6 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 
+extern const bclass be_class_SPAKE2P_Matter;
+
 /********************************************************************
 ** Solidified function: compute_pB
 ********************************************************************/
@@ -60,6 +62,8 @@ be_local_closure(SPAKE2P_Matter_compute_pB,   /* name */
 );
 /*******************************************************************/
 
+
+extern const bclass be_class_SPAKE_Hasher;
 
 /********************************************************************
 ** Solidified function: init

@@ -407,7 +407,7 @@ static int new_localvar(bparser *parser, bstring *name)
     if (reg == -1) {
         bvalue *var;
         if (comp_is_strict(parser->vm)) {
-            if (find_localvar(finfo, name, 0) >= 0 && str(name)[0] != '.') {  /* we do accept nested redifinition of internal variables starting with ':' */
+            if (find_localvar(finfo, name, 0) >= 0 && str(name)[0] != '.') {  /* we do accept nested redifinition of internal variables starting with '.' */
                 push_error(parser, "strict: redefinition of '%s' from outer scope", str(name));
             }
         }
@@ -1457,6 +1457,8 @@ static void classdef_stmt(bparser *parser, bclass *c, bbool is_static)
     be_stackpop(parser->vm, 1);
 }
 
+static void classstaticclass_stmt(bparser *parser, bclass *c_out, bexpdesc *e_out);
+
 static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
 {
     bstring *name;
@@ -1465,6 +1467,8 @@ static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
     scan_next_token(parser); /* skip 'static' */
     if (next_type(parser) == KeyDef) {  /* 'static' 'def' ... */
         classdef_stmt(parser, c, btrue);
+    } else if (next_type(parser) == KeyClass) {  /* 'static' 'class' ... */
+        classstaticclass_stmt(parser, c, e);
     } else {
         if (next_type(parser) == KeyVar) {
             scan_next_token(parser); /* skip 'var' if any */
@@ -1530,6 +1534,36 @@ static void class_stmt(bparser *parser)
         class_block(parser, c, &e);
         be_class_compress(parser->vm, c); /* compress class size */
         match_token(parser, KeyEnd); /* skip 'end' */
+    } else {
+        parser_error(parser, "class name error");
+    }
+}
+
+static void classstaticclass_stmt(bparser *parser, bclass *c_out, bexpdesc *e_out)
+{
+    bstring *name;
+    /* [preceding 'static'] 'class' ID [':' ID] class_block 'end' */
+    scan_next_token(parser); /* skip 'class' */
+    if (match_id(parser, name) != NULL) {
+        bexpdesc e_class;         /* new class object */
+        check_class_attr(parser, c_out, name);      /* check that the class names does not collide with another member */
+        be_class_member_bind(parser->vm, c_out, name, bfalse);  /* add the member slot as static */
+        /* create the class object */
+        bclass *c = be_newclass(parser->vm, name, NULL);
+        new_var(parser, name, &e_class);    /* add a local var to the static initialization code for static members */
+        be_code_class(parser->finfo, &e_class, c);
+        class_inherit(parser, &e_class);
+        class_block(parser, c, &e_class);
+        be_class_compress(parser->vm, c); /* compress class size */
+        match_token(parser, KeyEnd); /* skip 'end' */
+        /* add the code to copy the class object to the static member */
+        bexpdesc e1 = *e_out;        /* copy the class description */
+        bexpdesc key;   /* build the member key */
+        init_exp(&key, ETSTRING, 0);
+        key.v.s = name;
+        /* assign the class to the static member */
+        be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
+        be_code_setvar(parser->finfo, &e1, &e_class);    /* set member */
     } else {
         parser_error(parser, "class name error");
     }
