@@ -1098,6 +1098,7 @@ void TuyaNormalPowerModePacketProcess(void)
       if (Tuya.buffer[5] == 2) { // Processing by ESP module mode
         uint8_t led1_gpio = Tuya.buffer[6];
         uint8_t key1_gpio = Tuya.buffer[7];
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Mode=2 led:%d, key:%d"), led1_gpio, key1_gpio);
         bool key1_set = false;
         bool led1_set = false;
         for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
@@ -1107,10 +1108,12 @@ void TuyaNormalPowerModePacketProcess(void)
         if (!Settings->my_gp.io[led1_gpio] && !led1_set) {
           Settings->my_gp.io[led1_gpio] = AGPIO(GPIO_LED1);
           TasmotaGlobal.restart_flag = 2;
+          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Set LED1 on gpio:%d, will restart"), led1_gpio);
         }
         if (!Settings->my_gp.io[key1_gpio] && !key1_set) {
           Settings->my_gp.io[key1_gpio] = AGPIO(GPIO_KEY1);
           TasmotaGlobal.restart_flag = 2;
+          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Set KEY1 on gpio:%d, will restart"), key1_gpio);
         }
       }
       TuyaRequestState(0);
