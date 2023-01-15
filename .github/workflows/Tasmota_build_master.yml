@@ -57,7 +57,7 @@ jobs:
       matrix:
         variant:
           - tasmota
-          - tasmota4M
+          - tasmota-4M
           - tasmota-minimal
           - tasmota-display
           - tasmota-ir
@@ -208,7 +208,7 @@ jobs:
         mkdir -p ./release-firmware/map
         [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./release-firmware/map/
         [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./release-firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota4M.* ] || mv ./mv_firmware/firmware/tasmota4M.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-4M.* ] || mv ./mv_firmware/firmware/tasmota-4M.* ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin.gz ] || mv ./mv_firmware/firmware/tasmota-minimal.bin.gz ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./release-firmware/tasmota/

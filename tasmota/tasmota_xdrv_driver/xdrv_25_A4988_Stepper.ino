@@ -69,49 +69,56 @@ void (* const A4988Command[])(void) PROGMEM = {
   &CmndDoMove,&CmndDoRotate,&CmndDoTurn,&CmndSetMIS,&CmndSetSPR,&CmndSetRPM};
 
 void CmndDoMove(void) {
+  // Move the motor the given number of steps (positive values: clockwise, negative values: counterclockwise)
   if (XdrvMailbox.data_len > 0) {
-    long stepsPlease = strtoul(XdrvMailbox.data,nullptr,10);
+    long stepsPlease = strtol(XdrvMailbox.data, nullptr, 10);
     myA4988->doMove(stepsPlease);
     ResponseCmndDone();
   }
 }
 
 void CmndDoRotate(void) {
+  // Rotate the motor the given number of degrees (positive values: clockwise, negative values: counterclockwise)
   if (XdrvMailbox.data_len > 0) {
-    long degrsPlease = strtoul(XdrvMailbox.data,nullptr,10);
+    long degrsPlease = strtol(XdrvMailbox.data, nullptr, 10);
     myA4988->doRotate(degrsPlease);
     ResponseCmndDone();
   }
 }
 
 void CmndDoTurn(void) {
+  //  Spin the motor the given number of turns (positive values: clockwise, negative values: counterclockwise)
   if (XdrvMailbox.data_len > 0) {
-    float turnsPlease = strtod(XdrvMailbox.data,nullptr);
+//    float turnsPlease = strtod(XdrvMailbox.data,nullptr);
+    float turnsPlease = CharToFloat(XdrvMailbox.data);  // Save 8k code size over strtod()
     myA4988->doTurn(turnsPlease);
     ResponseCmndDone();
   }
 }
 
 void CmndSetMIS(void) {
-  if (PinUsed(GPIO_A4988_MS1) && PinUsed(GPIO_A4988_MS1, 1) && PinUsed(GPIO_A4988_MS1, 2) && (XdrvMailbox.data_len > 0)) {
-    short newMIS = strtoul(XdrvMailbox.data,nullptr,10);
-    myA4988->setMIS(newMIS);
+  // 1,2,4,8,16 Set micro stepping increment - 1/1 (full steps) to 1/16 (default = 1)
+  if (PinUsed(GPIO_A4988_MS1) && PinUsed(GPIO_A4988_MS1, 1) && PinUsed(GPIO_A4988_MS1, 2) && (XdrvMailbox.payload > 0)) {
+//    short newMIS = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setMIS(XdrvMailbox.payload);
     ResponseCmndDone();
   }
 }
 
 void CmndSetSPR(void) {
-  if (XdrvMailbox.data_len > 0) {
-    int newSPR = strtoul(XdrvMailbox.data,nullptr,10);
-    myA4988->setSPR(newSPR);
+  // Set the number of steps the given motor needs for one revolution (default = 200)
+  if (XdrvMailbox.payload > 0) {
+//    int newSPR = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setSPR(XdrvMailbox.payload);
     ResponseCmndDone();
   }
 }
 
 void CmndSetRPM(void) {
-  if (XdrvMailbox.data_len > 0) {
-    short newRPM = strtoul(XdrvMailbox.data,nullptr,10);
-    myA4988->setRPM(newRPM);
+  // Set revolutions per minute (default = 30)
+  if (XdrvMailbox.payload > 0) {
+//    short newRPM = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setRPM(XdrvMailbox.payload);
     ResponseCmndDone();
   }
 }

@@ -205,7 +205,7 @@ bool TimepropCommand()
 	      (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
       */
       if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
-        timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), Tprop.current_time_secs );
+        timeprops[XdrvMailbox.index].setPower( CharToFloat(XdrvMailbox.data), Tprop.current_time_secs );
       }
       Response_P(PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"), XdrvMailbox.index, XdrvMailbox.data);
     }

@@ -205,6 +205,7 @@ enum UserSelectablePins {
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
   GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
+  GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
   GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial Tx and direct output pin fan control
   GPIO_SENSOR_END };
 
@@ -457,6 +458,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LD2410_TX "|" D_SENSOR_LD2410_RX "|"
   D_SENSOR_MBR_TX_ENA "|" D_SENSOR_NRG_MBS_TX_ENA "|"
   D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
+  D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
   D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
   ;
 
@@ -1060,6 +1062,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),             // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),             // Mitsubishi Electric HVAC RX pin
+#endif
+#ifdef USE_TUYAMCUBR
+  AGPIO(GPIO_TUYAMCUBR_TX),
+  AGPIO(GPIO_TUYAMCUBR_RX),
 #endif
 #ifdef USE_WIEGAND
   AGPIO(GPIO_WIEGAND_D0),               // Date line D0 of Wiegand devices

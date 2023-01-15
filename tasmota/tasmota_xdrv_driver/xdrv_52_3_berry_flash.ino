@@ -157,7 +157,8 @@ extern "C" {
       esp_partition_erase_range(otadata_partition, 0, SPI_FLASH_SEC_SIZE * 2);
     }
     if (force_ota) {
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef ESP32
       OtaFactoryWrite(true);
 #endif
       RtcSettings.ota_loader = 1;     // force OTA at next reboot

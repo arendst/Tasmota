@@ -13,8 +13,6 @@ import re
 import sys
 from os.path import isfile, join
 from enum import Enum
-import typing
-from platformio.builder.tools.pioupload import AutodetectUploadPort
 import os
 import subprocess
 import shutil
@@ -28,8 +26,6 @@ if env["PIOPLATFORM"] == "espressif32":
     #print("Replace MKSPIFFSTOOL with mklittlefs")
     env.Replace( MKSPIFFSTOOL=platform.get_package_dir("tool-mklittlefs") + '/mklittlefs' )
 
-# needed for later
-AutodetectUploadPort(env)
 
 class FSType(Enum):
     SPIFFS="spiffs"
@@ -232,7 +228,7 @@ def esp8266_get_esptoolpy_reset_flags(resetmethod):
 def get_fs_type_start_and_length():
     platform = env["PIOPLATFORM"]
     if platform == "espressif32":
-        print("Retrieving filesystem info for ESP32. Assuming SPIFFS.")
+        print("Retrieving filesystem info for ESP32.")
         print("Partition file: " + str(env.subst("$PARTITIONS_TABLE_CSV")))
         esp32_fetch_spiffs_size(env)
         return SPIFFSInfo(env["SPIFFS_START"], env["SPIFFS_SIZE"], env["SPIFFS_PAGE"], env["SPIFFS_BLOCK"])
@@ -263,7 +259,6 @@ def download_fs(fs_info: FSInfo):
     fs_file = join(env["PROJECT_DIR"], f"downloaded_fs_{hex(fs_info.start)}_{hex(fs_info.length)}.bin")
     esptoolpy_flags = [
             "--chip", mcu,
-            "--port", env.subst("$UPLOAD_PORT"),
             "--baud",  env.subst("$UPLOAD_SPEED"),
             "--before", "default_reset",
             "--after", "hard_reset",

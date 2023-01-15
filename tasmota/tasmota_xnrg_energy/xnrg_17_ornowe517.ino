@@ -183,13 +183,12 @@ void WE517Every250ms(void)
   }
 }
 
-void We517SnsInit(void)
-{
+void We517SnsInit(void) {
   We517Modbus = new TasmotaModbus(Pin(GPIO_WE517_RX), Pin(GPIO_WE517_TX), Pin(GPIO_NRG_MBS_TX_ENA));
-  uint8_t result = We517Modbus->Begin(WE517_SPEED);
+  uint8_t result = We517Modbus->Begin(WE517_SPEED, SERIAL_8E1);
   if (result) {
       if (2 == result) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 HW serial init 8E1 at %d baud"), WE517_SPEED);
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 HW serial init 8E1 at %d baud"), WE517_SPEED);
           Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }

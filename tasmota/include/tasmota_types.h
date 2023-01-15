@@ -731,7 +731,8 @@ typedef struct {
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
   uint16_t      shutter_motorstop;         // 738
-  uint8_t       free_esp32_73A[3];         // 73A
+
+  uint8_t       free_73A[3];               // 73A
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E

@@ -608,14 +608,21 @@ void Ade7953Defaults(void) {
       }
     }
   }
+
+  String calib = "";
+#ifdef USE_UFILESYS
+  calib = TfsLoadString("/calib.dat");
+#endif  // USE_UFILESYS
 #ifdef USE_RULES
   // rule3 on file#calib.dat do {"angles":{"angle0":180,"angle1":176}} endon
-  String calib = RuleLoadFile("CALIB.DAT");
+  if (!calib.length()) {
+    calib = RuleLoadFile("CALIB.DAT");
+  }
+#endif  // USE_RULES
   if (calib.length()) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: File '%s'"), calib.c_str());
     Ade7953SetDefaults(calib.c_str());
   }
-#endif  // USE_RULES
 }
 
 void Ade7953DrvInit(void) {

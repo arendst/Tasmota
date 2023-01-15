@@ -282,8 +282,12 @@ static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, bproto *pr,
     if (pr->nconst > 0) {
         for (int k = 0; k < pr->nconst; k++) {
             if (var_type(&pr->ktab[k]) == BE_CLASS) {
-                // output the class
-                m_solidify_subclass(vm, str_literal, (bclass*) var_toobj(&pr->ktab[k]), fout);
+                if ((k == 0) && (pr->varg & BE_VA_STATICMETHOD)) {
+                    // it is the implicit '_class' variable from a static method, don't dump the class
+                } else {
+                    // output the class
+                    m_solidify_subclass(vm, str_literal, (bclass*) var_toobj(&pr->ktab[k]), fout);
+                }
             }
         }
     }
@@ -415,6 +419,9 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, bclosure *cl, const c
 static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, void* fout)
 {
     const char * class_name = str(cl->name);
+
+    /* pre-declare class to support '_class' implicit variable */
+    logfmt("\nextern const bclass be_class_%s;\n", class_name);
 
     /* iterate on members to dump closures */
     if (cl->members) {

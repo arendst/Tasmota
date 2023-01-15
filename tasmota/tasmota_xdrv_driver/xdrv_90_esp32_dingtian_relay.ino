@@ -99,10 +99,10 @@ void DingtianInit(void) {
 
       Dingtian->first = TasmotaGlobal.devices_present;
       TasmotaGlobal.devices_present += Dingtian->count;
-      if (TasGlobal.devices_present > POWER_SIZE) {
-        TasGlobal.devices_present = POWER_SIZE;
+      if (TasmotaGlobal.devices_present > POWER_SIZE) {
+        TasmotaGlobal.devices_present = POWER_SIZE;
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: Dingtian relays: POWER%d to POWER%d"), Dingtian->first + 1, TasGlobal.devices_present);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: Dingtian relays: POWER%d to POWER%d"), Dingtian->first + 1, TasmotaGlobal.devices_present);
     }
   }
 }

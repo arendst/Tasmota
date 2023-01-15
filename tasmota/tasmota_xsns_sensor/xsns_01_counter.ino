@@ -423,6 +423,12 @@ bool Xsns01(uint32_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kCounterCommands, CounterCommand);
         break;
+      case FUNC_INTERRUPT_STOP:
+        CounterInterruptDisable(true);
+        break;
+      case FUNC_INTERRUPT_START:
+        CounterInterruptDisable(false);
+        break;
     }
   } else {
     switch (function) {
