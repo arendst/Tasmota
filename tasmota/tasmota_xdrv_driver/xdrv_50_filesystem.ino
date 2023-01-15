@@ -925,7 +925,7 @@ uint8_t UfsDownloadFile(char *file) {
   UfsData.download_busy = true;
   char *path = (char*)malloc(128);
   strcpy(path,file);
-  BaseType_t ret = xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, nullptr, 1);
+  BaseType_t ret = xTaskCreatePinnedToCore(download_task, "DT", 6000, (void*)path, 3, nullptr, 1);
   if (ret != pdPASS)
     AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download task failed with %d"), ret);
   yield();
@@ -939,14 +939,12 @@ uint8_t UfsDownloadFile(char *file) {
 #ifndef DOWNLOAD_SIZE
 #define DOWNLOAD_SIZE 4096
 #endif // DOWNLOAD_SIZE
-void donload_task(void *path) {
+void download_task(void *path) {
   File download_file;
   WiFiClient download_Client;
   char *file = (char*) path;
 
   download_file = dfsp->open(file, UFS_FILE_READ);
-  free(file);
-
   uint32_t flen = download_file.size();
 
   download_Client = Webserver->client();
@@ -960,6 +958,8 @@ void donload_task(void *path) {
       break;
     }
   }
+  //snprintf_P(attachment, sizeof(attachment), PSTR("download file '%s' as '%s'"), file, cp);
+  //Webserver->sendHeader(F("X-Tasmota-Debug"), attachment);
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"), cp);
   Webserver->sendHeader(F("Content-Disposition"), attachment);
   WSSend(200, CT_APP_STREAM, "");
@@ -978,6 +978,7 @@ void donload_task(void *path) {
   download_Client.stop();
   UfsData.download_busy = false;
   vTaskDelete( NULL );
+  free(path);
 }
 #endif //  ESP32_DOWNLOAD_TASK
 
