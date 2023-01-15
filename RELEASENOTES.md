@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.3.1.3
+## Changelog v12.3.1.4
 ### Added
 - Support for up to 3 single phase modbus energy monitoring device using generic Energy Modbus driver- Support for RGB displays [#17414](https://github.com/arendst/Tasmota/issues/17414)
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 [#17417](https://github.com/arendst/Tasmota/issues/17417)

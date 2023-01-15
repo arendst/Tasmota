@@ -71,7 +71,7 @@ typedef struct {
   float bmp_humidity;
 } bmp_sensors_t;
 
-uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2, BMP_ADDR1, BMP_ADDR2};
+uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 uint8_t bmp_count = 0;
 uint8_t bmp_once = 1;
 
@@ -487,10 +487,10 @@ void BmpDetect(void) {
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bus = i >>1;
-    if (!I2cSetDevice(bmp_addresses[i], bus)) { continue; }
-    uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID, bus);
+    if (!I2cSetDevice(bmp_addresses[i &1], bus)) { continue; }
+    uint8_t bmp_type = I2cRead8(bmp_addresses[i &1], BMP_REGISTER_CHIPID, bus);
     if (bmp_type) {
-      bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
+      bmp_sensors[bmp_count].bmp_address = bmp_addresses[i &1];
       bmp_sensors[bmp_count].bmp_bus = bus;
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
@@ -560,7 +560,7 @@ void BmpShow(bool json) {
           for (uint32_t i = 1; i < bmp_count; i++) {
             if (bus != bmp_sensors[i].bmp_bus) {     // Different busses
               // BMP280-77-1
-              snprintf_P(name, sizeof(name), PSTR("%s%c%1d"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_bus +1);
+              snprintf_P(name, sizeof(name), PSTR("%s%c%d"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_bus +1);
               break;
             }
           }
