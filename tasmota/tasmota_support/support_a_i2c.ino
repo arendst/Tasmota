@@ -50,15 +50,16 @@ bool I2c2Begin(int sda, int scl, uint32_t frequency) {
 #endif
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint8_t bus = 0) {
-  uint8_t retry = I2C_RETRY_COUNTER;
-  bool status = false;
+  i2c_buffer = 0;
 #ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // Error
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
+  if (bus) { return false; }                              // Second I2c bus ESP32 only
   TwoWire & myWire = Wire;
 #endif
-  i2c_buffer = 0;
+  uint8_t retry = I2C_RETRY_COUNTER;
+  bool status = false;
   while (!status && retry) {
     myWire.beginTransmission(addr);                       // start transmission to device
     myWire.write(reg);                                    // sends register address to read from
@@ -146,14 +147,14 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg, uint8_t bus = 0) {
 }
 
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint8_t bus = 0) {
-  uint8_t x = I2C_RETRY_COUNTER;
 #ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // Error
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
-  if (bus != 0) { return false; }  // Second I2c bus ESP32 only
+  if (bus) { return false; }  // Second I2c bus ESP32 only
   TwoWire & myWire = Wire;
 #endif
+  uint8_t x = I2C_RETRY_COUNTER;
   do {
     myWire.beginTransmission((uint8_t)addr);              // start transmission to device
     myWire.write(reg);                                    // sends register address to write to
@@ -176,31 +177,31 @@ bool I2cWrite16(uint8_t addr, uint8_t reg, uint32_t val, uint8_t bus = 0) {
 
 bool I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
 #ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return true; }  // Error
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
-  if (bus != 0) { return false; }  // Second I2c bus ESP32 only
+  if (bus) { return true; }  // Second I2c bus ESP32 only
   TwoWire & myWire = Wire;
 #endif
   myWire.beginTransmission((uint8_t)addr);
   myWire.write((uint8_t)reg);
   myWire.endTransmission();
   if (len != myWire.requestFrom((uint8_t)addr, (uint8_t)len)) {
-    return 1;
+    return true;  // Error
   }
   while (len--) {
     *reg_data = (uint8_t)myWire.read();
     reg_data++;
   }
-  return 0;
+  return false;  // OK
 }
 
 int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
 #ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return 1; }  // Error
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
-  if (bus != 0) { return false; }  // Second I2c bus ESP32 only
+  if (bus) { return 1; }  // Second I2c bus ESP32 only
   TwoWire & myWire = Wire;
 #endif
   myWire.beginTransmission((uint8_t)addr);
@@ -210,7 +211,7 @@ int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len
     reg_data++;
   }
   myWire.endTransmission();
-  return 0;
+  return 0;  // OK
 }
 
 void I2cScan(uint8_t bus = 0) {
@@ -229,39 +230,40 @@ void I2cScan(uint8_t bus = 0) {
   // 4: other error
   // 5: timeout
 
+#ifdef ESP32
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return; }
+  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
+  Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Device(s) found on bus%d at"), bus +1);
+#else
+  if (bus) { return; }  // Second I2c bus ESP32 only
+  TwoWire & myWire = Wire;
+  Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Device(s) found at"));
+#endif
   uint8_t error = 0;
   uint8_t address = 0;
   uint8_t any = 0;
-
-  Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
-#ifdef ESP32
-    if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
-    TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-    if (bus != 0) { return; }  // Second I2c bus ESP32 only
-    TwoWire & myWire = Wire;
-#endif
     myWire.beginTransmission(address);
     error = myWire.endTransmission();
     if (0 == error) {
       any = 1;
-#ifdef ESP32
-      ResponseAppend_P(PSTR(" 0x%02x:%d"), address, bus);
-#else
       ResponseAppend_P(PSTR(" 0x%02x"), address);
-#endif
     }
     else if (error != 2) {  // Seems to happen anyway using this scan
       any = 2;
-      Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x bus %d"), error, address, bus);
+      Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Error %d at 0x%02x"), error, address);
+#ifdef ESP32
+      if (bus) {
+        ResponseAppend_P(PSTR(" (bus2)"));
+      }
+#endif
       break;
     }
   }
   if (any) {
     ResponseAppend_P(PSTR("\"}"));
   } else {
-    Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
+    Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"No devices found\"}"));
   }
 }
 
@@ -294,11 +296,11 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1, uint8_t bus = 0) {
 void I2cSetActiveFound(uint32_t addr, const char *types, uint8_t bus = 0) {
   I2cSetActive(addr, bus);
 #ifdef ESP32
-  if (1 == bus) {
-    AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT_PORT, types, addr, bus);
+  if (bus) {
+    AddLog(LOG_LEVEL_INFO, PSTR("I2C: %s found at 0x%02x (bus2)"), types, addr);
   } else
 #endif // ESP32
-  AddLog(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+  AddLog(LOG_LEVEL_INFO, PSTR("I2C: %s found at 0x%02x"), types, addr);
 }
 
 bool I2cActive(uint32_t addr, uint8_t bus = 0) {
@@ -311,9 +313,10 @@ bool I2cActive(uint32_t addr, uint8_t bus = 0) {
 
 bool I2cSetDevice(uint32_t addr, uint8_t bus = 0) {
 #ifdef ESP32
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
+  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // If no second bus report as not present;
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
+  bus = 0;
   TwoWire & myWire = Wire;
 #endif
   addr &= 0x7F;         // Max I2C address is 127
@@ -325,10 +328,11 @@ bool I2cSetDevice(uint32_t addr, uint8_t bus = 0) {
   uint32_t err = myWire.endTransmission();
   if (err && (err != 2)) {
 #ifdef ESP32
-    AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x bus %d"), err, addr, bus);
-#else
-    AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x"), err, addr);
+    if (bus) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x (bus2)"), err, addr);
+    } else
 #endif
+    AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Error %d at 0x%02x"), err, addr);
   }
   return (0 == err);
 }
