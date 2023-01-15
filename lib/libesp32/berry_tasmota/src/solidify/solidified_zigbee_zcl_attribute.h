@@ -4,6 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 
+extern const bclass be_class_zcl_attribute;
+
 /********************************************************************
 ** Solidified function: tomap
 ********************************************************************/
@@ -571,6 +573,8 @@ void be_load_zcl_attribute_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_zcl_attribute_list;
+
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
@@ -913,6 +917,8 @@ void be_load_zcl_attribute_list_class(bvm *vm) {
     be_setglobal(vm, "zcl_attribute_list");
     be_pop(vm, 1);
 }
+
+extern const bclass be_class_zcl_attributes;
 
 /********************************************************************
 ** Solidified function: init

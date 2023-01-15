@@ -314,6 +314,19 @@ void EnergyUpdateTotal(void) {
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: EnergyTotal[%d] %4_f kWh"), i, &Energy.import_active[i]);
 
+    // Try to fix instable input by verifying allowed bandwidth (#17659)
+    if ((Energy.start_energy[i] != 0) &&
+        (Settings->param[P_CSE7766_INVALID_POWER] > 0) &&
+        (Settings->param[P_CSE7766_INVALID_POWER] < 128)) {        // SetOption39 1..127 kWh
+      int total = abs((int)Energy.total[i]);                       // We only use kWh
+      int import_active = abs((int)Energy.import_active[i]);
+      if ((import_active < (total - Settings->param[P_CSE7766_INVALID_POWER])) ||
+          (import_active > (total + Settings->param[P_CSE7766_INVALID_POWER]))) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Outside bandwidth"));
+        continue;                                                  // No valid energy value received
+      }
+    }
+
     if (0 == Energy.start_energy[i] || (Energy.import_active[i] < Energy.start_energy[i])) {
       Energy.start_energy[i] = Energy.import_active[i];            // Init after restart and handle roll-over if any
     }

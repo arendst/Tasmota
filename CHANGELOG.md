@@ -3,14 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.3]
+## [12.3.1.4]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.3.1.3] 20230115
 ### Added
 - Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich (#17557)
 - Berry `bytes()` now evaluates to `false` if empty
 - Berry ``crypto.AES_CCM`` (required by Matter protocol)
 - ESP32 support for BMPxxx sensors on two I2C busses (#17643)
-
-### Breaking Changed
+- Berry add implicit ``_class`` parameter to static methods
 
 ### Changed
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
@@ -24,8 +34,7 @@ All notable changes to this project will be documented in this file.
 - Orno WE517 modbus serial config 8E1 setting (#17545)
 - No IP address shown when in AP mode regression from v12.3.1.1 (#17599)
 - Rename ``tasmota4M.bin`` to ``tasmota-4M.bin`` to solve use of ``tasmota-minimal.bin`` (#17674)
-
-### Removed
+- DNS lookup for ``upload`` from ota server using http regression from v12.3.1.1
 
 ## [12.3.1.2] 20221231
 ### Added

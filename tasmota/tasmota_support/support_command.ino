@@ -846,7 +846,7 @@ void CmndStatus(void)
                           EthernetHostname(),
                           (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
                           Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4],
-                          EthernetMacAddress().c_str()
+                          EthernetMacAddress().c_str());
 
 #endif // USE_IPV6
 #endif  // USE_ETHERNET
