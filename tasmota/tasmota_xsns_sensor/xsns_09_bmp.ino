@@ -262,7 +262,7 @@ typedef struct {
 Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
 
 bool Bmx280Calibrate(uint8_t bmp_idx) {
-  //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID) != BME280_CHIPID) return false;
+  //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID, bus) != BME280_CHIPID) return false;
 
   if (!Bme280CalibrationData) {
     Bme280CalibrationData = (Bme280CalibrationData_t*)malloc(BMP_MAX_SENSORS * sizeof(Bme280CalibrationData_t));
@@ -653,7 +653,7 @@ void BMP_EnterSleep(void) {
         case BMP180_CHIPID:
         case BMP280_CHIPID:
         case BME280_CHIPID:
-          I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET, bmp_idx >>1);
+          I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET, bmp_sensors[bmp_idx].bmp_bus);
           break;
         default:
           break;
@@ -668,8 +668,7 @@ void BMP_EnterSleep(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns09(uint32_t function)
-{
+bool Xsns09(uint32_t function) {
   if (!I2cEnabled(XI2C_10)) { return false; }
 
   bool result = false;
