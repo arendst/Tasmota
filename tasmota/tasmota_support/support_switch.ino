@@ -65,6 +65,10 @@ void SwitchPulldownFlag(uint32 switch_bit) {
   bitSet(Switch.pulldown_mask, switch_bit);
 }
 
+uint32_t SwitchGetVirtualOffset(void) {
+  return Switch.present;
+}
+
 void SwitchSetVirtual(uint32_t index, uint32_t state) {
   Switch.virtual_state[index] = state;
 }

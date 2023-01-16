@@ -83,6 +83,14 @@ void ButtonTouchFlag(uint32_t button_bit) {
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
+uint32_t ButtonGetVirtualOffset(void) {
+  return Button.present;
+}
+
+void ButtonSetVirtual(uint32_t index, uint32_t state) {
+  Button.virtual_state[index] = state;
+}
+
 /*********************************************************************************************/
 
 void ButtonProbe(void) {
@@ -275,7 +283,7 @@ uint8_t ButtonSerial(uint8_t serial_in_byte) {
  * SetOption73 (0)     - Decouple button from relay and send just mqtt topic
 \*********************************************************************************************/
 
-void ButtonHandler(void) {
+void ButtonHandler(uint32_t mode) {
   if (TasmotaGlobal.uptime < 4) { return; }                    // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;            // Extent hold time factor in case of iminnent Reset command
@@ -300,7 +308,7 @@ void ButtonHandler(void) {
       }
     } else
 #endif  // ESP8266
-    if (PinUsed(GPIO_KEY1, button_index)) {
+    if (PinUsed(GPIO_KEY1, button_index) || (mode)) {
 
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
       if (bitRead(TouchButton.touch_mask, button_index) && bitRead(TouchButton.calibration, button_index +1)) {  // Touch
@@ -528,7 +536,7 @@ void ButtonLoop(void) {
   if (Button.present) {
     if (TimeReached(Button.debounce)) {
       SetNextTimeInterval(Button.debounce, Settings->button_debounce);  // ButtonDebounce (50)
-      ButtonHandler();
+      ButtonHandler(0);
     }
   }
 }
