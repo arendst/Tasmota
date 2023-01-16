@@ -1125,7 +1125,7 @@ void TuyaNormalPowerModePacketProcess(void)
             TasmotaGlobal.restart_flag = 2;
             AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Set KEY1 on gpio%d, will restart"), key1_gpio);
           } else {
-            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: In use or illegal gpio%d for KEY1, ignored"), led1_gpio);
+            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: In use or illegal gpio%d for KEY1, ignored"), key1_gpio);
           }
         }
       }
