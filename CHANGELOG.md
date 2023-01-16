@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.3.1.4]
 ### Added
+- Berry ``crypto.EC_P256`` ECDSA signature (required by Matter protocol)
 
 ### Breaking Changed
 
