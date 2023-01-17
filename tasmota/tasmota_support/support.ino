@@ -1658,7 +1658,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 // ignore
 #else // not ESP32C3 and not ESP32S2
-  if ((WEMOS == Settings->module) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+  if (((WEMOS == Settings->module) || (TUYA_DIMMER == Settings->module) || (USER_MODULE == Settings->module)) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
