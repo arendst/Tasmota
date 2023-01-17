@@ -138,7 +138,7 @@ void shine_iteration_loop(shine_global_config *config) {
        */
       for (i=GRANULE_SIZE, config->l3loop->xrmax=0; i--;)
       {
-        config->l3loop->xrsq[i]  = mulsr(config->l3loop->xr[i],config->l3loop->xr[i]);
+        config->l3loop->xrsq[i]  = asm_mulsr(config->l3loop->xr[i],config->l3loop->xr[i]);
         config->l3loop->xrabs[i] = abs(config->l3loop->xr[i]);
         if(config->l3loop->xrabs[i]>config->l3loop->xrmax)
           config->l3loop->xrmax=config->l3loop->xrabs[i];
@@ -408,7 +408,7 @@ int quantize(int ix[GRANULE_SIZE], int stepsize, shine_global_config *config )
 
   /* a quick check to see if ixmax will be less than 8192 */
   /* this speeds up the early calls to bin_search_StepSize */
-  if((mulr(config->l3loop->xrmax,scalei)) > 165140) /* 8192**(4/3) */
+  if((asm_mulr(config->l3loop->xrmax,scalei)) > 165140) /* 8192**(4/3) */
     max = 16384; /* no point in continuing, stepsize not big enough */
   else
     for(i=0, max=0;i<GRANULE_SIZE;i++)
@@ -416,7 +416,7 @@ int quantize(int ix[GRANULE_SIZE], int stepsize, shine_global_config *config )
       /* This calculation is very sensitive. The multiply must round it's
        * result or bad things happen to the quality.
        */
-      ln = mulr(abs(config->l3loop->xr[i]),scalei);
+      ln = asm_mulr(abs(config->l3loop->xr[i]),scalei);
 
       if(ln<10000) /* ln < 10000 catches most values */
         ix[i] = config->l3loop->int2idx[ln]; /* quick look up method */
