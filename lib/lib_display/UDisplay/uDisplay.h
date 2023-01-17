@@ -48,6 +48,8 @@ static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin
 #define UDISP1_WHITE 1
 #define UDISP1_BLACK 0
 
+#define MAX_LUTS 5
+
 #define DISPLAY_INIT_MODE 0
 #define DISPLAY_INIT_PARTIAL 1
 #define DISPLAY_INIT_FULL 2
@@ -107,7 +109,6 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR_SLOW(spi_dc);
 #define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
 
-#define LUTMAXSIZE 64
 
 #ifdef USE_ESP32_S3
 struct esp_lcd_i80_bus_t {
@@ -245,7 +246,7 @@ class uDisplay : public Renderer {
    uint8_t i2c_page_start;
    uint8_t i2c_page_end;
    int8_t reset;
-   uint8_t dsp_cmds[128];
+   uint8_t dsp_cmds[256];
    uint8_t dsp_ncmds;
    uint8_t dsp_on;
    uint8_t dsp_off;
@@ -289,16 +290,27 @@ class uDisplay : public Renderer {
    uint8_t dim_op;
    uint8_t lutfsize;
    uint8_t lutpsize;
-   uint16_t lutftime;
+   int16_t lutftime;
+   int8_t busy_pin;
    uint16_t lutptime;
    uint16_t lut3time;
    uint16_t lut_num;
    uint8_t ep_mode;
-   uint8_t lut_full[LUTMAXSIZE];
-   uint8_t lut_partial[LUTMAXSIZE];
-   uint8_t lut_array[LUTMAXSIZE][5];
-   uint8_t lut_cnt[5];
-   uint8_t lut_cmd[5];
+   uint8_t ep_update_mode;
+   uint8_t *lut_full;
+   uint8_t lut_siz_full;
+   uint8_t *lut_partial;
+   uint8_t lut_siz_partial;
+
+   uint8_t epcoffs_full;
+   uint8_t epc_full_cnt;
+   uint8_t epcoffs_part;
+   uint8_t epc_part_cnt;
+
+   uint8_t *lut_array[MAX_LUTS];
+   uint8_t lut_cnt[MAX_LUTS];
+   uint8_t lut_cmd[MAX_LUTS];
+   uint8_t lut_siz[MAX_LUTS];
    uint16_t seta_xp1;
    uint16_t seta_xp2;
    uint16_t seta_yp1;
@@ -308,6 +320,11 @@ class uDisplay : public Renderer {
    int16_t rotmap_ymin;
    int16_t rotmap_ymax;
    void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
+   void delay_sync(int32_t time);
+   void reset_pin(int32_t delayl, int32_t delayh);
+   void delay_arg(uint32_t arg);
+   void Send_EP_Data(void);
+   void send_spi_cmds(uint16_t cmd_offset, uint16_t cmd_size);
 
 #ifdef USE_ESP32_S3
    int8_t par_cs;
