@@ -29,6 +29,8 @@ extern int m_ec_p256_pubkey(bvm *vm);
 extern int m_ec_p256_sharedkey(bvm *vm);
 extern int m_ec_p256_ecdsa_sign_sha256(bvm *vm);
 extern int m_ec_p256_ecdsa_verify_sha256(bvm *vm);
+extern int m_ec_p256_ecdsa_sign_sha256_asn1(bvm *vm);
+extern int m_ec_p256_ecdsa_verify_sha256_asn1(bvm *vm);
 extern int m_ec_p256_mod(bvm *vm);
 extern int m_ec_p256_neg(bvm *vm);
 extern int m_ec_p256_muladd(bvm *vm);
@@ -161,6 +163,8 @@ class be_class_ec_p256 (scope: global, name: EC_P256) {
     shared_key, static_func(m_ec_p256_sharedkey)
     ecdsa_sign_sha256, static_func(m_ec_p256_ecdsa_sign_sha256)
     ecdsa_verify_sha256, static_func(m_ec_p256_ecdsa_verify_sha256)
+    ecdsa_sign_sha256_asn1, static_func(m_ec_p256_ecdsa_sign_sha256_asn1)
+    ecdsa_verify_sha256_asn1, static_func(m_ec_p256_ecdsa_verify_sha256_asn1)
     mod, static_func(m_ec_p256_mod)
     neg, static_func(m_ec_p256_neg)
     muladd, static_func(m_ec_p256_muladd)
