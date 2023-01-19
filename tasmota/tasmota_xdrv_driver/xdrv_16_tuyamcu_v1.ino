@@ -41,7 +41,9 @@
 #define TUYA_CMD_QUERY_STATE        0x08
 #define TUYA_CMD_INITIATING_UPGRADE 0x0A
 #define TUYA_CMD_UPGRADE_PACKAGE    0x0B
+#define TUYA_CMD_TEST_WIFI          0x0E
 #define TUYA_CMD_SET_TIME           0x1C
+#define TUYA_CMD_GET_NETWORK_STATUS 0x2B
 #define TUYA_CMD_GET_WIFI_STRENGTH  0x24
 
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
@@ -117,7 +119,7 @@ void (* const TuyaCommand[])(void) PROGMEM = {
 };
 
 const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
-  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE, TUYA_CMD_GET_WIFI_STRENGTH
+  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE, TUYA_CMD_GET_WIFI_STRENGTH, TUYA_CMD_GET_NETWORK_STATUS, TUYA_CMD_TEST_WIFI
 };
 
 /*********************************************************************************************\
@@ -1134,6 +1136,12 @@ void TuyaNormalPowerModePacketProcess(void)
     case TUYA_CMD_GET_WIFI_STRENGTH: 
       TuyaSetWifiStrength();
       break;
+    case TUYA_CMD_TEST_WIFI:
+      TuyaCheckTestWifi();
+      break;
+    case TUYA_CMD_GET_NETWORK_STATUS:
+      TuyaSetNetworkState();
+      break;
 #ifdef USE_TUYA_TIME
     case TUYA_CMD_SET_TIME:
       TuyaSetTime();
@@ -1425,6 +1433,32 @@ void TuyaSetWifiStrength(void) {
   payload_buffer[0] = (uint8_t)signal_strength;
 
   TuyaSendCmd(TUYA_CMD_GET_WIFI_STRENGTH, payload_buffer, payload_len);
+}
+
+void TuyaCheckTestWifi(void){
+  // MCU request the module if whose SSID is 'tuya_mdev_test' and returns the result and the signal strength in percentage.
+  uint8_t payload_buffer[2] = {
+    0x00,   //'tuya_mdev_test' wifi not found
+    0x00    //signal strength = 0
+  };
+  
+  String test_wifi_ssid = "tuya_mdev_test";
+  
+  if (WiFi.SSID() == test_wifi_ssid){
+    int32_t rssi = WiFi.RSSI();
+    int signal_strength = WifiGetRssiAsQuality(rssi);
+
+    payload_buffer[0] = (uint8_t) 1;
+    payload_buffer[1] = (uint8_t) signal_strength;
+  }
+
+  TuyaSendCmd(TUYA_CMD_TEST_WIFI, payload_buffer, 2);
+}
+
+void TuyaSetNetworkState (void) {
+  //MCU requests the network state (this state should be consitent to the wifi state)
+  uint8_t network_state = TuyaGetTuyaWifiState();
+  TuyaSendCmd(TUYA_CMD_GET_NETWORK_STATUS, &network_state, 1);
 }
 
 #ifdef USE_TUYA_TIME
