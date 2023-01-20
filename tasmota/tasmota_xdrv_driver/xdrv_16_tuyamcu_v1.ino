@@ -1437,20 +1437,11 @@ void TuyaSetWifiStrength(void) {
 
 void TuyaCheckTestWifi(void){
   // MCU request the module if whose SSID is 'tuya_mdev_test' and returns the result and the signal strength in percentage.
+  // Assuming that nobody uses this test wifi, the payload is hardcoded.
   uint8_t payload_buffer[2] = {
     0x00,   //'tuya_mdev_test' wifi not found
     0x00    //signal strength = 0
   };
-  
-  String test_wifi_ssid = "tuya_mdev_test";
-  
-  if (WiFi.SSID() == test_wifi_ssid){
-    int32_t rssi = WiFi.RSSI();
-    int signal_strength = WifiGetRssiAsQuality(rssi);
-
-    payload_buffer[0] = (uint8_t) 1;
-    payload_buffer[1] = (uint8_t) signal_strength;
-  }
 
   TuyaSendCmd(TUYA_CMD_TEST_WIFI, payload_buffer, 2);
 }
