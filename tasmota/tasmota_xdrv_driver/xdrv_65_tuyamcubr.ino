@@ -33,7 +33,7 @@
  * - supporting the raw and string Dp types
  * - restarting the tuya mcu state machine?
  * - restarting the rx state machine when no bytes are rxed for a while
- * - time sync
+ * - gmtime sync
  */
 
 #define XDRV_65			65
@@ -82,7 +82,8 @@ CTASSERT(sizeof(struct tuyamcubr_header) == 6);
 #define TUYAMCUBR_CMD_QUERY_STATE	0x08
 #define TUYAMCUBR_CMD_INIT_UPGRADE	0x0a
 #define TUYAMCUBR_CMD_UPGRADE_PKG	0x0b
-#define TUYAMCUBR_CMD_SET_TIME		0x1c
+#define TUYAMCUBR_CMD_GMTIME		0x0c
+#define TUYAMCUBR_CMD_TIME		0x1c
 
 /* wifi state */
 
@@ -93,6 +94,35 @@ CTASSERT(sizeof(struct tuyamcubr_header) == 6);
 #define TUYAMCUBR_NETWORK_STATUS_5	0x04 /* WiFi + router + cloud*/
 #define TUYAMCUBR_NETWORK_STATUS_6	0x05 /* low power mode */
 #define TUYAMCUBR_NETWORK_STATUS_7	0x06 /* pairing in EZ+AP mode */
+
+/* gmtime */
+
+struct tuyamcubr_gmtime {
+	uint8_t			valid;
+	uint8_t			year;		/* + 2000 */
+	uint8_t			month;		/* 1 to 12 */
+	uint8_t			day;		/* 1 to 31 */
+	uint8_t			hour;		/* 0 to 23 */
+	uint8_t			minute;		/* 0 to 59 */
+	uint8_t			second;		/* 0 to 59 */
+};
+
+CTASSERT(sizeof(struct tuyamcubr_gmtime) == 7);
+
+/* time */
+
+struct tuyamcubr_time {
+	uint8_t			valid;
+	uint8_t			year;		/* 2000 + */
+	uint8_t			month;		/* 1 to 12 */
+	uint8_t			day;		/* 1 to 31 */
+	uint8_t			hour;		/* 0 to 23 */
+	uint8_t			minute;		/* 0 to 59 */
+	uint8_t			second;		/* 0 to 59 */
+	uint8_t			weekday;	/* 1 (monday) to 7 */
+};
+
+CTASSERT(sizeof(struct tuyamcubr_time) == 8);
 
 /* set dp */
 
@@ -288,6 +318,8 @@ static void	tuyamcubr_recv_net_status(struct tuyamcubr_softc *, uint8_t,
 		    const uint8_t *, size_t);
 static void	tuyamcubr_recv_status(struct tuyamcubr_softc *, uint8_t,
 		    const uint8_t *, size_t);
+static void	tuyamcubr_recv_time(struct tuyamcubr_softc *, uint8_t,
+		    const uint8_t *, size_t);
 
 static const struct tuyamcubr_recv_command tuyamcubr_recv_commands[] = {
 	{ TUYAMCUBR_CMD_HEARTBEAT,	tuyamcubr_recv_heartbeat },
@@ -295,6 +327,7 @@ static const struct tuyamcubr_recv_command tuyamcubr_recv_commands[] = {
 	{ TUYAMCUBR_CMD_MODE,		tuyamcubr_recv_mode },
 	{ TUYAMCUBR_CMD_WIFI_STATE,	tuyamcubr_recv_net_status },
 	{ TUYAMCUBR_CMD_STATE,		tuyamcubr_recv_status },
+	{ TUYAMCUBR_CMD_TIME,		tuyamcubr_recv_time },
 };
 
 static void
@@ -776,6 +809,26 @@ tuyamcubr_recv_status(struct tuyamcubr_softc *sc, uint8_t v,
 		tuyamcubr_rule_dp(sc, dp);
 		tuyamcubr_publish_dp(sc, dp);
 	} while (datalen > 0);
+}
+
+static void
+tuyamcubr_recv_time(struct tuyamcubr_softc *sc, uint8_t v,
+    const uint8_t *data, size_t datalen)
+{
+	struct tuyamcubr_time tm;
+
+	/* check datalen? should be 0 */
+
+	tm.valid = 1; /* XXX check whether time is valid */
+	tm.year = RtcTime.year % 100;
+	tm.month = RtcTime.month;
+	tm.day = RtcTime.day_of_month;
+	tm.hour = RtcTime.hour;
+	tm.minute = RtcTime.minute;
+	tm.second = RtcTime.second;
+	tm.weekday = (RtcTime.day_of_week - 1) || 7;
+
+	tuyamcubr_send(sc, TUYAMCUBR_CMD_TIME, &tm, sizeof(tm));
 }
 
 static void
