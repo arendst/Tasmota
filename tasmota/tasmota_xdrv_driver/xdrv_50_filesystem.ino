@@ -106,7 +106,7 @@ void UfsInitOnce(void) {
 #ifdef ESP32
   // try lfs first
   ffsp = &LittleFS;
- if (!LittleFS.begin(true, "")) {         // force empty mount point to make it the fallback FS
+ if (!LittleFS.begin(true, "") && !LittleFS.begin(true, "", 5, "fs_1")) {         // force empty mount point to make it the fallback FS
     // ffat is second
     ffsp = &FFat;
    if (!FFat.begin(true, "")) {
