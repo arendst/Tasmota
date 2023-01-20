@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v11.1.0.3 - Last update 17.05.2022
+ * Updated until v12.3.1.4 - Last update 19.01.2023
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -110,7 +110,7 @@
 #define D_PSR_MAX_MEMORY "Pamięć PS-RAM"
 #define D_PSR_FREE_MEMORY "Wolna pamięć PS-RAM"
 #define D_FREQUENCY "Częstotliwość"
-#define D_GAS "Gas"
+#define D_GAS "Gaz"
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
 #define D_HOST "Serwer"
@@ -620,8 +620,8 @@
 #define D_Spannung_L3 "Napięcie L3"
 #define D_METERNR "Numer licznika"
 #define D_METERSID "Identyfikator licznika"
-#define D_GasIN "Licznik"
-#define D_H2oIN "Licznik"
+#define D_GasIN "Licznik Gazu"
+#define D_H2oIN "Licznik Wody"
 #define D_StL1L2L3 "Prąd suma"
 #define D_SpL1L2L3 "Prąd średni"
 
