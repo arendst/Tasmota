@@ -81,11 +81,11 @@ unsigned char twi_readFrom(unsigned char address, unsigned char* buf, unsigned i
 #endif
 
 void sps30_get_data(uint16_t cmd, uint8_t *data, uint8_t dlen) {
-unsigned char cmdb[2];
-uint8_t tmp[3];
-uint8_t index=0;
-memset(data,0,dlen);
-uint8_t twi_buff[64];
+  unsigned char cmdb[2];
+  uint8_t tmp[3];
+  uint8_t index=0;
+  memset(data,0,dlen);
+  uint8_t twi_buff[64];
 
   Wire.beginTransmission(SPS30_ADDR);
   cmdb[0]=cmd>>8;
@@ -140,14 +140,16 @@ unsigned char cmdb[6];
 void SPS30_Detect(void)
 {
   if (!I2cSetDevice(SPS30_ADDR)) { return; }
-  I2cSetActiveFound(SPS30_ADDR, "SPS30");
-
   uint8_t dcode[32];
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
-  AddLog(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
+  if(dcode[0] == 0) {
+    return;
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"), dcode);
   sps30_cmd(SPS_CMD_START_MEASUREMENT);
   sps30_running = 1;
   sps30_ready = 1;
+  I2cSetActiveFound(SPS30_ADDR, "SPS30");
 }
 
 #define D_UNIT_PM "ug/m3"
