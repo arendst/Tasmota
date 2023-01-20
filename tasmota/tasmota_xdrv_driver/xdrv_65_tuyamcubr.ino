@@ -33,7 +33,7 @@
  * - supporting the raw and string Dp types
  * - restarting the tuya mcu state machine?
  * - restarting the rx state machine when no bytes are rxed for a while
- * - time sync
+ * - gmtime sync
  */
 
 #define XDRV_65			65
