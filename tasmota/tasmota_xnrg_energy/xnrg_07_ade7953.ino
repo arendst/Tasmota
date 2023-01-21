@@ -252,6 +252,7 @@ int Ade7953RegSize(uint16_t reg) {
   return size;
 }
 
+#ifdef USE_ESP32_SPI
 void Ade7953SpiEnable(void) {
   digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
   delayMicroseconds(1);                              // CS 1uS to SCLK edge
@@ -263,6 +264,7 @@ void Ade7953SpiDisable(void) {
   delayMicroseconds(2);                              // CS high 1.2uS after SCLK edge (when writing to COMM_LOCK bit)
   digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
 }
+#endif  // USE_ESP32_SPI
 
 void Ade7953Write(uint16_t reg, uint32_t val) {
   int size = Ade7953RegSize(reg);
@@ -690,11 +692,13 @@ void Ade7953DrvInit(void) {
         pinMode(pin_reset, INPUT);
       }
     }
+#ifdef USE_ESP32_SPI
 #ifdef USE_SHELLY_PRO
     if (Ade7953.model == ADE7953_SHELLY_PRO_4PM) {
       ShellyPro4Reset();
     }
 #endif  // USE_SHELLY_PRO
+#endif  // USE_ESP32_SPI
     delay(100);                                      // Need 100mS to init ADE7953
 
 #ifdef USE_ESP32_SPI
