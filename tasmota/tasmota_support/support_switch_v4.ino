@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define SWITCH_V3
-#ifdef SWITCH_V3
+#define SWITCH_V4
+#ifdef SWITCH_V4
 /*********************************************************************************************\
  * Switch support with input filter
  *
@@ -27,7 +27,7 @@
 
 const uint8_t SWITCH_PROBE_INTERVAL = 10;      // Time in milliseconds between switch input probe
 const uint8_t SWITCH_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between switch input probe for AC detection
-const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
+const uint8_t SWITCH_AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
 // Switch Mode definietions
 #define SM_TIMER_MASK         0x3F
@@ -47,12 +47,15 @@ struct SWITCH {
   uint32_t debounce = 0;                     // Switch debounce timer
   uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
   uint32_t pulldown_mask = 0;                // Switch pull-down bitmask flags
+  uint32_t virtual_pin_used = 0;             // Switch used bitmask
+  uint32_t virtual_pin = 0;                  // Switch state bitmask
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-  uint8_t virtual_state[MAX_SWITCHES];       // Virtual switch states
+  uint8_t debounced_state[MAX_SWITCHES];     // Switch debounced states
   uint8_t first_change = 0;
   uint8_t present = 0;
+  bool probe_mutex;
 } Switch;
 
 /********************************************************************************************/
@@ -65,12 +68,19 @@ void SwitchPulldownFlag(uint32 switch_bit) {
   bitSet(Switch.pulldown_mask, switch_bit);
 }
 
+void SwitchSetVirtualPinState(uint32_t index, uint32_t state) {
+  if (!Switch.probe_mutex) {
+    bitWrite(Switch.virtual_pin, index, state);
+  }
+}
+
 void SwitchSetVirtual(uint32_t index, uint32_t state) {
-  Switch.virtual_state[index] = state;
+  bitSet(Switch.virtual_pin_used, index);
+  Switch.debounced_state[index] = state;
 }
 
 uint8_t SwitchGetVirtual(uint32_t index) {
-  return Switch.virtual_state[index];
+  return Switch.debounced_state[index];
 }
 
 uint8_t SwitchLastState(uint32_t index) {
@@ -92,7 +102,8 @@ bool SwitchState(uint32_t index) {
 /*********************************************************************************************/
 
 void SwitchProbe(void) {
-  if (TasmotaGlobal.uptime < 4) { return; }                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (Switch.probe_mutex || (TasmotaGlobal.uptime < 4)) { return; }  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  Switch.probe_mutex = true;
 
   uint32_t state_filter;
   uint32_t first_change = Switch.first_change;
@@ -102,9 +113,9 @@ void SwitchProbe(void) {
   bool ac_detect = (debounce_flags == 9);
 
   if (ac_detect) {
-    if (Settings->switch_debounce < 2 * AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
-      state_filter = 2 * AC_PERIOD;
-    } else if (Settings->switch_debounce > (0x7f - 2 * AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
+    if (Settings->switch_debounce < 2 * SWITCH_AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
+      state_filter = 2 * SWITCH_AC_PERIOD;
+    } else if (Settings->switch_debounce > (0x7f - 2 * SWITCH_AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
       state_filter = 0x7f;
     } else {
       state_filter = (Settings->switch_debounce - 9) / SWITCH_FAST_PROBE_INTERVAL;
@@ -113,25 +124,32 @@ void SwitchProbe(void) {
     state_filter = Settings->switch_debounce / SWITCH_PROBE_INTERVAL;	// 5, 10, 15
   }
 
+  uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if (!PinUsed(GPIO_SWT1, i)) { continue; }
+    if (PinUsed(GPIO_SWT1, i)) {
+      not_activated = digitalRead(Pin(GPIO_SWT1, i));
+    }
+    else if (bitRead(Switch.virtual_pin_used, i)) {
+      not_activated = bitRead(Switch.virtual_pin, i);
+    }
+    else { continue; }
 
     // Olimex user_switch2.c code to fix 50Hz induced pulses
-    if (1 == digitalRead(Pin(GPIO_SWT1, i))) {
+    if (not_activated) {
 
       if (ac_detect) {                                     // Enabled with SwitchDebounce x9
         Switch.state[i] |= 0x80;
         if (Switch.state[i] > 0x80) {
           Switch.state[i]--;
           if (0x80 == Switch.state[i]) {
-            Switch.virtual_state[i] = 0;
+            Switch.debounced_state[i] = 0;
             Switch.first_change = false;
           }
         }
       } else {
 
         if (force_high) {                                  // Enabled with SwitchDebounce x1
-          if (1 == Switch.virtual_state[i]) {
+          if (1 == Switch.debounced_state[i]) {
             Switch.state[i] = state_filter;                // With noisy input keep current state 1 unless constant 0
           }
         }
@@ -139,7 +157,7 @@ void SwitchProbe(void) {
         if (Switch.state[i] < state_filter) {
           Switch.state[i]++;
           if (state_filter == Switch.state[i]) {
-            Switch.virtual_state[i] = 1;
+            Switch.debounced_state[i] = 1;
           }
         }
       }
@@ -155,11 +173,11 @@ void SwitchProbe(void) {
           */
         if (Switch.state[i] & 0x80) {
           Switch.state[i] &= 0x7f;
-          if (Switch.state[i] < state_filter - 2 * AC_PERIOD) {
-            Switch.state[i] += 2 * AC_PERIOD;
+          if (Switch.state[i] < state_filter - 2 * SWITCH_AC_PERIOD) {
+            Switch.state[i] += 2 * SWITCH_AC_PERIOD;
           } else {
             Switch.state[i] = state_filter;
-            Switch.virtual_state[i] = 1;
+            Switch.debounced_state[i] = 1;
             if (first_change) {
               Switch.last_state[i] = 1;
               Switch.first_change = false;
@@ -169,7 +187,7 @@ void SwitchProbe(void) {
           if (Switch.state[i] > 0x00) {
             Switch.state[i]--;
             if (0x00 == Switch.state[i]) {
-              Switch.virtual_state[i] = 0;
+              Switch.debounced_state[i] = 0;
               Switch.first_change = false;
             }
           }
@@ -177,7 +195,7 @@ void SwitchProbe(void) {
       } else {
 
         if (force_low) {                                   // Enabled with SwitchDebounce x2
-          if (0 == Switch.virtual_state[i]) {
+          if (0 == Switch.debounced_state[i]) {
             Switch.state[i] = 0;                           // With noisy input keep current state 0 unless constant 1
           }
         }
@@ -185,20 +203,25 @@ void SwitchProbe(void) {
         if (Switch.state[i] > 0) {
           Switch.state[i]--;
           if (0 == Switch.state[i]) {
-            Switch.virtual_state[i] = 0;
+            Switch.debounced_state[i] = 0;
           }
         }
       }
     }
   }
+
+  Switch.probe_mutex = false;
 }
 
 void SwitchInit(void) {
   bool ac_detect = (Settings->switch_debounce % 10 == 9);
 
   Switch.present = 0;
+  Switch.virtual_pin_used = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     Switch.last_state[i] = NOT_PRESSED;  // Init global to virtual switch state;
+    bool used = false;
+
     if (PinUsed(GPIO_SWT1, i)) {
       Switch.present++;
 #ifdef ESP8266
@@ -207,14 +230,27 @@ void SwitchInit(void) {
 #ifdef ESP32
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
-      if (ac_detect) {
-        Switch.state[i] = 0x80 + 2 * AC_PERIOD;
-        Switch.last_state[i] = 0;				// Will set later in the debouncing code
-      } else {
-        Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
+      Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
+      used = true;
+    }
+    else {
+      XdrvMailbox.index = i;
+      if (XdrvCall(FUNC_ADD_SWITCH)) {
+
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add switch %d"), i);
+
+        bitSet(Switch.virtual_pin_used, i);
+        Switch.present++;
+        Switch.last_state[i] = XdrvMailbox.payload;
+        used = true;
       }
     }
-    Switch.virtual_state[i] = Switch.last_state[i];
+
+    if (used && ac_detect) {
+      Switch.state[i] = 0x80 + 2 * SWITCH_AC_PERIOD;
+      Switch.last_state[i] = 0;				// Will set later in the debouncing code
+    }
+    Switch.debounced_state[i] = Switch.last_state[i];
   }
   if (Switch.present) {
     Switch.first_change = true;
@@ -232,8 +268,8 @@ void SwitchHandler(uint32_t mode) {
   uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if (PinUsed(GPIO_SWT1, i) || (mode)) {
-      uint32_t button = Switch.virtual_state[i];
+    if (PinUsed(GPIO_SWT1, i) || bitRead(Switch.virtual_pin_used, i)) {
+      uint32_t button = Switch.debounced_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;
       uint32_t switchmode = Settings->switchmode[i];
