@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.3.1.4]
 ### Added
 - Berry ``crypto.EC_P256`` ECDSA signature (required by Matter protocol)
+- Berry add up flag to ``tasmota.wifi()`` and ``tasmota.eth()``, always return MAC
 
 ### Breaking Changed
 
