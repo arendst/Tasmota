@@ -19,7 +19,7 @@
 
 #ifdef ESP32
 #ifdef USE_SPI
-#ifdef USE_SHELLY_PRO
+#ifdef USE_SHELLY_PRO_V1
 /*********************************************************************************************\
  * Shelly Pro support
  *

@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define BUTTON_V3
-#ifdef BUTTON_V3
+#define BUTTON_V4
+#ifdef BUTTON_V4
 /*********************************************************************************************\
  * Button support with input filter
  *
@@ -42,17 +42,19 @@ struct BUTTON {
   uint32_t no_pullup_mask = 0;               // key no pullup flag (1 = no pullup)
   uint32_t pulldown_mask = 0;                // key pulldown flag (1 = pulldown)
   uint32_t inverted_mask = 0;                // Key inverted flag (1 = inverted)
+  uint32_t virtual_pin_used = 0;             // Key used bitmask
+  uint32_t virtual_pin = 0;                  // Key state bitmask
   uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
   uint16_t dual_code = 0;                    // Sonoff dual received code
   uint8_t state[MAX_KEYS] = { 0 };
   uint8_t last_state[MAX_KEYS];              // Last button states
-  uint8_t virtual_state[MAX_KEYS];           // Virtual button states
+  uint8_t debounced_state[MAX_KEYS];         // Button debounced states
   uint8_t window_timer[MAX_KEYS] = { 0 };    // Max time between button presses to record press count
   uint8_t press_counter[MAX_KEYS] = { 0 };   // Number of button presses within Button.window_timer
   uint8_t dual_receive_count = 0;            // Sonoff dual input flag
   uint8_t first_change = 0;
   uint8_t present = 0;                       // Number of buttons found flag
-  uint8_t mutex;
+  bool probe_mutex;
 } Button;
 
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
@@ -83,11 +85,18 @@ void ButtonTouchFlag(uint32_t button_bit) {
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
+
+void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
+  if (!Button.probe_mutex) {
+    bitWrite(Button.virtual_pin, index, state);
+  }
+}
+
 /*********************************************************************************************/
 
 void ButtonProbe(void) {
-  if (Button.mutex || (TasmotaGlobal.uptime < 4)) { return; }  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
-  Button.mutex = 1;
+  if (Button.probe_mutex || (TasmotaGlobal.uptime < 4)) { return; }  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  Button.probe_mutex = true;
 
   uint32_t state_filter;
   uint32_t first_change = Button.first_change;
@@ -108,38 +117,42 @@ void ButtonProbe(void) {
     state_filter = Settings->button_debounce / BUTTON_PROBE_INTERVAL;	// 5, 10, 15
   }
 
+  uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (!PinUsed(GPIO_KEY1, i)) { continue; }
-
-    bool button_not_activated;
+    if (PinUsed(GPIO_KEY1, i)) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
-    if (bitRead(TouchButton.touch_mask, i)) {
-      if (ac_detect || bitRead(TouchButton.calibration, i +1)) { continue; }  // Touch is slow. Takes 21mS to read
-      uint32_t value = touchRead(Pin(GPIO_KEY1, i));
+      if (bitRead(TouchButton.touch_mask, i)) {
+        if (ac_detect || bitRead(TouchButton.calibration, i +1)) { continue; }  // Touch is slow. Takes 21mS to read
+        uint32_t value = touchRead(Pin(GPIO_KEY1, i));
 #ifdef SOC_TOUCH_VERSION_2
-      button_not_activated = (value < Settings->touch_threshold);  // ESPS3 No touch = 24200, Touch > 40000
+        not_activated = (value < Settings->touch_threshold);  // ESPS3 No touch = 24200, Touch > 40000
 #else
-      button_not_activated = ((value == 0) || (value > Settings->touch_threshold));  // ESP32 No touch = 74, Touch < 40
+        not_activated = ((value == 0) || (value > Settings->touch_threshold));  // ESP32 No touch = 74, Touch < 40
 #endif
-    } else
+      } else
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
-    button_not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
+      not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
+    }
+    else if (bitRead(Button.virtual_pin_used, i)) {
+      not_activated = bitRead(Button.virtual_pin, i);
+    }
+    else { continue; }
 
-    if (button_not_activated) {
+    if (not_activated) {
 
       if (ac_detect) {                                         // Enabled with ButtonDebounce x9
         Button.state[i] |= 0x80;
         if (Button.state[i] > 0x80) {
           Button.state[i]--;
           if (0x80 == Button.state[i]) {
-            Button.virtual_state[i] = 0;
+            Button.debounced_state[i] = 0;
             Button.first_change = false;
           }
         }
       } else {
 
         if (force_high) {                                      // Enabled with ButtonDebounce x1
-          if (1 == Button.virtual_state[i]) {
+          if (1 == Button.debounced_state[i]) {
             Button.state[i] = state_filter;                    // With noisy input keep current state 1 unless constant 0
           }
         }
@@ -147,7 +160,7 @@ void ButtonProbe(void) {
         if (Button.state[i] < state_filter) {
           Button.state[i]++;
           if (state_filter == Button.state[i]) {
-            Button.virtual_state[i] = 1;
+            Button.debounced_state[i] = 1;
           }
         }
       }
@@ -167,7 +180,7 @@ void ButtonProbe(void) {
             Button.state[i] += 2 * BUTTON_AC_PERIOD;
           } else {
             Button.state[i] = state_filter;
-            Button.virtual_state[i] = 1;
+            Button.debounced_state[i] = 1;
             if (first_change) {
               Button.last_state[i] = 1;
               Button.first_change = false;
@@ -177,7 +190,7 @@ void ButtonProbe(void) {
           if (Button.state[i] > 0x00) {
             Button.state[i]--;
             if (0x00 == Button.state[i]) {
-              Button.virtual_state[i] = 0;
+              Button.debounced_state[i] = 0;
               Button.first_change = false;
             }
           }
@@ -185,7 +198,7 @@ void ButtonProbe(void) {
       } else {
 
         if (force_low) {                                       // Enabled with ButtonDebounce x2
-          if (0 == Button.virtual_state[i]) {
+          if (0 == Button.debounced_state[i]) {
             Button.state[i] = 0;                               // With noisy input keep current state 0 unless constant 1
           }
         }
@@ -193,26 +206,31 @@ void ButtonProbe(void) {
         if (Button.state[i] > 0) {
           Button.state[i]--;
           if (0 == Button.state[i]) {
-            Button.virtual_state[i] = 0;
+            Button.debounced_state[i] = 0;
           }
         }
       }
     }
   }
-  Button.mutex = 0;
+  Button.probe_mutex = false;
 }
 
 void ButtonInit(void) {
   bool ac_detect = (Settings->button_debounce % 10 == 9);
 
   Button.present = 0;
+  Button.virtual_pin_used = 0;
+
 #ifdef ESP8266
   if ((SONOFF_DUAL == TasmotaGlobal.module_type) || (CH4 == TasmotaGlobal.module_type)) {
     Button.present++;
   }
 #endif  // ESP8266
+
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     Button.last_state[i] = NOT_PRESSED;
+    bool used = false;
+
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
 #ifdef ESP8266
@@ -221,20 +239,33 @@ void ButtonInit(void) {
 #ifdef ESP32
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
-      if (ac_detect) {
-        Button.state[i] = 0x80 + 2 * BUTTON_AC_PERIOD;
-        Button.last_state[i] = 0;				                       // Will set later in the debouncing code
-      } else {
-        // Set global now so doesn't change the saved power state on first button check
-        Button.last_state[i] = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
-      }
+      // Set global now so doesn't change the saved power state on first button check
+      Button.last_state[i] = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
+      used = true;
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
       Button.present++;
     }
 #endif  // USE_ADC
-    Button.virtual_state[i] = Button.last_state[i];
+    else {
+      XdrvMailbox.index = i;
+      if (XdrvCall(FUNC_ADD_BUTTON)) {
+
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add button %d"), i);
+
+        bitSet(Button.virtual_pin_used, i);
+        Button.present++;
+        Button.last_state[i] = XdrvMailbox.payload;
+        used = true;
+      }
+    }
+
+    if (used && ac_detect) {
+      Button.state[i] = 0x80 + 2 * BUTTON_AC_PERIOD;
+      Button.last_state[i] = 0;				// Will set later in the debouncing code
+    }
+    Button.debounced_state[i] = Button.last_state[i];
   }
   if (Button.present) {
     Button.first_change = true;
@@ -320,7 +351,7 @@ void ButtonHandler(void) {
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
       button_present = 1;
-      button = Button.virtual_state[button_index];
+      button = Button.debounced_state[button_index];
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, button_index)) {
@@ -332,6 +363,11 @@ void ButtonHandler(void) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
     }
 #endif  // USE_ADC
+    else if (bitRead(Button.virtual_pin_used, button_index)) {
+      button_present = 1;
+      button = Button.debounced_state[button_index];
+    }
+
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;

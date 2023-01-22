@@ -36,21 +36,21 @@
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
  * Model differences:
- * Function                        Model1   Model2   Model3   Model4  Model5  Remark
- * ------------------------------  -------  -------  -------  ------  ------  -------------------------------------------------
- * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM
- * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32
- * Interface                       I2C      I2C      I2C      SPI     SPI     Interface type used
- * Number of ADE9753 chips         1        1        1        1       2       Count of ADE9753 chips
- * ADE9753 IRQ                     1        2        3        4       5       Index defines model number
- * Current measurement device      shunt    CT       shunt    shunt   shunt   CT = Current Transformer
- * Common voltage                  Yes      Yes      Yes      No      No      Show common voltage in GUI/JSON
- * Common frequency                Yes      Yes      Yes      No      No      Show common frequency in GUI/JSON
- * Swapped channel A/B             Yes      No       No       No      No      Defined by hardware design - Fixed by Tasmota
- * Support Export Active           No       Yes      No       No      No      Only EM supports correct negative value detection
- * Show negative (reactive) power  No       Yes      No       No      No      Only EM supports correct negative value detection
- * Default phase calibration       0        200      0        0       0       CT needs different phase calibration than shunts
- * Default reset pin on ESP8266    -        16       -        -       -       Legacy support. Replaced by GPIO ADE7953RST
+ * Function                        Model1   Model2   Model3   Model4  Model5  Model6  Remark
+ * ------------------------------  -------  -------  -------  ------  ------  ------  -------------------------------------------------
+ * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM
+ * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32   ESP32
+ * Interface                       I2C      I2C      I2C      SPI     SPI     SPI     Interface type used
+ * Number of ADE9753 chips         1        1        1        1       2       2       Count of ADE9753 chips
+ * ADE9753 IRQ                     1        2        3        4       5       6       Index defines model number
+ * Current measurement device      shunt    CT       shunt    shunt   shunt   shunt   CT = Current Transformer
+ * Common voltage                  Yes      Yes      Yes      No      No      No      Show common voltage in GUI/JSON
+ * Common frequency                Yes      Yes      Yes      No      No      No      Show common frequency in GUI/JSON
+ * Swapped channel A/B             Yes      No       No       No      No      No      Defined by hardware design - Fixed by Tasmota
+ * Support Export Active           No       Yes      No       No      No      No      Only EM supports correct negative value detection
+ * Show negative (reactive) power  No       Yes      No       No      No      No      Only EM supports correct negative value detection
+ * Default phase calibration       0        200      0        0       0       0       CT needs different phase calibration than shunts
+ * Default reset pin on ESP8266    -        16       -        -       -       -       Legacy support. Replaced by GPIO ADE7953RST
  *
  * I2C Address: 0x38
  *********************************************************************************************
@@ -82,7 +82,7 @@
 #define ADE7953_PHCAL_DEFAULT     0          // = range -383 to 383 - Default phase calibration for Shunts
 #define ADE7953_PHCAL_DEFAULT_CT  200        // = range -383 to 383 - Default phase calibration for Current Transformers (Shelly EM)
 
-enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM, ADE7953_SHELLY_PRO_1PM, ADE7953_SHELLY_PRO_2PM };
+enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM, ADE7953_SHELLY_PRO_1PM, ADE7953_SHELLY_PRO_2PM, ADE7953_SHELLY_PRO_4PM };
 
 enum Ade7953_8BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
@@ -225,13 +225,15 @@ struct Ade7953 {
   uint32_t active_power[2] = { 0, 0 };
   int32_t calib_data[2][ADE7953_CALIBREGS];
   uint8_t init_step = 0;
-  uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM
+  uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM, 5 = Shelly Pro 4PM
   uint8_t cs_index;
 #ifdef USE_ESP32_SPI
   SPISettings spi_settings;
   int8_t pin_cs[2];
 #endif  // USE_ESP32_SPI
 } Ade7953;
+
+/*********************************************************************************************/
 
 int Ade7953RegSize(uint16_t reg) {
   int size = 0;
@@ -250,6 +252,20 @@ int Ade7953RegSize(uint16_t reg) {
   return size;
 }
 
+#ifdef USE_ESP32_SPI
+void Ade7953SpiEnable(void) {
+  digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
+  delayMicroseconds(1);                              // CS 1uS to SCLK edge
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));  // Set up SPI at 1MHz, MSB first, Capture at rising edge
+}
+
+void Ade7953SpiDisable(void) {
+  SPI.endTransaction();
+  delayMicroseconds(2);                              // CS high 1.2uS after SCLK edge (when writing to COMM_LOCK bit)
+  digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
+}
+#endif  // USE_ESP32_SPI
+
 void Ade7953Write(uint16_t reg, uint32_t val) {
   int size = Ade7953RegSize(reg);
   if (size) {
@@ -258,6 +274,7 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
 
 #ifdef USE_ESP32_SPI
     if (Ade7953.pin_cs[0] >= 0) {
+/*
       digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
       delayMicroseconds(1);                          // CS 1uS to SCLK edge
       SPI.beginTransaction(Ade7953.spi_settings);
@@ -269,6 +286,15 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
       SPI.endTransaction();
       delayMicroseconds(2);                          // CS high 1.2uS after SCLK edge (when writing to COMM_LOCK bit)
       digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
+*/
+      Ade7953SpiEnable();
+      SPI.transfer16(reg);
+      SPI.transfer(0x00);                            // Write
+      while (size--) {
+        SPI.transfer((val >> (8 * size)) & 0xFF);    // Write data, MSB first
+      }
+      Ade7953SpiDisable();
+
     } else {
 #endif  // USE_ESP32_SPI
       Wire.beginTransmission(ADE7953_ADDR);
@@ -292,6 +318,7 @@ int32_t Ade7953Read(uint16_t reg) {
   if (size) {
 #ifdef USE_ESP32_SPI
     if (Ade7953.pin_cs[0] >= 0) {
+/*
       digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
       delayMicroseconds(1);                          // CS 1uS to SCLK edge
       SPI.beginTransaction(Ade7953.spi_settings);
@@ -302,6 +329,15 @@ int32_t Ade7953Read(uint16_t reg) {
       }
       SPI.endTransaction();
       digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
+*/
+      Ade7953SpiEnable();
+      SPI.transfer16(reg);
+      SPI.transfer(0x80);                            // Read
+      while (size--) {
+        response = response << 8 | SPI.transfer(0xFF);  // receive DATA (MSB first)
+      }
+      Ade7953SpiDisable();
+
     } else {
 #endif  // USE_ESP32_SPI
       Wire.beginTransmission(ADE7953_ADDR);
@@ -449,9 +485,16 @@ void Ade7953GetData(void) {
 #ifdef USE_ESP32_SPI
   }
 #endif  // USE_ESP32_SPI
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, %d, Period %d, %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
-    acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
-    reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
+
+#ifdef USE_ESP32_SPI
+  if (1 == Energy.phase_count) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, WATT %d, VA %d, VAR %d"),
+      acc_mode, reg[0][4], reg[0][5], reg[0][0], reg[0][1], reg[0][2], reg[0][3]);
+  } else
+#endif  // USE_ESP32_SPI
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, %d, Period %d, %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
+      acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
+      reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
 
   // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
   if (Ade7953.init_step) { return; }
@@ -459,7 +502,7 @@ void Ade7953GetData(void) {
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
-  for (uint32_t channel = 0; channel < 2; channel++) {
+  for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
     Ade7953.voltage_rms[channel] = reg[channel][4];
     Ade7953.current_rms[channel] = reg[channel][0];
     if (Ade7953.current_rms[channel] < 2000) {        // No load threshold (20mA)
@@ -477,7 +520,7 @@ void Ade7953GetData(void) {
 
   if (Energy.power_on) {                              // Powered on
     float divider;
-    for (uint32_t channel = 0; channel < 2; channel++) {
+    for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
       Energy.data_valid[channel] = 0;
 
       float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
@@ -649,6 +692,13 @@ void Ade7953DrvInit(void) {
         pinMode(pin_reset, INPUT);
       }
     }
+#ifdef USE_ESP32_SPI
+#ifdef USE_SHELLY_PRO
+    if (Ade7953.model == ADE7953_SHELLY_PRO_4PM) {
+      ShellyPro4Reset();
+    }
+#endif  // USE_SHELLY_PRO
+#endif  // USE_ESP32_SPI
     delay(100);                                      // Need 100mS to init ADE7953
 
 #ifdef USE_ESP32_SPI

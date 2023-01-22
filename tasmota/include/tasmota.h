@@ -405,7 +405,7 @@ enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_I2C_INIT, FUNC_PRE_INIT, FUNC_
                      FUNC_COMMAND, FUNC_COMMAND_SENSOR, FUNC_COMMAND_DRIVER,
                      FUNC_RULES_PROCESS,
                      FUNC_SET_CHANNELS,
-                     FUNC_last_function         // Insert functions with return results before here
+                     FUNC_last_function         // Insert functions WITH return results before here
                      };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
