@@ -274,19 +274,6 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
 
 #ifdef USE_ESP32_SPI
     if (Ade7953.pin_cs[0] >= 0) {
-/*
-      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
-      delayMicroseconds(1);                          // CS 1uS to SCLK edge
-      SPI.beginTransaction(Ade7953.spi_settings);
-      SPI.transfer16(reg);
-      SPI.transfer(0x00);                            // Write
-      while (size--) {
-        SPI.transfer((val >> (8 * size)) & 0xFF);    // Write data, MSB first
-      }
-      SPI.endTransaction();
-      delayMicroseconds(2);                          // CS high 1.2uS after SCLK edge (when writing to COMM_LOCK bit)
-      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
-*/
       Ade7953SpiEnable();
       SPI.transfer16(reg);
       SPI.transfer(0x00);                            // Write
@@ -294,7 +281,6 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
         SPI.transfer((val >> (8 * size)) & 0xFF);    // Write data, MSB first
       }
       Ade7953SpiDisable();
-
     } else {
 #endif  // USE_ESP32_SPI
       Wire.beginTransmission(ADE7953_ADDR);
@@ -318,18 +304,6 @@ int32_t Ade7953Read(uint16_t reg) {
   if (size) {
 #ifdef USE_ESP32_SPI
     if (Ade7953.pin_cs[0] >= 0) {
-/*
-      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 0);
-      delayMicroseconds(1);                          // CS 1uS to SCLK edge
-      SPI.beginTransaction(Ade7953.spi_settings);
-      SPI.transfer16(reg);
-      SPI.transfer(0x80);                            // Read
-      while (size--) {
-        response = response << 8 | SPI.transfer(0);  // receive DATA (MSB first)
-      }
-      SPI.endTransaction();
-      digitalWrite(Ade7953.pin_cs[Ade7953.cs_index], 1);
-*/
       Ade7953SpiEnable();
       SPI.transfer16(reg);
       SPI.transfer(0x80);                            // Read
@@ -337,7 +311,6 @@ int32_t Ade7953Read(uint16_t reg) {
         response = response << 8 | SPI.transfer(0xFF);  // receive DATA (MSB first)
       }
       Ade7953SpiDisable();
-
     } else {
 #endif  // USE_ESP32_SPI
       Wire.beginTransmission(ADE7953_ADDR);

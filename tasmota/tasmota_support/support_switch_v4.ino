@@ -236,12 +236,20 @@ void SwitchInit(void) {
     else {
       XdrvMailbox.index = i;
       if (XdrvCall(FUNC_ADD_SWITCH)) {
-
-        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add switch %d"), i);
-
-        bitSet(Switch.virtual_pin_used, i);
+        /*
+           At entry:
+           XdrvMailbox.index = switch index
+           At exit:
+           XdrvMailbox.index bit 0 = current state
+        */
         Switch.present++;
-        Switch.last_state[i] = XdrvMailbox.payload;
+        bitSet(Switch.virtual_pin_used, i);    // This pin is used
+        bool state = (XdrvMailbox.index &1);
+        SwitchSetVirtualPinState(i, state);    // Virtual hardware pin state
+        Switch.last_state[i] = bitRead(Switch.virtual_pin, i);
+
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d, Info %02X"), Switch.present, Switch.last_state[i], XdrvMailbox.index);
+
         used = true;
       }
     }
@@ -252,6 +260,9 @@ void SwitchInit(void) {
     }
     Switch.debounced_state[i] = Switch.last_state[i];
   }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X"), Switch.virtual_pin_used, Switch.virtual_pin);
+
   if (Switch.present) {
     Switch.first_change = true;
     TickerSwitch.attach_ms((ac_detect) ? SWITCH_FAST_PROBE_INTERVAL : SWITCH_PROBE_INTERVAL, SwitchProbe);

@@ -27,6 +27,8 @@
 
 #define MAX_RELAY_BUTTON1       5            // Max number of relay controlled by BUTTON1
 
+#define BUTTON_INVERT           0x02         // Invert bitmask
+
 const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between button input probe
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
@@ -134,7 +136,7 @@ void ButtonProbe(void) {
       not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
     }
     else if (bitRead(Button.virtual_pin_used, i)) {
-      not_activated = bitRead(Button.virtual_pin, i);
+      not_activated = (bitRead(Button.virtual_pin, i) != bitRead(Button.inverted_mask, i));
     }
     else { continue; }
 
@@ -251,12 +253,23 @@ void ButtonInit(void) {
     else {
       XdrvMailbox.index = i;
       if (XdrvCall(FUNC_ADD_BUTTON)) {
-
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add button %d"), i);
-
-        bitSet(Button.virtual_pin_used, i);
+        /*
+           At entry:
+           XdrvMailbox.index = key index
+           At exit:
+           XdrvMailbox.index bit 0 = current state
+           XdrvMailbox.index bit 1 = invert signal
+        */
         Button.present++;
-        Button.last_state[i] = XdrvMailbox.payload;
+        bitSet(Button.virtual_pin_used, i);    // This pin is used
+        bool state = (XdrvMailbox.index &1);
+        ButtonSetVirtualPinState(i, state);    // Virtual hardware pin state
+        bool invert = (XdrvMailbox.index &BUTTON_INVERT);
+        if (invert) { ButtonInvertFlag(i); }   // Set inverted flag
+        Button.last_state[i] = (bitRead(Button.virtual_pin, i) != bitRead(Button.inverted_mask, i));
+
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add vButton%d, State %d, Info %02X"), Button.present, Button.last_state[i], XdrvMailbox.index);
+
         used = true;
       }
     }
@@ -267,6 +280,9 @@ void ButtonInit(void) {
     }
     Button.debounced_state[i] = Button.last_state[i];
   }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X, Invert %08X"), Button.virtual_pin_used, Button.virtual_pin, Button.inverted_mask);
+
   if (Button.present) {
     Button.first_change = true;
     TickerButton.attach_ms((ac_detect) ? BUTTON_FAST_PROBE_INTERVAL : BUTTON_PROBE_INTERVAL, ButtonProbe);
@@ -371,6 +387,7 @@ void ButtonHandler(void) {
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;
+      XdrvMailbox.command_code = Button.last_state[button_index];
       if (XdrvCall(FUNC_BUTTON_PRESSED)) {
         // Serviced
       }
