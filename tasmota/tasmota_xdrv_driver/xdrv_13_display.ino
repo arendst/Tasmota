@@ -636,7 +636,9 @@ void DisplayText(void)
                         model = Settings->display_model;
                         fp.read((uint8_t*)fdesc, size);
                         fp.close();
+                        Renderer *svptr = renderer;
                         Get_display(temp);
+                        renderer = svptr;
                         if (rot >= 0) {
                           srot = Settings->display_rotate;
                           Settings->display_rotate = rot;
@@ -646,7 +648,7 @@ void DisplayText(void)
                           Settings->display_rotate = srot;
                         }
                         Set_display(temp);
-                        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded %x"),renderer);
+                        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded"));
                         free(fdesc);
                         Settings->display_model = model;
                       }

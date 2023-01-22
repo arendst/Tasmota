@@ -4124,6 +4124,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
+        if (!strncmp(lp, "rrsn", 4)) {
+          fvar = ESP_ResetInfoReason();
+          goto exit;
+        }
         if (!strncmp(lp, "rax", 3)) {
           TasmotaGlobal.no_autoexec = 0;
           goto exit;

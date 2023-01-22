@@ -301,6 +301,7 @@ class uDisplay : public Renderer {
    uint8_t lut_siz_full;
    uint8_t *lut_partial;
    uint8_t lut_siz_partial;
+   uint8_t *frame_buffer;
 
    uint8_t epcoffs_full;
    uint8_t epc_full_cnt;
