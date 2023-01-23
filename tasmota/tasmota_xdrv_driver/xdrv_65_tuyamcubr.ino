@@ -586,18 +586,15 @@ tuyamcubr_cmnd_data_bool(void)
 		return;
 	}
 
-	if (strcasecmp(XdrvMailbox.data, "off") == 0 ||
-	    strcasecmp(XdrvMailbox.data, "false") == 0 ||
-	    strcmp(XdrvMailbox.data, "0") == 0)
-		value = 0;
-	else if (strcasecmp(XdrvMailbox.data, "on") == 0 ||
-	    strcasecmp(XdrvMailbox.data, "true") == 0 ||
-	    strcmp(XdrvMailbox.data, "1") == 0)
-		value = 1;
-	else if (strcasecmp(XdrvMailbox.data, "toggle") == 0 ||
-	    strcmp(XdrvMailbox.data, "2") == 0)
+	switch (XdrvMailbox.payload) {
+	case 0:
+	case 1:
+		value = XdrvMailbox.payload;
+		break;
+	case 2:
 		value = !dp->dp_value;
-	else {
+		break;
+	default:
 		ResponseCmndChar_P(PSTR("Invalid"));
 		return;
 	}
