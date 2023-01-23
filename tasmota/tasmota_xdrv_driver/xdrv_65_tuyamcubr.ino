@@ -961,6 +961,22 @@ tuyamcubr_loop(struct tuyamcubr_softc *sc)
  * Interface
  */
 
+#ifdef USE_WEBSERVER
+static void
+tuyamcubr_web_sensor(struct tuyamcubr_softc *sc)
+{
+	struct tuyamcubr_dp *dp;
+	const struct tuyamcubr_data_type *dt;
+
+	STAILQ_FOREACH(dp, &sc->sc_dps, dp_entry) {
+		dt = &tuyamcubr_data_types[dp->dp_type];
+
+		WSContentSend_PD(PSTR("{s}%s%u{m}%u{e}"),
+		    dt->t_name, dp->dp_id, dp->dp_value);
+	}
+}
+#endif // USE_WEBSERVER
+
 static const char tuyamcubr_cmnd_names[] PROGMEM =
 	D_CMND_TUYAMCUBR_PREFIX
 	"|" D_CMND_TUYAMCUBR_DATA_BOOL
@@ -1021,6 +1037,13 @@ Xdrv65(uint32_t function)
 	case FUNC_AFTER_TELEPERIOD:
 		tuyamcubr_publish(sc);
 		break;
+#ifdef USE_WEBSERVER
+	case FUNC_WEB_ADD_MAIN_BUTTON:
+		break;
+	case FUNC_WEB_SENSOR:
+		tuyamcubr_web_sensor(sc);
+		break;
+#endif // USE_WEBSERVER
 
 	case FUNC_COMMAND:
 		result = DecodeCommand(tuyamcubr_cmnd_names, tuyamcubr_cmnds);
