@@ -68,21 +68,23 @@ void SwitchPulldownFlag(uint32 switch_bit) {
   bitSet(Switch.pulldown_mask, switch_bit);
 }
 
+// Preffered virtual switch support since v12.3.1.4
 void SwitchSetVirtualPinState(uint32_t index, uint32_t state) {
-  if (!Switch.probe_mutex) {
-    bitWrite(Switch.virtual_pin, index, state);
-  }
+  bitWrite(Switch.virtual_pin, index, state);
 }
 
+// Legacy virtual switch support
 void SwitchSetVirtual(uint32_t index, uint32_t state) {
-  bitSet(Switch.virtual_pin_used, index);
+//  bitSet(Switch.virtual_pin_used, index);
   Switch.debounced_state[index] = state;
 }
 
+// Legacy virtual switch support
 uint8_t SwitchGetVirtual(uint32_t index) {
   return Switch.debounced_state[index];
 }
 
+// Legacy virtual switch support
 uint8_t SwitchLastState(uint32_t index) {
   return Switch.last_state[index];
 }

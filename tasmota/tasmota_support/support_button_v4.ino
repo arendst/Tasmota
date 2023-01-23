@@ -89,9 +89,7 @@ void ButtonTouchFlag(uint32_t button_bit) {
 
 
 void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
-  if (!Button.probe_mutex) {
-    bitWrite(Button.virtual_pin, index, state);
-  }
+  bitWrite(Button.virtual_pin, index, state);
 }
 
 /*********************************************************************************************/

@@ -45,8 +45,9 @@
 struct SPro {
   uint32_t last_update;
   uint32_t probe_pin;
-  int switch_offset;
-  int button_offset;
+  uint16_t input_state;
+  int8_t switch_offset;
+  int8_t button_offset;
   uint8_t pin_register_cs;
   uint8_t pin_mcp23s17_int;
   uint8_t ledlink;
@@ -98,33 +99,32 @@ void SP4Mcp23S17Disable(void) {
   digitalWrite(SPro.pin_register_cs, 1);
 }
 
-uint32_t SP4Mcp23S17ReadGpio(void) {
-  // Read 16-bit gpio registers: (gpiob << 8) | gpioa
-  SP4Mcp23S17Enable();
-  SPI.transfer(SHELLY_PRO_4_MCP23S17_ADDRESS | 1);
-  SPI.transfer(SP4_MCP23S17_GPIOA);
-  uint32_t gpio = SPI.transfer(0xFF);  // SP4_MCP23S17_GPIOA
-  gpio |= (SPI.transfer(0xFF) << 8);   // SP4_MCP23S17_GPIOB
-  SP4Mcp23S17Disable();
-  return gpio;
-}
-
-bool SP4Mcp23S17Read(uint8_t reg, uint8_t *value) {
+uint32_t SP4Mcp23S17Read16(uint8_t reg) {
+  // Read 16-bit registers: (regb << 8) | rega
   SP4Mcp23S17Enable();
   SPI.transfer(SHELLY_PRO_4_MCP23S17_ADDRESS | 1);
   SPI.transfer(reg);
-  *value = SPI.transfer(0xFF);
+  uint32_t value = SPI.transfer(0xFF);  // RegA
+  value |= (SPI.transfer(0xFF) << 8);   // RegB
   SP4Mcp23S17Disable();
-  return true;
+  return value;
 }
 
-bool SP4Mcp23S17Write(uint8_t reg, uint8_t value) {
+uint32_t SP4Mcp23S17Read(uint8_t reg) {
+  SP4Mcp23S17Enable();
+  SPI.transfer(SHELLY_PRO_4_MCP23S17_ADDRESS | 1);
+  SPI.transfer(reg);
+  uint32_t value = SPI.transfer(0xFF);
+  SP4Mcp23S17Disable();
+  return value;
+}
+
+void SP4Mcp23S17Write(uint8_t reg, uint8_t value) {
   SP4Mcp23S17Enable();
   SPI.transfer(SHELLY_PRO_4_MCP23S17_ADDRESS);
   SPI.transfer(reg);
   SPI.transfer(value);
   SP4Mcp23S17Disable();
-  return true;
 }
 
 void SP4Mcp23S17Update(uint8_t pin, bool pin_value, uint8_t reg_addr) {
@@ -135,7 +135,7 @@ void SP4Mcp23S17Update(uint8_t pin, bool pin_value, uint8_t reg_addr) {
   } else if (reg_addr == SP4_MCP23S17_OLATB) {
     reg_value = sp4_mcp23s17_olatb;
   } else {
-    SP4Mcp23S17Read(reg_addr, &reg_value);
+    reg_value = SP4Mcp23S17Read(reg_addr);
   }
   if (pin_value) {
     reg_value |= 1 << bit;
@@ -167,8 +167,7 @@ void SP4Mcp23S17PinMode(uint8_t pin, uint8_t flags) {
 bool SP4Mcp23S17DigitalRead(uint8_t pin) {
   uint8_t bit = pin % 8;
   uint8_t reg_addr = pin < 8 ? SP4_MCP23S17_GPIOA : SP4_MCP23S17_GPIOB;
-  uint8_t value = 0;
-  SP4Mcp23S17Read(reg_addr, &value);
+  uint8_t value = SP4Mcp23S17Read(reg_addr);
   return value & (1 << bit);
 }
 
@@ -210,8 +209,8 @@ void ShellyPro4Init(void) {
   SP4Mcp23S17Write(SP4_MCP23S17_GPINTENB, 0x80);   // Enable interrupt on change
 
   // Read current output register state
-  SP4Mcp23S17Read(SP4_MCP23S17_OLATA, &sp4_mcp23s17_olata);
-  SP4Mcp23S17Read(SP4_MCP23S17_OLATB, &sp4_mcp23s17_olatb);
+  sp4_mcp23s17_olata = SP4Mcp23S17Read(SP4_MCP23S17_OLATA);
+  sp4_mcp23s17_olatb = SP4Mcp23S17Read(SP4_MCP23S17_OLATB);
 
   for (uint32_t i = 0; i < 4; i++) {
     SP4Mcp23S17PinMode(sp4_switch_pin[i], INPUT);   // Switch1..4
@@ -226,6 +225,8 @@ void ShellyPro4Init(void) {
 
   SP4Mcp23S17PinMode(4, OUTPUT);                    // Reset display, ADE7943
   SP4Mcp23S17DigitalWrite(4, 1);
+
+  attachInterrupt(SPro.pin_mcp23s17_int, ShellyProUpdateIsr, CHANGE);
 }
 
 void ShellyPro4Reset(void) {
@@ -239,7 +240,9 @@ bool ShellyProAddButton(void) {
   if (SPro.button_offset < 0) { SPro.button_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.button_offset;
   if (index > 2) { return false; }                  // Support three buttons
-  XdrvMailbox.index = SP4Mcp23S17DigitalRead(sp4_button_pin[index]);
+  uint32_t state = SP4Mcp23S17DigitalRead(sp4_button_pin[index]);
+  bitWrite(SPro.input_state, sp4_button_pin[index], state);
+  XdrvMailbox.index = state;
   return true;
 }
 
@@ -248,28 +251,41 @@ bool ShellyProAddSwitch(void) {
   if (SPro.switch_offset < 0) { SPro.switch_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
-  XdrvMailbox.index = SP4Mcp23S17DigitalRead(sp4_switch_pin[index]);
+  uint32_t state = SP4Mcp23S17DigitalRead(sp4_switch_pin[index]);
+  bitWrite(SPro.input_state, sp4_switch_pin[index], state);
+  XdrvMailbox.index = state ^1;                     // Invert
   return true;
 }
 
-void ShellyProUpdateSwitches(void) {
-  if (SPro.detected != 4) { return; }               // Only support Shelly Pro 4
-  if (digitalRead(SPro.pin_mcp23s17_int)) { return; }  // Poll interrupt
+void ShellyProUpdateIsr(void) {
+  /*
+  The goal if this function is to minimize SPI and SetVirtualPinState calls
+  */
 
-  uint32_t gpio = SP4Mcp23S17ReadGpio();            // Read gpio and clear interrupt
+  uint32_t input_state = SP4Mcp23S17Read16(SP4_MCP23S17_INTCAPA);  // Read intcap and clear interrupt
+  input_state &= 0x806F;                            // Only test input bits
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Input detected 0x%04X"), gpio);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Input detected %04X, was %04X"), input_state, SPro.input_state);
 
-  // Propagate state
-  uint32_t state;
-  for (uint32_t i = 0; i < 4; i++) {
-    state = (gpio >> sp4_switch_pin[i]) &1;
-    SwitchSetVirtualPinState(SPro.switch_offset +i, state);
+  uint32_t mask = 1;
+  for (uint32_t j = 0; j < 16; j++) {
+    if ((input_state & mask) != (SPro.input_state & mask)) {
+      uint32_t state = (input_state >> j) &1;
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Change pin %d to %d"), j, state);
+
+      for (uint32_t i = 0; i < 4; i++) {
+        if (j == sp4_switch_pin[i]) {
+          SwitchSetVirtualPinState(SPro.switch_offset +i, state ^1);  // Invert
+        }
+        else if ((i < 3) && (j == sp4_button_pin[i])) {
+          ButtonSetVirtualPinState(SPro.button_offset +i, state);
+        }
+      }
+    }
+    mask <<= 1;
   }
-  for (uint32_t i = 0; i < 3; i++) {
-    state = (gpio >> sp4_button_pin[i]) &1;
-    ButtonSetVirtualPinState(SPro.button_offset +i, state);
-  }
+  SPro.input_state = input_state;
 }
 
 bool ShellyProButton(void) {
@@ -458,9 +474,6 @@ bool Xdrv88(uint32_t function) {
     ShellyProPreInit();
     } else if (SPro.detected) {
       switch (function) {
-        case FUNC_EVERY_50_MSECOND:
-          ShellyProUpdateSwitches();
-          break;
 /*
         case FUNC_BUTTON_PRESSED:
           result = ShellyProButton();
