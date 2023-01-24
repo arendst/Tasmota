@@ -240,7 +240,8 @@ bool ShellyProAddButton(void) {
   if (SPro.button_offset < 0) { SPro.button_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.button_offset;
   if (index > 2) { return false; }                  // Support three buttons
-  uint32_t state = SP4Mcp23S17DigitalRead(sp4_button_pin[index]);
+  uint32_t state = SP4Mcp23S17DigitalRead(sp4_button_pin[index]);  // 0 on power on, 1 on restart
+  state = 1;                                        // Force to off on power on
   bitWrite(SPro.input_state, sp4_button_pin[index], state);
   XdrvMailbox.index = state;
   return true;
@@ -251,7 +252,7 @@ bool ShellyProAddSwitch(void) {
   if (SPro.switch_offset < 0) { SPro.switch_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
-  uint32_t state = SP4Mcp23S17DigitalRead(sp4_switch_pin[index]);
+  uint32_t state = SP4Mcp23S17DigitalRead(sp4_switch_pin[index]);  // 0 on power on and restart
   bitWrite(SPro.input_state, sp4_switch_pin[index], state);
   XdrvMailbox.index = state ^1;                     // Invert
   return true;
@@ -261,11 +262,12 @@ void ShellyProUpdateIsr(void) {
   /*
   The goal if this function is to minimize SPI and SetVirtualPinState calls
   */
-
   uint32_t input_state = SP4Mcp23S17Read16(SP4_MCP23S17_INTCAPA);  // Read intcap and clear interrupt
   input_state &= 0x806F;                            // Only test input bits
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Input detected %04X, was %04X"), input_state, SPro.input_state);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Input from %04X to %04X"), SPro.input_state, input_state);
+
+  if (TasmotaGlobal.uptime < 3) { return; }         // Flush interrupt for 3 seconds after poweron
 
   uint32_t mask = 1;
   for (uint32_t j = 0; j < 16; j++) {
