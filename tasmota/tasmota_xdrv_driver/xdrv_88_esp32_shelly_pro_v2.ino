@@ -187,13 +187,13 @@ const uint8_t sp4_button_pin[] = { 5, 2, 3 };
 void ShellyPro4Init(void) {
   /*
   Shelly Pro 4PM MCP23S17 registers
-   bit 0 = input - Switch3
-   bit 1 = input - Switch2
-   bit 2 = input, pullup, inverted - Button Down
-   bit 3 = input, pullup, inverted - Button OK
+   bit 0 = input, inverted - Switch3
+   bit 1 = input, inverted - Switch2
+   bit 2 = input - Button Down
+   bit 3 = input - Button OK
    bit 4 = output - Reset, display, ADE7953
-   bit 5 = input, pullup, inverted - Button Up
-   bit 6 = input - Switch1
+   bit 5 = input - Button Up
+   bit 6 = input, inverted - Switch1
    bit 7
    bit 8 = output - Relay O1
    bit 9
@@ -202,7 +202,7 @@ void ShellyPro4Init(void) {
    bit 12 = output - Relay O4
    bit 13 = output - Relay O2
    bit 14 = output - Relay O3
-   bit 15 = input - Switch4
+   bit 15 = input, inverted - Switch4
   */
   SP4Mcp23S17Write(SP4_MCP23S17_IOCONA, 0b01011000);   // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
   SP4Mcp23S17Write(SP4_MCP23S17_GPINTENA, 0x6F);   // Enable interrupt on change
@@ -212,20 +212,22 @@ void ShellyPro4Init(void) {
   sp4_mcp23s17_olata = SP4Mcp23S17Read(SP4_MCP23S17_OLATA);
   sp4_mcp23s17_olatb = SP4Mcp23S17Read(SP4_MCP23S17_OLATB);
 
+  SP4Mcp23S17PinMode(4, OUTPUT);                    // Reset display, ADE7943
+  SP4Mcp23S17DigitalWrite(4, 1);
+
+  for (uint32_t i = 0; i < 3; i++) {
+    SP4Mcp23S17PinMode(sp4_button_pin[i], INPUT);   // Button Up, Down, OK (RC with 10k to 3V3 and button shorting C)
+  }
+  SPro.button_offset = -1;
+
   for (uint32_t i = 0; i < 4; i++) {
     SP4Mcp23S17PinMode(sp4_switch_pin[i], INPUT);   // Switch1..4
     SP4Mcp23S17PinMode(sp4_relay_pin[i], OUTPUT);   // Relay O1..O4
   }
   SPro.switch_offset = -1;
 
-  for (uint32_t i = 0; i < 3; i++) {
-    SP4Mcp23S17PinMode(sp4_button_pin[i], PULLUP);  // Button Up, Down, OK
-  }
-  SPro.button_offset = -1;
-
-  SP4Mcp23S17PinMode(4, OUTPUT);                    // Reset display, ADE7943
-  SP4Mcp23S17DigitalWrite(4, 1);
-
+  // Read current input register state
+  SPro.input_state = SP4Mcp23S17Read16(SP4_MCP23S17_GPIOA) & 0x806F;  // Read gpio and clear interrupt
   attachInterrupt(SPro.pin_mcp23s17_int, ShellyProUpdateIsr, CHANGE);
 }
 
@@ -240,9 +242,7 @@ bool ShellyProAddButton(void) {
   if (SPro.button_offset < 0) { SPro.button_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.button_offset;
   if (index > 2) { return false; }                  // Support three buttons
-  uint32_t state = SP4Mcp23S17DigitalRead(sp4_button_pin[index]);  // 0 on power on, 1 on restart
-  state = 1;                                        // Force to off on power on
-  bitWrite(SPro.input_state, sp4_button_pin[index], state);
+  uint32_t state = bitRead(SPro.input_state, sp4_button_pin[index]);  // 1 on power on and restart
   XdrvMailbox.index = state;
   return true;
 }
@@ -252,8 +252,7 @@ bool ShellyProAddSwitch(void) {
   if (SPro.switch_offset < 0) { SPro.switch_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
-  uint32_t state = SP4Mcp23S17DigitalRead(sp4_switch_pin[index]);  // 0 on power on and restart
-  bitWrite(SPro.input_state, sp4_switch_pin[index], state);
+  uint32_t state = bitRead(SPro.input_state, sp4_switch_pin[index]);  // 0 on power on and restart
   XdrvMailbox.index = state ^1;                     // Invert
   return true;
 }
