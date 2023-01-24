@@ -53,25 +53,25 @@ struct {
 } NrgDummy;
 
 void NrgDummyEverySecond(void) {
-  if (Energy.power_on) {  // Powered on
-    for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
+  if (Energy->power_on) {  // Powered on
+    for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
 
       float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 100;
       float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION) / 100;
       float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) / 100000;
       float frequency_calibration = (float)EnergyGetCalibration(channel, ENERGY_FREQUENCY_CALIBRATION) / 100;
 
-      Energy.voltage[channel] = voltage_calibration;      // V
-      Energy.frequency[channel] = frequency_calibration;  // Hz
+      Energy->voltage[channel] = voltage_calibration;      // V
+      Energy->frequency[channel] = frequency_calibration;  // Hz
       if (bitRead(TasmotaGlobal.power, channel)) {        // Emulate power read only if device is powered on
-        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : power_calibration;   // W
-        if (0 == Energy.active_power[channel]) {
-          Energy.current[channel] = 0;
+        Energy->active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : power_calibration;   // W
+        if (0 == Energy->active_power[channel]) {
+          Energy->current[channel] = 0;
         } else {
-          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : current_calibration;  // A
-          Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
+          Energy->current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : current_calibration;  // A
+          Energy->kWhtoday_delta[channel] += Energy->active_power[channel] * 1000 / 36;
         }
-        Energy.data_valid[channel] = 0;
+        Energy->data_valid[channel] = 0;
       }
     }
     EnergyUpdateToday();
@@ -84,46 +84,46 @@ bool NrgDummyCommand(void) {
   int32_t value = (int32_t)(CharToFloat(XdrvMailbox.data) * 1000);  // 1.234 = 1234, -1.234 = -1234
   uint32_t abs_value = abs(value) / 10;                             // 1.23 = 123,   -1.23 = 123
 
-  if ((CMND_POWERCAL == Energy.command_code) || (CMND_VOLTAGECAL == Energy.command_code) || (CMND_CURRENTCAL == Energy.command_code)) {
+  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy.command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 100) && (abs_value <= 16000000)) {   // Between 1.00 and 160000.00 W
         XdrvMailbox.payload = abs_value;
       }
     }
   }
-  else if (CMND_VOLTAGESET == Energy.command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 10000) && (abs_value <= 40000)) {    // Between 100.00 and 400.00 V
         XdrvMailbox.payload = abs_value;
       }
     }
   }
-  else if (CMND_CURRENTSET == Energy.command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 1000) && (abs_value <= 40000000)) {  // Between 10.00 mA and 400.00000 A
         XdrvMailbox.payload = abs_value;
       }
     }
   }
-  else if (CMND_FREQUENCYSET == Energy.command_code) {
+  else if (CMND_FREQUENCYSET == Energy->command_code) {
     if (XdrvMailbox.data_len) {
       if ((abs_value >= 4500) && (abs_value <= 6500)) {      // Between 45.00 and 65.00 Hz
         XdrvMailbox.payload = abs_value;
       }
     }
   }
-  else if (CMND_ENERGYCONFIG == Energy.command_code) {
+  else if (CMND_ENERGYCONFIG == Energy->command_code) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, value %d, data '%s'"),
       XdrvMailbox.index, XdrvMailbox.payload, value, XdrvMailbox.data ? XdrvMailbox.data : "null" );
 
-    // EnergyConfig1 to 3 = Set Energy.current[channel] in A like 0.417 for 417mA
+    // EnergyConfig1 to 3 = Set Energy->current[channel] in A like 0.417 for 417mA
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
       NrgDummy.current[XdrvMailbox.index -1] = value;
     }
-    // EnergyConfig4 to 6 = Set Energy.active_power[channel] in W like 100 for 100W
+    // EnergyConfig4 to 6 = Set Energy->active_power[channel] in W like 100 for 100W
     if ((XdrvMailbox.index > 3) && (XdrvMailbox.index < 7)) {
       NrgDummy.power[XdrvMailbox.index -4] = value;
     }
@@ -145,11 +145,11 @@ void NrgDummyDrvInit(void) {
       Settings->energy_power_calibration2 = NRG_DUMMY_PREF;
     }
 
-    Energy.phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
-    Energy.voltage_common = NRG_DUMMY_U_COMMON;    // Phase voltage = false, Common voltage = true
-    Energy.frequency_common = NRG_DUMMY_F_COMMON;  // Phase frequency = false, Common frequency = true
-    Energy.type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;
-    Energy.use_overtemp = NRG_DUMMY_OVERTEMP;      // Use global temperature for overtemp detection
+    Energy->phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
+    Energy->voltage_common = NRG_DUMMY_U_COMMON;    // Phase voltage = false, Common voltage = true
+    Energy->frequency_common = NRG_DUMMY_F_COMMON;  // Phase frequency = false, Common frequency = true
+    Energy->type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;
+    Energy->use_overtemp = NRG_DUMMY_OVERTEMP;      // Use global temperature for overtemp detection
 
     TasmotaGlobal.energy_driver = XNRG_30;
   }

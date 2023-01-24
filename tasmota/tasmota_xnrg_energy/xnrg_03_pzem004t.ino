@@ -180,20 +180,20 @@ void PzemEvery250ms(void)
   if (data_ready) {
     float value = 0;
     if (PzemRecieve(pzem_responses[Pzem.read_state], &value)) {
-      Energy.data_valid[Pzem.phase] = 0;
+      Energy->data_valid[Pzem.phase] = 0;
       switch (Pzem.read_state) {
         case 1:  // Voltage as 230.2V
-          Energy.voltage[Pzem.phase] = value;
+          Energy->voltage[Pzem.phase] = value;
           break;
         case 2:  // Current as 17.32A
-          Energy.current[Pzem.phase] = value;
+          Energy->current[Pzem.phase] = value;
           break;
         case 3:  // Power as 20W
-          Energy.active_power[Pzem.phase] = value;
+          Energy->active_power[Pzem.phase] = value;
           break;
         case 4:  // Total energy as 99999Wh
-          Energy.import_active[Pzem.phase] = value / 1000.0f;  // 99.999kWh
-          if (Pzem.phase == Energy.phase_count -1) {
+          Energy->import_active[Pzem.phase] = value / 1000.0f;  // 99.999kWh
+          if (Pzem.phase == Energy->phase_count -1) {
             if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
               EnergyUpdateTotal();
             }
@@ -212,12 +212,12 @@ void PzemEvery250ms(void)
   if (0 == Pzem.send_retry || data_ready) {
     if (1 == Pzem.read_state) {
       if (0 == Pzem.phase) {
-        Pzem.phase = Energy.phase_count -1;
+        Pzem.phase = Energy->phase_count -1;
       } else {
         Pzem.phase--;
       }
 
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("PZM: Probing address %d, Max phases %d"), Pzem.phase +1, Energy.phase_count);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("PZM: Probing address %d, Max phases %d"), Pzem.phase +1, Energy->phase_count);
     }
 
     if (Pzem.address) {
@@ -229,8 +229,8 @@ void PzemEvery250ms(void)
   }
   else {
     Pzem.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < PZEM_STABILIZE)) {
-      Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
+    if ((Energy->phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < PZEM_STABILIZE)) {
+      Energy->phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
       if (TasmotaGlobal.discovery_counter) {
         TasmotaGlobal.discovery_counter += (PZEM_RETRY / 4) + 1;  // Don't send Discovery yet, delay by 5 * 250ms + 1s
       }
@@ -246,7 +246,7 @@ void PzemSnsInit(void)
     if (PzemSerial->hardwareSerial()) {
       ClaimSerial();
     }
-    Energy.phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
+    Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     Pzem.phase = 0;
     Pzem.read_state = 1;
   } else {
@@ -265,7 +265,7 @@ bool PzemCommand(void)
 {
   bool serviced = true;
 
-  if (CMND_MODULEADDRESS == Energy.command_code) {
+  if (CMND_MODULEADDRESS == Energy->command_code) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= ENERGY_MAX_PHASES)) {
       Pzem.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
     }

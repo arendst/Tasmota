@@ -460,7 +460,7 @@ void Ade7953GetData(void) {
 #endif  // USE_ESP32_SPI
 
 #ifdef USE_ESP32_SPI
-  if (1 == Energy.phase_count) {
+  if (1 == Energy->phase_count) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, WATT %d, VA %d, VAR %d"),
       acc_mode, reg[0][4], reg[0][5], reg[0][0], reg[0][1], reg[0][2], reg[0][3]);
   } else
@@ -475,7 +475,7 @@ void Ade7953GetData(void) {
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
-  for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
+  for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
     Ade7953.voltage_rms[channel] = reg[channel][4];
     Ade7953.current_rms[channel] = reg[channel][0];
     if (Ade7953.current_rms[channel] < 2000) {        // No load threshold (20mA)
@@ -491,10 +491,10 @@ void Ade7953GetData(void) {
     }
   }
 
-  if (Energy.power_on) {                              // Powered on
+  if (Energy->power_on) {                              // Powered on
     float divider;
-    for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
-      Energy.data_valid[channel] = 0;
+    for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
+      Energy->data_valid[channel] = 0;
 
       float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
 #ifdef ADE7953_ACCU_ENERGY
@@ -503,29 +503,29 @@ void Ade7953GetData(void) {
       float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION);
       float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) * 10;
 
-      Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
+      Energy->frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
-      Energy.voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
+      Energy->voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
-      Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
+      Energy->active_power[channel] = (float)Ade7953.active_power[channel] / divider;
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
-      Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
+      Energy->reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
-          Energy.active_power[channel] *= -1;
+          Energy->active_power[channel] *= -1;
         }
         if (bitRead(acc_mode, 12 +channel)) {        // VARSIGN
-          Energy.reactive_power[channel] *= -1;
+          Energy->reactive_power[channel] *= -1;
         }
       }
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
-      Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
-      if (0 == Energy.active_power[channel]) {
-        Energy.current[channel] = 0;
+      Energy->apparent_power[channel] = (float)apparent_power[channel] / divider;
+      if (0 == Energy->active_power[channel]) {
+        Energy->current[channel] = 0;
       } else {
         divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : current_calibration;
-        Energy.current[channel] = (float)Ade7953.current_rms[channel] / divider;
-        Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
+        Energy->current[channel] = (float)Ade7953.current_rms[channel] / divider;
+        Energy->kWhtoday_delta[channel] += Energy->active_power[channel] * 1000 / 36;
       }
     }
     EnergyUpdateToday();
@@ -719,22 +719,22 @@ void Ade7953DrvInit(void) {
 
     Ade7953.init_step = 3;
 
-//    Energy.phase_count = 1;
-//    Energy.voltage_common = false;
-//    Energy.frequency_common = false;
-//    Energy.use_overtemp = false;
+//    Energy->phase_count = 1;
+//    Energy->voltage_common = false;
+//    Energy->frequency_common = false;
+//    Energy->use_overtemp = false;
     if (ADE7953_SHELLY_PRO_1PM == Ade7953.model) {
     } else {
-      Energy.phase_count = 2;                        // Handle two channels as two phases
+      Energy->phase_count = 2;                        // Handle two channels as two phases
       if (ADE7953_SHELLY_PRO_2PM == Ade7953.model) {
       } else {
-        Energy.voltage_common = true;                // Use common voltage
-        Energy.frequency_common = true;              // Use common frequency
+        Energy->voltage_common = true;                // Use common voltage
+        Energy->frequency_common = true;              // Use common frequency
       }
     }
-    Energy.use_overtemp = true;                      // Use global temperature for overtemp detection
+    Energy->use_overtemp = true;                      // Use global temperature for overtemp detection
     if (ADE7953_SHELLY_EM == Ade7953.model) {
-      Energy.local_energy_active_export = true;
+      Energy->local_energy_active_export = true;
     }
     TasmotaGlobal.energy_driver = XNRG_07;
   }
@@ -746,19 +746,19 @@ bool Ade7953Command(void) {
   uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
-  if (CMND_POWERCAL == Energy.command_code) {
+  if (CMND_POWERCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = ADE7953_PREF; }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_VOLTAGECAL == Energy.command_code) {
+  else if (CMND_VOLTAGECAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = ADE7953_UREF; }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_CURRENTCAL == Energy.command_code) {
+  else if (CMND_CURRENTCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = ADE7953_IREF; }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy.command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {       // Between 1W and 2000W
 #ifdef ADE7953_ACCU_ENERGY
@@ -771,14 +771,14 @@ bool Ade7953Command(void) {
       }
     }
   }
-  else if (CMND_VOLTAGESET == Energy.command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.voltage_rms[channel]) {
       if ((value > 10000) && (value < 26000)) {      // Between 100V and 260V
         XdrvMailbox.payload = (Ade7953.voltage_rms[channel] * 100) / value;  // 0.00 V
       }
     }
   }
-  else if (CMND_CURRENTSET == Energy.command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
       if ((value > 2000) && (value < 1000000)) {     // Between 20mA and 10A
         XdrvMailbox.payload = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA

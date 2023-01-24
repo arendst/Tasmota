@@ -284,19 +284,19 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     }
 
     if (DataRead[6] == 0x11 && DataRead[7] == 0x82) { // received "Response for query (live data)"
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
       solaxX1.temperature =    (DataRead[9] << 8) | DataRead[10]; // Temperature
       solaxX1.energy_today =   ((DataRead[11] << 8) | DataRead[12]) * 0.1f; // Energy Today
       solaxX1.dc1_voltage =    ((DataRead[13] << 8) | DataRead[14]) * 0.1f; // PV1 Voltage
       solaxX1.dc2_voltage =    ((DataRead[15] << 8) | DataRead[16]) * 0.1f; // PV2 Voltage
       solaxX1.dc1_current =    ((DataRead[17] << 8) | DataRead[18]) * 0.1f; // PV1 Current
       solaxX1.dc2_current =    ((DataRead[19] << 8) | DataRead[20]) * 0.1f; // PV2 Current
-      Energy.current[0] =      ((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
-      Energy.voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
-      Energy.frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
-      Energy.active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
+      Energy->current[0] =      ((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
+      Energy->voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
+      Energy->frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
+      Energy->active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
-      Energy.import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
+      Energy->import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
       solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
       solaxX1.runMode =        (DataRead[39] << 8) | DataRead[40]; // Work mode
       //temporal = (float)((DataRead[41] << 8) | DataRead[42]); // Grid voltage fault value 0.1V
@@ -444,9 +444,9 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     if (!solaxX1_global.SendRetry_count) { // Inverter went "off"
       solaxX1_global.SendRetry_count = 20;
       DEBUG_SENSOR_LOG(PSTR("SX1: Inverter went \"off\""));
-      Energy.data_valid[0] = ENERGY_WATCHDOG;
+      Energy->data_valid[0] = ENERGY_WATCHDOG;
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
-      solaxX1.dc2_power = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
+      solaxX1.dc2_power = Energy->current[0] = Energy->voltage[0] = Energy->frequency[0] = Energy->active_power[0] = 0;
       solaxX1.runMode = -1; // off(line)
       solaxX1_global.AddressAssigned = false;
     } // end Inverter went "off"

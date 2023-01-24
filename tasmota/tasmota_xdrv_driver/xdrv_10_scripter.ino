@@ -2773,43 +2773,43 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           while (*lp==' ') lp++;
           switch ((uint32_t)fvar) {
             case 0:
-              fvar = Energy.total_sum;
+              fvar = Energy->total_sum;
               break;
             case 1:
-              fvar = Energy.voltage[0];
+              fvar = Energy->voltage[0];
               break;
             case 2:
-              fvar = Energy.voltage[1];
+              fvar = Energy->voltage[1];
               break;
             case 3:
-              fvar = Energy.voltage[2];
+              fvar = Energy->voltage[2];
               break;
             case 4:
-              fvar = Energy.current[0];
+              fvar = Energy->current[0];
               break;
             case 5:
-              fvar = Energy.current[1];
+              fvar = Energy->current[1];
               break;
             case 6:
-              fvar = Energy.current[2];
+              fvar = Energy->current[2];
               break;
             case 7:
-              fvar = Energy.active_power[0];
+              fvar = Energy->active_power[0];
               break;
             case 8:
-              fvar = Energy.active_power[1];
+              fvar = Energy->active_power[1];
               break;
             case 9:
-              fvar = Energy.active_power[2];
+              fvar = Energy->active_power[2];
               break;
             case 10:
-              fvar = Energy.start_energy[0];
+              fvar = Energy->start_energy[0];
               break;
             case 11:
-              fvar = Energy.daily_sum;
+              fvar = Energy->daily_sum;
               break;
             case 12:
-              fvar = Energy.yesterday_sum;
+              fvar = Energy->yesterday_sum;
               break;
 
             default:

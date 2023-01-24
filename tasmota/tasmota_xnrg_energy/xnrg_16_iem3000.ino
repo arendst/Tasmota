@@ -83,7 +83,7 @@ void IEM3000Every250ms(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
 
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
@@ -108,55 +108,55 @@ void IEM3000Every250ms(void)
 
       switch(Iem3000.read_state) {
         case 0:
-          Energy.current[0] = value;
+          Energy->current[0] = value;
           break;
 
         case 1:
-          Energy.current[1] = value;
+          Energy->current[1] = value;
           break;
 
         case 2:
-          Energy.current[2] = value;
+          Energy->current[2] = value;
           break;
 
         case 3:
-          Energy.voltage[0]  = value;
+          Energy->voltage[0]  = value;
           break;
 
         case 4:
-          Energy.voltage[1]  = value;
+          Energy->voltage[1]  = value;
           break;
 
         case 5:
-          Energy.voltage[2]  = value;
+          Energy->voltage[2]  = value;
           break;
 
         case 6:
-          Energy.active_power[0] = value*1000;
+          Energy->active_power[0] = value*1000;
           break;
 
         case 7:
-          Energy.active_power[1] = value*1000;
+          Energy->active_power[1] = value*1000;
           break;
 
         case 8:
-          Energy.active_power[2] = value*1000;
+          Energy->active_power[2] = value*1000;
           break;
 
         case 9:
-          Energy.frequency[0] = value;
+          Energy->frequency[0] = value;
           break;
 
         case 10:
-          Energy.import_active[0] = value64/1000.0;
+          Energy->import_active[0] = value64/1000.0;
           break;
         
         case 11:
-          Energy.import_active[1] = value64/1000.0;
+          Energy->import_active[1] = value64/1000.0;
           break;
 
         case 12:
-          Energy.import_active[2] = value64/1000.0;
+          Energy->import_active[2] = value64/1000.0;
           break;
 
         case 13:
@@ -185,8 +185,8 @@ void Iem3000SnsInit(void)
   uint8_t result = Iem3000Modbus->Begin(IEM3000_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
-    Energy.phase_count = 3;
-    Energy.frequency_common = true;             // Use common frequency
+    Energy->phase_count = 3;
+    Energy->frequency_common = true;             // Use common frequency
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

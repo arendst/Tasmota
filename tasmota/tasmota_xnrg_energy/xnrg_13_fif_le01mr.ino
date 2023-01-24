@@ -125,7 +125,7 @@ void FifLEEvery250ms(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
 
       // CA=Client Address, FC=Function Code, BC=Byte Count, B3..B0=Data byte, Ch Cl = crc16 checksum
       // U32 registers:
@@ -153,36 +153,36 @@ void FifLEEvery250ms(void)
 
       switch(Le01mr.read_state) {
         case 0:
-          Energy.frequency[0] = value_buff * 0.01f;  // 5000 => 50.00
+          Energy->frequency[0] = value_buff * 0.01f;  // 5000 => 50.00
           break;
 
         case 1:
-          Energy.voltage[0] = value_buff * 0.01f;   // 23298 => 232.98 V
+          Energy->voltage[0] = value_buff * 0.01f;   // 23298 => 232.98 V
           break;
 
         case 2:
-          Energy.power_factor[0] = ((int16_t)value_buff) * 0.001f; // 1000 => 1.000 //note: I never saw this negative...
+          Energy->power_factor[0] = ((int16_t)value_buff) * 0.001f; // 1000 => 1.000 //note: I never saw this negative...
           break;
 
         case 3:
-          Energy.current[0] = value_buff * 0.001f; // 114 => 0.114 A
+          Energy->current[0] = value_buff * 0.001f; // 114 => 0.114 A
           break;
 
         case 4:
-          Energy.active_power[0] = value_buff * 1.0f; // P [W]
+          Energy->active_power[0] = value_buff * 1.0f; // P [W]
           break;
 
         case 5:
-          Energy.reactive_power[0] = value_buff * 1.0f; // Q [var]
+          Energy->reactive_power[0] = value_buff * 1.0f; // Q [var]
           break;
 
         case 6:
-          Energy.apparent_power[0] = value_buff * 1.0f; // S [VA]
+          Energy->apparent_power[0] = value_buff * 1.0f; // S [VA]
           break;
 
         case 7:
-          Energy.import_active[0] = value_buff * 0.01f; // [kWh]
-          Le01mr.total_active = Energy.import_active[0];  // Useless
+          Energy->import_active[0] = value_buff * 0.01f; // [kWh]
+          Le01mr.total_active = Energy->import_active[0];  // Useless
           break;
 
         case 8:

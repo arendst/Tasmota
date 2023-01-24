@@ -454,19 +454,19 @@ void McpParseData(void)
 //  mcp_power_factor   = McpExtractInt(mcp_buffer, 20, 2);
   mcp_line_frequency = McpExtractInt(mcp_buffer, 22, 2);
 
-  if (Energy.power_on) {  // Powered on
-    Energy.data_valid[0] = 0;
-    Energy.frequency[0] = (float)mcp_line_frequency / 1000;
-    Energy.voltage[0] = (float)mcp_voltage_rms / 10;
-    Energy.active_power[0] = (float)mcp_active_power / 100;
-    if (0 == Energy.active_power[0]) {
-      Energy.current[0] = 0;
+  if (Energy->power_on) {  // Powered on
+    Energy->data_valid[0] = 0;
+    Energy->frequency[0] = (float)mcp_line_frequency / 1000;
+    Energy->voltage[0] = (float)mcp_voltage_rms / 10;
+    Energy->active_power[0] = (float)mcp_active_power / 100;
+    if (0 == Energy->active_power[0]) {
+      Energy->current[0] = 0;
     } else {
-      Energy.current[0] = (float)mcp_current_rms / 10000;
+      Energy->current[0] = (float)mcp_current_rms / 10000;
     }
 /*
   } else {  // Powered off
-    Energy.data_valid[0] = ENERGY_WATCHDOG;
+    Energy->data_valid[0] = ENERGY_WATCHDOG;
 */
   }
 }
@@ -526,7 +526,7 @@ void McpSerialInput(void)
 
 void McpEverySecond(void)
 {
-  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
+  if (Energy->data_valid[0] > ENERGY_WATCHDOG) {
     mcp_voltage_rms = 0;
     mcp_current_rms = 0;
     mcp_active_power = 0;
@@ -534,7 +534,7 @@ void McpEverySecond(void)
   }
 
   if (mcp_active_power) {
-    Energy.kWhtoday_delta[0] += ((mcp_active_power * 10) / 36);
+    Energy->kWhtoday_delta[0] += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();
   }
 
@@ -573,7 +573,7 @@ void McpSnsInit(void)
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
     DigitalWrite(GPIO_MCP39F5_RST, 0, 1);  // MCP enable
-    Energy.use_overtemp = true;            // Use global temperature for overtemp detection
+    Energy->use_overtemp = true;            // Use global temperature for overtemp detection
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
@@ -598,7 +598,7 @@ bool McpCommand(void)
   bool serviced = true;
   unsigned long value = 0;
 
-  if (CMND_POWERSET == Energy.command_code) {
+  if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
@@ -608,7 +608,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_VOLTAGESET == Energy.command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
@@ -618,7 +618,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_CURRENTSET == Energy.command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
@@ -628,7 +628,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_FREQUENCYSET == Energy.command_code) {
+  else if (CMND_FREQUENCYSET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_line_frequency) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz

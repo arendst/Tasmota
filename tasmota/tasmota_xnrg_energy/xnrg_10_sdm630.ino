@@ -88,9 +88,9 @@ void SDM630Every250ms(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
-      Energy.data_valid[1] = 0;
-      Energy.data_valid[2] = 0;
+      Energy->data_valid[0] = 0;
+      Energy->data_valid[1] = 0;
+      Energy->data_valid[2] = 0;
 
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
@@ -103,95 +103,95 @@ void SDM630Every250ms(void)
 
       switch(Sdm630.read_state) {
         case 0:
-          Energy.voltage[0] = value;
+          Energy->voltage[0] = value;
           break;
 
         case 1:
-          Energy.voltage[1] = value;
+          Energy->voltage[1] = value;
           break;
 
         case 2:
-          Energy.voltage[2] = value;
+          Energy->voltage[2] = value;
           break;
 
         case 3:
-          Energy.current[0] = value;
+          Energy->current[0] = value;
           break;
 
         case 4:
-          Energy.current[1] = value;
+          Energy->current[1] = value;
           break;
 
         case 5:
-          Energy.current[2] = value;
+          Energy->current[2] = value;
           break;
 
         case 6:
-          Energy.active_power[0] = value;
+          Energy->active_power[0] = value;
           break;
 
         case 7:
-          Energy.active_power[1] = value;
+          Energy->active_power[1] = value;
           break;
 
         case 8:
-          Energy.active_power[2] = value;
+          Energy->active_power[2] = value;
           break;
 
         case 9:
-          Energy.reactive_power[0] = value;
+          Energy->reactive_power[0] = value;
           break;
 
         case 10:
-          Energy.reactive_power[1] = value;
+          Energy->reactive_power[1] = value;
           break;
 
         case 11:
-          Energy.reactive_power[2] = value;
+          Energy->reactive_power[2] = value;
           break;
 
         case 12:
-          Energy.power_factor[0] = value;
+          Energy->power_factor[0] = value;
           break;
 
         case 13:
-          Energy.power_factor[1] = value;
+          Energy->power_factor[1] = value;
           break;
 
         case 14:
-          Energy.power_factor[2] = value;
+          Energy->power_factor[2] = value;
           break;
 
         case 15:
-          Energy.frequency[0] = value;
+          Energy->frequency[0] = value;
           break;
 
         case 16:
-          Energy.export_active[0] = value;
+          Energy->export_active[0] = value;
           break;
 
         case 17:
-          Energy.export_active[1] = value;
+          Energy->export_active[1] = value;
           break;
 
         case 18:
-          Energy.export_active[2] = value;
+          Energy->export_active[2] = value;
           break;
 
         case 19:
-          Energy.import_active[0] = value;
+          Energy->import_active[0] = value;
           break;
 
         case 20:
-          Energy.import_active[1] = value;
+          Energy->import_active[1] = value;
           break;
 
         case 21:
-          Energy.import_active[2] = value;
+          Energy->import_active[2] = value;
           break;
 
         case 22:
-//          Energy.import_active[0] = value;
+//          Energy->import_active[0] = value;
           EnergyUpdateTotal();
           break;
       }
@@ -217,8 +217,8 @@ void Sdm630SnsInit(void)
   uint8_t result = Sdm630Modbus->Begin(SDM630_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
-    Energy.phase_count = 3;
-    Energy.frequency_common = true;             // Use common frequency
+    Energy->phase_count = 3;
+    Energy->frequency_common = true;             // Use common frequency
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

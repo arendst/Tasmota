@@ -68,7 +68,7 @@ void DDSU666Every250ms(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
 
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
@@ -81,35 +81,35 @@ void DDSU666Every250ms(void)
 
       switch(Ddsu666.read_state) {
         case 0:
-          Energy.voltage[0] = value;          // 230.2 V
+          Energy->voltage[0] = value;          // 230.2 V
           break;
 
         case 1:
-          Energy.current[0]  = value;         // 1.260 A
+          Energy->current[0]  = value;         // 1.260 A
           break;
 
         case 2:
-          Energy.active_power[0] = value * 1000;     // -196.3 W
+          Energy->active_power[0] = value * 1000;     // -196.3 W
           break;
 
         case 3:
-          Energy.reactive_power[0] = value * 1000;   // 92.2
+          Energy->reactive_power[0] = value * 1000;   // 92.2
           break;
 
         case 4:
-          Energy.power_factor[0] = value;     // 0.91
+          Energy->power_factor[0] = value;     // 0.91
           break;
 
         case 5:
-          Energy.frequency[0] = value;        // 50.0 Hz
+          Energy->frequency[0] = value;        // 50.0 Hz
           break;
 
         case 6:
-          Energy.import_active[0] = value;    // 478.492 kWh
+          Energy->import_active[0] = value;    // 478.492 kWh
           break;
 
         case 7:
-          Energy.export_active[0] = value;    // 6.216 kWh
+          Energy->export_active[0] = value;    // 6.216 kWh
           break;
       }
 
