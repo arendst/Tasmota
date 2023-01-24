@@ -1427,10 +1427,9 @@ void TuyaSetWifiStrength(void) {
   uint16_t payload_len = 1;
   uint8_t payload_buffer[1];
   int32_t rssi = WiFi.RSSI();
-  int signal_strength = WifiGetRssiAsQuality(rssi);
+  payload_buffer[0] = (uint8_t)rssi;
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX MCU Get Wifi Strength -> sending %d"), signal_strength);
-  payload_buffer[0] = (uint8_t)signal_strength;
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX MCU Get Wifi Strength -> sending %d (0x%02X)"), rssi, payload_buffer[0]);
 
   TuyaSendCmd(TUYA_CMD_GET_WIFI_STRENGTH, payload_buffer, payload_len);
 }
