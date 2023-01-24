@@ -567,7 +567,53 @@ tuyamcubr_cmnd_data(struct tuyamcubr_softc *sc, uint8_t type)
 static void
 tuyamcubr_cmnd_data_bool(void)
 {
-	tuyamcubr_cmnd_data(tuyamcubr_sc, TUYAMCUBR_DATA_TYPE_BOOL);
+	struct tuyamcubr_softc *sc = tuyamcubr_sc;
+	struct {
+		struct tuyamcubr_data_header h;
+		uint8_t value[1];
+	} data;
+	struct tuyamcubr_dp *dp;
+	uint32_t value;
+
+	dp = tuyamcubr_find_dp(sc, XdrvMailbox.index, TUYAMCUBR_DATA_TYPE_BOOL);
+	if (dp == NULL) {
+		ResponseCmndChar_P(PSTR("Unknown DpId"));
+		return;
+	}
+
+	if (XdrvMailbox.data_len == 0) {
+		ResponseCmndNumber(dp->dp_value);
+		return;
+	}
+
+	switch (XdrvMailbox.payload) {
+	case 0:
+	case 1:
+		value = XdrvMailbox.payload;
+		break;
+	case 2:
+		value = !dp->dp_value;
+		break;
+	default:
+		ResponseCmndChar_P(PSTR("Invalid"));
+		return;
+	}
+
+	dp->dp_value = value;
+
+	data.h.dpid = dp->dp_id;
+	data.h.type = dp->dp_type;
+	data.h.len = htons(sizeof(data.value));
+	data.value[0] = value;
+
+	tuyamcubr_send(sc, TUYAMCUBR_CMD_SET_DP, &data, sizeof(data));
+	tuyamcubr_rule_dp(sc, dp);
+
+	ResponseCmndNumber(dp->dp_value);
+
+	/* SetOption59 */
+	if (Settings->flag3.hass_tele_on_power)
+		tuyamcubr_publish_dp(sc, dp);
 }
 
 static void
