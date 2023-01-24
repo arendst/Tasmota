@@ -23,6 +23,7 @@ struct {
   void (* SetTime)(uint32_t);
   int32_t (* MemRead)(uint8_t *, uint32_t);
   int32_t (* MemWrite)(uint8_t *, uint32_t);
+  void (* ShowSensor)(bool);
   bool detected;
   int8_t mem_size = -1;
   uint8_t address;
@@ -51,6 +52,8 @@ struct {
 #define DS3231_YEAR         0x06
 #define DS3231_CONTROL      0x0E
 #define DS3231_STATUS       0x0F
+#define DS3231_TEMP_MSB     0x11
+#define DS3231_TEMP_LSB     0x12
 
 // Control register bits
 #define DS3231_OSF          7
@@ -82,6 +85,47 @@ uint32_t DS3231ReadTime(void) {
 }
 
 /*-------------------------------------------------------------------------------------------*\
+ * Read temperature from DS3231 internal sensor, return as float
+\*-------------------------------------------------------------------------------------------*/
+#ifdef DS3231_ENABLE_TEMP
+float DS3231ReadTemp(void) {
+  int16_t temp_reg = I2cReadS16(RtcChip.address, DS3231_TEMP_MSB) >> 6;
+  float temp = temp_reg * 0.25;
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("RTC: DS3231 temp_reg=%d"), temp_reg);
+  return temp;
+}
+#endif // #ifdef DS3231_ENABLE_TEMP
+
+/*-------------------------------------------------------------------------------------------*\
+ * Show temperature from DS3231 internal sensor, Web or SENSOR
+\*-------------------------------------------------------------------------------------------*/
+#ifdef DS3231_ENABLE_TEMP
+void D3231ShowSensor(bool json) {
+    float f_temperature = ConvertTemp(DS3231ReadTemp());
+
+    if (json) {
+        ResponseAppend_P(PSTR(",\"DS3231\":{\"" D_JSON_TEMPERATURE "\":%*_f}"), Settings->flag2.temperature_resolution, &f_temperature);
+#ifdef USE_DOMOTICZ
+        if (0 == TasmotaGlobal.tele_period) {
+          DomoticzFloatSensor(DZ_TEMP, f_temperature);
+        }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if (0 == TasmotaGlobal.tele_period) {
+          KnxSensor(KNX_TEMPERATURE, f_temperature);
+        }
+#endif  // USE_KNX
+    } 
+#ifdef USE_WEBSERVER
+    else {
+        WSContentSend_Temp("DS3231", f_temperature);
+    }
+#endif // #ifdef USE_WEBSERVER
+}
+#endif // #ifdef DS3231_ENABLE_TEMP
+
+
+/*-------------------------------------------------------------------------------------------*\
  * Get time as TIME_T and set the DS3231 time to this value
 \*-------------------------------------------------------------------------------------------*/
 void DS3231SetTime(uint32_t epoch_time) {
@@ -109,6 +153,9 @@ void DS3231Detected(void) {
         strcpy_P(RtcChip.name, PSTR("DS3231"));
         RtcChip.ReadTime = &DS3231ReadTime;
         RtcChip.SetTime = &DS3231SetTime;
+#ifdef DS3231_ENABLE_TEMP
+        RtcChip.ShowSensor = &D3231ShowSensor;
+#endif
         RtcChip.mem_size = -1;
       }
     }
@@ -455,6 +502,12 @@ bool Xdrv56(uint32_t function) {
     switch (function) {
       case FUNC_TIME_SYNCED:
         RtcChipTimeSynced();
+        break;
+      case FUNC_WEB_SENSOR:
+        if (RtcChip.ShowSensor) RtcChip.ShowSensor(0);
+        break;
+      case FUNC_JSON_APPEND:
+        if (RtcChip.ShowSensor) RtcChip.ShowSensor(1);
         break;
     }
   }
