@@ -188,13 +188,13 @@ bool Bl09XXDecode42(void) {
 
 void Bl09XXUpdateEnergy() {
   if (Energy->power_on) {  // Powered on
-    Energy->voltage[0] = (float)Bl09XX.voltage / Settings->energy_voltage_calibration;
+    Energy->voltage[0] = (float)Bl09XX.voltage / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION);
 #ifdef DEBUG_BL09XX
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %2_f, T %2_f"), &Energy->voltage[0], &Bl09XX.temperature);
 #endif
     for (uint32_t chan = 0; chan < Energy->phase_count; chan++) {
-      uint32_t power_calibration = EnergyGetCalibration(chan, ENERGY_POWER_CALIBRATION);
-      uint32_t current_calibration = EnergyGetCalibration(chan, ENERGY_CURRENT_CALIBRATION);
+      uint32_t power_calibration = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, chan);
+      uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, chan);
       if (Bl09XX.power[chan] > power_calibration) {                                     // We need at least 1W
         Energy->active_power[chan] = (float)Bl09XX.power[chan] / power_calibration;
         Energy->current[chan] = (float)Bl09XX.current[chan] / current_calibration;
@@ -287,16 +287,16 @@ void Bl09XXInit(void) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
-    if (HLW_UREF_PULSE == Settings->energy_voltage_calibration) {
-      Settings->energy_voltage_calibration = bl09xx_uref[Bl09XX.model];
-      Settings->energy_current_calibration = bl09xx_iref[Bl09XX.model];
-      Settings->energy_power_calibration   = bl09xx_pref[Bl09XX.model];
-      Settings->energy_voltage_calibration2 = bl09xx_uref[Bl09XX.model];
-      Settings->energy_current_calibration2 = bl09xx_iref[Bl09XX.model];
-      Settings->energy_power_calibration2   = bl09xx_pref[Bl09XX.model];
+    if (HLW_UREF_PULSE == EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) {
+      for (uint32_t i = 0; i < 2; i++) {
+        EnergySetCalibration(ENERGY_POWER_CALIBRATION, bl09xx_pref[Bl09XX.model], i);
+        EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, bl09xx_uref[Bl09XX.model], i);
+        EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, bl09xx_iref[Bl09XX.model], i);
+      }
     }
-    if ((BL0940_MODEL == Bl09XX.model) && (Settings->energy_current_calibration < (BL0940_IREF / 20))) {
-      Settings->energy_current_calibration *= 100;
+    if ((BL0940_MODEL == Bl09XX.model) && (EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION) < (BL0940_IREF / 20))) {
+      uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION) * 100;
+      EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, current_calibration);
     }
 
     if (BL0942_MODEL != Bl09XX.model) {

@@ -214,15 +214,15 @@ void McpParseCalibration(void)
   cal_registers.accumulation_interval      = McpExtractInt(mcp_buffer, 52, 2);
 
   if (mcp_calibrate & MCP_CALIBRATE_POWER) {
-    cal_registers.calibration_active_power = Settings->energy_power_calibration;
+    cal_registers.calibration_active_power = EnergyGetCalibration(ENERGY_POWER_CALIBRATION);
     if (McpCalibrationCalc(&cal_registers, 16)) { action = true; }
   }
   if (mcp_calibrate & MCP_CALIBRATE_VOLTAGE) {
-    cal_registers.calibration_voltage = Settings->energy_voltage_calibration;
+    cal_registers.calibration_voltage = EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION);
     if (McpCalibrationCalc(&cal_registers, 0)) { action = true; }
   }
   if (mcp_calibrate & MCP_CALIBRATE_CURRENT) {
-    cal_registers.calibration_current = Settings->energy_current_calibration;
+    cal_registers.calibration_current = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION);
     if (McpCalibrationCalc(&cal_registers, 8)) { action = true; }
   }
   mcp_timeout = 0;
@@ -230,9 +230,9 @@ void McpParseCalibration(void)
 
   mcp_calibrate = 0;
 
-  Settings->energy_power_calibration = cal_registers.calibration_active_power;
-  Settings->energy_voltage_calibration = cal_registers.calibration_voltage;
-  Settings->energy_current_calibration = cal_registers.calibration_current;
+  EnergySetCalibration(ENERGY_POWER_CALIBRATION, cal_registers.calibration_active_power);
+  EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, cal_registers.calibration_voltage);
+  EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, cal_registers.calibration_current);
 
   mcp_system_configuration = cal_registers.system_configuration;
 
@@ -386,7 +386,7 @@ void McpParseFrequency(void)
   uint16_t gain_line_frequency = mcp_buffer[4] * 256 + mcp_buffer[5];
 
   if (mcp_calibrate & MCP_CALIBRATE_FREQUENCY) {
-    line_frequency_ref = Settings->energy_frequency_calibration;
+    line_frequency_ref = EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION);
 
     if ((0xFFFF == mcp_line_frequency) || (0 == gain_line_frequency)) {  // Reset values to 50Hz
       mcp_line_frequency  = 50000;
@@ -398,7 +398,7 @@ void McpParseFrequency(void)
     McpSetFrequency(line_frequency_ref, gain_line_frequency);
   }
 
-  Settings->energy_frequency_calibration = line_frequency_ref;
+  EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, line_frequency_ref);
 
   mcp_calibrate = 0;
 }

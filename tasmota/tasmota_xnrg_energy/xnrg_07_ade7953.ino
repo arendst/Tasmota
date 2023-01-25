@@ -496,12 +496,12 @@ void Ade7953GetData(void) {
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
       Energy->data_valid[channel] = 0;
 
-      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 10;
+      float power_calibration = (float)EnergyGetCalibration(ENERGY_POWER_CALIBRATION, channel) / 10;
 #ifdef ADE7953_ACCU_ENERGY
       power_calibration /= ADE7953_POWER_CORRECTION;
 #endif  // ADE7953_ACCU_ENERGY
-      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION);
-      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) * 10;
+      float voltage_calibration = (float)EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION, channel);
+      float current_calibration = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel) * 10;
 
       Energy->frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
@@ -705,14 +705,12 @@ void Ade7953DrvInit(void) {
 #ifdef USE_ESP32_SPI
     }
 #endif  // USE_ESP32_SPI
-
-    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-      Settings->energy_power_calibration = ADE7953_PREF;
-      Settings->energy_voltage_calibration = ADE7953_UREF;
-      Settings->energy_current_calibration = ADE7953_IREF;
-      Settings->energy_power_calibration2 = ADE7953_PREF;
-      Settings->energy_voltage_calibration2 = ADE7953_UREF;
-      Settings->energy_current_calibration2 = ADE7953_IREF;
+    if (EnergyGetCalibration(ENERGY_POWER_CALIBRATION) == HLW_PREF_PULSE) {
+      for (uint32_t i = 0; i < 4; i++) {
+        EnergySetCalibration(ENERGY_POWER_CALIBRATION, ADE7953_PREF, i);
+        EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, ADE7953_UREF, i);
+        EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, ADE7953_IREF, i);
+      }
     }
 
     Ade7953Defaults();

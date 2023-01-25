@@ -221,17 +221,17 @@ bool Cse7761ChipInit(void) {
     CSE7761Data.coefficient[PowerPAC] = CSE7761_PREF;
 //    CSE7761Data.coefficient[PowerPBC] = 0xADD7;
   }
-  if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-    Settings->energy_frequency_calibration = CSE7761_FREF;
-    Settings->energy_voltage_calibration = Cse7761Ref(RmsUC);
-    Settings->energy_current_calibration = Cse7761Ref(RmsIAC);
-    Settings->energy_power_calibration = Cse7761Ref(PowerPAC);
-    Settings->energy_current_calibration2 = Settings->energy_current_calibration;
-    Settings->energy_power_calibration2 = Settings->energy_power_calibration;
+  if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
+    for (uint32_t i = 0; i < 2; i++) {
+      EnergySetCalibration(ENERGY_POWER_CALIBRATION, Cse7761Ref(PowerPAC), i);
+      EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, Cse7761Ref(RmsUC), i);
+      EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, Cse7761Ref(RmsIAC), i);
+      EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, CSE7761_FREF, i);
+    }
   }
   // Just to fix intermediate users
-  if (Settings->energy_frequency_calibration < CSE7761_FREF / 2) {
-    Settings->energy_frequency_calibration = CSE7761_FREF;
+  if (EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) < CSE7761_FREF / 2) {
+    EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, CSE7761_FREF);
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
@@ -461,21 +461,21 @@ void Cse7761GetData(void) {
   if (Energy->power_on) {  // Powered on
     // Voltage = RmsU * RmsUC * 10 / 0x400000
     // Energy->voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
-    Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / Settings->energy_voltage_calibration);  // V
+    Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION));  // V
 #ifdef CSE7761_FREQUENCY
-    Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)Settings->energy_frequency_calibration / 8 / CSE7761Data.frequency) : 0;  // Hz
+    Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) / 8 / CSE7761Data.frequency) : 0;  // Hz
 #endif
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy->data_valid[channel] = 0;
-      uint32_t power_calibration = EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION);
+      uint32_t power_calibration = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, channel);
       // Active power = PowerPA * PowerPAC * 1000 / 0x80000000
       // Energy->active_power[channel] = (float)(((uint64_t)CSE7761Data.active_power[channel] * CSE7761Data.coefficient[PowerPAC + channel] * 1000) >> 31) / 1000;  // W
       Energy->active_power[channel] = (float)CSE7761Data.active_power[channel] / power_calibration;  // W
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
       } else {
-        uint32_t current_calibration = EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION);
+        uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel);
         // Current = RmsIA * RmsIAC / 0x800000
         // Energy->current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
         Energy->current[channel] = (float)CSE7761Data.current_rms[channel] / current_calibration;  // A

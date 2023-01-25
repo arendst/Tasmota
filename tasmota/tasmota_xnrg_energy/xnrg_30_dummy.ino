@@ -56,10 +56,10 @@ void NrgDummyEverySecond(void) {
   if (Energy->power_on) {  // Powered on
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
 
-      float power_calibration = (float)EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION) / 100;
-      float voltage_calibration = (float)EnergyGetCalibration(channel, ENERGY_VOLTAGE_CALIBRATION) / 100;
-      float current_calibration = (float)EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION) / 100000;
-      float frequency_calibration = (float)EnergyGetCalibration(channel, ENERGY_FREQUENCY_CALIBRATION) / 100;
+      float power_calibration = (float)EnergyGetCalibration(ENERGY_POWER_CALIBRATION, channel) / 100;
+      float voltage_calibration = (float)EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION, channel) / 100;
+      float current_calibration = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel) / 100000;
+      float frequency_calibration = (float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION, channel) / 100;
 
       Energy->voltage[channel] = voltage_calibration;      // V
       Energy->frequency[channel] = frequency_calibration;  // Hz
@@ -135,17 +135,17 @@ bool NrgDummyCommand(void) {
 
 void NrgDummyDrvInit(void) {
   if (TasmotaGlobal.gpio_optiona.dummy_energy && TasmotaGlobal.devices_present) {
-    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-      Settings->energy_frequency_calibration = NRG_DUMMY_FREF;
-      Settings->energy_voltage_calibration = NRG_DUMMY_UREF;
-      Settings->energy_current_calibration = NRG_DUMMY_IREF;
-      Settings->energy_power_calibration = NRG_DUMMY_PREF;
-      Settings->energy_voltage_calibration2 = NRG_DUMMY_UREF;
-      Settings->energy_current_calibration2 = NRG_DUMMY_IREF;
-      Settings->energy_power_calibration2 = NRG_DUMMY_PREF;
+    Energy->phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
+
+    if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
+      for (uint32_t i = 0; i < Energy->phase_count; i++) {
+        EnergySetCalibration(ENERGY_POWER_CALIBRATION, NRG_DUMMY_PREF, i);
+        EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, NRG_DUMMY_UREF, i);
+        EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, NRG_DUMMY_IREF, i);
+        EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, NRG_DUMMY_FREF, i);
+      }
     }
 
-    Energy->phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
     Energy->voltage_common = NRG_DUMMY_U_COMMON;    // Phase voltage = false, Common voltage = true
     Energy->frequency_common = NRG_DUMMY_F_COMMON;  // Phase frequency = false, Common frequency = true
     Energy->type_dc = NRG_DUMMY_DC;                 // AC = false, DC = true;

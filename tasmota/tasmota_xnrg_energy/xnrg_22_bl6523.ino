@@ -162,16 +162,16 @@ RX: 35 0C TX: 00 00 00 F3 (WATT_HR)
 
 switch(rx_buffer[1]) {
   case BL6523_REG_AMPS :
-    Energy->current[SINGLE_PHASE] =  (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_current_calibration;     // 1.260 A
+    Energy->current[SINGLE_PHASE] =  (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION);     // 1.260 A
     break;
   case BL6523_REG_VOLTS :
-    Energy->voltage[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_voltage_calibration;     // 230.2 V
+    Energy->voltage[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION);     // 230.2 V
     break;
   case BL6523_REG_FREQ :
-    Energy->frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_frequency_calibration;    // 50.0 Hz
+    Energy->frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION);    // 50.0 Hz
     break;
   case BL6523_REG_WATTS :
-    Energy->active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_power_calibration; // -196.3 W
+    Energy->active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / EnergyGetCalibration(ENERGY_POWER_CALIBRATION); // -196.3 W
     break;
   case BL6523_REG_POWF :
    /* Power factor =(sign bit)*((PF[22]×2^－1）＋（PF[21]×2^－2）＋。。。)
@@ -188,7 +188,7 @@ switch(rx_buffer[1]) {
    Energy->power_factor[SINGLE_PHASE] = powf;
     break;
   case BL6523_REG_WATTHR :
-    Energy->import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / ( Settings->energy_power_calibration - BL6523_PWHRREF_D ); // 6.216 kWh => used in EnergyUpdateTotal()
+    Energy->import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / ( EnergyGetCalibration(ENERGY_POWER_CALIBRATION) - BL6523_PWHRREF_D ); // 6.216 kWh => used in EnergyUpdateTotal()
     break;
   default :
   break;
@@ -310,13 +310,12 @@ void Bl6523DrvInit(void)
   if (PinUsed(GPIO_BL6523_RX) && PinUsed(GPIO_BL6523_TX)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:PreInit Success" ));
     TasmotaGlobal.energy_driver = XNRG_22;
-    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-      Settings->energy_frequency_calibration = BL6523_FREF;
-      Settings->energy_voltage_calibration = BL6523_UREF;
-      Settings->energy_current_calibration = BL6523_IREF;
-      Settings->energy_power_calibration = BL6523_PREF;
+    if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
+      EnergySetCalibration(ENERGY_POWER_CALIBRATION, BL6523_PREF);
+      EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, BL6523_UREF);
+      EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, BL6523_IREF);
+      EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, BL6523_FREF);
     }
-
   }
   else
   {

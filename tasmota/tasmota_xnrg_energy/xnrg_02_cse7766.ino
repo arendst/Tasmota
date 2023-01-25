@@ -77,26 +77,26 @@ void CseReceived(void) {
   }
 
   // Get chip calibration data (coefficients) and use as initial defaults
-  if (HLW_UREF_PULSE == Settings->energy_voltage_calibration) {
+  if (HLW_UREF_PULSE == EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) {
     long voltage_coefficient = 191200;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
       voltage_coefficient = Cse.rx_buffer[2] << 16 | Cse.rx_buffer[3] << 8 | Cse.rx_buffer[4];
     }
-    Settings->energy_voltage_calibration = voltage_coefficient / CSE_UREF;
+    EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, voltage_coefficient / CSE_UREF);
   }
-  if (HLW_IREF_PULSE == Settings->energy_current_calibration) {
+  if (HLW_IREF_PULSE == EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION)) {
     long current_coefficient = 16140;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
       current_coefficient = Cse.rx_buffer[8] << 16 | Cse.rx_buffer[9] << 8 | Cse.rx_buffer[10];
     }
-    Settings->energy_current_calibration = current_coefficient;
+    EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, current_coefficient);
   }
-  if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
+  if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
     long power_coefficient = 5364000;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
       power_coefficient = Cse.rx_buffer[14] << 16 | Cse.rx_buffer[15] << 8 | Cse.rx_buffer[16];
     }
-    Settings->energy_power_calibration = power_coefficient / CSE_PREF;
+    EnergySetCalibration(ENERGY_POWER_CALIBRATION, power_coefficient / CSE_PREF);
   }
 
   uint8_t adjustement = Cse.rx_buffer[20];
@@ -107,7 +107,7 @@ void CseReceived(void) {
 
   if (Energy->power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
-      Energy->voltage[0] = (float)(Settings->energy_voltage_calibration * CSE_UREF) / (float)Cse.voltage_cycle;
+      Energy->voltage[0] = (float)(EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION) * CSE_UREF) / (float)Cse.voltage_cycle;
     }
     if (adjustement & 0x10) {  // Power valid
       Cse.power_invalid = 0;
@@ -117,7 +117,7 @@ void CseReceived(void) {
         if (0 == Cse.power_cycle_first) { Cse.power_cycle_first = Cse.power_cycle; }  // Skip first incomplete Cse.power_cycle
         if (Cse.power_cycle_first != Cse.power_cycle) {
           Cse.power_cycle_first = -1;
-          Energy->active_power[0] = (float)(Settings->energy_power_calibration * CSE_PREF) / (float)Cse.power_cycle;
+          Energy->active_power[0] = (float)(EnergyGetCalibration(ENERGY_POWER_CALIBRATION) * CSE_PREF) / (float)Cse.power_cycle;
         } else {
           Energy->active_power[0] = 0;
         }
@@ -134,7 +134,7 @@ void CseReceived(void) {
       if (0 == Energy->active_power[0]) {
         Energy->current[0] = 0;
       } else {
-        Energy->current[0] = (float)Settings->energy_current_calibration / (float)Cse.current_cycle;
+        Energy->current[0] = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION) / (float)Cse.current_cycle;
       }
     }
   } else {  // Powered off
@@ -204,7 +204,7 @@ void CseEverySecond(void) {
         cf_pulses = Cse.cf_pulses - Cse.cf_pulses_last_time;
       }
       if (cf_pulses && Energy->active_power[0])  {
-        uint32_t delta = (cf_pulses * Settings->energy_power_calibration) / 36;
+        uint32_t delta = (cf_pulses * EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) / 36;
         // prevent invalid load delta steps even checksum is valid (issue #5789):
         // prevent invalid load delta steps even checksum is valid but allow up to 4kW (issue #7155):
 //        if (delta <= (4000 * 1000 / 36)) {  // max load for S31/Pow R2: 4.00kW
