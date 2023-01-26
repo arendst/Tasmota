@@ -375,7 +375,8 @@ void Energy200ms(void)
         }
       }
 
-      if ((LocalTime() == Midnight()) || (RtcTime.day_of_year > Settings->energy_kWhdoy)) {
+      bool midnight = (LocalTime() == Midnight());
+      if (midnight || (RtcTime.day_of_year > Settings->energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;
         Settings->energy_kWhdoy = RtcTime.day_of_year;
 
@@ -399,11 +400,11 @@ void Energy200ms(void)
           Energy->daily_sum_export_balanced = 0.0;
         }
         EnergyUpdateToday();
-#if defined(USE_ENERGY_MARGIN_DETECTION) && defined(USE_ENERGY_POWER_LIMIT)
-        Energy->max_energy_state  = 3;
-#endif  // USE_ENERGY_POWER_LIMIT
       }
 #if defined(USE_ENERGY_MARGIN_DETECTION) && defined(USE_ENERGY_POWER_LIMIT)
+      if (midnight) {
+        Energy->max_energy_state  = 3;
+      }
       if ((RtcTime.hour == Settings->energy_max_energy_start) && (3 == Energy->max_energy_state )) {
         Energy->max_energy_state  = 0;
       }
@@ -1000,6 +1001,17 @@ void CmndEnergyConfig(void) {
 }
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
+/*********************************************************************************************\
+ * USE_ENERGY_MARGIN_DETECTION and USE_ENERGY_POWER_LIMIT
+\*********************************************************************************************/
+
+void EnergyMarginStatus(void) {
+  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":[%d,%d,%d],\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
+                        D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
+                        Settings->energy_power_delta[0], Settings->energy_power_delta[1], Settings->energy_power_delta[2], Settings->energy_min_power, Settings->energy_max_power,
+                        Settings->energy_min_voltage, Settings->energy_max_voltage, Settings->energy_min_current, Settings->energy_max_current);
+}
+
 void CmndPowerDelta(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 32000)) {
@@ -1110,6 +1122,8 @@ void CmndMaxEnergyStart(void) {
 }
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
+
+/********************************************************************************************/
 
 void EnergyDrvInit(void) {
   Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
