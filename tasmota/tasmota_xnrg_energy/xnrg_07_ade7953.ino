@@ -219,11 +219,18 @@ const float ADE7953_POWER_CORRECTION = 23.41494;  // See https://github.com/aren
 const float ADE7953_LSB_PER_WATTSECOND = 44;
 #endif  // ADE7953_ACCU_ENERGY
 
+typedef struct {
+  uint32_t voltage_rms;
+  uint32_t current_rms;
+  uint32_t active_power;
+  int32_t calib_data[ADE7953_CALIBREGS];
+} tAde7953Channel;
+
 struct Ade7953 {
-  uint32_t voltage_rms[2] = { 0, 0 };
-  uint32_t current_rms[2] = { 0, 0 };
-  uint32_t active_power[2] = { 0, 0 };
-  int32_t calib_data[2][ADE7953_CALIBREGS];
+  uint32_t voltage_rms[4] = { 0, 0 };
+  uint32_t current_rms[4] = { 0, 0 };
+  uint32_t active_power[4] = { 0, 0 };
+  int32_t calib_data[4][ADE7953_CALIBREGS];
   uint8_t init_step = 0;
   uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM, 5 = Shelly Pro 4PM
   uint8_t cs_index;
@@ -435,15 +442,23 @@ void Ade7953Init(void) {
 
 void Ade7953GetData(void) {
   uint32_t acc_mode = 0;
-  int32_t reg[2][ADE7953_REGISTERS];
+  int32_t reg[4][ADE7953_REGISTERS];
 
 #ifdef USE_ESP32_SPI
   if (Ade7953.pin_cs[0] >= 0) {
+    uint32_t channel = 0;
     for (uint32_t chip = 0; chip < 2; chip++) {
       if (Ade7953.pin_cs[chip] < 0) { continue; }
       Ade7953.cs_index = chip;
       for (uint32_t i = 0; i < ADE7953_REGISTERS; i++) {
-        reg[chip][i] = Ade7953Read(Ade7953Registers[0][i]);  // IRMS, WATT, VA, VAR, VRMS, Period
+        reg[channel][i] = Ade7953Read(Ade7953Registers[0][i]);    // IRMSa, WATTa, VAa, VARa, VRMS, Period
+      }
+      channel++;
+      if (4 == Energy->phase_count) {
+        for (uint32_t i = 0; i < ADE7953_REGISTERS; i++) {
+          reg[channel][i] = Ade7953Read(Ade7953Registers[1][i]);  // IRMSb, WATTb, VAb, VARb, VRMS, Period
+        }
+        channel++;
       }
     }
   } else {
@@ -459,21 +474,16 @@ void Ade7953GetData(void) {
   }
 #endif  // USE_ESP32_SPI
 
-#ifdef USE_ESP32_SPI
-  if (1 == Energy->phase_count) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, WATT %d, VA %d, VAR %d"),
-      acc_mode, reg[0][4], reg[0][5], reg[0][0], reg[0][1], reg[0][2], reg[0][3]);
-  } else
-#endif  // USE_ESP32_SPI
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, %d, Period %d, %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
-      acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
-      reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
+  for (uint32_t i = 0; i < Energy->phase_count; i++) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Channel%d ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, WATT %d, VA %d, VAR %d"),
+      i+1, acc_mode, reg[i][4], reg[i][5], reg[i][0], reg[i][1], reg[i][2], reg[i][3]);
+  }
 
   // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
   if (Ade7953.init_step) { return; }
 
-  uint32_t apparent_power[2] = { 0, 0 };
-  uint32_t reactive_power[2] = { 0, 0 };
+  uint32_t apparent_power[4] = { 0, 0 };
+  uint32_t reactive_power[4] = { 0, 0 };
 
   for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
     Ade7953.voltage_rms[channel] = reg[channel][4];
@@ -504,12 +514,16 @@ void Ade7953GetData(void) {
       float current_calibration = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel) * 10;
 
       Energy->frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
+
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
       Energy->voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
+
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy->active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
+
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy->reactive_power[channel] = (float)reactive_power[channel] / divider;
+
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
           Energy->active_power[channel] *= -1;
@@ -518,12 +532,14 @@ void Ade7953GetData(void) {
           Energy->reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
+
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy->apparent_power[channel] = (float)apparent_power[channel] / divider;
+
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
       } else {
-        divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : current_calibration;
+        divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN] != ADE7953_GAIN_DEFAULT) ? 100000 : current_calibration;
         Energy->current[channel] = (float)Ade7953.current_rms[channel] / divider;
         Energy->kWhtoday_delta[channel] += Energy->active_power[channel] * 1000 / 36;
       }
@@ -615,7 +631,7 @@ bool Ade7953SetDefaults(const char* json) {
 }
 
 void Ade7953Defaults(void) {
-  for (uint32_t channel = 0; channel < 2; channel++) {
+  for (uint32_t channel = 0; channel < 4; channel++) {
     for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
       if (ADE7943_CAL_PHCAL == i) {
         Ade7953.calib_data[channel][i] = (ADE7953_SHELLY_EM == Ade7953.model) ? ADE7953_PHCAL_DEFAULT_CT : ADE7953_PHCAL_DEFAULT;
@@ -728,6 +744,9 @@ void Ade7953DrvInit(void) {
       } else {
         Energy->voltage_common = true;                // Use common voltage
         Energy->frequency_common = true;              // Use common frequency
+        if (ADE7953_SHELLY_PRO_4PM == Ade7953.model) {
+          Energy->phase_count = 4;
+        }
       }
     }
     Energy->use_overtemp = true;                      // Use global temperature for overtemp detection
@@ -741,7 +760,10 @@ void Ade7953DrvInit(void) {
 bool Ade7953Command(void) {
   bool serviced = true;
 
-  uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
+  uint32_t channel = (XdrvMailbox.index > 4) ? 0 : XdrvMailbox.index -1;
+  if (ADE7953_SHELLY_PRO_4PM != Ade7953.model) {
+    channel = (2 == XdrvMailbox.index) ? 1 : 0;
+  }
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == Energy->command_code) {

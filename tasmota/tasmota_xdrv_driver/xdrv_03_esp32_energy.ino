@@ -1049,8 +1049,12 @@ void EnergyCommandCalSetResponse(uint32_t cal_type) {
   if (XdrvMailbox.payload > 99) {
     EnergySetCalibration(cal_type, XdrvMailbox.payload, XdrvMailbox.index -1);
   }
-  if (2 == Energy->phase_count) {
-    ResponseAppend_P(PSTR("[%d,%d]}"), EnergyGetCalibration(cal_type), EnergyGetCalibration(cal_type, 1));
+  if (Energy->phase_count > 1) {
+    ResponseAppend_P(PSTR("["));
+    for (uint32_t i = 0; i < Energy->phase_count; i++) {
+      ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", EnergyGetCalibration(cal_type, i));
+    }
+    ResponseAppend_P(PSTR("]}"));
   } else {
     ResponseAppend_P(PSTR("%d}"), EnergyGetCalibration(cal_type));
   }
@@ -1123,7 +1127,7 @@ void CmndFrequencySet(void) {
 }
 
 void CmndModuleAddress(void) {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4) && (1 == Energy->phase_count)) {
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 8) && (1 == Energy->phase_count)) {
     Energy->command_code = CMND_MODULEADDRESS;
     if (XnrgCall(FUNC_COMMAND)) {  // Module address
       ResponseCmndDone();
