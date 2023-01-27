@@ -80,7 +80,14 @@ uint32_t DS3231ReadTime(void) {
   tm.day_of_week = I2cRead8(RtcChip.address, DS3231_DAY);
   tm.day_of_month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_DATE));
   tm.month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_MONTH) & ~_BV(DS3231_CENTURY));  // Don't use the Century bit
-  tm.year = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_YEAR));
+  // MakeTime requires tm.year as number of years since 1970, 
+  // However DS3231 is supposed to hold the true year but before this PR it was written tm.year directly
+  // Assuming we read ... means ...
+  //   00..21   = 1970..1990 written before PR (to support a RTC written with 1970) => don't apply correction
+  //   22..51   = 2022..2051 written after PR => apply +30 years correction
+  //   52..99   = 2022..2069 written before PR => don't apply correction
+  uint8_t year = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_YEAR));
+  tm.year = ((year <= 21) || (year >= 52)) ? (year) : (year+30);
   return MakeTime(tm);
 }
 
@@ -137,7 +144,9 @@ void DS3231SetTime(uint32_t epoch_time) {
   I2cWrite8(RtcChip.address, DS3231_DAY, tm.day_of_week);
   I2cWrite8(RtcChip.address, DS3231_DATE, Dec2Bcd(tm.day_of_month));
   I2cWrite8(RtcChip.address, DS3231_MONTH, Dec2Bcd(tm.month));
-  I2cWrite8(RtcChip.address, DS3231_YEAR, Dec2Bcd(tm.year));
+  // BreakTime returns tm.year as number of years since 1970, while DS3231 expect the true year. Adusting to avoir leap year error
+  uint8_t true_year = (tm.year < 30) ? (tm.year + 70) : (tm.year - 30);
+  I2cWrite8(RtcChip.address, DS3231_YEAR, Dec2Bcd(true_year));
   I2cWrite8(RtcChip.address, DS3231_STATUS, I2cRead8(RtcChip.address, DS3231_STATUS) & ~_BV(DS3231_OSF));  // Clear the Oscillator Stop Flag
 }
 
