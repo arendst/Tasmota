@@ -132,8 +132,7 @@ print("".join(pin))
 #define USE_EQ3_ESP32
 #endif
 
-// for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
-#if CONFIG_IDF_TARGET_ESP32
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3 || defined CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_EQ3_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 #ifdef USE_BLE_ESP32

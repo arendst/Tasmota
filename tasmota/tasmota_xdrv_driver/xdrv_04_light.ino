@@ -1780,8 +1780,6 @@ void LightAnimate(void)
     if (TasmotaGlobal.sleep > PWM_MAX_SLEEP) {
       sleep_previous = TasmotaGlobal.sleep;     // save previous value of sleep
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
-    } else {
-      sleep_previous = -1;                      // if low enough, don't change it
     }
   } else {
     if (sleep_previous > 0) {
