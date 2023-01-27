@@ -615,23 +615,23 @@ void setup(void) {
   snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
-  GpioInit();
-  ButtonInit();
-  SwitchInit();
+  GpioInit();                    // FUNC_I2C_INIT -> FUNC_MODULE_INIT -> FUNC_LED_LINK
+  ButtonInit();                  // FUNC_ADD_BUTTON
+  SwitchInit();                  // FUNC_ADD_SWITCH
 #ifdef ROTARY_V1
   RotaryInit();
 #endif  // ROTARY_V1
 #ifdef USE_BERRY
   if (!TasmotaGlobal.no_autoexec) {
-    BerryInit();
+    BerryInit();                 // Load preinit.be
   }
 #endif // USE_BERRY
 
-  XdrvXsnsCall(FUNC_PRE_INIT);
+  XdrvXsnsCall(FUNC_PRE_INIT);   // FUNC_PRE_INIT
 
   TasmotaGlobal.init_state = INIT_GPIOS;
 
-  SetPowerOnState();
+  SetPowerOnState();             // FUNC_SET_POWER -> FUNC_SET_DEVICE_POWER
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
@@ -644,7 +644,7 @@ void setup(void) {
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
-  XdrvXsnsCall(FUNC_INIT);
+  XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif

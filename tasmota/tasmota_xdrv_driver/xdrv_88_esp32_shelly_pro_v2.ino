@@ -23,10 +23,10 @@
 /*********************************************************************************************\
  * Shelly Pro support
  *
- * {"NAME":"Shelly Pro 1","GPIO":[0,1,0,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
- * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
- * {"NAME":"Shelly Pro 2","GPIO":[0,1,0,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350;AdcParam2 2,10000,10000,3350"}
- * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350;AdcParam2 2,10000,10000,3350"}
+ * {"NAME":"Shelly Pro 1","GPIO":[0,1,0,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
+ * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
+ * {"NAME":"Shelly Pro 2","GPIO":[0,1,0,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
+ * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
  *
  * {"NAME":"Shelly Pro 4PM","GPIO":[769,1,1,1,9568,0,0,0,1,705,9569,737,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,6214,736,704,3461,0,4736,1,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 4PM No display","GPIO":[1,1,1,1,9568,0,0,0,1,1,9569,1,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,6214,736,704,3461,0,4736,1,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
@@ -44,7 +44,6 @@
 
 struct SPro {
   uint32_t last_update;
-  uint32_t probe_pin;
   uint16_t input_state;
   int8_t switch_offset;
   int8_t button_offset;
@@ -52,6 +51,7 @@ struct SPro {
   uint8_t pin_mcp23s17_int;
   uint8_t ledlink;
   uint8_t power;
+  bool init_done;
   uint8_t detected;
 } SPro;
 
@@ -364,17 +364,15 @@ void ShellyProPreInit(void) {
       TasmotaGlobal.devices_present += SPro.detected;
 
       SPro.pin_register_cs = Pin(GPIO_SPI_CS);
+      digitalWrite(SPro.pin_register_cs, (4 == SPro.detected) ? 1 : 0);      // Prep 74HC595 rclk
       pinMode(SPro.pin_register_cs, OUTPUT);
       // Does nothing if SPI is already initiated (by ADE7953) so no harm done
       SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 
       if (4 == SPro.detected) {
-        digitalWrite(SPro.pin_register_cs, 1);      // Prep MCP23S17 chip select
         SPro.pin_mcp23s17_int = SHELLY_PRO_4_PIN_MCP23S17_INT;  // GPIO35 = MCP23S17 common interrupt
         pinMode(SPro.pin_mcp23s17_int, INPUT);
         ShellyPro4Init();                           // Init MCP23S17
-      } else {
-        digitalWrite(SPro.pin_register_cs, 0);      // Prep 74HC595 rclk
       }
     }
   }
@@ -388,11 +386,17 @@ void ShellyProInit(void) {
   delay(1);                                         // (t-rstia) This pin must be brought low for a minimum of 100 uS
   digitalWrite(pin_lan_reset, 1);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("HDW: Shelly Pro %d%s initialized"), SPro.detected, (PinUsed(GPIO_ADE7953_CS))?"PM":"");
+  AddLog(LOG_LEVEL_INFO, PSTR("HDW: Shelly Pro %d%s initialized"),
+    SPro.detected, (PinUsed(GPIO_ADE7953_CS))?"PM":"");
+
+  SPro.init_done = true;
 }
 
 void ShellyProPower(void) {
-  if (4 == SPro.detected) {
+  if (SPro.detected != 4) {
+    SPro.power = XdrvMailbox.index &3;
+    ShellyProUpdate();
+  } else {
 
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Set Power 0x%08X"), XdrvMailbox.index);
 
@@ -402,29 +406,19 @@ void ShellyProPower(void) {
       SP4Mcp23S17DigitalWrite(sp4_relay_pin[i], state);
       rpower >>= 1;                                 // Select next power
     }
-  } else {
-    SPro.power = XdrvMailbox.index &3;
-    ShellyProUpdate();
   }
 }
 
 void ShellyProUpdateLedLink(uint32_t ledlink) {
-  if (4 == SPro.detected) {
-
-
-  } else {
-    if (ledlink != SPro.ledlink) {
-      SPro.ledlink = ledlink;
-      ShellyProUpdate();
-    }
+  if (ledlink != SPro.ledlink) {
+    SPro.ledlink = ledlink;
+    ShellyProUpdate();
   }
 }
 
 void ShellyProLedLink(void) {
-  if (4 == SPro.detected) {
-
-
-  } else {
+  if (!SPro.init_done) { return; }  // Block write before first power update
+  if (SPro.detected != 4) {
     /*
     bit 2 = blue, 3 = green, 4 = red
     Shelly Pro documentation
@@ -450,10 +444,8 @@ void ShellyProLedLink(void) {
 }
 
 void ShellyProLedLinkWifiOff(void) {
-  if (4 == SPro.detected) {
-
-
-  } else {
+  if (!SPro.init_done) { return; }
+  if (SPro.detected != 4) {
     /*
     bit 2 = blue, 3 = green, 4 = red
     - Green light indicator will be on if in STA mode and connected to a Wi-Fi network.
@@ -483,11 +475,8 @@ bool Xdrv88(uint32_t function) {
         case FUNC_EVERY_SECOND:
           ShellyProLedLinkWifiOff();
           break;
-        case FUNC_SET_DEVICE_POWER:
+        case FUNC_SET_POWER:
           ShellyProPower();
-          return true;
-        case FUNC_LED_LINK:
-          ShellyProLedLink();
           break;
         case FUNC_INIT:
           ShellyProInit();
@@ -497,6 +486,9 @@ bool Xdrv88(uint32_t function) {
           break;
         case FUNC_ADD_SWITCH:
           result = ShellyProAddSwitch();
+          break;
+        case FUNC_LED_LINK:
+          ShellyProLedLink();
           break;
       }
     }

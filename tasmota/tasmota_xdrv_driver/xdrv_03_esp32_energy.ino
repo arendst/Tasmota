@@ -71,15 +71,15 @@ void (* const EnergyCommand[])(void) PROGMEM = {
 /********************************************************************************************/
 
 typedef struct {
-  float usage_total_kWh[2];
-  float return_total_kWh[2];
+  float usage_total_kWh[4];
+  float return_total_kWh[4];
   float last_return_total_kWh;
   float last_usage_total_kWh;
 } tEnergyUsage;
 
 typedef struct {
-  uint32_t crc32;                                           // To detect file changes
-  uint16_t version;                                         // To detect driver function changes
+  uint32_t crc32;                                            // To detect file changes
+  uint16_t version;                                          // To detect driver function changes
   uint16_t energy_kWhdoy;
   uint32_t energy_kWhtotal_time;
   uint32_t spare1;
@@ -93,15 +93,15 @@ typedef struct {
   uint32_t current_calibration[ENERGY_MAX_PHASES_FUTURE];
   uint32_t frequency_calibration[ENERGY_MAX_PHASES_FUTURE];
 
-  uint16_t tariff[2][2];
+  float energy_today_kWh[ENERGY_MAX_PHASES_FUTURE];          // Energy today in kWh - float allows up to 262143.99 kWh
+  float energy_yesterday_kWh[ENERGY_MAX_PHASES_FUTURE];      // Energy yesterday in kWh - float allows up to 262143.99 kWh
+  float energy_total_kWh[ENERGY_MAX_PHASES_FUTURE];          // Total energy in kWh - float allows up to 262143.99 kWh
+  float energy_export_kWh[ENERGY_MAX_PHASES_FUTURE];         // Export energy in kWh - float allows up to 262143.99 kWh
+
+  uint16_t power_delta[ENERGY_MAX_PHASES_FUTURE];            // PowerDelta
+
+  uint16_t tariff[4][2];
   tEnergyUsage energy_usage;
-
-  float energy_today_kWh[ENERGY_MAX_PHASES_FUTURE];                // Energy today in kWh - float allows up to 262143.99 kWh
-  float energy_yesterday_kWh[ENERGY_MAX_PHASES_FUTURE];            // Energy yesterday in kWh - float allows up to 262143.99 kWh
-  float energy_total_kWh[ENERGY_MAX_PHASES_FUTURE];                // Total energy in kWh - float allows up to 262143.99 kWh
-  float energy_export_kWh[ENERGY_MAX_PHASES_FUTURE];               // Export energy in kWh - float allows up to 262143.99 kWh
-
-  uint16_t power_delta[ENERGY_MAX_PHASES_FUTURE];                  // PowerDelta
 } tEnergySettings;
 
 typedef struct {
@@ -398,8 +398,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
 
 /********************************************************************************************/
 
-bool EnergyTariff1Active()  // Off-Peak hours
-{
+bool EnergyTariff1Active() { // Off-Peak hours
   uint8_t dst = 0;
   if (IsDst() && (Energy->Settings.tariff[0][1] != Energy->Settings.tariff[1][1])) {
     dst = 1;
@@ -528,8 +527,7 @@ void EnergyUpdateTotal(void) {
 
 /*********************************************************************************************/
 
-void Energy200ms(void)
-{
+void Energy200ms(void) {
   Energy->power_on = (TasmotaGlobal.power != 0) | Settings->flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
 
   Energy->fifth_second++;
@@ -586,8 +584,7 @@ void Energy200ms(void)
   XnrgCall(FUNC_EVERY_200_MSECOND);
 }
 
-void EnergySaveState(void)
-{
+void EnergySaveState(void) {
   Energy->Settings.energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
 
   for (uint32_t i = 0; i < 3; i++) {
@@ -599,8 +596,7 @@ void EnergySaveState(void)
   Energy->Settings.energy_usage = RtcEnergySettings.energy_usage;
 }
 
-bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &save_flag)
-{
+bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &save_flag) {
   bool change;
 
   if (!margin) return false;
@@ -773,8 +769,7 @@ void EnergyMarginCheck(void) {
   }
 }
 
-void EnergyMqttShow(void)
-{
+void EnergyMqttShow(void) {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
   int tele_period_save = TasmotaGlobal.tele_period;
   TasmotaGlobal.tele_period = 2;
@@ -786,8 +781,7 @@ void EnergyMqttShow(void)
   MqttPublishTeleSensor();
 }
 
-void EnergyEverySecond(void)
-{
+void EnergyEverySecond(void) {
   // Overtemp check
   if (Energy->use_overtemp && TasmotaGlobal.global_update) {
     if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings->param[P_OVER_TEMP])) {  // SetOption42 Device overtemp, turn off relays
@@ -895,6 +889,7 @@ void CmndEnergyYesterday(void) {
 }
 
 void CmndEnergyToday(void) {
+  // EnergyToday 22 = 0.022 kWh
   uint32_t values[2] = { 0 };
   uint32_t params = ParseParameters(2, values);
 
@@ -1277,8 +1272,6 @@ void EnergyDrvInit(void) {
   EnergySettingsLoad();
   EnergyRtcSettingsLoad();
 
-
-
 //  Energy->voltage_common = false;
 //  Energy->frequency_common = false;
 //  Energy->use_overtemp = false;
@@ -1545,9 +1538,10 @@ void EnergyShow(bool json) {
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
     WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    bool no_label = Energy->voltage_common || (1 == Energy->phase_count);
+    bool label_o = Energy->voltage_common;
+    bool no_label = (1 == Energy->phase_count);
     for (uint32_t i = 0; i < Energy->phase_count; i++) {
-      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
+      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":(label_o)?"O":"L", (no_label)?"":itoa(i +1, value_chr, 10));
     }
     WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI

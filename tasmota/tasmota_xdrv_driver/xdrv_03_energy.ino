@@ -224,8 +224,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
 
 /********************************************************************************************/
 
-bool EnergyTariff1Active()  // Off-Peak hours
-{
+bool EnergyTariff1Active() {  // Off-Peak hours
   uint8_t dst = 0;
   if (IsDst() && (Settings->tariff[0][1] != Settings->tariff[1][1])) {
     dst = 1;
@@ -355,8 +354,7 @@ void EnergyUpdateTotal(void) {
 
 /*********************************************************************************************/
 
-void Energy200ms(void)
-{
+void Energy200ms(void) {
   Energy->power_on = (TasmotaGlobal.power != 0) | Settings->flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
 
   Energy->fifth_second++;
@@ -416,8 +414,7 @@ void Energy200ms(void)
   XnrgCall(FUNC_EVERY_200_MSECOND);
 }
 
-void EnergySaveState(void)
-{
+void EnergySaveState(void) {
   Settings->energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
 
   for (uint32_t i = 0; i < 3; i++) {
@@ -430,8 +427,7 @@ void EnergySaveState(void)
 }
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
-bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &save_flag)
-{
+bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &save_flag) {
   bool change;
 
   if (!margin) return false;
@@ -606,8 +602,7 @@ void EnergyMarginCheck(void) {
 #endif  // USE_ENERGY_POWER_LIMIT
 }
 
-void EnergyMqttShow(void)
-{
+void EnergyMqttShow(void) {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
   int tele_period_save = TasmotaGlobal.tele_period;
   TasmotaGlobal.tele_period = 2;
@@ -620,8 +615,7 @@ void EnergyMqttShow(void)
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
-void EnergyEverySecond(void)
-{
+void EnergyEverySecond(void) {
   // Overtemp check
   if (Energy->use_overtemp && TasmotaGlobal.global_update) {
     if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings->param[P_OVER_TEMP])) {  // SetOption42 Device overtemp, turn off relays
@@ -731,6 +725,7 @@ void CmndEnergyYesterday(void) {
 }
 
 void CmndEnergyToday(void) {
+  // EnergyToday 22 = 0.022 kWh
   uint32_t values[2] = { 0 };
   uint32_t params = ParseParameters(2, values);
 
@@ -1396,9 +1391,10 @@ void EnergyShow(bool json) {
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
     WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    bool no_label = Energy->voltage_common || (1 == Energy->phase_count);
+    bool label_o = Energy->voltage_common;
+    bool no_label = (1 == Energy->phase_count);
     for (uint32_t i = 0; i < Energy->phase_count; i++) {
-      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
+      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":(label_o)?"O":"L", (no_label)?"":itoa(i +1, value_chr, 10));
     }
     WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI

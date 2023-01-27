@@ -82,6 +82,8 @@
 #define ADE7953_PHCAL_DEFAULT     0          // = range -383 to 383 - Default phase calibration for Shunts
 #define ADE7953_PHCAL_DEFAULT_CT  200        // = range -383 to 383 - Default phase calibration for Current Transformers (Shelly EM)
 
+#define ADE7953_MAX_CHANNEL       4
+
 enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM, ADE7953_SHELLY_PRO_1PM, ADE7953_SHELLY_PRO_2PM, ADE7953_SHELLY_PRO_4PM };
 
 enum Ade7953_8BitRegisters {
@@ -227,16 +229,16 @@ typedef struct {
 } tAde7953Channel;
 
 struct Ade7953 {
-  uint32_t voltage_rms[4] = { 0, 0 };
-  uint32_t current_rms[4] = { 0, 0 };
-  uint32_t active_power[4] = { 0, 0 };
-  int32_t calib_data[4][ADE7953_CALIBREGS];
+  uint32_t voltage_rms[ADE7953_MAX_CHANNEL] = { 0, 0 };
+  uint32_t current_rms[ADE7953_MAX_CHANNEL] = { 0, 0 };
+  uint32_t active_power[ADE7953_MAX_CHANNEL] = { 0, 0 };
+  int32_t calib_data[ADE7953_MAX_CHANNEL][ADE7953_CALIBREGS];
   uint8_t init_step = 0;
   uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM, 5 = Shelly Pro 4PM
   uint8_t cs_index;
 #ifdef USE_ESP32_SPI
   SPISettings spi_settings;
-  int8_t pin_cs[2];
+  int8_t pin_cs[ADE7953_MAX_CHANNEL / 2];
 #endif  // USE_ESP32_SPI
 } Ade7953;
 
@@ -428,9 +430,11 @@ void Ade7953Init(void) {
         }
       }
 #ifdef USE_ESP32_SPI
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Chip%d CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"), chip +1, 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Chip%d CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"),
+        chip +1, 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
 #else
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"), 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"),
+        'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
 #endif  // USE_ESP32_SPI
     }
 
@@ -442,12 +446,12 @@ void Ade7953Init(void) {
 
 void Ade7953GetData(void) {
   uint32_t acc_mode = 0;
-  int32_t reg[4][ADE7953_REGISTERS];
+  int32_t reg[ADE7953_MAX_CHANNEL][ADE7953_REGISTERS];
 
 #ifdef USE_ESP32_SPI
   if (Ade7953.pin_cs[0] >= 0) {
     uint32_t channel = 0;
-    for (uint32_t chip = 0; chip < 2; chip++) {
+    for (uint32_t chip = 0; chip < ADE7953_MAX_CHANNEL / 2; chip++) {
       if (Ade7953.pin_cs[chip] < 0) { continue; }
       Ade7953.cs_index = chip;
       for (uint32_t i = 0; i < ADE7953_REGISTERS; i++) {
@@ -482,8 +486,8 @@ void Ade7953GetData(void) {
   // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
   if (Ade7953.init_step) { return; }
 
-  uint32_t apparent_power[4] = { 0, 0 };
-  uint32_t reactive_power[4] = { 0, 0 };
+  uint32_t apparent_power[ADE7953_MAX_CHANNEL] = { 0, 0 };
+  uint32_t reactive_power[ADE7953_MAX_CHANNEL] = { 0, 0 };
 
   for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
     Ade7953.voltage_rms[channel] = reg[channel][4];
@@ -578,60 +582,54 @@ bool Ade7953SetDefaults(const char* json) {
 
   // All parameters are optional allowing for partial changes
   JsonParserToken val;
-  JsonParserObject rms = root[PSTR("rms")].getObject();
-  if (rms) {
-    val = rms[PSTR("voltage")];
-    if (val) {
-      Ade7953.calib_data[0][ADE7953_CAL_VGAIN] = val.getInt();
-      Ade7953.calib_data[1][ADE7953_CAL_VGAIN] = Ade7953.calib_data[0][ADE7953_CAL_VGAIN];
+  char field[20];
+  for (uint32_t i = 0; i < ADE7953_MAX_CHANNEL; i++) {
+    JsonParserObject rms = root[PSTR("rms")].getObject();
+    if (rms) {
+      val = rms[PSTR("voltage")];
+      if (val) {
+        Ade7953.calib_data[i][ADE7953_CAL_VGAIN] = val.getInt();
+      }
+  #ifdef USE_ESP32_SPI
+      snprintf_P(field, sizeof(field), PSTR("voltage_%c"), 'a'+i);
+      val = rms[field];                              // "voltage_a" .. "voltage_d"
+      if (val) { Ade7953.calib_data[i][ADE7953_CAL_VGAIN] = val.getInt(); }
+  #endif  // USE_ESP32_SPI
+      snprintf_P(field, sizeof(field), PSTR("current_%c"), 'a'+i);
+      val = rms[field];                              // "current_a" .. "current_d"
+      if (val) { Ade7953.calib_data[i][ADE7953_CAL_IGAIN] = val.getInt(); }
     }
-#ifdef USE_ESP32_SPI
-    val = rms[PSTR("voltage_a")];
-    if (val) { Ade7953.calib_data[0][ADE7953_CAL_VGAIN] = val.getInt(); }
-    val = rms[PSTR("voltage_b")];
-    if (val) { Ade7953.calib_data[1][ADE7953_CAL_VGAIN] = val.getInt(); }
-#endif  // USE_ESP32_SPI
-    val = rms[PSTR("current_a")];
-    if (val) { Ade7953.calib_data[0][ADE7953_CAL_IGAIN] = val.getInt(); }
-    val = rms[PSTR("current_b")];
-    if (val) { Ade7953.calib_data[1][ADE7953_CAL_IGAIN] = val.getInt(); }
-  }
-  JsonParserObject angles = root[PSTR("angles")].getObject();
-  if (angles) {
-    val = angles[PSTR("angle0")];
-    if (val) { Ade7953.calib_data[0][ADE7943_CAL_PHCAL] = val.getInt(); }
-    val = angles[PSTR("angle1")];
-    if (val) { Ade7953.calib_data[1][ADE7943_CAL_PHCAL] = val.getInt(); }
-  }
-  JsonParserObject powers = root[PSTR("powers")].getObject();
-  if (powers) {
-    JsonParserObject totactive = powers[PSTR("totactive")].getObject();
-    if (totactive) {
-      val = totactive[PSTR("a")];
-      if (val) { Ade7953.calib_data[0][ADE7953_CAL_WGAIN] = val.getInt(); }
-      val = totactive[PSTR("b")];
-      if (val) { Ade7953.calib_data[1][ADE7953_CAL_WGAIN] = val.getInt(); }
+    JsonParserObject angles = root[PSTR("angles")].getObject();
+    if (angles) {
+      snprintf_P(field, sizeof(field), PSTR("angle%c"), '0'+i);
+      val = angles[field];                           // "angle0" .. "angle3"
+      if (val) { Ade7953.calib_data[i][ADE7943_CAL_PHCAL] = val.getInt(); }
     }
-    JsonParserObject apparent = powers[PSTR("apparent")].getObject();
-    if (apparent) {
-      val = apparent[PSTR("a")];
-      if (val) { Ade7953.calib_data[0][ADE7953_CAL_VAGAIN] = val.getInt(); }
-      val = apparent[PSTR("b")];
-      if (val) { Ade7953.calib_data[1][ADE7953_CAL_VAGAIN] = val.getInt(); }
-    }
-    JsonParserObject reactive = powers[PSTR("reactive")].getObject();
-    if (reactive) {
-      val = reactive[PSTR("a")];
-      if (val) { Ade7953.calib_data[0][ADE7953_CAL_VARGAIN] = val.getInt(); }
-      val = reactive[PSTR("b")];
-      if (val) { Ade7953.calib_data[1][ADE7953_CAL_VARGAIN] = val.getInt(); }
+    JsonParserObject powers = root[PSTR("powers")].getObject();
+    if (powers) {
+      snprintf_P(field, sizeof(field), PSTR("%c"), 'a'+i);
+      JsonParserObject totactive = powers[PSTR("totactive")].getObject();
+      if (totactive) {
+        val = totactive[field];                      // "a" .. "d"
+        if (val) { Ade7953.calib_data[i][ADE7953_CAL_WGAIN] = val.getInt(); }
+      }
+      JsonParserObject apparent = powers[PSTR("apparent")].getObject();
+      if (apparent) {
+        val = apparent[field];                       // "a" .. "d"
+        if (val) { Ade7953.calib_data[i][ADE7953_CAL_VAGAIN] = val.getInt(); }
+      }
+      JsonParserObject reactive = powers[PSTR("reactive")].getObject();
+      if (reactive) {
+        val = reactive[field];                       // "a" .. "d"
+        if (val) { Ade7953.calib_data[i][ADE7953_CAL_VARGAIN] = val.getInt(); }
+      }
     }
   }
   return true;
 }
 
 void Ade7953Defaults(void) {
-  for (uint32_t channel = 0; channel < 4; channel++) {
+  for (uint32_t channel = 0; channel < ADE7953_MAX_CHANNEL; channel++) {
     for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
       if (ADE7943_CAL_PHCAL == i) {
         Ade7953.calib_data[channel][i] = (ADE7953_SHELLY_EM == Ade7953.model) ? ADE7953_PHCAL_DEFAULT_CT : ADE7953_PHCAL_DEFAULT;
@@ -722,7 +720,7 @@ void Ade7953DrvInit(void) {
     }
 #endif  // USE_ESP32_SPI
     if (EnergyGetCalibration(ENERGY_POWER_CALIBRATION) == HLW_PREF_PULSE) {
-      for (uint32_t i = 0; i < 4; i++) {
+      for (uint32_t i = 0; i < ADE7953_MAX_CHANNEL; i++) {
         EnergySetCalibration(ENERGY_POWER_CALIBRATION, ADE7953_PREF, i);
         EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, ADE7953_UREF, i);
         EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, ADE7953_IREF, i);
@@ -760,7 +758,8 @@ void Ade7953DrvInit(void) {
 bool Ade7953Command(void) {
   bool serviced = true;
 
-  uint32_t channel = (XdrvMailbox.index > 4) ? 0 : XdrvMailbox.index -1;
+  if (XdrvMailbox.index > ADE7953_MAX_CHANNEL) { return false; };
+  uint32_t channel = XdrvMailbox.index -1;
   if (ADE7953_SHELLY_PRO_4PM != Ade7953.model) {
     channel = (2 == XdrvMailbox.index) ? 1 : 0;
   }
