@@ -3,18 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.4]
+## [12.3.1.5]
 ### Added
-- Berry ``crypto.EC_P256`` ECDSA signature (required by Matter protocol)
-- Berry add up flag to ``tasmota.wifi()`` and ``tasmota.eth()``, always return MAC
+- ESP32 Prep support for eigth energy phases/channels
 
 ### Breaking Changed
 
 ### Changed
+- Energy refactoring preparing for ESP32 phase/channel extension
 
 ### Fixed
+- ADE7953 when calibration data for second channel is used regression from v12.2.0.2
+- Shelly Pro 1/2 relay click at restart regression from v12.3.1.4
 
 ### Removed
+
+## [12.3.1.4] 20230127
+### Added
+- Berry ``crypto.EC_P256`` ECDSA signature (required by Matter protocol)
+- Berry add up flag to ``tasmota.wifi()`` and ``tasmota.eth()``, always return MAC
 
 ## [12.3.1.3] 20230115
 ### Added
