@@ -1,7 +1,7 @@
 /*
   xdrv_03_esp32_energy.ino - Energy sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2023  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,9 +19,15 @@
 
 #ifdef ESP32
 #ifdef USE_ENERGY_SENSOR
+//#define USE_ENERGY_SENSOR_ESP32
+#endif  // USE_ENERGY_SENSOR
+#endif  // ESP32
+
+#ifdef USE_ENERGY_SENSOR_ESP32
 /*********************************************************************************************\
- * Energy for ESP32
+ * Energy for ESP32 with max eight phases/channels using more RAM and Settings from filesystem
 \*********************************************************************************************/
+//#warning **** USE_ENERGY_SENSOR_ESP32 ****
 
 #define XDRV_03                   3
 #define XSNS_03                   3
@@ -30,9 +36,7 @@
 #define ENERGY_WATCHDOG           4        // Allow up to 4 seconds before deciding no valid data present
 
 #undef ENERGY_MAX_PHASES
-#define ENERGY_MAX_PHASES         4
-
-#define ENERGY_MAX_PHASES_FUTURE  8
+#define ENERGY_MAX_PHASES         8        // Support max eight phases/channels
 
 #include <Ticker.h>
 
@@ -88,17 +92,17 @@ typedef struct {
   uint32_t spare4;
   uint32_t spare5;
 
-  uint32_t power_calibration[ENERGY_MAX_PHASES_FUTURE];
-  uint32_t voltage_calibration[ENERGY_MAX_PHASES_FUTURE];
-  uint32_t current_calibration[ENERGY_MAX_PHASES_FUTURE];
-  uint32_t frequency_calibration[ENERGY_MAX_PHASES_FUTURE];
+  uint32_t power_calibration[ENERGY_MAX_PHASES];
+  uint32_t voltage_calibration[ENERGY_MAX_PHASES];
+  uint32_t current_calibration[ENERGY_MAX_PHASES];
+  uint32_t frequency_calibration[ENERGY_MAX_PHASES];
 
-  float energy_today_kWh[ENERGY_MAX_PHASES_FUTURE];          // Energy today in kWh - float allows up to 262143.99 kWh
-  float energy_yesterday_kWh[ENERGY_MAX_PHASES_FUTURE];      // Energy yesterday in kWh - float allows up to 262143.99 kWh
-  float energy_total_kWh[ENERGY_MAX_PHASES_FUTURE];          // Total energy in kWh - float allows up to 262143.99 kWh
-  float energy_export_kWh[ENERGY_MAX_PHASES_FUTURE];         // Export energy in kWh - float allows up to 262143.99 kWh
+  float energy_today_kWh[ENERGY_MAX_PHASES];          // Energy today in kWh - float allows up to 262143.99 kWh
+  float energy_yesterday_kWh[ENERGY_MAX_PHASES];      // Energy yesterday in kWh - float allows up to 262143.99 kWh
+  float energy_total_kWh[ENERGY_MAX_PHASES];          // Total energy in kWh - float allows up to 262143.99 kWh
+  float energy_export_kWh[ENERGY_MAX_PHASES];         // Export energy in kWh - float allows up to 262143.99 kWh
 
-  uint16_t power_delta[ENERGY_MAX_PHASES_FUTURE];            // PowerDelta
+  uint16_t power_delta[ENERGY_MAX_PHASES];            // PowerDelta
 
   uint16_t tariff[4][2];
   tEnergyUsage energy_usage;
@@ -178,9 +182,9 @@ const uint16_t RTC_ENERGY_MEM_VALID = 0xA55A;
 typedef struct {
   uint16_t valid;
   tEnergyUsage energy_usage;
-  float energy_today_kWh[ENERGY_MAX_PHASES_FUTURE];
-  float energy_total_kWh[ENERGY_MAX_PHASES_FUTURE];
-  float energy_export_kWh[ENERGY_MAX_PHASES_FUTURE];
+  float energy_today_kWh[ENERGY_MAX_PHASES];
+  float energy_total_kWh[ENERGY_MAX_PHASES];
+  float energy_export_kWh[ENERGY_MAX_PHASES];
 } tRtcEnergySettings;
 tRtcEnergySettings RtcEnergySettings;
 static RTC_NOINIT_ATTR tRtcEnergySettings RtcDataEnergySettings;
@@ -204,7 +208,7 @@ void EnergyRtcSettingsSave(void) {
       memset(&RtcEnergySettings, 0, sizeof(RtcEnergySettings));
       RtcEnergySettings.valid = RTC_ENERGY_MEM_VALID;
       RtcEnergySettings.energy_usage = Energy->Settings.energy_usage;
-      for (uint32_t i = 0; i < ENERGY_MAX_PHASES_FUTURE; i++) {
+      for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
         RtcEnergySettings.energy_today_kWh[i] = Energy->Settings.energy_today_kWh[i];
         RtcEnergySettings.energy_total_kWh[i] = Energy->Settings.energy_total_kWh[i];
         RtcEnergySettings.energy_export_kWh[i] = Energy->Settings.energy_export_kWh[i];
@@ -243,7 +247,7 @@ void EnergySettingsLoad(void) {
   memset(&Energy->Settings, 0x00, sizeof(tEnergySettings));
   Energy->Settings.version = XDRV_03_VERSION;
   // Init any other parameter in struct
-  for (uint32_t i = 0; i < ENERGY_MAX_PHASES_FUTURE; i++) {
+  for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
     Energy->Settings.power_calibration[i] = Settings->energy_power_calibration;
     Energy->Settings.voltage_calibration[i] = Settings->energy_voltage_calibration;;
     Energy->Settings.current_calibration[i] = Settings->energy_current_calibration;;
@@ -1658,5 +1662,4 @@ bool Xsns03(uint32_t function)
   return result;
 }
 
-#endif  // USE_ENERGY_SENSOR
-#endif  // ESP32
+#endif  // USE_ENERGY_SENSOR_ESP32
