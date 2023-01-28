@@ -332,6 +332,7 @@ enum SwitchModeOptions {TOGGLE,                              // 0
                         PUSHHOLDMULTI, PUSHHOLDMULTI_INV,    // 11, 12 - Pushbutton with dimmer mode
                         PUSHON, PUSHON_INV,                  // 13, 14 - Pushon mode (1 = on, switch off using PulseTime)
                         PUSH_IGNORE, PUSH_IGNORE_INV,        // 15, 16 - Send only MQTT message on switch change
+                        PUSHOFF, PUSHOFF_INV,                // 17, 18 - Pushoff mode (1 = off, switch off using PulseTime)
                         MAX_SWITCH_OPTION};
 
 enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};

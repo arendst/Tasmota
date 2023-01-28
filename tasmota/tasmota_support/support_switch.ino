@@ -84,7 +84,8 @@ bool SwitchState(uint32_t index) {
           (PUSHBUTTONHOLD_INV == switchmode) ||
           (FOLLOWMULTI_INV == switchmode) ||
           (PUSHHOLDMULTI_INV == switchmode) ||
-          (PUSHON_INV == switchmode)
+          (PUSHON_INV == switchmode) ||
+          (PUSHOFF_INV == switchmode)
          ) ^ Switch.last_state[index];
 }
 
@@ -403,6 +404,16 @@ void SwitchHandler(uint32_t mode) {
         case PUSHON_INV:
           if (NOT_PRESSED == button) {
             switchflag = POWER_ON;                              // Power ON with releasing pushbutton from Gnd
+          }
+          break;
+        case PUSHOFF:
+          if (PRESSED == button) {
+            switchflag = POWER_OFF;                              // Power OFF with pushbutton to Gnd
+          }
+          break;
+        case PUSHOFF_INV:
+          if (NOT_PRESSED == button) {
+            switchflag = POWER_OFF;                              // Power OFF with releasing pushbutton from Gnd
           }
           break;
         case PUSH_IGNORE:
