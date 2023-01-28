@@ -822,6 +822,8 @@ void HAssAnnounceSwitches(void)
     //                                                    INV (not available)                                       INC_DEC (not available)
     // 13             PUSHON                YES           NONE                          NONE                        NONE                        0,0
     // 14             PUSHON_INV            YES           NONE                          NONE                        NONE                        0,0
+    // 17             PUSHOFF               YES           NONE                          NONE                        NONE                        0,0
+    // 18             PUSHOFF_INV           YES           NONE                          NONE                        NONE                        0,0
     // Please note: SwitchMode11 and 12 will register just TOGGLE (button_short_press)
 
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
@@ -855,6 +857,10 @@ void HAssAnnounceSwitches(void)
         case PUSHON_INV:
           toggle = 0;
           pir = 1;        // Binary sensor with only ON state and automatic OFF after 1 second
+        case PUSHOFF:
+        case PUSHOFF_INV:
+          toggle = 0;
+          pir = 1;        // Binary sensor with only OFF state and automatic OFF after 1 second
       }
 
     } else { switch_present = 0;}
