@@ -264,6 +264,9 @@ void AdcInit(void) {
     if (PinUsed(GPIO_ADC_INPUT, i)) {
       AdcAttach(Pin(GPIO_ADC_INPUT, i), ADC_INPUT);
     }
+    if (PinUsed(GPIO_ADC_BATTERY, i)) {
+      AdcAttach(Pin(GPIO_ADC_BATTERY, i), ADC_BATTERY);
+    }
     if (PinUsed(GPIO_ADC_TEMP, i)) {
       AdcAttach(Pin(GPIO_ADC_TEMP, i), ADC_TEMP);
     }
@@ -557,6 +560,19 @@ void AdcShow(bool json) {
 #endif
 
     switch (Adc[idx].type) {
+      case ADC_BATTERY: {
+        float analog = (float)(AdcRead(Adc[idx].pin, 5))/100 + 0.790;
+
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"A%d\":%.2f"), idx + offset, analog);
+#ifdef USE_WEBSERVER
+        } else {
+          WSContentSend_PD(HTTP_SNS_BATTERY, "", idx + offset, analog);
+#endif  // USE_WEBSERVER
+        }
+        break;
+      }
       case ADC_INPUT: {
         uint16_t analog = AdcRead(Adc[idx].pin, 5);
 

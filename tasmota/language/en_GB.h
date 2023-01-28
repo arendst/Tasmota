@@ -834,6 +834,7 @@
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
 #define D_SENSOR_ADC_INPUT     "ADC Input"
+#define D_SENSOR_ADC_BATTERY   "ADC Battery"
 #define D_SENSOR_ADC_TEMP      "ADC Temp"
 #define D_SENSOR_ADC_LIGHT     "ADC Light"
 #define D_SENSOR_ADC_BUTTON    "ADC Button"
