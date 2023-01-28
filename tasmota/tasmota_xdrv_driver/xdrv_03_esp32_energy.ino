@@ -273,7 +273,7 @@ void EnergySettingsLoad(void) {
   // *** End Init default values ***
 
 #ifndef USE_UFILESYS
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Energy use defaults as file system not enabled"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not enabled"));
 #else
   // Try to load file /.drvset003
   char filename[20];
@@ -293,7 +293,7 @@ void EnergySettingsLoad(void) {
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy loaded from file"));
   } else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
   }
 #endif  // USE_UFILESYS
 }
