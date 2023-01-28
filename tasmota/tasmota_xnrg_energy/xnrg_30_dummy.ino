@@ -28,6 +28,10 @@
  * Each phase or channel can be set using commands overriding above commands
  *   EnergyConfig1, EnergyConfig2 and EnergyConfig3 for Current phases (0.417 = 417mA)
  *   EnergyConfig4, EnergyConfig5 and EnergyConfig6 for Active Power phases (100 = 100W)
+ *   In addition on ESP32 supporting more channels:
+ *     EnergyConfig11 to 18 for Current phases 1 to 8 (0.417 = 417mA)
+ *     EnergyConfig111 to 118 for Active Power phases 1 to 8 (100 = 100W)
+ *
  * Active Power is adjusted to calculated Apparent Power (=U*I) if the latter is smaller than the first
  *
  * Enable by selecting any GPIO as Option A2
@@ -48,8 +52,8 @@
 /********************************************************************************************/
 
 struct {
-  int32_t current[3] = { 0 };
-  int32_t power[3] = { 0 };
+  int32_t current[ENERGY_MAX_PHASES] = { 0 };
+  int32_t power[ENERGY_MAX_PHASES] = { 0 };
 } NrgDummy;
 
 void NrgDummyEverySecond(void) {
@@ -127,6 +131,16 @@ bool NrgDummyCommand(void) {
     if ((XdrvMailbox.index > 3) && (XdrvMailbox.index < 7)) {
       NrgDummy.power[XdrvMailbox.index -4] = value;
     }
+#ifdef ESP32
+    // EnergyConfig11 to 18 = Set Energy->current[channel] in A like 0.417 for 417mA
+    if ((XdrvMailbox.index > 10) && (XdrvMailbox.index < ENERGY_MAX_PHASES + 10)) {
+      NrgDummy.current[XdrvMailbox.index -1] = value;
+    }
+    // EnergyConfig111 to 118 = Set Energy->active_power[channel] in W like 100 for 100W
+    if ((XdrvMailbox.index > 110) && (XdrvMailbox.index < ENERGY_MAX_PHASES +110)) {
+      NrgDummy.power[XdrvMailbox.index -4] = value;
+    }
+#endif
   }
   else serviced = false;  // Unknown command
 
