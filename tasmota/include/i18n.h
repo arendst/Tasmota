@@ -925,6 +925,7 @@ const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{
 const char HTTP_SNS_GAS[]           PROGMEM = "{s}%s "  D_GAS                 "{m}%d " D_UNIT_PERCENT          "LEL{e}";
 const char HTTP_SNS_SOC[]           PROGMEM = "{s}%s "  D_SOC                 "{m}%d " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_SOH[]           PROGMEM = "{s}%s "  D_SOH                 "{m}%d " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_TDS[]           PROGMEM = "{s}%s "  D_TDS                 "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
 #endif  // USE_WEBSERVER
 
 #endif  // _I18N_H_

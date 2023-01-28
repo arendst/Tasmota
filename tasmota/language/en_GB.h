@@ -208,6 +208,7 @@
 #define D_WEB_SERVER "Web Server"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_TDS "TDS"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"
@@ -919,6 +920,7 @@
 #define D_SENSOR_ME007_RX      "ME007 Rx"
 #define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
 #define D_SENSOR_TUYAMCUBR_RX  "TuyaMCUBr Rx"
+#define D_SENSOR_KS0429        "KS0429"
 
 // Units
 #define D_UNIT_AMPERE "A"

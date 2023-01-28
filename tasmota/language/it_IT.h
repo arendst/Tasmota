@@ -919,6 +919,7 @@
 #define D_SENSOR_ME007_RX               "ME007 - RX"
 #define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
 #define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_KS0429                 "KS0429"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

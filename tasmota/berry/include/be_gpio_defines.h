@@ -128,6 +128,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "KEY1_NP", (int32_t) GPIO_KEY1_NP },
     { "KEY1_PD", (int32_t) GPIO_KEY1_PD },
     { "KEY1_TC", (int32_t) GPIO_KEY1_TC },
+    { "KS0429", (int32_t) GPIO_KS0429 },
     { "LE01MR_RX", (int32_t) GPIO_LE01MR_RX },
     { "LE01MR_TX", (int32_t) GPIO_LE01MR_TX },
     { "LED1", (int32_t) GPIO_LED1 },

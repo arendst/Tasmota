@@ -205,6 +205,7 @@ enum UserSelectablePins {
   GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
   GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
+  GPIO_KS0429,                         // KS-0429 TDS sensor (Analog)
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -457,6 +458,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MBR_TX_ENA "|" D_SENSOR_NRG_MBS_TX_ENA "|"
   D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
   D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
+  D_SENSOR_KS0429 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1138,6 +1140,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,       // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,        // Analog PH Sensor
   AGPIO(GPIO_ADC_MQ) + MAX_ADCS,        // Analog MQ Sensor
+
+
+  AGPIO(GPIO_KS0429)                    // KS0429 Sensor
 #endif  // ESP32
 };
 
