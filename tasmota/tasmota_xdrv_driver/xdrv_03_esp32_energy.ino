@@ -19,7 +19,7 @@
 
 #ifdef ESP32
 #ifdef USE_ENERGY_SENSOR
-//#define USE_ENERGY_SENSOR_ESP32
+#define USE_ENERGY_SENSOR_ESP32
 #endif  // USE_ENERGY_SENSOR
 #endif  // ESP32
 

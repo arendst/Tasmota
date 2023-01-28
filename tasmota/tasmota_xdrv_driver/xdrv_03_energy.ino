@@ -17,11 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef ESP8266
+#ifdef ESP8266
 #ifdef USE_ENERGY_SENSOR
 #define USE_ENERGY_SENSOR_LEGACY
 #endif  // USE_ENERGY_SENSOR
-//#endif  // ESP8266
+#endif  // ESP8266
 
 #ifdef USE_ENERGY_SENSOR_LEGACY
 /*********************************************************************************************\
