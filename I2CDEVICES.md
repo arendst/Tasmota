@@ -111,3 +111,4 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   73  | USE_HMC5883L        | xsns_101 | HMC5883L | 0x1E        | 3-channels Magnetic Field Sensor
   74  | USE_DISPLAY_TM1650  | xdsp_20  | TM1650   | 0x24 - 0x27, 0x34 - 0x37 | Four-digit seven-segment LED controller
   75  | USE_PCA9632         | xdrv_64  | PCA9632  | 0x60        | 4-channel 4-bit pwm driver
+  76  | USE_SEN5X           | xsns_103 | SEN5X    | 0x69        | Gas (VOC/NOx index) and air quality (PPM <1,<2.5,<4,<10)

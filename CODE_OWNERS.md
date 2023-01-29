@@ -198,6 +198,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_100_ina3221           | @barbudor
 | xsns_101_hmc5883l          | Andreas Achtzehn
 | xsns_102_ld2410            | @arendst
+| xsns_103_sen5x             | @tyeth
 |                            |
 | Libraries                  |
 |                            |
