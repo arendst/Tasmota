@@ -862,6 +862,11 @@ tuyamcubr_recv_time(struct tuyamcubr_softc *sc, uint8_t v,
     const uint8_t *data, size_t datalen)
 {
 	struct tuyamcubr_time tm;
+	uint8_t weekday;
+
+	weekday = RtcTime.day_of_week - 1;
+	if (weekday == 0)
+		weekday = 7;
 
 	/* check datalen? should be 0 */
 
@@ -872,7 +877,7 @@ tuyamcubr_recv_time(struct tuyamcubr_softc *sc, uint8_t v,
 	tm.hour = RtcTime.hour;
 	tm.minute = RtcTime.minute;
 	tm.second = RtcTime.second;
-	tm.weekday = (RtcTime.day_of_week - 1) || 7;
+	tm.weekday = weekday;
 
 	tuyamcubr_send(sc, TUYAMCUBR_CMD_TIME, &tm, sizeof(tm));
 }
