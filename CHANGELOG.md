@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - Berry energy_ctypes changed with new energy driver
+- Berry energy_ctypes fixed accordingly
 
 ### Changed
 - Energy refactoring preparing for ESP32 phase/channel extension
