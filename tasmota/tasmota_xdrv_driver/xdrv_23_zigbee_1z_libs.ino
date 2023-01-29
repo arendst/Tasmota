@@ -111,8 +111,9 @@ public:
                                   // Bit #9 is `0` command is cluster specific, or `1` general_command
   uint8_t       key_suffix;       // append a suffix to key (default is 1, explicitly output if >1)
   uint8_t       attr_type;        // [opt] type of the attribute, default to Zunk (0xFF)
-  int8_t        attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
-  int8_t        attr_divider;     // [opt] divider
+  uint16_t      attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
+  uint16_t      attr_divider;     // [opt] divider
+  int16_t       attr_base;        // [opt] base for conversion
   uint16_t      manuf;            // manufacturer id (0 if none)
 
   // Constructor with all defaults
@@ -130,6 +131,7 @@ public:
     attr_type(0xFF),
     attr_multiplier(1),
     attr_divider(1),
+    attr_base(0),
     manuf(0)
     {};
 
@@ -789,6 +791,7 @@ void Z_attribute::deepCopy(const Z_attribute & rhs) {
   attr_type = rhs.attr_type;
   attr_multiplier = rhs.attr_multiplier;
   attr_divider = rhs.attr_divider;
+  attr_base = rhs.attr_base;
   // copy value
   copyVal(rhs);
   // don't touch next pointer

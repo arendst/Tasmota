@@ -232,7 +232,7 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
 // I.e. multipliers and dividers are inversed
 // multiplier == 0: ignore
 // multiplier == 1: ignore
-void ZbApplyMultiplierForWrites(double &val_d, int8_t multiplier, int8_t divider, int8_t base) {
+void ZbApplyMultiplierForWrites(double &val_d, uint16_t multiplier, uint16_t divider, int16_t base) {
   if (0 != base) {
     val_d = val_d - base;
   }
@@ -253,7 +253,7 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 
   if (attr.key_is_str || attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum()) {
-    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, attr.attr_base);
   }
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;
@@ -312,7 +312,7 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
 
   if (attr.key_is_str && attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum()) {
-    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, attr.attr_base);
   }
 
   // push the value in the buffer
@@ -433,7 +433,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
         val_str = val_attr_rc.getStr();
         if (!val_attr_rc.isNull()) {
           val_d = val_attr_rc.getFloat();
-          ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+          ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, attr.attr_base);
         } else {
           val_d = NAN;
         }
