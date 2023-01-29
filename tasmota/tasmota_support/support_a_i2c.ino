@@ -267,30 +267,29 @@ void I2cScan(uint8_t bus = 0) {
   }
 }
 
-void I2cResetActive(uint32_t addr, uint32_t count = 1, uint8_t bus = 0) {
+void I2cResetActive(uint32_t addr, uint8_t bus = 0) {
 #ifdef ESP8266
   bus = 0;
 #endif
   addr &= 0x7F;         // Max I2C address is 127
-  count &= 0x7F;        // Max 4 x 32 bits available
-  while (count-- && (addr < 128)) {
-    i2c_active[bus][addr / 32] &= ~(1 << (addr % 32));
-    addr++;
-  }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[bus][0], i2c_active[bus][1], i2c_active[bus][2], i2c_active[bus][3]);
+  i2c_active[bus][addr / 32] &= ~(1 << (addr % 32));
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: I2cResetActive bus0 %08X-%08X-%08X-%08X, bus1 %08X-%08X-%08X-%08X"),
+//    i2c_active[0][0], i2c_active[0][1], i2c_active[0][2], i2c_active[0][3],
+//    i2c_active[1][0], i2c_active[1][1], i2c_active[1][2], i2c_active[1][3]);
 }
 
-void I2cSetActive(uint32_t addr, uint32_t count = 1, uint8_t bus = 0) {
+void I2cSetActive(uint32_t addr, uint8_t bus = 0) {
 #ifdef ESP8266
   bus = 0;
 #endif
   addr &= 0x7F;         // Max I2C address is 127
-  count &= 0x7F;        // Max 4 x 32 bits available
-  while (count-- && (addr < 128)) {
-    i2c_active[bus][addr / 32] |= (1 << (addr % 32));
-    addr++;
-  }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[bus][0], i2c_active[bus][1], i2c_active[bus][2], i2c_active[bus][3]);
+  i2c_active[bus][addr / 32] |= (1 << (addr % 32));
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: I2cSetActive addr %02X, bus%d, bus0 %08X-%08X-%08X-%08X, bus1 %08X-%08X-%08X-%08X"),
+//    addr, bus,
+//    i2c_active[0][0], i2c_active[0][1], i2c_active[0][2], i2c_active[0][3],
+//    i2c_active[1][0], i2c_active[1][1], i2c_active[1][2], i2c_active[1][3]);
 }
 
 void I2cSetActiveFound(uint32_t addr, const char *types, uint8_t bus = 0) {

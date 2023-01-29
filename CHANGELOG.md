@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - ADE7953 when calibration data for second channel is used regression from v12.2.0.2
 - Shelly Pro 1/2 relay click at restart regression from v12.3.1.4
 - Zigbee extend plug-in modifiers to 16 bits
+- Broken I2C priority regression from v12.3.1.3 (#17810)
 
 ### Removed
 
