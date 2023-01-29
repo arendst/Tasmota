@@ -13,6 +13,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ADC_CT_POWER", (int32_t) GPIO_ADC_CT_POWER },
     { "ADC_INPUT", (int32_t) GPIO_ADC_INPUT },
     { "ADC_BATTERY", (int32_t) GPIO_ADC_BATTERY },
+    { "ADC_BATTERY_DIODE", (int32_t) GPIO_ADC_BATTERY_DIODE },
     { "ADC_JOY", (int32_t) GPIO_ADC_JOY },
     { "ADC_LIGHT", (int32_t) GPIO_ADC_LIGHT },
     { "ADC_MQ", (int32_t) GPIO_ADC_MQ },

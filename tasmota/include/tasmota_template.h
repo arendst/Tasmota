@@ -97,6 +97,7 @@ enum UserSelectablePins {
   GPIO_AS3935,                         // Franklin Lightning Sensor
   GPIO_ADC_INPUT,                      // Analog input
   GPIO_ADC_BATTERY,                    // Analog Battery
+  GPIO_ADC_BATTERY_DIODE,              // Analog Battery with Diode
   GPIO_ADC_TEMP,                       // Analog Thermistor
   GPIO_ADC_LIGHT,                      // Analog Light sensor
   GPIO_ADC_BUTTON, GPIO_ADC_BUTTON_INV,  // Analog Button
@@ -346,6 +347,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AS3935 "|"
   D_SENSOR_ADC_INPUT "|"
   D_SENSOR_ADC_BATTERY "|"
+  D_SENSOR_ADC_BATTERY_DIODE "|"
   D_SENSOR_ADC_TEMP "|"
   D_SENSOR_ADC_LIGHT "|"
   D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
@@ -1126,6 +1128,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
   AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,     // Analog inputs
   AGPIO(GPIO_ADC_BATTERY) + MAX_ADCS,   // Analog batteries
+  AGPIO(GPIO_ADC_BATTERY_DIODE) + MAX_ADCS,   // Analog batteries with diode
   AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,      // Thermistor
   AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,     // Light sensor
   AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,    // Button
@@ -1147,6 +1150,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   GPIO_NONE,                              // Not used
   AGPIO(GPIO_ADC_INPUT),                  // Analog inputs
   AGPIO(GPIO_ADC_BATTERY),                // Analog battery
+  AGPIO(GPIO_ADC_BATTERY_DIODE),          // Analog battery with diode
   AGPIO(GPIO_ADC_TEMP),                   // Thermistor
   AGPIO(GPIO_ADC_LIGHT),                  // Light sensor
   AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,      // Button
@@ -1164,6 +1168,7 @@ enum UserSelectableAdc {
   ADC_NONE,           // Not used
   ADC_INPUT,          // Analog input
   ADC_BATTERY,        // Analog battery
+  ADC_BATTERY_DIODE,  // Analog battery with diode
   ADC_TEMP,           // Thermistor
   ADC_LIGHT,          // Light sensor
   ADC_BUTTON,         // Button
