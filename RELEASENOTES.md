@@ -117,11 +117,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for IPv6 only networks on Ethernet (not yet Wifi)
 - Support for TM1650 display as used in some clocks by Stefan Oskamp [#17594](https://github.com/arendst/Tasmota/issues/17594)
 - Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich [#17557](https://github.com/arendst/Tasmota/issues/17557)
+- support for SEN5X gas and air quality sensor by Tyeth Gundry [#17736](https://github.com/arendst/Tasmota/issues/17736)
 - Berry support for ``crypto.SHA256`` [#17430](https://github.com/arendst/Tasmota/issues/17430)
 - Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol [#17473](https://github.com/arendst/Tasmota/issues/17473)
 - Berry crypto add ``random`` to generate series of random bytes
 - Berry crypto add ``HKDF_HMAC_SHA256``
 - Berry crypto add ``SPAKE2P_Matter`` for Matter support
+- ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
+- ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
+- ESP32 support for eigth energy phases/channels
 - ESP32 support for BMPxxx sensors on two I2C busses [#17643](https://github.com/arendst/Tasmota/issues/17643)
 
 ### Breaking Changed

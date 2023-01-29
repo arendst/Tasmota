@@ -660,7 +660,7 @@ void Ade7953DrvInit(void) {
   if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {         // Irq is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
     pinMode(pin_irq, INPUT);                         // Related to resetPins() - Must be set to input
-    // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM), 2 (3 = Shelly Plus 2PM), 3 (4 = Shelly Pro 1PM), 4 (5 = Shelly Pro 2PM)
+    // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM), 2 (3 = Shelly Plus 2PM), 3 (4 = Shelly Pro 1PM), 4 (5 = Shelly Pro 2PM), 5 (6 = Shelly Pro 4PM)
     Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);
 
     int pin_reset = Pin(GPIO_ADE7953_RST);           // -1 if not defined

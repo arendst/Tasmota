@@ -454,6 +454,8 @@
 #define D_CMND_VOLTAGEHIGH "VoltageHigh"
 #define D_CMND_CURRENTLOW "CurrentLow"
 #define D_CMND_CURRENTHIGH "CurrentHigh"
+#define D_CMND_ENERGYDISPLAY "EnergyDisplay"
+#define D_CMND_ENERGYCOLS "EnergyCols"
 #define D_CMND_ENERGYTODAY "EnergyToday"
 #define D_CMND_ENERGYYESTERDAY "EnergyYesterday"
 #define D_CMND_ENERGYTOTAL "EnergyTotal"
