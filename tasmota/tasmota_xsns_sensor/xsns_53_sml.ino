@@ -35,7 +35,6 @@
 
 #include <TasmotaSerial.h>
 
-#include "han_Parser.h"
 
 // use special no wait serial driver, should be always on
 #ifndef ESP32
@@ -626,7 +625,7 @@ void dump2log(void) {
 							logsiz = mp->sbsiz;
 						}
 						memmove(mp->sbuff, payload, logsiz);
-						AddLog(LOG_LEVEL_INFO, PSTR(">> decrypted block: %d bytes"), logsiz);
+						AddLog(LOG_LEVEL_INFO, PSTR("decrypted block: %d bytes"), logsiz);
 						uint16_t index = 0;
 						while (logsiz) {
 							sml_dump_start('>');
@@ -2534,7 +2533,7 @@ struct METER_DESC *mp = &meter_desc[mnum];
 			for (uint8_t cnt = 0; cnt < (SML_CRYPT_SIZE * 2); cnt += 2) {
 				mp->key[cnt / 2] = (sml_hexnibble(cp[cnt]) << 4) | sml_hexnibble(cp[cnt + 1]);
 			}
-			AddLog(LOG_LEVEL_INFO, PSTR("crypto mode used for meter %d"), mnum + 1);
+			AddLog(LOG_LEVEL_INFO, PSTR("SML: crypto mode used for meter %d"), mnum + 1);
 			break;
 #ifdef USE_SML_AUTHKEY
 		case '5':
