@@ -2932,7 +2932,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #ifdef USE_ENERGY_SENSOR
         if (!strncmp(lp, "enrg[", 5)) {
-          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           switch ((uint32_t)fvar) {
             case 0:
@@ -4478,7 +4478,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_ANGLE_FUNC
 
+
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
+uint32_t sml_status(uint32_t meter);
 extern char *SML_GetSVal(uint32_t index);
 
         if (!strncmp(lp, "sml[", 4)) {
@@ -4547,13 +4549,7 @@ extern char *SML_GetSVal(uint32_t index);
               fvar = -99;
             }
           } else {
-
-
-#if defined(ED300L) || defined(AS2020)
-            fvar = SML_Status(fvar1);
-#else
-            fvar = 0;
-#endif //ED300L
+            fvar = sml_status(fvar1);
           }
           goto nfuncexit;
         }
