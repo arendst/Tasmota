@@ -1,4 +1,8 @@
+
 #include "GcmParser.h"
+#include "tasmota_options.h"
+
+#ifdef USE_TLS
 #include "lwip/def.h"
 #include <t_bearssl.h>
 
@@ -97,3 +101,4 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
     ctx.length -= footersize + headersize;
     return ptr - d;
 }
+#endif // USE_TLS
