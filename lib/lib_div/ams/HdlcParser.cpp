@@ -26,7 +26,7 @@ int8_t HDLCParser::parse(uint8_t *d, DataParserContext &ctx) {
             return DATA_PARSE_BOUNDRY_FLAG_MISSING;
 
         // Verify FCS
-        if(ntohs(f->fcs) != crc16_x25(d + 1, len - sizeof *f - 1))
+        if(ntohs(f->fcs) != AMS_crc16_x25(d + 1, len - sizeof *f - 1))
             return DATA_PARSE_FOOTER_CHECKSUM_ERROR;
 
         // Skip destination address, LSB marks last byte
@@ -44,7 +44,7 @@ int8_t HDLCParser::parse(uint8_t *d, DataParserContext &ctx) {
         HDLC3CtrlHcs* t3 = (HDLC3CtrlHcs*) (ptr);
 
         // Verify HCS
-        if(ntohs(t3->hcs) != crc16_x25(d + 1, ptr-d))
+        if(ntohs(t3->hcs) != AMS_crc16_x25(d + 1, ptr-d))
             return DATA_PARSE_HEADER_CHECKSUM_ERROR;
         ptr += 3;
 

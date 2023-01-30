@@ -1,6 +1,6 @@
 #include "crc.h"
 
-uint16_t crc16_x25(const uint8_t* p, int len)
+uint16_t AMS_crc16_x25(const uint8_t* p, int len)
 {
 	uint16_t crc = UINT16_MAX;
 
@@ -11,7 +11,7 @@ uint16_t crc16_x25(const uint8_t* p, int len)
 	return (~crc << 8) | (~crc >> 8 & 0xff);
 }
 
-uint16_t crc16 (const uint8_t *p, int len) {
+uint16_t AMS_crc16 (const uint8_t *p, int len) {
     uint16_t crc = 0;
 
     while (len--) {
@@ -22,8 +22,8 @@ uint16_t crc16 (const uint8_t *p, int len) {
 				crc = (crc >> 1) ^ 0xa001;
 			else
 				crc = (crc >> 1);
-		}    			
+		}
     }
-    
+
     return crc;
 }

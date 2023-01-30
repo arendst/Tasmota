@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <stdint.h>
 
-uint16_t crc16(const uint8_t* p, int len);
-uint16_t crc16_x25(const uint8_t* p, int len);
+uint16_t AMS_crc16(const uint8_t* p, int len);
+uint16_t AMS_crc16_x25(const uint8_t* p, int len);
 
 #endif
