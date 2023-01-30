@@ -1111,7 +1111,7 @@ void TuyaNormalPowerModePacketProcess(void)
         // If LED_1 not yet configured
         if (!led1_set) {
           // Check is the GPIO is not already in use and if it is valid
-          if (!Settings->my_gp.io[led1_gpio] && ValidPin(led1_gpio,GPIO_LED1)) {
+          if (!Settings->my_gp.io[led1_gpio] && ValidPin(led1_gpio,GPIO_LED1, true)) {
             Settings->my_gp.io[led1_gpio] = AGPIO(GPIO_LED1);
             TasmotaGlobal.restart_flag = 2;
             AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Set LED1 on gpio%d, will restart"), led1_gpio);
@@ -1122,7 +1122,7 @@ void TuyaNormalPowerModePacketProcess(void)
         // If KEY_1 not yet configured
         if (!key1_set) {
           // Check is the GPIO is not already in use and if it is valid
-          if (!Settings->my_gp.io[key1_gpio] && ValidPin(key1_gpio,GPIO_KEY1)) {
+          if (!Settings->my_gp.io[key1_gpio] && ValidPin(key1_gpio,GPIO_KEY1, true)) {
             Settings->my_gp.io[key1_gpio] = AGPIO(GPIO_KEY1);
             TasmotaGlobal.restart_flag = 2;
             AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Set KEY1 on gpio%d, will restart"), key1_gpio);
