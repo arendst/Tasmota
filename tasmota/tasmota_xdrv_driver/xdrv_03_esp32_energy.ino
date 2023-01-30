@@ -166,8 +166,8 @@ typedef struct {
 
   // Local only
   float daily_kWh[ENERGY_MAX_PHASES];           // 123.123 kWh
-  float energy_today_offset_kWh[ENERGY_MAX_PHASES];  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
-  float period_kWh[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
+  float energy_today_offset_kWh[ENERGY_MAX_PHASES];  // 123.12312 kWh = Energy->daily
+  float period_kWh[ENERGY_MAX_PHASES];          // 123.12312 kWh = Energy->daily
   float daily_sum_import_balanced;              // 123.123 kWh
   float daily_sum_export_balanced;              // 123.123 kWh
 
@@ -595,7 +595,7 @@ void Energy200ms(void) {
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Energy->Settings.energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;
-        for (uint32_t i = 0; i < 3; i++) {
+        for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
           Energy->energy_today_offset_kWh[i] = Energy->Settings.energy_today_kWh[i];
 //          RtcEnergySettings.energy_today_kWh[i] = 0;
         }
@@ -642,7 +642,7 @@ void Energy200ms(void) {
 void EnergySaveState(void) {
   Energy->Settings.energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
 
-  for (uint32_t i = 0; i < 3; i++) {
+  for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
     Energy->Settings.energy_today_kWh[i] = RtcEnergySettings.energy_today_kWh[i];
     Energy->Settings.energy_total_kWh[i] = RtcEnergySettings.energy_total_kWh[i];
     Energy->Settings.energy_export_kWh[i] = RtcEnergySettings.energy_export_kWh[i];
@@ -1380,7 +1380,7 @@ void EnergySnsInit(void) {
       &Energy->Settings.energy_today_kWh[0],&Energy->Settings.energy_today_kWh[1],&Energy->Settings.energy_today_kWh[2]
     );
 */
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
 //    Energy->energy_today_offset_kWh[i] = 0;   // Reset by EnergyDrvInit()
       // 20220805 - Change from https://github.com/arendst/Tasmota/issues/16118
       if (EnergyRtcSettingsValid()) {
