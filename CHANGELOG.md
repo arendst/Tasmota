@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Shelly Pro 1/2 relay click at restart regression from v12.3.1.4
 - Zigbee extend plug-in modifiers to 16 bits
 - Broken I2C priority regression from v12.3.1.3 (#17810)
+- Energy usage and return migrated too small (/10000) regression from v12.3.1.3
 
 ### Removed
 
