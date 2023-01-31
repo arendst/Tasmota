@@ -761,13 +761,9 @@ void HandleImage(void) {
     if (!wc_fb) { return; }
     if (Wc.stream_active < 2) {
       // fetch some more frames
-      delay(20);
       esp_camera_fb_return(wc_fb);
-      delay(20);
       wc_fb = esp_camera_fb_get();
-      delay(20);
       esp_camera_fb_return(wc_fb);
-      delay(20);
       wc_fb = esp_camera_fb_get();
     }
     if (wc_fb->format != PIXFORMAT_JPEG) {
