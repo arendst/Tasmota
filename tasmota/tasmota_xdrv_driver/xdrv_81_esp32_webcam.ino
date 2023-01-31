@@ -432,7 +432,10 @@ uint32_t WcSetup(int32_t fsiz) {
 
   WcApplySettings();
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Initialized"));
+  camera_sensor_info_t *info = esp_camera_sensor_get_info(&wc_s->id);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: %s Initialized"), info->name);
+
 
   Wc.up = 1;
   if (psram) { Wc.up = 2; }
@@ -756,6 +759,17 @@ void HandleImage(void) {
     camera_fb_t *wc_fb = 0;
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) { return; }
+    if (Wc.stream_active < 2) {
+      // fetch some more frames
+      delay(20);
+      esp_camera_fb_return(wc_fb);
+      delay(20);
+      wc_fb = esp_camera_fb_get();
+      delay(20);
+      esp_camera_fb_return(wc_fb);
+      delay(20);
+      wc_fb = esp_camera_fb_get();
+    }
     if (wc_fb->format != PIXFORMAT_JPEG) {
       bool jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
       if (!jpeg_converted) {
