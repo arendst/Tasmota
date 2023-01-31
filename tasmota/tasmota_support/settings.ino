@@ -1620,13 +1620,13 @@ void SettingsDelta(void) {
         Settings->energy_kWhtotal_ph[i] /= 100;
         RtcSettings.energy_kWhexport_ph[i] /= 100;
         Settings->energy_kWhexport_ph[i] /= 100;
-        RtcSettings.energy_usage.usage1_kWhtotal /= 100;
-        RtcSettings.energy_usage.usage2_kWhtotal /= 100;
-        RtcSettings.energy_usage.return1_kWhtotal /= 100;
-        RtcSettings.energy_usage.return2_kWhtotal /= 100;
-        RtcSettings.energy_usage.last_return_kWhtotal /= 100;
-        RtcSettings.energy_usage.last_usage_kWhtotal /= 100;
       }
+      RtcSettings.energy_usage.usage1_kWhtotal /= 100;
+      RtcSettings.energy_usage.usage2_kWhtotal /= 100;
+      RtcSettings.energy_usage.return1_kWhtotal /= 100;
+      RtcSettings.energy_usage.return2_kWhtotal /= 100;
+      RtcSettings.energy_usage.last_return_kWhtotal /= 100;
+      RtcSettings.energy_usage.last_usage_kWhtotal /= 100;
     }
 
     Settings->version = VERSION;
