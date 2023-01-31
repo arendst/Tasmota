@@ -223,7 +223,7 @@ static int32_t m_dns_add_hostname(struct bvm *vm) {
 }
 
 //
-// `mdns.find_service(service:string, proto:string [timeout_ms:int(3000), max_responses:int(20)]) -> nil`
+// `mdns.find_service(service:string, proto:string [timeout_ms:int(3000), max_responses:int(20)]) -> map`
 //
 static int32_t m_dns_find_service(struct bvm *vm) {
   static const char * ip_protocol_str[] = {"v4", "v6", "max"};
