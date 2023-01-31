@@ -157,8 +157,16 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
+  
+  // Berry: tasmota.locale() -> string
+  //
+  int32_t l_locale(struct bvm *vm);
+  int32_t l_locale(struct bvm *vm) {
+    be_pushstring(vm, D_HTML_LANGUAGE);
+    be_return(vm);
+  }
 
-  // Berry: tasmota.time_reached(timer:int) -> bool
+  // Berry: tasmota.rtc() -> map
   //
   int32_t l_rtc(struct bvm *vm);
   int32_t l_rtc(struct bvm *vm) {
