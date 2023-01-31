@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
 - ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
 - support for SEN5X gas and air quality sensor by Tyeth Gundry (#17736)
+- Berry add ``mdns`` advanced features and query
 
 ### Breaking Changed
 - Berry energy_ctypes changed with new energy driver
