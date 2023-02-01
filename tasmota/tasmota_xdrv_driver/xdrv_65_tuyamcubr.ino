@@ -380,6 +380,7 @@ tuyamcubr_parse(struct tuyamcubr_softc *sc, uint8_t byte)
 		if (byte != TUYAMCUBR_H_TWO)
 			return (TUYAMCUBR_P_START);
 
+		p->p_deadline = sc->sc_clock + (10 * 1000);
 		nstate = TUYAMCUBR_P_VERSION;
 		break;
 	case TUYAMCUBR_P_VERSION:
@@ -888,6 +889,16 @@ tuyamcubr_tick(struct tuyamcubr_softc *sc, unsigned int ms)
 	int diff;
 
 	sc->sc_clock += ms;
+
+	if (sc->sc_parser.p_state >= TUYAMCUBR_P_VERSION) {
+		/* parser timeout only starts after the header */
+		diff = sc->sc_clock - sc->sc_parser.p_deadline;
+		if (diff > 0) {
+			AddLog(LOG_LEVEL_ERROR,
+			    TUYAMCUBR_FMT("recv timeout"));
+			sc->sc_parser.p_state = TUYAMCUBR_P_START;
+		}
+	}
 
 	diff = sc->sc_clock - sc->sc_deadline;
 	if (diff < 0) {
