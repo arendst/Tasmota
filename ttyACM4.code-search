@@ -1,0 +1,14 @@
+# Query: ttyACM4
+# ContextLines: 1
+
+2 results - 2 files
+
+platformio_tasmota_env32.ini:
+  8  monitor_speed               = 115200
+  9: upload_port                 = /dev/ttyACM
+  10  upload_resetmethod          = ${common.upload_resetmethod}
+
+.vscode/settings.json:
+  1  {
+  2:     "idf.port": "/dev/ttyACM4"
+  3  }
