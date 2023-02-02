@@ -2,7 +2,7 @@
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
   Copyright (C) 2021 by Pablo Zerón
-  Copyright (C) 2022 by Stefan Wershoven
+  Copyright (C) 2023 by Stefan Wershoven
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -295,6 +295,7 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
       Energy->voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
       Energy->frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
       Energy->active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
+      Energy->apparent_power[0] = Energy->active_power[0]; // U*I from inverter is not valid for apparent power; U*I could be lower than active power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
       Energy->import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
       solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total

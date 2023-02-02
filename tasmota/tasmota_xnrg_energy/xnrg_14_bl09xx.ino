@@ -189,6 +189,7 @@ bool Bl09XXDecode42(void) {
 void Bl09XXUpdateEnergy() {
   if (Energy->power_on) {  // Powered on
     Energy->voltage[0] = (float)Bl09XX.voltage / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION);
+    Energy->voltage[1] = Energy->voltage[0];
 #ifdef DEBUG_BL09XX
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %2_f, T %2_f"), &Energy->voltage[0], &Bl09XX.temperature);
 #endif
@@ -208,6 +209,7 @@ void Bl09XXUpdateEnergy() {
     }
   } else {  // Powered off
     Energy->voltage[0] = 0;
+    Energy->voltage[1] = 0;
     Energy->active_power[0] = Energy->active_power[1] = 0;
     Energy->current[0] = Energy->current[1] = 0;
   }
