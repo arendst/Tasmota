@@ -205,7 +205,7 @@ enum UserSelectablePins {
   GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
   GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
-  GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU pins
+  GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
