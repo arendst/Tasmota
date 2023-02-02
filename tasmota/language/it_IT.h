@@ -919,6 +919,9 @@
 #define D_SENSOR_ME007_RX               "ME007 - RX"
 #define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
 #define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
+#define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
+#define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
