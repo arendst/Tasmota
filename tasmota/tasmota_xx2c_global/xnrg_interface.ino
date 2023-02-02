@@ -152,10 +152,6 @@ bool (* const xnrg_func_ptr[])(uint32_t) = {   // Energy driver Function Pointer
 #ifdef XNRG_32  // Reserved for use by xdrv_16_tuyamcu.ino
   &Xnrg32
 #endif
-
-#ifdef XNRG_33  // BioPDU 625x12
-  ,&Xnrg33
-#endif
 };
 
 const uint8_t xnrg_present = sizeof(xnrg_func_ptr) / sizeof(xnrg_func_ptr[0]);  // Number of drivers found
