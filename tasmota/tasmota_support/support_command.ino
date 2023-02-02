@@ -1449,6 +1449,11 @@ void CmndSetoptionBase(bool indexed) {
           }
           else if (6 == ptype) {           // SetOption146 .. 177
             bitWrite(Settings->flag6.data, pindex, XdrvMailbox.payload);
+            switch (pindex) {
+              case 5:                     // SetOption151 - Matter enabled
+                TasmotaGlobal.restart_flag = 2;
+                break;
+            }
           }
         } else {
           ptype = 99;                      // Command Error
