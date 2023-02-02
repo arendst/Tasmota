@@ -1,5 +1,5 @@
 /*
-  xnrg_33_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
+  xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
     Biomine 625x12 Custom Board
     6 x Independent PZEM-004V3 Modbus AC energy sensor
     3bit serial switch
@@ -27,7 +27,7 @@
 #if defined(USE_ENERGY_SENSOR_ESP32) && defined(USE_I2C)
 #ifdef USE_BIOPDU
 
-#define XNRG_33 33
+#define XNRG_24 24
 
 #undef ENERGY_MAX_PHASES
 #define ENERGY_MAX_PHASES         6        // BioPDU support max six phases/channels
@@ -208,7 +208,7 @@ void BioPduDrvInit(void)
 {
   if (PinUsed(GPIO_BIOPDU_PZEM016_RX) && PinUsed(GPIO_BIOPDU_PZEM0XX_TX) && PinUsed(GPIO_BIOPDU_BIT))
   {
-    TasmotaGlobal.energy_driver = XNRG_33;
+    TasmotaGlobal.energy_driver = XNRG_24;
 
     Energy->voltage_common = false;
     Energy->frequency_common = false;
@@ -257,7 +257,7 @@ bool BioPduCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg33(uint32_t function)
+bool Xnrg24(uint32_t function)
 {
   bool result = false;
 
