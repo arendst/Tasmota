@@ -1074,7 +1074,7 @@
 #ifdef USE_SCRIPT
 #define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #if defined(USE_SML_M) && !defined(NO_USE_SML_DECRYPT)
-#ifndef USE_TLS                                  // Add support for TLS as requires by SML decryption
+#ifndef USE_TLS                                  // Add support for TLS as required by SML decryption
 #define USE_TLS
 #endif
 #endif
