@@ -205,7 +205,8 @@ a_setoption = [[
     "(MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead",
     "(Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up",
     "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
-    "","","","",
+    "(Energy) Force no voltage/frequency common",
+    "","","",
     "","","","",
     "","","","",
     "","","","",
@@ -322,7 +323,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.3.1.2 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.3.1.5 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

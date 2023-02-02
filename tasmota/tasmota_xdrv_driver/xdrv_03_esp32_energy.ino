@@ -1416,7 +1416,10 @@ const char HTTP_ENERGY_SNS3[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 void EnergyShow(bool json) {
-  if (Energy->voltage_common) {
+  bool voltage_common = (Settings->flag6.no_voltage_common) ? false : Energy->voltage_common;
+  bool frequency_common = (Settings->flag6.no_voltage_common) ? false : Energy->frequency_common;
+
+  if (voltage_common) {
     for (uint32_t i = 0; i < Energy->phase_count; i++) {
       Energy->voltage[i] = Energy->voltage[0];
     }
@@ -1549,12 +1552,12 @@ void EnergyShow(bool json) {
       }
       if (!isnan(Energy->frequency[0])) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, Energy->frequency_common));
+          EnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
       }
     }
     if (Energy->voltage_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"),
-        EnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, Energy->voltage_common));
+        EnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
     }
     if (Energy->current_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"),
@@ -1636,7 +1639,7 @@ void EnergyShow(bool json) {
       if (Energy->gui_count > Energy->Settings.gui_cols) { Energy->gui_count = Energy->Settings.gui_cols; }
 
       WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
-      bool label_o = Energy->voltage_common;
+      bool label_o = voltage_common;
       if (ENERGY_DISPLAY_TABS == Energy->Settings.gui_display) {
         uint32_t tabs = (relay_show -1 + Energy->Settings.gui_cols) / Energy->Settings.gui_cols;
         if (tabs > 1) {
@@ -1668,12 +1671,12 @@ void EnergyShow(bool json) {
       WSContentSend_P(PSTR("<td>{e}"));              // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI
       if (Energy->voltage_available) {
-        WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, Energy->voltage_common));
+        WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
       }
       if (!Energy->type_dc) {
         if (!isnan(Energy->frequency[0])) {
           WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-            WebEnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, Energy->frequency_common));
+            WebEnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
         }
       }
       if (Energy->current_available) {

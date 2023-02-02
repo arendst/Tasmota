@@ -462,8 +462,10 @@ void Cse7761GetData(void) {
     // Voltage = RmsU * RmsUC * 10 / 0x400000
     // Energy->voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
     Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION));  // V
+    Energy->voltage[1] = Energy->voltage[0];
 #ifdef CSE7761_FREQUENCY
     Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) / 8 / CSE7761Data.frequency) : 0;  // Hz
+    Energy->frequency[1] = Energy->frequency[0];
 #endif
 
     for (uint32_t channel = 0; channel < 2; channel++) {

@@ -1200,7 +1200,10 @@ const char HTTP_ENERGY_SNS3[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 void EnergyShow(bool json) {
-  if (Energy->voltage_common) {
+  bool voltage_common = (Settings->flag6.no_voltage_common) ? false : Energy->voltage_common;
+  bool frequency_common = (Settings->flag6.no_voltage_common) ? false : Energy->frequency_common;
+
+  if (voltage_common) {
     for (uint32_t i = 0; i < Energy->phase_count; i++) {
       Energy->voltage[i] = Energy->voltage[0];
     }
@@ -1333,12 +1336,12 @@ void EnergyShow(bool json) {
       }
       if (!isnan(Energy->frequency[0])) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, Energy->frequency_common));
+          EnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
       }
     }
     if (Energy->voltage_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"),
-        EnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, Energy->voltage_common));
+        EnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
     }
     if (Energy->current_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"),
@@ -1397,7 +1400,7 @@ void EnergyShow(bool json) {
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
     WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    bool label_o = Energy->voltage_common;
+    bool label_o = voltage_common;
     bool no_label = (1 == Energy->phase_count);
     for (uint32_t i = 0; i < Energy->phase_count; i++) {
       WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":(label_o)?"O":"L", (no_label)?"":itoa(i +1, value_chr, 10));
@@ -1405,12 +1408,12 @@ void EnergyShow(bool json) {
     WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI
     if (Energy->voltage_available) {
-      WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, Energy->voltage_common));
+      WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
     }
     if (!Energy->type_dc) {
       if (!isnan(Energy->frequency[0])) {
         WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-          WebEnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, Energy->frequency_common));
+          WebEnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
       }
     }
     if (Energy->current_available) {
