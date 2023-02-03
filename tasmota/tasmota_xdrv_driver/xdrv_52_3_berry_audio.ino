@@ -258,7 +258,7 @@ extern "C" {
 
     be_return_nil(vm);
   }
-#endif // USE_UFILESYS
+#endif // USE_UFILESYS 
 }
 
 #endif  // USE_I2S_AUDIO_BERRY
