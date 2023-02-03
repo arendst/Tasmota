@@ -210,9 +210,6 @@ void BioPduDrvInit(void)
   {
     TasmotaGlobal.energy_driver = XNRG_24;
 
-    Energy->voltage_common = false;
-    Energy->frequency_common = false;
-
     AddLog(LOG_LEVEL_DEBUG, PSTR("PDU: checking pins"));
 
     for (uint8_t p = 0; p < 3; p++)
