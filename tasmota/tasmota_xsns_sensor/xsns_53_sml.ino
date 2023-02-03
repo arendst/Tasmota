@@ -625,7 +625,7 @@ void dump2log(void) {
 							logsiz = mp->sbsiz;
 						}
 						memmove(mp->sbuff, payload, logsiz);
-						AddLog(LOG_LEVEL_INFO, PSTR("decrypted block: %d bytes"), logsiz);
+						AddLog(LOG_LEVEL_DEBUG, PSTR("SML: decrypted block: %d bytes"), logsiz);
 						uint16_t index = 0;
 						while (logsiz) {
 							sml_dump_start('>');
@@ -1192,7 +1192,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
 					len = mp->sbsiz;
 				}
 				memmove(mp->sbuff, payload, len);
-				AddLog(LOG_LEVEL_INFO, PSTR(">> decrypted block: %d bytes"), len);
+				AddLog(LOG_LEVEL_DEBUG, PSTR("SML: decrypted block: %d bytes"), len);
 				SML_Decode(meters);
 			}
 		}
