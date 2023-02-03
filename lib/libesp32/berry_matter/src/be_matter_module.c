@@ -41,7 +41,7 @@ static const uint8_t MATTER_LOGO[] =
 extern const bclass be_class_Matter_Counter;
 extern const bclass be_class_Matter_Verhoeff;
 
-#include "solidify/solidified_matter_module.h"
+#include "solidify/solidified_Matter_Module.h"
 
 #include "../generate/be_matter_clusters.h"
 #include "../generate/be_matter_opcodes.h"
