@@ -1,6 +1,7 @@
 /*
   xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
     Biomine 625x12 Custom Board
+    6 x 25A Relays
     6 x Independent PZEM-004V3 Modbus AC energy sensor
     3bit serial switch
     Integrated MCP23008
@@ -26,6 +27,42 @@
 
 #if defined(USE_ENERGY_SENSOR_ESP32) && defined(USE_I2C)
 #ifdef USE_BIOPDU
+
+/*
+  BioPDU 625x12 Factory Settings:
+
+      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
+      Module 0
+      EthType 0
+      EthAddress 0
+      EthClockMode 3
+      SetOption26 1
+      SetOption129 1
+      SetOption150 1
+      EnergyDisplay 1
+      EnergyCols 6
+      i2cscan
+      Sensor29 0,1,0
+      Sensor29 1,5,2
+      Sensor29 2,5,2
+      Sensor29 3,5,2
+      Sensor29 4,5,2
+      Sensor29 5,5,2
+      Sensor29 6,5,2
+      Sensor29 7,1,0
+
+  compile with build flags:
+
+      ${env:tasmota32.build_flags}
+      USE_ETHERNET
+      ETH_TYPE=0
+      ETH_ADDRESS=0
+      ETH_CLKMODE=3
+      USE_MCP230xx
+      USE_MCP230xx_ADDR=0x20
+      USE_MCP230xx_OUTPUT
+      USE_BIOPDU
+*/
 
 #define XNRG_24 24
 
