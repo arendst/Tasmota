@@ -165,8 +165,8 @@ bool ZbLoad_inner(const char *filename, File &fp) {
     if (filename_imported == nullptr) {
       // allocate only once the filename for multiple entries
       // freed only by `ZbUnload`
-      filename_imported = (char*) malloc(strlen(filename)+1);
-      strcpy(filename_imported, filename);
+      filename_imported = (char*) malloc(strlen_P(filename)+1);
+      strcpy_P(filename_imported, filename);
     }
 
     // there is a non-empty line, containing no space/tab/crlf
@@ -214,8 +214,8 @@ bool ZbLoad_inner(const char *filename, File &fp) {
         uint16_t attr_id = 0xFFFF;
         uint16_t cluster_id = 0xFFFF;
         uint8_t  type_id = Zunk;
-        int8_t   multiplier = 1;
-        int8_t   divider = 1;
+        uint16_t multiplier = 1;
+        uint16_t divider = 1;
         int16_t  base = 0;
         char *   name = nullptr;
         uint16_t manuf = 0;
@@ -281,9 +281,9 @@ bool ZbLoad_inner(const char *filename, File &fp) {
         char * delimiter_slash2 = strchr(tok2, '/');
         uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
         uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
-        int8_t multiplier = 1;
-        int8_t divider = 1;
-        int16_t base = 0;
+        uint16_t multiplier = 1;
+        uint16_t divider = 1;
+        int16_t  base = 0;
 
         // ADDITIONAL ELEMENTS?
         while (token = strtok_r(rest, ",", &rest)) {

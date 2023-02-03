@@ -182,9 +182,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
     uint32_t mqtt_disable_sserialrec : 1;  // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead.
     uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
-    uint32_t spare03 : 1;                  // bit 3
-    uint32_t spare04 : 1;                  // bit 4
-    uint32_t spare05 : 1;                  // bit 5
+    uint32_t dns_ipv6_priority : 1;        // bit 3  (v12.2.0.6) - SetOption149 - (Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`
+    uint32_t no_voltage_common : 1;        // bit 4  (v12.3.1.5) - SetOption150 - (Energy) Force no voltage/frequency common
+    uint32_t matter_enabled : 1;           // bit 5  (v12.3.1.5) - SetOption151 - (Matter) Enable Matter protocol over Wifi
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
@@ -730,8 +730,9 @@ typedef struct {
 #endif  // ESP32
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
+  uint16_t      shutter_motorstop;         // 738
 
-  uint8_t       free_esp32_738[5];         // 738
+  uint8_t       free_73A[3];               // 73A
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E

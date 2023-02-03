@@ -1899,11 +1899,11 @@ void MI32createPolyline(char *polyline, uint8_t *history){
 
 #ifdef USE_MI_ESP32_ENERGY
 void MI32sendEnergyWidget(){
-  if (Energy.current_available && Energy.voltage_available) {
-    WSContentSend_P(HTTP_MI32_POWER_WIDGET,MIBLEsensors.size()+1, Energy.voltage,Energy.current[1]);
+  if (Energy->current_available && Energy->voltage_available) {
+    WSContentSend_P(HTTP_MI32_POWER_WIDGET,MIBLEsensors.size()+1, Energy->voltage,Energy->current[1]);
     char _polyline[176];
     MI32createPolyline(_polyline,MI32.energy_history);
-    WSContentSend_P(PSTR("<p>" D_POWERUSAGE ": %.1f " D_UNIT_WATT ""),Energy.active_power);
+    WSContentSend_P(PSTR("<p>" D_POWERUSAGE ": %.1f " D_UNIT_WATT ""),Energy->active_power);
     WSContentSend_P(HTTP_MI32_GRAPH,_polyline,185,124,124,_polyline,1);
     WSContentSend_P(PSTR("</p></div>"));
   }
@@ -2243,7 +2243,7 @@ void MI32Show(bool json)
 #ifdef USE_MI_EXT_GUI
     Mi32invalidateOldHistory();
 #ifdef USE_MI_ESP32_ENERGY
-    MI32addHistory(MI32.energy_history,Energy.active_power[0],100); //TODO: which value??
+    MI32addHistory(MI32.energy_history,Energy->active_power[0],100); //TODO: which value??
 #endif //USE_MI_ESP32_ENERGY
 #endif //USE_MI_EXT_GUI
     vTaskResume(MI32.ScanTask);
@@ -2357,11 +2357,16 @@ bool Xsns62(uint32_t function)
       MI32EverySecond(false);
       break;
     case FUNC_SAVE_BEFORE_RESTART:
+    case FUNC_INTERRUPT_STOP:
       ExtStopBLE();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kMI32_Commands, MI32_Commands);
       break;
+/*
+    case FUNC_INTERRUPT_START:
+      break;
+*/
     case FUNC_JSON_APPEND:
       MI32Show(1);
       break;

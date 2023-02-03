@@ -91,7 +91,7 @@ void SevensegLog(void)
               if (strchr( value_level2, '.') == NULL) {
                 sevenseg[unit]->print(atoi(value_level2), DEC);
               } else {
-                sevenseg[unit]->printFloat(atof(value_level2), 1, DEC);
+                sevenseg[unit]->printFloat(CharToFloat(value_level2), 1, DEC);
               }
               sevenseg[unit]->writeDisplay();
               unit++;
@@ -266,7 +266,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
         hasnumber= true;
         if (outnumtype == FLOAT) {
           // Floating point number is given
-          numberf = atof(str+i);
+          numberf = CharToFloat(str+i);
           // Find number of fractional digits
           buf= str+i;
           char *cp= strchr(buf, '.');

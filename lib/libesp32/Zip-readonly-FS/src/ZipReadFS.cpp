@@ -59,7 +59,7 @@ time_t dos2unixtime(uint32_t dostime)
 
 /********************************************************************
 ** Zip file parser
-** 
+**
 ********************************************************************/
 template <typename T> class LList;
 
@@ -119,7 +119,7 @@ protected:
 
 /********************************************************************
 ** Neutral file overlay
-** 
+**
 ********************************************************************/
 
 class ZipReadFileImpl;
@@ -175,13 +175,29 @@ public:
     return true;
   }
 
+  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
+  bool seekDir(long position){
+    if(!_f){
+        return false;
+    }
+    return _f.seekDir(position);
+  }
+  String getNextFileName(void)
+  {
+    if (!_f) {
+        return "";
+    }
+    return _f.getNextFileName();
+  }
+  #endif
+
 protected:
   File _f;
 };
 
 /********************************************************************
 ** Subfile implementation
-** 
+**
 ** Takes a `File` object of the ZIP archive
 ** First byte in archive and len
 ********************************************************************/
@@ -284,6 +300,23 @@ public:
   FileImplPtr openNextFile(const char* mode) {
     return nullptr;     // TODO
   }
+
+  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
+  bool seekDir(long position){
+    if(!_f){
+        return false;
+    }
+    return _f.seekDir(position);
+  }
+
+  String getNextFileName(void)
+  {
+    if (!_f) {
+        return "";
+    }
+    return _f.getNextFileName();
+  }
+  #endif
 
   void rewindDirectory(void) {
     // ignore
@@ -390,7 +423,7 @@ bool ZipArchive::parse(void) {
 
 /********************************************************************
 ** Encapsulation of FS and File to piggyback on Arduino
-** 
+**
 ********************************************************************/
 
 /* get the FS corresponding to the prefix, typically /sd/ for sdcard */

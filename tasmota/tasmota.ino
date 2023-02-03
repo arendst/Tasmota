@@ -32,10 +32,16 @@
 #include "include/i18n.h"                   // Language support configured by my_user_config.h
 #include "include/tasmota_template.h"       // Hardware configuration
 
+// ------------------------------------------------------------------------------------------
+// If IPv6 is not support by the underlying esp-idf, disable it
+// ------------------------------------------------------------------------------------------
+#if !LWIP_IPV6
+  #undef USE_IPV6
+#endif
+
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
-#include <DnsClient.h>                      // Any getHostByName
 #ifdef ESP32
   #ifdef USE_TLS
   #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
@@ -118,6 +124,8 @@ struct WIFI {
   bool wifi_test_AP_TIMEOUT = false;
   bool wifi_Test_Restart = false;
   bool wifi_Test_Save_SSID2 = false;
+  // IPv6 support, not guarded with #if LWIP_IPV6 to avoid bloating code with ifdefs
+  bool ipv6_local_link_called = false;           // did we already enable IPv6 Local-Link address, needs to be redone at each reconnect
 } Wifi;
 
 typedef struct {
@@ -184,7 +192,6 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
-DNSClient DnsClient;
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
@@ -492,7 +499,7 @@ void setup(void) {
 #ifdef ESP32
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
-  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
   if (FoundPSRAM() && !CanUsePSRAM()) {
     AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));
@@ -608,24 +615,23 @@ void setup(void) {
   snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
-  GpioInit();
-  ButtonInit();
-  SwitchInit();
+  GpioInit();                    // FUNC_I2C_INIT -> FUNC_MODULE_INIT -> FUNC_LED_LINK
+  ButtonInit();                  // FUNC_ADD_BUTTON
+  SwitchInit();                  // FUNC_ADD_SWITCH
 #ifdef ROTARY_V1
   RotaryInit();
 #endif  // ROTARY_V1
 #ifdef USE_BERRY
   if (!TasmotaGlobal.no_autoexec) {
-    BerryInit();
+    BerryInit();                 // Load preinit.be
   }
 #endif // USE_BERRY
 
-  XdrvXsnsCall(FUNC_PRE_INIT);
+  XdrvXsnsCall(FUNC_PRE_INIT);   // FUNC_PRE_INIT
 
   TasmotaGlobal.init_state = INIT_GPIOS;
 
-  SetPowerOnState();
-  DnsClient.setTimeout(Settings->dns_timeout);
+  SetPowerOnState();             // FUNC_SET_POWER -> FUNC_SET_DEVICE_POWER
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
@@ -638,7 +644,7 @@ void setup(void) {
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
 
-  XdrvXsnsCall(FUNC_INIT);
+  XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif

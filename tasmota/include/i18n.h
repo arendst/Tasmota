@@ -100,9 +100,6 @@
 #define D_JSON_OTHER_HTTP_ERROR "Other http error"
 #define D_JSON_HSBCOLOR "HSBColor"
 #define D_JSON_HUMIDITY "Humidity"
-#define D_JSON_I2CSCAN_DEVICES_FOUND_AT "Device(s) found at"
-#define D_JSON_I2CSCAN_UNKNOWN_ERROR_AT "Unknown error at"
-#define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
 #define D_JSON_ID "Id"
 #define D_JSON_ILLUMINANCE "Illuminance"
 #define D_JSON_IMPORT_ACTIVE "ImportActive"
@@ -110,6 +107,8 @@
 #define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_INVALID_FILE_TYPE "Invalid filetype or buffer"
+#define D_JSON_IP6_GLOBAL "IP6Global"
+#define D_JSON_IP6_LOCAL "IP6Local"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
 #define D_JSON_LINK_COUNT "LinkCount"
@@ -455,6 +454,8 @@
 #define D_CMND_VOLTAGEHIGH "VoltageHigh"
 #define D_CMND_CURRENTLOW "CurrentLow"
 #define D_CMND_CURRENTHIGH "CurrentHigh"
+#define D_CMND_ENERGYDISPLAY "EnergyDisplay"
+#define D_CMND_ENERGYCOLS "EnergyCols"
 #define D_CMND_ENERGYTODAY "EnergyToday"
 #define D_CMND_ENERGYYESTERDAY "EnergyYesterday"
 #define D_CMND_ENERGYTOTAL "EnergyTotal"
@@ -736,6 +737,7 @@
 #define D_CMND_SHUTTER_TILTCONFIG "TiltConfig"
 #define D_CMND_SHUTTER_SETTILT "Tilt"
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
+#define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -806,6 +808,7 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_ETH "ETH: "          // Ethernet
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language
@@ -864,7 +867,6 @@ const char JSON_SNS_RANGE[] PROGMEM = ",\"%s\":{\"" D_JSON_RANGE "\":%d}";
 const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"" D_JSON_FLOWRATE "\":%s}";
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
-const char S_LOG_I2C_FOUND_AT_PORT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x (" D_PORT " %d)";
 
 const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;

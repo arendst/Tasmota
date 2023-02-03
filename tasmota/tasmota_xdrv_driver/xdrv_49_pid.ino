@@ -105,7 +105,7 @@
                                                  // with just one relay then this will be 1.
                                                  // USE_TIMEPROP will be automativally included. You must set the output as
                                                  // explained in xdrv_48_timeprop.ino
-                                                 // To disable, override to false in user_config_override.h. If USE_TIMEPROP is 
+                                                 // To disable, override to false in user_config_override.h. If USE_TIMEPROP is
                                                  // not explicitly defined, then it will not be added by default.
 
    #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if
@@ -230,6 +230,9 @@ void PIDEverySecond() {
   // run the pid algorithm if Pid.run_pid_now is true or if the right number of seconds has passed or if too long has
   // elapsed since last pv update. If too long has elapsed the the algorithm will deal with that.
   if (Pid.run_pid_now  ||  Pid.current_time_secs - Pid.last_pv_update_secs > Pid.max_interval  ||  (Pid.update_secs != 0 && sec_counter++ % Pid.update_secs  ==  0)) {
+    if (!Pid.run_pid_now) {
+      PIDShowSensor();    // set actual process value
+    }
     PIDRun();
     Pid.run_pid_now = false;
   }
@@ -266,58 +269,78 @@ void PIDShowSensor() {
 
 void CmndSetPv(void) {
   Pid.last_pv_update_secs = Pid.current_time_secs;
-  Pid.pid.setPv(atof(XdrvMailbox.data), Pid.last_pv_update_secs);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setPv(CharToFloat(XdrvMailbox.data), Pid.last_pv_update_secs);
+  }
   // also trigger running the pid algorithm if we have been told to run it each pv sample
   if (Pid.update_secs == 0) {
     // this runs it at the next second
     Pid.run_pid_now = true;
   }
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  ResponseCmndFloat(Pid.pid.getPv(), 1);
 }
 
 void CmndSetSp(void) {
-  Pid.pid.setSp(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setSp(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getSp(), 1);
 }
 
 void CmndSetPb(void) {
-  Pid.pid.setPb(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setPb(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getPb(), 1);
 }
 
 void CmndSetTi(void) {
-  Pid.pid.setTi(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setTi(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getTi(), 1);
 }
 
 void CmndSetTd(void) {
-  Pid.pid.setTd(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setTd(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getTd(), 1);
 }
 
 void CmndSetInitialInt(void) {
-  Pid.pid.setInitialInt(atof(XdrvMailbox.data));
-  ResponseCmndNumber(atof(XdrvMailbox.data));
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setInitialInt(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndNumber(Pid.pid.getInitialInt());
 }
 
 void CmndSetDSmooth(void) {
-  Pid.pid.setDSmooth(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setDSmooth(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getDSmooth(), 1);
 }
 
 void CmndSetAuto(void) {
-  Pid.pid.setAuto(atoi(XdrvMailbox.data));
-  ResponseCmndNumber(atoi(XdrvMailbox.data));
+  if (XdrvMailbox.payload >= 0) {
+    Pid.pid.setAuto(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(Pid.pid.getAuto());
 }
 
 void CmndSetManualPower(void) {
-  Pid.pid.setManualPower(atof(XdrvMailbox.data));
-  ResponseCmndFloat(atof(XdrvMailbox.data), 1);
+  if (XdrvMailbox.data_len > 0) {
+    Pid.pid.setManualPower(CharToFloat(XdrvMailbox.data));
+  }
+  ResponseCmndFloat(Pid.pid.getManualPower(), 1);
 }
 
 void CmndSetMaxInterval(void) {
-  Pid.pid.setMaxInterval(atoi(XdrvMailbox.data));
-  ResponseCmndNumber(atoi(XdrvMailbox.data));
+  if (XdrvMailbox.payload >= 0) {
+    Pid.pid.setMaxInterval(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(Pid.pid.getMaxInterval());
 }
 
 // case CMND_PID_SETUPDATE_SECS:
@@ -325,9 +348,12 @@ void CmndSetMaxInterval(void) {
 //   if (Pid.update_secs < 0)
 //     Pid.update_secs = 0;
 void CmndSetUpdateSecs(void) {
-  Pid.update_secs = (atoi(XdrvMailbox.data));
-  if (Pid.update_secs < 0)
+  if (XdrvMailbox.payload >= 0) {
+    Pid.update_secs = (XdrvMailbox.payload);
+  }
+  if (Pid.update_secs < 0) {
     Pid.update_secs = 0;
+  }
   ResponseCmndNumber(Pid.update_secs);
 }
 

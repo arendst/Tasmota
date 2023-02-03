@@ -35,6 +35,7 @@ extern int l_scaleuint(bvm *vm);
 extern int l_logInfo(bvm *vm);
 extern int l_save(bvm *vm);
 extern int t_random_byte(bvm *vm);
+extern int l_locale(bvm *vm);
 
 extern int l_read_sensors(bvm *vm);
 
@@ -109,6 +110,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     scale_uint, func(l_scaleuint)
     log, func(l_logInfo)
     save, func(l_save)
+    locale, func(l_locale)
 
     read_sensors, func(l_read_sensors)
 

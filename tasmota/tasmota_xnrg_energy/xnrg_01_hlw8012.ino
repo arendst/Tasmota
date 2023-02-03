@@ -93,7 +93,7 @@ void HlwCfInterrupt(void) {  // Service Power
     Hlw.cf_pulse_counter++;
     Hlw.energy_period_counter++;
   }
-  Energy.data_valid[0] = 0;
+  Energy->data_valid[0] = 0;
 }
 
 void HlwCf1Interrupt(void) {  // Service Voltage and Current
@@ -111,7 +111,7 @@ void HlwCf1Interrupt(void) {  // Service Voltage and Current
       Hlw.cf1_timer = 8;  // We need up to HLW_SAMPLE_COUNT samples within 1 second (low current could take up to 0.3 second)
     }
   }
-  Energy.data_valid[0] = 0;
+  Energy->data_valid[0] = 0;
 }
 
 /********************************************************************************************/
@@ -133,15 +133,15 @@ void HlwEvery200ms(void) {
   Hlw.cf_summed_pulse_length = 0;
   Hlw.cf_pulse_counter = 0;
 
-  if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
-    hlw_w = (Hlw.power_ratio * Settings->energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
-    Energy.active_power[0] = (float)hlw_w / 10;
+  if (Hlw.cf_power_pulse_length  && Energy->power_on && !Hlw.load_off) {
+    hlw_w = (Hlw.power_ratio * EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) / Hlw.cf_power_pulse_length ;  // W *10
+    Energy->active_power[0] = (float)hlw_w / 10;
     Hlw.power_retry = 1;        // Workaround issue #5161
   } else {
     if (Hlw.power_retry) {
       Hlw.power_retry--;
     } else {
-      Energy.active_power[0] = 0;
+      Energy->active_power[0] = 0;
     }
   }
 
@@ -178,21 +178,21 @@ void HlwEvery200ms(void) {
       if (Hlw.select_ui_flag == Hlw.ui_flag) {
         Hlw.cf1_voltage_pulse_length  = cf1_pulse_length;
 
-        if (Hlw.cf1_voltage_pulse_length  && Energy.power_on) {     // If powered on always provide voltage
-          hlw_u = (Hlw.voltage_ratio * Settings->energy_voltage_calibration) / Hlw.cf1_voltage_pulse_length ;  // V *10
-          Energy.voltage[0] = (float)hlw_u / 10;
+        if (Hlw.cf1_voltage_pulse_length  && Energy->power_on) {     // If powered on always provide voltage
+          hlw_u = (Hlw.voltage_ratio * EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) / Hlw.cf1_voltage_pulse_length ;  // V *10
+          Energy->voltage[0] = (float)hlw_u / 10;
         } else {
-          Energy.voltage[0] = 0;
+          Energy->voltage[0] = 0;
         }
 
       } else {
         Hlw.cf1_current_pulse_length = cf1_pulse_length;
 
-        if (Hlw.cf1_current_pulse_length && Energy.active_power[0]) {   // No current if no power being consumed
-          hlw_i = (Hlw.current_ratio * Settings->energy_current_calibration) / Hlw.cf1_current_pulse_length;  // mA
-          Energy.current[0] = (float)hlw_i / 1000;
+        if (Hlw.cf1_current_pulse_length && Energy->active_power[0]) {   // No current if no power being consumed
+          hlw_i = (Hlw.current_ratio * EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION)) / Hlw.cf1_current_pulse_length;  // mA
+          Energy->current[0] = (float)hlw_i / 1000;
         } else {
-          Energy.current[0] = 0;
+          Energy->current[0] = 0;
         }
 
       }
@@ -203,7 +203,7 @@ void HlwEvery200ms(void) {
 }
 
 void HlwEverySecond(void) {
-  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
+  if (Energy->data_valid[0] > ENERGY_WATCHDOG) {
     Hlw.cf1_voltage_pulse_length  = 0;
     Hlw.cf1_current_pulse_length = 0;
     Hlw.cf_power_pulse_length  = 0;
@@ -217,7 +217,7 @@ void HlwEverySecond(void) {
       hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
       Hlw.energy_period_counter = 0;
       if (hlw_len) {
-        Energy.kWhtoday_delta[0] += (((Hlw.power_ratio * Settings->energy_power_calibration) / 36) * 100) / hlw_len;
+        Energy->kWhtoday_delta[0] += (((Hlw.power_ratio * EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) / 36) * 100) / hlw_len;
         EnergyUpdateToday();
       }
     }
@@ -225,10 +225,10 @@ void HlwEverySecond(void) {
 }
 
 void HlwSnsInit(void) {
-  if (!Settings->energy_power_calibration || (4975 == Settings->energy_power_calibration)) {
-    Settings->energy_power_calibration = HLW_PREF_PULSE;
-    Settings->energy_voltage_calibration = HLW_UREF_PULSE;
-    Settings->energy_current_calibration = HLW_IREF_PULSE;
+  if (!EnergyGetCalibration(ENERGY_POWER_CALIBRATION) || (4975 == EnergyGetCalibration(ENERGY_POWER_CALIBRATION))) {
+    EnergySetCalibration(ENERGY_POWER_CALIBRATION, HLW_PREF_PULSE);
+    EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, HLW_UREF_PULSE);
+    EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, HLW_IREF_PULSE);
   }
 
   if (Hlw.model_type) {
@@ -270,13 +270,13 @@ void HlwDrvInit(void) {
 
     if (PinUsed(GPIO_NRG_CF1)) {           // Voltage and/or Current monitor
       if (!PinUsed(GPIO_NRG_SEL)) {        // Voltage and/or Current selector
-        Energy.current_available = false;  // Assume Voltage
+        Energy->current_available = false;  // Assume Voltage
       }
     } else {
-      Energy.current_available = false;
-      Energy.voltage_available = false;
+      Energy->current_available = false;
+      Energy->voltage_available = false;
     }
-    Energy.use_overtemp = true;            // Use global temperature for overtemp detection
+    Energy->use_overtemp = true;            // Use global temperature for overtemp detection
 
     TasmotaGlobal.energy_driver = XNRG_01;
   }
@@ -285,20 +285,20 @@ void HlwDrvInit(void) {
 bool HlwCommand(void) {
   bool serviced = true;
 
-  if ((CMND_POWERCAL == Energy.command_code) || (CMND_VOLTAGECAL == Energy.command_code) || (CMND_CURRENTCAL == Energy.command_code)) {
+  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy.command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Hlw.cf_power_pulse_length ) {
       XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
     }
   }
-  else if (CMND_VOLTAGESET == Energy.command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_voltage_pulse_length ) {
       XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
     }
   }
-  else if (CMND_CURRENTSET == Energy.command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_current_pulse_length) {
       XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
     }

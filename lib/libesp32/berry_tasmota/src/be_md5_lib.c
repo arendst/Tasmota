@@ -11,8 +11,8 @@
 #include "esp_rom_md5.h"
 
 // `Md5.init() -> `
-int32_t m_md5_init(struct bvm *vm);
-int32_t m_md5_init(struct bvm *vm) {
+int m_md5_init(bvm *vm);
+int m_md5_init(bvm *vm) {
 
   md5_context_t * ctx = (md5_context_t *) be_os_malloc(sizeof(md5_context_t));
   if (!ctx) {
@@ -25,16 +25,14 @@ int32_t m_md5_init(struct bvm *vm) {
   be_return_nil(vm);
 }
 
-// `Md5.update(content:bytes()) -> nil`
+// `Md5.update(content:bytes()) -> self`
 //
 // Add raw bytes to the MD5 calculation
-int32_t m_md5_update(struct bvm *vm);
-int32_t m_md5_update(struct bvm *vm) {
+int m_md5_update(bvm *vm);
+int m_md5_update(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc >= 2 && be_isinstance(vm, 2)) {
+  if (argc >= 2 && be_isbytes(vm, 2)) {
     do {
-      be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-      if (!be_isderived(vm, 2)) break;
       size_t length = 0;
       const void * bytes = be_tobytes(vm, 2, &length);
       if (!bytes) break;
@@ -47,7 +45,8 @@ int32_t m_md5_update(struct bvm *vm) {
       if (length > 0) {
         esp_rom_md5_update(ctx, (const uint8_t*) bytes, length);
       }
-      be_return_nil(vm);
+      be_pushvalue(vm, 1);
+      be_return(vm);
       // success
     } while (0);
   }
@@ -57,8 +56,8 @@ int32_t m_md5_update(struct bvm *vm) {
 // `Md5.update(content:bytes()) -> nil`
 //
 // Add raw bytes to the MD5 calculation
-int32_t m_md5_finish(struct bvm *vm);
-int32_t m_md5_finish(struct bvm *vm) {
+int m_md5_finish(bvm *vm);
+int m_md5_finish(bvm *vm) {
   be_getmember(vm, 1, ".p");
   md5_context_t * ctx;
   ctx = (md5_context_t *) be_tocomptr(vm, -1);

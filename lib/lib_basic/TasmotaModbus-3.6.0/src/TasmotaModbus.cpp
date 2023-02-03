@@ -27,8 +27,15 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 
 //#define TASMOTAMODBUSDEBUG
 
-TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
+#define TASMOTA_MODBUS_TX_ENABLE        // Use local Tx enable on write buffer
+
+TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int tx_enable_pin) : TasmotaSerial(receive_pin, transmit_pin, 2)
 {
+#ifdef TASMOTA_MODBUS_TX_ENABLE
+  mb_tx_enable_pin = tx_enable_pin;     // Use local Tx enable on write buffer
+#else
+  setTransmitEnablePin(tx_enable_pin);  // Use TasmotaSerial Tx enable on write byte
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   mb_address = 0;
 }
 
@@ -57,6 +64,12 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   if (begin(speed, config)) {
     result = 1;
     if (hardwareSerial()) { result = 2; }
+#ifdef TASMOTA_MODBUS_TX_ENABLE
+    if (mb_tx_enable_pin > -1) {
+      pinMode(mb_tx_enable_pin, OUTPUT);
+      digitalWrite(mb_tx_enable_pin, LOW);
+    }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   }
   return result;
 }
@@ -91,7 +104,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   else if ((function_code == 5) || (function_code == 6))
   {
-    if (write_data == NULL) 
+    if (write_data == NULL)
     {
       free(frame);
       return 13; // Register data not specified
@@ -108,10 +121,10 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   {
     frame[framepointer++] = (uint8_t)(count >> 8);   // MSB
     frame[framepointer++] = (uint8_t)(count);        // LSB
-    
+
     frame[framepointer++] = byte_count;
 
-    if (write_data == NULL) 
+    if (write_data == NULL)
     {
       free(frame);
       return 13; // Register data not specified
@@ -126,7 +139,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
       frame[framepointer++] = (uint8_t)(write_data[bytepointer/2] >> (bytepointer % 2 ? 0 : 8));  // MSB, LSB, MSB ....
     }
   }
-  else 
+  else
   {
     free(frame);
     return 1; // Wrong function code
@@ -136,20 +149,31 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   frame[framepointer++] = (uint8_t)(crc);
   frame[framepointer++] = (uint8_t)(crc >> 8);
 
-#ifdef TASMOTAMODBUSDEBUG  
+#ifdef TASMOTAMODBUSDEBUG
   uint8_t *buf;
   uint16_t bufsize=(framepointer + 1) * 3;
   buf = (uint8_t *)malloc(bufsize);
   memset(buf, 0, bufsize);
   uint16_t i;
-  for (i = 0; i < framepointer;i++)
+  for (i = 0; i < framepointer;i++) {
     snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",frame[i]);
+  }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: %s"), buf);
   free(buf);
 #endif
-  
+
   flush();
+#ifdef TASMOTA_MODBUS_TX_ENABLE
+  if (mb_tx_enable_pin > -1) {
+    digitalWrite(mb_tx_enable_pin, HIGH);
+  }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   write(frame, framepointer);
+#ifdef TASMOTA_MODBUS_TX_ENABLE
+  if (mb_tx_enable_pin > -1) {
+    digitalWrite(mb_tx_enable_pin, LOW);
+  }
+#endif  // TASMOTA_MODBUS_TX_ENABLE
   free(frame);
   return 0;
 }
@@ -213,7 +237,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, ui
                       // 10 = Gateway Path Unavailable
                       // 11 = Gateway Target device failed to respond
   }
-  
+
   if (mb_len < 6) { return 7; }  // 7 = Not enough data
 
 /*

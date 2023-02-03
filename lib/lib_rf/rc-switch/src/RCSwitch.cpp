@@ -57,21 +57,21 @@
 /* Protocol description format
  *
  * {
- *    Pulse length, 
- * 
+ *    Pulse length,
+ *
  *    PreambleFactor,
  *    Preamble {high,low},
- * 
+ *
  *    HeaderFactor,
  *    Header {high,low},
- * 
+ *
  *    "0" bit {high,low},
  *    "1" bit {high,low},
- * 
+ *
  *    Inverted Signal,
  *    Guard time
  * }
- * 
+ *
  * Pulse length: pulse duration (Te) in microseconds,
  *               for example 350
  * PreambleFactor: Number of high and low states to send
@@ -80,7 +80,7 @@
  * Preamble: Pulse shape which defines a preamble bit.
  *           Sent ceil(PreambleFactor/2) times.
  *           For example, {1, 2} with factor 3 would send
- *      _    _   
+ *      _    _
  *     | |__| |__         (each horizontal bar has a duration of Te,
  *                         vertical bars are ignored)
  * HeaderFactor: Number of times to send the header pulse.
@@ -88,22 +88,22 @@
  *           {1, 31} means one pulse of duration 1 Te high and 31 Te low
  *      _
  *     | |_______________________________ (don't count the vertical bars)
- * 
+ *
  * "0" bit: pulse shape defining a data bit, which is a logical "0"
  *          {1, 3} means 1 pulse duration Te high level and 3 low
  *      _
  *     | |___
- * 
+ *
  * "1" bit: pulse shape that defines the data bit, which is a logical "1"
  *          {3, 1} means 3 pulses with a duration of Te high level and 1 low
  *      ___
  *     |   |_
  *
  * (note: to form the state bit Z (Tri-State bit), two codes are combined)
- * 
+ *
  * Inverted Signal: Signal inversion - if true the signal is inverted
  *                  replacing high to low in a transmitted / received packet
- * Guard time: Separation time between two retries. It will be followed by the 
+ * Guard time: Separation time between two retries. It will be followed by the
  *             next preamble of the next packet. In number of Te.
  *             e.g. 39 pulses of duration Te low level
  */
@@ -758,7 +758,7 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     unsigned int sdelay = 0;
     if (syncLengthInPulses > 0) {
       sdelay = RCSwitch::timings[FirstTiming] / syncLengthInPulses;
-    } else {
+    } else if (pro.PreambleFactor > 0) {
       sdelay = RCSwitch::timings[FirstTiming-2] / pro.PreambleFactor;
     }
     const unsigned int delay = sdelay;

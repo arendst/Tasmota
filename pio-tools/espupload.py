@@ -1,108 +1,85 @@
 #!/usr/bin/python3
-#
-# espupload by Theo Arends - 20170930
-#
-# Uploads binary file to OTA server
-#
-# Execute: espupload -u <Host_IP_address>:<Host_port>/<Host_path> -f <sketch.bin>
-#
-# Needs pycurl
-#   - pip install pycurl
+
+"""
+  espupload.py - for Tasmota
+
+  Copyright (C) 2022  Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Provides:
+  Uploads binary file to OTA server.
+  Usually initated from http-uploader.py
+
+Requirements:
+  - Python
+  - pip install requests
+
+Usage:
+  ./espupload -u <Host_IP_address>:<Host_port>/<Host_path> -f <sketch.bin>
+"""
 
 import sys
 import os
-import optparse
-import logging
-import pycurl
+import shutil
+import argparse
+import requests
 
-HOST_URL = "domus1:80/api/upload-arduino.php"
-
-def upload(hostUrl, filename):
-  tname = os.path.normpath(os.path.dirname(filename))
-  new_filename = tname + os.sep + os.path.basename(tname) + '.bin'
-  if os.path.exists(new_filename):
-    os.remove(new_filename)
-  os.rename(filename, new_filename)
-
-  url = 'http://%s' % (hostUrl)
-  c = pycurl.Curl()
-  c.setopt(c.URL, url)
-  # The "Expect:" is there to suppress "Expect: 100-continue" behaviour that is
-  # the default in libcurl when posting large bodies (and fails on lighttpd).
-  c.setopt(c.HTTPHEADER, ["Expect:"])
-  c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, new_filename, )), ])
-  c.perform()
-  c.close()
-
-def parser():
-  parser = optparse.OptionParser(
-    usage = "%prog [options]",
-    description = "Upload image to over the air Host server for the esp8266 module with OTA support."
-  )
-
-  # destination ip and port
-  group = optparse.OptionGroup(parser, "Destination")
-  group.add_option("-u", "--host_url",
-    dest = "host_url",
-    action = "store",
-    help = "Host url",
-    default = HOST_URL
-  )
-  parser.add_option_group(group)
-
-  # image
-  group = optparse.OptionGroup(parser, "Image")
-  group.add_option("-f", "--file",
-    dest = "image",
-    help = "Image file.",
-    metavar = "FILE",
-    default = None
-  )
-  parser.add_option_group(group)
-
-  # output group
-  group = optparse.OptionGroup(parser, "Output")
-  group.add_option("-d", "--debug",
-    dest = "debug",
-    help = "Show debug output. And override loglevel with debug.",
-    action = "store_true",
-    default = False
-  )
-  parser.add_option_group(group)
-
-  (options, args) = parser.parse_args()
-
-  return options
-# end parser
+# Default URL overwritten by [env] and/or [env:tasmota32_base] upload_port
+HOST_URL = "otaserver/ota/upload-tasmota.php"
 
 def main(args):
-  # get options
-  options = parser()
+#  print(sys.argv[0:])
 
-  # adapt log level
-  loglevel = logging.WARNING
-  if (options.debug):
-    loglevel = logging.DEBUG
-  # end if
+  # get arguments
+  parser = argparse.ArgumentParser(
+    usage = "%prog [arguments]",
+    description = "Upload image to over the air Host server for the esp8266 or esp32 module with OTA support."
+  )
+  parser.add_argument("-u", "--host_url", dest = "host_url", action = "store", help = "Host url", default = HOST_URL)
+  parser.add_argument("-f", "--file", dest = "image", help = "Image file.", metavar = "FILE", default = None)
+  args = parser.parse_args()
 
-  # logging
-  logging.basicConfig(level = loglevel, format = '%(asctime)-8s [%(levelname)s]: %(message)s', datefmt = '%H:%M:%S')
-
-  logging.debug("Options: %s", str(options))
-
-  if (not options.host_url or not options.image):
-    logging.critical("Not enough arguments.")
-
+  if (not args.host_url or not args.image):
+    print("Not enough arguments.")
     return 1
   # end if
 
-  if not os.path.exists(options.image):
-    logging.critical('Sorry: the file %s does not exist', options.image)
-
-    return 1
+  if not os.path.exists(args.image):
+    print('Sorry: the file {} does not exist'.format(args.image))
+    return 2
   # end if
 
-  upload(options.host_url, options.image)
+  if args.image.find("firmware.bin") != -1:
+    # Legacy support for $SOURCE
+    # copy firmware.bin to tasmota.bin or tasmota32.bin
+    # C:\tmp\.pioenvs\tasmota-theo\firmware.bin
+    tname = os.path.normpath(os.path.dirname(args.image))
+    # C:\tmp\.pioenvs\tasmota-theo\tasmota-theo.bin
+    upload_file = tname + os.sep + os.path.basename(tname) + '.bin'
+    shutil.copy2(args.image, upload_file)
+  else:
+    # Support for bin_file and bin_gz_file
+    upload_file = args.image
+  # end if
+
+#  print('Debug filename in {}, upload {}'.format(args.image, upload_file))
+
+  url = 'http://%s' % (args.host_url)
+  files = {'file': open(upload_file, 'rb')}
+  req = requests.post(url, files=files)
+  print(req.text)
 # end main
 
 if __name__ == '__main__':

@@ -203,8 +203,10 @@ a_setoption = [[
     ],[
     "(ESP32) Show ESP32 internal temperature sensor",
     "(MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead",
-    "","",
-    "","","","",
+    "(Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up",
+    "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
+    "(Energy) Force no voltage/frequency common",
+    "","","",
     "","","","",
     "","","","",
     "","","","",
@@ -288,8 +290,8 @@ a_features = [[
     ],[
     "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
     "USE_MODBUS_ENERGY","USE_SHELLY_PRO","USE_DALI","USE_BP1658CJ",
-    "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","",
-    "","","","",
+    "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
+    "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "","","","",
     "","","","",
     "","","","",
@@ -321,7 +323,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.2.0.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.3.1.5 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -1,0 +1,75 @@
+{
+  "platformio-ide.toolbar": [
+    {
+      "text": "$(home)",
+      "tooltip": "PlatformIO: Home",
+      "commands": [
+        {
+          "id": "platformio-ide.runPIOCoreCommand",
+          "args": "pio home"
+        }
+      ]
+    },
+    {
+      "text": "$(trash)",
+      "tooltip": "PlatformIO: Clean All",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Clean All"
+        }
+      ]
+    },
+    {
+      "text": "$(check)",
+      "tooltip": "PlatformIO: Build",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Build"
+        }
+      ]
+    },
+    {
+      "text": "$(zap)",
+      "tooltip": "PlatformIO: Build and Upload",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Upload"
+        }
+      ]
+    },
+    {
+      "text": "$(flame)",
+      "tooltip": "PlatformIO: Build, Erase and Upload",
+      "commands": [
+        {
+          "id": "platformio-ide.runPIOCoreCommand",
+          "args": "pio run -t erase_upload"
+        }
+      ]
+    },
+    {
+      "text": "$(device-desktop)",
+      "tooltip": "PlatformIO: Serial Monitor",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Monitor"
+        }
+      ]
+    },
+    {
+      "text": "$(refresh)",
+      "tooltip": "PlatformIO: Rebuild IntelliSense Index",
+      "commands": [
+        {
+          "id": "workbench.action.tasks.runTask",
+          "args": "PlatformIO: Rebuild IntelliSense Index"
+        }
+      ]
+    }
+  ]
+}
+

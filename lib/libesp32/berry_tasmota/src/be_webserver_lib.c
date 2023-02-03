@@ -16,6 +16,7 @@ extern int w_webserver_state(bvm *vm);
 extern int w_webserver_check_privileged_access(bvm *vm);
 extern int w_webserver_redirect(bvm *vm);
 extern int w_webserver_content_start(bvm *vm);
+extern int w_webserver_content_open(bvm *vm);
 extern int w_webserver_content_send(bvm *vm);
 extern int w_webserver_content_response(bvm *vm);
 extern int w_webserver_content_send_style(bvm *vm);
@@ -42,6 +43,7 @@ module webserver (scope: global) {
     content_response, func(w_webserver_content_response)
     content_send_style, func(w_webserver_content_send_style)
     content_flush, func(w_webserver_content_flush)
+    content_open, func(w_webserver_content_open)
     content_start, func(w_webserver_content_start)
     content_stop, func(w_webserver_content_stop)
     content_button, func(w_webserver_content_button)

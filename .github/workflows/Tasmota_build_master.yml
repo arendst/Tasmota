@@ -57,7 +57,7 @@ jobs:
       matrix:
         variant:
           - tasmota
-          - tasmota4M
+          - tasmota-4M
           - tasmota-minimal
           - tasmota-display
           - tasmota-ir
@@ -175,14 +175,20 @@ jobs:
           path: ./build_output
 
   Upload:
-    needs: [base-images, language-images]
+    needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/download-artifact@v3
+    - name: Download Tasmota firmwares
+      uses: actions/download-artifact@v3
       with:
         name: firmware
+        path: ./mv_firmware
+    - name: Download safeboot firmwares
+      uses: actions/download-artifact@v3
+      with:
+        name: firmware_safeboot
         path: ./mv_firmware
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
@@ -202,7 +208,7 @@ jobs:
         mkdir -p ./release-firmware/map
         [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./release-firmware/map/
         [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./release-firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota4M.* ] || mv ./mv_firmware/firmware/tasmota4M.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-4M.* ] || mv ./mv_firmware/firmware/tasmota-4M.* ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin.gz ] || mv ./mv_firmware/firmware/tasmota-minimal.bin.gz ./release-firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./release-firmware/tasmota/

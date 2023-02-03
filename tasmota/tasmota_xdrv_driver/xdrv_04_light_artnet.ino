@@ -139,9 +139,9 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: opcode=0x%04X procotol=%i universe=%i datalen=%i univ_start=%i univ_end=%i"), opcode, protocol, universe, datalen, artnet_conf.univ, artnet_conf.univ + artnet_conf.rows);
   if (opcode != 0x5000 || protocol != 14) { return; }
 
-  if (len + 18 < datalen) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DMX: packet is truncated, ignoring packet"));
-  }
+//  if (len + 18 < datalen) {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DMX: packet is truncated. Expected: %u Bytes, Received: %u Bytes."), datalen, len + 18);
+//  }
 
   if (universe < artnet_conf.univ || universe >= artnet_conf.univ + artnet_conf.rows) { return; }  // universe is not ours, ignore
   size_t idx = 18;      // start of payload data in the UDP frame
@@ -194,14 +194,24 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
     Ws2812CopyPixels(&buf[idx], datalen, offset_in_matrix);
   } else {
     // single light
-    uint8_t r8 = buf[idx+1];
-    uint8_t g8 = buf[idx];
-    uint8_t b8 = buf[idx+2];
-    uint16_t dimmer10 = changeUIntScale(artnet_conf.dimm, 0, 100, 0, 1023);
+    size_t offsidx = artnet_conf.offs + idx;
+    uint8_t r8 = buf[offsidx+1];
+    uint8_t g8 = buf[offsidx];
+    uint8_t b8 = buf[offsidx+2];
+    uint8_t w8 = buf[offsidx+3];
+    uint8_t ww8 = buf[offsidx+4];
+    // scale dimmer values to RGBWWTable calibration
+    uint16_t r_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[0]) * 4;
+    uint16_t g_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[1]) * 4;
+    uint16_t b_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[2]) * 4;
+    uint16_t w_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[3]) * 4;
+    uint16_t ww_dimmer = changeUIntScale(artnet_conf.dimm, 0, 100, 0, Settings->rgbwwTable[4]) * 4;
     uint16_t color[LST_MAX] = {0};
-    color[0] = changeUIntScale(r8, 0, 255, 0, dimmer10);
-    color[1] = changeUIntScale(g8, 0, 255, 0, dimmer10);
-    color[2] = changeUIntScale(b8, 0, 255, 0, dimmer10);
+    color[0] = changeUIntScale(r8, 0, 255, 0, r_dimmer);
+    color[1] = changeUIntScale(g8, 0, 255, 0, g_dimmer);
+    color[2] = changeUIntScale(b8, 0, 255, 0, b_dimmer);
+    color[3] = changeUIntScale(w8, 0, 255, 0, w_dimmer);
+    color[4] = changeUIntScale(ww8, 0, 255, 0, ww_dimmer);
     // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: %02X-%02X-%02X univ=%i rows=%i max_univ=%i"), buf[idx+1], buf[idx], buf[idx+2], universe, row, artnet_conf.univ + artnet_conf.rows);
     LightSetOutputs(color);
   }

@@ -858,12 +858,21 @@ void ResponseAppendFeatures(void)
 #ifdef USE_LD2410
     feature9 |= 0x00000400;  // xsns_102_ld2410.ino
 #endif
-//    feature9 |= 0x00000800;
-
-//    feature9 |= 0x00001000;
-//    feature9 |= 0x00002000;
-//    feature9 |= 0x00004000;
-//    feature9 |= 0x00008000;
+#ifdef USE_ME007
+    feature9 |= 0x00000800;  // xsns_23_me007.ino
+#endif
+#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_TM1650)
+    feature9 |= 0x00001000;  // xdsp_20_tm1650.ino
+#endif
+#if defined(USE_I2C) && defined(USE_PCA9632)
+    feature9 |= 0x00002000;
+#endif
+#ifdef USE_TUYAMCUBR
+    feature9 |= 0x00004000;  // xdrv_65_tuyamcubr.ino
+#endif
+#if defined(USE_I2C) && defined(USE_SEN5X)
+    feature9 |= 0x00008000;  // xsns_103_sen5x.ino
+#endif
 
 //    feature9 |= 0x00010000;
 //    feature9 |= 0x00020000;

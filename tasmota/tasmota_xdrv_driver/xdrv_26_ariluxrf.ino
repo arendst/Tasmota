@@ -181,6 +181,12 @@ bool Xdrv26(uint32_t function)
     case FUNC_EVERY_SECOND:
       if (10 == TasmotaGlobal.uptime) { AriluxRfInit(); }  // Needs rest before enabling RF interrupts
       break;
+    case FUNC_INTERRUPT_STOP:
+      AriluxRfDisable();
+      break;
+    case FUNC_INTERRUPT_START:
+      AriluxRfInit();
+      break;
   }
   return result;
 }

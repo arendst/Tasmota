@@ -31,15 +31,24 @@ static inline volatile uint32_t* get_gpio_lo_reg(int_fast8_t pin) { return (pin 
 static inline bool gpio_in(int_fast8_t pin) { return ((pin & 32) ? GPIO.in1.data : GPIO.in) & (1 << (pin & 31)); }
 static inline void gpio_hi(int_fast8_t pin) { if (pin >= 0) *get_gpio_hi_reg(pin) = 1 << (pin & 31); } // ESP_LOGI("LGFX", "gpio_hi: %d", pin); }
 static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin) = 1 << (pin & 31); } // ESP_LOGI("LGFX", "gpio_lo: %d", pin); }
-#endif
+#include "esp_lcd_panel_interface.h"
+#include "esp_lcd_panel_rgb.h"
+#include "esp_pm.h"
+#include "esp_lcd_panel_ops.h"
+#include <hal/dma_types.h>
+#include <rom/cache.h>
+#endif // USE_ESP32_S3
 
 #define _UDSP_I2C 1
 #define _UDSP_SPI 2
 #define _UDSP_PAR8 3
 #define _UDSP_PAR16 4
+#define _UDSP_RGB 5
 
 #define UDISP1_WHITE 1
 #define UDISP1_BLACK 0
+
+#define MAX_LUTS 5
 
 #define DISPLAY_INIT_MODE 0
 #define DISPLAY_INIT_PARTIAL 1
@@ -100,7 +109,6 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR_SLOW(spi_dc);
 #define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
 
-#define LUTMAXSIZE 64
 
 #ifdef USE_ESP32_S3
 struct esp_lcd_i80_bus_t {
@@ -115,6 +123,39 @@ struct esp_lcd_i80_bus_t {
     size_t resolution_hz;    // LCD_CLK resolution, determined by selected clock source
     gdma_channel_handle_t dma_chan; // DMA channel handle
 };
+
+// extract from esp-idf esp_lcd_rgb_panel.c
+struct esp_rgb_panel_t
+{
+  esp_lcd_panel_t base;                                        // Base class of generic lcd panel
+  int panel_id;                                                // LCD panel ID
+  lcd_hal_context_t hal;                                       // Hal layer object
+  size_t data_width;                                           // Number of data lines (e.g. for RGB565, the data width is 16)
+  size_t sram_trans_align;                                     // Alignment for framebuffer that allocated in SRAM
+  size_t psram_trans_align;                                    // Alignment for framebuffer that allocated in PSRAM
+  int disp_gpio_num;                                           // Display control GPIO, which is used to perform action like "disp_off"
+  intr_handle_t intr;                                          // LCD peripheral interrupt handle
+  esp_pm_lock_handle_t pm_lock;                                // Power management lock
+  size_t num_dma_nodes;                                        // Number of DMA descriptors that used to carry the frame buffer
+  uint8_t *fb;                                                 // Frame buffer
+  size_t fb_size;                                              // Size of frame buffer
+  int data_gpio_nums[SOC_LCD_RGB_DATA_WIDTH];                  // GPIOs used for data lines, we keep these GPIOs for action like "invert_color"
+  size_t resolution_hz;                                        // Peripheral clock resolution
+  esp_lcd_rgb_timing_t timings;                                // RGB timing parameters (e.g. pclk, sync pulse, porch width)
+  gdma_channel_handle_t dma_chan;                              // DMA channel handle
+  esp_lcd_rgb_panel_frame_trans_done_cb_t on_frame_trans_done; // Callback, invoked after frame trans done
+  void *user_ctx;                                              // Reserved user's data of callback functions
+  int x_gap;                                                   // Extra gap in x coordinate, it's used when calculate the flush window
+  int y_gap;                                                   // Extra gap in y coordinate, it's used when calculate the flush window
+  struct
+  {
+    unsigned int disp_en_level : 1; // The level which can turn on the screen by `disp_gpio_num`
+    unsigned int stream_mode : 1;   // If set, the LCD transfers data continuously, otherwise, it stops refreshing the LCD when transaction done
+    unsigned int fb_in_psram : 1;   // Whether the frame buffer is in PSRAM
+  } flags;
+  dma_descriptor_t dma_nodes[]; // DMA descriptor pool of size `num_dma_nodes`
+};
+
 #endif
 
 
@@ -205,7 +246,7 @@ class uDisplay : public Renderer {
    uint8_t i2c_page_start;
    uint8_t i2c_page_end;
    int8_t reset;
-   uint8_t dsp_cmds[128];
+   uint8_t dsp_cmds[256];
    uint8_t dsp_ncmds;
    uint8_t dsp_on;
    uint8_t dsp_off;
@@ -249,16 +290,28 @@ class uDisplay : public Renderer {
    uint8_t dim_op;
    uint8_t lutfsize;
    uint8_t lutpsize;
-   uint16_t lutftime;
+   int16_t lutftime;
+   int8_t busy_pin;
    uint16_t lutptime;
    uint16_t lut3time;
    uint16_t lut_num;
    uint8_t ep_mode;
-   uint8_t lut_full[LUTMAXSIZE];
-   uint8_t lut_partial[LUTMAXSIZE];
-   uint8_t lut_array[LUTMAXSIZE][5];
-   uint8_t lut_cnt[5];
-   uint8_t lut_cmd[5];
+   uint8_t ep_update_mode;
+   uint8_t *lut_full;
+   uint8_t lut_siz_full;
+   uint8_t *lut_partial;
+   uint8_t lut_siz_partial;
+   uint8_t *frame_buffer;
+
+   uint8_t epcoffs_full;
+   uint8_t epc_full_cnt;
+   uint8_t epcoffs_part;
+   uint8_t epc_part_cnt;
+
+   uint8_t *lut_array[MAX_LUTS];
+   uint8_t lut_cnt[MAX_LUTS];
+   uint8_t lut_cmd[MAX_LUTS];
+   uint8_t lut_siz[MAX_LUTS];
    uint16_t seta_xp1;
    uint16_t seta_xp2;
    uint16_t seta_yp1;
@@ -268,6 +321,11 @@ class uDisplay : public Renderer {
    int16_t rotmap_ymin;
    int16_t rotmap_ymax;
    void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
+   void delay_sync(int32_t time);
+   void reset_pin(int32_t delayl, int32_t delayh);
+   void delay_arg(uint32_t arg);
+   void Send_EP_Data(void);
+   void send_spi_cmds(uint16_t cmd_offset, uint16_t cmd_size);
 
 #ifdef USE_ESP32_S3
    int8_t par_cs;
@@ -277,6 +335,26 @@ class uDisplay : public Renderer {
 
    int8_t par_dbl[8];
    int8_t par_dbh[8];
+
+   int8_t de;
+   int8_t vsync;
+   int8_t hsync;
+   int8_t pclk;
+
+   uint16_t hsync_polarity;
+   uint16_t hsync_front_porch;
+   uint16_t hsync_pulse_width;
+   uint16_t hsync_back_porch;
+   uint16_t vsync_polarity;
+   uint16_t vsync_front_porch;
+   uint16_t vsync_pulse_width;
+   uint16_t vsync_back_porch;
+   uint16_t pclk_active_neg;
+
+   esp_lcd_panel_handle_t _panel_handle = NULL;
+   esp_rgb_panel_t *_rgb_panel;
+   uint16_t *rgb_fb;
+
 
    esp_lcd_i80_bus_handle_t _i80_bus = nullptr;
    gdma_channel_handle_t _dma_chan;
@@ -304,6 +382,7 @@ class uDisplay : public Renderer {
    uint8_t _align_data;
    void cs_control(bool level);
    uint32_t get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym);
+   void drawPixel_RGB(int16_t x, int16_t y, uint16_t color);
 #endif
 
 #ifdef ESP32

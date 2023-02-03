@@ -68,6 +68,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SM2135                | - | x / - | x | x | - | x |
 | USE_SM2335                | - | x / - | x | x | - | x |
 | USE_BP5758D               | - | x / - | x | x | - | x |
+| USE_BP1658CJ              | - | x / - | x | x | - | x |
 | USE_SONOFF_L1             | - | x / - | x | x | - | x |
 | USE_ELECTRIQ_MOODL        | - | x / - | x | x | - | x |
 |                           |   |       |   |   |   |   |
@@ -88,7 +89,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_BL09XX                | - | x / x | x | x | - | - |
 | USE_TELEINFO              | - | - / - | - | - | - | - |
 | USE_IEM3000               | - | - / - | - | - | - | - |
-| USE_WE517                 | - | - / - | - | - | - | - |
+| USE_WE517                 | - | - / x | - | - | - | - |
+| USE_MODBUS_ENERGY         | - | - / x | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | USE_ADC_VCC               | x | - / - | - | - | x | - |
 | USE_COUNTER               | - | x / x | x | x | - | x |
@@ -116,10 +118,12 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MGS                   | - | - / x | - | x | - | - |
 | USE_SGP30                 | - | - / x | - | x | - | - |
 | USE_SGP40                 | - | - / x | - | x | - | - |
+| USE_SEN5X                 | - | - / x | - | x | - | - |
 | USE_SI1145                | - | - / - | - | - | - | - |
 | USE_LM75AD                | - | - / x | - | x | - | - |
 | USE_APDS9960              | - | - / - | - | - | - | - |
 | USE_MCP230xx              | - | - / - | - | - | - | - |
+| USE_PCA9632               | - | - / - | - | - | - | - |
 | USE_PCA9685               | - | - / - | - | - | - | - |
 | USE_MPR121                | - | - / - | - | - | - | - |
 | USE_CCS811                | - | - / - | - | x | - | - |
@@ -177,10 +181,13 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_DS3502                | - | - / - | - | - | - | - |
 | USE_HYT                   | - | - / - | - | - | - | - |
 | USE_LUXV30B               | - | - / - | - | - | - | - |
+| USE_HMC5883L              | - | - / - | - | - | - | - |
+| USE_QMC5883L              | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | Feature or Sensor         | l | t     | k | s | i | d | Remarks
 | USE_SPI                   | - | - / - | - | - | - | x |
 | USE_RC522                 | - | - / - | - | - | - | - |
+| USE_CANSNIFFER            | - | - / - | - | - | - | - |
 | USE_MHZ19                 | - | - / x | - | x | - | - |
 | USE_SENSEAIR              | - | - / x | - | x | - | - |
 | USE_PMS5003               | - | - / x | - | x | - | - |
@@ -201,6 +208,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MIEL_HVAC             | - | - / - | - | - | - | - |
 | USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
 | USE_AS608                 | - | - / - | - | - | - | - |
+| USE_LD2410                | - | - / - | - | - | - | - |
 | USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge / zbbrdgpro
 |                           |   |       |   |   |   |   |
 | USE_NRF24                 | - | - / - | - | - | - | - |
@@ -214,6 +222,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_IR_REMOTE_FULL        | - | - / - | - | - | x | - | Enable ALL protocols
 |                           |   |       |   |   |   |   |
 | USE_SR04                  | - | - / - | - | x | - | - |
+| USE_ME007                 | - | - / - | - | - | - | - |
 | USE_DYP                   | - | - / - | - | - | - | - |
 | USE_TM1638                | - | - / x | - | x | - | - |
 | USE_HX711                 | - | - / x | - | x | - | - |
@@ -240,6 +249,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_DISPLAY_ST7789        | - | - / - | - | - | - | x |
 | USE_DISPLAY_TM1637        | - | - / - | - | - | - | x |
 | USE_DISPLAY_TM1621_SONOFF | - | - / x | - | - | - | - |
+| USE_DISPLAY_TM1650        | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | USE_FT5206                | - | - / - | - | - | - | - |
 | USE_FTC532                | - | - / - | - | - | - | - |
@@ -254,5 +264,9 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_I2S_AUDIO             |   |   / - |   |   |   |   |
 | USE_TTGO_WATCH            |   |   / - |   |   |   |   |
 | USE_SONOFF_SPM            |   |   / x |   |   |   |   |
+| USE_DISPLAY_TM1621_SONOFF |   |   / x |   |   |   |   |
+| USE_SHELLY_PRO            |   |   / x |   |   |   |   |
+| USE_DALI                  |   |   / - |   |   |   |   |
+| USE_DINGTIAN_RELAY        |   |   / - |   |   |   |   |
 
 * USE_MQTT_TLS is enabled by default in every ESP32 variants

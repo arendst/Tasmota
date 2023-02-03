@@ -1,7 +1,7 @@
 /*
   xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  Syssi, stefanbode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -176,7 +176,7 @@ void Ads1115Detect(void)
   // Set default mode and range
   Ads1115.channels = ADS1115_SINGLE_CHANNELS;
   Ads1115.range = ADS1115_REG_CONFIG_PGA_6_144V;
-  
+
   for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
     if (!Ads1115.found[i]) {
       Ads1115.address = Ads1115.addresses[i];

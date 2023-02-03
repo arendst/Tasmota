@@ -202,6 +202,10 @@ enum UserSelectablePins {
   GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
   GPIO_DINGTIAN_CLK, GPIO_DINGTIAN_SDI, GPIO_DINGTIAN_Q7, GPIO_DINGTIAN_PL, GPIO_DINGTIAN_RCK,  // Dingtian relay board - 595's & 165's pins
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
+  GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
+  GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
+  GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
+  GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -451,6 +455,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BP1658CJ_CLK "|" D_SENSOR_BP1658CJ_DAT "|"
   D_GPIO_DINGTIAN_CLK "|" D_GPIO_DINGTIAN_SDI "|" D_GPIO_DINGTIAN_Q7 "|" D_GPIO_DINGTIAN_PL "|" D_GPIO_DINGTIAN_RCK "|"
   D_SENSOR_LD2410_TX "|" D_SENSOR_LD2410_RX "|"
+  D_SENSOR_MBR_TX_ENA "|" D_SENSOR_NRG_MBS_TX_ENA "|"
+  D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
+  D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
+  D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -771,6 +779,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SR04_TRIG),                // SR04 Tri/TXgger pin
   AGPIO(GPIO_SR04_ECHO),                // SR04 Ech/RXo pin
 #endif
+#ifdef USE_ME007
+  AGPIO(GPIO_ME007_TRIG),              // ME007 Trigger pin (xsns_23_me007.ino)
+  AGPIO(GPIO_ME007_RX),                // ME007 Rx pin (xsns_23_me007.ino)
+#endif
 #ifdef USE_TM1638
   AGPIO(GPIO_TM1638CLK),                // TM1638 Clock
   AGPIO(GPIO_TM1638DIO),                // TM1638 Data I/O
@@ -802,7 +814,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_ADE7953
 #if defined(USE_I2C) || defined(USE_SPI)
-  AGPIO(GPIO_ADE7953_IRQ) + 5,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM)
+  AGPIO(GPIO_ADE7953_IRQ) + 6,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM, 6 = Shelly Pro 4PM)
   AGPIO(GPIO_ADE7953_RST),              // ADE7953 Reset
 #ifdef USE_SPI
   AGPIO(GPIO_ADE7953_CS) + 2,           // ADE7953 SPI Chip Select (1 = CS1 (1PM, 2PM), 2 = CS2 (2PM))
@@ -822,6 +834,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MCP39F5_RX),               // MCP39F501 Serial interface (Shelly2)
   AGPIO(GPIO_MCP39F5_RST),              // MCP39F501 Reset (Shelly2)
 #endif
+  AGPIO(GPIO_NRG_MBS_TX_ENA),           // Generic Energy Modbus Transmit Enable
 #if defined(USE_PZEM004T) || defined(USE_PZEM_AC) || defined(USE_PZEM_DC)
   AGPIO(GPIO_PZEM0XX_TX),               // PZEM0XX Serial interface
 #endif
@@ -900,6 +913,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SBR_RX),                   // Serial Bridge Serial interface
 #endif
 #ifdef USE_MODBUS_BRIDGE
+  AGPIO(GPIO_MBR_TX_ENA),               // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_TX),                   // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_RX),                   // Modbus Bridge Serial interface
 #endif
@@ -1046,6 +1060,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MIEL_HVAC_TX),             // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),             // Mitsubishi Electric HVAC RX pin
 #endif
+#ifdef USE_TUYAMCUBR
+  AGPIO(GPIO_TUYAMCUBR_TX),
+  AGPIO(GPIO_TUYAMCUBR_RX),
+#endif
 #ifdef USE_WIEGAND
   AGPIO(GPIO_WIEGAND_D0),               // Date line D0 of Wiegand devices
   AGPIO(GPIO_WIEGAND_D1),               // Date line D1 of Wiegand devices
@@ -1122,6 +1140,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,       // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,        // Analog PH Sensor
   AGPIO(GPIO_ADC_MQ) + MAX_ADCS,        // Analog MQ Sensor
+
+#ifdef USE_BIOPDU
+  AGPIO(GPIO_BIOPDU_PZEM0XX_TX),  // Biomine BioPDU pins
+  AGPIO(GPIO_BIOPDU_PZEM016_RX),
+  AGPIO(GPIO_BIOPDU_BIT) + 3,
+#endif
 #endif  // ESP32
 };
 

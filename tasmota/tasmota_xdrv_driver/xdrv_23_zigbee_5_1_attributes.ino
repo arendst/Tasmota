@@ -530,10 +530,10 @@ public:
   uint16_t cluster = 0xFFFF;
   uint16_t attribute = 0xFFFF;
   const char * name = nullptr;
+  uint16_t multiplier = 1;
+  uint16_t divider = 1;
+  int16_t  base = 0;
   uint8_t zigbee_type = Znodata;
-  int8_t multiplier = 1;
-  int8_t divider = 1;
-  int8_t base = 0;
   uint8_t map_offset = 0;
   Z_Data_Type map_type = Z_Data_Type::Z_Unknown;
   uint16_t manuf = 0x0000;      // manuf code (if any)
@@ -732,7 +732,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx000F, 0x002E,  Z_(BinaryInInactiveText),Cm1, 0 },
   { Zbool,    Cx000F, 0x0051,  Z_(BinaryInOutOfService),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0054,  Z_(BinaryInPolarity),    Cm1, 0 },
-  { Zstring,  Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
+  { Zbool,    Cx000F, 0x0055,  Z_(BinaryInValue),       Cm1, 0 },
   // { 0xFF, Cx000F, 0x0057,  (BinaryInPriorityArray),Cm1, 0 },
   { Zenum8,   Cx000F, 0x0067,  Z_(BinaryInReliability), Cm1, 0 },
   { Zmap8,    Cx000F, 0x006F,  Z_(BinaryInStatusFlags), Cm1, 0 },

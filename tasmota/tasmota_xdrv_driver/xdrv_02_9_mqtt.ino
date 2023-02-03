@@ -971,9 +971,10 @@ void MqttConnected(void) {
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
             TasmotaGlobal.hostname, (uint32_t)WiFi.localIP());
-#if LWIP_IPV6
-          ResponseAppend_P(PSTR(",\"IPv6Address\":\"%s\""), WifiGetIPv6().c_str());
-#endif  // LWIP_IPV6 = 1
+#ifdef USE_IPV6
+          ResponseAppend_P(PSTR(",\"" D_JSON_IP6_GLOBAL "\":\"%s\""), WifiGetIPv6Str().c_str());
+          ResponseAppend_P(PSTR(",\"" D_JSON_IP6_LOCAL "\":\"%s\""), WifiGetIPv6LinkLocalStr().c_str());
+#endif  // USE_IPV6
         }
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
         if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
@@ -1064,11 +1065,12 @@ void MqttReconnect(void) {
   MqttClient.setCallback(MqttDataHandler);
 
   // Keep using hostname to solve rc -4 issues
-  if (!WifiDnsPresent(SettingsText(SET_MQTT_HOST))) {
+  IPAddress ip;
+  if (!WifiHostByName(SettingsText(SET_MQTT_HOST), ip)) {
     MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
     return;
   }
-  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
+  MqttClient.setServer(ip, Settings->mqtt_port);
 
   if (2 == Mqtt.initial_connection_state) {  // Executed once just after power on and wifi is connected
     Mqtt.initial_connection_state = 1;
@@ -1084,9 +1086,11 @@ void MqttReconnect(void) {
   }
 
 #ifdef USE_MQTT_TLS
+
   uint32_t mqtt_connect_time = millis();
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
+    tlsClient->setDomainName(SettingsText(SET_MQTT_HOST));   // set domain name for TLS SNI (selection of certificate based on domain name)
   } else {
     MqttClient.setClient(EspClient);
   }

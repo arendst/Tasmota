@@ -1143,24 +1143,14 @@ bool XdrvCall(uint32_t function) {
 
 #ifdef USE_PROFILE_FUNCTION
 #ifdef XFUNC_PTR_IN_ROM
-      uint32_t index = pgm_read_byte(kXdrvList + x);
+    uint32_t index = pgm_read_byte(kXdrvList + x);
 #else
-      uint32_t index = kXdrvList[x];
+    uint32_t index = kXdrvList[x];
 #endif
     PROFILE_FUNCTION("drv", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
-    if (result && ((FUNC_COMMAND == function) ||
-                   (FUNC_COMMAND_DRIVER == function) ||
-                   (FUNC_MQTT_DATA == function) ||
-                   (FUNC_RULES_PROCESS == function) ||
-                   (FUNC_BUTTON_PRESSED == function) ||
-                   (FUNC_SERIAL == function) ||
-                   (FUNC_MODULE_INIT == function) ||
-                   (FUNC_SET_CHANNELS == function) ||
-                   (FUNC_PIN_STATE == function) ||
-                   (FUNC_SET_DEVICE_POWER == function)
-                  )) {
+    if (result && (function > FUNC_return_result)) {
       break;
     }
   }
