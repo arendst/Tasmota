@@ -24,6 +24,9 @@
 
 #include <berry.h>
 #include "berry_tasmota.h"
+#ifdef USE_MATTER
+  #include "berry_matter.h"
+#endif
 #include "be_vm.h"
 #include "ZipReadFS.h"
 #include "ccronexpr.h"

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - support for SEN5X gas and air quality sensor by Tyeth Gundry (#17736)
 - Berry add ``mdns`` advanced features and query
 - ESP32 support for Biomine BioPDU 625x12 (#17857)
+- ESP32 preliminary support for Matter protocol, milestone 1 (commissioning)
 
 ### Breaking Changed
 - Berry energy_ctypes changed with new energy driver

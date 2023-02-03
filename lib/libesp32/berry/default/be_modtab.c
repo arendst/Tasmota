@@ -65,6 +65,9 @@ be_extern_native_module(lv_tasmota);
 be_extern_native_module(haspmota);
 #endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
+#ifdef USE_MATTER_DEVICE
+be_extern_native_module(matter);
+#endif // USE_MATTER_DEVICE
 
 /* user-defined modules declare start */
 
@@ -175,6 +178,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_DISCOVERY
     &be_native_module(mdns),
 #endif // USE_DISCOVERY
+#ifdef USE_MATTER_DEVICE
+    &be_native_module(matter),
+#endif // USE_MATTER_DEVICE
 #endif // TASMOTA
     /* user-defined modules register end */
     NULL /* do not remove */
