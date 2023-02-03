@@ -5,7 +5,7 @@
     3bit serial switch
     Integrated MCP23008
 
-  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10081,10082,1,10016,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10080,1,1,10048,0,0,1],"FLAG":0,"BASE":1}
+  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
 
   Copyright (C) 2021       Theo Arends
   Copyright (C) 2022-2023  Fabrizio Amodio
