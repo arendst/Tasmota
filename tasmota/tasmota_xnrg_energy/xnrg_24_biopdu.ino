@@ -1,11 +1,12 @@
 /*
   xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
     Biomine 625x12 Custom Board
+    6 x 25A Relays
     6 x Independent PZEM-004V3 Modbus AC energy sensor
     3bit serial switch
     Integrated MCP23008
 
-  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10081,10082,1,10016,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10080,1,1,10048,0,0,1],"FLAG":0,"BASE":1}
+  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
 
   Copyright (C) 2021       Theo Arends
   Copyright (C) 2022-2023  Fabrizio Amodio
@@ -26,6 +27,42 @@
 
 #if defined(USE_ENERGY_SENSOR_ESP32) && defined(USE_I2C)
 #ifdef USE_BIOPDU
+
+/*
+  BioPDU 625x12 Factory Settings:
+
+      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
+      Module 0
+      EthType 0
+      EthAddress 0
+      EthClockMode 3
+      SetOption26 1
+      SetOption129 1
+      SetOption150 1
+      EnergyDisplay 1
+      EnergyCols 6
+      i2cscan
+      Sensor29 0,1,0
+      Sensor29 1,5,2
+      Sensor29 2,5,2
+      Sensor29 3,5,2
+      Sensor29 4,5,2
+      Sensor29 5,5,2
+      Sensor29 6,5,2
+      Sensor29 7,1,0
+
+  compile with build flags:
+
+      ${env:tasmota32.build_flags}
+      USE_ETHERNET
+      ETH_TYPE=0
+      ETH_ADDRESS=0
+      ETH_CLKMODE=3
+      USE_MCP230xx
+      USE_MCP230xx_ADDR=0x20
+      USE_MCP230xx_OUTPUT
+      USE_BIOPDU
+*/
 
 #define XNRG_24 24
 
@@ -117,21 +154,9 @@ void BioPduEvery250ms(void)
         Energy->frequency[BioPdu.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0f;                                                 // 50.0 Hz
         Energy->power_factor[BioPdu.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0f;                                             // 1.00
         Energy->import_active[BioPdu.phase] = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]) / 1000.0f; // 4294967.295 kWh
-
-        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PDU: ph=%d v=%2_f c=%4_f ap=%2_f f=%2_f pf=%3_f ia=%4_f"), 
-        //   BioPdu.phase,
-        //   &Energy->voltage[BioPdu.phase],
-        //   &Energy->current[BioPdu.phase],
-        //   &Energy->active_power[BioPdu.phase],
-        //   &Energy->frequency[BioPdu.phase],
-        //   &Energy->power_factor[BioPdu.phase],
-        //   &Energy->import_active[BioPdu.phase]
-        //   );
       }
     }
   }
-
-  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PDU: ph=%d st=%d dr=%d sr=%d"), BioPdu.phase, BioPdu.address_step, data_ready, BioPdu.send_retry);
 
   if (0 == BioPdu.send_retry || data_ready)
   {
@@ -165,24 +190,12 @@ void BioPduEvery250ms(void)
           }
           break;
         }
-        else
-        {
-          // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PDU: phase %d not read"), BioPdu.phase);
-        }
       }
     }
   }
   else
   {
     BioPdu.send_retry--;
-    if ((Energy->phase_count > 1) && (0 == BioPdu.send_retry) && (TasmotaGlobal.uptime < BIOPDU_STABILIZE))
-    {
-      // Energy->phase_count--; // Decrement phases if no response after retry within 30 seconds after restart
-      //  if (TasmotaGlobal.discovery_counter)
-      //  {
-      //    TasmotaGlobal.discovery_counter += ENERGY_WATCHDOG + 1; // Don't send Discovery yet, delay by 4s + 1s
-      //  }
-    }
   }
 }
 
@@ -209,9 +222,6 @@ void BioPduDrvInit(void)
   if (PinUsed(GPIO_BIOPDU_PZEM016_RX) && PinUsed(GPIO_BIOPDU_PZEM0XX_TX) && PinUsed(GPIO_BIOPDU_BIT))
   {
     TasmotaGlobal.energy_driver = XNRG_24;
-
-    Energy->voltage_common = false;
-    Energy->frequency_common = false;
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("PDU: checking pins"));
 
