@@ -32,7 +32,7 @@
  * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
  * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
- * {"NAME":"Shelly Pro 4PM No display","GPIO":[1,1,1,1,9568,0,0,0,1,1,9569,1,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,6214,736,704,3461,0,4736,1,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
+ * {"NAME":"Shelly Pro 4PM","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,0,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
@@ -241,6 +241,7 @@ struct Ade7953 {
   SPISettings spi_settings;
   int8_t pin_cs[ADE7953_MAX_CHANNEL / 2];
 #endif  // USE_ESP32_SPI
+  bool use_spi;
 } Ade7953;
 
 /*********************************************************************************************/
@@ -283,7 +284,7 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Write %08X"), val);
 
 #ifdef USE_ESP32_SPI
-    if (Ade7953.pin_cs[0] >= 0) {
+    if (Ade7953.use_spi) {
       Ade7953SpiEnable();
       SPI.transfer16(reg);
       SPI.transfer(0x00);                            // Write
@@ -313,7 +314,7 @@ int32_t Ade7953Read(uint16_t reg) {
   int size = Ade7953RegSize(reg);
   if (size) {
 #ifdef USE_ESP32_SPI
-    if (Ade7953.pin_cs[0] >= 0) {
+    if (Ade7953.use_spi) {
       Ade7953SpiEnable();
       SPI.transfer16(reg);
       SPI.transfer(0x80);                            // Read
@@ -450,7 +451,7 @@ void Ade7953GetData(void) {
   int32_t reg[ADE7953_MAX_CHANNEL][ADE7953_REGISTERS];
 
 #ifdef USE_ESP32_SPI
-  if (Ade7953.pin_cs[0] >= 0) {
+  if (Ade7953.use_spi) {
     uint32_t channel = 0;
     for (uint32_t chip = 0; chip < ADE7953_MAX_CHANNEL / 2; chip++) {
       if (Ade7953.pin_cs[chip] < 0) { continue; }
@@ -705,6 +706,7 @@ void Ade7953DrvInit(void) {
           Ade7953.model = ADE7953_SHELLY_PRO_1PM;
         }
         Ade7953.cs_index = 0;
+        Ade7953.use_spi = true;
         SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
         Ade7953.spi_settings = SPISettings(1000000, MSBFIRST, SPI_MODE0);  // Set up SPI at 1MHz, MSB first, Capture at rising edge
         AddLog(LOG_LEVEL_INFO, PSTR("SPI: ADE7953 found"));
@@ -820,8 +822,15 @@ bool Xnrg07(uint32_t function) {
   bool result = false;
 
   switch (function) {
-    case FUNC_ENERGY_EVERY_SECOND:
-      Ade7953EnergyEverySecond();
+    case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer (fails on SPI)
+      if (!Ade7953.use_spi) {       // No SPI
+        Ade7953EnergyEverySecond();
+      }
+      break;
+    case FUNC_EVERY_SECOND:         // Use loop timer (without interrupt)
+      if (Ade7953.use_spi) {        // SPI
+        Ade7953EnergyEverySecond();
+      }
       break;
     case FUNC_COMMAND:
       result = Ade7953Command();

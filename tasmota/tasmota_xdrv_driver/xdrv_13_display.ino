@@ -1838,14 +1838,21 @@ void DisplayLocalSensor(void)
  * Public
 \*********************************************************************************************/
 
-void DisplayInitDriver(void)
-{
+void DisplayInitDriver(void) {
+  uint8_t devices_present = TasmotaGlobal.devices_present;  // Save devices_present
+  TasmotaGlobal.devices_present++;
+  if (!PinUsed(GPIO_BACKLIGHT)) {
+    if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
+      TasmotaGlobal.devices_present--;  // Assume PWM channel is used for backlight
+    }
+  }
+  disp_device = TasmotaGlobal.devices_present;  // Set display device
+
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
   if (Settings->display_model) {
-//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
 
 #ifdef USE_MULTI_DISPLAY
     Set_display(0);
@@ -1874,6 +1881,7 @@ void DisplayInitDriver(void)
     for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
 #endif
 
+/*
     TasmotaGlobal.devices_present++;
     if (!PinUsed(GPIO_BACKLIGHT)) {
       if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
@@ -1881,12 +1889,16 @@ void DisplayInitDriver(void)
       }
     }
     disp_device = TasmotaGlobal.devices_present;
+*/
 
 #ifndef USE_DISPLAY_MODES1TO5
     Settings->display_mode = 0;
 #else
     DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
+  } else {
+    TasmotaGlobal.devices_present = devices_present;  // Restore devices_present
+    disp_device = 0;
   }
 }
 
@@ -2009,7 +2021,6 @@ void ApplyDisplayDimmer(void) {
     // still call Berry virtual display in case it is not managed entirely by renderer
     Xdsp18(FUNC_DISPLAY_DIM);
 #endif // USE_BERRY
-
   } else {
     XdspCall(FUNC_DISPLAY_DIM);
   }
