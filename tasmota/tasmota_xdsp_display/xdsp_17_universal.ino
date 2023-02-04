@@ -436,7 +436,7 @@ int8_t cs;
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
 
-    ApplyDisplayDimmer();
+//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
 
 #ifdef SHOW_SPLASH
     if (!Settings->flag5.display_no_splash) {
