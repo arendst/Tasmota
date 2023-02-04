@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define SWITCH_V3
+//#define SWITCH_V3
 #ifdef SWITCH_V3
 /*********************************************************************************************\
  * Switch support with input filter

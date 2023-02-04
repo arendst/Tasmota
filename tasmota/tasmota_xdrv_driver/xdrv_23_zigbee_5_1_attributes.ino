@@ -530,10 +530,10 @@ public:
   uint16_t cluster = 0xFFFF;
   uint16_t attribute = 0xFFFF;
   const char * name = nullptr;
+  uint16_t multiplier = 1;
+  uint16_t divider = 1;
+  int16_t  base = 0;
   uint8_t zigbee_type = Znodata;
-  int8_t multiplier = 1;
-  int8_t divider = 1;
-  int8_t base = 0;
   uint8_t map_offset = 0;
   Z_Data_Type map_type = Z_Data_Type::Z_Unknown;
   uint16_t manuf = 0x0000;      // manuf code (if any)

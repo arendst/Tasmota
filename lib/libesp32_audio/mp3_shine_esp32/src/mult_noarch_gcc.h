@@ -1,9 +1,9 @@
 #include <stdint.h>
 
-#ifndef mul
+#ifndef asm_mul
 //#define              /// mul(a,b)   (int32_t)  ( ( ((int64_t) a) * ((int64_t) b) ) >>32 )
 
-#define mul(x,y) \
+#define asm_mul(x,y) \
 ({ \
     register int32_t result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
@@ -12,8 +12,8 @@
 
 #endif
 
-#ifndef muls     //Not sure about this
-#define muls(x,y) \
+#ifndef asm_muls     //Not sure about this
+#define asm_muls(x,y) \
 ({ \
     register int32_t result; \
     asm ( \
@@ -28,8 +28,8 @@
 //#define muls(a,b)  (int32_t)  ( ( ((int64_t) a) * ((int64_t) b) ) >>31 )
 #endif
 
-#ifndef mulr    //no rounding shortcut
-#define mulr(x,y) \
+#ifndef asm_mulr    //no rounding shortcut
+#define asm_mulr(x,y) \
 ({ \
     register int32_t result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
@@ -39,8 +39,8 @@
 //#define mulr(a,b)  (int32_t)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x80000000LL ) >>32 )
 #endif
 
-#ifndef mulsr   //no rounding shortcut
-#define mulsr(x,y) \
+#ifndef asm_mulsr   //no rounding shortcut
+#define asm_mulsr(x,y) \
 ({ \
     register int32_t result; \
     asm ( \
@@ -53,11 +53,11 @@
 //#define mulsr(a,b) (int32_t)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x40000000LL ) >>31 )
 #endif
 
-#ifndef mul0
-#define mul0(hi,lo,a,b)     ((hi)  = mul((a), (b)))
+#ifndef asm_mul0
+#define asm_mul0(hi,lo,a,b)     ((hi)  = asm_mul((a), (b)))
 
 // This didn't seem to help either
-#define muladd(hi, lo, x, y) \
+#define asm_muladd(hi, lo, x, y) \
  ({  \
     asm ( \
     		"mulsh a7, %2, %1\n\t" \
@@ -67,8 +67,8 @@
 })
 
 
-//#define muladd(hi,lo,a,b)   ((hi) += mul((a), (b)))
- #define mulsub(hi, lo, x, y) \
+//#define asm_muladd(hi,lo,a,b)   ((hi) += mul((a), (b)))
+ #define asm_mulsub(hi, lo, x, y) \
  ({  \
     asm ( \
             "mulsh a8, %2, %1\n\t" \
@@ -77,10 +77,10 @@
             : "a8");\
 })
 //#define mulsub(hi,lo,a,b)   ((hi) -= mul((a), (b)))
-#define mulz(hi,lo)
+#define asm_mulz(hi,lo)
 #endif
 
-#ifndef cmuls
+#ifndef asm_cmuls
 /*
  #define cmuls(dre, dim, are, aim, bre, bim) \
 do { \
@@ -109,7 +109,7 @@ do { \
 } while (0)*/
 
 
-#define cmuls(dre, dim, are, aim, bre, bim) \
+#define asm_cmuls(dre, dim, are, aim, bre, bim) \
 do { \
 	int32_t tre; \
 	(tre) = (int32_t) (((int64_t) (are) * (int64_t) (bre) - (int64_t) (aim) * (int64_t) (bim)) >> 31); \

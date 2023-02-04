@@ -341,7 +341,10 @@ def main():
   # Write to root/TEMPLATES.md
   fout = open(TEMPLATES,"w+")
 
-  fout.write("<img src=\"/tools/logo/TASMOTA_FullLogo_Vector.svg\" alt=\"Logo\" align=\"right\" height=\"76\"/>\n")
+  fout.write("<picture>\n")
+  fout.write("  <source media=\"(prefers-color-scheme: dark)\" srcset=\"./tools/logo/TASMOTA_FullLogo_Vector_White.svg\">\n")
+  fout.write("  <img alt=\"Logo\" src=\"./tools/logo/TASMOTA_FullLogo_Vector.svg\" align=\"right\" height=\"76\">\n")
+  fout.write("</picture>\n")
   fout.write("\n")
   fout.write("# Templates\n")
   fout.write("\n")

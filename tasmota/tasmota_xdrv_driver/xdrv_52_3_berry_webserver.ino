@@ -144,7 +144,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `webserver.content_start() -> nil`
+  // Berry: `webserver.content_start(title:string) -> nil`
   //
   int32_t w_webserver_content_start(struct bvm *vm);
   int32_t w_webserver_content_start(struct bvm *vm) {
@@ -157,13 +157,36 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: `webserver.content_open(http_code:int, mimetype:string) -> nil`
+  //
+  int32_t w_webserver_content_open(struct bvm *vm);
+  int32_t w_webserver_content_open(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 1) && be_isstring(vm, 2)) {
+      int32_t httpcode = be_toint(vm, 1);
+      const char * mimetype = be_tostring(vm, 2);
+      Webserver->client().flush();
+      WSHeaderSend();
+      Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
+      Webserver->send(httpcode, mimetype, "");
+      Web.chunk_buffer = "";
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: `webserver.content_send(string) -> nil`
   //
   int32_t w_webserver_content_send(struct bvm *vm);
   int32_t w_webserver_content_send(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 1 && be_isstring(vm, 1)) {
-      const char * html = be_tostring(vm, 1);
+    if (argc >= 1 && (be_isstring(vm, 1) || be_iscomptr(vm, 1))) {
+      const char * html;
+      if (be_isstring(vm, 1)) {
+        html = be_tostring(vm, 1);
+      } else {
+        html = (const char*) be_tocomptr(vm, 1);
+      }
       WSContentSend_P(PSTR("%s"), html);
       be_return_nil(vm);
     }

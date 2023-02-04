@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BUTTON_V3
+//#define BUTTON_V3
 #ifdef BUTTON_V3
 /*********************************************************************************************\
  * Button support with input filter

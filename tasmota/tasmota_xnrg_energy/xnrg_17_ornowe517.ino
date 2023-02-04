@@ -84,9 +84,9 @@ void WE517Every250ms(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
-      Energy.data_valid[1] = 0;
-      Energy.data_valid[2] = 0;
+      Energy->data_valid[0] = 0;
+      Energy->data_valid[1] = 0;
+      Energy->data_valid[2] = 0;
 
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
@@ -99,71 +99,71 @@ void WE517Every250ms(void)
 
       switch(We517.read_state) {
         case 0:
-          Energy.voltage[0] = value;
+          Energy->voltage[0] = value;
           break;
 
         case 1:
-          Energy.voltage[1] = value;
+          Energy->voltage[1] = value;
           break;
 
         case 2:
-          Energy.voltage[2] = value;
+          Energy->voltage[2] = value;
           break;
 
         case 3:
-          Energy.current[0] = value;
+          Energy->current[0] = value;
           break;
 
         case 4:
-          Energy.current[1] = value;
+          Energy->current[1] = value;
           break;
 
         case 5:
-          Energy.current[2] = value;
+          Energy->current[2] = value;
           break;
 
         case 6:
-          Energy.active_power[0] = value * 1000;
+          Energy->active_power[0] = value * 1000;
           break;
 
         case 7:
-          Energy.active_power[1] = value * 1000;
+          Energy->active_power[1] = value * 1000;
           break;
 
         case 8:
-          Energy.active_power[2] = value * 1000;
+          Energy->active_power[2] = value * 1000;
           break;
 
         case 9:
-          Energy.reactive_power[0] = value;
+          Energy->reactive_power[0] = value;
           break;
 
         case 10:
-          Energy.reactive_power[1] = value;
+          Energy->reactive_power[1] = value;
           break;
 
         case 11:
-          Energy.reactive_power[2] = value;
+          Energy->reactive_power[2] = value;
           break;
 
         case 12:
-          Energy.power_factor[0] = value;
+          Energy->power_factor[0] = value;
           break;
 
         case 13:
-          Energy.power_factor[1] = value;
+          Energy->power_factor[1] = value;
           break;
 
         case 14:
-          Energy.power_factor[2] = value;
+          Energy->power_factor[2] = value;
           break;
 
         case 15:
-          Energy.frequency[0] = value;
+          Energy->frequency[0] = value;
           break;
 
         case 16:
-          Energy.import_active[0] = value;
+          Energy->import_active[0] = value;
           EnergyUpdateTotal();
           break;
       }
@@ -192,8 +192,8 @@ void We517SnsInit(void) {
           Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }
-      Energy.phase_count = 3;
-      Energy.frequency_common = true; // Use common frequency
+      Energy->phase_count = 3;
+      Energy->frequency_common = true; // Use common frequency
   } else {
       TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

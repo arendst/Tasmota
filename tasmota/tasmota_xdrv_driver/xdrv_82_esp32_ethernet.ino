@@ -190,31 +190,31 @@ void EthernetInit(void) {
   int eth_power = Pin(GPIO_ETH_PHY_POWER);
   int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
-#if CONFIG_IDF_TARGET_ESP32
+//#if CONFIG_IDF_TARGET_ESP32
   // fix an disconnection issue after rebooting Olimex POE - this forces a clean state for all GPIO involved in RMII
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
-  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
-  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
-  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
-  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
-  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
-  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
-  switch (Settings->eth_clk_mode) {
-    case 0:   // ETH_CLOCK_GPIO0_IN
-    case 1:   // ETH_CLOCK_GPIO0_OUT
-      gpio_reset_pin(GPIO_NUM_0);
-      break;
-    case 2:   // ETH_CLOCK_GPIO16_OUT
-      gpio_reset_pin(GPIO_NUM_16);
-      break;
-    case 3:   // ETH_CLOCK_GPIO17_OUT
-      gpio_reset_pin(GPIO_NUM_17);
-      break;
-  }
-  delay(1);
-#endif // CONFIG_IDF_TARGET_ESP32
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
+//  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
+//  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
+//  switch (Settings->eth_clk_mode) {
+//    case 0:   // ETH_CLOCK_GPIO0_IN
+//    case 1:   // ETH_CLOCK_GPIO0_OUT
+//      gpio_reset_pin(GPIO_NUM_0);
+//      break;
+//    case 2:   // ETH_CLOCK_GPIO16_OUT
+//      gpio_reset_pin(GPIO_NUM_16);
+//      break;
+//    case 3:   // ETH_CLOCK_GPIO17_OUT
+//      gpio_reset_pin(GPIO_NUM_17);
+//      break;
+//  }
+//  delay(1);
+//#endif // CONFIG_IDF_TARGET_ESP32
   if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
     return;

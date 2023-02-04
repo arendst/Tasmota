@@ -23,6 +23,7 @@ struct {
   void (* SetTime)(uint32_t);
   int32_t (* MemRead)(uint8_t *, uint32_t);
   int32_t (* MemWrite)(uint8_t *, uint32_t);
+  void (* ShowSensor)(bool);
   bool detected;
   int8_t mem_size = -1;
   uint8_t address;
@@ -51,6 +52,8 @@ struct {
 #define DS3231_YEAR         0x06
 #define DS3231_CONTROL      0x0E
 #define DS3231_STATUS       0x0F
+#define DS3231_TEMP_MSB     0x11
+#define DS3231_TEMP_LSB     0x12
 
 // Control register bits
 #define DS3231_OSF          7
@@ -77,9 +80,57 @@ uint32_t DS3231ReadTime(void) {
   tm.day_of_week = I2cRead8(RtcChip.address, DS3231_DAY);
   tm.day_of_month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_DATE));
   tm.month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_MONTH) & ~_BV(DS3231_CENTURY));  // Don't use the Century bit
-  tm.year = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_YEAR));
+  // MakeTime requires tm.year as number of years since 1970, 
+  // However DS3231 is supposed to hold the true year but before this PR it was written tm.year directly
+  // Assuming we read ... means ...
+  //   00..21   = 1970..1990 written before PR (to support a RTC written with 1970) => don't apply correction
+  //   22..51   = 2022..2051 written after PR => apply +30 years correction
+  //   52..99   = 2022..2069 written before PR => don't apply correction
+  uint8_t year = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_YEAR));
+  tm.year = ((year <= 21) || (year >= 52)) ? (year) : (year+30);
   return MakeTime(tm);
 }
+
+/*-------------------------------------------------------------------------------------------*\
+ * Read temperature from DS3231 internal sensor, return as float
+\*-------------------------------------------------------------------------------------------*/
+#ifdef DS3231_ENABLE_TEMP
+float DS3231ReadTemp(void) {
+  int16_t temp_reg = I2cReadS16(RtcChip.address, DS3231_TEMP_MSB) >> 6;
+  float temp = temp_reg * 0.25;
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("RTC: DS3231 temp_reg=%d"), temp_reg);
+  return temp;
+}
+#endif // #ifdef DS3231_ENABLE_TEMP
+
+/*-------------------------------------------------------------------------------------------*\
+ * Show temperature from DS3231 internal sensor, Web or SENSOR
+\*-------------------------------------------------------------------------------------------*/
+#ifdef DS3231_ENABLE_TEMP
+void D3231ShowSensor(bool json) {
+    float f_temperature = ConvertTemp(DS3231ReadTemp());
+
+    if (json) {
+        ResponseAppend_P(PSTR(",\"DS3231\":{\"" D_JSON_TEMPERATURE "\":%*_f}"), Settings->flag2.temperature_resolution, &f_temperature);
+#ifdef USE_DOMOTICZ
+        if (0 == TasmotaGlobal.tele_period) {
+          DomoticzFloatSensor(DZ_TEMP, f_temperature);
+        }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if (0 == TasmotaGlobal.tele_period) {
+          KnxSensor(KNX_TEMPERATURE, f_temperature);
+        }
+#endif  // USE_KNX
+    } 
+#ifdef USE_WEBSERVER
+    else {
+        WSContentSend_Temp("DS3231", f_temperature);
+    }
+#endif // #ifdef USE_WEBSERVER
+}
+#endif // #ifdef DS3231_ENABLE_TEMP
+
 
 /*-------------------------------------------------------------------------------------------*\
  * Get time as TIME_T and set the DS3231 time to this value
@@ -93,7 +144,9 @@ void DS3231SetTime(uint32_t epoch_time) {
   I2cWrite8(RtcChip.address, DS3231_DAY, tm.day_of_week);
   I2cWrite8(RtcChip.address, DS3231_DATE, Dec2Bcd(tm.day_of_month));
   I2cWrite8(RtcChip.address, DS3231_MONTH, Dec2Bcd(tm.month));
-  I2cWrite8(RtcChip.address, DS3231_YEAR, Dec2Bcd(tm.year));
+  // BreakTime returns tm.year as number of years since 1970, while DS3231 expect the true year. Adusting to avoir leap year error
+  uint8_t true_year = (tm.year < 30) ? (tm.year + 70) : (tm.year - 30);
+  I2cWrite8(RtcChip.address, DS3231_YEAR, Dec2Bcd(true_year));
   I2cWrite8(RtcChip.address, DS3231_STATUS, I2cRead8(RtcChip.address, DS3231_STATUS) & ~_BV(DS3231_OSF));  // Clear the Oscillator Stop Flag
 }
 
@@ -109,6 +162,9 @@ void DS3231Detected(void) {
         strcpy_P(RtcChip.name, PSTR("DS3231"));
         RtcChip.ReadTime = &DS3231ReadTime;
         RtcChip.SetTime = &DS3231SetTime;
+#ifdef DS3231_ENABLE_TEMP
+        RtcChip.ShowSensor = &D3231ShowSensor;
+#endif
         RtcChip.mem_size = -1;
       }
     }
@@ -455,6 +511,12 @@ bool Xdrv56(uint32_t function) {
     switch (function) {
       case FUNC_TIME_SYNCED:
         RtcChipTimeSynced();
+        break;
+      case FUNC_WEB_SENSOR:
+        if (RtcChip.ShowSensor) RtcChip.ShowSensor(0);
+        break;
+      case FUNC_JSON_APPEND:
+        if (RtcChip.ShowSensor) RtcChip.ShowSensor(1);
         break;
     }
   }

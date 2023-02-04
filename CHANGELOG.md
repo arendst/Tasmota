@@ -3,16 +3,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.3]
+## [12.3.1.5]
+### Added
+- ESP32 support for eigth energy phases/channels
+- ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
+- ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
+- support for SEN5X gas and air quality sensor by Tyeth Gundry (#17736)
+- Berry add ``mdns`` advanced features and query
+- ESP32 support for Biomine BioPDU 625x12 (#17857)
+- ESP32 preliminary support for Matter protocol, milestone 1 (commissioning)
+
+### Breaking Changed
+- Berry energy_ctypes changed with new energy driver
+- Berry energy_ctypes fixed accordingly
+
+### Changed
+- Energy refactoring preparing for ESP32 phase/channel extension
+
+### Fixed
+- ADE7953 when calibration data for second channel is used regression from v12.2.0.2
+- Shelly Pro 1/2 relay click at restart regression from v12.3.1.4
+- Zigbee extend plug-in modifiers to 16 bits
+- Broken I2C priority regression from v12.3.1.3 (#17810)
+- Energy usage and return migrated too small (/10000) regression from v12.3.1.3
+
+### Removed
+
+## [12.3.1.4] 20230127
+### Added
+- Berry ``crypto.EC_P256`` ECDSA signature (required by Matter protocol)
+- Berry add up flag to ``tasmota.wifi()`` and ``tasmota.eth()``, always return MAC
+
+## [12.3.1.3] 20230115
 ### Added
 - Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich (#17557)
 - Berry `bytes()` now evaluates to `false` if empty
 - Berry ``crypto.AES_CCM`` (required by Matter protocol)
 - ESP32 support for BMPxxx sensors on two I2C busses (#17643)
 - Berry add implicit ``_class`` parameter to static methods
-- Berry add ``static class`` to declare inner classes
-
-### Breaking Changed
 
 ### Changed
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
@@ -27,8 +55,6 @@ All notable changes to this project will be documented in this file.
 - No IP address shown when in AP mode regression from v12.3.1.1 (#17599)
 - Rename ``tasmota4M.bin`` to ``tasmota-4M.bin`` to solve use of ``tasmota-minimal.bin`` (#17674)
 - DNS lookup for ``upload`` from ota server using http regression from v12.3.1.1
-
-### Removed
 
 ## [12.3.1.2] 20221231
 ### Added

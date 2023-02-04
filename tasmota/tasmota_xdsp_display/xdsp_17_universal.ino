@@ -50,7 +50,9 @@ extern uint16_t fg_color;
 extern uint16_t bg_color;
 #endif
 
+#ifndef DISPDESC_SIZE
 #define DISPDESC_SIZE 1000
+#endif
 
 void Core2DisplayPower(uint8_t on);
 void Core2DisplayDim(uint8_t dim);
@@ -94,6 +96,11 @@ int8_t cs;
       fp = ffsp->open(DISP_DESC_FILE, "r");
       if (fp > 0) {
         uint32_t size = fp.size();
+        if (size > DISPDESC_SIZE - 50) {
+          free(fbuff);
+          fbuff = (char*)calloc(size + 50, 1);
+          if (!fbuff) return 0;
+        }
         fp.read((uint8_t*)fbuff, size);
         fp.close();
         ddesc = fbuff;
@@ -148,6 +155,7 @@ int8_t cs;
       if (fbuff) free(fbuff);
       return 0;
     }
+
     // now replace tasmota vars before passing to driver
     char *cp = strstr(ddesc, "I2C");
     if (cp) {
@@ -296,6 +304,7 @@ int8_t cs;
       delete renderer;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: reinit"));
     }
+
     udisp  = new uDisplay(ddesc);
 
     // checck for touch option TI1 or TI2
@@ -427,7 +436,7 @@ int8_t cs;
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
 
-    ApplyDisplayDimmer();
+//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
 
 #ifdef SHOW_SPLASH
     if (!Settings->flag5.display_no_splash) {

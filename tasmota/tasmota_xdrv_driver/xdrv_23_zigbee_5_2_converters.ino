@@ -1612,6 +1612,7 @@ void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uin
         attr.attr_type = matched_attr.zigbee_type;
         attr.attr_multiplier = matched_attr.multiplier;
         attr.attr_divider = matched_attr.divider;
+        attr.attr_base = matched_attr.base;
         attr.manuf = matched_attr.manuf;
       }
     }
@@ -1695,8 +1696,8 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
-    int8_t multiplier = 1;
-    int8_t divider = 1;
+    uint16_t multiplier = 1;
+    uint16_t divider = 1;
     int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
     if (multiplier8 > 1) { multiplier = multiplier8; }
     if (multiplier8 < 0) { divider = -multiplier8; }

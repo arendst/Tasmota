@@ -1,0 +1,55 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2CSen5x	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+startMeasurement	KEYWORD2
+startMeasurementWithoutPm	KEYWORD2
+stopMeasurement	KEYWORD2
+readDataReady	KEYWORD2
+readMeasuredValues	KEYWORD2
+readMeasuredValuesAsIntegers	KEYWORD2
+readMeasuredValuesSen50         KEYWORD2
+readMeasuredRawValues	KEYWORD2
+readMeasuredPmValues	KEYWORD2
+readMeasuredPmValuesAsIntegers	KEYWORD2
+startFanCleaning	KEYWORD2
+setTemperatureOffsetSimple	KEYWORD2
+getTemperatureOffsetSimple	KEYWORD2
+setTemperatureOffsetParameters	KEYWORD2
+getTemperatureOffsetParameters	KEYWORD2
+setWarmStartParameter	KEYWORD2
+getWarmStartParameter	KEYWORD2
+setVocAlgorithmTuningParameters	KEYWORD2
+getVocAlgorithmTuningParameters	KEYWORD2
+setNoxAlgorithmTuningParameters	KEYWORD2
+getNoxAlgorithmTuningParameters	KEYWORD2
+setRhtAccelerationMode	KEYWORD2
+getRhtAccelerationMode	KEYWORD2
+setVocAlgorithmState	KEYWORD2
+getVocAlgorithmState	KEYWORD2
+setFanAutoCleaningInterval	KEYWORD2
+getFanAutoCleaningInterval	KEYWORD2
+getProductName	KEYWORD2
+getSerialNumber	KEYWORD2
+getVersion	KEYWORD2
+readDeviceStatus	KEYWORD2
+readAndClearDeviceStatus	KEYWORD2
+deviceReset	KEYWORD2
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sen5x	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
