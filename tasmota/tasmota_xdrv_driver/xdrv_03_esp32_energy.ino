@@ -19,15 +19,9 @@
 
 #ifdef ESP32
 #ifdef USE_ENERGY_SENSOR
-#define USE_ENERGY_SENSOR_ESP32
-#endif  // USE_ENERGY_SENSOR
-#endif  // ESP32
-
-#ifdef USE_ENERGY_SENSOR_ESP32
 /*********************************************************************************************\
  * Energy for ESP32 with max eight phases/channels using more RAM and Settings from filesystem
 \*********************************************************************************************/
-//#warning **** USE_ENERGY_SENSOR_ESP32 ****
 
 #define XDRV_03                   3
 #define XSNS_03                   3
@@ -1798,4 +1792,5 @@ bool Xsns03(uint32_t function)
   return result;
 }
 
-#endif  // USE_ENERGY_SENSOR_ESP32
+#endif  // USE_ENERGY_SENSOR
+#endif  // ESP32

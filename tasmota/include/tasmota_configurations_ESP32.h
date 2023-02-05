@@ -346,7 +346,10 @@
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
-#undef USE_ENERGY_SENSOR
+
+#define USE_ENERGY_SENSOR                      // Add energy to support Shelly Pro 4PM display (+38k code)
+#define USE_ADE7953
+#define USE_SHELLY_PRO
 
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)

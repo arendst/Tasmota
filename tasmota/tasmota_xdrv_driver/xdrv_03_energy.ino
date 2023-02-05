@@ -19,15 +19,9 @@
 
 #ifdef ESP8266
 #ifdef USE_ENERGY_SENSOR
-#define USE_ENERGY_SENSOR_LEGACY
-#endif  // USE_ENERGY_SENSOR
-#endif  // ESP8266
-
-#ifdef USE_ENERGY_SENSOR_LEGACY
 /*********************************************************************************************\
  * Energy for ESP8266 and legacy ESP32 with max three phases/channels using Settings from flash
 \*********************************************************************************************/
-//#warning **** USE_ENERGY_SENSOR_LEGACY ****
 
 #define XDRV_03                3
 #define XSNS_03                3
@@ -1518,4 +1512,5 @@ bool Xsns03(uint32_t function)
   return result;
 }
 
-#endif  // USE_ENERGY_SENSOR_V1
+#endif  // USE_ENERGY_SENSOR
+#endif  // ESP8266
