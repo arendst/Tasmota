@@ -366,8 +366,7 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
 // topicBuf:       cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
 // topicBuf: cmnd/DVES_83BB10_fb/power1  dataBuf: toggle  = Mqtt command using fallback topic
 
-void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
-{
+void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   SHOW_FREE_MEM(PSTR("CommandHandler"));
 
   bool grpflg = false;
@@ -408,34 +407,32 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
       user_index = true;
     }
     type[i] = '\0';
-  }
 
-  bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
-  if (!binary_data) {
-    bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
-    if (!keep_spaces) {
-      while (*dataBuf && isspace(*dataBuf)) {
-        dataBuf++;                           // Skip leading spaces in data
-        data_len--;
+    bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
+    if (!binary_data) {
+      bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
+      if (!keep_spaces) {
+        while (*dataBuf && isspace(*dataBuf)) {
+          dataBuf++;                           // Skip leading spaces in data
+          data_len--;
+        }
       }
     }
-  }
 
-  int32_t payload = -99;
-  if (!binary_data) {
-    if (!strcmp(dataBuf,"?")) { data_len = 0; }
+    int32_t payload = -99;
+    if (!binary_data) {
+      if (!strcmp(dataBuf,"?")) { data_len = 0; }
 
-    char *p;
-    payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
-    if (p == dataBuf) { payload = -99; }
-    int temp_payload = GetStateNumber(dataBuf);
-    if (temp_payload > -1) { payload = temp_payload; }
-  }
+      char *p;
+      payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
+      if (p == dataBuf) { payload = -99; }
+      int temp_payload = GetStateNumber(dataBuf);
+      if (temp_payload > -1) { payload = temp_payload; }
+    }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmd '%s', Idx %d, Len %d, Pld %d, Data '%s'"),
-    grpflg, type, index, data_len, payload, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmd '%s', Idx %d, Len %d, Pld %d, Data '%s'"),
+      grpflg, type, index, data_len, payload, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
 
-  if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
 
     if (Settings->ledstate &0x02) { TasmotaGlobal.blinks++; }
