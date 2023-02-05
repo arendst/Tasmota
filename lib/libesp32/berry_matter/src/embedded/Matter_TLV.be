@@ -563,7 +563,7 @@ class Matter_TLV
     #############################################################
     # adders
     def add_TLV(tag, t, value)
-      if value != nil
+      if value != nil || t == matter.TLV.NULL
         var v = self.TLV.Matter_TLV_item(self)
         v.tag_sub = tag
         v.typ = t
