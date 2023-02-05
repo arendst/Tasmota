@@ -237,7 +237,7 @@ uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
 
-uint8_t disp_power = 0;
+int8_t disp_power = -1;
 uint8_t disp_device = 0;
 uint8_t disp_refresh = 1;
 uint8_t disp_autodraw = 1;
@@ -293,9 +293,10 @@ void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
   XdspCall(FUNC_DISPLAY_DRAW_STRING);
 }
 
-void DisplayOnOff(uint8_t on)
-{
-  ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
+void DisplayOnOff(uint8_t on) {
+  if (disp_device) {
+    ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1838,8 +1839,10 @@ void DisplayLocalSensor(void)
  * Public
 \*********************************************************************************************/
 
-void DisplayInitDriver(void)
-{
+void DisplayInitDriver(void) {
+
+
+
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
@@ -1890,8 +1893,9 @@ void DisplayInitDriver(void)
   }
 }
 
-void DisplaySetPower(void)
-{
+void DisplaySetPower(void) {
+  if (!disp_device) { return; }  // Not initialized yet
+
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
@@ -1995,6 +1999,8 @@ void CmndDisplayMode(void) {
 
 // Apply the current display dimmer
 void ApplyDisplayDimmer(void) {
+  if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
+
   uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
