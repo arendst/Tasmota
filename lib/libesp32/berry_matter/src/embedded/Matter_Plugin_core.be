@@ -36,6 +36,7 @@ class Matter_Plugin_core : Matter_Plugin
   # read an attribute
   #
   def read_attribute(msg, endpoint, cluster, attribute)
+    import string
     var TLV = matter.TLV
 
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
@@ -62,7 +63,41 @@ class Matter_Plugin_core : Matter_Plugin
     elif cluster == 0x0033              # ========== General Diagnostics Cluster 11.11 p.642 ==========
 
       if   attribute == 0x0000          #  ---------- NetworkInterfaces ----------
-        var nwi = TLV.Matter_TLV_list() # TODO list network interfaces, empty list for now
+        var nwi = TLV.Matter_TLV_array() # list network interfaces, empty list for now, p.647
+
+        var tas_eth = tasmota.eth()
+        if (tas_eth['up'])
+          var eth = nwi.add_struct(nil)
+          eth.add_TLV(0, TLV.UTF1, 'ethernet')      # Name
+          eth.add_TLV(1, TLV.BOOL, 1)               # IsOperational
+          eth.add_TLV(2, TLV.BOOL, 1)               # OffPremiseServicesReachableIPv4
+          eth.add_TLV(3, TLV.NULL, nil)             # OffPremiseServicesReachableIPv6
+          var mac = bytes().fromhex(string.replace(tas_eth.find("mac", ""), ":", ""))
+          eth.add_TLV(4, TLV.B1, mac) # HardwareAddress
+          var ip4 = eth.add_array(5)                 # IPv4Addresses
+          ip4.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip", "")))
+          var ip6 = eth.add_array(6)                 # IPv6Addresses
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip6local", "")))
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip6", "")))
+          eth.add_TLV(7, TLV.U1, 2)                # InterfaceType, p646
+        end
+
+        var tas_wif = tasmota.wifi()
+        if (tas_wif['up'])
+          var wif = nwi.add_struct(nil)
+          wif.add_TLV(0, TLV.UTF1, 'wifi')          # Name
+          wif.add_TLV(1, TLV.BOOL, 1)               # IsOperational
+          wif.add_TLV(2, TLV.BOOL, 1)               # OffPremiseServicesReachableIPv4
+          wif.add_TLV(3, TLV.NULL, nil)             # OffPremiseServicesReachableIPv6
+          var mac = bytes().fromhex(string.replace(tas_wif.find("mac", ""), ":", ""))
+          wif.add_TLV(4, TLV.B1, mac) # HardwareAddress
+          var ip4 = wif.add_array(5)                 # IPv4Addresses
+          ip4.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip", "")))
+          var ip6 = wif.add_array(6)                 # IPv6Addresses
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip6local", "")))
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip6", "")))
+          wif.add_TLV(7, TLV.U1, 1)                # InterfaceType, p646
+        end
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
         return TLV.create_TLV(TLV.U2, tasmota.cmd("Status 1")['StatusPRM']['BootCount'])

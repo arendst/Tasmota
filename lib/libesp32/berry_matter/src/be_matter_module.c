@@ -94,6 +94,11 @@ const char* matter_get_command_name(uint16_t cluster, uint16_t command) {
 }
 BE_FUNC_CTYPE_DECLARE(matter_get_command_name, "s", "ii")
 
+// Convert an IP address from string to raw bytes
+extern const void* matter_get_ip_bytes(const char* ip_str, size_t* ret_len);
+BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
+
+
 #include "solidify/solidified_Matter_inspect.h"
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
@@ -149,6 +154,7 @@ module matter (scope: global) {
   Counter, class(be_class_Matter_Counter)
   setmember, closure(matter_setmember_closure)
   member, closure(matter_member_closure)
+  get_ip_bytes, ctype_func(matter_get_ip_bytes)
 
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
