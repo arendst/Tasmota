@@ -237,6 +237,7 @@ uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
 
+bool disp_apply_display_dimmer_request = false;
 int8_t disp_power = -1;
 uint8_t disp_device = 0;
 uint8_t disp_refresh = 1;
@@ -1840,15 +1841,12 @@ void DisplayLocalSensor(void)
 \*********************************************************************************************/
 
 void DisplayInitDriver(void) {
-
-
-
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
   if (Settings->display_model) {
-//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
+//    ApplyDisplayDimmer();  // Not allowed here. Way too early in init sequence. Global power state has not been set at this point in time
 
 #ifdef USE_MULTI_DISPLAY
     Set_display(0);
@@ -1999,7 +1997,9 @@ void CmndDisplayMode(void) {
 
 // Apply the current display dimmer
 void ApplyDisplayDimmer(void) {
+  disp_apply_display_dimmer_request = true;
   if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
+  disp_apply_display_dimmer_request = false;
 
   uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
@@ -2895,6 +2895,11 @@ bool Xdrv13(uint32_t function)
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();
+        break;
+      case FUNC_INIT:
+        if (disp_apply_display_dimmer_request) {
+          ApplyDisplayDimmer();  // Allowed here.
+        }
         break;
       case FUNC_EVERY_50_MSECOND:
         if (Settings->display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
