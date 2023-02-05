@@ -39,7 +39,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12  - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
     uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13  - (Button) Support only single press (1) to speed up button press recognition
     uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK - Enable (1) /disable (0) interlock
-    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - (Light) Switch between commands PWM (1) or COLOR/DIMMER/CT/CHANNEL (0)
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - (Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16  - (WS2812) Switch between clockwise (0) or counter-clockwise (1)
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17  - (Light) Switch between decimal (1) or hexadecimal (0) output
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18  - (Light) Pair light signal (1) with CO2 sensor

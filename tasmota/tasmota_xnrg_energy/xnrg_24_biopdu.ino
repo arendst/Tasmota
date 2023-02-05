@@ -1,15 +1,7 @@
 /*
   xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
-    Biomine 625x12 Custom Board
-    6 x 25A Relays
-    6 x Independent PZEM-004V3 Modbus AC energy sensor
-    3bit serial switch
-    Integrated MCP23008
 
-  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
-
-  Copyright (C) 2021       Theo Arends
-  Copyright (C) 2022-2023  Fabrizio Amodio
+  Copyright (C) 2023  Fabrizio Amodio
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,8 +19,15 @@
 
 #if defined(USE_ENERGY_SENSOR_ESP32) && defined(USE_I2C)
 #ifdef USE_BIOPDU
+/*********************************************************************************************\
+  Biomine 625x12 Custom Board
+  6 x 25A Relays
+  6 x Independent PZEM-004V3 Modbus AC energy sensor
+  3bit serial switch
+  Integrated MCP23008
 
-/*
+  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
+
   BioPDU 625x12 Factory Settings:
 
       Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
@@ -62,7 +61,7 @@
       USE_MCP230xx_ADDR=0x20
       USE_MCP230xx_OUTPUT
       USE_BIOPDU
-*/
+\*********************************************************************************************/
 
 #define XNRG_24 24
 
