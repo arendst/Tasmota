@@ -301,9 +301,22 @@ class Matter_Frame
     import crypto
     var session = self.session
     var raw = self.raw
+    var mic = raw[-16..]      # take last 16 bytes as signature
+
     # decrypt the message with `i2r` key
     var i2r = session.get_i2r()
-    var mic = raw[-16..]      # take last 16 bytes as signature
+
+    # check privacy flag, p.127
+    if self.sec_p
+      # compute privacy key, p.71
+      var k = session.get_i2r_privacy()
+      var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
+      var m = self.raw[4 .. self.payload_idx-1]
+      var m_clear = crypto.AES_CTR(k).decrypt(m, n, 2)
+      # replace in-place
+      self.raw = self.raw[0..3] + m_clear + m[self.self.payload_idx .. ]
+    end
+
     # use AES_CCM
     var a = raw[0 .. self.payload_idx - 1]
     var p = raw[self.payload_idx .. -17]

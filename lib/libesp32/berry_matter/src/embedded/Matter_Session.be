@@ -53,6 +53,7 @@ class Matter_Session
   # encryption keys and challenges
   var i2rkey                      # key initiator to receiver (incoming)
   var r2ikey                      # key receiver to initiator (outgoing)
+  var _i2r_privacy                # cache for the i2r privacy key
   var attestation_challenge        # Attestation challenge
   var peer_node_id
   # breadcrumb
@@ -108,6 +109,7 @@ class Matter_Session
     self.counter_rcv.reset()
     self.counter_snd.reset()
     self.i2rkey = nil
+    self._i2r_privacy = nil
     self.r2ikey = nil
     self.attestation_challenge = nil
     # clear any attribute starting with `_`
@@ -129,6 +131,7 @@ class Matter_Session
   end
   def set_keys(i2r, r2i, ac, st)
     self.i2rkey = i2r
+    self._i2r_privacy = nil   # clear cache
     self.r2ikey = r2i
     self.attestation_challenge = ac
     self.session_timestamp = st
@@ -159,6 +162,14 @@ class Matter_Session
   end
   def get_i2r()
     return self.i2rkey
+  end
+  def get_i2r_privacy()       # get and cache privacy key
+    if self._i2r_privacy == nil
+      import crypto
+      # compute privacy key according to p.127
+      self._i2r_privacy = crypto.HKDF_SHA256().derive(self.get_i2r(), bytes(), bytes().fromstring("PrivacyKey"), 16)
+    end
+    return self._i2r_privacy
   end
   def get_r2i()
     return self.r2ikey
