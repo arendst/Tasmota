@@ -57,6 +57,7 @@ const uint8_t MAX_INTERLOCKS = 14;          // Max number of interlock groups (u
 const uint8_t MAX_SWITCHES = 28;            // Max number of switches (up to MAX_SWITCHES_SET)
 const uint8_t MAX_KEYS = 28;                // Max number of keys or buttons (up to 28)
 #endif  // ESP32
+const uint8_t MAX_KEYS_SET = 28;            // Max number of keys
 
 // Changes to the following MAX_ defines will impact settings layout
 const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS / 2)

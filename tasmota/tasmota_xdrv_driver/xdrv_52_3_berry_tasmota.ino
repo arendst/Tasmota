@@ -157,7 +157,7 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-  
+
   // Berry: tasmota.locale() -> string
   //
   int32_t l_locale(struct bvm *vm);
@@ -586,8 +586,8 @@ extern "C" {
   int32_t l_getswitch(bvm *vm);
   int32_t l_getswitch(bvm *vm) {
     be_newobject(vm, "list");
-    for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-      if (PinUsed(GPIO_SWT1, i)) {
+    for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+      if (SwitchUsed(i)) {
         be_pushbool(vm, SwitchGetVirtual(i) == PRESSED);
         be_data_push(vm, -2);
         be_pop(vm, 1);

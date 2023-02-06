@@ -44,15 +44,15 @@ const char kSwitchPressStates[] PROGMEM =
 Ticker TickerSwitch;
 
 struct SWITCH {
-  uint32_t debounce = 0;                     // Switch debounce timer
-  uint32_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
-  uint32_t pulldown_mask = 0;                // Switch pull-down bitmask flags
-  uint32_t virtual_pin_used = 0;             // Switch used bitmask
-  uint32_t virtual_pin = 0;                  // Switch state bitmask
-  uint8_t state[MAX_SWITCHES] = { 0 };
-  uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
-  uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-  uint8_t debounced_state[MAX_SWITCHES];     // Switch debounced states
+  uint32_t debounce = 0;                         // Switch debounce timer
+  uint32_t no_pullup_mask = 0;                   // Switch pull-up bitmask flags
+  uint32_t pulldown_mask = 0;                    // Switch pull-down bitmask flags
+  uint32_t virtual_pin_used = 0;                 // Switch used bitmask
+  uint32_t virtual_pin = 0;                      // Switch state bitmask
+  uint8_t state[MAX_SWITCHES_SET] = { 0 };
+  uint8_t last_state[MAX_SWITCHES_SET];          // Last wall switch states
+  uint8_t hold_timer[MAX_SWITCHES_SET] = { 0 };  // Timer for wallswitch push button hold
+  uint8_t debounced_state[MAX_SWITCHES_SET];     // Switch debounced states
   uint8_t first_change = 0;
   uint8_t present = 0;
   bool probe_mutex;
@@ -66,6 +66,10 @@ void SwitchPullupFlag(uint32 switch_bit) {
 
 void SwitchPulldownFlag(uint32 switch_bit) {
   bitSet(Switch.pulldown_mask, switch_bit);
+}
+
+bool SwitchUsed(uint32_t index) {
+  return (PinUsed(GPIO_SWT1, index) || bitRead(Switch.virtual_pin_used, index));
 }
 
 // Preffered virtual switch support since v12.3.1.4
@@ -127,7 +131,7 @@ void SwitchProbe(void) {
   }
 
   uint32_t not_activated;
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
     if (PinUsed(GPIO_SWT1, i)) {
       not_activated = digitalRead(Pin(GPIO_SWT1, i));
     }
@@ -220,7 +224,7 @@ void SwitchInit(void) {
 
   Switch.present = 0;
   Switch.virtual_pin_used = 0;
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
     Switch.last_state[i] = NOT_PRESSED;  // Init global to virtual switch state;
     bool used = false;
 
@@ -280,8 +284,9 @@ void SwitchHandler(uint32_t mode) {
 
   uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if (PinUsed(GPIO_SWT1, i) || bitRead(Switch.virtual_pin_used, i)) {
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+//    if (PinUsed(GPIO_SWT1, i) || bitRead(Switch.virtual_pin_used, i)) {
+    if (SwitchUsed(i)) {
       uint32_t button = Switch.debounced_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;

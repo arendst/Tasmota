@@ -338,18 +338,18 @@ void HassDiscoverMessage(void) {
                         "\"swc\":["));                         // Switch modes (start)
 
   // Enable Discovery for Switches only if SetOption114 is enabled
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings->flag5.mqtt_switches) ? Settings->switchmode[i] : -1);
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (SwitchUsed(i) && Settings->flag5.mqtt_switches) ? Settings->switchmode[i] : -1);
   }
 
   ResponseAppend_P(PSTR("],"                                   // Switch modes (end)
                         "\"swn\":["));                         // Switch names (start)
 
   // Enable Discovery for Switches only if SetOption114 is enabled
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
     char sname[TOPSZ];
     snprintf_P(sname, sizeof(sname), PSTR("\"%s\""), GetSwitchText(i).c_str());
-    ResponseAppend_P(PSTR("%s%s"), (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) && Settings->flag5.mqtt_switches) ? sname : PSTR("null"));
+    ResponseAppend_P(PSTR("%s%s"), (i > 0 ? "," : ""), (SwitchUsed(i) && Settings->flag5.mqtt_switches) ? sname : PSTR("null"));
   }
 
   ResponseAppend_P(PSTR("],"                                   // Switch names (end)
@@ -790,7 +790,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
 
 void HAssAnnounceSwitches(void)
 {
-  for (uint32_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++)
+  for (uint32_t switch_index = 0; switch_index < MAX_SWITCHES_SET; switch_index++)
   {
     uint8_t switch_present = 0;
     uint8_t dual = 0;
@@ -798,7 +798,7 @@ void HAssAnnounceSwitches(void)
     uint8_t hold = 0;
     uint8_t pir = 0;
 
-    if (PinUsed(GPIO_SWT1, switch_index)) { switch_present = 1; }
+    if (SwitchUsed(switch_index)) { switch_present = 1; }
 
     if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), TasmotaGlobal.mqtt_topic))   // Enable Discovery for Switches only if SwitchTopic is set to a custom name
     {

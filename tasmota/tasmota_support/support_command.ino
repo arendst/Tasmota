@@ -700,7 +700,7 @@ void CmndStatus(void)
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), EscapeJSONString(SettingsText(SET_FRIENDLYNAME1 +i)).c_str());
     }
     stemp2[0] = '\0';
-    for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%d" ), stemp2, (i > 0 ? "," : ""), Settings->switchmode[i]);
     }
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
@@ -2137,7 +2137,7 @@ void CmndSwitchText(void) {
 
 void CmndSwitchMode(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES_SET)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
       Settings->switchmode[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
