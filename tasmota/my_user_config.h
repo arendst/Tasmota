@@ -987,6 +987,11 @@
   #define SHIFT595_DEVICE_COUNT  1                 // [Shift595DeviceCount] Set the number of connected 74x595 shift registers
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+//  #define TM1638_USE_AS_BUTTON                   // Add support for buttons
+//  #define TM1638_USE_AS_SWITCH                   // Add support for switches (default)
+//  #define TM1638_MAX_DISPLAYS    8               // Add support for power control 8 displays
+//  #define TM1638_MAX_KEYS        8               // Add support for 8 keys
+//  #define TM1638_MAX_LEDS        8               // Add support for 8 leds
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 
