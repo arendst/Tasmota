@@ -484,7 +484,7 @@ struct SCRIPT_MEM {
     uint32_t script_lastmillis;
     bool event_handeled = false;
 #ifdef USE_BUTTON_EVENT
-    int8_t script_button[MAX_KEYS];
+    int8_t script_button[MAX_KEYS_SET];
 #endif //USE_BUTTON_EVENT
 
 #ifdef USE_HOMEKIT
@@ -2731,7 +2731,7 @@ chknext:
           // tasmota button state
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint32_t index = fvar;
-          if (index<1 || index>MAX_KEYS) index = 1;
+          if (index<1 || index>MAX_KEYS_SET) index = 1;
           fvar = glob_script_mem.script_button[index - 1];
           glob_script_mem.script_button[index - 1] |= 0x80;
           goto nfuncexit;
@@ -11688,7 +11688,7 @@ bool Xdrv10(uint32_t function)
       bitWrite(Settings->rule_once, 7, 1);
 
 #ifdef USE_BUTTON_EVENT
-      for (uint32_t cnt = 0; cnt < MAX_KEYS; cnt++) {
+      for (uint32_t cnt = 0; cnt < MAX_KEYS_SET; cnt++) {
         glob_script_mem.script_button[cnt] = -1;
       }
 #endif //USE_BUTTON_EVENT

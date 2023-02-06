@@ -40,30 +40,30 @@ const char kMultiPress[] PROGMEM = "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
 Ticker TickerButton;
 
 struct BUTTON {
-  uint32_t debounce = 0;                     // Button debounce timer
-  uint32_t no_pullup_mask = 0;               // key no pullup flag (1 = no pullup)
-  uint32_t pulldown_mask = 0;                // key pulldown flag (1 = pulldown)
-  uint32_t inverted_mask = 0;                // Key inverted flag (1 = inverted)
-  uint32_t virtual_pin_used = 0;             // Key used bitmask
-  uint32_t virtual_pin = 0;                  // Key state bitmask
-  uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
-  uint16_t dual_code = 0;                    // Sonoff dual received code
-  uint8_t state[MAX_KEYS] = { 0 };
-  uint8_t last_state[MAX_KEYS];              // Last button states
-  uint8_t debounced_state[MAX_KEYS];         // Button debounced states
-  uint8_t window_timer[MAX_KEYS] = { 0 };    // Max time between button presses to record press count
-  uint8_t press_counter[MAX_KEYS] = { 0 };   // Number of button presses within Button.window_timer
-  uint8_t dual_receive_count = 0;            // Sonoff dual input flag
+  uint32_t debounce = 0;                        // Button debounce timer
+  uint32_t no_pullup_mask = 0;                  // key no pullup flag (1 = no pullup)
+  uint32_t pulldown_mask = 0;                   // key pulldown flag (1 = pulldown)
+  uint32_t inverted_mask = 0;                   // Key inverted flag (1 = inverted)
+  uint32_t virtual_pin_used = 0;                // Key used bitmask
+  uint32_t virtual_pin = 0;                     // Key state bitmask
+  uint16_t hold_timer[MAX_KEYS_SET] = { 0 };    // Timer for button hold
+  uint16_t dual_code = 0;                       // Sonoff dual received code
+  uint8_t state[MAX_KEYS_SET] = { 0 };
+  uint8_t last_state[MAX_KEYS_SET];             // Last button states
+  uint8_t debounced_state[MAX_KEYS_SET];        // Button debounced states
+  uint8_t window_timer[MAX_KEYS_SET] = { 0 };   // Max time between button presses to record press count
+  uint8_t press_counter[MAX_KEYS_SET] = { 0 };  // Number of button presses within Button.window_timer
+  uint8_t dual_receive_count = 0;               // Sonoff dual input flag
   uint8_t first_change = 0;
-  uint8_t present = 0;                       // Number of buttons found flag
+  uint8_t present = 0;                          // Number of buttons found flag
   bool probe_mutex;
 } Button;
 
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
 struct TOUCH_BUTTON {
-  uint32_t touch_mask = 0;                   // Touch flag (1 = enabled)
-  uint32_t calibration = 0;                  // Bitfield
-  uint8_t hits[MAX_KEYS] = { 0 };            // Hits in a row to filter out noise
+  uint32_t touch_mask = 0;                      // Touch flag (1 = enabled)
+  uint32_t calibration = 0;                     // Bitfield
+  uint8_t hits[MAX_KEYS_SET] = { 0 };           // Hits in a row to filter out noise
 } TouchButton;
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
@@ -87,6 +87,9 @@ void ButtonTouchFlag(uint32_t button_bit) {
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
+bool ButtonUsed(uint32_t index) {
+  return (PinUsed(GPIO_KEY1, index) || bitRead(Button.virtual_pin_used, index));
+}
 
 void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
   bitWrite(Button.virtual_pin, index, state);
@@ -118,7 +121,7 @@ void ButtonProbe(void) {
   }
 
   uint32_t not_activated;
-  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+  for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
     if (PinUsed(GPIO_KEY1, i)) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
       if (bitRead(TouchButton.touch_mask, i)) {
@@ -227,7 +230,7 @@ void ButtonInit(void) {
   }
 #endif  // ESP8266
 
-  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+  for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
     Button.last_state[i] = NOT_PRESSED;
     bool used = false;
 
@@ -327,7 +330,7 @@ void ButtonHandler(void) {
   uint16_t loops_per_second = 1000 / Settings->button_debounce;  // ButtonDebounce (50)
   char scmnd[20];
 
-  for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+  for (uint32_t button_index = 0; button_index < MAX_KEYS_SET; button_index++) {
     uint8_t button = NOT_PRESSED;
     uint8_t button_present = 0;
 
@@ -584,4 +587,4 @@ void ButtonLoop(void) {
   }
 }
 
-#endif  // BUTTON_V3
+#endif  // BUTTON_V4

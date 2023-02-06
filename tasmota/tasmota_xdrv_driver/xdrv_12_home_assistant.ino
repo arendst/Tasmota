@@ -357,11 +357,11 @@ void HassDiscoverMessage(void) {
 
   bool SerialButton = false;
   // Enable Discovery for Buttons only if SetOption73 is enabled
-  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+  for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
 #ifdef ESP8266
     SerialButton = ((0 == i) && (SONOFF_DUAL == TasmotaGlobal.module_type ));
 #endif  // ESP8266
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) && Settings->flag3.mqtt_buttons));
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), (SerialButton ? 1 : (ButtonUsed(i)) && Settings->flag3.mqtt_buttons));
   }
 
   ResponseAppend_P(PSTR("],"                                   // Button flag (end)
@@ -866,7 +866,7 @@ void HAssAnnounceSwitches(void)
 
 void HAssAnnounceButtons(void)
 {
-  for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++)
+  for (uint32_t button_index = 0; button_index < MAX_KEYS_SET; button_index++)
   {
     uint8_t button_present = 0;
     uint8_t single = 0;
@@ -878,7 +878,7 @@ void HAssAnnounceButtons(void)
     } else
 #endif // ESP8266
     {
-      if (PinUsed(GPIO_KEY1, button_index)) {
+      if (ButtonUsed(button_index)) {
         button_present = 1;
       }
     }
