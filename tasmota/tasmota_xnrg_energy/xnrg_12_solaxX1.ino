@@ -30,7 +30,7 @@
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
 #endif
 
-#define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
+// #define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
 
 #define INVERTER_ADDRESS   0x0A
 
@@ -48,9 +48,10 @@ const char kSolaxError[] PROGMEM =
 
 #ifdef SOLAXX1_READCONFIG
 const char kSolaxSafetyType[] PROGMEM =
-  "VDE0126|ARN4105|AS4777_AU|G98/1|C10/11|OVE/ONORME8001|EN50438_NL|EN50438_DK|CEB|CEI021|NRS097_2_1|"
-  "VDE0126_Gr_Is|UTE_C15_712|IEC61727|G99/1|VDE0126_Gr_Co|France_VFR2014|C15_712_is_50|C15_712_is_60|"
-  "AS4777_NZ|RD1699|Chile|EN50438_Ireland|Philippines|Czech_PPDS|Czech_50438";
+  "VDE 0126|VDE-AR-N 4105|AS 4777|G98|C10/11|ÖVE/ÖNORM E 8001|EN 50438 NL|EN 50438 DK|CEB|CEI021|NRS 097-2-1|VDE 0126 Greece/Iceland|"
+  "UTE C15-712|IEC 61727|G99|VDE 0126 Greece/Co|Guyana|C15-712 France/Iceland 50|C15-712 France/Iceland 60|New Zeeland|RD1699|Chile|"
+  "EN 50438 Ireland|Philippines|Czech PPDS|Czech 50438|EN 50549 EU|Denmark 2019 EU|RD 1699 Island|EN50549 Poland|MEA Thailand|"
+  "PEA Thailand|ACEA|AS 4777 2020 B|AS 4777 2020 C|Sri Lanka|BRAZIL 240|EN 50549 SK|EN 50549 EU|G98/NI|Denmark 2019 EU|RD 1699 Island";
 #endif // SOLAXX1_READCONFIG
 
 union {
@@ -267,7 +268,7 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
 {
   uint8_t DataRead[80] = {0};
   uint8_t TempData[16] = {0};
-  char TempDataChar[16];
+  char TempDataChar[32];
   float TempFloat;
 
   if (solaxX1Serial->available()) {
