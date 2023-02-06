@@ -319,7 +319,7 @@ void ResponseAppendFeatures(void)
     feature3 |= 0x40000000;  // xsns_27_apds9960.ino
 #endif
 #ifdef USE_TM1638
-    feature3 |= 0x80000000;  // xsns_28_tm1638.ino
+    feature3 |= 0x80000000;  // xdrv_66_tm1638.ino
 #endif
   }
 

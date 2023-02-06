@@ -134,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 preliminary support for Matter protocol, milestone 1 (commissioning) by Stephan Hadinger
 
 ### Breaking Changed
+- TM1638 button and led support are handled as virtual switches and relays [#11031](https://github.com/arendst/Tasmota/issues/11031)
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.6 (IPv6 support)

@@ -963,11 +963,7 @@ bool MqttShowSensor(bool call_show_sensor) {
 
   int json_data_start = ResponseLength();
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-#ifdef USE_TM1638
-    if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB))) {
-#else
     if (SwitchUsed(i)) {
-#endif  // USE_TM1638
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }

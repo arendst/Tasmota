@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Basic support for Shelly Pro 4PM
 
 ### Breaking Changed
+- TM1638 button and led support are handled as virtual switches and relays (#11031)
 
 ### Changed
 
