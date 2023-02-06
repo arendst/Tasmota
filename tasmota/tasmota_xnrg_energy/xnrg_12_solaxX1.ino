@@ -30,7 +30,7 @@
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
 #endif
 
-#define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
+// #define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
 
 #define INVERTER_ADDRESS   0x0A
 
