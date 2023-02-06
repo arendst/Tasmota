@@ -625,7 +625,7 @@ void dump2log(void) {
 							logsiz = mp->sbsiz;
 						}
 						memmove(mp->sbuff, payload, logsiz);
-						AddLog(LOG_LEVEL_DEBUG, PSTR("SML: decrypted block: %d bytes"), logsiz);
+						AddLog(LOG_LEVEL_INFO PSTR("SML: decrypted block: %d bytes"), logsiz);
 						uint16_t index = 0;
 						while (logsiz) {
 							sml_dump_start('>');
@@ -1448,6 +1448,7 @@ uint8_t *sml_find(uint8_t *src, uint16_t ssize, uint8_t *pattern, uint16_t psize
 	return 0;
 }
 
+#ifdef USE_SML_DECRYPT
 double sml_get_obis_value(uint8_t *data) {
 	double out = 0;
 	CosemData *item = (CosemData *)data;
@@ -1479,7 +1480,7 @@ double sml_get_obis_value(uint8_t *data) {
 	}
 	return out;
 }
-
+#endif // USE_SML_DECRYPT
 
 
 
@@ -1701,6 +1702,7 @@ void SML_Decode(uint8_t index) {
 										// check auto type
 										if (aflg & 1) {
 											// METER_ID_SIZE
+#ifdef USE_SML_DECRYPT
 											CosemData *item = (CosemData *)cp;
 											switch (item->base.type) {
             						case CosemTypeString:
@@ -1714,6 +1716,7 @@ void SML_Decode(uint8_t index) {
 												default:
 													ebus_dval = sml_get_obis_value(cp);
         							}
+#endif
 										}
 									}
 									break;
