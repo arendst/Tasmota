@@ -41,6 +41,12 @@
 #ifndef TM1638_MAX_LEDS
 #define TM1638_MAX_LEDS       8
 #endif
+#ifndef TM1638_BRIGHTNESS
+#define TM1638_BRIGHTNESS     0    // Brightness from 0 to 7
+#endif
+#ifndef TM1638_DISPLAY_ON
+#define TM1638_DISPLAY_ON     1    // Display off (0) or on (1)
+#endif
 
 #define TM1638_COLOR_NONE     0
 #define TM1638_COLOR_RED      1
@@ -54,11 +60,6 @@ struct TM1638 {
   int8_t strobe_pin = 0;
   int8_t key_offset;
   int8_t led_offset;
-  uint8_t displays;
-  uint8_t power;
-
-  uint8_t active_display = 1;
-  uint8_t intensity = 0;
   bool detected = false;
 } Tm1638;
 
@@ -68,7 +69,7 @@ struct TM1638 {
 \*********************************************************************************************/
 
 void Tm16XXSend(uint8_t data) {
-	for (uint32_t i = 0; i < 8; i++) {
+	for (uint32_t i = 0; i < 8; i++) {          // 8 bits
     digitalWrite(Tm1638.data_pin, !!(data & (1 << i)));
     digitalWrite(Tm1638.clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
@@ -83,6 +84,9 @@ void Tm16XXSendCommand(uint8_t cmd) {
 }
 
 void TM16XXSendData(uint8_t address, uint8_t data) {
+  // TM_WRITE_LOC 0x44 - Write to a location
+  // TM_SEG_ADR   0xC0 - leftmost segment Address C0 C2 C4 C6 C8 CA CC CE
+  // TM_LEDS_ADR  0xC1 - Leftmost LED address C1 C3 C5 C7 C9 CB CD CF
   Tm16XXSendCommand(0x44);
   digitalWrite(Tm1638.strobe_pin, LOW);
   Tm16XXSend(0xC0 | address);
@@ -97,7 +101,7 @@ uint8_t Tm16XXReceive(void) {
   pinMode(Tm1638.data_pin, INPUT);
   digitalWrite(Tm1638.data_pin, HIGH);
 
-  for (uint32_t i = 0; i < 8; ++i) {
+  for (uint32_t i = 0; i < 8; ++i) {          // 8 bits
     digitalWrite(Tm1638.clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
     temp |= digitalRead(Tm1638.data_pin) << i;
@@ -113,37 +117,15 @@ uint8_t Tm16XXReceive(void) {
 
 /*********************************************************************************************/
 
-void Tm16XXClearDisplay(void) {
-  for (uint32_t i = 0; i < Tm1638.displays; i++) {
-    TM16XXSendData(i << 1, 0);
-  }
-}
-
 void Tm1638SetLED(uint8_t color, uint8_t pos) {
   TM16XXSendData((pos << 1) + 1, color);
 }
 
-void Tm1638SetLEDs(word leds) {
-  for (uint32_t i = 0; i < Tm1638.displays; i++) {
-    uint8_t color = 0;
-
-    if ((leds & (1 << i)) != 0) {
-      color |= TM1638_COLOR_RED;
-    }
-
-    if ((leds & (1 << (i + 8))) != 0) {
-      color |= TM1638_COLOR_GREEN;
-    }
-
-    Tm1638SetLED(color, i);
-  }
-}
-
 uint8_t Tm1638GetButtons(void) {
-  uint8_t keys = 0;
-
+  // TM_BUTTONS_MODE 0x42 - Buttons mode
   digitalWrite(Tm1638.strobe_pin, LOW);
   Tm16XXSend(0x42);
+  uint8_t keys = 0;
   for (uint32_t i = 0; i < 4; i++) {
     keys |= Tm16XXReceive() << i;
   }
@@ -167,13 +149,17 @@ void TmInit(void) {
     digitalWrite(Tm1638.strobe_pin, HIGH);
     digitalWrite(Tm1638.clock_pin, HIGH);
 
+    // TM_WRITE_INC  0x40 - Incremental write
     Tm16XXSendCommand(0x40);
-    Tm16XXSendCommand(0x80 | (Tm1638.active_display ? 8 : 0) | tmin(7, Tm1638.intensity));
+    // TM_BRIGHT_ADR 0x88 - Brightness address
+    Tm16XXSendCommand(0x80 | TM1638_DISPLAY_ON << 3 | TM1638_BRIGHTNESS);
 
+    // TM_SEG_ADR   0xC0  - leftmost segment Address C0 C2 C4 C6 C8 CA CC CE
+    // TM_LEDS_ADR  0xC1  - Leftmost LED address C1 C3 C5 C7 C9 CB CD CF
     digitalWrite(Tm1638.strobe_pin, LOW);
-    Tm16XXSend(0xC0);
-    for (uint32_t i = 0; i < 16; i++) {
-      Tm16XXSend(0x00);
+    Tm16XXSend(0xC0);                         // TM_SEG_ADR left most
+    for (uint32_t i = 0; i < TM1638_MAX_DISPLAYS * 2; i++) {
+      Tm16XXSend(0x00);                       // Init displays and leds
     }
     digitalWrite(Tm1638.strobe_pin, HIGH);
 
@@ -194,7 +180,6 @@ void TmInit(void) {
     Tm1638.led_offset = devices_present;
     TasmotaGlobal.devices_present += TM1638_MAX_LEDS;
     Tm1638.key_offset = -1;
-    Tm1638.displays = TM1638_MAX_DISPLAYS;
     Tm1638.detected = true;
   }
 }
