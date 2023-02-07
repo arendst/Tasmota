@@ -72,6 +72,7 @@ class Matter_Session
   var fabric                      # fabric identifier as bytes(8) little endian
   var fabric_compressed           # comrpessed fabric identifier, hashed with root_ca public key
   var deviceid                    # our own device id bytes(8) little endian
+  var fabric_label                # set by UpdateFabricLabel
   # Admin info extracted from NOC/ICAC
   var admin_subject
   var admin_vendor
@@ -112,6 +113,7 @@ class Matter_Session
     self._i2r_privacy = nil
     self.r2ikey = nil
     self.attestation_challenge = nil
+    self.fabric_label = ""
     # clear any attribute starting with `_`
     import introspect
     for k : introspect.members(self)
@@ -154,6 +156,11 @@ class Matter_Session
   end
   def set_persist(p)
     self._persist = bool(p)
+  end
+  def set_fabric_label(s)
+    if type(s) == 'string'
+      self.fabric_label = s
+    end
   end
 
   #############################################################
@@ -503,6 +510,23 @@ class Matter_Session_Store
     end
     session.set_expire_in_seconds(expire)
     return session
+  end
+
+  #############################################################
+  # list of sessions that are active, i.e. have been
+  # successfully commissioned
+  #
+  def sessions_active()
+    var ret = []
+    var idx = 0
+    while idx < size(self.sessions)
+      var session = self.sessions[idx]
+      if session.get_deviceid() && session.get_fabric()
+        ret.push(session)
+      end
+      idx += 1
+    end
+    return ret
   end
 
   #############################################################

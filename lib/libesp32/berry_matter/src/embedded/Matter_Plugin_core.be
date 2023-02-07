@@ -129,9 +129,25 @@ class Matter_Plugin_core : Matter_Plugin
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
-        # TODO
+        var nocl = TLV.Matter_TLV_array() # NOCs, p.711
+        for session: self.device.sessions.sessions_active()
+          var nocs = nocl.add_struct(nil)
+          nocs.add_TLV(1, TLV.B2, session.noc)      # NOC
+          nocs.add_TLV(2, TLV.B2, session.icac)     # ICAC
+        end
+        return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
-        # TODO
+        var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
+        for session: self.device.sessions.sessions_active()
+          var root_ca_tlv = TLV.parse(session.get_ca())
+          var fab = fabrics.add_struct(nil)            # encoding see p.303
+          fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
+          fab.add_TLV(2, TLV.U2, session.admin_vendor)      # VendorID
+          fab.add_TLV(3, TLV.U8, session.fabric)            # FabricID
+          fab.add_TLV(4, TLV.U8, session.deviceid)          # NodeID
+          fab.add_TLV(5, TLV.UTF1, session.fabric_label)    # Label
+        end
+        return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
         return TLV.create_TLV(TLV.U1, 5)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
@@ -397,6 +413,26 @@ class Matter_Plugin_core : Matter_Plugin
         nocr.add_TLV(1, TLV.U1, 1)   # fabric-index
         ctx.command = 0x08              # NOCResponse
         return nocr
+
+      elif command == 0x0009            # ---------- UpdateFabricLabel ----------
+        var label = val.findsubval(0)     # Label string max 32
+        session.set_fabric_label(label)
+        ctx.status = matter.SUCCESS                  # OK
+        return nil                      # trigger a standalone ack
+
+      elif command == 0x000A            # ---------- RemoveFabric ----------
+        var index = val.findsubval(0)     # FabricIndex
+        var sessions_act = self.device.sessions.sessions_active()
+        if index >= 1 && index <= size(sessions_act)
+          var session_deleted = sessions_act[index - 1]
+          tasmota.log("MTR: removing fabric " + session.fabric.copy().reverse().tohex())
+          self.device.sessions.remove_session()
+          self.device.sessions.save()
+        else
+          # TODO return error 11 InvalidFabricIndex
+        end
+        ctx.status = matter.SUCCESS                  # OK
+        return nil                      # trigger a standalone ack
 
       end
     end
