@@ -254,11 +254,16 @@ class Matter_TLV
       elif self.typ == TLV.I4 || self.typ == TLV.U4
         b.add(int(self.val), 4)
       elif self.typ == TLV.I8 || self.typ == TLV.U8
+        # I8/U8 can be encoded from bytes(8)/int64/int
         var i64 = self.val
-        if !isinstance(i64, int64)
-          i64 = int64(int(self.val))
+        if isinstance(i64, bytes)
+          i64 = i64.copy().resize(8)     # bytes(8)
+        elif isinstance(i64, int64)
+          i64 = i64.tobytes()             # bytes(8)
+        else
+          i64 = int64(int(i64)).tobytes()  # bytes(8)
         end
-        b .. i64.tobytes()
+        b .. i64
       elif self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
         # push nothing
       elif self.typ == TLV.FLOAT
