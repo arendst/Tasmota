@@ -42,11 +42,12 @@
  * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM
  * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32   ESP32
  * Interface                       I2C      I2C      I2C      SPI     SPI     SPI     Interface type used
+ * Number of inputs                2        2        2        1       2       4       Count of ADE9753 inputs used
  * Number of ADE9753 chips         1        1        1        1       2       2       Count of ADE9753 chips
  * ADE9753 IRQ                     1        2        3        4       5       6       Index defines model number
  * Current measurement device      shunt    CT       shunt    shunt   shunt   shunt   CT = Current Transformer
- * Common voltage                  Yes      Yes      Yes      No      No      No      Show common voltage in GUI/JSON
- * Common frequency                Yes      Yes      Yes      No      No      No      Show common frequency in GUI/JSON
+ * Common voltage                  Yes      Yes      Yes      No      No      Yes     Show common voltage in GUI/JSON
+ * Common frequency                Yes      Yes      Yes      No      No      Yes     Show common frequency in GUI/JSON
  * Swapped channel A/B             Yes      No       No       No      No      No      Defined by hardware design - Fixed by Tasmota
  * Support Export Active           No       Yes      No       No      No      No      Only EM supports correct negative value detection
  * Show negative (reactive) power  No       Yes      No       No      No      No      Only EM supports correct negative value detection
@@ -374,7 +375,6 @@ void Ade7953DumpRegs(void) {
 #endif  // ADE7953_DUMP_REGS
 
 void Ade7953SetCalibration(uint32_t regset, uint32_t calibset) {
-  Ade7953.cs_index = calibset;
   for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
     int32_t value = Ade7953.calib_data[calibset][i];
     if (ADE7943_CAL_PHCAL == i) {
@@ -393,6 +393,8 @@ void Ade7953Init(void) {
 #ifdef USE_ESP32_SPI
   chips = (Ade7953.pin_cs[1] >= 0) ? 2 : 1;
 #endif  // USE_ESP32_SPI
+
+  // Init ADE7953 with calibration settings
   for (uint32_t chip = 0; chip < chips; chip++) {
     Ade7953.cs_index = chip;
 
@@ -406,18 +408,32 @@ void Ade7953Init(void) {
 #ifdef USE_ESP32_SPI
 //    int32_t value = Ade7953Read(0x702);              // Silicon version
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
+    if (1 == chip) {
+      switch (Ade7953.model) {
+        case ADE7953_SHELLY_PRO_2PM:
+          Ade7953SetCalibration(0, 1);               // Second ADE7953 A registers set with calibration set 1
+          break;
+        case ADE7953_SHELLY_PRO_4PM:
+          Ade7953SetCalibration(0, 2);               // Second ADE7953 A registers set with calibration set 2
+          Ade7953SetCalibration(1, 3);               // Second ADE7953 B registers set with calibration set 3
+      }
+    } else {
 #endif  // USE_ESP32_SPI
-  }
-
-  Ade7953SetCalibration(0, 0);                       // First ADE7953 A registers set with calibration set 0
+      Ade7953SetCalibration(0, 0);                   // First ADE7953 A registers set with calibration set 0
+      switch (Ade7953.model) {
+        case ADE7953_SHELLY_25:
+        case ADE7953_SHELLY_EM:
+        case ADE7953_SHELLY_PLUS_2PM:
+//        case ADE7953_SHELLY_PRO_1PM:               // Uses defaults for B registers
+        case ADE7953_SHELLY_PRO_4PM:
+          Ade7953SetCalibration(1, 1);               // First ADE7953 B registers set with calibration set 1
+      }
 #ifdef USE_ESP32_SPI
-  if (Ade7953.pin_cs[1] >= 0) {                      // Second ADE7953 using SPI
-    Ade7953SetCalibration(0, 1);                     // Second ADE7953 A registers set with calibration set 1
-  }
-  else if (Ade7953.pin_cs[0] == -1)                  // No first ADE7953 using SPI so set register set B
+    }
 #endif  // USE_ESP32_SPI
-    Ade7953SetCalibration(1, 1);                     // First ADE7953 B register set with calibration set 1
+  }
 
+  // Report set calibration settings
   int32_t regs[ADE7953_CALIBREGS];
   for (uint32_t chip = 0; chip < chips; chip++) {
     Ade7953.cs_index = chip;
