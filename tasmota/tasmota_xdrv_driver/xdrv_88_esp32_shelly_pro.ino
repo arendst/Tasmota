@@ -252,7 +252,7 @@ bool ShellyProAddSwitch(void) {
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
   uint32_t state = bitRead(SPro.input_state, sp4_switch_pin[index]);  // 0 on power on and restart
-  XdrvMailbox.index = state ^1;                     // Invert
+  XdrvMailbox.index = state;
   return true;
 }
 
@@ -276,7 +276,7 @@ void ShellyProUpdateIsr(void) {
 
       for (uint32_t i = 0; i < 4; i++) {
         if (j == sp4_switch_pin[i]) {
-          SwitchSetVirtualPinState(SPro.switch_offset +i, state ^1);  // Invert
+          SwitchSetVirtualPinState(SPro.switch_offset +i, state);
         }
         else if ((i < 3) && (j == sp4_button_pin[i])) {
           ButtonSetVirtualPinState(SPro.button_offset +i, state);
