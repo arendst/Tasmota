@@ -255,7 +255,10 @@ void CseDrvInit(void) {
 bool CseCommand(void) {
   bool serviced = true;
 
-  if (CMND_POWERSET == Energy->command_code) {
+  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Cse.power_cycle) {
       XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.power_cycle) / CSE_PREF;
     }
