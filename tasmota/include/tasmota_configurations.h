@@ -1023,6 +1023,8 @@
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
+    #define USE_SPI
+    #define USE_SDCARD
     #define USE_PING
   #endif // FIRMWARE_MINIMAL
 
