@@ -282,7 +282,7 @@ void HassDiscoverMessage(void) {
                    SettingsText(SET_MQTTPREFIX2),
                    SettingsText(SET_MQTTPREFIX3));
 
-  uint8_t light_idx = MAX_RELAYS + 1;                          // Will store the starting position of the lights
+  uint8_t light_idx = MAX_RELAYS_SET + 1;                      // Will store the starting position of the lights
   uint8_t light_subtype = 0;
   bool light_controller_isCTRGBLinked = false;
 #ifdef USE_LIGHT
@@ -301,9 +301,9 @@ void HassDiscoverMessage(void) {
   }
 #endif  // USE_LIGHT
 
-  uint16_t Relay[MAX_RELAYS] = { 0 };                          // Base array to store the relay type
-  uint16_t Shutter[MAX_RELAYS] = { 0 };                        // Array to store a temp list for shutters
-  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+  uint16_t Relay[MAX_RELAYS_SET] = { 0 };                      // Base array to store the relay type
+  uint16_t Shutter[MAX_RELAYS_SET] = { 0 };                    // Array to store a temp list for shutters
+  for (uint32_t i = 0; i < MAX_RELAYS_SET; i++) {
     if (i < TasmotaGlobal.devices_present) {
 
 #ifdef USE_SHUTTER
