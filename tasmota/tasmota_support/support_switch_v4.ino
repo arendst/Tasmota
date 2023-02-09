@@ -254,7 +254,7 @@ void SwitchInit(void) {
         SwitchSetVirtualPinState(i, state);    // Virtual hardware pin state
         Switch.last_state[i] = bitRead(Switch.virtual_pin, i);
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d, Info %02X"), Switch.present, Switch.last_state[i], XdrvMailbox.index);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), Switch.present, Switch.last_state[i]);
 
         used = true;
       }

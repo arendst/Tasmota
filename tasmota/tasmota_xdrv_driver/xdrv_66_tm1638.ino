@@ -185,15 +185,15 @@ void TmInit(void) {
 }
 
 void TmLoop(void) {
-  uint8_t buttons = Tm1638GetButtons();
+  uint8_t keys = Tm1638GetButtons();
   for (uint32_t i = 0; i < TM1638_MAX_KEYS; i++) {
-    uint32_t state = buttons &1;
+    uint32_t state = keys &1;
 #ifdef TM1638_USE_BUTTONS
     ButtonSetVirtualPinState(Tm1638.key_offset +i, state);
 #else
-    SwitchSetVirtualPinState(Tm1638.key_offset +i, state ^1);
+    SwitchSetVirtualPinState(Tm1638.key_offset +i, state);
 #endif
-    buttons >>= 1;
+    keys >>= 1;
   }
 }
 
@@ -212,13 +212,13 @@ bool TmAddKey(void) {
   if (Tm1638.key_offset < 0) { Tm1638.key_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - Tm1638.key_offset;
   if (index >= TM1638_MAX_KEYS) { return false; }
-  uint8_t buttons = Tm1638GetButtons();
-  uint32_t state = bitRead(buttons, index);
-#ifdef TM1638_USE_BUTTONS
-  XdrvMailbox.index = state | BUTTON_INVERT;  // Invert - default is 0
-#else
-  XdrvMailbox.index = state ^1;               // Invert - default is 0
-#endif
+/*
+  uint8_t keys = Tm1638GetButtons();
+  uint32_t state = bitRead(keys, index);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Default state %d"), state);
+  XdrvMailbox.index = state;                  // Default is 0 - Button will also set invert
+*/
+  XdrvMailbox.index = 0;                      // Default is 0 - Button will also set invert
   return true;
 }
 

@@ -239,7 +239,6 @@ struct Ade7953 {
   uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM, 5 = Shelly Pro 4PM
   uint8_t cs_index;
 #ifdef USE_ESP32_SPI
-  SPISettings spi_settings;
   int8_t pin_cs[ADE7953_MAX_CHANNEL / 2];
 #endif  // USE_ESP32_SPI
   bool use_spi;
@@ -343,8 +342,8 @@ int32_t Ade7953Read(uint16_t reg) {
 }
 
 #ifdef ADE7953_DUMP_REGS
-void Ade7953DumpRegs(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: ***             SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"));
+void Ade7953DumpRegs(uint32_t chip) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** Chip%d ****  SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"), chip +1);
   char data[200] = { 0 };
   for (uint32_t i = 0; i < 10; i++) {
     int32_t value = Ade7953Read(ADE7953_SAGCYC + i);
@@ -399,7 +398,7 @@ void Ade7953Init(void) {
     Ade7953.cs_index = chip;
 
 #ifdef ADE7953_DUMP_REGS
-    Ade7953DumpRegs();
+    Ade7953DumpRegs(chip);
 #endif  // ADE7953_DUMP_REGS
 
     Ade7953Write(ADE7953_CONFIG, 0x0004);            // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
@@ -457,7 +456,7 @@ void Ade7953Init(void) {
     }
 
 #ifdef ADE7953_DUMP_REGS
-    Ade7953DumpRegs();
+    Ade7953DumpRegs(chip);
 #endif  // ADE7953_DUMP_REGS
   }
 }
@@ -724,7 +723,6 @@ void Ade7953DrvInit(void) {
         Ade7953.cs_index = 0;
         Ade7953.use_spi = true;
         SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-        Ade7953.spi_settings = SPISettings(1000000, MSBFIRST, SPI_MODE0);  // Set up SPI at 1MHz, MSB first, Capture at rising edge
         AddLog(LOG_LEVEL_INFO, PSTR("SPI: ADE7953 found"));
       } else {
         return;                                       // No CS pin defined

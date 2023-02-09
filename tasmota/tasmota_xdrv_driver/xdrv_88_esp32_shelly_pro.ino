@@ -241,8 +241,12 @@ bool ShellyProAddButton(void) {
   if (SPro.button_offset < 0) { SPro.button_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.button_offset;
   if (index > 2) { return false; }                  // Support three buttons
+/*
   uint32_t state = bitRead(SPro.input_state, sp4_button_pin[index]);  // 1 on power on and restart
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Button default state %d"), state);
   XdrvMailbox.index = state;
+*/
+  XdrvMailbox.index = 1;                            // 1 on power on and restart
   return true;
 }
 
@@ -251,8 +255,12 @@ bool ShellyProAddSwitch(void) {
   if (SPro.switch_offset < 0) { SPro.switch_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
+/*
   uint32_t state = bitRead(SPro.input_state, sp4_switch_pin[index]);  // 0 on power on and restart
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Switch default state %d"), state);
   XdrvMailbox.index = state;
+*/
+  XdrvMailbox.index = 0;                            // 0 on power on and restart
   return true;
 }
 

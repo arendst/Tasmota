@@ -27,8 +27,6 @@
 
 #define MAX_RELAY_BUTTON1       5            // Max number of relay controlled by BUTTON1
 
-#define BUTTON_INVERT           0x02         // Invert bitmask
-
 const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between button input probe
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
@@ -256,20 +254,19 @@ void ButtonInit(void) {
       if (XdrvCall(FUNC_ADD_BUTTON)) {
         /*
            At entry:
-           XdrvMailbox.index = key index
+           XdrvMailbox.index = button index
            At exit:
            XdrvMailbox.index bit 0 = current state
-           XdrvMailbox.index bit 1 = invert signal
         */
         Button.present++;
         bitSet(Button.virtual_pin_used, i);    // This pin is used
         bool state = (XdrvMailbox.index &1);
         ButtonSetVirtualPinState(i, state);    // Virtual hardware pin state
-        bool invert = (XdrvMailbox.index &BUTTON_INVERT);
-        if (invert) { ButtonInvertFlag(i); }   // Set inverted flag
+        if (!state) { ButtonInvertFlag(i); }   // Set inverted flag
+        // last_state[i] must be 1 to indicate no button pressed
         Button.last_state[i] = (bitRead(Button.virtual_pin, i) != bitRead(Button.inverted_mask, i));
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add vButton%d, State %d, Info %02X"), Button.present, Button.last_state[i], XdrvMailbox.index);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add vButton%d, State %d"), Button.present, Button.last_state[i]);
 
         used = true;
       }
