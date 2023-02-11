@@ -2785,7 +2785,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 
 // !!! Update this list in the same order as kModuleNiceList !!!
 const char kModuleNames[] PROGMEM =
-  "ESP32C3|AIRM2M-ESP32C3-CORE|AIRM2M-ESP32C3-CORE-lite|"
+  "ESP32C3|Airm2m ESP32C3 Core|Airm2m ESP32C3 Core Lite|"
   ;
 
 // !!! Update this list in the same order as SupportedModulesESP32C3 !!!
