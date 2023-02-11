@@ -2772,16 +2772,20 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 // Supported hardware modules
 enum SupportedModulesESP32C3 {
   WEMOS,
-  MAXMODULE };
+  AIRM2M_CORE_ESP32C3,
+  AIRM2M_CORE_ESP32C3LITE,
 
+  MAXMODULE };
 // Default module settings
 const uint8_t kModuleNiceList[] PROGMEM = {
   WEMOS,
+  AIRM2M_CORE_ESP32C3,
+  AIRM2M_CORE_ESP32C3LITE
 };
 
 // !!! Update this list in the same order as kModuleNiceList !!!
 const char kModuleNames[] PROGMEM =
-  "ESP32C3|"
+  "ESP32C3|AIRM2M-ESP32C3-CORE|AIRM2M-ESP32C3-CORE-lite|"
   ;
 
 // !!! Update this list in the same order as SupportedModulesESP32C3 !!!
@@ -2807,6 +2811,56 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 17      IO                  GPIO17, SPIQ
     AGPIO(GPIO_USER),            // 18      IO                  GPIO18, USB_D
     AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
+    AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
+    AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
+    0                            // Flag
+  },
+  {                              // AirM2M ESP32C3 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, XTAL_32K_N
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, FSPIQ
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, FSPIHD, MTMS
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC2_CH0, FSPIWP, MTDI
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, FSPICLK, MTCK
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, FSPID, MTDO
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10
+    AGPIO(GPIO_USER),            // 11      IO                  GPIO11, output power supply for flash
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12, SPIHD
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, SPIWP
+    0,                           // 14      IO                  GPIO14, SPICS0
+    0,                           // 15      IO                  GPIO15, SPICLK
+    0,                           // 16      IO                  GPIO16, SPID
+    0,                           // 17      IO                  GPIO17, SPIQ
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, USB_D
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
+    AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
+    AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
+    0                            // Flag
+  },
+  {                              // AirM2M ESP32C3 LITE device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, XTAL_32K_N
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, FSPIQ
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, FSPIHD, MTMS
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC2_CH0, FSPIWP, MTDI
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, FSPICLK, MTCK
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, FSPID, MTDO
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10
+    AGPIO(GPIO_USER),            // 11      IO                  GPIO11, output power supply for flash
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12, SPIHD
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, SPIWP
+    0,                           // 14      IO                  GPIO14, SPICS0
+    0,                           // 15      IO                  GPIO15, SPICLK
+    0,                           // 16      IO                  GPIO16, SPID
+    0,                           // 17      IO                  GPIO17, SPIQ
+    0,                           // 18      IO                  GPIO18, USB_D (USED BY USB)
+    0,                           // 19      IO                  GPIO19, USB_D+ (USED BY USB)
     AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
     AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
     0                            // Flag
