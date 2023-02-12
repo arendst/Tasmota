@@ -76,7 +76,10 @@ void SwitchSetVirtualPinState(uint32_t index, uint32_t state) {
 
 void SwitchSetState(uint32_t index, uint32_t state) {
   // Set debounced pin state to be used by late detected switches
-  bitSet(Switch.used, index);           // Force use bit as call maybe late
+  if (!bitRead(Switch.used, index)) {
+    bitSet(Switch.used, index);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), index +1, state);
+  }
   Switch.debounced_state[index] = state;
 }
 
@@ -218,16 +221,14 @@ void SwitchProbe(void) {
       }
     }
   }
-
   Switch.probe_mutex = false;
 }
 
 void SwitchInit(void) {
   bool ac_detect = (Settings->switch_debounce % 10 == 9);
-
   Switch.used = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-    Switch.last_state[i] = NOT_PRESSED;  // Init global to virtual switch state;
+    Switch.last_state[i] = NOT_PRESSED;
     if (PinUsed(GPIO_SWT1, i)) {
       bitSet(Switch.used, i);            // This pin is used
 #ifdef ESP8266
@@ -237,6 +238,10 @@ void SwitchInit(void) {
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
       Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
+      if (ac_detect) {
+        Switch.state[i] = 0x80 + 2 * SWITCH_AC_PERIOD;
+        Switch.last_state[i] = 0;				 // Will set later in the debouncing code
+      }
     }
     else {
       XdrvMailbox.index = i;
@@ -254,11 +259,6 @@ void SwitchInit(void) {
 
         AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), i +1, Switch.last_state[i]);
       }
-    }
-
-    if (bitRead(Switch.used, i) && ac_detect) {
-      Switch.state[i] = 0x80 + 2 * SWITCH_AC_PERIOD;
-      Switch.last_state[i] = 0;				   // Will set later in the debouncing code
     }
     Switch.debounced_state[i] = Switch.last_state[i];
   }
@@ -281,212 +281,212 @@ void SwitchHandler(void) {
   uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-    if (bitRead(Switch.used, i)) {
-      uint32_t button = Switch.debounced_state[i];
-      uint32_t switchflag = POWER_TOGGLE +1;
-      uint32_t mqtt_action = POWER_NONE;
-      uint32_t switchmode = Settings->switchmode[i];
+    if (!bitRead(Switch.used, i)) { return; }
 
-      if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
-        Switch.hold_timer[i]--;
-        if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
-          if ((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)){
-            if (((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) | ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i]))) {
-              SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
-            }
-            else if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) {
-                SendKey(KEY_SWITCH, i +1, POWER_DELAYED);      // Execute command via MQTT
-                mqtt_action = POWER_DELAYED;
-                Switch.hold_timer[i] = 0;
-            }
+    uint32_t button = Switch.debounced_state[i];
+    uint32_t switchflag = POWER_TOGGLE +1;
+    uint32_t mqtt_action = POWER_NONE;
+    uint32_t switchmode = Settings->switchmode[i];
+
+    if (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
+      Switch.hold_timer[i]--;
+      if ((Switch.hold_timer[i] & SM_TIMER_MASK) == loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
+        if ((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)){
+          if (((switchmode == PUSHHOLDMULTI) & (NOT_PRESSED == Switch.last_state[i])) | ((switchmode == PUSHHOLDMULTI_INV) & (PRESSED == Switch.last_state[i]))) {
+            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);      // Execute command via MQTT
           }
-        }
-        if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
-          switch (switchmode) {
-            case TOGGLEMULTI:
-              switchflag = POWER_TOGGLE;                     // Toggle after hold
-              break;
-            case FOLLOWMULTI:
-              switchflag = button &1;                        // Follow wall switch state after hold
-              break;
-            case FOLLOWMULTI_INV:
-              switchflag = ~button &1;                       // Follow inverted wall switch state after hold
-              break;
-            case PUSHHOLDMULTI:
-              if (NOT_PRESSED == button) {
-                Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
-                SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
-                mqtt_action = POWER_INCREMENT;
-              } else {
-                Switch.hold_timer[i]= 0;
-                SendKey(KEY_SWITCH, i +1, POWER_CLEAR);      // Execute command via MQTT
-                mqtt_action = POWER_CLEAR;
-              }
-              break;
-            case PUSHHOLDMULTI_INV:
-              if (PRESSED == button) {
-                Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
-                SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
-                mqtt_action = POWER_INCREMENT;
-              } else {
-                Switch.hold_timer[i]= 0;
-                SendKey(KEY_SWITCH, i +1, POWER_CLEAR);      // Execute command via MQTT
-                mqtt_action = POWER_CLEAR;
-              }
-              break;
-          default:
-            SendKey(KEY_SWITCH, i +1, POWER_HOLD);           // Execute command via MQTT
-            mqtt_action = POWER_HOLD;
-            break;
+          else if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) {
+              SendKey(KEY_SWITCH, i +1, POWER_DELAYED);      // Execute command via MQTT
+              mqtt_action = POWER_DELAYED;
+              Switch.hold_timer[i] = 0;
           }
         }
       }
-
-      if (button != Switch.last_state[i]) {  // This implies if ((PRESSED == button) then (NOT_PRESSED == Switch.last_state[i]))
+      if (0 == (Switch.hold_timer[i] & (((switchmode == PUSHHOLDMULTI) | (switchmode == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK))) {
         switch (switchmode) {
-        case TOGGLE:
-        case PUSHBUTTON_TOGGLE:
-          switchflag = POWER_TOGGLE;         // Toggle
-          break;
-        case FOLLOW:
-          switchflag = button &1;            // Follow wall switch state
-          break;
-        case FOLLOW_INV:
-          switchflag = ~button &1;           // Follow inverted wall switch state
-          break;
-        case PUSHBUTTON:
-          if (PRESSED == button) {
-            switchflag = POWER_TOGGLE;       // Toggle with pushbutton to Gnd
-          }
-          break;
-        case PUSHBUTTON_INV:
-          if (NOT_PRESSED == button) {
-            switchflag = POWER_TOGGLE;       // Toggle with releasing pushbutton from Gnd
-          }
-          break;
-        case PUSHBUTTONHOLD:
-          if (PRESSED == button) {
-            Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press
-          }
-          if ((NOT_PRESSED == button) && (Switch.hold_timer[i])) {
-            Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer...
-            switchflag = POWER_TOGGLE;       // ...and Toggle
-          }
-          break;
-        case PUSHBUTTONHOLD_INV:
-          if (NOT_PRESSED == button) {
-            Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press...
-          }
-          if ((PRESSED == button) && (Switch.hold_timer[i])) {
-            Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer.
-            switchflag = POWER_TOGGLE;       // ...and Toggle
-          }
-          break;
-        case TOGGLEMULTI:
-        case FOLLOWMULTI:
-        case FOLLOWMULTI_INV:
-          if (Switch.hold_timer[i]) {
-            Switch.hold_timer[i] = 0;
-            SendKey(KEY_SWITCH, i +1, POWER_HOLD);              // Execute command via MQTT
-            mqtt_action = POWER_HOLD;
-          } else {
-            Switch.hold_timer[i] = loops_per_second / 2;        // 0.5 second multi press window
-          }
-          break;
-        case PUSHHOLDMULTI:
-          if (NOT_PRESSED == button) {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
-              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
-              SendKey(KEY_SWITCH, i +1, POWER_INV);             // Execute command via MQTT
-              mqtt_action = POWER_INV;
-            }
-          } else {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
-              if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
-                Switch.hold_timer[i]= SM_FIRST_PRESS;
-                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
-              }
-              else{
-                SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
-                mqtt_action = POWER_100;
-                Switch.hold_timer[i]= 0;
-              }
+          case TOGGLEMULTI:
+            switchflag = POWER_TOGGLE;                     // Toggle after hold
+            break;
+          case FOLLOWMULTI:
+            switchflag = button &1;                        // Follow wall switch state after hold
+            break;
+          case FOLLOWMULTI_INV:
+            switchflag = ~button &1;                       // Follow inverted wall switch state after hold
+            break;
+          case PUSHHOLDMULTI:
+            if (NOT_PRESSED == button) {
+              Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
+              SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+              mqtt_action = POWER_INCREMENT;
             } else {
               Switch.hold_timer[i]= 0;
-              SendKey(KEY_SWITCH, i +1, POWER_RELEASE);         // Execute command via MQTT
-              mqtt_action = POWER_RELEASE;
+              SendKey(KEY_SWITCH, i +1, POWER_CLEAR);      // Execute command via MQTT
+              mqtt_action = POWER_CLEAR;
             }
-          }
-          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
-          break;
-        case PUSHHOLDMULTI_INV:
-          if (PRESSED == button) {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
-              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
-              SendKey(KEY_SWITCH, i +1, POWER_INV);             // Execute command via MQTT
-              mqtt_action = POWER_INV;
-            }
-          } else {
-            if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
-              if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
-                Switch.hold_timer[i]= SM_FIRST_PRESS;
-                switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
-              }
-              else{
-                SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
-                mqtt_action = POWER_100;
-                Switch.hold_timer[i]= 0;
-              }
+            break;
+          case PUSHHOLDMULTI_INV:
+            if (PRESSED == button) {
+              Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 25;
+              SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+              mqtt_action = POWER_INCREMENT;
             } else {
               Switch.hold_timer[i]= 0;
-              SendKey(KEY_SWITCH, i +1, POWER_RELEASE);         // Execute command via MQTT
-              mqtt_action = POWER_RELEASE;
+              SendKey(KEY_SWITCH, i +1, POWER_CLEAR);      // Execute command via MQTT
+              mqtt_action = POWER_CLEAR;
             }
-          }
-          Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
-          break;
-        case PUSHON:
-          if (PRESSED == button) {
-            switchflag = POWER_ON;                              // Power ON with pushbutton to Gnd
-          }
-          break;
-        case PUSHON_INV:
-          if (NOT_PRESSED == button) {
-            switchflag = POWER_ON;                              // Power ON with releasing pushbutton from Gnd
-          }
-          break;
-        case PUSH_IGNORE:
-        case PUSH_IGNORE_INV:
-          Switch.last_state[i] = button;                        // Update switch state before publishing
-          MqttPublishSensor();
+            break;
+        default:
+          SendKey(KEY_SWITCH, i +1, POWER_HOLD);           // Execute command via MQTT
+          mqtt_action = POWER_HOLD;
           break;
         }
-        Switch.last_state[i] = button;
       }
-      if (switchflag <= POWER_TOGGLE) {
-        if (!Settings->flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
-          if (!SendKey(KEY_SWITCH, i +1, switchflag)) {         // Execute command via MQTT
-            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
+    }
+
+    if (button != Switch.last_state[i]) {  // This implies if ((PRESSED == button) then (NOT_PRESSED == Switch.last_state[i]))
+      switch (switchmode) {
+      case TOGGLE:
+      case PUSHBUTTON_TOGGLE:
+        switchflag = POWER_TOGGLE;         // Toggle
+        break;
+      case FOLLOW:
+        switchflag = button &1;            // Follow wall switch state
+        break;
+      case FOLLOW_INV:
+        switchflag = ~button &1;           // Follow inverted wall switch state
+        break;
+      case PUSHBUTTON:
+        if (PRESSED == button) {
+          switchflag = POWER_TOGGLE;       // Toggle with pushbutton to Gnd
+        }
+        break;
+      case PUSHBUTTON_INV:
+        if (NOT_PRESSED == button) {
+          switchflag = POWER_TOGGLE;       // Toggle with releasing pushbutton from Gnd
+        }
+        break;
+      case PUSHBUTTONHOLD:
+        if (PRESSED == button) {
+          Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press
+        }
+        if ((NOT_PRESSED == button) && (Switch.hold_timer[i])) {
+          Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer...
+          switchflag = POWER_TOGGLE;       // ...and Toggle
+        }
+        break;
+      case PUSHBUTTONHOLD_INV:
+        if (NOT_PRESSED == button) {
+          Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press...
+        }
+        if ((PRESSED == button) && (Switch.hold_timer[i])) {
+          Switch.hold_timer[i] = 0;        // Button released and hold timer not expired : stop timer.
+          switchflag = POWER_TOGGLE;       // ...and Toggle
+        }
+        break;
+      case TOGGLEMULTI:
+      case FOLLOWMULTI:
+      case FOLLOWMULTI_INV:
+        if (Switch.hold_timer[i]) {
+          Switch.hold_timer[i] = 0;
+          SendKey(KEY_SWITCH, i +1, POWER_HOLD);              // Execute command via MQTT
+          mqtt_action = POWER_HOLD;
+        } else {
+          Switch.hold_timer[i] = loops_per_second / 2;        // 0.5 second multi press window
+        }
+        break;
+      case PUSHHOLDMULTI:
+        if (NOT_PRESSED == button) {
+          if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
+            Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
+            SendKey(KEY_SWITCH, i +1, POWER_INV);             // Execute command via MQTT
+            mqtt_action = POWER_INV;
           }
-        } else { mqtt_action = switchflag; }
-      }
-      if ((mqtt_action != POWER_NONE) && Settings->flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
-        if (!Settings->flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
-          char mqtt_state_str[16];
-          char *mqtt_state = mqtt_state_str;
-          if (mqtt_action <= 3) {
-            if (mqtt_action != 3) { SendKey(KEY_SWITCH, i +1, mqtt_action); }
-            mqtt_state = SettingsText(SET_STATE_TXT1 + mqtt_action);
+        } else {
+          if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
+            if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
+              Switch.hold_timer[i]= SM_FIRST_PRESS;
+              switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+            }
+            else{
+              SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
+              mqtt_action = POWER_100;
+              Switch.hold_timer[i]= 0;
+            }
           } else {
-            GetTextIndexed(mqtt_state_str, sizeof(mqtt_state_str), mqtt_action, kSwitchPressStates);
+            Switch.hold_timer[i]= 0;
+            SendKey(KEY_SWITCH, i +1, POWER_RELEASE);         // Execute command via MQTT
+            mqtt_action = POWER_RELEASE;
           }
-          Response_P(S_JSON_SVALUE_ACTION_SVALUE, GetSwitchText(i).c_str(), mqtt_state);
-          char scommand[10];
-          snprintf_P(scommand, sizeof(scommand), PSTR(D_JSON_SWITCH "%d"), i +1);
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, scommand);
         }
-        mqtt_action = POWER_NONE;
+        Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
+        break;
+      case PUSHHOLDMULTI_INV:
+        if (PRESSED == button) {
+          if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
+            Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
+            SendKey(KEY_SWITCH, i +1, POWER_INV);             // Execute command via MQTT
+            mqtt_action = POWER_INV;
+          }
+        } else {
+          if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings->param[P_HOLD_TIME] / 25) {
+            if ((Switch.hold_timer[i] & ~SM_TIMER_MASK) != SM_SECOND_PRESS) {
+              Switch.hold_timer[i]= SM_FIRST_PRESS;
+              switchflag = POWER_TOGGLE;                      // Toggle with pushbutton
+            }
+            else{
+              SendKey(KEY_SWITCH, i +1, POWER_100);           // Execute command via MQTT
+              mqtt_action = POWER_100;
+              Switch.hold_timer[i]= 0;
+            }
+          } else {
+            Switch.hold_timer[i]= 0;
+            SendKey(KEY_SWITCH, i +1, POWER_RELEASE);         // Execute command via MQTT
+            mqtt_action = POWER_RELEASE;
+          }
+        }
+        Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
+        break;
+      case PUSHON:
+        if (PRESSED == button) {
+          switchflag = POWER_ON;                              // Power ON with pushbutton to Gnd
+        }
+        break;
+      case PUSHON_INV:
+        if (NOT_PRESSED == button) {
+          switchflag = POWER_ON;                              // Power ON with releasing pushbutton from Gnd
+        }
+        break;
+      case PUSH_IGNORE:
+      case PUSH_IGNORE_INV:
+        Switch.last_state[i] = button;                        // Update switch state before publishing
+        MqttPublishSensor();
+        break;
       }
+      Switch.last_state[i] = button;
+    }
+    if (switchflag <= POWER_TOGGLE) {
+      if (!Settings->flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+        if (!SendKey(KEY_SWITCH, i +1, switchflag)) {         // Execute command via MQTT
+          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
+        }
+      } else { mqtt_action = switchflag; }
+    }
+    if ((mqtt_action != POWER_NONE) && Settings->flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+      if (!Settings->flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+        char mqtt_state_str[16];
+        char *mqtt_state = mqtt_state_str;
+        if (mqtt_action <= 3) {
+          if (mqtt_action != 3) { SendKey(KEY_SWITCH, i +1, mqtt_action); }
+          mqtt_state = SettingsText(SET_STATE_TXT1 + mqtt_action);
+        } else {
+          GetTextIndexed(mqtt_state_str, sizeof(mqtt_state_str), mqtt_action, kSwitchPressStates);
+        }
+        Response_P(S_JSON_SVALUE_ACTION_SVALUE, GetSwitchText(i).c_str(), mqtt_state);
+        char scommand[10];
+        snprintf_P(scommand, sizeof(scommand), PSTR(D_JSON_SWITCH "%d"), i +1);
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, scommand);
+      }
+      mqtt_action = POWER_NONE;
     }
   }
 }
