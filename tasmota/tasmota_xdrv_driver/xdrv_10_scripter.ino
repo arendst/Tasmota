@@ -5779,7 +5779,7 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
           return 1;
           break;
         case 'b':
-          *fvar = Button.last_state[index - 1];
+          *fvar = ButtonLastState(index - 1);
           return 1;
           break;
       }

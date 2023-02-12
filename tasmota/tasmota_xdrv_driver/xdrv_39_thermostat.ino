@@ -316,7 +316,7 @@ uint8_t ThermostatInputStatus(uint8_t input_switch)
   bool ifId = ThermostatSwitchIdValid(input_switch);
   uint8_t value = 0;
   if(ifId) {
-    value = SwitchGetVirtual(ifId - THERMOSTAT_INPUT_SWT1);
+    value = SwitchGetState(ifId - THERMOSTAT_INPUT_SWT1);
   }
   return value;
 }

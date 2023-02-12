@@ -47,14 +47,13 @@ struct SWITCH {
   uint32_t debounce = 0;                         // Switch debounce timer
   uint32_t no_pullup_mask = 0;                   // Switch pull-up bitmask flags
   uint32_t pulldown_mask = 0;                    // Switch pull-down bitmask flags
-  uint32_t virtual_pin_used = 0;                 // Switch used bitmask
+  uint32_t used = 0;                             // Switch used bitmask
   uint32_t virtual_pin = 0;                      // Switch state bitmask
   uint8_t state[MAX_SWITCHES_SET] = { 0 };
   uint8_t last_state[MAX_SWITCHES_SET];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES_SET] = { 0 };  // Timer for wallswitch push button hold
   uint8_t debounced_state[MAX_SWITCHES_SET];     // Switch debounced states
   uint8_t first_change = 0;
-  uint8_t present = 0;
   bool probe_mutex;
 } Switch;
 
@@ -68,29 +67,33 @@ void SwitchPulldownFlag(uint32 switch_bit) {
   bitSet(Switch.pulldown_mask, switch_bit);
 }
 
-bool SwitchUsed(uint32_t index) {
-  return (PinUsed(GPIO_SWT1, index) || bitRead(Switch.virtual_pin_used, index));
-}
+/*------------------------------------------------------------------------------------------*/
 
-// Preffered virtual switch support since v12.3.1.4
 void SwitchSetVirtualPinState(uint32_t index, uint32_t state) {
+  // Set virtual pin state to be debounced as used by early detected switches
   bitWrite(Switch.virtual_pin, index, state);
 }
 
-// Legacy virtual switch support
-void SwitchSetVirtual(uint32_t index, uint32_t state) {
-//  bitSet(Switch.virtual_pin_used, index);
+void SwitchSetState(uint32_t index, uint32_t state) {
+  // Set debounced pin state to be used by late detected switches
+  bitSet(Switch.used, index);           // Force use bit as call maybe late
   Switch.debounced_state[index] = state;
 }
 
-// Legacy virtual switch support
-uint8_t SwitchGetVirtual(uint32_t index) {
+uint8_t SwitchGetState(uint32_t index) {
+  // Get current state
   return Switch.debounced_state[index];
 }
 
-// Legacy virtual switch support
 uint8_t SwitchLastState(uint32_t index) {
+  // Get last state
   return Switch.last_state[index];
+}
+
+/*------------------------------------------------------------------------------------------*/
+
+bool SwitchUsed(uint32_t index) {
+  return bitRead(Switch.used, index);
 }
 
 bool SwitchState(uint32_t index) {
@@ -135,7 +138,7 @@ void SwitchProbe(void) {
     if (PinUsed(GPIO_SWT1, i)) {
       not_activated = digitalRead(Pin(GPIO_SWT1, i));
     }
-    else if (bitRead(Switch.virtual_pin_used, i)) {
+    else if (bitRead(Switch.used, i)) {
       not_activated = bitRead(Switch.virtual_pin, i);
     }
     else { continue; }
@@ -222,14 +225,11 @@ void SwitchProbe(void) {
 void SwitchInit(void) {
   bool ac_detect = (Settings->switch_debounce % 10 == 9);
 
-  Switch.present = 0;
-  Switch.virtual_pin_used = 0;
+  Switch.used = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
     Switch.last_state[i] = NOT_PRESSED;  // Init global to virtual switch state;
-    bool used = false;
-
     if (PinUsed(GPIO_SWT1, i)) {
-      Switch.present++;
+      bitSet(Switch.used, i);            // This pin is used
 #ifdef ESP8266
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
 #endif  // ESP8266
@@ -237,7 +237,6 @@ void SwitchInit(void) {
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.pulldown_mask, i) ? INPUT_PULLDOWN : bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
 #endif  // ESP32
       Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
-      used = true;
     }
     else {
       XdrvMailbox.index = i;
@@ -248,28 +247,25 @@ void SwitchInit(void) {
            At exit:
            XdrvMailbox.index bit 0 = current state
         */
-        Switch.present++;
-        bitSet(Switch.virtual_pin_used, i);    // This pin is used
+        bitSet(Switch.used, i);          // This pin is used
         bool state = (XdrvMailbox.index &1);
-        SwitchSetVirtualPinState(i, state);    // Virtual hardware pin state
+        SwitchSetVirtualPinState(i, state);  // Virtual hardware pin state
         Switch.last_state[i] = bitRead(Switch.virtual_pin, i);
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), Switch.present, Switch.last_state[i]);
-
-        used = true;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), i +1, Switch.last_state[i]);
       }
     }
 
-    if (used && ac_detect) {
+    if (bitRead(Switch.used, i) && ac_detect) {
       Switch.state[i] = 0x80 + 2 * SWITCH_AC_PERIOD;
-      Switch.last_state[i] = 0;				// Will set later in the debouncing code
+      Switch.last_state[i] = 0;				   // Will set later in the debouncing code
     }
     Switch.debounced_state[i] = Switch.last_state[i];
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X"), Switch.virtual_pin_used, Switch.virtual_pin);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X"), Switch.used, Switch.virtual_pin);
 
-  if (Switch.present) {
+  if (Switch.used) {                     // Any bit set
     Switch.first_change = true;
     TickerSwitch.attach_ms((ac_detect) ? SWITCH_FAST_PROBE_INTERVAL : SWITCH_PROBE_INTERVAL, SwitchProbe);
   }
@@ -279,14 +275,13 @@ void SwitchInit(void) {
  * Switch handler
 \*********************************************************************************************/
 
-void SwitchHandler(uint32_t mode) {
+void SwitchHandler(void) {
   if (TasmotaGlobal.uptime < 4) { return; }                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-//    if (PinUsed(GPIO_SWT1, i) || bitRead(Switch.virtual_pin_used, i)) {
-    if (SwitchUsed(i)) {
+    if (bitRead(Switch.used, i)) {
       uint32_t button = Switch.debounced_state[i];
       uint32_t switchflag = POWER_TOGGLE +1;
       uint32_t mqtt_action = POWER_NONE;
@@ -497,12 +492,12 @@ void SwitchHandler(uint32_t mode) {
 }
 
 void SwitchLoop(void) {
-  if (Switch.present) {
+  if (Switch.used) {
     if (TimeReached(Switch.debounce)) {
       SetNextTimeInterval(Switch.debounce, Settings->switch_debounce);
-      SwitchHandler(0);
+      SwitchHandler();
     }
   }
 }
 
-#endif  // SWITCH_V3
+#endif  // SWITCH_V4

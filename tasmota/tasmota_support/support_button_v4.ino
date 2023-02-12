@@ -42,7 +42,7 @@ struct BUTTON {
   uint32_t no_pullup_mask = 0;                  // key no pullup flag (1 = no pullup)
   uint32_t pulldown_mask = 0;                   // key pulldown flag (1 = pulldown)
   uint32_t inverted_mask = 0;                   // Key inverted flag (1 = inverted)
-  uint32_t virtual_pin_used = 0;                // Key used bitmask
+  uint32_t used = 0;                            // Key used bitmask
   uint32_t virtual_pin = 0;                     // Key state bitmask
   uint16_t hold_timer[MAX_KEYS_SET] = { 0 };    // Timer for button hold
   uint16_t dual_code = 0;                       // Sonoff dual received code
@@ -85,12 +85,22 @@ void ButtonTouchFlag(uint32_t button_bit) {
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
-bool ButtonUsed(uint32_t index) {
-  return (PinUsed(GPIO_KEY1, index) || bitRead(Button.virtual_pin_used, index));
-}
+/*------------------------------------------------------------------------------------------*/
 
 void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
+  // Set virtual pin state to be debounced as used by early detected buttons
   bitWrite(Button.virtual_pin, index, state);
+}
+
+uint8_t ButtonLastState(uint32_t index) {
+  // Get last state
+  return Button.last_state[index];
+}
+
+/*------------------------------------------------------------------------------------------*/
+
+bool ButtonUsed(uint32_t index) {
+  return (PinUsed(GPIO_KEY1, index) || bitRead(Button.used, index));
 }
 
 /*********************************************************************************************/
@@ -134,7 +144,7 @@ void ButtonProbe(void) {
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
       not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
     }
-    else if (bitRead(Button.virtual_pin_used, i)) {
+    else if (bitRead(Button.used, i)) {
       not_activated = (bitRead(Button.virtual_pin, i) != bitRead(Button.inverted_mask, i));
     }
     else { continue; }
@@ -220,7 +230,7 @@ void ButtonInit(void) {
   bool ac_detect = (Settings->button_debounce % 10 == 9);
 
   Button.present = 0;
-  Button.virtual_pin_used = 0;
+  Button.used = 0;
 
 #ifdef ESP8266
   if ((SONOFF_DUAL == TasmotaGlobal.module_type) || (CH4 == TasmotaGlobal.module_type)) {
@@ -259,7 +269,7 @@ void ButtonInit(void) {
            XdrvMailbox.index bit 0 = current state
         */
         Button.present++;
-        bitSet(Button.virtual_pin_used, i);    // This pin is used
+        bitSet(Button.used, i);                // This pin is used
         bool state = (XdrvMailbox.index &1);
         ButtonSetVirtualPinState(i, state);    // Virtual hardware pin state
         if (!state) { ButtonInvertFlag(i); }   // Set inverted flag
@@ -279,7 +289,7 @@ void ButtonInit(void) {
     Button.debounced_state[i] = Button.last_state[i];
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X, Invert %08X"), Button.virtual_pin_used, Button.virtual_pin, Button.inverted_mask);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: vPinUsed %08X, State %08X, Invert %08X"), Button.used, Button.virtual_pin, Button.inverted_mask);
 
   if (Button.present) {
     Button.first_change = true;
@@ -377,7 +387,7 @@ void ButtonHandler(void) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
     }
 #endif  // USE_ADC
-    else if (bitRead(Button.virtual_pin_used, button_index)) {
+    else if (bitRead(Button.used, button_index)) {
       button_present = 1;
       button = Button.debounced_state[button_index];
     }

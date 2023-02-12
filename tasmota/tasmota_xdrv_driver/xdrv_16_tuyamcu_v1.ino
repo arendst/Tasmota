@@ -86,6 +86,7 @@ struct TUYA {
 #endif // USE_ENERGY_SENSOR
   char *buffer = nullptr;                 // Serial receive buffer
   int byte_counter = 0;                   // Index in serial receive buffer
+  uint8_t last_button;
   bool low_power_mode = false;            // Normal or Low power mode protocol
   bool send_success_next_second = false;  // Second command success in low power mode
   uint32_t ignore_dimmer_cmd_timeout = 0; // Time until which received dimmer commands should be ignored
@@ -847,11 +848,10 @@ void TuyaProcessStatePacket(void) {
             if (Tuya.buffer[dpidStart + 4]) { PowerOff = true; }
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[dpidStart + 4], SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1));
-
-          if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1) != Tuya.buffer[dpidStart + 4]) {
-            SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1, Tuya.buffer[dpidStart + 4]);
-            SwitchHandler(1);
+          uint32_t switch_state = SwitchGetState(fnId - TUYA_MCU_FUNC_SWT1);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[dpidStart + 4], switch_state);
+          if (switch_state != Tuya.buffer[dpidStart + 4]) {
+            SwitchSetState(fnId - TUYA_MCU_FUNC_SWT1, Tuya.buffer[dpidStart + 4]);
           }
         }
         if (PowerOff) { Tuya.ignore_dimmer_cmd_timeout = millis() + 250; }
@@ -1133,7 +1133,7 @@ void TuyaNormalPowerModePacketProcess(void)
       }
       TuyaRequestState(0);
       break;
-    case TUYA_CMD_GET_WIFI_STRENGTH: 
+    case TUYA_CMD_GET_WIFI_STRENGTH:
       TuyaSetWifiStrength();
       break;
     case TUYA_CMD_TEST_WIFI:
@@ -1382,14 +1382,16 @@ void TuyaSerialInput(void)
   }
 }
 
-bool TuyaButtonPressed(void)
-{
-  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == Button.last_state[XdrvMailbox.index]))) {
+bool TuyaButtonPressed(void) {
+  bool result = false;
+  uint32_t button = XdrvMailbox.payload;
+  if (!XdrvMailbox.index && ((PRESSED == button) && (NOT_PRESSED == Tuya.last_button))) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Reset GPIO triggered"));
     TuyaResetWifi();
-    return true;  // Reset GPIO served here
+    result = true;  // Reset GPIO served here
   }
-  return false;   // Don't serve other buttons
+  Tuya.last_button = button;
+  return result;   // Don't serve other buttons
 }
 
 uint8_t TuyaGetTuyaWifiState(void) {

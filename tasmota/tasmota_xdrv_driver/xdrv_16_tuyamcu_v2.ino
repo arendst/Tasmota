@@ -253,6 +253,8 @@ typedef struct TUYA_STRUCT_tag {
   uint8_t dimCmdEnable; // we are allowed to send a dim command - bitfield
   uint8_t dimDebug; // enables a single dim debug - bitfield
 
+  uint8_t last_button;
+
   int sends;
   int rxs;
 
@@ -265,9 +267,8 @@ void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value, int len);
 
 int init_tuya_struct() {
   if (pTuya) return 0;  // done already
-  pTuya = (TUYA_STRUCT *)malloc(sizeof(TUYA_STRUCT));
+  pTuya = (TUYA_STRUCT *)calloc(sizeof(TUYA_STRUCT), 1);
   if (!pTuya) return 0;
-  memset(pTuya, 0, sizeof(TUYA_STRUCT));
   strcpy(pTuya->RGBColor, "000000");            // Stores RGB Color string in Hex format
   pTuya->CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   pTuya->CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
@@ -1626,23 +1627,22 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
 
     case TUYA_TYPE_BOOL: {  // Data Type 1
         if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1 + 1, value?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
-        if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)) {
-          if (!value) { PowerOff = true; }
-          ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, value, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+          AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1 + 1, value?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
+          if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)) {
+            if (!value) { PowerOff = true; }
+            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, value, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
           }
         } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-Inv-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1_INV + 1, value?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
-        if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
-          ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, value ^ 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
-          if (value) { PowerOff = true; }
+          AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-Inv-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1_INV + 1, value?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
+          if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
+            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, value ^ 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            if (value) { PowerOff = true; }
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Switch%d --> M%d T%d"),fnId, fnId - TUYA_MCU_FUNC_SWT1 + 1, value, SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1));
-
-        if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1) != value) {
-          SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1, value);
-            SwitchHandler(1);
+          uint32_t switch_state = SwitchGetState(fnId - TUYA_MCU_FUNC_SWT1);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Switch%d --> M%d T%d"),fnId, fnId - TUYA_MCU_FUNC_SWT1 + 1, value, switch_state);
+          if (switch_state != value) {
+            SwitchSetState(fnId - TUYA_MCU_FUNC_SWT1, value);
           }
         }
       //if (PowerOff) { pTuya->ignore_dimmer_cmd_timeout = millis() + 250; }
@@ -2261,14 +2261,16 @@ void TuyaSerialInput(void)
   }
 }
 
-bool TuyaButtonPressed(void)
-{
-  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == Button.last_state[XdrvMailbox.index]))) {
+bool TuyaButtonPressed(void) {
+  bool result = false;
+  uint32_t button = XdrvMailbox.payload;
+  if (!XdrvMailbox.index && ((PRESSED == button) && (NOT_PRESSED == pTuya->last_button))) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Reset GPIO triggered"));
     TuyaResetWifi();
-    return true;  // Reset GPIO served here
+    result = true;  // Reset GPIO served here
   }
-  return false;   // Don't serve other buttons
+  pTuya->last_button = button;
+  return result;   // Don't serve other buttons
 }
 
 uint8_t TuyaGetTuyaWifiState(void) {

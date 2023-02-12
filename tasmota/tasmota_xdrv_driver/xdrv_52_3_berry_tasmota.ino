@@ -588,7 +588,7 @@ extern "C" {
     be_newobject(vm, "list");
     for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
       if (SwitchUsed(i)) {
-        be_pushbool(vm, SwitchGetVirtual(i) == PRESSED);
+        be_pushbool(vm, SwitchGetState(i) == PRESSED);
         be_data_push(vm, -2);
         be_pop(vm, 1);
       }
