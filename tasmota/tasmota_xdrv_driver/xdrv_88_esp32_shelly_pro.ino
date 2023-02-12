@@ -88,7 +88,10 @@ enum SP4MCP23X17GPIORegisters {
 uint8_t sp4_mcp23s17_olata = 0;
 uint8_t sp4_mcp23s17_olatb = 0;
 
+bool sp4_spi_busy;
+
 void SP4Mcp23S17Enable(void) {
+  sp4_spi_busy = true;
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
   digitalWrite(SPro.pin_register_cs, 0);
 }
@@ -96,6 +99,7 @@ void SP4Mcp23S17Enable(void) {
 void SP4Mcp23S17Disable(void) {
   SPI.endTransaction();
   digitalWrite(SPro.pin_register_cs, 1);
+  sp4_spi_busy = false;
 }
 
 uint32_t SP4Mcp23S17Read16(uint8_t reg) {
@@ -408,11 +412,21 @@ void ShellyProPower(void) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Set Power 0x%08X"), XdrvMailbox.index);
 
     power_t rpower = XdrvMailbox.index;
+/*
     for (uint32_t i = 0; i < 4; i++) {
       power_t state = rpower &1;
-      SP4Mcp23S17DigitalWrite(sp4_relay_pin[i], state);
+      SP4Mcp23S17DigitalWrite(sp4_relay_pin[i], state);  // 4 SPI writes
       rpower >>= 1;                                 // Select next power
     }
+*/
+    for (uint32_t i = 0; i < 4; i++) {
+      power_t state = rpower &1;
+      uint32_t bit = sp4_relay_pin[i] -8;           // Adjust by 8 bits
+      bitWrite(sp4_mcp23s17_olatb, bit, state);
+      rpower >>= 1;                                 // Select next power
+    }
+    SP4Mcp23S17Write(SP4_MCP23S17_OLATB, sp4_mcp23s17_olatb);  // 1 SPI write
+
   }
 }
 
