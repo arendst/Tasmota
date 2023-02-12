@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- ESP8266 Fix TLS SNI which would prevent AWS IoT connection
 
 ### Removed
 
