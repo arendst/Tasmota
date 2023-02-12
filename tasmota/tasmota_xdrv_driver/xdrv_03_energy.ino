@@ -911,69 +911,45 @@ void EnergyCommandCalSetResponse(uint32_t cal_type) {
 }
 
 void EnergyCommandCalResponse(uint32_t cal_type) {
-  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
-  EnergyCommandCalSetResponse(cal_type);
-}
-
-void EnergyCommandSetCalResponse(uint32_t cal_type) {
-  Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
-  EnergyCommandCalSetResponse(cal_type);
+  Energy->command_code = cal_type;                     // Is XxxCal command too
+  if (XnrgCall(FUNC_COMMAND)) {                        // XxxCal
+    Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+    EnergyCommandCalSetResponse(cal_type);
+  }
 }
 
 void CmndPowerCal(void) {
-  Energy->command_code = CMND_POWERCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_POWER_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_POWER_CALIBRATION);
 }
-
 void CmndVoltageCal(void) {
-  Energy->command_code = CMND_VOLTAGECAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_VOLTAGE_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
-
 void CmndCurrentCal(void) {
-  Energy->command_code = CMND_CURRENTCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_CURRENT_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_CURRENT_CALIBRATION);
+}
+void CmndFrequencyCal(void) {
+  EnergyCommandCalResponse(ENERGY_FREQUENCY_CALIBRATION);
 }
 
-void CmndFrequencyCal(void) {
-  Energy->command_code = CMND_FREQUENCYCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_FREQUENCY_CALIBRATION);
+void EnergyCommandSetCalResponse(uint32_t cal_type) {
+  Energy->command_code = CMND_POWERSET + cal_type;     // Adjust for XxxSet command
+  if (XnrgCall(FUNC_COMMAND)) {                        // XxxSet
+    Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
+    EnergyCommandCalSetResponse(cal_type);
   }
 }
 
 void CmndPowerSet(void) {
-  Energy->command_code = CMND_POWERSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Watt
-    EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
 }
-
 void CmndVoltageSet(void) {
-  Energy->command_code = CMND_VOLTAGESET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Volt
-    EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
-
 void CmndCurrentSet(void) {
-  Energy->command_code = CMND_CURRENTSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // milliAmpere
-    EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
 }
-
 void CmndFrequencySet(void) {
-  Energy->command_code = CMND_FREQUENCYSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Hz
-    EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
 }
 
 void CmndModuleAddress(void) {
