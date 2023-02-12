@@ -2429,7 +2429,7 @@ be_local_closure(Matter_StatusIB_to_TLV,   /* name */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
     /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_list),
+    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
     /* K3   */  be_nested_str_weak(add_TLV),
     /* K4   */  be_const_int(0),
     /* K5   */  be_nested_str_weak(U2),

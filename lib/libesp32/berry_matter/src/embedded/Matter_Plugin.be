@@ -23,14 +23,18 @@
 #@ solidify:Matter_Plugin,weak
 
 class Matter_Plugin
-  var device
-  var endpoints
+  static var EMPTY_LIST = []
+  static var EMPTY_MAP = {}
+  var device                                # reference to the `device` global object
+  var endpoints                             # list of supported endpoints
+  var clusters                              # map from cluster to list of attributes
 
   #############################################################
   # Constructor
   def init(device)
     self.device = device
-    self.endpoints = []
+    self.endpoints = self.EMPTY_LIST
+    self.clusters = self.EMPTY_LIST
   end
 
   #############################################################
@@ -38,10 +42,29 @@ class Matter_Plugin
   def get_endpoints()
     return self.endpoints
   end
+  def get_cluster_map()
+    return self.clusters
+  end
+  def get_cluster_list(ep)
+    var ret = []
+    for k: self.clusters.keys()
+      ret.push(k)
+    end
+    return ret
+  end
+  def get_attribute_list(ep, cluster)
+    return self.clusters.find(cluster, self.EMPTY_LIST)
+  end
+
+  #############################################################
+  # Does it handle this endpoint and this cluster
+  def has(cluster, endpoint)
+    return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
+  end
 
   #############################################################
   # read attribute
-  def read_attribute(msg, endpoint, cluster, attribute)
+  def read_attribute(msg, ctx)
     return nil
   end
 

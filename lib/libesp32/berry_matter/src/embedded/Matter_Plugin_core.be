@@ -25,19 +25,39 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_core,weak
 
 class Matter_Plugin_core : Matter_Plugin
+  static var ENDPOINTS = [ 0 ]
+  static var CLUSTERS  = {
+    0x001D: [0,1,2,3],
+    0x0028: [0,1,2,3,4,5,6,7,8,9],
+    0x002B: [0,1],
+    0x002C: [0,1,2],
+    0x0030: [0,1,2,3,4],
+    0x0031: [3,0xFFFC],
+    0x0032: [],
+    0x0033: [0,1,2,8],
+    0x0034: [],
+    0x0038: [0,1,7],
+    0x003E: [0,1,2,3,4,5],
+    0x003C: [],
+    0x003F: []
+  }
+
   #############################################################
   # Constructor
   def init(device)
     super(self).init(device)
-    self.endpoints = [ 0 ]
+    self.endpoints = self.ENDPOINTS
+    self.clusters = self.CLUSTERS
   end
 
   #############################################################
   # read an attribute
   #
-  def read_attribute(msg, endpoint, cluster, attribute)
+  def read_attribute(msg, ctx)
     import string
     var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
 
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
@@ -151,11 +171,15 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
         return TLV.create_TLV(TLV.U1, 5)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
-        return TLV.create_TLV(TLV.U1, 1)     # TODO
+        var sessions_active = self.device.sessions.sessions_active()
+        return TLV.create_TLV(TLV.U1, size(sessions_active))  # number of active sessions
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
-        # TODO
+        var sessions_active = self.device.sessions.sessions_active()
+        var fabric_index = sessions_active.find(msg.session)
+        if fabric_index == nil    fabric_index = 0 end
+        return TLV.create_TLV(TLV.U1, fabric_index)  # number of active sessions
       end
 
     # ====================================================================================================
@@ -224,6 +248,31 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)    # 15s ??? TOOD what should we put here?
       end
+
+    # ====================================================================================================
+    elif   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
+      elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
+        var sl = TLV.Matter_TLV_array()
+        for cl: self.get_cluster_list()
+          sl.add_TLV(nil, TLV.U4, cl)
+        end
+        return sl
+      elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
+        var cl = TLV.Matter_TLV_array()
+        return cl
+      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
+        var eps = self.device.get_active_endpoints(true)
+        var pl = TLV.Matter_TLV_array()
+        for ep: eps
+          pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
+        end
+        return pl
+      end
+
+    else
+      ctx.status = matter.UNSUPPORTED_CLUSTER
+
     end
     # no match found, return that the attribute is unsupported
   end

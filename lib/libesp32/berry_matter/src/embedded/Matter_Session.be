@@ -82,6 +82,9 @@ class Matter_Session
   var _persist                     # do we persist this sessions or is it remporary
   var expiration                   # if not `nil` the entry is removed after this timestamp
 
+  # below are placeholders for ongoing transactions or chunked responses
+  var _chunked_attr_reports        # if not `nil` holds a container for the current _chuked_attr_reports
+
   # Group Key Derivation
   static var __GROUP_KEY = "GroupKey v1.0"  # starting with double `_` means it's not writable
 
@@ -510,6 +513,20 @@ class Matter_Session_Store
     end
     session.set_expire_in_seconds(expire)
     return session
+  end
+
+  #############################################################
+  # find session by resumption id
+  def find_session_by_resumption_id(resumption_id)
+    if !resumption_id  return nil end
+    var i = 0
+    var sessions = self.sessions
+    while i < size(sessions)
+      if sessions[i].resumption_id == resumption_id
+        return sessions[i]
+      end
+      i += 1
+    end
   end
 
   #############################################################

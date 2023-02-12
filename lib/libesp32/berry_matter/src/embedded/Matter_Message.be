@@ -59,13 +59,17 @@ class Matter_Frame
   var sec_extensions
   # var
   var app_payload_idx             # index where the application payload starts
+  # for UDP, remote_ip and remote_port to send back to
+  var remote_ip, remote_port
 
   #############################################################
   # keep track of the message_handler object
   #
-  def init(message_handler, raw)
+  def init(message_handler, raw, addr, port)
     self.message_handler = message_handler
     self.raw = raw
+    self.remote_ip = addr
+    self.remote_port = port
   end
 
   #############################################################
@@ -258,6 +262,9 @@ class Matter_Frame
     import string
     # send back response
     var resp = classof(self)(self.message_handler)
+
+    resp.remote_ip = self.remote_ip
+    resp.remote_port = self.remote_port
 
     if self.flag_s
       resp.flag_dsiz = 0x01

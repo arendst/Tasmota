@@ -428,6 +428,8 @@ class Matter_TLV
 # class Matter_TLV_struct var _ end
 
   static class Matter_TLV_list : Matter_TLV_item
+    static var is_struct = false
+
     #################################################################################
     def init(parent)
       super(self).init(parent)
@@ -517,8 +519,9 @@ class Matter_TLV
     end
 
     #############################################################
+    # encode to bytes
     def encode(b)
-      return self._encode_inner(b, false)
+      return self._encode_inner(b, self.is_struct)
     end
 
     #############################################################
@@ -618,6 +621,8 @@ class Matter_TLV
   # Matter_TLV_struct class
   #################################################################################
   static class Matter_TLV_struct : Matter_TLV_list
+    static var is_struct = true
+
     def init(parent)
       super(self).init(parent)
       self.typ = self.TLV.STRUCT
@@ -627,14 +632,6 @@ class Matter_TLV
     #############################################################
     def tostring()
       return self.tostring_inner(true, "{", "}")
-    end
-
-    #############################################################
-    # encode TLV
-    #
-    # appends to the bytes() object
-    def encode(b)
-      return self._encode_inner(b, true)
     end
   end
 
