@@ -546,7 +546,7 @@ class Matter_StatusIB : Matter_IM_base
 
   def to_TLV()
     var TLV = matter.TLV
-    var s = TLV.Matter_TLV_list()
+    var s = TLV.Matter_TLV_struct()
     s.add_TLV(0, TLV.U2, self.status)
     s.add_TLV(1, TLV.U2, self.cluster_status)
     return s

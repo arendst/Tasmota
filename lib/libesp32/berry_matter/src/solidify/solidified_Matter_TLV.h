@@ -1435,6 +1435,45 @@ void be_load_Matter_TLV_item_class(bvm *vm) {
 extern const bclass be_class_Matter_TLV_list;
 
 /********************************************************************
+** Solidified function: add_obj
+********************************************************************/
+be_local_closure(Matter_TLV_list_add_obj,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(to_TLV),
+    /* K1   */  be_nested_str_weak(tag_sub),
+    /* K2   */  be_nested_str_weak(val),
+    /* K3   */  be_nested_str_weak(push),
+    }),
+    be_str_weak(add_obj),
+    &be_const_str_solidified,
+    ( &(const binstruction[11]) {  /* code */
+      0x4C0C0000,  //  0000  LDNIL	R3
+      0x200C0403,  //  0001  NE	R3	R2	R3
+      0x780E0006,  //  0002  JMPF	R3	#000A
+      0x8C0C0500,  //  0003  GETMET	R3	R2	K0
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x900E0201,  //  0005  SETMBR	R3	K1	R1
+      0x88100102,  //  0006  GETMBR	R4	R0	K2
+      0x8C100903,  //  0007  GETMET	R4	R4	K3
+      0x5C180600,  //  0008  MOVE	R6	R3
+      0x7C100400,  //  0009  CALL	R4	2
+      0x80040000,  //  000A  RET	1	R0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: add_struct
 ********************************************************************/
 be_local_closure(Matter_TLV_list_add_struct,   /* name */
@@ -1474,117 +1513,9 @@ be_local_closure(Matter_TLV_list_add_struct,   /* name */
 
 
 /********************************************************************
-** Solidified function: _encode_inner
+** Solidified function: push
 ********************************************************************/
-be_local_closure(Matter_TLV_list__encode_inner,   /* name */
-  be_nested_proto(
-    9,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_encode_tag),
-    /* K1   */  be_nested_str_weak(val),
-    /* K2   */  be_nested_str_weak(copy),
-    /* K3   */  be_nested_str_weak(sort),
-    /* K4   */  be_nested_str_weak(encode),
-    /* K5   */  be_nested_str_weak(stop_iteration),
-    /* K6   */  be_nested_str_weak(add),
-    /* K7   */  be_nested_str_weak(TLV),
-    /* K8   */  be_nested_str_weak(EOC),
-    /* K9   */  be_const_int(1),
-    }),
-    be_str_weak(_encode_inner),
-    &be_const_str_solidified,
-    ( &(const binstruction[35]) {  /* code */
-      0x4C0C0000,  //  0000  LDNIL	R3
-      0x1C0C0203,  //  0001  EQ	R3	R1	R3
-      0x780E0002,  //  0002  JMPF	R3	#0006
-      0x600C0015,  //  0003  GETGBL	R3	G21
-      0x7C0C0000,  //  0004  CALL	R3	0
-      0x5C040600,  //  0005  MOVE	R1	R3
-      0x8C0C0100,  //  0006  GETMET	R3	R0	K0
-      0x5C140200,  //  0007  MOVE	R5	R1
-      0x7C0C0400,  //  0008  CALL	R3	2
-      0x880C0101,  //  0009  GETMBR	R3	R0	K1
-      0x8C0C0702,  //  000A  GETMET	R3	R3	K2
-      0x7C0C0200,  //  000B  CALL	R3	1
-      0x780A0002,  //  000C  JMPF	R2	#0010
-      0x8C100103,  //  000D  GETMET	R4	R0	K3
-      0x5C180600,  //  000E  MOVE	R6	R3
-      0x7C100400,  //  000F  CALL	R4	2
-      0x60100010,  //  0010  GETGBL	R4	G16
-      0x5C140600,  //  0011  MOVE	R5	R3
-      0x7C100200,  //  0012  CALL	R4	1
-      0xA8020005,  //  0013  EXBLK	0	#001A
-      0x5C140800,  //  0014  MOVE	R5	R4
-      0x7C140000,  //  0015  CALL	R5	0
-      0x8C180B04,  //  0016  GETMET	R6	R5	K4
-      0x5C200200,  //  0017  MOVE	R8	R1
-      0x7C180400,  //  0018  CALL	R6	2
-      0x7001FFF9,  //  0019  JMP		#0014
-      0x58100005,  //  001A  LDCONST	R4	K5
-      0xAC100200,  //  001B  CATCH	R4	1	0
-      0xB0080000,  //  001C  RAISE	2	R0	R0
-      0x8C100306,  //  001D  GETMET	R4	R1	K6
-      0x88180107,  //  001E  GETMBR	R6	R0	K7
-      0x88180D08,  //  001F  GETMBR	R6	R6	K8
-      0x581C0009,  //  0020  LDCONST	R7	K9
-      0x7C100600,  //  0021  CALL	R4	3
-      0x80040200,  //  0022  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: add_array
-********************************************************************/
-be_local_closure(Matter_TLV_list_add_array,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(TLV),
-    /* K1   */  be_nested_str_weak(Matter_TLV_array),
-    /* K2   */  be_nested_str_weak(tag_sub),
-    /* K3   */  be_nested_str_weak(val),
-    /* K4   */  be_nested_str_weak(push),
-    }),
-    be_str_weak(add_array),
-    &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100000,  //  0002  MOVE	R4	R0
-      0x7C080400,  //  0003  CALL	R2	2
-      0x900A0401,  //  0004  SETMBR	R2	K2	R1
-      0x880C0103,  //  0005  GETMBR	R3	R0	K3
-      0x8C0C0704,  //  0006  GETMET	R3	R3	K4
-      0x5C140400,  //  0007  MOVE	R5	R2
-      0x7C0C0400,  //  0008  CALL	R3	2
-      0x80040400,  //  0009  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Matter_TLV_list_init,   /* name */
+be_local_closure(Matter_TLV_list_push,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1594,29 +1525,18 @@ be_local_closure(Matter_TLV_list_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(typ),
-    /* K2   */  be_nested_str_weak(TLV),
-    /* K3   */  be_nested_str_weak(LIST),
-    /* K4   */  be_nested_str_weak(val),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(val),
+    /* K1   */  be_nested_str_weak(push),
     }),
-    be_str_weak(init),
+    be_str_weak(push),
     &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
-      0x60080003,  //  0000  GETGBL	R2	G3
-      0x5C0C0000,  //  0001  MOVE	R3	R0
-      0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
-      0x5C100200,  //  0004  MOVE	R4	R1
-      0x7C080400,  //  0005  CALL	R2	2
-      0x88080102,  //  0006  GETMBR	R2	R0	K2
-      0x88080503,  //  0007  GETMBR	R2	R2	K3
-      0x90020202,  //  0008  SETMBR	R0	K1	R2
-      0x60080012,  //  0009  GETGBL	R2	G18
-      0x7C080000,  //  000A  CALL	R2	0
-      0x90020802,  //  000B  SETMBR	R0	K4	R2
-      0x80000000,  //  000C  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80000000,  //  0004  RET	0
     })
   )
 );
@@ -1624,28 +1544,30 @@ be_local_closure(Matter_TLV_list_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: size
+** Solidified function: getsubval
 ********************************************************************/
-be_local_closure(Matter_TLV_list_size,   /* name */
+be_local_closure(Matter_TLV_list_getsubval,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
+    5,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(val),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(getsub),
+    /* K1   */  be_nested_str_weak(val),
     }),
-    be_str_weak(size),
+    be_str_weak(getsubval),
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x6004000C,  //  0000  GETGBL	R1	G12
-      0x88080100,  //  0001  GETMBR	R2	R0	K0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x88080501,  //  0003  GETMBR	R2	R2	K1
+      0x80040400,  //  0004  RET	1	R2
     })
   )
 );
@@ -1720,11 +1642,11 @@ be_local_closure(Matter_TLV_list_item,   /* name */
 
 
 /********************************************************************
-** Solidified function: tostring
+** Solidified function: size
 ********************************************************************/
-be_local_closure(Matter_TLV_list_tostring,   /* name */
+be_local_closure(Matter_TLV_list_size,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1732,63 +1654,16 @@ be_local_closure(Matter_TLV_list_tostring,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tostring_inner),
-    /* K1   */  be_nested_str_weak(_X5B_X5B),
-    /* K2   */  be_nested_str_weak(_X5D_X5D),
-    }),
-    be_str_weak(tostring),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x500C0000,  //  0001  LDBOOL	R3	0	0
-      0x58100001,  //  0002  LDCONST	R4	K1
-      0x58140002,  //  0003  LDCONST	R5	K2
-      0x7C040800,  //  0004  CALL	R1	4
-      0x80040200,  //  0005  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: findsub
-********************************************************************/
-be_local_closure(Matter_TLV_list_findsub,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(val),
-    /* K1   */  be_nested_str_weak(tag_sub),
-    /* K2   */  be_nested_str_weak(stop_iteration),
     }),
-    be_str_weak(findsub),
+    be_str_weak(size),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
-      0x600C0010,  //  0000  GETGBL	R3	G16
-      0x88100100,  //  0001  GETMBR	R4	R0	K0
-      0x7C0C0200,  //  0002  CALL	R3	1
-      0xA8020007,  //  0003  EXBLK	0	#000C
-      0x5C100600,  //  0004  MOVE	R4	R3
-      0x7C100000,  //  0005  CALL	R4	0
-      0x88140901,  //  0006  GETMBR	R5	R4	K1
-      0x1C140A01,  //  0007  EQ	R5	R5	R1
-      0x78160001,  //  0008  JMPF	R5	#000B
-      0xA8040001,  //  0009  EXBLK	1	1
-      0x80040800,  //  000A  RET	1	R4
-      0x7001FFF7,  //  000B  JMP		#0004
-      0x580C0002,  //  000C  LDCONST	R3	K2
-      0xAC0C0200,  //  000D  CATCH	R3	1	0
-      0xB0080000,  //  000E  RAISE	2	R0	R0
-      0x80040400,  //  000F  RET	1	R2
+    ( &(const binstruction[ 4]) {  /* code */
+      0x6004000C,  //  0000  GETGBL	R1	G12
+      0x88080100,  //  0001  GETMBR	R2	R0	K0
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -1825,6 +1700,37 @@ be_local_closure(Matter_TLV_list_findsubtyp,   /* name */
       0x80040600,  //  0007  RET	1	R3
       0x4C0C0000,  //  0008  LDNIL	R3
       0x80040600,  //  0009  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: encode
+********************************************************************/
+be_local_closure(Matter_TLV_list_encode,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_encode_inner),
+    /* K1   */  be_nested_str_weak(is_struct),
+    }),
+    be_str_weak(encode),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x88140101,  //  0002  GETMBR	R5	R0	K1
+      0x7C080600,  //  0003  CALL	R2	3
+      0x80040400,  //  0004  RET	1	R2
     })
   )
 );
@@ -1959,6 +1865,39 @@ be_local_closure(Matter_TLV_list_tostring_inner,   /* name */
 
 
 /********************************************************************
+** Solidified function: tostring
+********************************************************************/
+be_local_closure(Matter_TLV_list_tostring,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tostring_inner),
+    /* K1   */  be_nested_str_weak(_X5B_X5B),
+    /* K2   */  be_nested_str_weak(_X5D_X5D),
+    }),
+    be_str_weak(tostring),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x500C0000,  //  0001  LDBOOL	R3	0	0
+      0x58100001,  //  0002  LDCONST	R4	K1
+      0x58140002,  //  0003  LDCONST	R5	K2
+      0x7C040800,  //  0004  CALL	R1	4
+      0x80040200,  //  0005  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: findsubval
 ********************************************************************/
 be_local_closure(Matter_TLV_list_findsubval,   /* name */
@@ -1994,60 +1933,9 @@ be_local_closure(Matter_TLV_list_findsubval,   /* name */
 
 
 /********************************************************************
-** Solidified function: parse
+** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_TLV_list_parse,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(TLV),
-    /* K1   */  be_nested_str_weak(EOC),
-    /* K2   */  be_nested_str_weak(parse),
-    /* K3   */  be_nested_str_weak(next_idx),
-    /* K4   */  be_nested_str_weak(val),
-    /* K5   */  be_nested_str_weak(push),
-    /* K6   */  be_const_int(1),
-    }),
-    be_str_weak(parse),
-    &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x940C0202,  //  0000  GETIDX	R3	R1	R2
-      0x88100100,  //  0001  GETMBR	R4	R0	K0
-      0x88100901,  //  0002  GETMBR	R4	R4	K1
-      0x200C0604,  //  0003  NE	R3	R3	R4
-      0x780E000B,  //  0004  JMPF	R3	#0011
-      0x880C0100,  //  0005  GETMBR	R3	R0	K0
-      0x8C0C0702,  //  0006  GETMET	R3	R3	K2
-      0x5C140200,  //  0007  MOVE	R5	R1
-      0x5C180400,  //  0008  MOVE	R6	R2
-      0x5C1C0000,  //  0009  MOVE	R7	R0
-      0x7C0C0800,  //  000A  CALL	R3	4
-      0x88080703,  //  000B  GETMBR	R2	R3	K3
-      0x88100104,  //  000C  GETMBR	R4	R0	K4
-      0x8C100905,  //  000D  GETMET	R4	R4	K5
-      0x5C180600,  //  000E  MOVE	R6	R3
-      0x7C100400,  //  000F  CALL	R4	2
-      0x7001FFEE,  //  0010  JMP		#0000
-      0x00080506,  //  0011  ADD	R2	R2	K6
-      0x90020602,  //  0012  SETMBR	R0	K3	R2
-      0x80040400,  //  0013  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: getsubval
-********************************************************************/
-be_local_closure(Matter_TLV_list_getsubval,   /* name */
+be_local_closure(Matter_TLV_list_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -2057,18 +1945,29 @@ be_local_closure(Matter_TLV_list_getsubval,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(getsub),
-    /* K1   */  be_nested_str_weak(val),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(typ),
+    /* K2   */  be_nested_str_weak(TLV),
+    /* K3   */  be_nested_str_weak(LIST),
+    /* K4   */  be_nested_str_weak(val),
     }),
-    be_str_weak(getsubval),
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x88080501,  //  0003  GETMBR	R2	R2	K1
-      0x80040400,  //  0004  RET	1	R2
+    ( &(const binstruction[13]) {  /* code */
+      0x60080003,  //  0000  GETGBL	R2	G3
+      0x5C0C0000,  //  0001  MOVE	R3	R0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x88080102,  //  0006  GETMBR	R2	R0	K2
+      0x88080503,  //  0007  GETMBR	R2	R2	K3
+      0x90020202,  //  0008  SETMBR	R0	K1	R2
+      0x60080012,  //  0009  GETGBL	R2	G18
+      0x7C080000,  //  000A  CALL	R2	0
+      0x90020802,  //  000B  SETMBR	R0	K4	R2
+      0x80000000,  //  000C  RET	0
     })
   )
 );
@@ -2076,48 +1975,9 @@ be_local_closure(Matter_TLV_list_getsubval,   /* name */
 
 
 /********************************************************************
-** Solidified function: add_obj
+** Solidified function: add_array
 ********************************************************************/
-be_local_closure(Matter_TLV_list_add_obj,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(to_TLV),
-    /* K1   */  be_nested_str_weak(tag_sub),
-    /* K2   */  be_nested_str_weak(val),
-    /* K3   */  be_nested_str_weak(push),
-    }),
-    be_str_weak(add_obj),
-    &be_const_str_solidified,
-    ( &(const binstruction[11]) {  /* code */
-      0x4C0C0000,  //  0000  LDNIL	R3
-      0x200C0403,  //  0001  NE	R3	R2	R3
-      0x780E0006,  //  0002  JMPF	R3	#000A
-      0x8C0C0500,  //  0003  GETMET	R3	R2	K0
-      0x7C0C0200,  //  0004  CALL	R3	1
-      0x900E0201,  //  0005  SETMBR	R3	K1	R1
-      0x88100102,  //  0006  GETMBR	R4	R0	K2
-      0x8C100903,  //  0007  GETMET	R4	R4	K3
-      0x5C180600,  //  0008  MOVE	R6	R3
-      0x7C100400,  //  0009  CALL	R4	2
-      0x80040000,  //  000A  RET	1	R0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: encode
-********************************************************************/
-be_local_closure(Matter_TLV_list_encode,   /* name */
+be_local_closure(Matter_TLV_list_add_array,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -2127,76 +1987,26 @@ be_local_closure(Matter_TLV_list_encode,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_encode_inner),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(TLV),
+    /* K1   */  be_nested_str_weak(Matter_TLV_array),
+    /* K2   */  be_nested_str_weak(tag_sub),
+    /* K3   */  be_nested_str_weak(val),
+    /* K4   */  be_nested_str_weak(push),
     }),
-    be_str_weak(encode),
+    be_str_weak(add_array),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x50140000,  //  0002  LDBOOL	R5	0	0
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80040400,  //  0004  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: setitem
-********************************************************************/
-be_local_closure(Matter_TLV_list_setitem,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(val),
-    }),
-    be_str_weak(setitem),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x980C0202,  //  0001  SETIDX	R3	R1	R2
-      0x80000000,  //  0002  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: push
-********************************************************************/
-be_local_closure(Matter_TLV_list_push,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(val),
-    /* K1   */  be_nested_str_weak(push),
-    }),
-    be_str_weak(push),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[10]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
+      0x5C100000,  //  0002  MOVE	R4	R0
       0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
+      0x900A0401,  //  0004  SETMBR	R2	K2	R1
+      0x880C0103,  //  0005  GETMBR	R3	R0	K3
+      0x8C0C0704,  //  0006  GETMET	R3	R3	K4
+      0x5C140400,  //  0007  MOVE	R5	R2
+      0x7C0C0400,  //  0008  CALL	R3	2
+      0x80040400,  //  0009  RET	1	R2
     })
   )
 );
@@ -2256,6 +2066,197 @@ be_local_closure(Matter_TLV_list_add_TLV,   /* name */
 
 
 /********************************************************************
+** Solidified function: setitem
+********************************************************************/
+be_local_closure(Matter_TLV_list_setitem,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(val),
+    }),
+    be_str_weak(setitem),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 3]) {  /* code */
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x980C0202,  //  0001  SETIDX	R3	R1	R2
+      0x80000000,  //  0002  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: _encode_inner
+********************************************************************/
+be_local_closure(Matter_TLV_list__encode_inner,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[10]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_encode_tag),
+    /* K1   */  be_nested_str_weak(val),
+    /* K2   */  be_nested_str_weak(copy),
+    /* K3   */  be_nested_str_weak(sort),
+    /* K4   */  be_nested_str_weak(encode),
+    /* K5   */  be_nested_str_weak(stop_iteration),
+    /* K6   */  be_nested_str_weak(add),
+    /* K7   */  be_nested_str_weak(TLV),
+    /* K8   */  be_nested_str_weak(EOC),
+    /* K9   */  be_const_int(1),
+    }),
+    be_str_weak(_encode_inner),
+    &be_const_str_solidified,
+    ( &(const binstruction[35]) {  /* code */
+      0x4C0C0000,  //  0000  LDNIL	R3
+      0x1C0C0203,  //  0001  EQ	R3	R1	R3
+      0x780E0002,  //  0002  JMPF	R3	#0006
+      0x600C0015,  //  0003  GETGBL	R3	G21
+      0x7C0C0000,  //  0004  CALL	R3	0
+      0x5C040600,  //  0005  MOVE	R1	R3
+      0x8C0C0100,  //  0006  GETMET	R3	R0	K0
+      0x5C140200,  //  0007  MOVE	R5	R1
+      0x7C0C0400,  //  0008  CALL	R3	2
+      0x880C0101,  //  0009  GETMBR	R3	R0	K1
+      0x8C0C0702,  //  000A  GETMET	R3	R3	K2
+      0x7C0C0200,  //  000B  CALL	R3	1
+      0x780A0002,  //  000C  JMPF	R2	#0010
+      0x8C100103,  //  000D  GETMET	R4	R0	K3
+      0x5C180600,  //  000E  MOVE	R6	R3
+      0x7C100400,  //  000F  CALL	R4	2
+      0x60100010,  //  0010  GETGBL	R4	G16
+      0x5C140600,  //  0011  MOVE	R5	R3
+      0x7C100200,  //  0012  CALL	R4	1
+      0xA8020005,  //  0013  EXBLK	0	#001A
+      0x5C140800,  //  0014  MOVE	R5	R4
+      0x7C140000,  //  0015  CALL	R5	0
+      0x8C180B04,  //  0016  GETMET	R6	R5	K4
+      0x5C200200,  //  0017  MOVE	R8	R1
+      0x7C180400,  //  0018  CALL	R6	2
+      0x7001FFF9,  //  0019  JMP		#0014
+      0x58100005,  //  001A  LDCONST	R4	K5
+      0xAC100200,  //  001B  CATCH	R4	1	0
+      0xB0080000,  //  001C  RAISE	2	R0	R0
+      0x8C100306,  //  001D  GETMET	R4	R1	K6
+      0x88180107,  //  001E  GETMBR	R6	R0	K7
+      0x88180D08,  //  001F  GETMBR	R6	R6	K8
+      0x581C0009,  //  0020  LDCONST	R7	K9
+      0x7C100600,  //  0021  CALL	R4	3
+      0x80040200,  //  0022  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: findsub
+********************************************************************/
+be_local_closure(Matter_TLV_list_findsub,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(val),
+    /* K1   */  be_nested_str_weak(tag_sub),
+    /* K2   */  be_nested_str_weak(stop_iteration),
+    }),
+    be_str_weak(findsub),
+    &be_const_str_solidified,
+    ( &(const binstruction[16]) {  /* code */
+      0x600C0010,  //  0000  GETGBL	R3	G16
+      0x88100100,  //  0001  GETMBR	R4	R0	K0
+      0x7C0C0200,  //  0002  CALL	R3	1
+      0xA8020007,  //  0003  EXBLK	0	#000C
+      0x5C100600,  //  0004  MOVE	R4	R3
+      0x7C100000,  //  0005  CALL	R4	0
+      0x88140901,  //  0006  GETMBR	R5	R4	K1
+      0x1C140A01,  //  0007  EQ	R5	R5	R1
+      0x78160001,  //  0008  JMPF	R5	#000B
+      0xA8040001,  //  0009  EXBLK	1	1
+      0x80040800,  //  000A  RET	1	R4
+      0x7001FFF7,  //  000B  JMP		#0004
+      0x580C0002,  //  000C  LDCONST	R3	K2
+      0xAC0C0200,  //  000D  CATCH	R3	1	0
+      0xB0080000,  //  000E  RAISE	2	R0	R0
+      0x80040400,  //  000F  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: parse
+********************************************************************/
+be_local_closure(Matter_TLV_list_parse,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_weak(TLV),
+    /* K1   */  be_nested_str_weak(EOC),
+    /* K2   */  be_nested_str_weak(parse),
+    /* K3   */  be_nested_str_weak(next_idx),
+    /* K4   */  be_nested_str_weak(val),
+    /* K5   */  be_nested_str_weak(push),
+    /* K6   */  be_const_int(1),
+    }),
+    be_str_weak(parse),
+    &be_const_str_solidified,
+    ( &(const binstruction[20]) {  /* code */
+      0x940C0202,  //  0000  GETIDX	R3	R1	R2
+      0x88100100,  //  0001  GETMBR	R4	R0	K0
+      0x88100901,  //  0002  GETMBR	R4	R4	K1
+      0x200C0604,  //  0003  NE	R3	R3	R4
+      0x780E000B,  //  0004  JMPF	R3	#0011
+      0x880C0100,  //  0005  GETMBR	R3	R0	K0
+      0x8C0C0702,  //  0006  GETMET	R3	R3	K2
+      0x5C140200,  //  0007  MOVE	R5	R1
+      0x5C180400,  //  0008  MOVE	R6	R2
+      0x5C1C0000,  //  0009  MOVE	R7	R0
+      0x7C0C0800,  //  000A  CALL	R3	4
+      0x88080703,  //  000B  GETMBR	R2	R3	K3
+      0x88100104,  //  000C  GETMBR	R4	R0	K4
+      0x8C100905,  //  000D  GETMET	R4	R4	K5
+      0x5C180600,  //  000E  MOVE	R6	R3
+      0x7C100400,  //  000F  CALL	R4	2
+      0x7001FFEE,  //  0010  JMP		#0000
+      0x00080506,  //  0011  ADD	R2	R2	K6
+      0x90020602,  //  0012  SETMBR	R0	K3	R2
+      0x80040400,  //  0013  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: getsub
 ********************************************************************/
 be_local_closure(Matter_TLV_list_getsub,   /* name */
@@ -2297,28 +2298,29 @@ extern const bclass be_class_Matter_TLV_item;
 be_local_class(Matter_TLV_list,
     0,
     &be_class_Matter_TLV_item,
-    be_nested_map(20,
+    be_nested_map(21,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(add_struct, -1), be_const_closure(Matter_TLV_list_add_struct_closure) },
-        { be_const_key_weak(getsub, -1), be_const_closure(Matter_TLV_list_getsub_closure) },
-        { be_const_key_weak(add_array, -1), be_const_closure(Matter_TLV_list_add_array_closure) },
-        { be_const_key_weak(add_TLV, -1), be_const_closure(Matter_TLV_list_add_TLV_closure) },
-        { be_const_key_weak(size, -1), be_const_closure(Matter_TLV_list_size_closure) },
-        { be_const_key_weak(add_list, 18), be_const_closure(Matter_TLV_list_add_list_closure) },
-        { be_const_key_weak(item, 13), be_const_closure(Matter_TLV_list_item_closure) },
-        { be_const_key_weak(findsubval, -1), be_const_closure(Matter_TLV_list_findsubval_closure) },
-        { be_const_key_weak(parse, -1), be_const_closure(Matter_TLV_list_parse_closure) },
-        { be_const_key_weak(findsubtyp, 3), be_const_closure(Matter_TLV_list_findsubtyp_closure) },
-        { be_const_key_weak(tostring_inner, -1), be_const_closure(Matter_TLV_list_tostring_inner_closure) },
-        { be_const_key_weak(encode, 7), be_const_closure(Matter_TLV_list_encode_closure) },
-        { be_const_key_weak(findsub, 8), be_const_closure(Matter_TLV_list_findsub_closure) },
-        { be_const_key_weak(getsubval, -1), be_const_closure(Matter_TLV_list_getsubval_closure) },
         { be_const_key_weak(add_obj, -1), be_const_closure(Matter_TLV_list_add_obj_closure) },
-        { be_const_key_weak(init, 11), be_const_closure(Matter_TLV_list_init_closure) },
-        { be_const_key_weak(setitem, -1), be_const_closure(Matter_TLV_list_setitem_closure) },
+        { be_const_key_weak(add_struct, -1), be_const_closure(Matter_TLV_list_add_struct_closure) },
         { be_const_key_weak(push, -1), be_const_closure(Matter_TLV_list_push_closure) },
-        { be_const_key_weak(tostring, -1), be_const_closure(Matter_TLV_list_tostring_closure) },
-        { be_const_key_weak(_encode_inner, 1), be_const_closure(Matter_TLV_list__encode_inner_closure) },
+        { be_const_key_weak(getsubval, 20), be_const_closure(Matter_TLV_list_getsubval_closure) },
+        { be_const_key_weak(getsub, -1), be_const_closure(Matter_TLV_list_getsub_closure) },
+        { be_const_key_weak(parse, -1), be_const_closure(Matter_TLV_list_parse_closure) },
+        { be_const_key_weak(size, -1), be_const_closure(Matter_TLV_list_size_closure) },
+        { be_const_key_weak(findsubtyp, -1), be_const_closure(Matter_TLV_list_findsubtyp_closure) },
+        { be_const_key_weak(encode, -1), be_const_closure(Matter_TLV_list_encode_closure) },
+        { be_const_key_weak(tostring_inner, 4), be_const_closure(Matter_TLV_list_tostring_inner_closure) },
+        { be_const_key_weak(tostring, 16), be_const_closure(Matter_TLV_list_tostring_closure) },
+        { be_const_key_weak(findsubval, -1), be_const_closure(Matter_TLV_list_findsubval_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(Matter_TLV_list_init_closure) },
+        { be_const_key_weak(add_array, 15), be_const_closure(Matter_TLV_list_add_array_closure) },
+        { be_const_key_weak(add_TLV, 18), be_const_closure(Matter_TLV_list_add_TLV_closure) },
+        { be_const_key_weak(findsub, -1), be_const_closure(Matter_TLV_list_findsub_closure) },
+        { be_const_key_weak(_encode_inner, -1), be_const_closure(Matter_TLV_list__encode_inner_closure) },
+        { be_const_key_weak(is_struct, -1), be_const_bool(0) },
+        { be_const_key_weak(setitem, -1), be_const_closure(Matter_TLV_list_setitem_closure) },
+        { be_const_key_weak(item, 5), be_const_closure(Matter_TLV_list_item_closure) },
+        { be_const_key_weak(add_list, -1), be_const_closure(Matter_TLV_list_add_list_closure) },
     })),
     be_str_weak(Matter_TLV_list)
 );
@@ -2408,36 +2410,6 @@ be_local_closure(Matter_TLV_struct_tostring,   /* name */
 
 
 /********************************************************************
-** Solidified function: encode
-********************************************************************/
-be_local_closure(Matter_TLV_struct_encode,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_encode_inner),
-    }),
-    be_str_weak(encode),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x50140200,  //  0002  LDBOOL	R5	1	0
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80040400,  //  0004  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_TLV_struct
 ********************************************************************/
 extern const bclass be_class_Matter_TLV_list;
@@ -2448,7 +2420,7 @@ be_local_class(Matter_TLV_struct,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(init, -1), be_const_closure(Matter_TLV_struct_init_closure) },
         { be_const_key_weak(tostring, -1), be_const_closure(Matter_TLV_struct_tostring_closure) },
-        { be_const_key_weak(encode, -1), be_const_closure(Matter_TLV_struct_encode_closure) },
+        { be_const_key_weak(is_struct, -1), be_const_bool(1) },
     })),
     be_str_weak(Matter_TLV_struct)
 );

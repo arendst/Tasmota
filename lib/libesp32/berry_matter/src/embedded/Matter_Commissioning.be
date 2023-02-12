@@ -63,7 +63,7 @@ class Matter_Commisioning_Context
     self.window_open = true         # auto-commissioning for now
   end
 
-  def process_incoming(msg, remote_ip, remote_port)
+  def process_incoming(msg)
     #
     if !self.window_open
       tasmota.log("MTR: commissioning not open", 2)
@@ -72,21 +72,21 @@ class Matter_Commisioning_Context
 
     tasmota.log("MTR: received message " + matter.inspect(msg), 3)
     if msg.opcode == 0x20
-      return self.parse_PBKDFParamRequest(msg, remote_ip, remote_port)
+      return self.parse_PBKDFParamRequest(msg)
     elif msg.opcode == 0x22
-      return self.parse_Pake1(msg, remote_ip, remote_port)
+      return self.parse_Pake1(msg)
     elif msg.opcode == 0x24
-      return self.parse_Pake3(msg, remote_ip, remote_port)
+      return self.parse_Pake3(msg)
     elif msg.opcode == 0x30
-      return self.parse_Sigma1(msg, remote_ip, remote_port)
+      return self.parse_Sigma1(msg)
     elif msg.opcode == 0x32
-      return self.parse_Sigma3(msg, remote_ip, remote_port)
+      return self.parse_Sigma3(msg)
     end
 
     return false
   end
 
-  def parse_PBKDFParamRequest(msg, addr, port)
+  def parse_PBKDFParamRequest(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x20 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -122,10 +122,10 @@ class Matter_Commisioning_Context
     var resp = msg.build_response(0x21 #-PBKDR Response-#, true)
     var raw = resp.encode(pbkdfparamresp_raw)
 
-    self.responder.send_response(raw, addr, port, resp.message_counter)
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
   end
 
-  def parse_Pake1(msg, addr, port)
+  def parse_Pake1(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x22 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -200,10 +200,10 @@ class Matter_Commisioning_Context
     var resp = msg.build_response(0x23 #-pake-2-#, true)  # no reliable flag
     var raw = resp.encode(pake2_raw)
 
-    self.responder.send_response(raw, addr, port, resp.message_counter)
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
   end
 
-  def parse_Pake3(msg, addr, port)
+  def parse_Pake3(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x24 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -241,7 +241,7 @@ class Matter_Commisioning_Context
 
     var raw = resp.encode(status_raw)
 
-    self.responder.send_response(raw, addr, port, nil)
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, nil)
     self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.session_timestamp)
   end
 
@@ -268,7 +268,7 @@ class Matter_Commisioning_Context
     return nil
   end
 
-  def parse_Sigma1(msg, addr, port)
+  def parse_Sigma1(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -279,7 +279,15 @@ class Matter_Commisioning_Context
     self.initiatorEph_pub = sigma1.initiatorEphPubKey
 
     # find session
-    var session = self.find_session_by_destination_id(sigma1.destinationId, sigma1.initiatorRandom)
+    var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
+
+    # Check that it's a resumption
+    var session
+    if is_resumption
+      session = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
+    else
+      session = self.find_session_by_destination_id(sigma1.destinationId, sigma1.initiatorRandom)
+    end
     if session == nil   raise "valuer_error", "StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)" end
     session.source_node_id = msg.source_node_id
     session.set_mode(matter.Session.__CASE)
@@ -294,8 +302,7 @@ class Matter_Commisioning_Context
 
 
     # Check that it's a resumption
-    if   sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil &&
-         session.shared_secret != nil
+    if   is_resumption && session.shared_secret != nil
       # Resumption p.169
       var s1rk_salt = sigma1.initiatorRandom + sigma1.resumptionID
       var s1rk_info = bytes().fromstring("Sigma1_Resume")
@@ -356,7 +363,7 @@ class Matter_Commisioning_Context
         var resp = msg.build_response(0x33 #-sigma-2-resume-#, true)
         var raw = resp.encode(sigma2resume_raw)
     
-        self.responder.send_response(raw, addr, port, resp.message_counter)
+        self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
         session.close()
         session.set_keys(i2r, r2i, ac, session_timestamp)
@@ -431,14 +438,14 @@ class Matter_Commisioning_Context
       var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
       var raw = resp.encode(sigma2_raw)
   
-      self.responder.send_response(raw, addr, port, resp.message_counter)
+      self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
       return true
     end
 
     return true
   end
 
-  def parse_Sigma3(msg, addr, port)
+  def parse_Sigma3(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x32 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -546,7 +553,7 @@ class Matter_Commisioning_Context
 
     var raw = resp.encode(status_raw)
 
-    self.responder.send_response(raw, addr, port, resp.message_counter)
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
     session.close()
     session.set_keys(i2r, r2i, ac, session_timestamp)

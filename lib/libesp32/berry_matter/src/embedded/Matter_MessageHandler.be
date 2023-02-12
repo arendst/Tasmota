@@ -35,7 +35,7 @@ class Matter_MessageHandler
   def init(device)
     self.device = device
     self.commissioning = matter.Commisioning_Context(self)
-    self.im = matter.IM(self)
+    self.im = matter.IM(self, device)
     self.counter_rcv = matter.Counter()
   end
 
@@ -49,7 +49,7 @@ class Matter_MessageHandler
     import string
     try
       tasmota.log("MTR: MessageHandler::msg_received raw="+raw.tohex(), 4)
-      var frame = matter.Frame(self, raw)
+      var frame = matter.Frame(self, raw, addr, port)
 
       var ok = frame.decode_header()
       if !ok      return false end

@@ -70,6 +70,7 @@ class Matter_Device
 
     # add the default plugin
     self.plugins.push(matter.Plugin_core(self))
+    self.plugins.push(matter.Plugin_Relay(self))
 
     self.start_mdns_announce_hostnames()
 
@@ -267,21 +268,134 @@ class Matter_Device
   #############################################################
   # read an attribute
   #
-  def read_attribute(msg, endpoint, cluster, attribute)
-    var idx = 0
-    while idx < size(self.plugins)
-      var plugin = self.plugins[idx]
+  # def read_attribute(msg, ctx)
+  #   # dispatch only to plugins that support this endpoint and cluster
+  #   var endpoint = ctx.endpoint
+  #   var cluster = ctx.cluster
 
-      var ret = plugin.read_attribute(msg, endpoint, cluster, attribute)
-      if  ret != nil
-        return ret
+  #   var idx = 0
+  #   while idx < size(self.plugins)
+  #     var plugin = self.plugins[idx]
+
+  #     if plugin.has(cluster, endpoint)
+  #       var ret = plugin.read_attribute(msg, ctx)
+  #       if  ret != nil
+  #         return ret
+  #       end
+  #     end
+
+  #     idx += 1
+  #   end
+  # end
+
+  #############################################################
+  # expand attribute list based 
+  #
+  # called only when expansion is needed,
+  # so we don't need to report any error since they are ignored
+  def process_attribute_expansion(ctx, cb)
+    import string
+    var endpoint = ctx.endpoint
+    var endpoint_mono = [ endpoint ]
+    var endpoint_found = false                # did any endpoint match
+    var cluster = ctx.cluster
+    var cluster_mono = [ cluster ]
+    var cluster_found = false
+    var attribute = ctx.attribute
+    var attribute_mono = [ attribute ]
+    var attribute_found = false
+
+    var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
+
+    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 3)
+    for pi: self.plugins
+      var ep_list = pi.get_endpoints()    # get supported endpoints for this plugin
+      tasmota.log(string.format("MTR: ep_list %s %s", str(pi), str(ep_list)), 3)
+      if endpoint != nil
+        # we have a specific endpoint, make sure it's in the list
+        if ep_list.find(endpoint) != nil
+          ep_list = endpoint_mono
+          endpoint_found = true
+        else
+          continue
+        end
       end
+      # ep_list is the actual list of candidate endpoints for this plugin
+      # iterate on endpoints
+      for ep: ep_list
+        # now filter on clusters
+        var cluster_list = pi.get_cluster_list(ep)
+        tasmota.log(string.format("MTR: cluster_list %s %s", str(ep), str(cluster_list)), 3)
+        if cluster != nil
+          # we have a specific cluster, make sure it's in the list
+          if cluster_list.find(cluster) != nil
+            cluster_list = cluster_mono
+            cluster_found = true
+          else
+            continue
+          end
+        end
+        # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+        for cl: cluster_list
+          # now filter on attribute
+          var attr_list = pi.get_attribute_list(ep, cluster)
+          tasmota.log(string.format("MTR: attr_list %s %s", str(cl), str(attr_list)), 3)
+          if attribute != nil
+            # we have a specific attribute, make sure it's in the list
+            if attr_list.find(attribute) != nil
+              attr_list = attribute_mono
+              attribute_found = true
+            else
+              continue
+            end
+            for at: attr_list
+              # we now have the complete candidate: ep/cl/at
+              tasmota.log(string.format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
+              ctx.endpoint = ep
+              ctx.cluster = cl
+              ctx.attribute = at
+              var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
+              if finished     return end
+            end
+          end
+        end
+      end
+    end
 
-      idx += 1
+    # we didn't have any successful match, report an error if direct (non-expansion request)
+    if direct
+      # since it's a direct request, ctx has already the correct endpoint/cluster/attribute
+      if   !endpoint_found      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      elif !cluster_found       ctx.status = matter.UNSUPPORTED_CLUSTER
+      elif !attribute_found     ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+      else                      ctx.status = matter.UNREPORTABLE_ATTRIBUTE
+      end
+      cb(nil, ctx, true)
     end
   end
 
+  # def process_read_attribute(ctx)
+  #   self.process_attribute_expansion(ctx,
+  #       / pi, ctx, direct -> pi.read_attribute(ctx))
+  # end
 
+  #############################################################
+  # get active endpoints
+  #
+  # return the list of endpoints from all plugins (distinct)
+  def get_active_endpoints(exclude_zero)
+    var ret = []
+    for p:self.plugins
+      var e = p.get_endpoints()
+      for elt:e
+        if exclude_zero && elt == 0   continue end
+        if ret.find(elt) == nil
+          ret.push(elt)
+        end
+      end
+    end
+    return ret
+  end
 
   #############################################################
   # Persistance of Matter Device parameters
