@@ -138,13 +138,16 @@ void SwitchProbe(void) {
 
   uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+    if (!bitRead(Switch.used, i)) {
+      Switch.probe_mutex = false;
+      return;
+    }
+
     if (PinUsed(GPIO_SWT1, i)) {
       not_activated = digitalRead(Pin(GPIO_SWT1, i));
-    }
-    else if (bitRead(Switch.used, i)) {
+    } else {
       not_activated = bitRead(Switch.virtual_pin, i);
     }
-    else { continue; }
 
     // Olimex user_switch2.c code to fix 50Hz induced pulses
     if (not_activated) {

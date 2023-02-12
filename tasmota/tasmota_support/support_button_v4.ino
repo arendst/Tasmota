@@ -134,6 +134,11 @@ void ButtonProbe(void) {
 
   uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
+    if (!bitRead(Button.used, i)) {
+      Button.probe_mutex = false;
+      return;
+    }
+
     if (PinUsed(GPIO_KEY1, i)) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
       if (bitRead(TouchButton.touch_mask, i)) {
@@ -147,11 +152,9 @@ void ButtonProbe(void) {
       } else
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
       not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
-    }
-    else if (bitRead(Button.used, i)) {
+    } else {
       not_activated = (bitRead(Button.virtual_pin, i) != bitRead(Button.inverted_mask, i));
     }
-    else { continue; }
 
     if (not_activated) {
 
