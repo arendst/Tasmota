@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of January 2023. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of February 2023. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -302,7 +302,7 @@ Silicognition wESP32         {"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,55
 TZT ESP8266 Weather Station Kit  {"NAME":"TZT Weather Station","GPIO":[32,0,640,0,1,1184,0,0,1,1,608,1,1,1],"FLAG":0,"BASE":18}
 Wemos D1 Mini ESP32          {"NAME":"Wemos D1 Mini ESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0],"FLAG":0,"BASE":1}
 Wemos LOLIN32 Lite V1.0.0 (ESP32)  {"NAME":"Wemos LOLIN32 Lite V1.0.0","GPIO":[1,0,1,0,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,1,0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0],"FLAG":0,"BASE":1}
-Wireless Tag ESP32 Ethernet  {"NAME":"WT32-ETH01","GPIO":[1,1,1,1,1,1,0,0,1,0,1,1,3840,576,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1],"FLAG":0,"BASE":1}
+Wireless Tag ESP32 Ethernet  {"NAME":"WT32_ETH01","GPIO":[1,1,1,1,1,1,0,0,1,0,1,1,3840,576,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1],"FLAG":0,"BASE":1}
 Witty Cloud                  {"NAME":"Witty Cloud","GPIO":[1,1,320,1,32,1,0,0,417,418,1,416,1,4704],"FLAG":0,"BASE":32}
 Yison ESP-01/ESP-202         {"NAME":"Yison Dev Board","GPIO":[259,544,258,1,260,261,1,1,416,418,257,417,256,1],"FLAG":0,"BASE":18}
 ```
@@ -533,7 +533,7 @@ Goldair SleepSmart GCPF315   {"NAME":"Goldair Fan","GPIO":[0,0,0,0,0,0,0,0,0,230
 Holmes 36" Oscillating Tower  {"NAME":"Generic","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":54,"CMND":"TuyaMcu 11,1 | TuyaMcu 12,5 | WebButton1 Power | WebButton2 Oscillation "}
 Lucci Connect Remote Control  {"NAME":"Lucci Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 QuietCool Gable Mount Attic  {"NAME":"QuietCool-AFG-SMT-PRO-2.0","GPIO":[0,0,0,0,0,224,0,0,0,0,0,0,0,0,640,608,0,0,0,225,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Interlock 1|WebButton1 Low|WebButton2 High|SO8 1"}
-Sichler Haushaltsger�te Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
+Sichler Haushaltsgeraete Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Technical Pro                {"NAME":"FXA16 Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 12,8"}
 Zemismart Bladeless          {"NAME":"Bladeless Fan","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 ```
@@ -688,7 +688,7 @@ RGB 12-24V                   {"NAME":"WS03","GPIO":[0,0,0,0,0,0,0,0,418,417,416,
 RGB+CCT 12-24V               {"NAME":"WS05","GPIO":[0,0,0,0,0,420,0,0,418,417,416,419,0,0],"FLAG":0,"BASE":18}
 RGBW 12-24V                  {"NAME":"*WS04","GPIO":[0,0,0,0,0,0,0,0,417,418,416,419,0,0],"FLAG":0,"BASE":18}
 Shelly RGBW2                 {"NAME":"Shelly RGBW2","GPIO":[0,0,288,0,419,1,0,0,416,32,418,417,0,0],"FLAG":0,"BASE":18}
-Spectrum Smart RGBCCT        {"NAME":"Spectrum Smart WOJ+05641","GPIO":[32,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
+Spectrum Smart RGBCCT        {"NAME":"Spectrum Smart RGB CCT Controller","GPIO":[32,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Xunata Led Controller High Voltage 110/220V  {"NAME":"KL-LED-WIFI-AC","GPIO":[0,0,0,0,0,0,0,0,0,416,0,0,0,0],"FLAG":0,"BASE":18}
 ZJ-WF-ESP-A v1.1             {"NAME":"RGB2","GPIO":[0,0,0,0,0,0,0,0,417,416,418,0,0,0],"FLAG":0,"BASE":18}
 ```
@@ -901,7 +901,7 @@ Dewenwils Heavy Duty 40A     {"NAME":"Dewenwils HOWT01A","GPIO":[0,0,544,0,0,0,0
 ECF-SOP03                    {"NAME":"Outdoor3Outlet","GPIO":[0,0,0,226,320,0,0,0,224,32,225,0,0,0],"FLAG":0,"BASE":18}
 Ecoolbuy 4 Socket IP44       {"NAME":"ECCOLBUY 4","GPIO":[0,0,0,0,225,226,0,0,224,321,32,0,227,0],"FLAG":0,"BASE":18}
 Edimax 2AC                   {"NAME":"EDI SP-1122WTO","GPIO":[0,0,0,0,225,576,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
-Emax IP44                    {"NAME":"Emax Smart Socket","GPIO":[0,0,0,0,320,0,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
+Emax IP44                    {"NAME":"Emax Smart Socket","GPIO":[0,0,0,0,320,0,0,0,224,321,32,0,0,0],"FLAG":0,"BASE":18}
 Energizer 2AC Weather Resistant  {"NAME":"Energizer EOX3-1001-BLK","GPIO":[0,0,0,0,320,576,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
 Etekcity                     {"NAME":"ES015-TB","GPIO":[0,0,0,0,224,225,288,0,2656,2688,32,2592,289,0],"FLAG":0,"BASE":18}
 Feit Electric PLUG/WIFI/WP   {"NAME":"Prime Smart ou","GPIO":[0,1,0,1,544,320,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
@@ -2620,7 +2620,7 @@ Shelly EM                    {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,345
 Shelly i3 Action and Scenes Activation Device  {"NAME":"Shelly i3","GPIO":[0,0,0,0,0,320,0,0,193,194,192,0,0,4736],"FLAG":0,"BASE":18}
 Shelly Plus 1                {"NAME":"Shelly Plus 1 ","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,32,224,0,0,0,0,0,4736,4705,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Shelly Plus 1PM              {"NAME":"Shelly Plus 1PM","GPIO":[0,0,0,0,192,2720,0,0,0,0,0,0,0,0,2656,0,0,0,0,2624,0,32,224,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
-Shelly Plus 2PM              {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3456,0,0,0,0,0,0,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
+Shelly Plus 2PM              {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,34,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1}
 Shelly Plus i4               {"NAME":"Shelly Plus i4","GPIO":[0,0,0,0,0,0,0,0,192,0,193,0,0,0,0,0,0,0,0,0,0,0,195,194,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"SwitchMode1 1 | SwitchMode2 1 | SwitchMode3 1 | SwitchMode4 1 | SwitchTopic 0 | SetOption114 1"}
 Sinilink USB                 {"NAME":"XY-WFUSB","GPIO":[1,1,0,1,32,224,0,0,0,0,320,0,544,0],"FLAG":0,"BASE":18}
 Smarsecur Smart Switch       {"NAME":"ESP-02S","GPIO":[0,0,0,32,0,0,0,0,0,0,224,0,0,0],"FLAG":0,"BASE":18}
@@ -2720,7 +2720,7 @@ Kapok T16                    {"NAME":"tiltech-t16","GPIO":[0,320,0,32,192,0,0,0,
 Kesen KS-604                 {"NAME":"KS-604","GPIO":[1,1,288,1,1,33,0,0,225,224,1,1,32,0],"FLAG":0,"BASE":18}
 Kesen KS-604S                {"NAME":"KS-604S","GPIO":[1,1,258,1,1,33,0,0,225,224,1,1,32,4704],"FLAG":0,"BASE":18}
 Keygma KS-15TW               {"NAME":"Keygma KS-15T","GPIO":[0,0,0,0,0,320,0,0,224,160,0,0,0,0],"FLAG":0,"BASE":18}
-Knightsbridge Dual Waterproof  {"NAME":"Knightsbridge Dual Socket","GPIO":[321,544,320,544,225,0,0,0,0,33,0,224,32,0],"FLAG":0,"BASE":18}
+Knightsbridge Dual Waterproof  {"NAME":"Knightsbridge Dual Socket","GPIO":[321,544,320,544,225,2720,0,0,2624,33,2656,224,32,0],"FLAG":0,"BASE":18}
 KS-621                       {"NAME":"KS-621","GPIO":[32,0,0,0,2688,2656,0,0,2592,288,0,224,65,1],"FLAG":0,"BASE":18}
 Makegood MG-AUWF01           {"NAME":"MG-AUWF01","GPIO":[320,161,544,323,2720,2656,0,0,2624,225,321,224,160,0],"FLAG":0,"BASE":18}
 Makegood MG-UKWSG01          {"NAME":"Aseer 2-Gang","GPIO":[321,160,544,323,2720,2656,0,0,2624,224,320,225,161,0],"FLAG":0,"BASE":18}

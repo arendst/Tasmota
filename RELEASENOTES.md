@@ -141,17 +141,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
 - Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
 - Keep webserver enabled on command ``upload``
+- Better support for virtual buttons and switches up to a total of 28
 - Increase rule event buffer from 100 to 256 characters [#16943](https://github.com/arendst/Tasmota/issues/16943)
-- TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)
 
 ### Fixed
 - Modbus transmit enable GPIO enabled once during write buffer
 - Energy dummy switched voltage and power regression from v12.2.0.2
-- ESP8266 set GPIO's to input on power on fixing relay spikes [#17531](https://github.com/arendst/Tasmota/issues/17531)
 - Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)
 - Shutter default tilt configuration [#17484](https://github.com/arendst/Tasmota/issues/17484)
 - Orno WE517 modbus serial config 8E1 setting [#17545](https://github.com/arendst/Tasmota/issues/17545)
 - Rename ``tasmota4M.bin`` to ``tasmota-4M.bin`` to solve use of ``tasmota-minimal.bin`` [#17674](https://github.com/arendst/Tasmota/issues/17674)
-
-### Removed
+- ESP8266 set GPIO's to input on power on fixing relay spikes [#17531](https://github.com/arendst/Tasmota/issues/17531)
+- ESP8266 TLS SNI which would prevent AWS IoT connection [#17936](https://github.com/arendst/Tasmota/issues/17936)

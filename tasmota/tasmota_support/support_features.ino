@@ -865,7 +865,7 @@ void ResponseAppendFeatures(void)
     feature9 |= 0x00001000;  // xdsp_20_tm1650.ino
 #endif
 #if defined(USE_I2C) && defined(USE_PCA9632)
-    feature9 |= 0x00002000;
+    feature9 |= 0x00002000;  // xdrv_64_pca9632.ino
 #endif
 #ifdef USE_TUYAMCUBR
     feature9 |= 0x00004000;  // xdrv_65_tuyamcubr.ino
