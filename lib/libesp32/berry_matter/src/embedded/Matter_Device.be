@@ -545,7 +545,7 @@ class Matter_Device
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
         mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
-        mdns.add_service("_matter", "_tcp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
+        mdns.add_service("_matterc", "_udp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
 
         tasmota.log(string.format("MTR: starting mDNS on %s '%s' ptr to `%s.local`", is_eth ? "eth" : "wifi",
         is_eth ? self.commissioning_instance_eth : self.commissioning_instance_wifi,

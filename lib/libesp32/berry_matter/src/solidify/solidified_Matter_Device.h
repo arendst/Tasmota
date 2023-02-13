@@ -1940,7 +1940,7 @@ be_local_closure(Matter_Device__start_mdns_announce,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[50]) {     /* constants */
+    ( &(const bvalue[48]) {     /* constants */
     /* K0   */  be_nested_str_weak(mdns),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(start),
@@ -1986,11 +1986,9 @@ be_local_closure(Matter_Device__start_mdns_announce,   /* name */
     /* K42  */  be_nested_str_weak(_S),
     /* K43  */  be_nested_str_weak(_V),
     /* K44  */  be_nested_str_weak(_CM1),
-    /* K45  */  be_nested_str_weak(_matter),
-    /* K46  */  be_nested_str_weak(_tcp),
-    /* K47  */  be_nested_str_weak(MTR_X3A_X20Exception),
-    /* K48  */  be_nested_str_weak(_X7C),
-    /* K49  */  be_nested_str_weak(mdns_announce_op_discovery_all_sessions),
+    /* K45  */  be_nested_str_weak(MTR_X3A_X20Exception),
+    /* K46  */  be_nested_str_weak(_X7C),
+    /* K47  */  be_nested_str_weak(mdns_announce_op_discovery_all_sessions),
     }),
     be_str_weak(_start_mdns_announce),
     &be_const_str_solidified,
@@ -2170,8 +2168,8 @@ be_local_closure(Matter_Device__start_mdns_announce,   /* name */
       0x7C2C0600,  //  00AC  CALL	R11	3
       0x7C180A00,  //  00AD  CALL	R6	5
       0x8C18051B,  //  00AE  GETMET	R6	R2	K27
-      0x5820002D,  //  00AF  LDCONST	R8	K45
-      0x5824002E,  //  00B0  LDCONST	R9	K46
+      0x5820001C,  //  00AF  LDCONST	R8	K28
+      0x5824001D,  //  00B0  LDCONST	R9	K29
       0x542A15A3,  //  00B1  LDINT	R10	5540
       0x5C2C0800,  //  00B2  MOVE	R11	R4
       0x88300123,  //  00B3  GETMBR	R12	R0	K35
@@ -2274,8 +2272,8 @@ be_local_closure(Matter_Device__start_mdns_announce,   /* name */
       0x60240008,  //  0114  GETGBL	R9	G8
       0x5C280A00,  //  0115  MOVE	R10	R5
       0x7C240200,  //  0116  CALL	R9	1
-      0x00265E09,  //  0117  ADD	R9	K47	R9
-      0x00241330,  //  0118  ADD	R9	R9	K48
+      0x00265A09,  //  0117  ADD	R9	K45	R9
+      0x0024132E,  //  0118  ADD	R9	R9	K46
       0x60280008,  //  0119  GETGBL	R10	G8
       0x5C2C0C00,  //  011A  MOVE	R11	R6
       0x7C280200,  //  011B  CALL	R10	1
@@ -2284,7 +2282,7 @@ be_local_closure(Matter_Device__start_mdns_announce,   /* name */
       0x7C1C0600,  //  011E  CALL	R7	3
       0x70020000,  //  011F  JMP		#0121
       0xB0080000,  //  0120  RAISE	2	R0	R0
-      0x8C140131,  //  0121  GETMET	R5	R0	K49
+      0x8C14012F,  //  0121  GETMET	R5	R0	K47
       0x7C140200,  //  0122  CALL	R5	1
       0x80000000,  //  0123  RET	0
     })
