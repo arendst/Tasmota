@@ -116,7 +116,30 @@ void EthernetEvent(arduino_event_t *event) {
       }
       TasmotaGlobal.rules_flag.eth_connected = 1;
       TasmotaGlobal.global_state.eth_down = 0;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: IPv4 %_I, mask %_I, gateway %_I"),
+              event->event_info.got_ip.ip_info.ip.addr,
+              event->event_info.got_ip.ip_info.netmask.addr,
+              event->event_info.got_ip.ip_info.gw.addr);
+      WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
       break;
+
+#ifdef USE_IPV6
+    case ARDUINO_EVENT_ETH_GOT_IP6:
+    {
+      ip_addr_t ip_addr6;
+      ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
+      IPAddress addr(ip_addr6);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
+             event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
+             addr.isLocal() ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
+      if (!addr.isLocal()) {    // declare network up on IPv6
+        TasmotaGlobal.rules_flag.eth_connected = 1;
+        TasmotaGlobal.global_state.eth_down = 0;
+      }
+      WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
+    }
+    break;
+#endif // USE_IPV6
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Disconnected"));
@@ -143,19 +166,6 @@ void EthernetSetIp(void) {
              Settings->eth_ipv4_address[4]);      // IPAddress dns2
 }
 
-#ifdef USE_IPV6
-// Returns only IPv6 global address (no loopback and no link-local)
-String EthernetGetIPv6(void)
-{
-  return WifiFindIPv6(false, "en");
-}
-
-String EthernetGetIPv6LinkLocal(void)
-{
-  return WifiFindIPv6(true, "en");
-}
-#endif // USE_IPV6
-
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
   if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
@@ -180,31 +190,31 @@ void EthernetInit(void) {
   int eth_power = Pin(GPIO_ETH_PHY_POWER);
   int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
-#if CONFIG_IDF_TARGET_ESP32
+//#if CONFIG_IDF_TARGET_ESP32
   // fix an disconnection issue after rebooting Olimex POE - this forces a clean state for all GPIO involved in RMII
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
-  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
-  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
-  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
-  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
-  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
-  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
-  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
-  switch (Settings->eth_clk_mode) {
-    case 0:   // ETH_CLOCK_GPIO0_IN
-    case 1:   // ETH_CLOCK_GPIO0_OUT
-      gpio_reset_pin(GPIO_NUM_0);
-      break;
-    case 2:   // ETH_CLOCK_GPIO16_OUT
-      gpio_reset_pin(GPIO_NUM_16);
-      break;
-    case 3:   // ETH_CLOCK_GPIO17_OUT
-      gpio_reset_pin(GPIO_NUM_17);
-      break;
-  }
-  delay(1);
-#endif // CONFIG_IDF_TARGET_ESP32
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
+//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
+//  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
+//  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
+//  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
+//  switch (Settings->eth_clk_mode) {
+//    case 0:   // ETH_CLOCK_GPIO0_IN
+//    case 1:   // ETH_CLOCK_GPIO0_OUT
+//      gpio_reset_pin(GPIO_NUM_0);
+//      break;
+//    case 2:   // ETH_CLOCK_GPIO16_OUT
+//      gpio_reset_pin(GPIO_NUM_16);
+//      break;
+//    case 3:   // ETH_CLOCK_GPIO17_OUT
+//      gpio_reset_pin(GPIO_NUM_17);
+//      break;
+//  }
+//  delay(1);
+//#endif // CONFIG_IDF_TARGET_ESP32
   if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
     return;
@@ -217,6 +227,40 @@ void EthernetInit(void) {
 
 IPAddress EthernetLocalIP(void) {
   return ETH.localIP();
+}
+
+// Check to see if we have any routable IP address
+// IPv4 has always priority
+// Copy the value of the IP if pointer provided (optional)
+bool EthernetGetIP(IPAddress *ip) {
+#ifdef USE_IPV6
+  if ((uint32_t)ETH.localIP() != 0) {
+    if (ip != nullptr) { *ip = ETH.localIP(); }
+    return true;
+  }
+  IPAddress lip;
+  if (EthernetGetIPv6(&lip)) {
+    if (ip != nullptr) { *ip = lip; }
+    return true;
+  }
+  if (ip != nullptr) { *ip = IPAddress(); }
+  return false;
+#else
+  // IPv4 only
+  if (ip != nullptr) { *ip = ETH.localIP(); }
+  return (uint32_t)ETH.localIP() != 0;
+#endif // USE_IPV6
+}
+bool EthernetHasIP(void) {
+  return EthernetGetIP(nullptr);
+}
+String EthernetGetIPStr(void) {
+  IPAddress ip;
+  if (EthernetGetIP(&ip)) {
+    return ip.toString();
+  } else {
+    return String();
+  }
 }
 
 char* EthernetHostname(void) {
@@ -275,7 +319,7 @@ void CmndEthAddress(void) {
 }
 
 void CmndEthType(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 8)) {
     Settings->eth_type = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }

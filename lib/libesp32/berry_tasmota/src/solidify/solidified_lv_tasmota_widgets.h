@@ -4,6 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 
+extern const bclass be_class_lv_clock;
+
 /********************************************************************
 ** Solidified function: set_time
 ********************************************************************/
@@ -270,6 +272,8 @@ void be_load_lv_clock_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_lv_clock_icon;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -390,6 +394,8 @@ void be_load_lv_clock_icon_class(bvm *vm) {
     be_setglobal(vm, "lv_clock_icon");
     be_pop(vm, 1);
 }
+
+extern const bclass be_class_lv_signal_arcs;
 
 /********************************************************************
 ** Solidified function: set_percentage
@@ -804,6 +810,8 @@ void be_load_lv_signal_arcs_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_lv_wifi_arcs;
+
 /********************************************************************
 ** Solidified function: before_del
 ********************************************************************/
@@ -955,6 +963,8 @@ void be_load_lv_wifi_arcs_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_lv_wifi_arcs_icon;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -1084,6 +1094,8 @@ void be_load_lv_wifi_arcs_icon_class(bvm *vm) {
     be_setglobal(vm, "lv_wifi_arcs_icon");
     be_pop(vm, 1);
 }
+
+extern const bclass be_class_lv_signal_bars;
 
 /********************************************************************
 ** Solidified function: set_percentage
@@ -1468,6 +1480,8 @@ void be_load_lv_signal_bars_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_lv_wifi_bars;
+
 /********************************************************************
 ** Solidified function: before_del
 ********************************************************************/
@@ -1618,6 +1632,8 @@ void be_load_lv_wifi_bars_class(bvm *vm) {
     be_setglobal(vm, "lv_wifi_bars");
     be_pop(vm, 1);
 }
+
+extern const bclass be_class_lv_wifi_bars_icon;
 
 /********************************************************************
 ** Solidified function: init

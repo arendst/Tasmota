@@ -35,7 +35,7 @@ typedef struct LVGL_PARAMS {
       uint8_t use_dma : 1;
       uint8_t swap_color : 1;
       uint8_t async_dma : 1;   // force DMA completion before returning, avoid conflict with other devices on same bus. If set you should make sure the display is the only device on the bus
-      uint8_t resvd_1 : 1;
+      uint8_t busy_invert : 1;
       uint8_t resvd_2 : 1;
       uint8_t resvd_3 : 1;
       uint8_t resvd_4 : 1;
@@ -86,6 +86,7 @@ public:
   virtual uint16_t bgcol(void);
   virtual int8_t color_type(void);
   virtual void Splash(void);
+  virtual void Sleep(void);
   virtual char *devname(void);
   virtual LVGL_PARAMS *lvgl_pars(void);
   virtual void ep_update_mode(uint8_t mode);

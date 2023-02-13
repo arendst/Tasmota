@@ -578,25 +578,54 @@ void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
   }
 }
 
+/*********************************************************************************************\
+ * 
+ * Reply Tuya time
+ * 
+\*********************************************************************************************/
+static void replyTuyaTime( uint16_t cluster, uint16_t shortaddr, uint8_t dstendpoint ) {
+  ZCLFrame zcl(10);   // message is `attrs_len` bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = cluster;
+  zcl.dstendpoint = dstendpoint;
+  zcl.cmd = 0x24;
+  zcl.clusterSpecific = true;
+  zcl.needResponse = false; // it is a reply
+  zcl.direct = false;   // discover route
+  zcl.payload.add16BigEndian(8); // Size
+  if (!RtcTime.valid) {
+    zcl.payload.add32(0);
+    zcl.payload.add32(0);
+  } else {
+    zcl.payload.add32BigEndian(Rtc.utc_time);
+    zcl.payload.add32BigEndian(Rtc.local_time);
+  }
+  zigbeeZCLSendCmd(zcl);
+}
+
 //
 // Tuya - MOES specifc cluster 0xEF00
 // https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
 //
 bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &buf) {
-  // uint16_t seq_number = buf.get16BigEndian(0)
-  uint8_t dpid = buf.get8(2);   // dpid from Tuya documentation
-  uint8_t attr_type = buf.get8(3);   // data type from Tuya documentation
-  uint16_t len = buf.get16BigEndian(4);
 
   if ((1 == cmd) || (2 == cmd)) {   // attribute report or attribute response
+    // uint16_t seq_number = buf.get16BigEndian(0)
+    uint8_t dpid = buf.get8(2);   // dpid from Tuya documentation
+    uint8_t attr_type = buf.get8(3);   // data type from Tuya documentation
+    uint16_t len = buf.get16BigEndian(4);
     // create a synthetic attribute with id 'dpid'
     Z_attribute & attr = attr_list.addAttribute(cluster, (attr_type << 8) | dpid);
     parseSingleTuyaAttribute(attr, buf, 6, len, attr_type);
     return true;    // true = remove the original Tuya attribute
   }
-  // TODO Cmd 0x24 to sync clock with coordinator time
+  if (0x24 == cmd) {
+    replyTuyaTime(cluster, shortaddr, srcendpoint);
+    return true;
+  }
   return false;
 }
+
 
 /*********************************************************************************************\
  * 

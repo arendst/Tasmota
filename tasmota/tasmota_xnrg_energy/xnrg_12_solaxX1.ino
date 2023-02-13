@@ -2,7 +2,7 @@
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
   Copyright (C) 2021 by Pablo Zerón
-  Copyright (C) 2022 by Stefan Wershoven
+  Copyright (C) 2023 by Stefan Wershoven
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
 #endif
 
-#define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
+// #define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
 
 #define INVERTER_ADDRESS   0x0A
 
@@ -48,9 +48,10 @@ const char kSolaxError[] PROGMEM =
 
 #ifdef SOLAXX1_READCONFIG
 const char kSolaxSafetyType[] PROGMEM =
-  "VDE0126|ARN4105|AS4777_AU|G98/1|C10/11|OVE/ONORME8001|EN50438_NL|EN50438_DK|CEB|CEI021|NRS097_2_1|"
-  "VDE0126_Gr_Is|UTE_C15_712|IEC61727|G99/1|VDE0126_Gr_Co|France_VFR2014|C15_712_is_50|C15_712_is_60|"
-  "AS4777_NZ|RD1699|Chile|EN50438_Ireland|Philippines|Czech_PPDS|Czech_50438";
+  "VDE 0126|VDE-AR-N 4105|AS 4777|G98|C10/11|ÖVE/ÖNORM E 8001|EN 50438 NL|EN 50438 DK|CEB|CEI021|NRS 097-2-1|VDE 0126 Greece/Iceland|"
+  "UTE C15-712|IEC 61727|G99|VDE 0126 Greece/Co|Guyana|C15-712 France/Iceland 50|C15-712 France/Iceland 60|New Zeeland|RD1699|Chile|"
+  "EN 50438 Ireland|Philippines|Czech PPDS|Czech 50438|EN 50549 EU|Denmark 2019 EU|RD 1699 Island|EN50549 Poland|MEA Thailand|"
+  "PEA Thailand|ACEA|AS 4777 2020 B|AS 4777 2020 C|Sri Lanka|BRAZIL 240|EN 50549 SK|EN 50549 EU|G98/NI|Denmark 2019 EU|RD 1699 Island";
 #endif // SOLAXX1_READCONFIG
 
 union {
@@ -267,7 +268,7 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
 {
   uint8_t DataRead[80] = {0};
   uint8_t TempData[16] = {0};
-  char TempDataChar[16];
+  char TempDataChar[32];
   float TempFloat;
 
   if (solaxX1Serial->available()) {
@@ -284,19 +285,20 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     }
 
     if (DataRead[6] == 0x11 && DataRead[7] == 0x82) { // received "Response for query (live data)"
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
       solaxX1.temperature =    (DataRead[9] << 8) | DataRead[10]; // Temperature
       solaxX1.energy_today =   ((DataRead[11] << 8) | DataRead[12]) * 0.1f; // Energy Today
       solaxX1.dc1_voltage =    ((DataRead[13] << 8) | DataRead[14]) * 0.1f; // PV1 Voltage
       solaxX1.dc2_voltage =    ((DataRead[15] << 8) | DataRead[16]) * 0.1f; // PV2 Voltage
       solaxX1.dc1_current =    ((DataRead[17] << 8) | DataRead[18]) * 0.1f; // PV1 Current
       solaxX1.dc2_current =    ((DataRead[19] << 8) | DataRead[20]) * 0.1f; // PV2 Current
-      Energy.current[0] =      ((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
-      Energy.voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
-      Energy.frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
-      Energy.active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
+      Energy->current[0] =      ((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
+      Energy->voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
+      Energy->frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
+      Energy->active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
+      Energy->apparent_power[0] = Energy->active_power[0]; // U*I from inverter is not valid for apparent power; U*I could be lower than active power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
-      Energy.import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
+      Energy->import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
       solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
       solaxX1.runMode =        (DataRead[39] << 8) | DataRead[40]; // Work mode
       //temporal = (float)((DataRead[41] << 8) | DataRead[42]); // Grid voltage fault value 0.1V
@@ -444,9 +446,9 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     if (!solaxX1_global.SendRetry_count) { // Inverter went "off"
       solaxX1_global.SendRetry_count = 20;
       DEBUG_SENSOR_LOG(PSTR("SX1: Inverter went \"off\""));
-      Energy.data_valid[0] = ENERGY_WATCHDOG;
+      Energy->data_valid[0] = ENERGY_WATCHDOG;
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
-      solaxX1.dc2_power = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
+      solaxX1.dc2_power = Energy->current[0] = Energy->voltage[0] = Energy->frequency[0] = Energy->active_power[0] = 0;
       solaxX1.runMode = -1; // off(line)
       solaxX1_global.AddressAssigned = false;
     } // end Inverter went "off"

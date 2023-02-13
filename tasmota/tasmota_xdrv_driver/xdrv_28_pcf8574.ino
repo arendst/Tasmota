@@ -29,8 +29,37 @@
 #define XDRV_28           28
 #define XI2C_02           2     // See I2CDEVICES.md
 
-#define PCF8574_ADDR1     0x20  // PCF8574
-#define PCF8574_ADDR2     0x38  // PCF8574A
+// Start address and count can be overriden in user_config_override.h to allow better
+// sharing of the I2C address space. Still the covered range must remains valid.
+// A count of 0 can be used totaly disable any of the 2 ranges.
+// By default, the following addresses are explicitly excluded (as per the docs) :
+// - 0x27 and 0x37 are reserved for USE_DISPLAY_LCD in xdsp_01_lcd.ino
+// - 0X38 is reserved for other sensors
+// If the respective drivers are not used, overrides allows to recover those addresses
+// If defined, USE_MCP230xx_ADDR is also always excluded
+
+// PCF8574 address range from 0x20 to 0x26
+#ifndef PCF8574_ADDR1
+#define PCF8574_ADDR1 0x20 // PCF8574
+#endif
+#ifndef PCF8574_ADDR1_COUNT
+#define PCF8574_ADDR1_COUNT 7
+#endif
+// PCF8574A address range from 0x39 to 0x3E
+#ifndef PCF8574_ADDR2
+#define PCF8574_ADDR2 0x39 // PCF8574A
+#endif
+#ifndef PCF8574_ADDR2_COUNT
+#define PCF8574_ADDR2_COUNT 6
+#endif
+
+// Consitency tests - Checked across the complete range for the PCF8574/PCF8574A to allow override
+#if (PCF8574_ADDR1 < 0x20) || ((PCF8574_ADDR1 + PCF8574_ADDR1_COUNT - 1) > 0x27)
+#error PCF8574_ADDR1 and/or PCF8574_ADDR1_COUNT badly overriden. Fix your user_config_override
+#endif
+#if (PCF8574_ADDR2 < 0x38) || ((PCF8574_ADDR2 + PCF8574_ADDR2_COUNT - 1) > 0x3F)
+#error PCF8574_ADDR2 and/or PCF8574_ADDR2_COUNT badly overriden. Fix your user_config_override.
+#endif
 
 struct PCF8574 {
   int error;
@@ -82,15 +111,15 @@ void Pcf8574SwitchRelay(void)
 
 void Pcf8574Init(void)
 {
-  uint8_t pcf8574_address = PCF8574_ADDR1;
-  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
+  uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
+  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
 
-#ifdef USE_MCP230xx_ADDR
+#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
     if (USE_MCP230xx_ADDR == pcf8574_address) {
       AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
       pcf8574_address++;
-      if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
-        pcf8574_address = PCF8574_ADDR2 +1;
+      if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) { // See comment on allowed addresses and overrides
+        pcf8574_address = PCF8574_ADDR2;
       }
     }
 #endif
@@ -111,8 +140,8 @@ void Pcf8574Init(void)
     }
 
     pcf8574_address++;
-    if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
-      pcf8574_address = PCF8574_ADDR2 +1;
+    if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) { // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+      pcf8574_address = PCF8574_ADDR2;
     }
   }
   if (Pcf8574.type) {
@@ -123,7 +152,9 @@ void Pcf8574Init(void)
     Pcf8574.max_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
       uint8_t gpio = Pcf8574Read(idx);
-      Pcf8574.pin_mask[idx] = gpio;
+      // Insure the input pins are actually writen a 1 for proper input operation
+      Pcf8574.pin_mask[idx] = gpio | ~Settings->pcf8574_config[idx];
+      Pcf8574Write(idx); // Write back to the register
 #ifdef USE_PCF8574_MQTTINPUT
       Pcf8574.last_input[idx] = gpio & ~Settings->pcf8574_config[idx];
 #endif // #ifdef USE_PCF8574_MQTTINPUT

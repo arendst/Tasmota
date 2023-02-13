@@ -204,6 +204,8 @@ enum UserSelectablePins {
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
   GPIO_MBR_TX_ENA, GPIO_NRG_MBS_TX_ENA, // Modbus Bridge Serial Transmit Enable
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
+  GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
+  GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -455,6 +457,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LD2410_TX "|" D_SENSOR_LD2410_RX "|"
   D_SENSOR_MBR_TX_ENA "|" D_SENSOR_NRG_MBS_TX_ENA "|"
   D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
+  D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
+  D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -810,7 +814,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_ADE7953
 #if defined(USE_I2C) || defined(USE_SPI)
-  AGPIO(GPIO_ADE7953_IRQ) + 5,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM)
+  AGPIO(GPIO_ADE7953_IRQ) + 6,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM, 6 = Shelly Pro 4PM)
   AGPIO(GPIO_ADE7953_RST),              // ADE7953 Reset
 #ifdef USE_SPI
   AGPIO(GPIO_ADE7953_CS) + 2,           // ADE7953 SPI Chip Select (1 = CS1 (1PM, 2PM), 2 = CS2 (2PM))
@@ -1056,6 +1060,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MIEL_HVAC_TX),             // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),             // Mitsubishi Electric HVAC RX pin
 #endif
+#ifdef USE_TUYAMCUBR
+  AGPIO(GPIO_TUYAMCUBR_TX),
+  AGPIO(GPIO_TUYAMCUBR_RX),
+#endif
 #ifdef USE_WIEGAND
   AGPIO(GPIO_WIEGAND_D0),               // Date line D0 of Wiegand devices
   AGPIO(GPIO_WIEGAND_D1),               // Date line D1 of Wiegand devices
@@ -1132,6 +1140,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,       // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,        // Analog PH Sensor
   AGPIO(GPIO_ADC_MQ) + MAX_ADCS,        // Analog MQ Sensor
+
+#ifdef USE_BIOPDU
+  AGPIO(GPIO_BIOPDU_PZEM0XX_TX),  // Biomine BioPDU pins
+  AGPIO(GPIO_BIOPDU_PZEM016_RX),
+  AGPIO(GPIO_BIOPDU_BIT) + 3,
+#endif
 #endif  // ESP32
 };
 

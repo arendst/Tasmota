@@ -86,6 +86,10 @@ void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
 
 }
 
+void Renderer::Sleep(void) {
+
+}
+
 void Renderer::Updateframe() {
 
 }

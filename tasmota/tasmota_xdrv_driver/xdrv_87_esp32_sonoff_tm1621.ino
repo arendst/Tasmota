@@ -429,13 +429,13 @@ void TM1621Show(void) {
 
   if (TM1621_POWR316D == Tm1621.device) {
     if (0 == Tm1621.display_rotate) {
-      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.voltage[0]);
-      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.current[0]);
+      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy->voltage[0]);
+      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy->current[0]);
       Tm1621.voltage = true;
       Tm1621.display_rotate = 1;
     } else {
-      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.total[0]);
-      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.active_power[0]);
+      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy->total[0]);
+      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy->active_power[0]);
       Tm1621.kwh = true;
       Tm1621.display_rotate = 0;
     }
@@ -459,6 +459,7 @@ void TM1621Show(void) {
             temperature = TM1621GetTemperatureValues(Tm1621.temp_sensors_rotate);
             ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%d"), Tm1621.temp_sensors_rotate);
           } else {
+            temperature = TM1621GetTemperatureValues(1);  // Fix in case GlobalTemp is set wrong (#17694)
             float temperature2 = TM1621GetTemperatureValues(2);
             ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &temperature2);
           }

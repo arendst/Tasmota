@@ -1125,6 +1125,13 @@ static int m_size(bvm *vm)
     be_return(vm);
 }
 
+static int m_tobool(bvm *vm)
+{
+    buf_impl attr = m_read_attributes(vm, 1);
+    be_pushbool(vm, attr.len > 0 ? 1 : 0);
+    be_return(vm);
+}
+
 static int m_resize(bvm *vm)
 {
     int argc = be_top(vm);
@@ -1668,6 +1675,7 @@ void be_load_byteslib(bvm *vm)
         { "deinit", m_deinit },
         { "tostring", m_tostring },
         { "asstring", m_asstring },
+        { "tobool", m_tobool },
         { "fromstring", m_fromstring },
         { "tob64", m_tob64 },
         { "fromb64", m_fromb64 },
@@ -1714,6 +1722,7 @@ class be_class_bytes (scope: global, name: bytes) {
     deinit, func(m_deinit)
     tostring, func(m_tostring)
     asstring, func(m_asstring)
+    tobool, func(m_tobool)
     fromstring, func(m_fromstring)
     tob64, func(m_tob64)
     fromb64, func(m_fromb64)

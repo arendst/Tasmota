@@ -1135,12 +1135,10 @@ bool XsnsCall(uint32_t function) {
       PROFILE_FUNCTION("sns", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
-      if (result && ((FUNC_COMMAND == function) ||
-                     (FUNC_PIN_STATE == function) ||
-                     (FUNC_COMMAND_SENSOR == function)
-                    )) {
+      if (result && (function > FUNC_return_result)) {
         break;
       }
+
     }
   }
 

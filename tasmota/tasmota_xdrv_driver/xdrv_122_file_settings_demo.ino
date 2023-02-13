@@ -30,11 +30,11 @@
 \*********************************************************************************************/
 #warning **** USE_DRV_FILE_DEMO is enabled ****
 
-#define XDRV_98             98
+#define XDRV_122               122
 
-#define DRV98_MAX_DRV_TEXT  16
+#define DRV_DEMO_MAX_DRV_TEXT  16
 
-const uint32_t DRV98_VERSION = 0x01010101;  // Latest driver version (See settings deltas below)
+const uint32_t DRV_DEMO_VERSION = 0x01010101;  // Latest driver version (See settings deltas below)
 
 // Demo command line commands
 const char kDrvDemoCommands[] PROGMEM = "Drv|"  // Prefix
@@ -47,29 +47,29 @@ void (* const DrvDemoCommand[])(void) PROGMEM = {
 struct {
   uint32_t  crc32;    // To detect file changes
   uint32_t  version;  // To detect driver function changes
-  char      drv_text[DRV98_MAX_DRV_TEXT -1][10];
-} Drv98Settings;
+  char      drv_text[DRV_DEMO_MAX_DRV_TEXT -1][10];
+} DrvDemoSettings;
 
 // Global structure containing driver non-saved variables
 struct {
   uint32_t any_value;
-} Drv98Global;
+} DrvDemoGlobal;
 
 void CmndDrvText(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= DRV98_MAX_DRV_TEXT)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= DRV_DEMO_MAX_DRV_TEXT)) {
     if (!XdrvMailbox.usridx) {
       // Command DrvText
-      for (uint32_t i = 0; i < DRV98_MAX_DRV_TEXT; i++) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: DrvText%02d %s"), i, Drv98Settings.drv_text[i]);
+      for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DRV: DrvText%02d %s"), i, DrvDemoSettings.drv_text[i]);
       }
       ResponseCmndDone();
     } else {
       // Command DrvText<index> <text>
       uint32_t index = XdrvMailbox.index -1;
       if (XdrvMailbox.data_len > 0) {
-        snprintf_P(Drv98Settings.drv_text[index], sizeof(Drv98Settings.drv_text[index]), XdrvMailbox.data);
+        snprintf_P(DrvDemoSettings.drv_text[index], sizeof(DrvDemoSettings.drv_text[index]), XdrvMailbox.data);
       }
-      ResponseCmndIdxChar(Drv98Settings.drv_text[index]);
+      ResponseCmndIdxChar(DrvDemoSettings.drv_text[index]);
     }
   }
 }
@@ -80,7 +80,7 @@ void CmndDrvText(void) {
 
 uint32_t DrvDemoSettingsCrc32(void) {
   // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&Drv98Settings +4, sizeof(Drv98Settings) -4);  // Skip crc32
+  return GetCfgCrc32((uint8_t*)&DrvDemoSettings +4, sizeof(DrvDemoSettings) -4);  // Skip crc32
 }
 
 void DrvDemoSettingsDefault(void) {
@@ -88,16 +88,16 @@ void DrvDemoSettingsDefault(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
 
-  memset(&Drv98Settings, 0x00, sizeof(Drv98Settings));
-  Drv98Settings.version = DRV98_VERSION;
-  // Init any other parameter in struct Drv98Settings
-  snprintf_P(Drv98Settings.drv_text[0], sizeof(Drv98Settings.drv_text[0]), PSTR("Azalea"));
+  memset(&DrvDemoSettings, 0x00, sizeof(DrvDemoSettings));
+  DrvDemoSettings.version = DRV_DEMO_VERSION;
+  // Init any other parameter in struct DrvDemoSettings
+  snprintf_P(DrvDemoSettings.drv_text[0], sizeof(DrvDemoSettings.drv_text[0]), PSTR("Azalea"));
 }
 
 void DrvDemoSettingsDelta(void) {
   // Fix possible setting deltas
 
-  if (Drv98Settings.version != DRV98_VERSION) {      // Fix version dependent changes
+  if (DrvDemoSettings.version != DRV_DEMO_VERSION) {      // Fix version dependent changes
 
     if (Settings->version < 0x01010100) {
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
@@ -109,7 +109,7 @@ void DrvDemoSettingsDelta(void) {
     }
 
     // Set current version and save settings
-    Drv98Settings.version = DRV98_VERSION;
+    DrvDemoSettings.version = DRV_DEMO_VERSION;
     DrvDemoSettingsSave();
   }
 }
@@ -120,17 +120,17 @@ void DrvDemoSettingsLoad(void) {
   // Init default values in case file is not found
   DrvDemoSettingsDefault();
 
-  // Try to load file /.drvset098
+  // Try to load file /.drvset122
   char filename[20];
   // Use for sensors:
-//  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_98);
+//  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_122);
   // Use for drivers:
-  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_98);
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_122);
 
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: About to load settings from file %s"), filename);
 
 #ifdef USE_UFILESYS
-  if (TfsLoadFile(filename, (uint8_t*)&Drv98Settings, sizeof(Drv98Settings))) {
+  if (TfsLoadFile(filename, (uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
     // Fix possible setting deltas
     DrvDemoSettingsDelta();
   } else {
@@ -141,26 +141,26 @@ void DrvDemoSettingsLoad(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 
-  Drv98Settings.crc32 = DrvDemoSettingsCrc32();
+  DrvDemoSettings.crc32 = DrvDemoSettingsCrc32();
 }
 
 void DrvDemoSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 
-  if (DrvDemoSettingsCrc32() != Drv98Settings.crc32) {
-    // Try to save file /.drvset098
-    Drv98Settings.crc32 = DrvDemoSettingsCrc32();
+  if (DrvDemoSettingsCrc32() != DrvDemoSettings.crc32) {
+    // Try to save file /.drvset122
+    DrvDemoSettings.crc32 = DrvDemoSettingsCrc32();
 
     char filename[20];
     // Use for sensors:
-//    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_98);
+//    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_122);
     // Use for drivers:
-    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_98);
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_122);
 
     AddLog(LOG_LEVEL_INFO, PSTR("DRV: About to save settings to file %s"), filename);
 
 #ifdef USE_UFILESYS
-    if (!TfsSaveFile(filename, (const uint8_t*)&Drv98Settings, sizeof(Drv98Settings))) {
+    if (!TfsSaveFile(filename, (const uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
       // File system not ready: No flash space reserved for file system
       AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or unable to save file"));
     }
@@ -174,7 +174,7 @@ void DrvDemoSettingsSave(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv98(uint32_t function) {
+bool Xdrv122(uint32_t function) {
   bool result = false;
 
   switch (function) {

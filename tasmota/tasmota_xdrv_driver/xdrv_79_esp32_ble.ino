@@ -3619,6 +3619,13 @@ bool Xdrv79(uint32_t function)
       BLE_ESP32::BLEPublishDevices = 1;  // mqtt publish as 'TELE'
       break;
 
+    case FUNC_INTERRUPT_STOP:
+      ExtStopBLE();
+      break;
+/*
+    case FUNC_INTERRUPT_START:
+      break;
+*/
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
       WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);

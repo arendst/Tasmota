@@ -41,6 +41,7 @@
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
 #endif
+#define USE_TUYAMCUBR
 #undef USE_ARMTRONIX_DIMMERS                    // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                             // Disable support for PS-16-DZ Dimmer (+2k code)
 #undef USE_SONOFF_IFAN                          // Disable support for Sonoff iFan02 and iFan03 (+2k code)
@@ -97,6 +98,7 @@
 #define USE_MGS                                // [I2cDriver17] Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 #define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
 #define USE_SGP40                              // [I2cDriver69] Enable SGP40 sensor (I2C address 0x59) (+1k4 code)
+#define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //#define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //#define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
@@ -219,6 +221,7 @@
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter (+2k code)
 //#define USE_TELEINFO                             // Add support for French Energy Provider metering telemetry (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
 //#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
+//#define USE_MODBUS_ENERGY                        // Add support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -325,12 +328,13 @@
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
   #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
   #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+  #undef USE_MODBUS_ENERGY                       // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 #undef USE_BLE_ESP32                             // (ESP32 only) Disable support for native BLE on ESP32 - use new driver
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
 #define USE_DISPLAY                              // Add Display Support (+2k code)
   #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
-  #define USE_DISPLAY_MAX7219                    // [DisplayModel 16] Enable MAX7219 7-segment module
+  #define USE_DISPLAY_MAX7219                    // [DisplayModel 19] Enable MAX7219 7-segment module
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY_MODES1TO5                  // Enable display mode 1 to 5 in addition to mode 0
@@ -339,6 +343,7 @@
   #define USE_DISPLAY_MATRIX                     // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
   #define USE_DISPLAY_SEVENSEG                   // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C addresses 0x70 - 0x77) (<+11k code)
   #define USE_DISPLAY_SH1106                     // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
+//  #define USE_DISPLAY_TM1650                     // [DisplayModel 20] [I2cDriver74] Enable TM1650 display (I2C addresses 0x24 - 0x27 and 0x34 - 0x37)
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
   #define USE_DISPLAY_ILI9341                    // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
@@ -436,6 +441,7 @@
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
   #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
   #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+  #undef USE_MODBUS_ENERGY                       // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 //#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -620,6 +626,7 @@
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+#undef USE_MODBUS_ENERGY                         // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -774,6 +781,7 @@
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 #undef USE_BL6523                                // Disable support for BL6523 based energy monitor (+7k code)
 #undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
+#undef USE_MODBUS_ENERGY                         // Disable support for generic modbus energy monitor using a user file in rule space (+5k)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -1015,6 +1023,8 @@
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
+    #define USE_SPI
+    #define USE_SDCARD
     #define USE_PING
   #endif // FIRMWARE_MINIMAL
 
@@ -1065,7 +1075,13 @@
 
 #ifdef USE_SCRIPT
 #define USE_UNISHOX_COMPRESSION                  // Add support for string compression
+#if defined(USE_SML_M) && !defined(NO_USE_SML_DECRYPT)
+#ifndef USE_TLS                                  // Add support for TLS as required by SML decryption
+#define USE_TLS
 #endif
+#endif
+#endif
+
 #ifdef USE_ZIGBEE
 #define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif

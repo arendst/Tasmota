@@ -138,7 +138,7 @@ autoconf_module.init = def (m)
     # ####################################################################################################
     # Init web handlers
     # ####################################################################################################
-    # Displays a "Autocong" button on the configuration page
+    # Displays a "Autoconf" button on the configuration page
     def web_add_config_button()
       import webserver
       webserver.content_send("<p><form id=ac action='ac' style='display: block;' method='get'><button>Auto-configuration</button></form></p>")

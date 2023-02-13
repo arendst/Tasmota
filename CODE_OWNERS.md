@@ -1,4 +1,7 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./tools/logo/TASMOTA_FullLogo_Vector_White.svg">
+  <img alt="Logo" src="./tools/logo/TASMOTA_FullLogo_Vector.svg" align="right" height="76">
+</picture>
 
 # Code Owners
 
@@ -72,6 +75,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_61_ds3502             | f-reiling
 | xdrv_62_improv             | @arendst
 | xdrv_63_modbus_bridge      | @jeroenst
+| xdrv_64_pca9632            | Pascal Heinrich
 |                            |
 | xdrv_79_esp32_ble          | @staars, @btsimonh
 | xdrv_81_esp32_webcam       | @gemu, @philrich
@@ -194,6 +198,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_100_ina3221           | @barbudor
 | xsns_101_hmc5883l          | Andreas Achtzehn
 | xsns_102_ld2410            | @arendst
+| xsns_103_sen5x             | @tyeth
 |                            |
 | Libraries                  |
 |                            |

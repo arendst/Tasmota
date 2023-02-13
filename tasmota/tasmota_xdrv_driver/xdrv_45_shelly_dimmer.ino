@@ -527,19 +527,19 @@ bool ShdPacketProcess(void)
 #ifdef USE_ENERGY_SENSOR
                 if (Shd.hw_version == 2)
                 {
-                    Energy.current_available = true;
-                    Energy.voltage_available = true;
+                    Energy->current_available = true;
+                    Energy->voltage_available = true;
                 }
-                Energy.active_power[0] = wattage;
-                Energy.voltage[0] = voltage;
-                Energy.current[0] = current;
-                if (Shd.last_power_check > 10 && Energy.active_power[0] > 0) {
+                Energy->active_power[0] = wattage;
+                Energy->voltage[0] = voltage;
+                Energy->current[0] = current;
+                if (Shd.last_power_check > 10 && Energy->active_power[0] > 0) {
                     uint32_t time_passed = abs(TimePassedSince(Shd.last_power_check));  // Time passed in milliseconds
-                    uint32_t deca_microWh = (uint32_t)(Energy.active_power[0] * time_passed) / 36;
+                    uint32_t deca_microWh = (uint32_t)(Energy->active_power[0] * time_passed) / 36;
 #ifdef SHELLY_DIMMER_DEBUG
-                    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "%4_f W is %u dmWh during %u ms"), &Energy.active_power[0], deca_microWh, time_passed);
+                    AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "%4_f W is %u dmWh during %u ms"), &Energy->active_power[0], deca_microWh, time_passed);
 #endif  // SHELLY_DIMMER_DEBUG
-                    Energy.kWhtoday_delta[0] += deca_microWh;
+                    Energy->kWhtoday_delta[0] += deca_microWh;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = millis();
@@ -833,10 +833,10 @@ bool Xnrg31(uint32_t function) {
   if (Shd.present) {
     if (FUNC_PRE_INIT == function) {
 #ifndef SHELLY_VOLTAGE_MON
-      Energy.current_available = false;
-      Energy.voltage_available = false;
+      Energy->current_available = false;
+      Energy->voltage_available = false;
 #endif // SHELLY_VOLTAGE_MON
-      Energy.use_overtemp = true;   // Use global temperature for overtemp detection
+      Energy->use_overtemp = true;   // Use global temperature for overtemp detection
       TasmotaGlobal.energy_driver = XNRG_31;
     }
   }

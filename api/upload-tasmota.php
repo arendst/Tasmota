@@ -42,7 +42,7 @@ $target_file = "tasmota/".$image;
 $hostname = $_SERVER['SERVER_NAME'];
 
 if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
-  if (strpos($target_file, "tasmota32")) {
+  if (strpos($target_file, "tasmota32") | strpos($target_file, ".gz")) {
     echo "The file $image has been uploaded to OTA server $hostname. \n";
   } else {
     gzCompressFile($target_file);

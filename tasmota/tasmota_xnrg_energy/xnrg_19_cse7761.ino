@@ -221,17 +221,17 @@ bool Cse7761ChipInit(void) {
     CSE7761Data.coefficient[PowerPAC] = CSE7761_PREF;
 //    CSE7761Data.coefficient[PowerPBC] = 0xADD7;
   }
-  if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
-    Settings->energy_frequency_calibration = CSE7761_FREF;
-    Settings->energy_voltage_calibration = Cse7761Ref(RmsUC);
-    Settings->energy_current_calibration = Cse7761Ref(RmsIAC);
-    Settings->energy_power_calibration = Cse7761Ref(PowerPAC);
-    Settings->energy_current_calibration2 = Settings->energy_current_calibration;
-    Settings->energy_power_calibration2 = Settings->energy_power_calibration;
+  if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
+    for (uint32_t i = 0; i < 2; i++) {
+      EnergySetCalibration(ENERGY_POWER_CALIBRATION, Cse7761Ref(PowerPAC), i);
+      EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, Cse7761Ref(RmsUC), i);
+      EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, Cse7761Ref(RmsIAC), i);
+      EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, CSE7761_FREF, i);
+    }
   }
   // Just to fix intermediate users
-  if (Settings->energy_frequency_calibration < CSE7761_FREF / 2) {
-    Settings->energy_frequency_calibration = CSE7761_FREF;
+  if (EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) < CSE7761_FREF / 2) {
+    EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, CSE7761_FREF);
   }
 
   Cse7761Write(CSE7761_SPECIAL_COMMAND, CSE7761_CMD_ENABLE_WRITE);
@@ -458,28 +458,30 @@ void Cse7761GetData(void) {
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
-  if (Energy.power_on) {  // Powered on
+  if (Energy->power_on) {  // Powered on
     // Voltage = RmsU * RmsUC * 10 / 0x400000
-    // Energy.voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
-    Energy.voltage[0] = ((float)CSE7761Data.voltage_rms / Settings->energy_voltage_calibration);  // V
+    // Energy->voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
+    Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION));  // V
+    Energy->voltage[1] = Energy->voltage[0];
 #ifdef CSE7761_FREQUENCY
-    Energy.frequency[0] = (CSE7761Data.frequency) ? ((float)Settings->energy_frequency_calibration / 8 / CSE7761Data.frequency) : 0;  // Hz
+    Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) / 8 / CSE7761Data.frequency) : 0;  // Hz
+    Energy->frequency[1] = Energy->frequency[0];
 #endif
 
     for (uint32_t channel = 0; channel < 2; channel++) {
-      Energy.data_valid[channel] = 0;
-      uint32_t power_calibration = EnergyGetCalibration(channel, ENERGY_POWER_CALIBRATION);
+      Energy->data_valid[channel] = 0;
+      uint32_t power_calibration = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, channel);
       // Active power = PowerPA * PowerPAC * 1000 / 0x80000000
-      // Energy.active_power[channel] = (float)(((uint64_t)CSE7761Data.active_power[channel] * CSE7761Data.coefficient[PowerPAC + channel] * 1000) >> 31) / 1000;  // W
-      Energy.active_power[channel] = (float)CSE7761Data.active_power[channel] / power_calibration;  // W
-      if (0 == Energy.active_power[channel]) {
-        Energy.current[channel] = 0;
+      // Energy->active_power[channel] = (float)(((uint64_t)CSE7761Data.active_power[channel] * CSE7761Data.coefficient[PowerPAC + channel] * 1000) >> 31) / 1000;  // W
+      Energy->active_power[channel] = (float)CSE7761Data.active_power[channel] / power_calibration;  // W
+      if (0 == Energy->active_power[channel]) {
+        Energy->current[channel] = 0;
       } else {
-        uint32_t current_calibration = EnergyGetCalibration(channel, ENERGY_CURRENT_CALIBRATION);
+        uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel);
         // Current = RmsIA * RmsIAC / 0x800000
-        // Energy.current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
-        Energy.current[channel] = (float)CSE7761Data.current_rms[channel] / current_calibration;  // A
-        CSE7761Data.energy[channel] += Energy.active_power[channel];
+        // Energy->current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
+        Energy->current[channel] = (float)CSE7761Data.current_rms[channel] / current_calibration;  // A
+        CSE7761Data.energy[channel] += Energy->active_power[channel];
         CSE7761Data.energy_update[channel]++;
       }
     }
@@ -563,7 +565,7 @@ void Cse7761EverySecond(void) {
     if (2 == CSE7761Data.ready) {
       for (uint32_t channel = 0; channel < 2; channel++) {
         if (CSE7761Data.energy_update[channel]) {
-          Energy.kWhtoday_delta[channel] += ((CSE7761Data.energy[channel] * 1000) / CSE7761Data.energy_update[channel]) / 36;
+          Energy->kWhtoday_delta[channel] += ((CSE7761Data.energy[channel] * 1000) / CSE7761Data.energy_update[channel]) / 36;
           CSE7761Data.energy[channel] = 0;
           CSE7761Data.energy_update[channel] = 0;
         }
@@ -597,12 +599,12 @@ void Cse7761DrvInit(void) {
   if (PinUsed(GPIO_CSE7761_RX) && PinUsed(GPIO_CSE7761_TX)) {
     CSE7761Data.ready = 0;
     CSE7761Data.init = 4;                       // Init setup steps
-    Energy.phase_count = 2;                     // Handle two channels as two phases
-    Energy.voltage_common = true;               // Use common voltage
+    Energy->phase_count = 2;                     // Handle two channels as two phases
+    Energy->voltage_common = true;               // Use common voltage
 #ifdef CSE7761_FREQUENCY
-    Energy.frequency_common = true;             // Use common frequency
+    Energy->frequency_common = true;             // Use common frequency
 #endif
-    Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
+    Energy->use_overtemp = true;                 // Use global temperature for overtemp detection
     TasmotaGlobal.energy_driver = XNRG_19;
   }
 }
@@ -613,33 +615,33 @@ bool Cse7761Command(void) {
   uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
-  if (CMND_POWERCAL == Energy.command_code) {
+  if (CMND_POWERCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(PowerPAC); }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy.command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
         XdrvMailbox.payload = ((CSE7761Data.active_power[channel]) / value) * 100;
       }
     }
   }
-  else if (CMND_VOLTAGECAL == Energy.command_code) {
+  else if (CMND_VOLTAGECAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsUC); }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_VOLTAGESET == Energy.command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.voltage_rms) {
       if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
         XdrvMailbox.payload = (CSE7761Data.voltage_rms * 100) / value;
       }
     }
   }
-  else if (CMND_CURRENTCAL == Energy.command_code) {
+  else if (CMND_CURRENTCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_CURRENTSET == Energy.command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
       if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
         XdrvMailbox.payload = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
@@ -647,11 +649,11 @@ bool Cse7761Command(void) {
     }
   }
 #ifdef CSE7761_FREQUENCY
-  else if (CMND_FREQUENCYCAL == Energy.command_code) {
+  else if (CMND_FREQUENCYCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = CSE7761_FREF; }
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_FREQUENCYSET == Energy.command_code) {
+  else if (CMND_FREQUENCYSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.frequency) {
       if ((value > 4500) && (value < 6500)) {  // Between 45.00Hz and 65.00Hz
         XdrvMailbox.payload = (CSE7761Data.frequency * 8 * value) / 100;

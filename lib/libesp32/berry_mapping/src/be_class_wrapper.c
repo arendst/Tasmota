@@ -479,7 +479,7 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
       case 'c':   be_pushcomptr(vm, (void*) ret); break;
       case 's':   if (ret) {be_pushstring(vm, (const char*) ret);} else {be_pushnil(vm);} break;  // push `nil` if no string
       case '$':   if (ret) {be_pushstring(vm, (const char*) ret);  free((void*)ret);} else {be_pushnil(vm);} break;
-      case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
+      case '&':   if (ret) {be_pushbytes(vm, (void*) ret, return_len);} else {be_pushnil(vm);} break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
     }
     be_return(vm);

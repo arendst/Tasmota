@@ -237,7 +237,8 @@ uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
 
-uint8_t disp_power = 0;
+bool disp_apply_display_dimmer_request = false;
+int8_t disp_power = -1;
 uint8_t disp_device = 0;
 uint8_t disp_refresh = 1;
 uint8_t disp_autodraw = 1;
@@ -293,9 +294,10 @@ void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
   XdspCall(FUNC_DISPLAY_DRAW_STRING);
 }
 
-void DisplayOnOff(uint8_t on)
-{
-  ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
+void DisplayOnOff(uint8_t on) {
+  if (disp_device) {
+    ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -636,7 +638,9 @@ void DisplayText(void)
                         model = Settings->display_model;
                         fp.read((uint8_t*)fdesc, size);
                         fp.close();
+                        Renderer *svptr = renderer;
                         Get_display(temp);
+                        renderer = svptr;
                         if (rot >= 0) {
                           srot = Settings->display_rotate;
                           Settings->display_rotate = rot;
@@ -646,7 +650,7 @@ void DisplayText(void)
                           Settings->display_rotate = srot;
                         }
                         Set_display(temp);
-                        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded %x"),renderer);
+                        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor loaded"));
                         free(fdesc);
                         Settings->display_model = model;
                       }
@@ -1836,14 +1840,13 @@ void DisplayLocalSensor(void)
  * Public
 \*********************************************************************************************/
 
-void DisplayInitDriver(void)
-{
+void DisplayInitDriver(void) {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
 
   if (Settings->display_model) {
-//    ApplyDisplayDimmer();  // Not allowed here. Way too early in initi sequence. IE power state has not even been set at this point in time
+//    ApplyDisplayDimmer();  // Not allowed here. Way too early in init sequence. Global power state has not been set at this point in time
 
 #ifdef USE_MULTI_DISPLAY
     Set_display(0);
@@ -1888,8 +1891,9 @@ void DisplayInitDriver(void)
   }
 }
 
-void DisplaySetPower(void)
-{
+void DisplaySetPower(void) {
+  if (!disp_device) { return; }  // Not initialized yet
+
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
 //AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
@@ -1993,6 +1997,10 @@ void CmndDisplayMode(void) {
 
 // Apply the current display dimmer
 void ApplyDisplayDimmer(void) {
+  disp_apply_display_dimmer_request = true;
+  if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
+  disp_apply_display_dimmer_request = false;
+
   uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
@@ -2887,6 +2895,11 @@ bool Xdrv13(uint32_t function)
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();
+        break;
+      case FUNC_INIT:
+        if (disp_apply_display_dimmer_request) {
+          ApplyDisplayDimmer();  // Allowed here.
+        }
         break;
       case FUNC_EVERY_50_MSECOND:
         if (Settings->display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }

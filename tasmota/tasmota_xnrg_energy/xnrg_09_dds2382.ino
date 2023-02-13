@@ -52,7 +52,7 @@ void Dds2382EverySecond(void)
     if (error) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);
     } else {
-      Energy.data_valid[0] = 0;
+      Energy->data_valid[0] = 0;
 
       //           0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F    10    11           = ModBus register
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40  = Buffer index
@@ -64,18 +64,18 @@ void Dds2382EverySecond(void)
       // {"TotalStartTime":"2020-01-08T09:43:05","Total":0.060,"Yesterday":0.001,"Today":0.001,"ExportActive":12.670,"Period":0,"Power":1016,"ApparentPower":1020,"ReactivePower":112,"Factor":0.99,"Frequency":50,"Voltage":242,"Current":4.210}}
       // {"TotalStartTime":"2020-01-08T00:00:00","Total":0.061,"Yesterday":0.001,"Today":0.001,"ExportActive":12.670,"Period":0.020,"Power":1199.000,"ApparentPower":1204.231,"ReactivePower":108.000,"Factor":1.00,"Frequency":49.98,"Voltage":242.3,"Current":4.970}}
 
-      Energy.voltage[0] = (float)((buffer[27] << 8) + buffer[28]) / 10.0f;
-      Energy.current[0] = (float)((buffer[29] << 8) + buffer[30]) / 100.0f;
-      Energy.active_power[0] = (float)((buffer[31] << 8) + buffer[32]);
-      Energy.reactive_power[0] = (float)(int16_t)((buffer[33] << 8) + buffer[34]);
-      Energy.power_factor[0] = (float)((buffer[35] << 8) + buffer[36]) / 1000.0f;                                          // 1.00
-      Energy.frequency[0] = (float)((buffer[37] << 8) + buffer[38]) / 100.0f;                                              // 50.0 Hz
+      Energy->voltage[0] = (float)((buffer[27] << 8) + buffer[28]) / 10.0f;
+      Energy->current[0] = (float)((buffer[29] << 8) + buffer[30]) / 100.0f;
+      Energy->active_power[0] = (float)((buffer[31] << 8) + buffer[32]);
+      Energy->reactive_power[0] = (float)(int16_t)((buffer[33] << 8) + buffer[34]);
+      Energy->power_factor[0] = (float)((buffer[35] << 8) + buffer[36]) / 1000.0f;                                          // 1.00
+      Energy->frequency[0] = (float)((buffer[37] << 8) + buffer[38]) / 100.0f;                                              // 50.0 Hz
       uint8_t offset = 11;
       if (Settings->flag3.dds2382_model) {  // SetOption71 - Select different Modbus registers for Active Energy (#6531)
         offset = 19;
       }
-      Energy.export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0f;    // 429496.729 kW
-      Energy.import_active[0] = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0f;  // 429496.729 kW
+      Energy->export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0f;    // 429496.729 kW
+      Energy->import_active[0] = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0f;  // 429496.729 kW
       EnergyUpdateTotal();  // 484.708 kWh
     }
   } // end data ready

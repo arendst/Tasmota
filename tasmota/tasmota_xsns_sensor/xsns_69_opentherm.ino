@@ -500,7 +500,7 @@ void sns_opentherm_boiler_setpoint_cmd(void)
     bool query = strlen(XdrvMailbox.data) == 0;
     if (!query)
     {
-        sns_ot_boiler_status.m_boilerSetpoint = atof(XdrvMailbox.data);
+        sns_ot_boiler_status.m_boilerSetpoint = CharToFloat(XdrvMailbox.data);
     }
     ResponseCmndFloat(sns_ot_boiler_status.m_boilerSetpoint, Settings->flag2.temperature_resolution);
 }
@@ -510,7 +510,7 @@ void sns_opentherm_hot_water_setpoint_cmd(void)
     bool query = strlen(XdrvMailbox.data) == 0;
     if (!query)
     {
-        sns_ot_boiler_status.m_hotWaterSetpoint = atof(XdrvMailbox.data);
+        sns_ot_boiler_status.m_hotWaterSetpoint = CharToFloat(XdrvMailbox.data);
     }
     ResponseCmndFloat(sns_ot_boiler_status.m_hotWaterSetpoint, Settings->flag2.temperature_resolution);
 }

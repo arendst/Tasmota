@@ -260,19 +260,19 @@ void HandleMetrics(void) {
 #ifdef USE_ENERGY_SENSOR
   WritePromMetricDec(PSTR("energy_voltage_volts"),
     kPromMetricGauge,
-    Energy.voltage[0], Settings->flag2.voltage_resolution, nullptr);
+    Energy->voltage[0], Settings->flag2.voltage_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_current_amperes"),
     kPromMetricGauge,
-    Energy.current[0], Settings->flag2.current_resolution, nullptr);
+    Energy->current[0], Settings->flag2.current_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_active_watts"),
     kPromMetricGauge,
-    Energy.active_power[0], Settings->flag2.wattage_resolution, nullptr);
+    Energy->active_power[0], Settings->flag2.wattage_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_kilowatts_daily"),
     kPromMetricCounter,
-    Energy.daily_sum, Settings->flag2.energy_resolution, nullptr);
+    Energy->daily_sum, Settings->flag2.energy_resolution, nullptr);
   WritePromMetricDec(PSTR("energy_power_kilowatts_total"),
     kPromMetricCounter,
-    Energy.total_sum, Settings->flag2.energy_resolution, nullptr);
+    Energy->total_sum, Settings->flag2.energy_resolution, nullptr);
 #endif
 
   for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++) {

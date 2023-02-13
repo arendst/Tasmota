@@ -285,16 +285,16 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         // Voltage V (not present on all Smart Meter)
         if ( ilabel == LABEL_TENSION || ilabel == LABEL_URMS1 || ilabel == LABEL_URMS2 || ilabel == LABEL_URMS3)
         {
-            Energy.voltage_available = true;
+            Energy->voltage_available = true;
             float volt = (float) atoi(me->value);
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s=%s, now %d"), me->name, me->value, (int) volt);
 
             if ( ilabel == LABEL_URMS2) {
-                Energy.voltage[1] = volt;
+                Energy->voltage[1] = volt;
             } else if ( ilabel == LABEL_URMS3) {
-                Energy.voltage[2] = volt;
+                Energy->voltage[2] = volt;
             } else {
-                Energy.voltage[0] = volt;
+                Energy->voltage[0] = volt;
             }
         }
 
@@ -304,25 +304,25 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     || ilabel == LABEL_IINST2 || ilabel == LABEL_IRMS2
                     || ilabel == LABEL_IINST3 || ilabel == LABEL_IRMS3  )
         {
-            Energy.current_available = true;
+            Energy->current_available = true;
             float current = (float) atoi(me->value);
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s=%s, now %d"), me->name, me->value, (int) current);
 
             if (ilabel == LABEL_IINST2 || ilabel == LABEL_IRMS2) {
-                Energy.current[1]  = current;
+                Energy->current[1]  = current;
             } else if (ilabel == LABEL_IINST3 || ilabel == LABEL_IRMS3) {
-                Energy.phase_count = 3;
-                Energy.current[2] = current;
+                Energy->phase_count = 3;
+                Energy->current[2] = current;
             } else {
-                Energy.current[0] = current;
+                Energy->current[0] = current;
             }
         }
 
         // Power P
         else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
         {
-            Energy.active_power[0]  = (float) atoi(me->value);;
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
+            Energy->active_power[0]  = (float) atoi(me->value);;
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy->active_power[0]);
         }
 
         // Ok now not so real time values Does this value is new or changed?
@@ -394,11 +394,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 
                 AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
                 if (total_wh>0) {
-                    Energy.total[0] = (float) total_wh / 1000.0f;
-                    Energy.import_active[0] = Energy.total[0];
-                    //Energy.import_active[0] = (float)total/1000.0f;
+                    Energy->total[0] = (float) total_wh / 1000.0f;
+                    Energy->import_active[0] = Energy->total[0];
+                    //Energy->import_active[0] = (float)total/1000.0f;
                     //EnergyUpdateTotal();
-                    AddLog (LOG_LEVEL_DEBUG_MORE, PSTR ("TIC: import_active[0]=%.3fKWh"), Energy.import_active[0] );
+                    AddLog (LOG_LEVEL_DEBUG_MORE, PSTR ("TIC: import_active[0]=%.3fKWh"), Energy->import_active[0] );
                 }
             }
 
@@ -406,8 +406,8 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             else if ( ilabel == LABEL_EAST)
             {
                 total_wh = atol(me->value);
-                Energy.total[0] = (float) total_wh / 1000.0f;
-                Energy.import_active[0] = Energy.total[0];
+                Energy->total[0] = (float) total_wh / 1000.0f;
+                Energy->import_active[0] = Energy->total[0];
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total_wh);
             }
 
@@ -591,7 +591,7 @@ Comments: -
 void NewFrameCallback(struct _ValueList * me)
 {
     // Reset Energy Watchdog
-    Energy.data_valid[0] = 0;
+    Energy->data_valid[0] = 0;
 
     // Deprecated see setOption108
     // send teleinfo MQTT raw data only if setup like that
@@ -631,8 +631,8 @@ void TInfoDrvInit(void) {
     if (PinUsed(GPIO_TELEINFO_RX)) {
         tic_rx_pin = Pin(GPIO_TELEINFO_RX);
         TasmotaGlobal.energy_driver = XNRG_15;
-        Energy.voltage_available = false;
-        Energy.phase_count = 1;
+        Energy->voltage_available = false;
+        Energy->phase_count = 1;
         // init hardware energy counters
         total_wh = 0;
         Settings->flag3.hardware_energy_total = true;
@@ -763,7 +763,7 @@ bool TInfoCmd(void) {
     //uint8_t name_len = strlen(D_NAME_TELEINFO);
 
     // At least "EnergyConfig"
-    if (CMND_ENERGYCONFIG == Energy.command_code) {
+    if (CMND_ENERGYCONFIG == Energy->command_code) {
 
         AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
 
@@ -1106,7 +1106,7 @@ void TInfoShow(bool json)
     {
         // Add new value (not part of TIC JSON Object)
         if (isousc) {
-            ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
+            ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy->current[0]*100.0f) / isousc));
         }
 
         // add teleinfo TIC object
@@ -1126,8 +1126,8 @@ void TInfoShow(bool json)
             uint8_t red, green, blue;
             char phase_color[8];
 
-            for (int i=0; i<Energy.phase_count ; i++ ) {
-                percent = (int) ((Energy.current[i]*100.0f) / isousc) ;
+            for (int i=0; i<Energy->phase_count ; i++ ) {
+                percent = (int) ((Energy->current[i]*100.0f) / isousc) ;
                 if (percent > 100) {
                     percent = 100;
                 }
@@ -1150,7 +1150,7 @@ void TInfoShow(bool json)
         }
 
         if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
-            if (Energy.phase_count==3) {
+            if (Energy->phase_count==3) {
                 int imax[3];
                 for (int i=LABEL_IMAX1; i<=LABEL_IMAX3; i++) {
                     if (getValueFromLabelIndex(i, value) ) {
@@ -1177,7 +1177,7 @@ void TInfoShow(bool json)
                 }
             }
             if (contrat && isousc) {
-                int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
+                int percent = (int) ((Energy->current[0]*100.0f) / isousc) ;
                 GetTextIndexed(name, sizeof(name), contrat, kContratName);
                 WSContentSend_P(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
                //WSContentSend_P(HTTP_ENERGY_LOAD_TELEINFO,  percent);

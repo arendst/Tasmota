@@ -14,13 +14,14 @@
 // extern int be_udp_begin_mcast(bvm *vm);
 
 #include <Arduino.h>
-#include <WiFiGeneric.h>
 #include <WiFiUdp.h>
 #include "be_mapping.h"
 
 // Tasmota Logging
 extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
+extern bool WifiHostByName(const char* aHostname, IPAddress & aResult);
 
 extern "C" {
 
@@ -41,19 +42,17 @@ extern "C" {
     return be_call_c_func(vm, (void*) &be_udp_deinit_ntv, "=.p", "");
   }
 
-  // udp.begin(address:string, port:int) -> bool
-  int32_t be_udp_begin_ntv(WiFiUDP *udp, int32_t port) {   
+  // udp.begin(interface:string, port:int) -> bool
+  int32_t be_udp_begin_ntv(WiFiUDP *udp, const char *host, int32_t port) {
     IPAddress addr;
-    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin listening to '%s'", addr.toString().c_str());
+    // if no host or host is "" then we defult to INADDR_ANY
+    if(host && (*host != 0) && !WifiHostByName(host, addr)){
+        return 0;
+    }
     return udp->begin(addr, port);
   }
   int32_t be_udp_begin(struct bvm *vm) {
-    if (be_top(vm) >= 3 && be_isstring(vm, 2)) {
-      // legacy string parameter, now ignored
-      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".-i");
-    } else {
-      return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".i");
-    }
+    return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".si");
   }
 
   // udp.stop() -> nil
@@ -67,7 +66,7 @@ extern "C" {
   // udp.begin_multicast(address:string, port:int) -> nil
   int32_t be_udp_begin_mcast_ntv(WiFiUDP *udp, const char *host, int32_t port) {
     IPAddress addr;
-    if(!WiFiGenericClass::hostByName(host, addr)){
+    if(!WifiHostByName(host, addr)){
         return 0;
     }
     return udp->WiFiUDP::beginMulticast(addr, port);
@@ -79,7 +78,7 @@ extern "C" {
   // udp.send(address:string, port:int, payload:bytes) -> bool
   int32_t be_udp_send_ntv(WiFiUDP *udp, const char *host, int32_t port, const uint8_t* buf, int32_t len) {
     IPAddress addr;
-    if (!WiFiGenericClass::hostByName(host, addr)){
+    if (!WifiHostByName(host, addr)){
         return 0;
     }
     // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin got host '%s'", addr.toString().c_str());

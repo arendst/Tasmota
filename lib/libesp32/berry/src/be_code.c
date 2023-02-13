@@ -927,4 +927,14 @@ void be_code_raise(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
     free_expreg(finfo, e2);
 }
 
+void be_code_implicit_class(bfuncinfo *finfo, bexpdesc *e, bclass *c)
+{
+    bvalue k;
+    k.type = BE_CLASS;
+    k.v.p = c;
+    int idx = newconst(finfo, &k);  /* create new constant */
+    e->type = ETCONST;  /* new type is constant by index */
+    e->v.idx = setK(idx);
+}
+
 #endif

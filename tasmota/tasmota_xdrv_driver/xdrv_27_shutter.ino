@@ -110,8 +110,8 @@ struct SHUTTER {
   uint16_t venetian_delay = 0; // Delay in steps before venetian shutter start physical moving. Based on tilt position
   uint16_t min_realPositionChange = 0; // minimum change of the position before the shutter operates. different for PWM and time based operations
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
-  uint16_t last_reported_time =0;
-  uint32_t last_stop_time = 0;      // record the last time the relay was switched off
+  uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
+  uint32_t last_stop_time = 0;         // record the last time the relay was switched off
 } Shutter[MAX_SHUTTERS];
 
 struct SHUTTERGLOBAL {
@@ -309,7 +309,7 @@ void ShutterInit(void)
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Mode undef.. calculate..."));
         ShutterGlobal.position_mode = SHT_TIME;
         if (!relay_in_interlock) {
-          // temporary to maintain old functionality 
+          // temporary to maintain old functionality
           if (Settings->shutter_mode == SHT_UNDEF) {
             ShutterGlobal.position_mode = SHT_TIME_UP_DOWN;
           }
@@ -351,8 +351,15 @@ void ShutterInit(void)
       Shutter[i].lastdirection = (50 < Settings->shutter_position[i]) ? 1 : -1;
 
       // Venetian Blind
+      // ensure min is smaller than max
+      Settings->shutter_tilt_config[2][i] = Settings->shutter_tilt_config[0][i] >= Settings->shutter_tilt_config[1][i]?0:Settings->shutter_tilt_config[2][i];
+      //copy config to shutter
       for (uint8_t k=0; k<5; k++) {
         Shutter[i].tilt_config[k] =  Settings->shutter_tilt_config[k][i];
+      }
+      // wipe open/close position if duration is 0
+      if (Shutter[i].tilt_config[2]==0) {
+        Shutter[i].tilt_config[3] = Shutter[i].tilt_config[4] = 0;
       }
       Shutter[i].tilt_target_pos = Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
 
@@ -376,16 +383,16 @@ void ShutterInit(void)
           // Test is the relays are in interlock mode. Disable shuttermode if error
           if (!relay_in_interlock) {
             TasmotaGlobal.shutters_present = 0,
-            AddLog(LOG_LEVEL_ERROR, PSTR("SHT: ERROR: Shtr%d Relays are not in INTERLOCK. Pls read documentation. Shutter DISABLE. Fix and REBOOT"),i+1);
+            AddLog(LOG_LEVEL_ERROR, PSTR("SHT: ERROR: Shtr%d Relays are not in INTERLOCK. Pls read documentation. Shutter DISABLE. Fix and REBOOT"), i+1);
             return;
-          } 
+          }
         break;
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"),i+1,Shutter[i].min_realPositionChange,Shutter[i].min_TiltChange);
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"),i, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"), i+1, Shutter[i].min_realPositionChange, Shutter[i].min_TiltChange);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"), i+1, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init. Pos %d, Inv %d, Locked %d, Endstop enab %d, webButt inv %d, Motordel: %d"),
         i+1,  Shutter[i].real_position,
-        (Settings->shutter_options[i]&1) ? 1 : 0, (Settings->shutter_options[i]&2) ? 1 : 0, (Settings->shutter_options[i]&4) ? 1 : 0, (Settings->shutter_options[i]&8) ? 1 : 0, Shutter[i].motordelay);
+        (Settings->shutter_options[i] & 1) ? 1 : 0, (Settings->shutter_options[i] & 2) ? 1 : 0, (Settings->shutter_options[i] & 4) ? 1 : 0, (Settings->shutter_options[i] & 8) ? 1 : 0, Shutter[i].motordelay);
 
     } else {
       // terminate loop at first INVALID Shutter[i].
@@ -395,7 +402,10 @@ void ShutterInit(void)
     Settings->shutter_accuracy = 1;
     Settings->shutter_mode = ShutterGlobal.position_mode;
     // initialize MotorStop time with 500ms if not set
-    Settings->shutter_motorstop = Settings->shutter_motorstop == 0?500:Settings->shutter_motorstop;
+    // typical not set start values are 0 and 65535
+    if (Settings->shutter_motorstop > 5000 || Settings->shutter_motorstop == 0) {
+        Settings->shutter_motorstop = 500;
+    }
   }
 }
 
@@ -410,7 +420,7 @@ void ShutterReportPosition(bool always, uint32_t index)
       shutter_running++;
     }
   }
- 
+
   // Allow function exit if nothing to report (99.9% use case)
   if (!always && !shutter_running) return;
 
@@ -422,7 +432,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   }
   for (i; i < n; i++) {
     //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d"), i+1,Shutter[i].real_position);
-    
+
     if (Shutter[i].direction != 0) {
       ShutterLogPos(i);
       shutter_running++;
@@ -588,7 +598,7 @@ void ShutterPowerOff(uint8_t i)
 
 void ShutterWaitForMotorStop(uint8_t index)
 {
-  Shutter[index-1].last_stop_time = millis(); 
+  Shutter[index-1].last_stop_time = millis();
   ShutterWaitForMotorStart(index);
 }
 
@@ -597,7 +607,7 @@ void ShutterWaitForMotorStart(uint8_t index)
   while (millis() < Shutter[index-1].last_stop_time + Settings->shutter_motorstop) {
     loop();
   }
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done")); 
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
 }
 
 void ShutterUpdatePosition(void)
@@ -734,7 +744,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
-  
+
   Shutter[i].direction = direction; // Last action. This causes RTC to start.
 }
 
@@ -1363,9 +1373,12 @@ void CmndShutterOpenTime(void)
       Settings->shutter_opentime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Settings->shutter_opentime[XdrvMailbox.index -1]) / 10, 1, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Settings->shutter_opentime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
 
@@ -1376,9 +1389,12 @@ void CmndShutterCloseTime(void)
       Settings->shutter_closetime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Settings->shutter_closetime[XdrvMailbox.index -1]) / 10, 1, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Settings->shutter_closetime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
 
@@ -1390,9 +1406,12 @@ void CmndShutterMotorDelay(void)
       ShutterInit();
       //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr Init1. realdelay %d"),Shutter[XdrvMailbox.index -1].motordelay);
     }
+/*
     char time_chr[10];
     dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
+*/
+    ResponseCmndIdxFloat((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2);
   }
 }
 
@@ -1416,7 +1435,7 @@ void CmndShutterRelay(void)
     } else {
       ShutterGlobal.RelayShutterMask ^= 3 << (Settings->shutter_startrelay[XdrvMailbox.index -1] - 1);
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: relold:%d index:%d, mode:%d, relaymask: %ld"), 
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: relold:%d index:%d, mode:%d, relaymask: %ld"),
     Settings->shutter_startrelay[XdrvMailbox.index -1] , XdrvMailbox.index ,Settings->shutter_mode, ShutterGlobal.RelayShutterMask );
     if (Settings->shutter_startrelay[XdrvMailbox.index -1] == 0 && XdrvMailbox.index == 1 && Settings->shutter_mode == SHT_UNDEF) {
       // first shutter was not defined, maybe init
@@ -1433,7 +1452,7 @@ void CmndShutterRelay(void)
   // {"ShutterRelay1":"1","ShutterRelay2":"3","ShutterRelay3":"5"}
   Response_P(PSTR("{"));
   for (uint32_t i = start; i < end; i++) {
-    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":\"%d\""), (i>start)?",":"", i+1,Settings->shutter_startrelay[i]);
+    ResponseAppend_P(PSTR("%s\"" D_PRFX_SHUTTER D_CMND_SHUTTER_RELAY "%d\":%d"), (i>start)?",":"", i+1, Settings->shutter_startrelay[i]);
   }
   ResponseAppend_P(PSTR("}"));
 }
@@ -1754,7 +1773,7 @@ void CmndShutterTiltConfig(void)
       ShutterInit();
     }
     char setting_chr[30] = "0";
-    snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), XdrvMailbox.index -1,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
+    snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
     ResponseCmndIdxChar(setting_chr);
     AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltConfig %d, min: %d, max %d, runtime %d, close_pos: %d, open_pos: %d"), XdrvMailbox.index ,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
   }
@@ -1776,6 +1795,7 @@ void CmndShutterMotorStop(void)
   if (!XdrvMailbox.usridx) {
     if ((XdrvMailbox.payload >= 0) ) {
       Settings->shutter_motorstop = XdrvMailbox.payload;
+      ShutterInit();
     }
     ResponseCmndNumber(Settings->shutter_motorstop);
   }
