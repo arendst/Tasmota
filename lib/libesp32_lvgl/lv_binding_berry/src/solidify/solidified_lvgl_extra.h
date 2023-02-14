@@ -49,6 +49,8 @@ be_local_closure(lv_extra__anonymous_,   /* name */
 /*******************************************************************/
 
 
+extern const bclass be_class_lv_coord_arr;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -217,6 +219,8 @@ be_local_class(lv_coord_arr,
     be_str_weak(lv_coord_arr)
 );
 
+extern const bclass be_class_lv_point_arr;
+
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
@@ -318,6 +322,8 @@ be_local_class(lv_point_arr,
     })),
     be_str_weak(lv_point_arr)
 );
+
+extern const bclass be_class_lv_style_prop_arr;
 
 /********************************************************************
 ** Solidified function: init

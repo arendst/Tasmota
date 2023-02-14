@@ -8,14 +8,18 @@
 
 #include "lvgl.h"
 #include "be_mapping.h"
+#include "be_ctypes.h"
 #include "lv_berry.h"
 #include "lv_theme_haspmota.h"
+
+// declare accessors for non-const ints
+int32_t be_LV_LAYOUT_GRID(void) { return LV_LAYOUT_GRID; };              BE_VAR_CTYPE_DECLARE(be_LV_LAYOUT_GRID, "i");
+int32_t be_LV_LAYOUT_FLEX(void) { return LV_LAYOUT_FLEX; };              BE_VAR_CTYPE_DECLARE(be_LV_LAYOUT_FLEX, "i");
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
 
 extern lv_ts_calibration_t * lv_get_ts_calibration(void);
-
 
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
@@ -502,6 +506,8 @@ const be_const_member_t lv0_constants[] = {
     { "LAYER_TYPE_NONE", be_cconst_int(LV_LAYER_TYPE_NONE) },
     { "LAYER_TYPE_SIMPLE", be_cconst_int(LV_LAYER_TYPE_SIMPLE) },
     { "LAYER_TYPE_TRANSFORM", be_cconst_int(LV_LAYER_TYPE_TRANSFORM) },
+    { ">LAYOUT_FLEX", be_ctype(be_LV_LAYOUT_FLEX) },
+    { ">LAYOUT_GRID", be_ctype(be_LV_LAYOUT_GRID) },
     { "LED_DRAW_PART_RECTANGLE", be_cconst_int(LV_LED_DRAW_PART_RECTANGLE) },
     { "LOG_LEVEL_ERROR", be_cconst_int(LV_LOG_LEVEL_ERROR) },
     { "LOG_LEVEL_INFO", be_cconst_int(LV_LOG_LEVEL_INFO) },

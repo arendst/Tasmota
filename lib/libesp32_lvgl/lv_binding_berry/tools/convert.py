@@ -718,14 +718,18 @@ print("""/********************************************************************
 
 #include "lvgl.h"
 #include "be_mapping.h"
+#include "be_ctypes.h"
 #include "lv_berry.h"
 #include "lv_theme_haspmota.h"
+
+// declare accessors for non-const ints
+int32_t be_LV_LAYOUT_GRID(void) { return LV_LAYOUT_GRID; };              BE_VAR_CTYPE_DECLARE(be_LV_LAYOUT_GRID, "i");
+int32_t be_LV_LAYOUT_FLEX(void) { return LV_LAYOUT_FLEX; };              BE_VAR_CTYPE_DECLARE(be_LV_LAYOUT_FLEX, "i");
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
 
 extern lv_ts_calibration_t * lv_get_ts_calibration(void);
-
 
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
@@ -810,6 +814,7 @@ for k in sorted(lv_module2):
     if v[0] == '"': v_prefix = "$"; v_macro = "be_cconst_string"
     if v[0] == '&': v_prefix = "&"; v_macro = "be_cconst_ptr"
     if v[0] == '@': v_prefix = "@"; v_macro = "be_cconst_ptr"; v = "&" + v[1:]
+    if v[0] == '>': v_prefix = ">"; v_macro = "be_ctype"; v = v[1:]
     print(f"    {{ \"{v_prefix}{k}\", {v_macro}({v}) }},")
   else:
     print(f"    {{ \"{k}\", be_cconst_int(LV_{k}) }},")
