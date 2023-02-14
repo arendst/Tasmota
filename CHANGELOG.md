@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - TM1638 button and led support are handled as virtual switches and relays (#11031)
 
 ### Changed
+- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX`
 
 ### Fixed
 - ESP8266 Fix TLS SNI which would prevent AWS IoT connection (#17936)
