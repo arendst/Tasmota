@@ -848,10 +848,11 @@ void TuyaProcessStatePacket(void) {
             if (Tuya.buffer[dpidStart + 4]) { PowerOff = true; }
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-          uint32_t switch_state = SwitchGetState(fnId - TUYA_MCU_FUNC_SWT1);
-          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[dpidStart + 4], switch_state);
+          uint32_t switch_index = fnId - TUYA_MCU_FUNC_SWT1;
+          uint32_t switch_state = SwitchGetState(switch_index);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"), switch_index +1, Tuya.buffer[dpidStart + 4], switch_state);
           if (switch_state != Tuya.buffer[dpidStart + 4]) {
-            SwitchSetState(fnId - TUYA_MCU_FUNC_SWT1, Tuya.buffer[dpidStart + 4]);
+            SwitchSetState(switch_index, Tuya.buffer[dpidStart + 4]);
           }
         }
         if (PowerOff) { Tuya.ignore_dimmer_cmd_timeout = millis() + 250; }

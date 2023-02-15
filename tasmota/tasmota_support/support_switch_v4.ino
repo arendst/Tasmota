@@ -74,13 +74,9 @@ void SwitchSetVirtualPinState(uint32_t index, uint32_t state) {
   bitWrite(Switch.virtual_pin, index, state);
 }
 
-void SwitchSetState(uint32_t index, uint32_t state) {
-  // Set debounced pin state to be used by late detected switches
-  if (!bitRead(Switch.used, index)) {
-    bitSet(Switch.used, index);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), index +1, state);
-  }
-  Switch.debounced_state[index] = state;
+uint8_t SwitchLastState(uint32_t index) {
+  // Get last state
+  return Switch.last_state[index];
 }
 
 uint8_t SwitchGetState(uint32_t index) {
@@ -88,9 +84,17 @@ uint8_t SwitchGetState(uint32_t index) {
   return Switch.debounced_state[index];
 }
 
-uint8_t SwitchLastState(uint32_t index) {
-  // Get last state
-  return Switch.last_state[index];
+void SwitchSetState(uint32_t index, uint32_t state) {
+  // Set debounced pin state to be used by late detected switches
+  if (!bitRead(Switch.used, index)) {
+    for (uint32_t i = 0; i <= index; i++) {
+      if (!bitRead(Switch.used, i)) {
+        bitSet(Switch.used, i);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SWT: Add vSwitch%d, State %d"), i +1, Switch.debounced_state[i]);
+      }
+    }
+  }
+  Switch.debounced_state[index] = state;
 }
 
 /*------------------------------------------------------------------------------------------*/

@@ -1639,10 +1639,11 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
             if (value) { PowerOff = true; }
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-          uint32_t switch_state = SwitchGetState(fnId - TUYA_MCU_FUNC_SWT1);
-          AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Switch%d --> M%d T%d"),fnId, fnId - TUYA_MCU_FUNC_SWT1 + 1, value, switch_state);
+          uint32_t switch_index = fnId - TUYA_MCU_FUNC_SWT1;
+          uint32_t switch_state = SwitchGetState(switch_index);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Switch%d --> M%d T%d"), fnId, switch_index +1, value, switch_state);
           if (switch_state != value) {
-            SwitchSetState(fnId - TUYA_MCU_FUNC_SWT1, value);
+            SwitchSetState(switch_index, value);
           }
         }
       //if (PowerOff) { pTuya->ignore_dimmer_cmd_timeout = millis() + 250; }
