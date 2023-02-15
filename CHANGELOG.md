@@ -7,19 +7,22 @@ All notable changes to this project will be documented in this file.
 ### Added
 - ESP32 preliminary support for Matter protocol, milestone 1 (commissioning) by Stephan Hadinger
 - Basic support for Shelly Pro 4PM
+- Command ``DhtDelay<sensor> <high_delay>,<low_delay>`` to allow user control over high and low delay in microseconds (#17944)
 
 ### Breaking Changed
 - TM1638 button and led support are handled as virtual switches and relays (#11031)
 
 ### Changed
-- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX`
+- Dht driver from v6 to v7
+- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX` (#17948)
+- TuyaMcu support of virtual switches
 
 ### Fixed
 - ESP8266 Fix TLS SNI which would prevent AWS IoT connection (#17936)
 
 ### Removed
 
-## [12.3.1.5]
+## [12.3.1.5] 20230208
 ### Added
 - ESP32 support for eigth energy phases/channels
 - ESP32 command ``EnergyCols 1..8`` to change number of GUI columns

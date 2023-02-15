@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.3.1.6
 ### Added
+- Command ``DhtDelay<sensor> <high_delay>,<low_delay>`` to allow user control over high and low delay in microseconds [#17944](https://github.com/arendst/Tasmota/issues/17944)
 - Support for up to 3 (ESP8266) or 8 (ESP32) phase modbus energy monitoring device using generic Energy Modbus driver
 - Support for RGB displays [#17414](https://github.com/arendst/Tasmota/issues/17414)
 - Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 [#17417](https://github.com/arendst/Tasmota/issues/17417)
@@ -137,13 +138,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TM1638 button and led support are handled as virtual switches and relays [#11031](https://github.com/arendst/Tasmota/issues/11031)
 
 ### Changed
+- Dht driver from v6 to v7
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.6 (IPv6 support)
 - Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
 - Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
 - Keep webserver enabled on command ``upload``
 - Better support for virtual buttons and switches up to a total of 28
+- TuyaMcu support of virtual switches
 - Increase rule event buffer from 100 to 256 characters [#16943](https://github.com/arendst/Tasmota/issues/16943)
 - Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)
+- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX` [#17948](https://github.com/arendst/Tasmota/issues/17948)
 
 ### Fixed
 - Modbus transmit enable GPIO enabled once during write buffer

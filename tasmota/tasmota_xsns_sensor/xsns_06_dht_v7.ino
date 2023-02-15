@@ -6,7 +6,7 @@
   SPDX-License-Identifier: GPL-3.0-only
 */
 
-#ifdef USE_DHT_V6
+#ifdef USE_DHT
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021, THS01, MS01 - Temperature and Humidity
  *
@@ -14,6 +14,12 @@
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  *
  * Changelog
+ * 20230215 - v7
+ *          - Add user high and low delay in microseconds
+ *            DhtDelay1        - Show delays for first sensor
+ *            DhtDelay1 1      - Reset to defaults
+ *            DhtDelay1 500,40 - Set both delays for sensor 1
+ *            DhtDelay4 500,40 - Set both delays for sensor 4
  * 20220706 - v6
  *          - Consolidate Adafruit DHT library
  *          - Fix ESP32 interrupt control to solve intermittent results
@@ -31,6 +37,18 @@
 #endif
 #define DHT_MAX_RETRY    8
 
+const uint16_t dht_delays_const[4][2] = {
+  { 19000, 50 },   // DHT11
+  { 2000, 50 },    // DHT22
+#ifdef ESP8266
+  { 500, 30 },     // SI7021 / THS-01
+  { 450, 30 }      // MS01
+#else
+  { 400, 30 },     // SI7021 / THS-01
+  { 400, 30 }      // MS01
+#endif
+};
+
 uint32_t dht_maxcycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
@@ -42,12 +60,16 @@ bool dht_dual_mode = false;                   // Single pin mode
 struct DHTSTRUCT {
   float    t = NAN;
   float    h = NAN;
+  uint16_t delay_lo;
+  uint16_t delay_hi;
+  uint16_t type;
   int16_t  raw;
   char     stype[12];
   int8_t   pin;
-  uint16_t type;
   uint8_t  lastresult;
 } Dht[DHT_MAX_SENSORS];
+
+/*********************************************************************************************/
 
 // Expect the signal line to be at the specified level for a period of time and
 // return a count of loop cycles spent at that level (this cycle count can be
@@ -58,8 +80,8 @@ uint32_t DhtExpectPulse(bool level) {
   uint32_t count = 0;
   while (digitalRead(dht_pin) == level) {
     if (count++ >= dht_maxcycles) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d timeout waiting for %s pulse"),
-        dht_pin, (level) ? "high" : "low");
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d timeout waiting for %s pulse"),
+//        dht_pin, (level) ? "high" : "low");
       return UINT32_MAX;  // Exceeded timeout, fail.
     }
   }
@@ -80,6 +102,7 @@ bool DhtRead(uint32_t sensor) {
   } else {
     digitalWrite(dht_pin_out, LOW);
   }
+/*
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
       delay(19);  // minimum 18ms
@@ -103,8 +126,10 @@ bool DhtRead(uint32_t sensor) {
 #endif
       break;
   }
+*/
+  delayMicroseconds(Dht[sensor].delay_lo);
 
-  uint32_t cycles[80];
+  uint32_t cycles[80] = { 0 };
   uint32_t i = 0;
 
   // End the start signal by setting data line high for 40 microseconds.
@@ -115,6 +140,7 @@ bool DhtRead(uint32_t sensor) {
   }
 
   // Delay a moment to let sensor pull data line low.
+/*
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
@@ -125,6 +151,8 @@ bool DhtRead(uint32_t sensor) {
       delayMicroseconds(30);                            // See: https://github.com/letscontrolit/ESPEasy/issues/1798 and 20210524: https://github.com/arendst/Tasmota/issues/12180
       break;
   }
+*/
+  delayMicroseconds(Dht[sensor].delay_hi);
 
   // Now start reading the data line to get the value from the DHT sensor.
 
@@ -161,10 +189,15 @@ bool DhtRead(uint32_t sensor) {
   interrupts();
 #endif
 
-  if (i < 80) { return false; }
+  char cycle_dump[200] = { 0 };
+  for (uint32_t i = 0; i < 20; i++) {
+    snprintf_P(cycle_dump, sizeof(cycle_dump), PSTR("%s %u"), cycle_dump, cycles[i]);
+  }
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d cycles (%d/80) %s .."), dht_pin, i, cycle_dump);
 
-//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d cycles %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u .."),
-//    dht_pin, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4], cycles[5], cycles[6], cycles[7], cycles[8], cycles[9], cycles[10], cycles[11], cycles[12], cycles[13], cycles[14], cycles[15]);
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d cycles (%d/80) %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u .."),
+//    dht_pin, i, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4], cycles[5], cycles[6], cycles[7], cycles[8], cycles[9], cycles[10], cycles[11], cycles[12], cycles[13], cycles[14], cycles[15]);
+
   // DHT11 on ESP8266 - 80MHz
   // 10:49:06.532 DHT: Pin14 cycles 81 35 74 34 81 106 81 35 81 34 81 34 81 106 81 35 ..
   // 10:49:06.533 DHT: Pin14 read 22001A003C
@@ -192,6 +225,11 @@ bool DhtRead(uint32_t sensor) {
   // Sonoff THS01 on ESP32 - 80MHz
   // 14:36:43.787 DHT: Pin25 cycles 67 42 66 41 75 42 74 42 75 42 75 41 75 131 74 52 ..
   // 14:36:43.789 DHT: Pin25 read 020B00FC09
+
+  if (i < 80) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d timeout waiting for pulse %d"), dht_pin, i);
+    return false;
+  }
 
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
   // Inspect pulses and determine which ones are 0 (high state cycle count < low
@@ -291,12 +329,20 @@ bool DhtRead(uint32_t sensor) {
 
 /********************************************************************************************/
 
+void DhtDelayDefault(uint32_t sensor) {
+  uint32_t index = Dht[sensor].type - GPIO_DHT11;  // GPIO_DHT11, GPIO_DHT22, GPIO_SI7021
+  if (index > 2) { index = 3; }                    // GPIO_MS01
+  Dht[sensor].delay_lo = dht_delays_const[index][0];
+  Dht[sensor].delay_hi = dht_delays_const[index][1];
+}
+
 bool DhtPinState() {
   if (((XdrvMailbox.index >= AGPIO(GPIO_DHT11)) && (XdrvMailbox.index <= AGPIO(GPIO_SI7021))) ||
        (XdrvMailbox.index == AGPIO(GPIO_MS01))) {
     if (dht_sensors < DHT_MAX_SENSORS) {
       Dht[dht_sensors].pin = XdrvMailbox.payload;
       Dht[dht_sensors].type = BGPIO(XdrvMailbox.index);
+      DhtDelayDefault(dht_sensors);
       dht_sensors++;
       XdrvMailbox.index = AGPIO(GPIO_DHT11);
     } else {
@@ -327,7 +373,7 @@ void DhtInit(void) {
 
     dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: (v6) " D_SENSORS_FOUND " %d"), dht_sensors);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: (v7) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }
@@ -368,6 +414,37 @@ void DhtShow(bool json) {
 }
 
 /*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+const char kDhtCommands[] PROGMEM = "Dht|"  // Prefix
+  "Delay";
+
+void (* const DhtCommand[])(void) PROGMEM = {
+  &CmndDhtDelay };
+
+void CmndDhtDelay(void) {
+  // DhtDelay1        - Show delays for first sensor
+  // DhtDelay1 1      - Reset to defaults
+  // DhtDelay1 500,40 - Set both delays for sensor 1
+  // DhtDelay4 500,40 - Set both delays for sensor 4
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= dht_sensors)) {
+    uint32_t sensor = XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t parm[2] = { Dht[sensor].delay_lo, Dht[sensor].delay_hi };
+      ParseParameters(2, parm);
+      if (1 == parm[0]) {
+        DhtDelayDefault(sensor);
+      } else {
+        Dht[sensor].delay_lo = parm[0];
+        Dht[sensor].delay_hi = parm[1];
+      }
+    }
+    Response_P(PSTR("{\"%s%d\":[%d,%d]}"), XdrvMailbox.command, XdrvMailbox.index, Dht[sensor].delay_lo, Dht[sensor].delay_hi);
+  }
+}
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
@@ -387,6 +464,9 @@ bool Xsns06(uint32_t function) {
         DhtShow(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_COMMAND:
+        result = DecodeCommand(kDhtCommands, DhtCommand);
+        break;
       case FUNC_INIT:
         DhtInit();
         break;
