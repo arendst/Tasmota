@@ -3,19 +3,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [12.4.0] 20230215
+## [12.4.0] 20230216
 - Release Peter
 
-## [12.3.1.6] 20230215
+## [12.3.1.6] 20230216
 ### Added
 - ESP32 preliminary support for Matter protocol, milestone 1 (commissioning) by Stephan Hadinger
 - Basic support for Shelly Pro 4PM
+- Command ``DhtDelay<sensor> <high_delay>,<low_delay>`` to allow user control over high and low delay in microseconds (#17944)
+- Berry `int64.fromstring()` to convert a string to an int64 (#17953)
 
 ### Breaking Changed
 - TM1638 button and led support are handled as virtual switches and relays (#11031)
 
+### Changed
+- Dht driver from v6 to v7
+- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX` (#17948)
+- TuyaMcu support of virtual switches
+
 ### Fixed
 - ESP8266 Fix TLS SNI which would prevent AWS IoT connection (#17936)
+- TuyaMcu exception 3 regression from v12.3.1.4
 
 ## [12.3.1.5] 20230208
 ### Added
