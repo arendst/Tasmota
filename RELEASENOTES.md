@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry crypto add ``HKDF_HMAC_SHA256``
 - Berry crypto add ``SPAKE2P_Matter`` for Matter support
 - Berry add ``mdns`` advanced features and query
+- Berry `int64.fromstring()` to convert a string to an int64 [#17953](https://github.com/arendst/Tasmota/issues/17953)
 - ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
 - ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
 - ESP32 support for eigth energy phases/channels
