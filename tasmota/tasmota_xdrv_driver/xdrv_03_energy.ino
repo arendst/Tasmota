@@ -697,7 +697,7 @@ void CmndEnergyTotal(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Total
-    RtcSettings.energy_kWhtotal_ph[phase] = values[0];
+    RtcSettings.energy_kWhtotal_ph[phase] = (int32_t)values[0];
     Settings->energy_kWhtotal_ph[phase] = RtcSettings.energy_kWhtotal_ph[phase];
     if (params > 1) {
       Settings->energy_kWhtotal_time = values[1];
@@ -716,7 +716,7 @@ void CmndEnergyYesterday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Yesterday
-    Settings->energy_kWhyesterday_ph[phase] = values[0] * 100;
+    Settings->energy_kWhyesterday_ph[phase] = (int32_t)values[0] * 100;
     if (params > 1) {
       Settings->energy_kWhtotal_time = values[1];
     }
@@ -732,7 +732,7 @@ void CmndEnergyToday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Today
-    Energy->kWhtoday_offset[phase] = values[0] * 100;
+    Energy->kWhtoday_offset[phase] = (int32_t)values[0] * 100;
     Energy->kWhtoday[phase] = 0;
     Energy->kWhtoday_delta[phase] = 0;
     Energy->start_energy[phase] = 0;
@@ -760,7 +760,7 @@ void CmndEnergyExportActive(void) {
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
       uint32_t phase = XdrvMailbox.index -1;
       // Reset Energy Export Active
-      RtcSettings.energy_kWhexport_ph[phase] = values[0];
+      RtcSettings.energy_kWhexport_ph[phase] = (int32_t)values[0];
       Settings->energy_kWhexport_ph[phase] = RtcSettings.energy_kWhexport_ph[phase];
       if (params > 1) {
         Settings->energy_kWhtotal_time = values[1];
@@ -789,9 +789,9 @@ void CmndEnergyUsage(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.usage totals
-    RtcSettings.energy_usage.usage1_kWhtotal = values[0];
+    RtcSettings.energy_usage.usage1_kWhtotal = (int32_t)values[0];
     if (params > 1) {
-      RtcSettings.energy_usage.usage2_kWhtotal = values[1];
+      RtcSettings.energy_usage.usage2_kWhtotal = (int32_t)values[1];
     }
     Settings->energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
     Settings->energy_usage.usage2_kWhtotal = RtcSettings.energy_usage.usage2_kWhtotal;
@@ -804,9 +804,9 @@ void CmndEnergyExport(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.return totals
-    RtcSettings.energy_usage.return1_kWhtotal = values[0] * 100;
+    RtcSettings.energy_usage.return1_kWhtotal = (int32_t)values[0] * 100;
     if (params > 1) {
-      RtcSettings.energy_usage.return2_kWhtotal = values[1] * 100;
+      RtcSettings.energy_usage.return2_kWhtotal = (int32_t)values[1] * 100;
     }
     Settings->energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
     Settings->energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;

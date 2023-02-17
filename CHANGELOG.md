@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- SEN5X floats and units (#17961)
+- Energytotals cannot be set to negative values (#17965)
 
 ### Removed
 

@@ -930,7 +930,7 @@ void CmndEnergyTotal(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Total
-    RtcEnergySettings.energy_total_kWh[phase] = (float)values[0] / 1000;
+    RtcEnergySettings.energy_total_kWh[phase] = (float)(int32_t)values[0] / 1000;
     Energy->Settings.energy_total_kWh[phase] = RtcEnergySettings.energy_total_kWh[phase];
     if (params > 1) {
       Energy->Settings.energy_kWhtotal_time = values[1];
@@ -949,7 +949,7 @@ void CmndEnergyYesterday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Yesterday
-    Energy->Settings.energy_yesterday_kWh[phase] = (float)values[0] / 1000;
+    Energy->Settings.energy_yesterday_kWh[phase] = (float)(int32_t)values[0] / 1000;
     if (params > 1) {
       Energy->Settings.energy_kWhtotal_time = values[1];
     }
@@ -965,7 +965,7 @@ void CmndEnergyToday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Today
-    Energy->energy_today_offset_kWh[phase] = (float)values[0] / 1000;
+    Energy->energy_today_offset_kWh[phase] = (float)(int32_t)values[0] / 1000;
     Energy->kWhtoday[phase] = 0;
     Energy->kWhtoday_delta[phase] = 0;
     Energy->start_energy[phase] = 0;
@@ -993,7 +993,7 @@ void CmndEnergyExportActive(void) {
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
       uint32_t phase = XdrvMailbox.index -1;
       // Reset Energy Export Active
-      RtcEnergySettings.energy_export_kWh[phase] = (float)values[0] / 1000;
+      RtcEnergySettings.energy_export_kWh[phase] = (float)(int32_t)values[0] / 1000;
       Energy->Settings.energy_export_kWh[phase] = RtcEnergySettings.energy_export_kWh[phase];
       if (params > 1) {
         Energy->Settings.energy_kWhtotal_time = values[1];
@@ -1017,9 +1017,9 @@ void CmndEnergyUsage(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.usage totals
-    RtcEnergySettings.energy_usage.usage_total_kWh[0] = (float)values[0] / 1000;
+    RtcEnergySettings.energy_usage.usage_total_kWh[0] = (float)(int32_t)values[0] / 1000;
     if (params > 1) {
-      RtcEnergySettings.energy_usage.usage_total_kWh[1] = (float)values[1] / 1000;
+      RtcEnergySettings.energy_usage.usage_total_kWh[1] = (float)(int32_t)values[1] / 1000;
     }
     Energy->Settings.energy_usage.usage_total_kWh[0] = RtcEnergySettings.energy_usage.usage_total_kWh[0];
     Energy->Settings.energy_usage.usage_total_kWh[1] = RtcEnergySettings.energy_usage.usage_total_kWh[1];
@@ -1032,9 +1032,9 @@ void CmndEnergyExport(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.return totals
-    RtcEnergySettings.energy_usage.return_total_kWh[0] = (float)values[0] / 1000;
+    RtcEnergySettings.energy_usage.return_total_kWh[0] = (float)(int32_t)values[0] / 1000;
     if (params > 1) {
-      RtcEnergySettings.energy_usage.return_total_kWh[1] = (float)values[1] / 1000;
+      RtcEnergySettings.energy_usage.return_total_kWh[1] = (float)(int32_t)values[1] / 1000;
     }
     Energy->Settings.energy_usage.return_total_kWh[0] = RtcEnergySettings.energy_usage.return_total_kWh[0];
     Energy->Settings.energy_usage.return_total_kWh[1] = RtcEnergySettings.energy_usage.return_total_kWh[1];
