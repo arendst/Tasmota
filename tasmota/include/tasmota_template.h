@@ -206,6 +206,7 @@ enum UserSelectablePins {
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
   GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
   GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
+  GPIO_MCP23XXX_INT,                    // MCP23xxx INT
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -459,6 +460,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
   D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
   D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
+  D_SENSOR_MCP23XXX_INT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -466,6 +468,7 @@ const char kSensorNamesFixed[] PROGMEM =
 
 // Max number of GPIOs
 #define MAX_MAX31865S    6
+#define MAX_MCP23XXX     4
 #define MAX_FLOWRATEMETER 2
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
@@ -674,6 +677,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef USE_MAX31865
   AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
+#endif
+
+#ifdef USE_MCP23XXX_DRV
+  AGPIO(GPIO_MCP23XXX_INT) + MAX_MCP23XXX,
 #endif
 
   AGPIO(GPIO_TXD),                      // Serial interface

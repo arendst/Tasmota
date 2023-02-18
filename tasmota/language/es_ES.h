@@ -895,6 +895,7 @@
 #define D_SENSOR_ZEROCROSS     "Cruce por cero"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP23XXX_INT  "MCP23XXX INT"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
