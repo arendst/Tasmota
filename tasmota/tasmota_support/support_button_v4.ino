@@ -134,10 +134,7 @@ void ButtonProbe(void) {
 
   uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
-    if (!bitRead(Button.used, i)) {
-      Button.probe_mutex = false;
-      return;
-    }
+    if (!bitRead(Button.used, i)) { continue; }
 
     if (PinUsed(GPIO_KEY1, i)) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
@@ -334,7 +331,7 @@ void ButtonHandler(void) {
   char scmnd[20];
 
   for (uint32_t button_index = 0; button_index < MAX_KEYS_SET; button_index++) {
-    if (!bitRead(Button.used, button_index)) { return; }
+    if (!bitRead(Button.used, button_index)) { continue; }
 
     uint8_t button = Button.debounced_state[button_index];
 

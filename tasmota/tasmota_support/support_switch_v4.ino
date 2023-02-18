@@ -142,10 +142,7 @@ void SwitchProbe(void) {
 
   uint32_t not_activated;
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-    if (!bitRead(Switch.used, i)) {
-      Switch.probe_mutex = false;
-      return;
-    }
+    if (!bitRead(Switch.used, i)) { continue; }
 
     if (PinUsed(GPIO_SWT1, i)) {
       not_activated = digitalRead(Pin(GPIO_SWT1, i));
@@ -288,7 +285,7 @@ void SwitchHandler(void) {
   uint32_t loops_per_second = 1000 / Settings->switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-    if (!bitRead(Switch.used, i)) { return; }
+    if (!bitRead(Switch.used, i)) { continue; }
 
     uint32_t button = Switch.debounced_state[i];
     uint32_t switchflag = POWER_TOGGLE +1;

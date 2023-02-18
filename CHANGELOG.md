@@ -9,10 +9,13 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ADC Range oversample from 2 to 32 (#17975)
 
 ### Fixed
 - SEN5X floats and units (#17961)
 - Energytotals cannot be set to negative values (#17965)
+- Undocumented support for non-sequential buttons and switches (#17967)
+- SR04 driver single pin ultrasonic sensor detection (#17966)
 
 ### Removed
 
