@@ -1089,6 +1089,9 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     TasAutoMutex localmutex(&slotmutex, "Mi32AdCB2");
     switch(UUID){
       case 0xfe95: // std MI?
+      {
+          MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
+      } break;
       case 0xfdcd: // CGD1 & CGDK2
       {
         if (ServiceDataLength == 17){ // CGDK2
