@@ -113,9 +113,9 @@ class Matter_Commisioning_Context
     pbkdfparamresp.responderSessionId = self.future_local_session_id
     pbkdfparamresp.pbkdf_parameters_salt = self.device.salt
     pbkdfparamresp.pbkdf_parameters_iterations = self.device.iterations
-    tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 3)
+    tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
     var pbkdfparamresp_raw = pbkdfparamresp.encode()
-    tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 3)
+    tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
 
     self.PBKDFParamResponse = pbkdfparamresp_raw
 
@@ -134,22 +134,22 @@ class Matter_Commisioning_Context
     var pake1 = matter.Pake1().parse(msg.raw, msg.app_payload_idx)
 
     self.pA = pake1.pA
-    tasmota.log("MTR: received pA=" + self.pA.tohex(), 3)
+    tasmota.log("MTR: received pA=" + self.pA.tohex(), 4)
 
     
-    tasmota.log("MTR: spake: " + matter.inspect(self.spake), 3)
+    tasmota.log("MTR: spake: " + matter.inspect(self.spake), 4)
     # instanciate SPAKE
     self.spake = crypto.SPAKE2P_Matter(self.device.w0, self.device.w1, self.device.L)
     # compute pB
     self.spake.compute_pB(self.y)
     self.pB = self.spake.pB
-    tasmota.log("MTR: y=" + self.y.tohex(), 3)
-    tasmota.log("MTR: pb=" + self.pB.tohex(), 3)
+    tasmota.log("MTR: y=" + self.y.tohex(), 4)
+    tasmota.log("MTR: pb=" + self.pB.tohex(), 4)
 
     # compute ZV
     self.spake.compute_ZV_verifier(self.pA)
-    tasmota.log("MTR: Z=" + self.spake.Z.tohex(), 3)
-    tasmota.log("MTR: V=" + self.spake.V.tohex(), 3)
+    tasmota.log("MTR: Z=" + self.spake.Z.tohex(), 4)
+    tasmota.log("MTR: V=" + self.spake.V.tohex(), 4)
 
     var context = crypto.SHA256()
     context.update(bytes().fromstring(self.Matter_Context_Prefix))
@@ -157,7 +157,7 @@ class Matter_Commisioning_Context
     context.update(self.PBKDFParamResponse)
     var context_hash = context.out()
 
-    tasmota.log("MTR: Context=" + context_hash.tohex(), 3)
+    tasmota.log("MTR: Context=" + context_hash.tohex(), 4)
 
     # add pA
     self.spake.pA = self.pA
@@ -165,35 +165,33 @@ class Matter_Commisioning_Context
     self.spake.set_context(context_hash)
     self.spake.compute_TT_hash(true)      # `true` to indicate it's Matter variant to SPAKE2+
 
-    tasmota.log("MTR: ------------------------------", 3)
-    tasmota.log("MTR: Context = " + self.spake.Context.tohex(), 3)
-    tasmota.log("MTR: A       = " + self.spake.A.tohex(), 3)
-    tasmota.log("MTR: B       = " + self.spake.B.tohex(), 3)
-    tasmota.log("MTR: M       = " + self.spake.M.tohex(), 3)
-    tasmota.log("MTR: N       = " + self.spake.N.tohex(), 3)
-    tasmota.log("MTR: pA      = " + self.spake.pA.tohex(), 3)
-    tasmota.log("MTR: pB      = " + self.spake.pB.tohex(), 3)
-    tasmota.log("MTR: Z       = " + self.spake.Z.tohex(), 3)
-    tasmota.log("MTR: V       = " + self.spake.V.tohex(), 3)
-    tasmota.log("MTR: w0      = " + self.spake.w0.tohex(), 3)
-    tasmota.log("MTR: ------------------------------", 3)
+    tasmota.log("MTR: ------------------------------", 4)
+    tasmota.log("MTR: Context = " + self.spake.Context.tohex(), 4)
+    tasmota.log("MTR: M       = " + self.spake.M.tohex(), 4)
+    tasmota.log("MTR: N       = " + self.spake.N.tohex(), 4)
+    tasmota.log("MTR: pA      = " + self.spake.pA.tohex(), 4)
+    tasmota.log("MTR: pB      = " + self.spake.pB.tohex(), 4)
+    tasmota.log("MTR: Z       = " + self.spake.Z.tohex(), 4)
+    tasmota.log("MTR: V       = " + self.spake.V.tohex(), 4)
+    tasmota.log("MTR: w0      = " + self.spake.w0.tohex(), 4)
+    tasmota.log("MTR: ------------------------------", 4)
 
-    tasmota.log("MTR: Kmain   =" + self.spake.Kmain.tohex(), 3)
+    tasmota.log("MTR: Kmain   =" + self.spake.Kmain.tohex(), 4)
 
-    tasmota.log("MTR: KcA     =" + self.spake.KcA.tohex(), 3)
-    tasmota.log("MTR: KcB     =" + self.spake.KcB.tohex(), 3)
-    tasmota.log("MTR: K_shared=" + self.spake.K_shared.tohex(), 3)
-    tasmota.log("MTR: Ke      =" + self.spake.Ke.tohex(), 3)
+    tasmota.log("MTR: KcA     =" + self.spake.KcA.tohex(), 4)
+    tasmota.log("MTR: KcB     =" + self.spake.KcB.tohex(), 4)
+    tasmota.log("MTR: K_shared=" + self.spake.K_shared.tohex(), 4)
+    tasmota.log("MTR: Ke      =" + self.spake.Ke.tohex(), 4)
     self.cB = self.spake.cB
     self.Ke = self.spake.Ke
-    tasmota.log("MTR: cB=" + self.cB.tohex(), 3)
+    tasmota.log("MTR: cB=" + self.cB.tohex(), 4)
 
     var pake2 = matter.Pake2()
     pake2.pB = self.pB
     pake2.cB = self.cB
-    tasmota.log("MTR: pake2: " + matter.inspect(pake2), 3)
+    tasmota.log("MTR: pake2: " + matter.inspect(pake2), 4)
     var pake2_raw = pake2.encode()
-    tasmota.log("MTR: pake2_raw: " + pake2_raw.tohex(), 3)
+    tasmota.log("MTR: pake2_raw: " + pake2_raw.tohex(), 4)
 
 
     # now package the response message
@@ -212,7 +210,7 @@ class Matter_Commisioning_Context
     var pake3 = matter.Pake3().parse(msg.raw, msg.app_payload_idx)
 
     self.cA = pake3.cA
-    tasmota.log("MTR: received cA=" + self.cA.tohex(), 3)
+    tasmota.log("MTR: received cA=" + self.cA.tohex(), 4)
 
     # check the value against computed
     if self.cA != self.spake.cA   raise "protocol_error", "invalid cA received" end
@@ -224,12 +222,12 @@ class Matter_Commisioning_Context
     self.R2IKey = session_keys[16..31]
     self.AttestationChallenge = session_keys[32..47]
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: session_keys=" + session_keys.tohex(), 3)
-    tasmota.log("MTR: I2RKey      =" + self.I2RKey.tohex(), 3)
-    tasmota.log("MTR: R2IKey      =" + self.R2IKey.tohex(), 3)
-    tasmota.log("MTR: AC          =" + self.AttestationChallenge.tohex(), 3)
-    tasmota.log("MTR: ******************************", 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: session_keys=" + session_keys.tohex(), 4)
+    tasmota.log("MTR: I2RKey      =" + self.I2RKey.tohex(), 4)
+    tasmota.log("MTR: R2IKey      =" + self.R2IKey.tohex(), 4)
+    tasmota.log("MTR: AC          =" + self.AttestationChallenge.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
 
     # now package the response message
     var resp = msg.build_response(0x40 #-StatusReport-#, false)  # no reliable flag
@@ -256,7 +254,7 @@ class Matter_Commisioning_Context
       var destinationMessage = initiatorRandom + session.get_ca_pub() + session.get_fabric() + session.get_deviceid()
       var key = session.get_ipk_group_key()
       tasmota.log("MTR: SIGMA1: destinationMessage=" + destinationMessage.tohex(), 3)
-      tasmota.log("MTR: SIGMA1: key_ipk=" + key.tohex(), 3)
+      tasmota.log("MTR: SIGMA1: key_ipk=" + key.tohex(), 4)
       var h = crypto.HMAC_SHA256(key)
       h.update(destinationMessage)
       var candidateDestinationId = h.out()
@@ -315,12 +313,12 @@ class Matter_Commisioning_Context
       var Resume1MICPayload = ec.decrypt(encrypted)
       var decrypted_tag = ec.tag()
 
-      tasmota.log("****************************************", 3)
-      tasmota.log("MTR: * s1rk              = " + s1rk.tohex(), 3)
-      tasmota.log("MTR: * tag               = " + tag.tohex(), 3)
-      tasmota.log("MTR: * Resume1MICPayload = " + Resume1MICPayload.tohex(), 3)
-      tasmota.log("MTR: * decrypted_tag     = " + decrypted_tag.tohex(), 3)
-      tasmota.log("****************************************", 3)
+      tasmota.log("****************************************", 4)
+      tasmota.log("MTR: * s1rk              = " + s1rk.tohex(), 4)
+      tasmota.log("MTR: * tag               = " + tag.tohex(), 4)
+      tasmota.log("MTR: * Resume1MICPayload = " + Resume1MICPayload.tohex(), 4)
+      tasmota.log("MTR: * decrypted_tag     = " + decrypted_tag.tohex(), 4)
+      tasmota.log("****************************************", 4)
       if tag == decrypted_tag
         # Generate and Send Sigma2_Resume
         session.resumption_id = crypto.random(16)     # generate a new resumption id
@@ -349,15 +347,15 @@ class Matter_Commisioning_Context
         var ac = session_keys[32..47]
         var session_timestamp = tasmota.rtc()['utc']
 
-        tasmota.log("MTR: ******************************", 3)
-        tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 3)
-        tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 3)
-        tasmota.log("MTR: AC          =" + ac.tohex(), 3)
-        tasmota.log("MTR: ******************************", 3)
+        tasmota.log("MTR: ******************************", 4)
+        tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
+        tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
+        tasmota.log("MTR: AC          =" + ac.tohex(), 4)
+        tasmota.log("MTR: ******************************", 4)
 
         var sigma2resume_raw = sigma2resume.encode()
         session._Msg1 = nil
-        tasmota.log("MTR: sigma2resume_raw: " + sigma2resume_raw.tohex(), 3)
+        tasmota.log("MTR: sigma2resume_raw: " + sigma2resume_raw.tohex(), 4)
 
         # now package the response message
         var resp = msg.build_response(0x33 #-sigma-2-resume-#, true)
@@ -365,7 +363,7 @@ class Matter_Commisioning_Context
     
         self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
-        session.close()
+        # session.close()
         session.set_keys(i2r, r2i, ac, session_timestamp)
         session.set_persist(true)     # keep session on flash
         session.set_no_expiration()   # never expire
@@ -402,9 +400,9 @@ class Matter_Commisioning_Context
       sigma2_tbedata.add_TLV(4, matter.TLV.B2, session.resumption_id)
 
       # compute TranscriptHash = Crypto_Hash(message = Msg1)
-      tasmota.log("****************************************", 3)
+      tasmota.log("****************************************", 4)
       session._Msg1 = sigma1.Msg1
-      tasmota.log("MTR: * MSG1          = " + session._Msg1.tohex(), 3)
+      tasmota.log("MTR: * MSG1          = " + session._Msg1.tohex(), 4)
       var TranscriptHash = crypto.SHA256().update(session._Msg1).out()
 
       # Compute S2K, p.175
@@ -412,27 +410,27 @@ class Matter_Commisioning_Context
       var s2k_salt = session.get_ipk_group_key() + responderRandom + self.ResponderEph_pub + TranscriptHash
 
       var s2k = crypto.HKDF_SHA256().derive(session.shared_secret, s2k_salt, s2k_info, 16)
-      tasmota.log("MTR: * SharedSecret  = " + session.shared_secret.tohex(), 3)
-      tasmota.log("MTR: * s2k_salt      = " + s2k_salt.tohex(), 3)
-      tasmota.log("MTR: * s2k           = " + s2k.tohex(), 3)
+      tasmota.log("MTR: * SharedSecret  = " + session.shared_secret.tohex(), 4)
+      tasmota.log("MTR: * s2k_salt      = " + s2k_salt.tohex(), 4)
+      tasmota.log("MTR: * s2k           = " + s2k.tohex(), 4)
 
       var sigma2_tbedata_raw = sigma2_tbedata.encode()
       # // `AES_CCM.init(secret_key:bytes(16 or 32), iv:bytes(7..13), aad:bytes(), data_len:int, tag_len:int) -> instance`
 
       var aes = crypto.AES_CCM(s2k, bytes().fromstring(self.TBEData2_Nonce), bytes(), size(sigma2_tbedata_raw), 16)
       var TBEData2Encrypted = aes.encrypt(sigma2_tbedata_raw) + aes.tag()
-      tasmota.log("MTR: * TBEData2Enc   = " + TBEData2Encrypted.tohex(), 3)
-      tasmota.log("****************************************", 3)
+      tasmota.log("MTR: * TBEData2Enc   = " + TBEData2Encrypted.tohex(), 4)
+      tasmota.log("****************************************", 4)
 
       var sigma2 = matter.Sigma2()
       sigma2.responderRandom = responderRandom
       sigma2.responderSessionId = self.future_local_session_id
       sigma2.responderEphPubKey = self.ResponderEph_pub
       sigma2.encrypted2 = TBEData2Encrypted
-      tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 3)
+      tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 4)
       var sigma2_raw = sigma2.encode()
       session._Msg2 = sigma2_raw
-      tasmota.log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 3)
+      tasmota.log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 4)
   
       # now package the response message
       var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
@@ -454,23 +452,23 @@ class Matter_Commisioning_Context
     var session = msg.session
     var sigma3 = matter.Sigma3().parse(msg.raw, msg.app_payload_idx)
 
-    tasmota.log("****************************************", 3)
+    tasmota.log("****************************************", 4)
     # compute TranscriptHash = Crypto_Hash(message = Msg1 || Msg2)
     var TranscriptHash = crypto.SHA256().update(session._Msg1).update(session._Msg2).out()
-    tasmota.log("MTR: * session       = " + str(session), 3)
-    tasmota.log("MTR: session.ipk_epoch_key " + str(session.ipk_epoch_key), 3)
-    tasmota.log("MTR: session.fabric_compressed " + str(session.fabric_compressed), 3)
-    tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 3)
-    tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 3)
+    tasmota.log("MTR: * session       = " + str(session), 4)
+    tasmota.log("MTR: session.ipk_epoch_key " + str(session.ipk_epoch_key), 4)
+    tasmota.log("MTR: session.fabric_compressed " + str(session.fabric_compressed), 4)
+    tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 4)
+    tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 4)
 
     var s3k_info = bytes().fromstring(self.S3K_Info)
     var s3k = crypto.HKDF_SHA256().derive(session.shared_secret, session.get_ipk_group_key() + TranscriptHash, s3k_info, 16)
 
-    tasmota.log("****************************************", 3)
+    tasmota.log("****************************************", 4)
     # self.ipk_epoch_key == nil || self.fabric_compressed")
-    tasmota.log("MTR: * s3k_salt      = " + (session.get_ipk_group_key() + TranscriptHash).tohex(), 3)
-    tasmota.log("MTR: * s3k           = " + s3k.tohex(), 3)
-    tasmota.log("****************************************", 3)
+    tasmota.log("MTR: * s3k_salt      = " + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
+    tasmota.log("MTR: * s3k           = " + s3k.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     # decrypt
     var encrypted = sigma3.TBEData3Encrypted[0..-17]
@@ -478,10 +476,10 @@ class Matter_Commisioning_Context
     var ec = crypto.AES_CCM(s3k, bytes().fromstring(self.TBEData3_Nonce), bytes(), size(encrypted), 16)
     var TBEData3 = ec.decrypt(encrypted)
     var TBETag3 = ec.tag()
-    tasmota.log("MTR: * TBEData3      = " + TBEData3.tohex(), 3)
-    tasmota.log("MTR: * TBETag3       = " + TBETag3.tohex(), 3)
-    tasmota.log("MTR: * tag_sent      = " + tag.tohex(), 3)
-    tasmota.log("****************************************", 3)
+    tasmota.log("MTR: * TBEData3      = " + TBEData3.tohex(), 4)
+    tasmota.log("MTR: * TBETag3       = " + TBETag3.tohex(), 4)
+    tasmota.log("MTR: * tag_sent      = " + tag.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     if TBETag3 != tag   raise "value_error", "tag do not match"  end
 
@@ -507,9 +505,9 @@ class Matter_Commisioning_Context
     sigma3_tbs.add_TLV(4, matter.TLV.B1, self.ResponderEph_pub) 
     var sigma3_tbs_raw = sigma3_tbs.encode()
 
-    tasmota.log("MTR: * initiatorNOCPubKey      = " + initiatorNOCPubKey.tohex(), 3)
-    tasmota.log("MTR: * ec_signature      = " + ec_signature.tohex(), 3)
-    tasmota.log("****************************************", 3)
+    tasmota.log("MTR: * initiatorNOCPubKey      = " + initiatorNOCPubKey.tohex(), 4)
+    tasmota.log("MTR: * ec_signature      = " + ec_signature.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     # `crypto.EC_P256().ecdsa_verify_sha256(public_key:bytes(65), message:bytes(), hash:bytes()) -> bool`
     var sigma3_tbs_valid = crypto.EC_P256().ecdsa_verify_sha256(initiatorNOCPubKey, sigma3_tbs_raw, ec_signature)
@@ -524,9 +522,9 @@ class Matter_Commisioning_Context
     session._Msg1 = nil
     session._Msg2 = nil
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: shared_secret =" + session.shared_secret.tohex(), 3)
-    tasmota.log("MTR: ipk + hash    =" + (session.get_ipk_group_key() + TranscriptHash).tohex(), 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: shared_secret =" + session.shared_secret.tohex(), 4)
+    tasmota.log("MTR: ipk + hash    =" + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
     # compute session key
     var session_keys = crypto.HKDF_SHA256().derive(session.shared_secret #- input key -#,
                                                    session.get_ipk_group_key() + TranscriptHash #- salt -#,
@@ -537,11 +535,11 @@ class Matter_Commisioning_Context
     var ac = session_keys[32..47]
     var session_timestamp = tasmota.rtc()['utc']
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 3)
-    tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 3)
-    tasmota.log("MTR: AC          =" + ac.tohex(), 3)
-    tasmota.log("MTR: ******************************", 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
+    tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
+    tasmota.log("MTR: AC          =" + ac.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
 
     # Send success status report
     var resp = msg.build_response(0x40 #-StatusReport-#, true)  # reliable flag

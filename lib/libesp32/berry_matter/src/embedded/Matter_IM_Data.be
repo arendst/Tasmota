@@ -670,7 +670,7 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
   var keep_subscriptions          # bool
   var min_interval_floor          # u16
   var max_interval_ceiling        # u16
-  var attribute_requests          # array of AttributePathIB
+  var attributes_requests          # array of AttributePathIB
   var event_requests              # array of EventPathIB
   var event_filters               # array of EventFilterIB
   var fabric_filtered             # bool
@@ -679,13 +679,13 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
   # decode from TLV
   def from_TLV(val)
     if val == nil     return nil end
-    self.keep_subscriptions = val.findsubval(0)
-    self.min_interval_floor = val.findsubval(1)
-    self.max_interval_ceiling = val.findsubval(2)
-    self.attribute_requests = self.from_TLV_array(val.findsubval(3), matter.AttributePathIB)
+    self.keep_subscriptions = val.findsubval(0, false)
+    self.min_interval_floor = val.findsubval(1, 0)
+    self.max_interval_ceiling = val.findsubval(2, 60)
+    self.attributes_requests = self.from_TLV_array(val.findsubval(3), matter.AttributePathIB)
     self.event_requests = self.from_TLV_array(val.findsubval(4), matter.EventPathIB)
     self.event_filters = self.from_TLV_array(val.findsubval(5), matter.EventFilterIB)
-    self.fabric_filtered = val.findsubval(7)
+    self.fabric_filtered = val.findsubval(7, false)
     self.data_version_filters = self.from_TLV_array(val.findsubval(8), matter.DataVersionFilterIB)
     return self
   end
@@ -696,7 +696,7 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
     s.add_TLV(0, TLV.BOOL, self.keep_subscriptions)
     s.add_TLV(1, TLV.U2, self.min_interval_floor)
     s.add_TLV(2, TLV.U2, self.max_interval_ceiling)
-    self.to_TLV_array(s, 3, self.attribute_requests)
+    self.to_TLV_array(s, 3, self.attributes_requests)
     self.to_TLV_array(s, 4, self.event_requests)
     self.to_TLV_array(s, 5, self.event_filters)
     s.add_TLV(7, TLV.BOOL, self.fabric_filtered)

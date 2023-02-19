@@ -321,8 +321,8 @@ be_local_closure(Matter_Plugin_get_endpoints,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_write_attribute,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    5,                          /* argc */
+    5,                          /* nstack */
+    4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -333,8 +333,8 @@ be_local_closure(Matter_Plugin_write_attribute,   /* name */
     be_str_weak(write_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x4C140000,  //  0000  LDNIL	R5
-      0x80040A00,  //  0001  RET	1	R5
+      0x4C100000,  //  0000  LDNIL	R4
+      0x80040800,  //  0001  RET	1	R4
     })
   )
 );

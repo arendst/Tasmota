@@ -28,7 +28,7 @@ class Matter_Device
   static var FILENAME = "_matter_device.json"
   var plugins                         # list of plugins
   var udp_server                      # `matter.UDPServer()` object
-  var msg_handler                     # `matter.MessageHandler()` object
+  var message_handler                     # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
   # information about the device
@@ -65,12 +65,12 @@ class Matter_Device
 
     self.sessions = matter.Session_Store()
     self.sessions.load()
-    self.msg_handler = matter.MessageHandler(self)
+    self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
 
     # add the default plugin
-    self.plugins.push(matter.Plugin_core(self))
-    self.plugins.push(matter.Plugin_Relay(self))
+    self.plugins.push(matter.Plugin_Root(self))
+    self.plugins.push(matter.Plugin_OnOff(self))
 
     self.start_mdns_announce_hostnames()
 
@@ -167,7 +167,7 @@ class Matter_Device
   # dispatch every second click to sub-objects that need it
   def every_second()
     self.sessions.every_second()
-    self.msg_handler.every_second()
+    self.message_handler.every_second()
   end
 
   #############################################################
@@ -178,7 +178,7 @@ class Matter_Device
   #############################################################
   # callback when message is received
   def msg_received(raw, addr, port)
-    return self.msg_handler.msg_received(raw, addr, port)
+    return self.message_handler.msg_received(raw, addr, port)
   end
 
   def msg_send(raw, addr, port, id)
@@ -215,27 +215,6 @@ class Matter_Device
   end
 
   #############################################################
-  # Start UDP mDNS announcements for commissioning
-  #
-  # eth is `true` if ethernet turned up, `false` is wifi turned up
-  # def mdns_announce_commissioning()
-  #   var services = {
-  #     "VP":str(self.vendorid) + "+" + str(self.productid),
-  #     "D": self.discriminator,
-  #     "CM":1,                           # requires passcode
-  #     "T":0,                            # no support for TCP
-  #     "SII":5000, "SAI":300
-  #   }
-
-  #   if self.self.hostname_eth
-  #     mdns.add_service("_matterc","_udp", 5540, services, self.commissioning_instance_eth, self.hostname_eth)
-  #   end
-  #   if self.self.hostname_wifi
-  #     mdns.add_service("_matter","_tcp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
-  #   end
-  # end
-
-  #############################################################
   # Start Operational Discovery
   def start_operational_dicovery(session)
     import crypto
@@ -265,28 +244,36 @@ class Matter_Device
     tasmota.log("MTR: *** Commissioning complete ***", 2)
   end
 
-  #############################################################
-  # read an attribute
-  #
-  # def read_attribute(msg, ctx)
-  #   # dispatch only to plugins that support this endpoint and cluster
-  #   var endpoint = ctx.endpoint
-  #   var cluster = ctx.cluster
 
-  #   var idx = 0
-  #   while idx < size(self.plugins)
-  #     var plugin = self.plugins[idx]
-
-  #     if plugin.has(cluster, endpoint)
-  #       var ret = plugin.read_attribute(msg, ctx)
-  #       if  ret != nil
-  #         return ret
-  #       end
-  #     end
-
-  #     idx += 1
-  #   end
-  # end
+  #################################################################################
+  # Simple insertion sort - sorts the list in place, and returns the list
+  # remove duplicates
+  #################################################################################
+  static def sort_distinct(l)
+    # insertion sort
+    for i:1..size(l)-1
+      var k = l[i]
+      var j = i
+      while (j > 0) && (l[j-1] > k)
+        l[j] = l[j-1]
+        j -= 1
+      end
+      l[j] = k
+    end
+    # remove duplicate now that it's sorted
+    var i = 1
+    if size(l) <= 1  return l end     # no duplicate if empty or 1 element
+    var prev = l[0]
+    while i < size(l)
+      if l[i] == prev
+        l.remove(i)
+      else
+        prev = l[i]
+        i += 1
+      end
+    end
+    return l
+  end
 
   #############################################################
   # expand attribute list based 
@@ -294,69 +281,94 @@ class Matter_Device
   # called only when expansion is needed,
   # so we don't need to report any error since they are ignored
   def process_attribute_expansion(ctx, cb)
+    #################################################################################
+    # Returns the keys of a map as a sorted list
+    #################################################################################
+    def keys_sorted(m)
+      var l = []
+      for k: m.keys()
+        l.push(k)
+      end
+      # insertion sort
+      for i:1..size(l)-1
+        var k = l[i]
+        var j = i
+        while (j > 0) && (l[j-1] > k)
+          l[j] = l[j-1]
+          j -= 1
+        end
+        l[j] = k
+      end
+      return l
+    end
+  
     import string
     var endpoint = ctx.endpoint
-    var endpoint_mono = [ endpoint ]
+    # var endpoint_mono = [ endpoint ]
     var endpoint_found = false                # did any endpoint match
     var cluster = ctx.cluster
-    var cluster_mono = [ cluster ]
+    # var cluster_mono = [ cluster ]
     var cluster_found = false
     var attribute = ctx.attribute
-    var attribute_mono = [ attribute ]
+    # var attribute_mono = [ attribute ]
     var attribute_found = false
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 3)
+    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+
+    # build the list of candidates
+
+    # list of all endpoints
+    var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
+    tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
     for pi: self.plugins
       var ep_list = pi.get_endpoints()    # get supported endpoints for this plugin
-      tasmota.log(string.format("MTR: ep_list %s %s", str(pi), str(ep_list)), 3)
-      if endpoint != nil
-        # we have a specific endpoint, make sure it's in the list
-        if ep_list.find(endpoint) != nil
-          ep_list = endpoint_mono
-          endpoint_found = true
-        else
-          continue
-        end
-      end
-      # ep_list is the actual list of candidate endpoints for this plugin
-      # iterate on endpoints
+      tasmota.log(string.format("MTR: pi=%s ep_list=%s", str(pi), str(ep_list)), 4)
       for ep: ep_list
-        # now filter on clusters
-        var cluster_list = pi.get_cluster_list(ep)
-        tasmota.log(string.format("MTR: cluster_list %s %s", str(ep), str(cluster_list)), 3)
-        if cluster != nil
-          # we have a specific cluster, make sure it's in the list
-          if cluster_list.find(cluster) != nil
-            cluster_list = cluster_mono
-            cluster_found = true
-          else
-            continue
+        if endpoint != nil && ep != endpoint    continue      end       # skip if specific endpoint and no match
+        # from now on, 'ep' is a good candidate
+        if !all.contains(ep)                    all[ep] = {}  end       # create empty structure if not already in the list
+        endpoint_found = true
+
+        # now explore the cluster list for 'ep'
+        var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+        tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+        for cl: cluster_list
+          if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
+          # from now on, 'cl' is a good candidate
+          if !all[ep].contains(cl)              all[ep][cl] = {}  end
+          cluster_found = true
+
+          # now filter on attributes
+          var attr_list = pi.get_attribute_list(ep, cl)
+          tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+          for at: attr_list
+            if attribute != nil && at != attribute  continue  end       # skip if specific attribiute and no match
+            # from now on, 'at' is a good candidate
+            if !all[ep][cl].contains(at)        all[ep][cl][at] = [] end
+            attribute_found = true
+
+            all[ep][cl][at].push(pi)                                    # add plugin to the list
           end
         end
-        # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-        for cl: cluster_list
-          # now filter on attribute
-          var attr_list = pi.get_attribute_list(ep, cluster)
-          tasmota.log(string.format("MTR: attr_list %s %s", str(cl), str(attr_list)), 3)
-          if attribute != nil
-            # we have a specific attribute, make sure it's in the list
-            if attr_list.find(attribute) != nil
-              attr_list = attribute_mono
-              attribute_found = true
-            else
-              continue
-            end
-            for at: attr_list
-              # we now have the complete candidate: ep/cl/at
-              tasmota.log(string.format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
-              ctx.endpoint = ep
-              ctx.cluster = cl
-              ctx.attribute = at
-              var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
-              if finished     return end
-            end
+      end
+    end
+
+    # import json
+    # tasmota.log("MTR: all = " + json.dump(all), 2)
+
+    # iterate on candidates
+    for ep: keys_sorted(all)
+      for cl: keys_sorted(all[ep])
+        for at: keys_sorted(all[ep][cl])
+          for pi: all[ep][cl][at]
+            tasmota.log(string.format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
+            ctx.endpoint = ep
+            ctx.cluster = cl
+            ctx.attribute = at
+            var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
+            if direct && finished     return end
           end
         end
       end
