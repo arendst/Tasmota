@@ -67,18 +67,6 @@ extern const bclass be_class_md5;
 #include "be_fixed_be_class_hkdf_sha256.h"
 #include "be_fixed_crypto.h"
 
-// Enable all the crypto required by Matter
-#ifdef USE_BERRY_CRYPTO_SPAKE2P_MATTER
-  #undef USE_BERRY_CRYPTO_EC_P256
-  #define USE_BERRY_CRYPTO_EC_P256
-  #undef USE_BERRY_CRYPTO_HMAC_SHA256
-  #define USE_BERRY_CRYPTO_HMAC_SHA256
-  #undef USE_BERRY_CRYPTO_HKDF_SHA256
-  #define USE_BERRY_CRYPTO_HKDF_SHA256
-  #undef USE_BERRY_CRYPTO_AES_CCM
-  #define USE_BERRY_CRYPTO_AES_CCM
-#endif
-
 const be_const_member_t be_crypto_members[] = {
   // name with prefix '/' indicates a Berry class
   // entries need to be sorted (ignoring the prefix char)

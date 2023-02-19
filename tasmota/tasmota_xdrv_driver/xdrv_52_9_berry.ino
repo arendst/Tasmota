@@ -24,7 +24,7 @@
 
 #include <berry.h>
 #include "berry_tasmota.h"
-#ifdef USE_MATTER
+#ifdef USE_MATTER_DEVICE
   #include "berry_matter.h"
 #endif
 #include "be_vm.h"
