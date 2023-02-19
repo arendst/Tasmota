@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_core.be - implements the core features that a Matter device must implemment
+# Matter_Plugin_Root.be - implements the core features that a Matter device must implemment
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -17,30 +17,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Matter plug-in for core behavior
+# Matter plug-in for root behavior
 
 # dummy declaration for solidification
 class Matter_Plugin end
 
-#@ solidify:Matter_Plugin_core,weak
+#@ solidify:Matter_Plugin_Root,weak
 
-class Matter_Plugin_core : Matter_Plugin
+class Matter_Plugin_Root : Matter_Plugin
   static var ENDPOINTS = [ 0 ]
   static var CLUSTERS  = {
-    0x001D: [0,1,2,3],
-    0x0028: [0,1,2,3,4,5,6,7,8,9],
-    0x002B: [0,1],
-    0x002C: [0,1,2],
-    0x0030: [0,1,2,3,4],
-    0x0031: [3,0xFFFC],
-    0x0032: [],
-    0x0033: [0,1,2,8],
-    0x0034: [],
-    0x0038: [0,1,7],
-    0x003E: [0,1,2,3,4,5],
-    0x003C: [],
-    0x003F: []
+    0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
+    0x001F: [0,2,3,4],                # Access Control Cluster, p.461
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12],# Basic Information Cluster cluster 11.1 p.565
+    0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
+    0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
+    0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
+    0x0030: [0,1,2,3,4],              # GeneralCommissioning cluster 11.9 p.627
+    0x0031: [3,4,0xFFFC],             # Network Commissioning Cluster cluster 11.8 p.606
+    0x0032: [],                       # Diagnostic Logs Cluster 11.10 p.637
+    0x0033: [0,1,2,8],                # General Diagnostics Cluster 11.11 p.642
+    0x0034: [],                       # Software Diagnostics Cluster 11.12 p.654
+    0x0038: [0,1,7],                  # Time Synchronization 11.16 p.689
+    0x003C: [],                       # Administrator Commissioning Cluster 11.18 p.725
+    0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
+    0x003F: []                        # Group Key Management Cluster 11.2 p.572
   }
+  static var TYPES = [ 0x0016 ]       # On/Off Light
 
   #############################################################
   # Constructor
@@ -62,7 +65,7 @@ class Matter_Plugin_core : Matter_Plugin
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
-        return TLV.create_TLV(TLV.U8, msg.session.breadcrumb)
+        return TLV.create_TLV(TLV.U8, msg.session.__breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
         bci.add_TLV(0, TLV.U2, 60)      # FailSafeExpiryLengthSeconds
@@ -211,6 +214,8 @@ class Matter_Plugin_core : Matter_Plugin
         return TLV.create_TLV(TLV.U2, 0)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Version'])
+      elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       end
 
     # ====================================================================================================
@@ -218,12 +223,25 @@ class Matter_Plugin_core : Matter_Plugin
       # TODO
 
     # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   attribute == 0x0000          #  ---------- DefaultOTAProviders / list[ProviderLocationStruct] ----------
+        return TLV.Matter_TLV_array()   # empty list for now TODO
+      elif attribute == 0x0001          #  ---------- UpdatePossible / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 0)  # we claim that update is not possible, would require to go to Tasmota UI
+      elif attribute == 0x0002          #  ---------- UpdateState / UpdateStateEnum ----------
+        return TLV.create_TLV(TLV.U1, 1)  # Idle
+      elif attribute == 0x0003          #  ---------- UpdateStateProgress / uint8 ----------
+        return TLV.create_TLV(TLV.NULL, nil)  # null, nothing in process
+      end
+
+    # ====================================================================================================
     elif cluster == 0x002B              # ========== Localization Configuration Cluster 11.3 p.580 ==========
 
       if   attribute == 0x0000          #  ---------- ActiveLocale / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.locale())
       elif attribute == 0x0001          #  ---------- SupportedLocales / list[string] ----------
-        var locl = TLV.Matter_TLV_list()
+        var locl = TLV.Matter_TLV_array()
         locl.add_TLV(nil, TLV.UTF1, tasmota.locale())
         return locl
       end
@@ -236,7 +254,7 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
         return TLV.create_TLV(TLV.U1, 4)  # 4 = Gregorian
       elif attribute == 0x0002          #  ---------- SupportedCalendarTypes / list[CalendarType] ----------
-        var callist = TLV.Matter_TLV_list()
+        var callist = TLV.Matter_TLV_array()
         callist.add_TLV(nil, TLV.create_TLV(TLV.U1, 4))
         return callist
       end
@@ -252,6 +270,13 @@ class Matter_Plugin_core : Matter_Plugin
     # ====================================================================================================
     elif   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
       if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
+        var dtl = TLV.Matter_TLV_array()
+        for dt: self.TYPES
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
+          d1.add_TLV(1, TLV.U2, 1)      # Revision
+        end
+        return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
         var sl = TLV.Matter_TLV_array()
         for cl: self.get_cluster_list()
@@ -297,7 +322,7 @@ class Matter_Plugin_core : Matter_Plugin
         #  1=DebugText
         var ExpiryLengthSeconds = val.findsubval(0, 900)
         var Breadcrumb = val.findsubval(1, 0)
-        session.breadcrumb = Breadcrumb
+        session.__breadcrumb = Breadcrumb
 
         var afsr = TLV.Matter_TLV_struct()
         afsr.add_TLV(0, TLV.U1, 0)      # ErrorCode = OK
@@ -309,7 +334,7 @@ class Matter_Plugin_core : Matter_Plugin
         var NewRegulatoryConfig = val.findsubval(0)     # RegulatoryLocationType Enum
         var CountryCode = val.findsubval(1, "XX")
         var Breadcrumb = val.findsubval(2, 0)
-        session.breadcrumb = Breadcrumb
+        session.__breadcrumb = Breadcrumb
         # create SetRegulatoryConfigResponse
         # ID=1
         #  0=ErrorCode (OK=0)
@@ -322,7 +347,7 @@ class Matter_Plugin_core : Matter_Plugin
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
         # no data
-        session.breadcrumb = 0          # clear breadcrumb
+        session.__breadcrumb = 0          # clear breadcrumb
         session.set_no_expiration()
 
         # create CommissioningCompleteResponse
@@ -487,6 +512,85 @@ class Matter_Plugin_core : Matter_Plugin
     end
 
   end
+
+  #############################################################
+  # write an attribute
+  #
+  def write_attribute(msg, ctx, write_data)
+    import string
+    var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
+    
+    # 0x001D no writable attributes
+    # 0x0032 no attributes
+    # 0x0033 no writable attributes
+    # 0x0034 no writable attributes
+    # 0x0038 no mandatory writable attributes
+    # 0x003C no writable attributes
+    # 0x003E no writable attributes
+
+    if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
+
+      if   attribute == 0x0000          # ---------- Breadcrumb ----------
+        if type(write_data) == 'int' || isinstance(write_data, int64)
+          msg.session.__breadcrumb = write_data
+          return true
+        else
+          ctx.status = matter.CONSTRAINT_ERROR
+          return false
+        end
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x001F              # ========== Access Control Cluster 9.10 p.461 ==========
+      if   attribute == 0x0000          # ACL - list[AccessControlEntryStruct]
+        return true
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
+
+      if   attribute == 0x0005          #  ---------- NodeLabel / string ----------
+        # TODO
+        return true
+      elif attribute == 0x0006          #  ---------- Location / string ----------
+        # TODO
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   attribute == 0x0000          #  ---------- DefaultOTAProviders / list[ProviderLocationStruct] ----------
+        return true                     # silently ignore
+      end
+    # ====================================================================================================
+    elif cluster == 0x002B              # ========== Localization Configuration Cluster 11.3 p.580 ==========
+
+      if   attribute == 0x0000          #  ---------- ActiveLocale / string ----------
+        ctx.status = matter.CONSTRAINT_ERROR    # changing locale is not possible
+        return false
+      end
+    # ====================================================================================================
+    elif cluster == 0x002C              # ========== Time Format Localization Cluster 11.4 p.581 ==========
+
+      if   attribute == 0x0000          #  ---------- HourFormat / HourFormat ----------
+        # TODO
+        return true
+      elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
+        # TODO
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x0031              # ========== Network Commissioning Cluster cluster 11.8 p.606 ==========
+      if   attribute == 0x0004          #  ---------- InterfaceEnabled / bool ----------
+        ctx.status = matter.INVALID_ACTION
+        return false
+      end
+
+
+    end
+  end
 end
-matter.Plugin_core = Matter_Plugin_core
+matter.Plugin_Root = Matter_Plugin_Root
   

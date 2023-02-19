@@ -55,9 +55,9 @@ class Matter_UDPPacket_sent
     import string
     var ok = udp_socket.send(self.addr ? self.addr : udp_socket.remote_ip, self.port ? self.port : udp_socket.remote_port, self.raw)
     if ok
-      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", self.addr, self.port), 3)
+      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", self.addr, self.port), 4)
     else
-      tasmota.log(string.format("MTR: failed to send packet to '[%s]:%i'", self.addr, self.port), 2)
+      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", self.addr, self.port), 3)
     end
   end
 end
@@ -144,7 +144,9 @@ class Matter_UDPServer
         packet.send(self.udp_socket)         # resend
         packet.retries -= 1
         if packet.retries <= 0
+          import string
           self.packets_sent.remove(packet.msg_id)
+          tasmota.log(string.format("MTR: non-acked packet to '[%s]:%i'", packet.addr, packet.port), 3)
         else
           packet.next_try = tasmota.millis() + packet.RETRY_MS
         end
@@ -158,7 +160,7 @@ class Matter_UDPServer
     if id == nil   return end
     if self.packets_sent.contains(id)
       self.packets_sent.remove(id)
-      tasmota.log("MTR: removed packet from sending list id=" + str(id), 3)
+      tasmota.log("MTR: removed packet from sending list id=" + str(id), 4)
     end
   end
 

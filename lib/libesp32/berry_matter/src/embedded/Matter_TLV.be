@@ -298,6 +298,83 @@ class Matter_TLV
     end
 
     #############################################################
+    # compute the length in bytes of encoded TLV without actually
+    # allocating buffers (faster and no memory fragmentation)
+    #
+    # returns a number of bytes
+    def encode_len()
+      var TLV = self.TLV
+      var len = 0
+
+      # special case for bool
+      # we need to change the type according to the value
+      if self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
+        self.typ = bool(self.val) ? TLV.BTRUE : TLV.BFALSE
+      # try to compress ints
+      elif self.typ >= TLV.I2 && self.typ <= TLV.I4
+        var i = int(self.val)
+        if   i <= 127 && i >= -128      self.typ = TLV.I1
+        elif i <= 32767 && i >= -32768  self.typ = TLV.I2
+        end
+      elif self.typ >= TLV.U2 && self.typ <= TLV.U4
+        var i = int(self.val)
+        if   i <= 255 && i >= 0         self.typ = TLV.U1
+        elif i <= 65535 && i >= 0       self.typ = TLV.U2
+        end
+      elif self.typ >= TLV.B1 && self.typ <= TLV.B8       # encode length as minimum possible
+        if size(self.val) <= 255
+          self.typ = TLV.B1
+        elif size(self.val) <= 65535
+          self.typ = TLV.B2
+        else
+          self.typ = TLV.B4     # B4 is unlikely, B8 is impossible
+        end
+      elif self.typ >= TLV.UTF1 && self.typ <= TLV.UTF8
+        if size(self.val) <= 255
+          self.typ = TLV.UTF1
+        elif size(self.val) <= 65535
+          self.typ = TLV.UTF2
+        else
+          self.typ = TLV.UTF4     # UTF4 is unlikely, UTF8 is impossible
+        end
+      end
+
+      # encode tag and type
+      len += self._encode_tag_len()
+      # encode value
+
+      if self.typ == TLV.I1 || self.typ == TLV.U1
+        len += 1
+      elif self.typ == TLV.I2 || self.typ == TLV.U2
+        len += 2
+      elif self.typ == TLV.I4 || self.typ == TLV.U4
+        len += 4
+      elif self.typ == TLV.I8 || self.typ == TLV.U8
+        len += 8
+      elif self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
+        # push nothing
+      elif self.typ == TLV.FLOAT
+        len += 4
+      elif self.typ == TLV.DOUBLE
+        raise "value_error", "Unsupported type TLV.DOUBLE"
+      elif self.typ == TLV.UTF1
+        len += 1 + size(self.val)
+      elif self.typ == TLV.UTF2
+        len += 2 + size(self.val)
+      elif self.typ == TLV.B1
+        len += 1 + size(self.val)
+      elif self.typ == TLV.B2
+        len += 2 + size(self.val)
+      elif self.typ == TLV.NULL
+        # push nothing
+      else
+        raise "value_error", "unsupported type " + str(self.typ)
+      end
+
+      return len
+    end
+
+    #############################################################
     # internal_function
     # encode Tag+Type as the first bytes
     def _encode_tag(b)
@@ -338,6 +415,39 @@ class Matter_TLV
         b.add(self.tag_sub, 1)
       else    # anonymous tag
         b.add(0x00 + self.typ, 1)
+      end
+    end
+
+    #############################################################
+    # internal_function
+    # compute len of Tag+Type as the first bytes
+    def _encode_tag_len()
+      var tag_number = self.tag_number != nil ? self.tag_number : 0
+      var tag_huge = (tag_number >= 65536) || (tag_number < 0)
+      var tag_control = 0x00
+      if self.tag_vendor != nil
+        # full encoding
+        if tag_huge
+          return 9
+        else
+          return 7
+        end
+      elif self.tag_profile == -1       # Matter Common profile
+        if tag_huge
+          return 5
+        else
+          return 3
+        end
+      elif self.tag_profile != nil
+        if tag_huge
+          return 5
+        else
+          return 3
+        end
+      elif self.tag_sub != nil
+        return 2
+      else    # anonymous tag
+        return 1
       end
     end
 
@@ -494,16 +604,14 @@ class Matter_TLV
     end
 
     #############################################################
-    # encode TLV
-    #
-    # appends to the bytes() object
-    def _encode_inner(b, is_struct)
+    # encode to bytes
+    def encode(b)
       if b == nil   b = bytes() end
       # encode tag and type
       self._encode_tag(b)
       # sort values
       var val_list = self.val.copy()
-      if is_struct
+      if self.is_struct
         self.sort(val_list)
       end
 
@@ -519,9 +627,22 @@ class Matter_TLV
     end
 
     #############################################################
-    # encode to bytes
-    def encode(b)
-      return self._encode_inner(b, self.is_struct)
+    # compute the length in bytes of encoded TLV without actually
+    # allocating buffers (faster and no memory fragmentation)
+    #
+    # returns a number of bytes
+    def encode_len()
+      # tag and type
+      var len = self._encode_tag_len()
+      # output each one after the other, order doesn't infulence size
+      var idx = 0
+      while idx < size(self.val)
+        len += self.val[idx].encode_len()
+        idx += 1
+      end
+      # add 'end of container'
+      len += 1
+      return len
     end
 
     #############################################################
@@ -760,117 +881,52 @@ matter.TLV = Matter_TLV
 # Test
 import matter
 
-#load("Matter_TLV.be")
+def test_TLV(b, s)
+  var m =  matter.TLV.parse(b)
+  assert(m.tostring() == s)
+  assert(m.encode() == b)
+  assert(m.encode_len() == size(b))
+end
 
-var m
-m = matter.TLV.parse(bytes("2502054C"))
-assert(m.tostring() == "2 = 19461U")
-assert(m.encode() == bytes("2502054C"))
+test_TLV(bytes("2502054C"), "2 = 19461U")
+test_TLV(bytes("0001"), "1")
+test_TLV(bytes("08"), "false")
+test_TLV(bytes("09"), "true")
 
-m = matter.TLV.parse(bytes("0001"))
-assert(m.tostring() == "1")
-assert(m.encode() == bytes("0001"))
+test_TLV(bytes("00FF"), "-1")
+test_TLV(bytes("05FFFF"), "65535U")
 
-m = matter.TLV.parse(bytes("08"))
-assert(m.tostring() == "false")
-assert(m.encode() == bytes("08"))
-m = matter.TLV.parse(bytes("09"))
-assert(m.tostring() == "true")
-assert(m.encode() == bytes("09"))
-
-m = matter.TLV.parse(bytes("01FFFF"))
-assert(m.tostring() == "-1")
-assert(m.encode() == bytes("00FF"))
-m = matter.TLV.parse(bytes("05FFFF"))
-assert(m.tostring() == "65535U")
-assert(m.encode() == bytes("05FFFF"))
-
-m = matter.TLV.parse(bytes("0A0000C03F"))
-assert(m.tostring() == "1.5")
-assert(m.encode() == bytes("0A0000C03F"))
-
-m = matter.TLV.parse(bytes("0C06466f6f626172"))
-assert(m.tostring() == '"Foobar"')
-assert(m.encode() == bytes("0C06466f6f626172"))
-
-m = matter.TLV.parse(bytes("1006466f6f626172"))
-assert(m.tostring() == "466F6F626172")
-assert(m.encode() == bytes("1006466f6f626172"))
-
-m = matter.TLV.parse(bytes("e4f1ffeddeedfe55aa2a"))
-assert(m.tostring() == "0xFFF1::0xDEED:0xAA55FEED = 42U")
-assert(m.encode() == bytes("e4f1ffeddeedfe55aa2a"))
-
-
-m = matter.TLV.parse(bytes("300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66"))
-assert(m.tostring() == "1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66")
-assert(m.encode() == bytes("300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66"))
+test_TLV(bytes("0A0000C03F"), "1.5")
+test_TLV(bytes("0C06466f6f626172"), '"Foobar"')
+test_TLV(bytes("1006466f6f626172"), "466F6F626172")
+test_TLV(bytes("e4f1ffeddeedfe55aa2a"), "0xFFF1::0xDEED:0xAA55FEED = 42U")
+test_TLV(bytes("300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66"), "1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66")
 
 # context specific
-m = matter.TLV.parse(bytes("24012a"))
-assert(m.tostring() == "1 = 42U")
-assert(m.encode() == bytes("24012a"))
-
-m = matter.TLV.parse(bytes("4401002a"))
-assert(m.tostring() == "Matter::0x00000001 = 42U")
-assert(m.encode() == bytes("4401002a"))
+test_TLV(bytes("24012a"), "1 = 42U")
+test_TLV(bytes("4401002a"), "Matter::0x00000001 = 42U")
 
 # int64
-m = matter.TLV.parse(bytes("030102000000000000"))
-assert(m.tostring() == "513")
-assert(m.encode() == bytes("030102000000000000"))
-
-m = matter.TLV.parse(bytes("070102000000000000"))
-assert(m.tostring() == "513U")
-assert(m.encode() == bytes("070102000000000000"))
-
-m = matter.TLV.parse(bytes("03FFFFFFFFFFFFFFFF"))
-assert(m.tostring() == "-1")
-assert(m.encode() == bytes("03FFFFFFFFFFFFFFFF"))
-
-m = matter.TLV.parse(bytes("07FFFFFFFFFFFFFF7F"))
-assert(m.tostring() == "9223372036854775807U")
-assert(m.encode() == bytes("07FFFFFFFFFFFFFF7F"))
+test_TLV(bytes("030102000000000000"), "513")
+test_TLV(bytes("070102000000000000"), "513U")
+test_TLV(bytes("03FFFFFFFFFFFFFFFF"), "-1")
+test_TLV(bytes("07FFFFFFFFFFFFFF7F"), "9223372036854775807U")
 
 # structure
-m = matter.TLV.parse(bytes("1518"))
-assert(m.tostring() == "{}")
-assert(m.encode() == bytes("1518"))
-
-m = matter.TLV.parse(bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280418"))
-assert(m.tostring() == "{1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66, 2 = 19461U, 3 = 0U, 4 = false}")
-assert(m.encode() == bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280418"))
-
-m = matter.TLV.parse(bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280435052501881325022C011818"))
-assert(m.tostring() == "{1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66, 2 = 19461U, 3 = 0U, 4 = false, 5 = {1 = 5000U, 2 = 300U}}")
-assert(m.encode() == bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280435052501881325022C011818"))
+test_TLV(bytes("1518"), "{}")
+test_TLV(bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280418"), "{1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66, 2 = 19461U, 3 = 0U, 4 = false}")
+test_TLV(bytes("15300120D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D662502054C240300280435052501881325022C011818"), "{1 = D2DAEE8760C9B1D1B25E0E2E4DD6ECA8AEF6193C0203761356FCB06BBEDD7D66, 2 = 19461U, 3 = 0U, 4 = false, 5 = {1 = 5000U, 2 = 300U}}")
 
 # list
-m = matter.TLV.parse(bytes("1718"))
-assert(m.tostring() == "[[]]")
-assert(m.encode() == bytes("1718"))
-
-m = matter.TLV.parse(bytes("17000120002a000200032000ef18"))
-assert(m.tostring() == "[[1, 0 = 42, 2, 3, 0 = -17]]")
-assert(m.encode() == bytes("17000120002a000200032000ef18"))
-
+test_TLV(bytes("1718"), "[[]]")
+test_TLV(bytes("17000120002a000200032000ef18"), "[[1, 0 = 42, 2, 3, 0 = -17]]")
 
 # array
-m = matter.TLV.parse(bytes("1618"))
-assert(m.tostring() == "[]")
-assert(m.encode() == bytes("1618"))
-
-m = matter.TLV.parse(bytes("160000000100020003000418"))
-assert(m.tostring() == "[0, 1, 2, 3, 4]")
-assert(m.encode() == bytes("160000000100020003000418"))
+test_TLV(bytes("1618"), "[]")
+test_TLV(bytes("160000000100020003000418"), "[0, 1, 2, 3, 4]")
 
 # mix
-m = matter.TLV.parse(bytes("16002a02f067fdff15180a33338f410c0648656c6c6f2118"))
-assert(m.tostring() == '[42, -170000, {}, 17.9, "Hello!"]')
-assert(m.encode() == bytes("16002a02f067fdff15180a33338f410c0648656c6c6f2118"))
-
-m = matter.TLV.parse(bytes("153600172403312504FCFF18172402002403302404001817240200240330240401181724020024033024040218172402002403302404031817240200240328240402181724020024032824040418172403312404031818280324FF0118"))
-assert(m.tostring() == '{0 = [[[3 = 49U, 4 = 65532U]], [[2 = 0U, 3 = 48U, 4 = 0U]], [[2 = 0U, 3 = 48U, 4 = 1U]], [[2 = 0U, 3 = 48U, 4 = 2U]], [[2 = 0U, 3 = 48U, 4 = 3U]], [[2 = 0U, 3 = 40U, 4 = 2U]], [[2 = 0U, 3 = 40U, 4 = 4U]], [[3 = 49U, 4 = 3U]]], 3 = false, 255 = 1U}')
-assert(m.encode() == bytes("153600172403312504FCFF18172402002403302404001817240200240330240401181724020024033024040218172402002403302404031817240200240328240402181724020024032824040418172403312404031818280324FF0118"))
+test_TLV(bytes("16002a02f067fdff15180a33338f410c0648656c6c6f2118"), '[42, -170000, {}, 17.9, "Hello!"]')
+test_TLV(bytes("153600172403312504FCFF18172402002403302404001817240200240330240401181724020024033024040218172402002403302404031817240200240328240402181724020024032824040418172403312404031818280324FF0118"), '{0 = [[[3 = 49U, 4 = 65532U]], [[2 = 0U, 3 = 48U, 4 = 0U]], [[2 = 0U, 3 = 48U, 4 = 1U]], [[2 = 0U, 3 = 48U, 4 = 2U]], [[2 = 0U, 3 = 48U, 4 = 3U]], [[2 = 0U, 3 = 40U, 4 = 2U]], [[2 = 0U, 3 = 40U, 4 = 4U]], [[3 = 49U, 4 = 3U]]], 3 = false, 255 = 1U}')
 
 -#

@@ -47,6 +47,10 @@ class Matter_Session
   # counters
   var counter_rcv                 # counter for incoming messages
   var counter_snd                 # counter for outgoing messages
+  var __exchange_id               # exchange id for locally initiated transaction, non-persistent
+  # keep track of last known IP/Port of the fabric
+  var __ip
+  var __port
   # non-session counters
   var _counter_insecure_rcv       # counter for incoming messages
   var _counter_insecure_snd       # counter for outgoing messages
@@ -57,7 +61,7 @@ class Matter_Session
   var attestation_challenge        # Attestation challenge
   var peer_node_id
   # breadcrumb
-  var breadcrumb                  # breadcrumb attribute for this session
+  var __breadcrumb                # breadcrumb attribute for this session, prefix `__` so that it is not persisted and untouched
   # our own private key
   var no_private_key              # private key of the device certificate (generated at commissioning)
   # NOC information
@@ -90,6 +94,7 @@ class Matter_Session
 
   #############################################################
   def init(store, local_session_id, initiator_session_id)
+    import crypto
     self.__store = store
     self.mode = 0
     self.local_session_id = local_session_id
@@ -98,7 +103,8 @@ class Matter_Session
     self.counter_snd = matter.Counter()
     self._counter_insecure_rcv = matter.Counter()
     self._counter_insecure_snd = matter.Counter()
-    self.breadcrumb = int64()
+    self.__breadcrumb = 0
+    self.__exchange_id = crypto.random(2).get(0,2)      # generate a random 16 bits number, then increment with rollover
   end
 
   #############################################################

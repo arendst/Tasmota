@@ -66,7 +66,7 @@ be_local_closure(Matter_UDPPacket_sent_send,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(send),
     /* K2   */  be_nested_str_weak(addr),
@@ -78,9 +78,8 @@ be_local_closure(Matter_UDPPacket_sent_send,   /* name */
     /* K8   */  be_nested_str_weak(log),
     /* K9   */  be_nested_str_weak(format),
     /* K10  */  be_nested_str_weak(MTR_X3A_X20sending_X20packet_X20to_X20_X27_X5B_X25s_X5D_X3A_X25i_X27),
-    /* K11  */  be_const_int(3),
-    /* K12  */  be_nested_str_weak(MTR_X3A_X20failed_X20to_X20send_X20packet_X20to_X20_X27_X5B_X25s_X5D_X3A_X25i_X27),
-    /* K13  */  be_const_int(2),
+    /* K11  */  be_nested_str_weak(MTR_X3A_X20error_X20sending_X20packet_X20to_X20_X27_X5B_X25s_X5D_X3A_X25i_X27),
+    /* K12  */  be_const_int(3),
     }),
     be_str_weak(send),
     &be_const_str_solidified,
@@ -107,17 +106,17 @@ be_local_closure(Matter_UDPPacket_sent_send,   /* name */
       0x88240102,  //  0013  GETMBR	R9	R0	K2
       0x88280104,  //  0014  GETMBR	R10	R0	K4
       0x7C180800,  //  0015  CALL	R6	4
-      0x581C000B,  //  0016  LDCONST	R7	K11
+      0x541E0003,  //  0016  LDINT	R7	4
       0x7C100600,  //  0017  CALL	R4	3
       0x70020008,  //  0018  JMP		#0022
       0xB8120E00,  //  0019  GETNGBL	R4	K7
       0x8C100908,  //  001A  GETMET	R4	R4	K8
       0x8C180509,  //  001B  GETMET	R6	R2	K9
-      0x5820000C,  //  001C  LDCONST	R8	K12
+      0x5820000B,  //  001C  LDCONST	R8	K11
       0x88240102,  //  001D  GETMBR	R9	R0	K2
       0x88280104,  //  001E  GETMBR	R10	R0	K4
       0x7C180800,  //  001F  CALL	R6	4
-      0x581C000D,  //  0020  LDCONST	R7	K13
+      0x581C000C,  //  0020  LDCONST	R7	K12
       0x7C100600,  //  0021  CALL	R4	3
       0x80000000,  //  0022  RET	0
     })
@@ -357,7 +356,7 @@ be_local_closure(Matter_UDPServer_every_50ms,   /* name */
 ********************************************************************/
 be_local_closure(Matter_UDPServer_resend_packets,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    11,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -365,7 +364,7 @@ be_local_closure(Matter_UDPServer_resend_packets,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[17]) {     /* constants */
+    ( &(const bvalue[22]) {     /* constants */
     /* K0   */  be_nested_str_weak(packets_sent),
     /* K1   */  be_nested_str_weak(tasmota),
     /* K2   */  be_nested_str_weak(time_reached),
@@ -379,25 +378,30 @@ be_local_closure(Matter_UDPServer_resend_packets,   /* name */
     /* K10  */  be_nested_str_weak(retries),
     /* K11  */  be_const_int(1),
     /* K12  */  be_const_int(0),
-    /* K13  */  be_nested_str_weak(remove),
-    /* K14  */  be_nested_str_weak(millis),
-    /* K15  */  be_nested_str_weak(RETRY_MS),
-    /* K16  */  be_nested_str_weak(stop_iteration),
+    /* K13  */  be_nested_str_weak(string),
+    /* K14  */  be_nested_str_weak(remove),
+    /* K15  */  be_nested_str_weak(format),
+    /* K16  */  be_nested_str_weak(MTR_X3A_X20non_X2Dacked_X20packet_X20to_X20_X27_X5B_X25s_X5D_X3A_X25i_X27),
+    /* K17  */  be_nested_str_weak(addr),
+    /* K18  */  be_nested_str_weak(port),
+    /* K19  */  be_nested_str_weak(millis),
+    /* K20  */  be_nested_str_weak(RETRY_MS),
+    /* K21  */  be_nested_str_weak(stop_iteration),
     }),
     be_str_weak(resend_packets),
     &be_const_str_solidified,
-    ( &(const binstruction[44]) {  /* code */
+    ( &(const binstruction[54]) {  /* code */
       0x60040010,  //  0000  GETGBL	R1	G16
       0x88080100,  //  0001  GETMBR	R2	R0	K0
       0x7C040200,  //  0002  CALL	R1	1
-      0xA8020023,  //  0003  EXBLK	0	#0028
+      0xA802002D,  //  0003  EXBLK	0	#0032
       0x5C080200,  //  0004  MOVE	R2	R1
       0x7C080000,  //  0005  CALL	R2	0
       0xB80E0200,  //  0006  GETNGBL	R3	K1
       0x8C0C0702,  //  0007  GETMET	R3	R3	K2
       0x88140503,  //  0008  GETMBR	R5	R2	K3
       0x7C0C0400,  //  0009  CALL	R3	2
-      0x780E001B,  //  000A  JMPF	R3	#0027
+      0x780E0025,  //  000A  JMPF	R3	#0031
       0xB80E0200,  //  000B  GETNGBL	R3	K1
       0x8C0C0704,  //  000C  GETMET	R3	R3	K4
       0x60140008,  //  000D  GETGBL	R5	G8
@@ -414,23 +418,33 @@ be_local_closure(Matter_UDPServer_resend_packets,   /* name */
       0x900A1403,  //  0018  SETMBR	R2	K10	R3
       0x880C050A,  //  0019  GETMBR	R3	R2	K10
       0x180C070C,  //  001A  LE	R3	R3	K12
-      0x780E0004,  //  001B  JMPF	R3	#0021
-      0x880C0100,  //  001C  GETMBR	R3	R0	K0
-      0x8C0C070D,  //  001D  GETMET	R3	R3	K13
-      0x88140506,  //  001E  GETMBR	R5	R2	K6
-      0x7C0C0400,  //  001F  CALL	R3	2
-      0x70020005,  //  0020  JMP		#0027
-      0xB80E0200,  //  0021  GETNGBL	R3	K1
-      0x8C0C070E,  //  0022  GETMET	R3	R3	K14
-      0x7C0C0200,  //  0023  CALL	R3	1
-      0x8810050F,  //  0024  GETMBR	R4	R2	K15
-      0x000C0604,  //  0025  ADD	R3	R3	R4
-      0x900A0603,  //  0026  SETMBR	R2	K3	R3
-      0x7001FFDB,  //  0027  JMP		#0004
-      0x58040010,  //  0028  LDCONST	R1	K16
-      0xAC040200,  //  0029  CATCH	R1	1	0
-      0xB0080000,  //  002A  RAISE	2	R0	R0
-      0x80000000,  //  002B  RET	0
+      0x780E000E,  //  001B  JMPF	R3	#002B
+      0xA40E1A00,  //  001C  IMPORT	R3	K13
+      0x88100100,  //  001D  GETMBR	R4	R0	K0
+      0x8C10090E,  //  001E  GETMET	R4	R4	K14
+      0x88180506,  //  001F  GETMBR	R6	R2	K6
+      0x7C100400,  //  0020  CALL	R4	2
+      0xB8120200,  //  0021  GETNGBL	R4	K1
+      0x8C100904,  //  0022  GETMET	R4	R4	K4
+      0x8C18070F,  //  0023  GETMET	R6	R3	K15
+      0x58200010,  //  0024  LDCONST	R8	K16
+      0x88240511,  //  0025  GETMBR	R9	R2	K17
+      0x88280512,  //  0026  GETMBR	R10	R2	K18
+      0x7C180800,  //  0027  CALL	R6	4
+      0x581C0007,  //  0028  LDCONST	R7	K7
+      0x7C100600,  //  0029  CALL	R4	3
+      0x70020005,  //  002A  JMP		#0031
+      0xB80E0200,  //  002B  GETNGBL	R3	K1
+      0x8C0C0713,  //  002C  GETMET	R3	R3	K19
+      0x7C0C0200,  //  002D  CALL	R3	1
+      0x88100514,  //  002E  GETMBR	R4	R2	K20
+      0x000C0604,  //  002F  ADD	R3	R3	R4
+      0x900A0603,  //  0030  SETMBR	R2	K3	R3
+      0x7001FFD1,  //  0031  JMP		#0004
+      0x58040015,  //  0032  LDCONST	R1	K21
+      0xAC040200,  //  0033  CATCH	R1	1	0
+      0xB0080000,  //  0034  RAISE	2	R0	R0
+      0x80000000,  //  0035  RET	0
     })
   )
 );
@@ -549,14 +563,13 @@ be_local_closure(Matter_UDPServer_packet_ack,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(packets_sent),
     /* K1   */  be_nested_str_weak(contains),
     /* K2   */  be_nested_str_weak(remove),
     /* K3   */  be_nested_str_weak(tasmota),
     /* K4   */  be_nested_str_weak(log),
     /* K5   */  be_nested_str_weak(MTR_X3A_X20removed_X20packet_X20from_X20sending_X20list_X20id_X3D),
-    /* K6   */  be_const_int(3),
     }),
     be_str_weak(packet_ack),
     &be_const_str_solidified,
@@ -580,7 +593,7 @@ be_local_closure(Matter_UDPServer_packet_ack,   /* name */
       0x5C140200,  //  0010  MOVE	R5	R1
       0x7C100200,  //  0011  CALL	R4	1
       0x00120A04,  //  0012  ADD	R4	K5	R4
-      0x58140006,  //  0013  LDCONST	R5	K6
+      0x54160003,  //  0013  LDINT	R5	4
       0x7C080600,  //  0014  CALL	R2	3
       0x80000000,  //  0015  RET	0
     })

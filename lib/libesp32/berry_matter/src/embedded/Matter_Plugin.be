@@ -91,7 +91,7 @@ class Matter_Plugin
 
   #############################################################
   # write attribute
-  def write_attribute(msg, endpoint, cluster, attribute)
+  def write_attribute(msg, ctx, write_data)
     return nil
   end
 

@@ -80,6 +80,34 @@ const char* matter_get_attribute_name(uint16_t cluster, uint16_t attribute) {
 }
 BE_FUNC_CTYPE_DECLARE(matter_get_attribute_name, "s", "ii")
 
+bbool matter_is_attribute_writable(uint16_t cluster, uint16_t attribute) {
+  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+    if (cl->id == cluster) {
+      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+        if (at->id == attribute) {
+          return (at->flags & 0x01) ? btrue : bfalse;
+        }
+      }
+    }
+  }
+  return bfalse;
+}
+BE_FUNC_CTYPE_DECLARE(matter_is_attribute_writable, "b", "ii")
+
+bbool matter_is_attribute_reportable(uint16_t cluster, uint16_t attribute) {
+  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+    if (cl->id == cluster) {
+      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+        if (at->id == attribute) {
+          return (at->flags & 0x02) ? btrue : bfalse;
+        }
+      }
+    }
+  }
+  return bfalse;
+}
+BE_FUNC_CTYPE_DECLARE(matter_is_attribute_reportable, "b", "ii")
+
 const char* matter_get_command_name(uint16_t cluster, uint16_t command) {
   for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
     if (cl->id == cluster) {
@@ -110,6 +138,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Commissioning.h"
 #include "solidify/solidified_Matter_Message.h"
 #include "solidify/solidified_Matter_MessageHandler.h"
+#include "solidify/solidified_Matter_IM_Message.h"
+#include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
 #include "solidify/solidified_Matter_Plugin.h"
 #include "solidify/solidified_Matter_Base38.h"
@@ -118,8 +148,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 
 #include "../generate/be_matter_certs.h"
 
-#include "solidify/solidified_Matter_Plugin_core.h"
-#include "solidify/solidified_Matter_Plugin_Relay.h"
+#include "solidify/solidified_Matter_Plugin_Root.h"
+#include "solidify/solidified_Matter_Plugin_OnOff.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -158,6 +188,8 @@ module matter (scope: global) {
 
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
+  is_attribute_writable, ctype_func(matter_is_attribute_writable)
+  is_attribute_reportable, ctype_func(matter_is_attribute_reportable)
   get_command_name, ctype_func(matter_get_command_name)
   get_opcode_name, ctype_func(matter_get_opcode_name)
   TLV, class(be_class_Matter_TLV)
@@ -247,9 +279,16 @@ module matter (scope: global) {
   MessageHandler, class(be_class_Matter_MessageHandler)
 
   // Interation Model
-  Response_container, class(be_class_Matter_Response_container)
+  Path, class(be_class_Matter_Path)
+  IM_Status, class(be_class_Matter_IM_Status)
+  IM_InvokeResponse, class(be_class_Matter_IM_InvokeResponse)
+  IM_WriteResponse, class(be_class_Matter_IM_WriteResponse)
+  IM_ReportData, class(be_class_Matter_IM_ReportData)
+  IM_ReportDataSubscribed, class(be_class_Matter_IM_ReportDataSubscribed)
+  IM_SubscribeResponse, class(be_class_Matter_IM_SubscribeResponse)
+  IM_Subscription, class(be_class_Matter_IM_Subscription)
+  IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
-  Plugin_core, class(be_class_Matter_Plugin_core)
   UI, class(be_class_Matter_UI)
 
   // Base38 for QR Code
@@ -265,11 +304,11 @@ module matter (scope: global) {
   DAC_Cert_FFF1_8000, func(matter_DAC_Cert_FFF1_8000)
   DAC_Pub_FFF1_8000, func(matter_DAC_Pub_FFF1_8000)
   DAC_Priv_FFF1_8000, func(matter_DAC_Priv_FFF1_8000)
-  CD_FFF1_8000, func(matter_CD_FFF1_8000)   // Certification Declaration
+  CD_FFF1_8000, func(matter_CD_FFF1_8000)               // Certification Declaration
 
   // Plugins
-  Plugin_core, class(be_class_Matter_Plugin_core)       // Generic behavior common to all devices
-  Plugin_Relay, class(be_class_Matter_Plugin_Relay)     // Relay behavior (OnOff)
+  Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
+  Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
 }
 
 @const_object_info_end */
