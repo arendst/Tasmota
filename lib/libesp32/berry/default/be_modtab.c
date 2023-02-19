@@ -301,7 +301,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
 #endif // USE_I2S_AUDIO_BERRY
-#ifdef USE_BERRY_INT64
+#if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
 #endif
 #endif // TASMOTA

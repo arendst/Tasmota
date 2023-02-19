@@ -1279,6 +1279,34 @@
 #endif
 
 /*********************************************************************************************\
+ * Post-process compile options for Matter
+\*********************************************************************************************/
+
+#ifdef ESP32
+#ifdef USE_MATTER_DEVICE
+  #undef  USE_DISCOVERY
+  #define USE_DISCOVERY
+
+// Enable all the crypto required by Matter
+  #undef  USE_BERRY_CRYPTO_EC_P256
+  #define USE_BERRY_CRYPTO_EC_P256
+  #undef  USE_BERRY_CRYPTO_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_HKDF_SHA256
+  #define USE_BERRY_CRYPTO_HKDF_SHA256
+  #undef  USE_BERRY_CRYPTO_AES_CCM
+  #define USE_BERRY_CRYPTO_AES_CCM
+  #undef  USE_BERRY_CRYPTO_AES_CTR
+  #define USE_BERRY_CRYPTO_AES_CTR
+  #undef  USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  #define USE_BERRY_CRYPTO_SPAKE2P_MATTER
+
+#endif // USE_MATTER_DEVICE
+#endif
+
+/*********************************************************************************************\
  * Post-process stack size adjustment
 \*********************************************************************************************/
 
