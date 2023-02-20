@@ -31,8 +31,9 @@
 
 #ifdef FIRMWARE_SAFEBOOT
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "safeboot"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "safeboot"
+#endif
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
@@ -194,8 +195,9 @@
 
 #ifdef FIRMWARE_WEBCAM
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "webcam"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "webcam"
+#endif
 
 #define USE_WEBCAM
 #define ENABLE_RTSPSERVER
@@ -238,8 +240,9 @@
 
 #ifdef FIRMWARE_BLUETOOTH
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "bluetooth"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "bluetooth"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -275,8 +278,9 @@
 
 #ifdef FIRMWARE_LVGL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lvgl-haspmota"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "lvgl-haspmota"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -472,8 +476,9 @@
 
 #ifdef FIRMWARE_ZBBRDGPRO
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "zbbrdgpro"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "zbbrdgpro"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -522,8 +527,9 @@
 
 #ifdef FIRMWARE_NSPANEL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "nspanel"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "nspanel"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -540,6 +546,10 @@
 \*********************************************************************************************/
 
 #ifdef FIRMWARE_TASMOTA32
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "tasmota32"
+#endif
 
 #define USE_INFLUXDB                             // Enable influxdb support (+5k code)
 
