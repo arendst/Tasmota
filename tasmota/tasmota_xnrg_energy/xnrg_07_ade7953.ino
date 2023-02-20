@@ -836,6 +836,7 @@ bool Xnrg07(uint32_t function) {
   bool result = false;
 
   switch (function) {
+/*
     case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer (fails on SPI)
       if (!Ade7953.use_spi) {       // No SPI
         Ade7953EnergyEverySecond();
@@ -846,6 +847,11 @@ bool Xnrg07(uint32_t function) {
         Ade7953EnergyEverySecond();
       }
       break;
+*/
+    case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer (fails on SPI)
+      Ade7953EnergyEverySecond();
+      break;
+
     case FUNC_COMMAND:
       result = Ade7953Command();
       break;
