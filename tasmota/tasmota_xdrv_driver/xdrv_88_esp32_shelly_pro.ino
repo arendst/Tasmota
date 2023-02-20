@@ -272,10 +272,6 @@ void ShellyProUpdateIsr(void) {
   /*
   The goal if this function is to minimize SPI and SetVirtualPinState calls
   */
-  noInterrupts();
-  detachInterrupt(SPro.pin_mcp23s17_int);
-  interrupts();
-
   uint32_t input_state = SP4Mcp23S17Read16(SP4_MCP23S17_INTCAPA);  // Read intcap and clear interrupt
   input_state &= 0x806F;                            // Only test input bits
 
@@ -302,8 +298,6 @@ void ShellyProUpdateIsr(void) {
     mask <<= 1;
   }
   SPro.input_state = input_state;
-
-  attachInterrupt(SPro.pin_mcp23s17_int, ShellyProUpdateIsr, CHANGE);
 }
 
 bool ShellyProButton(void) {
