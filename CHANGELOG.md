@@ -5,18 +5,21 @@ All notable changes to this project will be documented in this file.
 
 ## [12.4.0.1]
 ### Added
+- Matter read/write and commands (#18000)
 
 ### Breaking Changed
 
 ### Changed
 - ADC Range oversample from 2 to 32 (#17975)
 - ESP32 Framework (Core) from v2.0.6 to v2.0.7
+- Move #define OTA_URL from user_config.h to board files for better inital support (#18008)
 
 ### Fixed
 - SEN5X floats and units (#17961)
 - Energytotals cannot be set to negative values (#17965)
 - Undocumented support for non-sequential buttons and switches (#17967)
 - SR04 driver single pin ultrasonic sensor detection (#17966)
+- IR panasonic protocol regression from v12.0.2.4 (#18013)
 
 ### Removed
 
