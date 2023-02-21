@@ -85,7 +85,6 @@ WiFiClient *IFDBwifiClient = nullptr;
 HTTPClient *IFDBhttpClient = nullptr;
 
 struct {
-  String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
   String _lastErrorResponse;             // Server reponse or library error message for last failed request
   uint32_t _lastRequestTime = 0;         // Last time in ms we made a request to server
@@ -119,19 +118,14 @@ bool InfluxDbParameterInit(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Invalid parameters"));
     return false;
   }
-  IFDB._serverUrl = "http://";
-  IFDB._serverUrl += SettingsText(SET_INFLUXDB_HOST);
-  IFDB._serverUrl += ":";
-  IFDB._serverUrl += Settings->influxdb_port;
 
-  IFDB._writeUrl = IFDB._serverUrl;
   if (2 == Settings->influxdb_version) {
-    IFDB._writeUrl += "/api/v2/write?org=";
+    IFDB._writeUrl  = "/api/v2/write?org=";
     IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_ORG));
     IFDB._writeUrl += "&bucket=";
     IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_BUCKET));
   } else {
-    IFDB._writeUrl += "/write?db=";
+    IFDB._writeUrl  = "/write?db=";
     IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_BUCKET));
     IFDB._writeUrl += InfluxDbAuth();
     if (strlen(SettingsText(SET_INFLUXDB_RP)) != 0) {
@@ -196,7 +190,13 @@ bool InfluxDbValidateConnection(void) {
     return false;
   }
   // on version 1.x /ping will by default return status code 204, without verbose
-  String url = IFDB._serverUrl + (2 == Settings->influxdb_version ? "/health" : "/ping?verbose=true");
+  IPAddress ifdb_ip;
+  if (!WifiHostByName(SettingsText(SET_INFLUXDB_HOST), ifdb_ip)) {
+    return false;
+  }
+  String url = "http://" + ifdb_ip.toString() + ":";
+  url += Settings->influxdb_port;
+  url += (2 == Settings->influxdb_version ? "/health" : "/ping?verbose=true");
   if (1 == Settings->influxdb_version) {
     url += InfluxDbAuth();
   }
@@ -223,7 +223,14 @@ int InfluxDbPostData(const char *data) {
     return 0;
   }
   if (data) {
-    if (!IFDBhttpClient->begin(*IFDBwifiClient, IFDB._writeUrl)) {
+    IPAddress ifdb_ip;
+    if (!WifiHostByName(SettingsText(SET_INFLUXDB_HOST), ifdb_ip)) {
+      return false;
+    }
+    String url = "http://" + ifdb_ip.toString() + ":";
+    url += Settings->influxdb_port;
+    url += IFDB._writeUrl;
+    if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
       return false;
     }
