@@ -167,7 +167,7 @@ class Matter_UDPServer
         else
           import string
           self.packets_sent.remove(packet.msg_id)
-          tasmota.log(string.format("MTR: target unreachable '[%s]:%i'", packet.addr, packet.port), 2)
+          tasmota.log(string.format("MTR: target unreachable '[%s]:%i' msg_id=%i", packet.addr, packet.port, packet.msg_id), 2)
         end
       end
     end
