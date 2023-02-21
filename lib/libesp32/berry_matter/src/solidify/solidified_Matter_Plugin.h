@@ -7,12 +7,12 @@
 extern const bclass be_class_Matter_Plugin;
 
 /********************************************************************
-** Solidified function: read_event
+** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_read_event,   /* name */
+be_local_closure(Matter_Plugin_read_attribute,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    5,                          /* argc */
+    4,                          /* nstack */
+    3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -20,11 +20,45 @@ be_local_closure(Matter_Plugin_read_event,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_weak(read_event),
+    be_str_weak(read_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x4C140000,  //  0000  LDNIL	R5
-      0x80040A00,  //  0001  RET	1	R5
+      0x4C0C0000,  //  0000  LDNIL	R3
+      0x80040600,  //  0001  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: attribute_updated
+********************************************************************/
+be_local_closure(Matter_Plugin_attribute_updated,   /* name */
+  be_nested_proto(
+    11,                          /* nstack */
+    5,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(device),
+    /* K1   */  be_nested_str_weak(attribute_updated),
+    }),
+    be_str_weak(attribute_updated),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88140100,  //  0000  GETMBR	R5	R0	K0
+      0x8C140B01,  //  0001  GETMET	R5	R5	K1
+      0x5C1C0200,  //  0002  MOVE	R7	R1
+      0x5C200400,  //  0003  MOVE	R8	R2
+      0x5C240600,  //  0004  MOVE	R9	R3
+      0x5C280800,  //  0005  MOVE	R10	R4
+      0x7C140A00,  //  0006  CALL	R5	5
+      0x80000000,  //  0007  RET	0
     })
   )
 );
@@ -66,75 +100,24 @@ be_local_closure(Matter_Plugin_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: has
+** Solidified function: subscribe_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_has,   /* name */
+be_local_closure(Matter_Plugin_subscribe_attribute,   /* name */
   be_nested_proto(
     6,                          /* nstack */
-    3,                          /* argc */
+    5,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(clusters),
-    /* K1   */  be_nested_str_weak(contains),
-    /* K2   */  be_nested_str_weak(endpoints),
-    /* K3   */  be_nested_str_weak(find),
-    }),
-    be_str_weak(has),
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(subscribe_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
-      0x5C140200,  //  0002  MOVE	R5	R1
-      0x7C0C0400,  //  0003  CALL	R3	2
-      0x780E0006,  //  0004  JMPF	R3	#000C
-      0x880C0102,  //  0005  GETMBR	R3	R0	K2
-      0x8C0C0703,  //  0006  GETMET	R3	R3	K3
-      0x5C140400,  //  0007  MOVE	R5	R2
-      0x7C0C0400,  //  0008  CALL	R3	2
-      0x4C100000,  //  0009  LDNIL	R4
-      0x200C0604,  //  000A  NE	R3	R3	R4
-      0x740E0000,  //  000B  JMPT	R3	#000D
-      0x500C0001,  //  000C  LDBOOL	R3	0	1
-      0x500C0200,  //  000D  LDBOOL	R3	1	0
-      0x80040600,  //  000E  RET	1	R3
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_attribute_list
-********************************************************************/
-be_local_closure(Matter_Plugin_get_attribute_list,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(clusters),
-    /* K1   */  be_nested_str_weak(find),
-    /* K2   */  be_nested_str_weak(EMPTY_LIST),
-    }),
-    be_str_weak(get_attribute_list),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
-      0x5C140400,  //  0002  MOVE	R5	R2
-      0x88180102,  //  0003  GETMBR	R6	R0	K2
-      0x7C0C0600,  //  0004  CALL	R3	3
-      0x80040600,  //  0005  RET	1	R3
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C140000,  //  0000  LDNIL	R5
+      0x80040A00,  //  0001  RET	1	R5
     })
   )
 );
@@ -188,81 +171,6 @@ be_local_closure(Matter_Plugin_get_cluster_list,   /* name */
 
 
 /********************************************************************
-** Solidified function: invoke_request
-********************************************************************/
-be_local_closure(Matter_Plugin_invoke_request,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(invoke_request),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x4C100000,  //  0000  LDNIL	R4
-      0x80040800,  //  0001  RET	1	R4
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: read_attribute
-********************************************************************/
-be_local_closure(Matter_Plugin_read_attribute,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(read_attribute),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x4C0C0000,  //  0000  LDNIL	R3
-      0x80040600,  //  0001  RET	1	R3
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: subscribe_event
-********************************************************************/
-be_local_closure(Matter_Plugin_subscribe_event,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    5,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(subscribe_event),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x4C140000,  //  0000  LDNIL	R5
-      0x80040A00,  //  0001  RET	1	R5
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: get_cluster_map
 ********************************************************************/
 be_local_closure(Matter_Plugin_get_cluster_map,   /* name */
@@ -283,6 +191,31 @@ be_local_closure(Matter_Plugin_get_cluster_map,   /* name */
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: invoke_request
+********************************************************************/
+be_local_closure(Matter_Plugin_invoke_request,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(invoke_request),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C100000,  //  0000  LDNIL	R4
+      0x80040800,  //  0001  RET	1	R4
     })
   )
 );
@@ -317,6 +250,31 @@ be_local_closure(Matter_Plugin_get_endpoints,   /* name */
 
 
 /********************************************************************
+** Solidified function: subscribe_event
+********************************************************************/
+be_local_closure(Matter_Plugin_subscribe_event,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    5,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(subscribe_event),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C140000,  //  0000  LDNIL	R5
+      0x80040A00,  //  0001  RET	1	R5
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: write_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_write_attribute,   /* name */
@@ -335,6 +293,74 @@ be_local_closure(Matter_Plugin_write_attribute,   /* name */
     ( &(const binstruction[ 2]) {  /* code */
       0x4C100000,  //  0000  LDNIL	R4
       0x80040800,  //  0001  RET	1	R4
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: has
+********************************************************************/
+be_local_closure(Matter_Plugin_has,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(clusters),
+    /* K1   */  be_nested_str_weak(contains),
+    /* K2   */  be_nested_str_weak(endpoints),
+    /* K3   */  be_nested_str_weak(find),
+    }),
+    be_str_weak(has),
+    &be_const_str_solidified,
+    ( &(const binstruction[15]) {  /* code */
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x780E0006,  //  0004  JMPF	R3	#000C
+      0x880C0102,  //  0005  GETMBR	R3	R0	K2
+      0x8C0C0703,  //  0006  GETMET	R3	R3	K3
+      0x5C140400,  //  0007  MOVE	R5	R2
+      0x7C0C0400,  //  0008  CALL	R3	2
+      0x4C100000,  //  0009  LDNIL	R4
+      0x200C0604,  //  000A  NE	R3	R3	R4
+      0x740E0000,  //  000B  JMPT	R3	#000D
+      0x500C0001,  //  000C  LDBOOL	R3	0	1
+      0x500C0200,  //  000D  LDBOOL	R3	1	0
+      0x80040600,  //  000E  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: read_event
+********************************************************************/
+be_local_closure(Matter_Plugin_read_event,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    5,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(read_event),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C140000,  //  0000  LDNIL	R5
+      0x80040A00,  //  0001  RET	1	R5
     })
   )
 );
@@ -367,24 +393,32 @@ be_local_closure(Matter_Plugin_timed_request,   /* name */
 
 
 /********************************************************************
-** Solidified function: subscribe_attribute
+** Solidified function: get_attribute_list
 ********************************************************************/
-be_local_closure(Matter_Plugin_subscribe_attribute,   /* name */
+be_local_closure(Matter_Plugin_get_attribute_list,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    5,                          /* argc */
+    7,                          /* nstack */
+    3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(subscribe_attribute),
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(clusters),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(EMPTY_LIST),
+    }),
+    be_str_weak(get_attribute_list),
     &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x4C140000,  //  0000  LDNIL	R5
-      0x80040A00,  //  0001  RET	1	R5
+    ( &(const binstruction[ 6]) {  /* code */
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
+      0x5C140400,  //  0002  MOVE	R5	R2
+      0x88180102,  //  0003  GETMBR	R6	R0	K2
+      0x7C0C0600,  //  0004  CALL	R3	3
+      0x80040600,  //  0005  RET	1	R3
     })
   )
 );
@@ -397,32 +431,33 @@ be_local_closure(Matter_Plugin_subscribe_attribute,   /* name */
 be_local_class(Matter_Plugin,
     3,
     NULL,
-    be_nested_map(18,
+    be_nested_map(19,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_event, -1), be_const_closure(Matter_Plugin_read_event_closure) },
-        { be_const_key_weak(get_cluster_list, -1), be_const_closure(Matter_Plugin_get_cluster_list_closure) },
-        { be_const_key_weak(endpoints, 1), be_const_var(1) },
-        { be_const_key_weak(get_attribute_list, 9), be_const_closure(Matter_Plugin_get_attribute_list_closure) },
-        { be_const_key_weak(device, -1), be_const_var(0) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_invoke_request_closure) },
         { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_read_attribute_closure) },
-        { be_const_key_weak(has, 13), be_const_closure(Matter_Plugin_has_closure) },
-        { be_const_key_weak(subscribe_event, -1), be_const_closure(Matter_Plugin_subscribe_event_closure) },
-        { be_const_key_weak(get_cluster_map, -1), be_const_closure(Matter_Plugin_get_cluster_map_closure) },
-        { be_const_key_weak(clusters, -1), be_const_var(2) },
-        { be_const_key_weak(EMPTY_MAP, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(0,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-    }))    ) } )) },
-        { be_const_key_weak(get_endpoints, -1), be_const_closure(Matter_Plugin_get_endpoints_closure) },
-        { be_const_key_weak(write_attribute, 2), be_const_closure(Matter_Plugin_write_attribute_closure) },
-        { be_const_key_weak(timed_request, -1), be_const_closure(Matter_Plugin_timed_request_closure) },
-        { be_const_key_weak(init, 4), be_const_closure(Matter_Plugin_init_closure) },
-        { be_const_key_weak(subscribe_attribute, -1), be_const_closure(Matter_Plugin_subscribe_attribute_closure) },
         { be_const_key_weak(EMPTY_LIST, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(0,
     ( (struct bvalue*) &(const bvalue[]) {
     }))    ) } )) },
+        { be_const_key_weak(clusters, 9), be_const_var(2) },
+        { be_const_key_weak(get_endpoints, -1), be_const_closure(Matter_Plugin_get_endpoints_closure) },
+        { be_const_key_weak(subscribe_attribute, -1), be_const_closure(Matter_Plugin_subscribe_attribute_closure) },
+        { be_const_key_weak(get_cluster_list, 3), be_const_closure(Matter_Plugin_get_cluster_list_closure) },
+        { be_const_key_weak(timed_request, -1), be_const_closure(Matter_Plugin_timed_request_closure) },
+        { be_const_key_weak(EMPTY_MAP, 8), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(0,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+    }))    ) } )) },
+        { be_const_key_weak(subscribe_event, -1), be_const_closure(Matter_Plugin_subscribe_event_closure) },
+        { be_const_key_weak(endpoints, 18), be_const_var(1) },
+        { be_const_key_weak(invoke_request, 7), be_const_closure(Matter_Plugin_invoke_request_closure) },
+        { be_const_key_weak(write_attribute, -1), be_const_closure(Matter_Plugin_write_attribute_closure) },
+        { be_const_key_weak(attribute_updated, 14), be_const_closure(Matter_Plugin_attribute_updated_closure) },
+        { be_const_key_weak(init, 2), be_const_closure(Matter_Plugin_init_closure) },
+        { be_const_key_weak(has, -1), be_const_closure(Matter_Plugin_has_closure) },
+        { be_const_key_weak(device, -1), be_const_var(0) },
+        { be_const_key_weak(read_event, 6), be_const_closure(Matter_Plugin_read_event_closure) },
+        { be_const_key_weak(get_attribute_list, -1), be_const_closure(Matter_Plugin_get_attribute_list_closure) },
+        { be_const_key_weak(get_cluster_map, -1), be_const_closure(Matter_Plugin_get_cluster_map_closure) },
     })),
     be_str_weak(Matter_Plugin)
 );

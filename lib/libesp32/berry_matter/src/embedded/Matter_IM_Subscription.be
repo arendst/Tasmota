@@ -28,7 +28,8 @@ import matter
 # Individual subscription instance
 #################################################################################
 class Matter_IM_Subscription
-  static var MAX_INTERVAL_MARGIN = 10             # we always keep 10s margin
+  static var MAX_INTERVAL_MARGIN = 5              # we always keep 5s margin
+  var subs                                        # pointer to sub shop
   # parameters of the subscription
   var subscription_id                             # id of the subcription as known by requester
   var session                                     # the session it belongs to
@@ -37,12 +38,14 @@ class Matter_IM_Subscription
   var max_interval                                # always send data before `max_interal` seconds or the subscription is lost
   var fabric_filtered
   # manage time
+  var not_before                                  # rate-limiting
   var expiration                                  # expiration epoch, we need to respond before
   # updates
   var updates
 
   # req: SubscribeRequestMessage
-  def init(id, session, req)
+  def init(subs, id, session, req)
+    self.subs = subs
     self.subscription_id = id
     self.session = session
     # check values for min_interval
@@ -73,17 +76,24 @@ class Matter_IM_Subscription
     self.updates = []
     self.clear_and_arm()
 
-    tasmota.log("MTR: new subsctiption " + matter.inspect(self), 2)
+    tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
   end
   
+  # remove self from subs list
+  def remove_self()
+    self.subs.remove_sub(self)
+  end
+
   # clear log after it was sent, and re-arm next expiration
   def clear_and_arm()
     self.updates.clear()
-    self.expiration = tasmota.millis() + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
+    var now = tasmota.millis()
+    self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
+    self.not_before = now + self.min_interval * 1000 - 1
   end
 
   # signal that an attribute was updated, to add to the list of reportable
-  def attribute_updated(ctx, fabric_specific)
+  def attribute_updated_ctx(ctx, fabric_specific)
     var idx = 0
     while idx < size(self.path_list)
       var filter = self.path_list[idx]
@@ -91,10 +101,26 @@ class Matter_IM_Subscription
          (filter.cluster == nil   || filter.cluster   == ctx.cluster)  &&
          (filter.attribute == nil || filter.attribute == ctx.attribute)
 
-         self.updates.push(ctx)
+         # ready to push the new attribute, check that it 
+         self._add_attribute_unique_path(ctx)
       end
       idx += 1
     end
+  end
+
+  # add an attribute path for an updated attribute, remove any duplicate
+  def _add_attribute_unique_path(ctx)
+    var idx = 0
+    while idx < size(self.updates)
+      var path = self.updates[idx]
+      if   path.endpoint  == ctx.endpoint  &&
+           path.cluster   == ctx.cluster   &&
+           path.attribute == ctx.attribute
+        return      # already exists in the list, abort
+      end
+      idx += 1
+    end
+    self.updates.push(ctx)
   end
 
 end
@@ -127,10 +153,21 @@ class Matter_IM_Subscription_Shop
       id = crypto.random(2).get(0,2)
     end
 
-    var sub = matter.IM_Subscription(id, session, req)
+    var sub = matter.IM_Subscription(self, id, session, req)
     self.subs.push(sub)
 
     return sub
+  end
+
+  def remove_sub(sub)
+    var idx = 0
+    while idx < size(self.subs)
+      if self.subs[idx] == sub
+        self.subs.remove(idx)
+      else
+        idx += 1
+      end
+    end
   end
 
   def get_by_id(id)
@@ -154,8 +191,22 @@ class Matter_IM_Subscription_Shop
     end
   end
 
-  def every_second()
+  #############################################################
+  # dispatch every 250ms click to sub-objects that need it
+  def every_250ms()
+    # any data ready to send?
     var idx = 0
+    while idx < size(self.subs)
+      var sub = self.subs[idx]
+      if size(sub.updates) > 0 && tasmota.time_reached(sub.not_before)
+        self.im.send_subscribe_update(sub)
+        sub.clear_and_arm()
+      end
+      idx += 1
+    end
+
+    # any heartbeat needing to be sent
+    idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
       if tasmota.time_reached(sub.expiration)
@@ -167,11 +218,11 @@ class Matter_IM_Subscription_Shop
   end
 
   # signal that an attribute was updated, to add to the list of reportable
-  def attribute_updated(ctx, fabric_specific)
+  def attribute_updated_ctx(ctx, fabric_specific)
     # signal any relevant subscription
     var idx = 0
     while idx < size(self.subs)
-      self.subs[idx].attribute_updated(ctx, fabric_specific)
+      self.subs[idx].attribute_updated_ctx(ctx, fabric_specific)
       idx += 1
     end
   end

@@ -38,6 +38,12 @@ class Matter_Plugin
   end
 
   #############################################################
+  # signal that an attribute has been changed
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    self.device.attribute_updated(endpoint, cluster, attribute, fabric_specific)
+  end
+
+  #############################################################
   # Which endpoints does it handle (list of numbers)
   def get_endpoints()
     return self.endpoints
@@ -64,47 +70,47 @@ class Matter_Plugin
 
   #############################################################
   # read attribute
-  def read_attribute(msg, ctx)
+  def read_attribute(session, ctx)
     return nil
   end
 
   #############################################################
   # read event
   # TODO
-  def read_event(msg, endpoint, cluster, eventid)
+  def read_event(session, endpoint, cluster, eventid)
     return nil
   end
 
   #############################################################
   # subscribe attribute
   # TODO
-  def subscribe_attribute(msg, endpoint, cluster, attribute)
+  def subscribe_attribute(session, endpoint, cluster, attribute)
     return nil
   end
 
   #############################################################
   # subscribe event
   # TODO
-  def subscribe_event(msg, endpoint, cluster, eventid)
+  def subscribe_event(session, endpoint, cluster, eventid)
     return nil
   end
 
   #############################################################
   # write attribute
-  def write_attribute(msg, ctx, write_data)
+  def write_attribute(session, ctx, write_data)
     return nil
   end
 
   #############################################################
   # invoke command
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     return nil
   end
 
   #############################################################
   # timed request
   # TODO - should we even support this?
-  def timed_request(msg, val, ctx)
+  def timed_request(session, val, ctx)
     return nil
   end
 end

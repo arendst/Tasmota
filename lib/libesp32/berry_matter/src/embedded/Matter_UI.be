@@ -98,6 +98,7 @@ class Matter_UI
     webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.passcode))
     webserver.content_send("<p>Distinguish id:</p>")
     webserver.content_send(string.format("<input type='number' min='0' max='2047' name='discriminator' value='%i'>", self.device.discriminator))
+    webserver.content_send(string.format("<p><input type='checkbox' name='ipv4'%s>IPv4 only</p>", self.device.ipv4only ? " checked" : ""))
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>")
     
 
@@ -205,6 +206,7 @@ class Matter_UI
         if webserver.has_arg("discriminator")
           self.device.discriminator = int(webserver.arg("discriminator"))
         end
+        self.device.ipv4only = webserver.arg("ipv4") == 'on'
         self.device.save_param()
 
         #- and force restart -#

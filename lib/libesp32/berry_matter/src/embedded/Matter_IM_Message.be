@@ -75,9 +75,17 @@ class Matter_IM_Message
   end
 
   # ack received for previous message, proceed to next (if any)
+  # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
-    self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
+    if msg
+      self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
+    end
     self.ready = true
+    return true
+  end
+
+  # we received an ACK error, do any necessary cleaning
+  def ack_error(msg)
   end
 
   # get the exchange-id for this message
@@ -227,12 +235,59 @@ matter.IM_ReportData = Matter_IM_ReportData
 # Main difference is that we are the spontaneous inititor
 #################################################################################
 class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
+  var sub                         # subscription object
+  var report_data_phase           # true during reportdata
 
-  def init(message_handler, session, data)
+  def init(message_handler, session, data, sub)
     self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
     self.data = data
     self.ready = true                # send immediately
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT
+    #
+    self.sub = sub
+    self.report_data_phase = true
+  end
+
+  # we received an ACK error, remove subscription
+  def ack_error(msg)
+    self.sub.remove_self()
+  end
+
+  # ack received for previous message, proceed to next (if any)
+  # return true if we manage the ack ourselves, false if it needs to be done upper
+  def ack_received(msg)
+    if self.report_data_phase
+      return super(self).ack_received(msg)
+    else
+      super(self).ack_received(nil)
+      return false                            # let the caller to the ack
+    end
+  end
+
+  # returns true if transaction is complete (remove object from queue)
+  # default responder for data
+  def send(responder)
+    if size(self.data.attribute_reports) > 0
+      if self.report_data_phase
+        var ret = super(self).send(responder)
+        if !ret   return false end              # ReportData needs to continue
+        # ReportData is finished
+        self.report_data_phase = false
+        return false
+      else
+        # send a simple ACK
+        var resp = self.resp.build_standalone_ack()
+        resp.encode()
+        resp.encrypt()
+        responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
+        return true                             # we received a ack(), just finish
+      end
+
+    else
+      # simple heartbeat ReportData
+      super(self).send(responder)
+      return true                               # don't expect any response
+    end
   end
 end
 matter.IM_ReportDataSubscribed = Matter_IM_ReportDataSubscribed
