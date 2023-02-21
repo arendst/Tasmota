@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ADC Range oversample from 2 to 32 (#17975)
+- ESP32 Framework (Core) from v2.0.6 to v2.0.7
 
 ### Fixed
 - SEN5X floats and units (#17961)
