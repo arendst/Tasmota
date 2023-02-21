@@ -596,6 +596,7 @@ class Matter_Session_Store
 
       for v:j           # iterate on values
         var session = matter.Session.fromjson(self, v)
+        session._persist = true
         if session != nil
           self.add_session(session)
         end
