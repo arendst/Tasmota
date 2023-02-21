@@ -56,7 +56,7 @@ class Matter_Plugin_Root : Matter_Plugin
   #############################################################
   # read an attribute
   #
-  def read_attribute(msg, ctx)
+  def read_attribute(session, ctx)
     import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
@@ -65,7 +65,7 @@ class Matter_Plugin_Root : Matter_Plugin
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
-        return TLV.create_TLV(TLV.U8, msg.session.__breadcrumb)
+        return TLV.create_TLV(TLV.U8, session.__breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
         bci.add_TLV(0, TLV.U2, 60)      # FailSafeExpiryLengthSeconds
@@ -153,22 +153,22 @@ class Matter_Plugin_Root : Matter_Plugin
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
-        for session: self.device.sessions.sessions_active()
+        for loc_session: self.device.sessions.sessions_active()
           var nocs = nocl.add_struct(nil)
-          nocs.add_TLV(1, TLV.B2, session.noc)      # NOC
-          nocs.add_TLV(2, TLV.B2, session.icac)     # ICAC
+          nocs.add_TLV(1, TLV.B2, loc_session.noc)      # NOC
+          nocs.add_TLV(2, TLV.B2, loc_session.icac)     # ICAC
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
         var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
-        for session: self.device.sessions.sessions_active()
-          var root_ca_tlv = TLV.parse(session.get_ca())
+        for loc_session: self.device.sessions.sessions_active()
+          var root_ca_tlv = TLV.parse(loc_session.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
-          fab.add_TLV(2, TLV.U2, session.admin_vendor)      # VendorID
-          fab.add_TLV(3, TLV.U8, session.fabric)            # FabricID
-          fab.add_TLV(4, TLV.U8, session.deviceid)          # NodeID
-          fab.add_TLV(5, TLV.UTF1, session.fabric_label)    # Label
+          fab.add_TLV(2, TLV.U2, loc_session.admin_vendor)      # VendorID
+          fab.add_TLV(3, TLV.U8, loc_session.fabric)            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_session.deviceid)          # NodeID
+          fab.add_TLV(5, TLV.UTF1, loc_session.fabric_label)    # Label
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
@@ -180,7 +180,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
         var sessions_active = self.device.sessions.sessions_active()
-        var fabric_index = sessions_active.find(msg.session)
+        var fabric_index = sessions_active.find(session)
         if fabric_index == nil    fabric_index = 0 end
         return TLV.create_TLV(TLV.U1, fabric_index)  # number of active sessions
       end
@@ -307,12 +307,11 @@ class Matter_Plugin_Root : Matter_Plugin
   #
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     import crypto
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
-    var session = msg.session
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   command == 0x0000            # ---------- ArmFailSafe ----------
@@ -516,7 +515,7 @@ class Matter_Plugin_Root : Matter_Plugin
   #############################################################
   # write an attribute
   #
-  def write_attribute(msg, ctx, write_data)
+  def write_attribute(session, ctx, write_data)
     import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
@@ -534,7 +533,8 @@ class Matter_Plugin_Root : Matter_Plugin
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
         if type(write_data) == 'int' || isinstance(write_data, int64)
-          msg.session.__breadcrumb = write_data
+          session.__breadcrumb = write_data
+          self.attribute_updated(ctx.endpoint, ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR

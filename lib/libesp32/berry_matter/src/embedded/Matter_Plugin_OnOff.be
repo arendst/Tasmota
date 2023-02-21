@@ -49,7 +49,7 @@ class Matter_Plugin_OnOff : Matter_Plugin
   #############################################################
   # read an attribute
   #
-  def read_attribute(msg, ctx)
+  def read_attribute(session, ctx)
     import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
@@ -105,11 +105,10 @@ class Matter_Plugin_OnOff : Matter_Plugin
   #
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
-    var session = msg.session
 
     # ====================================================================================================
     if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
@@ -140,17 +139,27 @@ class Matter_Plugin_OnOff : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   command == 0x0000            # ---------- Off ----------
+        if self.onoff   self.onoff_changed(ctx) end
         self.onoff = false
         return true
       elif command == 0x0001            # ---------- On ----------
+        if !self.onoff   self.onoff_changed(ctx) end
         self.onoff = true
         return true
       elif command == 0x0002            # ---------- Toggle ----------
+        self.onoff_changed(ctx)
         self.onoff = !self.onoff
         return true
       end
     end
   end
+
+  #############################################################
+  # Signal that onoff attribute changed
+  def onoff_changed(ctx)
+    self.attribute_updated(ctx.endpoint, 0x0006, 0x0000)
+  end
+
 end
 matter.Plugin_OnOff = Matter_Plugin_OnOff
   

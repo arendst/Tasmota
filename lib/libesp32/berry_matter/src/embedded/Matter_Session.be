@@ -49,8 +49,9 @@ class Matter_Session
   var counter_snd                 # counter for outgoing messages
   var __exchange_id               # exchange id for locally initiated transaction, non-persistent
   # keep track of last known IP/Port of the fabric
-  var __ip
-  var __port
+  var __ip                        # IP of the last received packet
+  var __port                      # port of the last received packet
+  var __message_handler           # pointer to the message handler for this session
   # non-session counters
   var _counter_insecure_rcv       # counter for incoming messages
   var _counter_insecure_snd       # counter for outgoing messages

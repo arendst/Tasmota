@@ -52,7 +52,7 @@ class Matter_Frame
   var x_flag_a
   var x_flag_i
   var opcode
-  var exchange_id
+  var exchange_id                 # exchange_id is 16 bits unsigned, we set bit 16 if it's an id generated locally
   var protocol_id
   var vendor_id                   # (opt)
   var ack_message_counter         # (opt)
@@ -140,6 +140,7 @@ class Matter_Frame
 
     self.opcode = raw.get(idx+1, 1)
     self.exchange_id = raw.get(idx+2, 2)
+    if !self.x_flag_i    self.exchange_id |= 0x10000  end      # special encoding for local exchange_id
     self.protocol_id = raw.get(idx+4, 2)
     idx += 6
 
@@ -210,7 +211,7 @@ class Matter_Frame
     raw.add(self.x_flags, 1)
     # opcode (mandatory)
     raw.add(self.opcode, 1)
-    raw.add(self.exchange_id, 2)
+    raw.add(self.exchange_id & 0xFFFF, 2)
     raw.add(self.protocol_id, 2)
     if self.x_flag_a    raw.add(self.ack_message_counter, 4) end
     # finally payload
@@ -246,7 +247,7 @@ class Matter_Frame
     resp.message_counter = self.session.counter_snd.next()
     resp.local_session_id = self.session.initiator_session_id
       
-    resp.x_flag_i = 0           # not sent by initiator
+    resp.x_flag_i = (self.x_flag_i ? 0 : 1)     # invert the initiator flag
     resp.opcode = 0x10          # MRP Standalone Acknowledgement
     resp.exchange_id = self.exchange_id
     resp.protocol_id = 0                # PROTOCOL_ID_SECURE_CHANNEL
@@ -290,7 +291,7 @@ class Matter_Frame
       resp.local_session_id = 0
     end
       
-    resp.x_flag_i = 0           # not sent by initiator
+    resp.x_flag_i = (self.x_flag_i ? 0 : 1)     # invert the initiator flag
     resp.opcode = opcode
     resp.exchange_id = self.exchange_id
     resp.protocol_id = self.protocol_id
@@ -333,11 +334,11 @@ class Matter_Frame
       resp.local_session_id = 0
     end
       
-    resp.x_flag_i = 1                           # we are the initiator
+    resp.x_flag_i = 1                                     # we are the initiator
     resp.opcode = opcode
-    session.__exchange_id += 1                  # move to next exchange_id
-    resp.exchange_id = session.__exchange_id
-    resp.protocol_id = 0x0001                   # PROTOCOL_ID_INTERACTION_MODEL
+    session.__exchange_id += 1                            # move to next exchange_id
+    resp.exchange_id = session.__exchange_id | 0x10000    # special encoding for local exchange_id
+    resp.protocol_id = 0x0001                             # PROTOCOL_ID_INTERACTION_MODEL
     resp.x_flag_r = reliable ? 1 : 0
 
     return resp

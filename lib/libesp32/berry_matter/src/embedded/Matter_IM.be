@@ -111,34 +111,52 @@ class Matter_IM
     return nil
   end
 
+  #############################################################
+  # find in send_queue by exchangeid
+  #
+  def remove_sendqueue_by_exchangeid(exchangeid)
+    if exchangeid == nil    return end
+    var idx = 0
+    while idx < size(self.send_queue)
+      if self.send_queue[idx].get_exchangeid() == exchangeid
+        self.send_queue.remove(idx)
+      else
+        idx += 1
+      end
+    end
+  end
 
   #############################################################
   # process IM 0x01 Status Response
   #
   # val is the TLV structure
   # or raises an exception
+  # return true if we handled the response and ack, false instead
   def process_status_response(msg, val)
     import string
     var status = val.findsubval(0, 0xFF)
+    var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
     if status == matter.SUCCESS
-      tasmota.log("MTR: >Status", 2)      # don't show 'SUCCESS' to not overflow logs with non-information
-      var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
+      tasmota.log("MTR: >Status_OK", 2)      # don't show 'SUCCESS' to not overflow logs with non-information
       if message
-        message.ack_received(msg)      # re-arm the sending of next packets for the same exchange
-        return true
+        return message.ack_received(msg)         # re-arm the sending of next packets for the same exchange
       end
     else
+      # error
       tasmota.log(string.format("MTR: >Status    ERROR = 0x%02X", status), 2)
+      if message
+        message.ack_error(msg)
+        self.remove_sendqueue_by_exchangeid(msg.exchange_id)
+      end
     end
-    return false
+    return false      # we did not ack the message, do it at higher level
   end
 
   #############################################################
   # Inner code shared between read_attributes and subscribe_request
   #
   # query: `ReadRequestMessage` or `SubscribeRequestMessage`
-  def _inner_process_read_request(msg, query)
-    var endpoints = self.device.get_active_endpoints()
+  def _inner_process_read_request(session, query)
 
     ### Inner function to be iterated upon
     # ret is the ReportDataMessage list to send back
@@ -154,7 +172,7 @@ class Matter_IM
       attr_name = attr_name ? " (" + attr_name + ")" : ""
       # tasmota.log(string.format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
       # Special case to report unsupported item, if pi==nil
-      var res = (pi != nil) ? pi.read_attribute(msg, ctx) : nil
+      var res = (pi != nil) ? pi.read_attribute(session, ctx) : nil
       if res != nil
         var a1 = matter.AttributeReportIB()
         a1.attribute_data = matter.AttributeDataIB()
@@ -190,6 +208,7 @@ class Matter_IM
       end
     end
 
+    var endpoints = self.device.get_active_endpoints()
     # structure is `ReadRequestMessage` 10.6.2 p.558
     var ctx = matter.Path()
 
@@ -238,7 +257,7 @@ class Matter_IM
   def process_read_request(msg, val)
     var query = matter.ReadRequestMessage().from_TLV(val)
     if query.attributes_requests != nil
-      var ret = self._inner_process_read_request(msg, query)
+      var ret = self._inner_process_read_request(msg.session, query)
       self.send_report_data(msg, ret)
     end
 
@@ -258,7 +277,8 @@ class Matter_IM
 
     tasmota.log("MTR: received SubscribeRequestMessage=" + str(query), 3)
     var sub = self.subs.new_subscription(msg.session, query)
-    var ret = self._inner_process_read_request(msg, query)
+    tasmota.log("MTR: >Subscribe sub_id=" + str(sub.subscription_id), 2)
+    var ret = self._inner_process_read_request(msg.session, query)
     # ret is of type `Matter_ReportDataMessage`
     ret.subscription_id = sub.subscription_id     # enrich with subscription id TODO
     self.send_subscribe_response(msg, ret, sub)
@@ -292,7 +312,7 @@ class Matter_IM
 
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
         tasmota.log(string.format("MTR: >Received  %s %s from [%s]:%i", str(ctx), cmd_name ? cmd_name : "", msg.remote_ip, msg.remote_port), 2)
-        var res = self.device.invoke_request(msg, q.command_fields, ctx)
+        var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         var a1 = matter.InvokeResponseIB()
         if res == true      # special case, just respond ok
           a1.status = matter.CommandStatusIB()
@@ -391,7 +411,7 @@ class Matter_IM
       # tasmota.log(string.format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
       # Special case to report unsupported item, if pi==nil
       ctx.status = matter.UNSUPPORTED_WRITE
-      var res = (pi != nil) ? pi.write_attribute(msg, ctx, write_data) : nil
+      var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
       if res    ctx.status = matter.SUCCESS   end     # if the cb returns true, the request was processed
       if ctx.status != nil
         if direct
@@ -507,14 +527,26 @@ class Matter_IM
     import string
     var session = sub.session
 
-    var ret = matter.ReportDataMessage()
+    # create a fake read request to feed to the ReportData
+    var fake_read = matter.ReadRequestMessage()
+    fake_read.fabric_filtered = false
+    fake_read.attributes_requests = []
+
+    for ctx: sub.updates
+      var p1 = matter.AttributePathIB()
+      p1.endpoint = ctx.endpoint
+      p1.cluster = ctx.cluster
+      p1.attribute = ctx.attribute
+      fake_read.attributes_requests.push(p1)
+    end
+
+    tasmota.log("MTR: <Sub_ack   sub_id=" + str(sub.subscription_id), 2)
+    var ret = self._inner_process_read_request(session, fake_read)
+    ret.suppress_response = (size(fake_read.attributes_requests) == 0)        # ret is of class `ReportDataMessage`
     ret.subscription_id = sub.subscription_id
-    ret.attribute_reports = []
-    ret.suppress_response = true                # true for empy report, as per 8.6.2 p.425    
 
-    self.send_queue.push(matter.IM_ReportDataSubscribed(self.device.message_handler, session, ret))
-
-    self.send_enqueued(self.device.message_handler)
+    self.send_queue.push(matter.IM_ReportDataSubscribed(session.__message_handler, session, ret, sub))
+    self.send_enqueued(session.__message_handler)
   end
   
   #############################################################
@@ -555,8 +587,14 @@ class Matter_IM
   #############################################################
   # placeholder, nothing to run for now
   def every_second()
-    self.subs.every_second()
   end
+
+  #############################################################
+  # dispatch every 250ms click to sub-objects that need it
+  def every_250ms()
+    self.subs.every_250ms()
+  end
+
 end
 matter.IM = Matter_IM
 
