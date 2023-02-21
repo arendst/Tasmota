@@ -465,7 +465,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
+    tasmota.log("MTR: sending decode: " + matter.inspect(r), 3)
   end
 end
 matter.Frame = Matter_Frame

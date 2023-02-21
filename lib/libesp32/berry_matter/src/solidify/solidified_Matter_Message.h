@@ -227,7 +227,7 @@ be_local_closure(Matter_Frame_debug,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
+    ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
     /* K1   */  be_nested_str_weak(Frame),
     /* K2   */  be_nested_str_weak(message_handler),
@@ -237,6 +237,7 @@ be_local_closure(Matter_Frame_debug,   /* name */
     /* K6   */  be_nested_str_weak(log),
     /* K7   */  be_nested_str_weak(MTR_X3A_X20sending_X20decode_X3A_X20),
     /* K8   */  be_nested_str_weak(inspect),
+    /* K9   */  be_const_int(3),
     }),
     be_str_weak(debug),
     &be_const_str_solidified,
@@ -257,7 +258,7 @@ be_local_closure(Matter_Frame_debug,   /* name */
       0x5C1C0400,  //  000D  MOVE	R7	R2
       0x7C140400,  //  000E  CALL	R5	2
       0x00160E05,  //  000F  ADD	R5	K7	R5
-      0x541A0003,  //  0010  LDINT	R6	4
+      0x58180009,  //  0010  LDCONST	R6	K9
       0x7C0C0600,  //  0011  CALL	R3	3
       0x80000000,  //  0012  RET	0
     })

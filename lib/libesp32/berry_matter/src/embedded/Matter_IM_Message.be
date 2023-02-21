@@ -77,6 +77,12 @@ class Matter_IM_Message
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
+    return false
+  end
+
+  # Status Report OK received for previous message, proceed to next (if any)
+  # return true if we manage the ack ourselves, false if it needs to be done upper
+  def status_ok_received(msg)
     if msg
       self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
     end
@@ -85,7 +91,7 @@ class Matter_IM_Message
   end
 
   # we received an ACK error, do any necessary cleaning
-  def ack_error(msg)
+  def status_error_received(msg)
   end
 
   # get the exchange-id for this message
@@ -196,7 +202,7 @@ class Matter_IM_ReportData : Matter_IM_Message
       end
     end
 
-    tasmota.log(string.format("MTR: elements=%i msg_sz=%i total=%i", elements, msg_sz, size(ret.attribute_reports)), 3)
+    tasmota.log(string.format("MTR: elements=%i msg_sz=%i total=%i", elements, msg_sz, size(ret.attribute_reports)), 4)
     var next_elemnts = ret.attribute_reports[elements .. ]
     ret.attribute_reports = ret.attribute_reports[0 .. elements - 1]
     ret.more_chunked_messages = (size(next_elemnts) > 0)
@@ -248,18 +254,28 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
     self.report_data_phase = true
   end
 
+  # ack received, confirm the heartbeat
+  def ack_received(msg)
+    if !self.report_data_phase
+      # if ack is received while all data is sent, means that it finished without error
+      return true                       # proceed to calling send()
+    else
+      return false                      # do nothing
+    end
+  end
+
   # we received an ACK error, remove subscription
-  def ack_error(msg)
+  def status_error_received(msg)
     self.sub.remove_self()
   end
 
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
-  def ack_received(msg)
+  def status_ok_received(msg)
     if self.report_data_phase
-      return super(self).ack_received(msg)
+      return super(self).status_ok_received(msg)
     else
-      super(self).ack_received(nil)
+      super(self).status_ok_received(nil)
       return false                            # let the caller to the ack
     end
   end
@@ -285,8 +301,13 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
 
     else
       # simple heartbeat ReportData
-      super(self).send(responder)
-      return true                               # don't expect any response
+      if self.report_data_phase
+        super(self).send(responder)
+        self.report_data_phase = false
+        return false                             # don't expect any response
+      else
+        return true                              # we're done, remove message
+      end
     end
   end
 end

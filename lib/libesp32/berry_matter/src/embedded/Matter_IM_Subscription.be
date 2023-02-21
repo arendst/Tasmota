@@ -81,6 +81,7 @@ class Matter_IM_Subscription
   
   # remove self from subs list
   def remove_self()
+    tasmota.log("MTR: Remove_Sub sub_id=" + str(self.subscription_id))
     self.subs.remove_sub(self)
   end
 

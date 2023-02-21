@@ -148,9 +148,9 @@ void be_load_Matter_Path_class(bvm *vm) {
 extern const bclass be_class_Matter_IM_Message;
 
 /********************************************************************
-** Solidified function: ack_received
+** Solidified function: status_ok_received
 ********************************************************************/
-be_local_closure(Matter_IM_Message_ack_received,   /* name */
+be_local_closure(Matter_IM_Message_status_ok_received,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -167,7 +167,7 @@ be_local_closure(Matter_IM_Message_ack_received,   /* name */
     /* K3   */  be_nested_str_weak(x_flag_r),
     /* K4   */  be_nested_str_weak(ready),
     }),
-    be_str_weak(ack_received),
+    be_str_weak(status_ok_received),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x78060007,  //  0000  JMPF	R1	#0009
@@ -183,65 +183,6 @@ be_local_closure(Matter_IM_Message_ack_received,   /* name */
       0x90020802,  //  000A  SETMBR	R0	K4	R2
       0x50080200,  //  000B  LDBOOL	R2	1	0
       0x80040400,  //  000C  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: ack_error
-********************************************************************/
-be_local_closure(Matter_IM_Message_ack_error,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(ack_error),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Matter_IM_Message_init,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(resp),
-    /* K1   */  be_nested_str_weak(build_response),
-    /* K2   */  be_nested_str_weak(ready),
-    }),
-    be_str_weak(init),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x8C100301,  //  0000  GETMET	R4	R1	K1
-      0x5C180400,  //  0001  MOVE	R6	R2
-      0x5C1C0600,  //  0002  MOVE	R7	R3
-      0x7C100600,  //  0003  CALL	R4	3
-      0x90020004,  //  0004  SETMBR	R0	K0	R4
-      0x50100200,  //  0005  LDBOOL	R4	1	0
-      0x90020404,  //  0006  SETMBR	R0	K2	R4
-      0x80000000,  //  0007  RET	0
     })
   )
 );
@@ -330,21 +271,106 @@ be_local_closure(Matter_IM_Message_send,   /* name */
 
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Matter_IM_Message_init,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(resp),
+    /* K1   */  be_nested_str_weak(build_response),
+    /* K2   */  be_nested_str_weak(ready),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x8C100301,  //  0000  GETMET	R4	R1	K1
+      0x5C180400,  //  0001  MOVE	R6	R2
+      0x5C1C0600,  //  0002  MOVE	R7	R3
+      0x7C100600,  //  0003  CALL	R4	3
+      0x90020004,  //  0004  SETMBR	R0	K0	R4
+      0x50100200,  //  0005  LDBOOL	R4	1	0
+      0x90020404,  //  0006  SETMBR	R0	K2	R4
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: status_error_received
+********************************************************************/
+be_local_closure(Matter_IM_Message_status_error_received,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(status_error_received),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: ack_received
+********************************************************************/
+be_local_closure(Matter_IM_Message_ack_received,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(ack_received),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x50080000,  //  0000  LDBOOL	R2	0	0
+      0x80040400,  //  0001  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_IM_Message
 ********************************************************************/
 be_local_class(Matter_IM_Message,
     3,
     NULL,
-    be_nested_map(8,
+    be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ack_received, 2), be_const_closure(Matter_IM_Message_ack_received_closure) },
-        { be_const_key_weak(send, -1), be_const_closure(Matter_IM_Message_send_closure) },
-        { be_const_key_weak(get_exchangeid, -1), be_const_closure(Matter_IM_Message_get_exchangeid_closure) },
-        { be_const_key_weak(resp, 6), be_const_var(0) },
-        { be_const_key_weak(ready, -1), be_const_var(1) },
         { be_const_key_weak(data, -1), be_const_var(2) },
+        { be_const_key_weak(get_exchangeid, -1), be_const_closure(Matter_IM_Message_get_exchangeid_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_IM_Message_init_closure) },
-        { be_const_key_weak(ack_error, 1), be_const_closure(Matter_IM_Message_ack_error_closure) },
+        { be_const_key_weak(resp, -1), be_const_var(0) },
+        { be_const_key_weak(send, 0), be_const_closure(Matter_IM_Message_send_closure) },
+        { be_const_key_weak(ready, 2), be_const_var(1) },
+        { be_const_key_weak(status_ok_received, 5), be_const_closure(Matter_IM_Message_status_ok_received_closure) },
+        { be_const_key_weak(status_error_received, -1), be_const_closure(Matter_IM_Message_status_error_received_closure) },
+        { be_const_key_weak(ack_received, -1), be_const_closure(Matter_IM_Message_ack_received_closure) },
     })),
     be_str_weak(Matter_IM_Message)
 );
@@ -580,10 +606,10 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
     /* K11  */  be_nested_str_weak(log),
     /* K12  */  be_nested_str_weak(format),
     /* K13  */  be_nested_str_weak(MTR_X3A_X20elements_X3D_X25i_X20msg_sz_X3D_X25i_X20total_X3D_X25i),
-    /* K14  */  be_const_int(3),
-    /* K15  */  be_const_int(2147483647),
-    /* K16  */  be_nested_str_weak(MTR_X3A_X20Read_Attr_X20_X20next_chunk_X20exch_X3D_X25i),
-    /* K17  */  be_nested_str_weak(get_exchangeid),
+    /* K14  */  be_const_int(2147483647),
+    /* K15  */  be_nested_str_weak(MTR_X3A_X20Read_Attr_X20_X20next_chunk_X20exch_X3D_X25i),
+    /* K16  */  be_nested_str_weak(get_exchangeid),
+    /* K17  */  be_const_int(3),
     /* K18  */  be_nested_str_weak(MTR_X3A_X20Read_Attr_X20_X20first_chunk_X20exch_X3D_X25i),
     /* K19  */  be_nested_str_weak(MTR_X3A_X20sending_X20TLV),
     /* K20  */  be_nested_str_weak(encode),
@@ -653,9 +679,9 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
       0x88400905,  //  0031  GETMBR	R16	R4	K5
       0x7C3C0200,  //  0032  CALL	R15	1
       0x7C280A00,  //  0033  CALL	R10	5
-      0x582C000E,  //  0034  LDCONST	R11	K14
+      0x542E0003,  //  0034  LDINT	R11	4
       0x7C200600,  //  0035  CALL	R8	3
-      0x40200F0F,  //  0036  CONNECT	R8	R7	K15
+      0x40200F0E,  //  0036  CONNECT	R8	R7	K14
       0x88240905,  //  0037  GETMBR	R9	R4	K5
       0x94201208,  //  0038  GETIDX	R8	R9	R8
       0x04280F08,  //  0039  SUB	R10	R7	K8
@@ -672,11 +698,11 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
       0xB82A1400,  //  0044  GETNGBL	R10	K10
       0x8C28150B,  //  0045  GETMET	R10	R10	K11
       0x8C30050C,  //  0046  GETMET	R12	R2	K12
-      0x58380010,  //  0047  LDCONST	R14	K16
-      0x8C3C0111,  //  0048  GETMET	R15	R0	K17
+      0x5838000F,  //  0047  LDCONST	R14	K15
+      0x8C3C0110,  //  0048  GETMET	R15	R0	K16
       0x7C3C0200,  //  0049  CALL	R15	1
       0x7C300600,  //  004A  CALL	R12	3
-      0x5834000E,  //  004B  LDCONST	R13	K14
+      0x58340011,  //  004B  LDCONST	R13	K17
       0x7C280600,  //  004C  CALL	R10	3
       0x88240903,  //  004D  GETMBR	R9	R4	K3
       0x78260012,  //  004E  JMPF	R9	#0062
@@ -686,10 +712,10 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
       0x8C24130B,  //  0052  GETMET	R9	R9	K11
       0x8C2C050C,  //  0053  GETMET	R11	R2	K12
       0x58340012,  //  0054  LDCONST	R13	K18
-      0x8C380111,  //  0055  GETMET	R14	R0	K17
+      0x8C380110,  //  0055  GETMET	R14	R0	K16
       0x7C380200,  //  0056  CALL	R14	1
       0x7C2C0600,  //  0057  CALL	R11	3
-      0x5830000E,  //  0058  LDCONST	R12	K14
+      0x58300011,  //  0058  LDCONST	R12	K17
       0x7C240600,  //  0059  CALL	R9	3
       0xB8261400,  //  005A  GETNGBL	R9	K10
       0x8C24130B,  //  005B  GETMET	R9	R9	K11
@@ -697,7 +723,7 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
       0x5C300800,  //  005D  MOVE	R12	R4
       0x7C2C0200,  //  005E  CALL	R11	1
       0x002E260B,  //  005F  ADD	R11	K19	R11
-      0x5830000E,  //  0060  LDCONST	R12	K14
+      0x58300011,  //  0060  LDCONST	R12	K17
       0x7C240600,  //  0061  CALL	R9	3
       0x8C240714,  //  0062  GETMET	R9	R3	K20
       0x882C0102,  //  0063  GETMBR	R11	R0	K2
@@ -726,7 +752,7 @@ be_local_closure(Matter_IM_ReportData_send,   /* name */
       0x5C300800,  //  007A  MOVE	R12	R4
       0x7C2C0200,  //  007B  CALL	R11	1
       0x002E360B,  //  007C  ADD	R11	K27	R11
-      0x5830000E,  //  007D  LDCONST	R12	K14
+      0x58300011,  //  007D  LDCONST	R12	K17
       0x7C240600,  //  007E  CALL	R9	3
       0xB8261400,  //  007F  GETNGBL	R9	K10
       0x8C24131D,  //  0080  GETMET	R9	R9	K29
@@ -823,36 +849,6 @@ void be_load_Matter_IM_ReportData_class(bvm *vm) {
 extern const bclass be_class_Matter_IM_ReportDataSubscribed;
 
 /********************************************************************
-** Solidified function: ack_error
-********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_ack_error,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(sub),
-    /* K1   */  be_nested_str_weak(remove_self),
-    }),
-    be_str_weak(ack_error),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x80000000,  //  0003  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: send
 ********************************************************************/
 be_local_closure(Matter_IM_ReportDataSubscribed_send,   /* name */
@@ -883,7 +879,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_send,   /* name */
     }),
     be_str_weak(send),
     &be_const_str_solidified,
-    ( &(const binstruction[48]) {  /* code */
+    ( &(const binstruction[55]) {  /* code */
       0x6008000C,  //  0000  GETGBL	R2	G12
       0x880C0100,  //  0001  GETMBR	R3	R0	K0
       0x880C0701,  //  0002  GETMBR	R3	R3	K1
@@ -922,16 +918,53 @@ be_local_closure(Matter_IM_ReportDataSubscribed_send,   /* name */
       0x7C0C0A00,  //  0023  CALL	R3	5
       0x500C0200,  //  0024  LDBOOL	R3	1	0
       0x80040600,  //  0025  RET	1	R3
-      0x70020007,  //  0026  JMP		#002F
-      0x60080003,  //  0027  GETGBL	R2	G3
-      0x5C0C0000,  //  0028  MOVE	R3	R0
-      0x7C080200,  //  0029  CALL	R2	1
-      0x8C080504,  //  002A  GETMET	R2	R2	K4
-      0x5C100200,  //  002B  MOVE	R4	R1
-      0x7C080400,  //  002C  CALL	R2	2
-      0x50080200,  //  002D  LDBOOL	R2	1	0
-      0x80040400,  //  002E  RET	1	R2
-      0x80000000,  //  002F  RET	0
+      0x7002000E,  //  0026  JMP		#0036
+      0x88080103,  //  0027  GETMBR	R2	R0	K3
+      0x780A000A,  //  0028  JMPF	R2	#0034
+      0x60080003,  //  0029  GETGBL	R2	G3
+      0x5C0C0000,  //  002A  MOVE	R3	R0
+      0x7C080200,  //  002B  CALL	R2	1
+      0x8C080504,  //  002C  GETMET	R2	R2	K4
+      0x5C100200,  //  002D  MOVE	R4	R1
+      0x7C080400,  //  002E  CALL	R2	2
+      0x50080000,  //  002F  LDBOOL	R2	0	0
+      0x90020602,  //  0030  SETMBR	R0	K3	R2
+      0x50080000,  //  0031  LDBOOL	R2	0	0
+      0x80040400,  //  0032  RET	1	R2
+      0x70020001,  //  0033  JMP		#0036
+      0x50080200,  //  0034  LDBOOL	R2	1	0
+      0x80040400,  //  0035  RET	1	R2
+      0x80000000,  //  0036  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: status_error_received
+********************************************************************/
+be_local_closure(Matter_IM_ReportDataSubscribed_status_error_received,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(sub),
+    /* K1   */  be_nested_str_weak(remove_self),
+    }),
+    be_str_weak(status_error_received),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x80000000,  //  0003  RET	0
     })
   )
 );
@@ -943,6 +976,39 @@ be_local_closure(Matter_IM_ReportDataSubscribed_send,   /* name */
 ********************************************************************/
 be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
   be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(report_data_phase),
+    }),
+    be_str_weak(ack_received),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x740A0002,  //  0001  JMPT	R2	#0005
+      0x50080200,  //  0002  LDBOOL	R2	1	0
+      0x80040400,  //  0003  RET	1	R2
+      0x70020001,  //  0004  JMP		#0007
+      0x50080000,  //  0005  LDBOOL	R2	0	0
+      0x80040400,  //  0006  RET	1	R2
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: status_ok_received
+********************************************************************/
+be_local_closure(Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
+  be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
@@ -953,9 +1019,9 @@ be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(report_data_phase),
-    /* K1   */  be_nested_str_weak(ack_received),
+    /* K1   */  be_nested_str_weak(status_ok_received),
     }),
-    be_str_weak(ack_received),
+    be_str_weak(status_ok_received),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -1048,14 +1114,15 @@ extern const bclass be_class_Matter_IM_ReportData;
 be_local_class(Matter_IM_ReportDataSubscribed,
     2,
     &be_class_Matter_IM_ReportData,
-    be_nested_map(6,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(sub, 5), be_const_var(0) },
-        { be_const_key_weak(ack_error, 0), be_const_closure(Matter_IM_ReportDataSubscribed_ack_error_closure) },
+        { be_const_key_weak(init, 1), be_const_closure(Matter_IM_ReportDataSubscribed_init_closure) },
+        { be_const_key_weak(status_ok_received, -1), be_const_closure(Matter_IM_ReportDataSubscribed_status_ok_received_closure) },
+        { be_const_key_weak(send, 4), be_const_closure(Matter_IM_ReportDataSubscribed_send_closure) },
         { be_const_key_weak(ack_received, -1), be_const_closure(Matter_IM_ReportDataSubscribed_ack_received_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_ReportDataSubscribed_init_closure) },
+        { be_const_key_weak(sub, 6), be_const_var(0) },
+        { be_const_key_weak(status_error_received, 0), be_const_closure(Matter_IM_ReportDataSubscribed_status_error_received_closure) },
         { be_const_key_weak(report_data_phase, -1), be_const_var(1) },
-        { be_const_key_weak(send, -1), be_const_closure(Matter_IM_ReportDataSubscribed_send_closure) },
     })),
     be_str_weak(Matter_IM_ReportDataSubscribed)
 );

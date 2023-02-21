@@ -74,6 +74,20 @@ class Matter_IM
   end
 
   #############################################################
+  # check whether the ack received is of interest to any
+  # current exchange
+  #
+  # return `true` if handled
+  def process_incoming_ack(msg)
+    # check if there is an exchange_id interested in receiving this
+    var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
+    if message
+      return message.ack_received(msg)                # dispatch to IM_Message
+    end
+    return false
+  end
+
+  #############################################################
   # send enqueued responses
   #
   def send_enqueued(responder)
@@ -139,13 +153,13 @@ class Matter_IM
     if status == matter.SUCCESS
       tasmota.log("MTR: >Status_OK", 2)      # don't show 'SUCCESS' to not overflow logs with non-information
       if message
-        return message.ack_received(msg)         # re-arm the sending of next packets for the same exchange
+        return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
       end
     else
       # error
       tasmota.log(string.format("MTR: >Status    ERROR = 0x%02X", status), 2)
       if message
-        message.ack_error(msg)
+        message.status_error_received(msg)
         self.remove_sendqueue_by_exchangeid(msg.exchange_id)
       end
     end
@@ -242,7 +256,7 @@ class Matter_IM
       )
     end
 
-    tasmota.log("MTR: ReportDataMessage=" + str(ret), 4)
+    tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
     tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
 
     return ret
@@ -540,7 +554,11 @@ class Matter_IM
       fake_read.attributes_requests.push(p1)
     end
 
-    tasmota.log("MTR: <Sub_ack   sub_id=" + str(sub.subscription_id), 2)
+    if size(fake_read.attributes_requests) > 0
+      tasmota.log("MTR: <Sub_data  sub_id=" + str(sub.subscription_id), 2)
+    else
+      tasmota.log("MTR: <Sub_alive sub_id=" + str(sub.subscription_id), 2)
+    end
     var ret = self._inner_process_read_request(session, fake_read)
     ret.suppress_response = (size(fake_read.attributes_requests) == 0)        # ret is of class `ReportDataMessage`
     ret.subscription_id = sub.subscription_id

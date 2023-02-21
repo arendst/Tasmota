@@ -11,7 +11,7 @@ extern const bclass be_class_Matter_IM_Subscription;
 ********************************************************************/
 be_local_closure(Matter_IM_Subscription_remove_self,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -19,18 +19,29 @@ be_local_closure(Matter_IM_Subscription_remove_self,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(subs),
-    /* K1   */  be_nested_str_weak(remove_sub),
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(log),
+    /* K2   */  be_nested_str_weak(MTR_X3A_X20Remove_Sub_X20sub_id_X3D),
+    /* K3   */  be_nested_str_weak(subscription_id),
+    /* K4   */  be_nested_str_weak(subs),
+    /* K5   */  be_nested_str_weak(remove_sub),
     }),
     be_str_weak(remove_self),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
+    ( &(const binstruction[12]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x5C0C0000,  //  0002  MOVE	R3	R0
-      0x7C040400,  //  0003  CALL	R1	2
-      0x80000000,  //  0004  RET	0
+      0x600C0008,  //  0002  GETGBL	R3	G8
+      0x88100103,  //  0003  GETMBR	R4	R0	K3
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x000E0403,  //  0005  ADD	R3	K2	R3
+      0x7C040400,  //  0006  CALL	R1	2
+      0x88040104,  //  0007  GETMBR	R1	R0	K4
+      0x8C040305,  //  0008  GETMET	R1	R1	K5
+      0x5C0C0000,  //  0009  MOVE	R3	R0
+      0x7C040400,  //  000A  CALL	R1	2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
