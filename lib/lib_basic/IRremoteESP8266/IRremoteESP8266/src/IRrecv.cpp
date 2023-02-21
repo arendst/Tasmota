@@ -411,6 +411,10 @@ void IRrecv::pause(void) {
   params.rcvstate = kStopState;
   params.rawlen = 0;
   params.overflow = false;
+#if defined(ESP8266)
+  os_timer_disarm(&timer);
+  detachInterrupt(params.recvpin);
+#endif
 #if defined(ESP32)
   gpio_intr_disable((gpio_num_t)params.recvpin);
 #endif  // ESP32
@@ -424,6 +428,10 @@ void IRrecv::resume(void) {
   params.rcvstate = kIdleState;
   params.rawlen = 0;
   params.overflow = false;
+#if defined(ESP8266)
+  os_timer_setfn(&timer, reinterpret_cast<os_timer_func_t *>(read_timeout),NULL);
+  attachInterrupt(params.recvpin, gpio_intr, CHANGE);
+#endif
 #if defined(ESP32)
   timerAlarmDisable(timer);
   gpio_intr_enable((gpio_num_t)params.recvpin);
