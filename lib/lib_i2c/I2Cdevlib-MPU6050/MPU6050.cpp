@@ -3149,3 +3149,124 @@ uint8_t MPU6050::getDMPConfig2() {
 void MPU6050::setDMPConfig2(uint8_t config) {
     I2Cdev::writeByte(devAddr, MPU6050_RA_DMP_CFG_2, config);
 }
+
+
+
+/**
+ * calibration
+ *
+ */
+
+
+/**
+ *
+ * @param val
+ * @param I_Min
+ * @param I_Max
+ * @param O_Min
+ * @param O_Max
+ * @return
+ */
+
+float local_map(float val, float I_Min, float I_Max, float O_Min, float O_Max){
+    return(val/(I_Max-I_Min)*(O_Max-O_Min) + O_Min);
+}
+
+
+
+
+
+/**
+  @brief      Fully calibrate Gyro from ZERO in about 6-7 Loops 600-700 readings
+*/
+void MPU6050::CalibrateGyro(uint8_t Loops ) {
+    double kP = 0.3;
+    double kI = 90;
+    float x;
+    x = (100 - local_map(Loops, 1, 5, 20, 0)) * .01;
+    kP *= x;
+    kI *= x;
+
+    PID( 0x43,  kP, kI,  Loops);
+}
+
+/**
+  @brief      Fully calibrate Accel from ZERO in about 6-7 Loops 600-700 readings
+*/
+void MPU6050::CalibrateAccel(uint8_t Loops ) {
+
+    float kP = 0.3;
+    float kI = 20;
+    float x;
+    x = (100 - local_map(Loops, 1, 5, 20, 0)) * .01;
+    kP *= x;
+    kI *= x;
+    PID( 0x3B, kP, kI,  Loops);
+}
+
+
+/**
+ *
+ * @param ReadAddress
+ * @param kP
+ * @param kI
+ * @param Loops
+ */
+void MPU6050::PID(uint8_t ReadAddress, float kP,float kI, uint8_t Loops){
+    uint8_t SaveAddress = (ReadAddress == 0x3B)?((getDeviceID() < 0x38 )? 0x06:0x77):0x13;
+
+    int16_t  Data;
+    float Reading;
+    int16_t BitZero[3];
+    uint8_t shift =(SaveAddress == 0x77)?3:2;
+    float Error, PTerm, ITerm[3];
+    int16_t eSample;
+    uint32_t eSum ;
+    for (int i = 0; i < 3; i++) {
+        I2Cdev::readWord(devAddr, SaveAddress + (i * shift), (uint16_t *)&Data); // reads 1 or more 16 bit integers (Word)
+        Reading = Data;
+        if(SaveAddress != 0x13){
+            BitZero[i] = Data & 1;										 // Capture Bit Zero to properly handle Accelerometer calibration
+            ITerm[i] = ((float)Reading) * 8;
+        } else {
+            ITerm[i] = Reading * 4;
+        }
+    }
+    for (int L = 0; L < Loops; L++) {
+        eSample = 0;
+        for (int c = 0; c < 100; c++) {// 100 PI Calculations
+            eSum = 0;
+            for (int i = 0; i < 3; i++) {
+                I2Cdev::readWord(devAddr, ReadAddress + (i * 2), (uint16_t *)&Data); // reads 1 or more 16 bit integers (Word)
+                Reading = Data;
+                if ((ReadAddress == 0x3B)&&(i == 2)) Reading -= 16384;	//remove Gravity
+                Error = -Reading;
+                eSum += abs(Reading);
+                PTerm = kP * Error;
+                ITerm[i] += (Error * 0.001) * kI;				// Integral term 1000 Calculations a second = 0.001
+                if(SaveAddress != 0x13){
+                    Data = round((PTerm + ITerm[i] ) / 8);		//Compute PID Output
+                    Data = ((Data)&0xFFFE) |BitZero[i];			// Insert Bit0 Saved at beginning
+                } else Data = round((PTerm + ITerm[i] ) / 4);	//Compute PID Output
+                I2Cdev::writeWord(devAddr, SaveAddress + (i * shift),Data);
+            }
+            if((c == 99) && eSum > 1000){						// Error is still to great to continue
+                c = 0;
+            }
+            if((eSum * ((ReadAddress == 0x3B)?.05: 1)) < 5) eSample++;	// Successfully found offsets prepare to  advance
+            if((eSum < 100) && (c > 10) && (eSample >= 10)) break;		// Advance to next Loop
+//            delay(1);
+        }
+        kP *= .75;
+        kI *= .75;
+        for (int i = 0; i < 3; i++){
+            if(SaveAddress != 0x13) {
+                Data = round((ITerm[i] ) / 8);		//Compute PID Output
+                Data = ((Data)&0xFFFE) |BitZero[i];	// Insert Bit0 Saved at beginning
+            } else Data = round((ITerm[i]) / 4);
+            I2Cdev::writeWord(devAddr, SaveAddress + (i * shift), Data);
+        }
+    }
+    resetFIFO();
+    resetDMP();
+}

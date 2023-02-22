@@ -985,6 +985,9 @@ class MPU6050 {
             uint16_t dmpGetFIFOPacketSize();
         #endif
 
+    void CalibrateGyro(uint8_t Loops = 15); // Fine tune after setting offsets with less Loops.
+    void CalibrateAccel(uint8_t Loops = 15);// Fine tune after setting offsets with less Loops.
+    void PID(uint8_t ReadAddress, float kP,float kI, uint8_t Loops);  // Does the
     private:
         uint8_t devAddr;
         uint8_t buffer[14];
