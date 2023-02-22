@@ -126,10 +126,8 @@ void MPU_6050Detect(void)
 
 #ifdef USE_MPU6050_DMP
     MPU6050_dmp.devStatus = mpu6050.dmpInitialize();
-    mpu6050.setXGyroOffset(220);
-    mpu6050.setYGyroOffset(76);
-    mpu6050.setZGyroOffset(-85);
-    mpu6050.setZAccelOffset(1788);
+    mpu6050.CalibrateAccel(10);
+    mpu6050.CalibrateGyro(10);
     if (MPU6050_dmp.devStatus == 0) {
       mpu6050.setDMPEnabled(true);
       MPU6050_dmp.packetSize = mpu6050.dmpGetFIFOPacketSize();
@@ -137,6 +135,8 @@ void MPU_6050Detect(void)
     }
 #else
     mpu6050.initialize();
+    mpu6050.CalibrateAccel(10);
+    mpu6050.CalibrateGyro(10);
     MPU_6050_found = mpu6050.testConnection();
 #endif //USE_MPU6050_DMP
     Settings->flag2.axis_resolution = 2;  // Need to be services by command Sensor32
