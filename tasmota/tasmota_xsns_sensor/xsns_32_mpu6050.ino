@@ -126,6 +126,9 @@ void MPU_6050Detect(void)
 
 #ifdef USE_MPU6050_DMP
     MPU6050_dmp.devStatus = mpu6050.dmpInitialize();
+    mpu6050.setFullScaleGyroRange(MPU6050_GYRO_FS_250);
+    mpu6050.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    mpu6050.setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
     mpu6050.CalibrateAccel(10);
     mpu6050.CalibrateGyro(10);
     if (MPU6050_dmp.devStatus == 0) {
