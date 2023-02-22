@@ -525,6 +525,7 @@ void Ade7953GetData(void) {
 
   if (Energy->power_on) {                              // Powered on
 
+#ifdef USE_ESP32_SPI
     float correction = 1.0f;
     if (Ade7953.use_spi) {        // SPI
       uint32_t time = millis();
@@ -536,6 +537,7 @@ void Ade7953GetData(void) {
       }
       Ade7953.last_update = time;
     }
+#endif  // USE_ESP32_SPI
 
     float divider;
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
@@ -571,11 +573,13 @@ void Ade7953GetData(void) {
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy->apparent_power[channel] = (float)apparent_power[channel] / divider;
 
+#ifdef USE_ESP32_SPI
       if (Ade7953.use_spi) {        // SPI
         Energy->active_power[channel] /= correction;
         Energy->reactive_power[channel] /= correction;
         Energy->apparent_power[channel] /= correction;
       }
+#endif  // USE_ESP32_SPI
 
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
@@ -856,6 +860,7 @@ bool Xnrg07(uint32_t function) {
   bool result = false;
 
   switch (function) {
+#ifdef USE_ESP32_SPI
     case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer (fails on SPI)
       if (!Ade7953.use_spi) {       // No SPI
         Ade7953EnergyEverySecond();
@@ -866,6 +871,11 @@ bool Xnrg07(uint32_t function) {
         Ade7953EnergyEverySecond();
       }
       break;
+#else   // ESP8266
+    case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer
+      Ade7953EnergyEverySecond();
+      break;
+#endif  // USE_ESP32_SPI
     case FUNC_COMMAND:
       result = Ade7953Command();
       break;

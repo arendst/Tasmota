@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [12.4.0.1]
 ### Added
 - Matter read/write and commands (#18000)
+- Matter subscriptions (#18017, #18018)
+- Matter multi-fabric (#18019)
 
 ### Breaking Changed
 
