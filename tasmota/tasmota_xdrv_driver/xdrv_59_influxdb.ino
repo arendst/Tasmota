@@ -200,10 +200,10 @@ bool InfluxDbValidateConnection(void) {
   if (1 == Settings->influxdb_version) {
     url += InfluxDbAuth();
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("IFX: Validating connection to %s"), url.c_str());
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Health check to %s"), url.c_str());
 
   if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("IFX: Health check failed"));
     return false;
   }
   IFDBhttpClient->addHeader(F("Accept"), F("application/json"));
@@ -231,7 +231,7 @@ int InfluxDbPostData(const char *data) {
     url += Settings->influxdb_port;
     url += IFDB._writeUrl;
     if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Data publish failed"));
       return false;
     }
 
