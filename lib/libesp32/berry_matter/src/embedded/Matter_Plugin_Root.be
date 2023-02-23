@@ -29,7 +29,7 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = {
     0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -43,7 +43,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
     0x003F: []                        # Group Key Management Cluster 11.2 p.572
   }
-  static var TYPES = { 0x0016: 1 }       # On/Off Light
+  static var TYPES = { 0x0016: 1 }       # Root node
 
   #############################################################
   # Constructor
@@ -216,6 +216,11 @@ class Matter_Plugin_Root : Matter_Plugin
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Version'])
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
+        var cps = TLV.Matter_TLV_struct()
+        cps.add_TLV(0, TLV.U2, 3)       # CaseSessionsPerFabric = 3
+        cps.add_TLV(1, TLV.U2, 3)       # SubscriptionsPerFabric = 5
+        return cps
       end
 
     # ====================================================================================================
