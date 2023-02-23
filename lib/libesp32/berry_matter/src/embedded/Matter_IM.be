@@ -141,6 +141,23 @@ class Matter_IM
   end
 
   #############################################################
+  # Remove any queued message that expired
+  #
+  def expire_sendqueue()
+    var idx = 0
+    while idx < size(self.send_queue)
+      var message = self.send_queue[idx]
+      if tasmota.time_reached(message.expiration)
+        message.reached_timeout()
+        self.send_queue.remove(idx)
+      else
+        idx += 1
+      end
+    end
+    return nil
+  end
+
+  #############################################################
   # process IM 0x01 Status Response
   #
   # val is the TLV structure
@@ -328,7 +345,7 @@ class Matter_IM
         tasmota.log(string.format("MTR: >Received  %s %s from [%s]:%i", str(ctx), cmd_name ? cmd_name : "", msg.remote_ip, msg.remote_port), 2)
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         var a1 = matter.InvokeResponseIB()
-        if res == true      # special case, just respond ok
+        if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
           a1.status = matter.CommandStatusIB()
           a1.status.command_path = matter.CommandPathIB()
           a1.status.command_path.endpoint = ctx.endpoint
@@ -337,6 +354,7 @@ class Matter_IM
           a1.status.status = matter.StatusIB()
           a1.status.status.status = matter.SUCCESS
           ret.invoke_responses.push(a1)
+          tasmota.log("MTR: <Replied   OK", 2)
         elif res != nil
           a1.command = matter.CommandDataIB()
           a1.command.command_path = matter.CommandPathIB()
@@ -357,7 +375,9 @@ class Matter_IM
           a1.status.status = matter.StatusIB()
           a1.status.status.status = ctx.status
           ret.invoke_responses.push(a1)
+          tasmota.log(string.format("MTR: <Replied   Status=0x%02X", ctx.status), 2)
         else
+          tasmota.log("MTR: _Ignore", 2)
           # ignore if content is nil and status is undefined
         end
       end
@@ -605,6 +625,7 @@ class Matter_IM
   #############################################################
   # placeholder, nothing to run for now
   def every_second()
+    self.expire_sendqueue()
   end
 
   #############################################################

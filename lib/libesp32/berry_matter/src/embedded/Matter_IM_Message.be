@@ -64,25 +64,34 @@ matter.Path = Matter_Path
 # Superclass for all IM responses
 #################################################################################
 class Matter_IM_Message
-  var resp                          # response Frame object
-  var ready                         # bool: ready to send (true) or wait (false)
-  var data                          # TLV data of the response (if any)
+  static var MSG_TIMEOUT = 10000      # 10s
+  var expiration                      # expiration time for the reporting 
+  var resp                            # response Frame object
+  var ready                           # bool: ready to send (true) or wait (false)
+  var data                            # TLV data of the response (if any)
 
   # build a response message stub
   def init(msg, opcode, reliable)
     self.resp = msg.build_response(opcode, reliable)
     self.ready = true
+    self.expiration = tasmota.millis() + self.MSG_TIMEOUT
+  end
+
+  # the message is being removed due to expiration
+  def reached_timeout()
   end
 
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
+    self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     return false
   end
 
   # Status Report OK received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
+    self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     if msg
       self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
     end
@@ -167,14 +176,11 @@ matter.IM_WriteResponse = Matter_IM_WriteResponse
 #################################################################################
 class Matter_IM_ReportData : Matter_IM_Message
   static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
-  static var MSG_TIMEOUT = 10000      # 10s
-  var expiration                      # expiration time for the reporting 
 
   def init(msg, data)
     super(self).init(msg, 0x05 #-Report Data-#, true)
     self.data = data
     self.ready = true                # send immediately
-    self.expiration = tasmota.millis() + self.MSG_TIMEOUT
   end
 
   # return true if transaction is complete (remove object from queue)
@@ -224,7 +230,6 @@ class Matter_IM_ReportData : Matter_IM_Message
     if size(next_elemnts) > 0
       ret.attribute_reports = next_elemnts
       tasmota.log("MTR: to_be_sent_later TLV" + str(ret), 3)
-      self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
       return false          # keep alive
     else
       return true           # finished, remove
@@ -254,11 +259,17 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
     self.report_data_phase = true
   end
 
+  def reached_timeout()
+    self.sub.remove_self()
+  end
+
   # ack received, confirm the heartbeat
   def ack_received(msg)
+    super(self).ack_received(msg)
     if !self.report_data_phase
       # if ack is received while all data is sent, means that it finished without error
-      return true                       # proceed to calling send()
+      self.ready = true
+      return true                       # proceed to calling send() which removes the message
     else
       return false                      # do nothing
     end
