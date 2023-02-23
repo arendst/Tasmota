@@ -75,6 +75,9 @@
 #ifndef INFLUXDB_RP
 #define INFLUXDB_RP        ""          // [IfxRP] Influxdb v1 retention policy (blank is default, usually autogen infinite)
 #endif
+#ifndef INFLUXDB_CONNECT_TIMEOUT
+#define INFLUXDB_CONNECT_TIMEOUT 1000
+#endif
 
 static const char UninitializedMessage[] PROGMEM = "Unconfigured instance";
 // This cannot be put to PROGMEM due to the way how it is used
@@ -208,6 +211,7 @@ bool InfluxDbValidateConnection(void) {
   }
   IFDBhttpClient->addHeader(F("Accept"), F("application/json"));
 
+  IFDBhttpClient->setConnectTimeout(INFLUXDB_CONNECT_TIMEOUT);
   IFDB._lastStatusCode = IFDBhttpClient->GET();
   IFDB._lastErrorResponse = "";
   InfluxDbAfterRequest(200, false);
@@ -239,6 +243,7 @@ int InfluxDbPostData(const char *data) {
     AddLog(IFDB.log_level, PSTR("IFX: Sending\n%s"), data);
     IFDBhttpClient->addHeader(F("Content-Type"), F("text/plain"));
     InfluxDbBeforeRequest();
+    IFDBhttpClient->setConnectTimeout(INFLUXDB_CONNECT_TIMEOUT);
     IFDB._lastStatusCode = IFDBhttpClient->POST((uint8_t*)data, strlen(data));
     InfluxDbAfterRequest(204, true);
     IFDBhttpClient->end();
