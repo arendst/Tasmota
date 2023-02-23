@@ -233,7 +233,7 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
     /* K37  */  be_nested_str_weak(process_incoming),
     /* K38  */  be_nested_str_weak(MTR_X3A_X20decode_X20header_X3A_X20local_session_id_X3D_X25i_X20message_counter_X3D_X25i),
     /* K39  */  be_nested_str_weak(get_session_by_local_session_id),
-    /* K40  */  be_nested_str_weak(MTR_X3A_X20unknown_X20local_session_id_X20),
+    /* K40  */  be_nested_str_weak(MTR_X3A_X20unknown_X20local_session_id_X3D),
     /* K41  */  be_nested_str_weak(MTR_X3A_X20frame_X3D),
     /* K42  */  be_nested_str_weak(inspect),
     /* K43  */  be_nested_str_weak(MTR_X3A_X20rejected_X20duplicate_X20encrypted_X20message_X20_X3D_X20),
@@ -409,7 +409,7 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
       0x88300D08,  //  008A  GETMBR	R12	R6	K8
       0x7C2C0200,  //  008B  CALL	R11	1
       0x002E500B,  //  008C  ADD	R11	K40	R11
-      0x58300011,  //  008D  LDCONST	R12	K17
+      0x58300023,  //  008D  LDCONST	R12	K35
       0x7C240600,  //  008E  CALL	R9	3
       0xB8260200,  //  008F  GETNGBL	R9	K1
       0x8C241302,  //  0090  GETMET	R9	R9	K2

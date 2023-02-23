@@ -89,7 +89,7 @@ class Matter_MessageHandler
 
         var session = self.device.sessions.get_session_by_local_session_id(frame.local_session_id)
         if session == nil
-          tasmota.log("MTR: unknown local_session_id "+str(frame.local_session_id), 3)
+          tasmota.log("MTR: unknown local_session_id="+str(frame.local_session_id), 2)
           tasmota.log("MTR: frame="+matter.inspect(frame), 3)
           return false
         end

@@ -29,8 +29,8 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = {
     0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12],# Basic Information Cluster cluster 11.1 p.565
-    0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
     0x0030: [0,1,2,3,4],              # GeneralCommissioning cluster 11.9 p.627
@@ -43,7 +43,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
     0x003F: []                        # Group Key Management Cluster 11.2 p.572
   }
-  static var TYPES = [ 0x0016 ]       # On/Off Light
+  static var TYPES = { 0x0016: 1 }       # Root node
 
   #############################################################
   # Constructor
@@ -181,8 +181,8 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
         var sessions_active = self.device.sessions.sessions_active()
         var fabric_index = sessions_active.find(session)
-        if fabric_index == nil    fabric_index = 0 end
-        return TLV.create_TLV(TLV.U1, fabric_index)  # number of active sessions
+        if fabric_index == nil    fabric_index = -1 end
+        return TLV.create_TLV(TLV.U1, fabric_index + 1)  # number of active sessions
       end
 
     # ====================================================================================================
@@ -211,11 +211,16 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
-        return TLV.create_TLV(TLV.U2, 0)
+        return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Version'])
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
+        var cps = TLV.Matter_TLV_struct()
+        cps.add_TLV(0, TLV.U2, 3)       # CaseSessionsPerFabric = 3
+        cps.add_TLV(1, TLV.U2, 3)       # SubscriptionsPerFabric = 5
+        return cps
       end
 
     # ====================================================================================================
@@ -271,10 +276,10 @@ class Matter_Plugin_Root : Matter_Plugin
     elif   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
       if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
         var dtl = TLV.Matter_TLV_array()
-        for dt: self.TYPES
+        for dt: self.TYPES.keys()
           var d1 = dtl.add_struct()
           d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, 1)      # Revision
+          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
         end
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
@@ -507,6 +512,13 @@ class Matter_Plugin_Root : Matter_Plugin
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   command == 0x0000          #  ---------- DefaultOTAProviders  ----------
+        return true                   # OK
       end
     end
 

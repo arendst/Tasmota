@@ -27,8 +27,9 @@
 
 #ifdef FIRMWARE_SENSORS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "sensors"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "sensors"
+#endif
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -254,8 +255,9 @@
 
 #ifdef FIRMWARE_KNX_NO_EMULATION
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "knx"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "knx"
+#endif
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -280,8 +282,9 @@
 
 #ifdef FIRMWARE_DISPLAYS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "display"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "display"
+#endif
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -366,8 +369,9 @@
 
 #ifdef FIRMWARE_IR
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "ir"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "ir"
+#endif
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -501,8 +505,9 @@
 
 #ifdef FIRMWARE_ZBBRIDGE  // *******************************************************************
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "zbbridge"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "zbbridge"
+#endif
 
 #undef MODULE
 #define MODULE                 SONOFF_ZB_BRIDGE  // [Module] Select default module from tasmota_template.h
@@ -664,8 +669,9 @@
 
 #ifdef FIRMWARE_LITE
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lite"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "lite"
+#endif
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -818,8 +824,9 @@
 #ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "minimal"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "minimal"
+#endif
 
 #define FIRMWARE_MINIMAL_ONLY
 
@@ -953,8 +960,9 @@
 #ifdef FIRMWARE_MINICUSTOM
 #define FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "mini-custom"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "mini-custom"
+#endif
 
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
@@ -1092,5 +1100,13 @@
 #if defined(USE_MQTT_TLS)                        // Enable TLS if required:
   #define USE_TLS                                // flag indicates we need to include TLS code
 #endif                                           // USE_MQTT_TLS
+
+/*********************************************************************************************\
+ * Default image
+\*********************************************************************************************/
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "tasmota"
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
