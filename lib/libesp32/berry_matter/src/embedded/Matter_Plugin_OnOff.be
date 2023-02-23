@@ -31,7 +31,8 @@ class Matter_Plugin_OnOff : Matter_Plugin
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
-    0x0006: [0,0xFFFC,0xFFFD]                       # On/Off 1.5 p.48
+    0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
+    0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
   }
   static var TYPES = { 0x010A: 2 }       # On/Off Light
 
@@ -124,6 +125,20 @@ class Matter_Plugin_OnOff : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
+    # ====================================================================================================
+    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
+        return TLV.create_TLV(TLV.U1, 0x88)
+      elif attribute == 0x000F          #  ---------- Options / map8 ----------
+        return TLV.create_TLV(TLV.U1, 0)    # 0 = no Level Control for Lighting
+      elif attribute == 0x0010          #  ---------- OnLevel / u1 ----------
+        return TLV.create_TLV(TLV.U1, 1)    # 0 = no Level Control for Lighting
+      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
+        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
+        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+      end
+      
     end
     # no match found, return that the attribute is unsupported  end
   end
@@ -177,6 +192,25 @@ class Matter_Plugin_OnOff : Matter_Plugin
       elif command == 0x0002            # ---------- Toggle ----------
         self.onoff_changed(ctx)
         self.onoff = !self.onoff
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      if   command == 0x0000            # ---------- MoveToLevel ----------
+        return true
+      elif command == 0x0001            # ---------- Move ----------
+        return true
+      elif command == 0x0002            # ---------- Step ----------
+        return true
+      elif command == 0x0003            # ---------- Stop ----------
+        return true
+      elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
+        return true
+      elif command == 0x0005            # ---------- MoveWithOnOff ----------
+        return true
+      elif command == 0x0006            # ---------- StepWithOnOff ----------
+        return true
+      elif command == 0x0007            # ---------- StopWithOnOff ----------
         return true
       end
     end

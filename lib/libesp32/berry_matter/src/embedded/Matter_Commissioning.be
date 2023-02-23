@@ -103,6 +103,7 @@ class Matter_Commisioning_Context
     # record the initiator_session_id
     self.future_initiator_session_id = pbkdfparamreq.initiator_session_id
     self.future_local_session_id = self.device.sessions.gen_local_session_id()
+    tasmota.log("MTR: Loc_session=" + str(self.future_local_session_id))
 
     # prepare response
     var pbkdfparamresp = matter.PBKDFParamResponse()
@@ -297,7 +298,7 @@ class Matter_Commisioning_Context
     session._future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
     session._future_local_session_id = self.device.sessions.gen_local_session_id()
     self.future_local_session_id = session._future_local_session_id
-
+    tasmota.log("MTR: Loc_session=" + str(self.future_local_session_id))
 
     # Check that it's a resumption
     if   is_resumption && session.shared_secret != nil
