@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Undocumented support for non-sequential buttons and switches (#17967)
 - SR04 driver single pin ultrasonic sensor detection (#17966)
 - IR panasonic protocol regression from v12.0.2.4 (#18013)
+- EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 (#18024)
 
 ### Removed
 
