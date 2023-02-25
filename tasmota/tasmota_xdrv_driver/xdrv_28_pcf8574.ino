@@ -148,7 +148,8 @@ void Pcf8574Init(void)
     for (uint32_t i = 0; i < sizeof(Pcf8574.pin); i++) {
       Pcf8574.pin[i] = 99;
     }
-    TasmotaGlobal.devices_present = TasmotaGlobal.devices_present - Pcf8574.max_connected_ports; // reset no of devices to avoid duplicate ports on duplicate init.
+    UpdateDevicesPresent(-Pcf8574.max_connected_ports);  // reset no of devices to avoid duplicate ports on duplicate init.
+
     Pcf8574.max_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
       uint8_t gpio = Pcf8574Read(idx);
@@ -173,7 +174,7 @@ void Pcf8574Init(void)
             bitWrite(Settings->power, TasmotaGlobal.devices_present, power_state);
           }
           //else AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: DON'T set power from chip state"));
-          TasmotaGlobal.devices_present++;
+          UpdateDevicesPresent(1);
           Pcf8574.max_connected_ports++;
         }
       }
@@ -314,7 +315,7 @@ void Pcf8574SaveSettings(void)
       count++;
     }
     if (count <= TasmotaGlobal.devices_present) {
-      TasmotaGlobal.devices_present = TasmotaGlobal.devices_present - count;
+      UpdateDevicesPresent(-count);
     }
     for (byte i = 0; i < 8; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("i2cs%d"), i+8*idx);
@@ -322,7 +323,7 @@ void Pcf8574SaveSettings(void)
       byte _value = (!strlen(tmp)) ?  0 : atoi(tmp);
       if (_value) {
         Settings->pcf8574_config[idx] = Settings->pcf8574_config[idx] | 1 << i;
-        TasmotaGlobal.devices_present++;
+        UpdateDevicesPresent(1);
         Pcf8574.max_connected_ports++;
       } else {
         Settings->pcf8574_config[idx] = Settings->pcf8574_config[idx] & ~(1 << i );

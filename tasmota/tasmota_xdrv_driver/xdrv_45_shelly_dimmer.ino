@@ -725,7 +725,7 @@ bool ShdSerialInput(void)
 
 bool ShdModuleSelected(void) {
   if (PinUsed(GPIO_SHELLY_DIMMER_BOOT0) && PinUsed(GPIO_SHELLY_DIMMER_RST_INV)) {
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
     TasmotaGlobal.light_type = LT_SERIAL1;
 
     Shd.present = true;

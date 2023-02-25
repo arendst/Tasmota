@@ -757,6 +757,22 @@ bool NewerVersion(char* version_str) {
   return (version > VERSION);
 }
 
+int32_t UpdateDevicesPresent(int32_t change) {
+  int32_t difference = 0;
+  int32_t devices_present = TasmotaGlobal.devices_present;  // Between 0 and 32
+  devices_present += change;
+  if (devices_present < 0) {                          // Support down to 0
+    difference = devices_present;
+    devices_present = 0;
+  }
+  else if (devices_present >= POWER_SIZE) {           // Support up to uint32_t as bitmask
+    difference = devices_present - POWER_SIZE;
+    devices_present = POWER_SIZE;
+  }
+  TasmotaGlobal.devices_present = devices_present;
+  return difference;
+}
+
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 {
   strncpy_P(dest, S_RSLT_POWER, size);                // POWER

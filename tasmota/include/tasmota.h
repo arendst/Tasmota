@@ -52,8 +52,8 @@ const uint8_t MAX_INTERLOCKS = 14;          // Max number of interlock groups (u
 const uint8_t MAX_SWITCHES = 28;            // Max number of switches selectable on GPIO
 const uint8_t MAX_KEYS = 28;                // Max number of keys or buttons selectable on GPIO
 #endif  // ESP32
-const uint8_t MAX_RELAYS_SET = 28;          // Max number of relays
-const uint8_t MAX_KEYS_SET = 28;            // Max number of keys
+const uint8_t MAX_RELAYS_SET = 32;          // Max number of relays
+const uint8_t MAX_KEYS_SET = 32;            // Max number of keys
 
 // Changes to the following MAX_ defines will impact settings layout
 const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS_SET / 2)

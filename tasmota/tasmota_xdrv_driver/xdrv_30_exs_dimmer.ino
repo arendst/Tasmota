@@ -354,7 +354,7 @@ bool ExsModuleSelected(void)
   Settings->flag3.pwm_multi_channels = 1;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
   SetSeriallog(LOG_LEVEL_NONE);
 
-  TasmotaGlobal.devices_present = +2;
+  UpdateDevicesPresent(2);
   TasmotaGlobal.light_type = LT_SERIAL2;
   return true;
 }

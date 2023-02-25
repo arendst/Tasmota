@@ -372,7 +372,7 @@ void ShellyProPreInit(void) {
     }
 
     if (SPro.detected) {
-      TasmotaGlobal.devices_present += SPro.detected;
+      UpdateDevicesPresent(SPro.detected);          // Shelly Pro 1
 
       SPro.pin_register_cs = Pin(GPIO_SPI_CS);
       digitalWrite(SPro.pin_register_cs, (4 == SPro.detected) ? 1 : 0);      // Prep 74HC595 rclk

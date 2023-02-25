@@ -1875,10 +1875,10 @@ void DisplayInitDriver(void) {
     for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
 #endif
 
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
     if (!PinUsed(GPIO_BACKLIGHT)) {
       if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
-        TasmotaGlobal.devices_present--;  // Assume PWM channel is used for backlight
+        UpdateDevicesPresent(-1);  // Assume PWM channel is used for backlight
       }
     }
     disp_device = TasmotaGlobal.devices_present;
