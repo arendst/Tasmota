@@ -74,14 +74,6 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...);
   #define TI_Debugflush  {}
 #endif
 
-// For 4 bytes Aligment boundaries
-#if defined (ESP8266) || defined (ESP32)
-#define ESP_allocAlign(size)  ((size + 3) & ~((size_t) 3))
-#endif
-
-#pragma pack(push)  // push current alignment to stack
-#pragma pack(1)     // set alignment to 1 byte boundary
-
 // Linked list structure containing all values received
 typedef struct _ValueList ValueList;
 struct _ValueList
@@ -93,8 +85,6 @@ struct _ValueList
   char  * name;    // LABEL of value name
   char  * value;   // value
 };
-
-#pragma pack(pop)
 
 // Library state machine
 enum _Mode_e {
@@ -125,6 +115,7 @@ enum _State_e {
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02
 #define TINFO_ETX 0x03
+#define TINFO_EOT 0x04 // frame interrupt (End Of Transmission)
 #define TINFO_HT  0x09
 #define TINFO_SGR '\n' // start of group
 #define TINFO_EGR '\r' // End of group
@@ -151,7 +142,12 @@ class TInfo
     char *        valueGet_P(const char * name, char * value);
     int           labelCount();
     boolean       listDelete();
+    void          clearStats();
     unsigned char calcChecksum(char *etiquette, char *valeur, char *horodate=NULL) ;
+    uint32_t      getChecksumErrorCount() { return _checksumerror; };
+    uint32_t      getFrameSizeErrorCount() { return _framesizeerror; };
+    uint32_t      getFrameFormatErrorCount() { return _frameformaterror; };
+    uint32_t      getFrameInterruptedCount() { return _frameinterrupted; };
 
   private:
     void          clearBuffer();
@@ -169,6 +165,13 @@ class TInfo
     char      _separator;
     uint8_t   _recv_idx;  // index in receive buffer
     boolean   _frame_updated; // Data on the frame has been updated
+
+    // Frame counters stats
+    uint32_t _checksumerror;
+    uint32_t _framesizeerror;
+    uint32_t _frameformaterror;
+    uint32_t _frameinterrupted;
+
     void      (*_fn_ADPS)(uint8_t phase, char * label);
     void      (*_fn_data)(ValueList * valueslist, uint8_t state);
     void      (*_fn_new_frame)(ValueList * valueslist);
