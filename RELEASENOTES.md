@@ -117,6 +117,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.6 to v2.0.7
+- LibTeleinfo from v1.1.3 to v1.1.5 [#18050](https://github.com/arendst/Tasmota/issues/18050)
+- Increase number of (virtual)relays and (virtual)buttons to 32
 - ADC Range oversample from 2 to 32 [#17975](https://github.com/arendst/Tasmota/issues/17975)
 - Move #define OTA_URL from user_config.h to board files for better inital support [#18008](https://github.com/arendst/Tasmota/issues/18008)
 
