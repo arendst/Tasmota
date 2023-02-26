@@ -45,7 +45,7 @@
 // Json Command
 //const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
 //const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
-const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, RX:%s, EN:%s, Raw:%s, Skip:%d, Limit:%d";
+const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, RX:%s, EN:%s, Raw:%s, Skip:%d, Limit:%d, Stats:%d";
 
 #define MAX_TINFO_COMMAND_NAME 16+1 // Change this if one of the following kTInfo_Commands is higher then 16 char
 const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit|stats";
@@ -199,6 +199,10 @@ const char HTTP_ENERGY_LOAD_BAR[] PROGMEM = "<tr><div style='margin:4px;padding:
                                             "<div style='font-size:0.75rem;font-weight:bold;padding:0px;text-align:center;border:1px solid #bbb;border-radius:4px;color:#444;background-color:%s;width:%d%%;'>"
                                             "%d%%</div>"
                                             "</div></tr>";
+const char HTTP_ENERGY_STATS_TELEINFO[] PROGMEM =   "{s}Bad Checksum{m}%d{e}" 
+                                                    "{s}Wrong Size{m}%d{e}" 
+                                                    "{s}Bad Format{m}%d{e}" 
+                                                    "{s}Interruption{m}%d{e}" ;
 #endif  // USE_WEBSERVER
 
 
@@ -799,7 +803,7 @@ bool TInfoCmd(void) {
                 sprintf_P(en_pin, PSTR("GPIO%d"), Pin(GPIO_TELEINFO_ENABLE));
             }
 
-            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, rx_pin, en_pin, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit);
+            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, rx_pin, en_pin, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit, Settings->teleinfo.show_stats);
 
             serviced = true;
 
@@ -910,7 +914,7 @@ bool TInfoCmd(void) {
                     char stats_name[MAX_TINFO_COMMAND_NAME];
                     // Get the raw name
                     GetTextIndexed(stats_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
-                    int l = strlen(stats_name); 
+                    int l = strlen(stats_name);
                     // At least "EnergyConfig Stats" plus one space and one (or more) digit
                     // so "EnergyConfig Stats" or "EnergyConfig Stats 0"
                     if ( pValue ) {
@@ -1269,6 +1273,11 @@ void TInfoShow(bool json)
         // Serial number ADCO or ADSC if found
         if (*serialNumber) {
             WSContentSend_P(HTTP_ENERGY_ID_TELEINFO, serialNumber);
+        }
+
+        if (Settings->teleinfo.show_stats) {
+            WSContentSend_P(HTTP_ENERGY_STATS_TELEINFO, tinfo.getChecksumErrorCount(), tinfo.getFrameSizeErrorCount()
+                                                      , tinfo.getFrameFormatErrorCount(), tinfo.getFrameInterruptedCount());
         }
 
 #endif  // USE_WEBSERVER
