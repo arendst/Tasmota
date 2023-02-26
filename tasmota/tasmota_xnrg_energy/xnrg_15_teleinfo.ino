@@ -530,7 +530,7 @@ bool ResponseAppendTInfo(char sep, bool all)
         if (me->name && me->value && *me->name && *me->value) {
 
             // Check back checksum in case of any memory corruption
-            if (me->checksum==tinfo.calcChecksum(me->name, me->value))) {
+            if (me->checksum==tinfo.calcChecksum(me->name, me->value)) {
 
                 // Does this label blacklisted ?
                 if (!isBlacklistedLabel(me->name)) {
@@ -582,7 +582,7 @@ bool ResponseAppendTInfo(char sep, bool all)
                 }
 
             } else {
-                AddLog(LOG_LEVEL_WARNING, PSTR("TIC: bad checksum for %s"), me->name);
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: bad checksum for %s"), me->name);
             }
         }
     }
@@ -909,8 +909,8 @@ bool TInfoCmd(void) {
                 case CMND_TELEINFO_STATS: {
                     char stats_name[MAX_TINFO_COMMAND_NAME];
                     // Get the raw name
-                    GetTextIndexed(statsname, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
-                    int l = strlen(stats_name);
+                    GetTextIndexed(stats_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+                    int l = strlen(stats_name); 
                     // At least "EnergyConfig Stats" plus one space and one (or more) digit
                     // so "EnergyConfig Stats" or "EnergyConfig Stats 0"
                     if ( pValue ) {
@@ -919,7 +919,7 @@ bool TInfoCmd(void) {
                             Settings->teleinfo.show_stats = value ;
                             AddLog(LOG_LEVEL_INFO, PSTR("TIC: Show stats=%d"), value);
                         } else if (value == 2) {
-                            tinfo.clearstats();
+                            tinfo.clearStats();
                             AddLog(LOG_LEVEL_INFO, PSTR("TIC: Stats cleared"));
                         } else {
                             AddLog(LOG_LEVEL_INFO, PSTR("TIC: bad Stats param '%d'"), value);
