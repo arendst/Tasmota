@@ -794,6 +794,8 @@ void CmndStatus(void)
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState(0);
+    ResponseAppend_P(PSTR(",\"" D_CMND_I2CDRIVER "\":"));
+    I2cDriverState();
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
