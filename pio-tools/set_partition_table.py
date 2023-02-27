@@ -12,12 +12,10 @@ import os
 from SCons.Script import COMMAND_LINE_TARGETS
 
 board_config = env.BoardConfig()
-framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
 
 if env["PIOPLATFORM"] != "espressif32":
-
+    framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
     assert os.path.isdir(framework_dir)
-
     if "nobuild" in COMMAND_LINE_TARGETS:
         env.Replace(
             LDSCRIPT_PATH=os.path.join(
@@ -35,7 +33,6 @@ if env["PIOPLATFORM"] != "espressif32":
 #
 
 else:
-
     if "nobuild" in COMMAND_LINE_TARGETS:
         env.Replace(
             PARTITIONS_TABLE_CSV=os.path.join(
