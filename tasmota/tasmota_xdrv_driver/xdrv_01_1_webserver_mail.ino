@@ -22,10 +22,12 @@
  * #define EMAIL_SERVER "smtp.gmail.com"
  * #define EMAIL_PORT 465
  *
+ * Note : starting with this update, it is not required anymore to include emails in < > as they will
+ * be automatically added if needed
  * if email body consist of a single * and scripter is present
  * and a section >m is found, the lines in this section (until #) are sent as email body
- * 
- * Some mail servers do not accept the IP address in the HELO (or EHLO) message but only a fully qualified 
+ *
+ * Some mail servers do not accept the IP address in the HELO (or EHLO) message but only a fully qualified
  * domain name (FQDN). To overcome this, use the following define to override this behavior and enter the desired FQDN
  * #define EMAIL_USER_DOMAIN "googlemail.com"
  *
@@ -111,7 +113,7 @@ String SendEmail::readClient() {
   return r;
 }
 
-bool SendEmail::send(const String& from, const String& to, const String& subject, const char *msg) {
+bool SendEmail::send(const String& _from, const String& _to, const String& subject, const char *msg) {
   if (!host.length()) { return false; }
 
   client->setTimeout(timeout);
@@ -128,6 +130,10 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
 #endif
     return false;
   }
+
+  String from, to;
+  from = ('<' == *_from.c_str()) ? _from : ("<" + _from + ">");
+  to = ('<' == *_to.c_str()) ? _to : ("<" + _to +">");
 
   String buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
