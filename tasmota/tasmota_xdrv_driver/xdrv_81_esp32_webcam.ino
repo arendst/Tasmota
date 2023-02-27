@@ -397,8 +397,8 @@ uint32_t WcSetup(int32_t fsiz) {
   bool psram = UsePSRAM();
   if (psram) {
     config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 10;
-    config.fb_count = 2;
+    config.jpeg_quality = 8;
+    config.fb_count = 4;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM found"));
   } else {
     config.frame_size = FRAMESIZE_VGA;
