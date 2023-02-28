@@ -13,10 +13,10 @@ from SCons.Script import COMMAND_LINE_TARGETS
 
 board_config = env.BoardConfig()
 
-if env["PIOPLATFORM"] != "espressif32":
-    framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
-    assert os.path.isdir(framework_dir)
-    if "nobuild" in COMMAND_LINE_TARGETS:
+if "nobuild" in COMMAND_LINE_TARGETS:
+    if env["PIOPLATFORM"] != "espressif32":
+        framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
+        assert os.path.isdir(framework_dir)
         env.Replace(
             LDSCRIPT_PATH=os.path.join(
                 framework_dir,
@@ -26,17 +26,15 @@ if env["PIOPLATFORM"] != "espressif32":
                 board_config.get("build.arduino.ldscript"),
            )
         )
-#       print("Set LDSCRIPT_PATH to: ", os.path.join(framework_dir,"tools","sdk","ld",board_config.get("build.arduino.ldscript")))
+#        print("Set LDSCRIPT_PATH to: ", os.path.join(framework_dir,"tools","sdk","ld",board_config.get("build.arduino.ldscript")))
 
 #
 # For ESP32 sets the missing "PARTITIONS_TABLE_CSV" when using the command `pio run -t nobuild`
 #
-
-else:
-    if "nobuild" in COMMAND_LINE_TARGETS:
+    else:
         env.Replace(
             PARTITIONS_TABLE_CSV=os.path.join(
                 board_config.get("build.partitions"),
             )
         )
-#       print("Set PARTITIONS_TABLE_CSV to: ", os.path.join(board_config.get("build.partitions")))
+#        print("Set PARTITIONS_TABLE_CSV to: ", os.path.join(board_config.get("build.partitions")))
