@@ -247,6 +247,8 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
       // Time stamped field?
       if (horodate && *horodate) {
         ts = horodate2Timestamp(horodate);
+        // We don't check horodate (not used) on storage so re calculate checksum without this one
+        checksum = calcChecksum(name,value) ;
       }
 
       // Loop thru the node
@@ -275,8 +277,7 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
             if (strlen(me->value) >= lgvalue ) {
               // Copy it
               strlcpy(me->value, value , lgvalue + 1 );
-              // store checksum for future check without horodate
-              me->checksum = ts ? calcChecksum(name,value) : checksum ;
+              me->checksum = checksum ;
               // That's all
               return (me);
             } else {
@@ -939,8 +940,11 @@ ValueList * TInfo::checkLine(char * pline)
       } 
       else 
       {
-        _frameformaterror++;
-        AddLog(1, PSTR("LibTeleinfo::checkLine frame format error, total=%d"), _frameformaterror);
+        // Specific field not formated has others, don't set as an error
+        if ( strcmp(ptok, "DATE") ) {
+          _frameformaterror++;
+          AddLog(1, PSTR("LibTeleinfo::checkLine frame format error total=%d"), _frameformaterror);
+        } 
       }
     }           
     // Next char
