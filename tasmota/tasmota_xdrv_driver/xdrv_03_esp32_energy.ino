@@ -1419,6 +1419,9 @@ void EnergyShow(bool json) {
         if (isnan(apparent_power[i])) {
           apparent_power[i] = Energy->voltage[i] * Energy->current[i];
         }
+        else if (0 == Energy->current[i]) {
+          apparent_power[i] = 0;
+        }
         if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
           Energy->active_power[i] = apparent_power[i];
         }
@@ -1445,6 +1448,9 @@ void EnergyShow(bool json) {
             else
               reactive_power[i] = (float)(SqrtInt((uint32_t)(power_diff)));
           }
+        }
+        else if (0 == Energy->current[i]) {
+          reactive_power[i] = 0;
         }
 
       }
