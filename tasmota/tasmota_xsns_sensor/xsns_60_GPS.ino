@@ -48,6 +48,7 @@ Driver is tested on a NEO-6m and a Beitian-220. Series 7 should work too. This a
 - Web-UI
 - simplified NTP-server and UART-over-TCP/IP-bridge (virtual serial port)
 - command interface
+- velocity and heading information with #define USE_GPS_VELOCITY
 
 ## Usage:
 The serial pins are GPS_RX and GPS_TX, no further installation steps needed. To get more debug information compile it with option "DEBUG_TASMOTA_SENSOR".
@@ -179,13 +180,14 @@ struct UBX_t {
   const char NAV_POSLLH_HEADER[2] = { 0x01, 0x02 };
   const char NAV_STATUS_HEADER[2] = { 0x01, 0x03 };
   const char NAV_TIME_HEADER[2]   = { 0x01, 0x21 };
+#ifdef USE_GPS_VELOCITY
   const char NAV_VEL_HEADER[2]   = { 0x01, 0x12 };
+#endif
 
   struct entry_t {
           int32_t lat;    //raw sensor value
           int32_t lon;    //raw sensor value
           uint32_t time;  //local time from system (maybe provided by the sensor)
-          //int32_t spd;
     };
 
   union {
