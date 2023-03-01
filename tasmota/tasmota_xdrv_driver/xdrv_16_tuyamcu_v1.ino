@@ -1421,7 +1421,9 @@ uint8_t TuyaGetTuyaWifiState(void) {
       break;
   }
 
-  if (MqttIsConnected()) {
+  // When Wifi is connected, Say "connected to cloud" if mqtt is disabled or mqtt is connected
+  // avoid MCU to resets ESP to desperately get state 4 while MQTT is not enabled
+  if ((3 == wifi_state) && (!Settings->flag.mqtt_enabled || MqttIsConnected())) {
     wifi_state = 0x04;
   }
 
