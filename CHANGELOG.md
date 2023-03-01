@@ -8,10 +8,11 @@ All notable changes to this project will be documented in this file.
 - Matter read/write and commands (#18000)
 - Matter subscriptions (#18017, #18018)
 - Matter multi-fabric (#18019)
-- Support for multiple MCP23017 as switch/button/relay
+- Support for multiple MCP23017/MCP23S17 as switch/button/relay
 - NTP time request from gateway (#17984)
 
 ### Breaking Changed
+- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
 - ADC Range oversample from 2 to 32 (#17975)

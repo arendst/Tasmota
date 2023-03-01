@@ -353,6 +353,7 @@
 
 #define USE_ENERGY_SENSOR                      // Add energy to support Shelly Pro 4PM display (+38k code)
 #define USE_ADE7953
+#define USE_MCP23XXX_DRV
 #define USE_SHELLY_PRO
 
 
@@ -664,6 +665,7 @@
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 //#define USE_MCP2515                            // Add support for can bus using MCP2515 (+7k code)
 //#define USE_CANSNIFFER                         // Add support for can bus sniffer using MCP2515 (+5k code)
+#define USE_MCP23XXX_DRV
 #define USE_SHELLY_PRO                           // Add support for Shelly Pro
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)

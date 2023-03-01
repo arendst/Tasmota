@@ -112,10 +112,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.4.0.1
 ### Added
-- Support for multiple MCP23017 as switch/button/relay
+- Support for multiple MCP23017/MCP23S17 as switch/button/relay
 - NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
 
 ### Breaking Changed
+- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.6 to v2.0.7

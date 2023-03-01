@@ -6,8 +6,7 @@
   SPDX-License-Identifier: GPL-3.0-only
 */
 
-#ifdef USE_I2C
-//#if defined(USE_I2C) || defined(USE_SPI)
+#if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_MCP23XXX_DRV
 /*********************************************************************************************\
  * MCP23008/17 - I2C GPIO Expander to be used as virtual button/switch/relay only
@@ -17,11 +16,11 @@
  *
  * I2C Address: 0x20 - 0x26 (0x27 is not supported)
  *
- * The goal of the driver is to provide a sequential list of pins configured like Tasmota template
+ * The goal of the driver is to provide a sequential list of pins configured as Tasmota template
  * and handle any input and output as configured GPIOs.
  *
  * Restrictions:
- * - Only MCP23017 (=I2C)
+ * - Supports MCP23017 (=I2C) and MCP23S17 (=SPI)
  * - Max support for 28 switches (input), 32 buttons (input), 32 relays (output)
  *
  * Supported template fields:
@@ -44,6 +43,9 @@
  * - a rule like: rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
  * - a script like: -y{"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  * - file called mcp23x.dat with contents: {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ *
+ *                                           S3  S2  B2 B3   B1 S1    R1        R4  R2  R3  S4
+ * {"NAME":"MCP23S17 Shelly Pro 4PM","GPIO":[194,193,65,66,0,64,192,0,224,0,0,0,227,225,226,195]}
  *
  * Inverted relays and buttons                          Ri8 Ri7 Ri6 Ri5 Ri4 Ri3 Ri2 Ri1 B1 B2 B3 B4 B5 B6 B7 B8
  * {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
@@ -156,15 +158,6 @@ uint16_t *Mcp23x_gpio_pin = nullptr;
  * MCP23x17 - SPI and I2C
 \*********************************************************************************************/
 
-void MCP23xDumpRegs(void) {
-  uint8_t data[22];
-  for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
-    I2cReadBuffer(Mcp23x.device[Mcp23x.chip].address, 0, data, 22);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Address %d, Regs %22_H"), Mcp23x.device[Mcp23x.chip].address, data);
-  }
-}
-
-/*
 #ifdef USE_SPI
 void MCP23xEnable(void) {
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
@@ -176,11 +169,33 @@ void MCP23xDisable(void) {
   digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
 }
 #endif
-*/
+
+void MCP23xDumpRegs(void) {
+  uint8_t data[22];
+  for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
+#ifdef USE_SPI
+    if (MCP23X_SPI == Mcp23x.device[Mcp23x.chip].interface) {
+      MCP23xEnable();
+      SPI.transfer(Mcp23x.device[Mcp23x.chip].address | 1);
+      SPI.transfer(0);
+      for (uint32_t i = 0; i < sizeof(data); i++) {
+        data[i] = SPI.transfer(0xFF);
+      }
+      MCP23xDisable();
+    }
+#endif
+#ifdef USE_I2C
+    if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
+      I2cReadBuffer(Mcp23x.device[Mcp23x.chip].address, 0, data, sizeof(data));
+    }
+#endif
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Intf %d, Address %02X, Regs %*_H"), Mcp23x.device[Mcp23x.chip].interface, Mcp23x.device[Mcp23x.chip].address, sizeof(data), data);
+  }
+}
+
 uint32_t MCP23xRead16(uint8_t reg) {
   // Read 16-bit registers: (regb << 8) | rega
   uint32_t value = 0;
-/*
 #ifdef USE_SPI
   if (MCP23X_SPI == Mcp23x.device[Mcp23x.chip].interface) {
     MCP23xEnable();
@@ -191,7 +206,6 @@ uint32_t MCP23xRead16(uint8_t reg) {
     MCP23xDisable();
   }
 #endif
-*/
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
     value = I2cRead16LE(Mcp23x.device[Mcp23x.chip].address, reg);
@@ -202,7 +216,6 @@ uint32_t MCP23xRead16(uint8_t reg) {
 
 uint32_t MCP23xRead(uint8_t reg) {
   uint32_t value = 0;
-/*
 #ifdef USE_SPI
   if (MCP23X_SPI == Mcp23x.device[Mcp23x.chip].interface) {
     MCP23xEnable();
@@ -212,7 +225,6 @@ uint32_t MCP23xRead(uint8_t reg) {
     MCP23xDisable();
   }
 #endif
-*/
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
     value = I2cRead8(Mcp23x.device[Mcp23x.chip].address, reg);
@@ -222,7 +234,6 @@ uint32_t MCP23xRead(uint8_t reg) {
 }
 
 bool MCP23xValidRead(uint8_t reg, uint8_t *data) {
-/*
 #ifdef USE_SPI
   if (MCP23X_SPI == Mcp23x.device[Mcp23x.chip].interface) {
     MCP23xEnable();
@@ -233,15 +244,15 @@ bool MCP23xValidRead(uint8_t reg, uint8_t *data) {
     return true;
   }
 #endif
-*/
+#ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
     return I2cValidRead8(data, Mcp23x.device[Mcp23x.chip].address, reg);
   }
   return false;
+#endif
 }
 
 void MCP23xWrite(uint8_t reg, uint8_t value) {
-/*
 #ifdef USE_SPI
   if (MCP23X_SPI == Mcp23x.device[Mcp23x.chip].interface) {
     MCP23xEnable();
@@ -251,7 +262,6 @@ void MCP23xWrite(uint8_t reg, uint8_t value) {
     MCP23xDisable();
   }
 #endif
-*/
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
     I2cWrite8(Mcp23x.device[Mcp23x.chip].address, reg, value);
@@ -546,44 +556,71 @@ void MCP23xModuleInit(void) {
     return;
   }
 
-  uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
-  while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
-    Mcp23x.chip = Mcp23x.max_devices;
-    if (I2cSetDevice(mcp23xxx_address)) {
-      Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
-      Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
+#ifdef USE_SPI
+  if ((SPI_MOSI_MISO == TasmotaGlobal.spi_enabled) && PinUsed(GPIO_MCP23SXX_CS, GPIO_ANY)) {
+    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && PinUsed(GPIO_MCP23SXX_CS, Mcp23x.max_devices)) {
+      Mcp23x.device[Mcp23x.chip].pin_cs = Pin(GPIO_MCP23SXX_CS, Mcp23x.max_devices);
+      digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
+      pinMode(Mcp23x.device[Mcp23x.chip].pin_cs, OUTPUT);
+      Mcp23x.device[Mcp23x.chip].interface = MCP23X_SPI;
+      Mcp23x.device[Mcp23x.chip].address = MCP23XXX_ADDR_START << 1;
+      AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found"));
+      Mcp23x.device[Mcp23x.chip].type = 3;
+      Mcp23x.device[Mcp23x.chip].pins = 16;
+      MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+      Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
+      Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+      Mcp23x.max_devices++;
 
-      MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
-      uint8_t buffer;
-      if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
-        if (0x00 == buffer) {
-/*
-          I2cSetActiveFound(mcp23xxx_address, "MCP23008");
-          Mcp23x.device[Mcp23x.chip].type = 1;
-          Mcp23x.device[Mcp23x.chip].pins = 8;
-          Mcp23x.max_devices++;
-*/
+      Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
+      pins_needed -= Mcp23x.device[Mcp23x.chip].pins;
+      if (!pins_needed) { break; }
+    }
+  } else {
+#endif  // USE_SPI
+    uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
+    while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
+      Mcp23x.chip = Mcp23x.max_devices;
+      if (I2cSetDevice(mcp23xxx_address)) {
+        Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
+        Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
+
+        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
+        uint8_t buffer;
+        if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
+          if (0x00 == buffer) {
+  /*
+            I2cSetActiveFound(mcp23xxx_address, "MCP23008");
+            Mcp23x.device[Mcp23x.chip].type = 1;
+            Mcp23x.device[Mcp23x.chip].pins = 8;
+            Mcp23x.max_devices++;
+  */
+          }
+          else if (0x80 == buffer) {
+            I2cSetActiveFound(mcp23xxx_address, "MCP23017");
+            Mcp23x.device[Mcp23x.chip].type = 2;
+            Mcp23x.device[Mcp23x.chip].pins = 16;
+            MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
+            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+            Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
+            Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+            Mcp23x.max_devices++;
+          }
+          Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
+          pins_needed -= Mcp23x.device[Mcp23x.chip].pins;
         }
-        else if (0x80 == buffer) {
-          I2cSetActiveFound(mcp23xxx_address, "MCP23017");
-          Mcp23x.device[Mcp23x.chip].type = 2;
-          Mcp23x.device[Mcp23x.chip].pins = 16;
-          MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
-          MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
-          Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
-          Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
-          Mcp23x.max_devices++;
-        }
-        Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
-        pins_needed -= Mcp23x.device[Mcp23x.chip].pins;
+      }
+      if (pins_needed) {
+        mcp23xxx_address++;
+      } else {
+        mcp23xxx_address = MCP23XXX_ADDR_END;
       }
     }
-    if (pins_needed) {
-      mcp23xxx_address++;
-    } else {
-      mcp23xxx_address = MCP23XXX_ADDR_END;
-    }
+#ifdef USE_SPI
   }
+#endif  // USE_SPI
+
   if (!Mcp23x.max_devices) { return; }
 
   Mcp23x_gpio_pin = (uint16_t*)calloc(Mcp23x.max_pins, 2);
@@ -670,8 +707,15 @@ bool MCP23xAddSwitch(void) {
 \*********************************************************************************************/
 
 bool Xdrv67(uint32_t function) {
-//  if (!I2cEnabled(XI2C_77) && (SPI_MOSI_MISO != TasmotaGlobal.spi_enabled)) { return false; }
-  if (!I2cEnabled(XI2C_77)) { return false; }
+  bool spi_enabled = false;
+  bool i2c_enabled = false;
+#ifdef USE_SPI
+  spi_enabled = (SPI_MOSI_MISO == TasmotaGlobal.spi_enabled);
+#endif  // USE_SPI
+#ifdef USE_I2C
+  i2c_enabled = I2cEnabled(XI2C_77);
+#endif  // USE_I2C
+  if (!spi_enabled && !i2c_enabled) { return false; }
 
   bool result = false;
 
