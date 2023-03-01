@@ -3,16 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.4.0.1]
+## [12.4.0.2]
+### Added
+
+### Breaking Changed
+- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.4.0.1] 20230301
 ### Added
 - Matter read/write and commands (#18000)
 - Matter subscriptions (#18017, #18018)
 - Matter multi-fabric (#18019)
 - Support for multiple MCP23017/MCP23S17 as switch/button/relay
 - NTP time request from gateway (#17984)
-
-### Breaking Changed
-- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
 - ADC Range oversample from 2 to 32 (#17975)
@@ -28,8 +37,6 @@ All notable changes to this project will be documented in this file.
 - SR04 driver single pin ultrasonic sensor detection (#17966)
 - IR panasonic protocol regression from v12.0.2.4 (#18013)
 - EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 (#18024)
-
-### Removed
 
 ## [Released]
 
