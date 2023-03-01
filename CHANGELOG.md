@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Matter subscriptions (#18017, #18018)
 - Matter multi-fabric (#18019)
 - Support for multiple MCP23017 as switch/button/relay
+- NTP time request from gateway (#17984)
 
 ### Breaking Changed
 

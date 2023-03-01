@@ -112,6 +112,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.4.0.1
 ### Added
+- Support for multiple MCP23017 as switch/button/relay
+- NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
 
 ### Breaking Changed
 
