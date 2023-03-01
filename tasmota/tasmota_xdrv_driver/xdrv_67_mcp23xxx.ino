@@ -1,5 +1,5 @@
 /*
-  xdrv_67_mcp230xx.ino - MCP23008/MCP23017 GPIO Expander support for Tasmota
+  xdrv_67_mcp23xxx.ino - MCP23008/MCP23017/MCP23S17 GPIO Expander support for Tasmota
 
   SPDX-FileCopyrightText: 2023 Theo Arends
 

@@ -896,6 +896,7 @@
 #define D_SENSOR_HALLEFFECT             "Effetto hall"
 #define D_SENSOR_EPD_DATA               "EPD - Dati"
 #define D_SENSOR_MCP23XXX_INT           "MCP23xxx - Int"
+#define D_SENSOR_MCP23SXX_CS            "MCP23Sxx - CS"
 #define D_SENSOR_MCP2515_CS             "MCP2515 - CS"
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"

@@ -876,7 +876,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_BIOPDU)
     feature9 |= 0x00010000;  // xnrg_24_biopdu.ino
 #endif
-//    feature9 |= 0x00020000;
+#if (defined(USE_I2C) || defined(USE_SPI)) && defined(USE_MCP23XXX_DRV)
+    feature9 |= 0x00020000;  // xdrv_67_mcp23xxx.ino
+#endif
 //    feature9 |= 0x00040000;
 //    feature9 |= 0x00080000;
 

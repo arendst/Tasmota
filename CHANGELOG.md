@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Matter read/write and commands (#18000)
 - Matter subscriptions (#18017, #18018)
 - Matter multi-fabric (#18019)
+- Support for multiple MCP23017 as switch/button/relay
 
 ### Breaking Changed
 
