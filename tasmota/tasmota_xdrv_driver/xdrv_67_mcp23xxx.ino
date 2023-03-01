@@ -558,7 +558,12 @@ void MCP23xModuleInit(void) {
 
 #ifdef USE_SPI
   if ((SPI_MOSI_MISO == TasmotaGlobal.spi_enabled) && PinUsed(GPIO_MCP23SXX_CS, GPIO_ANY)) {
+#ifdef ESP8266
+    SPI.begin();
+#endif
+#ifdef ESP32
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+#endif
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && PinUsed(GPIO_MCP23SXX_CS, Mcp23x.max_devices)) {
       Mcp23x.device[Mcp23x.chip].pin_cs = Pin(GPIO_MCP23SXX_CS, Mcp23x.max_devices);
       digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
