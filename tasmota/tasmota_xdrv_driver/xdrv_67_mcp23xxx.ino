@@ -9,7 +9,7 @@
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_MCP23XXX_DRV
 /*********************************************************************************************\
- * MCP23008/17 - I2C GPIO Expander to be used as virtual button/switch/relay only
+ * MCP23008/17 (I2C) and MCP23S17 (SPI) GPIO Expander to be used as virtual button/switch/relay only
  *
  * Docs at https://www.microchip.com/wwwproducts/en/MCP23008
  *         https://www.microchip.com/wwwproducts/en/MCP23017
@@ -21,52 +21,52 @@
  *
  * Restrictions:
  * - Supports MCP23017 (=I2C) and MCP23S17 (=SPI)
+ * - Uses incremental I2C addresses / SPI Chip select until template pin count reached
  * - Max support for 28 switches (input), 32 buttons (input), 32 relays (output)
  *
  * Supported template fields:
  * NAME  - Template name
- * ADDR  - Sequential list of I2C addresses
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
- *         Function        Code      Description
- *         --------------  --------  ----------------------------------------
- *         None            0         Not used
- *         Button1..32     32..63    Button to Gnd with internal pullup
- *         Button_n1..32   64..95    Button to Gnd without internal pullup
- *         Button_i1..32   96..127   Button inverted to Vcc with internal pullup
- *         Button_in1..32  128..159  Button inverted to Vcc without internal pullup
- *         Switch1..28     160..187  Switch to Gnd with internal pullup
- *         Switch_n1..28   192..219  Switch to Gnd without internal pullup
- *         Relay1..28      224..255  Relay
- *         Relay_i1..28    256..287  Relay inverted
+ *         Function             Code      Description
+ *         -------------------  --------  ----------------------------------------
+ *         None                 0         Not used
+ *         Button1..32     B    32..63    Button to Gnd with internal pullup
+ *         Button_n1..32   Bn   64..95    Button to Gnd without internal pullup
+ *         Button_i1..32   Bi   96..127   Button inverted to Vcc with internal pullup
+ *         Button_in1..32  Bin  128..159  Button inverted to Vcc without internal pullup
+ *         Switch1..28     S    160..187  Switch to Gnd with internal pullup
+ *         Switch_n1..28   Sn   192..219  Switch to Gnd without internal pullup
+ *         Relay1..28      R    224..255  Relay
+ *         Relay_i1..28    Ri   256..287  Relay inverted
  *
  * Prepare a template to be loaded either by:
- * - a rule like: rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
- * - a script like: -y{"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
- * - file called mcp23x.dat with contents: {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ * - a rule like: rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
+ * - a script like: -y{"NAME":"MCP23017 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ * - file called mcp23x.dat with contents: {"NAME":"MCP23017 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  *
  *                                           S3  S2  B2 B3   B1 S1    R1        R4  R2  R3  S4
  * {"NAME":"MCP23S17 Shelly Pro 4PM","GPIO":[194,193,65,66,0,64,192,0,224,0,0,0,227,225,226,195]}
  *
- * Inverted relays and buttons                          Ri8 Ri7 Ri6 Ri5 Ri4 Ri3 Ri2 Ri1 B1 B2 B3 B4 B5 B6 B7 B8
- * {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ * Inverted relays and buttons                Ri8 Ri7 Ri6 Ri5 Ri4 Ri3 Ri2 Ri1 B1 B2 B3 B4 B5 B6 B7 B8
+ * {"NAME":"MCP23017 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  *
- * Inverted relays and buttons                          Ri1 Ri2 Ri3 Ri4 Ri5 Ri6 Ri7 Ri8 B1 B2 B3 B4 B5 B6 B7 B8
- * {"NAME":"MCP23017 A=Ri1-8, B=B1-8","ADDR":32,"GPIO":[256,257,258,259,260,261,262,263,32,33,34,35,36,37,38,39]}
+ * Inverted relays and buttons                Ri1 Ri2 Ri3 Ri4 Ri5 Ri6 Ri7 Ri8 B1 B2 B3 B4 B5 B6 B7 B8
+ * {"NAME":"MCP23017 A=Ri1-8, B=B1-8","GPIO":[256,257,258,259,260,261,262,263,32,33,34,35,36,37,38,39]}
  *
- * Relays and buttons                                  R1  R2  R3  R4  R5  R6  R7  R8  B1 B2 B3 B4 B5 B6 B7 B8
- * {"NAME":"MCP23017 A=R1-8, B=B1-8","ADDR":32,"GPIO":[224,225,226,227,228,229,230,231,32,33,34,35,36,37,38,39]}
+ * Relays and buttons                        R1  R2  R3  R4  R5  R6  R7  R8  B1 B2 B3 B4 B5 B6 B7 B8
+ * {"NAME":"MCP23017 A=R1-8, B=B1-8","GPIO":[224,225,226,227,228,229,230,231,32,33,34,35,36,37,38,39]}
  *
- * Buttons and relays                                  B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
- * {"NAME":"MCP23017 A=B1-8, B=R1-8","ADDR":32,"GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
+ * Buttons and relays                        B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
+ * {"NAME":"MCP23017 A=B1-8, B=R1-8","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
  *
- * Buttons, relays, buttons and relays                                        B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8  B9 B10B11B12B13B14B15B16R9  R10 R11 R12 R13 R14 R15 R16
- * {"NAME":"MCP23017 A=B1-8, B=R1-8, C=B9-16, D=R9-16","ADDR":[32,33],"GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
+ * Buttons, relays, buttons and relays                         B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8  B9 B10B11B12B13B14B15B16R9  R10 R11 R12 R13 R14 R15 R16
+ * {"NAME":"MCP23017 A=B1-8, B=R1-8, C=B9-16, D=R9-16","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
  *
- * {"NAME":"MCP23017 A=R1-8, B=B1-8, C=R9-16, D=B9-16","ADDR":[32,33],"GPIO":[224,225,226,227,228,229,230,231,32,33,34,35,36,37,38,39,232,233,234,235,236,237,238,239,40,41,42,43,44,45,46,47]}
+ * {"NAME":"MCP23017 A=R1-8, B=B1-8, C=R9-16, D=B9-16","GPIO":[224,225,226,227,228,229,230,231,32,33,34,35,36,37,38,39,232,233,234,235,236,237,238,239,40,41,42,43,44,45,46,47]}
  *
- * 32 relays                                                                         R1  R2  R3  R4  R5  R6  R7  R8  R9  R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 R30 R31 R32
- * {"NAME":"MCP23017 A=Ri1-8, B=Ri9-16, C=Ri17-24, D=Ri25-32","ADDR":[32,33],"GPIO":[256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287]}
- *     {"NAME":"MCP23017 A=R1-8, B=R9-16, C=R17-24, D=R25-32","ADDR":[32,33],"GPIO":[224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255]}
+ * 32 relays                                                          R1  R2  R3  R4  R5  R6  R7  R8  R9  R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 R30 R31 R32
+ * {"NAME":"MCP23017 A=Ri1-8, B=Ri9-16, C=Ri17-24, D=Ri25-32","GPIO":[256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287]}
+ *     {"NAME":"MCP23017 A=R1-8, B=R9-16, C=R17-24, D=R25-32","GPIO":[224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255]}
  *
 \*********************************************************************************************/
 
@@ -135,6 +135,7 @@ typedef struct {
   uint8_t pins;                                        // 8 (MCP23008) or 16 (MCP23017 / MCP23S17)
   uint8_t type;                                        // 1 (MCP23008) or 2 (MCP23017) or 3 (MCP23S17)
   int8_t pin_cs;
+  int8_t pin_int;
 } tMcp23xDevice;
 
 struct MCP230 {
@@ -150,6 +151,7 @@ struct MCP230 {
   uint8_t switch_max;
   int8_t button_offset;
   int8_t switch_offset;
+  bool interrupt;
 } Mcp23x;
 
 uint16_t *Mcp23x_gpio_pin = nullptr;
@@ -417,6 +419,13 @@ String MCP23xTemplateLoadFile(void) {
   return mcptmplt;
 }
 
+void MCP23xSetPinModes(uint8_t pin, uint8_t flags) {
+  MCP23xPinMode(pin, flags);
+  if (Mcp23x.device[Mcp23x.chip].pin_int > -1) {       // Mcp23x.chip is updated by call to MCP23xPinMode
+    MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+  }
+}
+
 bool MCP23xLoadTemplate(void) {
   String mcptmplt = MCP23xTemplateLoadFile();
   uint32_t len = mcptmplt.length() +1;
@@ -426,41 +435,17 @@ bool MCP23xLoadTemplate(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
-  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017","ADDR":32,"GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]} endon
-  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017","ADDR":32,"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
-  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8","ADDR":[32,33],"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
-  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8, C=Ri16-9, D=B9-16","ADDR":[32,33],"GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39,271,270,269,268,267,266,265,264,40,41,42,43,44,45,46,47]} endon
+  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]} endon
+  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
+  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
+  // rule3 on file#mcp23x.dat do {"NAME":"MCP23017 A=Ri8-1, B=B1-8, C=Ri16-9, D=B9-16","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39,271,270,269,268,267,266,265,264,40,41,42,43,44,45,46,47]} endon
 
-  // {"NAME":"MCP23017","ADDR":32,"GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
-  // {"NAME":"MCP23017","ADDR":[32,33],"GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
+  // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
+  // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
   JsonParserToken val = root[PSTR(D_JSON_NAME)];
   if (val) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Template %s"), val.getStr());
   }
-/*
-  JsonParserArray arr = root[PSTR("ADDR")];
-  if (arr) {
-    uint32_t i;
-    for (i = 0; i < Mcp23x.max_devices; i++) {
-      JsonParserToken val = arr[i];
-      if (!val) { break; }
-
-      uint8_t address = val.getUInt();
-      uint32_t j;
-      for (j = 0; j < Mcp23x.max_devices; j++) {
-        if (address == Mcp23x.device[Mcp23x.max_devices].address) {
-          j = 0;
-          break;
-        }
-      }
-      if (j) { return false; }                         // Requested I2C address not present
-
-    }
-  } else {
-    val = root[PSTR("ADDR")];
-
-  }
-*/
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
     uint32_t pin = 0;
@@ -471,39 +456,33 @@ bool MCP23xLoadTemplate(void) {
       if (mpin) {                                      // Above GPIO_NONE
         if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
           Mcp23x.switch_max++;
-          MCP23xPinMode(pin, INPUT_PULLUP);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
           Mcp23x.switch_max++;
-          MCP23xPinMode(pin, INPUT);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
           Mcp23x.button_max++;
-          MCP23xPinMode(pin, INPUT_PULLUP);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
-          MCP23xPinMode(pin, INPUT);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
-          MCP23xPinMode(pin, INPUT_PULLUP);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
-          MCP23xPinMode(pin, INPUT);
-//          MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+          MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_REL1)) && (mpin < (AGPIO(GPIO_REL1) + MAX_RELAYS_SET))) {
           Mcp23x.relay_max++;
@@ -565,12 +544,14 @@ void MCP23xModuleInit(void) {
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 #endif
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && PinUsed(GPIO_MCP23SXX_CS, Mcp23x.max_devices)) {
+      Mcp23x.chip = Mcp23x.max_devices;
+      Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, Mcp23x.chip)) ? Pin(GPIO_MCP23XXX_INT, Mcp23x.chip) : -1;
       Mcp23x.device[Mcp23x.chip].pin_cs = Pin(GPIO_MCP23SXX_CS, Mcp23x.max_devices);
       digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
       pinMode(Mcp23x.device[Mcp23x.chip].pin_cs, OUTPUT);
       Mcp23x.device[Mcp23x.chip].interface = MCP23X_SPI;
       Mcp23x.device[Mcp23x.chip].address = MCP23XXX_ADDR_START << 1;
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
       Mcp23x.device[Mcp23x.chip].type = 3;
       Mcp23x.device[Mcp23x.chip].pins = 16;
       MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
@@ -584,10 +565,12 @@ void MCP23xModuleInit(void) {
     }
   } else {
 #endif  // USE_SPI
+#ifdef USE_I2C
     uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
       Mcp23x.chip = Mcp23x.max_devices;
       if (I2cSetDevice(mcp23xxx_address)) {
+        Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, Mcp23x.chip)) ? Pin(GPIO_MCP23XXX_INT, Mcp23x.chip) : -1;
         Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
         Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
 
@@ -622,6 +605,7 @@ void MCP23xModuleInit(void) {
         mcp23xxx_address = MCP23XXX_ADDR_END;
       }
     }
+#endif  // USE_I2C
 #ifdef USE_SPI
   }
 #endif  // USE_SPI
@@ -645,7 +629,8 @@ void MCP23xModuleInit(void) {
 }
 
 void MCP23xServiceInput(void) {
-  // I found no way to receive interrupts in a consistent manner; noise received at undefined moments - unstable usage
+  // I found no reliable way to receive interrupts; noise received at undefined moments - unstable usage
+  Mcp23x.interrupt = 0;
   // This works with no interrupt
   uint32_t pin_offset = 0;
   for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
@@ -668,6 +653,21 @@ void MCP23xServiceInput(void) {
       mask <<= 1;
     }
     pin_offset += Mcp23x.device[Mcp23x.chip].pins;
+  }
+}
+
+void IRAM_ATTR MCP23xInputIsr(void) {
+  Mcp23x.interrupt = 1;
+}
+
+void MCP23xInit(void) {
+  if (Mcp23x.button_max || Mcp23x.switch_max) {
+    for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
+      if (Mcp23x.device[Mcp23x.chip].pin_int > -1) {
+        uint32_t gpio = MCP23xRead16(MCP23X17_GPIOA);  // Clear interrupt
+        attachInterrupt(Mcp23x.device[Mcp23x.chip].pin_int, MCP23xInputIsr, CHANGE);
+      }
+    }
   }
 }
 
@@ -728,6 +728,12 @@ bool Xdrv67(uint32_t function) {
     MCP23xModuleInit();
   } else if (Mcp23x.max_devices) {
     switch (function) {
+      case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
+        if (!Mcp23x.interrupt) { return false; }
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: Interrupt"));
+        MCP23xServiceInput();
+        break;
       case FUNC_EVERY_100_MSECOND:
         if (Mcp23x.button_max || Mcp23x.switch_max) {
           MCP23xServiceInput();
@@ -735,6 +741,9 @@ bool Xdrv67(uint32_t function) {
         break;
       case FUNC_SET_POWER:
         MCP23xPower();
+        break;
+      case FUNC_INIT:
+        MCP23xInit();
         break;
       case FUNC_ADD_BUTTON:
         result = MCP23xAddButton();

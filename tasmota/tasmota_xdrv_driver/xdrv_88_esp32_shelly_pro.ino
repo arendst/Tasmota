@@ -28,7 +28,7 @@
  * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 2","GPIO":[0,1,0,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
- * {"NAME":"Shelly Pro 4PM","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,10272,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,0,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;rule3 on file#mcp23x.dat do {\"NAME\":\"MCP23S17 Shelly Pro 4PM\",\"GPIO\":[194,193,65,66,0,64,192,0,224,0,0,0,227,225,226,195]} endon"}
+ * {"NAME":"Shelly Pro 4PM","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,10272,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,10240,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;rule3 on file#mcp23x.dat do {\"NAME\":\"MCP23S17 Shelly Pro 4PM\",\"GPIO\":[194,193,65,66,0,64,192,0,224,0,0,0,227,225,226,195]} endon"}
  *
  * Shelly Pro 1/2 uses SPI to control one 74HC595 for relays/leds and one ADE7953 (1PM) or two ADE7953 (2PM) for energy monitoring
  * Shelly Pro 4 uses an SPI to control one MCP23S17 for buttons/switches/relays/leds and two ADE7953 for energy monitoring and a second SPI for the display
