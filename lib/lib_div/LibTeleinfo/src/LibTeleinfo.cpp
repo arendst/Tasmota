@@ -691,22 +691,51 @@ LF etiquette HT donnee HT Chk CR
 ====================================================================== */
 unsigned char TInfo::calcChecksum(char *etiquette, char *valeur, char * horodate) 
 {
+  char c;
   uint8_t sum = (_mode == TINFO_MODE_HISTORIQUE) ? _separator : (2 * _separator);  // Somme des codes ASCII du message + 2 separateurs
 
   // avoid dead loop, always check all is fine 
   if (etiquette && valeur) {
     // this will not hurt and may save our life ;-)
     if (strlen(etiquette) && strlen(valeur)) {
-      while (*etiquette)
-        sum += *etiquette++ ;
+      while (*etiquette) {
+        c =*etiquette++;
+        // Add another validity check since checksum may not be sufficient
+        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c=='-' || c=='+') {
+          sum += c ;
+        } else {
+          return 0;
+        }
+      }
   
-      while(*valeur)
-        sum += *valeur++ ;
+      while(*valeur) {
+        c = *valeur++ ;
+        // Add another validity check since checksum may not be sufficient (space authorized in Standard mode)
+        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c==' ' || c=='.' || c=='-' || c=='+') {
+          sum += c ;
+        } else {
+          return 0;
+        }
+      }
 
       if (horodate) {
         sum += _separator;
-        while (*horodate)
-          sum += *horodate++ ;
+        c = *horodate++;
+        // Add another validity check starting season [E]té (Summer) or [H]iver (Winter)
+        if ( c=='E' || c=='H' || c=='e' || c=='h') {
+          sum += c ;
+          while (*horodate) {
+            c = *horodate++ ;
+            // Add another validity check for horodate digits
+            if ( c>='0' && c<='9') {
+              sum += c ;
+            } else {
+              return 0;
+            }
+          }
+        } else {
+          return 0;
+        }
       }
 
       return ( (sum & 0x3f) + ' ' ) ;
@@ -905,7 +934,8 @@ ValueList * TInfo::checkLine(char * pline)
         // Always check to avoid bad behavior 
         if(strlen(ptok) && strlen(pvalue)) {
           // Is checksum is OK
-          char   calc_checksum = calcChecksum(ptok,pvalue,pts);
+          char calc_checksum = calcChecksum(ptok,pvalue,pts);
+          
           if ( calc_checksum == checksum) {
             // In case we need to do things on specific labels
             customLabel(ptok, pvalue, &flags);
