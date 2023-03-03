@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- TuyaMcu v1 sequence fix (#17625)
+- TuyaMcu v1 timer integer overflow (#18048)
 
 ### Removed
 
