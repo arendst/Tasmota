@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.4.0.2]
 ### Added
 - Support for multiple MCP23008 as switch/button/relay
+- Support for multiple PCF8574 as switch/button/relay
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
