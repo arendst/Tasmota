@@ -126,8 +126,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Move #define OTA_URL from user_config.h to board files for better inital support [#18008](https://github.com/arendst/Tasmota/issues/18008)
 
 ### Fixed
+- TuyaMcu v1 sequence fix [#17625](https://github.com/arendst/Tasmota/issues/17625)
 - SEN5X floats and units [#17961](https://github.com/arendst/Tasmota/issues/17961)
 - Energytotals cannot be set to negative values [#17965](https://github.com/arendst/Tasmota/issues/17965)
 - SR04 driver single pin ultrasonic sensor detection [#17966](https://github.com/arendst/Tasmota/issues/17966)
 - IR panasonic protocol regression from v12.0.2.4 [#18013](https://github.com/arendst/Tasmota/issues/18013)
 - EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 [#18024](https://github.com/arendst/Tasmota/issues/18024)
+- TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
