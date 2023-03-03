@@ -723,6 +723,7 @@ void MCP23xInit(void) {
         } else {
           gpio = MCP23xRead16(MCP23X17_GPIOA);         // Clear MCP23x17 interrupt
         }
+        pinMode(Mcp23x.device[Mcp23x.chip].pin_int, INPUT_PULLUP);
         attachInterrupt(Mcp23x.device[Mcp23x.chip].pin_int, MCP23xInputIsr, CHANGE);
       }
     }
