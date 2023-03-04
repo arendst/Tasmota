@@ -61,7 +61,7 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   37  | USE_24C256          | xdrv_10  | 24C256   | 0x50        | Scripter EEPROM storage
   38  | USE_DISPLAY_ILI9488 | xdsp_08  | FT6236   | 0x38        | Touch panel controller
   39  | USE_DISPLAY_RA8876  | xdsp_10  | FT5316   | 0x38        | Touch panel controller
-  40  | USE_TSL2591         | xsns_57  | TLS2591  | 0x29        | Light intensity sensor
+  40  | USE_TSL2591         | xsns_57  | TSL2591  | 0x29        | Light intensity sensor
   41  | USE_DHT12           | xsns_58  | DHT12    | 0x5C        | Temperature and humidity sensor
   42  | USE_DS1624          | xsns_59  | DS1621   | 0x48 - 0x4F | Temperature sensor
   42  | USE_DS1624          | xsns_59  | DS1624   | 0x48 - 0x4F | Temperature sensor
@@ -112,3 +112,4 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   74  | USE_DISPLAY_TM1650  | xdsp_20  | TM1650   | 0x24 - 0x27, 0x34 - 0x37 | Four-digit seven-segment LED controller
   75  | USE_PCA9632         | xdrv_64  | PCA9632  | 0x60        | 4-channel 4-bit pwm driver
   76  | USE_SEN5X           | xsns_103 | SEN5X    | 0x69        | Gas (VOC/NOx index) and air quality (PPM <1,<2.5,<4,<10)
+  77  | USE_MCP23XXX_DRV    | xdrv_67  | MCP23x17 | 0x20 - 0x26 | 16-bit I/O expander as virtual button/switch/relay

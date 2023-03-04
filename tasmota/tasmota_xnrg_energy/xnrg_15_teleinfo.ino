@@ -45,10 +45,10 @@
 // Json Command
 //const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
 //const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
-const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, RX:%s, EN:%s, Raw:%s, Skip:%d, Limit:%d";
+const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, RX:%s, EN:%s, Raw:%s, Skip:%d, Limit:%d, Stats:%d";
 
 #define MAX_TINFO_COMMAND_NAME 16+1 // Change this if one of the following kTInfo_Commands is higher then 16 char
-const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit";
+const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit|stats";
 
 enum TInfoCommands {            // commands for Console
   CMND_TELEINFO_HISTORIQUE=0,   // Set Legacy mode
@@ -57,7 +57,8 @@ enum TInfoCommands {            // commands for Console
   CMND_TELEINFO_RAW_FULL,       // Enable all RAW frame send
   CMND_TELEINFO_RAW_CHANGE,     // Enable only changed values RAW frame send
   CMND_TELEINFO_SKIP,           // Set number of frame to skip when raw mode is enabled
-  CMND_TELEINFO_LIMIT           // Limit RAW frame to values subject to fast change (Power, Current, ...), TBD
+  CMND_TELEINFO_LIMIT,          // Limit RAW frame to values subject to fast change (Power, Current, ...), TBD
+  CMND_TELEINFO_STATS           // Show / clear / Enable TIC reception errors stats
 };
 
 
@@ -155,6 +156,7 @@ PROGMEM
     =
     "|PJOURF+1"
     "|MSG1"
+    "|PPOINTE"
     "|"
     ;
 
@@ -197,6 +199,10 @@ const char HTTP_ENERGY_LOAD_BAR[] PROGMEM = "<tr><div style='margin:4px;padding:
                                             "<div style='font-size:0.75rem;font-weight:bold;padding:0px;text-align:center;border:1px solid #bbb;border-radius:4px;color:#444;background-color:%s;width:%d%%;'>"
                                             "%d%%</div>"
                                             "</div></tr>";
+const char HTTP_ENERGY_STATS_TELEINFO[] PROGMEM =   "{s}Bad Checksum{m}%d{e}" 
+                                                    "{s}Wrong Size{m}%d{e}" 
+                                                    "{s}Bad Format{m}%d{e}" 
+                                                    "{s}Interruption{m}%d{e}" ;
 #endif  // USE_WEBSERVER
 
 
@@ -527,53 +533,60 @@ bool ResponseAppendTInfo(char sep, bool all)
 
         if (me->name && me->value && *me->name && *me->value) {
 
-            // Does this label blacklisted ?
-            if (!isBlacklistedLabel(me->name)) {
+            // Check back checksum in case of any memory corruption
+            if (me->checksum==tinfo.calcChecksum(me->name, me->value)) {
 
-                // Add values only if we want all data or if data has changed
-                if (all || ( Settings->teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
+                // Does this label blacklisted ?
+                if (!isBlacklistedLabel(me->name)) {
 
-                    isNumber = true;
-                    hasValue = true;
-                    p = me->value;
+                    // Add values only if we want all data or if data has changed
+                    if (all || ( Settings->teleinfo.raw_report_changed && (me->flags & (TINFO_FLAGS_UPDATED | TINFO_FLAGS_ADDED | TINFO_FLAGS_ALERT) ) ) ) {
 
-                    // Specific treatment serial number don't convert to number later
-                    if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
-                        isNumber = false;
-                    } else {
-                        // check if value is number
-                        while (*p && isNumber) {
-                            if ( *p < '0' || *p > '9' ) {
-                                isNumber = false;
-                            }
-                            p++;
-                        }
-                    }
+                        isNumber = true;
+                        hasValue = true;
+                        p = me->value;
 
-                    // Avoid unneeded space
-                    if (sep == ' ') {
-                        ResponseAppend_P( PSTR("\"%s\":"), me->name );
-                    } else {
-                        ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
-                    }
-
-                    if (!isNumber) {
-                        // Some values contains space 
-                        if (strcmp(me->name, "NGTF")==0 || strcmp(me->name, "LTARF")==0 || strcmp(me->name, "MSG1")==0) {
-                            char trimmed_value[strlen(me->value)+1];
-                            strcpy(trimmed_value, me->value);
-                            ResponseAppend_P( PSTR("\"%s\""), Trim(trimmed_value) );
+                        // Specific treatment serial number don't convert to number later
+                        if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
+                            isNumber = false;
                         } else {
-                            ResponseAppend_P( PSTR("\"%s\""), me->value );
+                            // check if value is number
+                            while (*p && isNumber) {
+                                if ( *p < '0' || *p > '9' ) {
+                                    isNumber = false;
+                                }
+                                p++;
+                            }
                         }
 
-                    } else {
-                        ResponseAppend_P( PSTR("%ld"), atol(me->value));
-                    }
+                        // Avoid unneeded space
+                        if (sep == ' ') {
+                            ResponseAppend_P( PSTR("\"%s\":"), me->name );
+                        } else {
+                            ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
+                        }
 
-                    // Now JSON separator is needed
-                    sep =',';
+                        if (!isNumber) {
+                            // Some values contains space 
+                            if (strcmp(me->name, "NGTF")==0 || strcmp(me->name, "LTARF")==0 || strcmp(me->name, "MSG1")==0) {
+                                char trimmed_value[strlen(me->value)+1];
+                                strcpy(trimmed_value, me->value);
+                                ResponseAppend_P( PSTR("\"%s\""), Trim(trimmed_value) );
+                            } else {
+                                ResponseAppend_P( PSTR("\"%s\""), me->value );
+                            }
+
+                        } else {
+                            ResponseAppend_P( PSTR("%ld"), atol(me->value));
+                        }
+
+                        // Now JSON separator is needed
+                        sep =',';
+                    }
                 }
+
+            } else {
+                AddLog(LOG_LEVEL_INFO, PSTR("TIC: bad checksum for %s"), me->name);
             }
         }
     }
@@ -790,7 +803,7 @@ bool TInfoCmd(void) {
                 sprintf_P(en_pin, PSTR("GPIO%d"), Pin(GPIO_TELEINFO_ENABLE));
             }
 
-            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, rx_pin, en_pin, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit);
+            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, rx_pin, en_pin, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit, Settings->teleinfo.show_stats);
 
             serviced = true;
 
@@ -894,6 +907,34 @@ bool TInfoCmd(void) {
                     } else {
                         AddLog(LOG_LEVEL_INFO, PSTR("TIC: no skip value"));
                     }
+                }
+                break;
+
+                case CMND_TELEINFO_STATS: {
+                    char stats_name[MAX_TINFO_COMMAND_NAME];
+                    // Get the raw name
+                    GetTextIndexed(stats_name, MAX_TINFO_COMMAND_NAME, command_code, kTInfo_Commands);
+                    int l = strlen(stats_name);
+                    // At least "EnergyConfig Stats" plus one space and one (or more) digit
+                    // so "EnergyConfig Stats" or "EnergyConfig Stats 0"
+                    if ( pValue ) {
+                        int value = atoi(pValue);
+                        if (value==0 || value==1) {
+                            Settings->teleinfo.show_stats = value ;
+                            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Show stats=%d"), value);
+                        } else if (value == 2) {
+                            tinfo.clearStats();
+                            AddLog(LOG_LEVEL_INFO, PSTR("TIC: Stats cleared"));
+                        } else {
+                            AddLog(LOG_LEVEL_INFO, PSTR("TIC: bad Stats param '%d'"), value);
+                        }
+                    }
+                    // Show stats 
+                    AddLog(LOG_LEVEL_INFO, PSTR("TIC: Frame error CheckSum:%d Size:%d Format:%d Interrupt:%d"), 
+                                                tinfo.getChecksumErrorCount(), 
+                                                tinfo.getFrameSizeErrorCount(), 
+                                                tinfo.getFrameFormatErrorCount(), 
+                                                tinfo.getFrameInterruptedCount() );
                 }
                 break;
 
@@ -1232,6 +1273,11 @@ void TInfoShow(bool json)
         // Serial number ADCO or ADSC if found
         if (*serialNumber) {
             WSContentSend_P(HTTP_ENERGY_ID_TELEINFO, serialNumber);
+        }
+
+        if (Settings->teleinfo.show_stats) {
+            WSContentSend_P(HTTP_ENERGY_STATS_TELEINFO, tinfo.getChecksumErrorCount(), tinfo.getFrameSizeErrorCount()
+                                                      , tinfo.getFrameFormatErrorCount(), tinfo.getFrameInterruptedCount());
         }
 
 #endif  // USE_WEBSERVER

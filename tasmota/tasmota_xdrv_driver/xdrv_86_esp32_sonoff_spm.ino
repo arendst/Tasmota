@@ -1195,7 +1195,7 @@ void SSPMHandleReceivedData(void) {
           TasmotaGlobal.power |= current_state;
 
           Sspm->old_power = TasmotaGlobal.power;
-          TasmotaGlobal.devices_present += 4;
+          UpdateDevicesPresent(4);
         }
         SSPMSendGetOps(Sspm->module_selected -1);
         break;

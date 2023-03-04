@@ -3,15 +3,77 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.3.1.5]
+## [12.4.0.2]
+### Added
+- Support for multiple MCP23008 as switch/button/relay
+- Support for multiple PCF8574 as switch/button/relay
+
+### Breaking Changed
+- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
+
+### Changed
+
+### Fixed
+- TuyaMcu v1 sequence fix (#17625)
+- TuyaMcu v1 timer integer overflow (#18048)
+
+### Removed
+
+## [12.4.0.1] 20230301
+### Added
+- Matter read/write and commands (#18000)
+- Matter subscriptions (#18017, #18018)
+- Matter multi-fabric (#18019)
+- Support for multiple MCP23017/MCP23S17 as switch/button/relay
+- NTP time request from gateway (#17984)
+
+### Changed
+- ADC Range oversample from 2 to 32 (#17975)
+- ESP32 Framework (Core) from v2.0.6 to v2.0.7
+- Move #define OTA_URL from user_config.h to board files for better inital support (#18008)
+- Increase number of (virtual)relays and (virtual)buttons to 32
+- LibTeleinfo from v1.1.3 to v1.1.5 (#18050)
+
+### Fixed
+- SEN5X floats and units (#17961)
+- Energytotals cannot be set to negative values (#17965)
+- Undocumented support for non-sequential buttons and switches (#17967)
+- SR04 driver single pin ultrasonic sensor detection (#17966)
+- IR panasonic protocol regression from v12.0.2.4 (#18013)
+- EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 (#18024)
+
+## [Released]
+
+## [12.4.0] 20230216
+- Release Peter
+
+## [12.3.1.6] 20230216
+### Added
+- ESP32 preliminary support for Matter protocol, milestone 1 (commissioning) by Stephan Hadinger
+- Basic support for Shelly Pro 4PM
+- Command ``DhtDelay<sensor> <high_delay>,<low_delay>`` to allow user control over high and low delay in microseconds (#17944)
+- Berry `int64.fromstring()` to convert a string to an int64 (#17953)
+
+### Breaking Changed
+- TM1638 button and led support are handled as virtual switches and relays (#11031)
+
+### Changed
+- Dht driver from v6 to v7
+- LVGL allow access to `lv.LAYOUT_GRID` and `lv.LAYOUT_FLEX` (#17948)
+- TuyaMcu support of virtual switches
+
+### Fixed
+- ESP8266 Fix TLS SNI which would prevent AWS IoT connection (#17936)
+- TuyaMcu exception 3 regression from v12.3.1.4
+
+## [12.3.1.5] 20230208
 ### Added
 - ESP32 support for eigth energy phases/channels
 - ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
 - ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
-- support for SEN5X gas and air quality sensor by Tyeth Gundry (#17736)
+- Support for SEN5X gas and air quality sensor by Tyeth Gundry (#17736)
 - Berry add ``mdns`` advanced features and query
 - ESP32 support for Biomine BioPDU 625x12 (#17857)
-- ESP32 preliminary support for Matter protocol, milestone 1 (commissioning)
 
 ### Breaking Changed
 - Berry energy_ctypes changed with new energy driver
@@ -26,8 +88,6 @@ All notable changes to this project will be documented in this file.
 - Zigbee extend plug-in modifiers to 16 bits
 - Broken I2C priority regression from v12.3.1.3 (#17810)
 - Energy usage and return migrated too small (/10000) regression from v12.3.1.3
-
-### Removed
 
 ## [12.3.1.4] 20230127
 ### Added
@@ -87,8 +147,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.5.3 to v2.0.5.4 (IPv6 support)
-
-## [Released]
 
 ## [12.3.1] 20221216
 - Release Percy

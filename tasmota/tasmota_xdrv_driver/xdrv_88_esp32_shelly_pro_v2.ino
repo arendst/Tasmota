@@ -1,5 +1,5 @@
 /*
-  xdrv_88_shelly_pro.ino - Shelly pro family support for Tasmota
+  xdrv_88_esp32_shelly_pro.ino - Shelly pro family support for Tasmota
 
   Copyright (C) 2022  Theo Arends
 
@@ -19,7 +19,7 @@
 
 #ifdef ESP32
 #ifdef USE_SPI
-#ifdef USE_SHELLY_PRO
+#ifdef USE_SHELLY_PRO_V2
 /*********************************************************************************************\
  * Shelly Pro support
  *
@@ -31,6 +31,7 @@
  *
  * Shelly Pro 1/2 uses SPI to control one 74HC595 for relays/leds and one ADE7953 (1PM) or two ADE7953 (2PM) for energy monitoring
  * Shelly Pro 4 uses an SPI to control one MCP23S17 for buttons/switches/relays/leds and two ADE7953 for energy monitoring and a second SPI for the display
+ *   To use display enable defines USE_DISPLAY, USE_UNIVERSAL_DISPLAY and SHOW_SPLASH. Load file ST7735S_Pro4PM_display.ini as display.ini
 \*********************************************************************************************/
 
 #define XDRV_88                        88
@@ -87,7 +88,10 @@ enum SP4MCP23X17GPIORegisters {
 uint8_t sp4_mcp23s17_olata = 0;
 uint8_t sp4_mcp23s17_olatb = 0;
 
+bool sp4_spi_busy;
+
 void SP4Mcp23S17Enable(void) {
+  sp4_spi_busy = true;
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
   digitalWrite(SPro.pin_register_cs, 0);
 }
@@ -95,6 +99,7 @@ void SP4Mcp23S17Enable(void) {
 void SP4Mcp23S17Disable(void) {
   SPI.endTransaction();
   digitalWrite(SPro.pin_register_cs, 1);
+  sp4_spi_busy = false;
 }
 
 uint32_t SP4Mcp23S17Read16(uint8_t reg) {
@@ -240,8 +245,12 @@ bool ShellyProAddButton(void) {
   if (SPro.button_offset < 0) { SPro.button_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.button_offset;
   if (index > 2) { return false; }                  // Support three buttons
+/*
   uint32_t state = bitRead(SPro.input_state, sp4_button_pin[index]);  // 1 on power on and restart
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Button default state %d"), state);
   XdrvMailbox.index = state;
+*/
+  XdrvMailbox.index = 1;                            // 1 on power on and restart
   return true;
 }
 
@@ -250,8 +259,12 @@ bool ShellyProAddSwitch(void) {
   if (SPro.switch_offset < 0) { SPro.switch_offset = XdrvMailbox.index; }
   uint32_t index = XdrvMailbox.index - SPro.switch_offset;
   if (index > 3) { return false; }                  // Support four switches
+/*
   uint32_t state = bitRead(SPro.input_state, sp4_switch_pin[index]);  // 0 on power on and restart
-  XdrvMailbox.index = state ^1;                     // Invert
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Switch default state %d"), state);
+  XdrvMailbox.index = state;
+*/
+  XdrvMailbox.index = 0;                            // 0 on power on and restart
   return true;
 }
 
@@ -275,7 +288,7 @@ void ShellyProUpdateIsr(void) {
 
       for (uint32_t i = 0; i < 4; i++) {
         if (j == sp4_switch_pin[i]) {
-          SwitchSetVirtualPinState(SPro.switch_offset +i, state ^1);  // Invert
+          SwitchSetVirtualPinState(SPro.switch_offset +i, state);
         }
         else if ((i < 3) && (j == sp4_button_pin[i])) {
           ButtonSetVirtualPinState(SPro.button_offset +i, state);
@@ -359,7 +372,7 @@ void ShellyProPreInit(void) {
     }
 
     if (SPro.detected) {
-      TasmotaGlobal.devices_present += SPro.detected;
+      UpdateDevicesPresent(SPro.detected);          // Shelly Pro 1
 
       SPro.pin_register_cs = Pin(GPIO_SPI_CS);
       digitalWrite(SPro.pin_register_cs, (4 == SPro.detected) ? 1 : 0);      // Prep 74HC595 rclk
@@ -399,11 +412,21 @@ void ShellyProPower(void) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Set Power 0x%08X"), XdrvMailbox.index);
 
     power_t rpower = XdrvMailbox.index;
+/*
     for (uint32_t i = 0; i < 4; i++) {
       power_t state = rpower &1;
-      SP4Mcp23S17DigitalWrite(sp4_relay_pin[i], state);
+      SP4Mcp23S17DigitalWrite(sp4_relay_pin[i], state);  // 4 SPI writes
       rpower >>= 1;                                 // Select next power
     }
+*/
+    for (uint32_t i = 0; i < 4; i++) {
+      power_t state = rpower &1;
+      uint32_t bit = sp4_relay_pin[i] -8;           // Adjust by 8 bits
+      bitWrite(sp4_mcp23s17_olatb, bit, state);
+      rpower >>= 1;                                 // Select next power
+    }
+    SP4Mcp23S17Write(SP4_MCP23S17_OLATB, sp4_mcp23s17_olatb);  // 1 SPI write
+
   }
 }
 

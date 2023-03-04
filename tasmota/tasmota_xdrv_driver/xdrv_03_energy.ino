@@ -19,15 +19,9 @@
 
 #ifdef ESP8266
 #ifdef USE_ENERGY_SENSOR
-#define USE_ENERGY_SENSOR_LEGACY
-#endif  // USE_ENERGY_SENSOR
-#endif  // ESP8266
-
-#ifdef USE_ENERGY_SENSOR_LEGACY
 /*********************************************************************************************\
  * Energy for ESP8266 and legacy ESP32 with max three phases/channels using Settings from flash
 \*********************************************************************************************/
-//#warning **** USE_ENERGY_SENSOR_LEGACY ****
 
 #define XDRV_03                3
 #define XSNS_03                3
@@ -703,7 +697,7 @@ void CmndEnergyTotal(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Total
-    RtcSettings.energy_kWhtotal_ph[phase] = values[0];
+    RtcSettings.energy_kWhtotal_ph[phase] = (int32_t)values[0];
     Settings->energy_kWhtotal_ph[phase] = RtcSettings.energy_kWhtotal_ph[phase];
     if (params > 1) {
       Settings->energy_kWhtotal_time = values[1];
@@ -722,7 +716,7 @@ void CmndEnergyYesterday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Yesterday
-    Settings->energy_kWhyesterday_ph[phase] = values[0] * 100;
+    Settings->energy_kWhyesterday_ph[phase] = (int32_t)values[0] * 100;
     if (params > 1) {
       Settings->energy_kWhtotal_time = values[1];
     }
@@ -738,7 +732,7 @@ void CmndEnergyToday(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
     uint32_t phase = XdrvMailbox.index -1;
     // Reset Energy Today
-    Energy->kWhtoday_offset[phase] = values[0] * 100;
+    Energy->kWhtoday_offset[phase] = (int32_t)values[0] * 100;
     Energy->kWhtoday[phase] = 0;
     Energy->kWhtoday_delta[phase] = 0;
     Energy->start_energy[phase] = 0;
@@ -766,7 +760,7 @@ void CmndEnergyExportActive(void) {
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
       uint32_t phase = XdrvMailbox.index -1;
       // Reset Energy Export Active
-      RtcSettings.energy_kWhexport_ph[phase] = values[0];
+      RtcSettings.energy_kWhexport_ph[phase] = (int32_t)values[0];
       Settings->energy_kWhexport_ph[phase] = RtcSettings.energy_kWhexport_ph[phase];
       if (params > 1) {
         Settings->energy_kWhtotal_time = values[1];
@@ -795,9 +789,9 @@ void CmndEnergyUsage(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.usage totals
-    RtcSettings.energy_usage.usage1_kWhtotal = values[0];
+    RtcSettings.energy_usage.usage1_kWhtotal = (int32_t)values[0];
     if (params > 1) {
-      RtcSettings.energy_usage.usage2_kWhtotal = values[1];
+      RtcSettings.energy_usage.usage2_kWhtotal = (int32_t)values[1];
     }
     Settings->energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
     Settings->energy_usage.usage2_kWhtotal = RtcSettings.energy_usage.usage2_kWhtotal;
@@ -810,9 +804,9 @@ void CmndEnergyExport(void) {
   uint32_t params = ParseParameters(2, values);
   if (params > 0) {
     // Reset energy_usage.return totals
-    RtcSettings.energy_usage.return1_kWhtotal = values[0] * 100;
+    RtcSettings.energy_usage.return1_kWhtotal = (int32_t)values[0] * 100;
     if (params > 1) {
-      RtcSettings.energy_usage.return2_kWhtotal = values[1] * 100;
+      RtcSettings.energy_usage.return2_kWhtotal = (int32_t)values[1] * 100;
     }
     Settings->energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
     Settings->energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
@@ -917,69 +911,45 @@ void EnergyCommandCalSetResponse(uint32_t cal_type) {
 }
 
 void EnergyCommandCalResponse(uint32_t cal_type) {
-  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
-  EnergyCommandCalSetResponse(cal_type);
-}
-
-void EnergyCommandSetCalResponse(uint32_t cal_type) {
-  Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
-  EnergyCommandCalSetResponse(cal_type);
+  Energy->command_code = cal_type;                     // Is XxxCal command too
+  if (XnrgCall(FUNC_COMMAND)) {                        // XxxCal
+    Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+    EnergyCommandCalSetResponse(cal_type);
+  }
 }
 
 void CmndPowerCal(void) {
-  Energy->command_code = CMND_POWERCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_POWER_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_POWER_CALIBRATION);
 }
-
 void CmndVoltageCal(void) {
-  Energy->command_code = CMND_VOLTAGECAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_VOLTAGE_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
-
 void CmndCurrentCal(void) {
-  Energy->command_code = CMND_CURRENTCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_CURRENT_CALIBRATION);
-  }
+  EnergyCommandCalResponse(ENERGY_CURRENT_CALIBRATION);
+}
+void CmndFrequencyCal(void) {
+  EnergyCommandCalResponse(ENERGY_FREQUENCY_CALIBRATION);
 }
 
-void CmndFrequencyCal(void) {
-  Energy->command_code = CMND_FREQUENCYCAL;
-  if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    EnergyCommandCalResponse(ENERGY_FREQUENCY_CALIBRATION);
+void EnergyCommandSetCalResponse(uint32_t cal_type) {
+  Energy->command_code = CMND_POWERSET + cal_type;     // Adjust for XxxSet command
+  if (XnrgCall(FUNC_COMMAND)) {                        // XxxSet
+    Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
+    EnergyCommandCalSetResponse(cal_type);
   }
 }
 
 void CmndPowerSet(void) {
-  Energy->command_code = CMND_POWERSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Watt
-    EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
 }
-
 void CmndVoltageSet(void) {
-  Energy->command_code = CMND_VOLTAGESET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Volt
-    EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
-
 void CmndCurrentSet(void) {
-  Energy->command_code = CMND_CURRENTSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // milliAmpere
-    EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
 }
-
 void CmndFrequencySet(void) {
-  Energy->command_code = CMND_FREQUENCYSET;
-  if (XnrgCall(FUNC_COMMAND)) {  // Hz
-    EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
-  }
+  EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
 }
 
 void CmndModuleAddress(void) {
@@ -1219,6 +1189,9 @@ void EnergyShow(bool json) {
         if (isnan(apparent_power[i])) {
           apparent_power[i] = Energy->voltage[i] * Energy->current[i];
         }
+        else if (0 == Energy->current[i]) {
+          apparent_power[i] = 0;
+        }
         if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
           Energy->active_power[i] = apparent_power[i];
         }
@@ -1245,6 +1218,9 @@ void EnergyShow(bool json) {
             else
               reactive_power[i] = (float)(SqrtInt((uint32_t)(power_diff)));
           }
+        }
+        else if (0 == Energy->current[i]) {
+          reactive_power[i] = 0;
         }
 
       }
@@ -1518,4 +1494,5 @@ bool Xsns03(uint32_t function)
   return result;
 }
 
-#endif  // USE_ENERGY_SENSOR_V1
+#endif  // USE_ENERGY_SENSOR
+#endif  // ESP8266

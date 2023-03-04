@@ -42,11 +42,12 @@
  * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM
  * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32   ESP32
  * Interface                       I2C      I2C      I2C      SPI     SPI     SPI     Interface type used
+ * Number of inputs                2        2        2        1       2       4       Count of ADE9753 inputs used
  * Number of ADE9753 chips         1        1        1        1       2       2       Count of ADE9753 chips
  * ADE9753 IRQ                     1        2        3        4       5       6       Index defines model number
  * Current measurement device      shunt    CT       shunt    shunt   shunt   shunt   CT = Current Transformer
- * Common voltage                  Yes      Yes      Yes      No      No      No      Show common voltage in GUI/JSON
- * Common frequency                Yes      Yes      Yes      No      No      No      Show common frequency in GUI/JSON
+ * Common voltage                  Yes      Yes      Yes      No      No      Yes     Show common voltage in GUI/JSON
+ * Common frequency                Yes      Yes      Yes      No      No      Yes     Show common frequency in GUI/JSON
  * Swapped channel A/B             Yes      No       No       No      No      No      Defined by hardware design - Fixed by Tasmota
  * Support Export Active           No       Yes      No       No      No      No      Only EM supports correct negative value detection
  * Show negative (reactive) power  No       Yes      No       No      No      No      Only EM supports correct negative value detection
@@ -230,6 +231,7 @@ typedef struct {
 } tAde7953Channel;
 
 struct Ade7953 {
+  uint32_t last_update;
   uint32_t voltage_rms[ADE7953_MAX_CHANNEL] = { 0, 0 };
   uint32_t current_rms[ADE7953_MAX_CHANNEL] = { 0, 0 };
   uint32_t active_power[ADE7953_MAX_CHANNEL] = { 0, 0 };
@@ -238,7 +240,6 @@ struct Ade7953 {
   uint8_t model = 0;             // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM, 3 = Shelly Pro 1PM, 4 = Shelly Pro 2PM, 5 = Shelly Pro 4PM
   uint8_t cs_index;
 #ifdef USE_ESP32_SPI
-  SPISettings spi_settings;
   int8_t pin_cs[ADE7953_MAX_CHANNEL / 2];
 #endif  // USE_ESP32_SPI
   bool use_spi;
@@ -342,8 +343,8 @@ int32_t Ade7953Read(uint16_t reg) {
 }
 
 #ifdef ADE7953_DUMP_REGS
-void Ade7953DumpRegs(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: ***             SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"));
+void Ade7953DumpRegs(uint32_t chip) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: *** Chip%d ****  SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"), chip +1);
   char data[200] = { 0 };
   for (uint32_t i = 0; i < 10; i++) {
     int32_t value = Ade7953Read(ADE7953_SAGCYC + i);
@@ -374,7 +375,6 @@ void Ade7953DumpRegs(void) {
 #endif  // ADE7953_DUMP_REGS
 
 void Ade7953SetCalibration(uint32_t regset, uint32_t calibset) {
-  Ade7953.cs_index = calibset;
   for (uint32_t i = 0; i < ADE7953_CALIBREGS; i++) {
     int32_t value = Ade7953.calib_data[calibset][i];
     if (ADE7943_CAL_PHCAL == i) {
@@ -393,11 +393,13 @@ void Ade7953Init(void) {
 #ifdef USE_ESP32_SPI
   chips = (Ade7953.pin_cs[1] >= 0) ? 2 : 1;
 #endif  // USE_ESP32_SPI
+
+  // Init ADE7953 with calibration settings
   for (uint32_t chip = 0; chip < chips; chip++) {
     Ade7953.cs_index = chip;
 
 #ifdef ADE7953_DUMP_REGS
-    Ade7953DumpRegs();
+    Ade7953DumpRegs(chip);
 #endif  // ADE7953_DUMP_REGS
 
     Ade7953Write(ADE7953_CONFIG, 0x0004);            // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
@@ -406,18 +408,32 @@ void Ade7953Init(void) {
 #ifdef USE_ESP32_SPI
 //    int32_t value = Ade7953Read(0x702);              // Silicon version
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
+    if (1 == chip) {
+      switch (Ade7953.model) {
+        case ADE7953_SHELLY_PRO_2PM:
+          Ade7953SetCalibration(0, 1);               // Second ADE7953 A registers set with calibration set 1
+          break;
+        case ADE7953_SHELLY_PRO_4PM:
+          Ade7953SetCalibration(0, 2);               // Second ADE7953 A registers set with calibration set 2
+          Ade7953SetCalibration(1, 3);               // Second ADE7953 B registers set with calibration set 3
+      }
+    } else {
 #endif  // USE_ESP32_SPI
-  }
-
-  Ade7953SetCalibration(0, 0);                       // First ADE7953 A registers set with calibration set 0
+      Ade7953SetCalibration(0, 0);                   // First ADE7953 A registers set with calibration set 0
+      switch (Ade7953.model) {
+        case ADE7953_SHELLY_25:
+        case ADE7953_SHELLY_EM:
+        case ADE7953_SHELLY_PLUS_2PM:
+//        case ADE7953_SHELLY_PRO_1PM:               // Uses defaults for B registers
+        case ADE7953_SHELLY_PRO_4PM:
+          Ade7953SetCalibration(1, 1);               // First ADE7953 B registers set with calibration set 1
+      }
 #ifdef USE_ESP32_SPI
-  if (Ade7953.pin_cs[1] >= 0) {                      // Second ADE7953 using SPI
-    Ade7953SetCalibration(0, 1);                     // Second ADE7953 A registers set with calibration set 1
-  }
-  else if (Ade7953.pin_cs[0] == -1)                  // No first ADE7953 using SPI so set register set B
+    }
 #endif  // USE_ESP32_SPI
-    Ade7953SetCalibration(1, 1);                     // First ADE7953 B register set with calibration set 1
+  }
 
+  // Report set calibration settings
   int32_t regs[ADE7953_CALIBREGS];
   for (uint32_t chip = 0; chip < chips; chip++) {
     Ade7953.cs_index = chip;
@@ -441,7 +457,7 @@ void Ade7953Init(void) {
     }
 
 #ifdef ADE7953_DUMP_REGS
-    Ade7953DumpRegs();
+    Ade7953DumpRegs(chip);
 #endif  // ADE7953_DUMP_REGS
   }
 }
@@ -508,6 +524,21 @@ void Ade7953GetData(void) {
   }
 
   if (Energy->power_on) {                              // Powered on
+
+#ifdef USE_ESP32_SPI
+    float correction = 1.0f;
+    if (Ade7953.use_spi) {        // SPI
+      uint32_t time = millis();
+      if (Ade7953.last_update) {
+        uint32_t difference = time - Ade7953.last_update;
+        correction = (float)difference / 1000;    // Correction to 1 second
+
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Correction %4_f"), &correction);
+      }
+      Ade7953.last_update = time;
+    }
+#endif  // USE_ESP32_SPI
+
     float divider;
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
       Energy->data_valid[channel] = 0;
@@ -541,6 +572,14 @@ void Ade7953GetData(void) {
 
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : power_calibration;
       Energy->apparent_power[channel] = (float)apparent_power[channel] / divider;
+
+#ifdef USE_ESP32_SPI
+      if (Ade7953.use_spi) {        // SPI
+        Energy->active_power[channel] /= correction;
+        Energy->reactive_power[channel] /= correction;
+        Energy->apparent_power[channel] /= correction;
+      }
+#endif  // USE_ESP32_SPI
 
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
@@ -708,7 +747,6 @@ void Ade7953DrvInit(void) {
         Ade7953.cs_index = 0;
         Ade7953.use_spi = true;
         SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-        Ade7953.spi_settings = SPISettings(1000000, MSBFIRST, SPI_MODE0);  // Set up SPI at 1MHz, MSB first, Capture at rising edge
         AddLog(LOG_LEVEL_INFO, PSTR("SPI: ADE7953 found"));
       } else {
         return;                                       // No CS pin defined
@@ -822,6 +860,7 @@ bool Xnrg07(uint32_t function) {
   bool result = false;
 
   switch (function) {
+#ifdef USE_ESP32_SPI
     case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer (fails on SPI)
       if (!Ade7953.use_spi) {       // No SPI
         Ade7953EnergyEverySecond();
@@ -832,6 +871,11 @@ bool Xnrg07(uint32_t function) {
         Ade7953EnergyEverySecond();
       }
       break;
+#else   // ESP8266
+    case FUNC_ENERGY_EVERY_SECOND:  // Use energy interrupt timer
+      Ade7953EnergyEverySecond();
+      break;
+#endif  // USE_ESP32_SPI
     case FUNC_COMMAND:
       result = Ade7953Command();
       break;

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_core.be - implements the core features that a Matter device must implemment
+# Matter_Plugin_Root.be - implements the core features that a Matter device must implemment
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -17,31 +17,55 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Matter plug-in for core behavior
+# Matter plug-in for root behavior
 
 # dummy declaration for solidification
 class Matter_Plugin end
 
-#@ solidify:Matter_Plugin_core,weak
+#@ solidify:Matter_Plugin_Root,weak
 
-class Matter_Plugin_core : Matter_Plugin
+class Matter_Plugin_Root : Matter_Plugin
+  static var ENDPOINTS = [ 0 ]
+  static var CLUSTERS  = {
+    0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
+    0x001F: [0,2,3,4],                # Access Control Cluster, p.461
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
+    0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
+    0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
+    0x0030: [0,1,2,3,4],              # GeneralCommissioning cluster 11.9 p.627
+    0x0031: [3,4,0xFFFC],             # Network Commissioning Cluster cluster 11.8 p.606
+    0x0032: [],                       # Diagnostic Logs Cluster 11.10 p.637
+    0x0033: [0,1,2,8],                # General Diagnostics Cluster 11.11 p.642
+    0x0034: [],                       # Software Diagnostics Cluster 11.12 p.654
+    0x0038: [0,1,7],                  # Time Synchronization 11.16 p.689
+    0x003C: [],                       # Administrator Commissioning Cluster 11.18 p.725
+    0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
+    0x003F: []                        # Group Key Management Cluster 11.2 p.572
+  }
+  static var TYPES = { 0x0016: 1 }       # Root node
+
   #############################################################
   # Constructor
   def init(device)
     super(self).init(device)
-    self.endpoints = [ 0 ]
+    self.endpoints = self.ENDPOINTS
+    self.clusters = self.CLUSTERS
   end
 
   #############################################################
   # read an attribute
   #
-  def read_attribute(msg, endpoint, cluster, attribute)
+  def read_attribute(session, ctx)
+    import string
     var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
 
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
-        return TLV.create_TLV(TLV.U8, msg.session.breadcrumb)
+        return TLV.create_TLV(TLV.U8, session.__breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
         bci.add_TLV(0, TLV.U2, 60)      # FailSafeExpiryLengthSeconds
@@ -62,7 +86,41 @@ class Matter_Plugin_core : Matter_Plugin
     elif cluster == 0x0033              # ========== General Diagnostics Cluster 11.11 p.642 ==========
 
       if   attribute == 0x0000          #  ---------- NetworkInterfaces ----------
-        var nwi = TLV.Matter_TLV_list() # TODO list network interfaces, empty list for now
+        var nwi = TLV.Matter_TLV_array() # list network interfaces, empty list for now, p.647
+
+        var tas_eth = tasmota.eth()
+        if (tas_eth['up'])
+          var eth = nwi.add_struct(nil)
+          eth.add_TLV(0, TLV.UTF1, 'ethernet')      # Name
+          eth.add_TLV(1, TLV.BOOL, 1)               # IsOperational
+          eth.add_TLV(2, TLV.BOOL, 1)               # OffPremiseServicesReachableIPv4
+          eth.add_TLV(3, TLV.NULL, nil)             # OffPremiseServicesReachableIPv6
+          var mac = bytes().fromhex(string.replace(tas_eth.find("mac", ""), ":", ""))
+          eth.add_TLV(4, TLV.B1, mac) # HardwareAddress
+          var ip4 = eth.add_array(5)                 # IPv4Addresses
+          ip4.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip", "")))
+          var ip6 = eth.add_array(6)                 # IPv6Addresses
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip6local", "")))
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_eth.find("ip6", "")))
+          eth.add_TLV(7, TLV.U1, 2)                # InterfaceType, p646
+        end
+
+        var tas_wif = tasmota.wifi()
+        if (tas_wif['up'])
+          var wif = nwi.add_struct(nil)
+          wif.add_TLV(0, TLV.UTF1, 'wifi')          # Name
+          wif.add_TLV(1, TLV.BOOL, 1)               # IsOperational
+          wif.add_TLV(2, TLV.BOOL, 1)               # OffPremiseServicesReachableIPv4
+          wif.add_TLV(3, TLV.NULL, nil)             # OffPremiseServicesReachableIPv6
+          var mac = bytes().fromhex(string.replace(tas_wif.find("mac", ""), ":", ""))
+          wif.add_TLV(4, TLV.B1, mac) # HardwareAddress
+          var ip4 = wif.add_array(5)                 # IPv4Addresses
+          ip4.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip", "")))
+          var ip6 = wif.add_array(6)                 # IPv6Addresses
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip6local", "")))
+          ip6.add_TLV(nil, TLV.B1, matter.get_ip_bytes(tas_wif.find("ip6", "")))
+          wif.add_TLV(7, TLV.U1, 1)                # InterfaceType, p646
+        end
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
         return TLV.create_TLV(TLV.U2, tasmota.cmd("Status 1")['StatusPRM']['BootCount'])
@@ -94,17 +152,37 @@ class Matter_Plugin_core : Matter_Plugin
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
-        # TODO
+        var nocl = TLV.Matter_TLV_array() # NOCs, p.711
+        for loc_session: self.device.sessions.sessions_active()
+          var nocs = nocl.add_struct(nil)
+          nocs.add_TLV(1, TLV.B2, loc_session.noc)      # NOC
+          nocs.add_TLV(2, TLV.B2, loc_session.icac)     # ICAC
+        end
+        return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
-        # TODO
+        var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
+        for loc_session: self.device.sessions.sessions_active()
+          var root_ca_tlv = TLV.parse(loc_session.get_ca())
+          var fab = fabrics.add_struct(nil)            # encoding see p.303
+          fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
+          fab.add_TLV(2, TLV.U2, loc_session.admin_vendor)      # VendorID
+          fab.add_TLV(3, TLV.U8, loc_session.fabric)            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_session.deviceid)          # NodeID
+          fab.add_TLV(5, TLV.UTF1, loc_session.fabric_label)    # Label
+        end
+        return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
         return TLV.create_TLV(TLV.U1, 5)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
-        return TLV.create_TLV(TLV.U1, 1)     # TODO
+        var sessions_active = self.device.sessions.sessions_active()
+        return TLV.create_TLV(TLV.U1, size(sessions_active))  # number of active sessions
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
-        # TODO
+        var sessions_active = self.device.sessions.sessions_active()
+        var fabric_index = sessions_active.find(session)
+        if fabric_index == nil    fabric_index = -1 end
+        return TLV.create_TLV(TLV.U1, fabric_index + 1)  # number of active sessions
       end
 
     # ====================================================================================================
@@ -133,9 +211,16 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
-        return TLV.create_TLV(TLV.U2, 0)
+        return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Version'])
+      elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
+        var cps = TLV.Matter_TLV_struct()
+        cps.add_TLV(0, TLV.U2, 3)       # CaseSessionsPerFabric = 3
+        cps.add_TLV(1, TLV.U2, 3)       # SubscriptionsPerFabric = 5
+        return cps
       end
 
     # ====================================================================================================
@@ -143,12 +228,25 @@ class Matter_Plugin_core : Matter_Plugin
       # TODO
 
     # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   attribute == 0x0000          #  ---------- DefaultOTAProviders / list[ProviderLocationStruct] ----------
+        return TLV.Matter_TLV_array()   # empty list for now TODO
+      elif attribute == 0x0001          #  ---------- UpdatePossible / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 0)  # we claim that update is not possible, would require to go to Tasmota UI
+      elif attribute == 0x0002          #  ---------- UpdateState / UpdateStateEnum ----------
+        return TLV.create_TLV(TLV.U1, 1)  # Idle
+      elif attribute == 0x0003          #  ---------- UpdateStateProgress / uint8 ----------
+        return TLV.create_TLV(TLV.NULL, nil)  # null, nothing in process
+      end
+
+    # ====================================================================================================
     elif cluster == 0x002B              # ========== Localization Configuration Cluster 11.3 p.580 ==========
 
       if   attribute == 0x0000          #  ---------- ActiveLocale / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.locale())
       elif attribute == 0x0001          #  ---------- SupportedLocales / list[string] ----------
-        var locl = TLV.Matter_TLV_list()
+        var locl = TLV.Matter_TLV_array()
         locl.add_TLV(nil, TLV.UTF1, tasmota.locale())
         return locl
       end
@@ -161,7 +259,7 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
         return TLV.create_TLV(TLV.U1, 4)  # 4 = Gregorian
       elif attribute == 0x0002          #  ---------- SupportedCalendarTypes / list[CalendarType] ----------
-        var callist = TLV.Matter_TLV_list()
+        var callist = TLV.Matter_TLV_array()
         callist.add_TLV(nil, TLV.create_TLV(TLV.U1, 4))
         return callist
       end
@@ -173,6 +271,38 @@ class Matter_Plugin_core : Matter_Plugin
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)    # 15s ??? TOOD what should we put here?
       end
+
+    # ====================================================================================================
+    elif   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
+        var dtl = TLV.Matter_TLV_array()
+        for dt: self.TYPES.keys()
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
+          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
+        end
+        return dtl
+      elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
+        var sl = TLV.Matter_TLV_array()
+        for cl: self.get_cluster_list()
+          sl.add_TLV(nil, TLV.U4, cl)
+        end
+        return sl
+      elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
+        var cl = TLV.Matter_TLV_array()
+        return cl
+      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
+        var eps = self.device.get_active_endpoints(true)
+        var pl = TLV.Matter_TLV_array()
+        for ep: eps
+          pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
+        end
+        return pl
+      end
+
+    else
+      ctx.status = matter.UNSUPPORTED_CLUSTER
+
     end
     # no match found, return that the attribute is unsupported
   end
@@ -182,12 +312,11 @@ class Matter_Plugin_core : Matter_Plugin
   #
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     import crypto
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
-    var session = msg.session
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   command == 0x0000            # ---------- ArmFailSafe ----------
@@ -197,7 +326,7 @@ class Matter_Plugin_core : Matter_Plugin
         #  1=DebugText
         var ExpiryLengthSeconds = val.findsubval(0, 900)
         var Breadcrumb = val.findsubval(1, 0)
-        session.breadcrumb = Breadcrumb
+        session.__breadcrumb = Breadcrumb
 
         var afsr = TLV.Matter_TLV_struct()
         afsr.add_TLV(0, TLV.U1, 0)      # ErrorCode = OK
@@ -209,7 +338,7 @@ class Matter_Plugin_core : Matter_Plugin
         var NewRegulatoryConfig = val.findsubval(0)     # RegulatoryLocationType Enum
         var CountryCode = val.findsubval(1, "XX")
         var Breadcrumb = val.findsubval(2, 0)
-        session.breadcrumb = Breadcrumb
+        session.__breadcrumb = Breadcrumb
         # create SetRegulatoryConfigResponse
         # ID=1
         #  0=ErrorCode (OK=0)
@@ -222,7 +351,7 @@ class Matter_Plugin_core : Matter_Plugin
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
         # no data
-        session.breadcrumb = 0          # clear breadcrumb
+        session.__breadcrumb = 0          # clear breadcrumb
         session.set_no_expiration()
 
         # create CommissioningCompleteResponse
@@ -363,10 +492,117 @@ class Matter_Plugin_core : Matter_Plugin
         ctx.command = 0x08              # NOCResponse
         return nocr
 
+      elif command == 0x0009            # ---------- UpdateFabricLabel ----------
+        var label = val.findsubval(0)     # Label string max 32
+        session.set_fabric_label(label)
+        ctx.status = matter.SUCCESS                  # OK
+        return nil                      # trigger a standalone ack
+
+      elif command == 0x000A            # ---------- RemoveFabric ----------
+        var index = val.findsubval(0)     # FabricIndex
+        var sessions_act = self.device.sessions.sessions_active()
+        if index >= 1 && index <= size(sessions_act)
+          var session_deleted = sessions_act[index - 1]
+          tasmota.log("MTR: removing fabric " + session.fabric.copy().reverse().tohex())
+          self.device.sessions.remove_session()
+          self.device.sessions.save()
+        else
+          # TODO return error 11 InvalidFabricIndex
+        end
+        ctx.status = matter.SUCCESS                  # OK
+        return nil                      # trigger a standalone ack
+
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   command == 0x0000          #  ---------- DefaultOTAProviders  ----------
+        return true                   # OK
       end
     end
 
   end
+
+  #############################################################
+  # write an attribute
+  #
+  def write_attribute(session, ctx, write_data)
+    import string
+    var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
+    
+    # 0x001D no writable attributes
+    # 0x0032 no attributes
+    # 0x0033 no writable attributes
+    # 0x0034 no writable attributes
+    # 0x0038 no mandatory writable attributes
+    # 0x003C no writable attributes
+    # 0x003E no writable attributes
+
+    if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
+
+      if   attribute == 0x0000          # ---------- Breadcrumb ----------
+        if type(write_data) == 'int' || isinstance(write_data, int64)
+          session.__breadcrumb = write_data
+          self.attribute_updated(ctx.endpoint, ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
+          return true
+        else
+          ctx.status = matter.CONSTRAINT_ERROR
+          return false
+        end
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x001F              # ========== Access Control Cluster 9.10 p.461 ==========
+      if   attribute == 0x0000          # ACL - list[AccessControlEntryStruct]
+        return true
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
+
+      if   attribute == 0x0005          #  ---------- NodeLabel / string ----------
+        # TODO
+        return true
+      elif attribute == 0x0006          #  ---------- Location / string ----------
+        # TODO
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
+
+      if   attribute == 0x0000          #  ---------- DefaultOTAProviders / list[ProviderLocationStruct] ----------
+        return true                     # silently ignore
+      end
+    # ====================================================================================================
+    elif cluster == 0x002B              # ========== Localization Configuration Cluster 11.3 p.580 ==========
+
+      if   attribute == 0x0000          #  ---------- ActiveLocale / string ----------
+        ctx.status = matter.CONSTRAINT_ERROR    # changing locale is not possible
+        return false
+      end
+    # ====================================================================================================
+    elif cluster == 0x002C              # ========== Time Format Localization Cluster 11.4 p.581 ==========
+
+      if   attribute == 0x0000          #  ---------- HourFormat / HourFormat ----------
+        # TODO
+        return true
+      elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
+        # TODO
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x0031              # ========== Network Commissioning Cluster cluster 11.8 p.606 ==========
+      if   attribute == 0x0004          #  ---------- InterfaceEnabled / bool ----------
+        ctx.status = matter.INVALID_ACTION
+        return false
+      end
+
+
+    end
+  end
 end
-matter.Plugin_core = Matter_Plugin_core
+matter.Plugin_Root = Matter_Plugin_Root
   

@@ -27,8 +27,9 @@
 
 #ifdef FIRMWARE_SENSORS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "sensors"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "sensors"
+#endif
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -103,6 +104,7 @@
 #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //#define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+//#define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 #define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
@@ -254,8 +256,9 @@
 
 #ifdef FIRMWARE_KNX_NO_EMULATION
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "knx"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "knx"
+#endif
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -280,8 +283,9 @@
 
 #ifdef FIRMWARE_DISPLAYS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "display"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "display"
+#endif
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -366,8 +370,9 @@
 
 #ifdef FIRMWARE_IR
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "ir"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "ir"
+#endif
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -501,8 +506,9 @@
 
 #ifdef FIRMWARE_ZBBRIDGE  // *******************************************************************
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "zbbridge"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "zbbridge"
+#endif
 
 #undef MODULE
 #define MODULE                 SONOFF_ZB_BRIDGE  // [Module] Select default module from tasmota_template.h
@@ -664,8 +670,9 @@
 
 #ifdef FIRMWARE_LITE
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lite"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "lite"
+#endif
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -818,8 +825,9 @@
 #ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "minimal"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "minimal"
+#endif
 
 #define FIRMWARE_MINIMAL_ONLY
 
@@ -953,8 +961,9 @@
 #ifdef FIRMWARE_MINICUSTOM
 #define FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "mini-custom"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "mini-custom"
+#endif
 
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
@@ -1023,6 +1032,8 @@
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
+    #define USE_SPI
+    #define USE_SDCARD
     #define USE_PING
   #endif // FIRMWARE_MINIMAL
 
@@ -1090,5 +1101,13 @@
 #if defined(USE_MQTT_TLS)                        // Enable TLS if required:
   #define USE_TLS                                // flag indicates we need to include TLS code
 #endif                                           // USE_MQTT_TLS
+
+/*********************************************************************************************\
+ * Default image
+\*********************************************************************************************/
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "tasmota"
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

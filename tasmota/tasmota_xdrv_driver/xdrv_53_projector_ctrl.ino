@@ -123,7 +123,8 @@ projector_ctrl_pre_init(void)
 		SetSerial(baudrate, TS_SERIAL_8N1);
 	}
 
-	sc->sc_device = ++(TasmotaGlobal.devices_present); /* claim a POWER device slot */
+  UpdateDevicesPresent(1); /* claim a POWER device slot */
+	sc->sc_device = TasmotaGlobal.devices_present;
 
 	AddLog(LOG_LEVEL_INFO, PSTR(PROJECTOR_CTRL_LOGNAME ": new RELAY%d, polling serial for Projector status"), sc->sc_device);
 

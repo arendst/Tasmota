@@ -207,6 +207,8 @@ enum UserSelectablePins {
   GPIO_ME007_TRIG, GPIO_ME007_RX,       // ME007 Serial/Trigger interface
   GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
   GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
+  GPIO_MCP23XXX_INT, GPIO_MCP23SXX_CS,  // MCP23xxx Int and SPI Chip select
+  GPIO_PCF8574_INT,                     // PCF8574 interrupt
   GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial Tx and direct output pin fan control
   GPIO_SENSOR_END };
 
@@ -461,6 +463,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ME007_TRIG "|" D_SENSOR_ME007_RX "|"
   D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
   D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
+  D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
+  D_SENSOR_PCF8574_INT "|"
   D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
   ;
 
@@ -469,6 +473,7 @@ const char kSensorNamesFixed[] PROGMEM =
 
 // Max number of GPIOs
 #define MAX_MAX31865S    6
+#define MAX_MCP23XXX     6
 #define MAX_FLOWRATEMETER 2
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
@@ -556,6 +561,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
   AGPIO(GPIO_I2C_SDA) + MAX_I2C,        // I2C SDA
+#ifdef USE_PCF8574
+  AGPIO(GPIO_PCF8574_INT),              // PCF8574 Interrupt
+#endif  // USE_PCF8574
 #endif
 
 #if defined(USE_I2S_AUDIO) || defined (USE_I2S)
@@ -590,6 +598,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_MCP2515) || defined(USE_CANSNIFFER)
   AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
+#ifdef USE_MCP23XXX_DRV
+  AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX,
+#endif  // USE_MCP23XXX_DRV
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)
@@ -677,6 +688,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef USE_MAX31865
   AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
+#endif
+
+#ifdef USE_MCP23XXX_DRV
+  AGPIO(GPIO_MCP23XXX_INT) + MAX_MCP23XXX,
 #endif
 
   AGPIO(GPIO_TXD),                      // Serial interface

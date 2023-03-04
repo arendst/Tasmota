@@ -204,7 +204,7 @@ namespace BLE_ESP32 {
 /////////////////////////////////////////////////////
 
 #define BLE_ESP32_MAXNAMELEN 32
-#define BLE_ESP32_MAXALIASLEN 20
+#define BLE_ESP32_MAXALIASLEN 32
 
 
 #define MAX_BLE_DATA_LEN 100

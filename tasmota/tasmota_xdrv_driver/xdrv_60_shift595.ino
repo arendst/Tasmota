@@ -58,7 +58,8 @@ void Shift595Init(void) {
 
       Shift595->first = TasmotaGlobal.devices_present;
       Shift595->outputs = Settings->shift595_device_count * 8;
-      TasmotaGlobal.devices_present += Shift595->outputs;
+      UpdateDevicesPresent(Shift595->outputs);
+
       Shift595->connected = true;
       AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595->first + 1, Shift595->first + Shift595->outputs);
     }

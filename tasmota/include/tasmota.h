@@ -28,12 +28,6 @@
 #define MQTT_DATA_STRING                    // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 /*********************************************************************************************\
- * Default image
-\*********************************************************************************************/
-
-#define CODE_IMAGE_STR "tasmota"
-
-/*********************************************************************************************\
  * Power Type
 \*********************************************************************************************/
 
@@ -45,21 +39,24 @@ const uint32_t POWER_SIZE = 32;             // Power (relay) bit count
  * Constants
 \*********************************************************************************************/
 
+// Why 28? Because in addition to relays there may be lights and uint32_t bitmap can hold up to 32 devices
 #ifdef ESP8266
-const uint8_t MAX_RELAYS = 8;               // Max number of relays (up to 28)
+const uint8_t MAX_RELAYS = 8;               // Max number of relays selectable on GPIO
 const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
-const uint8_t MAX_SWITCHES = 8;             // Max number of switches (up to MAX_SWITCHES_SET)
-const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons (up to 28)
+const uint8_t MAX_SWITCHES = 8;             // Max number of switches selectable on GPIO
+const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons selectable on GPIO
 #endif  // ESP8266
 #ifdef ESP32
-const uint8_t MAX_RELAYS = 28;              // Max number of relays (up to 28)
+const uint8_t MAX_RELAYS = 28;              // Max number of relays selectable on GPIO
 const uint8_t MAX_INTERLOCKS = 14;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
-const uint8_t MAX_SWITCHES = 28;            // Max number of switches (up to MAX_SWITCHES_SET)
-const uint8_t MAX_KEYS = 28;                // Max number of keys or buttons (up to 28)
+const uint8_t MAX_SWITCHES = 28;            // Max number of switches selectable on GPIO
+const uint8_t MAX_KEYS = 28;                // Max number of keys or buttons selectable on GPIO
 #endif  // ESP32
+const uint8_t MAX_RELAYS_SET = 32;          // Max number of relays
+const uint8_t MAX_KEYS_SET = 32;            // Max number of keys
 
 // Changes to the following MAX_ defines will impact settings layout
-const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS / 2)
+const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS_SET / 2)
 const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
 const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in first settings block - Legacy limit for ESP8266, but extended for ESP32 (see below)

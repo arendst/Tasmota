@@ -35,7 +35,7 @@ class Matter_MessageHandler
   def init(device)
     self.device = device
     self.commissioning = matter.Commisioning_Context(self)
-    self.im = matter.IM(self)
+    self.im = matter.IM(device)
     self.counter_rcv = matter.Counter()
   end
 
@@ -47,9 +47,11 @@ class Matter_MessageHandler
   #
   def msg_received(raw, addr, port)
     import string
+    var ret = false
+
     try
       tasmota.log("MTR: MessageHandler::msg_received raw="+raw.tohex(), 4)
-      var frame = matter.Frame(self, raw)
+      var frame = matter.Frame(self, raw, addr, port)
 
       var ok = frame.decode_header()
       if !ok      return false end
@@ -60,6 +62,9 @@ class Matter_MessageHandler
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
         tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + "session_id = " + str(session.local_session_id), 3)
+        if addr     session.__ip = addr     end
+        if port     session.__port = port   end
+        session.__message_handler = self
         frame.session = session
         
         # check if it's a duplicate
@@ -73,9 +78,9 @@ class Matter_MessageHandler
         if frame.opcode != 0x10                                 # don't show `MRP_Standalone_Acknowledgement`
           var op_name = matter.get_opcode_name(frame.opcode)
           if !op_name   op_name = string.format("0x%02X", frame.opcode) end
-          tasmota.log(string.format("MTR: >Received      %s from [%s]:%i", op_name, addr, port), 2)
+          tasmota.log(string.format("MTR: >Received  %s from [%s]:%i", op_name, addr, port), 2)
         end
-        self.commissioning.process_incoming(frame, addr, port)
+        self.commissioning.process_incoming(frame)
         return true
       else
         #############################################################
@@ -84,10 +89,13 @@ class Matter_MessageHandler
 
         var session = self.device.sessions.get_session_by_local_session_id(frame.local_session_id)
         if session == nil
-          tasmota.log("MTR: unknown local_session_id "+str(frame.local_session_id), 3)
+          tasmota.log("MTR: unknown local_session_id="+str(frame.local_session_id), 2)
           tasmota.log("MTR: frame="+matter.inspect(frame), 3)
           return false
         end
+        if addr     session.__ip = addr     end
+        if port     session.__port = port   end
+        session.__message_handler = self
         frame.session = session   # keep a pointer of the session in the message
        
         # check if it's a duplicate
@@ -104,9 +112,9 @@ class Matter_MessageHandler
         frame.raw .. cleartext                          # add cleartext
 
         # continue decoding
-        tasmota.log(string.format("MTR: idx=%i clear=%s", frame.payload_idx, frame.raw.tohex()), 3)
+        tasmota.log(string.format("MTR: idx=%i clear=%s", frame.payload_idx, frame.raw.tohex()), 4)
         frame.decode_payload()
-        tasmota.log("MTR: decrypted message: protocol_id:"+str(frame.protocol_id)+" opcode="+str(frame.opcode)+" exchange_id"+str(frame.exchange_id), 3)
+        tasmota.log("MTR: decrypted message: protocol_id:"+str(frame.protocol_id)+" opcode="+str(frame.opcode)+" exchange_id="+str(frame.exchange_id & 0xFFFF), 3)
 
         self.device.packet_ack(frame.ack_message_counter)      # acknowledge packet
 
@@ -115,12 +123,27 @@ class Matter_MessageHandler
         if protocol_id == 0x0000    # PROTOCOL_ID_SECURE_CHANNEL
           # it should not be encrypted
           tasmota.log("MTR: PROTOCOL_ID_SECURE_CHANNEL " + matter.inspect(frame), 3)
-          # if frame.opcode == 0x10
-          # end
-          return true
+          if frame.opcode == 0x10                             # MRPStandaloneAcknowledgement
+            ret = self.im.process_incoming_ack(frame)
+            if ret
+              self.im.send_enqueued(self)
+            end
+          end
+          ret = true
         elif protocol_id == 0x0001  # PROTOCOL_ID_INTERACTION_MODEL
           # dispatch to IM Protocol Messages
-          return self.im.process_incoming(frame, addr, port)
+          ret = self.im.process_incoming(frame)
+          # if `ret` is true, we have something to send
+          if ret
+            self.im.send_enqueued(self)
+
+          elif frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+            var resp = frame.build_standalone_ack()
+            resp.encode()
+            resp.encrypt()
+            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
+          end
+          ret = true
 
         # -- PROTOCOL_ID_BDX is used for file transfer between devices, not used in Tasmota
         # elif protocol_id == 0x0002  # PROTOCOL_ID_BDX -- BDX not handled at all in Tasmota
@@ -132,12 +155,11 @@ class Matter_MessageHandler
         #   return false # ignore for now TODO
         else
           tasmota.log("MTR: ignoring unhandled protocol_id:"+str(protocol_id), 3)
-          return false
         end
 
       end
 
-      return true
+      return ret
     except .. as e, m
       tasmota.log("MTR: MessageHandler::msg_received exception: "+str(e)+";"+str(m))
       import debug
@@ -167,5 +189,12 @@ class Matter_MessageHandler
     self.commissioning.every_second()
     self.im.every_second()
   end
+
+  #############################################################
+  # dispatch every 250ms click to sub-objects that need it
+  def every_250ms()
+    self.im.every_250ms()
+  end
+
 end
 matter.MessageHandler = Matter_MessageHandler

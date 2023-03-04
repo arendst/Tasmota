@@ -26,12 +26,14 @@
 
 #include <stdlib.h>
 #include "epd2in9.h"
+#include "tasmota_options.h"
 
-
+#ifndef EPD_29_V1
 #define EPD_29_V2
+#endif
+
 
 //#define BUSY_PIN 16
-
 
 Epd::Epd(int16_t width, int16_t height) :
 Paint(width,height) {
@@ -84,7 +86,6 @@ void Epd::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setTextColor(WHITE,BLACK);
   setCursor(0,0);
   fillScreen(BLACK);
-
   disp_bpp = 1;
 }
 
@@ -98,7 +99,6 @@ void Epd::Begin(int16_t cs,int16_t mosi,int16_t sclk, int16_t rst, int16_t busy)
   busy_pin = BUSY_PIN;
 #endif
 }
-
 
 void Epd::Init(int8_t p) {
   if (p == DISPLAY_INIT_PARTIAL) {
@@ -116,20 +116,14 @@ void Epd::Init(int8_t p) {
   }
 }
 
-
 int Epd::Init(const unsigned char* lut) {
-    /* this calls the peripheral hardware interface, see epdif */
-    /*if (IfInit() != 0) {
-        return -1;
-    }*/
-/*
-    cs_pin=pin[GPIO_SSPI_CS];
-    mosi_pin=pin[GPIO_SSPI_MOSI];
-    sclk_pin=pin[GPIO_SSPI_SCLK];
-*/
 
-    if (framebuffer) {
-    //  free(framebuffer);
+    if (iniz) {
+#ifndef EPD_29_V2
+      this->lut = lut;
+      SetLut(this->lut);
+#endif
+      return 0;
     }
     framebuffer = (uint8_t*)malloc(EPD_WIDTH * EPD_HEIGHT / 8);
     if (!framebuffer) return -1;
@@ -204,6 +198,7 @@ int Epd::Init(const unsigned char* lut) {
     SetLut(this->lut);
 #endif
     /* EPD hardware init end */
+    iniz = 1;
     return 0;
 }
 
@@ -250,7 +245,9 @@ void Epd::Reset(void) {
       digitalWrite(rst_pin, HIGH);
       delay(200);
     } else {
+#ifdef EPD_29_V2
       SendCommand(0x12);
+#endif
     }
 }
 

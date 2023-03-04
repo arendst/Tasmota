@@ -93,24 +93,6 @@
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 #define MQTT_LOG_LEVEL         LOG_LEVEL_NONE    // [MqttLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
-// -- Ota -----------------------------------------
-#ifdef ESP8266
-#define OTA_URL                "http://ota.tasmota.com/tasmota/release/tasmota.bin.gz"  // [OtaUrl]
-#endif  // ESP8266
-#ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32c3.bin"  // [OtaUrl]
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32s2.bin"  // [OtaUrl]
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32s3.bin"  // [OtaUrl]
-#elif defined(CORE32SOLO1)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32solo1.bin"  // [OtaUrl]
-#else
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32.bin"  // [OtaUrl]
-#endif  //  CONFIG_IDF_TARGET_ESP32C3
-#endif  // ESP32
-
 // -- MQTT ----------------------------------------
 #define MQTT_USE               true              // [SetOption3] Select default MQTT use (false = Off, true = On)
 
@@ -631,6 +613,7 @@
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+2k2 code)
 //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//  #define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //  #define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //    #define USE_PCA9685_ADDR 0x40                // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
 //    #define USE_PCA9685_FREQ 50                  // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
@@ -987,6 +970,11 @@
   #define SHIFT595_DEVICE_COUNT  1                 // [Shift595DeviceCount] Set the number of connected 74x595 shift registers
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+//  #define TM1638_USE_AS_BUTTON                   // Add support for buttons
+//  #define TM1638_USE_AS_SWITCH                   // Add support for switches (default)
+//  #define TM1638_MAX_DISPLAYS    8               // Add support for power control 8 displays
+//  #define TM1638_MAX_KEYS        8               // Add support for 8 keys
+//  #define TM1638_MAX_LEDS        8               // Add support for 8 leds
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 
@@ -1212,6 +1200,14 @@
 //#define FIRMWARE_MINIMAL                         // Create tasmota-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
+ * Safe guard when needed defines are not done in Platformio                                                         *
+\*********************************************************************************************/
+
+#ifndef OTA_URL
+  #define OTA_URL ""
+#endif
+
+/*********************************************************************************************\
  * User configurable items override                                                          *
 \*********************************************************************************************/
 
@@ -1271,6 +1267,34 @@
 
 #if defined(USE_MQTT_TLS) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS)
   #define USE_TLS                                // flag indicates we need to include TLS code
+#endif
+
+/*********************************************************************************************\
+ * Post-process compile options for Matter
+\*********************************************************************************************/
+
+#ifdef ESP32
+#ifdef USE_MATTER_DEVICE
+  #undef  USE_DISCOVERY
+  #define USE_DISCOVERY
+
+// Enable all the crypto required by Matter
+  #undef  USE_BERRY_CRYPTO_EC_P256
+  #define USE_BERRY_CRYPTO_EC_P256
+  #undef  USE_BERRY_CRYPTO_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_HKDF_SHA256
+  #define USE_BERRY_CRYPTO_HKDF_SHA256
+  #undef  USE_BERRY_CRYPTO_AES_CCM
+  #define USE_BERRY_CRYPTO_AES_CCM
+  #undef  USE_BERRY_CRYPTO_AES_CTR
+  #define USE_BERRY_CRYPTO_AES_CTR
+  #undef  USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  #define USE_BERRY_CRYPTO_SPAKE2P_MATTER
+
+#endif // USE_MATTER_DEVICE
 #endif
 
 /*********************************************************************************************\

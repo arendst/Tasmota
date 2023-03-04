@@ -628,7 +628,7 @@ bool UBXHandlePOSLLH()
   DEBUG_SENSOR_LOG(PSTR("UBX: iTOW: %u"),UBX.Message.navPosllh.iTOW);
   if (UBX.state.gpsFix>1) {
     if (UBX.mode.filter_noise) {
-      if ((UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat<abs(UBX_LAT_LON_THRESHOLD))||(UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon<abs(UBX_LAT_LON_THRESHOLD))) {
+      if ((abs(UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat)<UBX_LAT_LON_THRESHOLD)||(abs(UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon)<UBX_LAT_LON_THRESHOLD)) {
         DEBUG_SENSOR_LOG(PSTR("UBX: Diff lat: %u lon: %u "),UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat, UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon);
         return false; //no new position
       }
@@ -667,7 +667,7 @@ void UBXHandleSTATUS()
 void UBXHandleTIME()
 {
   DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time: %u-%u-%u %u:%u:%u"), UBX.Message.navTime.year, UBX.Message.navTime.month ,UBX.Message.navTime.day,UBX.Message.navTime.hour,UBX.Message.navTime.min,UBX.Message.navTime.sec);
-  if (UBX.Message.navTime.valid.UTC == 1) {
+  if ((UBX.Message.navTime.valid.UTC == 1) && (UBX.Message.navTime.year >= 2023)) {
     UBX.state.timeOffset =  millis(); // iTOW%1000 should be 0 here, when NTP-server is enabled and in "pure mode"
     DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time is valid"));
     bool resync = (Rtc.utc_time > UBX.utc_time);  // Sync local time every hour

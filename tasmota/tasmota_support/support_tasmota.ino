@@ -962,12 +962,8 @@ bool MqttShowSensor(bool call_show_sensor) {
   ResponseAppendTime();
 
   int json_data_start = ResponseLength();
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-#ifdef USE_TM1638
-    if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM1638CLK) && PinUsed(GPIO_TM1638DIO) && PinUsed(GPIO_TM1638STB))) {
-#else
-    if (PinUsed(GPIO_SWT1, i)) {
-#endif  // USE_TM1638
+  for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+    if (SwitchUsed(i)) {
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }
@@ -2200,6 +2196,22 @@ void GpioInit(void)
   XdrvCall(FUNC_I2C_INIT);                                 // Init RTC
 
   TasmotaGlobal.devices_present = 0;
+  uint32_t bi_device = 0;
+  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+    if (PinUsed(GPIO_REL1, i)) {
+      TasmotaGlobal.devices_present++;
+#ifdef ESP8266
+      if (EXS_RELAY == TasmotaGlobal.module_type) {
+        if (i &1) { TasmotaGlobal.devices_present--; }
+      }
+#endif  // ESP8266
+      if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+        if (bi_device &1) { TasmotaGlobal.devices_present--; }
+        bi_device++;
+      }
+    }
+  }
+
   TasmotaGlobal.light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
 
   XsnsCall(FUNC_MODULE_INIT);
@@ -2228,22 +2240,6 @@ void GpioInit(void)
 #endif  // ESP8266
 
   GpioInitPwm();
-
-  uint32_t bi_device = 0;
-  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
-    if (PinUsed(GPIO_REL1, i)) {
-      TasmotaGlobal.devices_present++;
-#ifdef ESP8266
-      if (EXS_RELAY == TasmotaGlobal.module_type) {
-        if (i &1) { TasmotaGlobal.devices_present--; }
-      }
-#endif  // ESP8266
-      if (bitRead(TasmotaGlobal.rel_bistable, i)) {
-        if (bi_device &1) { TasmotaGlobal.devices_present--; }
-        bi_device++;
-      }
-    }
-  }
 
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
     if (PinUsed(GPIO_LED1, i)) {

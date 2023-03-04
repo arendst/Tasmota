@@ -47,16 +47,22 @@ class Matter_Session
   # counters
   var counter_rcv                 # counter for incoming messages
   var counter_snd                 # counter for outgoing messages
+  var __exchange_id               # exchange id for locally initiated transaction, non-persistent
+  # keep track of last known IP/Port of the fabric
+  var __ip                        # IP of the last received packet
+  var __port                      # port of the last received packet
+  var __message_handler           # pointer to the message handler for this session
   # non-session counters
   var _counter_insecure_rcv       # counter for incoming messages
   var _counter_insecure_snd       # counter for outgoing messages
   # encryption keys and challenges
   var i2rkey                      # key initiator to receiver (incoming)
   var r2ikey                      # key receiver to initiator (outgoing)
+  var _i2r_privacy                # cache for the i2r privacy key
   var attestation_challenge        # Attestation challenge
   var peer_node_id
   # breadcrumb
-  var breadcrumb                  # breadcrumb attribute for this session
+  var __breadcrumb                # breadcrumb attribute for this session, prefix `__` so that it is not persisted and untouched
   # our own private key
   var no_private_key              # private key of the device certificate (generated at commissioning)
   # NOC information
@@ -71,6 +77,7 @@ class Matter_Session
   var fabric                      # fabric identifier as bytes(8) little endian
   var fabric_compressed           # comrpessed fabric identifier, hashed with root_ca public key
   var deviceid                    # our own device id bytes(8) little endian
+  var fabric_label                # set by UpdateFabricLabel
   # Admin info extracted from NOC/ICAC
   var admin_subject
   var admin_vendor
@@ -80,11 +87,15 @@ class Matter_Session
   var _persist                     # do we persist this sessions or is it remporary
   var expiration                   # if not `nil` the entry is removed after this timestamp
 
+  # below are placeholders for ongoing transactions or chunked responses
+  var _chunked_attr_reports        # if not `nil` holds a container for the current _chuked_attr_reports
+
   # Group Key Derivation
   static var __GROUP_KEY = "GroupKey v1.0"  # starting with double `_` means it's not writable
 
   #############################################################
   def init(store, local_session_id, initiator_session_id)
+    import crypto
     self.__store = store
     self.mode = 0
     self.local_session_id = local_session_id
@@ -93,7 +104,8 @@ class Matter_Session
     self.counter_snd = matter.Counter()
     self._counter_insecure_rcv = matter.Counter()
     self._counter_insecure_snd = matter.Counter()
-    self.breadcrumb = int64()
+    self.__breadcrumb = 0
+    self.__exchange_id = crypto.random(2).get(0,2)      # generate a random 16 bits number, then increment with rollover
   end
 
   #############################################################
@@ -108,8 +120,10 @@ class Matter_Session
     self.counter_rcv.reset()
     self.counter_snd.reset()
     self.i2rkey = nil
+    self._i2r_privacy = nil
     self.r2ikey = nil
     self.attestation_challenge = nil
+    self.fabric_label = ""
     # clear any attribute starting with `_`
     import introspect
     for k : introspect.members(self)
@@ -129,6 +143,7 @@ class Matter_Session
   end
   def set_keys(i2r, r2i, ac, st)
     self.i2rkey = i2r
+    self._i2r_privacy = nil   # clear cache
     self.r2ikey = r2i
     self.attestation_challenge = ac
     self.session_timestamp = st
@@ -152,6 +167,11 @@ class Matter_Session
   def set_persist(p)
     self._persist = bool(p)
   end
+  def set_fabric_label(s)
+    if type(s) == 'string'
+      self.fabric_label = s
+    end
+  end
 
   #############################################################
   def get_mode()
@@ -159,6 +179,14 @@ class Matter_Session
   end
   def get_i2r()
     return self.i2rkey
+  end
+  def get_i2r_privacy()       # get and cache privacy key
+    if self._i2r_privacy == nil
+      import crypto
+      # compute privacy key according to p.127
+      self._i2r_privacy = crypto.HKDF_SHA256().derive(self.get_i2r(), bytes(), bytes().fromstring("PrivacyKey"), 16)
+    end
+    return self._i2r_privacy
   end
   def get_r2i()
     return self.r2ikey
@@ -495,6 +523,37 @@ class Matter_Session_Store
   end
 
   #############################################################
+  # find session by resumption id
+  def find_session_by_resumption_id(resumption_id)
+    if !resumption_id  return nil end
+    var i = 0
+    var sessions = self.sessions
+    while i < size(sessions)
+      if sessions[i].resumption_id == resumption_id
+        return sessions[i]
+      end
+      i += 1
+    end
+  end
+
+  #############################################################
+  # list of sessions that are active, i.e. have been
+  # successfully commissioned
+  #
+  def sessions_active()
+    var ret = []
+    var idx = 0
+    while idx < size(self.sessions)
+      var session = self.sessions[idx]
+      if session.get_deviceid() && session.get_fabric()
+        ret.push(session)
+      end
+      idx += 1
+    end
+    return ret
+  end
+
+  #############################################################
   def save()
     import json
     self.remove_expired()      # clean before saving
@@ -537,6 +596,7 @@ class Matter_Session_Store
 
       for v:j           # iterate on values
         var session = matter.Session.fromjson(self, v)
+        session._persist = true
         if session != nil
           self.add_session(session)
         end

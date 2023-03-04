@@ -1,15 +1,7 @@
 /*
   xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
-    Biomine 625x12 Custom Board
-    6 x 25A Relays
-    6 x Independent PZEM-004V3 Modbus AC energy sensor
-    3bit serial switch
-    Integrated MCP23008
 
-  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
-
-  Copyright (C) 2021       Theo Arends
-  Copyright (C) 2022-2023  Fabrizio Amodio
+  Copyright (C) 2023  Fabrizio Amodio
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,13 +17,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_ENERGY_SENSOR_ESP32) && defined(USE_I2C)
+#ifdef ESP32
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C)
 #ifdef USE_BIOPDU
+/*********************************************************************************************\
+  Biomine 625x12 Custom Board
+  6 x 25A Relays
+  6 x Independent PZEM-004V3 Modbus AC energy sensor
+  3bit serial switch
+  Integrated MCP23008
 
-/*
+  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}
+
   BioPDU 625x12 Factory Settings:
 
-      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}  
+      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}
       Module 0
       EthType 0
       EthAddress 0
@@ -62,18 +62,11 @@
       USE_MCP230xx_ADDR=0x20
       USE_MCP230xx_OUTPUT
       USE_BIOPDU
-*/
+\*********************************************************************************************/
 
 #define XNRG_24 24
 
-#undef ENERGY_MAX_PHASES
-#define ENERGY_MAX_PHASES         6        // BioPDU support max six phases/channels
-
-#undef ENERGY_GUI_MAX_COLS
-#define ENERGY_GUI_MAX_COLS       6        // [EnergyCols] Number of GUI data columns - Preffered 6
-
-#undef ENERGY_GUI_DISPLAY_MODE
-#define ENERGY_GUI_DISPLAY_MODE   ENERGY_DISPLAY_TABS // [EnergyDisplay] 1 = Rotate if over EnergyCols, 2 = Rotate only powered on if over EnergyCols, 3 = Use tabs if over EnergyCols
+#define BIOPDU_MAX_PHASES         6         // BioPDU support max six phases/channels
 
 const uint8_t BIOPDU_DEVICE_ADDRESS = 0x01; // PZEM default address
 const uint32_t BIOPDU_STABILIZE = 30;       // Number of seconds to stabilize configuration
@@ -242,7 +235,7 @@ void BioPduDrvInit(void)
       }
     }
 
-    Energy->phase_count = std::min((uint8_t)(pow(2, BioPdu.pins) - 1), (uint8_t)ENERGY_MAX_PHASES); // Start off with 6 phases
+    Energy->phase_count = std::min((uint8_t)(pow(2, BioPdu.pins) - 1), (uint8_t)BIOPDU_MAX_PHASES); // Start off with 6 phases
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("PDU: number of pins=%d, max_phase=%d"), BioPdu.pins, Energy->phase_count);
   }
@@ -298,5 +291,6 @@ bool Xnrg24(uint32_t function)
   return result;
 }
 
-#endif // USE_BIOPDU
-#endif // USE_ENERGY_SENSOR
+#endif  // USE_BIOPDU
+#endif  // USE_ENERGY_SENSOR
+#endif  // ESP32

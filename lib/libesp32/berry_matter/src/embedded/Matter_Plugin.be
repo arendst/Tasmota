@@ -23,14 +23,24 @@
 #@ solidify:Matter_Plugin,weak
 
 class Matter_Plugin
-  var device
-  var endpoints
+  static var EMPTY_LIST = []
+  static var EMPTY_MAP = {}
+  var device                                # reference to the `device` global object
+  var endpoints                             # list of supported endpoints
+  var clusters                              # map from cluster to list of attributes
 
   #############################################################
   # Constructor
   def init(device)
     self.device = device
-    self.endpoints = []
+    self.endpoints = self.EMPTY_LIST
+    self.clusters = self.EMPTY_LIST
+  end
+
+  #############################################################
+  # signal that an attribute has been changed
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    self.device.attribute_updated(endpoint, cluster, attribute, fabric_specific)
   end
 
   #############################################################
@@ -38,50 +48,69 @@ class Matter_Plugin
   def get_endpoints()
     return self.endpoints
   end
+  def get_cluster_map()
+    return self.clusters
+  end
+  def get_cluster_list(ep)
+    var ret = []
+    for k: self.clusters.keys()
+      ret.push(k)
+    end
+    return ret
+  end
+  def get_attribute_list(ep, cluster)
+    return self.clusters.find(cluster, self.EMPTY_LIST)
+  end
+
+  #############################################################
+  # Does it handle this endpoint and this cluster
+  def has(cluster, endpoint)
+    return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
+  end
 
   #############################################################
   # read attribute
-  def read_attribute(msg, endpoint, cluster, attribute)
+  def read_attribute(session, ctx)
     return nil
   end
 
   #############################################################
   # read event
   # TODO
-  def read_event(msg, endpoint, cluster, eventid)
+  def read_event(session, endpoint, cluster, eventid)
     return nil
   end
 
   #############################################################
   # subscribe attribute
   # TODO
-  def subscribe_attribute(msg, endpoint, cluster, attribute)
+  def subscribe_attribute(session, endpoint, cluster, attribute)
     return nil
   end
 
   #############################################################
   # subscribe event
   # TODO
-  def subscribe_event(msg, endpoint, cluster, eventid)
+  def subscribe_event(session, endpoint, cluster, eventid)
     return nil
   end
 
   #############################################################
   # write attribute
-  def write_attribute(msg, endpoint, cluster, attribute)
+  def write_attribute(session, ctx, write_data)
     return nil
   end
 
   #############################################################
   # invoke command
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     return nil
   end
 
   #############################################################
   # timed request
   # TODO - should we even support this?
-  def timed_request(msg, val, ctx)
+  def timed_request(session, val, ctx)
     return nil
   end
 end

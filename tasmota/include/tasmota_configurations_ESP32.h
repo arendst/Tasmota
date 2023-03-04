@@ -31,8 +31,9 @@
 
 #ifdef FIRMWARE_SAFEBOOT
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "safeboot"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "safeboot"
+#endif
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
@@ -194,8 +195,9 @@
 
 #ifdef FIRMWARE_WEBCAM
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "webcam"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "webcam"
+#endif
 
 #define USE_WEBCAM
 #define ENABLE_RTSPSERVER
@@ -238,8 +240,9 @@
 
 #ifdef FIRMWARE_BLUETOOTH
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "bluetooth"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "bluetooth"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -275,8 +278,9 @@
 
 #ifdef FIRMWARE_LVGL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lvgl-haspmota"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "lvgl-haspmota"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -346,8 +350,8 @@
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
-#undef USE_ENERGY_SENSOR
-
+#define USE_ENERGY_SENSOR                      // Add energy to support Shelly Pro 4PM display (+38k code)
+#define USE_SHELLY_PRO
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #undef USE_MLX90614
@@ -374,6 +378,7 @@
 //#define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //#define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+#define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
@@ -384,7 +389,7 @@
 //#define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 //#define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k3 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
-//#define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
+#define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //#define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_VL53L1X                            // [I2cDriver54] Enable VL53L1X time of flight sensor (I2C address 0x29) using Pololu VL53L1X library (+2k9 code)
 //#define USE_TOF10120                           // [I2cDriver57] Enable TOF10120 time of flight sensor (I2C address 0x52) (+0k6 code)
@@ -469,8 +474,9 @@
 
 #ifdef FIRMWARE_ZBBRDGPRO
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "zbbrdgpro"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "zbbrdgpro"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -519,8 +525,9 @@
 
 #ifdef FIRMWARE_NSPANEL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "nspanel"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "nspanel"
+#endif
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -537,6 +544,10 @@
 \*********************************************************************************************/
 
 #ifdef FIRMWARE_TASMOTA32
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "tasmota32"
+#endif
 
 #define USE_INFLUXDB                             // Enable influxdb support (+5k code)
 
@@ -592,6 +603,7 @@
 #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //#define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+#define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 //#define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
@@ -603,6 +615,7 @@
 #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 #define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k5 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
+#define USE_ADE7880                            // [I2cDriver65] Enable ADE7880 Energy monitor as used on Shelly 3EM (I2C address 0x38) (+3k8)
 #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 #define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_VL53L1X                            // [I2cDriver54] Enable VL53L1X time of flight sensor (I2C address 0x29) using Pololu VL53L1X library (+2k9 code)
@@ -651,6 +664,7 @@
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
 //#define USE_MCP2515                            // Add support for can bus using MCP2515 (+7k code)
 //#define USE_CANSNIFFER                         // Add support for can bus sniffer using MCP2515 (+5k code)
+#define USE_MCP23XXX_DRV                         // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 #define USE_SHELLY_PRO                           // Add support for Shelly Pro
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)

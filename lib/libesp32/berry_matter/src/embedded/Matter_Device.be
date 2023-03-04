@@ -28,7 +28,7 @@ class Matter_Device
   static var FILENAME = "_matter_device.json"
   var plugins                         # list of plugins
   var udp_server                      # `matter.UDPServer()` object
-  var msg_handler                     # `matter.MessageHandler()` object
+  var message_handler                     # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
   # information about the device
@@ -38,9 +38,11 @@ class Matter_Device
   var hostname_eth                    # MAC-derived hostname for commissioning
   var vendorid
   var productid
+  # saved in parameters
   var discriminator
-  # context for PBKDF
   var passcode
+  var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  # context for PBKDF
   var iterations
   # PBKDF information used only during PASE (freed afterwards)
   var salt
@@ -59,17 +61,19 @@ class Matter_Device
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.iterations = self.PBKDF_ITERATIONS
+    self.ipv4only = false
     self.load_param()
     self.commissioning_instance_wifi = crypto.random(8).tohex()    # 16 characters random hostname
     self.commissioning_instance_eth = crypto.random(8).tohex()    # 16 characters random hostname
 
     self.sessions = matter.Session_Store()
     self.sessions.load()
-    self.msg_handler = matter.MessageHandler(self)
+    self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
 
     # add the default plugin
-    self.plugins.push(matter.Plugin_core(self))
+    self.plugins.push(matter.Plugin_Root(self))
+    self.plugins.push(matter.Plugin_OnOff(self))
 
     self.start_mdns_announce_hostnames()
 
@@ -113,6 +117,7 @@ class Matter_Device
   # iterations is set to 1000 which is large enough
   def compute_pbkdf(passcode_int)
     import crypto
+    import string
     self.salt = crypto.random(16)         # bytes("5350414B453250204B65792053616C74")
     var passcode = bytes().add(passcode_int, 4)
 
@@ -124,13 +129,17 @@ class Matter_Device
     self.w1 = crypto.EC_P256().mod(w1s)
     self.L = crypto.EC_P256().public_key(self.w1)
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: salt          = " + self.salt.tohex(), 3)
-    tasmota.log("MTR: passcode      = " + passcode.tohex(), 3)
-    tasmota.log("MTR: w0            = " + self.w0.tohex(), 3)
-    tasmota.log("MTR: w1            = " + self.w1.tohex(), 3)
-    tasmota.log("MTR: L             = " + self.L.tohex(), 3)
-    tasmota.log("MTR: ******************************", 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: salt          = " + self.salt.tohex(), 4)
+    tasmota.log("MTR: passcode_hex  = " + passcode.tohex(), 4)
+    tasmota.log("MTR: w0            = " + self.w0.tohex(), 4)
+    tasmota.log("MTR: w1            = " + self.w1.tohex(), 4)
+    tasmota.log("MTR: L             = " + self.L.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
+
+    # show Manual pairing code in logs
+    var pairing_code = self.compute_manual_pairing_code()
+    tasmota.log(string.format("MTR: Manual pairing code: %s-%s-%s", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]), 2)
   end
 
   #############################################################
@@ -166,7 +175,13 @@ class Matter_Device
   # dispatch every second click to sub-objects that need it
   def every_second()
     self.sessions.every_second()
-    self.msg_handler.every_second()
+    self.message_handler.every_second()
+  end
+
+  #############################################################
+  # dispatch every 250ms click to sub-objects that need it
+  def every_250ms()
+    self.message_handler.every_250ms()
   end
 
   #############################################################
@@ -177,7 +192,7 @@ class Matter_Device
   #############################################################
   # callback when message is received
   def msg_received(raw, addr, port)
-    return self.msg_handler.msg_received(raw, addr, port)
+    return self.message_handler.msg_received(raw, addr, port)
   end
 
   def msg_send(raw, addr, port, id)
@@ -214,27 +229,6 @@ class Matter_Device
   end
 
   #############################################################
-  # Start UDP mDNS announcements for commissioning
-  #
-  # eth is `true` if ethernet turned up, `false` is wifi turned up
-  # def mdns_announce_commissioning()
-  #   var services = {
-  #     "VP":str(self.vendorid) + "+" + str(self.productid),
-  #     "D": self.discriminator,
-  #     "CM":1,                           # requires passcode
-  #     "T":0,                            # no support for TCP
-  #     "SII":5000, "SAI":300
-  #   }
-
-  #   if self.self.hostname_eth
-  #     mdns.add_service("_matterc","_udp", 5540, services, self.commissioning_instance_eth, self.hostname_eth)
-  #   end
-  #   if self.self.hostname_wifi
-  #     mdns.add_service("_matter","_tcp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
-  #   end
-  # end
-
-  #############################################################
   # Start Operational Discovery
   def start_operational_dicovery(session)
     import crypto
@@ -264,24 +258,177 @@ class Matter_Device
     tasmota.log("MTR: *** Commissioning complete ***", 2)
   end
 
-  #############################################################
-  # read an attribute
-  #
-  def read_attribute(msg, endpoint, cluster, attribute)
-    var idx = 0
-    while idx < size(self.plugins)
-      var plugin = self.plugins[idx]
 
-      var ret = plugin.read_attribute(msg, endpoint, cluster, attribute)
-      if  ret != nil
-        return ret
+  #################################################################################
+  # Simple insertion sort - sorts the list in place, and returns the list
+  # remove duplicates
+  #################################################################################
+  static def sort_distinct(l)
+    # insertion sort
+    for i:1..size(l)-1
+      var k = l[i]
+      var j = i
+      while (j > 0) && (l[j-1] > k)
+        l[j] = l[j-1]
+        j -= 1
       end
+      l[j] = k
+    end
+    # remove duplicate now that it's sorted
+    var i = 1
+    if size(l) <= 1  return l end     # no duplicate if empty or 1 element
+    var prev = l[0]
+    while i < size(l)
+      if l[i] == prev
+        l.remove(i)
+      else
+        prev = l[i]
+        i += 1
+      end
+    end
+    return l
+  end
 
-      idx += 1
+  #############################################################
+  # signal that an attribute has been changed
+  #
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    if fabric_specific == nil   fabric_specific = false end
+    var ctx = matter.Path()
+    ctx.endpoint = endpoint
+    ctx.cluster = cluster
+    ctx.attribute = attribute
+    self.message_handler.im.subs.attribute_updated_ctx(ctx, fabric_specific)
+  end
+
+  #############################################################
+  # expand attribute list based 
+  #
+  # called only when expansion is needed,
+  # so we don't need to report any error since they are ignored
+  def process_attribute_expansion(ctx, cb)
+    #################################################################################
+    # Returns the keys of a map as a sorted list
+    #################################################################################
+    def keys_sorted(m)
+      var l = []
+      for k: m.keys()
+        l.push(k)
+      end
+      # insertion sort
+      for i:1..size(l)-1
+        var k = l[i]
+        var j = i
+        while (j > 0) && (l[j-1] > k)
+          l[j] = l[j-1]
+          j -= 1
+        end
+        l[j] = k
+      end
+      return l
+    end
+  
+    import string
+    var endpoint = ctx.endpoint
+    # var endpoint_mono = [ endpoint ]
+    var endpoint_found = false                # did any endpoint match
+    var cluster = ctx.cluster
+    # var cluster_mono = [ cluster ]
+    var cluster_found = false
+    var attribute = ctx.attribute
+    # var attribute_mono = [ attribute ]
+    var attribute_found = false
+
+    var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
+
+    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+
+    # build the list of candidates
+
+    # list of all endpoints
+    var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
+    tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
+    for pi: self.plugins
+      var ep_list = pi.get_endpoints()    # get supported endpoints for this plugin
+      tasmota.log(string.format("MTR: pi=%s ep_list=%s", str(pi), str(ep_list)), 4)
+      for ep: ep_list
+        if endpoint != nil && ep != endpoint    continue      end       # skip if specific endpoint and no match
+        # from now on, 'ep' is a good candidate
+        if !all.contains(ep)                    all[ep] = {}  end       # create empty structure if not already in the list
+        endpoint_found = true
+
+        # now explore the cluster list for 'ep'
+        var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+        tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+        for cl: cluster_list
+          if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
+          # from now on, 'cl' is a good candidate
+          if !all[ep].contains(cl)              all[ep][cl] = {}  end
+          cluster_found = true
+
+          # now filter on attributes
+          var attr_list = pi.get_attribute_list(ep, cl)
+          tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+          for at: attr_list
+            if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
+            # from now on, 'at' is a good candidate
+            if !all[ep][cl].contains(at)        all[ep][cl][at] = [] end
+            attribute_found = true
+
+            all[ep][cl][at].push(pi)                                    # add plugin to the list
+          end
+        end
+      end
+    end
+
+    # import json
+    # tasmota.log("MTR: all = " + json.dump(all), 2)
+
+    # iterate on candidates
+    for ep: keys_sorted(all)
+      for cl: keys_sorted(all[ep])
+        for at: keys_sorted(all[ep][cl])
+          for pi: all[ep][cl][at]
+            tasmota.log(string.format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
+            ctx.endpoint = ep
+            ctx.cluster = cl
+            ctx.attribute = at
+            var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
+            if direct && finished     return end
+          end
+        end
+      end
+    end
+
+    # we didn't have any successful match, report an error if direct (non-expansion request)
+    if direct
+      # since it's a direct request, ctx has already the correct endpoint/cluster/attribute
+      if   !endpoint_found      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      elif !cluster_found       ctx.status = matter.UNSUPPORTED_CLUSTER
+      elif !attribute_found     ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+      else                      ctx.status = matter.UNREPORTABLE_ATTRIBUTE
+      end
+      cb(nil, ctx, true)
     end
   end
 
-
+  #############################################################
+  # get active endpoints
+  #
+  # return the list of endpoints from all plugins (distinct)
+  def get_active_endpoints(exclude_zero)
+    var ret = []
+    for p:self.plugins
+      var e = p.get_endpoints()
+      for elt:e
+        if exclude_zero && elt == 0   continue end
+        if ret.find(elt) == nil
+          ret.push(elt)
+        end
+      end
+    end
+    return ret
+  end
 
   #############################################################
   # Persistance of Matter Device parameters
@@ -290,7 +437,7 @@ class Matter_Device
   # 
   def save_param()
     import json
-    var j = json.dump({'distinguish':self.discriminator, 'passcode':self.passcode})
+    var j = json.dump({'distinguish':self.discriminator, 'passcode':self.passcode, 'ipv4only':self.ipv4only})
     try
       import string
       var f = open(self.FILENAME, "w")
@@ -316,8 +463,9 @@ class Matter_Device
       import json
       var j = json.load(s)
 
-      self.discriminator = j.find("distinguish")
-      self.passcode = j.find("passcode")
+      self.discriminator = j.find("distinguish", self.discriminator)
+      self.passcode = j.find("passcode", self.passcode)
+      self.ipv4only = bool(j.find("ipv4only", false))
     except .. as e, m
       if e != "io_error"
         tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
@@ -343,12 +491,12 @@ class Matter_Device
   # Plugins allow to specify response to read/write attributes
   # and command invokes
   #############################################################
-  def invoke_request(msg, val, ctx)
+  def invoke_request(session, val, ctx)
     var idx = 0
     while idx < size(self.plugins)
       var plugin = self.plugins[idx]
 
-      var ret = plugin.invoke_request(msg, val, ctx)
+      var ret = plugin.invoke_request(session, val, ctx)
       if  ret != nil || ctx.status != matter.UNSUPPORTED_COMMAND  # default value
         return ret
       end
@@ -407,7 +555,11 @@ class Matter_Device
       if is_eth
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
-        mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
+        if !self.ipv4only
+          mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
+        else
+          mdns.add_hostname(self.hostname_eth, eth.find('ip',''))
+        end
         mdns.add_service("_matterc", "_udp", 5540, services, self.commissioning_instance_eth, self.hostname_eth)
 
         tasmota.log(string.format("MTR: starting mDNS on %s '%s' ptr to `%s.local`", is_eth ? "eth" : "wifi",
@@ -430,8 +582,12 @@ class Matter_Device
       else
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
-        mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
-        mdns.add_service("_matter", "_tcp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
+        if !self.ipv4only
+          mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
+        else
+          mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
+        end
+        mdns.add_service("_matterc", "_udp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
 
         tasmota.log(string.format("MTR: starting mDNS on %s '%s' ptr to `%s.local`", is_eth ? "eth" : "wifi",
         is_eth ? self.commissioning_instance_eth : self.commissioning_instance_wifi,

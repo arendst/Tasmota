@@ -65,7 +65,7 @@ a_setoption = [[
     "(Settings) Switch between dynamic (0) or fixed (1) slot flash save location",
     "(Button) Support only single press (1) to speed up button press recognition",
     "(Interlock) Power interlock mode",
-    "(Light) Switch between commands PWM (1) or COLOR/DIMMER/CT/CHANNEL (0)",
+    "(Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)",
     "(WS2812) Switch between clockwise (0) or counter-clockwise (1)",
     "(Light) Switch between decimal (1) or hexadecimal (0) output",
     "(Light) Pair light signal (1) with CO2 sensor",
@@ -206,7 +206,8 @@ a_setoption = [[
     "(Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up",
     "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
     "(Energy) Force no voltage/frequency common",
-    "","","",
+    "(Matter) Enable Matter protocol over Wifi",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -292,7 +293,7 @@ a_features = [[
     "USE_MODBUS_ENERGY","USE_SHELLY_PRO","USE_DALI","USE_BP1658CJ",
     "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
-    "","","","",
+    "USE_BIOPDU","USE_MCP23XXX_DRV","","",
     "","","","",
     "","","","",
     "","","",""
@@ -323,7 +324,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.3.1.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.4.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.6**.
+This release will be supported from ESP32/Arduino library Core version **2.0.7**.
 
-Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.6 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.7 have been removed.
 
 ## Support of TLS
 
@@ -75,12 +75,12 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.3.1
+- http://ota.tasmota.com/tasmota/release-12.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.6**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.7**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -100,7 +100,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-12.3.1
+- https://ota.tasmota.com/tasmota32/release-12.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -110,43 +110,27 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.3.1.5
+## Changelog v12.4.0.2
 ### Added
-- Support for up to 3 single phase modbus energy monitoring device using generic Energy Modbus driver- Support for RGB displays [#17414](https://github.com/arendst/Tasmota/issues/17414)
-- Support for IPv6 DNS records (AAAA) and IPv6 ``Ping`` for ESP32 and ESP8266 [#17417](https://github.com/arendst/Tasmota/issues/17417)
-- Support for IPv6 only networks on Ethernet (not yet Wifi)
-- Support for TM1650 display as used in some clocks by Stefan Oskamp [#17594](https://github.com/arendst/Tasmota/issues/17594)
-- Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich [#17557](https://github.com/arendst/Tasmota/issues/17557)
-- support for SEN5X gas and air quality sensor by Tyeth Gundry [#17736](https://github.com/arendst/Tasmota/issues/17736)
-- Berry support for ``crypto.SHA256`` [#17430](https://github.com/arendst/Tasmota/issues/17430)
-- Berry crypto add ``EC_P256`` and ``PBKDF2_HMAC_SHA256`` algorithms required by Matter protocol [#17473](https://github.com/arendst/Tasmota/issues/17473)
-- Berry crypto add ``random`` to generate series of random bytes
-- Berry crypto add ``HKDF_HMAC_SHA256``
-- Berry crypto add ``SPAKE2P_Matter`` for Matter support
-- ESP32 command ``EnergyCols 1..8`` to change number of GUI columns
-- ESP32 command ``EnergyDisplay 1..3`` to change GUI column presentation
-- ESP32 support for eigth energy phases/channels
-- ESP32 support for BMPxxx sensors on two I2C busses [#17643](https://github.com/arendst/Tasmota/issues/17643)
-- ESP32 support for Biomine BioPDU 625x12 [#17857](https://github.com/arendst/Tasmota/issues/17857)
+- Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay
+- Support for multiple PCF8574 as switch/button/relay
+- NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
 
 ### Breaking Changed
+- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
-- ESP32 Framework (Core) from v2.0.5.3 to v2.0.6 (IPv6 support)
-- Energy totals max supported value from +/-21474.83647 to +/-2147483.647 kWh
-- Removed delays in TasmotaSerial and TasmotaModbus Tx enable switching
-- Keep webserver enabled on command ``upload``
-- Increase rule event buffer from 100 to 256 characters [#16943](https://github.com/arendst/Tasmota/issues/16943)
-- TuyaMcu rewrite by btsimonh [#17051](https://github.com/arendst/Tasmota/issues/17051)
-- Tasmota OTA scripts now support both unzipped and gzipped file uploads [#17378](https://github.com/arendst/Tasmota/issues/17378)
+- ESP32 Framework (Core) from v2.0.6 to v2.0.7
+- LibTeleinfo from v1.1.3 to v1.1.5 [#18050](https://github.com/arendst/Tasmota/issues/18050)
+- Increase number of (virtual)relays and (virtual)buttons to 32
+- ADC Range oversample from 2 to 32 [#17975](https://github.com/arendst/Tasmota/issues/17975)
+- Move #define OTA_URL from user_config.h to board files for better inital support [#18008](https://github.com/arendst/Tasmota/issues/18008)
 
 ### Fixed
-- Modbus transmit enable GPIO enabled once during write buffer
-- Energy dummy switched voltage and power regression from v12.2.0.2
-- ESP8266 set GPIO's to input on power on fixing relay spikes [#17531](https://github.com/arendst/Tasmota/issues/17531)
-- Shutter default motorstop set to 0 [#17403](https://github.com/arendst/Tasmota/issues/17403)
-- Shutter default tilt configuration [#17484](https://github.com/arendst/Tasmota/issues/17484)
-- Orno WE517 modbus serial config 8E1 setting [#17545](https://github.com/arendst/Tasmota/issues/17545)
-- Rename ``tasmota4M.bin`` to ``tasmota-4M.bin`` to solve use of ``tasmota-minimal.bin`` [#17674](https://github.com/arendst/Tasmota/issues/17674)
-
-### Removed
+- TuyaMcu v1 sequence fix [#17625](https://github.com/arendst/Tasmota/issues/17625)
+- SEN5X floats and units [#17961](https://github.com/arendst/Tasmota/issues/17961)
+- Energytotals cannot be set to negative values [#17965](https://github.com/arendst/Tasmota/issues/17965)
+- SR04 driver single pin ultrasonic sensor detection [#17966](https://github.com/arendst/Tasmota/issues/17966)
+- IR panasonic protocol regression from v12.0.2.4 [#18013](https://github.com/arendst/Tasmota/issues/18013)
+- EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 [#18024](https://github.com/arendst/Tasmota/issues/18024)
+- TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
