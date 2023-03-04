@@ -207,6 +207,7 @@ enum UserSelectablePins {
   GPIO_TUYAMCUBR_TX, GPIO_TUYAMCUBR_RX, // TuyaMCU Bridge
   GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
   GPIO_MCP23XXX_INT, GPIO_MCP23SXX_CS,  // MCP23xxx Int and SPI Chip select
+  GPIO_PCF8574_INT,                     // PCF8574 interrupt
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -461,6 +462,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TUYAMCUBR_TX "|" D_SENSOR_TUYAMCUBR_RX "|"
   D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
   D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
+  D_SENSOR_PCF8574_INT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -556,6 +558,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
   AGPIO(GPIO_I2C_SDA) + MAX_I2C,        // I2C SDA
+#ifdef USE_PCF8574
+  AGPIO(GPIO_PCF8574_INT),              // PCF8574 Interrupt
+#endif  // USE_PCF8574
 #endif
 
 #if defined(USE_I2S_AUDIO) || defined (USE_I2S)

@@ -32,7 +32,7 @@
 #define XNRG_06                    6
 
 const uint8_t PZEM_DC_DEVICE_ADDRESS = 0x01;  // PZEM default address
-const uint32_t PZEM_DC_STABILIZE = 30;        // Number of seconds to stabilize configuration
+const uint32_t PZEM_DC_STABILIZE = 10;        // Number of seconds to stabilize 1 pzem
 
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemDcModbus;
@@ -76,7 +76,7 @@ void PzemDcEverySecond(void)
         Energy->active_power[PzemDc.channel] = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0f;  // 429496729.0 W
         Energy->import_active[PzemDc.channel] = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]) / 1000.0f;  // 4294967.295 kWh
         if (PzemDc.channel == Energy->phase_count -1) {
-          if (TasmotaGlobal.uptime > PZEM_DC_STABILIZE) {
+          if (TasmotaGlobal.uptime > (PZEM_DC_STABILIZE * ENERGY_MAX_PHASES)) {
             EnergyUpdateTotal();
           }
         }
@@ -100,7 +100,7 @@ void PzemDcEverySecond(void)
   }
   else {
     PzemDc.send_retry--;
-    if ((Energy->phase_count > 1) && (0 == PzemDc.send_retry) && (TasmotaGlobal.uptime < PZEM_DC_STABILIZE)) {
+    if ((Energy->phase_count > 1) && (0 == PzemDc.send_retry) && (TasmotaGlobal.uptime < (PZEM_DC_STABILIZE * ENERGY_MAX_PHASES))) {
       Energy->phase_count--;  // Decrement channels if no response after retry within 30 seconds after restart
       if (TasmotaGlobal.discovery_counter) {
         TasmotaGlobal.discovery_counter += ENERGY_WATCHDOG + 1;  // Don't send Discovery yet, delay by 4s + 1s
