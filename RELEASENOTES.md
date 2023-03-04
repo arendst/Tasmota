@@ -134,3 +134,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - IR panasonic protocol regression from v12.0.2.4 [#18013](https://github.com/arendst/Tasmota/issues/18013)
 - EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 [#18024](https://github.com/arendst/Tasmota/issues/18024)
 - TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
+- PZEM energy monitor stabilize period on larger configs [#18103](https://github.com/arendst/Tasmota/issues/18103)

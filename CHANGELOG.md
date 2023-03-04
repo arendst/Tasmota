@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - TuyaMcu v1 sequence fix (#17625)
 - TuyaMcu v1 timer integer overflow (#18048)
+- PZEM energy monitor stabilize period on larger configs (#18103)
 
 ### Removed
 

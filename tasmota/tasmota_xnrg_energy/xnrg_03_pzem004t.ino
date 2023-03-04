@@ -30,7 +30,7 @@
 
 #define XNRG_03                  3
 
-const uint32_t PZEM_STABILIZE = 30;        // Number of seconds to stabilize configuration
+const uint32_t PZEM_STABILIZE = 10;        // Number of seconds to stabilize 1 pzem
 const uint32_t PZEM_RETRY = 5;             // Number of 250 ms retries
 
 #include <TasmotaSerial.h>
@@ -194,7 +194,7 @@ void PzemEvery250ms(void)
         case 4:  // Total energy as 99999Wh
           Energy->import_active[Pzem.phase] = value / 1000.0f;  // 99.999kWh
           if (Pzem.phase == Energy->phase_count -1) {
-            if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
+            if (TasmotaGlobal.uptime > (PZEM_STABILIZE * ENERGY_MAX_PHASES)) {
               EnergyUpdateTotal();
             }
           }
@@ -229,7 +229,7 @@ void PzemEvery250ms(void)
   }
   else {
     Pzem.send_retry--;
-    if ((Energy->phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < PZEM_STABILIZE)) {
+    if ((Energy->phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < (PZEM_STABILIZE * ENERGY_MAX_PHASES))) {
       Energy->phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
       if (TasmotaGlobal.discovery_counter) {
         TasmotaGlobal.discovery_counter += (PZEM_RETRY / 4) + 1;  // Don't send Discovery yet, delay by 5 * 250ms + 1s

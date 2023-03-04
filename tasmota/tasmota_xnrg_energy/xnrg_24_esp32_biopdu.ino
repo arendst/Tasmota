@@ -69,7 +69,7 @@
 #define BIOPDU_MAX_PHASES         6         // BioPDU support max six phases/channels
 
 const uint8_t BIOPDU_DEVICE_ADDRESS = 0x01; // PZEM default address
-const uint32_t BIOPDU_STABILIZE = 30;       // Number of seconds to stabilize configuration
+const uint32_t BIOPDU_STABILIZE = 10;       // Number of seconds to stabilize 1 device
 
 #include <TasmotaModbus.h>
 TasmotaModbus *BioPduModbus;
@@ -273,7 +273,7 @@ bool Xnrg24(uint32_t function)
     } // Fix start up issue #5875
     break;
   case FUNC_ENERGY_EVERY_SECOND:
-    if (TasmotaGlobal.uptime > BIOPDU_STABILIZE)
+    if (TasmotaGlobal.uptime > (BIOPDU_STABILIZE * BIOPDU_MAX_PHASES))
     {
       BioPduEverySecond();
     }
