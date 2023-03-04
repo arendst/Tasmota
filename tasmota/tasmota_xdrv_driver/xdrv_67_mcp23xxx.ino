@@ -709,7 +709,7 @@ void MCP23xServiceInput(void) {
   }
 }
 
-void IRAM_ATTR MCP23xInputIsr(void) {
+static void IRAM_ATTR MCP23xInputIsr(void) {
   Mcp23x.interrupt = true;
 }
 

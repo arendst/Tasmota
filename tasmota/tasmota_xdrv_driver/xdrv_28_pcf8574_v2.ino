@@ -71,8 +71,6 @@
  * {"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  *                                                      B1 B2 B3 B4 Ri4 Ri3 Ri2 Ri1 B5 B6 B7 B8 Ri8 Ri7 Ri6 Ri5
  * {"NAME":"PCF8574 A=B1-4,Ri4-1, B=B5-8,Ri8-5","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]}
- *                                                        B1 B2 B3 B4 Ri4 Ri3 Ri2 Ri1 B5 B6 B7 B8 Ri8 Ri7 Ri6 Ri5
- * {"NAME":"PCF8574 A=Bi1-4,Ri4-1, B=Bi5-8,Ri8-5","GPIO":[64,65,66,67,259,258,257,256,68,69,70,71,263,262,261,260]}
 \*********************************************************************************************/
 
 #define XDRV_28           28
@@ -108,7 +106,6 @@
 #endif
 
 struct PCF8574 {
-  int error;
   uint32_t relay_inverted;
   uint32_t button_inverted;
   uint16_t pin[PCF8574_MAX_PINS];
@@ -120,7 +117,6 @@ struct PCF8574 {
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
   uint8_t mode;
-  uint8_t chip;
   uint8_t relay_max;
   uint8_t relay_offset;
   uint8_t button_max;
@@ -135,34 +131,21 @@ struct PCF8574 {
 \*********************************************************************************************/
 
 uint8_t Pcf8574Read(uint8_t idx) {
-  Wire.requestFrom(Pcf8574.address[idx],(uint8_t)1);
+  Wire.requestFrom(Pcf8574.address[idx], (uint8_t)1);
   return Wire.read();
 }
 
-uint8_t Pcf8574Write(uint8_t idx) {
+void Pcf8574Write(uint8_t idx) {
   Wire.beginTransmission(Pcf8574.address[idx]);
   Wire.write(Pcf8574.pin_mask[idx]);
-  return Wire.endTransmission();
-}
-
-/*********************************************************************************************/
-
-uint8_t Pcf8574ReadByte(void) {
-  Wire.requestFrom(Pcf8574.address[Pcf8574.chip], (uint8_t)1);
-  return Wire.read();
-}
-
-uint8_t Pcf8574WriteByte(uint8_t value) {
-  Wire.beginTransmission(Pcf8574.address[Pcf8574.chip]);
-  Wire.write(value);
-  return Wire.endTransmission();
+  Wire.endTransmission();
 }
 
 bool Pcf8574DigitalRead(uint8_t pin) {
   // pin 0 - 63
-  Pcf8574.chip = pin / 8;
-  uint8_t bit = pin % 8;
-  uint8_t value = Pcf8574ReadByte();
+  uint32_t chip = pin / 8;
+  uint32_t bit = pin % 8;
+  uint32_t value = Pcf8574Read(chip);
   return value & (1 << bit);
 }
 
@@ -170,15 +153,17 @@ void Pcf8574DigitalWrite(uint8_t pin, bool pin_value) {
   // pin 0 - 63
   // INPUT or INPUT_PULLUP = Pcf8574DigitalWrite(pin, 1);
   // OUTPUT = Pcf8574DigitalWrite(pin, 0); or Pcf8574DigitalWrite(pin, 1);
-  Pcf8574.chip = pin / 8;
-  uint8_t bit = pin % 8;
-  uint8_t reg_value = Pcf8574ReadByte();
+  uint32_t chip = pin / 8;
+  uint32_t bit = pin % 8;
+  uint32_t value = Pcf8574Read(chip);
   if (pin_value) {
-    reg_value |= 1 << bit;
+    value |= 1 << bit;
   } else {
-    reg_value &= ~(1 << bit);
+    value &= ~(1 << bit);
   }
-  Pcf8574WriteByte(reg_value);
+  Wire.beginTransmission(Pcf8574.address[chip]);
+  Wire.write(value);
+  Wire.endTransmission();
 }
 
 /*********************************************************************************************\
@@ -244,7 +229,6 @@ bool Pcf8574LoadTemplate(void) {
   if (!root) { return false; }
 
   // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B1-4,Ri4-1, B=B5-8,Ri8-5","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]} endon
-  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=Bi1-4,Ri4-1, B=Bi5-8,Ri8-5","GPIO":[64,65,66,67,259,258,257,256,68,69,70,71,263,262,261,260]} endon
   JsonParserToken val = root[PSTR(D_JSON_NAME)];
   if (val) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Template %s"), val.getStr());
@@ -289,13 +273,13 @@ bool Pcf8574LoadTemplate(void) {
         }
         else if ((mpin >= AGPIO(GPIO_REL1)) && (mpin < (AGPIO(GPIO_REL1) + MAX_RELAYS_SET))) {
           Pcf8574.relay_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT
+//          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
         }
         else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS_SET))) {
           bitSet(Pcf8574.relay_inverted, mpin - AGPIO(GPIO_REL1_INV));
           mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
           Pcf8574.relay_max++;
-          Pcf8574DigitalWrite(pin, 0);                 // OUTPUT
+//          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
         }
         else if (mpin == AGPIO(GPIO_OUTPUT_HI)) {
           Pcf8574DigitalWrite(pin, 1);                 // OUTPUT
@@ -315,38 +299,15 @@ bool Pcf8574LoadTemplate(void) {
     }
     Pcf8574.max_connected_ports = pin;                 // Max number of configured pins
   }
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Pins %d, pin %*_V"), Pcf8574.max_connected_ports, Pcf8574.max_connected_ports, (uint8_t*)Pcf8574.pin);
-
   return true;
-}
-
-uint32_t Pcf8574TemplateGpio(void) {
-  String pcftmplt = Pcf8574TemplateLoadFile();
-  uint32_t len = pcftmplt.length() +1;
-  if (len < 7) { return 0; }                           // No PcfTmplt found
-
-  JsonParser parser((char*)pcftmplt.c_str());
-  JsonParserObject root = parser.getRootObject();
-  if (!root) { return 0; }
-
-  JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
-  if (arr.isArray()) {
-    return arr.size();                                // Number of requested pins
-  }
-  return 0;
 }
 
 void Pcf8574ServiceInput(void) {
   Pcf8574.interrupt = false;
-  // This works with no interrupt
+  // This works with no interrupt too
   uint32_t pin_offset = 0;
-  uint32_t gpio;
-  for (Pcf8574.chip = 0; Pcf8574.chip < Pcf8574.max_devices; Pcf8574.chip++) {
-    gpio = Pcf8574ReadByte();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PCF: Chip %d, State %02X"), Pcf8574.chip, gpio);
-
+  for (uint32_t chip = 0; chip < Pcf8574.max_devices; chip++) {
+    uint32_t gpio = Pcf8574Read(chip);
     uint32_t mask = 1;
     for (uint32_t pin = 0; pin < 8; pin++) {
       uint32_t state = ((gpio & mask) != 0);
@@ -367,7 +328,7 @@ void Pcf8574ServiceInput(void) {
   }
 }
 
-void IRAM_ATTR Pcf8574InputIsr(void) {
+static void IRAM_ATTR Pcf8574InputIsr(void) {
   Pcf8574.interrupt = true;
 }
 
@@ -381,14 +342,12 @@ void Pcf8574Init(void) {
 }
 
 void Pcf8574Power(void) {
+  // XdrvMailbox.index = 32-bit rpower bit mask
   power_t rpower = XdrvMailbox.index >> Pcf8574.relay_offset;
   for (uint32_t index = 0; index < Pcf8574.relay_max; index++) {
     power_t state = rpower &1;
     if (Pcf8574PinUsed(GPIO_REL1, index)) {
       uint32_t pin = Pcf8574Pin(GPIO_REL1, index) & 0x3F;   // Fix possible overflow over 63 gpios
-
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Power pin %d, state %d(%d)"), pin, state, bitRead(Pcf8574.relay_inverted, index));
-
       Pcf8574DigitalWrite(pin, bitRead(Pcf8574.relay_inverted, index) ? !state : state);
     }
     rpower >>= 1;                                      // Select next power
@@ -401,9 +360,6 @@ bool Pcf8574AddButton(void) {
   uint32_t index = XdrvMailbox.index - Pcf8574.button_offset;
   if (index >= Pcf8574.button_max) { return false; }
   XdrvMailbox.index = (Pcf8574DigitalRead(Pcf8574Pin(GPIO_KEY1, index)) != bitRead(Pcf8574.button_inverted, index));
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: AddButton index %d, state %d"), index, XdrvMailbox.index);
-
   return true;
 }
 
@@ -433,7 +389,7 @@ void Pcf8574SwitchRelay(void) {
       //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: SwitchRelay %d=%d => PCF-%d.D%d=%d"), i, relay_state, board +1, pin, _val);
       bitWrite(Pcf8574.pin_mask[board], pin, _val);
       if (oldpinmask != Pcf8574.pin_mask[board]) {
-        Pcf8574.error = Pcf8574Write(board);
+        Pcf8574Write(board);
       }
       //else AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: SwitchRelay skipped"));
     }
@@ -459,8 +415,8 @@ void Pcf8574ModuleInit(void) {
     if (I2cSetDevice(pcf8574_address)) {
       Pcf8574.mode = 1;
 
-      Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
       Pcf8574.max_connected_ports += 8;
+      Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
       Pcf8574.max_devices++;
 
       char stype[9];
@@ -469,6 +425,7 @@ void Pcf8574ModuleInit(void) {
         strcpy(stype, "PCF8574A");
       }
       I2cSetActiveFound(pcf8574_address, stype);
+      if (Pcf8574.max_connected_ports > PCF8574_MAX_PINS -8) { break; }
     }
 
     pcf8574_address++;
