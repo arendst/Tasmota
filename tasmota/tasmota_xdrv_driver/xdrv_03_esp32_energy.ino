@@ -181,7 +181,6 @@ typedef struct {
   uint8_t gui_rotate;
   uint8_t gui_count;
   uint8_t gui_offset;
-  uint8_t tariff_forced; // 0: tariff change on time, 1|2: tariff forced
 
   bool voltage_common;                          // Use common voltage
   bool frequency_common;                        // Use common frequency
@@ -449,8 +448,8 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
 /********************************************************************************************/
 
 bool EnergyTariff1Active() { // Off-Peak hours
-  if (Energy->tariff_forced) {
-    return 1 == Energy->tariff_forced;
+  if (Settings->mbflag2.tariff_forced) {
+    return 1 == Settings->mbflag2.tariff_forced;
   }
   uint8_t dst = 0;
   if (IsDst() && (Energy->Settings.tariff[0][1] != Energy->Settings.tariff[1][1])) {
@@ -1058,9 +1057,9 @@ void CmndTariff(void) {
     uint32_t time_type = 0;
     char *p;
     if (POWER_OFF == XdrvMailbox.payload)
-      Energy->tariff_forced = 0;
+      Settings->mbflag2.tariff_forced = 0;
     else if (POWER_ON == XdrvMailbox.payload)
-      Energy->tariff_forced = tariff + 1;
+      Settings->mbflag2.tariff_forced = tariff + 1;
     else {
       char *str = strtok_r(XdrvMailbox.data, ", ", &p);  // 23:15, 22:30
       while ((str != nullptr) && (time_type < 2)) {
@@ -1093,8 +1092,8 @@ void CmndTariff(void) {
     XdrvMailbox.command,
     GetMinuteTime(Energy->Settings.tariff[0][0]).c_str(),GetMinuteTime(Energy->Settings.tariff[0][1]).c_str(),
     GetMinuteTime(Energy->Settings.tariff[1][0]).c_str(),GetMinuteTime(Energy->Settings.tariff[1][1]).c_str(),
-    GetStateText(Settings->flag3.energy_weekend),
-    Energy->tariff_forced);             // CMND_TARIFF
+    GetStateText(Settings->flag3.energy_weekend), // Tariff9
+    Settings->mbflag2.tariff_forced);             // Tariff<x> ON|OFF
 }
 
 uint32_t EnergyGetCalibration(uint32_t cal_type, uint32_t chan = 0) {
@@ -1479,7 +1478,7 @@ void EnergyShow(bool json) {
   bool energy_tariff = false;
   float energy_usage_kWh[2];
   float energy_return_kWh[2];
-  if (Energy->tariff_forced || (Energy->Settings.tariff[0][0] != Energy->Settings.tariff[1][0])) {
+  if (Settings->mbflag2.tariff_forced || (Energy->Settings.tariff[0][0] != Energy->Settings.tariff[1][0])) {
     energy_usage_kWh[0] = RtcEnergySettings.energy_usage.usage_total_kWh[0];    // Tariff1
     energy_usage_kWh[1] = RtcEnergySettings.energy_usage.usage_total_kWh[1];    // Tariff2
     energy_return_kWh[0] = RtcEnergySettings.energy_usage.return_total_kWh[0];  // Tariff1

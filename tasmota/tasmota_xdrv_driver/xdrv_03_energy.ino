@@ -225,6 +225,9 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
 /********************************************************************************************/
 
 bool EnergyTariff1Active() {  // Off-Peak hours
+  if (Settings->mbflag2.tariff_forced) {
+    return 1 == Settings->mbflag2.tariff_forced;
+  }
   uint8_t dst = 0;
   if (IsDst() && (Settings->tariff[0][1] != Settings->tariff[1][1])) {
     dst = 1;
@@ -825,37 +828,44 @@ void CmndTariff(void) {
     uint32_t tariff = XdrvMailbox.index -1;
     uint32_t time_type = 0;
     char *p;
-    char *str = strtok_r(XdrvMailbox.data, ", ", &p);  // 23:15, 22:30
-    while ((str != nullptr) && (time_type < 2)) {
-      char *q;
-      uint32_t value = strtol(str, &q, 10);            // 23 or 22
-      Settings->tariff[tariff][time_type] = value;
-      if (value < 24) {                                // Below 24 is hours
-        Settings->tariff[tariff][time_type] *= 60;      // Multiply hours by 60 minutes
-        char *minute = strtok_r(nullptr, ":", &q);
-        if (minute) {
-          value = strtol(minute, nullptr, 10);         // 15 or 30
-          if (value > 59) {
-            value = 59;
+    if (POWER_OFF == XdrvMailbox.payload)
+      Settings->mbflag2.tariff_forced = 0;
+    else if (POWER_ON == XdrvMailbox.payload)
+      Settings->mbflag2.tariff_forced = tariff + 1;
+    else {
+      char *str = strtok_r(XdrvMailbox.data, ", ", &p);  // 23:15, 22:30
+      while ((str != nullptr) && (time_type < 2)) {
+        char *q;
+        uint32_t value = strtol(str, &q, 10);            // 23 or 22
+        Settings->tariff[tariff][time_type] = value;
+        if (value < 24) {                                // Below 24 is hours
+          Settings->tariff[tariff][time_type] *= 60;      // Multiply hours by 60 minutes
+          char *minute = strtok_r(nullptr, ":", &q);
+          if (minute) {
+            value = strtol(minute, nullptr, 10);         // 15 or 30
+            if (value > 59) {
+              value = 59;
+            }
+            Settings->tariff[tariff][time_type] += value;
           }
-          Settings->tariff[tariff][time_type] += value;
         }
+        if (Settings->tariff[tariff][time_type] > 1439) {
+          Settings->tariff[tariff][time_type] = 1439;     // Max is 23:59
+        }
+        str = strtok_r(nullptr, ", ", &p);
+        time_type++;
       }
-      if (Settings->tariff[tariff][time_type] > 1439) {
-        Settings->tariff[tariff][time_type] = 1439;     // Max is 23:59
-      }
-      str = strtok_r(nullptr, ", ", &p);
-      time_type++;
     }
   }
   else if (XdrvMailbox.index == 9) {
     Settings->flag3.energy_weekend = XdrvMailbox.payload & 1;  // CMND_TARIFF
   }
-  Response_P(PSTR("{\"%s\":{\"Off-Peak\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Standard\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Weekend\":\"%s\"}}"),
+  Response_P(PSTR("{\"%s\":{\"Off-Peak\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Standard\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Weekend\":\"%s\",\"Forced\":\"%d\"}}"),
     XdrvMailbox.command,
     GetMinuteTime(Settings->tariff[0][0]).c_str(),GetMinuteTime(Settings->tariff[0][1]).c_str(),
     GetMinuteTime(Settings->tariff[1][0]).c_str(),GetMinuteTime(Settings->tariff[1][1]).c_str(),
-    GetStateText(Settings->flag3.energy_weekend));             // CMND_TARIFF
+    GetStateText(Settings->flag3.energy_weekend), // Tariff9
+    Settings->mbflag2.tariff_forced);             // Tariff<x> ON|OFF
 }
 
 uint32_t EnergyGetCalibration(uint32_t cal_type, uint32_t chan = 0) {
@@ -1238,7 +1248,7 @@ void EnergyShow(bool json) {
   bool energy_tariff = false;
   float energy_usage[2];
   float energy_return[2];
-  if (Settings->tariff[0][0] != Settings->tariff[1][0]) {
+  if (Settings->mbflag2.tariff_forced || (Settings->tariff[0][0] != Settings->tariff[1][0])) {
     energy_usage[0] = (float)RtcSettings.energy_usage.usage1_kWhtotal / 1000;  // Tariff1
     energy_usage[1] = (float)RtcSettings.energy_usage.usage2_kWhtotal / 1000;  // Tariff2
     energy_return[0] = (float)RtcSettings.energy_usage.return1_kWhtotal / 1000;  // Tariff1
