@@ -2590,6 +2590,9 @@ void uDisplay::SetLuts(void) {
 
 void uDisplay::DisplayFrame_42(void) {
 
+    if (epc_full_cnt) {
+      send_spi_cmds(epcoffs_full, epc_full_cnt);
+    }
     spi_command_EPD(saw_1);
     for(int i = 0; i < gxs / 8 * gys; i++) {
         spi_data8_EPD(0xFF);
@@ -2616,6 +2619,9 @@ void uDisplay::DisplayFrame_42(void) {
 
 
 void uDisplay::ClearFrame_42(void) {
+    if (epc_full_cnt) {
+      send_spi_cmds(epcoffs_full, epc_full_cnt);
+    }
     spi_command_EPD(saw_1);
     for (uint16_t j = 0; j < gys; j++) {
         for (uint16_t i = 0; i < gxs; i++) {
