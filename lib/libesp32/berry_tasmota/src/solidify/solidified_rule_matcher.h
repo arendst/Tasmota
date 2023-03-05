@@ -515,12 +515,14 @@ be_local_closure(Rule_Matcher_Array_match,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(index),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_const_int(1),
     }),
     &be_const_str_match,
     &be_const_str_solidified,
-    ( &(const binstruction[22]) {  /* code */
+    ( &(const binstruction[28]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
       0x1C080202,  //  0001  EQ	R2	R1	R2
       0x780A0001,  //  0002  JMPF	R2	#0005
@@ -533,16 +535,22 @@ be_local_closure(Rule_Matcher_Array_match,   /* name */
       0x740A0000,  //  0009  JMPT	R2	#000B
       0x80040200,  //  000A  RET	1	R1
       0x88080100,  //  000B  GETMBR	R2	R0	K0
-      0x600C000C,  //  000C  GETGBL	R3	G12
-      0x5C100200,  //  000D  MOVE	R4	R1
-      0x7C0C0200,  //  000E  CALL	R3	1
-      0x28080403,  //  000F  GE	R2	R2	R3
-      0x780A0001,  //  0010  JMPF	R2	#0013
-      0x4C080000,  //  0011  LDNIL	R2
-      0x80040400,  //  0012  RET	1	R2
-      0x88080100,  //  0013  GETMBR	R2	R0	K0
-      0x94080202,  //  0014  GETIDX	R2	R1	R2
-      0x80040400,  //  0015  RET	1	R2
+      0x18080501,  //  000C  LE	R2	R2	K1
+      0x780A0001,  //  000D  JMPF	R2	#0010
+      0x4C080000,  //  000E  LDNIL	R2
+      0x80040400,  //  000F  RET	1	R2
+      0x88080100,  //  0010  GETMBR	R2	R0	K0
+      0x600C000C,  //  0011  GETGBL	R3	G12
+      0x5C100200,  //  0012  MOVE	R4	R1
+      0x7C0C0200,  //  0013  CALL	R3	1
+      0x24080403,  //  0014  GT	R2	R2	R3
+      0x780A0001,  //  0015  JMPF	R2	#0018
+      0x4C080000,  //  0016  LDNIL	R2
+      0x80040400,  //  0017  RET	1	R2
+      0x88080100,  //  0018  GETMBR	R2	R0	K0
+      0x04080502,  //  0019  SUB	R2	R2	K2
+      0x94080202,  //  001A  GETIDX	R2	R1	R2
+      0x80040400,  //  001B  RET	1	R2
     })
   )
 );
