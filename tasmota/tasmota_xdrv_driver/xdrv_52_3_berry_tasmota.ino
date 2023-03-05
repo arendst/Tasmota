@@ -453,9 +453,7 @@ extern "C" {
   }
 
   // Find for an operator in the string
-  // takes a string, an offset to start the search from, and works in 2 modes.
-  // mode1 (false): loog for the first char of an operato
-  // mode2 (true): finds the last char of the operator
+  // returns -1 if not found, or returns start in low 16 bits, end in high 16 bits
   int32_t tasm_find_op(bvm *vm);
   int32_t tasm_find_op(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -463,48 +461,52 @@ extern "C" {
     int32_t ret = -1;
     if (top >= 2 && be_isstring(vm, 2)) {
       const char *c = be_tostring(vm, 2);
-      if (top >= 3) {
-        second_phase = be_tobool(vm, 3);
-      }
+      // new version, two phases in 1, return start in low 16 bits, end in high 16 bits
 
-      if (!second_phase) {
-        int32_t idx = 0;
-        // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`
-        while (*c && ret < 0) {
-          switch (c[0]) {
-            case '=':
-            case '<':
-            case '>':
-              ret = idx;
-              break;   // anything starting with `=`, `<` or `>` is a valid operator
-            case '!':
-              if (c[1] == '=') {
-                ret = idx; // needs to start with `!=`
-              }
-              break;
-            default:
-              break;
-          }
-          c++;
-          idx++;
+      int32_t idx_start = -1;
+      int32_t idx = 0;
+      // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`
+      while (*c && idx_start < 0) {
+        switch (c[0]) {
+          case '=':
+          case '<':
+          case '>':
+            idx_start = idx;
+            break;   // anything starting with `=`, `<` or `>` is a valid operator
+          case '!':
+            if (c[1] == '=') {
+              idx_start = idx; // needs to start with `!=`
+            }
+            break;
+          default:
+            break;
         }
-      } else {
+        c++;
+        idx++;
+      }
+      int idx_end = -1; 
+      if (idx_start >= 0) {
+        idx_end = idx_start;
         // second phase
         switch (c[0]) {
           case '<':
           case '>':
           case '=':
-            if (c[1] != '=') { ret = 1; }    // `<` or `>` or `=`
-            else             { ret = 2; }    // `<=` or `>=` or `==`
+            if (c[1] != '=') { idx_end += 1; }    // `<` or `>` or `=`
+            else             { idx_end += 2; }    // `<=` or `>=` or `==`
             break;
           case '!':
             if (c[1] != '=') { ; }         // this is invalid if isolated `!`
-            if (c[2] != '=') { ret = 2; }    // `!=`
-            else             { ret = 3; }    // `!==`
+            if (c[2] != '=') { idx_end += 2; }    // `!=`
+            else             { idx_end += 3; }    // `!==`
             break;
           default:
             break;
         }
+      }
+
+      if (idx_start >= 0 && idx_end >= idx_start) {
+        ret = ((idx_end & 0x7FFF) << 16) | (idx_start & 0x7FFF);
       }
     }
     be_pushint(vm, ret);
@@ -512,11 +514,11 @@ extern "C" {
   }
   /*
 
-  # test patterns
-  assert(tasmota._find_op("aaa#bbc==23",false) == 7)
-  assert(tasmota._find_op("==23",true) == 2)
-  assert(tasmota._find_op(">23",true) == 1)
-  assert(tasmota._find_op("aaa#bbc!23",false) == -1)
+  # test patterns for all-in-one version
+  assert(tasmota._find_op("aaa#bbc==23") == 0x80007)
+  assert(tasmota._find_op("az==23") == 0x30002)
+  assert(tasmota._find_op("a>23") == 0x10001)
+  assert(tasmota._find_op("aaa#bbc!23") == -1)
 
   */
 

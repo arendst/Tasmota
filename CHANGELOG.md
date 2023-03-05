@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
+- Refactored Berry rule engine and support for arrays
 
 ### Fixed
 - TuyaMcu v1 sequence fix (#17625)

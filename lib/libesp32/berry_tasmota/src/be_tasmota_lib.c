@@ -60,25 +60,26 @@ extern int l_i2cenabled(bvm *vm);
 extern int tasm_find_op(bvm *vm);
 
 #include "solidify/solidified_tasmota_class.h"
+#include "solidify/solidified_rule_matcher.h"
+#include "solidify/solidified_trigger_class.h"
 
 #include "be_fixed_be_class_tasmota.h"
 
-
 /* @const_object_info_begin
 class be_class_tasmota (scope: global, name: Tasmota) {
-    _fl, var
-    _rules, var
-    _timers, var
-    _crons, var
-    _ccmd, var
-    _drivers, var
-    wire1, var
-    wire2, var
-    cmd_res, var
-    global, var
-    settings, var
-    wd, var
-    _debug_present, var
+    _fl, var                            // list of active fast-loop object (faster than drivers)
+    _rules, var                         // list of active rules
+    _timers, var                        // list of active timers
+    _crons, var                         // list of active crons
+    _ccmd, var                          // list of active Tasmota commands implemented in Berry
+    _drivers, var                       // list of active drivers
+    wire1, var                          // Tasmota I2C Wire1
+    wire2, var                          // Tasmota I2C Wire2
+    cmd_res, var                        // store the command result, nil if disables, true if capture enabled, contains return value
+    global, var                         // mapping to TasmotaGlobal
+    settings, var                       // mapping to Tasmota Settings
+    wd, var                             // working dir
+    _debug_present, var                 // is `import debug` present?
 
     _global_def, comptr(&be_tasmota_global_struct)
     _settings_def, comptr(&be_tasmota_settings_struct)
@@ -173,5 +174,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_light, closure(Tasmota_get_light_closure)
     set_light, closure(Tasmota_set_light_closure)
+
+    Rule_Matcher, class(be_class_Rule_Matcher)
 }
 @const_object_info_end */
