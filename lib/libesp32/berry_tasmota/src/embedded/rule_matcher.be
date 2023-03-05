@@ -71,16 +71,16 @@ m = tasmota.Rule_Matcher.parse("AA#?#CC=2")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
-m = tasmota.Rule_Matcher.parse("AA#Power[0]")
-assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 0.5)
 m = tasmota.Rule_Matcher.parse("AA#Power[1]")
-assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 1.5)
+assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 0.5)
 m = tasmota.Rule_Matcher.parse("AA#Power[2]")
-assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 2.5)
+assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 1.5)
 m = tasmota.Rule_Matcher.parse("AA#Power[3]")
+assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == 2.5)
+m = tasmota.Rule_Matcher.parse("AA#Power[4]")
 assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == nil)
 
-m = tasmota.Rule_Matcher.parse("AA#Power[0]>1")
+m = tasmota.Rule_Matcher.parse("AA#Power[1]>1")
 assert(m.match({'aa':{'power':[0.5,1.5,2.5]}}) == nil)
 assert(m.match({'aa':{'power':[1.2,1.5,2.5]}}) == 1.2)
 
@@ -164,8 +164,9 @@ class Rule_Matcher
     def match(val)
       if val == nil                 return nil end        # safeguard
       if !isinstance(val, list)     return val end        # ignore index if not a list
-      if self.index >= size(val)    return nil end        # out of bounds
-      return val[self.index]
+      if self.index <= 0            return nil end        # out of bounds
+      if self.index > size(val)     return nil end        # out of bounds
+      return val[self.index - 1]
     end
 
     def tostring()
