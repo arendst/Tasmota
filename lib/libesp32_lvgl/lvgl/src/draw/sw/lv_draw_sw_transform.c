@@ -122,8 +122,8 @@ void lv_draw_sw_transform(lv_draw_ctx_t * draw_ctx, const lv_area_t * dest_area,
             xs_step_256 = (256 * xs_diff) / (dest_w - 1);
             ys_step_256 = (256 * ys_diff) / (dest_w - 1);
         }
-        int32_t xs_ups = xs1_ups;
-        int32_t ys_ups = ys1_ups;
+        int32_t xs_ups = xs1_ups + 0x80;
+        int32_t ys_ups = ys1_ups + 0x80;
 
         if(draw_dsc->antialias == 0) {
             switch(cf) {
@@ -180,7 +180,7 @@ static void rgb_no_aa(const uint8_t * src, lv_coord_t src_w, lv_coord_t src_h, l
         }
         else {
 
-#if LV_COLOR_DEPTH == 8
+#if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
             const uint8_t * src_tmp = src;
             src_tmp += ys_int * src_stride + xs_int;
             cbuf[x].full = src_tmp[0];
@@ -221,7 +221,7 @@ static void argb_no_aa(const uint8_t * src, lv_coord_t src_w, lv_coord_t src_h, 
             const uint8_t * src_tmp = src;
             src_tmp += (ys_int * src_stride * LV_IMG_PX_SIZE_ALPHA_BYTE) + xs_int * LV_IMG_PX_SIZE_ALPHA_BYTE;
 
-#if LV_COLOR_DEPTH == 8
+#if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
             cbuf[x].full = src_tmp[0];
 #elif LV_COLOR_DEPTH == 16
             cbuf[x].full = src_tmp[0] + (src_tmp[1] << 8);
@@ -396,7 +396,7 @@ static void argb_and_rgb_aa(const uint8_t * src, lv_coord_t src_w, lv_coord_t sr
 
                 if(abuf[x] == 0x00) continue;
 
-#if LV_COLOR_DEPTH == 8
+#if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
                 c_base.full = px_base[0];
                 c_ver.full = px_ver[0];
                 c_hor.full = px_hor[0];
@@ -429,7 +429,7 @@ static void argb_and_rgb_aa(const uint8_t * src, lv_coord_t src_w, lv_coord_t sr
         }
         /*Partially out of the image*/
         else {
-#if LV_COLOR_DEPTH == 8
+#if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
             cbuf[x].full = src_tmp[0];
 #elif LV_COLOR_DEPTH == 16
             cbuf[x].full = src_tmp[0] + (src_tmp[1] << 8);
