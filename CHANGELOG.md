@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Refactored Berry rule engine and support for arrays
+- ESP32 LVGL library from v8.3.3 to v8.3.5 (no functional change)
 
 ### Fixed
 - TuyaMcu v1 sequence fix (#17625)
