@@ -978,6 +978,24 @@ class lvh_switch : lvh_obj
   def get_val()
     return self.get_toggle()
   end
+  def set_bg_color10(t)
+    self._lv_obj.set_style_bg_color(self.parse_color(t), lv.PART_INDICATOR | lv.STATE_CHECKED)
+  end
+  def set_bg_color20(t)
+    self._lv_obj.set_style_bg_color(self.parse_color(t), lv.PART_KNOB | lv.STATE_DEFAULT)
+  end
+  def set_radius20(t)
+    self._lv_obj.set_style_radius(int(t), lv.PART_KNOB | lv.STATE_DEFAULT)
+  end
+  def get_bg_color10()
+    return self._lv_obj.get_style_bg_color(lv.PART_INDICATOR)
+  end
+  def get_bg_color20()
+    return self._lv_obj.get_style_bg_color(lv.PART_KNOB)
+  end
+  def get_radius20()
+    return self._lv_obj.get_style_radius(lv.PART_KNOB)
+  end
 end
 
 #====================================================================
