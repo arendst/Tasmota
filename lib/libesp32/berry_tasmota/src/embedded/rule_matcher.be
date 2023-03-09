@@ -61,13 +61,13 @@ m = tasmota.Rule_Matcher.parse("AA#BB")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':1}}) == 1)
 
-m = tasmota.Rule_Matcher.parse("AA#BB#CC=2")
+m = tasmota.Rule_Matcher.parse("AA#BB#CC==2")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':1}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':1}}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
-m = tasmota.Rule_Matcher.parse("AA#?#CC=2")
+m = tasmota.Rule_Matcher.parse("AA#?#CC==2")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
@@ -193,11 +193,68 @@ class Rule_Matcher
     var op_str                                          # name of the operator like '>'
     var op_value                                        # value to compare agains
 
-    def init(op_func, op_value, op_str)
-      self.op_func = op_func
-      self.op_value = op_value
-      self.op_str = op_str
+    def init(op_str, op_value)
+      self.op_parse(op_str, op_value)
     end
+
+
+  ###########################################################################################
+  # Functions to compare two values
+  ###########################################################################################
+  def op_parse(op, op_value)
+    self.op_str = op
+
+    def op_eq_str(a,b)     return tasmota._apply_str_op(1, str(a), b) end
+    def op_neq_str(a,b)    return tasmota._apply_str_op(2, str(a), b) end
+    def op_start_str(a,b)  return tasmota._apply_str_op(3, str(a), b) end
+    def op_end_str(a,b)    return tasmota._apply_str_op(4, str(a), b) end
+    def op_sub_str(a,b)    return tasmota._apply_str_op(5, str(a), b) end
+    def op_notsub_str(a,b) return tasmota._apply_str_op(6, str(a), b) end
+    def op_eq(a,b)         return number(a) == b   end
+    def op_neq(a,b)        return number(a) != b   end
+    def op_gt(a,b)         return number(a) >  b   end
+    def op_gte(a,b)        return number(a) >= b   end
+    def op_lt(a,b)         return number(a) <  b   end
+    def op_lte(a,b)        return number(a) <= b   end
+    def op_mod(a,b)        return (int(a) % b) == 0 end
+
+    var numerical = false
+    var f
+
+    if   op=='='            f = op_eq_str
+    elif op=='!=='          f = op_neq_str
+    elif op=='$!'           f = op_neq_str
+    elif op=='$<'           f = op_start_str
+    elif op=='$>'           f = op_end_str
+    elif op=='$|'           f = op_sub_str
+    elif op=='$^'           f = op_notsub_str
+    else
+      numerical = true
+      if   op=='=='         f = op_eq
+      elif op=='!='         f = op_neq
+      elif op=='>'          f = op_gt
+      elif op=='>='         f = op_gte
+      elif op=='<'          f = op_lt
+      elif op=='<='         f = op_lte
+      elif op=='|'          f = op_mod
+      end
+    end
+
+    self.op_func = f
+    if numerical            # if numerical comparator, make sure that the value passed is a number
+      # to check if a number is correct, the safest method is to use a json decoder
+      import json
+      var val_num = json.load(op_value)
+      if type(val_num) != 'int' && type(val_num) != 'real'
+        raise "value_error", "value needs to be a number"
+      else
+        self.op_value = val_num
+      end
+    else
+      self.op_value = str(op)
+    end
+
+  end
 
     def match(val)
       var t = type(val)
@@ -206,7 +263,11 @@ class Rule_Matcher
     end
 
     def tostring()
-      return "<Matcher op '" + self.op_str + "' val='" + str(self.op_value) + "'>"
+      if type(self.op_value) == 'string'
+        return "<Matcher op '" + self.op_str + "' val='" + str(self.op_value) + "'>"
+      else
+        return "<Matcher op '" + self.op_str + "' val=" + str(self.op_value) + ">"
+      end
     end
   end
 
@@ -279,10 +340,7 @@ class Rule_Matcher
 
     # if an operator was found, add the operator matcher
     if op_str != nil && op_value != nil         # we have an operator
-      var op_func = _class.op_parse(op_str)
-      if op_func
-        matchers.push(_class.Rule_Matcher_Operator(op_func, op_value, op_str))
-      end
+      matchers.push(_class.Rule_Matcher_Operator(op_str, op_value))
     end
 
     return _class(pattern, value_str, matchers)       # `_class` is a reference to the Rule_Matcher class
@@ -307,28 +365,4 @@ class Rule_Matcher
     return str(self.matchers)
   end
 
-  ###########################################################################################
-  # Functions to compare two values
-  ###########################################################################################
-  static def op_parse(op)
-
-    def op_eq_str(a,b)     return str(a)  == str(b)    end
-    def op_neq_str(a,b)    return str(a)  != str(b)    end
-    def op_eq(a,b)         return real(a) == real(b)   end
-    def op_neq(a,b)        return real(a) != real(b)   end
-    def op_gt(a,b)         return real(a) >  real(b)   end
-    def op_gte(a,b)        return real(a) >= real(b)   end
-    def op_lt(a,b)         return real(a) <  real(b)   end
-    def op_lte(a,b)        return real(a) <= real(b)   end
-
-    if   op=='=='           return op_eq_str
-    elif op=='!=='          return op_neq_str
-    elif op=='='            return op_eq
-    elif op=='!='           return op_neq
-    elif op=='>'            return op_gt
-    elif op=='>='           return op_gte
-    elif op=='<'            return op_lt
-    elif op=='<='           return op_lte
-    end
-  end
 end

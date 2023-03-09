@@ -77,7 +77,7 @@ class Tasmota
       var idx_start = idx_composite & 0x7FFF
       var idx_end = idx_composite >> 16
 
-      return [ item[0 .. idx_start-1], item[idx_start .. idx_end], item[idx_end+1 ..]]
+      return [ item[0 .. idx_start-1], item[idx_start .. idx_end - 1], item[idx_end ..]]
     end
     return [item, nil, nil]
   end

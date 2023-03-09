@@ -58,6 +58,7 @@ extern int l_getswitch(bvm *vm);
 
 extern int l_i2cenabled(bvm *vm);
 extern int tasm_find_op(bvm *vm);
+extern int tasm_apply_str_op(bvm *vm);
 
 #include "solidify/solidified_tasmota_class.h"
 #include "solidify/solidified_rule_matcher.h"
@@ -138,6 +139,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     remove_fast_loop, closure(Tasmota_remove_fast_loop_closure)
     cmd, closure(Tasmota_cmd_closure)
     _find_op, func(tasm_find_op)        // new C version for finding a rule operator
+    _apply_str_op, func(tasm_apply_str_op)
     find_key_i, closure(Tasmota_find_key_i_closure)
     find_op, closure(Tasmota_find_op_closure)
     add_rule, closure(Tasmota_add_rule_closure)
