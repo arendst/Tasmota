@@ -33,24 +33,32 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_tasmota_global_struct = {
     sizeof(TasmotaGlobal),  /* size in bytes */
-    4,  /* number of elements */
+    8,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[4]) {
+    (const be_ctypes_structure_item_t[8]) {
       // Warning: fields below need to be in alphabetical order
       { "devices_present", offsetof(TasmotaGlobal_t, devices_present), 0, 0, ctypes_u8, 0 },
       { "fast_loop_enabled", offsetof(TasmotaGlobal_t, berry_fast_loop_enabled), 0, 0, ctypes_u8, 0 },
+      { "masterlog_level", offsetof(TasmotaGlobal_t, masterlog_level), 0, 0, ctypes_u8, 0 },
       { "restart_flag", offsetof(TasmotaGlobal_t, restart_flag), 0, 0, ctypes_u8, 0 },
+      { "seriallog_level", offsetof(TasmotaGlobal_t, seriallog_level), 0, 0, ctypes_u8, 0 },
       { "sleep", offsetof(TasmotaGlobal_t, sleep), 0, 0, ctypes_u8, 0 },
+      { "syslog_level", offsetof(TasmotaGlobal_t, syslog_level), 0, 0, ctypes_u8, 0 },
+      { "templog_level", offsetof(TasmotaGlobal_t, templog_level), 0, 0, ctypes_u8, 0 },
   }};
 
   extern const be_ctypes_structure_t be_tasmota_settings_struct = {
     sizeof(TSettings),  /* size in bytes */
-    2,  /* number of elements */
+    6,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[2]) {
+    (const be_ctypes_structure_item_t[6]) {
       // Warning: fields below need to be in alphabetical order
       { "bootcount", offsetof(TSettings, bootcount), 0, 0, ctypes_u16, 0 },
+      { "mqttlog_level", offsetof(TSettings, mqttlog_level), 0, 0, ctypes_u8, 0 },
+      { "seriallog_level", offsetof(TSettings, seriallog_level), 0, 0, ctypes_u8, 0 },
       { "sleep", offsetof(TSettings, sleep), 0, 0, ctypes_u8, 0 },
+      { "syslog_level", offsetof(TSettings, syslog_level), 0, 0, ctypes_u8, 0 },
+      { "weblog_level", offsetof(TSettings, weblog_level), 0, 0, ctypes_u8, 0 },
   }};
 
 }

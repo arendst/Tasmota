@@ -637,9 +637,20 @@ class Tasmota
   end
 
   # cmd high-level function
-  def cmd(command)
+  # mute: (opt, bool) if true temporarily reduce log_level to 1
+  def cmd(command, mute)
     var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
+
+    var seriallog_level = tasmota.global.seriallog_level
+    var mqttlog_level   = tasmota.settings.mqttlog_level
+    var weblog_level    = tasmota.settings.weblog_level
+
+    if mute                 # mute logging
+      if seriallog_level >= 2       tasmota.global.seriallog_level = 1    end
+      if mqttlog_level   >= 2       tasmota.settings.mqttlog_level = 1    end
+      if weblog_level    >= 2       tasmota.settings.weblog_level  = 1    end
+    end
 
     self._cmd(command)
     
@@ -649,6 +660,12 @@ class Tasmota
     end
     self.cmd_res = save_cmd_res       # restore previous state
     
+    # restore log_level
+    if mute
+      tasmota.global.seriallog_level = seriallog_level
+      tasmota.settings.mqttlog_level = mqttlog_level
+      tasmota.settings.weblog_level = weblog_level
+    end
     return ret
   end
 
