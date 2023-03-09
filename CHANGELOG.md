@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for multiple MCP23008 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
 - Extended Tariff command for forced tariff (#18080)
+- Zigbee send Tuya 'magic spell' to unlock devices when pairing
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
