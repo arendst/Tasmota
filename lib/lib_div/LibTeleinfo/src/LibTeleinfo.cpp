@@ -711,7 +711,7 @@ unsigned char TInfo::calcChecksum(char *etiquette, char *valeur, char * horodate
       while(*valeur) {
         c = *valeur++ ;
         // Add another validity check since checksum may not be sufficient (space authorized in Standard mode)
-        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c==' ' || c=='.' || c=='-' || c=='+') {
+        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c==' ' || c=='.' || c=='-' || c=='+' || c=='/') {
           sum += c ;
         } else {
           return 0;
