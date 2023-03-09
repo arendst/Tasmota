@@ -375,8 +375,8 @@ uint8_t swapbits(uint8_t n)
  
             //seg EDC    //seg A             //seg B
      return (n & 0x1C) | ((n & 0x01) << 5) | ((n & 0x02) << 6)
-     | ((n & 0x20) << 1) | ((n & 0x40) >> 5) | ((n & 0x80) >> 6); 
-       //seg F             //seg G             //seg B
+     | ((n & 0x20) << 1) | ((n & 0x40) >> 5) | ((n & 0x80) >> 7); 
+       //seg F             //seg G             //seg P
 }  
 
 void TM1650DisplayRaw (char *text)  // Text shall match regex (([^.]?\.?){0,4}\0), e.g., 123.4
