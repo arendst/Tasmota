@@ -609,7 +609,7 @@ const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s MB - " D_FS_FREE " %s MB";
 
 const char UFS_FORM_FILE_UPGc1[] PROGMEM =
-    " &nbsp;&nbsp;<a href='http://%_I/ufsd?dir=%d'>%s</a>";
+    " &nbsp;&nbsp;<a href='/ufsd?dir=%d'>%s</a>";
 
 const char UFS_FORM_FILE_UPGc2[] PROGMEM =
   "</div>";
@@ -719,7 +719,7 @@ void UfsDirectory(void) {
   WSContentSend_PD(UFS_FORM_FILE_UPGc, WebColor(COL_TEXT), ts, fs);
 
   if (ufs_dir) {
-    WSContentSend_P(UFS_FORM_FILE_UPGc1, (uint32_t)WiFi.localIP(), (ufs_dir == 1)?2:1, (ufs_dir == 1)?PSTR("SDCard"):PSTR("FlashFS"));
+    WSContentSend_P(UFS_FORM_FILE_UPGc1, (ufs_dir == 1)?2:1, (ufs_dir == 1)?PSTR("SDCard"):PSTR("FlashFS"));
   }
   WSContentSend_P(UFS_FORM_FILE_UPGc2);
 
