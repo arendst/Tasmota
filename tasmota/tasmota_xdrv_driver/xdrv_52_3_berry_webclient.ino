@@ -259,6 +259,20 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // wc.set_follow_redirects(bool) -> self
+  int32_t wc_set_follow_redirects(struct bvm *vm);
+  int32_t wc_set_follow_redirects(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isbool(vm, 2)) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      bbool follow = be_tobool(vm, 2);
+      cl->setFollowRedirects(follow ? HTTPC_STRICT_FOLLOW_REDIRECTS : HTTPC_DISABLE_FOLLOW_REDIRECTS);
+      be_pushvalue(vm, 1);
+      be_return(vm);  /* return self */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // wc.wc_set_auth(auth:string | (user:string, password:string)) -> self
   int32_t wc_set_auth(struct bvm *vm);
   int32_t wc_set_auth(struct bvm *vm) {

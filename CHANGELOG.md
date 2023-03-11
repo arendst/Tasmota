@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Extended Tariff command for forced tariff (#18080)
 - Berry support for Tensorflow Lite (TFL) by Christiaan Baars (#18119)
 - Zigbee send Tuya 'magic spell' to unlock devices when pairing (#18144)
+- Berry add `wc.set_follow_redirects(bool)`
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
