@@ -16,6 +16,8 @@ extern int wc_set_timeouts(bvm *vm);
 extern int wc_set_useragent(bvm *vm);
 extern int wc_set_follow_redirects(bvm *vm);
 extern int wc_set_auth(bvm *vm);
+extern int wc_collect_headers(bvm *vm);
+extern int wc_get_header(bvm *vm);
 extern int wc_connected(bvm *vm);
 extern int wc_close(bvm *vm);
 extern int wc_addheader(bvm *vm);
@@ -50,6 +52,11 @@ class be_class_webclient (scope: global, name: webclient) {
     set_useragent, func(wc_set_useragent)
     set_follow_redirects, func(wc_set_follow_redirects)
     set_auth, func(wc_set_auth)
+
+    // collect response headers
+    collect_headers, func(wc_collect_headers)
+    get_header, func(wc_get_header)
+
     close, func(wc_close)
     add_header, func(wc_addheader)
     GET, func(wc_GET)
