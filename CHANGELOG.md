@@ -8,7 +8,9 @@ All notable changes to this project will be documented in this file.
 - Support for multiple MCP23008 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
 - Extended Tariff command for forced tariff (#18080)
-- Zigbee send Tuya 'magic spell' to unlock devices when pairing
+- Berry support for Tensorflow Lite (TFL) by Christiaan Baars (#18119)
+- Zigbee send Tuya 'magic spell' to unlock devices when pairing (#18144)
+- Berry add `wc.set_follow_redirects(bool)`
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
@@ -16,11 +18,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Refactored Berry rule engine and support for arrays
 - ESP32 LVGL library from v8.3.3 to v8.3.5 (no functional change)
+- Removed absolute url from filesystem (#18148)
 
 ### Fixed
 - TuyaMcu v1 sequence fix (#17625)
 - TuyaMcu v1 timer integer overflow (#18048)
 - PZEM energy monitor stabilize period on larger configs (#18103)
+- Rule topic comparison (#18144)
+- ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 (#15856)
 
 ### Removed
 

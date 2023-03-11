@@ -1304,7 +1304,7 @@ void EnergyShow(bool json) {
     if (show_energy_period) {
       float energy_period[Energy->phase_count];
       for (uint32_t i = 0; i < Energy->phase_count; i++) {
-        energy_period[i] = (float)(RtcSettings.energy_kWhtoday_ph[i] - Energy->period[i]) / 100;
+        energy_period[i] = (float)(RtcSettings.energy_kWhtoday_ph[i] - Energy->period[i]) / 100;  // Wh
         Energy->period[i] = RtcSettings.energy_kWhtoday_ph[i];
       }
       ResponseAppend_P(PSTR(",\"" D_JSON_PERIOD "\":%s"),

@@ -644,7 +644,7 @@ bool Xdrv28(uint32_t function) {
 
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     Pcf8574ModuleInit();
   } else if (1 == Pcf8574.mode) {
     switch (function) {
