@@ -67,7 +67,7 @@ struct TFL_mic_descriptor_t{
 struct TFL_mic_ctx_t{
   TaskHandle_t audio_capture_task = nullptr;
   SemaphoreHandle_t feature_buffer_mutex = nullptr;
-  MFCC * mfcc;
+  MFCC * mfcc = nullptr;
   int8_t* model_input_buffer = nullptr;
   File *file = nullptr;
   int32_t file_bytes_left;
@@ -153,10 +153,16 @@ RingbufHandle_t TFL_log_buffer = nullptr;
  * Internal driver functions
 \*********************************************************************************************/
 
+/**
+ * @brief This function is called from Microprint() from the Tensorflow framework
+ *        Used to log from Tensorflow and from this (Tasmota) driver
+ * 
+ * @param s - message as c-string
+ */
 void TFL_Log(char *s){
   size_t len = strlen(s);
   if(len<5) return; // we assume this is for the trash
-  // s[len] = 0; //strip CR/LF
+
   xRingbufferSend(TFL_log_buffer, s, len+1 , pdMS_TO_TICKS(3));
 }
 
@@ -204,7 +210,7 @@ int TFL_InitializeFeatures() {
  * @param input - audio buffer
  * @param input_size - length auf audio input in samples (16-bit)
  * @param output_size - length of feature buffer in bytes (we use int8_t quantization)
- * @param output - feature buffer for one slize of audio
+ * @param output - feature buffer for one slice of audio
  * @param num_samples_read - not used anymore, to be removed
  * @return int 
  */
@@ -373,15 +379,6 @@ void TFL_append_audio_to_file(uint8_t *byte_buffer, uint16_t length){
         samples[i] *= TFL->mic->preamp; //gain ... a lot
     }
 
-    // float buffer[length/2];
-    // for (int i = 0; i < length/2; i++) {
-    //   buffer[i] = (float)samples[i]/(float)(1<<15);
-    //   if(samples[i] > pre_noisefloor || samples[i] + pre_noisefloor < 0){
-    //     buffer[i] *= (float)TFL->mic->preamp;
-    //   }
-    // }
-    //  TFL->mic->file->write((uint8_t*)buffer, length*2);
-
     TFL->mic->file->write(byte_buffer,length);
 
     TFL->mic->file_bytes_left -= length;
@@ -402,7 +399,7 @@ void TFL_append_audio_to_file(uint8_t *byte_buffer, uint16_t length){
  */
 void TFL_capture_samples(void* arg) {
   MicroPrintf( PSTR( "Capture task started"));
-  int i2s_bytes_to_read = TFL->mic->i2s_samples_to_get * 2;  // according to slize duration
+  int i2s_bytes_to_read = TFL->mic->i2s_samples_to_get * 2;  // according to slice duration
 
   int buffer_size = (i2s_bytes_to_read * TFL->mic->slice_dur)/TFL->mic->slice_stride; // in bytes, current slice duration plus (potential) history data
 
@@ -413,7 +410,7 @@ void TFL_capture_samples(void* arg) {
   int16_t i2s_sample_buffer[buffer_size/2] = {0}; // in shorts, add the size to hold history data
   uint8_t  *i2s_byte_buffer = (uint8_t*)i2s_sample_buffer;
   uint32_t *i2s_long_buffer = (uint32_t*)i2s_sample_buffer;
-  uint8_t  *i2s_read_buffer = i2s_byte_buffer + (buffer_size - i2s_bytes_to_read); // behind the history data, if slize duration != slize stride
+  uint8_t  *i2s_read_buffer = i2s_byte_buffer + (buffer_size - i2s_bytes_to_read); // behind the history data, if slice duration != slice stride
 
   // read to "nowhere" to get no startup noise on some mics
   i2s_read(I2S_NUM, i2s_byte_buffer, i2s_bytes_to_read, &bytes_read,  pdMS_TO_TICKS(100));
@@ -436,7 +433,7 @@ void TFL_capture_samples(void* arg) {
 
     /* read slice data at once from i2s */
     i2s_read(I2S_NUM, i2s_read_buffer, i2s_bytes_to_read, &bytes_read, pdMS_TO_TICKS(TFL->mic->slice_stride));
-    // taskYIELD();
+
     if (bytes_read <= 0) {
       MicroPrintf( PSTR( "Error in I2S read : %d"), bytes_read);
     }
@@ -450,11 +447,6 @@ void TFL_capture_samples(void* arg) {
       if (bytes_read < i2s_bytes_to_read) {
        MicroPrintf(PSTR("Partial I2S read: %d"), bytes_read);
       }
-      // MicroPrintf( PSTR( "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u"), i2s_long_buffer[0], i2s_long_buffer[1], i2s_long_buffer[2], i2s_long_buffer[3], i2s_long_buffer[4], i2s_long_buffer[5]
-      //                                                                       , i2s_long_buffer[6], i2s_long_buffer[7], i2s_long_buffer[8], i2s_long_buffer[9], i2s_long_buffer[10]
-      //                                                                       , i2s_long_buffer[11], i2s_long_buffer[12], i2s_long_buffer[13], i2s_long_buffer[14], i2s_long_buffer[15]);
-
-      // test_file->read(i2s_byte_buffer, 1024);
 
       xSemaphoreTake(TFL->mic->feature_buffer_mutex, pdMS_TO_TICKS(TFL->mic->slice_stride) );
 
@@ -479,7 +471,10 @@ void TFL_capture_samples(void* arg) {
     if(TFL->mic->flag.continue_audio_capture == 1) vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(TFL->mic->slice_stride) );
   }
   i2s_driver_uninstall(I2S_NUM);
-  delete TFL->mic->mfcc;
+  if(TFL->mic->mfcc != nullptr){
+    delete TFL->mic->mfcc;
+    TFL->mic->mfcc = nullptr;
+  }
   MicroPrintf( PSTR("end capture task"));
   TFL->mic->flag.audio_capture_ended = 1;
   vTaskDelete(NULL);
@@ -507,7 +502,7 @@ void TFL_set_mic_config(const uint8_t *descriptor_buffer){
   TFL->mic->i2s_samples_to_get = (TFL->mic->slice_stride * (kAudioSampleFrequency / 1000));
   TFL->mic->db_floor =  mic_descriptor->db_floor * -1;
   AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: filter: %u, coefficients: %u"), TFL->mic->num_filter, TFL->mic->num_coeff);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: slice stride: %u ms -> slize count: %u, samples to read: %u"), TFL->mic->slice_stride, TFL->mic->slice_count, TFL->mic->i2s_samples_to_get);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: slice stride: %u ms -> slice count: %u, samples to read: %u"), TFL->mic->slice_stride, TFL->mic->slice_count, TFL->mic->i2s_samples_to_get);
 }
 
 /**
@@ -517,18 +512,13 @@ void TFL_set_mic_config(const uint8_t *descriptor_buffer){
 void TFL_mic_feature_buf_to_input(){
   xSemaphoreTake(TFL->mic->feature_buffer_mutex, pdMS_TO_TICKS(TFL->mic->slice_stride) );
   // Copy feature buffer to input tensor
-  // MicroPrintf( PSTR("loop audio, idx: %u"),TFL->mic->feature_buffer_idx);
   int idx = TFL->mic->feature_buffer_idx + 1;  //oldest slice right after the newest slice
   if(idx == TFL->mic->slice_count) idx = 0;
   int slices_upperstack = TFL->mic->slice_count - idx;
   int slices_lowerstack = TFL->mic->slice_count - slices_upperstack;
-  // MicroPrintf( PSTR("idx,slices_upperstack, slices_lowerstack: %u %u %u"), idx, slices_upperstack,slices_lowerstack);
   memcpy(TFL->mic->model_input_buffer,TFL->mic->feature_buffer + (idx * TFL->mic->slice_size), TFL->mic->slice_size * slices_upperstack);
   memcpy(TFL->mic->model_input_buffer +  (TFL->mic->slice_size * slices_upperstack),TFL->mic->feature_buffer, TFL->mic->slice_size * slices_lowerstack);
-  // MicroPrintf( PSTR("written: %u"),size_head + size_wrap);
-  // MicroPrintf("%d %d %d %d %d %d %d %d %d %d %d %d %d",TFL->mic->feature_buffer[0],TFL->mic->feature_buffer[1] ,TFL->mic->feature_buffer[2] ,TFL->mic->feature_buffer[3] ,TFL->mic->feature_buffer[4] ,TFL->mic->feature_buffer[5] ,TFL->mic->feature_buffer[6] ,TFL->mic->feature_buffer[7] ,TFL->mic->feature_buffer[8] ,TFL->mic->feature_buffer[9] ,TFL->mic->feature_buffer[10] ,TFL->mic->feature_buffer[11] ,TFL->mic->feature_buffer[12] );
-  // MicroPrintf("%d %d %d %d %d %d %d %d %d %d %d %d %d",TFL->mic->model_input_buffer[0],TFL->mic->model_input_buffer[1] ,TFL->mic->model_input_buffer[2] ,TFL->mic->model_input_buffer[3] ,TFL->mic->model_input_buffer[4] ,TFL->mic->model_input_buffer[5] ,TFL->mic->model_input_buffer[6] ,TFL->mic->model_input_buffer[7] ,TFL->mic->model_input_buffer[8] ,TFL->mic->model_input_buffer[9] ,TFL->mic->model_input_buffer[10] ,TFL->mic->model_input_buffer[11] ,TFL->mic->model_input_buffer[12] );
-   xSemaphoreGive(TFL->mic->feature_buffer_mutex);
+  xSemaphoreGive(TFL->mic->feature_buffer_mutex);
   return;
 }
 
@@ -543,7 +533,6 @@ void TFL_stop_audio_capture(){
     uint32_t timeout = 0;
     while(TFL->mic->flag.audio_capture_ended == 0){
       if(timeout>3) break;
-      // MicroPrintf( PSTR("wait for stop_capture_task"));
       vTaskDelay(pdMS_TO_TICKS(TFL->mic->slice_stride) );
       timeout++;
     }
@@ -559,9 +548,7 @@ void TFL_stop_audio_capture(){
 void TFL_delete_tasks(){
   if(TFL == nullptr) return;
   TFL->option.running_loop = 0;
-  // delay(20);
   while(TFL->option.loop_ended == 0){
-    // AddLog(LOG_LEVEL_DEBUG, PSTR("..."));
     vTaskDelay(pdMS_TO_TICKS(10));
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: task loop did stop"));
@@ -636,14 +623,10 @@ void TFL_task_loop(void *pvParameters){
   #ifdef USE_I2S
     if(TFL->option.use_mic == 1){
       TFL->option.delay_next_invocation = 0; // Clean up later
-      // MicroPrintf(PSTR("new_feature_data: %d"), TFL->mic->flag.new_feature_data);
       if (TFL->mic->flag.new_feature_data == 0){
-        // MicroPrintf(PSTR("no invokation yet"));
         do_invokation = false;
       } 
-      // MicroPrintf(PSTR(" yes"));
       if(TFL->mic->flag.continue_audio_capture == 1){
-        // MicroPrintf(PSTR(" now loop audio"));
         TFL_mic_feature_buf_to_input();
       }
     }
@@ -656,13 +639,11 @@ void TFL_task_loop(void *pvParameters){
         MicroPrintf(PSTR("Invoke failed"));
         TFL->option.running_loop = 0;
       }
-      // TFL->output = interpreter.output(0);
       if(TFL->berry_output_buf != nullptr){
         memcpy(TFL->berry_output_buf,(int8_t*)TFL->output->data.data,TFL->berry_output_bufsize);
       }
       TFL->stats->invokations++;
 
-      // MicroPrintf(PSTR("Invokation done"));
       TFL->option.unread_output = 1;
     #ifdef USE_I2S
       if(TFL->option.use_mic == 1) {
@@ -697,7 +678,7 @@ extern "C" {
  * @return bfalse 
  */
   bbool be_TFL_begin(struct bvm *vm, const char* type, const uint8_t *descriptor, size_t len) {
-    if (!TFL_log_buffer){
+    if (TFL_log_buffer == nullptr){
       TFL_log_buffer = xRingbufferCreate(1028, RINGBUF_TYPE_NOSPLIT);
       AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: init log buffer"));
     }
@@ -753,7 +734,7 @@ extern "C" {
  * @param vm 
  * @param buf     Model in a byte buffer
  * @param size    Size of buffer, must be 8-byte-aligned (auto-calculated by Berry)
- * @param arean   Size of the Tensor Arena in the stack of the TFL task
+ * @param arena   Size of the Tensor Arena in the stack of the TFL task
  * @return btrue 
  * @return bfalse 
  */
@@ -827,7 +808,6 @@ extern "C" {
     if(TFL->option.unread_output == 1){
       AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: read output  data"));
       if(TFL->output != nullptr){
-        // memcpy((uint8_t*)buf,(uint8_t*)TFL->output->data.data,size);
         TFL->option.unread_output = 0;
         return btrue; //new data
       }
@@ -853,7 +833,7 @@ extern "C" {
 
 
 /**
- * @brief Shows statistiscs about the model and the running TFL session
+ * @brief Shows statistics about the model and the running TFL session
  * 
  * @param vm 
  * @return json string
@@ -912,7 +892,6 @@ extern "C" {
           return;
         }
         if(TFL_init_wave_file(filename,seconds)){
-          AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: starting recording to: %s"),filename);
           TFL->mic->flag.mode_record_audio = 1;
           TFL->stats = new TFL_stats_t;
           xTaskCreatePinnedToCore(TFL_capture_samples, "tfl_mic", 1024 * 3, NULL, 10, &TFL->mic->audio_capture_task, 0);
