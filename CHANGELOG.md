@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - TuyaMcu v1 timer integer overflow (#18048)
 - PZEM energy monitor stabilize period on larger configs (#18103)
 - Rule topic comparison (#18144)
+- ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 (#15856)
 
 ### Removed
 

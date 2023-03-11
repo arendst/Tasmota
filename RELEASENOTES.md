@@ -141,3 +141,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
 - PZEM energy monitor stabilize period on larger configs [#18103](https://github.com/arendst/Tasmota/issues/18103)
 - Rule topic comparison [#18144](https://github.com/arendst/Tasmota/issues/18144)
+- ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 [#15856](https://github.com/arendst/Tasmota/issues/15856)
