@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Refactored Berry rule engine and support for arrays
 - ESP32 LVGL library from v8.3.3 to v8.3.5 (no functional change)
 - Removed absolute url from filesystem (#18148)
+- ``UrlFetch`` now follows redirects
 
 ### Fixed
 - TuyaMcu v1 sequence fix (#17625)

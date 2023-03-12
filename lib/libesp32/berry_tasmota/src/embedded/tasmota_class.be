@@ -755,6 +755,7 @@ class Tasmota
       end
     end
     var wc = webclient()
+    wc.set_follow_redirects(true)
     wc.begin(url)
     var st = wc.GET()
     if st != 200

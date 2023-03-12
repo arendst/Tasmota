@@ -1609,7 +1609,7 @@ be_local_closure(Tasmota_urlfetch,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[16]) {     /* constants */
+    ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str(string),
     /* K1   */  be_nested_str(split),
     /* K2   */  be_nested_str(_X2F),
@@ -1617,19 +1617,20 @@ be_local_closure(Tasmota_urlfetch,   /* name */
     /* K4   */  be_const_int(0),
     /* K5   */  be_nested_str(index_X2Ehtml),
     /* K6   */  be_nested_str(webclient),
-    /* K7   */  be_nested_str(begin),
-    /* K8   */  be_nested_str(GET),
-    /* K9   */  be_nested_str(status_X3A_X20),
-    /* K10  */  be_nested_str(connection_error),
-    /* K11  */  be_nested_str(write_file),
-    /* K12  */  be_nested_str(close),
-    /* K13  */  be_nested_str(log),
-    /* K14  */  be_nested_str(BRY_X3A_X20Fetched_X20),
-    /* K15  */  be_const_int(3),
+    /* K7   */  be_nested_str(set_follow_redirects),
+    /* K8   */  be_nested_str(begin),
+    /* K9   */  be_nested_str(GET),
+    /* K10  */  be_nested_str(status_X3A_X20),
+    /* K11  */  be_nested_str(connection_error),
+    /* K12  */  be_nested_str(write_file),
+    /* K13  */  be_nested_str(close),
+    /* K14  */  be_nested_str(log),
+    /* K15  */  be_nested_str(BRY_X3A_X20Fetched_X20),
+    /* K16  */  be_const_int(3),
     }),
     &be_const_str_urlfetch,
     &be_const_str_solidified,
-    ( &(const binstruction[45]) {  /* code */
+    ( &(const binstruction[48]) {  /* code */
       0x4C0C0000,  //  0000  LDNIL	R3
       0x1C0C0403,  //  0001  EQ	R3	R2	R3
       0x780E000D,  //  0002  JMPF	R3	#0011
@@ -1650,31 +1651,34 @@ be_local_closure(Tasmota_urlfetch,   /* name */
       0xB80E0C00,  //  0011  GETNGBL	R3	K6
       0x7C0C0000,  //  0012  CALL	R3	0
       0x8C100707,  //  0013  GETMET	R4	R3	K7
-      0x5C180200,  //  0014  MOVE	R6	R1
+      0x50180200,  //  0014  LDBOOL	R6	1	0
       0x7C100400,  //  0015  CALL	R4	2
       0x8C100708,  //  0016  GETMET	R4	R3	K8
-      0x7C100200,  //  0017  CALL	R4	1
-      0x541600C7,  //  0018  LDINT	R5	200
-      0x20140805,  //  0019  NE	R5	R4	R5
-      0x78160004,  //  001A  JMPF	R5	#0020
-      0x60140008,  //  001B  GETGBL	R5	G8
-      0x5C180800,  //  001C  MOVE	R6	R4
-      0x7C140200,  //  001D  CALL	R5	1
-      0x00161205,  //  001E  ADD	R5	K9	R5
-      0xB0061405,  //  001F  RAISE	1	K10	R5
-      0x8C14070B,  //  0020  GETMET	R5	R3	K11
-      0x5C1C0400,  //  0021  MOVE	R7	R2
-      0x7C140400,  //  0022  CALL	R5	2
-      0x8C18070C,  //  0023  GETMET	R6	R3	K12
-      0x7C180200,  //  0024  CALL	R6	1
-      0x8C18010D,  //  0025  GETMET	R6	R0	K13
-      0x60200008,  //  0026  GETGBL	R8	G8
-      0x5C240A00,  //  0027  MOVE	R9	R5
-      0x7C200200,  //  0028  CALL	R8	1
-      0x00221C08,  //  0029  ADD	R8	K14	R8
-      0x5824000F,  //  002A  LDCONST	R9	K15
-      0x7C180600,  //  002B  CALL	R6	3
-      0x80040800,  //  002C  RET	1	R4
+      0x5C180200,  //  0017  MOVE	R6	R1
+      0x7C100400,  //  0018  CALL	R4	2
+      0x8C100709,  //  0019  GETMET	R4	R3	K9
+      0x7C100200,  //  001A  CALL	R4	1
+      0x541600C7,  //  001B  LDINT	R5	200
+      0x20140805,  //  001C  NE	R5	R4	R5
+      0x78160004,  //  001D  JMPF	R5	#0023
+      0x60140008,  //  001E  GETGBL	R5	G8
+      0x5C180800,  //  001F  MOVE	R6	R4
+      0x7C140200,  //  0020  CALL	R5	1
+      0x00161405,  //  0021  ADD	R5	K10	R5
+      0xB0061605,  //  0022  RAISE	1	K11	R5
+      0x8C14070C,  //  0023  GETMET	R5	R3	K12
+      0x5C1C0400,  //  0024  MOVE	R7	R2
+      0x7C140400,  //  0025  CALL	R5	2
+      0x8C18070D,  //  0026  GETMET	R6	R3	K13
+      0x7C180200,  //  0027  CALL	R6	1
+      0x8C18010E,  //  0028  GETMET	R6	R0	K14
+      0x60200008,  //  0029  GETGBL	R8	G8
+      0x5C240A00,  //  002A  MOVE	R9	R5
+      0x7C200200,  //  002B  CALL	R8	1
+      0x00221E08,  //  002C  ADD	R8	K15	R8
+      0x58240010,  //  002D  LDCONST	R9	K16
+      0x7C180600,  //  002E  CALL	R6	3
+      0x80040800,  //  002F  RET	1	R4
     })
   )
 );
