@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry `webclient` `set_follow_redirects(bool)`
 - Berry `webclient` `collect_headers()` and `set_headers`
 - Display TM1650 commands like TM1637 (#18109)
+- Berry add `web_get_arg` event to drivers when `FUNC_WEB_GET_ARG` event is processed
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
