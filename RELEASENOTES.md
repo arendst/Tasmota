@@ -118,6 +118,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Extended Tariff command for forced tariff [#18080](https://github.com/arendst/Tasmota/issues/18080)
 - Zigbee send Tuya 'magic spell' to unlock devices when pairing [#18144](https://github.com/arendst/Tasmota/issues/18144)
 - Berry support for Tensorflow Lite (TFL) by Christiaan Baars [#18119](https://github.com/arendst/Tasmota/issues/18119)
+- Berry `webclient` features
+- Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration

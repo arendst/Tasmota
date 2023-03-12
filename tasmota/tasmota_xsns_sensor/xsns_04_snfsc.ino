@@ -165,7 +165,7 @@ bool Xsns04(uint32_t function)
       case FUNC_INIT:
         SonoffScInit();
         break;
-      case FUNC_MODULE_INIT:
+      case FUNC_PRE_INIT:
         SetSerial(19200, TS_SERIAL_8N1);
         break;
     }
