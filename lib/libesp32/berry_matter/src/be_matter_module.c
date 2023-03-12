@@ -175,7 +175,7 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 
 /* @const_object_info_begin
 
-module matter (scope: global) {
+module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
   _QRCODE_MINJS, comptr(QRCODE_MINJS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
