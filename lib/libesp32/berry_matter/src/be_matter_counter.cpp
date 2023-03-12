@@ -175,7 +175,7 @@ static int mc_tostring(bvm *vm) {
 #include "be_fixed_be_class_Matter_Counter.h"
 
 /* @const_object_info_begin
-class be_class_Matter_Counter (scope: global, name: Matter_Counter) {
+class be_class_Matter_Counter (scope: global, name: Matter_Counter, strings: weak) {
   _p, var
   init, ctype_func(mc_init)
   deinit, ctype_func(mc_deinit)
