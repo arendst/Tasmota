@@ -127,7 +127,7 @@ enum TInfoLabel{
     LABEL_HCJB,LABEL_HPJB,LABEL_HCJW,LABEL_HPJW,LABEL_HCJR,LABEL_HPJR,
     LABEL_EASF03, LABEL_EASF04, LABEL_EASF05, LABEL_EASF06,
     LABEL_OPTARIF, LABEL_NGTF, LABEL_ISOUSC, LABEL_PREF, LABEL_PTEC, LABEL_LTARF, LABEL_NTARF,
-    LABEL_PAPP, LABEL_SINSTS, LABEL_IINST, LABEL_IINST1, LABEL_IINST2, LABEL_IINST3, LABEL_IRMS1, LABEL_IRMS2, LABEL_IRMS3,
+    LABEL_PAPP, LABEL_SINSTS, LABEL_SINSTS1, LABEL_SINSTS2, LABEL_SINSTS3, LABEL_IINST, LABEL_IINST1, LABEL_IINST2, LABEL_IINST3, LABEL_IRMS1, LABEL_IRMS2, LABEL_IRMS3,
     LABEL_TENSION, LABEL_URMS1, LABEL_URMS2, LABEL_URMS3,
     LABEL_IMAX, LABEL_IMAX1, LABEL_IMAX2, LABEL_IMAX3, LABEL_PMAX, LABEL_SMAXSN,
     LABEL_DEMAIN,LABEL_MSG1,LABEL_MSG2,LABEL_STGE,
@@ -140,7 +140,7 @@ const char kLabel[] PROGMEM =
     "|BBRHCJB|BBRHPJB|BBRHCJW|BBRHPJW|BBRHCJR|BBRHPJR"
     "|EASF03|EASF04|EASF05|EASF06"
     "|OPTARIF|NGTF|ISOUSC|PREF|PTEC|LTARF|NTARF"
-    "|PAPP|SINSTS|IINST|IINST1|IINST2|IINST3|IRMS1|IRMS2|IRMS3"
+    "|PAPP|SINSTS|SINSTS1|SINSTS2|SINSTS3|IINST|IINST1|IINST2|IINST3|IRMS1|IRMS2|IRMS3"
     "|TENSION|URMS1|URMS2|URMS3"
     "|IMAX|IMAX1|IMAX2|IMAX3|PMAX|SMAXSN"
     "|DEMAIN|MSG1|MSG2|STGE"
@@ -325,10 +325,18 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         }
 
         // Power P
-        else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
+        else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS || ilabel == LABEL_SINSTS1 || ilabel == LABEL_SINSTS2 || ilabel == LABEL_SINSTS3)
         {
-            Energy->active_power[0]  = (float) atoi(me->value);;
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy->active_power[0]);
+            float power = (float) atoi(me->value);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s=%s, now %d"), me->name, me->value, (int) power);
+
+            if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS1 || (ilabel == LABEL_SINSTS && Energy->phase_count == 1)) {
+                Energy->active_power[0] = power;
+            } else if (ilabel == LABEL_SINSTS2) {
+                Energy->active_power[1] = power;
+            } else if (ilabel == LABEL_SINSTS3) {
+                Energy->active_power[2] = power;
+            }
         }
 
         // Ok now not so real time values Does this value is new or changed?
@@ -1168,7 +1176,7 @@ void TInfoShow(bool json)
             char phase_color[8];
 
             for (int i=0; i<Energy->phase_count ; i++ ) {
-                percent = (int) ((Energy->current[i]*100.0f) / isousc) ;
+                percent = (int) ((Energy->current[i]*100.0f) / (isousc / Energy->phase_count)) ;
                 if (percent > 100) {
                     percent = 100;
                 }
