@@ -76,6 +76,7 @@
 #define D_CMND_TIMESENSLOSTSET "TimeSensLostSet"
 #define D_CMND_DIAGNOSTICMODESET "DiagnosticModeSet"
 #define D_CMND_CTRDUTYCYCLEREAD "CtrDutyCycleRead"
+#define D_CMND_CONTROLMETHOD "ControlMethod"
 #define D_CMND_ENABLEOUTPUTSET "EnableOutputSet"
 
 enum ThermostatModes { THERMOSTAT_OFF, THERMOSTAT_AUTOMATIC_OP, THERMOSTAT_MANUAL_OP, THERMOSTAT_MODES_MAX };
@@ -175,7 +176,7 @@ const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CM
   D_CMND_TIMEMINACTIONSET "|" D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|"
   D_CMND_TIMERAMPUPMAXSET "|" D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|"
   D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET "|" D_CMND_CTRDUTYCYCLEREAD "|"
-  D_CMND_ENABLEOUTPUTSET;
+  D_CMND_ENABLEOUTPUTSET "|" D_CMND_CONTROLMETHOD;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndThermostatModeSet, &CmndClimateModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet,
@@ -2013,7 +2014,7 @@ void CmndEnableOutputSet(void)
 
 
 // To be done, add all of this defines in according languages file when all will be finished
-// Avoid multiple changes on all language files during developement
+// Avoid multiple changes on all language files during development
 // --------------------------------------------------
 // xdrv_39_thermostat.ino
 #define D_THERMOSTAT             "Thermostat"
@@ -2023,6 +2024,10 @@ void CmndEnableOutputSet(void)
 #define D_THERMOSTAT_DUTY_CYCLE  "Duty cycle"
 #define D_THERMOSTAT_CYCLE_TIME  "Cycle time"
 #define D_THERMOSTAT_PI_AUTOTUNE "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD "Control method"
+#define D_THERMOSTAT_RAMP_UP     "Ramp up"
+#define D_THERMOSTAT_PI          "PI"
+#define D_THERMOSTAT_AUTOTUNE    "Autotune"
 // --------------------------------------------------
 
 
@@ -2031,6 +2036,7 @@ const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}"
 const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
 const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
 const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_CONTROL_METHOD[] PROGMEM = "{s}" D_THERMOSTAT_CONTROL_METHOD "{m}%s{e}";
 const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
 const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
 
@@ -2044,6 +2050,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CONTROLMETHOD, Thermostat[ctr_output].status.phase_hybrid_ctr);
     ResponseJsonEnd();
     return;
   }
@@ -2073,6 +2080,29 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     f_temperature = value / 1000.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
+    switch (Thermostat[ctr_output].status.controller_mode) {
+      case CTR_HYBRID:
+        switch (Thermostat[ctr_output].status.phase_hybrid_ctr) {
+          case CTR_HYBRID_RAMP_UP:
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP );
+            break;
+          case CTR_HYBRID_PI:
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI );
+            break;
+        #ifdef USE_PI_AUTOTUNING
+          case CTR_HYBRID_PI_AUTOTUNE:
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_AUTOTUNE );
+            break;
+        #endif
+        }
+        break;
+      case CTR_PI:
+        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI );
+        break;
+      case CTR_RAMP_UP:
+        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP );
+        break;
+      }
     WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle );
 
   #ifdef USE_PI_AUTOTUNING
