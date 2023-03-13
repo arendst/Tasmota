@@ -1513,6 +1513,9 @@ void Every250mSeconds(void)
           SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
           Settings->mqtt_port = mqtt_port;
         }
+
+        XdrvCall(FUNC_RESET_SETTINGS);
+
         TasmotaGlobal.restart_flag = 3;                   // Finish backlog then Restart 1
       }
       else if (213 == TasmotaGlobal.restart_flag) {       // Reset 3

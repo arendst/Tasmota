@@ -273,7 +273,7 @@ bool EnergyRtcSettingsValid(void) {
 
 const uint32_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
 
-void EnergySettingsLoad(void) {
+void EnergySettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
   memset(&Energy->Settings, 0x00, sizeof(tEnergySettings));
   Energy->Settings.version = XDRV_03_VERSION;
@@ -320,7 +320,10 @@ void EnergySettingsLoad(void) {
   char filename[20];
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_03);
-  if (TfsLoadFile(filename, (uint8_t*)&Energy->Settings, sizeof(tEnergySettings))) {
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&Energy->Settings, sizeof(tEnergySettings))) {
     if (Energy->Settings.version != XDRV_03_VERSION) {      // Fix version dependent changes
 
       // *** Start fix possible setting deltas ***
@@ -336,7 +339,8 @@ void EnergySettingsLoad(void) {
       EnergySettingsSave();
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy loaded from file"));
-  } else {
+  }
+  else {
     // File system not ready: No flash space reserved for file system
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
   }
@@ -1338,7 +1342,7 @@ void EnergyDrvInit(void) {
   Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
   if (!Energy) { return; }
 
-  EnergySettingsLoad();
+  EnergySettingsLoad(0);
   EnergyRtcSettingsLoad();
 
 //  Energy->voltage_common = false;
@@ -1745,6 +1749,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);
+        break;
+      case FUNC_RESET_SETTINGS:
+        EnergySettingsLoad(1);
         break;
       case FUNC_SAVE_SETTINGS:
         EnergySettingsSave();

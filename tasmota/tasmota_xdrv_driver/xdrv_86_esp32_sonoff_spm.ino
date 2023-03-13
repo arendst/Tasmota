@@ -310,7 +310,7 @@ TSspm *Sspm = nullptr;
 
 const uint32_t XDRV_86_VERSION = 0x0104;              // Latest driver version (See settings deltas below)
 
-void Xdrv86SettingsLoad(void) {
+void Xdrv86SettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
   memset(&Sspm->Settings, 0x00, sizeof(tSspmSettings));
   Sspm->Settings.version = XDRV_86_VERSION;
@@ -326,7 +326,10 @@ void Xdrv86SettingsLoad(void) {
   char filename[20];
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_86);
-  if (TfsLoadFile(filename, (uint8_t*)&Sspm->Settings, sizeof(tSspmSettings))) {
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&Sspm->Settings, sizeof(tSspmSettings))) {
     if (Sspm->Settings.version != XDRV_86_VERSION) {      // Fix version dependent changes
 
       // *** Start fix possible setting deltas ***
@@ -341,7 +344,8 @@ void Xdrv86SettingsLoad(void) {
       Xdrv86SettingsSave();
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: XDRV86 loaded from file"));
-  } else {
+  }
+  else {
     // File system not ready: No flash space reserved for file system
     AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV86 Use defaults as file system not ready or file not found"));
   }
@@ -1907,7 +1911,7 @@ void SSPMInit(void) {
     return;
   }
 
-  Xdrv86SettingsLoad();
+  Xdrv86SettingsLoad(0);
 
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);
   digitalWrite(SSPM_GPIO_ARM_RESET, 1);
@@ -2644,6 +2648,9 @@ bool Xdrv86(uint32_t function) {
         break;
       case FUNC_EVERY_100_MSECOND:
         SSPMEvery100ms();
+        break;
+      case FUNC_RESET_SETTINGS:
+        Xdrv86SettingsLoad(1);
         break;
       case FUNC_SAVE_SETTINGS:
         Xdrv86SettingsSave();
