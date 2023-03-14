@@ -92,14 +92,14 @@ class Matter_UDPServer
   var listening                     # true if active
   var udp_socket
   var dispatch_cb                   # callback to call when a message is received
-  var packets_sent                  # map of packets sent to be acknowledged
+  var packets_sent                  # list map of packets sent to be acknowledged
 
   #############################################################
   def init(address, port)
     self.address = address ? address : ""
     self.port = port ? port : 5540
     self.listening = false
-    self.packets_sent = {}
+    self.packets_sent = []
   end
 
   #############################################################
@@ -157,18 +157,23 @@ class Matter_UDPServer
 
   #############################################################
   def resend_packets()
-    for packet:self.packets_sent
+    var idx = 0
+    while idx < size(self.packets_sent)
+      var packet = self.packets_sent[idx]
       if tasmota.time_reached(packet.next_try)
         if packet.retries <= self.RETRIES
           tasmota.log("MTR: resending packet id=" + str(packet.msg_id), 3)
           packet.send(self.udp_socket)         # resend
           packet.next_try = tasmota.millis() + packet.backoff_time(packet.retries)
           packet.retries += 1
+          idx += 1
         else
           import string
-          self.packets_sent.remove(packet.msg_id)
+          self.packets_sent.remove(idx)
           tasmota.log(string.format("MTR: target unreachable '[%s]:%i' msg_id=%i", packet.addr, packet.port, packet.msg_id), 2)
         end
+      else
+        idx += 1
       end
     end
   end
@@ -177,9 +182,14 @@ class Matter_UDPServer
   # just received acknowledgment, remove packet from sender
   def packet_ack(id)
     if id == nil   return end
-    if self.packets_sent.contains(id)
-      self.packets_sent.remove(id)
-      tasmota.log("MTR: removed packet from sending list id=" + str(id), 4)
+    var idx = 0
+    while idx < size(self.packets_sent)
+      if self.packets_sent[idx].msg_id == id
+        self.packets_sent.remove(idx)
+        tasmota.log("MTR: removed packet from sending list id=" + str(id), 4)
+      else
+        idx += 1
+      end
     end
   end
 
@@ -188,7 +198,7 @@ class Matter_UDPServer
     var packet = matter.UDPPacket_sent(raw, addr, port, id)
     packet.send(self.udp_socket)    # send
     if id
-      self.packets_sent[id] = packet
+      self.packets_sent.push(packet)
     end
   end
 

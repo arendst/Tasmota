@@ -1015,7 +1015,7 @@ be_local_closure(Matter_IM_send_subscribe_update,   /* name */
     /* K21  */  be_nested_str_weak(suppress_response),
     /* K22  */  be_nested_str_weak(send_queue),
     /* K23  */  be_nested_str_weak(IM_ReportDataSubscribed),
-    /* K24  */  be_nested_str_weak(__message_handler),
+    /* K24  */  be_nested_str_weak(_message_handler),
     /* K25  */  be_nested_str_weak(send_enqueued),
     }),
     be_str_weak(send_subscribe_update),

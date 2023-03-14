@@ -57,6 +57,7 @@ class Matter_IM_Subscription
     var max_interval = req.max_interval_ceiling
     if max_interval < 60                    max_interval = 60 end
     if max_interval > 3600                  max_interval = 3600 end
+    max_interval = 60
     self.max_interval = max_interval
     
     self.fabric_filtered = req.fabric_filtered
