@@ -65,7 +65,7 @@ class Matter_Plugin_Root : Matter_Plugin
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
-        return TLV.create_TLV(TLV.U8, session.__breadcrumb)
+        return TLV.create_TLV(TLV.U8, session._breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
         bci.add_TLV(0, TLV.U2, 60)      # FailSafeExpiryLengthSeconds
@@ -123,9 +123,9 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
-        return TLV.create_TLV(TLV.U2, tasmota.cmd("Status 1")['StatusPRM']['BootCount'])
+        return TLV.create_TLV(TLV.U2, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
       elif attribute == 0x0002          #  ---------- UpTime u16 ----------
-        return TLV.create_TLV(TLV.U4, tasmota.cmd("Status 11")['StatusSTS']['UptimeSec'])
+        return TLV.create_TLV(TLV.U4, tasmota.cmd("Status 11", true)['StatusSTS']['UptimeSec'])
       # TODO add later other attributes
       elif attribute == 0x0008          #  ---------- TestEventTriggersEnabled bool ----------
         return TLV.create_TLV(TLV.BOOL, false)    # false - maybe can set to true
@@ -155,8 +155,8 @@ class Matter_Plugin_Root : Matter_Plugin
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
         for loc_session: self.device.sessions.sessions_active()
           var nocs = nocl.add_struct(nil)
-          nocs.add_TLV(1, TLV.B2, loc_session.noc)      # NOC
-          nocs.add_TLV(2, TLV.B2, loc_session.icac)     # ICAC
+          nocs.add_TLV(1, TLV.B2, loc_session.get_noc())      # NOC
+          nocs.add_TLV(2, TLV.B2, loc_session.get_icac())     # ICAC
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -165,14 +165,14 @@ class Matter_Plugin_Root : Matter_Plugin
           var root_ca_tlv = TLV.parse(loc_session.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
-          fab.add_TLV(2, TLV.U2, loc_session.admin_vendor)      # VendorID
-          fab.add_TLV(3, TLV.U8, loc_session.fabric)            # FabricID
-          fab.add_TLV(4, TLV.U8, loc_session.deviceid)          # NodeID
-          fab.add_TLV(5, TLV.UTF1, loc_session.fabric_label)    # Label
+          fab.add_TLV(2, TLV.U2, loc_session.get_admin_vendor())      # VendorID
+          fab.add_TLV(3, TLV.U8, loc_session.get_fabric_compressed())            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_session.get_device_id())          # NodeID
+          fab.add_TLV(5, TLV.UTF1, loc_session.get_fabric_label())    # Label
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
-        return TLV.create_TLV(TLV.U1, 5)     # Max 5 fabrics
+        return TLV.create_TLV(TLV.U1, matter.Fabric._MAX_CASE)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
         var sessions_active = self.device.sessions.sessions_active()
         return TLV.create_TLV(TLV.U1, size(sessions_active))  # number of active sessions
@@ -199,21 +199,21 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
         return TLV.create_TLV(TLV.U2, self.device.vendorid)    # Vendor ID reserved for development
       elif attribute == 0x0003          #  ---------- ProductName / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName")['DeviceName'])
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
       elif attribute == 0x0004          #  ---------- ProductID / u16 (opt) ----------
         return TLV.create_TLV(TLV.U2, 32768)    # taken from esp-matter example
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("FriendlyName")['FriendlyName1'])
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("FriendlyName", true)['FriendlyName1'])
       elif attribute == 0x0006          #  ---------- Location / string ----------
         return TLV.create_TLV(TLV.UTF1, "XX")   # no location
       elif attribute == 0x0007          #  ---------- HardwareVersion / u16 ----------
         return TLV.create_TLV(TLV.U2, 0)
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Hardware'])
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
         return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2")['StatusFWR']['Version'])
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Version'])
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
@@ -326,7 +326,7 @@ class Matter_Plugin_Root : Matter_Plugin
         #  1=DebugText
         var ExpiryLengthSeconds = val.findsubval(0, 900)
         var Breadcrumb = val.findsubval(1, 0)
-        session.__breadcrumb = Breadcrumb
+        session._breadcrumb = Breadcrumb
 
         var afsr = TLV.Matter_TLV_struct()
         afsr.add_TLV(0, TLV.U1, 0)      # ErrorCode = OK
@@ -338,7 +338,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var NewRegulatoryConfig = val.findsubval(0)     # RegulatoryLocationType Enum
         var CountryCode = val.findsubval(1, "XX")
         var Breadcrumb = val.findsubval(2, 0)
-        session.__breadcrumb = Breadcrumb
+        session._breadcrumb = Breadcrumb
         # create SetRegulatoryConfigResponse
         # ID=1
         #  0=ErrorCode (OK=0)
@@ -351,8 +351,10 @@ class Matter_Plugin_Root : Matter_Plugin
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
         # no data
-        session.__breadcrumb = 0          # clear breadcrumb
+        session._breadcrumb = 0          # clear breadcrumb
+        session.fabric_completed()      # fabric information is complete, persist
         session.set_no_expiration()
+        session.save()
 
         # create CommissioningCompleteResponse
         # ID=1
@@ -456,32 +458,39 @@ class Matter_Plugin_Root : Matter_Plugin
 
         session.set_noc(NOCValue, ICACValue)
         session.set_ipk_epoch_key(IpkValue)
-        session.admin_subject = CaseAdminSubject
-        session.admin_vendor = AdminVendorId
+        session.set_admin_subject_vendor(CaseAdminSubject, AdminVendorId)
 
         # extract important information from NOC
         var noc_cert = matter.TLV.parse(NOCValue)
         var dnlist = noc_cert.findsub(6)
-        var fabric = dnlist.findsubval(21)
+        var fabric_id = dnlist.findsubval(21)
         var deviceid = dnlist.findsubval(17)
-        if !fabric || !deviceid
+        if !fabric_id || !deviceid
           tasmota.log("MTR: Error: no fabricid nor deviceid in NOC certificate", 2)
           return false
         end
         # convert fo bytes(8)
-        if type(fabric) == 'int'    fabric = int64(fabric).tobytes()      else fabric = fabric.tobytes()     end
+        if type(fabric_id) == 'int'    fabric_id = int64(fabric_id).tobytes()      else fabric_id = fabric_id.tobytes()     end
         if type(deviceid) == 'int'  deviceid = int64(deviceid).tobytes()  else deviceid = deviceid.tobytes() end
 
         var root_ca = matter.TLV.parse(session.get_ca()).findsubval(9)    # extract public key from ca
         root_ca = root_ca[1..]            # remove first byte as per Matter specification
         var info = bytes().fromstring("CompressedFabric")   # as per spec, 4.3.2.2 p.99
         var hk = crypto.HKDF_SHA256()
-        var fabric_rev = fabric.copy().reverse()
+        var fabric_rev = fabric_id.copy().reverse()
         var k_fabric = hk.derive(root_ca, fabric_rev, info, 8)
-        session.set_fabric_device(fabric, deviceid, k_fabric)
+        session.set_fabric_device(fabric_id, deviceid, k_fabric)
+
+        # We have a candidate fabric, add it as expirable for 2 minutes
+        session.persist_to_fabric()       # fabric object is completed, persist it
+        session.fabric_candidate()
 
         # move to next step
-        self.device.start_operational_dicovery_deferred(session)
+        self.device.start_operational_discovery_deferred(session)
+        # session.fabric_completed()
+        tasmota.log("MTR: ------------------------------------------", 3)
+        tasmota.log("MTR: fabric=" + matter.inspect(session._fabric), 3)
+        tasmota.log("MTR: ------------------------------------------", 3)
         # create NOCResponse
         # 0=StatusCode
         # 1=FabricIndex (1-254) (opt)
@@ -503,9 +512,9 @@ class Matter_Plugin_Root : Matter_Plugin
         var sessions_act = self.device.sessions.sessions_active()
         if index >= 1 && index <= size(sessions_act)
           var session_deleted = sessions_act[index - 1]
-          tasmota.log("MTR: removing fabric " + session.fabric.copy().reverse().tohex())
+          tasmota.log("MTR: removing fabric " + session.get_fabric_id().copy().reverse().tohex())
           self.device.sessions.remove_session()
-          self.device.sessions.save()
+          self.device.sessions.save_fabrics()
         else
           # TODO return error 11 InvalidFabricIndex
         end
@@ -545,7 +554,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
         if type(write_data) == 'int' || isinstance(write_data, int64)
-          session.__breadcrumb = write_data
+          session._breadcrumb = write_data
           self.attribute_updated(ctx.endpoint, ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
           return true
         else

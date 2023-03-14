@@ -25,8 +25,6 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#include "be_matter_qrcode_min_js.h"
-
 // Matter logo
 static const uint8_t MATTER_LOGO[] = 
   "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
@@ -40,6 +38,7 @@ static const uint8_t MATTER_LOGO[] =
 
 extern const bclass be_class_Matter_Counter;
 extern const bclass be_class_Matter_Verhoeff;
+extern const bclass be_class_Matter_QRCode;
 
 #include "solidify/solidified_Matter_Module.h"
 
@@ -133,6 +132,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
+#include "solidify/solidified_Matter_Expirable.h"
 #include "solidify/solidified_Matter_Session.h"
 #include "solidify/solidified_Matter_Commissioning_Data.h"
 #include "solidify/solidified_Matter_Commissioning.h"
@@ -177,7 +177,6 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 
 module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
-  _QRCODE_MINJS, comptr(QRCODE_MINJS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
 
   Verhoeff, class(be_class_Matter_Verhoeff)
@@ -270,7 +269,12 @@ module matter (scope: global, strings: weak) {
   UDPPacket_sent, class(be_class_Matter_UDPPacket_sent)
   UDPServer, class(be_class_Matter_UDPServer)
 
+  // Expirable
+  Expirable, class(be_class_Matter_Expirable)
+  Expirable_list, class(be_class_Matter_Expirable_list)
+
   // Sessions
+  Fabric, class(be_class_Matter_Fabric)
   Session, class(be_class_Matter_Session)
   Session_Store, class(be_class_Matter_Session_Store)
 
@@ -290,6 +294,9 @@ module matter (scope: global, strings: weak) {
   IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
   UI, class(be_class_Matter_UI)
+
+  // QR Code
+  QRCode, class(be_class_Matter_QRCode)
 
   // Base38 for QR Code
   Base38, class(be_class_Matter_Base38)

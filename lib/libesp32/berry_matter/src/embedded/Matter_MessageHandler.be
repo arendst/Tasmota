@@ -62,9 +62,9 @@ class Matter_MessageHandler
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
         tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + "session_id = " + str(session.local_session_id), 3)
-        if addr     session.__ip = addr     end
-        if port     session.__port = port   end
-        session.__message_handler = self
+        if addr     session._ip = addr     end
+        if port     session._port = port   end
+        session._message_handler = self
         frame.session = session
         
         # check if it's a duplicate
@@ -93,9 +93,9 @@ class Matter_MessageHandler
           tasmota.log("MTR: frame="+matter.inspect(frame), 3)
           return false
         end
-        if addr     session.__ip = addr     end
-        if port     session.__port = port   end
-        session.__message_handler = self
+        if addr     session._ip = addr     end
+        if port     session._port = port   end
+        session._message_handler = self
         frame.session = session   # keep a pointer of the session in the message
        
         # check if it's a duplicate
@@ -174,13 +174,13 @@ class Matter_MessageHandler
   end
 
   #############################################################
-  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, session_timestamp)
+  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, created)
     import string
     # create session object
     tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 3)
     
     var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
-    session.set_keys(i2r, r2i, ac, session_timestamp)
+    session.set_keys(i2r, r2i, ac, created)
   end
 
   #############################################################
