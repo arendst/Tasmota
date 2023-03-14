@@ -172,4 +172,4 @@ People helping to keep the show on the road:
 
 ## License
 
-This program is licensed under GPL-3.0
+This program is licensed under GPL-3.0-only
