@@ -602,6 +602,15 @@ class Matter_Session_Store
   end
 
   #############################################################
+  # Count active fabrics
+  #
+  # Count the number of commissionned fabrics, i.e. persisted
+  def count_active_fabrics(f)
+    self.remove_expired()      # clean before saving
+    return self.fabrics.count_persistables()
+  end
+
+  #############################################################
   # add session 
   def create_session(local_session_id, initiator_session_id)
     var session = self.get_session_by_local_session_id(local_session_id)

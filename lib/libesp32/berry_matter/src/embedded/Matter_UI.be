@@ -160,7 +160,7 @@ class Matter_UI
     webserver.content_send("<p>Passcode:</p>")
     webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.passcode))
     webserver.content_send("<p>Distinguish id:</p>")
-    webserver.content_send(string.format("<input type='number' min='0' max='2047' name='discriminator' value='%i'>", self.device.discriminator))
+    webserver.content_send(string.format("<input type='number' min='0' max='4095' name='discriminator' value='%i'>", self.device.discriminator))
     webserver.content_send(string.format("<p><input type='checkbox' name='ipv4'%s>IPv4 only</p>", self.device.ipv4only ? " checked" : ""))
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>")
     webserver.content_send("<p></p></fieldset><p></p>")
@@ -314,6 +314,14 @@ class Matter_UI
       end
 
       # mtc0 = close, mtc1 = open commissioning
+      var fabrics_count = self.device.sessions.count_active_fabrics()
+      if fabrics_count == 0
+        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", "No active associaition"))
+      else
+        var plural = fabrics_count > 1
+        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", str(fabrics_count) + " active association" + (plural ? "s" : "")))
+      end
+
       webserver.content_send(string.format("<button onclick='la(\"&mtc%i=1\");'>", self.device.commissioning_open == nil ? 1 : 0))
       webserver.content_send(matter._LOGO)
       if self.device.commissioning_open == nil

@@ -1516,25 +1516,24 @@ be_local_closure(Matter_Device_init_basic_commissioning,   /* name */
     /* K0   */  be_nested_str_weak(compute_pbkdf),
     /* K1   */  be_nested_str_weak(passcode),
     /* K2   */  be_nested_str_weak(sessions),
-    /* K3   */  be_nested_str_weak(fabrics),
+    /* K3   */  be_nested_str_weak(count_active_fabrics),
     /* K4   */  be_const_int(0),
     /* K5   */  be_nested_str_weak(start_basic_commissioning),
     }),
     be_str_weak(init_basic_commissioning),
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
+    ( &(const binstruction[11]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x880C0101,  //  0001  GETMBR	R3	R0	K1
       0x7C040400,  //  0002  CALL	R1	2
-      0x6004000C,  //  0003  GETGBL	R1	G12
-      0x88080102,  //  0004  GETMBR	R2	R0	K2
-      0x88080503,  //  0005  GETMBR	R2	R2	K3
-      0x7C040200,  //  0006  CALL	R1	1
-      0x1C040304,  //  0007  EQ	R1	R1	K4
-      0x78060001,  //  0008  JMPF	R1	#000B
-      0x8C040105,  //  0009  GETMET	R1	R0	K5
-      0x7C040200,  //  000A  CALL	R1	1
-      0x80000000,  //  000B  RET	0
+      0x88040102,  //  0003  GETMBR	R1	R0	K2
+      0x8C040303,  //  0004  GETMET	R1	R1	K3
+      0x7C040200,  //  0005  CALL	R1	1
+      0x1C040304,  //  0006  EQ	R1	R1	K4
+      0x78060001,  //  0007  JMPF	R1	#000A
+      0x8C040105,  //  0008  GETMET	R1	R0	K5
+      0x7C040200,  //  0009  CALL	R1	1
+      0x80000000,  //  000A  RET	0
     })
   )
 );
@@ -2371,21 +2370,24 @@ be_local_closure(Matter_Device_start_commissioning_complete,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
     /* K1   */  be_nested_str_weak(log),
     /* K2   */  be_nested_str_weak(MTR_X3A_X20_X2A_X2A_X2A_X20Commissioning_X20complete_X20_X2A_X2A_X2A),
     /* K3   */  be_const_int(2),
+    /* K4   */  be_nested_str_weak(stop_basic_commissioning),
     }),
     be_str_weak(start_commissioning_complete),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[ 8]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x58100002,  //  0002  LDCONST	R4	K2
       0x58140003,  //  0003  LDCONST	R5	K3
       0x7C080600,  //  0004  CALL	R2	3
-      0x80000000,  //  0005  RET	0
+      0x8C080104,  //  0005  GETMET	R2	R0	K4
+      0x7C080200,  //  0006  CALL	R2	1
+      0x80000000,  //  0007  RET	0
     })
   )
 );

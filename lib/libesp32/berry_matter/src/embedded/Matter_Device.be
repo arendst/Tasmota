@@ -110,7 +110,7 @@ class Matter_Device
     self.compute_pbkdf(self.passcode)
 
     # if no fabric is configured, automatically open commissioning at restart
-    if size(self.sessions.fabrics) == 0
+    if self.sessions.count_active_fabrics() == 0
       self.start_basic_commissioning()
     end
   end
@@ -274,6 +274,7 @@ class Matter_Device
   #
   def start_commissioning_complete(session)
     tasmota.log("MTR: *** Commissioning complete ***", 2)
+    self.stop_basic_commissioning()     # by default close commissioning when it's complete
   end
 
 

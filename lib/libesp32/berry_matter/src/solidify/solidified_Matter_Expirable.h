@@ -399,11 +399,11 @@ void be_load_Matter_Expirable_class(bvm *vm) {
 extern const bclass be_class_Matter_Expirable_list;
 
 /********************************************************************
-** Solidified function: every_second
+** Solidified function: count_persistables
 ********************************************************************/
-be_local_closure(Matter_Expirable_list_every_second,   /* name */
+be_local_closure(Matter_Expirable_list_count_persistables,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -411,15 +411,79 @@ be_local_closure(Matter_Expirable_list_every_second,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(remove_expired),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(_persist),
+    /* K2   */  be_const_int(1),
     }),
-    be_str_weak(every_second),
+    be_str_weak(count_persistables),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0x80000000,  //  0002  RET	0
+    ( &(const binstruction[14]) {  /* code */
+      0x58040000,  //  0000  LDCONST	R1	K0
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x600C000C,  //  0002  GETGBL	R3	G12
+      0x5C100000,  //  0003  MOVE	R4	R0
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x140C0403,  //  0005  LT	R3	R2	R3
+      0x780E0005,  //  0006  JMPF	R3	#000D
+      0x940C0002,  //  0007  GETIDX	R3	R0	R2
+      0x880C0701,  //  0008  GETMBR	R3	R3	K1
+      0x780E0000,  //  0009  JMPF	R3	#000B
+      0x00040302,  //  000A  ADD	R1	R1	K2
+      0x00080502,  //  000B  ADD	R2	R2	K2
+      0x7001FFF4,  //  000C  JMP		#0002
+      0x80040200,  //  000D  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: remove_expired
+********************************************************************/
+be_local_closure(Matter_Expirable_list_remove_expired,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(has_expired),
+    /* K2   */  be_nested_str_weak(_persist),
+    /* K3   */  be_nested_str_weak(remove),
+    /* K4   */  be_const_int(1),
+    }),
+    be_str_weak(remove_expired),
+    &be_const_str_solidified,
+    ( &(const binstruction[22]) {  /* code */
+      0x50040000,  //  0000  LDBOOL	R1	0	0
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x600C000C,  //  0002  GETGBL	R3	G12
+      0x5C100000,  //  0003  MOVE	R4	R0
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x140C0403,  //  0005  LT	R3	R2	R3
+      0x780E000D,  //  0006  JMPF	R3	#0015
+      0x940C0002,  //  0007  GETIDX	R3	R0	R2
+      0x8C0C0701,  //  0008  GETMET	R3	R3	K1
+      0x7C0C0200,  //  0009  CALL	R3	1
+      0x780E0007,  //  000A  JMPF	R3	#0013
+      0x940C0002,  //  000B  GETIDX	R3	R0	R2
+      0x880C0702,  //  000C  GETMBR	R3	R3	K2
+      0x780E0000,  //  000D  JMPF	R3	#000F
+      0x50040200,  //  000E  LDBOOL	R1	1	0
+      0x8C0C0103,  //  000F  GETMET	R3	R0	K3
+      0x5C140400,  //  0010  MOVE	R5	R2
+      0x7C0C0400,  //  0011  CALL	R3	2
+      0x70020000,  //  0012  JMP		#0014
+      0x00080504,  //  0013  ADD	R2	R2	K4
+      0x7001FFEC,  //  0014  JMP		#0002
+      0x80040200,  //  0015  RET	1	R1
     })
   )
 );
@@ -475,58 +539,11 @@ be_local_closure(Matter_Expirable_list_setitem,   /* name */
 
 
 /********************************************************************
-** Solidified function: push
+** Solidified function: every_second
 ********************************************************************/
-be_local_closure(Matter_Expirable_list_push,   /* name */
+be_local_closure(Matter_Expirable_list_every_second,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(Expirable),
-    /* K2   */  be_nested_str_weak(type_error),
-    /* K3   */  be_nested_str_weak(argument_X20must_X20be_X20of_X20class_X20_X27Expirable_X27),
-    /* K4   */  be_nested_str_weak(set_parent_list),
-    /* K5   */  be_nested_str_weak(push),
-    }),
-    be_str_weak(push),
-    &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
-      0x6008000F,  //  0000  GETGBL	R2	G15
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0xB8120000,  //  0002  GETNGBL	R4	K0
-      0x88100901,  //  0003  GETMBR	R4	R4	K1
-      0x7C080400,  //  0004  CALL	R2	2
-      0x740A0000,  //  0005  JMPT	R2	#0007
-      0xB0060503,  //  0006  RAISE	1	K2	K3
-      0x8C080304,  //  0007  GETMET	R2	R1	K4
-      0x5C100000,  //  0008  MOVE	R4	R0
-      0x7C080400,  //  0009  CALL	R2	2
-      0x60080003,  //  000A  GETGBL	R2	G3
-      0x5C0C0000,  //  000B  MOVE	R3	R0
-      0x7C080200,  //  000C  CALL	R2	1
-      0x8C080505,  //  000D  GETMET	R2	R2	K5
-      0x5C100200,  //  000E  MOVE	R4	R1
-      0x7C080400,  //  000F  CALL	R2	2
-      0x80040400,  //  0010  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: remove_expired
-********************************************************************/
-be_local_closure(Matter_Expirable_list_remove_expired,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -534,38 +551,15 @@ be_local_closure(Matter_Expirable_list_remove_expired,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_weak(has_expired),
-    /* K2   */  be_nested_str_weak(_persist),
-    /* K3   */  be_nested_str_weak(remove),
-    /* K4   */  be_const_int(1),
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(remove_expired),
     }),
-    be_str_weak(remove_expired),
+    be_str_weak(every_second),
     &be_const_str_solidified,
-    ( &(const binstruction[22]) {  /* code */
-      0x50040000,  //  0000  LDBOOL	R1	0	0
-      0x58080000,  //  0001  LDCONST	R2	K0
-      0x600C000C,  //  0002  GETGBL	R3	G12
-      0x5C100000,  //  0003  MOVE	R4	R0
-      0x7C0C0200,  //  0004  CALL	R3	1
-      0x140C0403,  //  0005  LT	R3	R2	R3
-      0x780E000D,  //  0006  JMPF	R3	#0015
-      0x940C0002,  //  0007  GETIDX	R3	R0	R2
-      0x8C0C0701,  //  0008  GETMET	R3	R3	K1
-      0x7C0C0200,  //  0009  CALL	R3	1
-      0x780E0007,  //  000A  JMPF	R3	#0013
-      0x940C0002,  //  000B  GETIDX	R3	R0	R2
-      0x880C0702,  //  000C  GETMBR	R3	R3	K2
-      0x780E0000,  //  000D  JMPF	R3	#000F
-      0x50040200,  //  000E  LDBOOL	R1	1	0
-      0x8C0C0103,  //  000F  GETMET	R3	R0	K3
-      0x5C140400,  //  0010  MOVE	R5	R2
-      0x7C0C0400,  //  0011  CALL	R3	2
-      0x70020000,  //  0012  JMP		#0014
-      0x00080504,  //  0013  ADD	R2	R2	K4
-      0x7001FFEC,  //  0014  JMP		#0002
-      0x80040200,  //  0015  RET	1	R1
+    ( &(const binstruction[ 3]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0x80000000,  //  0002  RET	0
     })
   )
 );
@@ -632,19 +626,67 @@ be_local_closure(Matter_Expirable_list_persistables,   /* name */
 
 
 /********************************************************************
+** Solidified function: push
+********************************************************************/
+be_local_closure(Matter_Expirable_list_push,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(matter),
+    /* K1   */  be_nested_str_weak(Expirable),
+    /* K2   */  be_nested_str_weak(type_error),
+    /* K3   */  be_nested_str_weak(argument_X20must_X20be_X20of_X20class_X20_X27Expirable_X27),
+    /* K4   */  be_nested_str_weak(set_parent_list),
+    /* K5   */  be_nested_str_weak(push),
+    }),
+    be_str_weak(push),
+    &be_const_str_solidified,
+    ( &(const binstruction[17]) {  /* code */
+      0x6008000F,  //  0000  GETGBL	R2	G15
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0xB8120000,  //  0002  GETNGBL	R4	K0
+      0x88100901,  //  0003  GETMBR	R4	R4	K1
+      0x7C080400,  //  0004  CALL	R2	2
+      0x740A0000,  //  0005  JMPT	R2	#0007
+      0xB0060503,  //  0006  RAISE	1	K2	K3
+      0x8C080304,  //  0007  GETMET	R2	R1	K4
+      0x5C100000,  //  0008  MOVE	R4	R0
+      0x7C080400,  //  0009  CALL	R2	2
+      0x60080003,  //  000A  GETGBL	R2	G3
+      0x5C0C0000,  //  000B  MOVE	R3	R0
+      0x7C080200,  //  000C  CALL	R2	1
+      0x8C080505,  //  000D  GETMET	R2	R2	K5
+      0x5C100200,  //  000E  MOVE	R4	R1
+      0x7C080400,  //  000F  CALL	R2	2
+      0x80040400,  //  0010  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_Expirable_list
 ********************************************************************/
 extern const bclass be_class_list;
 be_local_class(Matter_Expirable_list,
     0,
     &be_class_list,
-    be_nested_map(5,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(every_second, 4), be_const_closure(Matter_Expirable_list_every_second_closure) },
+        { be_const_key_weak(count_persistables, -1), be_const_closure(Matter_Expirable_list_count_persistables_closure) },
+        { be_const_key_weak(every_second, -1), be_const_closure(Matter_Expirable_list_every_second_closure) },
         { be_const_key_weak(setitem, -1), be_const_closure(Matter_Expirable_list_setitem_closure) },
-        { be_const_key_weak(push, -1), be_const_closure(Matter_Expirable_list_push_closure) },
-        { be_const_key_weak(remove_expired, -1), be_const_closure(Matter_Expirable_list_remove_expired_closure) },
+        { be_const_key_weak(remove_expired, 1), be_const_closure(Matter_Expirable_list_remove_expired_closure) },
         { be_const_key_weak(persistables, -1), be_const_closure(Matter_Expirable_list_persistables_closure) },
+        { be_const_key_weak(push, -1), be_const_closure(Matter_Expirable_list_push_closure) },
     })),
     be_str_weak(Matter_Expirable_list)
 );
