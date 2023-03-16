@@ -169,6 +169,18 @@ class Matter_Expirable_list : list
   end
 
   #############################################################
+  # Count the number of persistable objects
+  def count_persistables()
+    var ret = 0
+    var idx = 0
+    while idx < size(self)
+      if self[idx]._persist   ret += 1  end
+      idx += 1
+    end
+    return ret
+  end
+
+  #############################################################
   # every_second
   def every_second()
     self.remove_expired()

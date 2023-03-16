@@ -269,7 +269,7 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0003          #  ---------- ConnectMaxTimeSeconds / uint8 ----------
         return TLV.create_TLV(TLV.U1, 30)    # 30 - value taking from example in esp-matter
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 15s ??? TOOD what should we put here?
+        return TLV.create_TLV(TLV.U4, 0x04)  # Put Eth for now which should work for any on-network
       end
 
     # ====================================================================================================
