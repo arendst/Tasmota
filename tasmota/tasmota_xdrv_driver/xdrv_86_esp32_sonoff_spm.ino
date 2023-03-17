@@ -2300,14 +2300,12 @@ void SSPMEnergyShow(bool json) {
       WSContentSend_PD(HTTP_SNS_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
       WSContentSend_PD(HTTP_SNS_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[0], Settings->flag2.current_resolution, indirect, offset, count));
       WSContentSend_PD(HTTP_SNS_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
-      char valu2_chr[SSPM_SIZE];
-      char valu3_chr[SSPM_SIZE];
-      WSContentSend_PD(HTTP_ENERGY_SNS1, SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
-                                         SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
-                                         SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
-      WSContentSend_PD(HTTP_ENERGY_SNS2, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
-                                         SSPMEnergyFormat(valu2_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
-                                         SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_POWERUSAGE_APPARENT, SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_POWERUSAGE_REACTIVE, SSPMEnergyFormat(value_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_POWER_FACTOR, SSPMEnergyFormat(value_chr, Sspm->power_factor[0], 2, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_TODAY, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_YESTERDAY, SSPMEnergyFormat(value_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_TOTAL, SSPMEnergyFormat(value_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
 #endif  // USE_WEBSERVER

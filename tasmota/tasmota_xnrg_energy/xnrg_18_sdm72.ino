@@ -177,26 +177,24 @@ void Sdm72Show(bool json) {
 */
 
 #ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SDM72[] PROGMEM =
-  "{s}" D_EXPORT_POWER "{m}%s" D_UNIT_WATT "{e}"
+const char HTTP_ENERGY_SDM72_EXPORT_POWER[] PROGMEM =
+  "{s}" D_EXPORT_POWER "{m}%s" D_UNIT_WATT "{e}";
+const char HTTP_ENERGY_SDM72_IMPORT_POWER[] PROGMEM =
   "{s}" D_IMPORT_POWER "{m}%s" D_UNIT_WATT "{e}";
 #endif  // USE_WEBSERVER
 
 void Sdm72Show(bool json) {
   if (isnan(Sdm72.total_active)) { return; }
 
-  char value_chr[GUISZ];
-  char value2_chr[GUISZ];
-
   if (json) {
-     ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_POWER "\":%s,\"" D_JSON_IMPORT_POWER "\":%s"),
-      EnergyFormat(value_chr, &Sdm72.export_power, Settings->flag2.wattage_resolution),
-      EnergyFormat(value2_chr, &Sdm72.import_power, Settings->flag2.wattage_resolution));
+     ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_POWER "\":%s"),
+      EnergyFmt(&Sdm72.export_power, Settings->flag2.wattage_resolution));
+     ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_POWER "\":%s"),
+      EnergyFmt(&Sdm72.import_power, Settings->flag2.wattage_resolution));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM72, WebEnergyFormat(value_chr, &Sdm72.export_power, Settings->flag2.wattage_resolution),
-                                        WebEnergyFormat(value2_chr, &Sdm72.import_power, Settings->flag2.wattage_resolution));
-
+    WSContentSend_PD(HTTP_ENERGY_SDM72_EXPORT_POWER, WebEnergyFmt(&Sdm72.export_power, Settings->flag2.wattage_resolution));
+    WSContentSend_PD(HTTP_ENERGY_SDM72_IMPORT_POWER, WebEnergyFmt(&Sdm72.import_power, Settings->flag2.wattage_resolution));
 #endif  // USE_WEBSERVER
   }
 }

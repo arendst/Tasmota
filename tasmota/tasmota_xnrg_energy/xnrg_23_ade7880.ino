@@ -746,14 +746,13 @@ const char HTTP_ADE7880_CURRENT[] PROGMEM = "{s}" D_CURRENT_NEUTRAL "{m}%s " D_U
 #endif  // USE_WEBSERVER
 
 void Ade7880Show(bool json) {
-  char value_chr[GUISZ];
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"),
-      EnergyFormat(value_chr, &Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+      EnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ADE7880_CURRENT, WebEnergyFormat(value_chr, &Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+    WSContentSend_PD(HTTP_ADE7880_CURRENT, WebEnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
 #endif  // USE_WEBSERVER
   }
 }

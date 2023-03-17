@@ -200,11 +200,6 @@ const uint16_t MAX_INPUT_BUFFER_SIZE = 2048; // Max number of characters in Ardu
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
-#ifdef ESP8266
-const uint16_t GUISZ = 300;                 // Max number of characters in WebEnergyFormat string
-#else
-const uint16_t GUISZ = 600;                 // Max number of characters in WebEnergyFormat string
-#endif
 
 #ifdef ESP8266
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED

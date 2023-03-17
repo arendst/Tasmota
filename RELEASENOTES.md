@@ -110,7 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.4.0.2
+## Changelog v12.4.0.3
 ### Added
 - Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
@@ -143,4 +143,5 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
 - PZEM energy monitor stabilize period on larger configs [#18103](https://github.com/arendst/Tasmota/issues/18103)
 - Rule topic comparison [#18144](https://github.com/arendst/Tasmota/issues/18144)
+- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs [#18164](https://github.com/arendst/Tasmota/issues/18164)
 - ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 [#15856](https://github.com/arendst/Tasmota/issues/15856)

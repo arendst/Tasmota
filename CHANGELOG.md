@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.4.0.2]
+## [12.4.0.3]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs (#18164)
+
+### Removed
+
+## [12.4.0.2] 20230317
 ### Added
 - Support for multiple MCP23008 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
@@ -31,8 +43,6 @@ All notable changes to this project will be documented in this file.
 - PZEM energy monitor stabilize period on larger configs (#18103)
 - Rule topic comparison (#18144)
 - ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 (#15856)
-
-### Removed
 
 ## [12.4.0.1] 20230301
 ### Added
