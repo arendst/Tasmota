@@ -431,7 +431,7 @@
  #define HOME_ASSISTANT_LWT_SUBSCRIBE    true               // Subscribe to Home Assistant Birth and Last Will Topic (default = true)
 
 // -- MQTT - Tasmota Discovery ---------------------
-#define USE_TASMOTA_DISCOVERY                      // Enable Tasmota Discovery support (+2k code)
+// #define USE_TASMOTA_DISCOVERY                      // Enable Tasmota Discovery support (+2k code)
 
 // -- MQTT - TLS - AWS IoT ------------------------
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
@@ -493,15 +493,15 @@
 
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
-#define USE_RULES                                // Add support for rules (+8k code)
- #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
-   #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
+// #define USE_RULES                                // Add support for rules (+8k code)
+//  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
+//    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
 //  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
-//  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
+#define USE_SCRIPT                               // Add support for script (+17k code)
+ #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
   #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 //#define USER_BACKLOG "<Any command separated by a semicolon (;)>"  // Add commands executed at firmware load or when command reset is executed
