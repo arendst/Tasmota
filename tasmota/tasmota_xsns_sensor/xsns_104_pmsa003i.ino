@@ -1,7 +1,7 @@
 /*
-  xsns_100_pmsa003i.ino - PMSA003I air quality sensor support for Tasmota
+  xsns_104_pmsa003i.ino - PMSA003I air quality sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2023  Jean-Pierre Deschamps
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
  * I2C Address: 0x12
 \*********************************************************************************************/
 
-#define XSNS_100            100
-#define XI2C_71             71  // See I2CDEVICES.md
+#define XSNS_104            104
+#define XI2C_71             78  // See I2CDEVICES.md
 
 #define PMSA003I_ADDRESS    0x12
 

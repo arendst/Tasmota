@@ -880,7 +880,7 @@ void ResponseAppendFeatures(void)
     feature9 |= 0x00020000;  // xdrv_67_mcp23xxx.ino
 #endif
 #if defined(USE_I2C) && defined(USE_PMSA003I)
-    feature9 |= 0x00040000;  // xsns_100_pmsa003i.ino
+    feature9 |= 0x00040000;  // xsns_104_pmsa003i.ino
 #endif
 //    feature9 |= 0x00080000;
 
