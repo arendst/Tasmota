@@ -37,3 +37,7 @@ lib/libesp32/berry/berry
 .vscode/settings.json
 *.bak
 *.code-workspace
+lib/libesp32/berry_tasmota/src/embedded/mqttsensor.be
+tasmota/berry/mqtt_dexcom.be
+tasmota/berry/mqtt_topic.be
+lib/libesp32/berry_tasmota/src/embedded/mqttprocess.be
