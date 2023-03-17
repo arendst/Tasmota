@@ -383,8 +383,8 @@ bool EnergyFmtMalloc(void) {
 }
 
 void EnergyFmtFree(void) {
-  free(Energy->value);
-  Energy->value = nullptr;
+//  free(Energy->value);                    // Let's keep it for future use reducing heap fragmentation
+//  Energy->value = nullptr;
 }
 
 char* EnergyFmt(float* input, uint32_t resolution, uint32_t single = 0);
@@ -1367,7 +1367,7 @@ void EnergyDrvInit(void) {
   EnergySettingsLoad(0);
   EnergyRtcSettingsLoad();
 
-  EnergyFmtFree();
+  Energy->value = nullptr;
 //  Energy->voltage_common = false;
 //  Energy->frequency_common = false;
 //  Energy->use_overtemp = false;

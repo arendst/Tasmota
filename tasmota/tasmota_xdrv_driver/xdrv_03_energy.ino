@@ -156,8 +156,8 @@ bool EnergyFmtMalloc(void) {
 }
 
 void EnergyFmtFree(void) {
-  free(Energy->value);
-  Energy->value = nullptr;
+//  free(Energy->value);                    // Let's keep it for future use reducing heap fragmentation
+//  Energy->value = nullptr;
 }
 
 char* EnergyFmt(float* input, uint32_t resolution, uint32_t single = 0);
@@ -1132,7 +1132,7 @@ void EnergyDrvInit(void) {
   Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
   if (!Energy) { return; }
 
-  EnergyFmtFree();
+  Energy->value = nullptr;
 //  Energy->voltage_common = false;
 //  Energy->frequency_common = false;
 //  Energy->use_overtemp = false;
