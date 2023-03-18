@@ -741,18 +741,12 @@ bool Ade7880Command(void) {
 \*********************************************************************************************/
 
 #ifdef ADE7880_MORE_REGS
-#ifdef USE_WEBSERVER
-const char HTTP_ADE7880_CURRENT[] PROGMEM = "{s}" D_CURRENT_NEUTRAL "{m}%s " D_UNIT_AMPERE "{e}";
-#endif  // USE_WEBSERVER
-
 void Ade7880Show(bool json) {
-
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"),
-      EnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+    ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"), EnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ADE7880_CURRENT, WebEnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+    WSContentSend_PD(HTTP_SNS_CURRENT_N, WebEnergyFmt(&Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
 #endif  // USE_WEBSERVER
   }
 }

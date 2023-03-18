@@ -216,28 +216,16 @@ void Sdm230Reset(void)
 }
 
 #ifdef SDM230_MORE_REGS
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SDM230_PHASE_ANGLE[] PROGMEM =
-  "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}";
-const char HTTP_ENERGY_SDM230_MAX_POWER[] PROGMEM =
-  "{s}" D_MAX_POWER "{m}%s " D_UNIT_WATT "{e}";
-const char HTTP_ENERGY_SDM230_RESETTABLE_TOTAL_ACTIVE[] PROGMEM =
-  "{s}" D_RESETTABLE_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-#endif  // USE_WEBSERVER
-
 void Sdm230Show(bool json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s"),
-      EnergyFmt(&Sdm230.phase_angle, 2));
-    ResponseAppend_P(PSTR(",\"" D_JSON_POWERMAX "\":%s"),
-      EnergyFmt(&Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution));
-    ResponseAppend_P(PSTR(",\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s"),
-      EnergyFmt(&Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s"), EnergyFmt(&Sdm230.phase_angle, 2));
+    ResponseAppend_P(PSTR(",\"" D_JSON_POWERMAX "\":%s"), EnergyFmt(&Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s"), EnergyFmt(&Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM230_PHASE_ANGLE, WebEnergyFmt(&Sdm230.phase_angle, 2));
-    WSContentSend_PD(HTTP_ENERGY_SDM230_MAX_POWER, WebEnergyFmt(&Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution));
-    WSContentSend_PD(HTTP_ENERGY_SDM230_RESETTABLE_TOTAL_ACTIVE, WebEnergyFmt(&Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
+    WSContentSend_PD(HTTP_SNS_PHASE_ANGLE, WebEnergyFmt(&Sdm230.phase_angle, 2));
+    WSContentSend_PD(HTTP_SNS_MAX_POWER, WebEnergyFmt(&Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution));
+    WSContentSend_PD(HTTP_SNS_RSTTBL_TOTAL_ACTIVE, WebEnergyFmt(&Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
 #endif  // USE_WEBSERVER
   }
 }

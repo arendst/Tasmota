@@ -1187,23 +1187,6 @@ void EnergySnsInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_POWERUSAGE_APPARENT[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}";
-const char HTTP_ENERGY_POWERUSAGE_REACTIVE[] PROGMEM =
-  "{s}" D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}";
-const char HTTP_ENERGY_POWER_FACTOR[] PROGMEM =
-  "{s}" D_POWER_FACTOR "{m}%s{e}";
-const char HTTP_ENERGY_TODAY[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-const char HTTP_ENERGY_YESTERDAY[] PROGMEM =
-  "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-const char HTTP_ENERGY_TOTAL[] PROGMEM =
-  "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_ENERGY_EXPORT_ACTIVE[] PROGMEM =
-  "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-#endif  // USE_WEBSERVER
-
 void EnergyShow(bool json) {
   bool voltage_common = (Settings->flag6.no_voltage_common) ? false : Energy->voltage_common;
   bool frequency_common = (Settings->flag6.no_voltage_common) ? false : Energy->frequency_common;
@@ -1436,17 +1419,17 @@ void EnergyShow(bool json) {
     WSContentSend_PD(HTTP_SNS_POWER, WebEnergyFmt(Energy->active_power, Settings->flag2.wattage_resolution));
     if (!Energy->type_dc) {
       if (Energy->current_available && Energy->voltage_available) {
-        WSContentSend_PD(HTTP_ENERGY_POWERUSAGE_APPARENT, WebEnergyFmt(apparent_power, Settings->flag2.wattage_resolution));
-        WSContentSend_PD(HTTP_ENERGY_POWERUSAGE_REACTIVE, WebEnergyFmt(reactive_power, Settings->flag2.wattage_resolution));
-        WSContentSend_PD(HTTP_ENERGY_POWER_FACTOR, WebEnergyFmt(power_factor, 2));
+        WSContentSend_PD(HTTP_SNS_POWERUSAGE_APPARENT, WebEnergyFmt(apparent_power, Settings->flag2.wattage_resolution));
+        WSContentSend_PD(HTTP_SNS_POWERUSAGE_REACTIVE, WebEnergyFmt(reactive_power, Settings->flag2.wattage_resolution));
+        WSContentSend_PD(HTTP_SNS_POWER_FACTOR, WebEnergyFmt(power_factor, 2));
       }
     }
-    WSContentSend_PD(HTTP_ENERGY_TODAY, WebEnergyFmt(Energy->daily, Settings->flag2.energy_resolution, 2));
-    WSContentSend_PD(HTTP_ENERGY_YESTERDAY, WebEnergyFmt(energy_yesterday_ph, Settings->flag2.energy_resolution, 2));
-    WSContentSend_PD(HTTP_ENERGY_TOTAL, WebEnergyFmt(Energy->total, Settings->flag2.energy_resolution, 2));
+    WSContentSend_PD(HTTP_SNS_ENERGY_TODAY, WebEnergyFmt(Energy->daily, Settings->flag2.energy_resolution, 2));
+    WSContentSend_PD(HTTP_SNS_ENERGY_YESTERDAY, WebEnergyFmt(energy_yesterday_ph, Settings->flag2.energy_resolution, 2));
+    WSContentSend_PD(HTTP_SNS_ENERGY_TOTAL, WebEnergyFmt(Energy->total, Settings->flag2.energy_resolution, 2));
     if (!isnan(Energy->export_active[0])) {
       uint32_t single = (!isnan(Energy->export_active[1]) && !isnan(Energy->export_active[2])) ? 2 : 1;
-      WSContentSend_PD(HTTP_ENERGY_EXPORT_ACTIVE, WebEnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
+      WSContentSend_PD(HTTP_SNS_EXPORT_ACTIVE, WebEnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
     }
 #ifdef USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_COL_SENSOR);

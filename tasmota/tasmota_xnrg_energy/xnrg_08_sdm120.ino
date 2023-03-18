@@ -203,33 +203,19 @@ void Sdm220Reset(void)
   Sdm120.phase_angle = 0;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SDM220_IMPORT_REACTIVE[] PROGMEM =
-  "{s}" D_IMPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}";
-const char HTTP_ENERGY_SDM220_EXPORT_REACTIVE[] PROGMEM =
-  "{s}" D_EXPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}";
-const char HTTP_ENERGY_SDM220_PHASE_ANGLE[] PROGMEM =
-  "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}";
-#endif  // USE_WEBSERVER
-
 void Sdm220Show(bool json) {
   if (isnan(Sdm120.import_active)) { return; }
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"),
-      EnergyFmt(&Sdm120.import_active, Settings->flag2.energy_resolution));
-    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_REACTIVE "\":%s"),
-      EnergyFmt(&Sdm120.import_reactive, Settings->flag2.energy_resolution));
-    ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_REACTIVE "\":%s"),
-      EnergyFmt(&Sdm120.export_reactive, Settings->flag2.energy_resolution));
-    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s"),
-      EnergyFmt(&Sdm120.phase_angle, 2));
+    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"), EnergyFmt(&Sdm120.import_active, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_REACTIVE "\":%s"), EnergyFmt(&Sdm120.import_reactive, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_REACTIVE "\":%s"), EnergyFmt(&Sdm120.export_reactive, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s"), EnergyFmt(&Sdm120.phase_angle, 2));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM220_IMPORT_REACTIVE, WebEnergyFmt(&Sdm120.import_reactive, Settings->flag2.energy_resolution, 2));
-    WSContentSend_PD(HTTP_ENERGY_SDM220_EXPORT_REACTIVE, WebEnergyFmt(&Sdm120.export_reactive, Settings->flag2.energy_resolution, 2));
-    WSContentSend_PD(HTTP_ENERGY_SDM220_PHASE_ANGLE, WebEnergyFmt(&Sdm120.phase_angle, 2));
-
+    WSContentSend_PD(HTTP_SNS_IMPORT_REACTIVE, WebEnergyFmt(&Sdm120.import_reactive, Settings->flag2.energy_resolution, 2));
+    WSContentSend_PD(HTTP_SNS_EXPORT_REACTIVE, WebEnergyFmt(&Sdm120.export_reactive, Settings->flag2.energy_resolution, 2));
+    WSContentSend_PD(HTTP_SNS_PHASE_ANGLE, WebEnergyFmt(&Sdm120.phase_angle, 2));
 #endif  // USE_WEBSERVER
   }
 }

@@ -833,10 +833,7 @@ void EnergyModbusShow(bool json) {
 #ifdef USE_WEBSERVER
       } else {
         if (strlen(NrgMbsUser[i].gui_name)) {    // Skip empty GUI names
-          WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
-            NrgMbsUser[i].gui_name,
-            WebEnergyFmt(values, resolution, single),
-            NrgMbsUser[i].gui_unit);
+          WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"), NrgMbsUser[i].gui_name, WebEnergyFmt(values, resolution, single), NrgMbsUser[i].gui_unit);
         }
 #endif  // USE_WEBSERVER
       }

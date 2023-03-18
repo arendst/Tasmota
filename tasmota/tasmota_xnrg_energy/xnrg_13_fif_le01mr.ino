@@ -236,23 +236,14 @@ void FifLEReset(void)
   Le01mr.total_reactive = 0;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_LE01MR_TOTAL_ACTIVE[] PROGMEM =
-  "{s}" D_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-const char HTTP_ENERGY_LE01MR_TOTAL_REACTIVE[] PROGMEM =
-  "{s}" D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}";
-#endif  // USE_WEBSERVER
-
 void FifLEShow(bool json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s"),
-      EnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
-    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_REACTIVE "\":%s"),
-      EnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s"), EnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_REACTIVE "\":%s"), EnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_LE01MR_TOTAL_ACTIVE, WebEnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
-    WSContentSend_PD(HTTP_ENERGY_LE01MR_TOTAL_REACTIVE, WebEnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
+    WSContentSend_PD(HTTP_SNS_TOTAL_ACTIVE, WebEnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
+    WSContentSend_PD(HTTP_SNS_TOTAL_REACTIVE, WebEnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
 #endif  // USE_WEBSERVER
   }
 }
