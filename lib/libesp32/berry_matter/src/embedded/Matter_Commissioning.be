@@ -77,6 +77,8 @@ class Matter_Commisioning_Context
       return self.parse_Sigma1(msg)
     elif msg.opcode == 0x32
       return self.parse_Sigma3(msg)
+    elif msg.opcode == 0x40
+      return self.parse_StatusReport(msg)
     end
 
     return false
@@ -373,6 +375,12 @@ class Matter_Commisioning_Context
     end
 
     if sigma1.resumptionID == nil || sigma1.initiatorResumeMIC == nil
+
+      # tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
+      # tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
+      # tasmota.log("MTR: noc           ="+session._fabric.noc.tohex(), 4)
+      # tasmota.log("MTR: root_ca_cert  ="+session._fabric.root_ca_certificate.tohex(), 4)
+
       # Compute Sigma2, p.162
       session.resumption_id = crypto.random(16)
       self.ResponderEph_priv = crypto.random(32)
@@ -400,6 +408,7 @@ class Matter_Commisioning_Context
       session.__Msg1 = sigma1.Msg1
       tasmota.log("MTR: * MSG1          = " + session.__Msg1.tohex(), 4)
       var TranscriptHash = crypto.SHA256().update(session.__Msg1).out()
+      # tasmota.log("MTR: TranscriptHash =" + TranscriptHash.tohex(), 4)
 
       # Compute S2K, p.175
       var s2k_info = bytes().fromstring(self.S2K_Info)
@@ -557,6 +566,12 @@ class Matter_Commisioning_Context
     session.persist_to_fabric()
     session.save()
 
+    return true
+  end
+
+  def parse_StatusReport(msg)
+    var session = msg.session
+    tasmota.log("MTR: StatusReport = "+msg.raw[msg.app_payload_idx..].tohex())
     return true
   end
 

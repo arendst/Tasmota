@@ -81,6 +81,7 @@ class Matter_Fabric : Matter_Expirable
   def get_fabric_label()      return self.fabric_label      end
   def get_admin_subject()     return self.admin_subject     end
   def get_admin_vendor()      return self.admin_vendor      end
+  def get_ca()                return self.root_ca_certificate end
 
   #############################################################
   # Operational Group Key Derivation, 4.15.2, p.182
@@ -602,11 +603,18 @@ class Matter_Session_Store
   end
 
   #############################################################
+  # Returns an iterator on active fabrics
+  def active_fabrics()
+    self.remove_expired()      # clean before
+    return self.fabrics.persistables()
+  end
+
+  #############################################################
   # Count active fabrics
   #
   # Count the number of commissionned fabrics, i.e. persisted
-  def count_active_fabrics(f)
-    self.remove_expired()      # clean before saving
+  def count_active_fabrics()
+    self.remove_expired()      # clean before
     return self.fabrics.count_persistables()
   end
 

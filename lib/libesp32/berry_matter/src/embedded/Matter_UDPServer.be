@@ -141,7 +141,7 @@ class Matter_UDPServer
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
-      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
+      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 3)
       if self.dispatch_cb
         self.dispatch_cb(packet, from_addr, from_port)
       end
