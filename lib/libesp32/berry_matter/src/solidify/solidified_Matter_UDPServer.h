@@ -525,7 +525,7 @@ be_local_closure(Matter_UDPServer_every_50ms,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_const_int(0),
     /* K2   */  be_nested_str_weak(udp_socket),
@@ -537,9 +537,10 @@ be_local_closure(Matter_UDPServer_every_50ms,   /* name */
     /* K8   */  be_nested_str_weak(log),
     /* K9   */  be_nested_str_weak(format),
     /* K10  */  be_nested_str_weak(MTR_X3A_X20UDP_X20received_X20from_X20_X5B_X25s_X5D_X3A_X25i),
-    /* K11  */  be_nested_str_weak(dispatch_cb),
-    /* K12  */  be_nested_str_weak(MAX_PACKETS_READ),
-    /* K13  */  be_nested_str_weak(resend_packets),
+    /* K11  */  be_const_int(3),
+    /* K12  */  be_nested_str_weak(dispatch_cb),
+    /* K13  */  be_nested_str_weak(MAX_PACKETS_READ),
+    /* K14  */  be_nested_str_weak(resend_packets),
     }),
     be_str_weak(every_50ms),
     &be_const_str_solidified,
@@ -569,16 +570,16 @@ be_local_closure(Matter_UDPServer_every_50ms,   /* name */
       0x5C2C0800,  //  0016  MOVE	R11	R4
       0x5C300A00,  //  0017  MOVE	R12	R5
       0x7C200800,  //  0018  CALL	R8	4
-      0x54260003,  //  0019  LDINT	R9	4
+      0x5824000B,  //  0019  LDCONST	R9	K11
       0x7C180600,  //  001A  CALL	R6	3
-      0x8818010B,  //  001B  GETMBR	R6	R0	K11
+      0x8818010C,  //  001B  GETMBR	R6	R0	K12
       0x781A0004,  //  001C  JMPF	R6	#0022
-      0x8C18010B,  //  001D  GETMET	R6	R0	K11
+      0x8C18010C,  //  001D  GETMET	R6	R0	K12
       0x5C200600,  //  001E  MOVE	R8	R3
       0x5C240800,  //  001F  MOVE	R9	R4
       0x5C280A00,  //  0020  MOVE	R10	R5
       0x7C180800,  //  0021  CALL	R6	4
-      0x8818010C,  //  0022  GETMBR	R6	R0	K12
+      0x8818010D,  //  0022  GETMBR	R6	R0	K13
       0x14180406,  //  0023  LT	R6	R2	R6
       0x781A0004,  //  0024  JMPF	R6	#002A
       0x88180102,  //  0025  GETMBR	R6	R0	K2
@@ -588,7 +589,7 @@ be_local_closure(Matter_UDPServer_every_50ms,   /* name */
       0x70020000,  //  0029  JMP		#002B
       0x4C0C0000,  //  002A  LDNIL	R3
       0x7001FFDD,  //  002B  JMP		#000A
-      0x8C10010D,  //  002C  GETMET	R4	R0	K13
+      0x8C10010E,  //  002C  GETMET	R4	R0	K14
       0x7C100200,  //  002D  CALL	R4	1
       0x80000000,  //  002E  RET	0
     })

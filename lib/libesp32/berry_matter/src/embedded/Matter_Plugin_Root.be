@@ -153,35 +153,44 @@ class Matter_Plugin_Root : Matter_Plugin
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
-        for loc_session: self.device.sessions.sessions_active()
+        for loc_fabric: self.device.sessions.active_fabrics()
           var nocs = nocl.add_struct(nil)
-          nocs.add_TLV(1, TLV.B2, loc_session.get_noc())      # NOC
-          nocs.add_TLV(2, TLV.B2, loc_session.get_icac())     # ICAC
+          nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
+          nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
         var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
-        for loc_session: self.device.sessions.sessions_active()
-          var root_ca_tlv = TLV.parse(loc_session.get_ca())
+        for loc_fabric: self.device.sessions.active_fabrics()
+          var root_ca_tlv = TLV.parse(loc_fabric.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
-          fab.add_TLV(2, TLV.U2, loc_session.get_admin_vendor())      # VendorID
-          fab.add_TLV(3, TLV.U8, loc_session.get_fabric_compressed())            # FabricID
-          fab.add_TLV(4, TLV.U8, loc_session.get_device_id())          # NodeID
-          fab.add_TLV(5, TLV.UTF1, loc_session.get_fabric_label())    # Label
+          fab.add_TLV(2, TLV.U2, loc_fabric.get_admin_vendor())      # VendorID
+          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_compressed())            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id())          # NodeID
+          fab.add_TLV(5, TLV.UTF1, loc_fabric.get_fabric_label())    # Label
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
         return TLV.create_TLV(TLV.U1, matter.Fabric._MAX_CASE)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
-        var sessions_active = self.device.sessions.sessions_active()
-        return TLV.create_TLV(TLV.U1, size(sessions_active))  # number of active sessions
+        var fabric_actice = self.device.sessions.count_active_fabrics()
+        return TLV.create_TLV(TLV.U1, fabric_actice)  # number of active fabrics
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
-        var sessions_active = self.device.sessions.sessions_active()
-        var fabric_index = sessions_active.find(session)
-        if fabric_index == nil    fabric_index = -1 end
+        var fabric_active = session._fabric
+        var fabric_index = 0
+        var found = false
+        for fab: self.device.sessions.active_fabrics()
+          if fab == fabric_active
+            found = true
+            break
+          else
+            fabric_index += 1
+          end
+        end
+        if !found   fabric_index = -1  end
         return TLV.create_TLV(TLV.U1, fabric_index + 1)  # number of active sessions
       end
 
@@ -447,6 +456,8 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0006            # ---------- AddNOC ----------
         var NOCValue = val.findsubval(0)        # octstr max 400
         var ICACValue = val.findsubval(1)       # octstr max 400
+        # Apple sends an empty ICAC instead of a missing attribute, fix this
+        if size(ICACValue) == 0   ICACValue = nil   end
         var IpkValue = val.findsubval(2)        # octstr max 16
         var CaseAdminSubject = val.findsubval(3)
         var AdminVendorId = val.findsubval(4)
@@ -470,8 +481,8 @@ class Matter_Plugin_Root : Matter_Plugin
           return false
         end
         # convert fo bytes(8)
-        if type(fabric_id) == 'int'    fabric_id = int64(fabric_id).tobytes()      else fabric_id = fabric_id.tobytes()     end
-        if type(deviceid) == 'int'  deviceid = int64(deviceid).tobytes()  else deviceid = deviceid.tobytes() end
+        if type(fabric_id) == 'int' fabric_id = int64.fromu32(fabric_id).tobytes()  else fabric_id = fabric_id.tobytes() end
+        if type(deviceid) == 'int'  deviceid = int64.fromu32(deviceid).tobytes()    else deviceid = deviceid.tobytes() end
 
         var root_ca = matter.TLV.parse(session.get_ca()).findsubval(9)    # extract public key from ca
         root_ca = root_ca[1..]            # remove first byte as per Matter specification

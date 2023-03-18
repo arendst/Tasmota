@@ -72,6 +72,13 @@ void int64_set(int64_t *i64, int32_t high, int32_t low) {
 }
 BE_FUNC_CTYPE_DECLARE(int64_set, "", ".ii")
 
+int64_t* int64_fromu32(bvm *vm, uint32_t low) {
+  int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
+  *r64 = low;
+  return r64;
+}
+BE_FUNC_CTYPE_DECLARE(int64_fromu32, "int64", "@i")
+
 int64_t* int64_add(bvm *vm, int64_t *i64, int64_t *j64) {
   int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
   // it's possible that arg j64 is nullptr, since class type does allow NULLPTR to come through.
@@ -197,6 +204,7 @@ class be_class_int64 (scope: global, name: int64) {
   init, ctype_func(int64_init)
   deinit, ctype_func(int64_deinit)
   set, ctype_func(int64_set)
+  fromu32, static_ctype_func(int64_fromu32)
 
   tostring, ctype_func(int64_tostring)
   fromstring, static_ctype_func(int64_fromstring)
