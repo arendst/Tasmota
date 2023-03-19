@@ -195,30 +195,32 @@ void DingtianSetPower(void)
 
 const char HTTP_DINGTIAN_INPUTS[] PROGMEM = "{s}DINGTIAN " D_SENSOR_INPUT "%d.." D_SENSOR_INPUT "%d{m}%s{e}";
 
-void DingtianShow(bool json)
+#if !defined(DINGTIAN_USE_AS_BUTTON) && !defined(DINGTIAN_USE_AS_SWITCH)
+void DingtianJsonAppend(void)
 {
-  if (json) {
-    bool first_done = false;
-    ResponseAppend_P(PSTR(",\"DINGTIAN\":{"));
-    for (int i = 0 ; i < Dingtian->count ; i++) {
-      if (first_done) ResponseAppend_P(PSTR(","));
-      ResponseAppend_P(PSTR("\"IN%d\":%d"), i +1, bitRead(Dingtian->last_inputs, i));
-      first_done = true;
-    }
-    ResponseAppend_P(PSTR("}"));
+  bool first_done = false;
+  ResponseAppend_P(PSTR(",\"DINGTIAN\":{"));
+  for (int i = 0 ; i < Dingtian->count ; i++) {
+    if (first_done) ResponseAppend_P(PSTR(","));
+    ResponseAppend_P(PSTR("\"IN%d\":%d"), i +1, bitRead(Dingtian->last_inputs, i));
+    first_done = true;
   }
-#ifdef USE_WEBSERVER
-  else {
-    char input_str[9];
-    for (int block_input = 0 ; block_input < Dingtian->count ; block_input += 8 ) {
-      for (int i = 0 ; i < 8 ; i++ )
-        input_str[i] = '0' + bitRead(Dingtian->last_inputs, block_input +i);
-      input_str[8] = '\0';
-      WSContentSend_P(HTTP_DINGTIAN_INPUTS, block_input, block_input +7, input_str);
-    }
-  }
-#endif
+  ResponseAppend_P(PSTR("}"));
 }
+#endif
+
+#ifdef USE_WEBSERVER
+void DingtianWebSensor(void)
+{
+  char input_str[9];
+  for (int block_input = 0 ; block_input < Dingtian->count ; block_input += 8 ) {
+    for (int i = 0 ; i < 8 ; i++ )
+      input_str[i] = '0' + bitRead(Dingtian->last_inputs, block_input +i);
+    input_str[8] = '\0';
+    WSContentSend_P(HTTP_DINGTIAN_INPUTS, block_input, block_input +7, input_str);
+  }
+}
+#endif
 
 
 /*********************************************************************************************\
@@ -239,9 +241,16 @@ bool Xdrv90(uint32_t function) {
       //case FUNC_EVERY_250_MSECOND:
         DingtianLoop();
         break;
+#if !defined(DINGTIAN_USE_AS_BUTTON) && !defined(DINGTIAN_USE_AS_SWITCH)
       case FUNC_JSON_APPEND:
-        DingtianShow(1);
+        DingtianJsonAppend();
         break;
+#endif
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        DingtianWebSensor();
+        break;
+#endif  // USE_WEBSERVER
 #ifdef DINGTIAN_USE_AS_BUTTON
       case FUNC_ADD_BUTTON:
         result = DingtianAddKey();
@@ -252,11 +261,6 @@ bool Xdrv90(uint32_t function) {
         result = DingtianAddKey();
         break;
 #endif
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        DingtianShow(0);
-        break;
-#endif  // USE_WEBSERVER
     }
   }
   return result;
