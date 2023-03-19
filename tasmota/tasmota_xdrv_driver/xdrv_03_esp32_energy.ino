@@ -159,6 +159,8 @@ typedef struct {
   int32_t kWhtoday[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
 
   // Local only
+  char* value;
+
   float daily_kWh[ENERGY_MAX_PHASES];           // 123.123 kWh
   float energy_today_offset_kWh[ENERGY_MAX_PHASES];  // 123.12312 kWh = Energy->daily
   float period_kWh[ENERGY_MAX_PHASES];          // 123.12312 kWh = Energy->daily
@@ -273,7 +275,7 @@ bool EnergyRtcSettingsValid(void) {
 
 const uint32_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
 
-void EnergySettingsLoad(void) {
+void EnergySettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
   memset(&Energy->Settings, 0x00, sizeof(tEnergySettings));
   Energy->Settings.version = XDRV_03_VERSION;
@@ -320,7 +322,10 @@ void EnergySettingsLoad(void) {
   char filename[20];
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_03);
-  if (TfsLoadFile(filename, (uint8_t*)&Energy->Settings, sizeof(tEnergySettings))) {
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&Energy->Settings, sizeof(tEnergySettings))) {
     if (Energy->Settings.version != XDRV_03_VERSION) {      // Fix version dependent changes
 
       // *** Start fix possible setting deltas ***
@@ -336,7 +341,8 @@ void EnergySettingsLoad(void) {
       EnergySettingsSave();
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy loaded from file"));
-  } else {
+  }
+  else {
     // File system not ready: No flash space reserved for file system
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
   }
@@ -366,14 +372,32 @@ void EnergySettingsSave(void) {
 
 /********************************************************************************************/
 
-char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single = 0);
-char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single) {
+const uint16_t GUISZ = 600;                 // Max number of characters in WebEnergyFmt string
+
+bool EnergyFmtMalloc(void) {
+  if (Energy->value == nullptr) {
+    Energy->value = (char*)malloc(GUISZ);
+    if (!Energy->value) { return false; }
+  }
+  return true;
+}
+
+void EnergyFmtFree(void) {
+//  free(Energy->value);                    // Let's keep it for future use reducing heap fragmentation
+//  Energy->value = nullptr;
+}
+
+char* EnergyFmt(float* input, uint32_t resolution, uint32_t single = 0);
+char* EnergyFmt(float* input, uint32_t resolution, uint32_t single) {
   // single = 0 - Energy->phase_count - xx or [xx,xx] or [xx,xx,xx]
   // single = 1 - Energy->voltage_common or Energy->frequency_common - xx
   // single = 2 - Sum of Energy->phase_count if SO129 0 - xx or if SO129 1 - [xx,xx,xx]
   // single = 5 - single &0x03 = 1 - xx
   // single = 6 - single &0x03 = 2 - [xx,xx] - used by tarriff
   // single = 7 - single &0x03 = 3 - [xx,xx,xx]
+
+  if (!EnergyFmtMalloc()) { return EmptyStr; }
+
   uint32_t index = (single > 3) ? single &0x03 : (0 == single) ? Energy->phase_count : 1;  // 1,2,3
   if (single > 2) { single = 0; }                        // 0,1,2
   float input_sum = 0.0f;
@@ -389,19 +413,22 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
       index = Energy->phase_count;
     }
   }
-  result[0] = '\0';
+  Energy->value[0] = '\0';
   for (uint32_t i = 0; i < index; i++) {
-    ext_snprintf_P(result, GUISZ, PSTR("%s%s%*_f%s"), result, (0==i)?(1==index)?"":"[":",", resolution, &input[i], (index-1==i)?(1==index)?"":"]":"");
+    ext_snprintf_P(Energy->value, GUISZ, PSTR("%s%s%*_f%s"), Energy->value, (0==i)?(1==index)?"":"[":",", resolution, &input[i], (index-1==i)?(1==index)?"":"]":"");
   }
-  return result;
+  return Energy->value;
 }
 
 #ifdef USE_WEBSERVER
-char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single = 0);
-char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single) {
+char* WebEnergyFmt(float* input, uint32_t resolution, uint32_t single = 0);
+char* WebEnergyFmt(float* input, uint32_t resolution, uint32_t single) {
   // single = 0 - Energy->phase_count - xx / xx / xx or multi column
   // single = 1 - Energy->voltage_common or Energy->frequency_common - xx or single column using colspan (if needed)
   // single = 2 - Sum of Energy->phase_count if SO129 0 - xx or single column using colspan (if needed) or if SO129 1 - xx / xx / xx or multi column
+
+  if (!EnergyFmtMalloc()) { return EmptyStr; }
+
   float input_sum = 0.0f;
   if (single > 1) {                                      // Sum and/or Single column
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
@@ -416,32 +443,32 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     }
   }
 #ifdef USE_ENERGY_COLUMN_GUI
-  ext_snprintf_P(result, GUISZ, PSTR("</td>"));       // Skip first column
+  ext_snprintf_P(Energy->value, GUISZ, PSTR("</td>"));       // Skip first column
   if ((Energy->gui_count > 1) && single) {            // Need to set colspan so need new columns
     // </td><td colspan='3' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='5' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='7' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
-    ext_snprintf_P(result, GUISZ, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
-      result, (Energy->gui_count *2) -1, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"), resolution, &input[Energy->gui_indirect[0]]);
+    ext_snprintf_P(Energy->value, GUISZ, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+      Energy->value, (Energy->gui_count *2) -1, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"), resolution, &input[Energy->gui_indirect[0]]);
   } else {
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     for (uint32_t i = 0; i < Energy->gui_count; i++) {
-      ext_snprintf_P(result, GUISZ, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
-        result, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[Energy->gui_indirect[Energy->gui_offset +i]]);
+      ext_snprintf_P(Energy->value, GUISZ, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+        Energy->value, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[Energy->gui_indirect[Energy->gui_offset +i]]);
     }
   }
-  ext_snprintf_P(result, GUISZ, PSTR("%s<td>"), result);
+  ext_snprintf_P(Energy->value, GUISZ, PSTR("%s<td>"), Energy->value);
 #else  // not USE_ENERGY_COLUMN_GUI
   uint32_t index = (single) ? 1 : Energy->phase_count;    // 1,2,3
-  result[0] = '\0';
+  Energy->value[0] = '\0';
   for (uint32_t i = 0; i < index; i++) {
-    ext_snprintf_P(result, GUISZ, PSTR("%s%s%*_f"), result, (i)?" / ":"", resolution, &input[i]);
+    ext_snprintf_P(Energy->value, GUISZ, PSTR("%s%s%*_f"), Energy->value, (i)?" / ":"", resolution, &input[i]);
   }
 #endif  // USE_ENERGY_COLUMN_GUI
-  return result;
+  return Energy->value;
 }
 #endif  // USE_WEBSERVER
 
@@ -713,8 +740,7 @@ void EnergyMarginCheck(void) {
     for (uint32_t phase = 0; phase < Energy->phase_count; phase++) {
       power_diff_f[phase] = power_diff[phase];
     }
-    char value_chr[GUISZ];
-    ResponseAppend_P(PSTR("\"" D_CMND_POWERDELTA "\":%s"), EnergyFormat(value_chr, power_diff_f, 0));
+    ResponseAppend_P(PSTR("\"" D_CMND_POWERDELTA "\":%s"), EnergyFmt(power_diff_f, 0));
   }
 
   uint16_t energy_power_u = (uint16_t)(Energy->active_power[0]);
@@ -819,6 +845,7 @@ void EnergyMarginCheck(void) {
       SetAllPower(POWER_ALL_OFF, SRC_MAXENERGY);
     }
   }
+  EnergyFmtFree();
 }
 
 void EnergyMqttShow(void) {
@@ -881,10 +908,6 @@ void EnergyEverySecond(void) {
 \*********************************************************************************************/
 
 void ResponseCmndEnergyTotalYesterdayToday(void) {
-  char value_chr[GUISZ];   // Used by EnergyFormatIndex
-  char value2_chr[GUISZ];
-  char value3_chr[GUISZ];
-
   float energy_yesterday_kWh[3];
   for (uint32_t i = 0; i < Energy->phase_count; i++) {
     energy_yesterday_kWh[i] = Energy->Settings.energy_yesterday_kWh[i];
@@ -894,16 +917,19 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
     }
   }
 
-  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s"),
     XdrvMailbox.command,
-    EnergyFormat(value_chr, Energy->total, Settings->flag2.energy_resolution),
-    EnergyFormat(value2_chr, energy_yesterday_kWh, Settings->flag2.energy_resolution),
-    EnergyFormat(value3_chr, Energy->daily_kWh, Settings->flag2.energy_resolution));
+    EnergyFmt(Energy->total, Settings->flag2.energy_resolution));
+  ResponseAppend_P(PSTR(",\"" D_JSON_YESTERDAY "\":%s"),
+    EnergyFmt(energy_yesterday_kWh, Settings->flag2.energy_resolution));
+  ResponseAppend_P(PSTR(",\"" D_JSON_TODAY "\":%s"),
+    EnergyFmt(Energy->daily_kWh, Settings->flag2.energy_resolution));
   if (Energy->local_energy_active_export) {
     ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
-      EnergyFormat(value_chr, Energy->export_active, Settings->flag2.energy_resolution));
+      EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution));
   }
   ResponseJsonEndEnd();
+  EnergyFmtFree();
 }
 
 void CmndEnergyDisplay(void) {
@@ -1338,9 +1364,10 @@ void EnergyDrvInit(void) {
   Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
   if (!Energy) { return; }
 
-  EnergySettingsLoad();
+  EnergySettingsLoad(0);
   EnergyRtcSettingsLoad();
 
+  Energy->value = nullptr;
 //  Energy->voltage_common = false;
 //  Energy->frequency_common = false;
 //  Energy->use_overtemp = false;
@@ -1393,21 +1420,6 @@ void EnergySnsInit(void) {
     ticker_energy.attach_ms(200, Energy200ms);
   }
 }
-
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SNS1[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}"
-  "{s}" D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
-  "{s}" D_POWER_FACTOR "{m}%s{e}";
-
-const char HTTP_ENERGY_SNS2[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
-const char HTTP_ENERGY_SNS3[] PROGMEM =
-  "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-#endif  // USE_WEBSERVER
 
 void EnergyShow(bool json) {
   bool voltage_common = (Settings->flag6.no_voltage_common) ? false : Energy->voltage_common;
@@ -1486,34 +1498,31 @@ void EnergyShow(bool json) {
     energy_tariff = true;
   }
 
-  char value_chr[GUISZ];   // Used by EnergyFormatIndex
-  char value2_chr[GUISZ];
-  char value3_chr[GUISZ];
-
   if (json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
 
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s"),
       GetDateAndTime(DT_ENERGY).c_str(),
-      EnergyFormat(value_chr, Energy->total, Settings->flag2.energy_resolution, 2));
+      EnergyFmt(Energy->total, Settings->flag2.energy_resolution, 2));
 
     if (energy_tariff) {
       ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL D_CMND_TARIFF "\":%s"),
-        EnergyFormat(value_chr, energy_usage_kWh, Settings->flag2.energy_resolution, 6));
+        EnergyFmt(energy_usage_kWh, Settings->flag2.energy_resolution, 6));
     }
 
-    ResponseAppend_P(PSTR(",\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
-      EnergyFormat(value_chr, energy_yesterday_kWh, Settings->flag2.energy_resolution, 2),
-      EnergyFormat(value2_chr, Energy->daily_kWh, Settings->flag2.energy_resolution, 2));
+    ResponseAppend_P(PSTR(",\"" D_JSON_YESTERDAY "\":%s"),
+      EnergyFmt(energy_yesterday_kWh, Settings->flag2.energy_resolution, 2));
+    ResponseAppend_P(PSTR(",\"" D_JSON_TODAY "\":%s"),
+      EnergyFmt(Energy->daily_kWh, Settings->flag2.energy_resolution, 2));
 
 /*
  #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
     if (!isnan(Energy->import_active[0])) {
       ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"),
-        EnergyFormat(value_chr, Energy->import_active, Settings->flag2.energy_resolution));
+        EnergyFmt(Energy->import_active, Settings->flag2.energy_resolution));
       if (energy_tariff) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT D_CMND_TARIFF "\":%s"),
-          EnergyFormat(value_chr, energy_return_kWh, Settings->flag2.energy_resolution, 6));
+          EnergyFmt(energy_return_kWh, Settings->flag2.energy_resolution, 6));
       }
     }
 #endif  // SDM630_IMPORT || SDM72_IMPEXP
@@ -1521,47 +1530,51 @@ void EnergyShow(bool json) {
 
     if (!isnan(Energy->export_active[0])) {
       uint32_t single = (!isnan(Energy->export_active[1]) && !isnan(Energy->export_active[2])) ? 0 : 1;
-      ResponseAppend_P(PSTR(",\"" D_JSON_TODAY_SUM_IMPORT "\":%s,\"" D_JSON_TODAY_SUM_EXPORT "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s"),
-        EnergyFormat(value_chr, &Energy->daily_sum_import_balanced, Settings->flag2.energy_resolution, 1),
-        EnergyFormat(value2_chr, &Energy->daily_sum_export_balanced, Settings->flag2.energy_resolution, 1),
-        EnergyFormat(value3_chr, Energy->export_active, Settings->flag2.energy_resolution, single));
+      ResponseAppend_P(PSTR(",\"" D_JSON_TODAY_SUM_IMPORT "\":%s"),
+        EnergyFmt(&Energy->daily_sum_import_balanced, Settings->flag2.energy_resolution, 1));
+      ResponseAppend_P(PSTR(",\"" D_JSON_TODAY_SUM_EXPORT "\":%s"),
+        EnergyFmt(&Energy->daily_sum_export_balanced, Settings->flag2.energy_resolution, 1));
+      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
+        EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
       if (energy_tariff) {
         ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT D_CMND_TARIFF "\":%s"),
-          EnergyFormat(value_chr, energy_return_kWh, Settings->flag2.energy_resolution, 6));
+          EnergyFmt(energy_return_kWh, Settings->flag2.energy_resolution, 6));
       }
     }
 
     if (show_energy_period) {
       float energy_period[Energy->phase_count];
       for (uint32_t i = 0; i < Energy->phase_count; i++) {
-        energy_period[i] = RtcEnergySettings.energy_today_kWh[i] - Energy->period_kWh[i];
+        energy_period[i] = (RtcEnergySettings.energy_today_kWh[i] - Energy->period_kWh[i]) * 1000;  // Wh
         Energy->period_kWh[i] = RtcEnergySettings.energy_today_kWh[i];
       }
       ResponseAppend_P(PSTR(",\"" D_JSON_PERIOD "\":%s"),
-        EnergyFormat(value_chr, energy_period, Settings->flag2.wattage_resolution));
+        EnergyFmt(energy_period, Settings->flag2.wattage_resolution));
     }
 
     ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":%s"),
-        EnergyFormat(value_chr, Energy->active_power, Settings->flag2.wattage_resolution));
+        EnergyFmt(Energy->active_power, Settings->flag2.wattage_resolution));
     if (!Energy->type_dc) {
       if (Energy->current_available && Energy->voltage_available) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s"),
-          EnergyFormat(value_chr, apparent_power, Settings->flag2.wattage_resolution),
-          EnergyFormat(value2_chr, reactive_power, Settings->flag2.wattage_resolution),
-          EnergyFormat(value3_chr, power_factor, 2));
+        ResponseAppend_P(PSTR(",\"" D_JSON_APPARENT_POWERUSAGE "\":%s"),
+          EnergyFmt(apparent_power, Settings->flag2.wattage_resolution));
+        ResponseAppend_P(PSTR(",\"" D_JSON_REACTIVE_POWERUSAGE "\":%s"),
+          EnergyFmt(reactive_power, Settings->flag2.wattage_resolution));
+        ResponseAppend_P(PSTR(",\"" D_JSON_POWERFACTOR "\":%s"),
+          EnergyFmt(power_factor, 2));
       }
       if (!isnan(Energy->frequency[0])) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
+          EnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
       }
     }
     if (Energy->voltage_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"),
-        EnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
+        EnergyFmt(Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
     }
     if (Energy->current_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"),
-        EnergyFormat(value_chr, Energy->current, Settings->flag2.current_resolution));
+        EnergyFmt(Energy->current, Settings->flag2.current_resolution));
     }
     XnrgCall(FUNC_JSON_APPEND);
     ResponseJsonEnd();
@@ -1663,39 +1676,40 @@ void EnergyShow(bool json) {
       // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
       WSContentSend_P(PSTR("{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
       bool no_label = (1 == Energy->phase_count);
+      char number[4];
       for (uint32_t i = 0; i < Energy->gui_count; i++) {
         WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"),
           (no_label) ? "" : (label_o) ? "O" : "L",
-          (no_label) ? "" : itoa(relays[Energy->gui_offset +i], value_chr, 10));
+          (no_label) ? "" : itoa(relays[Energy->gui_offset +i], number, 10));
       }
       WSContentSend_P(PSTR("<td>{e}"));              // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI
       if (Energy->voltage_available) {
-        WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
+        WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFmt(Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
       }
       if (!Energy->type_dc) {
         if (!isnan(Energy->frequency[0])) {
           WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-            WebEnergyFormat(value_chr, Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
+            WebEnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
         }
       }
       if (Energy->current_available) {
-        WSContentSend_PD(HTTP_SNS_CURRENT, WebEnergyFormat(value_chr, Energy->current, Settings->flag2.current_resolution));
+        WSContentSend_PD(HTTP_SNS_CURRENT, WebEnergyFmt(Energy->current, Settings->flag2.current_resolution));
       }
-      WSContentSend_PD(HTTP_SNS_POWER, WebEnergyFormat(value_chr, Energy->active_power, Settings->flag2.wattage_resolution));
+      WSContentSend_PD(HTTP_SNS_POWER, WebEnergyFmt(Energy->active_power, Settings->flag2.wattage_resolution));
       if (!Energy->type_dc) {
         if (Energy->current_available && Energy->voltage_available) {
-          WSContentSend_PD(HTTP_ENERGY_SNS1, WebEnergyFormat(value_chr, apparent_power, Settings->flag2.wattage_resolution),
-                                            WebEnergyFormat(value2_chr, reactive_power, Settings->flag2.wattage_resolution),
-                                            WebEnergyFormat(value3_chr, power_factor, 2));
+          WSContentSend_PD(HTTP_SNS_POWERUSAGE_APPARENT, WebEnergyFmt(apparent_power, Settings->flag2.wattage_resolution));
+          WSContentSend_PD(HTTP_SNS_POWERUSAGE_REACTIVE, WebEnergyFmt(reactive_power, Settings->flag2.wattage_resolution));
+          WSContentSend_PD(HTTP_SNS_POWER_FACTOR, WebEnergyFmt(power_factor, 2));
         }
       }
-      WSContentSend_PD(HTTP_ENERGY_SNS2, WebEnergyFormat(value_chr, Energy->daily_kWh, Settings->flag2.energy_resolution, 2),
-                                        WebEnergyFormat(value2_chr, energy_yesterday_kWh, Settings->flag2.energy_resolution, 2),
-                                        WebEnergyFormat(value3_chr, Energy->total, Settings->flag2.energy_resolution, 2));
+      WSContentSend_PD(HTTP_SNS_ENERGY_TODAY, WebEnergyFmt(Energy->daily_kWh, Settings->flag2.energy_resolution, 2));
+      WSContentSend_PD(HTTP_SNS_ENERGY_YESTERDAY, WebEnergyFmt(energy_yesterday_kWh, Settings->flag2.energy_resolution, 2));
+      WSContentSend_PD(HTTP_SNS_ENERGY_TOTAL, WebEnergyFmt(Energy->total, Settings->flag2.energy_resolution, 2));
       if (!isnan(Energy->export_active[0])) {
         uint32_t single = (!isnan(Energy->export_active[1]) && !isnan(Energy->export_active[2])) ? 2 : 1;
-        WSContentSend_PD(HTTP_ENERGY_SNS3, WebEnergyFormat(value_chr, Energy->export_active, Settings->flag2.energy_resolution, single));
+        WSContentSend_PD(HTTP_SNS_EXPORT_ACTIVE, WebEnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
       }
 
 #ifdef USE_ENERGY_COLUMN_GUI
@@ -1706,6 +1720,7 @@ void EnergyShow(bool json) {
 #endif  // USE_WEBSERVER
     }
   }
+  EnergyFmtFree();
 }
 
 #ifdef USE_WEBSERVER
@@ -1745,6 +1760,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);
+        break;
+      case FUNC_RESET_SETTINGS:
+        EnergySettingsLoad(1);
         break;
       case FUNC_SAVE_SETTINGS:
         EnergySettingsSave();

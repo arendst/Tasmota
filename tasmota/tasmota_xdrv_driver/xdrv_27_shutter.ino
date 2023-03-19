@@ -1274,8 +1274,8 @@ void CmndShutterPosition(void)
            (abs(Shutter[index].target_position - Shutter[index].real_position ) > Shutter[index].min_realPositionChange ||
             abs(Shutter[index].tilt_target_pos - Shutter[index].tilt_real_pos ) > Shutter[index].min_TiltChange) ) {
         if (Settings->shutter_options[index] & 4) {
-          if (0   == target_pos_percent) Shutter[index].target_position -= 1 * RESOLUTION * STEPS_PER_SECOND;
-          if (100 == target_pos_percent) Shutter[index].target_position += 1 * RESOLUTION * STEPS_PER_SECOND;
+          if (0   == target_pos_percent && Shutter[index].real_position > 0) Shutter[index].target_position -= 1 * RESOLUTION * STEPS_PER_SECOND;
+          if (100 == target_pos_percent && Shutter[index].real_position < Shutter[index].open_max) Shutter[index].target_position += 1 * RESOLUTION * STEPS_PER_SECOND;
         }
         int8_t new_shutterdirection;
         if (abs(Shutter[index].target_position - Shutter[index].real_position ) > Shutter[index].min_realPositionChange) {

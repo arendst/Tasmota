@@ -460,6 +460,7 @@ size_t TasmotaSerial::write(uint8_t b) {
     size = 1;
   }
   if (m_tx_enable_pin > -1) {
+    flush();  // Must wait for all data sent
     digitalWrite(m_tx_enable_pin, LOW);
   }
   return size;

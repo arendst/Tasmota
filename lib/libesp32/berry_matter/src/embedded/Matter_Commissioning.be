@@ -48,10 +48,8 @@ class Matter_Commisioning_Context
   var ResponderEph_priv, ResponderEph_pub
   var initiatorEph_pub
   # Session data
-  var session_timestamp
+  var created
   var I2RKey, R2IKey, AttestationChallenge
-  # is commissioning window open
-  var window_open
 
   def init(responder)
     import crypto
@@ -59,13 +57,11 @@ class Matter_Commisioning_Context
     self.device = responder.device
     # generate y once
     self.y = crypto.random(32)
-
-    self.window_open = true         # auto-commissioning for now
   end
 
   def process_incoming(msg)
     #
-    if !self.window_open
+    if !self.device.is_commissioning_open() && msg.opcode >= 0x20 && msg.opcode <= 0x24
       tasmota.log("MTR: commissioning not open", 2)
       return false
     end
@@ -81,6 +77,8 @@ class Matter_Commisioning_Context
       return self.parse_Sigma1(msg)
     elif msg.opcode == 0x32
       return self.parse_Sigma3(msg)
+    elif msg.opcode == 0x40
+      return self.parse_StatusReport(msg)
     end
 
     return false
@@ -93,7 +91,7 @@ class Matter_Commisioning_Context
       raise "protocol_error", "invalid PBKDFParamRequest message"
     end
     var pbkdfparamreq = matter.PBKDFParamRequest().parse(msg.raw, msg.app_payload_idx)
-    msg.session.set_mode(matter.Session.__PASE)
+    msg.session.set_mode_PASE()
 
     self.PBKDFParamRequest = msg.raw[msg.app_payload_idx..]
 
@@ -217,7 +215,7 @@ class Matter_Commisioning_Context
     if self.cA != self.spake.cA   raise "protocol_error", "invalid cA received" end
 
     # send PakeFinished and compute session key
-    self.session_timestamp = tasmota.rtc()['utc']
+    self.created = tasmota.rtc()['utc']
     var session_keys = crypto.HKDF_SHA256().derive(self.Ke, bytes(), bytes().fromstring(self.SEKeys_Info), 48)
     self.I2RKey = session_keys[0..15]
     self.R2IKey = session_keys[16..31]
@@ -241,19 +239,19 @@ class Matter_Commisioning_Context
     var raw = resp.encode(status_raw)
 
     self.responder.send_response(raw, msg.remote_ip, msg.remote_port, nil)
-    self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.session_timestamp)
+    self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
   end
 
-  def find_session_by_destination_id(destinationId, initiatorRandom)
+  def find_fabric_by_destination_id(destinationId, initiatorRandom)
     import crypto
     # Validate Sigma1 Destination ID, p.162
-    # traverse all existing sessions
+    # traverse all existing fabrics
     tasmota.log("MTR: SEARCHING: destinationId=" + destinationId.tohex(), 3)
-    for session:self.device.sessions.sessions
-      if session.noc == nil || session.fabric == nil || session.deviceid == nil     continue end
+    for fabric : self.device.sessions.fabrics
+      if fabric.noc == nil || fabric.fabric_id == nil || fabric.device_id == nil     continue end
       # compute candidateDestinationId, Section 4.13.2.4.1, “Destination Identifier”
-      var destinationMessage = initiatorRandom + session.get_ca_pub() + session.get_fabric() + session.get_deviceid()
-      var key = session.get_ipk_group_key()
+      var destinationMessage = initiatorRandom + fabric.get_ca_pub() + fabric.fabric_id + fabric.device_id
+      var key = fabric.get_ipk_group_key()
       tasmota.log("MTR: SIGMA1: destinationMessage=" + destinationMessage.tohex(), 3)
       tasmota.log("MTR: SIGMA1: key_ipk=" + key.tohex(), 4)
       var h = crypto.HMAC_SHA256(key)
@@ -261,7 +259,7 @@ class Matter_Commisioning_Context
       var candidateDestinationId = h.out()
       tasmota.log("MTR: SIGMA1: candidateDestinationId=" + candidateDestinationId.tohex(), 3)
       if candidateDestinationId == destinationId
-        return session
+        return fabric
       end
     end
     return nil
@@ -281,27 +279,29 @@ class Matter_Commisioning_Context
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
 
     # Check that it's a resumption
-    var session
+    var session = msg.session
     if is_resumption
       session = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
     else
-      session = self.find_session_by_destination_id(sigma1.destinationId, sigma1.initiatorRandom)
+      # new CASE session, assign to existing fabric
+      var fabric = self.find_fabric_by_destination_id(sigma1.destinationId, sigma1.initiatorRandom)
+      session._fabric = fabric
     end
-    if session == nil   raise "valuer_error", "StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)" end
+    if session == nil || session._fabric == nil  raise "valuer_error", "StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)" end
     session.source_node_id = msg.source_node_id
-    session.set_mode(matter.Session.__CASE)
+    session.set_mode_CASE()
 
-    if msg.session
+    if msg.session != session
       self.device.sessions.remove_session(msg.session)  # drop the temporary session that was created
     end
     msg.session = session
-    session._future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
-    session._future_local_session_id = self.device.sessions.gen_local_session_id()
-    self.future_local_session_id = session._future_local_session_id
+    session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
+    session.__future_local_session_id = self.device.sessions.gen_local_session_id()
+    self.future_local_session_id = session.__future_local_session_id
     tasmota.log("MTR: Loc_session=" + str(self.future_local_session_id))
 
     # Check that it's a resumption
-    if   is_resumption && session.shared_secret != nil
+    if   is_resumption
       # Resumption p.169
       var s1rk_salt = sigma1.initiatorRandom + sigma1.resumptionID
       var s1rk_info = bytes().fromstring("Sigma1_Resume")
@@ -335,7 +335,7 @@ class Matter_Commisioning_Context
 
         var sigma2resume = matter.Sigma2Resume()
         sigma2resume.resumptionID = session.resumption_id
-        sigma2resume.responderSessionID = session._future_local_session_id
+        sigma2resume.responderSessionID = session.__future_local_session_id
         sigma2resume.sigma2ResumeMIC = Resume2MIC
 
         # # compute session key, p.178
@@ -346,7 +346,7 @@ class Matter_Commisioning_Context
         var i2r = session_keys[0..15]
         var r2i = session_keys[16..31]
         var ac = session_keys[32..47]
-        var session_timestamp = tasmota.rtc()['utc']
+        var created = tasmota.rtc()['utc']
 
         tasmota.log("MTR: ******************************", 4)
         tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
@@ -355,7 +355,7 @@ class Matter_Commisioning_Context
         tasmota.log("MTR: ******************************", 4)
 
         var sigma2resume_raw = sigma2resume.encode()
-        session._Msg1 = nil
+        session.__Msg1 = nil
         tasmota.log("MTR: sigma2resume_raw: " + sigma2resume_raw.tohex(), 4)
 
         # now package the response message
@@ -365,10 +365,7 @@ class Matter_Commisioning_Context
         self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
         # session.close()
-        session.set_keys(i2r, r2i, ac, session_timestamp)
-        session.set_persist(true)     # keep session on flash
-        session.set_no_expiration()   # never expire
-        session.save()
+        session.set_keys(i2r, r2i, ac, created)
 
         return true
       else
@@ -378,6 +375,12 @@ class Matter_Commisioning_Context
     end
 
     if sigma1.resumptionID == nil || sigma1.initiatorResumeMIC == nil
+
+      # tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
+      # tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
+      # tasmota.log("MTR: noc           ="+session._fabric.noc.tohex(), 4)
+      # tasmota.log("MTR: root_ca_cert  ="+session._fabric.root_ca_certificate.tohex(), 4)
+
       # Compute Sigma2, p.162
       session.resumption_id = crypto.random(16)
       self.ResponderEph_priv = crypto.random(32)
@@ -402,9 +405,10 @@ class Matter_Commisioning_Context
 
       # compute TranscriptHash = Crypto_Hash(message = Msg1)
       tasmota.log("****************************************", 4)
-      session._Msg1 = sigma1.Msg1
-      tasmota.log("MTR: * MSG1          = " + session._Msg1.tohex(), 4)
-      var TranscriptHash = crypto.SHA256().update(session._Msg1).out()
+      session.__Msg1 = sigma1.Msg1
+      tasmota.log("MTR: * MSG1          = " + session.__Msg1.tohex(), 4)
+      var TranscriptHash = crypto.SHA256().update(session.__Msg1).out()
+      # tasmota.log("MTR: TranscriptHash =" + TranscriptHash.tohex(), 4)
 
       # Compute S2K, p.175
       var s2k_info = bytes().fromstring(self.S2K_Info)
@@ -430,7 +434,7 @@ class Matter_Commisioning_Context
       sigma2.encrypted2 = TBEData2Encrypted
       tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 4)
       var sigma2_raw = sigma2.encode()
-      session._Msg2 = sigma2_raw
+      session.__Msg2 = sigma2_raw
       tasmota.log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 4)
   
       # now package the response message
@@ -455,10 +459,10 @@ class Matter_Commisioning_Context
 
     tasmota.log("****************************************", 4)
     # compute TranscriptHash = Crypto_Hash(message = Msg1 || Msg2)
-    var TranscriptHash = crypto.SHA256().update(session._Msg1).update(session._Msg2).out()
+    var TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).out()
     tasmota.log("MTR: * session       = " + str(session), 4)
-    tasmota.log("MTR: session.ipk_epoch_key " + str(session.ipk_epoch_key), 4)
-    tasmota.log("MTR: session.fabric_compressed " + str(session.fabric_compressed), 4)
+    tasmota.log("MTR: session.ipk_epoch_key " + str(session.get_ipk_epoch_key()), 4)
+    tasmota.log("MTR: session.fabric_compressed " + str(session.get_fabric_compressed()), 4)
     tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 4)
     tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 4)
 
@@ -466,7 +470,6 @@ class Matter_Commisioning_Context
     var s3k = crypto.HKDF_SHA256().derive(session.shared_secret, session.get_ipk_group_key() + TranscriptHash, s3k_info, 16)
 
     tasmota.log("****************************************", 4)
-    # self.ipk_epoch_key == nil || self.fabric_compressed")
     tasmota.log("MTR: * s3k_salt      = " + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
     tasmota.log("MTR: * s3k           = " + s3k.tohex(), 4)
     tasmota.log("****************************************", 4)
@@ -518,10 +521,10 @@ class Matter_Commisioning_Context
     # All good, compute new keys
     tasmota.log("MTR: Sigma3 verified, computing new keys", 3)
 
-    TranscriptHash = crypto.SHA256().update(session._Msg1).update(session._Msg2).update(sigma3.Msg3).out()
-    # we can now free _Msg1 and _Msg2
-    session._Msg1 = nil
-    session._Msg2 = nil
+    TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).update(sigma3.Msg3).out()
+    # we can now free __Msg1 and __Msg2
+    session.__Msg1 = nil
+    session.__Msg2 = nil
 
     tasmota.log("MTR: ******************************", 4)
     tasmota.log("MTR: shared_secret =" + session.shared_secret.tohex(), 4)
@@ -534,7 +537,7 @@ class Matter_Commisioning_Context
     var i2r = session_keys[0..15]
     var r2i = session_keys[16..31]
     var ac = session_keys[32..47]
-    var session_timestamp = tasmota.rtc()['utc']
+    var created = tasmota.rtc()['utc']
 
     tasmota.log("MTR: ******************************", 4)
     tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
@@ -555,11 +558,20 @@ class Matter_Commisioning_Context
     self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
     session.close()
-    session.set_keys(i2r, r2i, ac, session_timestamp)
+    session.set_keys(i2r, r2i, ac, created)
+
+    # CASE Session completed, persist it
     session.set_persist(true)     # keep session on flash
     session.set_no_expiration()   # never expire
+    session.persist_to_fabric()
     session.save()
 
+    return true
+  end
+
+  def parse_StatusReport(msg)
+    var session = msg.session
+    tasmota.log("MTR: StatusReport = "+msg.raw[msg.app_payload_idx..].tohex())
     return true
   end
 

@@ -851,7 +851,7 @@ bool Xsns02(uint32_t function) {
     case FUNC_COMMAND:
       result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
-    case FUNC_MODULE_INIT:
+    case FUNC_SETUP_RING2:
       AdcInit();
       break;
     default:

@@ -78,96 +78,81 @@ void CmndDrvText(void) {
  * Driver Settings load and save
 \*********************************************************************************************/
 
-uint32_t DrvDemoSettingsCrc32(void) {
-  // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&DrvDemoSettings +4, sizeof(DrvDemoSettings) -4);  // Skip crc32
-}
+void DrvDemoSettingsLoad(bool erase) {
+  // Called from FUNC_PRE_INIT (erase = 0) once at restart
+  // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
-void DrvDemoSettingsDefault(void) {
-  // Init default values in case file is not found
-
+  // *** Start init default values in case file is not found ***
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
 
   memset(&DrvDemoSettings, 0x00, sizeof(DrvDemoSettings));
   DrvDemoSettings.version = DRV_DEMO_VERSION;
   // Init any other parameter in struct DrvDemoSettings
   snprintf_P(DrvDemoSettings.drv_text[0], sizeof(DrvDemoSettings.drv_text[0]), PSTR("Azalea"));
-}
 
-void DrvDemoSettingsDelta(void) {
-  // Fix possible setting deltas
+  // *** End Init default values ***
 
-  if (DrvDemoSettings.version != DRV_DEMO_VERSION) {      // Fix version dependent changes
-
-    if (Settings->version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
-
-    }
-    if (Settings->version < 0x01010101) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update old version restore"));
-
-    }
-
-    // Set current version and save settings
-    DrvDemoSettings.version = DRV_DEMO_VERSION;
-    DrvDemoSettingsSave();
-  }
-}
-
-void DrvDemoSettingsLoad(void) {
-  // Called from FUNC_PRE_INIT once at restart
-
-  // Init default values in case file is not found
-  DrvDemoSettingsDefault();
-
+#ifndef USE_UFILESYS
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: Demo use defaults as file system not enabled"));
+#else
   // Try to load file /.drvset122
   char filename[20];
   // Use for sensors:
 //  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_122);
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_122);
-
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: About to load settings from file %s"), filename);
-
-#ifdef USE_UFILESYS
-  if (TfsLoadFile(filename, (uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
-    // Fix possible setting deltas
-    DrvDemoSettingsDelta();
-  } else {
-    // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or file not found"));
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
   }
-#else
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
-#endif  // USE_UFILESYS
+  else if (TfsLoadFile(filename, (uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
+    if (DrvDemoSettings.version != DRV_DEMO_VERSION) {      // Fix version dependent changes
 
-  DrvDemoSettings.crc32 = DrvDemoSettingsCrc32();
+      // *** Start fix possible setting deltas ***
+      if (Settings->version < 0x01010100) {
+        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update oldest version restore"));
+
+      }
+      if (Settings->version < 0x01010101) {
+        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update old version restore"));
+
+      }
+
+      // *** End setting deltas ***
+
+      // Set current version and save settings
+      DrvDemoSettings.version = DRV_DEMO_VERSION;
+      DrvDemoSettingsSave();
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Demo loaded from file"));
+  }
+  else {
+    // File system not ready: No flash space reserved for file system
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Demo use defaults as file system not ready or file not found"));
+  }
+#endif  // USE_UFILESYS
 }
 
 void DrvDemoSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
-
-  if (DrvDemoSettingsCrc32() != DrvDemoSettings.crc32) {
+#ifdef USE_UFILESYS
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&DrvDemoSettings +4, sizeof(DrvDemoSettings) -4);  // Skip crc32
+  if (crc32 != DrvDemoSettings.crc32) {
     // Try to save file /.drvset122
-    DrvDemoSettings.crc32 = DrvDemoSettingsCrc32();
+    DrvDemoSettings.crc32 = crc32;
 
     char filename[20];
     // Use for sensors:
 //    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_122);
     // Use for drivers:
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_122);
-
-    AddLog(LOG_LEVEL_INFO, PSTR("DRV: About to save settings to file %s"), filename);
-
-#ifdef USE_UFILESYS
-    if (!TfsSaveFile(filename, (const uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
+    if (TfsSaveFile(filename, (const uint8_t*)&DrvDemoSettings, sizeof(DrvDemoSettings))) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo saved to file"));
+    } else {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: ERROR Demo file system not ready or unable to save file"));
     }
-#else
-    AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
-#endif  // USE_UFILESYS
   }
+#endif  // USE_UFILESYS
 }
 
 /*********************************************************************************************\
@@ -178,6 +163,9 @@ bool Xdrv122(uint32_t function) {
   bool result = false;
 
   switch (function) {
+    case FUNC_RESET_SETTINGS:
+      DrvDemoSettingsLoad(1);
+      break;
     case FUNC_SAVE_SETTINGS:
       DrvDemoSettingsSave();
       break;
@@ -185,7 +173,7 @@ bool Xdrv122(uint32_t function) {
       result = DecodeCommand(kDrvDemoCommands, DrvDemoCommand);
       break;
     case FUNC_PRE_INIT:
-      DrvDemoSettingsLoad();
+      DrvDemoSettingsLoad(0);
       break;
     case FUNC_SAVE_BEFORE_RESTART:
       // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!

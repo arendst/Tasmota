@@ -783,7 +783,7 @@ bool Xdrv67(uint32_t function) {
 
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     MCP23xModuleInit();
   } else if (Mcp23x.max_devices) {
     switch (function) {

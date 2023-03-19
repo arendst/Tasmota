@@ -46,8 +46,7 @@
 #define RFSNS_SIGNAL_TIMEOUT      10     // Pulse timings in mSec. Beyond this value indicate end of message
 #define RFSNS_SIGNAL_REPEAT_TIME  500    // (500) Tijd in mSec. waarbinnen hetzelfde event niet nogmaals via RF mag binnenkomen. Onderdrukt ongewenste herhalingen van signaal
 
-typedef struct RawSignalStruct                   // Variabelen geplaatst in struct zodat deze later eenvoudig kunnen worden weggeschreven naar SDCard
-{
+typedef struct RawSignalStruct {         // Variabelen geplaatst in struct zodat deze later eenvoudig kunnen worden weggeschreven naar SDCard
   int  Number;                           // aantal bits, maal twee omdat iedere bit een mark en een space heeft.
   uint8_t Repeats;                          // Aantal maal dat de pulsreeks verzonden moet worden bij een zendactie.
   uint8_t Multiply;                         // Pulses[] * Multiply is de echte tijd van een puls in microseconden
@@ -65,8 +64,7 @@ uint8_t rfsns_any_sensor = 0;
  * Fetch signals from RF pin
 \*********************************************************************************************/
 
-bool RfSnsFetchSignal(uint8_t DataPin, bool StateSignal)
-{
+bool RfSnsFetchSignal(uint8_t DataPin, bool StateSignal) {
   uint8_t Fbit = digitalPinToBitMask(DataPin);
   uint8_t Fport = digitalPinToPort(DataPin);
   uint8_t FstateMask = (StateSignal ? Fbit : 0);
@@ -168,16 +166,14 @@ typedef struct {
 theo_v2_t1_t *rfsns_theo_v2_t1 = nullptr;
 theo_v2_t2_t *rfsns_theo_v2_t2 = nullptr;
 
-void RfSnsInitTheoV2(void)
-{
-  rfsns_theo_v2_t1 = (theo_v2_t1_t*)malloc(RFSNS_THEOV2_MAX_CHANNEL * sizeof(theo_v2_t1_t));
-  rfsns_theo_v2_t2 = (theo_v2_t2_t*)malloc(RFSNS_THEOV2_MAX_CHANNEL * sizeof(theo_v2_t2_t));
+void RfSnsInitTheoV2(void) {
+  rfsns_theo_v2_t1 = (theo_v2_t1_t*)calloc(RFSNS_THEOV2_MAX_CHANNEL, sizeof(theo_v2_t1_t));
+  rfsns_theo_v2_t2 = (theo_v2_t2_t*)calloc(RFSNS_THEOV2_MAX_CHANNEL, sizeof(theo_v2_t2_t));
   rfsns_any_sensor++;
 }
 
-void RfSnsAnalyzeTheov2(void)
-{
-  if (rfsns_raw_signal->Number != RFSNS_THEOV2_PULSECOUNT) { return; }
+bool RfSnsAnalyzeTheov2(void) {
+  if (rfsns_raw_signal->Number != RFSNS_THEOV2_PULSECOUNT) { return false; }
 
   uint8_t Checksum;  // 8 bits Checksum over following bytes
   uint8_t Channel;   // 3 bits channel
@@ -185,15 +181,13 @@ void RfSnsAnalyzeTheov2(void)
   uint8_t Voltage;   // 8 bits Vcc like 45 = 4.5V, bit 8 is batt low
   int Payload1;      // 16 bits
   int Payload2;      // 16 bits
-
-  uint8_t b, bytes, bits, id;
+  uint8_t id;
 
   uint8_t idx = 3;
   uint8_t chksum = 0;
-  for (bytes = 0; bytes < 7; bytes++) {
-    b = 0;
-    for (bits = 0; bits <= 7; bits++)
-    {
+  for (uint32_t bytes = 0; bytes < 7; bytes++) {
+    uint8_t b = 0;
+    for (uint32_t bits = 0; bits <= 7; bits++) {
       if ((rfsns_raw_signal->Pulses[idx] * rfsns_raw_signal->Multiply) > RFSNS_THEOV2_RF_PULSE_MID) {
         b |= 1 << bits;
       }
@@ -228,8 +222,8 @@ void RfSnsAnalyzeTheov2(void)
     }
   }
 
-  if (Checksum != chksum) { return; }
-  if ((Channel == 0) || (Channel > RFSNS_THEOV2_MAX_CHANNEL)) { return; }
+  if (Checksum != chksum) { return false; }
+  if ((Channel == 0) || (Channel > RFSNS_THEOV2_MAX_CHANNEL)) { return false; }
   Channel--;
 
   rfsns_raw_signal->Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
@@ -253,10 +247,11 @@ void RfSnsAnalyzeTheov2(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
     chksum, Checksum, id, Type, Channel +1, Payload3, (Voltage & 0x80) >> 7, Payload1, Payload2);
+
+  return true;
 }
 
-void RfSnsTheoV2Show(bool json)
-{
+void RfSnsTheoV2Show(bool json) {
   bool sensor_once = false;
 
   for (uint32_t i = 0; i < RFSNS_THEOV2_MAX_CHANNEL; i++) {
@@ -422,16 +417,14 @@ typedef struct {
 alecto_v2_t *rfsns_alecto_v2 = nullptr;
 uint16_t rfsns_alecto_rain_base = 0;
 
-void RfSnsInitAlectoV2(void)
-{
-  rfsns_alecto_v2 = (alecto_v2_t*)malloc(sizeof(alecto_v2_t));
+void RfSnsInitAlectoV2(void) {
+  rfsns_alecto_v2 = (alecto_v2_t*)calloc(1, sizeof(alecto_v2_t));
   rfsns_any_sensor++;
 }
 
-void RfSnsAnalyzeAlectov2()
-{
+bool RfSnsAnalyzeAlectov2() {
   if (!(((rfsns_raw_signal->Number >= RFSNS_ACH2010_MIN_PULSECOUNT) &&
-         (rfsns_raw_signal->Number <= RFSNS_ACH2010_MAX_PULSECOUNT)) || (rfsns_raw_signal->Number == RFSNS_DKW2012_PULSECOUNT))) { return; }
+         (rfsns_raw_signal->Number <= RFSNS_ACH2010_MAX_PULSECOUNT)) || (rfsns_raw_signal->Number == RFSNS_DKW2012_PULSECOUNT))) { return false; }
 
   uint8_t c = 0;
   uint8_t rfbit;
@@ -470,8 +463,8 @@ void RfSnsAnalyzeAlectov2()
   msgtype = (data[0] >> 4) & 0xf;
   rc = (data[0] << 4) | (data[1] >> 4);
 
-  if (checksum != checksumcalc) { return; }
-  if ((msgtype != 10) && (msgtype != 5)) { return; }
+  if (checksum != checksumcalc) { return false; }
+  if ((msgtype != 10) && (msgtype != 5)) { return false; }
 
   rfsns_raw_signal->Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
 
@@ -504,10 +497,11 @@ void RfSnsAnalyzeAlectov2()
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
+
+  return true;
 }
 
-void RfSnsAlectoResetRain(void)
-{
+void RfSnsAlectoResetRain(void) {
   if ((RtcTime.hour == 0) && (RtcTime.minute == 0) && (RtcTime.second == 5)) {
     rfsns_alecto_v2->rain = 0;  // Reset Rain
   }
@@ -519,8 +513,7 @@ void RfSnsAlectoResetRain(void)
  *           http://lucsmall.com/2012/04/30/weather-station-hacking-part-3/
  *           https://github.com/lucsmall/WH2-Weather-Sensor-Library-for-Arduino/blob/master/WeatherSensorWH2.cpp
  \*********************************************************************************************/
-uint8_t RfSnsAlectoCRC8(uint8_t *addr, uint8_t len)
-{
+uint8_t RfSnsAlectoCRC8(uint8_t *addr, uint8_t len) {
   uint8_t crc = 0;
   while (len--) {
     uint8_t inbyte = *addr++;
@@ -543,8 +536,7 @@ const char HTTP_SNS_ALECTOV2_WDIR[] PROGMEM =
   "{s}" D_ALECTOV2 " " D_TX20_WIND_DIRECTION "{m}%s{e}";
 #endif
 
-void RfSnsAlectoV2Show(bool json)
-{
+void RfSnsAlectoV2Show(bool json) {
   if (rfsns_alecto_v2->time) {
     if (rfsns_alecto_v2->time < LocalTime() - RFSNS_VALID_WINDOW) {
       if (json) {
@@ -594,11 +586,12 @@ void RfSnsAlectoV2Show(bool json)
 }
 #endif  // USE_ALECTO_V2 **********************************************************************
 
-void RfSnsInit(void)
-{
-  rfsns_raw_signal = (raw_signal_t*)(malloc(sizeof(raw_signal_t)));
+void RfSnsInit(void) {
+  if (!PinUsed(GPIO_RF_SENSOR)) { return; }
+
+  rfsns_raw_signal = (raw_signal_t*)(calloc(1, sizeof(raw_signal_t)));
   if (rfsns_raw_signal) {
-    memset(rfsns_raw_signal, 0, sizeof(raw_signal_t));  // Init defaults to 0
+//    memset(rfsns_raw_signal, 0, sizeof(raw_signal_t));  // Init defaults to 0
 #ifdef USE_THEO_V2
     RfSnsInitTheoV2();
 #endif
@@ -616,27 +609,26 @@ void RfSnsInit(void)
   }
 }
 
-void RfSnsAnalyzeRawSignal(void)
-{
+void RfSnsAnalyzeRawSignal(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
 
+  bool valid = false;
 #ifdef USE_THEO_V2
-    RfSnsAnalyzeTheov2();
+  if (RfSnsAnalyzeTheov2()) { valid = true; }
 #endif
 #ifdef USE_ALECTO_V2
-    RfSnsAnalyzeAlectov2();
+  if (RfSnsAnalyzeAlectov2()) { valid = true; }
 #endif
+  if (valid) { MqttPublishSensor(); }
 }
 
-void RfSnsEverySecond(void)
-{
+void RfSnsEverySecond(void) {
 #ifdef USE_ALECTO_V2
   RfSnsAlectoResetRain();
 #endif
 }
 
-void RfSnsShow(bool json)
-{
+void RfSnsShow(bool json) {
 #ifdef USE_THEO_V2
   RfSnsTheoV2Show(json);
 #endif
@@ -649,11 +641,10 @@ void RfSnsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns37(uint32_t function)
-{
+bool Xsns37(uint32_t function) {
   bool result = false;
 
-  if (PinUsed(GPIO_RF_SENSOR) && (FUNC_INIT == function)) {
+  if (FUNC_INIT == function) {
     RfSnsInit();
   }
   else if (rfsns_raw_signal) {

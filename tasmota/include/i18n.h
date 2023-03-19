@@ -908,10 +908,6 @@ const char HTTP_SNS_MOISTURE[]      PROGMEM = "{s}%s "  D_MOISTURE            "{
 const char HTTP_SNS_RANGE_CHR[]     PROGMEM = "{s}%s "  D_RANGE               "{m}%s"                             "{e}";
 const char HTTP_SNS_RANGE[]         PROGMEM = "{s}%s "  D_RANGE               "{m}%d"                             "{e}";
 const char HTTP_SNS_HALL_EFFECT[]   PROGMEM = "{s}%s "  D_HALL_EFFECT         "{m}%d"                             "{e}";
-const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{m}%s " D_UNIT_VOLT                "{e}";
-const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
-const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE_ACTIVE   "{m}%s " D_UNIT_WATT                "{e}";
-const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
 const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
 const char HTTP_SNS_MQ[]            PROGMEM = "{s}"     D_MQ"-%s"             "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
 const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
@@ -927,6 +923,27 @@ const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{
 const char HTTP_SNS_GAS[]           PROGMEM = "{s}%s "  D_GAS                 "{m}%d " D_UNIT_PERCENT          "LEL{e}";
 const char HTTP_SNS_SOC[]           PROGMEM = "{s}%s "  D_SOC                 "{m}%d " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_SOH[]           PROGMEM = "{s}%s "  D_SOH                 "{m}%d " D_UNIT_PERCENT             "{e}";
+
+const char HTTP_SNS_VOLTAGE[]             PROGMEM = "{s}" D_VOLTAGE                 "{m}%s " D_UNIT_VOLT          "{e}";
+const char HTTP_SNS_CURRENT[]             PROGMEM = "{s}" D_CURRENT                 "{m}%s " D_UNIT_AMPERE        "{e}";
+const char HTTP_SNS_CURRENT_N[]           PROGMEM = "{s}" D_CURRENT_NEUTRAL         "{m}%s " D_UNIT_AMPERE        "{e}";
+const char HTTP_SNS_POWER[]               PROGMEM = "{s}" D_POWERUSAGE_ACTIVE       "{m}%s " D_UNIT_WATT          "{e}";
+const char HTTP_SNS_IMPORT_POWER[]        PROGMEM = "{s}" D_IMPORT_POWER            "{m}%s " D_UNIT_WATT          "{e}";
+const char HTTP_SNS_EXPORT_POWER[]        PROGMEM = "{s}" D_EXPORT_POWER            "{m}%s " D_UNIT_WATT          "{e}";
+const char HTTP_SNS_MAX_POWER[]           PROGMEM = "{s}" D_MAX_POWER               "{m}%s " D_UNIT_WATT          "{e}";
+const char HTTP_SNS_POWERUSAGE_APPARENT[] PROGMEM = "{s}" D_POWERUSAGE_APPARENT     "{m}%s " D_UNIT_VA            "{e}";
+const char HTTP_SNS_POWERUSAGE_REACTIVE[] PROGMEM = "{s}" D_POWERUSAGE_REACTIVE     "{m}%s " D_UNIT_VAR           "{e}";
+const char HTTP_SNS_POWER_FACTOR[]        PROGMEM = "{s}" D_POWER_FACTOR            "{m}%s                         {e}";
+const char HTTP_SNS_ENERGY_TODAY[]        PROGMEM = "{s}" D_ENERGY_TODAY            "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_ENERGY_YESTERDAY[]    PROGMEM = "{s}" D_ENERGY_YESTERDAY        "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_ENERGY_TOTAL[]        PROGMEM = "{s}" D_ENERGY_TOTAL            "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_EXPORT_ACTIVE[]       PROGMEM = "{s}" D_EXPORT_ACTIVE           "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_TOTAL_ACTIVE[]        PROGMEM = "{s}" D_TOTAL_ACTIVE            "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_RSTTBL_TOTAL_ACTIVE[] PROGMEM = "{s}" D_RESETTABLE_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR  "{e}";
+const char HTTP_SNS_IMPORT_REACTIVE[]     PROGMEM = "{s}" D_IMPORT_REACTIVE         "{m}%s " D_UNIT_KWARH         "{e}";
+const char HTTP_SNS_EXPORT_REACTIVE[]     PROGMEM = "{s}" D_EXPORT_REACTIVE         "{m}%s " D_UNIT_KWARH         "{e}";
+const char HTTP_SNS_TOTAL_REACTIVE[]      PROGMEM = "{s}" D_TOTAL_REACTIVE          "{m}%s " D_UNIT_KWARH         "{e}";
+const char HTTP_SNS_PHASE_ANGLE[]         PROGMEM = "{s}" D_PHASE_ANGLE             "{m}%s " D_UNIT_ANGLE         "{e}";
 #endif  // USE_WEBSERVER
 
 #endif  // _I18N_H_
