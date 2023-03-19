@@ -29,7 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_104            104
-#define XI2C_71             78  // See I2CDEVICES.md
+#define XI2C_78             78  // See I2CDEVICES.md
 
 #define PMSA003I_ADDRESS    0x12
 
@@ -43,18 +43,7 @@ Adafruit_PM25AQI aqi = Adafruit_PM25AQI();
 bool pmsa003i_type = false;
 bool pmsa003i_ready = false;
 uint8_t warmup_counter;  // count for warmup
-uint16_t pm10_standard,  ///< Standard PM1.0
-    pm25_standard,       ///< Standard PM2.5
-    pm100_standard;      ///< Standard PM10.0
-uint16_t pm10_env,       ///< Environmental PM1.0
-    pm25_env,            ///< Environmental PM2.5
-    pm100_env;           ///< Environmental PM10.0
-uint16_t particles_03um, ///< 0.3um Particle Count
-    particles_05um,      ///< 0.5um Particle Count
-    particles_10um,      ///< 1.0um Particle Count
-    particles_25um,      ///< 2.5um Particle Count
-    particles_50um,      ///< 5.0um Particle Count
-    particles_100um;     ///< 10.0um Particle Count
+PM25_AQI_Data data;
 
 /********************************************************************************************/
 
@@ -83,22 +72,11 @@ void Pmsa003iUpdate(void)
   }
 
   pmsa003i_ready = false;
-  PM25_AQI_Data data;
-  if (! aqi.read(&data)) { // Could not read from AQI
+  PM25_AQI_Data local_data;
+  if (! aqi.read(&local_data)) { // Could not read from AQI
     return;
   }
-  pm10_standard = data.pm10_standard;
-  pm25_standard = data.pm25_standard;
-  pm100_standard = data.pm100_standard;
-  pm10_env = data.pm10_env;
-  pm25_env = data.pm25_env;
-  pm100_env = data.pm100_env;
-  particles_03um = data.particles_03um;
-  particles_05um = data.particles_05um;
-  particles_10um = data.particles_10um;
-  particles_25um = data.particles_25um;
-  particles_50um = data.particles_50um;
-  particles_100um = data.particles_100um;
+  data = local_data;
   pmsa003i_ready = true;
 }
 
@@ -123,23 +101,23 @@ void Pmsa003iShow(bool json)
   if (pmsa003i_ready) {
     if (json) {
       ResponseAppend_P(PSTR(",\"PMSA003I\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
-        pm10_standard, pm25_standard, pm100_standard,
-        pm10_env, pm25_env, pm100_env,
-        particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um);
+        data.pm10_standard, data.pm25_standard, data.pm100_standard,
+        data.pm10_env, data.pm25_env, data.pm100_env,
+        data.particles_03um, data.particles_05um, data.particles_10um, data.particles_25um, data.particles_50um, data.particles_100um);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_COUNT, pm10_env);     // PM1
-        DomoticzSensor(DZ_VOLTAGE, pm25_env);   // PM2.5
-        DomoticzSensor(DZ_CURRENT, pm100_env);  // PM10
+        DomoticzSensor(DZ_COUNT, data.pm10_env);     // PM1
+        DomoticzSensor(DZ_VOLTAGE, data.pm25_env);   // PM2.5
+        DomoticzSensor(DZ_CURRENT, data.pm100_env);  // PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_PMSA003I,
-//      pm10_standard, pm25_standard, pm100_standard,
-      pm10_env, pm25_env, pm100_env,
-      particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um);
+//      data.pm10_standard, data.pm25_standard, data.pm100_standard,
+      data.pm10_env, data.pm25_env, data.pm100_env,
+      data.particles_03um, data.particles_05um, data.particles_10um, data.particles_25um, data.particles_50um, data.particles_100um);
 #endif
     }
   }
@@ -149,9 +127,9 @@ void Pmsa003iShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns100(uint8_t function)
+bool Xsns104(uint32_t function)
 {
-  if (!I2cEnabled(XI2C_71)) { return false; }
+  if (!I2cEnabled(XI2C_78)) { return false; }
 
   bool result = false;
 
