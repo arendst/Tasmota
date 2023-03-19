@@ -7,12 +7,12 @@
       },
       {
         "text": "$(trash)",
-        "tooltip": "PlatformIO: Clean active environment",
+        "tooltip": "PlatformIO: Clean",
         "commands": "platformio-ide.clean"
       },
       {
         "text": "$(check)",
-        "tooltip": "PlatformIO: Build active environment",
+        "tooltip": "PlatformIO: Build",
         "commands": "platformio-ide.build"
       },
       {
@@ -29,6 +29,11 @@
             "args": "pio run -t erase_upload -e ${command:platformio-ide.activeEnvironment}"
           }
         ]
+      },
+      {
+        "text": "$(arrow-right)",
+        "tooltip": "PlatformIO: Upload and Monitor",
+        "commands": "platformio-ide.uploadAndMonitor"
       },
       {
         "text": "$(error)",
