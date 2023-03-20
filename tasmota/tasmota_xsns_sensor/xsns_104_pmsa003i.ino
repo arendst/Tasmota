@@ -38,12 +38,15 @@
 #endif
 
 #include "Adafruit_PM25AQI.h"
-Adafruit_PM25AQI aqi = Adafruit_PM25AQI();
 
-bool pmsa003i_type = false;
-bool pmsa003i_ready = false;
-uint8_t warmup_counter;  // count for warmup
-PM25_AQI_Data data;
+struct PMSA003I {
+  bool type = false;
+  bool ready = false;
+  uint8_t warmup_counter;  // count for warmup
+  PM25_AQI_Data data;
+  Adafruit_PM25AQI aqi = Adafruit_PM25AQI();
+} Pmsa003i;
+
 
 /********************************************************************************************/
 
@@ -54,9 +57,9 @@ void pmsa003i_Init(void)
     return;
   }
 
-  if (aqi.begin_I2C()) {
-    pmsa003i_type = true;
-    warmup_counter = PMSA003I_WARMUP_DELAY;
+  if (Pmsa003i.aqi.begin_I2C()) {
+    Pmsa003i.type = true;
+    Pmsa003i.warmup_counter = PMSA003I_WARMUP_DELAY;
     I2cSetActiveFound(PMSA003I_ADDRESS, "PMSA003I");
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("PMSA003I: " "begin_I2C failed"));
@@ -66,18 +69,18 @@ void pmsa003i_Init(void)
 
 void Pmsa003iUpdate(void)
 {
-  if (warmup_counter > 0) {
-    warmup_counter--;
+  if (Pmsa003i.warmup_counter > 0) {
+    Pmsa003i.warmup_counter--;
     return;
   }
 
-  pmsa003i_ready = false;
-  PM25_AQI_Data local_data;
-  if (! aqi.read(&local_data)) { // Could not read from AQI
+  Pmsa003i.ready = false;
+  PM25_AQI_Data data;
+  if (! Pmsa003iaqi.read(&data)) { // Could not read from AQI
     return;
   }
-  data = local_data;
-  pmsa003i_ready = true;
+  Pmsa003i.data = data;
+  Pmsa003i.ready = true;
 }
 
 #ifdef USE_WEBSERVER
@@ -98,26 +101,26 @@ const char HTTP_SNS_PMSA003I[] PROGMEM =
 
 void Pmsa003iShow(bool json)
 {
-  if (pmsa003i_ready) {
+  if (Pmsa003i.ready) {
     if (json) {
       ResponseAppend_P(PSTR(",\"PMSA003I\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
-        data.pm10_standard, data.pm25_standard, data.pm100_standard,
-        data.pm10_env, data.pm25_env, data.pm100_env,
-        data.particles_03um, data.particles_05um, data.particles_10um, data.particles_25um, data.particles_50um, data.particles_100um);
+        Pmsa003i.data.pm10_standard, Pmsa003i.data.pm25_standard, Pmsa003i.data.pm100_standard,
+        Pmsa003i.data.pm10_env, Pmsa003i.data.pm25_env, Pmsa003i.data.pm100_env,
+        Pmsa003i.data.particles_03um, Pmsa003i.data.particles_05um, Pmsa003i.data.particles_10um, Pmsa003i.data.particles_25um, Pmsa003i.data.particles_50um, Pmsa003i.data.particles_100um);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_COUNT, data.pm10_env);     // PM1
-        DomoticzSensor(DZ_VOLTAGE, data.pm25_env);   // PM2.5
-        DomoticzSensor(DZ_CURRENT, data.pm100_env);  // PM10
+        DomoticzSensor(DZ_COUNT, Pmsa003i.data.pm10_env);     // PM1
+        DomoticzSensor(DZ_VOLTAGE, Pmsa003i.data.pm25_env);   // PM2.5
+        DomoticzSensor(DZ_CURRENT, Pmsa003i.data.pm100_env);  // PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_PMSA003I,
-//      data.pm10_standard, data.pm25_standard, data.pm100_standard,
-      data.pm10_env, data.pm25_env, data.pm100_env,
-      data.particles_03um, data.particles_05um, data.particles_10um, data.particles_25um, data.particles_50um, data.particles_100um);
+//      Pmsa003i.data.pm10_standard, Pmsa003i.data.pm25_standard, Pmsa003i.data.pm100_standard,
+      Pmsa003i.data.pm10_env, Pmsa003i.data.pm25_env, Pmsa003i.data.pm100_env,
+      Pmsa003i.data.particles_03um, Pmsa003i.data.particles_05um, Pmsa003i.data.particles_10um, Pmsa003i.data.particles_25um, Pmsa003i.data.particles_50um, Pmsa003i.data.particles_100um);
 #endif
     }
   }
@@ -136,7 +139,7 @@ bool Xsns104(uint32_t function)
   if (FUNC_INIT == function) {
     pmsa003i_Init();
   }
-  else if (pmsa003i_type) {
+  else if (Pmsa003i.type) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         Pmsa003iUpdate();
