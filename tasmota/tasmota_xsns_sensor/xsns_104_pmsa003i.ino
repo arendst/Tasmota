@@ -83,31 +83,17 @@ void Pmsa003iUpdate(void)
   Pmsa003i.ready = true;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_PMSA003I[] PROGMEM =
-//  "{s}PMSA003I " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-//  "{s}PMSA003I " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-//  "{s}PMSA003I " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMSA003I " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMSA003I " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMSA003I " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 0.3 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 0.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}PMSA003I " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif
-
-void Pmsa003iShow(bool json)
-{
+void Pmsa003iShow(bool json) {
   if (Pmsa003i.ready) {
+    char types[10];
+    strcpy_P(types, PSTR("PMSA003I"));
+
     if (json) {
-      ResponseAppend_P(PSTR(",\"PMSA003I\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
+      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
+        types,
         Pmsa003i.data.pm10_standard, Pmsa003i.data.pm25_standard, Pmsa003i.data.pm100_standard,
         Pmsa003i.data.pm10_env, Pmsa003i.data.pm25_env, Pmsa003i.data.pm100_env,
         Pmsa003i.data.particles_03um, Pmsa003i.data.particles_05um, Pmsa003i.data.particles_10um, Pmsa003i.data.particles_25um, Pmsa003i.data.particles_50um, Pmsa003i.data.particles_100um);
-      ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_COUNT, Pmsa003i.data.pm10_env);     // PM1
@@ -117,10 +103,18 @@ void Pmsa003iShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_PMSA003I,
-//      Pmsa003i.data.pm10_standard, Pmsa003i.data.pm25_standard, Pmsa003i.data.pm100_standard,
-      Pmsa003i.data.pm10_env, Pmsa003i.data.pm25_env, Pmsa003i.data.pm100_env,
-      Pmsa003i.data.particles_03um, Pmsa003i.data.particles_05um, Pmsa003i.data.particles_10um, Pmsa003i.data.particles_25um, Pmsa003i.data.particles_50um, Pmsa003i.data.particles_100um);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "1", Pmsa003i.data.pm10_standard);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "2.5", Pmsa003i.data.pm25_standard);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "10", Pmsa003i.data.pm100_standard);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "1", Pmsa003i.data.pm10_env);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "2.5", Pmsa003i.data.pm25_env);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "10", Pmsa003i.data.pm100_env);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.3", Pmsa003i.data.particles_03um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.5", Pmsa003i.data.particles_05um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "1", Pmsa003i.data.particles_10um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "2.5", Pmsa003i.data.particles_25um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "5", Pmsa003i.data.particles_50um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "10", Pmsa003i.data.particles_100um);
 #endif
     }
   }
