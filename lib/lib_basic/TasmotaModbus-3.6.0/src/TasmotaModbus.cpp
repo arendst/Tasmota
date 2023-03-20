@@ -204,7 +204,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, ui
         }
       }
 
-      timeout = millis() + 10;
+      timeout = millis() + 20;
 
     }
   }
