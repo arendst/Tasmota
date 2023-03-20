@@ -143,6 +143,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_CHIRP                 | - | - / - | - | - | - | - |
 | USE_PAJ7620               | - | - / - | - | - | - | - |
 | USE_PCF8574               | - | - / - | - | - | - | - |
+| USE_PMSA003I              | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | Feature or Sensor         | l | t     | k | s | i | d | Remarks
 | USE_HIH6                  | - | - / x | - | x | - | - |

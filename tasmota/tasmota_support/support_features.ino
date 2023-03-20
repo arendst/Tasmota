@@ -879,7 +879,9 @@ void ResponseAppendFeatures(void)
 #if (defined(USE_I2C) || defined(USE_SPI)) && defined(USE_MCP23XXX_DRV)
     feature9 |= 0x00020000;  // xdrv_67_mcp23xxx.ino
 #endif
-//    feature9 |= 0x00040000;
+#if defined(USE_I2C) && defined(USE_PMSA003I)
+    feature9 |= 0x00040000;  // xsns_104_pmsa003i.ino
+#endif
 //    feature9 |= 0x00080000;
 
 //    feature9 |= 0x00100000;
