@@ -47,6 +47,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define TS_FLOAT float
 #endif
 
+
 // float = 4, double = 8 bytes
 
 const uint8_t SCRIPT_VERS[2] = {5, 1};
@@ -263,7 +264,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 #include <TasmotaSerial.h>
 
 #ifdef TESLA_POWERWALL
-#include "powerwall.h"
+#include "include/powerwall.h"
 #endif
 
 #ifdef USE_DISPLAY_DUMP
@@ -660,7 +661,7 @@ uint32_t Script_Find_Vars(char *sp) {
         }
         if (*cp == '"') {
           svars += 1;
-        } else if (isdigit(*cp)) {
+        } else if (isdigit(*cp) || *cp == '-') {
           numvars += 1;
         }
         sp = cp;
@@ -1438,6 +1439,13 @@ TS_FLOAT Get_MFVal(uint8_t index, int16_t bind) {
             summ += mflp->rbuff[cnt];
           }
           return summ / maxind;
+        }
+        if (bind == -3) {
+          TS_FLOAT summ = 0;
+          for (uint32_t cnt = 0; cnt < maxind; cnt++) {
+            summ += mflp->rbuff[cnt];
+          }
+          return summ;
         }
         if (bind < -2 || bind > maxind ) bind = 1;
         return mflp->rbuff[bind - 1];
@@ -2346,6 +2354,8 @@ char iob = *cp;
       iob = '\n';
     } else if (*cp == 'r') {
       iob = '\r';
+    } else if (*cp == '"') {
+      iob = '"';
     } else if (*cp == '0' && *(cp + 1) == 'x') {
       cp += 2;
       iob = strtol(cp, 0, 16);
@@ -3743,6 +3753,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif //SCRIPT_GET_HTTPS_JP
+
+#ifdef TESLA_POWERWALL
+        if (!strncmp(lp, "gpwl(", 5)) {
+          char path[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
+          fvar = call2pwl(path);
+          goto nfuncexit;
+        }
+#endif
 
         if (!strncmp(lp, "gi(", 3)) {
           lp += 3;
@@ -5243,6 +5262,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto strexit;
         }
 #endif // USE_FEXTRACT
+
         break;
 
       case 't':
@@ -5324,7 +5344,7 @@ extern char *SML_GetSVal(uint32_t index);
           uint32_t cycles;
           uint64_t accu = 0;
           char sbuffer[32];
-
+    
           /*
           // PSTR performance test
           // this is best case since everything will be in cache
@@ -6458,7 +6478,6 @@ int16_t retval;
 
     if (js) {
       String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
-      //JsonParser parser((char*)jss.c_str());
       JsonParser parser((char*)jss.c_str());
       jo = parser.getRootObject();
       gv.jo = &jo;
@@ -7459,31 +7478,62 @@ uint32_t script_sspi_trans(int32_t cs_index, TS_FLOAT *array, uint32_t len, uint
         out <<= 16;
         out |= glob_script_mem.spi.spip->transfer16((uint32_t)*array);
       }
+      if (size == 4) {
+        // special byte transfer with cs low
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+        out = glob_script_mem.spi.spip->transfer((uint8_t)*array);
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
+      }
       *array++ = out;
     }
     glob_script_mem.spi.spip->endTransaction();
 
   } else {
-    if (size < 1 || size > 3) size = 1;
-    for (uint32_t cnt = 0; cnt < len; cnt++) {
-      uint32_t bit = 1 << ((size * 8) - 1);
-      out = 0;
-      uint32_t uvar = *array;
-      while (bit) {
-        digitalWrite(glob_script_mem.spi.sclk, 0);
-        if (glob_script_mem.spi.mosi >= 0) {
-          if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
-          else   digitalWrite(glob_script_mem.spi.mosi, 0);
-        }
-        digitalWrite(glob_script_mem.spi.sclk, 1);
-        if (glob_script_mem.spi.miso >= 0) {
-          if (digitalRead(glob_script_mem.spi.miso)) {
-            out |= bit;
+    if (size == 4) {
+      for (uint32_t cnt = 0; cnt < len; cnt++) {
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+        uint32_t bit = 1 << ((1 * 8) - 1);
+        out = 0;
+        uint32_t uvar = *array;
+        while (bit) {
+          digitalWrite(glob_script_mem.spi.sclk, 0);
+          if (glob_script_mem.spi.mosi >= 0) {
+            if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
+            else   digitalWrite(glob_script_mem.spi.mosi, 0);
           }
+          digitalWrite(glob_script_mem.spi.sclk, 1);
+          if (glob_script_mem.spi.miso >= 0) {
+            if (digitalRead(glob_script_mem.spi.miso)) {
+              out |= bit;
+            }
+          }
+          bit >>= 1;
         }
-        bit >>= 1;
+        *array++ = out;
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
       }
-      *array++ = out;
+    } else {
+      if (size < 1 || size > 3) size = 1;
+      for (uint32_t cnt = 0; cnt < len; cnt++) {
+        uint32_t bit = 1 << ((size * 8) - 1);
+        out = 0;
+        uint32_t uvar = *array;
+        while (bit) {
+          digitalWrite(glob_script_mem.spi.sclk, 0);
+          if (glob_script_mem.spi.mosi >= 0) {
+            if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
+            else   digitalWrite(glob_script_mem.spi.mosi, 0);
+          }
+          digitalWrite(glob_script_mem.spi.sclk, 1);
+          if (glob_script_mem.spi.miso >= 0) {
+            if (digitalRead(glob_script_mem.spi.miso)) {
+              out |= bit;
+            }
+          }
+          bit >>= 1;
+        }
+        *array++ = out;
+      }
     }
   }
   if (cs_index >= 0) {
@@ -8055,6 +8105,9 @@ void set_callbacks() {
   if (Run_Scripter1(">T", -2, 0) == 99) {glob_script_mem.teleperiod = glob_script_mem.section_ptr + 2;} else {glob_script_mem.teleperiod = 0;}
 }
 
+
+//#define SCRIPT_HUE_DEBUG
+
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
 #define HUE_DEV_MVNUM 5
 #define HUE_DEV_NSIZE 16
@@ -8337,7 +8390,7 @@ void Script_Check_Hue(String *response) {
           struct T_INDEX ind;
           uint8_t vtype;
           char vname[16];
-          for (uint32_t cnt = 0; cnt<sizeof(vname) - 1; cnt++) {
+          for (uint32_t cnt = 0; cnt < sizeof(vname) - 1; cnt++) {
             if (*cp==',' || *cp==0) {
               vname[cnt] = 0;
               break;
@@ -8357,6 +8410,9 @@ void Script_Check_Hue(String *response) {
         }
       }
       // append response
+#ifdef SCRIPT_HUE_DEBUG
+      AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),hue_script[hue_devs].name, hue_devs);
+#endif
       if (response) {
         if (TasmotaGlobal.devices_present) {
           *response += ",\"";
@@ -8367,9 +8423,10 @@ void Script_Check_Hue(String *response) {
         }
         *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
-        //AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+#ifdef SCRIPT_HUE_DEBUG
+        AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+#endif
       }
-
       hue_devs++;
     }
     if (*lp==SCRIPT_EOL) {
@@ -8380,7 +8437,7 @@ void Script_Check_Hue(String *response) {
       lp++;
     }
   }
-#if 0
+#ifdef SCRIPT_HUE_DEBUG
   if (response) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
@@ -8527,7 +8584,11 @@ void Script_Handle_Hue(String path) {
   } else {
     response = FPSTR(sHUE_ERROR_JSON);
   }
+#ifdef SCRIPT_HUE_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+#else
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+#endif
   WSSend(code, CT_APP_JSON, response);
   if (resp) {
     //Run_Scripter(">E", 2, 0);
@@ -11091,14 +11152,14 @@ int32_t url2file(uint8_t fref, char *url) {
   HTTPClient http;
   int32_t httpCode = 0;
   String weburl = "http://"+UrlEncode(url);
-  //for (uint32_t retry = 0; retry < 15; retry++) {
+  for (uint32_t retry = 0; retry < 3; retry++) {
     http.begin(http_client, weburl);
     delay(100);
     httpCode = http.GET();
-    //if (httpCode > 0) {
-    //  break;
-    //}
-  //}
+    if (httpCode >= 0) {
+      break;
+    }
+  }
   if (httpCode < 0) {
     AddLog(LOG_LEVEL_INFO,PSTR("HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
   }
@@ -11191,26 +11252,51 @@ int32_t http_req(char *host, char *request) {
 
 
 #ifdef SCRIPT_GET_HTTPS_JP
+
+#ifdef TESLA_POWERWALL
+Powerwall powerwall = Powerwall();
+
+int32_t call2pwl(const char *url) {
+  uint8_t debug = 0;
+  if (*url == 'D') {
+    url++;
+    debug = 1;
+  }
+  String cookie = powerwall.AuthCookie();
+  if (*url == 'N') {
+    url++;
+    cookie = "";
+  } 
+  String result = powerwall.GetRequest(String(url), cookie);
+  //AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+
+  // shrink data size because it exceeds json parser maxsize
+  result.replace("communication_time", "ct");
+  result.replace("instant", "i");
+  result.replace("apparent", "a");
+  result.replace("reactive", "r");
+
+  if (debug) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+  }
+
+  Run_Scripter(">jp", 3, result.c_str());
+
+  return 0;
+}
+#endif // TESLA_POWERWALL
+
+
 #ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
 #else
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
-#ifdef TESLA_POWERWALL
-Powerwall powerwall = Powerwall();
-String authCookie   = "";
-#endif
-
-// get tesla powerwall info page json string
+// get https info page json string
 uint32_t call2https(const char *host, const char *path) {
   //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
-
-#ifdef TESLA_POWERWALL
-//  authCookie = powerwall.getAuthCookie();
-//  return 0;
-#endif
 
 #ifdef ESP32
   WiFiClientSecure *httpsClient;
@@ -11223,28 +11309,7 @@ uint32_t call2https(const char *host, const char *path) {
   httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
 
-#if 0
-  File file = ufsp->open("/tesla.cer", FS_FILE_READ);
-  uint16_t fsize = 0;
-  char *cert = 0;
-  if (file) {
-    fsize = file.size();
-    if (fsize) {
-      cert = (char*)malloc(fsize +2);
-      if (cert) {
-        file.read((uint8_t*)cert, fsize);
-        file.close();
-        httpsClient->setCACert(cert);
-      }
-      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
-    }
-  } else {
-    httpsClient->setCACert(root_ca);
-  }
-#endif
-
-
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> host %s"),host);
+ // AddLog(LOG_LEVEL_INFO,PSTR(">>> host %s"),host);
 
   uint32_t retry = 0;
   while ((!httpsClient->connect(host, 443)) && (retry < 10)) {
@@ -11254,36 +11319,9 @@ uint32_t call2https(const char *host, const char *path) {
   if (retry == 10) {
     return 2;
   }
-  AddLog(LOG_LEVEL_INFO,PSTR("connected"));
+  AddLog(LOG_LEVEL_DEBUG,PSTR("connected"));
 
-String request;
-#if 0
-
-  File file = ufsp->open("/login.txt", FS_FILE_READ);
-  uint16_t fsize = 0;
-  char *cert = 0;
-  if (file) {
-    fsize = file.size();
-    if (fsize) {
-      cert = (char*)calloc(fsize +2, 1);
-      if (cert) {
-        file.read((uint8_t*)cert, fsize);
-        file.close();
-        //httpsClient->setCACert(cert);
-      }
-      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
-    }
-  }
-
-  request = String("POST ") + "/api/login/Basic" + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + cert + "\r\n" + "Content-Type: application/json" + "\r\n";
-  httpsClient->print(request);
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post request %s"),(char*)request.c_str());
-
-  String line = httpsClient->readStringUntil('\n');
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1a %s"),(char*)line.c_str());
-  line = httpsClient->readStringUntil('\n');
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1b %s"),(char*)line.c_str());
-#endif
+  String request;
 
   request = String("GET ") + path +
                     " HTTP/1.1\r\n" +
@@ -12145,6 +12183,8 @@ bool Xdrv10(uint32_t function)
 #endif
       break;
 
+    case FUNC_NETWORK_UP:
+      break;
   }
   return result;
 }
