@@ -120,6 +120,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry support for Tensorflow Lite (TFL) by Christiaan Baars [#18119](https://github.com/arendst/Tasmota/issues/18119)
 - Berry `webclient` features
 - Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
+- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps [#18214](https://github.com/arendst/Tasmota/issues/18214)
+- Support for DingTian virtual switch/button/relay [#18223](https://github.com/arendst/Tasmota/issues/18223)
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration

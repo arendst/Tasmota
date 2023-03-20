@@ -53,7 +53,7 @@ struct PMSA003I {
 void pmsa003i_Init(void)
 {
   if (!I2cSetDevice(PMSA003I_ADDRESS)) {
-    // AddLog(LOG_LEVEL_DEBUG, PSTR("PMSA003I: "  D_JSON_I2CSCAN_NO_DEVICES_FOUND));
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " D_JSON_I2CSCAN_NO_DEVICES_FOUND));
     return;
   }
 
@@ -61,8 +61,8 @@ void pmsa003i_Init(void)
     Pmsa003i.type = true;
     Pmsa003i.warmup_counter = PMSA003I_WARMUP_DELAY;
     I2cSetActiveFound(PMSA003I_ADDRESS, "PMSA003I");
-  } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PMSA003I: " "begin_I2C failed"));
+//  } else {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: " "Begin_I2C failed"));
   }
 }
 
@@ -76,7 +76,7 @@ void Pmsa003iUpdate(void)
 
   Pmsa003i.ready = false;
   PM25_AQI_Data data;
-  if (! Pmsa003iaqi.read(&data)) { // Could not read from AQI
+  if (! Pmsa003i.aqi.read(&data)) { // Could not read from AQI
     return;
   }
   Pmsa003i.data = data;

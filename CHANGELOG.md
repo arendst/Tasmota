@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [12.4.0.3]
 ### Added
+- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps (#18214)
+- Support for DingTian virtual switch/button/relay (#18223)
 
 ### Breaking Changed
 
