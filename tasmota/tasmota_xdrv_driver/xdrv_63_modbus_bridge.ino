@@ -81,12 +81,13 @@ void (*const ModbusBridgeCommand[])(void) PROGMEM = {
 
 #define D_CMND_MODBUS_TCP_START "TCPStart"
 #define D_CMND_MODBUS_TCP_CONNECT "TCPConnect"
+#define D_CMND_MODBUS_TCP_MQTT "TCPMqtt"
 
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
-    D_CMND_MODBUS_TCP_START "|" D_CMND_MODBUS_TCP_CONNECT "|" D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
+    D_CMND_MODBUS_TCP_START "|" D_CMND_MODBUS_TCP_CONNECT "|" D_CMND_MODBUS_TCP_MQTT "|" D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
 
 void (*const ModbusBridgeCommand[])(void) PROGMEM = {
-    &CmndModbusTCPStart, &CmndModbusTCPConnect,
+    &CmndModbusTCPStart, &CmndModbusTCPConnect, &CmndModbusTCPMqtt,
     &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig};
 
 struct ModbusBridgeTCP
@@ -97,6 +98,7 @@ struct ModbusBridgeTCP
   uint8_t *tcp_buf = nullptr; // data transfer buffer
   IPAddress ip_filter;
   uint16_t tcp_transaction_id = 0;
+  bool output_mqtt = false;
 };
 
 ModbusBridgeTCP modbusBridgeTCP;
@@ -328,7 +330,7 @@ void ModbusBridgeHandle(void)
     {
 #ifdef USE_MODBUS_BRIDGE_TCP
       // If tcp client connected don't log error and exit this function (do not process)
-      if (nitems(modbusBridgeTCP.client_tcp))
+      if (nitems(modbusBridgeTCP.client_tcp) && !modbusBridgeTCP.output_mqtt)
       {
         return;
       }
@@ -657,25 +659,28 @@ void ModbusTCPHandle(void)
 
         modbusBridgeTCP.tcp_transaction_id = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[0]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[1]));
 
-        if (mbfunctioncode <= 2)
+        if (mbfunctioncode <= 2) // Multiple Coils, Inputs
         {
           count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
           modbusBridge.byteCount = ((count - 1) >> 3) + 1;
-          modbusBridge.dataCount = ((count - 1) >> 4) + 1;
+          modbusBridge.dataCount = count;
+          modbusBridge.type = ModbusBridgeType::mb_bit;
         }
-        else if (mbfunctioncode <= 4)
+        else if (mbfunctioncode <= 4) // Multiple Holding or input registers
         {
           count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
           modbusBridge.byteCount = count * 2;
           modbusBridge.dataCount = count;
+          modbusBridge.type = ModbusBridgeType::mb_uint16;
         }
-        else
+        else // Write coil(s) or register(s)
         {
           // For functioncode 15 & 16 ignore bytecount, modbusBridgeModbus does calculate this
           uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
           uint16_t byteCount = (buf_len - dataStartByte);
           modbusBridge.byteCount = 2;
           modbusBridge.dataCount = 1;
+          modbusBridge.type = ModbusBridgeType::mb_uint16;
 
           writeData = (uint16_t *)malloc((byteCount / 2)+1);
           if (nullptr == writeData)
@@ -704,6 +709,14 @@ void ModbusTCPHandle(void)
                modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, count, modbusBridge.dataCount, modbusBridge.byteCount);
 
         modbusBridgeModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, count, writeData);
+
+        if (modbusBridgeTCP.output_mqtt)
+        {
+          modbusBridge.deviceAddress = mbdeviceaddress;
+          modbusBridge.functionCode = (ModbusBridgeFunctionCode)mbfunctioncode;
+          modbusBridge.startAddress = mbstartaddress;
+          modbusBridge.count = count;
+        }
 
         free(writeData);
       }
@@ -1109,6 +1122,12 @@ void CmndModbusTCPConnect(void)
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBR Usage: port,ip_address"));
   }
 
+  ResponseCmndDone();
+}
+
+void CmndModbusTCPMqtt(void)
+{
+  modbusBridgeTCP.output_mqtt = XdrvMailbox.payload;
   ResponseCmndDone();
 }
 #endif
