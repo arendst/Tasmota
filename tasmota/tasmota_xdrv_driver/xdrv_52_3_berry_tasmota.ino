@@ -708,17 +708,25 @@ extern "C" {
   int32_t l_getpower(bvm *vm) {
     power_t pow = TasmotaGlobal.power;
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 2 && be_isint(vm, 2)) {
-      pow = be_toint(vm, 2);
-    }
-    be_newobject(vm, "list");
-    for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      be_pushbool(vm, bitRead(pow, i));
-      be_data_push(vm, -2);
+    if (top >= 2 && be_isint(vm, 2)) {
+      int32_t idx = be_toint(vm, 2);
+      if (idx >= 0 && idx < TasmotaGlobal.devices_present) {
+        be_pushbool(vm, bitRead(pow, idx));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    } else {
+      // no parameter, return an array of all values
+      be_newobject(vm, "list");
+      for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
+        be_pushbool(vm, bitRead(pow, i));
+        be_data_push(vm, -2);
+        be_pop(vm, 1);
+      }
       be_pop(vm, 1);
+      be_return(vm); // Return
     }
-    be_pop(vm, 1);
-    be_return(vm); // Return
   }
 
   int32_t l_setpower(bvm *vm);
