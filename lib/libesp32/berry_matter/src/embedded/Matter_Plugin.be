@@ -26,13 +26,21 @@ class Matter_Plugin
   static var EMPTY_LIST = []
   static var EMPTY_MAP = {}
   var device                                # reference to the `device` global object
-  var endpoints                             # list of supported endpoints
+  var endpoints                             # list of supported endpoints TODO refactor
+  var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes
 
   #############################################################
+  # MVC Model
+  #
+  # Model linking the plugin to the Tasmota behavior
+  #############################################################
+
+  #############################################################
   # Constructor
-  def init(device)
+  def init(device, endpoint)
     self.device = device
+    self.endpoint = endpoint
     self.endpoints = self.EMPTY_LIST
     self.clusters = self.EMPTY_LIST
   end
@@ -69,6 +77,11 @@ class Matter_Plugin
   end
 
   #############################################################
+  # MVC Model
+  #
+  # View reading attributes
+  #############################################################
+  #############################################################
   # read attribute
   def read_attribute(session, ctx)
     return nil
@@ -96,11 +109,21 @@ class Matter_Plugin
   end
 
   #############################################################
+  # MVC Model
+  #
+  # Controller write attributes
+  #############################################################
+  #############################################################
   # write attribute
   def write_attribute(session, ctx, write_data)
     return nil
   end
 
+  #############################################################
+  # MVC Model
+  #
+  # Controller invoke request
+  #############################################################
   #############################################################
   # invoke command
   def invoke_request(session, val, ctx)
@@ -113,5 +136,11 @@ class Matter_Plugin
   def timed_request(session, val, ctx)
     return nil
   end
+
+  #############################################################
+  # every_second
+  def every_second()
+  end
 end
+
 matter.Plugin = Matter_Plugin

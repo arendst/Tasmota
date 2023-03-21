@@ -28,15 +28,12 @@ class Matter_MessageHandler
   # handlers
   var commissioning
   var im                  # handler for Interaction Model
-  # counters
-  var counter_rcv         # Global Unencrypted Message Counter incoming
 
   #############################################################
   def init(device)
     self.device = device
     self.commissioning = matter.Commisioning_Context(self)
     self.im = matter.IM(device)
-    self.counter_rcv = matter.Counter()
   end
 
   #############################################################
@@ -61,15 +58,15 @@ class Matter_MessageHandler
         #############################################################
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
-        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + "session_id = " + str(session.local_session_id), 3)
+        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 3)
         if addr     session._ip = addr     end
         if port     session._port = port   end
         session._message_handler = self
         frame.session = session
         
         # check if it's a duplicate
-        if !self.counter_rcv.validate(frame.message_counter, false)
-          tasmota.log(string.format("MTR: rejected duplicate unencrypted message = %i ref = %i", frame.message_counter, self.counter_rcv.val()), 3)
+        if !session._counter_insecure_rcv.validate(frame.message_counter, false)
+          tasmota.log(string.format("MTR: rejected duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 3)
           return false
         end
 

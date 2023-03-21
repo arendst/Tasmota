@@ -287,7 +287,7 @@ class Matter_Frame
       resp.message_counter = self.session.counter_snd.next()
       resp.local_session_id = self.session.initiator_session_id
     else
-      resp.message_counter = self.session.__counter_insecure_snd.next()
+      resp.message_counter = self.session._counter_insecure_snd.next()
       resp.local_session_id = 0
     end
       
@@ -330,7 +330,7 @@ class Matter_Frame
       resp.message_counter = session.counter_snd.next()
       resp.local_session_id = session.initiator_session_id
     else
-      resp.message_counter = session.__counter_insecure_snd.next()
+      resp.message_counter = session._counter_insecure_snd.next()
       resp.local_session_id = 0
     end
       

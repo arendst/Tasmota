@@ -273,8 +273,8 @@ class Matter_IM
       )
     end
 
-    tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
-    tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
+    # tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
+    # tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
 
     return ret
   end

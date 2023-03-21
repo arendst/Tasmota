@@ -53,17 +53,20 @@ be_local_closure(Matter_TLV_item_create_TLV,   /* name */
     }),
     be_str_weak(create_TLV),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
+    ( &(const binstruction[13]) {  /* code */
       0x58080000,  //  0000  LDCONST	R2	K0
       0x4C0C0000,  //  0001  LDNIL	R3
       0x200C0203,  //  0002  NE	R3	R1	R3
-      0x780E0004,  //  0003  JMPF	R3	#0009
-      0x5C0C0400,  //  0004  MOVE	R3	R2
-      0x7C0C0000,  //  0005  CALL	R3	0
-      0x900E0200,  //  0006  SETMBR	R3	K1	R0
-      0x900E0401,  //  0007  SETMBR	R3	K2	R1
-      0x80040600,  //  0008  RET	1	R3
-      0x80000000,  //  0009  RET	0
+      0x740E0002,  //  0003  JMPT	R3	#0007
+      0x540E0013,  //  0004  LDINT	R3	20
+      0x1C0C0003,  //  0005  EQ	R3	R0	R3
+      0x780E0004,  //  0006  JMPF	R3	#000C
+      0x5C0C0400,  //  0007  MOVE	R3	R2
+      0x7C0C0000,  //  0008  CALL	R3	0
+      0x900E0200,  //  0009  SETMBR	R3	K1	R0
+      0x900E0401,  //  000A  SETMBR	R3	K2	R1
+      0x80040600,  //  000B  RET	1	R3
+      0x80000000,  //  000C  RET	0
     })
   )
 );

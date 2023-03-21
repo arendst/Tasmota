@@ -107,7 +107,7 @@ class Matter_TLV
     #############################################################
     # create simple TLV
     static def create_TLV(t, value)
-      if value != nil
+      if value != nil || t == 0x14 #-t == matter.TLV.NULL-#   # put the actual number for performance
         var v = _class()      # parent is nil
         v.typ = t
         v.val = value

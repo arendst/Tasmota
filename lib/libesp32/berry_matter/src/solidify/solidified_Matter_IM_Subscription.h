@@ -383,51 +383,6 @@ void be_load_Matter_IM_Subscription_class(bvm *vm) {
 extern const bclass be_class_Matter_IM_Subscription_Shop;
 
 /********************************************************************
-** Solidified function: get_by_id
-********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_get_by_id,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_weak(subs),
-    /* K2   */  be_nested_str_weak(subscription_id),
-    /* K3   */  be_const_int(1),
-    }),
-    be_str_weak(get_by_id),
-    &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
-      0x58080000,  //  0000  LDCONST	R2	K0
-      0x600C000C,  //  0001  GETGBL	R3	G12
-      0x88100101,  //  0002  GETMBR	R4	R0	K1
-      0x7C0C0200,  //  0003  CALL	R3	1
-      0x140C0403,  //  0004  LT	R3	R2	R3
-      0x780E0009,  //  0005  JMPF	R3	#0010
-      0x880C0101,  //  0006  GETMBR	R3	R0	K1
-      0x940C0602,  //  0007  GETIDX	R3	R3	R2
-      0x880C0702,  //  0008  GETMBR	R3	R3	K2
-      0x1C0C0601,  //  0009  EQ	R3	R3	R1
-      0x780E0002,  //  000A  JMPF	R3	#000E
-      0x880C0101,  //  000B  GETMBR	R3	R0	K1
-      0x940C0602,  //  000C  GETIDX	R3	R3	R2
-      0x80040600,  //  000D  RET	1	R3
-      0x00080503,  //  000E  ADD	R2	R2	K3
-      0x7001FFF0,  //  000F  JMP		#0001
-      0x80000000,  //  0010  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: every_250ms
 ********************************************************************/
 be_local_closure(Matter_IM_Subscription_Shop_every_250ms,   /* name */
@@ -511,6 +466,51 @@ be_local_closure(Matter_IM_Subscription_Shop_every_250ms,   /* name */
 
 
 /********************************************************************
+** Solidified function: get_by_id
+********************************************************************/
+be_local_closure(Matter_IM_Subscription_Shop_get_by_id,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(subs),
+    /* K2   */  be_nested_str_weak(subscription_id),
+    /* K3   */  be_const_int(1),
+    }),
+    be_str_weak(get_by_id),
+    &be_const_str_solidified,
+    ( &(const binstruction[17]) {  /* code */
+      0x58080000,  //  0000  LDCONST	R2	K0
+      0x600C000C,  //  0001  GETGBL	R3	G12
+      0x88100101,  //  0002  GETMBR	R4	R0	K1
+      0x7C0C0200,  //  0003  CALL	R3	1
+      0x140C0403,  //  0004  LT	R3	R2	R3
+      0x780E0009,  //  0005  JMPF	R3	#0010
+      0x880C0101,  //  0006  GETMBR	R3	R0	K1
+      0x940C0602,  //  0007  GETIDX	R3	R3	R2
+      0x880C0702,  //  0008  GETMBR	R3	R3	K2
+      0x1C0C0601,  //  0009  EQ	R3	R3	R1
+      0x780E0002,  //  000A  JMPF	R3	#000E
+      0x880C0101,  //  000B  GETMBR	R3	R0	K1
+      0x940C0602,  //  000C  GETIDX	R3	R3	R2
+      0x80040600,  //  000D  RET	1	R3
+      0x00080503,  //  000E  ADD	R2	R2	K3
+      0x7001FFF0,  //  000F  JMP		#0001
+      0x80000000,  //  0010  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: new_subscription
 ********************************************************************/
 be_local_closure(Matter_IM_Subscription_Shop_new_subscription,   /* name */
@@ -578,80 +578,6 @@ be_local_closure(Matter_IM_Subscription_Shop_new_subscription,   /* name */
 
 
 /********************************************************************
-** Solidified function: attribute_updated_ctx
-********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_weak(subs),
-    /* K2   */  be_nested_str_weak(attribute_updated_ctx),
-    /* K3   */  be_const_int(1),
-    }),
-    be_str_weak(attribute_updated_ctx),
-    &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0x580C0000,  //  0000  LDCONST	R3	K0
-      0x6010000C,  //  0001  GETGBL	R4	G12
-      0x88140101,  //  0002  GETMBR	R5	R0	K1
-      0x7C100200,  //  0003  CALL	R4	1
-      0x14100604,  //  0004  LT	R4	R3	R4
-      0x78120007,  //  0005  JMPF	R4	#000E
-      0x88100101,  //  0006  GETMBR	R4	R0	K1
-      0x94100803,  //  0007  GETIDX	R4	R4	R3
-      0x8C100902,  //  0008  GETMET	R4	R4	K2
-      0x5C180200,  //  0009  MOVE	R6	R1
-      0x5C1C0400,  //  000A  MOVE	R7	R2
-      0x7C100600,  //  000B  CALL	R4	3
-      0x000C0703,  //  000C  ADD	R3	R3	K3
-      0x7001FFF2,  //  000D  JMP		#0001
-      0x80000000,  //  000E  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_init,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(im),
-    /* K1   */  be_nested_str_weak(subs),
-    }),
-    be_str_weak(init),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x60080012,  //  0001  GETGBL	R2	G18
-      0x7C080000,  //  0002  CALL	R2	0
-      0x90020202,  //  0003  SETMBR	R0	K1	R2
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: remove_sub
 ********************************************************************/
 be_local_closure(Matter_IM_Subscription_Shop_remove_sub,   /* name */
@@ -691,6 +617,49 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_sub,   /* name */
       0x00080503,  //  000F  ADD	R2	R2	K3
       0x7001FFEF,  //  0010  JMP		#0001
       0x80000000,  //  0011  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: attribute_updated_ctx
+********************************************************************/
+be_local_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(subs),
+    /* K2   */  be_nested_str_weak(attribute_updated_ctx),
+    /* K3   */  be_const_int(1),
+    }),
+    be_str_weak(attribute_updated_ctx),
+    &be_const_str_solidified,
+    ( &(const binstruction[15]) {  /* code */
+      0x580C0000,  //  0000  LDCONST	R3	K0
+      0x6010000C,  //  0001  GETGBL	R4	G12
+      0x88140101,  //  0002  GETMBR	R5	R0	K1
+      0x7C100200,  //  0003  CALL	R4	1
+      0x14100604,  //  0004  LT	R4	R3	R4
+      0x78120007,  //  0005  JMPF	R4	#000E
+      0x88100101,  //  0006  GETMBR	R4	R0	K1
+      0x94100803,  //  0007  GETIDX	R4	R4	R3
+      0x8C100902,  //  0008  GETMET	R4	R4	K2
+      0x5C180200,  //  0009  MOVE	R6	R1
+      0x5C1C0400,  //  000A  MOVE	R7	R2
+      0x7C100600,  //  000B  CALL	R4	3
+      0x000C0703,  //  000C  ADD	R3	R3	K3
+      0x7001FFF2,  //  000D  JMP		#0001
+      0x80000000,  //  000E  RET	0
     })
   )
 );
@@ -746,22 +715,95 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_by_session,   /* name */
 
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Matter_IM_Subscription_Shop_init,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(im),
+    /* K1   */  be_nested_str_weak(subs),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x60080012,  //  0001  GETGBL	R2	G18
+      0x7C080000,  //  0002  CALL	R2	0
+      0x90020202,  //  0003  SETMBR	R0	K1	R2
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: remove_by_fabric
+********************************************************************/
+be_local_closure(Matter_IM_Subscription_Shop_remove_by_fabric,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_sessions),
+    /* K1   */  be_nested_str_weak(remove_by_session),
+    /* K2   */  be_nested_str_weak(stop_iteration),
+    }),
+    be_str_weak(remove_by_fabric),
+    &be_const_str_solidified,
+    ( &(const binstruction[14]) {  /* code */
+      0x60080010,  //  0000  GETGBL	R2	G16
+      0x880C0300,  //  0001  GETMBR	R3	R1	K0
+      0x7C080200,  //  0002  CALL	R2	1
+      0xA8020005,  //  0003  EXBLK	0	#000A
+      0x5C0C0400,  //  0004  MOVE	R3	R2
+      0x7C0C0000,  //  0005  CALL	R3	0
+      0x8C100101,  //  0006  GETMET	R4	R0	K1
+      0x5C180600,  //  0007  MOVE	R6	R3
+      0x7C100400,  //  0008  CALL	R4	2
+      0x7001FFF9,  //  0009  JMP		#0004
+      0x58080002,  //  000A  LDCONST	R2	K2
+      0xAC080200,  //  000B  CATCH	R2	1	0
+      0xB0080000,  //  000C  RAISE	2	R0	R0
+      0x80000000,  //  000D  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_IM_Subscription_Shop
 ********************************************************************/
 be_local_class(Matter_IM_Subscription_Shop,
     2,
     NULL,
-    be_nested_map(9,
+    be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_IM_Subscription_Shop_every_250ms_closure) },
         { be_const_key_weak(get_by_id, -1), be_const_closure(Matter_IM_Subscription_Shop_get_by_id_closure) },
         { be_const_key_weak(attribute_updated_ctx, -1), be_const_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx_closure) },
-        { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_IM_Subscription_Shop_every_250ms_closure) },
-        { be_const_key_weak(remove_sub, 1), be_const_closure(Matter_IM_Subscription_Shop_remove_sub_closure) },
+        { be_const_key_weak(init, 2), be_const_closure(Matter_IM_Subscription_Shop_init_closure) },
+        { be_const_key_weak(remove_sub, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_sub_closure) },
         { be_const_key_weak(new_subscription, 3), be_const_closure(Matter_IM_Subscription_Shop_new_subscription_closure) },
-        { be_const_key_weak(subs, -1), be_const_var(0) },
-        { be_const_key_weak(im, 7), be_const_var(1) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_Subscription_Shop_init_closure) },
+        { be_const_key_weak(subs, 8), be_const_var(0) },
+        { be_const_key_weak(im, -1), be_const_var(1) },
         { be_const_key_weak(remove_by_session, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_by_session_closure) },
+        { be_const_key_weak(remove_by_fabric, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_by_fabric_closure) },
     })),
     be_str_weak(Matter_IM_Subscription_Shop)
 );

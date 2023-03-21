@@ -158,9 +158,9 @@ class Matter_UI
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter Passcode&nbsp;</b></legend><p></p>")
     webserver.content_send("<form action='/matterc' method='post' >")
     webserver.content_send("<p>Passcode:</p>")
-    webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.passcode))
+    webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.root_passcode))
     webserver.content_send("<p>Distinguish id:</p>")
-    webserver.content_send(string.format("<input type='number' min='0' max='4095' name='discriminator' value='%i'>", self.device.discriminator))
+    webserver.content_send(string.format("<input type='number' min='0' max='4095' name='discriminator' value='%i'>", self.device.root_discriminator))
     webserver.content_send(string.format("<p><input type='checkbox' name='ipv4'%s>IPv4 only</p>", self.device.ipv4only ? " checked" : ""))
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>")
     webserver.content_send("<p></p></fieldset><p></p>")
@@ -185,7 +185,7 @@ class Matter_UI
         if !first     webserver.content_send("<hr>") end
         first = false
 
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;%s&nbsp;</b></legend><p></p>", "&lt;No label&gt;"))
+        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s&nbsp;</b></legend><p></p>", f.get_fabric_index(), "&lt;No label&gt;"))
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
@@ -247,10 +247,10 @@ class Matter_UI
       #---------------------------------------------------------------------#
       if webserver.has_arg("passcode") || webserver.has_arg("discriminator")
         if webserver.has_arg("passcode")
-          self.device.passcode = int(webserver.arg("passcode"))
+          self.device.root_passcode = int(webserver.arg("passcode"))
         end
         if webserver.has_arg("discriminator")
-          self.device.discriminator = int(webserver.arg("discriminator"))
+          self.device.root_discriminator = int(webserver.arg("discriminator"))
         end
         self.device.ipv4only = webserver.arg("ipv4") == 'on'
         self.device.save_param()
@@ -309,7 +309,7 @@ class Matter_UI
     var matter_enabled = tasmota.get_option(matter.MATTER_OPTION)
 
     if matter_enabled
-      if self.device.commissioning_open
+      if self.device.is_root_commissioning_open()
         self.show_commissioning_info()
       end
 
@@ -337,7 +337,7 @@ class Matter_UI
     if   webserver.has_arg("mtc0")    # Close Commissioning
       self.device.stop_basic_commissioning()
     elif webserver.has_arg("mtc1")    # Open Commissioning
-      self.device.start_basic_commissioning()
+      self.device.start_root_basic_commissioning()
     end
   end
 
