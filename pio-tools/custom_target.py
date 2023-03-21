@@ -344,7 +344,6 @@ def upload_factory(*args, **kwargs):
         ]
         esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
         print("Flash firmware at address 0x0")
-        print (esptoolpy_cmd)
         subprocess.call(esptoolpy_cmd, shell=False)
 
 env.AddCustomTarget(
