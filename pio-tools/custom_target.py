@@ -256,9 +256,14 @@ def get_fs_type_start_and_length():
 
 def download_fs(fs_info: FSInfo):
     esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
+    upload_port = join(env.get("UPLOAD_PORT", "none"))
+    if "none" in upload_port:
+        env.AutodetectUploadPort()
+        upload_port = join(env.get("UPLOAD_PORT", "none"))
     fs_file = join(env["PROJECT_DIR"], f"downloaded_fs_{hex(fs_info.start)}_{hex(fs_info.length)}.bin")
     esptoolpy_flags = [
             "--chip", mcu,
+            "--port", upload_port,
             "--baud",  env.subst("$UPLOAD_SPEED"),
             "--before", "default_reset",
             "--after", "hard_reset",
@@ -318,6 +323,30 @@ def command_download_fs(*args, **kwargs):
     if unpack_ok is True:
         display_fs(unpacked_dir)
 
+def upload_factory(*args, **kwargs):
+    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
+    upload_speed = join(str(board.get("upload.speed", "115200")))
+    upload_port = join(env.get("UPLOAD_PORT", "none"))
+    cur_env = (env["PIOENV"])
+    firm_name = cur_env + "%s" % (".bin" if mcu == "esp8266" else (".factory.bin"))
+    target_firm = join(env.subst("$PROJECT_DIR"), "build_output","firmware",firm_name)
+    if "none" in upload_port:
+        env.AutodetectUploadPort()
+        upload_port = join(env.get("UPLOAD_PORT", "none"))
+    if "tasmota" in cur_env:
+        esptoolpy_flags = [
+                "--chip", mcu,
+                "--port", upload_port,
+                "--baud", upload_speed,
+                "write_flash",
+                "0x0",
+                target_firm
+        ]
+        esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
+        print("Flash firmware at address 0x0")
+        print (esptoolpy_cmd)
+        subprocess.call(esptoolpy_cmd, shell=False)
+
 env.AddCustomTarget(
     name="downloadfs",
     dependencies=None,
@@ -326,4 +355,14 @@ env.AddCustomTarget(
     ],
     title="Download Filesystem",
     description="Downloads and displays files stored in the target ESP32/ESP8266"
+)
+
+env.AddCustomTarget(
+    name="factory_flash",
+    dependencies=None,
+    actions=[
+        upload_factory
+    ],
+    title="Flash factory",
+    description="Flash factory firmware"
 )
