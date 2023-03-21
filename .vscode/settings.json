@@ -46,7 +46,7 @@
         "commands": [
           {
             "id": "platformio-ide.runPIOCoreCommand",
-            "args": "pio run -t erase -e ${command:platformio-ide.activeEnvironment}"
+            "args": "pio run -t nobuild -t erase -e ${command:platformio-ide.activeEnvironment}"
           }
         ]
       },
