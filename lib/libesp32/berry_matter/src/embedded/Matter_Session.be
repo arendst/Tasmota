@@ -45,6 +45,8 @@ class Matter_Fabric : Matter_Expirable
   var _store                      # reference back to session store
   # timestamp
   var created
+  # fabric-index
+  var fabric_index                # index number for fabrics, starts with `1`
   # list of active sessions
   var _sessions                   # only active CASE sessions that need to be persisted
   # our own private key
@@ -82,6 +84,9 @@ class Matter_Fabric : Matter_Expirable
   def get_admin_subject()     return self.admin_subject     end
   def get_admin_vendor()      return self.admin_vendor      end
   def get_ca()                return self.root_ca_certificate end
+  def get_fabric_index()      return self.fabric_index      end
+
+  def set_fabric_index(v)     self.fabric_index = v         end
 
   #############################################################
   # Operational Group Key Derivation, 4.15.2, p.182
@@ -136,7 +141,7 @@ class Matter_Fabric : Matter_Expirable
   end
 
   #############################################################
-  # Fabric::to_json()
+  # Fabric::tojson()
   #
   # convert a single entry as json
   # returns a JSON string
@@ -146,6 +151,7 @@ class Matter_Fabric : Matter_Expirable
     import string
     import introspect
 
+    self.persist_pre()
     var keys = []
     for k : introspect.members(self)
       var v = introspect.get(self, k)
@@ -171,6 +177,7 @@ class Matter_Fabric : Matter_Expirable
       r.push('"_sessions":' + s_list)
     end
 
+    self.persist_post()
     return "{" + r.concat(",") + "}"
   end
 
@@ -203,7 +210,7 @@ class Matter_Fabric : Matter_Expirable
         introspect.set(self, k, v)
       end
     end
-
+    self.hydrate_post()
     return self
   end
 
@@ -231,7 +238,7 @@ class Matter_Session : Matter_Expirable
   var initiator_session_id        # id used to respond to the initiator
   var created                     # timestamp (UTC) when the session was created
   var last_used                   # timestamp (UTC) when the session was last used
-  var source_node_id              # source node if bytes(8) (opt, used only when session is not established)
+  var _source_node_id             # source node if bytes(8) (opt, used only when session is not established)
   # session_ids when the session will be active
   var __future_initiator_session_id
   var __future_local_session_id
@@ -244,8 +251,8 @@ class Matter_Session : Matter_Expirable
   var _port                       # port of the last received packet
   var _message_handler            # pointer to the message handler for this session
   # non-session counters
-  var __counter_insecure_rcv      # counter for incoming messages
-  var __counter_insecure_snd      # counter for outgoing messages
+  var _counter_insecure_rcv      # counter for incoming messages
+  var _counter_insecure_snd      # counter for outgoing messages
   # encryption keys and challenges
   var i2rkey                      # key initiator to receiver (incoming)
   var r2ikey                      # key receiver to initiator (outgoing)
@@ -275,8 +282,8 @@ class Matter_Session : Matter_Expirable
     self.initiator_session_id = initiator_session_id
     self.counter_rcv = matter.Counter()
     self.counter_snd = matter.Counter()
-    self.__counter_insecure_rcv = matter.Counter()
-    self.__counter_insecure_snd = matter.Counter()
+    self._counter_insecure_rcv = matter.Counter()
+    self._counter_insecure_snd = matter.Counter()
     self._breadcrumb = 0
     self._exchange_id = crypto.random(2).get(0,2)      # generate a random 16 bits number, then increment with rollover
 
@@ -300,6 +307,9 @@ class Matter_Session : Matter_Expirable
   def fabric_completed()
     self._fabric.set_no_expiration()
     self._fabric.set_persist(true)
+    if (self._fabric.get_fabric_index() == nil)
+      self._fabric.set_fabric_index(self._store.next_fabric_idx())
+    end
     self._store.add_fabric(self._fabric)
   end
 
@@ -324,7 +334,6 @@ class Matter_Session : Matter_Expirable
     # close the PASE session, it will be re-opened with a CASE session
     self.local_session_id = self.__future_local_session_id
     self.initiator_session_id = self.__future_initiator_session_id
-    self.source_node_id = nil
     self.counter_rcv.reset()
     self.counter_snd.reset()
     self.i2rkey = nil
@@ -448,6 +457,7 @@ class Matter_Session : Matter_Expirable
     import string
     import introspect
 
+    self.persist_pre()
     var keys = []
     for k : introspect.members(self)
       var v = introspect.get(self, k)
@@ -468,6 +478,7 @@ class Matter_Session : Matter_Expirable
       
       r.push(string.format("%s:%s", json.dump(str(k)), json.dump(v)))
     end
+    self.persist_post()
     return "{" + r.concat(",") + "}"
   end
 
@@ -501,7 +512,7 @@ class Matter_Session : Matter_Expirable
         end
       end
     end
-
+    self.hydrate_post()
     return self
   end
 
@@ -586,6 +597,12 @@ class Matter_Session_Store
   end
 
   #############################################################
+  # remove fabric
+  def remove_fabric(fabric)
+    self.fabrics.remove(self.fabrics.find(fabric))     # fail safe
+  end
+
+  #############################################################
   # Remove redudant fabric
   #
   # remove all other fabrics that have the same:
@@ -616,6 +633,22 @@ class Matter_Session_Store
   def count_active_fabrics()
     self.remove_expired()      # clean before
     return self.fabrics.count_persistables()
+  end
+
+  #############################################################
+  # Next fabric-idx
+  #
+  # starts at `1`, computes the next available fabric-idx
+  def next_fabric_idx()
+    self.remove_expired()      # clean before
+    var next_idx = 1
+    for fab: self.active_fabrics()
+      var fab_idx = fab.fabric_index
+      if type(fab_idx) == 'int' && fab_idx >= next_idx
+        next_idx = fab_idx + 1
+      end
+    end
+    return next_idx
   end
 
   #############################################################
@@ -661,7 +694,7 @@ class Matter_Session_Store
     var sessions = self.sessions
     while i < sz
       var session = sessions[i]
-      if session.source_node_id == nodeid
+      if session._source_node_id == nodeid
         session.update()
         return session
       end
@@ -720,7 +753,7 @@ class Matter_Session_Store
     var session = self.get_session_by_source_node_id(source_node_id)
     if session == nil
       session = matter.Session(self, 0, 0)
-      session.source_node_id = source_node_id
+      session._source_node_id = source_node_id
       self.sessions.push(session)
     end
     session.set_expire_in_seconds(expire)

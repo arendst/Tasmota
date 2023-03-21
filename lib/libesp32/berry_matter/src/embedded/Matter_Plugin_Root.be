@@ -29,7 +29,7 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = {
     0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -39,7 +39,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x0033: [0,1,2,8],                # General Diagnostics Cluster 11.11 p.642
     0x0034: [],                       # Software Diagnostics Cluster 11.12 p.654
     0x0038: [0,1,7],                  # Time Synchronization 11.16 p.689
-    0x003C: [],                       # Administrator Commissioning Cluster 11.18 p.725
+    0x003C: [0,1,2],                  # Administrator Commissioning Cluster 11.18 p.725
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
     0x003F: []                        # Group Key Management Cluster 11.2 p.572
   }
@@ -47,8 +47,8 @@ class Matter_Plugin_Root : Matter_Plugin
 
   #############################################################
   # Constructor
-  def init(device)
-    super(self).init(device)
+  def init(device, endpoint)
+    super(self).init(device, endpoint)
     self.endpoints = self.ENDPOINTS
     self.clusters = self.CLUSTERS
   end
@@ -157,6 +157,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
+          nocs.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # Label
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -166,9 +167,10 @@ class Matter_Plugin_Root : Matter_Plugin
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
           fab.add_TLV(2, TLV.U2, loc_fabric.get_admin_vendor())      # VendorID
-          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_compressed())            # FabricID
+          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_id())            # FabricID
           fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id())          # NodeID
           fab.add_TLV(5, TLV.UTF1, loc_fabric.get_fabric_label())    # Label
+          fab.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # idx
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
@@ -179,29 +181,36 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
-        var fabric_active = session._fabric
-        var fabric_index = 0
-        var found = false
-        for fab: self.device.sessions.active_fabrics()
-          if fab == fabric_active
-            found = true
-            break
-          else
-            fabric_index += 1
-          end
-        end
-        if !found   fabric_index = -1  end
-        return TLV.create_TLV(TLV.U1, fabric_index + 1)  # number of active sessions
+        return TLV.create_TLV(TLV.U1, session._fabric.get_fabric_index())  # number of active sessions
       end
 
     # ====================================================================================================
     elif cluster == 0x003C              # ========== Administrator Commissioning Cluster 11.18 p.725 ==========
-      # TODO
-
+      if   attribute == 0x0000          #  ---------- WindowStatus / u8 ----------
+        var commissioning_open = self.device.is_commissioning_open()
+        var basic_commissioning = self.device.is_root_commissioning_open()
+        var val = commissioning_open ? (basic_commissioning ? 2 #-BasicWindowOpen-# : 1 #-EnhancedWindowOpen-#) : 0 #-WindowNotOpen-#
+        return TLV.create_TLV(TLV.U1, val)
+      elif attribute == 0x0001          #  ---------- AdminFabricIndex / u16 ----------
+        var admin_fabric = self.device.commissioning_admin_fabric
+        if admin_fabric != nil
+          return TLV.create_TLV(TLV.U2, admin_fabric.get_fabric_index())
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x0002          #  ---------- AdminVendorId / u16 ----------
+        var admin_fabric = self.device.commissioning_admin_fabric
+        if admin_fabric != nil
+          return TLV.create_TLV(TLV.U2, admin_fabric.get_admin_vendor())
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      end
+        
     # ====================================================================================================
     elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
 
-      if   attribute == 0x0000          #  ---------- DataModelRevision / u16 ----------
+      if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
         return TLV.create_TLV(TLV.U2, 0)
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return TLV.create_TLV(TLV.UTF1, "Tasmota")
@@ -223,6 +232,8 @@ class Matter_Plugin_Root : Matter_Plugin
         return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Version'])
+      elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
@@ -323,6 +334,7 @@ class Matter_Plugin_Root : Matter_Plugin
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
     import crypto
+    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -520,18 +532,59 @@ class Matter_Plugin_Root : Matter_Plugin
 
       elif command == 0x000A            # ---------- RemoveFabric ----------
         var index = val.findsubval(0)     # FabricIndex
-        var sessions_act = self.device.sessions.sessions_active()
-        if index >= 1 && index <= size(sessions_act)
-          var session_deleted = sessions_act[index - 1]
-          tasmota.log("MTR: removing fabric " + session.get_fabric_id().copy().reverse().tohex())
-          self.device.sessions.remove_session()
-          self.device.sessions.save_fabrics()
-        else
-          # TODO return error 11 InvalidFabricIndex
+
+        for fab: self.device.sessions.active_fabrics()
+          if fab.get_fabric_index() == index
+            tasmota.log("MTR: removing fabric " + fab.get_fabric_id().copy().reverse().tohex(), 2)
+            self.device.remove_fabric(fab)
+            break
+          end
         end
+        tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x003C              # ========== Administrator Commissioning Cluster 11.18 p.725 ==========
+
+      if   command == 0x0000          #  ---------- OpenCommissioningWindow  ----------
+        var timeout = val.findsubval(0)             # CommissioningTimeout u2
+        var passcode_verifier = val.findsubval(1)   # PAKEPasscodeVerifier octstr
+        var discriminator = val.findsubval(2)       # Discriminator u2
+        var iterations = val.findsubval(3)          # Iterations u4
+        var salt = val.findsubval(4)                # Salt octstr
+
+        tasmota.log(string.format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
+                                  timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 2)
+
+        # check values
+        if timeout == nil || passcode_verifier == nil || discriminator == nil || iterations == nil || salt == nil
+          ctx.status = matter.INVALID_DATA_TYPE
+          return nil                      # trigger a standalone ack
+        end
+        if size(passcode_verifier) != 32+65 || size(salt) < 16 || size(salt) > 32
+          tasmota.log("MTR: wrong size for PAKE parameters")
+          ctx.status = matter.CONSTRAINT_ERROR
+          return nil                      # trigger a standalone ack
+        end
+
+        var w0 = passcode_verifier[0..31]
+        var L  = passcode_verifier[32..]
+
+        self.device.start_basic_commissioning(timeout, iterations, discriminator, salt, w0, #-w1,-# L, session.get_fabric())
+        # TODO announce in MDNS
+        return true                   # OK
+      elif command == 0x0001          #  ---------- OpenBasicCommissioningWindow  ----------
+        var commissioning_timeout = val.findsubval(0)     # CommissioningTimeout
+        tasmota.log("MTR: OpenBasicCommissioningWindow commissioning_timeout="+str(commissioning_timeout), 2)
+        self.device.start_root_basic_commissioning(commissioning_timeout)
+        return true
+      elif command == 0x0002          #  ---------- RevokeCommissioning  ----------
+        # TODO add checks that the commissioning window was opened by the same fabric
+        self.device.stop_basic_commissioning()
+        return true
       end
 
     # ====================================================================================================

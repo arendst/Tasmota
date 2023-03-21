@@ -32,19 +32,46 @@ class Matter_Plugin_OnOff : Matter_Plugin
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
-    0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
+    # 0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
   }
   static var TYPES = { 0x010A: 2 }       # On/Off Light
 
-  var onoff                           # fake status for now # TODO
+  var tasmota_relay_index             # Relay number in Tasmota (zero based)
+  var shadow_onoff                           # fake status for now # TODO
 
   #############################################################
   # Constructor
-  def init(device)
-    super(self).init(device)
+  def init(device, endpoint, tasmota_relay_index)
+    super(self).init(device, endpoint)
     self.endpoints = self.ENDPOINTS
+    self.endpoint = self.ENDPOINTS[0]       # TODO refactor endpoint management
     self.clusters = self.CLUSTERS
-    self.onoff = false                # fake status for now # TODO
+    self.get_onoff()                        # read actual value
+    if tasmota_relay_index == nil     tasmota_relay_index = 0   end
+    self.tasmota_relay_index = tasmota_relay_index
+  end
+
+  #############################################################
+  # Model
+  #
+  def set_onoff(v)
+    tasmota.set_power(self.tasmota_relay_index, bool(v))
+    self.get_onoff()
+  end
+  #############################################################
+  # get_onoff
+  #
+  # Update shadow and signal any change
+  def get_onoff()
+    var state = tasmota.get_power(self.tasmota_relay_index)
+    if state != nil
+      if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
+        self.onoff_changed()      # signal any change
+      end
+      self.shadow_onoff = state
+    end
+    if self.shadow_onoff == nil   self.shadow_onoff = false   end     # avoid any `nil` value when initializing
+    return self.shadow_onoff
   end
 
   #############################################################
@@ -118,7 +145,7 @@ class Matter_Plugin_OnOff : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return TLV.create_TLV(TLV.BOOL, self.onoff)
+        return TLV.create_TLV(TLV.BOOL, self.get_onoff())
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
@@ -182,16 +209,13 @@ class Matter_Plugin_OnOff : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   command == 0x0000            # ---------- Off ----------
-        if self.onoff   self.onoff_changed(ctx) end
-        self.onoff = false
+        self.set_onoff(false)
         return true
       elif command == 0x0001            # ---------- On ----------
-        if !self.onoff   self.onoff_changed(ctx) end
-        self.onoff = true
+        self.set_onoff(true)
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        self.onoff_changed(ctx)
-        self.onoff = !self.onoff
+        self.set_onoff(!self.get_onoff())
         return true
       end
     # ====================================================================================================
@@ -218,10 +242,15 @@ class Matter_Plugin_OnOff : Matter_Plugin
 
   #############################################################
   # Signal that onoff attribute changed
-  def onoff_changed(ctx)
-    self.attribute_updated(ctx.endpoint, 0x0006, 0x0000)
+  def onoff_changed()
+    self.attribute_updated(self.endpoint, 0x0006, 0x0000)
   end
 
+  #############################################################
+  # every_second
+  def every_second()
+    self.get_onoff()                    # force reading value and sending subscriptions
+  end
 end
 matter.Plugin_OnOff = Matter_Plugin_OnOff
   

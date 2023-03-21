@@ -193,6 +193,12 @@ class Matter_IM_Subscription_Shop
     end
   end
 
+  def remove_by_fabric(fabric)
+    for session: fabric._sessions
+      self.remove_by_session(session)
+    end
+  end
+
   #############################################################
   # dispatch every 250ms click to sub-objects that need it
   def every_250ms()

@@ -110,8 +110,8 @@ class Matter_Commisioning_Context
     # generate 32 bytes random
     pbkdfparamresp.responderRandom = crypto.random(32)
     pbkdfparamresp.responderSessionId = self.future_local_session_id
-    pbkdfparamresp.pbkdf_parameters_salt = self.device.salt
-    pbkdfparamresp.pbkdf_parameters_iterations = self.device.iterations
+    pbkdfparamresp.pbkdf_parameters_salt = self.device.commissioning_salt
+    pbkdfparamresp.pbkdf_parameters_iterations = self.device.commissioning_iterations
     tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
     var pbkdfparamresp_raw = pbkdfparamresp.encode()
     tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
@@ -138,7 +138,8 @@ class Matter_Commisioning_Context
     
     tasmota.log("MTR: spake: " + matter.inspect(self.spake), 4)
     # instanciate SPAKE
-    self.spake = crypto.SPAKE2P_Matter(self.device.w0, self.device.w1, self.device.L)
+    # for testing purpose, we don't send `w1` to make sure
+    self.spake = crypto.SPAKE2P_Matter(self.device.commissioning_w0, nil, self.device.commissioning_L)
     # compute pB
     self.spake.compute_pB(self.y)
     self.pB = self.spake.pB
@@ -288,7 +289,7 @@ class Matter_Commisioning_Context
       session._fabric = fabric
     end
     if session == nil || session._fabric == nil  raise "valuer_error", "StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)" end
-    session.source_node_id = msg.source_node_id
+    session._source_node_id = msg.source_node_id
     session.set_mode_CASE()
 
     if msg.session != session
@@ -559,8 +560,9 @@ class Matter_Commisioning_Context
 
     session.close()
     session.set_keys(i2r, r2i, ac, created)
-
+    
     # CASE Session completed, persist it
+    session._breadcrumb = 0          # clear breadcrumb
     session.set_persist(true)     # keep session on flash
     session.set_no_expiration()   # never expire
     session.persist_to_fabric()
