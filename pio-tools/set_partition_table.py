@@ -24,10 +24,11 @@ if "nobuild" in COMMAND_LINE_TARGETS:
         source_firm = join(env.subst("$PROJECT_DIR"), "build_output","firmware",firm_name)
         if not os.path.exists(join(env.subst("$BUILD_DIR"))):
             os.makedirs(join(env.subst("$BUILD_DIR")))
-        shutil.copy(source_firm, join(env.subst("$BUILD_DIR")))
-        target_ren = join(env.subst("$BUILD_DIR"), firm_name)
-        renamed = join(env.subst("$BUILD_DIR"), "firmware.bin")
-        os.rename(target_ren, renamed)
+        if os.path.isfile(source_firm):
+            shutil.copy(source_firm, join(env.subst("$BUILD_DIR")))
+            target_ren = join(env.subst("$BUILD_DIR"), firm_name)
+            renamed = join(env.subst("$BUILD_DIR"), "firmware.bin")
+            os.rename(target_ren, renamed)
 
     if env["PIOPLATFORM"] != "espressif32":
         framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
