@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs (#18164)
+- Berry fix `tasmota.get_power(index)`
 
 ### Removed
 
