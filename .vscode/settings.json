@@ -21,7 +21,7 @@
         "commands": [
           {
             "id": "platformio-ide.runPIOCoreCommand",
-            "args": "pio run -t nobuild -t factory_flash"
+            "args": "pio run -t nobuild -t factory_flash -e ${command:platformio-ide.activeEnvironment}"
           }
         ]
       },
