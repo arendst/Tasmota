@@ -9,11 +9,26 @@
 Import("env")
 
 import os
+from os.path import isfile, join
+import shutil
 from SCons.Script import COMMAND_LINE_TARGETS
 
 board_config = env.BoardConfig()
 
 if "nobuild" in COMMAND_LINE_TARGETS:
+    if not os.path.isfile(join(env.subst("$BUILD_DIR"),"firmware.bin")):
+        #print ("No firmware in path:",join(env.subst("$BUILD_DIR")))
+        env.CleanProject()
+        cur_env = (env["PIOENV"])
+        firm_name = cur_env + ".bin"
+        source_firm = join(env.subst("$PROJECT_DIR"), "build_output","firmware",firm_name)
+        if not os.path.exists(join(env.subst("$BUILD_DIR"))):
+            os.makedirs(join(env.subst("$BUILD_DIR")))
+        shutil.copy(source_firm, join(env.subst("$BUILD_DIR")))
+        target_ren = join(env.subst("$BUILD_DIR"), firm_name)
+        renamed = join(env.subst("$BUILD_DIR"), "firmware.bin")
+        os.rename(target_ren, renamed)
+
     if env["PIOPLATFORM"] != "espressif32":
         framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
         assert os.path.isdir(framework_dir)
