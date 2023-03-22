@@ -2017,17 +2017,20 @@ void CmndEnableOutputSet(void)
 // Avoid multiple changes on all language files during development
 // --------------------------------------------------
 // xdrv_39_thermostat.ino
-#define D_THERMOSTAT             "Thermostat"
-#define D_THERMOSTAT_SET_POINT   "Set Point"
-#define D_THERMOSTAT_SENSOR      "Current"
-#define D_THERMOSTAT_GRADIENT    "Gradient"
-#define D_THERMOSTAT_DUTY_CYCLE  "Duty cycle"
-#define D_THERMOSTAT_CYCLE_TIME  "Cycle time"
-#define D_THERMOSTAT_PI_AUTOTUNE "PI Auto tuning"
-#define D_THERMOSTAT_CONTROL_METHOD "Control method"
-#define D_THERMOSTAT_RAMP_UP     "Ramp up"
-#define D_THERMOSTAT_PI          "PI"
-#define D_THERMOSTAT_AUTOTUNE    "Autotune"
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point"
+#define D_THERMOSTAT_SENSOR           "Current"
+#define D_THERMOSTAT_GRADIENT         "Gradient"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 // --------------------------------------------------
 
 
@@ -2050,7 +2053,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
-    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CONTROLMETHOD, Thermostat[ctr_output].status.phase_hybrid_ctr);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CONTROLMETHOD, Thermostat[ctr_output].status.controller_mode == CTR_HYBRID ? Thermostat[ctr_output].status.phase_hybrid_ctr : Thermostat[ctr_output].status.controller_mode);
     ResponseJsonEnd();
     return;
   }
@@ -2063,11 +2066,11 @@ void ThermostatShow(uint8_t ctr_output, bool json)
 
   } else {
     char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
-    float f_temperature ;
+    float f_temperature;
 
-    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED );
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED);
 
-    f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f ;
+    f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
 
     f_temperature = Thermostat[ctr_output].temp_measured / 10.0f;
@@ -2079,40 +2082,46 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     }
     f_temperature = value / 1000.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
-    WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
+
+    WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output));
+
     switch (Thermostat[ctr_output].status.controller_mode) {
       case CTR_HYBRID:
         switch (Thermostat[ctr_output].status.phase_hybrid_ctr) {
           case CTR_HYBRID_RAMP_UP:
-            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP );
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP_HYBRID);
             break;
           case CTR_HYBRID_PI:
-            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI );
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI_HYBRID);
             break;
         #ifdef USE_PI_AUTOTUNING
           case CTR_HYBRID_PI_AUTOTUNE:
-            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_AUTOTUNE );
+            WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_AUTOTUNE_HYBRID);
             break;
         #endif
         }
         break;
       case CTR_PI:
-        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI );
+        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_PI);
         break;
       case CTR_RAMP_UP:
-        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP );
+        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_RAMP_UP);
         break;
+    #ifdef USE_PI_AUTOTUNING
+      case CTR_PI_AUTOTUNE:
+        WSContentSend_P(HTTP_THERMOSTAT_CONTROL_METHOD, D_THERMOSTAT_AUTOTUNE);
+        break;
+    #endif
       }
-    WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle );
+
+    WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle);
 
   #ifdef USE_PI_AUTOTUNING
-    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_ENABLED  );
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_ENABLED);
   #else
-    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_DISABLED );
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_DISABLED);
   #endif
-
   }
-
 #endif  // USE_WEBSERVER
 }
 
