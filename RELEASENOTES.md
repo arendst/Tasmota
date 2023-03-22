@@ -110,7 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.4.0.3
+## Changelog v12.4.0.4
 ### Added
 - Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
 - Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps [#18214](https://github.com/arendst/Tasmota/issues/18214)
 - Support for DingTian virtual switch/button/relay [#18223](https://github.com/arendst/Tasmota/issues/18223)
+- Matter support simple Relay on Apple Homekit by Stephan Hadinger [#18239](https://github.com/arendst/Tasmota/issues/18239)
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration

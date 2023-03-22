@@ -3,22 +3,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.4.0.3]
+## [12.4.0.4]
 ### Added
-- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps (#18214)
-- Support for DingTian virtual switch/button/relay (#18223)
-- Berry add `mdns.remove_service()`
-- Matter support simple Relay on Apple Homekit
+- Matter support simple Relay on Apple Homekit by Stephan Hadinger (#18239)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
-- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs (#18164)
-- Berry fix `tasmota.get_power(index)`
 
 ### Removed
+
+## [12.4.0.3] 20230322
+### Added
+- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps (#18214)
+- Support for DingTian virtual switch/button/relay (#18223)
+- Berry add `mdns.remove_service()`
+
+### Fixed
+- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs (#18164)
+- Berry fix `tasmota.get_power(index)`
 
 ## [12.4.0.2] 20230317
 ### Added
