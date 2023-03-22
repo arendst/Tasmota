@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "מנהל"
 #define D_AIR_QUALITY "איכות אוויר"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "לחיצה מרובה"
 #define D_NOISE "רעש"
 #define D_NONE "כלום"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "כבוי"
 #define D_OFFLINE "מנותק"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "UV רמת"
 #define D_UV_POWER "UV Power"
 #define D_VERSION "גרסה"
+#define D_VOC "VOC"
 #define D_VOLTAGE "מתח"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "משקל"
@@ -937,6 +940,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"

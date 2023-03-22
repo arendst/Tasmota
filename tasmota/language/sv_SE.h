@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Luftkvalitet"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "fler tryck"
 #define D_NOISE "Oväsen"
 #define D_NONE "Ingen"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "Av"
 #define D_OFFLINE "Off-line"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "UV nivå"
 #define D_UV_POWER "UV kraft"
 #define D_VERSION "Version"
+#define D_VOC "VOC"
 #define D_VOLTAGE "Volttal"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "Vikt"
@@ -937,6 +940,7 @@
 #define D_UNIT_HOUR "Tim"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "ink"
 #define D_UNIT_KELVIN "K"

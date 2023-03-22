@@ -108,8 +108,6 @@ const char HTTP_SNS_SGP30[] PROGMEM =
 const char HTTP_SNS_AHUM[] PROGMEM = "{s}SGP30 Abs Humidity{m}%s g/m3{e}";
 #endif
 
-#define D_JSON_AHUM "aHumidity"
-
 void Sgp30Show(bool json)
 {
   if (sgp30_ready) {

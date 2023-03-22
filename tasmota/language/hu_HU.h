@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Levegőminőség"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "többes lenyomás"
 #define D_NOISE "Zaj"
 #define D_NONE "nincs"
+#define D_NOX "NOx"
 #define D_O2 "Oxygén"
 #define D_OFF "Ki"
 #define D_OFFLINE "Offline"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "UV szint"
 #define D_UV_POWER "UV teljesítmény"
 #define D_VERSION "Verzió"
+#define D_VOC "VOC"
 #define D_VOLTAGE "Feszültség"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "Tömeg"
@@ -940,6 +943,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "növ."
 #define D_UNIT_KELVIN "K"

@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Адміністратор"
 #define D_AIR_QUALITY "Якість повітря"
 #define D_AP "Точка доступу"        // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "Багаторазове натискання"
 #define D_NOISE "Шум"
 #define D_NONE "Нічого"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "Вимкнено"
 #define D_OFFLINE "Неактивний"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "Рівень УФ"
 #define D_UV_POWER "Потужність УФ"
 #define D_VERSION "Версія"
+#define D_VOC "VOC"
 #define D_VOLTAGE "Напруга"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "Вага"
@@ -937,6 +940,7 @@
 #define D_UNIT_HOUR                      "г"
 #define D_UNIT_GALLONS                   "гал"
 #define D_UNIT_GALLONS_PER_MIN           "гал/хв"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS                "інк"
 #define D_UNIT_KELVIN                    "K"
