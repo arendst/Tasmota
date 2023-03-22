@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.4.0.4]
 ### Added
 - Matter support simple Relay on Apple Homekit by Stephan Hadinger (#18239)
+- VSC Pio menu bar extensions by @Jason2866 (#18233)
 
 ### Breaking Changed
 
