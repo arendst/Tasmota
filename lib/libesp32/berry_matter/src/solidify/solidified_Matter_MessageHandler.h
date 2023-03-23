@@ -82,7 +82,7 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
     /* K59  */  be_nested_str_weak(send_enqueued),
     /* K60  */  be_nested_str_weak(x_flag_r),
     /* K61  */  be_nested_str_weak(build_standalone_ack),
-    /* K62  */  be_nested_str_weak(encode),
+    /* K62  */  be_nested_str_weak(encode_frame),
     /* K63  */  be_nested_str_weak(encrypt),
     /* K64  */  be_nested_str_weak(send_response),
     /* K65  */  be_nested_str_weak(remote_ip),

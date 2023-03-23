@@ -755,8 +755,8 @@ class Matter_Session_Store
       session = matter.Session(self, 0, 0)
       session._source_node_id = source_node_id
       self.sessions.push(session)
+      session.set_expire_in_seconds(expire)
     end
-    session.set_expire_in_seconds(expire)
     session.update()
     return session
   end

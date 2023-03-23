@@ -136,7 +136,7 @@ class Matter_MessageHandler
 
           elif frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
             var resp = frame.build_standalone_ack()
-            resp.encode()
+            resp.encode_frame()
             resp.encrypt()
             self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
           end

@@ -84,11 +84,37 @@ class Matter_Commisioning_Context
     return false
   end
 
+  #################################################################################
+  # send_status_report
+  #
+  # send a StatusReport message (unencrypted)
+  #
+  # Usage:
+  # # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
+  # var raw = send_status_report(0x00, 0x0000, 0x0000)
+  # self.responder.send_response(raw, msg.remote_ip, msg.remote_port, nil)
+  def send_status_report(msg, general_code, protocol_id, protocol_code, reliable)
+    # now package the response message
+    var resp = msg.build_response(0x40 #-StatusReport-#, reliable)
+
+    var status_raw = bytes()
+    status_raw.add(general_code, 2)
+    status_raw.add(protocol_id, 4)
+    status_raw.add(protocol_code, 4)
+
+    var raw = resp.encode_frame(status_raw)
+
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
+  end
+
   def parse_PBKDFParamRequest(msg)
     import crypto
     # sanity checks
     if msg.opcode != 0x20 || msg.local_session_id != 0 || msg.protocol_id != 0
-      raise "protocol_error", "invalid PBKDFParamRequest message"
+      tasmota.log("MTR: invalid PBKDFParamRequest message", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
     var pbkdfparamreq = matter.PBKDFParamRequest().parse(msg.raw, msg.app_payload_idx)
     msg.session.set_mode_PASE()
@@ -96,7 +122,12 @@ class Matter_Commisioning_Context
     self.PBKDFParamRequest = msg.raw[msg.app_payload_idx..]
 
     # sanity check for PBKDFParamRequest
-    if pbkdfparamreq.passcodeId != 0  raise "protocol_error", "non-zero passcode id" end
+    if pbkdfparamreq.passcodeId != 0
+      tasmota.log("MTR: non-zero passcode id", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
+    end
 
     # record the initiator_session_id
     self.future_initiator_session_id = pbkdfparamreq.initiator_session_id
@@ -119,7 +150,7 @@ class Matter_Commisioning_Context
     self.PBKDFParamResponse = pbkdfparamresp_raw
 
     var resp = msg.build_response(0x21 #-PBKDR Response-#, true)
-    var raw = resp.encode(pbkdfparamresp_raw)
+    var raw = resp.encode_frame(pbkdfparamresp_raw)
 
     self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
   end
@@ -128,7 +159,10 @@ class Matter_Commisioning_Context
     import crypto
     # sanity checks
     if msg.opcode != 0x22 || msg.local_session_id != 0 || msg.protocol_id != 0
-      raise "protocol_error", "invalid Pake1 message"
+      tasmota.log("MTR: invalid Pake1 message", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
     var pake1 = matter.Pake1().parse(msg.raw, msg.app_payload_idx)
 
@@ -196,7 +230,7 @@ class Matter_Commisioning_Context
 
     # now package the response message
     var resp = msg.build_response(0x23 #-pake-2-#, true)  # no reliable flag
-    var raw = resp.encode(pake2_raw)
+    var raw = resp.encode_frame(pake2_raw)
 
     self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
   end
@@ -205,7 +239,10 @@ class Matter_Commisioning_Context
     import crypto
     # sanity checks
     if msg.opcode != 0x24 || msg.local_session_id != 0 || msg.protocol_id != 0
-      raise "protocol_error", "invalid Pake3 message"
+      tasmota.log("MTR: invalid Pake3 message", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
     var pake3 = matter.Pake3().parse(msg.raw, msg.app_payload_idx)
 
@@ -213,7 +250,12 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: received cA=" + self.cA.tohex(), 4)
 
     # check the value against computed
-    if self.cA != self.spake.cA   raise "protocol_error", "invalid cA received" end
+    if self.cA != self.spake.cA
+      tasmota.log("MTR: invalid cA received", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
+    end
 
     # send PakeFinished and compute session key
     self.created = tasmota.rtc()['utc']
@@ -229,17 +271,9 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: AC          =" + self.AttestationChallenge.tohex(), 4)
     tasmota.log("MTR: ******************************", 4)
 
-    # now package the response message
-    var resp = msg.build_response(0x40 #-StatusReport-#, false)  # no reliable flag
+    # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
+    var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
 
-    var status_raw = bytes()
-    status_raw.add(0x00, 2)      # GeneralCode = SUCCESS
-    status_raw.add(0x0000, 4)    # ProtocolID = 0 (PROTOCOL_ID_SECURE_CHANNEL)
-    status_raw.add(0x0000, 4)    # ProtocolCode = 0 (SESSION_ESTABLISHMENT_SUCCESS)
-
-    var raw = resp.encode(status_raw)
-
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, nil)
     self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
   end
 
@@ -270,7 +304,10 @@ class Matter_Commisioning_Context
     import crypto
     # sanity checks
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
-      raise "protocol_error", "invalid Pake1 message"
+      tasmota.log("MTR: invalid Sigma1 message", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
     var sigma1 = matter.Sigma1().parse(msg.raw, msg.app_payload_idx)
 
@@ -288,7 +325,11 @@ class Matter_Commisioning_Context
       var fabric = self.find_fabric_by_destination_id(sigma1.destinationId, sigma1.initiatorRandom)
       session._fabric = fabric
     end
-    if session == nil || session._fabric == nil  raise "valuer_error", "StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)" end
+    if session == nil || session._fabric == nil
+      tasmota.log("MTR: StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0001, false)
+      return false
+    end
     session._source_node_id = msg.source_node_id
     session.set_mode_CASE()
 
@@ -361,7 +402,7 @@ class Matter_Commisioning_Context
 
         # now package the response message
         var resp = msg.build_response(0x33 #-sigma-2-resume-#, true)
-        var raw = resp.encode(sigma2resume_raw)
+        var raw = resp.encode_frame(sigma2resume_raw)
     
         self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
 
@@ -440,7 +481,7 @@ class Matter_Commisioning_Context
   
       # now package the response message
       var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
-      var raw = resp.encode(sigma2_raw)
+      var raw = resp.encode_frame(sigma2_raw)
   
       self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
       return true
@@ -453,7 +494,9 @@ class Matter_Commisioning_Context
     import crypto
     # sanity checks
     if msg.opcode != 0x32 || msg.local_session_id != 0 || msg.protocol_id != 0
-      raise "protocol_error", "invalid Pake1 message"
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
     var session = msg.session
     var sigma3 = matter.Sigma3().parse(msg.raw, msg.app_payload_idx)
@@ -486,7 +529,12 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: * tag_sent      = " + tag.tohex(), 4)
     tasmota.log("****************************************", 4)
 
-    if TBETag3 != tag   raise "value_error", "tag do not match"  end
+    if TBETag3 != tag
+      tasmota.log("MTR: Tag don't match", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
+    end
 
     var TBEData3TLV = matter.TLV.parse(TBEData3)
     var initiatorNOC = TBEData3TLV.findsubval(1)
@@ -517,7 +565,12 @@ class Matter_Commisioning_Context
     # `crypto.EC_P256().ecdsa_verify_sha256(public_key:bytes(65), message:bytes(), hash:bytes()) -> bool`
     var sigma3_tbs_valid = crypto.EC_P256().ecdsa_verify_sha256(initiatorNOCPubKey, sigma3_tbs_raw, ec_signature)
 
-    if !sigma3_tbs_valid    raise "value_error", "sigma3_tbs does not have a valid signature" end
+    if !sigma3_tbs_valid
+      tasmota.log("MTR: sigma3_tbs does not have a valid signature", 2)
+      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
+    end
 
     # All good, compute new keys
     tasmota.log("MTR: Sigma3 verified, computing new keys", 3)
@@ -546,17 +599,8 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: AC          =" + ac.tohex(), 4)
     tasmota.log("MTR: ******************************", 4)
 
-    # Send success status report
-    var resp = msg.build_response(0x40 #-StatusReport-#, true)  # reliable flag
-
-    var status_raw = bytes()
-    status_raw.add(0x00, 2)      # GeneralCode = SUCCESS
-    status_raw.add(0x0000, 4)    # ProtocolID = 0 (PROTOCOL_ID_SECURE_CHANNEL)
-    status_raw.add(0x0000, 4)    # ProtocolCode = 0 (SESSION_ESTABLISHMENT_SUCCESS)
-
-    var raw = resp.encode(status_raw)
-
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
+    # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
+    var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, true)
 
     session.close()
     session.set_keys(i2r, r2i, ac, created)

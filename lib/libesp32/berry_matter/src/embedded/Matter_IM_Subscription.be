@@ -40,6 +40,7 @@ class Matter_IM_Subscription
   # manage time
   var not_before                                  # rate-limiting
   var expiration                                  # expiration epoch, we need to respond before
+  var wait_status                                 # if `true` wait for Status Response before sending anything new
   # updates
   var updates
 
@@ -59,6 +60,7 @@ class Matter_IM_Subscription
     if max_interval > 3600                  max_interval = 3600 end
     max_interval = 60
     self.max_interval = max_interval
+    self.wait_status = false
     
     self.fabric_filtered = req.fabric_filtered
 
@@ -75,9 +77,9 @@ class Matter_IM_Subscription
     
     # update next time interval
     self.updates = []
-    self.clear_and_arm()
+    self.clear_before_arm()
 
-    tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
+    # tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
   end
   
   # remove self from subs list
@@ -87,8 +89,14 @@ class Matter_IM_Subscription
   end
 
   # clear log after it was sent, and re-arm next expiration
-  def clear_and_arm()
+  def clear_before_arm()
     self.updates.clear()
+    self.wait_status = true
+  end
+
+  # we received a complete ack for previous message, rearm
+  def re_arm()
+    self.wait_status = false
     var now = tasmota.millis()
     self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
     self.not_before = now + self.min_interval * 1000 - 1
@@ -206,9 +214,9 @@ class Matter_IM_Subscription_Shop
     var idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
-      if size(sub.updates) > 0 && tasmota.time_reached(sub.not_before)
+      if !sub.wait_status && size(sub.updates) > 0 && tasmota.time_reached(sub.not_before)
         self.im.send_subscribe_update(sub)
-        sub.clear_and_arm()
+        sub.clear_before_arm()
       end
       idx += 1
     end
@@ -217,9 +225,9 @@ class Matter_IM_Subscription_Shop
     idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
-      if tasmota.time_reached(sub.expiration)
+      if !sub.wait_status && tasmota.time_reached(sub.expiration)
         self.im.send_subscribe_update(sub)
-        sub.clear_and_arm()
+        sub.clear_before_arm()
       end
       idx += 1
     end

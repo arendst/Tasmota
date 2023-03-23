@@ -610,8 +610,9 @@ class Matter_TLV
       # encode tag and type
       self._encode_tag(b)
       # sort values
-      var val_list = self.val.copy()
+      var val_list = self.val
       if self.is_struct
+        val_list = val_list.copy()
         self.sort(val_list)
       end
 

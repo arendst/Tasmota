@@ -25,7 +25,6 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_OnOff,weak
 
 class Matter_Plugin_OnOff : Matter_Plugin
-  static var ENDPOINTS = [ 1 ]
   static var CLUSTERS  = {
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
@@ -43,8 +42,6 @@ class Matter_Plugin_OnOff : Matter_Plugin
   # Constructor
   def init(device, endpoint, tasmota_relay_index)
     super(self).init(device, endpoint)
-    self.endpoints = self.ENDPOINTS
-    self.endpoint = self.ENDPOINTS[0]       # TODO refactor endpoint management
     self.clusters = self.CLUSTERS
     self.get_onoff()                        # read actual value
     if tasmota_relay_index == nil     tasmota_relay_index = 0   end
@@ -107,9 +104,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
         var pl = TLV.Matter_TLV_array()
         return pl
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 0)    #
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 1)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 1)    # "Initial Release"
       end
 
     # ====================================================================================================
@@ -119,9 +116,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
         return TLV.create_TLV(TLV.U1, 0)      # IdentifyType = 0x00 None
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 0)    # no features
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 4)    # "new data model format and notation"
       end
 
     # ====================================================================================================
@@ -129,9 +126,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
       if   attribute == 0x0000          #  ----------  ----------
         return nil                      # TODO
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 0)#
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 4)# "new data model format and notation"
       end
 
     # ====================================================================================================
@@ -243,7 +240,7 @@ class Matter_Plugin_OnOff : Matter_Plugin
   #############################################################
   # Signal that onoff attribute changed
   def onoff_changed()
-    self.attribute_updated(self.endpoint, 0x0006, 0x0000)
+    self.attribute_updated(nil, 0x0006, 0x0000)   # send to all endpoints
   end
 
   #############################################################
@@ -253,4 +250,3 @@ class Matter_Plugin_OnOff : Matter_Plugin
   end
 end
 matter.Plugin_OnOff = Matter_Plugin_OnOff
-  
