@@ -64,7 +64,7 @@ matter.Path = Matter_Path
 # Superclass for all IM responses
 #################################################################################
 class Matter_IM_Message
-  static var MSG_TIMEOUT = 10000      # 10s
+  static var MSG_TIMEOUT = 5000       # 5s
   var expiration                      # expiration time for the reporting 
   var resp                            # response Frame object
   var ready                           # bool: ready to send (true) or wait (false)
@@ -112,7 +112,7 @@ class Matter_IM_Message
   # default responder for data
   def send(responder)
     var resp = self.resp
-    resp.encode(self.data.to_TLV().encode())    # payload in cleartext
+    resp.encode_frame(self.data.to_TLV().encode())    # payload in cleartext
     resp.encrypt()
     responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
     return true
@@ -187,19 +187,19 @@ class Matter_IM_ReportData : Matter_IM_Message
   # default responder for data
   def send(responder)
     import string
-    var resp = self.resp
-    var ret = self.data
-    var was_chunked = ret.more_chunked_messages        # is this following a chunked packet?
+    var resp = self.resp                          # response frame object
+    var data = self.data                          # TLV data of the response (if any)
+    var was_chunked = data.more_chunked_messages  # is this following a chunked packet?
 
     # compute the acceptable size
-    var msg_sz = 0
-    var elements = 0
-    if size(ret.attribute_reports) > 0
-      msg_sz = ret.attribute_reports[0].to_TLV().encode_len()
+    var msg_sz = 0                  # message size up to now
+    var elements = 0                # number of elements added
+    if size(data.attribute_reports) > 0
+      msg_sz = data.attribute_reports[0].to_TLV().encode_len()
       elements = 1
     end
-    while msg_sz < self.MAX_MESSAGE && elements < size(ret.attribute_reports)
-      var next_sz = ret.attribute_reports[elements].to_TLV().encode_len()
+    while msg_sz < self.MAX_MESSAGE && elements < size(data.attribute_reports)
+      var next_sz = data.attribute_reports[elements].to_TLV().encode_len()
       if msg_sz + next_sz < self.MAX_MESSAGE
         msg_sz += next_sz
         elements += 1
@@ -208,28 +208,36 @@ class Matter_IM_ReportData : Matter_IM_Message
       end
     end
 
-    tasmota.log(string.format("MTR: elements=%i msg_sz=%i total=%i", elements, msg_sz, size(ret.attribute_reports)), 4)
-    var next_elemnts = ret.attribute_reports[elements .. ]
-    ret.attribute_reports = ret.attribute_reports[0 .. elements - 1]
-    ret.more_chunked_messages = (size(next_elemnts) > 0)
+
+    tasmota.log(string.format("MTR: elements=%i msg_sz=%i total=%i", elements, msg_sz, size(data.attribute_reports)), 3)
+    var next_elemnts = data.attribute_reports[elements .. ]
+    data.attribute_reports = data.attribute_reports[0 .. elements - 1]
+    data.more_chunked_messages = (size(next_elemnts) > 0)
 
     if was_chunked
       tasmota.log(string.format("MTR: Read_Attr  next_chunk exch=%i", self.get_exchangeid()), 3)
     end
-    if ret.more_chunked_messages
+    if data.more_chunked_messages
       if !was_chunked
         tasmota.log(string.format("MTR: Read_Attr  first_chunk exch=%i", self.get_exchangeid()), 3)
       end
-      tasmota.log("MTR: sending TLV" + str(ret), 3)
+      # tasmota.log("MTR: sending TLV" + str(data), 4)
     end
 
-    resp.encode(self.data.to_TLV().encode())    # payload in cleartext
+    # print(">>>>> send elements before encode")
+    var raw_tlv = self.data.to_TLV()
+    # print(">>>>> send elements before encode 2")
+    var encoded_tlv = raw_tlv.encode(bytes(self.MAX_MESSAGE))    # takes time
+    # print(">>>>> send elements before encode 3")
+    resp.encode_frame(encoded_tlv)    # payload in cleartext, pre-allocate max buffer
+    # print(">>>>> send elements after encode")
     resp.encrypt()
+    # print(">>>>> send elements after encrypt")
     responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
 
     if size(next_elemnts) > 0
-      ret.attribute_reports = next_elemnts
-      tasmota.log("MTR: to_be_sent_later TLV" + str(ret), 3)
+      data.attribute_reports = next_elemnts
+      # tasmota.log("MTR: to_be_sent_later TLV" + str(data), 3)
       return false          # keep alive
     else
       return true           # finished, remove
@@ -269,6 +277,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
     if !self.report_data_phase
       # if ack is received while all data is sent, means that it finished without error
       self.ready = true
+      self.sub.re_arm()           # signal that we can proceed to next sub report
       return true                       # proceed to calling send() which removes the message
     else
       return false                      # do nothing
@@ -304,7 +313,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
       else
         # send a simple ACK
         var resp = self.resp.build_standalone_ack()
-        resp.encode()
+        resp.encode_frame()
         resp.encrypt()
         responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
         return true                             # we received a ack(), just finish
@@ -357,12 +366,19 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
       sr.max_interval = self.sub.max_interval
 
       self.resp.opcode = 0x04 #- Subscribe Response -#
-      resp.encode(sr.to_TLV().encode())    # payload in cleartext
+      resp.encode_frame(sr.to_TLV().encode())    # payload in cleartext
       resp.encrypt()
       responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
+      self.sub.re_arm()
       return true
     end
   end
 
+  # Status ok received
+  def status_ok_received(msg)
+    # once we receive ack, open flow for subscriptions
+    return super(self).status_ok_received(msg)
+  end
+    
 end
 matter.IM_SubscribeResponse = Matter_IM_SubscribeResponse

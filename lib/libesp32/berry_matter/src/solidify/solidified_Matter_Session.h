@@ -3495,7 +3495,7 @@ be_local_closure(Matter_Session_Store_find_session_source_id_unsecure,   /* name
       0x7C0C0400,  //  0002  CALL	R3	2
       0x4C100000,  //  0003  LDNIL	R4
       0x1C100604,  //  0004  EQ	R4	R3	R4
-      0x7812000B,  //  0005  JMPF	R4	#0012
+      0x7812000E,  //  0005  JMPF	R4	#0015
       0xB8120200,  //  0006  GETNGBL	R4	K1
       0x8C100902,  //  0007  GETMET	R4	R4	K2
       0x5C180000,  //  0008  MOVE	R6	R0

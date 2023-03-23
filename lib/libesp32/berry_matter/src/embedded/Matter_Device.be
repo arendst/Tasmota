@@ -48,9 +48,9 @@ class Matter_Device
   var hostname_eth                    # MAC-derived hostname for commissioning
   var vendorid
   var productid
-  # MDNS active announces
-  var mdns_pase_eth                   # do we have an active PASE mdns announce for eth
-  var mdns_pase_wifi                  # do we have an active PASE mdns announce for wifi
+  # mDNS active announces
+  var mdns_pase_eth                   # do we have an active PASE mDNS announce for eth
+  var mdns_pase_wifi                  # do we have an active PASE mDNS announce for wifi
   # saved in parameters
   var root_discriminator
   var root_passcode
@@ -80,17 +80,18 @@ class Matter_Device
     self.ipv4only = false
     self.load_param()
 
-    self.commissioning_instance_wifi = crypto.random(8).tohex()    # 16 characters random hostname
-    self.commissioning_instance_eth = crypto.random(8).tohex()    # 16 characters random hostname
-
     self.sessions = matter.Session_Store()
     self.sessions.load_fabrics()
     self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
 
     # add the default plugin
-    self.plugins.push(matter.Plugin_Root(self), 0)
-    self.plugins.push(matter.Plugin_OnOff(self), 1, 0 #-tasmota relay 1-#)
+    self.plugins.push(matter.Plugin_Root(self, 0))
+    self.plugins.push(matter.Plugin_OnOff(self, 1, 0#-tasmota relay 1-#))
+    # self.plugins.push(matter.Plugin_Temp_Sensor(self, 2, "ESP32#Temperature"))
+
+    # for now read sensors every 5 seconds
+    tasmota.add_cron("*/5 * * * * *", def () self.trigger_read_sensors() end, "matter_sensors_5s")
 
     self.start_mdns_announce_hostnames()
 
@@ -135,12 +136,12 @@ class Matter_Device
   end
 
   #####################################################################
-  # Remove a fabric and clean all corresponding values and MDNS entries
+  # Remove a fabric and clean all corresponding values and mDNS entries
   def remove_fabric(fabric)
     self.message_handler.im.subs.remove_by_fabric(fabric)
     self.sessions.remove_fabric(fabric)
     self.sessions.save_fabrics()
-    # TODO remove MDNS entries
+    # TODO remove mDNS entries
   end
 
   #############################################################
@@ -267,6 +268,27 @@ class Matter_Device
       self.plugins[idx].every_second()
       idx += 1
     end
+  end
+
+  #############################################################
+  # trigger a read_sensors and dispatch to plugins
+  def trigger_read_sensors()
+    import json
+    var rs_json = tasmota.read_sensors()
+    var rs = json.load(rs_json)
+    if rs != nil
+
+      # call all plugins
+      var idx = 0
+      while idx < size(self.plugins)
+        self.plugins[idx].parse_sensors(rs)
+        idx += 1
+      end
+
+    else
+      tasmota.log("MTR: unable to parse read_sensors: "+rs_json, 3)
+    end
+
   end
 
   #############################################################
@@ -437,34 +459,32 @@ class Matter_Device
     var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
     tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
     for pi: self.plugins
-      var ep_list = pi.get_endpoints()    # get supported endpoints for this plugin
-      tasmota.log(string.format("MTR: pi=%s ep_list=%s", str(pi), str(ep_list)), 4)
-      for ep: ep_list
-        if endpoint != nil && ep != endpoint    continue      end       # skip if specific endpoint and no match
-        # from now on, 'ep' is a good candidate
-        if !all.contains(ep)                    all[ep] = {}  end       # create empty structure if not already in the list
-        endpoint_found = true
+      var ep = pi.get_endpoint()    # get supported endpoints for this plugin
 
-        # now explore the cluster list for 'ep'
-        var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-        tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
-        for cl: cluster_list
-          if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
-          # from now on, 'cl' is a good candidate
-          if !all[ep].contains(cl)              all[ep][cl] = {}  end
-          cluster_found = true
+      if endpoint != nil && ep != endpoint    continue      end       # skip if specific endpoint and no match
+      # from now on, 'ep' is a good candidate
+      if !all.contains(ep)                    all[ep] = {}  end       # create empty structure if not already in the list
+      endpoint_found = true
 
-          # now filter on attributes
-          var attr_list = pi.get_attribute_list(ep, cl)
-          tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
-          for at: attr_list
-            if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
-            # from now on, 'at' is a good candidate
-            if !all[ep][cl].contains(at)        all[ep][cl][at] = [] end
-            attribute_found = true
+      # now explore the cluster list for 'ep'
+      var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+      tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+      for cl: cluster_list
+        if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
+        # from now on, 'cl' is a good candidate
+        if !all[ep].contains(cl)              all[ep][cl] = {}  end
+        cluster_found = true
 
-            all[ep][cl][at].push(pi)                                    # add plugin to the list
-          end
+        # now filter on attributes
+        var attr_list = pi.get_attribute_list(ep, cl)
+        tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+        for at: attr_list
+          if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
+          # from now on, 'at' is a good candidate
+          if !all[ep][cl].contains(at)        all[ep][cl][at] = [] end
+          attribute_found = true
+
+          all[ep][cl][at].push(pi)                                    # add plugin to the list
         end
       end
     end
@@ -507,12 +527,10 @@ class Matter_Device
   def get_active_endpoints(exclude_zero)
     var ret = []
     for p:self.plugins
-      var e = p.get_endpoints()
-      for elt:e
-        if exclude_zero && elt == 0   continue end
-        if ret.find(elt) == nil
-          ret.push(elt)
-        end
+      var ep = p.get_endpoint()
+      if exclude_zero && ep == 0   continue end
+      if ret.find(ep) == nil
+        ret.push(ep)
       end
     end
     return ret
@@ -594,9 +612,9 @@ class Matter_Device
   end
 
   #############################################################
-  # MDNS Configuration
+  # mDNS Configuration
   #############################################################
-  # Start MDNS and announce hostnames for Wifi and ETH from MAC
+  # Start mDNS and announce hostnames for Wifi and ETH from MAC
   #
   # When the announce is active, `hostname_wifi` and `hostname_eth`
   # are defined
@@ -669,6 +687,7 @@ class Matter_Device
   def mdns_announce_PASE()
     import mdns
     import string
+    import crypto
 
     var services = {
       "VP":str(self.vendorid) + "+" + str(self.productid),
@@ -677,6 +696,9 @@ class Matter_Device
       "T":0,                            # no support for TCP
       "SII":5000, "SAI":300
     }
+
+    self.commissioning_instance_wifi = crypto.random(8).tohex()    # 16 characters random hostname
+    self.commissioning_instance_eth = crypto.random(8).tohex()    # 16 characters random hostname
 
     try
       if self.hostname_eth
@@ -740,13 +762,13 @@ class Matter_Device
     try
       if self.mdns_pase_eth
         tasmota.log(string.format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth), 3)
-        tasmota.log(string.format("MTR: remove mdns on %s '%s'", "eth", self.commissioning_instance_eth), 2)
+        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "eth", self.commissioning_instance_eth), 2)
         self.mdns_pase_eth = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth)
       end
       if self.mdns_pase_wifi
         tasmota.log(string.format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi), 3)
-        tasmota.log(string.format("MTR: remove mdns on %s '%s'", "wifi", self.commissioning_instance_wifi), 2)
+        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "wifi", self.commissioning_instance_wifi), 2)
         self.mdns_pase_wifi = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi)
       end
@@ -795,6 +817,49 @@ class Matter_Device
       tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
     end
   end
+
+  #############################################################
+  # Remove all mDNS announces
+  def mdns_remove_op_discovery_all_fabrics()
+    for fabric: self.sessions.active_fabrics()
+      if fabric.get_device_id() && fabric.get_fabric_id()
+        self.mdns_remove_op_discovery(fabric)
+      end
+    end
+  end
+
+  #############################################################
+  # Start UDP mDNS announcements for commissioning
+  def mdns_remove_op_discovery(fabric)
+    import mdns
+    import string
+    try
+      var device_id = fabric.get_device_id().copy().reverse()
+      var k_fabric = fabric.get_fabric_compressed()
+      var op_node = k_fabric.tohex() + "-" + device_id.tohex()
+
+      # mdns
+      if (tasmota.eth().find("up"))
+        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "eth", op_node), 2)
+        mdns.remove_service("_matter", "_tcp", op_node, self.hostname_eth)
+      end
+      if (tasmota.wifi().find("up"))
+        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "wifi", op_node), 2)
+        mdns.remove_service("_matter", "_tcp", op_node, self.hostname_wifi)
+      end
+    except .. as e, m
+      tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
+    end
+  end
+
+  #############################################################
+  # Try to clean MDNS entries before restart
+  #
+  def save_before_restart()
+    self.stop_basic_commissioning()
+    self.mdns_remove_op_discovery_all_fabrics()
+  end
+
 end
 matter.Device = Matter_Device
 

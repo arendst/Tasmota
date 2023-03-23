@@ -26,7 +26,6 @@ class Matter_Plugin
   static var EMPTY_LIST = []
   static var EMPTY_MAP = {}
   var device                                # reference to the `device` global object
-  var endpoints                             # list of supported endpoints TODO refactor
   var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes
 
@@ -38,23 +37,26 @@ class Matter_Plugin
 
   #############################################################
   # Constructor
+  #
   def init(device, endpoint)
     self.device = device
     self.endpoint = endpoint
-    self.endpoints = self.EMPTY_LIST
     self.clusters = self.EMPTY_LIST
   end
 
   #############################################################
   # signal that an attribute has been changed
+  #
+  # If `endpoint` is `nil`, send to all endpoints
   def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    if endpoint == nil    endpoint = self.endpoint  end
     self.device.attribute_updated(endpoint, cluster, attribute, fabric_specific)
   end
 
   #############################################################
   # Which endpoints does it handle (list of numbers)
-  def get_endpoints()
-    return self.endpoints
+  def get_endpoint()
+    return self.endpoint
   end
   def get_cluster_map()
     return self.clusters
@@ -135,6 +137,14 @@ class Matter_Plugin
   # TODO - should we even support this?
   def timed_request(session, val, ctx)
     return nil
+  end
+
+  #############################################################
+  # parse sensor
+  #
+  # The device calls regularly `tasmota.read_sensors()` and converts
+  # it to json.
+  def parse_sensors(payload)
   end
 
   #############################################################

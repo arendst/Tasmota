@@ -151,7 +151,7 @@ be_local_closure(Matter_PBKDFParamResponse_encode,   /* name */
     }),
     be_str_weak(encode),
     &be_const_str_solidified,
-    ( &(const binstruction[70]) {  /* code */
+    ( &(const binstruction[71]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x88080501,  //  0001  GETMBR	R2	R2	K1
       0x8C080502,  //  0002  GETMET	R2	R2	K2
@@ -220,8 +220,9 @@ be_local_closure(Matter_PBKDFParamResponse_encode,   /* name */
       0x88240111,  //  0041  GETMBR	R9	R0	K17
       0x7C140800,  //  0042  CALL	R5	4
       0x8C100512,  //  0043  GETMET	R4	R2	K18
-      0x7C100200,  //  0044  CALL	R4	1
-      0x80040800,  //  0045  RET	1	R4
+      0x5C180200,  //  0044  MOVE	R6	R1
+      0x7C100400,  //  0045  CALL	R4	2
+      0x80040800,  //  0046  RET	1	R4
     })
   )
 );
@@ -364,7 +365,7 @@ be_local_closure(Matter_Pake2_encode,   /* name */
     }),
     be_str_weak(encode),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[22]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x88080501,  //  0001  GETMBR	R2	R2	K1
       0x8C080502,  //  0002  GETMET	R2	R2	K2
@@ -384,8 +385,9 @@ be_local_closure(Matter_Pake2_encode,   /* name */
       0x881C0108,  //  0010  GETMBR	R7	R0	K8
       0x7C0C0800,  //  0011  CALL	R3	4
       0x8C0C0509,  //  0012  GETMET	R3	R2	K9
-      0x7C0C0200,  //  0013  CALL	R3	1
-      0x80040600,  //  0014  RET	1	R3
+      0x5C140200,  //  0013  MOVE	R5	R1
+      0x7C0C0400,  //  0014  CALL	R3	2
+      0x80040600,  //  0015  RET	1	R3
     })
   )
 );
@@ -665,7 +667,7 @@ be_local_closure(Matter_Sigma2_encode,   /* name */
     }),
     be_str_weak(encode),
     &be_const_str_solidified,
-    ( &(const binstruction[60]) {  /* code */
+    ( &(const binstruction[61]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x88080501,  //  0001  GETMBR	R2	R2	K1
       0x8C080502,  //  0002  GETMET	R2	R2	K2
@@ -724,8 +726,9 @@ be_local_closure(Matter_Sigma2_encode,   /* name */
       0x8820010E,  //  0037  GETMBR	R8	R0	K14
       0x7C100800,  //  0038  CALL	R4	4
       0x8C0C0511,  //  0039  GETMET	R3	R2	K17
-      0x7C0C0200,  //  003A  CALL	R3	1
-      0x80040600,  //  003B  RET	1	R3
+      0x5C140200,  //  003A  MOVE	R5	R1
+      0x7C0C0400,  //  003B  CALL	R3	2
+      0x80040600,  //  003C  RET	1	R3
     })
   )
 );
@@ -793,7 +796,7 @@ be_local_closure(Matter_Sigma2Resume_encode,   /* name */
     }),
     be_str_weak(encode),
     &be_const_str_solidified,
-    ( &(const binstruction[53]) {  /* code */
+    ( &(const binstruction[54]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x88080501,  //  0001  GETMBR	R2	R2	K1
       0x8C080502,  //  0002  GETMET	R2	R2	K2
@@ -845,8 +848,9 @@ be_local_closure(Matter_Sigma2Resume_encode,   /* name */
       0x8820010C,  //  0030  GETMBR	R8	R0	K12
       0x7C100800,  //  0031  CALL	R4	4
       0x8C0C050F,  //  0032  GETMET	R3	R2	K15
-      0x7C0C0200,  //  0033  CALL	R3	1
-      0x80040600,  //  0034  RET	1	R3
+      0x5C140200,  //  0033  MOVE	R5	R1
+      0x7C0C0400,  //  0034  CALL	R3	2
+      0x80040600,  //  0035  RET	1	R3
     })
   )
 );

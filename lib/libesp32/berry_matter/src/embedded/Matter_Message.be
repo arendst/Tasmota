@@ -171,7 +171,7 @@ class Matter_Frame
   #
   # Header is built from attributes
   # `payload` is a bytes() buffer for the app payload
-  def encode(payload)
+  def encode_frame(payload)
     var raw = bytes()
     # compute flags
     if self.flags == nil

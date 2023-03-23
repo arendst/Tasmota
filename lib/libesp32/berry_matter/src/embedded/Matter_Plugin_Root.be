@@ -25,11 +25,10 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_Root,weak
 
 class Matter_Plugin_Root : Matter_Plugin
-  static var ENDPOINTS = [ 0 ]
   static var CLUSTERS  = {
     0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -49,7 +48,6 @@ class Matter_Plugin_Root : Matter_Plugin
   # Constructor
   def init(device, endpoint)
     super(self).init(device, endpoint)
-    self.endpoints = self.ENDPOINTS
     self.clusters = self.CLUSTERS
   end
 
