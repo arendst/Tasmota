@@ -57,8 +57,8 @@
  *         Button_in1..32  Bin  128..159  Button inverted to Vcc without internal pullup
  *         Switch1..28     S    160..187  Switch to Gnd with internal pullup
  *         Switch_n1..28   Sn   192..219  Switch to Gnd without internal pullup
- *         Relay1..28      R    224..255  Relay
- *         Relay_i1..28    Ri   256..287  Relay inverted
+ *         Relay1..32      R    224..255  Relay
+ *         Relay_i1..32    Ri   256..287  Relay inverted
  *         Output_Hi       Oh   3840      Fixed output high
  *         Output_lo       Ol   3872      Fixed output low
  *
@@ -106,6 +106,8 @@
 #endif
 
 struct PCF8574 {
+  uint32_t button_used;
+  uint32_t switch_used;
   uint32_t relay_inverted;
   uint32_t button_inverted;
   uint16_t pin[PCF8574_MAX_PINS];
@@ -123,6 +125,7 @@ struct PCF8574 {
   uint8_t switch_max;
   int8_t button_offset;
   int8_t switch_offset;
+  bool base;
   bool interrupt;
 } Pcf8574;
 
@@ -228,10 +231,15 @@ bool Pcf8574LoadTemplate(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
-  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B1-4,Ri4-1, B=B5-8,Ri8-5","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]} endon
-  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B1234,Ri4321,B=B5678,Ri8765","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]} endon
+  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B3456,Ri4321,B=B78910,Ri8765","BASE":1,"GPIO":[34,35,36,37,259,258,257,256,38,39,40,41,263,262,261,260]} endon
+  JsonParserToken val = root[PSTR(D_JSON_BASE)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Template %s"), val.getStr());
+    Pcf8574.base = (val.getUInt()) ? true : false;
+  }
+  val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Base %d, Template '%s'"), Pcf8574.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -242,32 +250,38 @@ bool Pcf8574LoadTemplate(void) {
       uint16_t mpin = val.getUInt();
       if (mpin) {                                      // Above GPIO_NONE
         if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
+          bitSet(Pcf8574.switch_used, mpin - AGPIO(GPIO_SWT1));
           Pcf8574.switch_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
+          bitSet(Pcf8574.switch_used, mpin - AGPIO(GPIO_SWT1));
           Pcf8574.switch_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT
         }
         else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
+          bitSet(Pcf8574.button_used, mpin - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
+          bitSet(Pcf8574.button_used, mpin - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
           bitSet(Pcf8574.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
+          bitSet(Pcf8574.button_used, mpin - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
           bitSet(Pcf8574.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
+          bitSet(Pcf8574.button_used, mpin - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
           Pcf8574DigitalWrite(pin, 1);                 // INPUT
         }
@@ -356,18 +370,32 @@ void Pcf8574Power(void) {
 
 bool Pcf8574AddButton(void) {
   // XdrvMailbox.index = button/switch index
-  if (Pcf8574.button_offset < 0) { Pcf8574.button_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Pcf8574.button_offset;
-  if (index >= Pcf8574.button_max) { return false; }
+  uint32_t index;
+  if (Pcf8574.base) {
+    index = XdrvMailbox.index;
+    if (!bitRead(Pcf8574.button_used, index)) { return false; }
+    Pcf8574.button_offset = 0;
+  } else {
+    if (Pcf8574.button_offset < 0) { Pcf8574.button_offset = XdrvMailbox.index; }
+    index = XdrvMailbox.index - Pcf8574.button_offset;
+    if (index >= Pcf8574.button_max) { return false; }
+  }
   XdrvMailbox.index = (Pcf8574DigitalRead(Pcf8574Pin(GPIO_KEY1, index)) != bitRead(Pcf8574.button_inverted, index));
   return true;
 }
 
 bool Pcf8574AddSwitch(void) {
   // XdrvMailbox.index = button/switch index
-  if (Pcf8574.switch_offset < 0) { Pcf8574.switch_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Pcf8574.switch_offset;
-  if (index >= Pcf8574.switch_max) { return false; }
+  uint32_t index;
+  if (Pcf8574.base) {
+    index = XdrvMailbox.index;
+    if (!bitRead(Pcf8574.switch_used, index)) { return false; }
+    Pcf8574.switch_offset = 0;
+  } else {
+    if (Pcf8574.switch_offset < 0) { Pcf8574.switch_offset = XdrvMailbox.index; }
+    index = XdrvMailbox.index - Pcf8574.switch_offset;
+    if (index >= Pcf8574.switch_max) { return false; }
+  }
   XdrvMailbox.index = Pcf8574DigitalRead(Pcf8574Pin(GPIO_SWT1, index));
   return true;
 }
