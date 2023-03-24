@@ -827,7 +827,7 @@ void UBXShow(bool json)
       uint32_t i = UBX.state.log_interval / 10;
       ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"), UBX.mode.filter_noise, i);
     } else {
-      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, alt, hAcc, vAcc);
+      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s,\"fix\":\"%s\"}"), lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
     }
 #ifdef USE_FLOG
     ResponseAppend_P(PSTR(",\"FLOG\":{\"rec\":%u,\"mode\":%u,\"sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);
