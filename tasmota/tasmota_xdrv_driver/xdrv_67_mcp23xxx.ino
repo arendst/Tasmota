@@ -25,6 +25,7 @@
  *
  * Supported template fields:
  * NAME  - Template name
+ * BASE  - Optional. 0 = use relative buttons and switches (default), 1 = use absolute buttons and switches
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
  *         Function             Code      Description
  *         -------------------  --------  ----------------------------------------
@@ -35,8 +36,8 @@
  *         Button_in1..32  Bin  128..159  Button inverted to Vcc without internal pullup
  *         Switch1..28     S    160..187  Switch to Gnd with internal pullup
  *         Switch_n1..28   Sn   192..219  Switch to Gnd without internal pullup
- *         Relay1..28      R    224..255  Relay
- *         Relay_i1..28    Ri   256..287  Relay inverted
+ *         Relay1..32      R    224..255  Relay
+ *         Relay_i1..32    Ri   256..287  Relay inverted
  *         Output_Hi       Oh   3840      Fixed output high
  *         Output_lo       Ol   3872      Fixed output low
  *
@@ -142,6 +143,8 @@ typedef struct {
 
 struct MCP230 {
   tMcp23xDevice device[MCP23XXX_MAX_DEVICES];
+  uint32_t button_used;
+  uint32_t switch_used;
   uint32_t relay_inverted;
   uint32_t button_inverted;
   uint8_t chip;
@@ -153,6 +156,7 @@ struct MCP230 {
   uint8_t switch_max;
   int8_t button_offset;
   int8_t switch_offset;
+  bool base;
   bool interrupt;
 } Mcp23x;
 
@@ -485,9 +489,13 @@ bool MCP23xLoadTemplate(void) {
 
   // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
   // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
-  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  JsonParserToken val = root[PSTR(D_JSON_BASE)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Template %s"), val.getStr());
+    Mcp23x.base = (val.getUInt()) ? true : false;
+  }
+  val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Base %d, Template '%s'"), Mcp23x.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -498,32 +506,38 @@ bool MCP23xLoadTemplate(void) {
       uint16_t mpin = val.getUInt();
       if (mpin) {                                      // Above GPIO_NONE
         if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
+          bitSet(Mcp23x.switch_used, mpin - AGPIO(GPIO_SWT1));
           Mcp23x.switch_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
+          bitSet(Mcp23x.switch_used, mpin - AGPIO(GPIO_SWT1));
           Mcp23x.switch_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
+          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
+          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
+          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
+          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
@@ -747,21 +761,30 @@ void MCP23xPower(void) {
 
 bool MCP23xAddButton(void) {
   // XdrvMailbox.index = button/switch index
-  if (Mcp23x.button_offset < 0) { Mcp23x.button_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Mcp23x.button_offset;
-  if (index >= Mcp23x.button_max) { return false; }
+  uint32_t index = XdrvMailbox.index;
+  if (Mcp23x.base) {
+    if (!bitRead(Mcp23x.button_used, index)) { return false; }
+    Mcp23x.button_offset = 0;
+  } else {
+    if (Mcp23x.button_offset < 0) { Mcp23x.button_offset = index; }
+    index -= Mcp23x.button_offset;
+    if (index >= Mcp23x.button_max) { return false; }
+  }
   XdrvMailbox.index = (MCP23xDigitalRead(MCP23xPin(GPIO_KEY1, index)) != bitRead(Mcp23x.button_inverted, index));
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: AddButton index %d, state %d"), index, XdrvMailbox.index);
-
   return true;
 }
 
 bool MCP23xAddSwitch(void) {
   // XdrvMailbox.index = button/switch index
-  if (Mcp23x.switch_offset < 0) { Mcp23x.switch_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Mcp23x.switch_offset;
-  if (index >= Mcp23x.switch_max) { return false; }
+  uint32_t index = XdrvMailbox.index;
+  if (Mcp23x.base) {
+    if (!bitRead(Mcp23x.switch_used, index)) { return false; }
+    Mcp23x.switch_offset = 0;
+  } else {
+    if (Mcp23x.switch_offset < 0) { Mcp23x.switch_offset = index; }
+    index -= Mcp23x.switch_offset;
+    if (index >= Mcp23x.switch_max) { return false; }
+  }
   XdrvMailbox.index = MCP23xDigitalRead(MCP23xPin(GPIO_SWT1, index));
   return true;
 }

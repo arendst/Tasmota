@@ -47,6 +47,7 @@
  *
  * Supported template fields:
  * NAME  - Template name
+ * BASE  - Optional. 0 = use relative buttons and switches (default), 1 = use absolute buttons and switches
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
  *         Function             Code      Description
  *         -------------------  --------  ----------------------------------------
@@ -370,14 +371,13 @@ void Pcf8574Power(void) {
 
 bool Pcf8574AddButton(void) {
   // XdrvMailbox.index = button/switch index
-  uint32_t index;
+  uint32_t index = XdrvMailbox.index;
   if (Pcf8574.base) {
-    index = XdrvMailbox.index;
     if (!bitRead(Pcf8574.button_used, index)) { return false; }
     Pcf8574.button_offset = 0;
   } else {
-    if (Pcf8574.button_offset < 0) { Pcf8574.button_offset = XdrvMailbox.index; }
-    index = XdrvMailbox.index - Pcf8574.button_offset;
+    if (Pcf8574.button_offset < 0) { Pcf8574.button_offset = index; }
+    index -= Pcf8574.button_offset;
     if (index >= Pcf8574.button_max) { return false; }
   }
   XdrvMailbox.index = (Pcf8574DigitalRead(Pcf8574Pin(GPIO_KEY1, index)) != bitRead(Pcf8574.button_inverted, index));
@@ -386,14 +386,13 @@ bool Pcf8574AddButton(void) {
 
 bool Pcf8574AddSwitch(void) {
   // XdrvMailbox.index = button/switch index
-  uint32_t index;
+  uint32_t index = XdrvMailbox.index;
   if (Pcf8574.base) {
-    index = XdrvMailbox.index;
     if (!bitRead(Pcf8574.switch_used, index)) { return false; }
     Pcf8574.switch_offset = 0;
   } else {
-    if (Pcf8574.switch_offset < 0) { Pcf8574.switch_offset = XdrvMailbox.index; }
-    index = XdrvMailbox.index - Pcf8574.switch_offset;
+    if (Pcf8574.switch_offset < 0) { Pcf8574.switch_offset = index; }
+    index -= Pcf8574.switch_offset;
     if (index >= Pcf8574.switch_max) { return false; }
   }
   XdrvMailbox.index = Pcf8574DigitalRead(Pcf8574Pin(GPIO_SWT1, index));
