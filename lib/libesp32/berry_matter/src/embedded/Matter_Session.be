@@ -228,6 +228,7 @@ matter.Fabric = Matter_Fabric
 class Matter_Session : Matter_Expirable
   static var _PASE = 1           # PASE authentication in progress
   static var _CASE = 2           # CASE authentication in progress
+  static var _COUNTER_SND_INCR = 1024  # counter increased when persisting
   var _store                     # reference back to session store
   # mode for Session. Can be PASE=1, CASE=2, Established=10 none=0
   var mode
@@ -244,7 +245,9 @@ class Matter_Session : Matter_Expirable
   var __future_local_session_id
   # counters
   var counter_rcv                 # counter for incoming messages
-  var counter_snd                 # counter for outgoing messages
+  var counter_snd                 # persisted last highest known counter_snd (it is in advance or equal to the actual last used counter_snd)
+  var _counter_rcv_impl           # implementation of counter_rcv by matter.Counter()
+  var _counter_snd_impl           # implementation of counter_snd by matter.Counter()
   var _exchange_id                # exchange id for locally initiated transaction, non-persistent
   # keep track of last known IP/Port of the fabric
   var _ip                         # IP of the last received packet
@@ -280,8 +283,13 @@ class Matter_Session : Matter_Expirable
     self.mode = 0
     self.local_session_id = local_session_id
     self.initiator_session_id = initiator_session_id
-    self.counter_rcv = matter.Counter()
-    self.counter_snd = matter.Counter()
+    # self.counter_rcv = matter.Counter()
+    # self.counter_snd = matter.Counter()
+    self._counter_snd_impl = matter.Counter()
+    self._counter_rcv_impl = matter.Counter()
+    self.counter_rcv = 0      # avoid nil values
+    self.counter_snd = self._counter_snd_impl.next() + self._COUNTER_SND_INCR
+    # print(">>>> INIT", "counter_rcv=", self.counter_rcv, "counter_snd=", self.counter_snd)
     self._counter_insecure_rcv = matter.Counter()
     self._counter_insecure_snd = matter.Counter()
     self._breadcrumb = 0
@@ -289,6 +297,49 @@ class Matter_Session : Matter_Expirable
 
     self._fabric = fabric ? fabric : self._store.create_fabric()
     self.update()
+  end
+
+  #############################################################
+  # Management of security counters
+  #############################################################
+  # Provide the next counter value, and update the last know persisted if needed
+  #
+  def counter_snd_next()
+    var next = self._counter_snd_impl.next()
+    # print(">>> NEXT counter_snd=", self.counter_snd, "_impl=", self._counter_snd_impl.val())
+    if matter.Counter.is_greater(next, self.counter_snd)
+      if self.does_persist()
+        # the persisted counter is behind the actual counter
+        self.counter_snd = next + self._COUNTER_SND_INCR
+        self.save()
+      else
+        self.counter_snd = next     # if no persistance, just keep track
+      end
+    end
+    return next
+  end
+  # #############################################################
+  # # Before savind
+  # def persist_pre()
+  # end
+
+  #############################################################
+  # When hydrating from persistance, update counters
+  def hydrate_post()
+    # reset counter_snd to highest known.
+    # We advance it only in case it is actually used
+    # This avoids updaing counters on dead sessions
+    self._counter_snd_impl.reset(self.counter_snd)
+    self._counter_rcv_impl.reset(self.counter_rcv)
+    self.counter_snd = self._counter_snd_impl.val()
+    self.counter_rcv = self._counter_rcv_impl.val()
+  end
+  #############################################################
+  # Validate received counter
+  def counter_rcv_validate(v, t)
+    var ret = self._counter_rcv_impl.validate(v, t)
+    if ret    self.counter_rcv = self._counter_rcv_impl.val()    end           # update the validated counter
+    return ret
   end
 
   #############################################################
@@ -334,8 +385,10 @@ class Matter_Session : Matter_Expirable
     # close the PASE session, it will be re-opened with a CASE session
     self.local_session_id = self.__future_local_session_id
     self.initiator_session_id = self.__future_initiator_session_id
-    self.counter_rcv.reset()
-    self.counter_snd.reset()
+    self._counter_rcv_impl.reset()
+    self._counter_snd_impl.reset()
+    self.counter_rcv = 0
+    self.counter_snd = self._counter_snd_impl.next()
     self.i2rkey = nil
     self._i2r_privacy = nil
     self.r2ikey = nil
@@ -470,9 +523,7 @@ class Matter_Session : Matter_Expirable
       var v = introspect.get(self, k)
       if v == nil     continue end
 
-      if   k == "counter_rcv"       v = v.val()
-      elif k == "counter_snd"       v = v.next() + 256          # take a margin to avoid reusing the same counter
-      elif isinstance(v, bytes)     v = "$$" + v.tob64()        # bytes
+      if   isinstance(v, bytes)     v = "$$" + v.tob64()        # bytes
       elif type(v) == 'instance'    continue                    # skip any other instance
       end
       
@@ -495,21 +546,17 @@ class Matter_Session : Matter_Expirable
 
     for k:values.keys()
       var v = values[k]
-      if   k == "counter_rcv"     self.counter_rcv.reset(int(v))
-      elif k == "counter_snd"     self.counter_snd.reset(int(v))
-      else
-        # standard values
-        if type(v) == 'string'
-          if string.find(v, "0x") == 0  # treat as bytes
-            introspect.set(self, k, bytes().fromhex(v[2..]))
-          elif string.find(v, "$$") == 0  # treat as bytes
-            introspect.set(self, k, bytes().fromb64(v[2..]))
-          else
-            introspect.set(self, k, v)
-          end
+      # standard values
+      if type(v) == 'string'
+        if string.find(v, "0x") == 0  # treat as bytes
+          introspect.set(self, k, bytes().fromhex(v[2..]))
+        elif string.find(v, "$$") == 0  # treat as bytes
+          introspect.set(self, k, bytes().fromb64(v[2..]))
         else
           introspect.set(self, k, v)
         end
+      else
+        introspect.set(self, k, v)
       end
     end
     self.hydrate_post()
