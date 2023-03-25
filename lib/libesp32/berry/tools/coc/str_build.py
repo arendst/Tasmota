@@ -1,6 +1,20 @@
 import json
 from coc_string import *
 
+# from https://stackoverflow.com/questions/14945095/how-to-escape-string-for-generated-c (simplified)
+def escape_c(s, encoding='ascii'):
+    result = ''
+    for c in s:
+        if not (32 <= ord(c) < 127):
+            result += '\\%03o' % ord(c)
+        elif c == '\\':
+            result += "\\\\"
+        elif c == '"':
+            result += "\\\""
+        else:
+            result += c
+    return '"' + result + '"'
+
 class str_info:
     def __init__(self):
         self.hash = 0
@@ -91,7 +105,7 @@ class str_build:
                 else:
                     next = "NULL"
                 istr += "be_define_const_str("
-                istr += node + ", " + json.dumps(info.str) + ", "
+                istr += node + ", " + escape_c(info.str) + ", "
                 istr += str(info.hash) + "u, " + str(info.extra) + ", "
                 istr += str(len(info.str)) + ", " + next + ");\n"
                 strings[info.str] = istr
@@ -104,7 +118,7 @@ class str_build:
         ostr += "\n/* weak strings */\n"
         for k in self.str_weak:
             ostr += "be_define_const_str("
-            ostr += escape_operator(k) + ", " + json.dumps(k) + ", "
+            ostr += escape_operator(k) + ", " + escape_c(k) + ", "
             ostr += "0u, 0, " + str(len(k)) + ", NULL);\n"
 
         ostr += "\n"

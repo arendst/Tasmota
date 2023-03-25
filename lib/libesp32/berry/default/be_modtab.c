@@ -50,6 +50,7 @@ be_extern_native_module(partition_core);
 be_extern_native_module(crc);
 be_extern_native_module(crypto);
 be_extern_native_module(ULP);
+be_extern_native_module(TFL);
 be_extern_native_module(mdns);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
@@ -171,6 +172,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if defined(USE_BERRY_ULP) && ((CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
+#if defined(USE_BERRY_TF_LITE)
+    &be_native_module(TFL),
+#endif //USE_BERRY_TF_LITE
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     &be_native_module(MI32),
     &be_native_module(BLE),

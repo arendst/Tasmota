@@ -107,7 +107,7 @@ class Matter_TLV
     #############################################################
     # create simple TLV
     static def create_TLV(t, value)
-      if value != nil
+      if value != nil || t == 0x14 #-t == matter.TLV.NULL-#   # put the actual number for performance
         var v = _class()      # parent is nil
         v.typ = t
         v.val = value
@@ -610,8 +610,9 @@ class Matter_TLV
       # encode tag and type
       self._encode_tag(b)
       # sort values
-      var val_list = self.val.copy()
+      var val_list = self.val
       if self.is_struct
+        val_list = val_list.copy()
         self.sort(val_list)
       end
 

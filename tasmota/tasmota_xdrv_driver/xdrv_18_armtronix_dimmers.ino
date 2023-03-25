@@ -86,7 +86,7 @@ void ArmtronixRequestState(void)
 
 bool ArmtronixModuleSelected(void)
 {
-  TasmotaGlobal.devices_present++;
+  UpdateDevicesPresent(1);
   TasmotaGlobal.light_type = LT_SERIAL2;
   return true;
 }

@@ -913,12 +913,11 @@ void UBXShow(bool json)
       uint32_t i = UBX.state.log_interval / 10;
       ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"), UBX.mode.filter_noise, i);
     } else {
-    #ifdef USE_GPS_VELOCITY
-      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s,\"spd\":%s,\"hdng\":%s,\"cAcc\":%s,\"sAcc\":%s}"), lat, lon, alt, hAcc, vAcc, spd, hdng, cAcc, sAcc);
-    #endif
-    #ifndef USE_GPS_VELOCITY
-      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, alt, hAcc, vAcc);
-    #endif
+      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s,\"fix\":\"%s\""), lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
+#ifdef USE_GPS_VELOCITY
+      ResponseAppend_P(PSTR(,\"spd\":%s,\"hdng\":%s,\"cAcc\":%s,\"sAcc\":%s"), spd, hdng, cAcc, sAcc);
+#endif
+      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_FLOG
     ResponseAppend_P(PSTR(",\"FLOG\":{\"rec\":%u,\"mode\":%u,\"sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);

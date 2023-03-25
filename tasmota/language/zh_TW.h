@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "空氣品質"
 #define D_AP "存取點"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "多重點擊"
 #define D_NOISE "雜訊"
 #define D_NONE "無"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "關閉"
 #define D_OFFLINE "離線"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "紫外線等級"
 #define D_UV_POWER "紫外線能量"
 #define D_VERSION "版本"
+#define D_VOC "VOC"
 #define D_VOLTAGE "電壓"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "重量"
@@ -895,7 +898,9 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_PCF8574_INT   "PCF8574 Int"
 #define D_SENSOR_MCP23XXX_INT  "MCP23xxx Int"
+#define D_SENSOR_MCP23SXX_CS   "MCP23Sxx CS"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
@@ -935,6 +940,7 @@
 #define D_UNIT_HOUR "時"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"

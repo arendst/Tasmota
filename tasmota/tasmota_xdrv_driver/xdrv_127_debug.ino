@@ -60,6 +60,7 @@
 #define D_CMND_I2CSTRETCH "I2CStretch"
 #define D_CMND_I2CCLOCK  "I2CClock"
 #define D_CMND_SERBUFF   "SerBufSize"
+#define D_CMND_SOSET     "SOSet"
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MEMDUMP "|" D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
@@ -77,8 +78,9 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
 #endif
   D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|"
 #ifdef USE_I2C
-  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK
+  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK "|"
 #endif
+  D_CMND_SOSET
   ;
 
 void (* const DebugCommand[])(void) PROGMEM = {
@@ -97,8 +99,9 @@ void (* const DebugCommand[])(void) PROGMEM = {
 #endif
   &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump,
 #ifdef USE_I2C
-  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock
+  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock,
 #endif
+  &CmndSoSet
   };
 
 uint32_t CPU_loops = 0;
@@ -209,21 +212,39 @@ extern "C" {
   extern cont_t* g_pcont;
 }
 
-void DebugFreeMem(void)
-{
+void DebugFreeMem(void) {
   register uint32_t *sp asm("a1");
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
 }
 
+uint32_t FreeStack(void) {
+  register uint32_t *sp asm("a1");
+  return 4 * (sp - g_pcont->stack);
+}
+
+void AddLogMem(const char* function) {
+  register uint32_t *sp asm("a1");
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "== %s FreeRam %d, FreeStack %d"), function, ESP.getFreeHeap(), 4 * (sp - g_pcont->stack));
+}
+
 #endif  // ESP8266
 #ifdef ESP32
 
-void DebugFreeMem(void)
-{
+void DebugFreeMem(void) {
   register uint8_t *sp asm("a1");
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL), XdrvMailbox.data);
+}
+
+uint32_t FreeStack(void) {
+  register uint8_t *sp asm("a1");
+  return sp - pxTaskGetStackStart(NULL);
+}
+
+void AddLogMem(const char* function) {
+  register uint8_t *sp asm("a1");
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "== %s FreeRam %d, FreeStack %d"), function, ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL));
 }
 
 #endif  // ESP8266 - ESP32
@@ -723,6 +744,52 @@ void CmndI2cClock(void)
   ResponseCmndDone();
 }
 #endif // USE_I2C
+
+void CmndSoSet(void) {
+  // Set option data as 32-bit hex value
+  // SoSet1 0x5400401B
+  if ((XdrvMailbox.index >= 1) && (XdrvMailbox.index <= 5)) {
+    uint32_t option = XdrvMailbox.index;
+    uint32_t data;
+    switch (option) {
+      case 1:
+        data = Settings->flag.data;   // SetOption0 .. 31
+        break;
+      case 2:
+        data = Settings->flag3.data;  // SetOption50 .. 81
+        break;
+      case 3:
+        data = Settings->flag4.data;  // SetOption82 .. 113
+        break;
+      case 4:
+        data = Settings->flag5.data;  // SetOption114 .. 145
+        break;
+      case 5:
+        data = Settings->flag6.data;  // SetOption146 .. 177
+    }
+    if (XdrvMailbox.data_len > 0) {
+      char *p;
+      data = strtoul(XdrvMailbox.data, &p, 0);  // decimal, octal (0) or hex (0x)
+      switch (option) {
+        case 1:
+          Settings->flag.data = data;   // SetOption0 .. 31
+          break;
+        case 2:
+          Settings->flag3.data = data;  // SetOption50 .. 81
+          break;
+        case 3:
+          Settings->flag4.data = data;  // SetOption82 .. 113
+          break;
+        case 4:
+          Settings->flag5.data = data;  // SetOption114 .. 145
+          break;
+        case 5: Settings->flag6.data = data;  // SetOption146 .. 177
+      }
+//      TasmotaGlobal.restart_flag = 2;  // Activate some SetOptions
+    }
+    Response_P(PSTR("{\"%s%d\":\"%08X\"}"), XdrvMailbox.command, XdrvMailbox.index, data);
+  }
+}
 
 /*********************************************************************************************\
  * Interface

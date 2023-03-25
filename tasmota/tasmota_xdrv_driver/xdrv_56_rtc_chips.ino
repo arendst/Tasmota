@@ -504,7 +504,7 @@ bool Xdrv56(uint32_t function) {
   }
 #endif  // RTC_NTP_SERVER
 
-  if (FUNC_I2C_INIT == function) {
+  if (FUNC_SETUP_RING1 == function) {
     RtcChipDetect();
   }
   else if (RtcChip.detected) {

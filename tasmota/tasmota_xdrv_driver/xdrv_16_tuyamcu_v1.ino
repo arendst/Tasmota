@@ -92,7 +92,10 @@ struct TUYA {
   uint32_t ignore_dimmer_cmd_timeout = 0; // Time until which received dimmer commands should be ignored
   bool ignore_tuyareceived = false;       // When a modeset changes ignore stat
   bool active;
+  uint32_t time_last_cmd;                 // to compute timeout on response and not sending another message
 } Tuya;
+
+#define TUYA_CMD_TIMEOUT        200
 
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
 
@@ -477,6 +480,7 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   }
   TuyaSerial->write(checksum);
   TuyaSerial->flush();
+  Tuya.time_last_cmd = millis() | 1; // cheap trick to avoid 0
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x\""), log_data, checksum);
   AddLogData(LOG_LEVEL_DEBUG, log_data);
 }
@@ -1181,13 +1185,13 @@ bool TuyaModuleSelected(void) {
     if ((Settings->tuya_fnid_map[i].fnid >= TUYA_MCU_FUNC_REL1 && Settings->tuya_fnid_map[i].fnid <= TUYA_MCU_FUNC_REL8 ) ||
     (Settings->tuya_fnid_map[i].fnid >= TUYA_MCU_FUNC_REL1_INV && Settings->tuya_fnid_map[i].fnid <= TUYA_MCU_FUNC_REL8_INV )) {
       relaySet = true;
-      TasmotaGlobal.devices_present++;
+      UpdateDevicesPresent(1);
     }
   }
 
   if (!relaySet && TuyaGetDpId(TUYA_MCU_FUNC_DUMMY) == 0) { //by default the first relay is created automatically the dummy let remove it if not needed
     TuyaAddMcuFunc(TUYA_MCU_FUNC_REL1, 1);
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
     SettingsSaveAll();
   }
 
@@ -1287,6 +1291,7 @@ void TuyaSerialInput(void)
       uint8_t dpDataType = 0;
       char DataStr[15];
       bool isCmdToSuppress = false;
+      Tuya.time_last_cmd = 0;
 
       if (len > 0) {
         ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
@@ -1416,7 +1421,9 @@ uint8_t TuyaGetTuyaWifiState(void) {
       break;
   }
 
-  if (MqttIsConnected()) {
+  // When Wifi is connected, Say "connected to cloud" if mqtt is disabled or mqtt is connected
+  // avoid MCU to resets ESP to desperately get state 4 while MQTT is not enabled
+  if ((3 == wifi_state) && (!Settings->flag.mqtt_enabled || MqttIsConnected())) {
     wifi_state = 0x04;
   }
 
@@ -1567,7 +1574,7 @@ void TuyaSensorsShow(bool json)
           case 82:
           case 83:
           case 84:
-            WSContentSend_PD(PSTR("{s}Timer%d{m}%d{e}"), (sensor-80), Tuya.Sensors[sensor-71]); // No UoM for timers since they can be sec or min
+            WSContentSend_PD(PSTR("{s}Timer%d{m}%u{e}"), (sensor-80), Tuya.Sensors[sensor-71]); // No UoM for timers since they can be sec or min
             break;
         }
       }
@@ -1650,6 +1657,12 @@ bool Xdrv16(uint32_t function) {
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
+        if (Tuya.time_last_cmd) {
+          if ((millis()-Tuya.time_last_cmd) < TUYA_CMD_TIMEOUT)
+            break; // don't send anything if we are already waiting for an answer
+          else
+            Tuya.time_last_cmd = 0;
+        }
         if (TuyaSerial && Tuya.wifi_state != TuyaGetTuyaWifiState()) { TuyaSetWifiLed(); }
         if (!Tuya.low_power_mode) {
           Tuya.heartbeat_timer++;

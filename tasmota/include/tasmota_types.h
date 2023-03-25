@@ -266,8 +266,7 @@ typedef union {
     uint32_t spare23 : 1;                  // bit 23
     uint32_t spare24 : 1;                  // bit 24
     uint32_t spare25 : 1;                  // bit 25
-    uint32_t spare26 : 1;                  // bit 26
-    uint32_t spare27 : 1;                  // bit 27
+    uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
     uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
   };
@@ -453,7 +452,10 @@ typedef union {
   uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
   uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
   uint32_t mode_standard : 1;          // Set Linky Standard Mode (9600 bps stream) else legacy (1200 bps)
-  uint32_t spare4_1 : 4;               // Keep some spares for future uses
+  uint32_t show_stats : 1;             // Display frames stats informations on WEB interface
+  uint32_t spare1_1 : 1;               // Keep some spares for future uses
+  uint32_t spare1_2 : 1;               // Keep some spares for future uses
+  uint32_t spare1_3 : 1;               // Keep some spares for future uses
   uint32_t spare8_1 : 8;               // Keep some spares for future uses
   uint32_t spare8_2 : 8;               // Keep some spares for future uses
   };

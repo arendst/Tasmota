@@ -237,7 +237,7 @@ HTTPUpdateResult HTTPUpdateLight::handleUpdate(HTTPClientLight& http, const Stri
       if (len <= -1000) {
         AddLog(LOG_LEVEL_INFO, "OTA: TLS connection error %d after %d ms", -len - 1000, millis() - http_connect_time);
       } else if (len == -1) {
-        AddLog(LOG_LEVEL_INFO, "OTA: Connection timeout after %d ms", len, millis() - http_connect_time);
+        AddLog(LOG_LEVEL_INFO, "OTA: Connection timeout after %d ms", millis() - http_connect_time);
       } else {
         AddLog(LOG_LEVEL_INFO, "OTA: Connection error %d after %d ms", len, millis() - http_connect_time);
       }

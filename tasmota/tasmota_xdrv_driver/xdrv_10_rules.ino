@@ -1174,7 +1174,7 @@ bool RulesMqttData(void) {
     event_item = subscriptions.get(index);
 
     //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
-    if (sTopic.startsWith(event_item.Topic)) {
+    if ((sTopic == event_item.Topic) || sTopic.startsWith(event_item.Topic+"/")) {
       //This topic is subscribed by us, so serve it
       serviced = true;
       String value;

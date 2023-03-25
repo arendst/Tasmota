@@ -196,7 +196,7 @@ void PS16DZInit(void)
 
 bool PS16DZModuleSelected(void)
 {
-  TasmotaGlobal.devices_present++;
+  UpdateDevicesPresent(1);
   TasmotaGlobal.light_type = LT_SERIAL1;
 
   return true;

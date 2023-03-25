@@ -1116,17 +1116,17 @@ bool LightModuleInit(void)
 #endif  // USE_PWM_DIMMER
 
   if (TasmotaGlobal.light_type > LT_BASIC) {
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
   }
 
   // post-process for lights
   uint32_t pwm_channels = (TasmotaGlobal.light_type & 7) > LST_MAX ? LST_MAX : (TasmotaGlobal.light_type & 7);
   if (Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
     if (0 == pwm_channels) { pwm_channels = 1; }
-    TasmotaGlobal.devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
+    UpdateDevicesPresent(pwm_channels - 1);  // add the pwm channels controls at the end
   } else if ((Settings->param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {  // SetOption37
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
   } else {
 #ifdef USE_LIGHT_VIRTUAL_CT
     initCTRange(pwm_channels);

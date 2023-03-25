@@ -273,8 +273,8 @@ class Matter_IM
       )
     end
 
-    tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
-    tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
+    # tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
+    # tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
 
     return ret
   end
@@ -583,8 +583,8 @@ class Matter_IM
     ret.suppress_response = (size(fake_read.attributes_requests) == 0)        # ret is of class `ReportDataMessage`
     ret.subscription_id = sub.subscription_id
 
-    self.send_queue.push(matter.IM_ReportDataSubscribed(session.__message_handler, session, ret, sub))
-    self.send_enqueued(session.__message_handler)
+    self.send_queue.push(matter.IM_ReportDataSubscribed(session._message_handler, session, ret, sub))
+    self.send_enqueued(session._message_handler)
   end
   
   #############################################################

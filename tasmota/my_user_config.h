@@ -613,6 +613,7 @@
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+2k2 code)
 //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//  #define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //  #define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //    #define USE_PCA9685_ADDR 0x40                // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
 //    #define USE_PCA9685_FREQ 50                  // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
@@ -698,6 +699,7 @@
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
 //                                                 // Both settings together allow to limit searching for INA3221 to only a subset of addresses
+//  #define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
 
 //  #define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //    #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -822,7 +824,6 @@
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)
-#define USE_ENERGY_COLUMN_GUI                    // Add support for column display in GUI (+0k5 code)
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
   #define USE_ENERGY_POWER_LIMIT                 // Add additional support for Energy Power Limit detection (+1k2 code)
 #define USE_ENERGY_DUMMY                         // Add support for dummy Energy monitor allowing user values (+0k7 code)
@@ -976,6 +977,11 @@
 //  #define TM1638_MAX_LEDS        8               // Add support for 8 leds
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
+
+//#define USE_DINGTIAN_RELAY                       // Add support for the Dingian board using 74'595 et 74'165 shift registers
+//  #define DINGTIAN_INPUTS_INVERTED               // Invert input states (Hi => OFF, Low => ON)
+//  #define DINGTIAN_USE_AS_BUTTON                 // Inputs as Tasmota's virtual Buttons
+//  #define DINGTIAN_USE_AS_SWITCH                 // Inputs as Tasmota's virtual Switches
 
 // Select none or only one of the below defines
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
@@ -1203,7 +1209,7 @@
 \*********************************************************************************************/
 
 #ifndef OTA_URL
-  #define OTA_URL
+  #define OTA_URL ""
 #endif
 
 /*********************************************************************************************\

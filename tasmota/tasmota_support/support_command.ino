@@ -794,6 +794,10 @@ void CmndStatus(void)
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState(0);
+#ifdef USE_I2C
+    ResponseAppend_P(PSTR(",\"" D_CMND_I2CDRIVER "\":"));
+    I2cDriverState();
+#endif
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
@@ -2135,13 +2139,28 @@ void CmndSwitchText(void) {
   }
 }
 
-void CmndSwitchMode(void)
-{
+void CmndSwitchMode(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES_SET)) {
+    // SwitchMode1   - Show SwitchMode1
+    // SwitchMode1 2 - Set SwitchMode tot 2
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
       Settings->switchmode[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
     ResponseCmndIdxNumber(Settings->switchmode[XdrvMailbox.index-1]);
+  }
+  else if (0 == XdrvMailbox.index) {
+    // SwitchMode0   - Show all SwitchMode like {"SwitchMode":[2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+    // SwitchMode0 2 - Set all SwitchMode to 2
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        Settings->switchmode[i] = XdrvMailbox.payload;
+      }
+    }
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
+    for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+      ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings->switchmode[i]);
+    }
+    ResponseAppend_P(PSTR("]}"));
   }
 }
 

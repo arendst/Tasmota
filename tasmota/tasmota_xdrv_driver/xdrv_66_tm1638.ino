@@ -164,7 +164,7 @@ void TmInit(void) {
     digitalWrite(Tm1638.strobe_pin, HIGH);
 
     Tm1638.led_offset = TasmotaGlobal.devices_present;
-    TasmotaGlobal.devices_present += TM1638_MAX_LEDS;
+    UpdateDevicesPresent(TM1638_MAX_LEDS);
     Tm1638.key_offset = -1;
     Tm1638.detected = true;
   }
@@ -215,7 +215,7 @@ bool TmAddKey(void) {
 bool Xdrv66(uint32_t function) {
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     TmInit();
   } else if (Tm1638.detected) {
     switch (function) {

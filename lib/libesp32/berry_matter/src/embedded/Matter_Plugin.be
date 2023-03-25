@@ -26,27 +26,37 @@ class Matter_Plugin
   static var EMPTY_LIST = []
   static var EMPTY_MAP = {}
   var device                                # reference to the `device` global object
-  var endpoints                             # list of supported endpoints
+  var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes
 
   #############################################################
+  # MVC Model
+  #
+  # Model linking the plugin to the Tasmota behavior
+  #############################################################
+
+  #############################################################
   # Constructor
-  def init(device)
+  #
+  def init(device, endpoint)
     self.device = device
-    self.endpoints = self.EMPTY_LIST
+    self.endpoint = endpoint
     self.clusters = self.EMPTY_LIST
   end
 
   #############################################################
   # signal that an attribute has been changed
+  #
+  # If `endpoint` is `nil`, send to all endpoints
   def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    if endpoint == nil    endpoint = self.endpoint  end
     self.device.attribute_updated(endpoint, cluster, attribute, fabric_specific)
   end
 
   #############################################################
   # Which endpoints does it handle (list of numbers)
-  def get_endpoints()
-    return self.endpoints
+  def get_endpoint()
+    return self.endpoint
   end
   def get_cluster_map()
     return self.clusters
@@ -68,6 +78,11 @@ class Matter_Plugin
     return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
   end
 
+  #############################################################
+  # MVC Model
+  #
+  # View reading attributes
+  #############################################################
   #############################################################
   # read attribute
   def read_attribute(session, ctx)
@@ -96,11 +111,21 @@ class Matter_Plugin
   end
 
   #############################################################
+  # MVC Model
+  #
+  # Controller write attributes
+  #############################################################
+  #############################################################
   # write attribute
   def write_attribute(session, ctx, write_data)
     return nil
   end
 
+  #############################################################
+  # MVC Model
+  #
+  # Controller invoke request
+  #############################################################
   #############################################################
   # invoke command
   def invoke_request(session, val, ctx)
@@ -113,5 +138,19 @@ class Matter_Plugin
   def timed_request(session, val, ctx)
     return nil
   end
+
+  #############################################################
+  # parse sensor
+  #
+  # The device calls regularly `tasmota.read_sensors()` and converts
+  # it to json.
+  def parse_sensors(payload)
+  end
+
+  #############################################################
+  # every_second
+  def every_second()
+  end
 end
+
 matter.Plugin = Matter_Plugin

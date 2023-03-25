@@ -1981,13 +1981,13 @@ bool TuyaModuleSelected(void) {
     if ((Settings->tuya_fnid_map[i].fnid >= TUYA_MCU_FUNC_REL1 && Settings->tuya_fnid_map[i].fnid <= TUYA_MCU_FUNC_REL8 ) ||
     (Settings->tuya_fnid_map[i].fnid >= TUYA_MCU_FUNC_REL1_INV && Settings->tuya_fnid_map[i].fnid <= TUYA_MCU_FUNC_REL8_INV )) {
       relaySet = true;
-      TasmotaGlobal.devices_present++;
+      UpdateDevicesPresent(1);
     }
   }
 
   if (!relaySet && TuyaGetDpId(TUYA_MCU_FUNC_DUMMY) == 0) { //by default the first relay is created automatically the dummy let remove it if not needed
     TuyaAddMcuFunc(TUYA_MCU_FUNC_REL1, 1);
-    TasmotaGlobal.devices_present++;
+    UpdateDevicesPresent(1);
     SettingsSaveAll();
   }
 

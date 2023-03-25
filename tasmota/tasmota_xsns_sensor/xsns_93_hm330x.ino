@@ -269,32 +269,14 @@ void HM330XEnterSleep()
  * SNS Interface
 \*********************************************************************************************/
 
-const char JSON_HM330X_SNS[] PROGMEM = ",\"HM330X\":{"
-        "\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,"
-        "\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,"
-        "\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}";
+void HM330XShow(bool json) {
+  if (HM330Xdata->valid) {
+    char types[10];
+    strcpy_P(types, PSTR("HM330X"));
 
-const char HTTP_HM330X_SNS[] PROGMEM =
-  // "{s}HM330X " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  // "{s}HM330X " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  // "{s}HM330X " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}HM330X " D_ENVIRONMENTAL_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}HM330X " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}HM330X " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 0.3 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 0.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}"
-  "{s}HM330X " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
-
-void HM330XShow(bool json)
-{
-  if (HM330Xdata->valid)
-  {
     if (json) {
-      ResponseAppend_P(JSON_HM330X_SNS,
+      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
+        types,
         HM330Xdata->rx_buffer.pm1_0_standard, HM330Xdata->rx_buffer.pm2_5_standard, HM330Xdata->rx_buffer.pm10_0_standard,
         HM330Xdata->rx_buffer.pm1_0_env, HM330Xdata->rx_buffer.pm2_5_env, HM330Xdata->rx_buffer.pm10_0_env,
         HM330Xdata->rx_buffer.particles_0_3um, HM330Xdata->rx_buffer.particles_0_5um, HM330Xdata->rx_buffer.particles_1_0um,
@@ -308,11 +290,18 @@ void HM330XShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-        WSContentSend_PD(HTTP_HM330X_SNS,
-        // HM330Xdata->rx_buffer.pm1_0_standard, HM330Xdata->rx_buffer.pm2_5_standard, HM330Xdata->rx_buffer.pm10_0_standard,
-        HM330Xdata->rx_buffer.pm1_0_env, HM330Xdata->rx_buffer.pm2_5_env, HM330Xdata->rx_buffer.pm10_0_env,
-        HM330Xdata->rx_buffer.particles_0_3um, HM330Xdata->rx_buffer.particles_0_5um, HM330Xdata->rx_buffer.particles_1_0um,
-        HM330Xdata->rx_buffer.particles_2_5um, HM330Xdata->rx_buffer.particles_5_0um, HM330Xdata->rx_buffer.particles_10_0um);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "1", HM330Xdata->rx_buffer.pm1_0_standard);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "2.5", HM330Xdata->rx_buffer.pm2_5_standard);
+//      WSContentSend_PD(HTTP_SNS_STANDARD_CONCENTRATION, types, "10", HM330Xdata->rx_buffer.pm10_0_standard);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "1", HM330Xdata->rx_buffer.pm1_0_env);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "2.5", HM330Xdata->rx_buffer.pm2_5_env);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "10", HM330Xdata->rx_buffer.pm10_0_env);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.3", HM330Xdata->rx_buffer.particles_0_3um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.5", HM330Xdata->rx_buffer.particles_0_5um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "1", HM330Xdata->rx_buffer.particles_1_0um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "2.5", HM330Xdata->rx_buffer.particles_2_5um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "5", HM330Xdata->rx_buffer.particles_5_0um);
+      WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "10", HM330Xdata->rx_buffer.particles_10_0um);
 #endif  // USE_WEBSERVER
     }
   }

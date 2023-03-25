@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "공기질"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "소음"
 #define D_NONE "없음"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "꺼짐"
 #define D_OFFLINE "오프라인"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "UV 레벨"
 #define D_UV_POWER "UV 파워"
 #define D_VERSION "버전"
+#define D_VOC "VOC"
 #define D_VOLTAGE "전압"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "무게"
@@ -895,7 +898,9 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_PCF8574_INT   "PCF8574 Int"
 #define D_SENSOR_MCP23XXX_INT  "MCP23xxx Int"
+#define D_SENSOR_MCP23SXX_CS   "MCP23Sxx CS"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
@@ -935,6 +940,7 @@
 #define D_UNIT_HOUR "시"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"

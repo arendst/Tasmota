@@ -84,7 +84,7 @@ class Matter_PBKDFParamResponse
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.encode(b)
   end
 end
 matter.PBKDFParamResponse = Matter_PBKDFParamResponse
@@ -118,7 +118,7 @@ class Matter_Pake2
     #
     s.add_TLV(1, matter.TLV.B1, self.pB)
     s.add_TLV(2, matter.TLV.B1, self.cB)
-    return s.encode()
+    return s.encode(b)
   end
 end
 matter.Pake2 = Matter_Pake2
@@ -198,7 +198,7 @@ class Matter_Sigma2
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.encode(b)
   end
 end
 matter.Sigma2 = Matter_Sigma2
@@ -224,7 +224,7 @@ class Matter_Sigma2Resume
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.encode(b)
   end
 end
 matter.Sigma2Resume = Matter_Sigma2Resume
