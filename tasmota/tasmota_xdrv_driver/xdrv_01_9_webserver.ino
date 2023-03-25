@@ -3631,10 +3631,9 @@ void CmndWebColor(void)
 #endif // FIRMWARE_MINIMAL
     }
   }
-  Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
+  Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
   for (uint32_t i = 0; i < COL_LAST; i++) {
-    if (i) { ResponseAppend_P(PSTR(",")); }
-    ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
+    ResponseAppend_P(PSTR("%s\"#%06x\""), (i>0)?",":"", WebColor(i));
   }
   ResponseAppend_P(PSTR("]}"));
 }

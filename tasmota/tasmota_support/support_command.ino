@@ -2156,13 +2156,11 @@ void CmndSwitchMode(void) {
         Settings->switchmode[i] = XdrvMailbox.payload;
       }
     }
-    char stemp[MAX_SWITCHES_SET * 4];
-    stemp[0] = '\0';
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
     for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%d" ), stemp, (i > 0 ? "," : "["), Settings->switchmode[i]);
+      ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings->switchmode[i]);
     }
-    strcat(stemp, "]");
-    Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp);
+    ResponseAppend_P(PSTR("]}"));
   }
 }
 
