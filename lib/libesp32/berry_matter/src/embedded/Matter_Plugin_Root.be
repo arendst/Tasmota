@@ -26,7 +26,7 @@ class Matter_Plugin end
 
 class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = {
-    0x001D: [0,1,2,3],                # Descriptor Cluster 9.5 p.453
+    # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
     0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
@@ -48,7 +48,6 @@ class Matter_Plugin_Root : Matter_Plugin
   # Constructor
   def init(device, endpoint)
     super(self).init(device, endpoint)
-    self.clusters = self.CLUSTERS
   end
 
   #############################################################
@@ -288,34 +287,6 @@ class Matter_Plugin_Root : Matter_Plugin
         return TLV.create_TLV(TLV.U1, 30)    # 30 - value taking from example in esp-matter
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0x04)  # Put Eth for now which should work for any on-network
-      end
-
-    # ====================================================================================================
-    elif   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
-      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
-        var dtl = TLV.Matter_TLV_array()
-        for dt: self.TYPES.keys()
-          var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
-        end
-        return dtl
-      elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
-        var sl = TLV.Matter_TLV_array()
-        for cl: self.get_cluster_list()
-          sl.add_TLV(nil, TLV.U4, cl)
-        end
-        return sl
-      elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
-        var cl = TLV.Matter_TLV_array()
-        return cl
-      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
-        var eps = self.device.get_active_endpoints(true)
-        var pl = TLV.Matter_TLV_array()
-        for ep: eps
-          pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
-        end
-        return pl
       end
 
     else

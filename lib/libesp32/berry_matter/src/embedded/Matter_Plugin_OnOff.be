@@ -26,7 +26,7 @@ class Matter_Plugin end
 
 class Matter_Plugin_OnOff : Matter_Plugin
   static var CLUSTERS  = {
-    0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
+    # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
@@ -42,7 +42,6 @@ class Matter_Plugin_OnOff : Matter_Plugin
   # Constructor
   def init(device, endpoint, tasmota_relay_index)
     super(self).init(device, endpoint)
-    self.clusters = self.CLUSTERS
     self.get_onoff()                        # read actual value
     if tasmota_relay_index == nil     tasmota_relay_index = 0   end
     self.tasmota_relay_index = tasmota_relay_index
@@ -80,37 +79,8 @@ class Matter_Plugin_OnOff : Matter_Plugin
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
-    if   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
-
-      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
-        var dtl = TLV.Matter_TLV_array()
-        for dt: self.TYPES.keys()
-          var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
-        end
-        return dtl
-      elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
-        var sl = TLV.Matter_TLV_array()
-        for cl: self.get_cluster_list()
-          sl.add_TLV(nil, TLV.U4, cl)
-        end
-        return sl
-      elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
-        var cl = TLV.Matter_TLV_array()
-        cl.add_TLV(nil, TLV.U2, 0x0006)
-        return cl
-      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
-        var pl = TLV.Matter_TLV_array()
-        return pl
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    #
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 1)    # "Initial Release"
-      end
-
     # ====================================================================================================
-    elif cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
+    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
       if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
         return TLV.create_TLV(TLV.U2, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
@@ -163,8 +133,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
       
+    else
+      return super(self).read_attribute(session, ctx)
     end
-    # no match found, return that the attribute is unsupported  end
   end
 
   #############################################################
