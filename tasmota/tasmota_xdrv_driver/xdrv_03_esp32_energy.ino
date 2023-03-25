@@ -442,7 +442,6 @@ char* WebEnergyFmt(float* input, uint32_t resolution, uint32_t single) {
       single = 0;
     }
   }
-#ifdef USE_ENERGY_COLUMN_GUI
   ext_snprintf_P(Energy->value, GUISZ, PSTR("</td>"));       // Skip first column
   if ((Energy->gui_count > 1) && single) {            // Need to set colspan so need new columns
     // </td><td colspan='3' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
@@ -461,13 +460,6 @@ char* WebEnergyFmt(float* input, uint32_t resolution, uint32_t single) {
     }
   }
   ext_snprintf_P(Energy->value, GUISZ, PSTR("%s<td>"), Energy->value);
-#else  // not USE_ENERGY_COLUMN_GUI
-  uint32_t index = (single) ? 1 : Energy->phase_count;    // 1,2,3
-  Energy->value[0] = '\0';
-  for (uint32_t i = 0; i < index; i++) {
-    ext_snprintf_P(Energy->value, GUISZ, PSTR("%s%s%*_f"), Energy->value, (i)?" / ":"", resolution, &input[i]);
-  }
-#endif  // USE_ENERGY_COLUMN_GUI
   return Energy->value;
 }
 #endif  // USE_WEBSERVER
@@ -1622,7 +1614,6 @@ void EnergyShow(bool json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-#ifdef USE_ENERGY_COLUMN_GUI
     uint8_t relays[ENERGY_MAX_PHASES];
     uint32_t relay_show = 0;
     power_t power = TasmotaGlobal.power;
@@ -1683,7 +1674,6 @@ void EnergyShow(bool json) {
           (no_label) ? "" : itoa(relays[Energy->gui_offset +i], number, 10));
       }
       WSContentSend_P(PSTR("<td>{e}"));              // Last column is units ({e} = </td></tr>)
-#endif  // USE_ENERGY_COLUMN_GUI
       if (Energy->voltage_available) {
         WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFmt(Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
       }
@@ -1712,10 +1702,8 @@ void EnergyShow(bool json) {
         WSContentSend_PD(HTTP_SNS_EXPORT_ACTIVE, WebEnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
       }
 
-#ifdef USE_ENERGY_COLUMN_GUI
       XnrgCall(FUNC_WEB_COL_SENSOR);
       WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
-#endif  // USE_ENERGY_COLUMN_GUI
       XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER
     }

@@ -183,11 +183,7 @@ bool Xnrg18(uint32_t function)
       Sdm72Show(1);
       break;
 #ifdef USE_WEBSERVER
-#ifdef USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_COL_SENSOR:
-#else   // not USE_ENERGY_COLUMN_GUI
-    case FUNC_WEB_SENSOR:
-#endif  // USE_ENERGY_COLUMN_GUI
       Sdm72Show(0);
       break;
 #endif  // USE_WEBSERVER
