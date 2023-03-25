@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.4.0.4
 ### Added
+- Command ``SwitchMode0`` to show or set all SwitchModes
 - Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay
 - Support for multiple PCF8574 as switch/button/relay
 - NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)

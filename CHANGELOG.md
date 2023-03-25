@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Matter support simple Relay on Apple Homekit by Stephan Hadinger (#18239)
 - VSC Pio menu bar extensions by @Jason2866 (#18233)
+- Command ``SwitchMode0`` to show or set all SwitchModes
 
 ### Breaking Changed
 

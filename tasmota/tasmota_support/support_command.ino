@@ -2139,13 +2139,30 @@ void CmndSwitchText(void) {
   }
 }
 
-void CmndSwitchMode(void)
-{
+void CmndSwitchMode(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES_SET)) {
+    // SwitchMode1   - Show SwitchMode1
+    // SwitchMode1 2 - Set SwitchMode tot 2
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
       Settings->switchmode[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
     ResponseCmndIdxNumber(Settings->switchmode[XdrvMailbox.index-1]);
+  }
+  else if (0 == XdrvMailbox.index) {
+    // SwitchMode0   - Show all SwitchMode like {"SwitchMode":[2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+    // SwitchMode0 2 - Set all SwitchMode to 2
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        Settings->switchmode[i] = XdrvMailbox.payload;
+      }
+    }
+    char stemp[MAX_SWITCHES_SET * 3];
+    stemp[0] = '\0';
+    for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%d" ), stemp, (i > 0 ? "," : "["), Settings->switchmode[i]);
+    }
+    strcat(stemp, "]");
+    Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp);
   }
 }
 
