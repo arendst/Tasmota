@@ -143,8 +143,6 @@ typedef struct {
 
 struct MCP230 {
   tMcp23xDevice device[MCP23XXX_MAX_DEVICES];
-  uint32_t button_used;
-  uint32_t switch_used;
   uint32_t relay_inverted;
   uint32_t button_inverted;
   uint8_t chip;
@@ -506,38 +504,32 @@ bool MCP23xLoadTemplate(void) {
       uint16_t mpin = val.getUInt();
       if (mpin) {                                      // Above GPIO_NONE
         if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
-          bitSet(Mcp23x.switch_used, mpin - AGPIO(GPIO_SWT1));
           Mcp23x.switch_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
-          bitSet(Mcp23x.switch_used, mpin - AGPIO(GPIO_SWT1));
           Mcp23x.switch_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
-          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
-          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
-          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
-          bitSet(Mcp23x.button_used, mpin - AGPIO(GPIO_KEY1));
           Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
@@ -770,7 +762,7 @@ bool MCP23xAddButton(void) {
     index -= Mcp23x.button_offset;
     if (index >= Mcp23x.button_max) { return false; }
   } else {
-    if (!bitRead(Mcp23x.button_used, index)) { return false; }
+    if (!MCP23xPinUsed(GPIO_KEY1, index)) { return false; }
     Mcp23x.button_offset = 0;
   }
   XdrvMailbox.index = (MCP23xDigitalRead(MCP23xPin(GPIO_KEY1, index)) != bitRead(Mcp23x.button_inverted, index));
@@ -785,7 +777,7 @@ bool MCP23xAddSwitch(void) {
     index -= Mcp23x.switch_offset;
     if (index >= Mcp23x.switch_max) { return false; }
   } else {
-    if (!bitRead(Mcp23x.switch_used, index)) { return false; }
+    if (!MCP23xPinUsed(GPIO_SWT1, index)) { return false; }
     Mcp23x.switch_offset = 0;
   }
   XdrvMailbox.index = MCP23xDigitalRead(MCP23xPin(GPIO_SWT1, index));
