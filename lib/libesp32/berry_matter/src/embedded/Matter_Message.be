@@ -244,7 +244,7 @@ class Matter_Frame
     end
     resp.session = self.session         # also copy the session object
     # message counter
-    resp.message_counter = self.session.counter_snd.next()
+    resp.message_counter = self.session.counter_snd_next()
     resp.local_session_id = self.session.initiator_session_id
       
     resp.x_flag_i = (self.x_flag_i ? 0 : 1)     # invert the initiator flag
@@ -284,7 +284,7 @@ class Matter_Frame
     # message counter
     # if self.session && self.session.initiator_session_id != 0
     if self.local_session_id != 0 && self.session && self.session.initiator_session_id != 0
-      resp.message_counter = self.session.counter_snd.next()
+      resp.message_counter = self.session.counter_snd_next()
       resp.local_session_id = self.session.initiator_session_id
     else
       resp.message_counter = self.session._counter_insecure_snd.next()
@@ -327,7 +327,7 @@ class Matter_Frame
     resp.session = session         # also copy the session object
     # message counter
     if session && session.initiator_session_id != 0
-      resp.message_counter = session.counter_snd.next()
+      resp.message_counter = session.counter_snd_next()
       resp.local_session_id = session.initiator_session_id
     else
       resp.message_counter = session._counter_insecure_snd.next()

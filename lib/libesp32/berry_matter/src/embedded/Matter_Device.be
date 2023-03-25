@@ -275,6 +275,7 @@ class Matter_Device
   def trigger_read_sensors()
     import json
     var rs_json = tasmota.read_sensors()
+    if rs_json == nil   return  end
     var rs = json.load(rs_json)
     if rs != nil
 
@@ -286,7 +287,7 @@ class Matter_Device
       end
 
     else
-      tasmota.log("MTR: unable to parse read_sensors: "+rs_json, 3)
+      tasmota.log("MTR: unable to parse read_sensors: "+str(rs_json), 3)
     end
 
   end

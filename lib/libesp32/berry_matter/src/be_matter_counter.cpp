@@ -69,6 +69,12 @@ static void mc_deinit(bvm *vm, matter_counter_t *c) {
 }
 BE_FUNC_CTYPE_DECLARE(mc_deinit, "", "@.")
 
+// do a unisgned int32 comparison
+bbool mc_is_greater(uint32_t a, uint32_t b) {
+  return a > b;
+}
+BE_FUNC_CTYPE_DECLARE(mc_is_greater, "b", "ii")
+
 static void mc_reset(matter_counter_t *c, int32_t val) {
   c->counter = val;
   c->window.reset();
@@ -185,6 +191,8 @@ class be_class_Matter_Counter (scope: global, name: Matter_Counter, strings: wea
   val, ctype_func(mc_val)
   next, ctype_func(mc_next)
   validate, ctype_func(mc_validate)
+
+  is_greater, static_ctype_func(mc_is_greater)    // compare two numbers as unsigned 32 bits
 }
 @const_object_info_end */
 

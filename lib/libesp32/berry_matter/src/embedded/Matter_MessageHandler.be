@@ -96,8 +96,8 @@ class Matter_MessageHandler
         frame.session = session   # keep a pointer of the session in the message
        
         # check if it's a duplicate
-        if !session.counter_rcv.validate(frame.message_counter, true)
-          tasmota.log("MTR: rejected duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv.val()), 3)
+        if !session.counter_rcv_validate(frame.message_counter, true)
+          tasmota.log("MTR: rejected duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
           return false
         end
         
