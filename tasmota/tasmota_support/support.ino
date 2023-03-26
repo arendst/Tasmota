@@ -2018,7 +2018,7 @@ void SetSerialBegin(void) {
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef ARDUINO_USB_CDC_ON_BOOT
+#if ARDUINO_USB_MODE
 //  Serial.end();
 //  Serial.begin();
   // Above sequence ends in "Exception":5,"Reason":"Load access fault"
@@ -2028,7 +2028,7 @@ void SetSerialBegin(void) {
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
-#endif  // Not ARDUINO_USB_CDC_ON_BOOT
+#endif  // Not ARDUINO_USB_MODE
 #endif  // ESP32
 }
 
