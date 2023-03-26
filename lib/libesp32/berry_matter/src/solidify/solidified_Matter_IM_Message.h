@@ -926,7 +926,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
 ********************************************************************/
 be_local_closure(Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -934,32 +934,34 @@ be_local_closure(Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(report_data_phase),
-    /* K1   */  be_nested_str_weak(status_ok_received),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(report_data_phase),
+    /* K2   */  be_nested_str_weak(status_ok_received),
     }),
     be_str_weak(status_ok_received),
     &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x780A0007,  //  0001  JMPF	R2	#000A
-      0x60080003,  //  0002  GETGBL	R2	G3
-      0x5C0C0000,  //  0003  MOVE	R3	R0
-      0x7C080200,  //  0004  CALL	R2	1
-      0x8C080501,  //  0005  GETMET	R2	R2	K1
-      0x5C100200,  //  0006  MOVE	R4	R1
-      0x7C080400,  //  0007  CALL	R2	2
-      0x80040400,  //  0008  RET	1	R2
-      0x70020007,  //  0009  JMP		#0012
-      0x60080003,  //  000A  GETGBL	R2	G3
-      0x5C0C0000,  //  000B  MOVE	R3	R0
-      0x7C080200,  //  000C  CALL	R2	1
-      0x8C080501,  //  000D  GETMET	R2	R2	K1
-      0x4C100000,  //  000E  LDNIL	R4
-      0x7C080400,  //  000F  CALL	R2	2
-      0x50080000,  //  0010  LDBOOL	R2	0	0
-      0x80040400,  //  0011  RET	1	R2
-      0x80000000,  //  0012  RET	0
+    ( &(const binstruction[20]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x880C0101,  //  0001  GETMBR	R3	R0	K1
+      0x780E0007,  //  0002  JMPF	R3	#000B
+      0x600C0003,  //  0003  GETGBL	R3	G3
+      0x5C100000,  //  0004  MOVE	R4	R0
+      0x7C0C0200,  //  0005  CALL	R3	1
+      0x8C0C0702,  //  0006  GETMET	R3	R3	K2
+      0x5C140200,  //  0007  MOVE	R5	R1
+      0x7C0C0400,  //  0008  CALL	R3	2
+      0x80040600,  //  0009  RET	1	R3
+      0x70020007,  //  000A  JMP		#0013
+      0x600C0003,  //  000B  GETGBL	R3	G3
+      0x5C100000,  //  000C  MOVE	R4	R0
+      0x7C0C0200,  //  000D  CALL	R3	1
+      0x8C0C0702,  //  000E  GETMET	R3	R3	K2
+      0x4C140000,  //  000F  LDNIL	R5
+      0x7C0C0400,  //  0010  CALL	R3	2
+      0x500C0000,  //  0011  LDBOOL	R3	0	0
+      0x80040600,  //  0012  RET	1	R3
+      0x80000000,  //  0013  RET	0
     })
   )
 );
@@ -1250,7 +1252,7 @@ be_local_closure(Matter_IM_SubscribeResponse_init,   /* name */
 ********************************************************************/
 be_local_closure(Matter_IM_SubscribeResponse_status_ok_received,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    9,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1258,19 +1260,39 @@ be_local_closure(Matter_IM_SubscribeResponse_status_ok_received,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(status_ok_received),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(log),
+    /* K3   */  be_nested_str_weak(format),
+    /* K4   */  be_nested_str_weak(MTR_X3A_X20_X3ESub_OK_X20_X20_X20_X20sub_id_X3D),
+    /* K5   */  be_nested_str_weak(sub),
+    /* K6   */  be_nested_str_weak(subscription_id),
+    /* K7   */  be_const_int(2),
+    /* K8   */  be_nested_str_weak(status_ok_received),
     }),
     be_str_weak(status_ok_received),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x60080003,  //  0000  GETGBL	R2	G3
-      0x5C0C0000,  //  0001  MOVE	R3	R0
-      0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
-      0x5C100200,  //  0004  MOVE	R4	R1
-      0x7C080400,  //  0005  CALL	R2	2
-      0x80040400,  //  0006  RET	1	R2
+    ( &(const binstruction[19]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0xB80E0200,  //  0001  GETNGBL	R3	K1
+      0x8C0C0702,  //  0002  GETMET	R3	R3	K2
+      0x8C140503,  //  0003  GETMET	R5	R2	K3
+      0x601C0008,  //  0004  GETGBL	R7	G8
+      0x88200105,  //  0005  GETMBR	R8	R0	K5
+      0x88201106,  //  0006  GETMBR	R8	R8	K6
+      0x7C1C0200,  //  0007  CALL	R7	1
+      0x001E0807,  //  0008  ADD	R7	K4	R7
+      0x7C140400,  //  0009  CALL	R5	2
+      0x58180007,  //  000A  LDCONST	R6	K7
+      0x7C0C0600,  //  000B  CALL	R3	3
+      0x600C0003,  //  000C  GETGBL	R3	G3
+      0x5C100000,  //  000D  MOVE	R4	R0
+      0x7C0C0200,  //  000E  CALL	R3	1
+      0x8C0C0708,  //  000F  GETMET	R3	R3	K8
+      0x5C140200,  //  0010  MOVE	R5	R1
+      0x7C0C0400,  //  0011  CALL	R3	2
+      0x80040600,  //  0012  RET	1	R3
     })
   )
 );

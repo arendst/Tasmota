@@ -90,7 +90,7 @@ class Matter_Device
     self.plugins.push(matter.Plugin_OnOff(self, 1, 0#-tasmota relay 1-#))
     # self.plugins.push(matter.Plugin_OnOff(self, 2, 1#-tasmota relay 2-#))
     # self.plugins.push(matter.Plugin_Light3(self, 1))
-    # self.plugins.push(matter.Plugin_Temp_Sensor(self, 1, "ESP32#Temperature"))
+    # self.plugins.push(matter.Plugin_Temp_Sensor(self, 10, "ESP32#Temperature"))
 
     # for now read sensors every 5 seconds
     tasmota.add_cron("*/5 * * * * *", def () self.trigger_read_sensors() end, "matter_sensors_5s")
