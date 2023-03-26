@@ -5,7 +5,7 @@
       "memory_type": "qio_opi"
     },
     "core": "esp32",
-    "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=0 -DARDUINO_USB_MSC_ON_BOOT=0 -DARDUINO_USB_DFU_ON_BOOT=0 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
+    "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "qio",
