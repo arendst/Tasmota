@@ -2574,7 +2574,7 @@ be_local_closure(Matter_Commisioning_Context_send_status_report,   /* name */
     }),
     be_str_weak(send_status_report),
     &be_const_str_solidified,
-    ( &(const binstruction[29]) {  /* code */
+    ( &(const binstruction[32]) {  /* code */
       0x8C180300,  //  0000  GETMET	R6	R1	K0
       0x5422003F,  //  0001  LDINT	R8	64
       0x5C240A00,  //  0002  MOVE	R9	R5
@@ -2601,9 +2601,12 @@ be_local_closure(Matter_Commisioning_Context_send_status_report,   /* name */
       0x5C2C1000,  //  0017  MOVE	R11	R8
       0x88300306,  //  0018  GETMBR	R12	R1	K6
       0x88340307,  //  0019  GETMBR	R13	R1	K7
-      0x88380D08,  //  001A  GETMBR	R14	R6	K8
-      0x7C240A00,  //  001B  CALL	R9	5
-      0x80000000,  //  001C  RET	0
+      0x78160001,  //  001A  JMPF	R5	#001D
+      0x88380D08,  //  001B  GETMBR	R14	R6	K8
+      0x70020000,  //  001C  JMP		#001E
+      0x4C380000,  //  001D  LDNIL	R14
+      0x7C240A00,  //  001E  CALL	R9	5
+      0x80000000,  //  001F  RET	0
     })
   )
 );

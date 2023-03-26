@@ -31,7 +31,7 @@ class Matter_Plugin_Light3 : Matter_Plugin
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
-    0x0008: [0,0x0F,0x11,0xFFFC,0xFFFD],                # Level Control 1.6 p.57
+    0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],                # Level Control 1.6 p.57
     0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
   }
   static var TYPES = { 0x010D: 2 }                  # Extended Color Light
@@ -44,9 +44,9 @@ class Matter_Plugin_Light3 : Matter_Plugin
   def init(device, endpoint)
     super(self).init(device, endpoint)
     self.shadow_hue = 0
-    # self.get_onoff()                        # read actual value
-    # if tasmota_relay_index == nil     tasmota_relay_index = 0   end
-    # self.tasmota_relay_index = tasmota_relay_index
+    self.shadow_bri = 0
+    self.shadow_sat = 0
+    self.shadow_onoff = false
   end
 
   #############################################################
@@ -67,29 +67,6 @@ class Matter_Plugin_Light3 : Matter_Plugin
     if hue != self.shadow_hue   self.attribute_updated(nil, 0x0300, 0x0000)   self.shadow_hue = hue   end
     if sat != self.shadow_sat   self.attribute_updated(nil, 0x0300, 0x0001)   self.shadow_sat = sat   end
   end
-
-  # #############################################################
-  # # Model
-  # #
-  # def set_onoff(v)
-  #   tasmota.set_power(self.tasmota_relay_index, bool(v))
-  #   self.get_onoff()
-  # end
-  # #############################################################
-  # # get_onoff
-  # #
-  # # Update shadow and signal any change
-  # def get_onoff()
-  #   var state = tasmota.get_power(self.tasmota_relay_index)
-  #   if state != nil
-  #     if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
-  #       self.onoff_changed()      # signal any change
-  #     end
-  #     self.shadow_onoff = state
-  #   end
-  #   if self.shadow_onoff == nil   self.shadow_onoff = false   end     # avoid any `nil` value when initializing
-  #   return self.shadow_onoff
-  # end
 
   #############################################################
   # read an attribute
@@ -143,11 +120,15 @@ class Matter_Plugin_Light3 : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0x88)
+        return TLV.create_TLV(TLV.U1, self.shadow_bri)
+      elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
+        return TLV.create_TLV(TLV.U1, 0)
+      elif attribute == 0x0003          #  ---------- MaxLevel / u1 ----------
+        return TLV.create_TLV(TLV.U1, 254)
       elif attribute == 0x000F          #  ---------- Options / map8 ----------
         return TLV.create_TLV(TLV.U1, 0)    #
       elif attribute == 0x0011          #  ---------- OnLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 1)    #
+        return TLV.create_TLV(TLV.U1, self.shadow_bri)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0X01)    # OnOff
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
@@ -163,13 +144,18 @@ class Matter_Plugin_Light3 : Matter_Plugin
       elif attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return TLV.create_TLV(TLV.U1, 0)# 0 = CurrentHue and CurrentSaturation
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
         return TLV.create_TLV(TLV.U1, 0)
+      
+      # Defined Primaries Information Attribute Set
+      elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
+        return TLV.create_TLV(TLV.U1, 0)
+
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0x01)    # HS
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
@@ -187,6 +173,7 @@ class Matter_Plugin_Light3 : Matter_Plugin
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
+    import light
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -220,32 +207,88 @@ class Matter_Plugin_Light3 : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   command == 0x0000            # ---------- Off ----------
-        self.set_onoff(false)
+        light.set({'power':false})
+        self.update_shadow()
         return true
       elif command == 0x0001            # ---------- On ----------
-        self.set_onoff(true)
+        light.set({'power':true})
+        self.update_shadow()
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        self.set_onoff(!self.get_onoff())
+        light.set({'power':!self.shadow_onoff})
+        self.update_shadow()
         return true
       end
     # ====================================================================================================
     elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       if   command == 0x0000            # ---------- MoveToLevel ----------
+        var bri_in = val.findsubval(0)  # Hue 0..254
+        var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 360)
+        light.set({'bri': bri})
+        self.update_shadow()
         return true
       elif command == 0x0001            # ---------- Move ----------
+        # TODO, we don't really support it
         return true
       elif command == 0x0002            # ---------- Step ----------
+        # TODO, we don't really support it
         return true
       elif command == 0x0003            # ---------- Stop ----------
+        # TODO, we don't really support it
         return true
       elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
+        var bri_in = val.findsubval(0)  # Hue 0..254
+        var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 360)
+        var onoff = bri > 0
+        light.set({'bri': bri, 'power': onoff})
+        self.update_shadow()
         return true
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
+        # TODO, we don't really support it
         return true
       elif command == 0x0006            # ---------- StepWithOnOff ----------
+        # TODO, we don't really support it
         return true
       elif command == 0x0007            # ---------- StopWithOnOff ----------
+        # TODO, we don't really support it
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      if   command == 0x0000            # ---------- MoveToHue ----------
+        var hue_in = val.findsubval(0)  # Hue 0..254
+        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
+        light.set({'hue': hue})
+        self.update_shadow()
+        return true
+      elif command == 0x0001            # ---------- MoveHue ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x0002            # ---------- StepHue ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x0003            # ---------- MoveToSaturation ----------
+        var sat_in = val.findsubval(0)  # Sat 0..254
+        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
+        light.set({'sat': sat})
+        self.update_shadow()
+        return true
+      elif command == 0x0004            # ---------- MoveSaturation ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x0005            # ---------- StepSaturation ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x0006            # ---------- MoveToHueAndSaturation ----------
+        var hue_in = val.findsubval(0)  # Hue 0..254
+        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
+        var sat_in = val.findsubval(1)  # Sat 0..254
+        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
+        light.set({'hue': hue, 'sat': sat})
+        self.update_shadow()
+        return true
+      elif command == 0x0047            # ---------- StopMoveStep ----------
+        # TODO, we don't really support it
         return true
       end
     end

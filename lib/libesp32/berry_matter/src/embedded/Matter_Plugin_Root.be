@@ -519,12 +519,13 @@ class Matter_Plugin_Root : Matter_Plugin
         for fab: self.device.sessions.active_fabrics()
           if fab.get_fabric_index() == index
             tasmota.log("MTR: removing fabric " + fab.get_fabric_id().copy().reverse().tohex(), 2)
-            self.device.remove_fabric(fab)
-            break
+            # defer actual removal to send a response
+            tasmota.set_timer(2000, def () self.device.remove_fabric(fab) end)
+            return true                 # Ok
           end
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
-        ctx.status = matter.SUCCESS                  # OK
+        ctx.status = matter.INVALID_ACTION
         return nil                      # trigger a standalone ack
 
       end
