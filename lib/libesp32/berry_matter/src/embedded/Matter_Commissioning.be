@@ -104,7 +104,7 @@ class Matter_Commisioning_Context
 
     var raw = resp.encode_frame(status_raw)
 
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter)
+    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, reliable ? resp.message_counter : nil)
   end
 
   def parse_PBKDFParamRequest(msg)

@@ -36,7 +36,7 @@ class Matter_UDPPacket_sent
   var raw                         # bytes() to be sent
   var addr                        # ip_address (string)
   var port                        # port (int)
-  var msg_id                      # (int) message identifier that needs to be acknowledged
+  var msg_id                      # (int) message identifier that needs to be acknowledged, or `nil` if no ack needed
   var retries                     # 0 in first attempts, goes up to RETRIES
   var next_try                    # timestamp (millis) when to try again
 
