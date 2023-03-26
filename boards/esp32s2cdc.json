@@ -4,7 +4,7 @@
       "ldscript": "esp32s2_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=0 -DARDUINO_USB_CDC_ON_BOOT=0 -DARDUINO_USB_MSC_ON_BOOT=0 -DARDUINO_USB_DFU_ON_BOOT=0 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S2",
+    "extra_flags": "-DBOARD_HAS_PSRAM -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S2",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dio",
