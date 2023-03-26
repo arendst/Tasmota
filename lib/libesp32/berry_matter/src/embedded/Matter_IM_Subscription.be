@@ -96,10 +96,12 @@ class Matter_IM_Subscription
 
   # we received a complete ack for previous message, rearm
   def re_arm()
+    import string
     self.wait_status = false
     var now = tasmota.millis()
     self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
     self.not_before = now + self.min_interval * 1000 - 1
+    tasmota.log(string.format("MTR: >Sub_Done  sub_id="+str(self.subscription_id)), 2)
   end
 
   # signal that an attribute was updated, to add to the list of reportable

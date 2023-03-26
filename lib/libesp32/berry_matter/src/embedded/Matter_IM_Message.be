@@ -292,6 +292,8 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
+    import string
+    # tasmota.log(string.format("MTR: >Sub_OK    sub_id="+str(self.sub.subscription_id)), 2)
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
@@ -376,7 +378,9 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
 
   # Status ok received
   def status_ok_received(msg)
+    import string
     # once we receive ack, open flow for subscriptions
+    tasmota.log(string.format("MTR: >Sub_OK    sub_id="+str(self.sub.subscription_id)), 2)
     return super(self).status_ok_received(msg)
   end
     
