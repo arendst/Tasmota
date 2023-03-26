@@ -88,6 +88,7 @@ class Matter_Device
     # add the default plugin
     self.plugins.push(matter.Plugin_Root(self, 0))
     self.plugins.push(matter.Plugin_OnOff(self, 1, 0#-tasmota relay 1-#))
+    # self.plugins.push(matter.Plugin_OnOff(self, 2, 1#-tasmota relay 2-#))
     # self.plugins.push(matter.Plugin_Light3(self, 1))
     # self.plugins.push(matter.Plugin_Temp_Sensor(self, 1, "ESP32#Temperature"))
 
@@ -140,9 +141,9 @@ class Matter_Device
   # Remove a fabric and clean all corresponding values and mDNS entries
   def remove_fabric(fabric)
     self.message_handler.im.subs.remove_by_fabric(fabric)
+    self.mdns_remove_op_discovery(fabric)
     self.sessions.remove_fabric(fabric)
     self.sessions.save_fabrics()
-    # TODO remove mDNS entries
   end
 
   #############################################################
@@ -601,16 +602,17 @@ class Matter_Device
   #############################################################
   def invoke_request(session, val, ctx)
     var idx = 0
+    var endpoint = ctx.endpoint
     while idx < size(self.plugins)
       var plugin = self.plugins[idx]
 
-      var ret = plugin.invoke_request(session, val, ctx)
-      if  ret != nil || ctx.status != matter.UNSUPPORTED_COMMAND  # default value
-        return ret
+      if plugin.endpoint == endpoint
+        return plugin.invoke_request(session, val, ctx)
       end
 
       idx += 1
     end
+    ctx.status = matter.UNSUPPORTED_ENDPOINT
   end
 
   #############################################################
