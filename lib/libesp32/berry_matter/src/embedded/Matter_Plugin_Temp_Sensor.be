@@ -26,9 +26,9 @@ class Matter_Plugin_Device end
 
 class Matter_Plugin_Temp_Sensor : Matter_Plugin_Device
   static var CLUSTERS  = {
-    0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
-    0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
-    0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
+    # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
+    # 0x0003: inherited                             # Identify 1.2 p.16
+    # 0x0004: inherited                             # Groups 1.3 p.21
     0x0402: [0,1,2],                                # Temperature Measurement p.97 - no writable
   }
   static var TYPES = { 0x0302: 2 }                  # Temperature Sensor, rev 2
@@ -41,7 +41,6 @@ class Matter_Plugin_Temp_Sensor : Matter_Plugin_Device
   # Constructor
   def init(device, endpoint, sensor_filter)
     super(self).init(device, endpoint)
-    self.clusters = self.CLUSTERS
     self.tasmota_sensor_filter = sensor_filter
     self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(sensor_filter)
   end
