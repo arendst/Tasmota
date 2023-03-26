@@ -150,47 +150,101 @@ extern "C" {
         be_pop(vm, 1);    // remove last argument to have the map at the top of stack
       }
 
-      // power
-      if (map_find(vm, "power")) {
-        bool power = be_tobool(vm, -1);
-        bool current_power = bitRead(TasmotaGlobal.power, idx + Light.device - 1);
-        if (power != current_power) {   // only send command if needed
-          ExecuteCommandPower(idx + Light.device, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
+      // read all arguments first and clear stack when calling Tasmota APIs
+      bool has_power = map_find(vm, "power");
+      bool val_power;
+      if (has_power) { val_power = be_tobool(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_ct = map_find(vm, "ct");
+      int32_t val_ct;
+      if (has_ct) { val_ct = be_toint(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_hue = map_find(vm, "hue");
+      int32_t val_hue;
+      if (has_hue) { val_hue = be_toint(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_sat = map_find(vm, "sat");
+      int32_t val_sat;
+      if (has_sat) { val_sat = be_toint(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_rgb = map_find(vm, "rgb");
+      const char * val_rgb_s;
+      if (has_rgb) { val_rgb_s = be_tostring(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_bri = map_find(vm, "bri");
+      int32_t val_bri;
+      if (has_bri) { val_bri = be_toint(vm, -1); }
+      be_pop(vm, 1);
+
+      bool has_channels = map_find(vm, "channels");
+      uint8_t channels[LST_MAX] = {};     // initialized with all zeroes
+      bool val_on = false;  // if all are zero, then only set power off
+      if (has_channels) {
+        if (be_isinstance(vm, -1)) {
+          be_getbuiltin(vm, "list");    // add "list" class
+          if (be_isderived(vm, -2)) {
+            be_pop(vm, 1);      // remove "list" class from top
+            int32_t list_size = get_list_size(vm);
+            // AddLog(LOG_LEVEL_INFO, "Instance is list size = %d", list_size);
+
+            uint8_t channels[LST_MAX] = {};     // initialized with all zeroes
+            if (list_size > LST_MAX) { list_size = LST_MAX; }   // no more than 5 channels, no need to test for positive, any negative will be discarded by loop
+            for (uint32_t i = 0; i < list_size; i++) {
+              // be_dumpstack(vm);
+              get_list_item(vm, i);
+              // be_dumpstack(vm);
+              int32_t val = be_toint(vm, -1);
+              be_pop(vm, 1);      // remove result from stack
+              channels[i] = to_u8(val);
+              if (channels[i]) { val_on = true; }
+            }
+          } else {
+            has_channels = false;
+            be_pop(vm, 1);      // remove "list" class from top
+          }
         }
       }
       be_pop(vm, 1);
 
-      // ct
-      if (map_find(vm, "ct")) {
-        int32_t ct = be_toint(vm, -1);
-        light_controller.changeCTB(ct, light_state.getBriCT());
+      be_pop(vm, be_top(vm));     // clear all stack for re_entrance
+
+      // power
+      if (has_power) {
+        bool current_power = bitRead(TasmotaGlobal.power, idx + Light.device - 1);
+        if (val_power != current_power) {   // only send command if needed
+          ExecuteCommandPower(idx + Light.device, (val_power) ? POWER_ON : POWER_OFF, SRC_BERRY);
+        }
       }
-      be_pop(vm, 1);
+
+      // ct
+      if (has_ct) {
+        light_controller.changeCTB(val_ct, light_state.getBriCT());
+      }
 
       // hue
-      if (map_find(vm, "hue")) {
-        int32_t hue = be_toint(vm, -1);
+      if (has_hue) {
         uint8_t sat;
         uint8_t bri;
         light_state.getHSB(nullptr, &sat, &bri);
-        light_controller.changeHSB(hue, sat, bri);
+        light_controller.changeHSB(val_hue, sat, bri);
       }
-      be_pop(vm, 1);
 
       // sat
-      if (map_find(vm, "sat")) {
-        int32_t sat = be_toint(vm, -1);
+      if (has_sat) {
         uint16_t hue;
         uint8_t bri;
         light_state.getHSB(&hue, nullptr, &bri);
-        light_controller.changeHSB(hue, sat, bri);
+        light_controller.changeHSB(hue, val_sat, bri);
       }
-      be_pop(vm, 1);
 
       // rgb
-      if (map_find(vm, "rgb")) {
-        const char * rgb_s = be_tostring(vm, -1);
-        SBuffer buf = SBuffer::SBufferFromHex(rgb_s, strlen(rgb_s));
+      if (has_rgb) {
+        SBuffer buf = SBuffer::SBufferFromHex(val_rgb_s, strlen(val_rgb_s));
         uint8_t channels[LST_MAX] = {};
         memcpy(channels, buf.buf(), buf.len() > LST_MAX ? LST_MAX : buf.len());
         bool on = false;    // if all are zero, then only set power off
@@ -203,48 +257,21 @@ extern "C" {
           ExecuteCommandPower(idx + 1, POWER_OFF, SRC_BERRY);
         }
       }
-      be_pop(vm, 1);
 
       // channels
-      if (map_find(vm, "channels")) {
-        if (be_isinstance(vm, -1)) {
-          be_getbuiltin(vm, "list");    // add "list" class
-          if (be_isderived(vm, -2)) {
-            be_pop(vm, 1);      // remove "list" class from top
-            int32_t list_size = get_list_size(vm);
-            // AddLog(LOG_LEVEL_INFO, "Instance is list size = %d", list_size);
-
-            uint8_t channels[LST_MAX] = {};     // initialized with all zeroes
-            if (list_size > LST_MAX) { list_size = LST_MAX; }   // no more than 5 channels, no need to test for positive, any negative will be discarded by loop
-            bool on = false;    // if all are zero, then only set power off
-            for (uint32_t i = 0; i < list_size; i++) {
-              // be_dumpstack(vm);
-              get_list_item(vm, i);
-              // be_dumpstack(vm);
-              int32_t val = be_toint(vm, -1);
-              be_pop(vm, 1);      // remove result from stack
-              channels[i] = to_u8(val);
-              if (channels[i]) { on = true; }
-            }
-            if (on) {
-              light_controller.changeChannels(channels);
-            } else {
-              ExecuteCommandPower(idx + 1, POWER_OFF, SRC_BERRY);
-            }
-          } else {
-            be_pop(vm, 1);      // remove "list" class from top
-          }
+      if (has_channels) {
+        if (val_on) {
+          light_controller.changeChannels(channels);
+        } else {
+          ExecuteCommandPower(idx + 1, POWER_OFF, SRC_BERRY);
         }
       }
-      be_pop(vm, 1);
 
       // bri is done after channels and rgb
       // bri
-      if (map_find(vm, "bri")) {
-        int32_t bri = be_toint(vm, -1);
-        light_controller.changeBri(bri);
+      if (has_bri) {
+        light_controller.changeBri(val_bri);
       }
-      be_pop(vm, 1);
 
       push_getlight(vm, idx);
       be_return(vm); // Return
