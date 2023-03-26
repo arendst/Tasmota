@@ -88,6 +88,7 @@ class Matter_Device
     # add the default plugin
     self.plugins.push(matter.Plugin_Root(self, 0))
     self.plugins.push(matter.Plugin_OnOff(self, 1, 0#-tasmota relay 1-#))
+    # self.plugins.push(matter.Plugin_Light3(self, 2))
     # self.plugins.push(matter.Plugin_Temp_Sensor(self, 2, "ESP32#Temperature"))
 
     # for now read sensors every 5 seconds

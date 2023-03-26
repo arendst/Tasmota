@@ -124,19 +124,17 @@ be_local_closure(Matter_Plugin_Temp_Sensor_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(clusters),
-    /* K2   */  be_nested_str_weak(CLUSTERS),
-    /* K3   */  be_nested_str_weak(tasmota_sensor_filter),
-    /* K4   */  be_nested_str_weak(tasmota_sensor_matcher),
-    /* K5   */  be_nested_str_weak(tasmota),
-    /* K6   */  be_nested_str_weak(Rule_Matcher),
-    /* K7   */  be_nested_str_weak(parse),
+    /* K1   */  be_nested_str_weak(tasmota_sensor_filter),
+    /* K2   */  be_nested_str_weak(tasmota_sensor_matcher),
+    /* K3   */  be_nested_str_weak(tasmota),
+    /* K4   */  be_nested_str_weak(Rule_Matcher),
+    /* K5   */  be_nested_str_weak(parse),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0x60100003,  //  0000  GETGBL	R4	G3
       0x5C140000,  //  0001  MOVE	R5	R0
       0x7C100200,  //  0002  CALL	R4	1
@@ -144,16 +142,14 @@ be_local_closure(Matter_Plugin_Temp_Sensor_init,   /* name */
       0x5C180200,  //  0004  MOVE	R6	R1
       0x5C1C0400,  //  0005  MOVE	R7	R2
       0x7C100600,  //  0006  CALL	R4	3
-      0x88100102,  //  0007  GETMBR	R4	R0	K2
-      0x90020204,  //  0008  SETMBR	R0	K1	R4
-      0x90020603,  //  0009  SETMBR	R0	K3	R3
-      0xB8120A00,  //  000A  GETNGBL	R4	K5
-      0x88100906,  //  000B  GETMBR	R4	R4	K6
-      0x8C100907,  //  000C  GETMET	R4	R4	K7
-      0x5C180600,  //  000D  MOVE	R6	R3
-      0x7C100400,  //  000E  CALL	R4	2
-      0x90020804,  //  000F  SETMBR	R0	K4	R4
-      0x80000000,  //  0010  RET	0
+      0x90020203,  //  0007  SETMBR	R0	K1	R3
+      0xB8120600,  //  0008  GETNGBL	R4	K3
+      0x88100904,  //  0009  GETMBR	R4	R4	K4
+      0x8C100905,  //  000A  GETMET	R4	R4	K5
+      0x5C180600,  //  000B  MOVE	R6	R3
+      0x7C100400,  //  000C  CALL	R4	2
+      0x90020404,  //  000D  SETMBR	R0	K2	R4
+      0x80000000,  //  000E  RET	0
     })
   )
 );
@@ -270,39 +266,14 @@ be_local_class(Matter_Plugin_Temp_Sensor,
         { be_const_key_weak(get_temperature, 1), be_const_closure(Matter_Plugin_Temp_Sensor_get_temperature_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Temp_Sensor_init_closure) },
         { be_const_key_weak(CLUSTERS, 9), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(4,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(4, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(3,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(0),
-        be_const_int(65532),
-        be_const_int(65533),
-    }))    ) } )) },
-        { be_const_key_int(29, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(6,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(0),
-        be_const_int(1),
-        be_const_int(2),
-        be_const_int(3),
-        be_const_int(65532),
-        be_const_int(65533),
-    }))    ) } )) },
         { be_const_key_int(1026, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(3,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
         be_const_int(2),
-    }))    ) } )) },
-        { be_const_key_int(3, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(4,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(0),
-        be_const_int(1),
-        be_const_int(65532),
-        be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(every_second, 3), be_const_closure(Matter_Plugin_Temp_Sensor_every_second_closure) },
