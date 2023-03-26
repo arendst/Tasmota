@@ -158,6 +158,7 @@ void Pcf8574DigitalWrite(uint8_t pin, bool pin_value) {
   uint32_t chip = pin / 8;
   uint32_t bit = pin % 8;
   uint32_t value = Pcf8574Read(chip);
+  value |= Pcf8574.pin_mask[chip];                     // Restore inputs
   if (pin_value) {
     value |= 1 << bit;
   } else {
@@ -166,6 +167,13 @@ void Pcf8574DigitalWrite(uint8_t pin, bool pin_value) {
   Wire.beginTransmission(Pcf8574.address[chip]);
   Wire.write(value);
   Wire.endTransmission();
+}
+
+void Pcf8574DigitalWriteConfig(uint8_t pin, bool pin_value) {
+  if (pin_value) {
+    bitSet(Pcf8574.pin_mask[pin / 8], pin % 8);        // Save inputs
+  }
+  Pcf8574DigitalWrite(pin, pin_value);
 }
 
 /*********************************************************************************************\
@@ -244,55 +252,56 @@ bool Pcf8574LoadTemplate(void) {
   if (arr) {
     uint32_t pin = 0;
     for (pin; pin < Pcf8574.max_connected_ports; pin++) {  // Max number of detected chip pins
+      if (0 == (pin % 8)) { Pcf8574.pin_mask[pin / 8] = 0; }  // Reset config for next 8-pins
       JsonParserToken val = arr[pin];
       if (!val) { break; }
       uint16_t mpin = val.getUInt();
       if (mpin) {                                      // Above GPIO_NONE
         if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
           Pcf8574.switch_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
           Pcf8574.switch_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT
         }
         else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
           Pcf8574.button_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
           bitSet(Pcf8574.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT_PULLUP
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT_PULLUP
         }
         else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
           bitSet(Pcf8574.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
           Pcf8574.button_max++;
-          Pcf8574DigitalWrite(pin, 1);                 // INPUT
+          Pcf8574DigitalWriteConfig(pin, 1);           // INPUT
         }
         else if ((mpin >= AGPIO(GPIO_REL1)) && (mpin < (AGPIO(GPIO_REL1) + MAX_RELAYS_SET))) {
           Pcf8574.relay_max++;
-//          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
+//          Pcf8574DigitalWriteConfig(pin, 1);           // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
         }
         else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS_SET))) {
           bitSet(Pcf8574.relay_inverted, mpin - AGPIO(GPIO_REL1_INV));
           mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
           Pcf8574.relay_max++;
-//          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
+//          Pcf8574DigitalWriteConfig(pin, 1);           // OUTPUT - Leave unchanged to fix restart and power on spikes (default is 1)
         }
         else if (mpin == AGPIO(GPIO_OUTPUT_HI)) {
-          Pcf8574DigitalWrite(pin, 1);                 // OUTPUT
+          Pcf8574DigitalWriteConfig(pin, 1);           // OUTPUT
         }
         else if (mpin == AGPIO(GPIO_OUTPUT_LO)) {
-          Pcf8574DigitalWrite(pin, 0);                 // OUTPUT
+          Pcf8574DigitalWriteConfig(pin, 0);           // OUTPUT
         }
         else { mpin = 0; }
         Pcf8574.pin[pin] = mpin;
@@ -314,7 +323,7 @@ void Pcf8574ServiceInput(void) {
   // This works with no interrupt too
   uint32_t pin_offset = 0;
   for (uint32_t chip = 0; chip < Pcf8574.max_devices; chip++) {
-    uint32_t gpio = Pcf8574Read(chip);
+    uint32_t gpio = Pcf8574Read(chip);                 // Reset interrupt
     uint32_t mask = 1;
     for (uint32_t pin = 0; pin < 8; pin++) {
       uint32_t state = ((gpio & mask) != 0);
@@ -323,11 +332,11 @@ void Pcf8574ServiceInput(void) {
       lpin = BGPIO(lpin);                              // UserSelectablePins number
       if (GPIO_KEY1 == lpin) {
         ButtonSetVirtualPinState(Pcf8574.button_offset + index, (state != bitRead(Pcf8574.button_inverted, index)));
-        Pcf8574DigitalWrite(pin_offset + pin, 1);      // INPUT and reset interrupt
+//        Pcf8574DigitalWrite(pin_offset + pin, 1);      // INPUT and reset interrupt
       }
       else if (GPIO_SWT1 == lpin) {
         SwitchSetVirtualPinState(Pcf8574.switch_offset + index, state);
-        Pcf8574DigitalWrite(pin_offset + pin, 1);      // INPUT and reset interrupt
+//        Pcf8574DigitalWrite(pin_offset + pin, 1);      // INPUT and reset interrupt
       }
       mask <<= 1;
     }
