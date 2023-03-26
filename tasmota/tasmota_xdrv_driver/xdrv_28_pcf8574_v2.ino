@@ -122,9 +122,9 @@ struct PCF8574 {
   uint8_t relay_offset;
   uint8_t button_max;
   uint8_t switch_max;
-  uint8_t base;
   int8_t button_offset;
   int8_t switch_offset;
+  bool base;
   bool interrupt;
 } Pcf8574;
 
@@ -231,11 +231,10 @@ bool Pcf8574LoadTemplate(void) {
   if (!root) { return false; }
 
   // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B1234,Ri4321,B=B5678,Ri8765","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]} endon
-  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B3456,Ri4321,B=B78910,Ri8765","BASE":1,"GPIO":[34,35,36,37,259,258,257,256,38,39,40,41,263,262,261,260]} endon
-  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B3456,Ri6543,B=B78910,Ri10987","BASE":2,"GPIO":[34,35,36,37,261,260,259,258,38,39,40,41,265,264,263,262]} endon
+  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B3456,Ri6543,B=B78910,Ri10987","BASE":1,"GPIO":[34,35,36,37,261,260,259,258,38,39,40,41,265,264,263,262]} endon
   JsonParserToken val = root[PSTR(D_JSON_BASE)];
   if (val) {
-    Pcf8574.base = val.getUInt();
+    Pcf8574.base = (val.getUInt()) ? true : false;
   }
   val = root[PSTR(D_JSON_NAME)];
   if (val) {
@@ -351,9 +350,11 @@ void Pcf8574Init(void) {
 
 void Pcf8574Power(void) {
   // XdrvMailbox.index = 32-bit rpower bit mask
+  // Use absolute relay indexes unique with main template
   power_t rpower = XdrvMailbox.index;
   uint32_t relay_max = TasmotaGlobal.devices_present;
-  if (Pcf8574.base < 2) {
+  if (!Pcf8574.base) {
+    // Use relative and sequential relay indexes
     rpower >>= Pcf8574.relay_offset;
     relay_max = Pcf8574.relay_max;
   }
@@ -370,11 +371,13 @@ void Pcf8574Power(void) {
 bool Pcf8574AddButton(void) {
   // XdrvMailbox.index = button/switch index
   uint32_t index = XdrvMailbox.index;
-  if (Pcf8574.base < 1) {
+  if (!Pcf8574.base) {
+    // Use relative and sequential button indexes
     if (Pcf8574.button_offset < 0) { Pcf8574.button_offset = index; }
     index -= Pcf8574.button_offset;
     if (index >= Pcf8574.button_max) { return false; }
   } else {
+    // Use absolute button indexes unique with main template
     if (!Pcf8574PinUsed(GPIO_KEY1, index)) { return false; }
     Pcf8574.button_offset = 0;
   }
@@ -385,11 +388,13 @@ bool Pcf8574AddButton(void) {
 bool Pcf8574AddSwitch(void) {
   // XdrvMailbox.index = button/switch index
   uint32_t index = XdrvMailbox.index;
-  if (Pcf8574.base < 1) {
+  if (!Pcf8574.base) {
+    // Use relative and sequential switch indexes
     if (Pcf8574.switch_offset < 0) { Pcf8574.switch_offset = index; }
     index -= Pcf8574.switch_offset;
     if (index >= Pcf8574.switch_max) { return false; }
   } else {
+    // Use absolute switch indexes unique with main template
     if (!Pcf8574PinUsed(GPIO_SWT1, index)) { return false; }
     Pcf8574.switch_offset = 0;
   }

@@ -152,9 +152,9 @@ struct MCP230 {
   uint8_t relay_offset;
   uint8_t button_max;
   uint8_t switch_max;
-  uint8_t base;
   int8_t button_offset;
   int8_t switch_offset;
+  bool base;
   bool interrupt;
 } Mcp23x;
 
@@ -489,7 +489,7 @@ bool MCP23xLoadTemplate(void) {
   // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
   JsonParserToken val = root[PSTR(D_JSON_BASE)];
   if (val) {
-    Mcp23x.base = val.getUInt();
+    Mcp23x.base = (val.getUInt()) ? true : false;
   }
   val = root[PSTR(D_JSON_NAME)];
   if (val) {
@@ -738,9 +738,11 @@ void MCP23xInit(void) {
 
 void MCP23xPower(void) {
   // XdrvMailbox.index = 32-bit rpower bit mask
+  // Use absolute relay indexes unique with main template
   power_t rpower = XdrvMailbox.index;
   uint32_t relay_max = TasmotaGlobal.devices_present;
-  if (Mcp23x.base < 2) {
+  if (!Mcp23x.base) {
+    // Use relative and sequential relay indexes
     rpower >>= Mcp23x.relay_offset;
     relay_max = Mcp23x.relay_max;
   }
@@ -757,11 +759,13 @@ void MCP23xPower(void) {
 bool MCP23xAddButton(void) {
   // XdrvMailbox.index = button/switch index
   uint32_t index = XdrvMailbox.index;
-  if (Mcp23x.base < 1) {
+  if (!Mcp23x.base) {
+    // Use relative and sequential button indexes
     if (Mcp23x.button_offset < 0) { Mcp23x.button_offset = index; }
     index -= Mcp23x.button_offset;
     if (index >= Mcp23x.button_max) { return false; }
   } else {
+    // Use absolute button indexes unique with main template
     if (!MCP23xPinUsed(GPIO_KEY1, index)) { return false; }
     Mcp23x.button_offset = 0;
   }
@@ -772,11 +776,13 @@ bool MCP23xAddButton(void) {
 bool MCP23xAddSwitch(void) {
   // XdrvMailbox.index = button/switch index
   uint32_t index = XdrvMailbox.index;
-  if (Mcp23x.base < 1) {
+  if (!Mcp23x.base) {
+    // Use relative and sequential switch indexes
     if (Mcp23x.switch_offset < 0) { Mcp23x.switch_offset = index; }
     index -= Mcp23x.switch_offset;
     if (index >= Mcp23x.switch_max) { return false; }
   } else {
+    // Use absolute switch indexes unique with main template
     if (!MCP23xPinUsed(GPIO_SWT1, index)) { return false; }
     Mcp23x.switch_offset = 0;
   }
