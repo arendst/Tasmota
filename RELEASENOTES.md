@@ -113,8 +113,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v12.4.0.4
 ### Added
 - Command ``SwitchMode0`` to show or set all SwitchModes
-- Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay
-- Support for multiple PCF8574 as switch/button/relay
+- Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay if enabled with `#define USE_MCP23XXX_DRV`
+- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
 - NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
 - Extended Tariff command for forced tariff [#18080](https://github.com/arendst/Tasmota/issues/18080)
 - Zigbee send Tuya 'magic spell' to unlock devices when pairing [#18144](https://github.com/arendst/Tasmota/issues/18144)

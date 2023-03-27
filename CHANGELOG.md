@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
 
 ### Fixed
 
@@ -29,7 +30,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.4.0.2] 20230317
 ### Added
-- Support for multiple MCP23008 as switch/button/relay
+- Support for multiple MCP23008 as switch/button/relay if enabled with `#define USE_MCP23XXX_DRV`
 - Support for multiple PCF8574 as switch/button/relay
 - Extended Tariff command for forced tariff (#18080)
 - Berry support for Tensorflow Lite (TFL) by Christiaan Baars (#18119)

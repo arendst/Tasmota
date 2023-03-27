@@ -74,31 +74,34 @@
  * {"NAME":"PCF8574 A=B1-4,Ri4-1, B=B5-8,Ri8-5","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]}
 \*********************************************************************************************/
 
-#define XDRV_28           28
-#define XI2C_02           2     // See I2CDEVICES.md
+#define XDRV_28              28
+#define XI2C_02              2      // See I2CDEVICES.md
 
 // PCF8574 address range from 0x20 to 0x26
 #ifndef PCF8574_ADDR1
-#define PCF8574_ADDR1 0x20 // PCF8574
+#define PCF8574_ADDR1        0x20   // PCF8574
 #endif
 #ifndef PCF8574_ADDR1_COUNT
-#define PCF8574_ADDR1_COUNT 7
+#define PCF8574_ADDR1_COUNT  7
 #endif
 // PCF8574A address range from 0x39 to 0x3E
 #ifndef PCF8574_ADDR2
-#define PCF8574_ADDR2 0x39 // PCF8574A
+#define PCF8574_ADDR2        0x39   // PCF8574A
 #endif
 #ifndef PCF8574_ADDR2_COUNT
-#define PCF8574_ADDR2_COUNT 6
+#define PCF8574_ADDR2_COUNT  6
 #endif
 
-#define PCF8574_MAX_PINS  64
+//#define USE_PCF8574_MODE2         // Enable Mode2 virtual relays/buttons/switches (+2k3 code)
+//#define USE_PCF8574_SENSOR        // Enable Mode1 inputs and outputs in SENSOR message (+0k2 code)
+//#define USE_PCF8574_DISPLAYINPUT  // Enable Mode1 inputs display in Web page (+0k2 code)
+//#define USE_PCF8574_MQTTINPUT     // Enable Mode1 MQTT message & rule process on input change detection : stat/%topic%/PCF8574_INP = {"Time":"2021-03-07T16:19:23+01:00","PCF8574-1_INP":{"D1":1}} (+0k5 code)
 
 /*********************************************************************************************\
  * PCF8574 support
 \*********************************************************************************************/
 
-// Consitency tests - Checked across the complete range for the PCF8574/PCF8574A to allow override
+// Consistency tests - Checked across the complete range for the PCF8574/PCF8574A to allow override
 #if (PCF8574_ADDR1 < 0x20) || ((PCF8574_ADDR1 + PCF8574_ADDR1_COUNT - 1) > 0x27)
 #error PCF8574_ADDR1 and/or PCF8574_ADDR1_COUNT badly overriden. Fix your user_config_override
 #endif
@@ -109,7 +112,6 @@
 struct PCF8574 {
   uint32_t relay_inverted;
   uint32_t button_inverted;
-  uint16_t pin[PCF8574_MAX_PINS];
   uint8_t address[MAX_PCF8574];
   uint8_t pin_mask[MAX_PCF8574] = { 0 };
 #ifdef USE_PCF8574_MQTTINPUT
@@ -128,6 +130,8 @@ struct PCF8574 {
   bool interrupt;
 } Pcf8574;
 
+uint16_t *Pcf8574_pin = nullptr;
+
 /*********************************************************************************************\
  * PCF8574 - I2C
 \*********************************************************************************************/
@@ -142,6 +146,8 @@ void Pcf8574Write(uint8_t idx) {
   Wire.write(Pcf8574.pin_mask[idx]);
   Wire.endTransmission();
 }
+
+#ifdef USE_PCF8574_MODE2
 
 bool Pcf8574DigitalRead(uint8_t pin) {
   // pin 0 - 63
@@ -189,7 +195,7 @@ int Pcf8574Pin(uint32_t gpio, uint32_t index) {
     mask = 0xFFFF;
   }
   for (uint32_t i = 0; i < Pcf8574.max_connected_ports; i++) {
-    if ((Pcf8574.pin[i] & mask) == real_gpio) {
+    if ((Pcf8574_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
     }
   }
@@ -203,7 +209,7 @@ bool Pcf8574PinUsed(uint32_t gpio, uint32_t index) {
 
 uint32_t Pcf8574GetPin(uint32_t lpin) {
   if (lpin < Pcf8574.max_connected_ports) {
-    return Pcf8574.pin[lpin];
+    return Pcf8574_pin[lpin];
   } else {
     return GPIO_NONE;
   }
@@ -238,6 +244,7 @@ bool Pcf8574LoadTemplate(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
+  // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B12345678,B=Ri87654321","GPIO":[32,33,34,35,36,37,38,39,263,262,261,260,259,258,257,256]} endon
   // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B1234,Ri4321,B=B5678,Ri8765","GPIO":[32,33,34,35,259,258,257,256,36,37,38,39,263,262,261,260]} endon
   // rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=B3456,Ri6543,B=B78910,Ri10987","BASE":1,"GPIO":[34,35,36,37,261,260,259,258,38,39,40,41,265,264,263,262]} endon
   JsonParserToken val = root[PSTR(D_JSON_BASE)];
@@ -252,7 +259,7 @@ bool Pcf8574LoadTemplate(void) {
   if (arr) {
     uint32_t pin = 0;
     for (pin; pin < Pcf8574.max_connected_ports; pin++) {  // Max number of detected chip pins
-      if (0 == (pin % 8)) { Pcf8574.pin_mask[pin / 8] = 0; }  // Reset config for next 8-pins
+//      if (0 == (pin % 8)) { Pcf8574.pin_mask[pin / 8] = 0; }  // Reset config for next 8-pins
       JsonParserToken val = arr[pin];
       if (!val) { break; }
       uint16_t mpin = val.getUInt();
@@ -304,7 +311,7 @@ bool Pcf8574LoadTemplate(void) {
           Pcf8574DigitalWriteConfig(pin, 0);           // OUTPUT
         }
         else { mpin = 0; }
-        Pcf8574.pin[pin] = mpin;
+        Pcf8574_pin[pin] = mpin;
       }
       if ((Pcf8574.switch_max >= MAX_SWITCHES_SET) ||
           (Pcf8574.button_max >= MAX_KEYS_SET) ||
@@ -411,6 +418,8 @@ bool Pcf8574AddSwitch(void) {
   return true;
 }
 
+#endif  // USE_PCF8574_MODE2
+
 /*********************************************************************************************\
  * PCF8574 Mode 1 - Stefan Bode
 \*********************************************************************************************/
@@ -419,9 +428,9 @@ void Pcf8574SwitchRelay(void) {
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
 
-    if (Pcf8574.max_devices > 0 && Pcf8574.pin[i] < 99) {
-      uint8_t board = Pcf8574.pin[i]>>3;
-      uint8_t pin = Pcf8574.pin[i]&0x7;
+    if (Pcf8574.max_devices > 0 && Pcf8574_pin[i] < 99) {
+      uint8_t board = Pcf8574_pin[i]>>3;
+      uint8_t pin = Pcf8574_pin[i]&0x7;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
       uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
 
@@ -435,91 +444,65 @@ void Pcf8574SwitchRelay(void) {
   }
 }
 
-void Pcf8574ModuleInit(void) {
-  uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
-  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
-
-#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
-    if (USE_MCP230xx_ADDR == pcf8574_address) {
-      AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
-      pcf8574_address++;
-      if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) { // See comment on allowed addresses and overrides
-        pcf8574_address = PCF8574_ADDR2;
-      }
-    }
-#endif
-
-  //  AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
-
-    if (I2cSetDevice(pcf8574_address)) {
-      Pcf8574.mode = 1;
-
-      Pcf8574.max_connected_ports += 8;
-      Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
-      Pcf8574.max_devices++;
-
-      char stype[9];
-      strcpy(stype, "PCF8574");
-      if (pcf8574_address >= PCF8574_ADDR2) {
-        strcpy(stype, "PCF8574A");
-      }
-      I2cSetActiveFound(pcf8574_address, stype);
-      if (Pcf8574.max_connected_ports > PCF8574_MAX_PINS -8) { break; }
-    }
-
-    pcf8574_address++;
-    if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) { // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
-      pcf8574_address = PCF8574_ADDR2;
-    }
-  }
-
-  if (Pcf8574.mode) {
-    if (Pcf8574LoadTemplate()) {
-      Pcf8574.mode = 2;
-
-      Pcf8574.relay_offset = TasmotaGlobal.devices_present;
-      Pcf8574.relay_max -= UpdateDevicesPresent(Pcf8574.relay_max);
-
-      Pcf8574.button_offset = -1;
-      Pcf8574.switch_offset = -1;
-    } else {
-      Pcf8574.max_connected_ports = 0;                 // Reset no of devices
-      for (uint32_t i = 0; i < PCF8574_MAX_PINS; i++) {
-        Pcf8574.pin[i] = 99;
-      }
-
-      for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
-        uint8_t gpio = Pcf8574Read(idx);
-        // Insure the input pins are actually writen a 1 for proper input operation
-        Pcf8574.pin_mask[idx] = gpio | ~Settings->pcf8574_config[idx];
-        Pcf8574Write(idx); // Write back to the register
 #ifdef USE_PCF8574_MQTTINPUT
-        Pcf8574.last_input[idx] = gpio & ~Settings->pcf8574_config[idx];
-#endif // #ifdef USE_PCF8574_MQTTINPUT
-        //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: PCF-%d config=0x%02x, gpio=0x%02X"), idx +1, Settings->pcf8574_config[idx], gpio);
-
-        for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
-          uint8_t _result = Settings->pcf8574_config[idx] >> i &1;
-          //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings->power>>i&1, TasmotaGlobal.devices_present);
-          if (_result > 0) {
-            Pcf8574.pin[TasmotaGlobal.devices_present] = i + 8 * idx;
-            bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
-            if (!Settings->flag.save_state && !Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-              //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Set power from from chip state"));
-              uint8_t power_state = Settings->flag3.pcf8574_ports_inverted ? 1 & ~gpio : 1 & gpio;
-              bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present, power_state);
-              bitWrite(Settings->power, TasmotaGlobal.devices_present, power_state);
-            }
-            //else AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: DON'T set power from chip state"));
-            UpdateDevicesPresent(1);
-            Pcf8574.max_connected_ports++;
+void Pcf8574CheckForInputChange(void) {
+  for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
+    uint8_t input_mask = ~Settings->pcf8574_config[idx];  // Invert to 1 = input
+    uint8_t input = Pcf8574Read(idx) & input_mask;
+    uint8_t last_input = Pcf8574.last_input[idx];
+    if (input != last_input) {                         // Don't scan bits if no change (EVERY_50_MS !)
+      for (uint32_t pin = 0 ; pin < 8 ; ++pin) {
+        if (bitRead(input_mask,pin) && bitRead(input,pin) != bitRead(last_input,pin)) {
+          ResponseTime_P(PSTR(",\"PCF8574%c%d_INP\":{\"D%i\":%i}}"), IndexSeparator(), idx +1, pin, bitRead(input,pin));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("PCF8574_INP"));
+          if (Settings->flag3.hass_tele_on_power) {    // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
+            MqttPublishSensor();
           }
         }
+        Pcf8574.last_input[idx] =  input;
       }
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Settings->power=0x%08X, TasmotaGlobal.power=0x%08X"), Settings->power, TasmotaGlobal.power);
-      AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
     }
   }
+}
+#endif  // USE_PCF8574_MQTTINPUT
+
+
+void Pcf8574ModuleInitMode1(void) {
+  for (uint32_t i = 0; i < Pcf8574.max_connected_ports; i++) {
+    Pcf8574_pin[i] = 99;
+  }
+  Pcf8574.max_connected_ports = 0;                     // Reset no of devices
+
+  for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
+    uint8_t gpio = Pcf8574Read(idx);
+    // Insure the input pins are actually writen a 1 for proper input operation
+    Pcf8574.pin_mask[idx] = gpio | ~Settings->pcf8574_config[idx];
+    Pcf8574Write(idx);                                 // Write back to the register
+#ifdef USE_PCF8574_MQTTINPUT
+    Pcf8574.last_input[idx] = gpio & ~Settings->pcf8574_config[idx];
+#endif  // USE_PCF8574_MQTTINPUT
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: PCF-%d config=0x%02x, gpio=0x%02X"), idx +1, Settings->pcf8574_config[idx], gpio);
+
+    for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
+      uint8_t _result = Settings->pcf8574_config[idx] >> i &1;
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings->power>>i&1, TasmotaGlobal.devices_present);
+      if (_result > 0) {
+        Pcf8574_pin[TasmotaGlobal.devices_present] = i + 8 * idx;
+        bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
+        if (!Settings->flag.save_state && !Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+          //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Set power from from chip state"));
+          uint8_t power_state = Settings->flag3.pcf8574_ports_inverted ? 1 & ~gpio : 1 & gpio;
+          bitWrite(TasmotaGlobal.power, TasmotaGlobal.devices_present, power_state);
+          bitWrite(Settings->power, TasmotaGlobal.devices_present, power_state);
+        }
+        //else AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: DON'T set power from chip state"));
+        UpdateDevicesPresent(1);
+        Pcf8574.max_connected_ports++;
+      }
+    }
+  }
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Settings->power=0x%08X, TasmotaGlobal.power=0x%08X"), Settings->power, TasmotaGlobal.power);
+  AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
 }
 
 /*********************************************************************************************\
@@ -527,7 +510,6 @@ void Pcf8574ModuleInit(void) {
 \*********************************************************************************************/
 
 #ifdef USE_WEBSERVER
-
 #define WEB_HANDLE_PCF8574 "pcf"
 
 const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
@@ -546,9 +528,7 @@ const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
 
 const char HTTP_SNS_PCF8574_GPIO[] PROGMEM = "{s}PCF8574%c%d D%d{m}%d{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-
-void HandlePcf8574(void)
-{
+void HandlePcf8574(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP  D_CONFIGURE_PCF8574));
@@ -564,7 +544,7 @@ void HandlePcf8574(void)
   WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings->flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
-    for (uint32_t idx2 = 0; idx2 < 8; idx2++) {  // 8 ports on PCF8574
+    for (uint32_t idx2 = 0; idx2 < 8; idx2++) {        // 8 ports on PCF8574
       uint8_t helper = 1 << idx2;
       WSContentSend_P(HTTP_FORM_I2C_PCF8574_2,
         idx +1, idx2,
@@ -581,64 +561,7 @@ void HandlePcf8574(void)
   WSContentStop();
 }
 
-#if defined(USE_PCF8574_SENSOR) || defined(USE_PCF8574_DISPLAYINPUT)
-void Pcf8574Show(bool json)
-{
-#ifdef USE_PCF8574_SENSOR
-  if (json) {
-    for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
-    {
-      uint8_t gpio = Pcf8574Read(idx);
-      ResponseAppend_P(PSTR(",\"PCF8574%c%d\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i}"),
-        IndexSeparator(), idx +1,
-        (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-    }
-  }
-#endif // #ifdef USE_PCF8574_SENSOR
-#if defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
-  if(!json) {
-    for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
-    {
-      uint8_t input_mask = ~Settings->pcf8574_config[idx]; //invert to 1 = input
-      uint8_t gpio = Pcf8574Read(idx);
-      for (int pin = 0 ; pin < 8 ; ++pin, input_mask>>=1, gpio>>=1)
-      {
-        if (input_mask & 1)
-          WSContentSend_P(HTTP_SNS_PCF8574_GPIO, IndexSeparator(), idx +1, pin, gpio & 1);
-      }
-    }
-  }
-#endif // defined(USE_WEBSERVER) && defined(USE_PCF8574_DISPLAYINPUT)
-}
-#endif // #if defined(USE_PCF8574_SENSOR) || defined(USE_PCF8574_DISPLAYINPUT)
-
-
-#ifdef USE_PCF8574_MQTTINPUT
-void Pcf8574CheckForInputChange(void)
-{
-    for (int idx = 0 ; idx < Pcf8574.max_devices ; idx++)
-    {
-      uint8_t input_mask = ~Settings->pcf8574_config[idx]; //invert to 1 = input
-      uint8_t input = Pcf8574Read(idx) & input_mask;
-      uint8_t last_input = Pcf8574.last_input[idx];
-      if (input != last_input) { // don't scan bits if no change (EVERY_50_MS !)
-        for (uint8_t pin = 0 ; pin < 8 ; ++pin) {
-          if (bitRead(input_mask,pin) && bitRead(input,pin) != bitRead(last_input,pin)) {
-            ResponseTime_P(PSTR(",\"PCF8574%c%d_INP\":{\"D%i\":%i}}"), IndexSeparator(), idx +1, pin, bitRead(input,pin));
-            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("PCF8574_INP"));
-            if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
-                MqttPublishSensor();
-            }
-          }
-          Pcf8574.last_input[idx] =  input;
-        }
-      }
-    }
-}
-#endif //#ifdef USE_PCF8574_MQTTINPUT
-
-void Pcf8574SaveSettings(void)
-{
+void Pcf8574SaveSettings(void) {
   char stemp[7];
   char tmp[100];
 
@@ -669,10 +592,91 @@ void Pcf8574SaveSettings(void)
     }
     //Settings->pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
     //AddLog(LOG_LEVEL_INFO, PSTR("PCF: I2C Board: %d, Config: %2x")),  idx, Settings->pcf8574_config[idx];
-
   }
 }
+
+#ifdef USE_PCF8574_DISPLAYINPUT
+void Pcf8574ShowWeb(void) {
+  for (uint32_t idx = 0 ; idx < Pcf8574.max_devices ; idx++) {
+    uint8_t input_mask = ~Settings->pcf8574_config[idx];  // Invert to 1 = input
+    uint8_t gpio = Pcf8574Read(idx);
+    for (uint32_t pin = 0 ; pin < 8 ; ++pin, input_mask >>= 1, gpio >>= 1) {
+      if (input_mask & 1) {
+        WSContentSend_P(HTTP_SNS_PCF8574_GPIO, IndexSeparator(), idx +1, pin, gpio & 1);
+      }
+    }
+  }
+}
+#endif // USE_PCF8574_DISPLAYINPUT
 #endif // USE_WEBSERVER
+
+#ifdef USE_PCF8574_SENSOR
+void Pcf8574ShowJson(void) {
+  for (uint32_t idx = 0 ; idx < Pcf8574.max_devices ; idx++) {
+    uint8_t gpio = Pcf8574Read(idx);
+    ResponseAppend_P(PSTR(",\"PCF8574%c%d\":{"), IndexSeparator(), idx +1);
+    for (uint32_t pin = 0; pin < 8; ++pin, gpio >>= 1) {
+      ResponseAppend_P(PSTR("%s\"D%d\":%i"), (0==pin)?"":",", pin, gpio & 1);
+    }
+    ResponseJsonEnd();
+  }
+}
+#endif // #ifdef USE_PCF8574_SENSOR
+
+/*********************************************************************************************\
+ * PCF8574 Module Init
+\*********************************************************************************************/
+
+void Pcf8574ModuleInit(void) {
+  uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
+  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
+
+#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
+    if (USE_MCP230xx_ADDR == pcf8574_address) {
+      AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP230xx"), pcf8574_address);
+    } else {
+#endif
+
+      if (I2cSetDevice(pcf8574_address)) {
+        Pcf8574.mode = 1;
+
+        Pcf8574.max_connected_ports += 8;
+        Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
+        Pcf8574.max_devices++;
+
+        char stype[12];
+        sprintf_P(stype, PSTR("PCF8574%s"), (pcf8574_address >= PCF8574_ADDR2) ? "A" : "");
+        I2cSetActiveFound(pcf8574_address, stype);
+      }
+
+#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
+    }
+#endif
+
+    pcf8574_address++;
+    if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+      pcf8574_address = PCF8574_ADDR2;
+    }
+  }
+
+  if (Pcf8574.mode) {
+    Pcf8574_pin = (uint16_t*)malloc(Pcf8574.max_connected_ports * sizeof(uint16_t));
+    if (Pcf8574_pin) {
+#ifdef USE_PCF8574_MODE2
+      if (Pcf8574LoadTemplate()) {
+        Pcf8574.mode = 2;
+        Pcf8574.button_offset = -1;
+        Pcf8574.switch_offset = -1;
+        Pcf8574.relay_offset = TasmotaGlobal.devices_present;
+        Pcf8574.relay_max -= UpdateDevicesPresent(Pcf8574.relay_max);
+      } else
+#endif  // USE_PCF8574_MODE2
+        Pcf8574ModuleInitMode1();
+    } else {
+      Pcf8574.mode = 0;
+    }
+  }
+}
 
 /*********************************************************************************************\
  * Interface
@@ -691,15 +695,15 @@ bool Xdrv28(uint32_t function) {
       case FUNC_EVERY_50_MSECOND:
         Pcf8574CheckForInputChange();
         break;
-#endif // #ifdef USE_PCF8574_MQTTINPUT
+#endif  // USE_PCF8574_MQTTINPUT
       case FUNC_SET_POWER:
         Pcf8574SwitchRelay();
         break;
 #ifdef USE_PCF8574_SENSOR
       case FUNC_JSON_APPEND:
-        Pcf8574Show(1);
+        Pcf8574ShowJson();
         break;
-#endif // #ifdef USE_PCF8574_SENSOR
+#endif  // USE_PCF8574_SENSOR
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_PCF8574);
@@ -709,17 +713,18 @@ bool Xdrv28(uint32_t function) {
         break;
 #ifdef USE_PCF8574_DISPLAYINPUT
       case FUNC_WEB_SENSOR:
-        Pcf8574Show(0);
+        Pcf8574ShowWeb();
         break;
-#endif // #ifdef USE_PCF8574_DISPLAYINPUT
+#endif  // USE_PCF8574_DISPLAYINPUT
 #endif  // USE_WEBSERVER
     }
+#ifdef USE_PCF8574_MODE2
   } else if (2 == Pcf8574.mode) {
     switch (function) {
       case FUNC_LOOP:
       case FUNC_SLEEP_LOOP:
         if (!Pcf8574.interrupt) { return false; }
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PCF: Interrupt"));
+//        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PCF: Interrupt"));
         Pcf8574ServiceInput();
         break;
       case FUNC_EVERY_100_MSECOND:
@@ -740,6 +745,7 @@ bool Xdrv28(uint32_t function) {
         result = Pcf8574AddSwitch();
         break;
     }
+#endif  // USE_PCF8574_MODE2
   }
   return result;
 }
