@@ -287,6 +287,26 @@ void ShutterSettingsSave(void) {
   }
 }
 
+bool ShutterStatus(void) {
+  if (Settings->flag3.shutter_mode) {  // SetOption80  - (Shutter) Enable shutter support (1)
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":{"));
+    for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
+      if (0 == ShutterSettings.shutter_startrelay[i]) { break; }
+      if (i > 0) { ResponseAppend_P(PSTR(",")); }
+      ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
+                                  "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
+                                  "\"Calib\":[%d,%d,%d,%d,%d],"
+                                  "\"Mode\":\"%d\"}"),
+                                  i, ShutterSettings.shutter_startrelay[i], ShutterSettings.shutter_startrelay[i] +1, ShutterSettings.shutter_opentime[i], ShutterSettings.shutter_closetime[i],
+                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
+                                  ShutterSettings.shuttercoeff[0][i], ShutterSettings.shuttercoeff[1][i], ShutterSettings.shuttercoeff[2][i], ShutterSettings.shuttercoeff[3][i], ShutterSettings.shuttercoeff[4][i],
+                                  ShutterSettings.shutter_mode);
+    }
+    ResponseJsonEndEnd();
+    return true;
+  }
+  return false;
+}
 
 void ShutterLogPos(uint32_t i)
 {
@@ -438,7 +458,6 @@ void ShutterInit(void)
   }
   for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
-    //ShutterSettings.shutter_startrelay[i] = (ShutterSettings.shutter_startrelay[i] == 0 && i ==  0? 1 : ShutterSettings.shutter_startrelay[i]);
     if (ShutterSettings.shutter_startrelay[i] && (ShutterSettings.shutter_startrelay[i] <= 32 )) {
       bool relay_in_interlock = false;
       TasmotaGlobal.shutters_present++;
