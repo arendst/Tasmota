@@ -16,7 +16,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef ESP32
+
+// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
+// Remove once tests complete
+#if defined(ESP32) && defined(USE_SHUTTER_ESP32)
+// End **************************************************************
+
+//#ifdef ESP32
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -2042,4 +2048,5 @@ void CmndShutterUnitTest(void) {
 #else
 void CmndShutterUnitTest(void) {}
 #endif
-#endif
+
+#endif  // ESP32
