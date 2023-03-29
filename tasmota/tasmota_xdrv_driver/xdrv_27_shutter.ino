@@ -126,6 +126,27 @@ struct SHUTTERGLOBAL {
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
 
+bool ShutterStatus(void) {
+  if (Settings->flag3.shutter_mode) {  // SetOption80  - (Shutter) Enable shutter support (1)
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":{"));
+    for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+      if (0 == Settings->shutter_startrelay[i]) { break; }
+      if (i > 0) { ResponseAppend_P(PSTR(",")); }
+      ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
+                                  "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
+                                  "\"Calib\":[%d,%d,%d,%d,%d],"
+                                  "\"Mode\":\"%d\"}"),
+                                  i, Settings->shutter_startrelay[i], Settings->shutter_startrelay[i] +1, Settings->shutter_opentime[i], Settings->shutter_closetime[i],
+                                  Settings->shutter_set50percent[i], Settings->shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
+                                  Settings->shuttercoeff[0][i], Settings->shuttercoeff[1][i], Settings->shuttercoeff[2][i], Settings->shuttercoeff[3][i], Settings->shuttercoeff[4][i],
+                                  Settings->shutter_mode);
+    }
+    ResponseJsonEndEnd();
+    return true;
+  }
+  return false;
+}
+
 
 void ShutterLogPos(uint32_t i)
 {
