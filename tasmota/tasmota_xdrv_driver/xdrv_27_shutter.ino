@@ -1,5 +1,5 @@
 /*
-  xdrv_27_Shutter[i].ino - Shutter/Blind support for Tasmota
+  xdrv_27_Shutter.ino - Shutter/Blind support for Tasmota
 
   Copyright (C) 2023  Stefan Bode
 
@@ -1105,7 +1105,7 @@ bool ShutterButtonHandler(void)
     ResponseJsonEnd();
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
   }
-  return true
+  return true;
 }
 
 void ShutterSetPosition(uint32_t device, uint32_t position)
