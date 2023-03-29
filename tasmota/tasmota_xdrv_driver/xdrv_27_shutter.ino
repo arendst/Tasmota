@@ -1,7 +1,7 @@
 /*
   xdrv_27_Shutter[i].ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2022  Stefan Bode
+  Copyright (C) 2023  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef ESP8266
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -877,7 +877,7 @@ bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_ind
   return ((-1 != min_shutterbutton_hold_timer) && (min_shutterbutton_hold_timer > (Button.hold_timer[button_index]>>1)));
 }
 
-void ShutterButtonHandler(void)
+bool ShutterButtonHandler(void)
 {
   uint8_t buttonState = SHT_NOT_PRESSED;
   uint8_t button = XdrvMailbox.payload;
@@ -1940,4 +1940,5 @@ void CmndShutterUnitTest(void) {
 }
 #else
 void CmndShutterUnitTest(void) {}
+#endif
 #endif
