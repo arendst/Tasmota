@@ -16,7 +16,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
+// Remove once tests complete
 #ifdef ESP8266
+#define USE_SHUTTER_ESP8266
+#endif
+
+#ifdef ESP32
+#ifndef USE_SHUTTER_ESP32
+#define USE_SHUTTER_ESP8266
+#endif  // No USE_SHUTTER_ESP32
+#endif  // ESP32
+
+#ifdef USE_SHUTTER_ESP8266
+// End **************************************************************
+
+//#ifdef ESP8266
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -1023,14 +1039,14 @@ bool ShutterButtonHandler(void)
         char scmnd[20];
         snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
         ExecuteCommand(scmnd, SRC_BUTTON);
-        return;
+        return true;
       } else if ((buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) || ((shutter_index_num_buttons==1) && (buttonState == SHT_PRESSED_EXT_HOLD))){
         // no SetOption1 (0) checked above
         // simultaneous or stand alone button extended hold detected
         char scmnd[20];
         snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
         ExecuteCommand(scmnd, SRC_BUTTON);
-        return;
+        return true;
       }
     }
     if (buttonState <= SHT_PRESSED_IMMEDIATE) {
@@ -1089,6 +1105,7 @@ bool ShutterButtonHandler(void)
     ResponseJsonEnd();
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
   }
+  return true
 }
 
 void ShutterSetPosition(uint32_t device, uint32_t position)
@@ -1962,4 +1979,5 @@ void CmndShutterUnitTest(void) {
 #else
 void CmndShutterUnitTest(void) {}
 #endif
-#endif
+
+#endif  // ESP8266
