@@ -177,7 +177,7 @@ void SEN5XShow(bool json) {
     }
     if (ahum_available) {
       ResponseAppendTHD(temperature, humidity);
-      ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%4_f"), abs_humidity);
+      ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%4_f"), &abs_humidity);
     }
     ResponseJsonEnd();
 #ifdef USE_WEBSERVER
@@ -194,7 +194,7 @@ void SEN5XShow(bool json) {
     }
     if (ahum_available) {
       WSContentSend_THD(types, temperature, humidity);
-      WSContentSend_PD(HTTP_SNS_F_ABS_HUM, types, 4, abs_humidity);
+      WSContentSend_PD(HTTP_SNS_F_ABS_HUM, types, 4, &abs_humidity);
     }
 #endif
   }
