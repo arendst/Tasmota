@@ -153,7 +153,7 @@ void HlwEvery200ms(void) {
       DigitalWrite(GPIO_NRG_SEL, 0, Hlw.select_ui_flag);
 
       if (Hlw.cf1_pulse_counter) {
-        cf1_pulse_length = Hlw.cf1_summed_pulse_length / Hlw.cf1_pulse_counter;
+        cf1_pulse_length = Hlw.cf1_summed_pulse_length / Hlw.cf1_pulse_counter; //this creates a Voltage step precision of 0.3V at around 230V
       }
 
 #ifdef HLW_DEBUG
@@ -179,7 +179,7 @@ void HlwEvery200ms(void) {
         Hlw.cf1_voltage_pulse_length  = cf1_pulse_length;
 
         if (Hlw.cf1_voltage_pulse_length  && Energy->power_on) {     // If powered on always provide voltage
-          hlw_u = (Hlw.voltage_ratio * EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) / Hlw.cf1_voltage_pulse_length ;  // V *10
+          hlw_u = (Hlw.voltage_ratio * EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) * Hlw.cf1_pulse_counter / Hlw.cf1_summed_pulse_length ;  // V *10 // including line 156 into this formula makes measurements with 0.1V step rather than 0.3V steps
           Energy->voltage[0] = (float)hlw_u / 10;
         } else {
           Energy->voltage[0] = 0;
