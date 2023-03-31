@@ -120,10 +120,11 @@ struct SHUTTER {
   int8_t   tilt_config[5];     // tilt_min, tilt_max, duration, tilt_closed_value, tilt_opened_value
   int8_t   tilt_real_pos;      // -90 to 90
   int8_t   tilt_target_pos;    // target positon for movements of the tilt
-  int8_t   tilt_start_pos;     // saved start position before shutter moves
-  uint8_t  tilt_velocity;      // degree rotation per step 0.05sec
-  int8_t   tiltmoving;         // 0  operating move, 1 = operating tilt
-  uint16_t venetian_delay = 0; // Delay in steps before venetian shutter start physical moving. Based on tilt position
+  int8_t   tilt_target_pos_override;   // one time override of automatic calculation of tilt_target
+  int8_t   tilt_start_pos;             // saved start position before shutter moves
+  uint8_t  tilt_velocity;              // degree rotation per step 0.05sec
+  int8_t   tiltmoving;                 // 0  operating move, 1 = operating tilt
+  uint16_t venetian_delay = 0;         // Delay in steps before venetian shutter start physical moving. Based on tilt position
   uint16_t min_realPositionChange = 0; // minimum change of the position before the shutter operates. different for PWM and time based operations
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
@@ -1264,6 +1265,25 @@ void CmndShutterPosition(void)
       //limit the payload
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pos. payload <%s> (%d), payload %d, idx %d (%d), src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, XdrvMailbox.usridx, TasmotaGlobal.last_source );
 
+      if (XdrvMailbox.data_len >= 3) {
+        // check if input is of format "position,tilt"
+        uint32_t i = 0;
+        char *str_ptr;
+        char data_copy[strlen(XdrvMailbox.data) +1];
+        strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
+        // Loop through the data string, splitting on ',' seperators.
+        for (char *str = strtok_r(data_copy, ",", &str_ptr); str && i < 2; str = strtok_r(nullptr, ",", &str_ptr), i++) {
+          switch(i) {
+            case 0:
+              XdrvMailbox.payload = atoi(str);
+              break;
+            case 1:
+              Shutter[index].tilt_target_pos_override = atoi(str);
+              break;
+          }
+        }
+      }
+
       // value 0 with data_len > 0 can mean Open
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
       // STOP will come with payload 0 because predefined value in TASMOTA
@@ -1297,6 +1317,12 @@ void CmndShutterPosition(void)
       // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
       if (XdrvMailbox.payload ==   0 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  > 0  ) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
       if (XdrvMailbox.payload == 100 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  < 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
+      
+      // manual override of tiltposition
+      if (Shutter[index].tilt_target_pos_override != -128) {
+        Shutter[index].tilt_target_pos = Shutter[index].tilt_target_pos_override;
+        Shutter[index].tilt_target_pos_override = -128;
+      }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       // webgui still send also on inverted shutter the native position.
