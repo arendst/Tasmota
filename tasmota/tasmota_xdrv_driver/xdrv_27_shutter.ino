@@ -174,6 +174,10 @@ void ShutterLogPos(uint32_t i)
     Shutter[i].pwm_velocity, Shutter[i].pwm_value,Shutter[i].tilt_real_pos);
 }
 
+uint8_t ShutterGetStartRelay(uint8_t index) {
+  return Settings->shutter_startrelay[index];
+}
+
 void ExecuteCommandPowerShutter(uint32_t device, uint32_t state, uint32_t source)
 {
   // first implementation for virtual relays. Avoid switching relay numbers that do not exist.
