@@ -74,6 +74,13 @@ class Matter_Expirable
   end
   
   #############################################################
+  # before_remove
+  #
+  # called right before the element is removed
+  def before_remove()
+  end
+
+  #############################################################
   # set absolute time for expiration
   def set_no_expiration()
     self._expiration = nil
@@ -131,6 +138,13 @@ class Matter_Expirable_list : list
     return super(self).setitem(i, o)
   end
 
+  #############################################################
+  # remove - override
+  #
+  def remove(i)
+    if i >= 0 && i < size(self)   self[i].before_remove()   end
+    return super(self).remove(i)
+  end
 
   #############################################################
   # remove_expired

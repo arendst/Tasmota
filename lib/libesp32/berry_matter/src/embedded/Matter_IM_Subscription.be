@@ -29,7 +29,7 @@ import matter
 #################################################################################
 class Matter_IM_Subscription
   static var MAX_INTERVAL_MARGIN = 5              # we always keep 5s margin
-  var subs                                        # pointer to sub shop
+  var subs_shop                                   # pointer to sub shop
   # parameters of the subscription
   var subscription_id                             # id of the subcription as known by requester
   var session                                     # the session it belongs to
@@ -41,12 +41,13 @@ class Matter_IM_Subscription
   var not_before                                  # rate-limiting
   var expiration                                  # expiration epoch, we need to respond before
   var wait_status                                 # if `true` wait for Status Response before sending anything new
+  var is_keep_alive                               # was the last message sent an empty keep-alive
   # updates
   var updates
 
   # req: SubscribeRequestMessage
-  def init(subs, id, session, req)
-    self.subs = subs
+  def init(subs_shop, id, session, req)
+    self.subs_shop = subs_shop
     self.subscription_id = id
     self.session = session
     # check values for min_interval
@@ -78,14 +79,15 @@ class Matter_IM_Subscription
     # update next time interval
     self.updates = []
     self.clear_before_arm()
+    self.is_keep_alive = false
 
     # tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
   end
   
-  # remove self from subs list
+  # remove self from subs_shop list
   def remove_self()
-    tasmota.log("MTR: Remove_Sub sub_id=" + str(self.subscription_id))
-    self.subs.remove_sub(self)
+    tasmota.log("MTR: -Sub_Del   (      ) sub=" + str(self.subscription_id), 2)
+    self.subs_shop.remove_sub(self)
   end
 
   # clear log after it was sent, and re-arm next expiration
@@ -101,7 +103,9 @@ class Matter_IM_Subscription
     var now = tasmota.millis()
     self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
     self.not_before = now + self.min_interval * 1000 - 1
-    tasmota.log(string.format("MTR: >Sub_Done  sub_id="+str(self.subscription_id)), 2)
+    if !self.is_keep_alive
+      tasmota.log(string.format("MTR: .Sub_Done  (      ) sub=%i", self.subscription_id), 2)
+    end
   end
 
   # signal that an attribute was updated, to add to the list of reportable

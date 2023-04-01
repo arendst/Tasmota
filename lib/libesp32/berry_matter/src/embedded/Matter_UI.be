@@ -185,7 +185,9 @@ class Matter_UI
         if !first     webserver.content_send("<hr>") end
         first = false
 
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s&nbsp;</b></legend><p></p>", f.get_fabric_index(), "&lt;No label&gt;"))
+        var label = f.fabric_label
+        if !label   label = "&lt;No label&gt;"    end
+        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s&nbsp;</b></legend><p></p>", f.get_fabric_index(), label))
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
