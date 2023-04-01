@@ -1232,7 +1232,7 @@ void HandleRoot(void)
 #ifdef USE_SHUTTER
     if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, Settings->shutter_position[i], i+1);
+        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  ShutterRealToPercentPosition(-9999, i), i+1);
       }
     }
 #endif  // USE_SHUTTER
@@ -1482,9 +1482,9 @@ int32_t IsShutterWebButton(uint32_t idx) {
   /* 0: Not a shutter, 1..4: shutter up idx, -1..-4: shutter down idx */
   int32_t ShutterWebButton = 0;
   if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-    for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-      if (Settings->shutter_startrelay[i] && ((Settings->shutter_startrelay[i] == idx) || (Settings->shutter_startrelay[i] == (idx-1)))) {
-        ShutterWebButton = (Settings->shutter_startrelay[i] == idx) ? (i+1): (-1-i);
+    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present ; i++) {
+      if (ShutterGetStartRelay(i) && ((ShutterGetStartRelay(i) == idx) || (ShutterGetStartRelay(i) == (idx-1)))) {
+        ShutterWebButton = (ShutterGetStartRelay(i) == idx) ? (i+1): (-1-i);
         break;
       }
     }
