@@ -70,7 +70,7 @@ class Matter_PBKDFParamResponse
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
 
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.initiatorRandom)
@@ -84,7 +84,7 @@ class Matter_PBKDFParamResponse
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode(b)
+    return s.tlv2raw(b)
   end
 end
 matter.PBKDFParamResponse = Matter_PBKDFParamResponse
@@ -113,12 +113,12 @@ class Matter_Pake2
   var pB                # 65 bytes
   var cB                # 32 bytes
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     #
     s.add_TLV(1, matter.TLV.B1, self.pB)
     s.add_TLV(2, matter.TLV.B1, self.cB)
-    return s.encode(b)
+    return s.tlv2raw(b)
   end
 end
 matter.Pake2 = Matter_Pake2
@@ -186,7 +186,7 @@ class Matter_Sigma2
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.responderRandom)
@@ -198,7 +198,7 @@ class Matter_Sigma2
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode(b)
+    return s.tlv2raw(b)
   end
 end
 matter.Sigma2 = Matter_Sigma2
@@ -213,7 +213,7 @@ class Matter_Sigma2Resume
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.resumptionID)
@@ -224,7 +224,7 @@ class Matter_Sigma2Resume
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode(b)
+    return s.tlv2raw(b)
   end
 end
 matter.Sigma2Resume = Matter_Sigma2Resume

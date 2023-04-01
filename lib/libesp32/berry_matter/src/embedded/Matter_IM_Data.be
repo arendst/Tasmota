@@ -880,7 +880,7 @@ a = matter.AttributePathIB().from_TLV(m)
 assert(str(a) == "[00]0030/0000")
 m = a.to_TLV()
 assert(m.tostring() == "[[2 = 0U, 3 = 48U, 4 = 0U]]")
-assert(m.encode() == bytes("1724020024033024040018"))
+assert(m.tlv2raw() == bytes("1724020024033024040018"))
 
 
 # create DataVersionFilterIB from scratch
@@ -894,7 +894,7 @@ d = matter.DataVersionFilterIB()
 d.path = c
 d.data_version = 10
 assert(str(d.to_TLV()) == '{0 = [[1 = 1U, 2 = 32U]], 1 = 10U}')
-assert(d.to_TLV().encode() == bytes('1537002401012402201824010A18'))
+assert(d.to_TLV().tlv2raw() == bytes('1537002401012402201824010A18'))
 
 # decode DataVersionFilterIB from scratch
 m = matter.TLV.parse(bytes("1537002401012402201824010A18"))
@@ -932,7 +932,7 @@ a1.attribute_data.data = matter.TLV.create_TLV(matter.TLV.UTF1, "Tasmota")
 assert(str(a1.to_TLV()) == '{0 = {0 = [[2 = 0U, 3 = 48U, 4 = 0U]], 1 = [[0 = 0U, 1 = 0U]]}, 1 = {0 = 1U, 1 = [[2 = 0U, 3 = 48U, 4 = 0U]], 2 = "Tasmota"}}')
 r.attribute_reports.push(a1)
 #{0 = 1U, 1 = [{0 = {0 = [[2 = 0U, 3 = 48U, 4 = 0U]], 1 = [[0 = 0U, 1 = 0U]]}, 1 = {0 = 1U, 1 = [[2 = 0U, 3 = 48U, 4 = 0U]], 2 = "Tasmota"}}]}
-assert(r.to_TLV().encode() == bytes('1524000136011535003700240200240330240400183701240000240100181835012400013701240200240330240400182C02075461736D6F746118181818'))
+assert(r.to_TLV().tlv2raw() == bytes('1524000136011535003700240200240330240400183701240000240100181835012400013701240200240330240400182C02075461736D6F746118181818'))
 
 
 # <Matter_AttributeReportIB:{
