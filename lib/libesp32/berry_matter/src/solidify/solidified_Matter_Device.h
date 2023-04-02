@@ -1869,8 +1869,8 @@ be_local_closure(Matter_Device_save_param,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Device_msg_send,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
-    5,                          /* argc */
+    13,                          /* nstack */
+    6,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -1883,15 +1883,16 @@ be_local_closure(Matter_Device_msg_send,   /* name */
     }),
     be_str_weak(msg_send),
     &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x88140100,  //  0000  GETMBR	R5	R0	K0
-      0x8C140B01,  //  0001  GETMET	R5	R5	K1
-      0x5C1C0200,  //  0002  MOVE	R7	R1
-      0x5C200400,  //  0003  MOVE	R8	R2
-      0x5C240600,  //  0004  MOVE	R9	R3
-      0x5C280800,  //  0005  MOVE	R10	R4
-      0x7C140A00,  //  0006  CALL	R5	5
-      0x80040A00,  //  0007  RET	1	R5
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88180100,  //  0000  GETMBR	R6	R0	K0
+      0x8C180D01,  //  0001  GETMET	R6	R6	K1
+      0x5C200200,  //  0002  MOVE	R8	R1
+      0x5C240400,  //  0003  MOVE	R9	R2
+      0x5C280600,  //  0004  MOVE	R10	R3
+      0x5C2C0800,  //  0005  MOVE	R11	R4
+      0x5C300A00,  //  0006  MOVE	R12	R5
+      0x7C180C00,  //  0007  CALL	R6	6
+      0x80040C00,  //  0008  RET	1	R6
     })
   )
 );

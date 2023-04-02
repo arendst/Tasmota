@@ -321,8 +321,8 @@ class Matter_Device
   #############################################################
   # Global entry point for sending a message.
   # Delegates to `udp_server`
-  def msg_send(raw, addr, port, id)
-    return self.udp_server.send_response(raw, addr, port, id)
+  def msg_send(raw, addr, port, id, session_id)
+    return self.udp_server.send_response(raw, addr, port, id, session_id)
   end
 
   #############################################################

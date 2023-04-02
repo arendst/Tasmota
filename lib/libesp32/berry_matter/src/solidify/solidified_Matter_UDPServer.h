@@ -11,47 +11,55 @@ extern const bclass be_class_Matter_UDPPacket_sent;
 ********************************************************************/
 be_local_closure(Matter_UDPPacket_sent_init,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    5,                          /* argc */
+    10,                          /* nstack */
+    6,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
+    ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(raw),
     /* K1   */  be_nested_str_weak(addr),
     /* K2   */  be_nested_str_weak(port),
     /* K3   */  be_nested_str_weak(msg_id),
     /* K4   */  be_nested_str_weak(retries),
     /* K5   */  be_const_int(0),
-    /* K6   */  be_nested_str_weak(next_try),
-    /* K7   */  be_nested_str_weak(tasmota),
-    /* K8   */  be_nested_str_weak(millis),
-    /* K9   */  be_nested_str_weak(matter),
-    /* K10  */  be_nested_str_weak(UDPServer),
-    /* K11  */  be_nested_str_weak(_backoff_time),
+    /* K6   */  be_nested_str_weak(session_id),
+    /* K7   */  be_nested_str_weak(next_try),
+    /* K8   */  be_nested_str_weak(tasmota),
+    /* K9   */  be_nested_str_weak(millis),
+    /* K10  */  be_nested_str_weak(matter),
+    /* K11  */  be_nested_str_weak(UDPServer),
+    /* K12  */  be_nested_str_weak(_backoff_time),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[23]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x90020202,  //  0001  SETMBR	R0	K1	R2
       0x90020403,  //  0002  SETMBR	R0	K2	R3
       0x90020604,  //  0003  SETMBR	R0	K3	R4
       0x90020905,  //  0004  SETMBR	R0	K4	K5
-      0xB8160E00,  //  0005  GETNGBL	R5	K7
-      0x8C140B08,  //  0006  GETMET	R5	R5	K8
-      0x7C140200,  //  0007  CALL	R5	1
-      0xB81A1200,  //  0008  GETNGBL	R6	K9
-      0x88180D0A,  //  0009  GETMBR	R6	R6	K10
-      0x8C180D0B,  //  000A  GETMET	R6	R6	K11
-      0x88200104,  //  000B  GETMBR	R8	R0	K4
-      0x7C180400,  //  000C  CALL	R6	2
-      0x00140A06,  //  000D  ADD	R5	R5	R6
-      0x90020C05,  //  000E  SETMBR	R0	K6	R5
-      0x80000000,  //  000F  RET	0
+      0x4C180000,  //  0005  LDNIL	R6
+      0x20180A06,  //  0006  NE	R6	R5	R6
+      0x781A0001,  //  0007  JMPF	R6	#000A
+      0x5C180A00,  //  0008  MOVE	R6	R5
+      0x70020000,  //  0009  JMP		#000B
+      0x58180005,  //  000A  LDCONST	R6	K5
+      0x90020C06,  //  000B  SETMBR	R0	K6	R6
+      0xB81A1000,  //  000C  GETNGBL	R6	K8
+      0x8C180D09,  //  000D  GETMET	R6	R6	K9
+      0x7C180200,  //  000E  CALL	R6	1
+      0xB81E1400,  //  000F  GETNGBL	R7	K10
+      0x881C0F0B,  //  0010  GETMBR	R7	R7	K11
+      0x8C1C0F0C,  //  0011  GETMET	R7	R7	K12
+      0x88240104,  //  0012  GETMBR	R9	R0	K4
+      0x7C1C0400,  //  0013  CALL	R7	2
+      0x00180C07,  //  0014  ADD	R6	R6	R7
+      0x90020E06,  //  0015  SETMBR	R0	K7	R6
+      0x80000000,  //  0016  RET	0
     })
   )
 );
@@ -134,18 +142,19 @@ be_local_closure(Matter_UDPPacket_sent_send,   /* name */
 ** Solidified class: Matter_UDPPacket_sent
 ********************************************************************/
 be_local_class(Matter_UDPPacket_sent,
-    6,
+    7,
     NULL,
-    be_nested_map(8,
+    be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(addr, -1), be_const_var(1) },
-        { be_const_key_weak(raw, -1), be_const_var(0) },
-        { be_const_key_weak(msg_id, 0), be_const_var(3) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_UDPPacket_sent_init_closure) },
-        { be_const_key_weak(port, -1), be_const_var(2) },
-        { be_const_key_weak(retries, -1), be_const_var(4) },
-        { be_const_key_weak(next_try, 4), be_const_var(5) },
+        { be_const_key_weak(next_try, 3), be_const_var(6) },
+        { be_const_key_weak(msg_id, 8), be_const_var(3) },
+        { be_const_key_weak(retries, 7), be_const_var(5) },
         { be_const_key_weak(send, -1), be_const_closure(Matter_UDPPacket_sent_send_closure) },
+        { be_const_key_weak(port, 0), be_const_var(2) },
+        { be_const_key_weak(raw, -1), be_const_var(0) },
+        { be_const_key_weak(init, -1), be_const_closure(Matter_UDPPacket_sent_init_closure) },
+        { be_const_key_weak(addr, -1), be_const_var(1) },
+        { be_const_key_weak(session_id, -1), be_const_var(4) },
     })),
     be_str_weak(Matter_UDPPacket_sent)
 );
@@ -251,8 +260,8 @@ be_local_closure(Matter_UDPServer__backoff_time,   /* name */
 ********************************************************************/
 be_local_closure(Matter_UDPServer_send_response,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
-    5,                          /* argc */
+    13,                          /* nstack */
+    6,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -269,23 +278,24 @@ be_local_closure(Matter_UDPServer_send_response,   /* name */
     }),
     be_str_weak(send_response),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
-      0xB8160000,  //  0000  GETNGBL	R5	K0
-      0x8C140B01,  //  0001  GETMET	R5	R5	K1
-      0x5C1C0200,  //  0002  MOVE	R7	R1
-      0x5C200400,  //  0003  MOVE	R8	R2
-      0x5C240600,  //  0004  MOVE	R9	R3
-      0x5C280800,  //  0005  MOVE	R10	R4
-      0x7C140A00,  //  0006  CALL	R5	5
-      0x8C180B02,  //  0007  GETMET	R6	R5	K2
-      0x88200103,  //  0008  GETMBR	R8	R0	K3
-      0x7C180400,  //  0009  CALL	R6	2
-      0x78120003,  //  000A  JMPF	R4	#000F
-      0x88180104,  //  000B  GETMBR	R6	R0	K4
-      0x8C180D05,  //  000C  GETMET	R6	R6	K5
-      0x5C200A00,  //  000D  MOVE	R8	R5
-      0x7C180400,  //  000E  CALL	R6	2
-      0x80000000,  //  000F  RET	0
+    ( &(const binstruction[17]) {  /* code */
+      0xB81A0000,  //  0000  GETNGBL	R6	K0
+      0x8C180D01,  //  0001  GETMET	R6	R6	K1
+      0x5C200200,  //  0002  MOVE	R8	R1
+      0x5C240400,  //  0003  MOVE	R9	R2
+      0x5C280600,  //  0004  MOVE	R10	R3
+      0x5C2C0800,  //  0005  MOVE	R11	R4
+      0x5C300A00,  //  0006  MOVE	R12	R5
+      0x7C180C00,  //  0007  CALL	R6	6
+      0x8C1C0D02,  //  0008  GETMET	R7	R6	K2
+      0x88240103,  //  0009  GETMBR	R9	R0	K3
+      0x7C1C0400,  //  000A  CALL	R7	2
+      0x78120003,  //  000B  JMPF	R4	#0010
+      0x881C0104,  //  000C  GETMBR	R7	R0	K4
+      0x8C1C0F05,  //  000D  GETMET	R7	R7	K5
+      0x5C240C00,  //  000E  MOVE	R9	R6
+      0x7C1C0400,  //  000F  CALL	R7	2
+      0x80000000,  //  0010  RET	0
     })
   )
 );
@@ -493,7 +503,7 @@ be_local_closure(Matter_UDPServer_init,   /* name */
 ********************************************************************/
 be_local_closure(Matter_UDPServer__resend_packets,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
+    13,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -501,7 +511,7 @@ be_local_closure(Matter_UDPServer__resend_packets,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[23]) {     /* constants */
+    ( &(const bvalue[24]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_nested_str_weak(packets_sent),
     /* K2   */  be_nested_str_weak(tasmota),
@@ -521,27 +531,28 @@ be_local_closure(Matter_UDPServer__resend_packets,   /* name */
     /* K16  */  be_nested_str_weak(string),
     /* K17  */  be_nested_str_weak(remove),
     /* K18  */  be_nested_str_weak(format),
-    /* K19  */  be_nested_str_weak(MTR_X3A_X20_X2E_X20_X20_X20_X20_X20_X20_X20_X20_X20_X20Unacked_X20packet_X20_X27_X5B_X25s_X5D_X3A_X25i_X27_X20msg_id_X3D_X25i),
-    /* K20  */  be_nested_str_weak(addr),
-    /* K21  */  be_nested_str_weak(port),
-    /* K22  */  be_const_int(2),
+    /* K19  */  be_nested_str_weak(MTR_X3A_X20_X2E_X20_X20_X20_X20_X20_X20_X20_X20_X20_X20_X28_X256i_X29_X20Unacked_X20packet_X20_X27_X5B_X25s_X5D_X3A_X25i_X27_X20msg_id_X3D_X25i),
+    /* K20  */  be_nested_str_weak(session_id),
+    /* K21  */  be_nested_str_weak(addr),
+    /* K22  */  be_nested_str_weak(port),
+    /* K23  */  be_const_int(2),
     }),
     be_str_weak(_resend_packets),
     &be_const_str_solidified,
-    ( &(const binstruction[60]) {  /* code */
+    ( &(const binstruction[61]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0x6008000C,  //  0001  GETGBL	R2	G12
       0x880C0101,  //  0002  GETMBR	R3	R0	K1
       0x7C080200,  //  0003  CALL	R2	1
       0x14080202,  //  0004  LT	R2	R1	R2
-      0x780A0034,  //  0005  JMPF	R2	#003B
+      0x780A0035,  //  0005  JMPF	R2	#003C
       0x88080101,  //  0006  GETMBR	R2	R0	K1
       0x94080401,  //  0007  GETIDX	R2	R2	R1
       0xB80E0400,  //  0008  GETNGBL	R3	K2
       0x8C0C0703,  //  0009  GETMET	R3	R3	K3
       0x88140504,  //  000A  GETMBR	R5	R2	K4
       0x7C0C0400,  //  000B  CALL	R3	2
-      0x780E002B,  //  000C  JMPF	R3	#0039
+      0x780E002C,  //  000C  JMPF	R3	#003A
       0x880C0505,  //  000D  GETMBR	R3	R2	K5
       0x88100106,  //  000E  GETMBR	R4	R0	K6
       0x180C0604,  //  000F  LE	R3	R3	R4
@@ -569,7 +580,7 @@ be_local_closure(Matter_UDPServer__resend_packets,   /* name */
       0x000C070F,  //  0025  ADD	R3	R3	K15
       0x900A0A03,  //  0026  SETMBR	R2	K5	R3
       0x0004030F,  //  0027  ADD	R1	R1	K15
-      0x7002000E,  //  0028  JMP		#0038
+      0x7002000F,  //  0028  JMP		#0039
       0xA40E2000,  //  0029  IMPORT	R3	K16
       0x88100101,  //  002A  GETMBR	R4	R0	K1
       0x8C100911,  //  002B  GETMET	R4	R4	K17
@@ -581,14 +592,15 @@ be_local_closure(Matter_UDPServer__resend_packets,   /* name */
       0x58200013,  //  0031  LDCONST	R8	K19
       0x88240514,  //  0032  GETMBR	R9	R2	K20
       0x88280515,  //  0033  GETMBR	R10	R2	K21
-      0x882C0509,  //  0034  GETMBR	R11	R2	K9
-      0x7C180A00,  //  0035  CALL	R6	5
-      0x581C0016,  //  0036  LDCONST	R7	K22
-      0x7C100600,  //  0037  CALL	R4	3
-      0x70020000,  //  0038  JMP		#003A
-      0x0004030F,  //  0039  ADD	R1	R1	K15
-      0x7001FFC5,  //  003A  JMP		#0001
-      0x80000000,  //  003B  RET	0
+      0x882C0516,  //  0034  GETMBR	R11	R2	K22
+      0x88300509,  //  0035  GETMBR	R12	R2	K9
+      0x7C180C00,  //  0036  CALL	R6	6
+      0x581C0017,  //  0037  LDCONST	R7	K23
+      0x7C100600,  //  0038  CALL	R4	3
+      0x70020000,  //  0039  JMP		#003B
+      0x0004030F,  //  003A  ADD	R1	R1	K15
+      0x7001FFC4,  //  003B  JMP		#0001
+      0x80000000,  //  003C  RET	0
     })
   )
 );
@@ -732,7 +744,7 @@ be_local_class(Matter_UDPServer,
     NULL,
     be_nested_map(17,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(RETRIES, -1), be_const_int(4) },
+        { be_const_key_weak(RETRIES, -1), be_const_int(6) },
         { be_const_key_weak(_backoff_time, 6), be_const_static_closure(Matter_UDPServer__backoff_time_closure) },
         { be_const_key_weak(listening, -1), be_const_var(2) },
         { be_const_key_weak(send_response, -1), be_const_closure(Matter_UDPServer_send_response_closure) },

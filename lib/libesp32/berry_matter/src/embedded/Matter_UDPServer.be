@@ -37,15 +37,17 @@ class Matter_UDPPacket_sent
   var addr                        # ip_address (string)
   var port                        # port (int)
   var msg_id                      # (int) message identifier that needs to be acknowledged, or `nil` if no ack needed
+  var session_id                  # (int) exchange id, for logging only
   var retries                     # 0 in first attempts, goes up to RETRIES
   var next_try                    # timestamp (millis) when to try again
 
-  def init(raw, addr, port, id)
+  def init(raw, addr, port, id, session_id)
     self.raw = raw
     self.addr = addr
     self.port = port
     self.msg_id = id
     self.retries = 0
+    self.session_id = (session_id != nil) ? session_id : 0
     self.next_try = tasmota.millis() + matter.UDPServer._backoff_time(self.retries)
   end
 
@@ -72,7 +74,7 @@ matter.UDPPacket_sent = Matter_UDPPacket_sent
 #
 #################################################################################
 class Matter_UDPServer
-  static var RETRIES = 4            # 5 transmissions max (4 retries) `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
+  static var RETRIES = 6            # 7 transmissions max (6 retries) - 2 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
   static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
   var addr, port                    # local addr and port
   var listening                     # true if active
@@ -171,7 +173,7 @@ class Matter_UDPServer
         else
           import string
           self.packets_sent.remove(idx)
-          tasmota.log(string.format("MTR: .          Unacked packet '[%s]:%i' msg_id=%i", packet.addr, packet.port, packet.msg_id), 2)
+          tasmota.log(string.format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 2)
         end
       else
         idx += 1
@@ -197,8 +199,8 @@ class Matter_UDPServer
 
   #############################################################
   # Send a packet, enqueue it if `id` is not `nil`
-  def send_response(raw, addr, port, id)
-    var packet = matter.UDPPacket_sent(raw, addr, port, id)
+  def send_response(raw, addr, port, id, session_id)
+    var packet = matter.UDPPacket_sent(raw, addr, port, id, session_id)
     packet.send(self.udp_socket)    # send
     if id
       # tasmota.log("MTR: <<< enqueue id="+str(id))

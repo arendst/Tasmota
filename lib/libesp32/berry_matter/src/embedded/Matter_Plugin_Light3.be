@@ -59,9 +59,9 @@ class Matter_Plugin_Light3 : Matter_Plugin
     var hue = light_status.find('hue', nil)
     var sat = light_status.find('sat', nil)
     var pow = light_status.find('power', nil)
-    if bri != nil     self.shadow_bri = tasmota.scale_uint(bri, 0, 255, 0, 254)       end
-    if hue != nil     self.shadow_hue = tasmota.scale_uint(hue, 0, 360, 0, 254)       end
-    if sat != nil     self.shadow_sat = tasmota.scale_uint(sat, 0, 255, 0, 254)       end
+    if bri != nil     bri = tasmota.scale_uint(bri, 0, 255, 0, 254)   else bri = self.shadow_bri      end
+    if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else bri = self.shadow_hue      end
+    if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else bri = self.shadow_sat      end
     if pow != self.shadow_onoff self.attribute_updated(nil, 0x0006, 0x0000)   self.shadow_onoff = pow end
     if bri != self.shadow_bri   self.attribute_updated(nil, 0x0008, 0x0000)   self.shadow_bri = bri   end
     if hue != self.shadow_hue   self.attribute_updated(nil, 0x0300, 0x0000)   self.shadow_hue = hue   end
