@@ -920,7 +920,7 @@
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCk"
 #define D_SENSOR_CM11_TX       "CM110x Tx"
 #define D_SENSOR_CM11_RX       "CM110x Rx"
-#define D_SENSOR_FLOWRATEMETER "Débit"
+#define D_SENSOR_FLOWRATEMETER "Débitmètre"
 #define D_SENSOR_ME007_TRIG    "ME007 Tri"
 #define D_SENSOR_ME007_RX      "ME007 Rx"
 #define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
@@ -1124,9 +1124,10 @@
 #define D_FP_UNKNOWNERROR "Erreur"             // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Débit"
-#define D_FLOWRATEMETER_AMOUNT_TODAY "Quantité aujourd'hui"
-#define D_FLOWRATEMETER_DURATION_TODAY "Durée aujourd'hui"
+#define D_FLOWRATEMETER_NAME            "Débit"
+#define D_FLOWRATEMETER_COUNT           "Nb Impulsions"
+#define D_FLOWRATEMETER_AMOUNT_TODAY    "Qté journalière"
+#define D_FLOWRATEMETER_DURATION_TODAY  "Durée de fonction"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
