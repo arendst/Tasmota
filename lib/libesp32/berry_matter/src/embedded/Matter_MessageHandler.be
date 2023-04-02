@@ -143,7 +143,7 @@ class Matter_MessageHandler
             resp.encode_frame()
             resp.encrypt()
             tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
-            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
+            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
           end
           ret = true
 
@@ -171,8 +171,8 @@ class Matter_MessageHandler
   end
 
   #############################################################
-  def send_response(raw, addr, port, id)
-    self.device.msg_send(raw, addr, port, id)
+  def send_response(raw, addr, port, id, session_id)
+    self.device.msg_send(raw, addr, port, id, session_id)
   end
 
   #############################################################

@@ -102,8 +102,8 @@ class Matter_IM
       resp.encrypt()
       import string
       tasmota.log(string.format("MTR: <Ack_now   (%6i) rack=%i id=%i [%s]:%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, resp.remote_ip, resp.remote_port), 3)
-      msg.session._message_handler.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil)
-      # self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter)
+      msg.session._message_handler.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
+      # self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
       # return msg.send_im(msg.session._message_handler)         # send message now
     else
       return true
