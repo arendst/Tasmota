@@ -123,7 +123,7 @@ String GetTimeZone(void) {
   return String(tz);  // -03:45
 }
 
-String GetDuration(uint32_t time) {
+String GetDuration(uint32_t time, boolean withDays = true) {
   char dt[16];
 
   TIME_T ut;
@@ -134,7 +134,11 @@ String GetDuration(uint32_t time) {
 
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  if (withDays) {
+    snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  } else {
+    snprintf_P(dt, sizeof(dt), PSTR("%02d:%02d:%02d"), ut.hour, ut.minute, ut.second);
+  }
 
   return String(dt);  // 128T14:35:44
 }

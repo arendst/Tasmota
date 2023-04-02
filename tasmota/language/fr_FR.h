@@ -1127,7 +1127,7 @@
 #define D_FLOWRATEMETER_NAME            "Débit"
 #define D_FLOWRATEMETER_COUNT           "Nb Impulsions"
 #define D_FLOWRATEMETER_AMOUNT_TODAY    "Qté journalière"
-#define D_FLOWRATEMETER_DURATION_TODAY  "Durée de fonction"
+#define D_FLOWRATEMETER_DURATION_TODAY  "Durée de fonct."
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
