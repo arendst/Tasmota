@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light3.be - implements the behavior for a Light with 3 channels (RGB)
+# Matter_Plugin_Light2.be - implements the behavior for a Light with 2 channel (CT)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -22,9 +22,9 @@
 # dummy declaration for solidification
 class Matter_Plugin end
 
-#@ solidify:Matter_Plugin_Light3,weak
+#@ solidify:Matter_Plugin_Light2,weak
 
-class Matter_Plugin_Light3 : Matter_Plugin
+class Matter_Plugin_Light2 : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
@@ -32,21 +32,21 @@ class Matter_Plugin_Light3 : Matter_Plugin
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],                # Level Control 1.6 p.57
-    0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
   }
-  static var TYPES = { 0x010D: 2 }                  # Extended Color Light
+  static var TYPES = { 0x010C: 2 }                  # Color Temperature Light
 
-  var shadow_hue, shadow_bri, shadow_sat
+  var shadow_bri, shadow_ct
+  var ct_min, ct_max
   var shadow_onoff
 
   #############################################################
   # Constructor
   def init(device, endpoint)
     super(self).init(device, endpoint)
-    self.shadow_hue = 0
     self.shadow_bri = 0
-    self.shadow_sat = 0
+    self.shadow_ct = 325
     self.shadow_onoff = false
+    self.update_ct_minmax()
   end
 
   #############################################################
@@ -54,18 +54,25 @@ class Matter_Plugin_Light3 : Matter_Plugin
   #
   def update_shadow()
     import light
+    self.update_ct_minmax()
     var light_status = light.get()
-    var bri = light_status.find('bri', nil)
-    var hue = light_status.find('hue', nil)
-    var sat = light_status.find('sat', nil)
     var pow = light_status.find('power', nil)
+    var bri = light_status.find('bri', nil)
+    var ct = light_status.find('ct', nil)
     if bri != nil     bri = tasmota.scale_uint(bri, 0, 255, 0, 254)   else bri = self.shadow_bri      end
-    if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else bri = self.shadow_hue      end
-    if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else bri = self.shadow_sat      end
+    if ct  == nil     ct = self.shadow_ct      end
     if pow != self.shadow_onoff self.attribute_updated(nil, 0x0006, 0x0000)   self.shadow_onoff = pow end
     if bri != self.shadow_bri   self.attribute_updated(nil, 0x0008, 0x0000)   self.shadow_bri = bri   end
-    if hue != self.shadow_hue   self.attribute_updated(nil, 0x0300, 0x0000)   self.shadow_hue = hue   end
-    if sat != self.shadow_sat   self.attribute_updated(nil, 0x0300, 0x0001)   self.shadow_sat = sat   end
+    if ct  != self.shadow_ct    self.attribute_updated(nil, 0x0300, 0x0007)   self.shadow_ct = ct   end
+  end
+
+  #############################################################
+  # Update ct_min/max
+  #
+  def update_ct_minmax()
+    var ct_alexa_mode = tasmota.get_option(82)      # if set, range is 200..380 instead of 153...500
+    self.ct_min = ct_alexa_mode ? 200 : 153
+    self.ct_max = ct_alexa_mode ? 380 : 500
   end
 
   #############################################################
@@ -137,31 +144,23 @@ class Matter_Plugin_Light3 : Matter_Plugin
       
     # ====================================================================================================
     elif cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
-        return TLV.create_TLV(TLV.U1, self.shadow_hue)
-      elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.shadow_sat)
-      elif attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+      if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
+        return TLV.create_TLV(TLV.U1, self.shadow_ct)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)# 0 = CurrentHue and CurrentSaturation
+        return TLV.create_TLV(TLV.U1, 2)# 2 = ColorTemperatureMireds
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
-      elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+      elif attribute == 0x400B          #  ---------- ColorTempPhysicalMinMireds / u2 ----------
+        return TLV.create_TLV(TLV.U1, self.ct_min)
+      elif attribute == 0x400C          #  ---------- ColorTempPhysicalMaxMireds / u2 ----------
+        return TLV.create_TLV(TLV.U1, self.ct_max)
       
-      # Defined Primaries Information Attribute Set
-      elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
-
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x01)    # HS
+        return TLV.create_TLV(TLV.U4, 0x10)    # CT
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
         return TLV.create_TLV(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
       end
-
+        
     else
       return super(self).read_attribute(session, ctx)
     end
@@ -255,44 +254,24 @@ class Matter_Plugin_Light3 : Matter_Plugin
         # TODO, we don't really support it
         return true
       end
+      
     # ====================================================================================================
     elif cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      if   command == 0x0000            # ---------- MoveToHue ----------
-        var hue_in = val.findsubval(0)  # Hue 0..254
-        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
-        light.set({'hue': hue})
+      if   command == 0x000A            # ---------- MoveToColorTemperature ----------
+        var ct_in = val.findsubval(0)  # CT
+        if ct_in < self.ct_min  ct_in = self.ct_min   end
+        if ct_in > self.ct_max  ct_in = self.ct_max   end
+        light.set({'ct': ct_in})
         self.update_shadow()
-        ctx.log = "hue:"+str(hue_in)
-        return true
-      elif command == 0x0001            # ---------- MoveHue ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0002            # ---------- StepHue ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0003            # ---------- MoveToSaturation ----------
-        var sat_in = val.findsubval(0)  # Sat 0..254
-        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
-        light.set({'sat': sat})
-        self.update_shadow()
-        ctx.log = "sat:"+str(sat_in)
-        return true
-      elif command == 0x0004            # ---------- MoveSaturation ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0005            # ---------- StepSaturation ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0006            # ---------- MoveToHueAndSaturation ----------
-        var hue_in = val.findsubval(0)  # Hue 0..254
-        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
-        var sat_in = val.findsubval(1)  # Sat 0..254
-        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
-        light.set({'hue': hue, 'sat': sat})
-        self.update_shadow()
-        ctx.log = "hue:"+str(hue_in)+" sat:"+str(sat_in)
+        ctx.log = "ct:"+str(ct_in)
         return true
       elif command == 0x0047            # ---------- StopMoveStep ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x004B            # ---------- MoveColorTemperature ----------
+        # TODO, we don't really support it
+        return true
+      elif command == 0x004C            # ---------- StepColorTemperature ----------
         # TODO, we don't really support it
         return true
       end
@@ -306,4 +285,4 @@ class Matter_Plugin_Light3 : Matter_Plugin
     self.update_shadow()                    # force reading value and sending subscriptions
   end
 end
-matter.Plugin_Light3 = Matter_Plugin_Light3
+matter.Plugin_Light2 = Matter_Plugin_Light2
