@@ -39,6 +39,7 @@ class Matter_Path
   var attribute               # attribute or `nil` if expansion
   var command                 # command
   var status                  # status to be returned (matter.SUCCESS or matter.<ERROR>)
+  var log                     # any string that needs to be logged (used to show significant parameters for commands)
 
   def tostring()
     try
