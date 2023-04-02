@@ -528,6 +528,7 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
         ctx.status = matter.INVALID_ACTION
+        ctx.log = "fabric_index:"+str(index)
         return nil                      # trigger a standalone ack
 
       end

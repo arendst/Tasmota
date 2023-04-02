@@ -124,14 +124,15 @@ be_local_closure(Matter_Path_tostring,   /* name */
 ** Solidified class: Matter_Path
 ********************************************************************/
 be_local_class(Matter_Path,
-    5,
+    6,
     NULL,
-    be_nested_map(6,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(log, 4), be_const_var(5) },
+        { be_const_key_weak(command, 2), be_const_var(3) },
+        { be_const_key_weak(status, -1), be_const_var(4) },
         { be_const_key_weak(tostring, -1), be_const_closure(Matter_Path_tostring_closure) },
-        { be_const_key_weak(cluster, 3), be_const_var(1) },
-        { be_const_key_weak(command, -1), be_const_var(3) },
-        { be_const_key_weak(status, 0), be_const_var(4) },
+        { be_const_key_weak(cluster, 5), be_const_var(1) },
         { be_const_key_weak(endpoint, -1), be_const_var(0) },
         { be_const_key_weak(attribute, -1), be_const_var(2) },
     })),
