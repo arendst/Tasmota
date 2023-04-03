@@ -485,7 +485,8 @@ bool FlowRateMeterCommand(void) {
       if (any_value) {
         if (value & 1) {FlowRateMeterMidnightReset();}
         ResponseCmndNumber(value & 1);
-        
+        FlowRateMeterShow(true);
+
         show_parms = true;
       }
       break;
