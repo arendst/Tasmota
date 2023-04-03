@@ -397,7 +397,7 @@ void FlowRateMeterShow(bool json) {
  * Sensor96 12 0|1                  - Value reglage: Switch between telePeriod 300 reglage(0) / telePeriod 3 reglage(1)
  * Sensor96 13 0|1                  - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
  * Sensor96 14 0->31                - Value weight avg sample (0 à 31)
- *
+ * Sensor96 15 0|1                  - Reset des valeurs totales
  * Flowmeter calibration:
  * - get the current displayed flow rate (D)
  * - get the current <correction-factor> (c)
@@ -482,6 +482,14 @@ bool FlowRateMeterCommand(void) {
       if (any_value) {
         Settings->SensorBits1.flowratemeter_weight_avg_sample = value & 31;
         ResponseCmndNumber(value & 31);
+        
+        show_parms = true;
+      }
+      break;
+    case 15:  // Reset des valeurs totales
+      if (any_value) {
+        (value & 1) ? FlowRateMeterMidnightReset();
+        ResponseCmndNumber(value & 1);
         
         show_parms = true;
       }
