@@ -1403,6 +1403,7 @@ void Every250mSeconds(void)
             AddLog(LOG_LEVEL_INFO, "OTA: unsupported protocol");
             ota_result = -999;
           } else {
+            OTAclient.setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);
             httpUpdateLight.rebootOnUpdate(false);
             httpUpdateLight.setFactory(TasmotaGlobal.ota_factory);
             ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));

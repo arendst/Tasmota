@@ -1038,13 +1038,17 @@ void CmndSleep(void)
 
 }
 
-void CmndUpgrade(void)
-{
+void CmndUpgrade(void) {
   // Check if the payload is numerically 1, and had no trailing chars.
   //   e.g. "1foo" or "1.2.3" could fool us.
   // Check if the version we have been asked to upgrade to is higher than our current version.
   //   We also need at least 3 chars to make a valid version number string.
+  // Upload 1 - OTA upload binary
+  // Upload 2 - (ESP32 only) OTA upload safeboot binary if partition is present
   if (((1 == XdrvMailbox.data_len) && (1 == XdrvMailbox.payload)) || ((XdrvMailbox.data_len >= 3) && NewerVersion(XdrvMailbox.data))) {
+#ifdef ESP32
+    TasmotaGlobal.ota_factory = false;  // Reset in case of failed safeboot upgrade
+#endif  // ESP32 and WEBCLIENT_HTTPS
     TasmotaGlobal.ota_state_flag = 3;
     char stemp1[TOPSZ];
     Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), XdrvMailbox.command, TasmotaGlobal.version, GetOtaUrl(stemp1, sizeof(stemp1)));
