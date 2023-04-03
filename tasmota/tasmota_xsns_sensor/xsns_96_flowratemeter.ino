@@ -261,24 +261,19 @@ void FlowRateMeterShow(bool json) {
         //uint32_t count = flowratemeter_count[i];
 
         if (i == 0) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER1 "\":{\"name\":\"%s\","), FLOWRATEMETER1);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER1);
         } else if (i == 1) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER2 "\":{\"name\":\"%s\","), FLOWRATEMETER2);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER2);
         } else if (i == 2) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER3 "\":{\"name\":\"%s\","), FLOWRATEMETER3);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER3);
         } else if (i == 3) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER4 "\":{\"name\":\"%s\","), FLOWRATEMETER4);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER4);
         } else if (i == 4) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER5 "\":{\"name\":\"%s\","), FLOWRATEMETER5);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER5);
         } else if (i == 5) {
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER6 "\":{\"name\":\"%s\","), FLOWRATEMETER6);
-          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
+          ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i, FLOWRATEMETER6);
         }
+        ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_COUNT "\":%d,"), count);
         ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_RATE "\":%*_f,"),
           Settings->flag2.frequency_resolution, &rate);
         ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_TODAY "\":%*_f,"),
@@ -382,15 +377,14 @@ void FlowRateMeterShow(bool json) {
 
 /*********************************************************************************************\
  * Supported commands for Sensor96:
- *
- * Sensor96                        - Show current settings
+ * Sensor96                         - Affiche les paramètres actuels
 
- * Sensor96 1 <correction-factor>  - Set sensor 1 factor (x 1000) - to set to 0.2 enter 'Sensor96 1 200'
- * Sensor96 2 <correction-factor>  - Set sensor 2 factor (x 1000)
- * Sensor96 3 <correction-factor>  - Set sensor 3 factor (x 1000)
- * Sensor96 4 <correction-factor>  - Set sensor 4 factor (x 1000)
- * Sensor96 5 <correction-factor>  - Set sensor 5 factor (x 1000)
- * Sensor96 6 <correction-factor>  - Set sensor 6 factor (x 1000)
+ * Sensor96 1 <correction-factor>  	- Facteur de correction du débitmètre1 (x 1000) - Pour paramétrer 0.2, entrez 'Sensor96 1 200'
+ * Sensor96 2 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
+ * Sensor96 3 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
+ * Sensor96 4 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
+ * Sensor96 5 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
+ * Sensor96 6 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
  * 
  * Sensor96 10 0|1                  - Show flow value in l/min (0) or m³/h (1)
  * Sensor96 11 0|1                  - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
@@ -398,18 +392,19 @@ void FlowRateMeterShow(bool json) {
  * Sensor96 13 0|1                  - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
  * Sensor96 14 0->31                - Value weight avg sample (0 à 31)
  * Sensor96 15 0|1                  - Reset des valeurs totales
- * Flowmeter calibration:
- * - get the current displayed flow rate (D)
- * - get the current <correction-factor> (c)
- * - measure the real flow rate          (M)
- * - new <correction-factor> = M / (c * D)
  *
- * Example:
- * - displayed flow rate = 254.39 l/min (D)
- * - current <correction-factor> = 1.0  (c)
- * - real flow rate      =  83.42 l/min (M)
+ * Calibration des débitmètres :
+ * - débit actuel affiché 				  (D)
+ * - <correction-factor> actuel 		(c)
+ * - débit réel mesuré          		(M)
+ * - nouveau <correction-factor> à appliquer = M / (c * D)
  *
- * new <correction-factor> = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
+ * Exemple:
+ * - débit actuel affiché 		  = 254.39 l/min 	(D)
+ * - <correction-factor> actuel = 1.0  			    (c)
+ * - débit réel mesuré      	  =  83.42 l/min 	(M)
+ *
+ * nouveau <correction-factor> à appliquer = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
  * Cmd: Sensor96 x 328
 \*********************************************************************************************/
 bool FlowRateMeterCommand(void) {
@@ -480,15 +475,15 @@ bool FlowRateMeterCommand(void) {
       break;
     case 14:  // weight avg sample (0 à 31)
       if (any_value) {
-        Settings->SensorBits1.flowratemeter_weight_avg_sample = value & 31;
-        ResponseCmndNumber(value & 31);
+        Settings->SensorBits1.flowratemeter_weight_avg_sample = value & 0x1F;
+        ResponseCmndNumber(value & 0x1F);
         
         show_parms = true;
       }
       break;
     case 15:  // Reset des valeurs totales
       if (any_value) {
-        (value & 1) ? FlowRateMeterMidnightReset();
+        if (value & 1) {FlowRateMeterMidnightReset();}
         ResponseCmndNumber(value & 1);
         
         show_parms = true;

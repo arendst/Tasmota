@@ -1014,12 +1014,7 @@
   #define FLOWRATEMETER5                        "Débitmètre de Chambre Axel"
   #define FLOWRATEMETER6                        "Débitmètre de Chambre Camille"          
 
-  #define D_JSON_FLOWRATEMETER1                 "debitmetre_entree_cuisine"   
-  #define D_JSON_FLOWRATEMETER2                 "debitmetre_salon_salle_a_manger"
-  #define D_JSON_FLOWRATEMETER3                 "debitmetre_salle _de_bain"
-  #define D_JSON_FLOWRATEMETER4                 "debitmetre_chambre_parentale"
-  #define D_JSON_FLOWRATEMETER5                 "debitmetre_chambre_axel"
-  #define D_JSON_FLOWRATEMETER6                 "debitmetre_chambre_camille"   
+  #define D_JSON_FLOWRATEMETER                 "debitmetre" 
 #endif
 
 // -- Thermostat control ----------------------------
