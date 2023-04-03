@@ -3265,7 +3265,6 @@ int WebQuery(char *buffer) {
   if (url && method) {
 #if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
     if (http.begin(UrlEncode(url))) {
-      http.setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);
 #else // HTTP only
     if (http.begin(http_client, UrlEncode(url))) {
 #endif
@@ -3357,7 +3356,6 @@ int WebGetConfig(char *buffer) {
 #if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
   HTTPClientLight http;
   if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-    http.setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);
 #else // HTTP only
   WiFiClient http_client;
   HTTPClient http;
@@ -3602,8 +3600,7 @@ void CmndWebQuery(void)
 }
 
 #ifdef USE_WEBGETCONFIG
-void CmndWebGetConfig(void)
-{
+void CmndWebGetConfig(void) {
   // WebGetConfig http://myserver:8000/tasmota/conf/%id%.dmp where %id% is expanded to device mac address
   // WebGetConfig http://myserver:8000/tasmota/conf/Config_demo_9.5.0.8.dmp
   if (XdrvMailbox.data_len > 0) {
