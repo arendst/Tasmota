@@ -31,9 +31,6 @@
 
 #include <TasmotaSerial.h>
 
-#ifndef STARTING_OFFSET
-#define STARTING_OFFSET               30      // Turn on NovaSDS XX-seconds before tele_period is reached
-#endif
 #if STARTING_OFFSET < 10
 #error "Please set STARTING_OFFSET >= 10"
 #endif

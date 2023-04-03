@@ -379,13 +379,6 @@ String EthernetMacAddress(void);
 #define CORS_ENABLED_ALL            "*"
 #endif
 
-#ifndef WORKING_PERIOD
-#define WORKING_PERIOD              5          // Working period of the SDS Sensor, Takes a reading every X Minutes
-#endif
-#ifndef STARTING_OFFSET
-#define STARTING_OFFSET             30         // NOVA SDS parameter used in settings
-#endif
-
 #ifndef WIFI_RGX_STATE
 #define WIFI_RGX_STATE              0
 #endif
