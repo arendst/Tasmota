@@ -228,7 +228,7 @@ class Matter_Frame
   #############################################################
   # Generate a Standalone Acknowledgment
   # Uses `PROTOCOL_ID_SECURE_CHANNEL` no ecnryption required
-  def build_standalone_ack()
+  def build_standalone_ack(reliable)
     import string
     # send back response
     var resp = classof(self)(self.message_handler)
@@ -253,9 +253,7 @@ class Matter_Frame
     resp.protocol_id = 0                # PROTOCOL_ID_SECURE_CHANNEL
     resp.x_flag_a = 1           # ACK of previous message
     resp.ack_message_counter = self.message_counter
-    resp.x_flag_r = 1
-
-    tasmota.log(string.format("MTR: <Replied   %s", matter.get_opcode_name(resp.opcode)), 3)
+    resp.x_flag_r = reliable ? 1 : 0
     return resp
   end
 
@@ -304,7 +302,7 @@ class Matter_Frame
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
       if !op_name   op_name = string.format("0x%02X", resp.opcode) end
-      tasmota.log(string.format("MTR: <Replied   %s", op_name), 2)
+      tasmota.log(string.format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 2)
     end
     return resp
   end

@@ -370,7 +370,7 @@ class Matter_Plugin_Root : Matter_Plugin
         ctx.command = 0x05              # CommissioningCompleteResponse
 
         self.device.start_commissioning_complete_deferred(session)
-        return ccr                      # trigger a standalone ack
+        return ccr
       end
 
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
@@ -399,7 +399,7 @@ class Matter_Plugin_Root : Matter_Plugin
         att_elts.add_TLV(1, TLV.B2, matter.CD_FFF1_8000())    # certification_declaration
         att_elts.add_TLV(2, TLV.B1, AttestationNonce)         # attestation_nonce
         att_elts.add_TLV(3, TLV.U4, tasmota.rtc()['utc'])     # timestamp in epoch-s
-        var attestation_message = att_elts.encode()
+        var attestation_message = att_elts.tlv2raw()
 
         var ac = session.get_ac()
         var attestation_tbs = attestation_message + ac
@@ -426,7 +426,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var nocsr_elements = TLV.Matter_TLV_struct()
         nocsr_elements.add_TLV(1, TLV.B2, csr)
         nocsr_elements.add_TLV(2, TLV.B1, CSRNonce)
-        var nocsr_elements_message = nocsr_elements.encode()
+        var nocsr_elements_message = nocsr_elements.tlv2raw()
         # sign with attestation challenge
         var nocsr_tbs = nocsr_elements_message + session.get_ac()
         tasmota.log("MTR: nocsr_tbs=" + nocsr_tbs.tohex(), 3)
@@ -497,6 +497,7 @@ class Matter_Plugin_Root : Matter_Plugin
         tasmota.log("MTR: ------------------------------------------", 3)
         tasmota.log("MTR: fabric=" + matter.inspect(session._fabric), 3)
         tasmota.log("MTR: ------------------------------------------", 3)
+        session._fabric.log_new_fabric()        # log that we registered a new fabric
         # create NOCResponse
         # 0=StatusCode
         # 1=FabricIndex (1-254) (opt)
@@ -510,6 +511,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0009            # ---------- UpdateFabricLabel ----------
         var label = val.findsubval(0)     # Label string max 32
         session.set_fabric_label(label)
+        tasmota.log(string.format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 2)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
@@ -526,6 +528,7 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
         ctx.status = matter.INVALID_ACTION
+        ctx.log = "fabric_index:"+str(index)
         return nil                      # trigger a standalone ack
 
       end

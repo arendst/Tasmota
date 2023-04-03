@@ -116,9 +116,9 @@ void be_load_Matter_PBKDFParamRequest_class(bvm *vm) {
 extern const bclass be_class_Matter_PBKDFParamResponse;
 
 /********************************************************************
-** Solidified function: encode
+** Solidified function: tlv2raw
 ********************************************************************/
-be_local_closure(Matter_PBKDFParamResponse_encode,   /* name */
+be_local_closure(Matter_PBKDFParamResponse_tlv2raw,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     2,                          /* argc */
@@ -147,9 +147,9 @@ be_local_closure(Matter_PBKDFParamResponse_encode,   /* name */
     /* K15  */  be_nested_str_weak(pbkdf_parameters_salt),
     /* K16  */  be_nested_str_weak(SLEEPY_IDLE_INTERVAL),
     /* K17  */  be_nested_str_weak(SLEEPY_ACTIVE_INTERVAL),
-    /* K18  */  be_nested_str_weak(encode),
+    /* K18  */  be_nested_str_weak(tlv2raw),
     }),
-    be_str_weak(encode),
+    be_str_weak(tlv2raw),
     &be_const_str_solidified,
     ( &(const binstruction[71]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -238,13 +238,13 @@ be_local_class(Matter_PBKDFParamResponse,
     be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(pbkdf_parameters_salt, -1), be_const_var(4) },
-        { be_const_key_weak(SLEEPY_IDLE_INTERVAL, -1), be_const_var(5) },
-        { be_const_key_weak(SLEEPY_ACTIVE_INTERVAL, 1), be_const_var(6) },
-        { be_const_key_weak(responderRandom, -1), be_const_var(1) },
+        { be_const_key_weak(SLEEPY_ACTIVE_INTERVAL, -1), be_const_var(6) },
+        { be_const_key_weak(SLEEPY_IDLE_INTERVAL, 1), be_const_var(5) },
+        { be_const_key_weak(responderSessionId, -1), be_const_var(2) },
         { be_const_key_weak(pbkdf_parameters_iterations, -1), be_const_var(3) },
-        { be_const_key_weak(initiatorRandom, -1), be_const_var(0) },
-        { be_const_key_weak(responderSessionId, 3), be_const_var(2) },
-        { be_const_key_weak(encode, -1), be_const_closure(Matter_PBKDFParamResponse_encode_closure) },
+        { be_const_key_weak(initiatorRandom, 7), be_const_var(0) },
+        { be_const_key_weak(responderRandom, 3), be_const_var(1) },
+        { be_const_key_weak(tlv2raw, -1), be_const_closure(Matter_PBKDFParamResponse_tlv2raw_closure) },
     })),
     be_str_weak(Matter_PBKDFParamResponse)
 );
@@ -339,9 +339,9 @@ void be_load_Matter_Pake1_class(bvm *vm) {
 extern const bclass be_class_Matter_Pake2;
 
 /********************************************************************
-** Solidified function: encode
+** Solidified function: tlv2raw
 ********************************************************************/
-be_local_closure(Matter_Pake2_encode,   /* name */
+be_local_closure(Matter_Pake2_tlv2raw,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -361,9 +361,9 @@ be_local_closure(Matter_Pake2_encode,   /* name */
     /* K6   */  be_nested_str_weak(pB),
     /* K7   */  be_const_int(2),
     /* K8   */  be_nested_str_weak(cB),
-    /* K9   */  be_nested_str_weak(encode),
+    /* K9   */  be_nested_str_weak(tlv2raw),
     }),
-    be_str_weak(encode),
+    be_str_weak(tlv2raw),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -402,7 +402,7 @@ be_local_class(Matter_Pake2,
     NULL,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(encode, -1), be_const_closure(Matter_Pake2_encode_closure) },
+        { be_const_key_weak(tlv2raw, -1), be_const_closure(Matter_Pake2_tlv2raw_closure) },
         { be_const_key_weak(cB, -1), be_const_var(1) },
         { be_const_key_weak(pB, 0), be_const_var(0) },
     })),
@@ -633,9 +633,9 @@ void be_load_Matter_Sigma1_class(bvm *vm) {
 extern const bclass be_class_Matter_Sigma2;
 
 /********************************************************************
-** Solidified function: encode
+** Solidified function: tlv2raw
 ********************************************************************/
-be_local_closure(Matter_Sigma2_encode,   /* name */
+be_local_closure(Matter_Sigma2_tlv2raw,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -663,9 +663,9 @@ be_local_closure(Matter_Sigma2_encode,   /* name */
     /* K14  */  be_nested_str_weak(SLEEPY_ACTIVE_INTERVAL),
     /* K15  */  be_nested_str_weak(add_struct),
     /* K16  */  be_nested_str_weak(U4),
-    /* K17  */  be_nested_str_weak(encode),
+    /* K17  */  be_nested_str_weak(tlv2raw),
     }),
-    be_str_weak(encode),
+    be_str_weak(tlv2raw),
     &be_const_str_solidified,
     ( &(const binstruction[61]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -743,13 +743,13 @@ be_local_class(Matter_Sigma2,
     NULL,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(encrypted2, -1), be_const_var(3) },
-        { be_const_key_weak(encode, -1), be_const_closure(Matter_Sigma2_encode_closure) },
+        { be_const_key_weak(tlv2raw, -1), be_const_closure(Matter_Sigma2_tlv2raw_closure) },
+        { be_const_key_weak(responderEphPubKey, 3), be_const_var(2) },
         { be_const_key_weak(responderSessionId, -1), be_const_var(1) },
-        { be_const_key_weak(SLEEPY_IDLE_INTERVAL, 6), be_const_var(4) },
-        { be_const_key_weak(SLEEPY_ACTIVE_INTERVAL, 0), be_const_var(5) },
-        { be_const_key_weak(responderRandom, 3), be_const_var(0) },
-        { be_const_key_weak(responderEphPubKey, -1), be_const_var(2) },
+        { be_const_key_weak(SLEEPY_IDLE_INTERVAL, -1), be_const_var(4) },
+        { be_const_key_weak(SLEEPY_ACTIVE_INTERVAL, 6), be_const_var(5) },
+        { be_const_key_weak(responderRandom, 1), be_const_var(0) },
+        { be_const_key_weak(encrypted2, -1), be_const_var(3) },
     })),
     be_str_weak(Matter_Sigma2)
 );
@@ -764,9 +764,9 @@ void be_load_Matter_Sigma2_class(bvm *vm) {
 extern const bclass be_class_Matter_Sigma2Resume;
 
 /********************************************************************
-** Solidified function: encode
+** Solidified function: tlv2raw
 ********************************************************************/
-be_local_closure(Matter_Sigma2Resume_encode,   /* name */
+be_local_closure(Matter_Sigma2Resume_tlv2raw,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -792,9 +792,9 @@ be_local_closure(Matter_Sigma2Resume_encode,   /* name */
     /* K12  */  be_nested_str_weak(SLEEPY_ACTIVE_INTERVAL),
     /* K13  */  be_nested_str_weak(add_struct),
     /* K14  */  be_nested_str_weak(U4),
-    /* K15  */  be_nested_str_weak(encode),
+    /* K15  */  be_nested_str_weak(tlv2raw),
     }),
-    be_str_weak(encode),
+    be_str_weak(tlv2raw),
     &be_const_str_solidified,
     ( &(const binstruction[54]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -870,7 +870,7 @@ be_local_class(Matter_Sigma2Resume,
         { be_const_key_weak(sigma2ResumeMIC, -1), be_const_var(1) },
         { be_const_key_weak(responderSessionID, 1), be_const_var(2) },
         { be_const_key_weak(SLEEPY_ACTIVE_INTERVAL, -1), be_const_var(4) },
-        { be_const_key_weak(encode, -1), be_const_closure(Matter_Sigma2Resume_encode_closure) },
+        { be_const_key_weak(tlv2raw, -1), be_const_closure(Matter_Sigma2Resume_tlv2raw_closure) },
     })),
     be_str_weak(Matter_Sigma2Resume)
 );

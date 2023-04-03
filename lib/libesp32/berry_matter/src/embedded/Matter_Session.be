@@ -89,6 +89,20 @@ class Matter_Fabric : Matter_Expirable
   def set_fabric_index(v)     self.fabric_index = v         end
 
   #############################################################
+  # Called before removal
+  def log_new_fabric()
+    import string
+    tasmota.log(string.format("MTR: +Fabric    fab='%s'", self.get_fabric_id().copy().reverse().tohex()), 2)
+  end
+
+  #############################################################
+  # Called before removal
+  def before_remove()
+    import string
+    tasmota.log(string.format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 2)
+  end
+
+  #############################################################
   # Operational Group Key Derivation, 4.15.2, p.182
   def get_ipk_group_key()
     if self.ipk_epoch_key == nil || self.fabric_compressed == nil   return nil end
@@ -300,20 +314,27 @@ class Matter_Session : Matter_Expirable
   end
 
   #############################################################
+  # Called before removal
+  def before_remove()
+    import string
+    tasmota.log(string.format("MTR: -Session   (%6i) (removed)", self.local_session_id), 3)
+  end
+
+  #############################################################
   # Management of security counters
   #############################################################
   # Provide the next counter value, and update the last know persisted if needed
   #
   def counter_snd_next()
+    import string
     var next = self._counter_snd_impl.next()
-    # print(">>> NEXT counter_snd=", self.counter_snd, "_impl=", self._counter_snd_impl.val())
+    tasmota.log(string.format("MTR: .          Counter_snd=%i", next), 3)
+    # print(">>> NEXT counter_snd=", self.counter_snd, "_impl=", self._counter_snd_impl.val(), 4)
     if matter.Counter.is_greater(next, self.counter_snd)
+      self.counter_snd = next + self._COUNTER_SND_INCR
       if self.does_persist()
         # the persisted counter is behind the actual counter
-        self.counter_snd = next + self._COUNTER_SND_INCR
         self.save()
-      else
-        self.counter_snd = next     # if no persistance, just keep track
       end
     end
     return next
@@ -869,7 +890,7 @@ class Matter_Session_Store
       var f = open(self._FABRICS, "w")
       f.write(fabs)
       f.close()
-      tasmota.log(string.format("MTR: Saved %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
+      tasmota.log(string.format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
     end

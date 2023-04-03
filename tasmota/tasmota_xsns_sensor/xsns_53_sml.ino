@@ -1252,10 +1252,10 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
       mp->sbuff[count] = mp->sbuff[count + 1];
     }
   }
-    
+
   uint8_t iob;
   if (mp->srcpin != TCP_MODE_FLG) {
-    iob = (uint8_t)mp->meter_ss->read(); 
+    iob = (uint8_t)mp->meter_ss->read();
   } else {
     iob = (uint8_t)mp->client->read();
   }
@@ -1447,7 +1447,7 @@ uint32_t meters;
             sml_shift_in(meters, 0);
           }
         } else {
-#ifdef USE_SML_TCP          
+#ifdef USE_SML_TCP
           while (mp->client->available()){
             sml_shift_in(meters, 0);
           }
@@ -2625,7 +2625,7 @@ struct METER_DESC *mp = &meter_desc[mnum];
       break;
   	case '7':
 			cp += 2;
-#ifdef ESP32     
+#ifdef ESP32
 			mp->uart_index = strtol(cp, &cp, 10);
 #endif // ESP32
 			break;
@@ -3096,7 +3096,7 @@ next_line:
         mp->client = new WiFiClientSecure;
         //client(new BearSSL::WiFiClientSecure_light(1024,1024)) {
         mp->client->setInsecure();
-#else        
+#else
         mp->client = new WiFiClient;
 #endif
         int32_t err = mp->client->connect(mp->ip_addr, mp->params);
@@ -3142,7 +3142,7 @@ next_line:
 
 #endif  // ESP32
 
-        SerialConfig smode = SERIAL_8N1;
+        uint32_t smode = SERIAL_8N1;
 
         if (mp->sopt & 0xf0) {
           // new serial config
@@ -3178,14 +3178,14 @@ next_line:
           mp->meter_ss->flush();
         }
         if (mp->meter_ss->hardwareSerial()) {
-          Serial.begin(mp->params, smode);
+          Serial.begin(mp->params, (SerialConfig)smode);  // void HardwareSerial::begin(unsigned long baud, SerialConfig config, SerialMode mode, uint8_t tx_pin, bool invert)
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
 #endif  // ESP8266
 
 #ifdef ESP32
-        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin);
+        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin);  // void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert, unsigned long timeout_ms, uint8_t rxfifo_full_thrhd)
 #ifdef USE_ESP32_SW_SERIAL
 				mp->meter_ss->setRxBufferSize(mp->sibsiz);
 #endif
@@ -3293,7 +3293,7 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
     hstr++;
     // currently only 8 bits and ignore stopbits
     hstr++;
-    SerialConfig smode;
+    uint32_t smode;
     switch (*hstr) {
       case 'N':
         smode = SERIAL_8N1;
@@ -3307,9 +3307,9 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
     }
 
 #ifdef ESP8266
-    Serial.begin(baud, smode);
+    Serial.begin(baud, (SerialConfig)smode);  // void HardwareSerial::begin(unsigned long baud, SerialConfig config, SerialMode mode, uint8_t tx_pin, bool invert)
 #else
-    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin);
+    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin);  // void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert, unsigned long timeout_ms, uint8_t rxfifo_full_thrhd)
 #endif
   }
   return 1;

@@ -27,6 +27,7 @@ class Matter_Device
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
+  var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
   var plugins                         # list of plugins
   var udp_server                      # `matter.UDPServer()` object
   var message_handler                     # `matter.MessageHandler()` object
@@ -35,15 +36,14 @@ class Matter_Device
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
-  var commissioning_discriminator     # current discriminator
+  var commissioning_discriminator     # commissioning_discriminator
   var commissioning_salt              # current salt
-  var commissioning_w0                # current w0
-  # var commissioning_w1                # current w1
-  var commissioning_L                 # current L
+  var commissioning_w0                # current w0 (SPAKE2+)
+  var commissioning_L                 # current L (SPAKE2+)
   var commissioning_admin_fabric      # the fabric that opened the currint commissioning window, or `nil` for default
   # information about the device
-  var commissioning_instance_wifi     # random instance name for commissioning
-  var commissioning_instance_eth      # random instance name for commissioning
+  var commissioning_instance_wifi     # random instance name for commissioning (mDNS)
+  var commissioning_instance_eth      # random instance name for commissioning (mDNS)
   var hostname_wifi                   # MAC-derived hostname for commissioning
   var hostname_eth                    # MAC-derived hostname for commissioning
   var vendorid
@@ -52,15 +52,14 @@ class Matter_Device
   var mdns_pase_eth                   # do we have an active PASE mDNS announce for eth
   var mdns_pase_wifi                  # do we have an active PASE mDNS announce for wifi
   # saved in parameters
-  var root_discriminator
-  var root_passcode
+  var root_discriminator              # as `int`
+  var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
   # context for PBKDF
-  var root_iterations
+  var root_iterations                 # PBKDF number of iterations
   # PBKDF information used only during PASE (freed afterwards)
   var root_salt
   var root_w0
-  # var root_w1
   var root_L
 
   #############################################################
@@ -72,6 +71,7 @@ class Matter_Device
       return
     end    # abort if SetOption 151 is not set
 
+    self.started = false
     self.plugins = []
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
@@ -85,76 +85,90 @@ class Matter_Device
     self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
 
-    # add the default plugin
-    self.plugins.push(matter.Plugin_Root(self, 0))
-    self.plugins.push(matter.Plugin_OnOff(self, 1, 0#-tasmota relay 1-#))
-    # self.plugins.push(matter.Plugin_OnOff(self, 2, 1#-tasmota relay 2-#))
-    # self.plugins.push(matter.Plugin_Light3(self, 1))
-    # self.plugins.push(matter.Plugin_Temp_Sensor(self, 10, "ESP32#Temperature"))
-
-    # for now read sensors every 5 seconds
-    tasmota.add_cron("*/5 * * * * *", def () self.trigger_read_sensors() end, "matter_sensors_5s")
-
-    self.start_mdns_announce_hostnames()
-
-    if tasmota.wifi()['up']
-      self.start_udp(self.UDP_PORT)
-    else
+    if tasmota.wifi()['up'] || tasmota.eth()['up']
+      self.start()
+    end
+    if !tasmota.wifi()['up']
       tasmota.add_rule("Wifi#Connected", def ()
-          self.start_udp(self.UDP_PORT)
-          tasmota.remove_rule("Wifi#Connected", "matter_device_udp")
-
-        end, "matter_device_udp")
+          self.start()
+          tasmota.remove_rule("Wifi#Connected", "matter_start")
+        end, "matter_start")
     end
-
-    if tasmota.eth()['up']
-      self.start_udp(self.UDP_PORT)
-    else
+    if !tasmota.eth()['up']
       tasmota.add_rule("Eth#Connected", def ()
-          self.start_udp(self.UDP_PORT)
-          tasmota.remove_rule("Eth#Connected", "matter_device_udp")
-        end, "matter_device_udp")
+          self.start()
+          tasmota.remove_rule("Eth#Connected", "matter_start")
+        end, "matter_start")
     end
 
-    self.init_basic_commissioning()
+    self._init_basic_commissioning()
 
     tasmota.add_driver(self)
   end
 
   #############################################################
-  # Start Basic Commissioning Window
-  def init_basic_commissioning()
+  # Start Matter device server when the first network is coming up
+  def start()
+    if self.started  return end      # abort if already started
+
+    # add the default plugin
+    self.plugins.push(matter.Plugin_Root(self, 0))
+    # autoconfigure other plugins
+    self.autoconf_device()
+
+    # for now read sensors every 5 seconds
+    tasmota.add_cron("*/5 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_5s")
+
+    self._start_udp(self.UDP_PORT)
+
+    self.start_mdns_announce_hostnames()
+
+    self.started = true
+  end
+
+  #############################################################
+  # Start Basic Commissioning Window if needed at startup
+  def _init_basic_commissioning()
     # if no fabric is configured, automatically open commissioning at restart
     if self.sessions.count_active_fabrics() == 0
       self.start_root_basic_commissioning()
     end
   end
 
+  #############################################################
+  # Start Basic Commissioning with root parameters
+  #
+  # Open window for `timeout_s` (default 10 minutes)
   def start_root_basic_commissioning(timeout_s)
+    import string
     if timeout_s == nil   timeout_s = self.PASE_TIMEOUT end
+
+    # show Manual pairing code in logs
+    var pairing_code = self.compute_manual_pairing_code()
+    tasmota.log(string.format("MTR: Manual pairing code: %s-%s-%s", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]), 2)
+    
     # compute PBKDF
-    self.compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
+    self._compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
     self.start_basic_commissioning(timeout_s, self.root_iterations, self.root_discriminator, self.root_salt, self.root_w0, #-self.root_w1,-# self.root_L, nil)
   end
 
   #####################################################################
   # Remove a fabric and clean all corresponding values and mDNS entries
   def remove_fabric(fabric)
-    self.message_handler.im.subs.remove_by_fabric(fabric)
+    self.message_handler.im.subs_shop.remove_by_fabric(fabric)
     self.mdns_remove_op_discovery(fabric)
     self.sessions.remove_fabric(fabric)
     self.sessions.save_fabrics()
   end
 
   #############################################################
-  # Start Basic Commissioning Window
-  def start_basic_commissioning(timeout_s, iterations, discriminator, salt, w0, #-w1,-# L, admin_fabric)
+  # Start Basic Commissioning Window with custom parameters
+  def start_basic_commissioning(timeout_s, iterations, discriminator, salt, w0, L, admin_fabric)
     self.commissioning_open = tasmota.millis() + timeout_s * 1000
     self.commissioning_iterations = iterations
     self.commissioning_discriminator = discriminator
     self.commissioning_salt = salt
     self.commissioning_w0 = w0
-    # self.commissioning_w1 = w1
     self.commissioning_L  = L
     self.commissioning_admin_fabric = admin_fabric
 
@@ -172,10 +186,14 @@ class Matter_Device
     end
   end
 
+  #############################################################
+  # Is root commissioning currently open. Mostly for UI to know if QRCode needs to be shown.
   def is_root_commissioning_open()
     return self.commissioning_open != nil && self.commissioning_admin_fabric == nil
   end
 
+  #############################################################
+  # Stop PASE commissioning, mostly called when CASE is about to start
   def stop_basic_commissioning()
     self.commissioning_open = nil
 
@@ -193,13 +211,11 @@ class Matter_Device
   def is_commissioning_open()
     return self.commissioning_open != nil
   end
-  def finish_commissioning()
-  end
-
+  
   #############################################################
-  # Compute the PBKDF parameters for SPAKE2+
+  # (internal) Compute the PBKDF parameters for SPAKE2+ from root parameters
   #
-  def compute_pbkdf(passcode_int, iterations, salt)
+  def _compute_pbkdf(passcode_int, iterations, salt)
     import crypto
     import string
     var passcode = bytes().add(passcode_int, 4)
@@ -213,21 +229,16 @@ class Matter_Device
     # self.root_w1 = crypto.EC_P256().mod(w1s)
     self.root_L = crypto.EC_P256().public_key(w1)
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: salt          = " + self.root_salt.tohex(), 4)
-    tasmota.log("MTR: passcode_hex  = " + passcode.tohex(), 4)
-    tasmota.log("MTR: w0            = " + self.root_w0.tohex(), 4)
-    # tasmota.log("MTR: w1            = " + self.root_w1.tohex(), 4)
-    tasmota.log("MTR: L             = " + self.root_L.tohex(), 4)
-    tasmota.log("MTR: ******************************", 4)
-
-    # show Manual pairing code in logs
-    var pairing_code = self.compute_manual_pairing_code()
-    tasmota.log(string.format("MTR: Manual pairing code: %s-%s-%s", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]), 2)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: salt          = " + self.root_salt.tohex(), 4)
+    # tasmota.log("MTR: passcode_hex  = " + passcode.tohex(), 4)
+    # tasmota.log("MTR: w0            = " + self.root_w0.tohex(), 4)
+    # tasmota.log("MTR: L             = " + self.root_L.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
   end
 
   #############################################################
-  # compute QR Code content - can be done only for root PASE
+  # Compute QR Code content - can be done only for root PASE
   def compute_qrcode_content()
     var raw = bytes().resize(11)    # we don't use TLV Data so it's only 88 bits or 11 bytes
     # version is `000` dont touch
@@ -243,7 +254,8 @@ class Matter_Device
 
 
   #############################################################
-  # compute the 11 digits manual pairing code (wihout vendorid nor productid) p.223
+  # Compute the 11 digits manual pairing code (wihout vendorid nor productid) p.223
+  # <BR>
   # can be done only for root PASE (we need the passcode, but we don't get it with OpenCommissioningWindow command)
   def compute_manual_pairing_code()
     import string
@@ -274,7 +286,8 @@ class Matter_Device
 
   #############################################################
   # trigger a read_sensors and dispatch to plugins
-  def trigger_read_sensors()
+  # Internally used by cron
+  def _trigger_read_sensors()
     import json
     var rs_json = tasmota.read_sensors()
     if rs_json == nil   return  end
@@ -302,26 +315,34 @@ class Matter_Device
 
   #############################################################
   def stop()
+    tasmota.remove_driver(self)
     if self.udp_server    self.udp_server.stop() end
   end
 
   #############################################################
-  # callback when message is received
+  # Callback when message is received.
+  # Send to `message_handler`
   def msg_received(raw, addr, port)
     return self.message_handler.msg_received(raw, addr, port)
   end
 
-  def msg_send(raw, addr, port, id)
-    return self.udp_server.send_response(raw, addr, port, id)
-  end
-
-  def packet_ack(id)
-    return self.udp_server.packet_ack(id)
+  #############################################################
+  # Global entry point for sending a message.
+  # Delegates to `udp_server`
+  def msg_send(raw, addr, port, id, session_id)
+    return self.udp_server.send_response(raw, addr, port, id, session_id)
   end
 
   #############################################################
-  # Start UDP Server
-  def start_udp(port)
+  # Signals that a ack was received.
+  # Delegates to `udp_server` to remove from resending list.
+  def received_ack(id)
+    return self.udp_server.received_ack(id)
+  end
+
+  #############################################################
+  # (internal) Start UDP Server
+  def _start_udp(port)
     if self.udp_server    return end        # already started
     if port == nil      port = 5540 end
     tasmota.log("MTR: starting UDP server on port: " + str(port), 2)
@@ -330,22 +351,28 @@ class Matter_Device
   end
 
   #############################################################
-  # start_operational_discovery
+  # Start Operational Discovery for this session
   #
-  # Pass control to `device`
+  # Deferred until next tick.
   def start_operational_discovery_deferred(session)
     # defer to next click
     tasmota.set_timer(0, /-> self.start_operational_discovery(session))
   end
 
   #############################################################
+  # Start Commissioning Complete for this session
+  #
+  # Deferred until next tick.
   def start_commissioning_complete_deferred(session)
     # defer to next click
     tasmota.set_timer(0, /-> self.start_commissioning_complete(session))
   end
 
   #############################################################
-  # Start Operational Discovery
+  # Start Operational Discovery for this session
+  #
+  # Stop Basic Commissioning and clean PASE specific values (to save memory).
+  # Announce fabric entry in mDNS.
   def start_operational_discovery(session)
     import crypto
     import mdns
@@ -366,6 +393,7 @@ class Matter_Device
   #############################################################
   # Commissioning Complete
   #
+  # Stop basic commissioning.
   def start_commissioning_complete(session)
     tasmota.log("MTR: *** Commissioning complete ***", 2)
     self.stop_basic_commissioning()     # by default close commissioning when it's complete
@@ -403,22 +431,30 @@ class Matter_Device
   end
 
   #############################################################
-  # signal that an attribute has been changed
+  # Signal that an attribute has been changed and propagate
+  # to any active subscription.
   #
+  # Delegates to `message_handler`
   def attribute_updated(endpoint, cluster, attribute, fabric_specific)
     if fabric_specific == nil   fabric_specific = false end
     var ctx = matter.Path()
     ctx.endpoint = endpoint
     ctx.cluster = cluster
     ctx.attribute = attribute
-    self.message_handler.im.subs.attribute_updated_ctx(ctx, fabric_specific)
+    self.message_handler.im.subs_shop.attribute_updated_ctx(ctx, fabric_specific)
   end
 
   #############################################################
-  # expand attribute list based 
+  # Proceed to attribute expansion (used for Attribute Read/Write/Subscribe)
   #
-  # called only when expansion is needed,
-  # so we don't need to report any error since they are ignored
+  # Called only when expansion is needed, so we don't need to report any error since they are ignored
+  #
+  # calls `cb(pi, ctx, direct)` for each attribute expanded.
+  # `pi`: plugin instance targeted by the attribute (via endpoint). Note: nothing is sent if the attribute is not declared in supported attributes in plugin.
+  # `ctx`: context object with `endpoint`, `cluster`, `attribute` (no `command`)
+  # `direct`: `true` if the attribute is directly targeted, `false` if listed as part of a wildcard
+  # returns: `true` if processed succesfully, `false` if error occured. If `direct`, the error is returned to caller, but if expanded the error is silently ignored and the attribute skipped.
+  # In case of `direct` but the endpoint/cluster/attribute is not suppported, it calls `cb(nil, ctx, true)` so you have a chance to encode the exact error (UNSUPPORTED_ENDPOINT/UNSUPPORTED_CLUSTER/UNSUPPORTED_ATTRIBUTE/UNREPORTABLE_ATTRIBUTE)
   def process_attribute_expansion(ctx, cb)
     #################################################################################
     # Returns the keys of a map as a sorted list
@@ -524,9 +560,7 @@ class Matter_Device
   end
 
   #############################################################
-  # get active endpoints
-  #
-  # return the list of endpoints from all plugins (distinct)
+  # Return the list of endpoints from all plugins (distinct), exclud endpoint zero if `exclude_zero` is `true`
   def get_active_endpoints(exclude_zero)
     var ret = []
     for p:self.plugins
@@ -560,6 +594,7 @@ class Matter_Device
   end
 
   #############################################################
+  # Load Matter Device parameters
   def load_param()
     import string
     import crypto
@@ -686,8 +721,6 @@ class Matter_Device
 
   #############################################################
   # Announce MDNS for PASE commissioning
-  #
-  # eth is `true` if ethernet turned up, `false` is wifi turned up
   def mdns_announce_PASE()
     import mdns
     import string
@@ -757,8 +790,6 @@ class Matter_Device
 
   #############################################################
   # MDNS remove any PASE announce
-  #
-  # eth is `true` if ethernet turned up, `false` is wifi turned up
   def mdns_remove_PASE()
     import mdns
     import string
@@ -823,7 +854,7 @@ class Matter_Device
   end
 
   #############################################################
-  # Remove all mDNS announces
+  # Remove all mDNS announces for all fabrics
   def mdns_remove_op_discovery_all_fabrics()
     for fabric: self.sessions.active_fabrics()
       if fabric.get_device_id() && fabric.get_fabric_id()
@@ -833,7 +864,7 @@ class Matter_Device
   end
 
   #############################################################
-  # Start UDP mDNS announcements for commissioning
+  # Remove mDNS announce for fabric
   def mdns_remove_op_discovery(fabric)
     import mdns
     import string
@@ -857,13 +888,56 @@ class Matter_Device
   end
 
   #############################################################
-  # Try to clean MDNS entries before restart
+  # Try to clean MDNS entries before restart.
   #
+  # Called by Tasmota loop as a Tasmota driver.
   def save_before_restart()
     self.stop_basic_commissioning()
     self.mdns_remove_op_discovery_all_fabrics()
   end
 
+  #############################################################
+  # Autoconfigure device from template
+  #
+  def autoconf_device()
+    import string
+    # check if we have a light
+    var endpoint = 1
+    var light_present = false
+
+    import light
+    var light_status = light.get()
+    if light_status != nil
+      var channels_count = size(light_status.find('channels', ""))
+      if channels_count > 0
+        if   channels_count == 1
+          self.plugins.push(matter.Plugin_Light1(self, endpoint))
+          tasmota.log(string.format("MTR: Endpoint:%i Light_Dimmer", endpoint), 2)
+        elif channels_count == 2
+          self.plugins.push(matter.Plugin_Light2(self, endpoint))
+          tasmota.log(string.format("MTR: Endpoint:%i Light_CT", endpoint), 2)
+        else
+          self.plugins.push(matter.Plugin_Light3(self, endpoint))
+          tasmota.log(string.format("MTR: Endpoint:%i Light_RGB", endpoint), 2)
+        end
+        light_present = true
+        endpoint += 1
+      end
+    end
+
+    # how many relays are present
+    var relay_count = size(tasmota.get_power())
+    var relay_index = 0         # start at index 0
+    if light_present    relay_count -= 1  end       # last power is taken for lights
+
+    while relay_index < relay_count
+      self.plugins.push(matter.Plugin_OnOff(self, endpoint, relay_index))
+      tasmota.log(string.format("MTR: Endpoint:%i Relay_%i", endpoint, relay_index + 1), 2)
+      relay_index += 1
+      endpoint += 1
+    end
+
+  end
 end
 matter.Device = Matter_Device
 
