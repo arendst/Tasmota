@@ -135,6 +135,7 @@ struct SHUTTERGLOBAL {
   power_t  RelayShutterMask = 0;             // bit mask with 11 at the position of relays that belong to at least ONE shutter
   power_t  RelayOldMask = 0;                 // bitmatrix that contain the last known state of all relays. Required to detemine the manual changed relay.
   power_t  RelayCurrentMask = 0;             // bitmatrix that contain the current state of all relays
+  uint8_t  LastChangedRelay = 0;             // Relay 1..32, 0 no change
   uint8_t  position_mode = 0;                // how to calculate actual position: SHT_TIME, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME
   uint8_t  skip_relay_change;                // avoid overrun at endstops
   uint8_t  start_reported = 0;               // indicates of the shutter start was reported through MQTT JSON
@@ -142,6 +143,16 @@ struct SHUTTERGLOBAL {
 } ShutterGlobal;
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
+
+uint8_t ShutterGetRelayNoFromBitfield(power_t number) {
+    int position = 0;
+    while (number != 0) {
+        position++;
+        if (number & 1) return position;
+        number >>= 1;
+    }
+    return 0; // return 0 if no relay found
+}
 
 bool ShutterStatus(void) {
   if (Settings->flag3.shutter_mode) {  // SetOption80  - (Shutter) Enable shutter support (1)
@@ -322,7 +333,6 @@ void ShutterInit(void)
   }
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
-    //Settings->shutter_startrelay[i] = (Settings->shutter_startrelay[i] == 0 && i ==  0? 1 : Settings->shutter_startrelay[i]);
     if (Settings->shutter_startrelay[i] && (Settings->shutter_startrelay[i] <= 32 )) {
       bool relay_in_interlock = false;
       TasmotaGlobal.shutters_present++;
@@ -641,15 +651,15 @@ void ShutterPowerOff(uint8_t i)
   Shutter[i].last_stop_time = millis();
 }
 
-void ShutterWaitForMotorStop(uint8_t index)
+void ShutterWaitForMotorStop(uint8_t i)
 {
-  Shutter[index-1].last_stop_time = millis();
-  ShutterWaitForMotorStart(index);
+  Shutter[i].last_stop_time = millis();
+  ShutterWaitForMotorStart(i);
 }
 
-void ShutterWaitForMotorStart(uint8_t index)
+void ShutterWaitForMotorStart(uint8_t i)
 {
-  while (millis() < Shutter[index-1].last_stop_time + Settings->shutter_motorstop) {
+  while (millis() < Shutter[i].last_stop_time + Settings->shutter_motorstop) {
     loop();
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
@@ -745,7 +755,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterGlobal.skip_relay_change = 1;
   } else {
     Shutter[i].pwm_velocity = 0;
-    ShutterWaitForMotorStart(i+1);
+    ShutterWaitForMotorStart(i);
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
@@ -879,6 +889,7 @@ void ShutterRelayChanged(void)
             default:
               //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i);
               Shutter[i].target_position = Shutter[i].real_position;
+              Shutter[i].last_stop_time = millis();
             }
         break;
         case SHT_TIME:
@@ -890,8 +901,9 @@ void ShutterRelayChanged(void)
               ShutterStartInit(i, -1, 0);
               break;
               default:
-                //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i);
+                //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i+1);
                 Shutter[i].target_position = Shutter[i].real_position;
+                Shutter[i].last_stop_time = millis();
           }
         break;
         case SHT_TIME_GARAGE:
@@ -1885,6 +1897,8 @@ bool Xdrv27(uint32_t function)
     uint8_t  counterend = XdrvMailbox.index==0?TasmotaGlobal.shutters_present:XdrvMailbox.index;
     int32_t  rescue_payload  = XdrvMailbox.payload;
     uint32_t rescue_data_len = XdrvMailbox.data_len;
+    char stemp1[10];
+    power_t save_powermatrix;
     switch (function) {
       case FUNC_PRE_INIT:
         ShutterInit();
@@ -1919,27 +1933,31 @@ bool Xdrv27(uint32_t function)
         }
         break;
       case FUNC_SET_POWER:
-        char stemp1[10];
+
         // extract the number of the relay that was switched and save for later in Update Position.
         ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Switched relay %d by %s"), ShutterGlobal.RelayCurrentMask,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource));
-        ShutterRelayChanged();
-        ShutterGlobal.RelayOldMask = XdrvMailbox.index;
+        ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
+        save_powermatrix = TasmotaGlobal.power;
+        if (!ShutterGlobal.LastChangedRelay) {
+          ShutterGlobal.skip_relay_change = 1;
+          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("INVALID REQUEST"));
+        } else {
+          ShutterRelayChanged();
+          ShutterGlobal.RelayOldMask = XdrvMailbox.index;
+          TasmotaGlobal.power = save_powermatrix;
+        }
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER end. powermask %d"), TasmotaGlobal.power);
       break;
       case FUNC_SET_DEVICE_POWER:
         if (ShutterGlobal.skip_relay_change ) {
-          uint8_t i;
-          for (i = 0; i < TasmotaGlobal.devices_present; i++) {
-            if (ShutterGlobal.RelayCurrentMask &1) {
-              break;
-            }
-            ShutterGlobal.RelayCurrentMask >>= 1;
-          }
           //AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Skip relay change %d"), i+1);
           result = true;
           ShutterGlobal.skip_relay_change = 0;
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"), i);
-          ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER);
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"), ShutterGlobal.LastChangedRelay);
+          //ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER);
+          if (ShutterGlobal.LastChangedRelay) ShutterGlobal.RelayOldMask = TasmotaGlobal.power ^=  1<<(ShutterGlobal.LastChangedRelay-1);
+          //ShutterGlobal.RelayOldMask ^= 1<<(ShutterGlobal.LastChangedRelay-1);
         }
       break;
       case FUNC_BUTTON_PRESSED:
