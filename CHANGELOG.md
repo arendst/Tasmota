@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- ESP32 ``Upload``, ``Upgrade``, ``WebGetConfig``, ``WebQuery`` and ``WebSend`` random HTTP(S) connection timeout set to 5 sec (commit 542eca3)
 
 ### Removed
 
