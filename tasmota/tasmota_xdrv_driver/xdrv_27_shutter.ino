@@ -135,7 +135,7 @@ struct SHUTTERGLOBAL {
   power_t  RelayShutterMask = 0;             // bit mask with 11 at the position of relays that belong to at least ONE shutter
   power_t  RelayOldMask = 0;                 // bitmatrix that contain the last known state of all relays. Required to detemine the manual changed relay.
   power_t  RelayCurrentMask = 0;             // bitmatrix that contain the current state of all relays
-  uint8_t  LastChangedRelay = 0;             // Relay 1..32
+  uint8_t  LastChangedRelay = 0;             // Relay 1..32, 0 no change
   uint8_t  position_mode = 0;                // how to calculate actual position: SHT_TIME, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME
   uint8_t  skip_relay_change;                // avoid overrun at endstops
   uint8_t  start_reported = 0;               // indicates of the shutter start was reported through MQTT JSON
@@ -146,17 +146,14 @@ struct SHUTTERGLOBAL {
 
 uint8_t ShutterGetRelayNoFromBitfield(power_t number) {
     int position = 0;
-
     while (number != 0) {
         position++;
-        if (number & 1) {
-            return position;
-        }
+        if (number & 1) return position;
         number >>= 1;
     }
-
-    return -1; // Wenn keine 1 gefunden wurde, geben Sie -1 zur�ck
+    return 0; // return 0 if no relay found
 }
+
 bool ShutterStatus(void) {
   if (Settings->flag3.shutter_mode) {  // SetOption80  - (Shutter) Enable shutter support (1)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":{"));
@@ -1942,14 +1939,12 @@ bool Xdrv27(uint32_t function)
         ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
         save_powermatrix = TasmotaGlobal.power;
-        if (ShutterGlobal.LastChangedRelay == 255) {
-          result = true;
+        if (!ShutterGlobal.LastChangedRelay) {
           ShutterGlobal.skip_relay_change = 1;
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("INVALID REQUEST"));
+          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("INVALID REQUEST"));
         } else {
           ShutterRelayChanged();
           ShutterGlobal.RelayOldMask = XdrvMailbox.index;
-          //ShutterGlobal.RelayOldMask = ShutterGlobal.RelayCurrentMask;
           TasmotaGlobal.power = save_powermatrix;
         }
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER end. powermask %d"), TasmotaGlobal.power);
@@ -1961,7 +1956,7 @@ bool Xdrv27(uint32_t function)
           ShutterGlobal.skip_relay_change = 0;
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"), ShutterGlobal.LastChangedRelay);
           //ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER);
-          if (ShutterGlobal.LastChangedRelay < 255) ShutterGlobal.RelayOldMask = TasmotaGlobal.power ^=  1<<(ShutterGlobal.LastChangedRelay-1);
+          if (ShutterGlobal.LastChangedRelay) ShutterGlobal.RelayOldMask = TasmotaGlobal.power ^=  1<<(ShutterGlobal.LastChangedRelay-1);
           //ShutterGlobal.RelayOldMask ^= 1<<(ShutterGlobal.LastChangedRelay-1);
         }
       break;
