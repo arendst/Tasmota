@@ -59,6 +59,16 @@ class Matter_Commisioning_Context
     self.y = crypto.random(32)
   end
 
+  #############################################################
+  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, created)
+    import string
+    # create session object
+    tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 3)
+    
+    var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
+    session.set_keys(i2r, r2i, ac, created)
+  end
+
   def process_incoming(msg)
     #
     if !self.device.is_commissioning_open() && msg.opcode >= 0x20 && msg.opcode <= 0x24
@@ -275,7 +285,7 @@ class Matter_Commisioning_Context
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
     var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
 
-    self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
+    self.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
   end
 
   def find_fabric_by_destination_id(destinationId, initiatorRandom)
