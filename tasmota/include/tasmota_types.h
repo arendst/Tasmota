@@ -404,11 +404,11 @@ typedef union {
     uint32_t flowratemeter_reglage : 1;               // Sensor96 12,x - mode reglage OFF : TelePeriode=300 (0) OU mode reglage ON : TelePeriode=3 (1)
     uint32_t flowratemeter_test : 1;                  // Sensor96 13,x - mode test OFF : fonctionnement normal (0) OU mode test ON : generation de chiffres aléatoires (1)
     uint32_t flowratemeter_weight_avg_sample : 5;     // Sensor96 14,x - weight avg sample (0 à 31)
+    uint32_t flowratemeter_show_freq : 1;             // Sensor96 16,x - Affiche la frequence sur la page web : NON(0) / OUI(1)
     uint32_t bh1750_2_resolution : 2;
     uint32_t bh1750_1_resolution : 2;                 // Sensor10 1,2,3
     uint32_t hx711_json_weight_change : 1;            // Sensor34 8,x - Enable JSON message on weight change
     uint32_t mhz19b_abc_disable : 1;                  // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
-    uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;

@@ -1125,9 +1125,9 @@
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME            "Débit"
-#define D_FLOWRATEMETER_COUNT           "Frequence"
-#define D_FLOWRATEMETER_AMOUNT_TODAY    "Qté journalière"
-#define D_FLOWRATEMETER_DURATION_TODAY  "Durée de fonct."
+#define D_FLOWRATEMETER_COUNT           "Fréquence"
+#define D_FLOWRATEMETER_AMOUNT_TODAY    "Qté/jour"
+#define D_FLOWRATEMETER_DURATION_TODAY  "Tps/jour"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

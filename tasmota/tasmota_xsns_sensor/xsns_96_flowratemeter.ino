@@ -41,6 +41,7 @@
 #define D_JSON_FLOWRATEMETER_AMOUNT_UNIT    "qteUnite"
 #define D_JSON_FLOWRATEMETER_DURATION_TODAY "dureeJour"
 #define D_JSON_FLOWRATEMETER_VALUE_AVG      "moyenne"
+#define D_JSON_FLOWRATEMETER_SHOW_FREQ      "affichageFreq"
 #define D_JSON_FLOWRATEMETER_VALUE_RAW      "donneeBrute"
 #define D_JSON_FLOWRATEMETERS               "Debitmetres"
 
@@ -270,8 +271,10 @@ void FlowRateMeterShow(bool json) {
         // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
         // head
         WSContentSend_PD(PSTR("{s}&nbsp;</th>&nbsp;<th></th>"));
-        WSContentSend_PD(PSTR("<th style=\"text-align:%s\">" D_FLOWRATEMETER_COUNT "</th><th>&nbsp;</th>"),
-                Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"));
+        if (Settings->SensorBits1.flowratemeter_show_freq) {
+            WSContentSend_PD(PSTR("<th style=\"text-align:%s\">" D_FLOWRATEMETER_COUNT "</th><th>&nbsp;</th>"),
+                    Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"));
+        }
         WSContentSend_PD(PSTR("<th style=\"text-align:%s\">" D_FLOWRATEMETER_NAME "</th><th>&nbsp;</th>"),
                 Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"));
         WSContentSend_PD(PSTR("<th style=\"text-align:%s\">" D_FLOWRATEMETER_AMOUNT_TODAY "</th><th>&nbsp;</th>"),
@@ -302,10 +305,12 @@ void FlowRateMeterShow(bool json) {
                 float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
 
                 // Nb impulsions
-                WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%d</td><td>&nbsp;</td>"),
-                        Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
-                        flowratemeter_count[i]
-                );
+                if (Settings->SensorBits1.flowratemeter_show_freq) {
+                    WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%d</td><td>&nbsp;</td>"),
+                            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+                            flowratemeter_count[i]
+                    );
+                }
 
                 // Flowrate
                 WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
@@ -351,7 +356,8 @@ void FlowRateMeterShow(bool json) {
  * Sensor96 13 0|1                  - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
  * Sensor96 14 0->31                - Value weight avg sample (0 à 31)
  * Sensor96 15 0|1                  - Reset des valeurs totales
- *
+ * Sensor96 16 0|1                  - Affiche la frequence sur la page web : NON(0) / OUI(1)
+ * 
  * Calibration des débitmètres :
  * - débit actuel affiché 				  (D)
  * - <correction-factor> actuel 		(c)
@@ -452,6 +458,14 @@ bool FlowRateMeterCommand(void) {
                 show_parms = true;
             }
             break;
+        case 16:  // Paramètre l'affiche de la fréquence sur la page Web
+            if (any_value) {
+                Settings->SensorBits1.flowratemeter_show_freq = value & 1;
+                ResponseCmndNumber(value & 1);
+
+                show_parms = true;
+            }
+            break;
     }
 
     if (show_parms) {
@@ -467,13 +481,14 @@ bool FlowRateMeterCommand(void) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
                 Settings->SensorBits1.flowratemeter_reglage ? PSTR("ON") : PSTR("OFF"));
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_TEST "\":\"%s\""),
-            Settings->SensorBits1.flowratemeter_test ? PSTR("ON") : PSTR("OFF"));
+                Settings->SensorBits1.flowratemeter_test ? PSTR("ON") : PSTR("OFF"));
         if (Settings->SensorBits1.flowratemeter_raw_value == 0) {
-            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_AVG_SAMPLE "\":%d}}"),
+            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_AVG_SAMPLE "\":%d"),
                     Settings->SensorBits1.flowratemeter_weight_avg_sample);
-        } else {
-            ResponseAppend_P(PSTR("}}"));  
         }
+        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_SHOW_FREQ "\":\"%s\""),
+                Settings->SensorBits1.flowratemeter_show_freq ? PSTR("ON") : PSTR("OFF"));
+        ResponseAppend_P(PSTR("}}"));
     }
 
   return true;
