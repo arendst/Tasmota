@@ -382,22 +382,22 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    tasmota.log("MTR: p           =" + p.tohex(), 4)
-    tasmota.log("MTR: a           =" + a.tohex(), 4)
-    tasmota.log("MTR: n           =" + n.tohex(), 4)
-    tasmota.log("MTR: mic         =" + mic.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
+    # tasmota.log("MTR: p           =" + p.tohex(), 4)
+    # tasmota.log("MTR: a           =" + a.tohex(), 4)
+    # tasmota.log("MTR: n           =" + n.tohex(), 4)
+    # tasmota.log("MTR: mic         =" + mic.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(i2r, n, a, size(p), 16)
     var cleartext = aes.decrypt(p)
     var tag = aes.tag()
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
-    tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
+    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
       tasmota.log("MTR: rejected packet due to invalid MIC", 3)
@@ -431,23 +431,23 @@ class Matter_Frame
     end
     n.resize(13)        # add zeros
 
-    tasmota.log("MTR: cleartext: " + self.raw.tohex(), 4)
+    # tasmota.log("MTR: cleartext: " + self.raw.tohex(), 4)
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: r2i         =" + r2i.tohex(), 4)
-    tasmota.log("MTR: p           =" + p.tohex(), 4)
-    tasmota.log("MTR: a           =" + a.tohex(), 4)
-    tasmota.log("MTR: n           =" + n.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: r2i         =" + r2i.tohex(), 4)
+    # tasmota.log("MTR: p           =" + p.tohex(), 4)
+    # tasmota.log("MTR: a           =" + a.tohex(), 4)
+    # tasmota.log("MTR: n           =" + n.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(r2i, n, a, size(p), 16)
     var ciphertext = aes.encrypt(p)
     var tag = aes.tag()
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: ciphertext  =" + ciphertext.tohex(), 4)
-    tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: ciphertext  =" + ciphertext.tohex(), 4)
+    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
 
     # packet is good, put back content in raw
     self.raw.resize(self.payload_idx)              # remove cleartext payload
@@ -463,7 +463,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    tasmota.log("MTR: sending decode: " + matter.inspect(r), 3)
+    tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

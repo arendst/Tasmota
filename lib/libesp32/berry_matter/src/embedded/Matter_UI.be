@@ -278,13 +278,13 @@ class Matter_UI
         while idx < size(fabrics)
           var fabric_hex = fabrics[idx].get_fabric_id().copy().reverse().tohex()
           if fabric_hex == del_fabric
-            fabrics.remove(idx)
+            self.device.remove_fabric(fabrics[idx])
             dirty = true
+            break
           else
             idx += 1
           end
         end
-        if dirty    self.device.sessions.save_fabrics()  end
 
         #- and force restart -#
         webserver.redirect("/?rst=")

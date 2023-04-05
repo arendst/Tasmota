@@ -46,6 +46,11 @@ class Matter_Plugin
   end
 
   #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  def update_shadow()
+  end
+
+  #############################################################
   # signal that an attribute has been changed
   #
   # If `endpoint` is `nil`, send to all endpoints
@@ -208,6 +213,7 @@ class Matter_Plugin
   #############################################################
   # every_second
   def every_second()
+    self.update_shadow()                    # force reading value and sending subscriptions
   end
 end
 
