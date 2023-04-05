@@ -156,7 +156,7 @@ void FlowRateMeterInit(void) {
 }
 
 // Récupère les valeurs à afficher
-void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, float *amount_today) {
+void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, float *amount_today, float *rateMin, float *rateMax) {
     float _flowratemeter_count = 0.0;
     float _lmin = 0.0;
 
@@ -168,7 +168,7 @@ void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, f
         *rate_float = _flowratemeter_count * 2.02 * 60 / 1000;
         *amount_today = 0.0;
 
-        return;
+        goto calculExtremes;
     }
 
     if (nullptr != count) {
@@ -202,6 +202,11 @@ void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, f
             *amount_today = _lmin * ((flowratemeter_period_sum_dT[meter] / 1000) / 60);
         }
     }
+
+    // Détermine les valeurs max et min de débit
+calculExtremes:
+    if (*rate_float < *rateMin) {*rateMin = *rate_float;}
+    if (*rate_float > *rateMax) {*rateMax = *rate_float;}
 }
 
 void FlowRateMeterShow(bool json) {
@@ -211,10 +216,12 @@ void FlowRateMeterShow(bool json) {
     float flowratemeter_rate_float[MAX_FLOWRATEMETER];
     float floatrate_amount_today[MAX_FLOWRATEMETER];
     uint32_t flowratemeter_count[MAX_FLOWRATEMETER];
+    static float min[MAX_FLOWRATEMETER] = {9999.9};
+    static float max[MAX_FLOWRATEMETER] = {0};
 
     for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
         // Teste si il y a au moins 1 capteur de débit
-        FlowRateMeterGetValue(i, &flowratemeter_count[i], &flowratemeter_rate_float[i], &floatrate_amount_today[i]);
+        FlowRateMeterGetValue(i, &flowratemeter_count[i], &flowratemeter_rate_float[i], &floatrate_amount_today[i], &min[i], &max[i]);
         if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
             flowmeter_count++;
         }
@@ -257,11 +264,13 @@ void FlowRateMeterShow(bool json) {
                         Settings->flag2.frequency_resolution, &amount_today);
                 ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_DURATION_TODAY "\":%ld"),
                         GetDuration(flowratemeter_period_duration[i] / 10000, false).c_str());
-                ResponseAppend_P(PSTR("}%s"), i+1 < MAX_FLOWRATEMETER ? PSTR(",") : PSTR(""));
+                ResponseAppend_P(PSTR(",\"extremes\":{\"min\":%*_f,\"max\":%*_f}"),
+                        Settings->flag2.frequency_resolution, &min[i], Settings->flag2.frequency_resolution, &max[i]);
+                ResponseAppend_P(PSTR("},"));
             }
         }
 
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_VALUE "\":\"%s\""),
+        ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_VALUE "\":\"%s\""),
                 Settings->SensorBits1.flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG));
         if (Settings->SensorBits1.flowratemeter_raw_value == 0) {
             ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_AVG_SAMPLE "\":%d"),
