@@ -74,9 +74,9 @@ void LOXParse(uint8_t *buf)
   // O 0198.5 T +21.7 P 0983 % 020.19 e 0000
   if (buf[0] != 'O' || buf[9] != 'T' || buf[17] != 'P' || buf[24] != '%' || buf[33] != 'e') return; // check for valid response
   lox_o2->pressure = strtoul((char *)buf+19, nullptr, 10);
-  lox_o2->ppO2 = strtof((char *)buf+2, nullptr);
-  lox_o2->temperature = strtof((char *)buf+11, nullptr);
-  lox_o2->O2 = strtof((char *)buf+26, nullptr);
+  lox_o2->ppO2 = CharToFloat((char *)buf+2);
+  lox_o2->temperature = CharToFloat((char *)buf+11);
+  lox_o2->O2 = CharToFloat((char *)buf+26);
   lox_o2->error = strtoul((char *)buf+35, nullptr, 10);
 }
 
@@ -85,8 +85,9 @@ void LOXJson()
   if (!lox_o2) return;
   if (lox_o2->pressure > 0 && lox_o2->error == 0)
   {
+    float temperature = ConvertTemp(lox_o2->temperature);
     ResponseAppend_P(PSTR(",\"LOX\":{\"" D_JSON_PRESSURE "\":%i,\"ppO2\":%1_f,\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_O2 "\":%2_f"),
-      lox_o2->pressure, &lox_o2->ppO2, &lox_o2->temperature, &lox_o2->O2);
+      lox_o2->pressure, &lox_o2->ppO2, &temperature, &lox_o2->O2);
     ResponseJsonEnd();
   }
 }
@@ -121,7 +122,7 @@ void LOXShow(void)
   //AddLog(LOG_LEVEL_DEBUG, PSTR("LOX: %s"), value);
   WSContentSend_PD(PSTR("{s}%s " D_PRESSURE "{m} %i " D_UNIT_PRESSURE "{e}"), types, lox_o2->pressure);
   WSContentSend_PD(PSTR("{s}%s ppO2{m} %1_f " D_UNIT_PRESSURE "{e}"), types, &lox_o2->ppO2);
-  WSContentSend_Temp(types, lox_o2->temperature);
+  WSContentSend_Temp(types, ConvertTemp(lox_o2->temperature));
   WSContentSend_PD(PSTR("{s}%s " D_O2 "{m} %2_f %%{e}"), types, &lox_o2->O2);
 }
 #endif  // USE_WEBSERVER
