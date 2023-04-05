@@ -351,6 +351,10 @@ uint8_t ShutterGetStartRelay(uint8_t index) {
   return ShutterSettings.shutter_startrelay[index];
 }
 
+int8_t ShutterGetTiltConfig(uint8_t config_idx,uint8_t index) {
+  return Shutter[index].tilt_config[config_idx];
+}
+
 void ExecuteCommandPowerShutter(uint32_t device, uint32_t state, uint32_t source)
 {
   // first implementation for virtual relays. Avoid switching relay numbers that do not exist.

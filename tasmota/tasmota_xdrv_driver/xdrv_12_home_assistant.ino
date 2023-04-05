@@ -308,11 +308,11 @@ void HassDiscoverMessage(void) {
 
 #ifdef USE_SHUTTER
       if (Settings->flag3.shutter_mode) {
-        for (uint32_t k = 0; k < MAX_SHUTTERS; k++) {
-          if (Settings->shutter_startrelay[k] > 0) {
-            Shutter[Settings->shutter_startrelay[k]-1] = Shutter[Settings->shutter_startrelay[k]] = 1;
+        for (uint32_t k = 0; k < TasmotaGlobal.shutters_present; k++) {
+          if (ShutterGetStartRelay(k) > 0) {
+            Shutter[ShutterGetStartRelay(k)-1] = Shutter[ShutterGetStartRelay(k)] = 1;
           } else {
-            // terminate loop at first INVALID Settings->shutter_startrelay[i].
+            // terminate loop at first INVALID ShutterGetStartRelay(k).
             break;
           }
         }
@@ -393,7 +393,7 @@ void HassDiscoverMessage(void) {
                         light_controller_isCTRGBLinked,
                         light_subtype);
 
-  for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
 #ifdef USE_SHUTTER
     ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
 #else
@@ -403,12 +403,12 @@ void HassDiscoverMessage(void) {
 
   ResponseAppend_P(PSTR("],"                                   // Shutter Options (end)
                         "\"sht\":["));                         // Shutter Tilt (start)
-  for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
 #ifdef USE_SHUTTER
     ResponseAppend_P(PSTR("%s[%d,%d,%d]"), (i > 0 ? "," : ""),
-                          Settings->shutter_tilt_config[0][i],
-                          Settings->shutter_tilt_config[1][i],
-                          Settings->shutter_tilt_config[2][i]);
+                          ShutterGetTiltConfig(0,i),
+                          ShutterGetTiltConfig(1,i),
+                          ShutterGetTiltConfig(2,i));
 #else
     ResponseAppend_P(PSTR("%s[0,0,0]"), (i > 0 ? "," : ""));
 #endif  // USE_SHUTTER
