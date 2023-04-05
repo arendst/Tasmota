@@ -1125,7 +1125,7 @@
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME            "Débit"
-#define D_FLOWRATEMETER_COUNT           "Nb Impulsions"
+#define D_FLOWRATEMETER_COUNT           "Frequence"
 #define D_FLOWRATEMETER_AMOUNT_TODAY    "Qté journalière"
 #define D_FLOWRATEMETER_DURATION_TODAY  "Durée de fonct."
 
