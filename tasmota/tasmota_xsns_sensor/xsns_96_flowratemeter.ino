@@ -162,7 +162,9 @@ void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, f
 
     // Génération de compteurs d'impulsions aléatoires en cas de test
     if(Settings->SensorBits1.flowratemeter_test) {
-        *count = (uint32_t)_flowratemeter_count = random(1, 4000);
+        _flowratemeter_count = random(1, 4000);
+
+        *count = (uint32_t)_flowratemeter_count;
         *rate_float = _flowratemeter_count * 2.02 * 60 / 1000;
         *amount_today = 0.0;
 
