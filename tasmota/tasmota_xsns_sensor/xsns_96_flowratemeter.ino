@@ -452,7 +452,7 @@ bool FlowRateMeterCommand(void) {
                 Settings->SensorBits1.flowratemeter_reglage = value & 1;
                 ResponseCmndNumber(value & 1);
 
-                if (Settings->SensorBits1.flowratemeter_reglage) {FlowRateMeterShow(true);}
+                FlowRateMeterShow(true);
 
                 Settings->SensorBits1.flowratemeter_reglage ? value = 3 : value = 300;
                 Settings->tele_period = value;

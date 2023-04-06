@@ -469,7 +469,6 @@ const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
-// Si vous augmenter le nombre --> modifier la structure TSettings dabs le fichier 'tasmota_types.h'
 #define MAX_MAX31865S       6
 #define MAX_MCP23XXX        6
 #define MAX_FLOWRATEMETER   6
