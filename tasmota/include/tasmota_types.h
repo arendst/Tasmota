@@ -298,16 +298,12 @@ typedef union {
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
-    uint32_t spare22 : 1;                  // bit 22
-    uint32_t spare23 : 1;                  // bit 23
-    uint32_t spare24 : 1;                  // bit 24
-    uint32_t spare25 : 1;                  // bit 25
-    uint32_t spare26 : 1;                  // bit 26
-    uint32_t spare27 : 1;                  // bit 27
-    uint32_t spare28 : 1;                  // bit 28
-    uint32_t spare29 : 1;                  // bit 29
-    uint32_t spare30 : 1;                  // bit 30
-    uint32_t spare31 : 1;                  // bit 31
+    uint32_t flowratemeter_unit : 1;                  // bit 22 : Sensor96 10,x - unit l/min (0) or m³/h (1)
+    uint32_t flowratemeter_raw_value : 1;             // bit 23 : Sensor96 11,x - average over 'flowratemeter_weight_avg_sample' measurements (0) OR instantaneous gross value (1)
+    uint32_t flowratemeter_reglage : 1;               // bit 24 : Sensor96 12,x - setting mode OFF: TelePeriode=300 (0) OR setting mode ON: TelePeriode=3 (1)
+    uint32_t flowratemeter_test : 1;                  // bit 25 : Sensor96 13,x - test mode OFF: normal operation (0) OR test mode ON: generation of random digits (1)
+    uint32_t flowratemeter_weight_avg_sample : 5;     // bit 26 to 30 : Sensor96 14,x - weight avg sample (0 à 31)
+    uint32_t flowratemeter_show_freq : 1;             // bit 31 : Sensor96 16,x - displays the frequency on the web page: NO(0) / YES(1)
   };
 } SBitfield1;
 
@@ -397,34 +393,14 @@ typedef union {
 } Mcp230xxCfg;
 
 typedef union {
-  uint32_t data;
+  uint8_t data;
   struct {
-    uint32_t flowratemeter_unit : 1;                  // Sensor96 10,x - unit l/min (0) or m³/h (1)
-    uint32_t flowratemeter_raw_value : 1;             // Sensor96 11,x - moyenne sur 'flowratemeter_weight_avg_sample' mesures (0) OU valeur brute instantanée (1)
-    uint32_t flowratemeter_reglage : 1;               // Sensor96 12,x - mode reglage OFF : TelePeriode=300 (0) OU mode reglage ON : TelePeriode=3 (1)
-    uint32_t flowratemeter_test : 1;                  // Sensor96 13,x - mode test OFF : fonctionnement normal (0) OU mode test ON : generation de chiffres aléatoires (1)
-    uint32_t flowratemeter_weight_avg_sample : 5;     // Sensor96 14,x - weight avg sample (0 à 31)
-    uint32_t flowratemeter_show_freq : 1;             // Sensor96 16,x - Affiche la frequence sur la page web : NON(0) / OUI(1)
-    uint32_t bh1750_2_resolution : 2;
-    uint32_t bh1750_1_resolution : 2;                 // Sensor10 1,2,3
-    uint32_t hx711_json_weight_change : 1;            // Sensor34 8,x - Enable JSON message on weight change
-    uint32_t mhz19b_abc_disable : 1;                  // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
-    uint32_t spare16 : 1;
-    uint32_t spare17 : 1;
-    uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
-    uint32_t spare20 : 1;
-    uint32_t spare21 : 1;
-    uint32_t spare22 : 1;
-    uint32_t spare23 : 1;
-    uint32_t spare24 : 1;
-    uint32_t spare25 : 1;
-    uint32_t spare26 : 1;
-    uint32_t spare27 : 1;
-    uint32_t spare28 : 1;
-    uint32_t spare29 : 1;
-    uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint8_t spare0 : 1;
+    uint8_t spare1 : 1;
+    uint8_t bh1750_2_resolution : 2;
+    uint8_t bh1750_1_resolution : 2;                 // Sensor10 1,2,3
+    uint8_t hx711_json_weight_change : 1;            // Sensor34 8,x - Enable JSON message on weight change
+    uint8_t mhz19b_abc_disable : 1;                  // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
 } SensorCfg1;
 
@@ -860,7 +836,7 @@ typedef struct {
 
   uint8_t       modbus_sconfig;            // F62
 
-  uint8_t       free_f63[13];              // F63 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f63[5];              // F63 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint32_t      touch_threshold;           // F70
@@ -892,7 +868,7 @@ typedef struct {
   uint32_t      cfg_crc32;                 // FFC
 } TSettings;
 
-static_assert(sizeof(TSettings) == 4112, "TSettings Size is not correct");     //4112
+static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");     //4112
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
