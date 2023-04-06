@@ -60,7 +60,7 @@ bool bool_flowratemeter_test = false;
 
 #define FlowRateMeterIsValid(time, meter) flowratemeter_last_irq[meter] != FLOWRATEMETER_INVALID && flowratemeter_last_irq[meter] < time
 
-// Fonction de calcul des données de base par interruption sur pin GPIO
+// Basic data calculation function by interrupt on GPIO pin
 void IRAM_ATTR FlowRateMeterIR(uint16_t irq) {
 	uint32_t time = micros();
 #if defined(ESP8266)
@@ -68,12 +68,12 @@ void IRAM_ATTR FlowRateMeterIR(uint16_t irq) {
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
 #endif	
 
-	// Si l'indice du capteur est bien < MAX_FLOWRATEMETER (6)
+	// If the index of the sensor is indeed < MAX_FLOWRATEMETER (6)
 	if (irq < MAX_FLOWRATEMETER) {
-		// Est invalide si (1ere mesure / noté invalide / last_irq < time)
+		// Is invalid if (1st measure / noted invalid / last_irq < time)
 		if (FlowRateMeterIsValid(time, irq)) {
-			// frequence(Hz) = 1/Période(s) -> T(microS)=1000000(microS)/f
-			// freqCalculee > freqMin -> 1/Tcalc > 1/Tmin -> Tcalc < Tmin -> Tcalc < 1/freqMin
+			// frequency(Hz) = 1/Period(s) -> T(microS)=1000000(microS)/f
+			// freqCalculated > freqMin -> 1/Tcalc > 1/Tmin -> Tcalc < Tmin -> Tcalc < 1/freqMin
 			if ((time - flowratemeter_last_irq[irq]) < (1000000 / FLOWRATEMETER_MIN_FREQ)) {
 				flowratemeter_period_sum_dT[irq] = millis();
 				flowratemeter_period_sum[irq] ++;
@@ -85,7 +85,7 @@ void IRAM_ATTR FlowRateMeterIR(uint16_t irq) {
 			}
 		}
 		
-		// Enregistre le timer (microS) de la prise de mesure
+		// Saves the timer (microS) of the measurement
 		flowratemeter_last_irq[irq] = time;
 	}
 }
@@ -99,7 +99,7 @@ void IRAM_ATTR FlowRateMeter4IR(void) {FlowRateMeterIR(3);}
 void IRAM_ATTR FlowRateMeter5IR(void) {FlowRateMeterIR(4);}
 void IRAM_ATTR FlowRateMeter6IR(void) {FlowRateMeterIR(5);}
 
-// Reset des compteurs à minuit
+// Reset counters at midnight
 void FlowRateMeterMidnightReset(void) {
     uint32_t t = millis();
 
@@ -110,7 +110,7 @@ void FlowRateMeterMidnightReset(void) {
     }
 }
 
-// Lit les compteurs toutes les 250ms
+// Reads counters every 250ms
 void FlowRateMeterRead(void) {
     for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
         uint32_t time = micros();
@@ -124,7 +124,7 @@ void FlowRateMeterRead(void) {
                 flowratemeter_last_irq[i] = FLOWRATEMETER_INVALID;
             }
 
-            // Calcul une moyenne selon un echantillonnage definit 'FLOWRATEMETER_WEIGHT_AVG_SAMPLE'
+            // Calculation of an average according to a defined sampling 'FLOWRATEMETER_WEIGHT_AVG_SAMPLE'
             // exponentially weighted average
             if (flowratemeter_count[i] <= Settings->sbflag1.flowratemeter_weight_avg_sample) {
                 flowratemeter_count[i] ++;
@@ -155,12 +155,12 @@ void FlowRateMeterInit(void) {
     }
 }
 
-// Récupère les valeurs à afficher
+// Get the values ​​to display
 void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, float *amount_today, float *rateMin, float *rateMax) {
     float _flowratemeter_count = 0.0;
     float _lmin = 0.0;
 
-    // Génération de compteurs d'impulsions aléatoires en cas de test
+    // Generation of random pulse counters in test case
     if(Settings->sbflag1.flowratemeter_test) {
         _flowratemeter_count = random(1, 4000);
 
@@ -183,12 +183,12 @@ void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, f
         }
     }
 
-    // Capteur de mesure 1000ml = 660 impulsion (etiquette rouge) ==> mesuresFlow.debit = mesuresFlow.frequence * 1.52
-    // Capteur de mesure 1000ml = 495 impulsion (etiquette noire) ==> mesuresFlow.debit = mesuresFlow.frequence * 2.02
+    // Measuring sensor 1000ml = 660 pulses (red label) ==> measurementsFlow.flow = measurementsFlow.frequency * 1.52
+    // Measuring sensor 1000ml = 495 pulses (black label) ==> measurementsFlow.flow = measurementsFlow.frequency * 2.02
     if (nullptr != rate_float) {
         *rate_float = 0;
         if (meter < MAX_FLOWRATEMETER && flowratemeter_period[meter]) {
-            *rate_float = _flowratemeter_count * 2.02 * 60 / 1000; // debit en L/min : 1 impulsion = 2.02ml
+            *rate_float = _flowratemeter_count * 2.02 * 60 / 1000; // flow in L/min: 1 pulse = 2.02ml
         }
     }
 
@@ -198,12 +198,12 @@ void FlowRateMeterGetValue(uint32_t meter, uint32_t *count, float *rate_float, f
             _flowratemeter_count = 1000000.0 
                 / (uint32_t)((float)flowratemeter_period_sum_dT[meter] / (float)flowratemeter_period_sum[meter] * 1000.0)       //en uS
                 * ((Settings->flowratemeter_calibration[meter] ? (float)Settings->flowratemeter_calibration[meter] : 1000.0) / 1000);
-            _lmin = _flowratemeter_count * 2.02 * 60 / 1000;       // debit en L/min : 1 impulsion = 2.02ml
+            _lmin = _flowratemeter_count * 2.02 * 60 / 1000;       // flow in L/min: 1 pulse = 2.02ml
             *amount_today = _lmin * ((flowratemeter_period_sum_dT[meter] / 1000) / 60);
         }
     }
 
-    // Détermine les valeurs max et min de débit
+    // Determines the max and min values ​​of flow
 calculExtremes:
     if (*rate_float < *rateMin) {*rateMin = *rate_float;}
     if (*rate_float > *rateMax) {*rateMax = *rate_float;}
@@ -220,7 +220,7 @@ void FlowRateMeterShow(bool json) {
     static float max[MAX_FLOWRATEMETER] = {0};
 
     for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
-        // Teste si il y a au moins 1 capteur de débit
+        // Tests if there is at least 1 flow sensor
         FlowRateMeterGetValue(i, &flowratemeter_count[i], &flowratemeter_rate_float[i], &floatrate_amount_today[i], &min[i], &max[i]);
         if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
             flowmeter_count++;
@@ -239,8 +239,8 @@ void FlowRateMeterShow(bool json) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETERS "\":{"));
         for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
             if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
-                // A modifier  selon le mode test -> génération aléatoire
-                // Si TEST=ON ==> période génération de chiffres aléatoires
+                // To be modified according to test mode -> random generation
+                // If TEST=ON ==> period generation of random digits
                 float rate = Settings->sbflag1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
                 float amount_today = Settings->sbflag1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
 
@@ -318,12 +318,12 @@ void FlowRateMeterShow(bool json) {
                     WSContentSend_PD(PSTR("{s}" FLOWRATEMETER6 "{m}&nbsp;</td>"));
                 }
 
-                // A modifier  selon le mode test -> génération aléatoire
-                // Si TEST=ON ==> période génération de chiffres aléatoires
+                // To be modified according to test mode -> random generation
+                // If TEST=ON ==> period generation of random digits
                 float rate = Settings->sbflag1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
                 float amount_today = Settings->sbflag1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
 
-                // Nb impulsions
+                // Number of pulses
                 if (Settings->sbflag1.flowratemeter_show_freq) {
                     WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%d</td><td>&nbsp;</td>"),
                             Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
@@ -360,36 +360,36 @@ void FlowRateMeterShow(bool json) {
 
 /*********************************************************************************************
  * Supported commands for Sensor96:
- * Sensor96                         - Affiche les paramètres actuels
+ * Sensor96 - Displays current settings
 
- * Sensor96 1 <correction-factor>  	- Facteur de correction du débitmètre1 (x 1000) - Pour paramétrer 0.2, entrez 'Sensor96 1 200'
- * Sensor96 2 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
- * Sensor96 3 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
- * Sensor96 4 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
- * Sensor96 5 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
- * Sensor96 6 <correction-factor>  	- Facteur de correction du débitmètre2 (x 1000)
+ * Sensor96 1 <correction-factor> - Correction factor of flowmeter1 (x 1000) - To set 0.2 enter 'Sensor96 1 200'
+ * Sensor96 2 <correction-factor> - Flowmeter correction factor2 (x 1000)
+ * Sensor96 3 <correction-factor> - Flowmeter correction factor2 (x 1000)
+ * Sensor96 4 <correction-factor> - Flowmeter correction factor2 (x 1000)
+ * Sensor96 5 <correction-factor> - Flowmeter correction factor2 (x 1000)
+ * Sensor96 6 <correction-factor> - Flowmeter correction factor2 (x 1000)
  * 
- * Sensor96 10 0|1                  - Show flow value in l/min (0) or m³/h (1)
- * Sensor96 11 0|1                  - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
- * Sensor96 12 0|1                  - Value reglage: Switch between telePeriod 300 reglage(0) / telePeriod 3 reglage(1)
- * Sensor96 13 0|1                  - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
- * Sensor96 14 0->31                - Value weight avg sample (0 à 31)
- * Sensor96 15 0|1                  - Reset des valeurs totales
- * Sensor96 16 0|1                  - Affiche la frequence sur la page web : NON(0) / OUI(1)
- * 
- * Calibration des débitmètres :
- * - débit actuel affiché 				  (D)
- * - <correction-factor> actuel 		(c)
- * - débit réel mesuré          		(M)
- * - nouveau <correction-factor> à appliquer = M / (c * D)
+ * Sensor96 10 0|1 - Show flow value in l/min (0) or m³/h (1)
+ * Sensor96 11 0|1 - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
+ * Sensor96 12 0|1 - Value setting: Switch between telePeriod 300 setting(0) / telePeriod 3 setting(1)
+ * Sensor96 13 0|1 - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
+ * Sensor96 14 0->31 - Value weight avg sample (0 to 31)
+ * Sensor96 15 0|1 - Reset total values
+ * Sensor96 16 0|1 - Displays the frequency on the web page: NO(0) / YES(1)
  *
- * Exemple:
- * - débit actuel affiché 		  = 254.39 l/min 	(D)
- * - <correction-factor> actuel = 1.0  			    (c)
- * - débit réel mesuré      	  =  83.42 l/min 	(M)
+ * Calibration of flowmeters:
+ * - current flow displayed (D)
+ * - current <correction-factor> (c)
+ * - actual measured flow (M)
+ * - new <correction-factor> to apply = M / (c * D)
  *
- * nouveau <correction-factor> à appliquer = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
- * Cmd: Sensor96 x 328
+* Example:
+ * - current flow displayed = 254.39 l/min (D)
+ * - current <correction-factor> = 1.0 (c)
+ * - actual measured flow = 83.42 l/min (M)
+ *
+ * new <correction-factor> to apply = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
+ * Cmd: Sensor96x328
 *********************************************************************************************/
 bool FlowRateMeterCommand(void) {
     bool show_parms = true;
@@ -433,7 +433,7 @@ bool FlowRateMeterCommand(void) {
                 show_parms = true;
             }
             break;
-        case 12:  // reglage : Teleperiod (300/3)
+        case 12:  // setting: Teleperiod (300/3)
             if (any_value) {
                 Settings->sbflag1.flowratemeter_reglage = value & 1;
                 ResponseCmndNumber(value & 1);
@@ -468,7 +468,7 @@ bool FlowRateMeterCommand(void) {
                 show_parms = true;
             }
             break;
-        case 15:  // Reset des valeurs totales
+        case 15:  // Reset total values
             if (any_value) {
                 if (value & 1) {FlowRateMeterMidnightReset();}
                 ResponseCmndNumber(value & 1);
@@ -477,7 +477,7 @@ bool FlowRateMeterCommand(void) {
                 show_parms = true;
             }
             break;
-        case 16:  // Paramètre l'affiche de la fréquence sur la page Web
+        case 16:  // Sets the frequency display on the web page
             if (any_value) {
                 Settings->sbflag1.flowratemeter_show_freq = value & 1;
                 ResponseCmndNumber(value & 1);
