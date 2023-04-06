@@ -322,11 +322,14 @@ class Matter_Commisioning_Context
       return false
     end
     var sigma1 = matter.Sigma1().parse(msg.raw, msg.app_payload_idx)
+    tasmota.log(string.format("MTR: sigma1=%s", matter.inspect(sigma1)), 4)
 
     self.initiatorEph_pub = sigma1.initiatorEphPubKey
 
     # find session
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
+    tasmota.log(string.format("MTR: is_resumption=%i", is_resumption ? 1 : 0), 4)
+    is_resumption = false   # quick fix TODO
 
     # Check that it's a resumption
     var session = msg.session
@@ -433,6 +436,9 @@ class Matter_Commisioning_Context
       tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
       tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
       tasmota.log("MTR: noc           ="+session._fabric.noc.tohex(), 4)
+      if session._fabric.get_icac()
+        tasmota.log("MTR: icac          ="+session._fabric.get_icac().tohex(), 4)
+      end
       tasmota.log("MTR: root_ca_cert  ="+session._fabric.root_ca_certificate.tohex(), 4)
 
       # Compute Sigma2, p.162
@@ -517,8 +523,8 @@ class Matter_Commisioning_Context
     # compute TranscriptHash = Crypto_Hash(message = Msg1 || Msg2)
     var TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).out()
     tasmota.log("MTR: * session       = " + str(session), 4)
-    tasmota.log("MTR: session.ipk_epoch_key " + str(session.get_ipk_epoch_key()), 4)
-    tasmota.log("MTR: session.fabric_compressed " + str(session.get_fabric_compressed()), 4)
+    tasmota.log("MTR:   .ipk_epoch_key=" + str(session.get_ipk_epoch_key()), 4)
+    tasmota.log("MTR:   .fabric_compr = " + str(session.get_fabric_compressed()), 4)
     tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 4)
     tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 4)
 
@@ -549,9 +555,13 @@ class Matter_Commisioning_Context
     end
 
     var TBEData3TLV = matter.TLV.parse(TBEData3)
+    tasmota.log("MTR: * TBEData3TLV   = " + str(TBEData3TLV), 4)
     var initiatorNOC = TBEData3TLV.findsubval(1)
     var initiatorICAC = TBEData3TLV.findsubval(2)
     var ec_signature = TBEData3TLV.findsubval(3)
+    tasmota.log("MTR: * initiatorNOC  = " + str(initiatorNOC), 4)
+    tasmota.log("MTR: * initiatorICAC = " + str(initiatorICAC), 4)
+    tasmota.log("MTR: * ec_signature  = " + str(ec_signature), 4)
     # Success = Crypto_VerifyChain(certificates = [TBEData3.initiatorNOC, TBEData3.initiatorICAC, TrustedRCAC]), when TBEData3.initiatorICAC is present
     # TODO
     var initiatorNOCTLV = matter.TLV.parse(initiatorNOC)
@@ -567,10 +577,12 @@ class Matter_Commisioning_Context
     sigma3_tbs.add_TLV(1, matter.TLV.B1, initiatorNOC)
     sigma3_tbs.add_TLV(2, matter.TLV.B1, initiatorICAC)
     sigma3_tbs.add_TLV(3, matter.TLV.B1, self.initiatorEph_pub)
-    sigma3_tbs.add_TLV(4, matter.TLV.B1, self.ResponderEph_pub) 
+    sigma3_tbs.add_TLV(4, matter.TLV.B1, self.ResponderEph_pub)
+    tasmota.log("MTR: * sigma3_tbs    = " + str(sigma3_tbs), 4)
     var sigma3_tbs_raw = sigma3_tbs.tlv2raw()
+    tasmota.log("MTR: * sigma3_tbs_raw= " + sigma3_tbs_raw.tohex(), 4)
 
-    tasmota.log("MTR: * initiatorNOCPubKey      = " + initiatorNOCPubKey.tohex(), 4)
+    tasmota.log("MTR: * initiatorNOCPubKey= " + initiatorNOCPubKey.tohex(), 4)
     tasmota.log("MTR: * ec_signature      = " + ec_signature.tohex(), 4)
     tasmota.log("****************************************", 4)
 
@@ -588,6 +600,10 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: Sigma3 verified, computing new keys", 3)
 
     TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).update(sigma3.Msg3).out()
+    tasmota.log("MTR: * __Msg1            = " + session.__Msg1.tohex(), 4)
+    tasmota.log("MTR: * __Msg2            = " + session.__Msg2.tohex(), 4)
+    tasmota.log("MTR: * __Msg3            = " + sigma3.Msg3.tohex(), 4)
+    tasmota.log("MTR: * TranscriptHash    = " + TranscriptHash.tohex(), 4)
     # we can now free __Msg1 and __Msg2
     session.__Msg1 = nil
     session.__Msg2 = nil
