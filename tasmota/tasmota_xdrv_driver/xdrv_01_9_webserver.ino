@@ -3239,8 +3239,7 @@ int WebSend(char *buffer)
   return status;
 }
 
-int WebQuery(char *buffer)
-{
+int WebQuery(char *buffer) {
   // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
   // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
   // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
@@ -3343,8 +3342,7 @@ int WebQuery(char *buffer)
 }
 
 #ifdef USE_WEBGETCONFIG
-int WebGetConfig(char *buffer)
-{
+int WebGetConfig(char *buffer) {
   // http://user:password@server:port/path/%id%.dmp  : %id% will be expanded to MAC address
 
   int status = WEBCMND_WRONG_PARAMETERS;
@@ -3357,7 +3355,7 @@ int WebGetConfig(char *buffer)
 
 #if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
   HTTPClientLight http;
-  if (http.begin(UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+  if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
 #else // HTTP only
   WiFiClient http_client;
   HTTPClient http;
@@ -3602,8 +3600,7 @@ void CmndWebQuery(void)
 }
 
 #ifdef USE_WEBGETCONFIG
-void CmndWebGetConfig(void)
-{
+void CmndWebGetConfig(void) {
   // WebGetConfig http://myserver:8000/tasmota/conf/%id%.dmp where %id% is expanded to device mac address
   // WebGetConfig http://myserver:8000/tasmota/conf/Config_demo_9.5.0.8.dmp
   if (XdrvMailbox.data_len > 0) {

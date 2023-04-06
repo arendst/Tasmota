@@ -59,6 +59,16 @@ class Matter_Commisioning_Context
     self.y = crypto.random(32)
   end
 
+  #############################################################
+  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, created)
+    import string
+    # create session object
+    tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 3)
+    
+    var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
+    session.set_keys(i2r, r2i, ac, created)
+  end
+
   def process_incoming(msg)
     #
     if !self.device.is_commissioning_open() && msg.opcode >= 0x20 && msg.opcode <= 0x24
@@ -275,7 +285,7 @@ class Matter_Commisioning_Context
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
     var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
 
-    self.responder.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
+    self.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
   end
 
   def find_fabric_by_destination_id(destinationId, initiatorRandom)
@@ -358,12 +368,12 @@ class Matter_Commisioning_Context
       var Resume1MICPayload = ec.decrypt(encrypted)
       var decrypted_tag = ec.tag()
 
-      # tasmota.log("****************************************", 4)
-      # tasmota.log("MTR: * s1rk              = " + s1rk.tohex(), 4)
-      # tasmota.log("MTR: * tag               = " + tag.tohex(), 4)
-      # tasmota.log("MTR: * Resume1MICPayload = " + Resume1MICPayload.tohex(), 4)
-      # tasmota.log("MTR: * decrypted_tag     = " + decrypted_tag.tohex(), 4)
-      # tasmota.log("****************************************", 4)
+      tasmota.log("****************************************", 4)
+      tasmota.log("MTR: * s1rk              = " + s1rk.tohex(), 4)
+      tasmota.log("MTR: * tag               = " + tag.tohex(), 4)
+      tasmota.log("MTR: * Resume1MICPayload = " + Resume1MICPayload.tohex(), 4)
+      tasmota.log("MTR: * decrypted_tag     = " + decrypted_tag.tohex(), 4)
+      tasmota.log("****************************************", 4)
       if tag == decrypted_tag
         # Generate and Send Sigma2_Resume
         session.resumption_id = crypto.random(16)     # generate a new resumption id
@@ -392,15 +402,15 @@ class Matter_Commisioning_Context
         var ac = session_keys[32..47]
         var created = tasmota.rtc()['utc']
 
-        # tasmota.log("MTR: ******************************", 4)
-        # tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
-        # tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
-        # tasmota.log("MTR: AC          =" + ac.tohex(), 4)
-        # tasmota.log("MTR: ******************************", 4)
+        tasmota.log("MTR: ******************************", 4)
+        tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
+        tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
+        tasmota.log("MTR: AC          =" + ac.tohex(), 4)
+        tasmota.log("MTR: ******************************", 4)
 
         var sigma2resume_raw = sigma2resume.tlv2raw()
         session.__Msg1 = nil
-        # tasmota.log("MTR: sigma2resume_raw: " + sigma2resume_raw.tohex(), 4)
+        tasmota.log("MTR: sigma2resume_raw: " + sigma2resume_raw.tohex(), 4)
 
         # now package the response message
         var resp = msg.build_response(0x33 #-sigma-2-resume-#, true)
@@ -420,10 +430,10 @@ class Matter_Commisioning_Context
 
     if sigma1.resumptionID == nil || sigma1.initiatorResumeMIC == nil
 
-      # tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
-      # tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
-      # tasmota.log("MTR: noc           ="+session._fabric.noc.tohex(), 4)
-      # tasmota.log("MTR: root_ca_cert  ="+session._fabric.root_ca_certificate.tohex(), 4)
+      tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
+      tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
+      tasmota.log("MTR: noc           ="+session._fabric.noc.tohex(), 4)
+      tasmota.log("MTR: root_ca_cert  ="+session._fabric.root_ca_certificate.tohex(), 4)
 
       # Compute Sigma2, p.162
       session.resumption_id = crypto.random(16)
@@ -448,38 +458,38 @@ class Matter_Commisioning_Context
       sigma2_tbedata.add_TLV(4, matter.TLV.B2, session.resumption_id)
 
       # compute TranscriptHash = Crypto_Hash(message = Msg1)
-      # tasmota.log("****************************************", 4)
+      tasmota.log("****************************************", 4)
       session.__Msg1 = sigma1.Msg1
-      # tasmota.log("MTR: * MSG1          = " + session.__Msg1.tohex(), 4)
+      tasmota.log("MTR: * MSG1          = " + session.__Msg1.tohex(), 4)
       var TranscriptHash = crypto.SHA256().update(session.__Msg1).out()
-      # tasmota.log("MTR: TranscriptHash =" + TranscriptHash.tohex(), 4)
+      tasmota.log("MTR: TranscriptHash =" + TranscriptHash.tohex(), 4)
 
       # Compute S2K, p.175
       var s2k_info = bytes().fromstring(self.S2K_Info)
       var s2k_salt = session.get_ipk_group_key() + responderRandom + self.ResponderEph_pub + TranscriptHash
 
       var s2k = crypto.HKDF_SHA256().derive(session.shared_secret, s2k_salt, s2k_info, 16)
-      # tasmota.log("MTR: * SharedSecret  = " + session.shared_secret.tohex(), 4)
-      # tasmota.log("MTR: * s2k_salt      = " + s2k_salt.tohex(), 4)
-      # tasmota.log("MTR: * s2k           = " + s2k.tohex(), 4)
+      tasmota.log("MTR: * SharedSecret  = " + session.shared_secret.tohex(), 4)
+      tasmota.log("MTR: * s2k_salt      = " + s2k_salt.tohex(), 4)
+      tasmota.log("MTR: * s2k           = " + s2k.tohex(), 4)
 
       var sigma2_tbedata_raw = sigma2_tbedata.tlv2raw()
       # // `AES_CCM.init(secret_key:bytes(16 or 32), iv:bytes(7..13), aad:bytes(), data_len:int, tag_len:int) -> instance`
 
       var aes = crypto.AES_CCM(s2k, bytes().fromstring(self.TBEData2_Nonce), bytes(), size(sigma2_tbedata_raw), 16)
       var TBEData2Encrypted = aes.encrypt(sigma2_tbedata_raw) + aes.tag()
-      # tasmota.log("MTR: * TBEData2Enc   = " + TBEData2Encrypted.tohex(), 4)
-      # tasmota.log("****************************************", 4)
+      tasmota.log("MTR: * TBEData2Enc   = " + TBEData2Encrypted.tohex(), 4)
+      tasmota.log("****************************************", 4)
 
       var sigma2 = matter.Sigma2()
       sigma2.responderRandom = responderRandom
       sigma2.responderSessionId = self.future_local_session_id
       sigma2.responderEphPubKey = self.ResponderEph_pub
       sigma2.encrypted2 = TBEData2Encrypted
-      # tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 4)
+      tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 4)
       var sigma2_raw = sigma2.tlv2raw()
       session.__Msg2 = sigma2_raw
-      # tasmota.log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 4)
+      tasmota.log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 4)
   
       # now package the response message
       var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
@@ -503,22 +513,22 @@ class Matter_Commisioning_Context
     var session = msg.session
     var sigma3 = matter.Sigma3().parse(msg.raw, msg.app_payload_idx)
 
-    # tasmota.log("****************************************", 4)
+    tasmota.log("****************************************", 4)
     # compute TranscriptHash = Crypto_Hash(message = Msg1 || Msg2)
     var TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).out()
-    # tasmota.log("MTR: * session       = " + str(session), 4)
-    # tasmota.log("MTR: session.ipk_epoch_key " + str(session.get_ipk_epoch_key()), 4)
-    # tasmota.log("MTR: session.fabric_compressed " + str(session.get_fabric_compressed()), 4)
-    # tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 4)
-    # tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 4)
+    tasmota.log("MTR: * session       = " + str(session), 4)
+    tasmota.log("MTR: session.ipk_epoch_key " + str(session.get_ipk_epoch_key()), 4)
+    tasmota.log("MTR: session.fabric_compressed " + str(session.get_fabric_compressed()), 4)
+    tasmota.log("MTR: * ipk_group_key = " + session.get_ipk_group_key().tohex(), 4)
+    tasmota.log("MTR: * TranscriptHash= " + TranscriptHash.tohex(), 4)
 
     var s3k_info = bytes().fromstring(self.S3K_Info)
     var s3k = crypto.HKDF_SHA256().derive(session.shared_secret, session.get_ipk_group_key() + TranscriptHash, s3k_info, 16)
 
-    # tasmota.log("****************************************", 4)
-    # tasmota.log("MTR: * s3k_salt      = " + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
-    # tasmota.log("MTR: * s3k           = " + s3k.tohex(), 4)
-    # tasmota.log("****************************************", 4)
+    tasmota.log("****************************************", 4)
+    tasmota.log("MTR: * s3k_salt      = " + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
+    tasmota.log("MTR: * s3k           = " + s3k.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     # decrypt
     var encrypted = sigma3.TBEData3Encrypted[0..-17]
@@ -526,10 +536,10 @@ class Matter_Commisioning_Context
     var ec = crypto.AES_CCM(s3k, bytes().fromstring(self.TBEData3_Nonce), bytes(), size(encrypted), 16)
     var TBEData3 = ec.decrypt(encrypted)
     var TBETag3 = ec.tag()
-    # tasmota.log("MTR: * TBEData3      = " + TBEData3.tohex(), 4)
-    # tasmota.log("MTR: * TBETag3       = " + TBETag3.tohex(), 4)
-    # tasmota.log("MTR: * tag_sent      = " + tag.tohex(), 4)
-    # tasmota.log("****************************************", 4)
+    tasmota.log("MTR: * TBEData3      = " + TBEData3.tohex(), 4)
+    tasmota.log("MTR: * TBETag3       = " + TBETag3.tohex(), 4)
+    tasmota.log("MTR: * tag_sent      = " + tag.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     if TBETag3 != tag
       tasmota.log("MTR: Tag don't match", 2)
@@ -545,13 +555,13 @@ class Matter_Commisioning_Context
     # Success = Crypto_VerifyChain(certificates = [TBEData3.initiatorNOC, TBEData3.initiatorICAC, TrustedRCAC]), when TBEData3.initiatorICAC is present
     # TODO
     var initiatorNOCTLV = matter.TLV.parse(initiatorNOC)
-    # tasmota.log("MTR: initiatorNOCTLV = " + str(initiatorNOCTLV), 3)
+    tasmota.log("MTR: initiatorNOCTLV = " + str(initiatorNOCTLV), 3)
     var initiatorNOCPubKey = initiatorNOCTLV.findsubval(9)
     var initiatorNOCListDN = initiatorNOCTLV.findsub(6)
     var initiatorFabricId = initiatorNOCListDN.findsubval(17)
     if type(initiatorFabricId) == 'int'   initiatorFabricId = int64(initiatorFabricId) end
     session.peer_node_id = initiatorFabricId.tobytes()
-    # tasmota.log("MTR: initiatorFabricId="+str(session.peer_node_id), 3)
+    tasmota.log("MTR: initiatorFabricId="+str(session.peer_node_id), 3)
 
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
     sigma3_tbs.add_TLV(1, matter.TLV.B1, initiatorNOC)
@@ -560,9 +570,9 @@ class Matter_Commisioning_Context
     sigma3_tbs.add_TLV(4, matter.TLV.B1, self.ResponderEph_pub) 
     var sigma3_tbs_raw = sigma3_tbs.tlv2raw()
 
-    # tasmota.log("MTR: * initiatorNOCPubKey      = " + initiatorNOCPubKey.tohex(), 4)
-    # tasmota.log("MTR: * ec_signature      = " + ec_signature.tohex(), 4)
-    # tasmota.log("****************************************", 4)
+    tasmota.log("MTR: * initiatorNOCPubKey      = " + initiatorNOCPubKey.tohex(), 4)
+    tasmota.log("MTR: * ec_signature      = " + ec_signature.tohex(), 4)
+    tasmota.log("****************************************", 4)
 
     # `crypto.EC_P256().ecdsa_verify_sha256(public_key:bytes(65), message:bytes(), hash:bytes()) -> bool`
     var sigma3_tbs_valid = crypto.EC_P256().ecdsa_verify_sha256(initiatorNOCPubKey, sigma3_tbs_raw, ec_signature)
@@ -582,9 +592,9 @@ class Matter_Commisioning_Context
     session.__Msg1 = nil
     session.__Msg2 = nil
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: shared_secret =" + session.shared_secret.tohex(), 4)
-    # tasmota.log("MTR: ipk + hash    =" + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: shared_secret =" + session.shared_secret.tohex(), 4)
+    tasmota.log("MTR: ipk + hash    =" + (session.get_ipk_group_key() + TranscriptHash).tohex(), 4)
     # compute session key
     var session_keys = crypto.HKDF_SHA256().derive(session.shared_secret #- input key -#,
                                                    session.get_ipk_group_key() + TranscriptHash #- salt -#,
@@ -595,11 +605,11 @@ class Matter_Commisioning_Context
     var ac = session_keys[32..47]
     var created = tasmota.rtc()['utc']
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
-    # tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
-    # tasmota.log("MTR: AC          =" + ac.tohex(), 4)
-    # tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
+    tasmota.log("MTR: R2IKey      =" + r2i.tohex(), 4)
+    tasmota.log("MTR: AC          =" + ac.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
 
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
     var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, true)

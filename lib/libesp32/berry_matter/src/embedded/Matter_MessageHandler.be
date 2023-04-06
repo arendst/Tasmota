@@ -26,8 +26,8 @@ class Matter_MessageHandler
   var device              # `tansport.msg_send(raw:bytes() [,...]) -> bool` true if succeeded
 
   # handlers
-  var commissioning
-  var im                  # handler for Interaction Model
+  var commissioning       # Commissioning Context instance, handling the PASE/CASE phases
+  var im                  # Instance of `matter.IM` handling Interaction Model
 
   #############################################################
   def init(device)
@@ -173,16 +173,6 @@ class Matter_MessageHandler
   #############################################################
   def send_response(raw, addr, port, id, session_id)
     self.device.msg_send(raw, addr, port, id, session_id)
-  end
-
-  #############################################################
-  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, created)
-    import string
-    # create session object
-    tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 3)
-    
-    var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
-    session.set_keys(i2r, r2i, ac, created)
   end
 
   #############################################################

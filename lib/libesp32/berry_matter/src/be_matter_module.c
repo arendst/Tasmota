@@ -151,6 +151,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Root.h"
 #include "solidify/solidified_Matter_Plugin_Device.h"
 #include "solidify/solidified_Matter_Plugin_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Light0.h"
 #include "solidify/solidified_Matter_Plugin_Light1.h"
 #include "solidify/solidified_Matter_Plugin_Light2.h"
 #include "solidify/solidified_Matter_Plugin_Light3.h"
@@ -322,6 +323,7 @@ module matter (scope: global, strings: weak) {
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
   Plugin_Device, class(be_class_Matter_Plugin_Device)   // Generic device (abstract)
   Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
+  Plugin_Light0, class(be_class_Matter_Plugin_Light0)     // OnOff Light
   Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
   Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
   Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
