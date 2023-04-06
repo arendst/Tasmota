@@ -503,7 +503,7 @@ extern const bclass be_class_Matter_Sigma1;
 ********************************************************************/
 be_local_closure(Matter_Sigma1_parse,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
+    8,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -511,7 +511,7 @@ be_local_closure(Matter_Sigma1_parse,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[21]) {     /* constants */
+    ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_nested_str_weak(matter),
     /* K2   */  be_nested_str_weak(TLV),
@@ -533,10 +533,12 @@ be_local_closure(Matter_Sigma1_parse,   /* name */
     /* K18  */  be_nested_str_weak(SLEEPY_IDLE_INTERVAL),
     /* K19  */  be_nested_str_weak(findsubval),
     /* K20  */  be_nested_str_weak(SLEEPY_ACTIVE_INTERVAL),
+    /* K21  */  be_nested_str_weak(resumptionID),
+    /* K22  */  be_nested_str_weak(initiatorResumeMIC),
     }),
     be_str_weak(parse),
     &be_const_str_solidified,
-    ( &(const binstruction[58]) {  /* code */
+    ( &(const binstruction[60]) {  /* code */
       0x4C0C0000,  //  0000  LDNIL	R3
       0x1C0C0403,  //  0001  EQ	R3	R2	R3
       0x780E0000,  //  0002  JMPF	R3	#0004
@@ -588,13 +590,15 @@ be_local_closure(Matter_Sigma1_parse,   /* name */
       0x581C000D,  //  0030  LDCONST	R7	K13
       0x7C140400,  //  0031  CALL	R5	2
       0x90022805,  //  0032  SETMBR	R0	K20	R5
-      0x8C140711,  //  0033  GETMET	R5	R3	K17
+      0x8C140713,  //  0033  GETMET	R5	R3	K19
       0x541E0005,  //  0034  LDINT	R7	6
       0x7C140400,  //  0035  CALL	R5	2
-      0x8C180711,  //  0036  GETMET	R6	R3	K17
-      0x54220006,  //  0037  LDINT	R8	7
-      0x7C180400,  //  0038  CALL	R6	2
-      0x80040000,  //  0039  RET	1	R0
+      0x90022A05,  //  0036  SETMBR	R0	K21	R5
+      0x8C140713,  //  0037  GETMET	R5	R3	K19
+      0x541E0006,  //  0038  LDINT	R7	7
+      0x7C140400,  //  0039  CALL	R5	2
+      0x90022C05,  //  003A  SETMBR	R0	K22	R5
+      0x80040000,  //  003B  RET	1	R0
     })
   )
 );
