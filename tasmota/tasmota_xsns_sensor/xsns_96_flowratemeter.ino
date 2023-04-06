@@ -298,7 +298,6 @@ void FlowRateMeterShow(bool json) {
         } else if (Settings->sbflag1.flowratemeter_unit == 2) {
             ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
                     PSTR(D_UNIT_CUBIC_METER), PSTR(D_UNIT_CUBICMETER_PER_HOUR));  
-            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), PSTR(D_UNIT_CUBICMETER_PER_HOUR));
         }
 
         ResponseAppend_P(PSTR("},\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
@@ -381,7 +380,7 @@ void FlowRateMeterShow(bool json) {
                 WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
                         Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
                         Settings->flag2.frequency_resolution, &amount_today,
-                        Settings->sbflag1.flowratemeter_unit < 2 ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS)
+                        Settings->sbflag1.flowratemeter_unit < 2 ? PSTR(D_UNIT_LITERS) : PSTR(D_UNIT_CUBIC_METER)
                 );
 
                 // Duration today
@@ -408,13 +407,13 @@ void FlowRateMeterShow(bool json) {
  * Sensor96 5 <correction-factor> - Flowmeter correction factor2 (x 1000)
  * Sensor96 6 <correction-factor> - Flowmeter correction factor2 (x 1000)
  * 
- * Sensor96 10 0|1 - Show flow value in l/min (0) or l/h (1) or m³/h (2)
- * Sensor96 11 0|1 - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
- * Sensor96 12 0|1 - Value setting: Switch between telePeriod 300 setting(0) / telePeriod 3 setting(1)
- * Sensor96 13 0|1 - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
- * Sensor96 14 0->31 - Value weight avg sample (0 to 31)
- * Sensor96 15 0|1 - Reset total values
- * Sensor96 16 0|1 - Displays the frequency on the web page: NO(0) / YES(1)
+ * Sensor96 10 0|1|2    - Show flow value in l/min (0) or l/h (1) or m³/h (2)
+ * Sensor96 11 0|1      - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
+ * Sensor96 12 0|1      - Value setting: Switch between telePeriod 300 setting(0) / telePeriod 3 setting(1)
+ * Sensor96 13 0|1      - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
+ * Sensor96 14 0->31    - Value weight avg sample (0 to 31)
+ * Sensor96 15 0|1      - Reset total values
+ * Sensor96 16 0|1      - Displays the frequency on the web page: NO(0) / YES(1)
  *
  * Calibration of flowmeters:
  * - current flow displayed (D)
@@ -461,8 +460,8 @@ bool FlowRateMeterCommand(void) {
 
         case 10:  // Unit
             if (any_value) {
-                Settings->sbflag1.flowratemeter_unit = value & 0x02;
-                ResponseCmndNumber(value & 0x02);
+                Settings->sbflag1.flowratemeter_unit = value & 0x03;
+                ResponseCmndNumber(value & 0x03);
                 show_parms = true;
             }
             break;
@@ -546,7 +545,6 @@ bool FlowRateMeterCommand(void) {
         } else if (Settings->sbflag1.flowratemeter_unit == 2) {
             ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
                     PSTR(D_UNIT_CUBIC_METER), PSTR(D_UNIT_CUBICMETER_PER_HOUR));  
-            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), PSTR(D_UNIT_CUBICMETER_PER_HOUR));
         }
 
         ResponseAppend_P(PSTR("},\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
