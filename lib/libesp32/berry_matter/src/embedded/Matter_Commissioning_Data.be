@@ -168,8 +168,8 @@ class Matter_Sigma1
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
     end
-    var resumptionID = val.findsub(6)
-    var initiatorResumeMIC = val.findsub(7)
+    self.resumptionID = val.findsubval(6)
+    self.initiatorResumeMIC = val.findsubval(7)
     return self
   end
 end
