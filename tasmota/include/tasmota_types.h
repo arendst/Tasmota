@@ -297,8 +297,7 @@ typedef union {
     uint32_t spare18 : 1;                  // bit 18
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
-    uint32_t spare21 : 1;                  // bit 21
-    uint32_t flowratemeter_unit : 1;                  // bit 22 : Sensor96 10,x - unit l/min (0) or m³/h (1)
+    uint32_t flowratemeter_unit : 2;                  // bit 21 to 22 : Sensor96 10,x - unit l/min (0) or l/h (1) or m³/h (2)
     uint32_t flowratemeter_raw_value : 1;             // bit 23 : Sensor96 11,x - average over 'flowratemeter_weight_avg_sample' measurements (0) OR instantaneous gross value (1)
     uint32_t flowratemeter_reglage : 1;               // bit 24 : Sensor96 12,x - setting mode OFF: TelePeriode=300 (0) OR setting mode ON: TelePeriode=3 (1)
     uint32_t flowratemeter_test : 1;                  // bit 25 : Sensor96 13,x - test mode OFF: normal operation (0) OR test mode ON: generation of random digits (1)
