@@ -445,6 +445,8 @@ class Matter_Commisioning_Context
       session.resumption_id = crypto.random(16)
       self.ResponderEph_priv = crypto.random(32)
       self.ResponderEph_pub = crypto.EC_P256().public_key(self.ResponderEph_priv)
+      tasmota.log("MTR: ResponderEph_priv  ="+self.ResponderEph_priv.tohex(), 4)
+      tasmota.log("MTR: ResponderEph_pub  ="+self.ResponderEph_pub.tohex(), 4)
       var responderRandom = crypto.random(32)
 
       session.shared_secret = crypto.EC_P256().shared_key(self.ResponderEph_priv, sigma1.initiatorEphPubKey)
@@ -466,6 +468,7 @@ class Matter_Commisioning_Context
       # compute TranscriptHash = Crypto_Hash(message = Msg1)
       tasmota.log("****************************************", 4)
       session.__Msg1 = sigma1.Msg1
+      tasmota.log("MTR: * resumptionid  = " + session.resumption_id.tohex(), 4)
       tasmota.log("MTR: * MSG1          = " + session.__Msg1.tohex(), 4)
       var TranscriptHash = crypto.SHA256().update(session.__Msg1).out()
       tasmota.log("MTR: TranscriptHash =" + TranscriptHash.tohex(), 4)
@@ -480,6 +483,7 @@ class Matter_Commisioning_Context
       tasmota.log("MTR: * s2k           = " + s2k.tohex(), 4)
 
       var sigma2_tbedata_raw = sigma2_tbedata.tlv2raw()
+      tasmota.log("MTR: * TBEData2Raw   = " + sigma2_tbedata_raw.tohex(), 4)
       # // `AES_CCM.init(secret_key:bytes(16 or 32), iv:bytes(7..13), aad:bytes(), data_len:int, tag_len:int) -> instance`
 
       var aes = crypto.AES_CCM(s2k, bytes().fromstring(self.TBEData2_Nonce), bytes(), size(sigma2_tbedata_raw), 16)
