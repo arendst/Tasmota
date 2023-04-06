@@ -218,6 +218,8 @@ void FlowRateMeterShow(bool json) {
     uint32_t flowratemeter_count[MAX_FLOWRATEMETER];
     static float min[MAX_FLOWRATEMETER] = {9999.9};
     static float max[MAX_FLOWRATEMETER] = {0};
+    float rate;
+    float amount_today;
 
     for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
         // Tests if there is at least 1 flow sensor
@@ -241,8 +243,16 @@ void FlowRateMeterShow(bool json) {
             if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
                 // To be modified according to test mode -> random generation
                 // If TEST=ON ==> period generation of random digits
-                float rate = Settings->sbflag1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
-                float amount_today = Settings->sbflag1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
+                if (Settings->sbflag1.flowratemeter_unit == 0) {
+                    rate = flowratemeter_rate_float[i];
+                    amount_today = floatrate_amount_today[i];
+                } else if (Settings->sbflag1.flowratemeter_unit == 1) {
+                    rate = flowratemeter_rate_float[i] * 60;
+                    amount_today = floatrate_amount_today[i];
+                } else if (Settings->sbflag1.flowratemeter_unit == 2) {
+                    rate = flowratemeter_rate_float[i] * 60 / 1000;
+                    amount_today = floatrate_amount_today[i] / 1000;
+                }
 
                 if (i == 0) {
                     ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER "%d\":{\"name\":\"%s\","), i + 1, FLOWRATEMETER1);
@@ -277,11 +287,21 @@ void FlowRateMeterShow(bool json) {
                     Settings->sbflag1.flowratemeter_weight_avg_sample
             );
         }
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\""),
-                Settings->sbflag1.flowratemeter_unit ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS));    
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""),
-                Settings->sbflag1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE));
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
+
+        ResponseAppend_P(PSTR(",\"unites\":{"));
+        if (Settings->sbflag1.flowratemeter_unit == 0) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_LITERS), PSTR(D_UNIT_LITER_PER_MINUTE));
+        } else if (Settings->sbflag1.flowratemeter_unit == 1) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_LITERS), PSTR(D_UNIT_LITER_PER_HOUR));          
+        } else if (Settings->sbflag1.flowratemeter_unit == 2) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_CUBIC_METER), PSTR(D_UNIT_CUBICMETER_PER_HOUR));  
+            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), PSTR(D_UNIT_CUBICMETER_PER_HOUR));
+        }
+
+        ResponseAppend_P(PSTR("},\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
                 Settings->sbflag1.flowratemeter_reglage ? PSTR("ON") : PSTR("OFF"));
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_TEST "\":\"%s\"}"),
                 Settings->sbflag1.flowratemeter_test ? PSTR("ON") : PSTR("OFF"));
@@ -320,8 +340,16 @@ void FlowRateMeterShow(bool json) {
 
                 // To be modified according to test mode -> random generation
                 // If TEST=ON ==> period generation of random digits
-                float rate = Settings->sbflag1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
-                float amount_today = Settings->sbflag1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
+                if (Settings->sbflag1.flowratemeter_unit == 0) {
+                    rate = flowratemeter_rate_float[i];
+                    amount_today = floatrate_amount_today[i];
+                } else if (Settings->sbflag1.flowratemeter_unit == 1) {
+                    rate = flowratemeter_rate_float[i] * 60;
+                    amount_today = floatrate_amount_today[i];
+                } else if (Settings->sbflag1.flowratemeter_unit == 2) {
+                    rate = flowratemeter_rate_float[i] * 60 / 1000;
+                    amount_today = floatrate_amount_today[i] / 1000;
+                }
 
                 // Number of pulses
                 if (Settings->sbflag1.flowratemeter_show_freq) {
@@ -332,17 +360,28 @@ void FlowRateMeterShow(bool json) {
                 }
 
                 // Flowrate
-                WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
-                        Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
-                        Settings->flag2.frequency_resolution, &rate,
-                        Settings->sbflag1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE)
-                );
+                if (Settings->sbflag1.flowratemeter_unit == 0) {
+                    WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
+                            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+                            Settings->flag2.frequency_resolution, &rate,
+                            PSTR(D_UNIT_LITER_PER_MINUTE));
+                } else if (Settings->sbflag1.flowratemeter_unit == 1) {
+                    WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
+                            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+                            Settings->flag2.frequency_resolution, &rate,
+                            PSTR(D_UNIT_LITER_PER_HOUR));      
+                } else if (Settings->sbflag1.flowratemeter_unit == 2) {
+                    WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
+                            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+                            Settings->flag2.frequency_resolution, &rate,
+                            PSTR(D_UNIT_CUBICMETER_PER_HOUR));   
+                }
 
                 // Amount today
                 WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f %s</td><td>&nbsp;</td>"),
                         Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
                         Settings->flag2.frequency_resolution, &amount_today,
-                        Settings->sbflag1.flowratemeter_unit ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS)
+                        Settings->sbflag1.flowratemeter_unit < 2 ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS)
                 );
 
                 // Duration today
@@ -369,7 +408,7 @@ void FlowRateMeterShow(bool json) {
  * Sensor96 5 <correction-factor> - Flowmeter correction factor2 (x 1000)
  * Sensor96 6 <correction-factor> - Flowmeter correction factor2 (x 1000)
  * 
- * Sensor96 10 0|1 - Show flow value in l/min (0) or m³/h (1)
+ * Sensor96 10 0|1 - Show flow value in l/min (0) or l/h (1) or m³/h (2)
  * Sensor96 11 0|1 - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
  * Sensor96 12 0|1 - Value setting: Switch between telePeriod 300 setting(0) / telePeriod 3 setting(1)
  * Sensor96 13 0|1 - Value test: Switch between displaying random value test(0) / raw(1) readings (not permanently)
@@ -394,6 +433,7 @@ void FlowRateMeterShow(bool json) {
 bool FlowRateMeterCommand(void) {
     bool show_parms = true;
     char argument[XdrvMailbox.data_len];
+    char *flowUnitStr;
 
     long value = 0;
     for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
@@ -421,8 +461,8 @@ bool FlowRateMeterCommand(void) {
 
         case 10:  // Unit
             if (any_value) {
-                Settings->sbflag1.flowratemeter_unit = value & 1;
-                ResponseCmndNumber(value & 1);
+                Settings->sbflag1.flowratemeter_unit = value & 0x02;
+                ResponseCmndNumber(value & 0x02);
                 show_parms = true;
             }
             break;
@@ -495,9 +535,21 @@ bool FlowRateMeterCommand(void) {
         }
         ResponseAppend_P(PSTR("],\"" D_JSON_FLOWRATEMETER_VALUE "\":\"%s\""),
                 Settings->sbflag1.flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG));
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""),
-                Settings->sbflag1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE));
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
+
+        ResponseAppend_P(PSTR(",\"unites\":{"));
+        if (Settings->sbflag1.flowratemeter_unit == 0) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_LITERS), PSTR(D_UNIT_LITER_PER_MINUTE));
+        } else if (Settings->sbflag1.flowratemeter_unit == 1) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_LITERS), PSTR(D_UNIT_LITER_PER_HOUR));          
+        } else if (Settings->sbflag1.flowratemeter_unit == 2) {
+            ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), 
+                    PSTR(D_UNIT_CUBIC_METER), PSTR(D_UNIT_CUBICMETER_PER_HOUR));  
+            ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\""), PSTR(D_UNIT_CUBICMETER_PER_HOUR));
+        }
+
+        ResponseAppend_P(PSTR("},\"" D_JSON_FLOWRATEMETER_REGLAGE "\":\"%s\""),
                 Settings->sbflag1.flowratemeter_reglage ? PSTR("ON") : PSTR("OFF"));
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_TEST "\":\"%s\""),
                 Settings->sbflag1.flowratemeter_test ? PSTR("ON") : PSTR("OFF"));
@@ -507,7 +559,7 @@ bool FlowRateMeterCommand(void) {
         }
         ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_SHOW_FREQ "\":\"%s\""),
                 Settings->sbflag1.flowratemeter_show_freq ? PSTR("ON") : PSTR("OFF"));
-        ResponseAppend_P(PSTR("}}"));
+        ResponseAppend_P(PSTR("}"));
     }
 
   return true;
