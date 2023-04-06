@@ -22,7 +22,7 @@
   Aide & tuto Sensors API:
   https://tasmota.github.io/docs/Sensor-API/#managing-a-forked-branch
 */
-
+/*
 #ifdef USE_FLOWRATEMETER
 
 #define XSNS_96                       96
@@ -358,7 +358,7 @@ void FlowRateMeterShow(bool json) {
     }
 }
 
-/*********************************************************************************************\
+/*********************************************************************************************
  * Supported commands for Sensor96:
  * Sensor96                         - Affiche les paramètres actuels
 
@@ -390,7 +390,7 @@ void FlowRateMeterShow(bool json) {
  *
  * nouveau <correction-factor> à appliquer = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
  * Cmd: Sensor96 x 328
-\*********************************************************************************************/
+*********************************************************************************************
 bool FlowRateMeterCommand(void) {
     bool show_parms = true;
     char argument[XdrvMailbox.data_len];
@@ -513,9 +513,9 @@ bool FlowRateMeterCommand(void) {
   return true;
 }
 
-/*********************************************************************************************\
+/*********************************************************************************************
  * Interface
-\*********************************************************************************************/
+/*********************************************************************************************
 
 bool Xsns96(uint32_t function) {
   bool result = false;
@@ -554,3 +554,4 @@ bool Xsns96(uint32_t function) {
 }
 
 #endif  // USE_FLOWRATEMETER
+*/
