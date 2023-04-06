@@ -3,21 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.4.0.4]
+## [12.4.0.5]
 ### Added
-- Matter support simple Relay on Apple Homekit by Stephan Hadinger (#18239)
-- VSC Pio menu bar extensions by @Jason2866 (#18233)
-- Command ``SwitchMode0`` to show or set all SwitchModes
-- Matter support for Light and Relays
+- Matter support for Light and Relays on ESP32 by Stephan Hadinger (#18320)
+- ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode (#18295)
 
 ### Breaking Changed
 
 ### Changed
-- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
+- ESP32 LVGL library from v8.3.5 to v8.3.6 (no functional change)
 
 ### Fixed
+- ESP32 ``Upload``, ``Upgrade``, ``WebGetConfig``, ``WebQuery`` and ``WebSend`` random HTTP(S) connection timeout set to 5 sec (commit 542eca3)
 
 ### Removed
+
+## [12.4.0.4] 20230403
+### Added
+- Matter support simple Relay on Apple Homekit by Stephan Hadinger (#18239)
+- VSC Pio menu bar extensions by @Jason2866 (#18233)
+- Command ``SwitchMode0`` to show or set all SwitchModes
+
+### Changed
+- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
 
 ## [12.4.0.3] 20230322
 ### Added

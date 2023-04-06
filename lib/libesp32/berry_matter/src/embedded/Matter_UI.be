@@ -194,9 +194,8 @@ class Matter_UI
         webserver.content_send(string.format("Fabric: %s<br>", fabric_rev.tohex()))
         webserver.content_send(string.format("Device: %s<br>&nbsp;", deviceid_rev.tohex()))
 
-        webserver.content_send("<form action='/matterc' method='post' ")
-        webserver.content_send("onsubmit='return confirm(\"This will cause a restart.\");'>")
-        webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%s'>", fabric_rev.tohex()))
+        webserver.content_send("<form action='/matterc' method='post'>")
+        webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%i'>", f.get_fabric_index()))
         webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
     
         webserver.content_send("<p></p></fieldset><p></p>")
@@ -271,23 +270,20 @@ class Matter_UI
         webserver.redirect("/?rst=")
 
       elif webserver.has_arg("del_fabric")
-        var del_fabric = webserver.arg("del_fabric")
+        var del_fabric = int(webserver.arg("del_fabric"))
         var idx = 0
         var fabrics = self.device.sessions.fabrics
-        var dirty = false
         while idx < size(fabrics)
-          var fabric_hex = fabrics[idx].get_fabric_id().copy().reverse().tohex()
-          if fabric_hex == del_fabric
-            fabrics.remove(idx)
-            dirty = true
+          if fabrics[idx].get_fabric_index() == del_fabric
+            self.device.remove_fabric(fabrics[idx])
+            break
           else
             idx += 1
           end
         end
-        if dirty    self.device.sessions.save_fabrics()  end
 
         #- and force restart -#
-        webserver.redirect("/?rst=")
+        webserver.redirect("/matterc?")
 
       end
     except .. as e, m
