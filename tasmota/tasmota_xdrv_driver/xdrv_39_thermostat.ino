@@ -76,7 +76,6 @@
 #define D_CMND_TIMESENSLOSTSET "TimeSensLostSet"
 #define D_CMND_DIAGNOSTICMODESET "DiagnosticModeSet"
 #define D_CMND_CTRDUTYCYCLEREAD "CtrDutyCycleRead"
-#define D_CMND_CONTROLMETHOD "ControlMethod"
 #define D_CMND_ENABLEOUTPUTSET "EnableOutputSet"
 
 enum ThermostatModes { THERMOSTAT_OFF, THERMOSTAT_AUTOMATIC_OP, THERMOSTAT_MANUAL_OP, THERMOSTAT_MODES_MAX };
@@ -176,7 +175,7 @@ const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CM
   D_CMND_TIMEMINACTIONSET "|" D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|"
   D_CMND_TIMERAMPUPMAXSET "|" D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|"
   D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET "|" D_CMND_CTRDUTYCYCLEREAD "|"
-  D_CMND_ENABLEOUTPUTSET "|" D_CMND_CONTROLMETHOD;
+  D_CMND_ENABLEOUTPUTSET;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndThermostatModeSet, &CmndClimateModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet,
@@ -2048,6 +2047,9 @@ const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
+#define D_THERMOSTAT_JSON_NAME_CONTROL_METHOD "ControlMethod"
+#define D_THERMOSTAT_JSON_NAME_EMERGENCY_STATE "EmergencyState"
+
 void ThermostatShow(uint8_t ctr_output, bool json)
 {
   if (json) {
@@ -2056,7 +2058,8 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
-    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CONTROLMETHOD, Thermostat[ctr_output].status.controller_mode == CTR_HYBRID ? Thermostat[ctr_output].status.phase_hybrid_ctr : Thermostat[ctr_output].status.controller_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_CONTROL_METHOD, Thermostat[ctr_output].status.controller_mode == CTR_HYBRID ? Thermostat[ctr_output].status.phase_hybrid_ctr : Thermostat[ctr_output].status.controller_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_EMERGENCY_STATE, Thermostat[ctr_output].diag.state_emergency == EMERGENCY_ON);
     ResponseJsonEnd();
     return;
   }

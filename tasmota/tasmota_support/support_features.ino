@@ -882,7 +882,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_PMSA003I)
     feature9 |= 0x00040000;  // xsns_104_pmsa003i.ino
 #endif
-//    feature9 |= 0x00080000;
+#ifdef USE_LOX_O2
+    feature9 |= 0x00080000;  // xsns_105_lox_o2.ino
+#endif
 
 //    feature9 |= 0x00100000;
 //    feature9 |= 0x00200000;

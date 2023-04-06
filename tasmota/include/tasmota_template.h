@@ -208,6 +208,7 @@ enum UserSelectablePins {
   GPIO_BIOPDU_PZEM0XX_TX, GPIO_BIOPDU_PZEM016_RX, GPIO_BIOPDU_BIT, // Biomine BioPDU 625x12
   GPIO_MCP23XXX_INT, GPIO_MCP23SXX_CS,  // MCP23xxx Int and SPI Chip select
   GPIO_PCF8574_INT,                     // PCF8574 interrupt
+  GPIO_LOX_O2_RX,                       // LOX-O2 RX
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -463,6 +464,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BIOPDU_PZEM0XX_TX "|" D_SENSOR_BIOPDU_PZEM016_RX "|" D_SENSOR_BIOPDU_BIT "|"
   D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
   D_SENSOR_PCF8574_INT "|"
+  D_SENSOR_LOX_O2_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1025,6 +1027,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_LD2410                       // xsns_102_ld2410.ino
   AGPIO(GPIO_LD2410_TX),                // HLK-LD2410 Serial interface
   AGPIO(GPIO_LD2410_RX),                // HLK-LD2410 Serial interface
+#endif
+#ifdef USE_LOX_O2                       // xsns_105_lox_o2.ino
+  AGPIO(GPIO_LOX_O2_RX),                // LuminOx Oxygen Sensor LOX-O2 Serial interface
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
