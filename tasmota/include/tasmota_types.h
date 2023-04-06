@@ -867,7 +867,7 @@ typedef struct {
   uint32_t      cfg_crc32;                 // FFC
 } TSettings;
 
-static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");     //4112
+static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
