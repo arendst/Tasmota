@@ -897,7 +897,7 @@ matter.TLV = Matter_TLV
 import matter
 
 def test_TLV(b, s)
-  var m =  matter.TLV.parse(b)
+  var m = matter.TLV.parse(b)
   assert(m.tostring() == s)
   assert(m.tlv2raw() == b)
   assert(m.encode_len() == size(b))
