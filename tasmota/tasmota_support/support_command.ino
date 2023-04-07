@@ -629,16 +629,14 @@ void CmndJson(void) {
       } else if (parameters.isObject()) {       // Should have been escaped
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
       } else {
-        if (strchr(parameters.getStr(), ';')) {
-          String compound = command;
-          compound += " ";
-          compound += parameters.getStr();      // Rule1 ON Clock#Timer=1 DO Backlog Color #FF000000D0; Wakeup 100 ENDON
-          ExecuteCommand((char*)compound.c_str(), SRC_FILE);
-        } else {
+        String cmnd_param = command;
+        cmnd_param += " ";
+        cmnd_param += parameters.getStr();
+        if (cmnd_param.indexOf(";") == -1) {    // Rule1 ON Clock#Timer=1 DO Backlog Color #FF000000D0; Wakeup 100 ENDON
           if (backlog.length()) { backlog += ";"; }
-          backlog += command;
-          backlog += " ";
-          backlog += parameters.getStr();       // HSBColor 51,97,100
+          backlog += cmnd_param;                // HSBColor 51,97,100
+        } else {
+          ExecuteCommand((char*)cmnd_param.c_str(), SRC_FILE);
         }
       }
     }
