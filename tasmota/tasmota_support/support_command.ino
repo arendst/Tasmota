@@ -587,6 +587,31 @@ void CmndJson(void) {
     // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
     // Output:
     // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+/*
+    String backlog;
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          backlog = command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+          ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
+        }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
+      } else {
+        backlog = command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+        ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
+      }
+    }
+*/
     String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
@@ -604,16 +629,25 @@ void CmndJson(void) {
       } else if (parameters.isObject()) {       // Should have been escaped
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
       } else {
-        if (backlog.length()) { backlog += ";"; }
-        backlog += command;
-        backlog += " ";
-        backlog += parameters.getStr();         // HSBColor 51,97,100
+        if (strchr(parameters.getStr(), ';')) {
+          String compound = command;
+          compound += " ";
+          compound += parameters.getStr();      // Rule1 ON Clock#Timer=1 DO Backlog Color #FF000000D0; Wakeup 100 ENDON
+          ExecuteCommand((char*)compound.c_str(), SRC_FILE);
+        } else {
+          if (backlog.length()) { backlog += ";"; }
+          backlog += command;
+          backlog += " ";
+          backlog += parameters.getStr();       // HSBColor 51,97,100
+        }
       }
     }
-    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
-    XdrvMailbox.data_len = 1;                   // Any data
-    XdrvMailbox.index = 0;                      // Backlog0 - no delay
-    CmndBacklog();
+    if (backlog.length()) {
+      XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+      XdrvMailbox.data_len = 1;                 // Any data
+      XdrvMailbox.index = 0;                    // Backlog0 - no delay
+      CmndBacklog();
+    }
   } else {
     ResponseCmndChar(PSTR(D_JSON_EMPTY));
   }
