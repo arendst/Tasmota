@@ -137,13 +137,14 @@ void FlowRateMeterRead(void) {
 }
 
 void FlowRateMeterInit(void) {
+    // To avoid unwanted triggering of the interrupt if the pin is not connected
     void (*irq_service[MAX_FLOWRATEMETER]) (void) = {
-        FlowRateMeter1IR, 
-        FlowRateMeter2IR, 
-        FlowRateMeter3IR, 
-        FlowRateMeter4IR, 
-        FlowRateMeter5IR, 
-        FlowRateMeter6IR
+        (MAX_FLOWRATEMETER >= 1) ? FlowRateMeter1IR : nullptr, 
+        (MAX_FLOWRATEMETER >= 2) ? FlowRateMeter2IR : nullptr, 
+        (MAX_FLOWRATEMETER >= 3) ? FlowRateMeter3IR : nullptr, 
+        (MAX_FLOWRATEMETER >= 4) ? FlowRateMeter4IR : nullptr, 
+        (MAX_FLOWRATEMETER >= 5) ? FlowRateMeter5IR : nullptr, 
+        (MAX_FLOWRATEMETER >= 6) ? FlowRateMeter6IR : nullptr
     };
 
     FlowRateMeterMidnightReset();
