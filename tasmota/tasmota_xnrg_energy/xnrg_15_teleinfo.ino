@@ -651,6 +651,7 @@ void TInfoDrvInit(void) {
     // If one TInfo RX pin declared use it
     if (PinUsed(GPIO_TELEINFO_RX)) {
         tic_rx_pin = Pin(GPIO_TELEINFO_RX);
+        
         TasmotaGlobal.energy_driver = XNRG_15;
         Energy->voltage_available = false;
         Energy->phase_count = 1;

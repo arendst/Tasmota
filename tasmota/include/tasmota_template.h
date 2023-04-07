@@ -482,6 +482,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DSB             4
 #define MAX_BP1658CJ_DAT    16
 #define MAX_DINGTIAN_SHIFT  4
+#define MAX_TELEINFO        2
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -1073,8 +1074,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_AS3935),                   // AS3935 IRQ Pin
 #endif
 #ifdef USE_TELEINFO
-  AGPIO(GPIO_TELEINFO_RX),
-  AGPIO(GPIO_TELEINFO_ENABLE),
+  AGPIO(GPIO_TELEINFO_RX) + MAX_TELEINFO,
+  AGPIO(GPIO_TELEINFO_ENABLE) + MAX_TELEINFO,
 #endif
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),             // Mitsubishi Electric HVAC TX pin
