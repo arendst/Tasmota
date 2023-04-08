@@ -1343,7 +1343,7 @@ void CmndShutterPosition(void)
       
       // manual override of tiltposition
       if (Shutter[index].tilt_target_pos_override != -128) {
-        Shutter[index].tilt_target_pos = Shutter[index].tilt_target_pos_override;
+        Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
         Shutter[index].tilt_target_pos_override = -128;
       }
 
