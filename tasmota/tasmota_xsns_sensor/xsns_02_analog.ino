@@ -469,7 +469,8 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
   uint16_t analog_max = 0;
 
   if (0 == Adc[idx].param1) {
-    for (uint32_t i = 0; i < samples; i++) {
+    unsigned long tstart=millis();
+    while (millis()-tstart < 35) {
       analog = analogRead(Adc[idx].pin);
       if (analog < analog_min) {
         analog_min = analog;
@@ -477,9 +478,11 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
       if (analog > analog_max) {
         analog_max = analog;
       }
-      delay(1);
     }
+    //AddLog(0, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
     Adc[idx].current = (float)(analog_max-analog_min) * ((float)(Adc[idx].param2) / 100000);
+    if (Adc[idx].current < (((float)Adc[idx].param4) / 10000.0))
+        Adc[idx].current = 0.0;
   }
   else {
     analog = AdcRead(Adc[idx].pin, 5);
