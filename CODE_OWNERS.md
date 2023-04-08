@@ -204,6 +204,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_103_sen5x             | @tyeth
 | xsns_104_pmsa003i          | Jean-Pierre Deschamps
 | xsns_105_lox_o2            | @ACE1046
+| xsns_106_gdk101            | @Szewcson
 |                            |
 | Libraries                  |
 |                            |

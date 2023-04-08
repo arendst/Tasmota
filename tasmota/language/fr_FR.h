@@ -1190,4 +1190,8 @@
 #define D_NEOPOOL_PH_LOW                  "Trop bas"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "durée pompage expirée"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "dose moyenne de rayonnement"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_FR_FR_H_
