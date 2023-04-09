@@ -316,7 +316,7 @@ class Matter_Commisioning_Context
     import string
     # sanity checks
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
-      tasmota.log("MTR: invalid Sigma1 message", 2)
+      # tasmota.log("MTR: invalid Sigma1 message", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
       var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
@@ -426,12 +426,12 @@ class Matter_Commisioning_Context
 
         return true
       else
-        sigma1.resumptionID = nil
+        is_resumption = false
         # fall through normal sigma1 (non-resumption)
       end
     end
 
-    if sigma1.resumptionID == nil || sigma1.initiatorResumeMIC == nil
+    if !is_resumption
 
       tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
       tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)

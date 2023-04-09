@@ -661,7 +661,7 @@ be_local_closure(Matter_Plugin_Root_read_attribute,   /* name */
       0x781E0005,  //  0224  JMPF	R7	#022B
       0x8C1C0906,  //  0225  GETMET	R7	R4	K6
       0x8824090C,  //  0226  GETMBR	R9	R4	K12
-      0x58280005,  //  0227  LDCONST	R10	K5
+      0x58280009,  //  0227  LDCONST	R10	K9
       0x7C1C0600,  //  0228  CALL	R7	3
       0x80040E00,  //  0229  RET	1	R7
       0x7002009B,  //  022A  JMP		#02C7
