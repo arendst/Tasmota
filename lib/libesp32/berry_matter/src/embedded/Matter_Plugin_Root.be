@@ -208,7 +208,7 @@ class Matter_Plugin_Root : Matter_Plugin
     elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
 
       if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
-        return TLV.create_TLV(TLV.U2, 0)
+        return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return TLV.create_TLV(TLV.UTF1, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------

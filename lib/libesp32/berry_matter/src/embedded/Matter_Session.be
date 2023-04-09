@@ -840,12 +840,15 @@ class Matter_Session_Store
   #############################################################
   # find session by resumption id
   def find_session_by_resumption_id(resumption_id)
+    import string
     if !resumption_id  return nil end
     var i = 0
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
+      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)))
       if session.resumption_id == resumption_id && session.shared_secret != nil
+        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)))
         session.update()
         return session
       end
