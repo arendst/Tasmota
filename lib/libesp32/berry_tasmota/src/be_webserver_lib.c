@@ -24,6 +24,8 @@ extern int w_webserver_content_flush(bvm *vm);
 extern int w_webserver_content_stop(bvm *vm);
 extern int w_webserver_content_button(bvm *vm);
 
+extern int w_webserver_html_escape(bvm *vm);
+
 extern int w_webserver_argsize(bvm *vm);
 extern int w_webserver_arg(bvm *vm);
 extern int w_webserver_arg_name(bvm *vm);
@@ -47,6 +49,8 @@ module webserver (scope: global) {
     content_start, func(w_webserver_content_start)
     content_stop, func(w_webserver_content_stop)
     content_button, func(w_webserver_content_button)
+
+    html_escape, func(w_webserver_html_escape)
 
     arg_size, func(w_webserver_argsize)
     arg, func(w_webserver_arg)
