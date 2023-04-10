@@ -90,6 +90,12 @@
 #define SML_OBIS_LINE
 #endif
 
+
+#ifdef USE_SML_TCP_SECURE
+#define USE_SML_TCP_IP_STR
+#endif
+
+
 // median filter eliminates outliers, but uses much RAM and CPU cycles
 // 672 bytes extra RAM with SML_MAX_VARS = 16
 // default compile on, but must be enabled by descriptor flag 16
@@ -448,18 +454,26 @@ struct METER_DESC {
 #endif // USE_SML_DECRYPT
 
 #ifdef USE_SML_TCP
+
+#ifdef USE_SML_TCP_IP_STR
+  char ip_addr[16];
+#else
   IPAddress ip_addr;
-#ifdef TCP_CLIENT_SECURE
+#endif // USE_SML_TCP_IP_STR
+
+#ifdef USE_SML_TCP_SECURE
   WiFiClientSecure *client;
 #else
   WiFiClient *client;
-#endif
+#endif // USE_SML_TCP_SECURE
+
+#endif // USE_SML_TCP
 
 #ifdef ESP32
   int8_t uart_index;
 #endif
-#endif
 };
+
 
 
 #define TCP_MODE_FLG 0x7f
@@ -523,6 +537,7 @@ struct SML_GLOBS {
 #endif
 	uint8_t *script_meter;
 	struct METER_DESC *mp;
+  uint8_t to_cnt;
   bool ready;
 } sml_globs;
 
@@ -609,7 +624,11 @@ uint16_t Serial_available() {
     if (!meter_desc[num].meter_ss) return 0;
     return meter_desc[num].meter_ss->available();
   } else {
-    return meter_desc[num].client->available();
+    if (meter_desc[num].client) {
+      return meter_desc[num].client->available();
+    } else {
+      return 0;
+    }
   }
 }
 
@@ -621,7 +640,11 @@ uint8_t Serial_read() {
     if (!meter_desc[num].meter_ss) return 0;
     return meter_desc[num].meter_ss->read();
   } else {
-    return meter_desc[num].client->read();
+    if (meter_desc[num].client) {
+      return meter_desc[num].client->read();
+    } else {
+      return 0;
+    }
   }
 }
 
@@ -633,7 +656,11 @@ uint8_t Serial_peek() {
     if (!meter_desc[num].meter_ss) return 0;
     return meter_desc[num].meter_ss->peek();
   } else {
-    return meter_desc[num].client->peek();
+    if (meter_desc[num].client) {
+      return meter_desc[num].client->peek();
+    } else {
+      return 0;
+    }
   }
 }
 
@@ -1252,12 +1279,16 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
       mp->sbuff[count] = mp->sbuff[count + 1];
     }
   }
-
+    
   uint8_t iob;
   if (mp->srcpin != TCP_MODE_FLG) {
-    iob = (uint8_t)mp->meter_ss->read();
+    iob = (uint8_t)mp->meter_ss->read(); 
   } else {
-    iob = (uint8_t)mp->client->read();
+    if (mp->client) {
+      iob = (uint8_t)mp->client->read();
+    } else {
+      iob = 0;
+    }
   }
 
   switch (mp->type) {
@@ -1348,7 +1379,9 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           if (mp->spos == 6 + tlen) {
             mp->spos = 0;
             SML_Decode(meters);
-            mp->client->flush();
+            if (mp->client) {
+              mp->client->flush();
+            }
             //Hexdump(mp->sbuff + 6, 10);
           }
         }
@@ -1448,8 +1481,10 @@ uint32_t meters;
           }
         } else {
 #ifdef USE_SML_TCP
-          while (mp->client->available()){
-            sml_shift_in(meters, 0);
+          if (mp->client) {    
+            while (mp->client->available()){
+              sml_shift_in(meters, 0);
+            }
           }
 #endif
         }
@@ -2625,7 +2660,7 @@ struct METER_DESC *mp = &meter_desc[mnum];
       break;
   	case '7':
 			cp += 2;
-#ifdef ESP32
+#ifdef ESP32     
 			mp->uart_index = strtol(cp, &cp, 10);
 #endif // ESP32
 			break;
@@ -2844,7 +2879,11 @@ void SML_Init(void) {
             str[cnt] = 0;
             lp++;
 #ifdef USE_SML_TCP
+#ifdef USE_SML_TCP_IP_STR
+            strcpy(mmp->ip_addr, str);
+#else
             mmp->ip_addr.fromString(str);
+#endif
 #endif
           } else {
             srcpin  = strtol(lp, &lp, 10);
@@ -3091,18 +3130,7 @@ next_line:
       // serial input, init
       if (mp->srcpin == TCP_MODE_FLG) {
 #ifdef USE_SML_TCP
-        // tcp mode
-#ifdef TCP_CLIENT_SECURE
-        mp->client = new WiFiClientSecure;
-        //client(new BearSSL::WiFiClientSecure_light(1024,1024)) {
-        mp->client->setInsecure();
-#else
-        mp->client = new WiFiClient;
-#endif
-        int32_t err = mp->client->connect(mp->ip_addr, mp->params);
-        if (!err) {
-          AddLog(LOG_LEVEL_INFO, PSTR("SML: could not connect TCP to %s:%d"),mp->ip_addr.toString().c_str(), mp->params);
-        }
+        sml_tcp_init(mp);
 #endif
       } else {
         // serial mode
@@ -3178,14 +3206,14 @@ next_line:
           mp->meter_ss->flush();
         }
         if (mp->meter_ss->hardwareSerial()) {
-          Serial.begin(mp->params, (SerialConfig)smode);  // void HardwareSerial::begin(unsigned long baud, SerialConfig config, SerialMode mode, uint8_t tx_pin, bool invert)
+          Serial.begin(mp->params, (SerialConfig)smode);
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
 #endif  // ESP8266
 
 #ifdef ESP32
-        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin);  // void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert, unsigned long timeout_ms, uint8_t rxfifo_full_thrhd)
+        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin);
 #ifdef USE_ESP32_SW_SERIAL
 				mp->meter_ss->setRxBufferSize(mp->sibsiz);
 #endif
@@ -3307,9 +3335,9 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
     }
 
 #ifdef ESP8266
-    Serial.begin(baud, (SerialConfig)smode);  // void HardwareSerial::begin(unsigned long baud, SerialConfig config, SerialMode mode, uint8_t tx_pin, bool invert)
+    Serial.begin(baud, (SerialConfig)smode);
 #else
-    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin);  // void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert, unsigned long timeout_ms, uint8_t rxfifo_full_thrhd)
+    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin);
 #endif
   }
   return 1;
@@ -3406,8 +3434,10 @@ void SML_Counter_Poll_1s(void) {
 	}
 }
 
-#define CNT_PULSE_TIMEOUT 5000
 
+#ifndef CNT_PULSE_TIMEOUT
+#define CNT_PULSE_TIMEOUT 5000
+#endif
 
 // fast counter polling
 void SML_Counter_Poll(void) {
@@ -3586,23 +3616,85 @@ uint16_t sml_swap(uint16_t in) {
 void sml_tcp_send(uint32_t meter, uint8_t *sbuff, uint16_t slen) {
 MODBUS_TCP_HEADER tcph;
 
-tcph.T_ID = sml_swap(0x1234);
-tcph.P_ID = 0;
-tcph.SIZE = sml_swap(6);
-tcph.U_ID = *sbuff;
+  tcph.T_ID = sml_swap(0x1234);
+  tcph.P_ID = 0;
+  tcph.SIZE = sml_swap(6);
+  tcph.U_ID = *sbuff;
 
-sbuff++;
-for (uint8_t cnt = 0; cnt < slen - 3; cnt++) {
-  tcph.payload[cnt] = *sbuff++;
-}
+  sbuff++;
+  for (uint8_t cnt = 0; cnt < slen - 3; cnt++) {
+    tcph.payload[cnt] = *sbuff++;
+  }
 
 #ifdef USE_SML_TCP
- // AddLog(LOG_LEVEL_INFO, PSTR("slen >> %d "),slen);
-  if (meter_desc[meter].client->connected()) {
-    meter_desc[meter].client->write((uint8_t*)&tcph, 7 + slen - 3);
+  // AddLog(LOG_LEVEL_INFO, PSTR("slen >> %d "),slen);
+  if (meter_desc[meter].client) {
+    if (meter_desc[meter].client->connected()) {
+      meter_desc[meter].client->write((uint8_t*)&tcph, 7 + slen - 3);
+    }
   }
 #endif
 }
+
+#ifdef USE_SML_TCP
+int32_t sml_tcp_init(struct METER_DESC *mp) {  
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    if (!mp->client) {
+      // tcp mode
+#ifdef USE_SML_TCP_SECURE
+      mp->client = new WiFiClientSecure;
+      //client(new BearSSL::WiFiClientSecure_light(1024,1024)) {
+      mp->client->setInsecure();
+#else        
+      mp->client = new WiFiClient;
+#endif // USE_SML_TCP_SECURE
+    }
+    int32_t err = mp->client->connect(mp->ip_addr, mp->params);
+    char ipa[32];
+#ifdef USE_SML_TCP_IP_STR
+    strcpy(ipa, mp->ip_addr);
+#else
+    strcpy(ipa, mp->ip_addr.toString().c_str());
+#endif
+    if (!err) {
+      AddLog(LOG_LEVEL_INFO, PSTR("SML: could not connect TCP to %s:%d"),ipa, mp->params);
+    } else {
+      AddLog(LOG_LEVEL_INFO, PSTR("SML: connected TCP to %s:%d"),ipa, mp->params);
+    }
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("SML: could not connect TCP since wifi is down"));
+    mp->client = nullptr;
+    return -1;
+  }
+  return 0;
+}
+
+#ifndef TCP_TIMEOUT
+#define TCP_TIMEOUT 30
+#endif
+
+void sml_tcp_check(void) {
+  sml_globs.to_cnt++;
+  if (sml_globs.to_cnt > TCP_TIMEOUT) {
+    sml_globs.to_cnt = 0;
+    for (uint32_t meter = 0; meter < sml_globs.meters_used; meter++) {
+      struct METER_DESC *mp = &sml_globs.mp[meter];
+		  if (mp->srcpin == TCP_MODE_FLG) {
+			  if (!mp->client) {
+          sml_tcp_init(mp);
+        } else {
+          if (!mp->client->connected()) {
+            sml_tcp_init(mp);
+          }
+        }
+		  }
+	  }
+  }
+}
+
+
+#endif // USE_SML_TCP
+
 
 // send sequence every N Seconds
 void SML_Send_Seq(uint32_t meter, char *seq) {
@@ -3918,6 +4010,9 @@ bool Xsns53(uint32_t function) {
 					if (bitRead(Settings->rule_enabled, 0)) {
 						if (sml_globs.ready) {
 							SML_Counter_Poll_1s();
+#ifdef USE_SML_TCP
+              sml_tcp_check();
+#endif
 						}
 					}
 					break;
