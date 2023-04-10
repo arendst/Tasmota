@@ -186,7 +186,7 @@ be_local_closure(Matter_UI_web_sensor,   /* name */
     /* K12  */  be_nested_str_weak(content_send),
     /* K13  */  be_nested_str_weak(format),
     /* K14  */  be_nested_str_weak(_X3Cdiv_X20style_X3D_X27text_X2Dalign_X3Aright_X3Bfont_X2Dsize_X3A11px_X3Bcolor_X3A_X23aaa_X3B_X27_X3E_X25s_X3C_X2Fdiv_X3E),
-    /* K15  */  be_nested_str_weak(No_X20active_X20associaition),
+    /* K15  */  be_nested_str_weak(No_X20active_X20association),
     /* K16  */  be_const_int(1),
     /* K17  */  be_nested_str_weak(_X20active_X20association),
     /* K18  */  be_nested_str_weak(s),
@@ -907,7 +907,7 @@ be_local_closure(Matter_UI_show_commissioning_info,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[18]) {     /* constants */
+    ( &(const bvalue[20]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(device),
@@ -917,19 +917,21 @@ be_local_closure(Matter_UI_show_commissioning_info,   /* name */
     /* K6   */  be_const_int(0),
     /* K7   */  be_nested_str_weak(content_send),
     /* K8   */  be_nested_str_weak(format),
-    /* K9   */  be_nested_str_weak(_X3Cfieldset_X3E_X3Clegend_X3E_X3Cb_X3E_X26nbsp_X3B_X5B_X20Commissioning_X20open_X20for_X20_X25i_X20min_X20_X5D_X26nbsp_X3B_X3C_X2Fb_X3E_X3C_X2Flegend_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
+    /* K9   */  be_nested_str_weak(_X3Cfieldset_X3E_X3Clegend_X3E_X3Cb_X3E_X26nbsp_X3BCommissioning_X20open_X20for_X20_X25i_X20min_X26nbsp_X3B_X3C_X2Fb_X3E_X3C_X2Flegend_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
     /* K10  */  be_nested_str_weak(compute_manual_pairing_code),
     /* K11  */  be_nested_str_weak(_X3Cp_X3EManual_X20pairing_X20code_X3A_X3Cbr_X3E_X3Cb_X3E_X25s_X2D_X25s_X2D_X25s_X3C_X2Fb_X3E_X3C_X2Fp_X3E_X3Chr_X3E),
     /* K12  */  be_const_int(3),
     /* K13  */  be_const_int(2147483647),
-    /* K14  */  be_nested_str_weak(compute_qrcode_content),
-    /* K15  */  be_nested_str_weak(show_qrcode),
-    /* K16  */  be_nested_str_weak(_X3Cp_X3E_X20_X25s_X3C_X2Fp_X3E),
-    /* K17  */  be_nested_str_weak(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
+    /* K14  */  be_nested_str_weak(_X3Cdiv_X3E_X3Ccenter_X3E),
+    /* K15  */  be_nested_str_weak(compute_qrcode_content),
+    /* K16  */  be_nested_str_weak(show_qrcode),
+    /* K17  */  be_nested_str_weak(_X3Cp_X3E_X20_X25s_X3C_X2Fp_X3E),
+    /* K18  */  be_nested_str_weak(_X3C_X2Fdiv_X3E),
+    /* K19  */  be_nested_str_weak(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
     }),
     be_str_weak(show_commissioning_info),
     &be_const_str_solidified,
-    ( &(const binstruction[56]) {  /* code */
+    ( &(const binstruction[66]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x880C0102,  //  0002  GETMBR	R3	R0	K2
@@ -970,22 +972,32 @@ be_local_closure(Matter_UI_show_commissioning_info,   /* name */
       0x94340A0D,  //  0025  GETIDX	R13	R5	R13
       0x7C200A00,  //  0026  CALL	R8	5
       0x7C180400,  //  0027  CALL	R6	2
-      0x88180102,  //  0028  GETMBR	R6	R0	K2
-      0x8C180D0E,  //  0029  GETMET	R6	R6	K14
-      0x7C180200,  //  002A  CALL	R6	1
-      0x8C1C010F,  //  002B  GETMET	R7	R0	K15
-      0x5C240C00,  //  002C  MOVE	R9	R6
-      0x7C1C0400,  //  002D  CALL	R7	2
-      0x8C1C0307,  //  002E  GETMET	R7	R1	K7
-      0x8C240508,  //  002F  GETMET	R9	R2	K8
-      0x582C0010,  //  0030  LDCONST	R11	K16
-      0x5C300C00,  //  0031  MOVE	R12	R6
-      0x7C240600,  //  0032  CALL	R9	3
-      0x7C1C0400,  //  0033  CALL	R7	2
-      0x8C1C0307,  //  0034  GETMET	R7	R1	K7
-      0x58240011,  //  0035  LDCONST	R9	K17
-      0x7C1C0400,  //  0036  CALL	R7	2
-      0x80000000,  //  0037  RET	0
+      0x8C180307,  //  0028  GETMET	R6	R1	K7
+      0x8C200508,  //  0029  GETMET	R8	R2	K8
+      0x5828000E,  //  002A  LDCONST	R10	K14
+      0x7C200400,  //  002B  CALL	R8	2
+      0x7C180400,  //  002C  CALL	R6	2
+      0x88180102,  //  002D  GETMBR	R6	R0	K2
+      0x8C180D0F,  //  002E  GETMET	R6	R6	K15
+      0x7C180200,  //  002F  CALL	R6	1
+      0x8C1C0110,  //  0030  GETMET	R7	R0	K16
+      0x5C240C00,  //  0031  MOVE	R9	R6
+      0x7C1C0400,  //  0032  CALL	R7	2
+      0x8C1C0307,  //  0033  GETMET	R7	R1	K7
+      0x8C240508,  //  0034  GETMET	R9	R2	K8
+      0x582C0011,  //  0035  LDCONST	R11	K17
+      0x5C300C00,  //  0036  MOVE	R12	R6
+      0x7C240600,  //  0037  CALL	R9	3
+      0x7C1C0400,  //  0038  CALL	R7	2
+      0x8C1C0307,  //  0039  GETMET	R7	R1	K7
+      0x8C240508,  //  003A  GETMET	R9	R2	K8
+      0x582C0012,  //  003B  LDCONST	R11	K18
+      0x7C240400,  //  003C  CALL	R9	2
+      0x7C1C0400,  //  003D  CALL	R7	2
+      0x8C1C0307,  //  003E  GETMET	R7	R1	K7
+      0x58240013,  //  003F  LDCONST	R9	K19
+      0x7C1C0400,  //  0040  CALL	R7	2
+      0x80000000,  //  0041  RET	0
     })
   )
 );
