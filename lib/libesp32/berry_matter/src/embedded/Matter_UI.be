@@ -188,7 +188,9 @@ class Matter_UI
         first = false
 
         var label = f.fabric_label
-        if !label   label = "&lt;No label&gt;"    end
+        if !label   label = "<No label>"    end
+        label = webserver.html_escape(label)      # protect against HTML injection
+        
         webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s&nbsp;</b></legend><p></p>", f.get_fabric_index(), label))
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
