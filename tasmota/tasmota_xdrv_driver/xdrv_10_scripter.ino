@@ -2401,6 +2401,19 @@ TS_FLOAT fvar;
   return lp;
 }
 
+
+#ifdef SCRIPT_SAVE_RAM
+#undef strncmp_XP
+#define strncmp_XP strncmp_P
+#undef XPSTR
+#define XPSTR(A) PSTR(A)
+#else
+#undef strncmp_XP
+#define strncmp_XP strncmp
+#undef XPSTR
+#define XPSTR(A) A
+#endif
+
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
 char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *sp, struct GVARS *gv);
@@ -2571,10 +2584,10 @@ nexit:
         return lp + len;
       } else {
         // string
-        if (!strncmp(str_value, "ON", 2)) {
+        if (!strncmp_XP(str_value, XPSTR("ON"), 2)) {
           if (fp) *fp = 1;
           goto nexit;
-        } else if (!strncmp(str_value, "OFF", 3)) {
+        } else if (!strncmp_XP(str_value, XPSTR("OFF"), 3)) {
           if (fp) *fp = 0;
           goto nexit;
         } else {
@@ -2657,10 +2670,10 @@ nexit:
           }
           if (str_value && *str_value) {
             if ((*jpo)[vn].isStr()) {
-              if (!strncmp(str_value, "ON", 2)) {
+              if (!strncmp_XP(str_value, XPSTR("ON"), 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
-              } else if (!strncmp(str_value, "OFF", 3)) {
+              } else if (!strncmp_XP(str_value, XPSTR("OFF"), 3)) {
                 if (fp) *fp = 0;
                 goto nexit;
               } else {
@@ -2673,7 +2686,7 @@ nexit:
 
             } else {
               if (fp) {
-                if (!strncmp(vn.c_str(), "Epoch", 5)) {
+                if (!strncmp_XP(vn.c_str(), XPSTR("Epoch"), 5)) {
                   *fp = atoi(str_value) - (uint32_t)glob_script_mem.epoch_offset;
                 } else {
                   *fp = CharToFloat((char*)str_value);
@@ -2701,25 +2714,25 @@ chknext:
 
       case 'a':
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "acos(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("acos("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = acosf(fvar);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "abs(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("abs("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = fabs(fvar);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "asc(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("asc("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, gv);
           fvar = str[0];
           goto nfuncexit;
         }
-        if (!strncmp(lp, "adc(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("adc("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           TS_FLOAT pin = 1;
@@ -2752,7 +2765,7 @@ chknext:
           goto exit;
         }
 
-        if (!strncmp(lp, "acp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("acp("), 4)) {
           lp += 4;
           SCRIPT_SKIP_SPACES
           uint16_t alend;
@@ -2772,7 +2785,7 @@ chknext:
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "af(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("af("), 3)) {
           // array to float
           uint16_t alend;
           TS_FLOAT *fpd;
@@ -2800,7 +2813,7 @@ chknext:
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ap(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ap("), 3)) {
           //TasmotaGlobal.restart_flag = 216;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           switch ((uint8_t)fvar) {
@@ -2834,7 +2847,7 @@ chknext:
         break;
 
       case 'b':
-        if (!strncmp(vname, "boot", 4)) {
+        if (!strncmp_XP(vname, XPSTR("boot"), 4)) {
           if (TasmotaGlobal.rules_flag.system_boot) {
             TasmotaGlobal.rules_flag.system_boot = 0;
             fvar = 1;
@@ -2842,7 +2855,7 @@ chknext:
           goto exit;
         }
 #ifdef USE_BUTTON_EVENT
-        if (!strncmp(lp, "bt[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("bt["), 3)) {
           // tasmota button state
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint32_t index = fvar;
@@ -2852,7 +2865,7 @@ chknext:
           goto nfuncexit;
         }
 #endif //USE_BUTTON_EVENT
-        if (!strncmp(lp, "bcd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("bcd("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint32_t sel = fvar;
           while (*lp==' ') lp++;
@@ -2862,7 +2875,7 @@ chknext:
         }
 
 #ifdef USE_FLASH_BDIR
-        if (!strncmp(lp, "bdir(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("bdir("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           char str[SCRIPT_MAXSSIZE];
           if (fvar > 1) {
@@ -2874,7 +2887,7 @@ chknext:
 #endif // USE_FLASH_BDIR
         break;
       case 'c':
-        if (!strncmp(lp, "chg[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("chg["), 4)) {
           // var changed
           struct T_INDEX ind;
           uint8_t vtype;
@@ -2889,12 +2902,12 @@ chknext:
           goto nfuncexit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "core", 4)) {
+        if (!strncmp_XP(vname, XPSTR("core"), 4)) {
           fvar = xPortGetCoreID();
           goto exit;
         }
 #ifdef USE_M5STACK_CORE2
-        if (!strncmp(lp, "c2ps(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("c2ps("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           TS_FLOAT fvar1;
@@ -2905,7 +2918,7 @@ chknext:
 #endif // USE_M5STACK_CORE2
 
 #ifdef USE_SCRIPT_TASK
-        if (!strncmp(lp, "ct(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ct("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           TS_FLOAT fvar1;
@@ -2930,14 +2943,19 @@ chknext:
 #endif //ESP32
 
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "cos(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cos("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = cosf(fvar);
           goto nfuncexit;
         }
+        if (!strncmp_XP(lp, XPSTR("ceil("), 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          fvar = ceilf(fvar);
+          goto nfuncexit;
+        }
 #endif
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "cts(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cts("), 4)) {
           char tsin[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, tsin, 0);
           SCRIPT_SKIP_SPACES
@@ -2954,7 +2972,7 @@ chknext:
           goto strexit;
         }
 #endif // USE_FEXTRACT
-        if (!strncmp(lp, "cbs", 3)) {
+        if (!strncmp_XP(lp, XPSTR("cbs"), 3)) {
           fvar = glob_script_mem.cmdbuffer_size;
           tind->index = SCRIPT_CBSIZE;
           goto exit_settable;
@@ -2962,7 +2980,7 @@ chknext:
 #ifdef USE_W8960
 extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
-        if (!strncmp(lp, "codec(", 6)) {
+        if (!strncmp_XP(lp, XPSTR("codec("), 6)) {
           TS_FLOAT sel;
           lp = GetNumericArgument(lp + 6, OPER_EQU, &sel, gv);
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
@@ -2973,7 +2991,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
 #ifdef USE_UFILESYS
-        if (!strncmp(lp, "cpf(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cpf("), 4)) {
           // copy file with offsets sfd, sfstart, sfstop, df
           TS_FLOAT sfd, sf_from, sf_to, dfd;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &sfd, 0);
@@ -3006,15 +3024,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
         break;
       case 'd':
-        if (!strncmp(vname, "day", 3)) {
+        if (!strncmp_XP(vname, XPSTR("day"), 3)) {
           fvar = RtcTime.day_of_month;
           goto exit;
         }
-        if (!strncmp(vname, "dvnm", 4)) {
+        if (!strncmp_XP(vname, XPSTR("dvnm"), 4)) {
           if (sp) strlcpy(sp, SettingsText(SET_DEVICENAME), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(lp, "dp(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("dp("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           glob_script_mem.script_lzero = fvar;
@@ -3028,7 +3046,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "diff[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("diff["), 5)) {
           struct T_INDEX ind;
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, gv);
@@ -3043,22 +3061,22 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
         break;
       case 'e':
-        if (!strncmp(vname, "epoch", 5)) {
+        if (!strncmp_XP(vname, XPSTR("epoch"), 5)) {
           fvar = UtcTime() - (uint32_t)glob_script_mem.epoch_offset;
           goto exit;
         }
-        if (!strncmp(vname, "epoffs", 6)) {
+        if (!strncmp_XP(vname, XPSTR("epoffs"), 6)) {
           fvar = (uint32_t)glob_script_mem.epoch_offset;
           tind->index = SCRIPT_EPOFFS;
           goto exit_settable;
         }
-        if (!strncmp(vname, "eres", 4)) {
+        if (!strncmp_XP(vname, XPSTR("eres"), 4)) {
           fvar = glob_script_mem.event_handeled;
           tind->index = SCRIPT_EVENT_HANDLED;
           goto exit_settable;
         }
 #ifdef USE_ENERGY_SENSOR
-        if (!strncmp(lp, "enrg[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("enrg["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           switch ((uint32_t)fvar) {
@@ -3113,7 +3131,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
       case 'f':
 //#define DEBUG_FS
 #ifdef USE_SCRIPT_FATFS
-        if (!strncmp(lp, "fo(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fo("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           while (*lp == ' ') lp++;
@@ -3174,7 +3192,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fc("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar >= 0) {
             uint8_t ind = fvar;
@@ -3188,7 +3206,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ff(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ff("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3196,7 +3214,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fw(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fw("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = ForceStringVar(lp + 3, str);
           while (*lp == ' ') lp++;
@@ -3210,7 +3228,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fwb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwb("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t buf[2];
           buf[0] = fvar;
@@ -3226,7 +3244,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "fr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fr("), 3)) {
           struct T_INDEX ind;
           uint8_t vtype;
           uint8_t sindex = 0;
@@ -3299,7 +3317,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "frb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frb("), 4)) {
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3313,7 +3331,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fa(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fa("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3324,7 +3342,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fs(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fs("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           SCRIPT_SKIP_SPACES
@@ -3338,7 +3356,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fz(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fz("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t ind = fvar;
@@ -3350,14 +3368,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fd(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fd("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           ufsp->remove(str);
           goto nfuncexit;
         }
 #ifdef USE_UFILESYS
-        if (!strncmp(lp, "frw(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frw("), 4)) {
           // read file from web
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
@@ -3369,7 +3387,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif
 #if defined(ESP32) && defined(USE_WEBCAM)
-        if (!strncmp(lp, "fwp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwp("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           TS_FLOAT fvar1;
@@ -3395,7 +3413,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //ESP32 && USE_WEBCAM
 #ifdef USE_SCRIPT_FATFS_EXT
-        if (!strncmp(lp, "fe(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fe("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
@@ -3416,13 +3434,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fmd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fmd("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->mkdir(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fmt(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fmt("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (!fvar) {
             LittleFS.format();
@@ -3431,13 +3449,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "frd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frd("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->rmdir(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fx(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fx("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           if (ufsp->exists(str)) fvar = 1;
@@ -3445,12 +3463,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "fsi(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fsi("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = UfsInfo(fvar, 0);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "frn(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frn("), 4)) {
           // rename a file
           char fn_from[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, fn_from, 0);
@@ -3465,7 +3483,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "fxt", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fxt"), 3)) {
           lp += 3;
           uint8_t oflg = 0;
           if (*lp == 'o') {
@@ -3541,7 +3559,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif // USE_FEXTRACT
-        if (!strncmp(lp, "fwa(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwa("), 4)) {
           uint16_t alen;
           TS_FLOAT *fa;
           lp = get_array_by_name(lp + 4, &fa, &alen, 0);
@@ -3582,7 +3600,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fra(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fra("), 4)) {
           uint16_t alen;
           TS_FLOAT *fa;
           lp = get_array_by_name(lp + 4, &fa, &alen, 0);
@@ -3628,7 +3646,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 
 #endif // USE_SCRIPT_FATFS_EXT
-        if (!strncmp(lp, "fl1(", 4) || !strncmp(lp, "fl2(", 4) )  {
+        if (!strncmp_XP(lp, XPSTR("fl1("), 4) || !strncmp_XP(lp, XPSTR("fl2("), 4) )  {
           uint8_t lknum = *(lp + 2) & 3;
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
@@ -3637,12 +3655,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fsm", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fsm"), 3)) {
           fvar = (uint32_t)ufsp;
           goto exit;
         }
 #endif //USE_SCRIPT_FATFS
-        if (!strncmp(lp, "freq", 4)) {
+        if (!strncmp_XP(lp, XPSTR("freq"), 4)) {
 #ifdef ESP32
           fvar = getCpuFrequencyMhz();
 #else
@@ -3650,31 +3668,38 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
           goto exit;
         }
-        if (!strncmp(lp, "frnm", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frnm"), 4)) {
           if (sp) strlcpy(sp, SettingsText(SET_FRIENDLYNAME1), glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp_XP(lp, XPSTR("floor("), 6)) {
+          lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
+          fvar = floorf(fvar);
+          goto nfuncexit;
+        }
+#endif
         break;
 
       case 'g':
-        if (!strncmp(vname, "gtmp", 4)) {
+        if (!strncmp_XP(vname, XPSTR("gtmp"), 4)) {
           fvar = TasmotaGlobal.temperature_celsius;
           goto exit;
         }
-        if (!strncmp(vname, "ghum", 4)) {
+        if (!strncmp_XP(vname, XPSTR("ghum"), 4)) {
           fvar = TasmotaGlobal.humidity;
           goto exit;
         }
-        if (!strncmp(vname, "gprs", 4)) {
+        if (!strncmp_XP(vname, XPSTR("gprs"), 4)) {
           fvar = TasmotaGlobal.pressure_hpa;
           goto exit;
         }
-        if (!strncmp(vname, "gtopic", 6)) {
+        if (!strncmp_XP(vname, XPSTR("gtopic"), 6)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTT_GRP_TOPIC), glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_WEBSEND_RESPONSE
-        if (!strncmp(lp, "gwr(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("gwr("), 4)) {
           char delim[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, delim, 0);
           SCRIPT_SKIP_SPACES
@@ -3743,7 +3768,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
 #ifdef SCRIPT_GET_HTTPS_JP
-        if (!strncmp(lp, "gjp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("gjp("), 4)) {
           char host[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, host, 0);
           SCRIPT_SKIP_SPACES
@@ -3755,7 +3780,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif //SCRIPT_GET_HTTPS_JP
 
 #ifdef TESLA_POWERWALL
-        if (!strncmp(lp, "gpwl(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("gpwl("), 5)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
           fvar = call2pwl(path);
@@ -3763,9 +3788,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif
 
-        if (!strncmp(lp, "gi(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("gi("), 3)) {
           lp += 3;
-          if (!strncmp(lp, "epoch", 5)) {
+          if (!strncmp_XP(lp, XPSTR("epoch"), 5)) {
             lp += 5;
             *(uint32_t*)&fvar = UtcTime();
           } else if (*lp == '0' && *(lp + 1) == 'x') {
@@ -3778,15 +3803,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
         break;
       case 'h':
-        if (!strncmp(vname, "hours", 5)) {
+        if (!strncmp_XP(vname, XPSTR("hours"), 5)) {
           fvar = RtcTime.hour;
           goto exit;
         }
-        if (!strncmp(vname, "heap", 4)) {
+        if (!strncmp_XP(vname, XPSTR("heap"), 4)) {
           fvar = ESP_getFreeHeap();
           goto exit;
         }
-        if (!strncmp(lp, "hni(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("hni("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t iob = *(uint32_t*)&fvar;
           lp++;
@@ -3796,7 +3821,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hn(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hn("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar < 0 || fvar > 255) fvar = 0;
           lp++;
@@ -3806,7 +3831,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hxi(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("hxi("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           lp++;
           len = 0;
@@ -3815,7 +3840,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hx(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hx("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           lp++;
           len = 0;
@@ -3824,13 +3849,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hd(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hd("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = strtol(str, NULL, 16);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "hf(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hf("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
@@ -3859,7 +3884,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "http(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("http("), 5)) {
           char host[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 5, OPER_EQU, host, 0);
           SCRIPT_SKIP_SPACES
@@ -3870,7 +3895,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #ifdef USE_LIGHT
-        if (!strncmp(lp, "hsvrgb(", 7)) {
+        if (!strncmp_XP(lp, XPSTR("hsvrgb("), 7)) {
           lp = GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
           if (fvar < 0 || fvar > 360) fvar = 0;
           SCRIPT_SKIP_SPACES
@@ -3890,7 +3915,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif //USE_LIGHT
 
 #ifdef USE_HOMEKIT
-        if (!strncmp(lp, "hki(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("hki("), 4)) {
           if (!TasmotaGlobal.global_state.wifi_down) {
             // erase nvs
             lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
@@ -3903,7 +3928,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "hstr(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("hstr("), 5)) {
           char hstr[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 5, OPER_EQU, hstr, 0);
           uint16_t cnt;
@@ -3921,7 +3946,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'i':
-        if (!strncmp(lp, "ins(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ins("), 4)) {
           char s1[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, s1, 0);
           SCRIPT_SKIP_SPACES
@@ -3936,46 +3961,46 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "int(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("int("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = floor(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "is(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("is("), 3)) {
           lp = isargs(lp + 3, 0);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is1(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is1("), 4)) {
           lp = isargs(lp + 4, 1);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is2(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is2("), 4)) {
           lp = isargs(lp + 4, 2);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("is["), 3)) {
           lp = isget(lp + 3, sp, 0, gv);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "is1[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is1["), 4)) {
           lp = isget(lp + 4, sp, 1, gv);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "is2[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is2["), 4)) {
           lp = isget(lp + 4, sp, 2, gv);
           len = 0;
           goto strexit;
         }
 #ifdef USE_SCRIPT_I2C
-        if (!strncmp(lp, "ia", 2)) {
+        if (!strncmp_XP(lp, XPSTR("ia"), 2)) {
           uint8_t bus = 0;
           lp += 2;
           if (*lp == '2') {
@@ -3986,7 +4011,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = script_i2c(0, fvar, bus);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "iw", 2)) {
+        if (!strncmp_XP(lp, XPSTR("iw"), 2)) {
           uint8_t bytes = 1;
           lp += 2;
           if (*lp != '(') {
@@ -4003,7 +4028,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = script_i2c(9 + bytes, fvar, fvar2);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ir", 2)) {
+        if (!strncmp_XP(lp, XPSTR("ir"), 2)) {
           uint8_t bytes = 1;
           lp += 2;
           if (*lp != '(') {
@@ -4020,7 +4045,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
 #ifdef ESP32
 #ifdef USE_I2S_AUDIO
-        if (!strncmp(lp, "i2sw(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("i2sw("), 5)) {
           TS_FLOAT port;
           lp = GetNumericArgument(lp + 5, OPER_EQU, &port, gv);
           uint16_t alen = 0;
@@ -4051,7 +4076,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #ifdef JPEG_PICTS
 #ifdef STREAM_JPEG_PICTS
       case 'j':
-        if (!strncmp(lp, "jpg(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("jpg("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           uint8_t selector = fvar;
           switch (selector) {
@@ -4079,7 +4104,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
 #ifdef USE_KNX
       case 'k':
-        if (!strncmp(lp, "knx(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("knx("), 4)) {
           TS_FLOAT type;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &type, gv);
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
@@ -4091,17 +4116,17 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
       case 'l':
-        if (!strncmp(lp, "lip", 3)) {
+        if (!strncmp_XP(lp, XPSTR("lip"), 3)) {
           if (sp) strlcpy(sp, (const char*)WiFi.localIP().toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_SCRIPT_GLOBVARS
-        if (!strncmp(vname, "luip", 4)) {
+        if (!strncmp_XP(vname, XPSTR("luip"), 4)) {
           if (sp) strlcpy(sp, glob_script_mem.last_udp_ip.toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #endif //USE_SCRIPT_GLOBVARS
-        if (!strncmp(vname, "loglvl", 6)) {
+        if (!strncmp_XP(vname, XPSTR("loglvl"), 6)) {
           fvar = glob_script_mem.script_loglevel;
           tind->index = SCRIPT_LOGLEVEL;
   exit_settable:
@@ -4112,7 +4137,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           return lp + len;
         }
 #ifdef USE_LVGL
-        if (!strncmp(lp, "lvgl(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("lvgl("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           fvar = lvgl_test(&lp, fvar);
@@ -4121,7 +4146,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif // USE_LVGL
         break;
       case 'm':
-        if (!strncmp(lp, "med(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("med("), 4)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
@@ -4132,47 +4157,47 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "mpt(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("mpt("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = MeasurePulseTime(fvar);
           goto nfuncexit;
         }
 #endif //USE_ANGLE_FUNC
-        if (!strncmp(vname, "micros", 6)) {
+        if (!strncmp_XP(vname, XPSTR("micros"), 6)) {
           fvar = micros();
           goto exit;
         }
-        if (!strncmp(vname, "millis", 6)) {
+        if (!strncmp_XP(vname, XPSTR("millis"), 6)) {
           fvar = millis();
           goto exit;
         }
-        if (!strncmp(vname, "mins", 4)) {
+        if (!strncmp_XP(vname, XPSTR("mins"), 4)) {
           fvar = RtcTime.minute;
           goto exit;
         }
-        if (!strncmp(vname, "month", 5)) {
+        if (!strncmp_XP(vname, XPSTR("month"), 5)) {
           fvar = RtcTime.month;
           goto exit;
         }
-        if (!strncmp(vname, "mqttc", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqttc"), 5)) {
           if (TasmotaGlobal.rules_flag.mqtt_connected) {
             TasmotaGlobal.rules_flag.mqtt_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "mqttd", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqttd"), 5)) {
           if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
             TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "mqtts", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqtts"), 5)) {
           fvar = !TasmotaGlobal.global_state.mqtt_down;
           goto exit;
         }
-        if (!strncmp(lp, "mp(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("mp("), 3)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
@@ -4202,7 +4227,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #ifdef USE_MORITZ
-        if (!strncmp(lp, "mo(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("mo("), 3)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
@@ -4218,7 +4243,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_MORITZ
 #ifdef ESP32_FAST_MUX
-        if (!strncmp(lp, "mux(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("mux("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar == 0) {
             // start
@@ -4262,14 +4287,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'n':
-        if (!strncmp(vname, "npwr", 4)) {
+        if (!strncmp_XP(vname, XPSTR("npwr"), 4)) {
           fvar = TasmotaGlobal.devices_present;
           goto exit;
         }
         break;
 
       case 'p':
-        if (!strncmp(lp, "pin[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pin["), 4)) {
           // raw pin level
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = digitalRead((uint8_t)fvar);
@@ -4277,7 +4302,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(lp, "pn[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pn["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           fvar = Pin(fvar);
           // skip ] bracket
@@ -4285,7 +4310,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
-        if (!strncmp(lp, "pl(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pl("), 3)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
           Play_mp3(path);
@@ -4294,7 +4319,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #endif // USE_I2S_AUDIO
-        if (!strncmp(lp, "pd[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pd["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t gpiopin = fvar;
           if ((gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
@@ -4307,24 +4332,24 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "pheap", 5)) {
+        if (!strncmp_XP(vname, XPSTR("pheap"), 5)) {
           fvar = ESP.getFreePsram();
           goto exit;
         }
 #endif //ESP32
-        if (!strncmp(vname, "prefix1", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix1"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX1), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "prefix2", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix2"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX2), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "prefix3", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix3"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX3), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(lp, "pow(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pow("), 4)) {
           // arg1
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
@@ -4335,7 +4360,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = FastPrecisePowf(fvar1, fvar2);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "pwr[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pwr["), 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index <= TasmotaGlobal.devices_present) {
@@ -4346,7 +4371,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len += 1;
           goto exit;
         }
-        if (!strncmp(lp, "pc[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pc["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index < 1 || index > MAX_COUNTERS) index = 1;
@@ -4358,11 +4383,11 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'r':
-        if (!strncmp(vname, "ram", 3)) {
+        if (!strncmp_XP(vname, XPSTR("ram"), 3)) {
           fvar = glob_script_mem.script_mem_size + (glob_script_mem.script_size) + (PMEM_SIZE);
           goto exit;
         }
-        if (!strncmp(lp, "rnd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rnd("), 4)) {
           // tasmota switch state
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<0) {
@@ -4375,7 +4400,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(lp, "rma(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rma("), 4)) {
           uint16_t alen;
           TS_FLOAT *array;
           lp = get_array_by_name(lp + 4, &array, &alen, 0);
@@ -4407,7 +4432,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 /*
 #if defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC))
-        if (!strncmp(lp, "rec(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rec("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           //SCRIPT_SKIP_SPACES
@@ -4419,7 +4444,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 */
 
-        if (!strncmp(lp, "rr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("rr("), 3)) {
           lp += 4;
           len = 0;
           const char *cp = GetResetReason().c_str();
@@ -4432,22 +4457,34 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "rrsn", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rrsn"), 4)) {
           fvar = ESP_ResetInfoReason();
           goto exit;
         }
-        if (!strncmp(lp, "rax", 3)) {
+        if (!strncmp_XP(lp, XPSTR("rax"), 3)) {
           TasmotaGlobal.no_autoexec = 0;
           goto exit;
         }
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp_XP(lp, XPSTR("rad("), 4)) {
+          GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          fvar = fvar * 3.1415916535f / 180.0f;
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("round("), 6)) {
+          lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
+          fvar = floorf(fvar);
+          goto nfuncexit;
+        }
+#endif
         break;
 
       case 's':
-        if (!strncmp(vname, "secs", 4)) {
+        if (!strncmp_XP(vname, XPSTR("secs"), 4)) {
           fvar = RtcTime.second;
           goto exit;
         }
-        if (!strncmp(lp, "sw[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sw["), 3)) {
           // tasmota switch state
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           fvar = SwitchLastState((uint32_t)fvar);
@@ -4455,27 +4492,27 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(vname, "stack", 5)) {
+        if (!strncmp_XP(vname, XPSTR("stack"), 5)) {
           fvar = GetStack();
           goto exit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "stkwm", 5)) {
+        if (!strncmp_XP(vname, XPSTR("stkwm"), 5)) {
           fvar = uxTaskGetStackHighWaterMark(NULL);
           goto exit;
         }
 #endif // ESP32
-        if (!strncmp(vname, "slen", 4)) {
+        if (!strncmp_XP(vname, XPSTR("slen"), 4)) {
           fvar = strlen(glob_script_mem.script_ram);
           goto exit;
         }
-        if (!strncmp(lp, "sl(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sl("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = strlen(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sb(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sb("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
@@ -4495,7 +4532,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "st(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("st("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
@@ -4556,7 +4593,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "s(", 2)) {
+        if (!strncmp_XP(lp, XPSTR("s("), 2)) {
           lp += 2;
           uint8_t dprec = glob_script_mem.script_dprec;
           uint8_t lzero = glob_script_mem.script_lzero;
@@ -4582,7 +4619,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto strexit;
         }
 #if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
-        if (!strncmp(lp, "say(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("say("), 4)) {
           char text[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, text, 0);
           Say(text);
@@ -4593,7 +4630,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif // USE_I2S_AUDIO
 
 #ifdef ESP32
-        if (!strncmp(lp, "sf(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sf("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar < 80) fvar = 80;
           if (fvar > 240) fvar = 240;
@@ -4603,7 +4640,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //ESP32
 #ifdef USE_TTGO_WATCH
-        if (!strncmp(lp, "slp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("slp("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           TTGO_Sleep(fvar);
@@ -4611,18 +4648,18 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_TTGO_WATCH
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-        if (!strncmp(vname, "sunrise", 7)) {
+        if (!strncmp_XP(vname, XPSTR("sunrise"), 7)) {
           fvar = SunMinutes(0);
           goto exit;
         }
-        if (!strncmp(vname, "sunset", 6)) {
+        if (!strncmp_XP(vname, XPSTR("sunset"), 6)) {
           fvar = SunMinutes(1);
           goto exit;
         }
 #endif //USE_TIMERS
 
 #ifdef USE_SHUTTER
-        if (!strncmp(lp, "sht[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sht["), 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index <= TasmotaGlobal.shutters_present) {
@@ -4635,12 +4672,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_SHUTTER
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "sin(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sin("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = sinf(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sqrt(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("sqrt("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = sqrtf(fvar);
           goto nfuncexit;
@@ -4652,13 +4689,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 uint32_t sml_status(uint32_t meter);
 extern char *SML_GetSVal(uint32_t index);
 
-        if (!strncmp(lp, "sml[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sml["), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           fvar = SML_GetVal(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "smls[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smls["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           lp++;
@@ -4676,7 +4713,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "sml(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sml("), 4)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
@@ -4722,18 +4759,18 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(vname, "smlj", 4)) {
+        if (!strncmp_XP(vname, XPSTR("smlj"), 4)) {
           fvar = sml_options;
           tind->index = SML_JSON_ENABLE;
           goto exit_settable;
         }
-        if (!strncmp(lp, "smld(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smld("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           if (fvar < 1) fvar = 1;
           SML_Decode(fvar - 1);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "smlv[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smlv["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = sml_getv(fvar);
           goto nfuncexit;
@@ -4741,7 +4778,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif //USE_SML_M
 
 #ifdef USE_SCRIPT_SERIAL
-        if (!strncmp(lp, "so(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("so("), 3)) {
           TS_FLOAT rxpin, txpin, br;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &rxpin, gv);
           SCRIPT_SKIP_SPACES
@@ -4796,7 +4833,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sw(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sw("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = -1;
@@ -4806,7 +4843,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "swb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("swb("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           if (glob_script_mem.sp) {
             glob_script_mem.sp->write((uint8_t)fvar);
@@ -4814,14 +4851,14 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sa(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sa("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "srb(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("srb("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
@@ -4831,7 +4868,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sp(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sp("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
@@ -4841,7 +4878,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sr("), 3)) {
           uint16_t size = glob_script_mem.max_ssize;
           char str[SCRIPT_MAXSSIZE];
           memset(str, 0, size);
@@ -4874,7 +4911,7 @@ extern char *SML_GetSVal(uint32_t index);
           if (sp) strlcpy(sp, str, size);
           goto strexit;;
         }
-        if (!strncmp(lp, "sc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sc("), 3)) {
           fvar = -1;
           if (Script_Close_Serial()) {
             fvar = 0;
@@ -4884,7 +4921,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
         // serial write array
-        if (!strncmp(lp, "swa(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("swa("), 4)) {
           fvar = -1;
           uint8_t modbus_buffer[64];
           uint16_t alen;
@@ -4973,7 +5010,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto nfuncexit;
         }
         // serial read array
-        if (!strncmp(lp, "sra(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sra("), 4)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             uint16_t alen;
@@ -5030,7 +5067,7 @@ extern char *SML_GetSVal(uint32_t index);
         }
 #ifdef USE_SML_M
         // serial modbus write float, 010404ffffffffxxxx
-        if (!strncmp(lp, "smw(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("smw("), 4)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             TS_FLOAT addr;
@@ -5139,7 +5176,7 @@ extern char *SML_GetSVal(uint32_t index);
 
 
 #ifdef USE_SCRIPT_SPI
-        if (!strncmp(lp, "spi(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("spi("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           uint8_t sel = fvar;
           uint8_t index;
@@ -5239,7 +5276,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
 #endif // USE_SCRIPT_SPI
-        if (!strncmp(lp, "s2hms(", 6)) {
+        if (!strncmp_XP(lp, XPSTR("s2hms("), 6)) {
           lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, 0);
           lp++;
           char tbuff[16];
@@ -5253,7 +5290,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto strexit;
         }
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "s2t(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("s2t("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           char str[SCRIPT_MAXSSIZE];
           s2tstamp(str, SCRIPT_MAXSSIZE, fvar, 0);
@@ -5266,51 +5303,51 @@ extern char *SML_GetSVal(uint32_t index);
         break;
 
       case 't':
-        if (!strncmp(vname, "time", 4)) {
+        if (!strncmp_XP(vname, XPSTR("time"), 4)) {
           fvar = MinutesPastMidnight();
           goto exit;
         }
-        if (!strncmp(vname, "tper", 4)) {
+        if (!strncmp_XP(vname, XPSTR("tper"), 4)) {
           fvar = Settings->tele_period;
           tind->index = SCRIPT_TELEPERIOD;
           goto exit_settable;
         }
-        if (!strncmp(vname, "tinit", 5)) {
+        if (!strncmp_XP(vname, XPSTR("tinit"), 5)) {
           fvar = TasmotaGlobal.rules_flag.time_init;
           goto exit;
         }
-        if (!strncmp(vname, "tset", 4)) {
+        if (!strncmp_XP(vname, XPSTR("tset"), 4)) {
           fvar = TasmotaGlobal.rules_flag.time_set;
           goto exit;
         }
-        if (!strncmp(vname, "tstamp", 6)) {
+        if (!strncmp_XP(vname, XPSTR("tstamp"), 6)) {
           if (sp) strlcpy(sp, GetDateAndTime(DT_LOCAL).c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "topic", 5)) {
+        if (!strncmp_XP(vname, XPSTR("topic"), 5)) {
           if (sp) strlcpy(sp, TasmotaGlobal.mqtt_topic, glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_SCRIPT_TIMER
-        if (!strncmp(lp, "ts1(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts1("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker1.attach_ms(fvar, Script_ticker1_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts2(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts2("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker2.attach_ms(fvar, Script_ticker2_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts3(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts3("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker3.attach_ms(fvar, Script_ticker3_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts4(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts4("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker4.attach_ms(fvar, Script_ticker4_end);
@@ -5320,7 +5357,7 @@ extern char *SML_GetSVal(uint32_t index);
 
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
-        if (!strncmp(lp, "tbut[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("tbut["), 5)) {
           GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index < 1 || index > MAX_TOUCH_BUTTONS) index = 1;
@@ -5339,12 +5376,14 @@ extern char *SML_GetSVal(uint32_t index);
 
 
 #if 0
-        if (!strncmp(lp, "test(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("test("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint32_t cycles;
           uint64_t accu = 0;
           char sbuffer[32];
-    
+          
+          GT911_Touch_Init(&Wire1, -1, -1, 960, 540);
+
           /*
           // PSTR performance test
           // this is best case since everything will be in cache
@@ -5365,7 +5404,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
 
 #ifdef USE_TIMERS
-        if (!strncmp(lp, "ttget(", 6)) {
+        if (!strncmp_XP(lp, XPSTR("ttget("), 6)) {
           lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t index = fvar;
@@ -5378,7 +5417,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "tso(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("tso("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = -1;
@@ -5396,14 +5435,14 @@ extern char *SML_GetSVal(uint32_t index);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "tsn(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("tsn("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = tstamp2l(str);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "tc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("tc("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           lp++;
           if (sp) {
@@ -5415,15 +5454,15 @@ extern char *SML_GetSVal(uint32_t index);
         }
         break;
       case 'u':
-        if (!strncmp(vname, "uptime", 6)) {
+        if (!strncmp_XP(vname, XPSTR("uptime"), 6)) {
           fvar = MinutesUptime();
           goto exit;
         }
-        if (!strncmp(vname, "upsecs", 6)) {
+        if (!strncmp_XP(vname, XPSTR("upsecs"), 6)) {
           fvar = TasmotaGlobal.uptime;
           goto exit;
         }
-        if (!strncmp(lp, "upd[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("upd["), 4)) {
           // var was updated
           struct T_INDEX ind;
           uint8_t vtype;
@@ -5442,7 +5481,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto notfound;
         }
-        if (!strncmp(lp, "udp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("udp("), 4)) {
           char url[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, url, 0);
           TS_FLOAT port;
@@ -5456,7 +5495,7 @@ extern char *SML_GetSVal(uint32_t index);
 
       case 'w':
 #if defined(ESP32) && defined(USE_WEBCAM)
-        if (!strncmp(lp, "wc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("wc("), 3)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
@@ -5516,55 +5555,55 @@ extern char *SML_GetSVal(uint32_t index);
         }
 #endif //ESP32, USE_WEBCAM
 #if defined(USE_TTGO_WATCH) && defined(USE_BMA423)
-        if (!strncmp(vname, "wdclk", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wdclk"), 5)) {
           fvar = TTGO_doubleclick();
           goto exit;
         }
-        if (!strncmp(vname, "wbut", 4)) {
+        if (!strncmp_XP(vname, XPSTR("wbut"), 4)) {
           fvar = TTGO_button();
           goto exit;
         }
 #endif // USE_TTGO_WATCH
 #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_GT911)
-        if (!strncmp(lp, "wtch(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("wtch("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = Touch_Status(fvar);
           goto nfuncexit;
         }
 #endif // USE_FT5206
-        if (!strncmp(vname, "wm", 2)) {
+        if (!strncmp_XP(vname, XPSTR("wm"), 2)) {
           fvar = glob_script_mem.web_mode;
           goto exit;
         }
-        if (!strncmp(vname, "wday", 4)) {
+        if (!strncmp_XP(vname, XPSTR("wday"), 4)) {
           fvar = RtcTime.day_of_week;
           goto exit;
         }
-        if (!strncmp(vname, "wific", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wific"), 5)) {
           if (TasmotaGlobal.rules_flag.wifi_connected) {
             TasmotaGlobal.rules_flag.wifi_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "wifid", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wifid"), 5)) {
           if (TasmotaGlobal.rules_flag.wifi_disconnected) {
             TasmotaGlobal.rules_flag.wifi_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "wifis", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wifis"), 5)) {
           fvar = !TasmotaGlobal.global_state.wifi_down;
           goto exit;
         }
-        if (!strncmp(vname, "wlp", 3)) {
+        if (!strncmp_XP(vname, XPSTR("wlp"), 3)) {
           OsWatchLoop();
           fvar = 0;
           goto exit;
         }
 #ifdef xUSE_SHINE
-        if (!strncmp(vname, "wav2mp3(", 8)) {
+        if (!strncmp_XP(vname, XPSTR("wav2mp3("), 8)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 8, OPER_EQU, path, 0);
           fvar = wav2mp3(path);
@@ -5573,7 +5612,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
         break;
       case 'y':
-        if (!strncmp(vname, "year", 4)) {
+        if (!strncmp_XP(vname, XPSTR("year"), 4)) {
           fvar = RtcTime.year;
           goto exit;
         }
@@ -6808,7 +6847,7 @@ getnext:
               goto next_line;
             }
 #ifdef USE_DISPLAY
-            else if (!strncmp(lp, "dt", 2)) {
+            else if (!strncmp(lp, "dt ", 3)) {
               //char dstbuf[256];
               lp += 2;
               SCRIPT_SKIP_SPACES
@@ -6924,26 +6963,17 @@ getnext:
             }
 #endif //ESP32
 
-            else if (!strncmp(lp, "pwm", 3)) {
+            else if (!strncmp(lp, "pwm", 3) && lp[4] == '(') {
               lp += 3;
-              uint8_t channel = 1;
-              if (*(lp+1) == '(') {
-                channel = *lp & 0x0f;
+              uint8_t channel = *lp & 0x0f;
 #ifdef ESP8266
-                if (channel > 5) {channel = 5;}
+              if (channel > 5) {channel = 5;}
 #endif // ESP8266
 #ifdef ESP32
-                if (channel > 8) {channel = 8;}
+              if (channel > 8) {channel = 8;}
 #endif // ESP32
-                if (channel < 1) {channel = 1;}
-                lp += 2;
-              } else {
-                if (*lp == '(') {
-                  lp++;
-                } else {
-                  goto next_line;
-                }
-              }
+              if (channel < 1) {channel = 1;}
+              lp += 2;
               lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
               SCRIPT_SKIP_SPACES
               TS_FLOAT fvar1 = 4000;
@@ -6955,26 +6985,26 @@ getnext:
               goto next_line;
             }
 #ifdef USE_SCRIPT_WEB_DISPLAY
-            else if (!strncmp(lp, "wcs", 3)) {
+            else if (!strncmp(lp, "wcs ", 4)) {
               lp += 4;
               // skip one space after cmd
               web_send_line(0, lp);
               //WSContentFlush();
               goto next_line;
             }
-            else if (!strncmp(lp, "wfs", 3)) {
+            else if (!strncmp(lp, "wfs ", 4)) {
               lp += 4;
               // skip one space after cmd
               web_send_file(0, lp);
               //WSContentFlush();
               goto next_line;
             }
-            else if (!strncmp(lp, "wcf", 3)) {
+            else if (!strncmp(lp, "wcf\n", 4)) {
               WSContentFlush();
               goto next_line;
             }
 #endif
-            else if (!strncmp(lp, "rapp", 3)) {
+            else if (!strncmp(lp, "rapp ", 4)) {
               lp += 4;
               // skip one space after cmd
               char *tmp = (char*)malloc(256);
@@ -6988,7 +7018,7 @@ getnext:
 
 
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
-            else if (!strncmp(lp, "mail", 4)) {
+            else if (!strncmp(lp, "mail ", 5)) {
               lp += 5;
               //char tmp[256];
               char *tmp = (char*)malloc(256);
@@ -11275,13 +11305,35 @@ int32_t call2pwl(const char *url) {
   result.replace("instant", "i");
   result.replace("apparent", "a");
   result.replace("reactive", "r");
-
-  if (debug) {
-    AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+  if (result.length()>4095) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PWL: result overflow: %d"), result.length());
   }
 
-  Run_Scripter(">jp", 3, result.c_str());
-
+  // meter aggregates has also too many tokens
+  char *cp = (char*)result.c_str();
+  if (!strncmp_P(cp, PSTR("{\"site\""), 7)) {
+    // split into 2 sets
+    char *sp = strstr_P(cp, PSTR(",\"load\":"));
+    if (sp) {
+      *sp = '}';
+      *(sp + 1 ) = 0;
+      if (debug) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PWL: result 1: %s"), cp);
+      }
+      Run_Scripter(">jp", 3, cp);
+      *sp = '{';
+      *(sp + 1 ) = '\"';
+      if (debug) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PWL: result 2: %s"), sp);
+      }
+      Run_Scripter(">jp", 3, sp);
+    }
+  } else {
+    if (debug) {
+      AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+    }
+    Run_Scripter(">jp", 3, result.c_str());
+  }
   return 0;
 }
 #endif // TESLA_POWERWALL
