@@ -70,7 +70,7 @@ class Matter_UI
     webserver.content_send(string.format("<p></p><button name='%s' class='button bgrn'>", matter_enabled ? "disable" : "enable"))
     webserver.content_send(matter_enabled ? "Disable" : "Enable")
     webserver.content_send(" Matter</button></form></p>")
-    
+
     webserver.content_send("<p></p></fieldset><p></p>")
 
     return matter_enabled
@@ -135,14 +135,16 @@ class Matter_UI
     if seconds_left < 0   seconds_left = 0 end
     var min_left = (seconds_left + 30) / 60
 
-    webserver.content_send(string.format("<fieldset><legend><b>&nbsp;[ Commissioning open for %i min ]&nbsp;</b></legend><p></p>", min_left))
+    webserver.content_send(string.format("<fieldset><legend><b>&nbsp;Commissioning open for %i min&nbsp;</b></legend><p></p>", min_left))
 
     var pairing_code = self.device.compute_manual_pairing_code()
     webserver.content_send(string.format("<p>Manual pairing code:<br><b>%s-%s-%s</b></p><hr>", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]))
-    
+
+    webserver.content_send(string.format("<div><center>"))
     var qr_text = self.device.compute_qrcode_content()
     self.show_qrcode(qr_text)
     webserver.content_send(string.format("<p> %s</p>", qr_text))
+    webserver.content_send(string.format("</div>"))
 
     webserver.content_send("<p></p></fieldset><p></p>")
 
@@ -197,13 +199,13 @@ class Matter_UI
         webserver.content_send("<form action='/matterc' method='post'>")
         webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%i'>", f.get_fabric_index()))
         webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
-    
+
         webserver.content_send("<p></p></fieldset><p></p>")
       end
     end
 
     webserver.content_send("<p></p></fieldset><p></p>")
-    
+
   end
 
   #######################################################################
@@ -212,7 +214,7 @@ class Matter_UI
   def page_part_mgr()
     import webserver
     import string
-    
+
     if !webserver.check_privileged_access() return nil end
 
     webserver.content_start("Matter")           #- title of the web page -#
@@ -236,13 +238,13 @@ class Matter_UI
     import string
     import partition_core
     import persist
-    
+
 
     #- check that the partition is valid -#
     var p = partition_core.Partition()
 
     try
-      
+
       #---------------------------------------------------------------------#
       # Change Passcode and/or Passcode
       #---------------------------------------------------------------------#
@@ -314,7 +316,7 @@ class Matter_UI
       # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = self.device.sessions.count_active_fabrics()
       if fabrics_count == 0
-        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", "No active associaition"))
+        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", "No active association"))
       else
         var plural = fabrics_count > 1
         webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", str(fabrics_count) + " active association" + (plural ? "s" : "")))
