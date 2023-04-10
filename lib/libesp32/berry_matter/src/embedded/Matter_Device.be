@@ -154,10 +154,17 @@ class Matter_Device
 
   #####################################################################
   # Remove a fabric and clean all corresponding values and mDNS entries
-  def remove_fabric(fabric)
-    self.message_handler.im.subs_shop.remove_by_fabric(fabric)
-    self.mdns_remove_op_discovery(fabric)
-    self.sessions.remove_fabric(fabric)
+  def remove_fabric(fabric_parent)
+    var sub_fabrics = self.sessions.find_children_fabrics(fabric_parent.get_fabric_index())
+    if sub_fabrics == nil return end
+    for fabric_index : sub_fabrics
+      var fabric = self.sessions.find_fabric_by_index(fabric_index)
+      if fabric != nil
+        self.message_handler.im.subs_shop.remove_by_fabric(fabric)
+        self.mdns_remove_op_discovery(fabric)
+        self.sessions.remove_fabric(fabric)
+      end
+    end
     self.sessions.save_fabrics()
   end
 

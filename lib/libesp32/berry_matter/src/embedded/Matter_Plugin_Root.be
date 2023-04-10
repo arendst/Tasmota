@@ -488,7 +488,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var hk = crypto.HKDF_SHA256()
         var fabric_rev = fabric_id.copy().reverse()
         var k_fabric = hk.derive(root_ca, fabric_rev, info, 8)
-        session.set_fabric_device(fabric_id, deviceid, k_fabric)
+        session.set_fabric_device(fabric_id, deviceid, k_fabric, self.device.commissioning_admin_fabric)
 
         # We have a candidate fabric, add it as expirable for 2 minutes
         session.persist_to_fabric()       # fabric object is completed, persist it

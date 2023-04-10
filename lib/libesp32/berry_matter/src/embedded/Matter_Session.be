@@ -47,6 +47,7 @@ class Matter_Fabric : Matter_Expirable
   var created
   # fabric-index
   var fabric_index                # index number for fabrics, starts with `1`
+  var fabric_parent               # index of the parent fabric, i.e. the fabric that triggered the provisioning (if nested)
   # list of active sessions
   var _sessions                   # only active CASE sessions that need to be persisted
   # our own private key
@@ -457,10 +458,11 @@ class Matter_Session : Matter_Expirable
     self._fabric.admin_vendor = admin_vendor
   end
 
-  def set_fabric_device(fabric_id, device_id, fc)
+  def set_fabric_device(fabric_id, device_id, fc, fabric_parent)
     self._fabric.fabric_id = fabric_id
     self._fabric.device_id = device_id
     self._fabric.fabric_compressed = fc
+    self._fabric.fabric_parent = (fabric_parent != nil) ? fabric_parent.get_fabric_index() : nil
   end
   def set_fabric_label(s)
     if type(s) == 'string'
@@ -716,6 +718,51 @@ class Matter_Session_Store
   def count_active_fabrics()
     self.remove_expired()      # clean before
     return self.fabrics.count_persistables()
+  end
+
+  #############################################################
+  # Find fabric by index number
+  #
+  def find_fabric_by_index(fabric_index)
+    for fab : self.active_fabrics()
+      if fab.get_fabric_index() == fabric_index
+        return fab
+      end
+    end
+    return nil
+  end
+
+  #############################################################
+  # Find children fabrics
+  #
+  # Find all children fabrics recursively and collate in array
+  # includes the parent fabric as first element
+  #
+  # Ex:
+  # matter_device.sessions.fabrics[1].fabric_parent = 1
+  # matter_device.sessions.find_children_fabrics(1)
+  # 
+  def find_children_fabrics(parent_index)
+    if parent_index == nil  return []   end
+    var ret = [ parent_index ]
+
+    def find_children_fabrics_inner(index)
+      for fab: self.active_fabrics()
+        if fab.fabric_parent == index
+          # protect against infinite loops
+          if ret.find() == nil
+            var sub_index = fab.fabric_index
+            ret.push(sub_index)
+            find_children_fabrics_inner(sub_index)
+          end
+        end
+      end
+    end
+
+    find_children_fabrics_inner(parent_index)
+
+    # ret contains a list of indices
+    return ret
   end
 
   #############################################################
