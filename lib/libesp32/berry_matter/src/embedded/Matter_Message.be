@@ -358,6 +358,7 @@ class Matter_Frame
     # check privacy flag, p.127
     if self.sec_p
       # compute privacy key, p.71
+      tasmota.log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
       var k = session.get_i2r_privacy()
       var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
       var m = self.raw[4 .. self.payload_idx-1]
@@ -382,25 +383,25 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    # tasmota.log("MTR: p           =" + p.tohex(), 4)
-    # tasmota.log("MTR: a           =" + a.tohex(), 4)
-    # tasmota.log("MTR: n           =" + n.tohex(), 4)
-    # tasmota.log("MTR: mic         =" + mic.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
+    tasmota.log("MTR: p           =" + p.tohex(), 4)
+    tasmota.log("MTR: a           =" + a.tohex(), 4)
+    tasmota.log("MTR: n           =" + n.tohex(), 4)
+    tasmota.log("MTR: mic         =" + mic.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(i2r, n, a, size(p), 16)
     var cleartext = aes.decrypt(p)
     var tag = aes.tag()
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
-    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    # tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
+    tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
-      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
+      tasmota.log("MTR: rejected packet due to invalid MIC", 2)
       return nil
     end
 

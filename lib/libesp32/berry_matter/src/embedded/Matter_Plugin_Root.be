@@ -228,7 +228,10 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
         return TLV.create_TLV(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Version'])
+        var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
+        var version_end = string.find(version_full, '(')
+        if version_end > 0    version_full = version_full[0..version_end - 1]   end
+        return TLV.create_TLV(TLV.UTF1, version_full)
       elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
