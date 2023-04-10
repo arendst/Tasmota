@@ -66,7 +66,13 @@ class Matter_MessageHandler
         
         # check if it's a duplicate
         if !session._counter_insecure_rcv.validate(frame.message_counter, false)
-          tasmota.log(string.format("MTR: .          Rejected duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 3)
+          tasmota.log(string.format("MTR: .          Duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 3)
+          if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+            var resp = frame.build_standalone_ack(false)
+            resp.encode_frame()
+            tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
+            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
+          end
           return false
         end
 
@@ -79,7 +85,14 @@ class Matter_MessageHandler
         else
           tasmota.log(string.format("MTR: >rcv Ack   (%6i) rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.message_counter, frame.x_flag_r ? "{reliable} " : "", frame.exchange_id, str(frame.ack_message_counter), addr, port), 3)
         end
-        self.commissioning.process_incoming(frame)
+        ret = self.commissioning.process_incoming(frame)
+        # if ret is false, the implicit Ack was not sent
+        if !ret && frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+          var resp = frame.build_standalone_ack(false #-not reliable-#)
+          resp.encode_frame()
+          tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
+          self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
+        end
         return true
       else
         #############################################################
@@ -99,7 +112,14 @@ class Matter_MessageHandler
        
         # check if it's a duplicate
         if !session.counter_rcv_validate(frame.message_counter, true)
-          tasmota.log("MTR: .          Rejected duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
+          tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
+          if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+            var resp = frame.build_standalone_ack(false)
+            resp.encode_frame()
+            resp.encrypt()
+            tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
+            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
+          end
           return false
         end
         

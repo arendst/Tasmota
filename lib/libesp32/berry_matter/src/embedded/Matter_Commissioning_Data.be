@@ -218,7 +218,7 @@ class Matter_Sigma2Resume
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.resumptionID)
     s.add_TLV(2, matter.TLV.B1, self.sigma2ResumeMIC)
-    s.add_TLV(3, matter.TLV.B1, self.responderSessionID)
+    s.add_TLV(3, matter.TLV.U2, self.responderSessionID)
     if self.SLEEPY_IDLE_INTERVAL != nil || self.SLEEPY_ACTIVE_INTERVAL != nil
       var s2 = s.add_struct(4)
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
