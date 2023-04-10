@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Matter support for Light and Relays on ESP32 by Stephan Hadinger (#18320)
 - ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode (#18295)
+- Berry `webserver.html_escape()` reusing the internal HTML escaping function
 
 ### Breaking Changed
 
