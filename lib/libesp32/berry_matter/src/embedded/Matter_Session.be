@@ -375,13 +375,19 @@ class Matter_Session : Matter_Expirable
   def is_CASE()   return self.mode == self._CASE    end
   
   #############################################################
-  # Register the frabric as complete (end of commissioning)
-  def fabric_completed()
-    self._fabric.set_no_expiration()
-    self._fabric.set_persist(true)
+  # Assign a new fabric index
+  def assign_fabric_index()
     if (self._fabric.get_fabric_index() == nil)
       self._fabric.set_fabric_index(self._store.next_fabric_idx())
     end
+  end
+
+  #############################################################
+  # Register the fabric as complete (end of commissioning)
+  def fabric_completed()
+    self._fabric.set_no_expiration()
+    self._fabric.set_persist(true)
+    self.assign_fabric_index()
     self._store.add_fabric(self._fabric)
   end
 
@@ -389,6 +395,7 @@ class Matter_Session : Matter_Expirable
   # Register the frabric as complete (end of commissioning)
   def fabric_candidate()
     self._fabric.set_expire_in_seconds(120)       # expire in 2 minutes
+    self.assign_fabric_index()
     self._store.add_fabric(self._fabric)
   end
 

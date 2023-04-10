@@ -232,7 +232,9 @@ extern "C" {
         int ret = br_ccm_reset(ccm_ctx, nonce, nonce_len, aad_len, data_len, tag_len);
         if (ret == 0) { be_raise(vm, "value_error", "br_ccm_reset failed"); }
 
-        br_ccm_aad_inject(ccm_ctx, aad, aad_len);
+        if (aad_len > 0) {
+          br_ccm_aad_inject(ccm_ctx, aad, aad_len);
+        }
         br_ccm_flip(ccm_ctx);
 
         be_return_nil(vm);

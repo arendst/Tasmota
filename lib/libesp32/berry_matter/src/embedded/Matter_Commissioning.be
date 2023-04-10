@@ -77,7 +77,11 @@ class Matter_Commisioning_Context
     end
 
     tasmota.log("MTR: received message " + matter.inspect(msg), 3)
-    if msg.opcode == 0x20
+    if   msg.opcode == 0x10
+      return self.parse_MsgCounterSyncReq(msg)
+    elif msg.opcode == 0x11
+      return self.parse_MsgCounterSyncRsp(msg)
+    elif msg.opcode == 0x20
       return self.parse_PBKDFParamRequest(msg)
     elif msg.opcode == 0x22
       return self.parse_Pake1(msg)
@@ -89,6 +93,10 @@ class Matter_Commisioning_Context
       return self.parse_Sigma3(msg)
     elif msg.opcode == 0x40
       return self.parse_StatusReport(msg)
+    else
+      import string
+      tasmota.log(string.format("MTR: >????????? Unknown OpCode (secure channel) %02X", msg.opcode), 2)
+      return false
     end
 
     return false
@@ -679,9 +687,33 @@ class Matter_Commisioning_Context
     return true
   end
 
+  #############################################################
+  # placeholder, nothing to run for now
   def parse_StatusReport(msg)
     var session = msg.session
-    tasmota.log("MTR: StatusReport = "+msg.raw[msg.app_payload_idx..].tohex(), 2)
+    tasmota.log("MTR: >Status    "+msg.raw[msg.app_payload_idx..].tohex(), 2)
+    return false      # we don't explicitly ack the message
+  end
+
+  #############################################################
+  # MsgCounterSyncReq
+  #
+  # Not yet implemented
+  def parse_MsgCounterSyncReq(msg)
+    import string
+    var session = msg.session
+    tasmota.log(string.format("MTR: >????????? MsgCounterSyncReq not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
+    return false      # we don't explicitly ack the message
+  end
+
+  #############################################################
+  # MsgCounterSyncRsp
+  #
+  # Not yet implemented
+  def parse_MsgCounterSyncRsp(msg)
+    import string
+    var session = msg.session
+    tasmota.log(string.format("MTR: >????????? MsgCounterSyncRsp not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
     return false      # we don't explicitly ack the message
   end
 
