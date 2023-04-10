@@ -229,6 +229,7 @@ void ShutterSettingsDefault(void) {
     ShutterSettings.shutter_pwmrange[0][i] = pwm_servo_min;
     ShutterSettings.shutter_pwmrange[1][i] = pwm_servo_max;
   }
+  ShutterSettingsSave();
 }
 
 void ShutterSettingsDelta(void) {
