@@ -123,7 +123,8 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop};
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop
+  };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -180,11 +181,6 @@ struct SHUTTERGLOBAL {
  * Driver Settings load and save
 \*********************************************************************************************/
 
-uint32_t ShutterSettingsCrc32(void) {
-  // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&ShutterSettings +4, sizeof(ShutterSettings) -4);  // Skip crc32
-}
-
 void ShutterSettingsDefault(void) {
   // Init default values in case file is not found
 
@@ -212,6 +208,7 @@ void ShutterSettingsDefault(void) {
     ShutterSettings.shutter_position[i] = Settings->shutter_position[i];
     ShutterSettings.shutter_startrelay[i] = Settings->shutter_startrelay[i];
     ShutterSettings.shutter_motordelay[i] = Settings->shutter_motordelay[i];
+    
   }
   for (uint32_t i = 0; i < MAX_SHUTTER_KEYS; i++) { 
     ShutterSettings.shutter_button[i].shutter_number = Settings->shutter_button[i] & 0x03;
@@ -233,15 +230,14 @@ void ShutterSettingsDefault(void) {
 
 void ShutterSettingsDelta(void) {
   // Fix possible setting deltas
-
   if (ShutterSettings.version != SHUTTER_VERSION) {      // Fix version dependent changes
 /*
     if (ShutterSettings.version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update oldest version restore"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update oldest version restore"));
 
     }
     if (ShutterSettings.version < 0x01010101) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: Update old version restore"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update old version restore"));
 
     }
 */
@@ -251,13 +247,13 @@ void ShutterSettingsDelta(void) {
   }
 }
 
-void ShutterSettingsLoad(void) {
+void ShutterSettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT once at restart
 
   // Init default values in case file is not found
   ShutterSettingsDefault();
 
-  // Try to load file /.drvset122
+  // Try to load file /.drvset027
   char filename[20];
   // Use for sensors:
 //  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_27);
@@ -267,26 +263,29 @@ void ShutterSettingsLoad(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: About to load settings from file %s"), filename);
 
 #ifdef USE_UFILESYS
-  if (TfsLoadFile(filename, (uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
     // Fix possible setting deltas
     ShutterSettingsDelta();
   } else {
     // File system not ready: No flash space reserved for file system
     AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or file not found"));
+
   }
 #else
   AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 
-  ShutterSettings.crc32 = ShutterSettingsCrc32();
 }
 
 void ShutterSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
-
-  if (ShutterSettingsCrc32() != ShutterSettings.crc32) {
-    // Try to save file /.drvset122
-    ShutterSettings.crc32 = ShutterSettingsCrc32();
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&ShutterSettings +4, sizeof(ShutterSettings) -4);  // Skip crc32
+  if (crc32 != ShutterSettings.crc32) {
+    // Try to save file /.drvset027
+    ShutterSettings.crc32 = crc32;
 
     char filename[20];
     // Use for sensors:
@@ -1428,7 +1427,7 @@ void CmndShutterPosition(void)
 
       //override tiltposition if explicit set (shutterbutton)
       if (Shutter[index].tilt_target_pos_override != -128) {
-         Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
+        Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
         Shutter[index].tilt_target_pos_override = -128;
       }
 
@@ -2048,9 +2047,12 @@ bool Xdrv27(uint32_t function)
         ShutterSettingsSave();
       break;
       case FUNC_PRE_INIT:
-        ShutterSettingsLoad();
+        ShutterSettingsLoad(0);
         ShutterInit();
         break;
+      case FUNC_RESET_SETTINGS:
+        ShutterSettingsLoad(1);
+      break;
       case FUNC_EVERY_50_MSECOND:
         ShutterUpdatePosition();
         break;
