@@ -38,9 +38,9 @@ class Matter_Expirable end
 #################################################################################
 class Matter_Fabric : Matter_Expirable
   static var _MAX_CASE = 5        # maximum number of concurrent CASE sessions per fabric
+  static var _GROUP_SND_INCR = 32  # counter increased when persisting
   # Group Key Derivation
   static var _GROUP_KEY = "GroupKey v1.0"  # starting with double `_` means it's not writable
-
 
   var _store                      # reference back to session store
   # timestamp
@@ -62,6 +62,11 @@ class Matter_Fabric : Matter_Expirable
   var fabric_compressed           # comrpessed fabric_id identifier, hashed with root_ca public key
   var device_id                   # our own device id bytes(8) little endian
   var fabric_label                # set by UpdateFabricLabel
+  # global group counters (send)
+  var counter_group_data_snd      # counter for group data
+  var counter_group_ctrl_snd      # counter for group command
+  var _counter_group_data_snd_impl# implementation of counter_group_data_snd by matter.Counter()
+  var _counter_group_ctrl_snd_impl# implementation of counter_group_ctrl_snd by matter.Counter()
   # Admin info extracted from NOC/ICAC
   var admin_subject
   var admin_vendor
@@ -73,6 +78,11 @@ class Matter_Fabric : Matter_Expirable
     self._sessions = matter.Expirable_list()
     self.fabric_label = ""
     self.created = tasmota.rtc()['utc']
+    # init group counters
+    self._counter_group_data_snd_impl = matter.Counter()
+    self._counter_group_ctrl_snd_impl  = matter.Counter()
+    self.counter_group_data_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
+    self.counter_group_ctrl_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
   end
 
   def get_noc()               return self.noc               end
@@ -89,6 +99,53 @@ class Matter_Fabric : Matter_Expirable
 
   def set_fabric_index(v)     self.fabric_index = v         end
 
+  #############################################################
+  # When hydrating from persistance, update counters
+  def hydrate_post()
+    # reset counter_snd to highest known.
+    # We advance it only in case it is actually used
+    # This avoids updaing counters on dead sessions
+    self._counter_group_data_snd_impl.reset(self.counter_group_data_snd)
+    self._counter_group_ctrl_snd_impl.reset(self.counter_group_ctrl_snd)
+    self.counter_group_data_snd = self._counter_group_data_snd_impl.val()
+    self.counter_group_ctrl_snd = self._counter_group_ctrl_snd_impl.val()
+  end
+
+  #############################################################
+  # Management of security counters
+  #############################################################
+  # Provide the next counter value, and update the last know persisted if needed
+  #
+  def counter_group_data_snd_next()
+    import string
+    var next = self._counter_group_data_snd_impl.next()
+    tasmota.log(string.format("MTR: .          Counter_group_data_snd=%i", next), 3)
+    if matter.Counter.is_greater(next, self.counter_group_data_snd)
+      self.counter_group_data_snd = next + self._GROUP_SND_INCR
+      if self.does_persist()
+        # the persisted counter is behind the actual counter
+        self.save()
+      end
+    end
+    return next
+  end
+  #############################################################
+  # Provide the next counter value, and update the last know persisted if needed
+  #
+  def counter_group_ctrl_snd_next()
+    import string
+    var next = self._counter_group_ctrl_snd_impl.next()
+    tasmota.log(string.format("MTR: .          Counter_group_ctrl_snd=%i", next), 3)
+    if matter.Counter.is_greater(next, self.counter_group_ctrl_snd)
+      self.counter_group_ctrl_snd = next + self._GROUP_SND_INCR
+      if self.does_persist()
+        # the persisted counter is behind the actual counter
+        self.save()
+      end
+    end
+    return next
+  end
+  
   #############################################################
   # Called before removal
   def log_new_fabric()
@@ -304,7 +361,7 @@ class Matter_Session : Matter_Expirable
     self._counter_rcv_impl = matter.Counter()
     self.counter_rcv = 0      # avoid nil values
     self.counter_snd = self._counter_snd_impl.next() + self._COUNTER_SND_INCR
-    # print(">>>> INIT", "counter_rcv=", self.counter_rcv, "counter_snd=", self.counter_snd)
+    #
     self._counter_insecure_rcv = matter.Counter()
     self._counter_insecure_snd = matter.Counter()
     self._breadcrumb = 0

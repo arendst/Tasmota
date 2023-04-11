@@ -78,9 +78,7 @@ class Matter_Commisioning_Context
 
     tasmota.log("MTR: received message " + matter.inspect(msg), 3)
     if   msg.opcode == 0x10
-      return self.parse_MsgCounterSyncReq(msg)
-    elif msg.opcode == 0x11
-      return self.parse_MsgCounterSyncRsp(msg)
+      # don't need to do anything, the message is acked already before this call
     elif msg.opcode == 0x20
       return self.parse_PBKDFParamRequest(msg)
     elif msg.opcode == 0x22
@@ -692,28 +690,6 @@ class Matter_Commisioning_Context
   def parse_StatusReport(msg)
     var session = msg.session
     tasmota.log("MTR: >Status    "+msg.raw[msg.app_payload_idx..].tohex(), 2)
-    return false      # we don't explicitly ack the message
-  end
-
-  #############################################################
-  # MsgCounterSyncReq
-  #
-  # Not yet implemented
-  def parse_MsgCounterSyncReq(msg)
-    import string
-    var session = msg.session
-    tasmota.log(string.format("MTR: >????????? MsgCounterSyncReq not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
-    return false      # we don't explicitly ack the message
-  end
-
-  #############################################################
-  # MsgCounterSyncRsp
-  #
-  # Not yet implemented
-  def parse_MsgCounterSyncRsp(msg)
-    import string
-    var session = msg.session
-    tasmota.log(string.format("MTR: >????????? MsgCounterSyncRsp not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
     return false      # we don't explicitly ack the message
   end
 

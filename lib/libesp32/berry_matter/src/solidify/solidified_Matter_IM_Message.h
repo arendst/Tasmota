@@ -976,7 +976,7 @@ be_local_class(Matter_IM_ReportData,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(send_im, 1), be_const_closure(Matter_IM_ReportData_send_im_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_IM_ReportData_init_closure) },
-        { be_const_key_weak(MAX_MESSAGE, -1), be_const_int(1000) },
+        { be_const_key_weak(MAX_MESSAGE, -1), be_const_int(1200) },
     })),
     be_str_weak(Matter_IM_ReportData)
 );

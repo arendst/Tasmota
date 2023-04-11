@@ -182,7 +182,9 @@ matter.IM_WriteResponse = Matter_IM_WriteResponse
 # Report Data for a Read Request
 #################################################################################
 class Matter_IM_ReportData : Matter_IM_Message
-  static var MAX_MESSAGE = 1000       # max bytes size for a single TLV worklaod
+  static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
+                                      # the maximum MTU is 1280, which leaves 80 bytes for the rest of the message
+                                      # section 4.4.4 (p. 114)
 
   def init(msg, data)
     super(self).init(msg, 0x05 #-Report Data-#, true)

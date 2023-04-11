@@ -141,6 +141,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_IM_Message.h"
 #include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
+#include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
@@ -299,6 +300,7 @@ module matter (scope: global, strings: weak) {
   IM_Subscription, class(be_class_Matter_IM_Subscription)
   IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
+  Control_Message, class(be_class_Matter_Control_Message)
   UI, class(be_class_Matter_UI)
 
   // QR Code
