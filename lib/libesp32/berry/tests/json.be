@@ -34,6 +34,12 @@ assert_load_failed('{"ke: 1}')
 assert_load_failed('{"key": 1x}')
 assert_load_failed('{"key"}')
 assert_load_failed('{"key": 1, }')
+# insanely long, nested object
+var text = 'null'
+for i : 0 .. 200
+    text = '{"nested":' + text + ', "num": 1, "bool": true, "str": "abc", "n": null, "arr": [1, 2, 3]}'
+end
+json.load(text) # do nothing, just check that it doesn't crash
 
 # dump tests
 
