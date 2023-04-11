@@ -28,12 +28,45 @@ class Matter_MessageHandler
   # handlers
   var commissioning       # Commissioning Context instance, handling the PASE/CASE phases
   var im                  # Instance of `matter.IM` handling Interaction Model
+  var control_message     # Instance of `matter.Control_Message` for MCSP
 
   #############################################################
   def init(device)
     self.device = device
     self.commissioning = matter.Commisioning_Context(self)
     self.im = matter.IM(device)
+    self.control_message = matter.Control_Message(self)
+  end
+
+  #############################################################
+  # Send a unencrypted Ack if needed
+  #
+  # reliable: do we send as reliable message
+  #
+  def send_simple_ack(frame, reliable)
+    import string
+    if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+      var resp = frame.build_standalone_ack(reliable)
+      resp.encode_frame()
+      tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
+      self.send_response(resp.raw, resp.remote_ip, resp.remote_port, reliable ? resp.message_counter : nil, resp.session.local_session_id)
+    end
+  end
+
+  #############################################################
+  # Send an encrypted Ack if needed
+  #
+  # reliable: do we send as reliable message
+  #
+  def send_encrypted_ack(frame, reliable)
+    import string
+    if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+      var resp = frame.build_standalone_ack(reliable)
+      resp.encode_frame()
+      resp.encrypt()
+      tasmota.log(string.format("MTR: <Ack*      (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
+      self.send_response(resp.raw, resp.remote_ip, resp.remote_port, reliable ? resp.message_counter : nil, resp.session.local_session_id)
+    end
   end
 
   #############################################################
@@ -54,7 +87,13 @@ class Matter_MessageHandler
       if !ok      return false end
 
       # do we need decryption?
-      if frame.local_session_id == 0 && frame.sec_sesstype == 0
+      if frame.sec_p
+        # Control message
+        tasmota.log("MTR: CONTROL MESSAGE=" + matter.inspect(frame))
+        var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
+        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 2)
+        return self.control_message.process_incoming_control_message(frame)
+      elif frame.local_session_id == 0 && frame.sec_sesstype == 0
         #############################################################
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
@@ -67,12 +106,7 @@ class Matter_MessageHandler
         # check if it's a duplicate
         if !session._counter_insecure_rcv.validate(frame.message_counter, false)
           tasmota.log(string.format("MTR: .          Duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 3)
-          if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
-            var resp = frame.build_standalone_ack(false)
-            resp.encode_frame()
-            tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
-            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
-          end
+          self.send_simple_ack(frame, false #-not reliable-#)
           return false
         end
 
@@ -87,12 +121,7 @@ class Matter_MessageHandler
         end
         ret = self.commissioning.process_incoming(frame)
         # if ret is false, the implicit Ack was not sent
-        if !ret && frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
-          var resp = frame.build_standalone_ack(false #-not reliable-#)
-          resp.encode_frame()
-          tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
-          self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
-        end
+        if !ret     self.send_simple_ack(frame, false #-not reliable-#)   end
         return true
       else
         #############################################################
@@ -113,13 +142,7 @@ class Matter_MessageHandler
         # check if it's a duplicate
         if !session.counter_rcv_validate(frame.message_counter, true)
           tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
-          if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
-            var resp = frame.build_standalone_ack(false)
-            resp.encode_frame()
-            resp.encrypt()
-            tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
-            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil, resp.session.local_session_id)
-          end
+          self.send_encrypted_ack(frame, false #-not reliable-#)
           return false
         end
         
@@ -158,12 +181,8 @@ class Matter_MessageHandler
           if ret
             self.im.send_enqueued(self)
 
-          elif frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
-            var resp = frame.build_standalone_ack(true)
-            resp.encode_frame()
-            resp.encrypt()
-            tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i {reliable}", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
-            self.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
+          else
+            self.send_encrypted_ack(frame, true #-reliable-#)
           end
           ret = true
 
