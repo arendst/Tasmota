@@ -183,6 +183,10 @@ static const char* parser_string(bvm *vm, const char *json)
                 }
             }
             be_assert(ch == '"');
+            /* require the stack to have some free space for the string, 
+               since parsing deeply nested objects might
+               crash the VM due to insufficient stack space. */
+            be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
             be_pushnstring(vm, buf, cast_int(dst - buf));
             be_free(vm, buf, len);
             return json + 1; /* skip '"' */
