@@ -115,7 +115,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP;
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -123,7 +123,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup
   };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
@@ -173,6 +173,7 @@ struct SHUTTERGLOBAL {
   uint8_t  skip_relay_change;                // avoid overrun at endstops
   uint8_t  start_reported = 0;               // indicates of the shutter start was reported through MQTT JSON
   uint16_t open_velocity_max = RESOLUTION;   // maximum of PWM change during opening. Defines velocity on opening. Steppers and Servos only
+  bool     callibration_run = false;         // if true a callibration is running and additional measures are captured
 } ShutterGlobal;
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
@@ -846,6 +847,15 @@ void ShutterUpdatePosition(void)
         i+1, Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
+      if (ShutterGlobal.callibration_run && Energy->current_available) {
+        // update energy consumption on every loop to dectect stop of the shutter
+        XnrgCall(FUNC_ENERGY_EVERY_SECOND);
+        // fency calculation with direction gives index 0 and 1 of the energy meter
+        // stop if endpoint is reached
+        if (Energy->active_power[(Shutter[i].direction + 1) / 2] == 0.0 && Shutter[i].time > 20){
+          Shutter[i].target_position = Shutter[i].real_position;
+        }
+      }
       if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
            ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
            || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
@@ -2025,6 +2035,80 @@ void CmndShutterMotorStop(void)
     }
     ResponseCmndNumber(ShutterSettings.shutter_motorstop);
   }
+}
+
+uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
+  uint32_t cycle_time = 0;
+  bool     started = false;
+  uint32_t last_time;
+  char     time_chr[10];
+
+  last_time = millis();
+  while (!started && millis()-last_time < max_runtime * 1000) {
+    loop();
+    if (Shutter[i].direction) {
+      started = true;
+      last_time = millis();
+    }
+  }
+  if (!started) return 0;
+  AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Start detected. Waiting for STOP"));
+  while (Shutter[i].direction && millis()-last_time < max_runtime * 1000) {
+    loop();
+  }
+  if (Shutter[i].direction) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. No stop detected... Cancel"));
+    return 0;
+  } 
+  cycle_time = (millis()-last_time)/100 - (Shutter[i].motordelay * 10 / STEPS_PER_SECOND) ;
+  dtostrfd((float)(cycle_time) / 10, 1, time_chr);
+  AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Cycletime is: %s sec"),time_chr);
+  return cycle_time;
+}
+
+void CmndShutterSetup(void) {
+  uint8_t index_no;
+  char time_chr[10];
+  uint32_t new_opentime;
+  uint32_t new_closetime;
+  uint8_t  max_runtime = 120; // max 120 seconds runtime
+
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
+    index_no = XdrvMailbox.index-1; // save, because will be changed in following operations
+    // init shutter to default settings
+    ShutterGlobal.callibration_run = true;
+    ShutterSettings.shutter_position[index_no] = 0;
+    ShutterSettings.shutter_closetime[index_no] = max_runtime * 10;
+    ShutterSettings.shutter_opentime[index_no] = max_runtime * 10;
+    ShutterInit();
+    if (Energy->current_available) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open, autostop detect. max duration is 2min"));
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open and stop when open. max duration is 2min"));
+    }
+    new_opentime = ShutterGetCycleTime(index_no, max_runtime);
+    if (new_opentime) {
+      ShutterSettings.shutter_position[index_no] = 100;
+      ShutterInit();  
+      if (Energy->current_available) {
+        AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Now close, autostop detect. max duration is 2min"));
+      }else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Now close and stop when closed. max duration is 2min"));
+      }
+      
+      new_closetime = ShutterGetCycleTime(index_no, max_runtime);
+      ShutterSettings.shutter_position[index_no] = 0;
+      if (new_closetime)  {
+        ShutterSettings.shutter_opentime[index_no] = new_opentime;
+        ShutterSettings.shutter_closetime[index_no] = new_closetime;
+        ShutterInit();
+      } 
+    } 
+  } else {
+    // print out help instructions
+    // will only work without TILT configuration
+  }
+  return;
 }
 
 /*********************************************************************************************\
