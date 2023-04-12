@@ -739,6 +739,7 @@
 #define D_CMND_SHUTTER_SETTILT "Tilt"
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
 #define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
+#define D_CMND_SHUTTER_SETUP "Setup"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
