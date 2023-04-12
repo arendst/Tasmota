@@ -3456,8 +3456,8 @@ be_local_closure(Matter_Device_autoconf_device,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Device_msg_send,   /* name */
   be_nested_proto(
-    13,                          /* nstack */
-    6,                          /* argc */
+    5,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -3466,20 +3466,16 @@ be_local_closure(Matter_Device_msg_send,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(udp_server),
-    /* K1   */  be_nested_str_weak(send_response),
+    /* K1   */  be_nested_str_weak(send_UDP),
     }),
     be_str_weak(msg_send),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x88180100,  //  0000  GETMBR	R6	R0	K0
-      0x8C180D01,  //  0001  GETMET	R6	R6	K1
-      0x5C200200,  //  0002  MOVE	R8	R1
-      0x5C240400,  //  0003  MOVE	R9	R2
-      0x5C280600,  //  0004  MOVE	R10	R3
-      0x5C2C0800,  //  0005  MOVE	R11	R4
-      0x5C300A00,  //  0006  MOVE	R12	R5
-      0x7C180C00,  //  0007  CALL	R6	6
-      0x80040C00,  //  0008  RET	1	R6
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
     })
   )
 );

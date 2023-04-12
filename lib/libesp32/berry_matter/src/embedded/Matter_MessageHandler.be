@@ -49,7 +49,7 @@ class Matter_MessageHandler
       var resp = frame.build_standalone_ack(reliable)
       resp.encode_frame()
       tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
-      self.send_response(resp.raw, resp.remote_ip, resp.remote_port, reliable ? resp.message_counter : nil, resp.session.local_session_id)
+      self.send_response_frame(resp)
     end
   end
 
@@ -65,7 +65,7 @@ class Matter_MessageHandler
       resp.encode_frame()
       resp.encrypt()
       tasmota.log(string.format("MTR: <Ack*      (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
-      self.send_response(resp.raw, resp.remote_ip, resp.remote_port, reliable ? resp.message_counter : nil, resp.session.local_session_id)
+      self.send_response_frame(resp)
     end
   end
 
@@ -111,7 +111,7 @@ class Matter_MessageHandler
         end
 
         if !frame.decode_payload()    return false end
-        self.device.received_ack(frame.ack_message_counter)     # remove acknowledge packet from sending list
+        self.device.received_ack(frame)                         # remove acknowledge packet from sending list
         if frame.opcode != 0x10                                 # don't show `MRP_Standalone_Acknowledgement`
           var op_name = matter.get_opcode_name(frame.opcode)
           if !op_name   op_name = string.format("0x%02X", frame.opcode) end
@@ -160,7 +160,7 @@ class Matter_MessageHandler
 
         tasmota.log(string.format("MTR: >rcv       (%6i) [%02X/%02X] rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.protocol_id, frame.opcode, frame.message_counter, frame.exchange_id, str(frame.ack_message_counter), frame.x_flag_r ? "{reliable} " : "", addr, port), 3)
 
-        self.device.received_ack(frame.ack_message_counter)      # remove acknowledge packet from sending list
+        self.device.received_ack(frame)                     # remove acknowledge packet from sending list
 
         # dispatch according to protocol_id
         var protocol_id = frame.protocol_id
@@ -210,8 +210,18 @@ class Matter_MessageHandler
   end
 
   #############################################################
-  def send_response(raw, addr, port, id, session_id)
-    self.device.msg_send(raw, addr, port, id, session_id)
+  # send a frame to target, usually a response
+  #
+  # We need the following:
+  #   msg.raw:              raw bytes to send (bytes)
+  #   msg.remote_ip:        ip address of target (string)
+  #   msg.remote_port:      port of target (int)
+  #   msg.x_flag_r:         is the frame expecting a Ack back (int)
+  #   msg.message_counter:  counter for this message (int)
+  #   msg.exchange_id:      exchange id (int)
+  #   msg.local_session_id: local session (for logging)
+  def send_response_frame(msg)
+    self.device.msg_send(msg)
   end
 
   #############################################################

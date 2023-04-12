@@ -336,15 +336,15 @@ class Matter_Device
   #############################################################
   # Global entry point for sending a message.
   # Delegates to `udp_server`
-  def msg_send(raw, addr, port, id, session_id)
-    return self.udp_server.send_response(raw, addr, port, id, session_id)
+  def msg_send(msg)
+    return self.udp_server.send_UDP(msg)
   end
 
   #############################################################
   # Signals that a ack was received.
   # Delegates to `udp_server` to remove from resending list.
-  def received_ack(id)
-    return self.udp_server.received_ack(id)
+  def received_ack(msg)
+    return self.udp_server.received_ack(msg)
   end
 
   #############################################################

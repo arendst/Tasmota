@@ -123,7 +123,7 @@ class Matter_IM_Message
     resp.encode_frame(self.data.to_TLV().tlv2raw())    # payload in cleartext
     resp.encrypt()
     tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter),3)
-    responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
+    responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
     return true
   end
@@ -244,7 +244,7 @@ class Matter_IM_ReportData : Matter_IM_Message
     resp.encrypt()
     # print(">>>>> send elements after encrypt")
     tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter),3)
-    responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
+    responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
 
     if size(next_elemnts) > 0
@@ -340,7 +340,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
         resp.encode_frame()
         resp.encrypt()
         tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
-        responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, nil #-not reliable-#, resp.session.local_session_id)
+        responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
         return true                             # we received a ack(), just finish
       end
@@ -399,7 +399,7 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
       self.resp.opcode = 0x04 #- Subscribe Response -#
       resp.encode_frame(sr.to_TLV().tlv2raw())    # payload in cleartext
       resp.encrypt()
-      responder.send_response(resp.raw, resp.remote_ip, resp.remote_port, resp.message_counter, resp.session.local_session_id)
+      responder.send_response_frame(resp)
       self.last_counter = resp.message_counter
       tasmota.log(string.format("MTR: Send SubscribeResponseMessage sub=%i id=%i", self.sub.subscription_id, resp.message_counter), 3)
       self.sub.re_arm()
