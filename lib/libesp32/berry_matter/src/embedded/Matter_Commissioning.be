@@ -120,7 +120,7 @@ class Matter_Commisioning_Context
 
     var raw = resp.encode_frame(status_raw)
 
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, reliable ? resp.message_counter : nil, msg.session.local_session_id)
+    self.responder.send_response_frame(resp)
   end
 
   def parse_PBKDFParamRequest(msg)
@@ -169,7 +169,7 @@ class Matter_Commisioning_Context
     var resp = msg.build_response(0x21 #-PBKDR Response-#, true)
     var raw = resp.encode_frame(pbkdfparamresp_raw)
 
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter, msg.session.local_session_id)
+    self.responder.send_response_frame(resp)
     return true
   end
 
@@ -250,7 +250,7 @@ class Matter_Commisioning_Context
     var resp = msg.build_response(0x23 #-pake-2-#, true)  # no reliable flag
     var raw = resp.encode_frame(pake2_raw)
 
-    self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter, msg.session.local_session_id)
+    self.responder.send_response_frame(resp)
     return true
   end
 
@@ -432,7 +432,7 @@ class Matter_Commisioning_Context
         var resp = msg.build_response(0x33 #-sigma-2-resume-#, true)
         var raw = resp.encode_frame(sigma2resume_raw)
     
-        self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter, msg.session.local_session_id)
+        self.responder.send_response_frame(resp)
 
         session.close()
         session.set_keys(i2r, r2i, ac, created)
@@ -542,7 +542,7 @@ class Matter_Commisioning_Context
       var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
       var raw = resp.encode_frame(sigma2_raw)
   
-      self.responder.send_response(raw, msg.remote_ip, msg.remote_port, resp.message_counter, msg.session.local_session_id)
+      self.responder.send_response_frame(resp)
       return true
     end
 

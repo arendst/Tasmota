@@ -37,33 +37,22 @@ class Matter_UDPPacket_sent
   var addr                        # ip_address (string)
   var port                        # port (int)
   var msg_id                      # (int) message identifier that needs to be acknowledged, or `nil` if no ack needed
-  var session_id                  # (int) exchange id, for logging only
+  var exchange_id                 # (int) exchange id, to match ack
+  var session_id                  # (int) session id, for logging only
   var retries                     # 0 in first attempts, goes up to RETRIES
   var next_try                    # timestamp (millis) when to try again
 
-  def init(raw, addr, port, id, session_id)
-    self.raw = raw
-    self.addr = addr
-    self.port = port
-    self.msg_id = id
+  def init(msg)
+    # extract information from msg
+    self.raw = msg.raw
+    self.addr = msg.remote_ip
+    self.port = msg.remote_port
+    self.msg_id = msg.x_flag_r ? msg.message_counter : nil
+    self.exchange_id = (msg.exchange_id != nil) ? msg.exchange_id : 0
+    self.session_id = (msg.local_session_id != nil) ?  msg.local_session_id : 0
+    # other information
     self.retries = 0
-    self.session_id = (session_id != nil) ? session_id : 0
     self.next_try = tasmota.millis() + matter.UDPServer._backoff_time(self.retries)
-  end
-
-  #############################################################
-  # Send packet now.
-  #
-  # Returns `true` if packet was successfully sent.
-  def send(udp_socket)
-    import string
-    var ok = udp_socket.send(self.addr ? self.addr : udp_socket.remote_ip, self.port ? self.port : udp_socket.remote_port, self.raw)
-    if ok
-      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", self.addr, self.port), 4)
-    else
-      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", self.addr, self.port), 3)
-    end
-    return ok
   end
 
 end
@@ -74,7 +63,7 @@ matter.UDPPacket_sent = Matter_UDPPacket_sent
 #
 #################################################################################
 class Matter_UDPServer
-  static var RETRIES = 6            # 7 transmissions max (6 retries) - 2 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
+  static var RETRIES = 5            # 6 transmissions max (5 retries) - 1 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
   static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
   var addr, port                    # local addr and port
   var listening                     # true if active
@@ -151,6 +140,21 @@ class Matter_UDPServer
   end
 
   #############################################################
+  # Send packet now.
+  #
+  # Returns `true` if packet was successfully sent.
+  def send(packet)
+    import string
+    var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
+    if ok
+      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
+    else
+      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 2)
+    end
+    return ok
+  end
+
+  #############################################################
   # Resend packets if they have not been acknowledged by receiver
   # either with direct Ack packet or ack embedded in another packet.
   # Packets with `id`=`nil` are not resent.
@@ -166,7 +170,7 @@ class Matter_UDPServer
       if tasmota.time_reached(packet.next_try)
         if packet.retries <= self.RETRIES
           tasmota.log("MTR: .          Resending packet id=" + str(packet.msg_id), 3)
-          packet.send(self.udp_socket)         # resend
+          self.send(packet)
           packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)
           packet.retries += 1
           idx += 1
@@ -183,12 +187,15 @@ class Matter_UDPServer
 
   #############################################################
   # Just received acknowledgment, remove packet from sender
-  def received_ack(id)
+  def received_ack(msg)
+    var id = msg.ack_message_counter
+    var exch = msg.exchange_id
     if id == nil   return end
     tasmota.log("MTR: receveived ACK id="+str(id), 3)
     var idx = 0
     while idx < size(self.packets_sent)
-      if self.packets_sent[idx].msg_id == id
+      var packet = self.packets_sent[idx]
+      if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
         tasmota.log("MTR: .          Removed packet from sending list id=" + str(id), 3)
       else
@@ -199,11 +206,10 @@ class Matter_UDPServer
 
   #############################################################
   # Send a packet, enqueue it if `id` is not `nil`
-  def send_response(raw, addr, port, id, session_id)
-    var packet = matter.UDPPacket_sent(raw, addr, port, id, session_id)
-    packet.send(self.udp_socket)    # send
-    if id
-      # tasmota.log("MTR: <<< enqueue id="+str(id))
+  def send_UDP(msg)
+    var packet = matter.UDPPacket_sent(msg)
+    self.send(packet)
+    if packet.msg_id
       self.packets_sent.push(packet)
     end
   end
