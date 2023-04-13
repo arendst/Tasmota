@@ -35,38 +35,21 @@ class Matter_Commisioning_Context
 
   var responder                       # reference to the caller, sending packets
   var device                          # root device object
-  var spake
-  var future_initiator_session_id
-  var future_local_session_id
-  # used by TT hash
-  var PBKDFParamRequest, PBKDFParamResponse
-  # PAKE
-  var y                               # 32 bytes random known only by verifier
-  var pA, pB, cA, cB
-  var Ke
-  # CASE
-  var ResponderEph_priv, ResponderEph_pub
-  var initiatorEph_pub
-  # Session data
-  var created
-  var I2RKey, R2IKey, AttestationChallenge
-
+  
   def init(responder)
     import crypto
     self.responder = responder
     self.device = responder.device
-    # generate y once
-    self.y = crypto.random(32)
   end
 
   #############################################################
-  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac, created)
+  def add_session(local_session_id, initiator_session_id, i2r, r2i, ac)
     import string
     # create session object
     tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 3)
     
     var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
-    session.set_keys(i2r, r2i, ac, created)
+    session.set_keys(i2r, r2i, ac)
   end
 
   def process_incoming(msg)
@@ -126,6 +109,7 @@ class Matter_Commisioning_Context
   def parse_PBKDFParamRequest(msg)
     import crypto
     import string
+    var session = msg.session
     # sanity checks
     if msg.opcode != 0x20 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid PBKDFParamRequest message", 2)
@@ -136,7 +120,7 @@ class Matter_Commisioning_Context
     var pbkdfparamreq = matter.PBKDFParamRequest().parse(msg.raw, msg.app_payload_idx)
     msg.session.set_mode_PASE()
 
-    self.PBKDFParamRequest = msg.raw[msg.app_payload_idx..]
+    session.__Msg1 = msg.raw[msg.app_payload_idx..]
 
     # sanity check for PBKDFParamRequest
     if pbkdfparamreq.passcodeId != 0
@@ -147,9 +131,9 @@ class Matter_Commisioning_Context
     end
 
     # record the initiator_session_id
-    self.future_initiator_session_id = pbkdfparamreq.initiator_session_id
-    self.future_local_session_id = self.device.sessions.gen_local_session_id()
-    tasmota.log(string.format("MTR: +Session   (%6i) from '[%s]:%i'", self.future_local_session_id, msg.remote_ip, msg.remote_port), 2)
+    session.__future_initiator_session_id = pbkdfparamreq.initiator_session_id
+    session.__future_local_session_id = self.device.sessions.gen_local_session_id()
+    tasmota.log(string.format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 2)
 
     # prepare response
     var pbkdfparamresp = matter.PBKDFParamResponse()
@@ -157,14 +141,14 @@ class Matter_Commisioning_Context
     pbkdfparamresp.initiatorRandom = pbkdfparamreq.initiatorRandom
     # generate 32 bytes random
     pbkdfparamresp.responderRandom = crypto.random(32)
-    pbkdfparamresp.responderSessionId = self.future_local_session_id
+    pbkdfparamresp.responderSessionId = session.__future_local_session_id
     pbkdfparamresp.pbkdf_parameters_salt = self.device.commissioning_salt
     pbkdfparamresp.pbkdf_parameters_iterations = self.device.commissioning_iterations
     tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
     var pbkdfparamresp_raw = pbkdfparamresp.tlv2raw()
     tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
 
-    self.PBKDFParamResponse = pbkdfparamresp_raw
+    session.__Msg2 = pbkdfparamresp_raw
 
     var resp = msg.build_response(0x21 #-PBKDR Response-#, true)
     var raw = resp.encode_frame(pbkdfparamresp_raw)
@@ -175,6 +159,7 @@ class Matter_Commisioning_Context
 
   def parse_Pake1(msg)
     import crypto
+    var session = msg.session
     # sanity checks
     if msg.opcode != 0x22 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid Pake1 message", 2)
@@ -184,67 +169,68 @@ class Matter_Commisioning_Context
     end
     var pake1 = matter.Pake1().parse(msg.raw, msg.app_payload_idx)
 
-    self.pA = pake1.pA
-    # tasmota.log("MTR: received pA=" + self.pA.tohex(), 4)
-
+    var pA = pake1.pA
+    # tasmota.log("MTR: received pA=" + pA.tohex(), 4)
     
-    # tasmota.log("MTR: spake: " + matter.inspect(self.spake), 4)
     # instanciate SPAKE
     # for testing purpose, we don't send `w1` to make sure
-    self.spake = crypto.SPAKE2P_Matter(self.device.commissioning_w0, nil, self.device.commissioning_L)
+    var spake = crypto.SPAKE2P_Matter(self.device.commissioning_w0, nil, self.device.commissioning_L)
+
+    # generate `y` nonce (not persisted)
+    var y = crypto.random(32)                     # 32 bytes random known only by verifier
+
     # compute pB
-    self.spake.compute_pB(self.y)
-    self.pB = self.spake.pB
-    # tasmota.log("MTR: y=" + self.y.tohex(), 4)
-    # tasmota.log("MTR: pb=" + self.pB.tohex(), 4)
+    spake.compute_pB(y)
+    # tasmota.log("MTR: y=" + y.tohex(), 4)
+    # tasmota.log("MTR: pb=" + spake.pB.tohex(), 4)
 
     # compute ZV
-    self.spake.compute_ZV_verifier(self.pA)
-    # tasmota.log("MTR: Z=" + self.spake.Z.tohex(), 4)
-    # tasmota.log("MTR: V=" + self.spake.V.tohex(), 4)
+    spake.compute_ZV_verifier(pA)
+    # tasmota.log("MTR: Z=" + spake.Z.tohex(), 4)
+    # tasmota.log("MTR: V=" + spake.V.tohex(), 4)
 
     var context = crypto.SHA256()
     context.update(bytes().fromstring(self.Matter_Context_Prefix))
-    context.update(self.PBKDFParamRequest)
-    context.update(self.PBKDFParamResponse)
+    context.update(session.__Msg1)
+    context.update(session.__Msg2)
     var context_hash = context.out()
 
     # tasmota.log("MTR: Context=" + context_hash.tohex(), 4)
 
     # add pA
-    self.spake.pA = self.pA
+    spake.pA = pA
 
-    self.spake.set_context(context_hash)
-    self.spake.compute_TT_hash(true)      # `true` to indicate it's Matter variant to SPAKE2+
+    spake.set_context(context_hash)
+    spake.compute_TT_hash(true)      # `true` to indicate it's Matter variant to SPAKE2+
 
     # tasmota.log("MTR: ------------------------------", 4)
-    # tasmota.log("MTR: Context = " + self.spake.Context.tohex(), 4)
-    # tasmota.log("MTR: M       = " + self.spake.M.tohex(), 4)
-    # tasmota.log("MTR: N       = " + self.spake.N.tohex(), 4)
-    # tasmota.log("MTR: pA      = " + self.spake.pA.tohex(), 4)
-    # tasmota.log("MTR: pB      = " + self.spake.pB.tohex(), 4)
-    # tasmota.log("MTR: Z       = " + self.spake.Z.tohex(), 4)
-    # tasmota.log("MTR: V       = " + self.spake.V.tohex(), 4)
-    # tasmota.log("MTR: w0      = " + self.spake.w0.tohex(), 4)
+    # tasmota.log("MTR: Context = " + spake.Context.tohex(), 4)
+    # tasmota.log("MTR: M       = " + spake.M.tohex(), 4)
+    # tasmota.log("MTR: N       = " + spake.N.tohex(), 4)
+    # tasmota.log("MTR: pA      = " + spake.pA.tohex(), 4)
+    # tasmota.log("MTR: pB      = " + spake.pB.tohex(), 4)
+    # tasmota.log("MTR: Z       = " + spake.Z.tohex(), 4)
+    # tasmota.log("MTR: V       = " + spake.V.tohex(), 4)
+    # tasmota.log("MTR: w0      = " + spake.w0.tohex(), 4)
     # tasmota.log("MTR: ------------------------------", 4)
 
-    # tasmota.log("MTR: Kmain   =" + self.spake.Kmain.tohex(), 4)
+    # tasmota.log("MTR: Kmain   =" + spake.Kmain.tohex(), 4)
 
-    # tasmota.log("MTR: KcA     =" + self.spake.KcA.tohex(), 4)
-    # tasmota.log("MTR: KcB     =" + self.spake.KcB.tohex(), 4)
-    # tasmota.log("MTR: K_shared=" + self.spake.K_shared.tohex(), 4)
-    # tasmota.log("MTR: Ke      =" + self.spake.Ke.tohex(), 4)
-    self.cB = self.spake.cB
-    self.Ke = self.spake.Ke
-    # tasmota.log("MTR: cB=" + self.cB.tohex(), 4)
+    # tasmota.log("MTR: KcA     =" + spake.KcA.tohex(), 4)
+    # tasmota.log("MTR: KcB     =" + spake.KcB.tohex(), 4)
+    # tasmota.log("MTR: K_shared=" + spake.K_shared.tohex(), 4)
+    # tasmota.log("MTR: Ke      =" + spake.Ke.tohex(), 4)
+    # tasmota.log("MTR: cB=" + spake.cB.tohex(), 4)
 
     var pake2 = matter.Pake2()
-    pake2.pB = self.pB
-    pake2.cB = self.cB
+    pake2.pB = spake.pB
+    pake2.cB = spake.cB
     # tasmota.log("MTR: pake2: " + matter.inspect(pake2), 4)
     var pake2_raw = pake2.tlv2raw()
     # tasmota.log("MTR: pake2_raw: " + pake2_raw.tohex(), 4)
 
+    session.__spake_cA = spake.cA
+    session.__spake_Ke = spake.Ke
 
     # now package the response message
     var resp = msg.build_response(0x23 #-pake-2-#, true)  # no reliable flag
@@ -256,6 +242,7 @@ class Matter_Commisioning_Context
 
   def parse_Pake3(msg)
     import crypto
+    var session = msg.session
     # sanity checks
     if msg.opcode != 0x24 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid Pake3 message", 2)
@@ -265,11 +252,11 @@ class Matter_Commisioning_Context
     end
     var pake3 = matter.Pake3().parse(msg.raw, msg.app_payload_idx)
 
-    self.cA = pake3.cA
-    # tasmota.log("MTR: received cA=" + self.cA.tohex(), 4)
+    var cA = pake3.cA
+    # tasmota.log("MTR: received cA=" + cA.tohex(), 4)
 
     # check the value against computed
-    if self.cA != self.spake.cA
+    if cA != session.__spake_cA
       tasmota.log("MTR: invalid cA received", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
       var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
@@ -277,23 +264,23 @@ class Matter_Commisioning_Context
     end
 
     # send PakeFinished and compute session key
-    self.created = tasmota.rtc()['utc']
-    var session_keys = crypto.HKDF_SHA256().derive(self.Ke, bytes(), bytes().fromstring(self.SEKeys_Info), 48)
-    self.I2RKey = session_keys[0..15]
-    self.R2IKey = session_keys[16..31]
-    self.AttestationChallenge = session_keys[32..47]
+    var created = tasmota.rtc()['utc']
+    var session_keys = crypto.HKDF_SHA256().derive(session.__spake_Ke, bytes(), bytes().fromstring(self.SEKeys_Info), 48)
+    var I2RKey = session_keys[0..15]
+    var R2IKey = session_keys[16..31]
+    var AttestationChallenge = session_keys[32..47]
 
     # tasmota.log("MTR: ******************************", 4)
     # tasmota.log("MTR: session_keys=" + session_keys.tohex(), 4)
-    # tasmota.log("MTR: I2RKey      =" + self.I2RKey.tohex(), 4)
-    # tasmota.log("MTR: R2IKey      =" + self.R2IKey.tohex(), 4)
-    # tasmota.log("MTR: AC          =" + self.AttestationChallenge.tohex(), 4)
+    # tasmota.log("MTR: I2RKey      =" + I2RKey.tohex(), 4)
+    # tasmota.log("MTR: R2IKey      =" + R2IKey.tohex(), 4)
+    # tasmota.log("MTR: AC          =" + AttestationChallenge.tohex(), 4)
     # tasmota.log("MTR: ******************************", 4)
 
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
     var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
 
-    self.add_session(self.future_local_session_id, self.future_initiator_session_id, self.I2RKey, self.R2IKey, self.AttestationChallenge, self.created)
+    self.add_session(session.__future_local_session_id, session.__future_initiator_session_id, I2RKey, R2IKey, AttestationChallenge, created)
     return true
   end
 
@@ -323,6 +310,7 @@ class Matter_Commisioning_Context
   def parse_Sigma1(msg)
     import crypto
     import string
+    var session = msg.session
     # sanity checks
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
       # tasmota.log("MTR: invalid Sigma1 message", 2)
@@ -333,7 +321,7 @@ class Matter_Commisioning_Context
     var sigma1 = matter.Sigma1().parse(msg.raw, msg.app_payload_idx)
     tasmota.log(string.format("MTR: sigma1=%s", matter.inspect(sigma1)), 4)
 
-    self.initiatorEph_pub = sigma1.initiatorEphPubKey
+    session.__initiator_pub = sigma1.initiatorEphPubKey
 
     # find session
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
@@ -342,7 +330,6 @@ class Matter_Commisioning_Context
     is_resumption = false
 
     # Check that it's a resumption
-    var session = msg.session
     var session_resumption
     if is_resumption
       session_resumption = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
@@ -378,7 +365,6 @@ class Matter_Commisioning_Context
         session.set_mode_CASE()
         session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
         session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-        # self.future_local_session_id = session.__future_local_session_id
         tasmota.log(string.format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 2)
 
         # Generate and Send Sigma2_Resume
@@ -467,8 +453,7 @@ class Matter_Commisioning_Context
   
       session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
       session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-      self.future_local_session_id = session.__future_local_session_id
-      tasmota.log(string.format("MTR: +Session   (%6i) from '[%s]:%i'", self.future_local_session_id, msg.remote_ip, msg.remote_port), 2)
+      tasmota.log(string.format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 2)
 
       tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
       tasmota.log("MTR: no_private_key="+session._fabric.no_private_key.tohex(), 4)
@@ -480,18 +465,18 @@ class Matter_Commisioning_Context
 
       # Compute Sigma2, p.162
       session.resumption_id = crypto.random(16)
-      self.ResponderEph_priv = crypto.random(32)
-      self.ResponderEph_pub = crypto.EC_P256().public_key(self.ResponderEph_priv)
-      tasmota.log("MTR: ResponderEph_priv  ="+self.ResponderEph_priv.tohex(), 4)
-      tasmota.log("MTR: ResponderEph_pub  ="+self.ResponderEph_pub.tohex(), 4)
+      session.__responder_priv = crypto.random(32)
+      session.__responder_pub = crypto.EC_P256().public_key(session.__responder_priv)
+      tasmota.log("MTR: ResponderEph_priv  ="+session.__responder_priv.tohex(), 4)
+      tasmota.log("MTR: ResponderEph_pub  ="+session.__responder_pub.tohex(), 4)
       var responderRandom = crypto.random(32)
 
-      session.shared_secret = crypto.EC_P256().shared_key(self.ResponderEph_priv, sigma1.initiatorEphPubKey)
+      session.shared_secret = crypto.EC_P256().shared_key(session.__responder_priv, sigma1.initiatorEphPubKey)
 
       var sigma2_tbsdata = matter.TLV.Matter_TLV_struct()
       sigma2_tbsdata.add_TLV(1, matter.TLV.B2, session.get_noc())
       sigma2_tbsdata.add_TLV(2, matter.TLV.B2, session.get_icac())
-      sigma2_tbsdata.add_TLV(3, matter.TLV.B2, self.ResponderEph_pub)
+      sigma2_tbsdata.add_TLV(3, matter.TLV.B2, session.__responder_pub)
       sigma2_tbsdata.add_TLV(4, matter.TLV.B2, sigma1.initiatorEphPubKey)
 
       var TBSData2Signature = crypto.EC_P256().ecdsa_sign_sha256(session.get_pk(), sigma2_tbsdata.tlv2raw())
@@ -512,7 +497,7 @@ class Matter_Commisioning_Context
 
       # Compute S2K, p.175
       var s2k_info = bytes().fromstring(self.S2K_Info)
-      var s2k_salt = session.get_ipk_group_key() + responderRandom + self.ResponderEph_pub + TranscriptHash
+      var s2k_salt = session.get_ipk_group_key() + responderRandom + session.__responder_pub + TranscriptHash
 
       var s2k = crypto.HKDF_SHA256().derive(session.shared_secret, s2k_salt, s2k_info, 16)
       tasmota.log("MTR: * SharedSecret  = " + session.shared_secret.tohex(), 4)
@@ -530,8 +515,8 @@ class Matter_Commisioning_Context
 
       var sigma2 = matter.Sigma2()
       sigma2.responderRandom = responderRandom
-      sigma2.responderSessionId = self.future_local_session_id
-      sigma2.responderEphPubKey = self.ResponderEph_pub
+      sigma2.responderSessionId = session.__future_local_session_id
+      sigma2.responderEphPubKey = session.__responder_pub
       sigma2.encrypted2 = TBEData2Encrypted
       tasmota.log("MTR: sigma2: " + matter.inspect(sigma2), 4)
       var sigma2_raw = sigma2.tlv2raw()
@@ -617,8 +602,8 @@ class Matter_Commisioning_Context
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
     sigma3_tbs.add_TLV(1, matter.TLV.B1, initiatorNOC)
     sigma3_tbs.add_TLV(2, matter.TLV.B1, initiatorICAC)
-    sigma3_tbs.add_TLV(3, matter.TLV.B1, self.initiatorEph_pub)
-    sigma3_tbs.add_TLV(4, matter.TLV.B1, self.ResponderEph_pub)
+    sigma3_tbs.add_TLV(3, matter.TLV.B1, session.__initiator_pub)
+    sigma3_tbs.add_TLV(4, matter.TLV.B1, session.__responder_pub)
     tasmota.log("MTR: * sigma3_tbs    = " + str(sigma3_tbs), 4)
     var sigma3_tbs_raw = sigma3_tbs.tlv2raw()
     tasmota.log("MTR: * sigma3_tbs_raw= " + sigma3_tbs_raw.tohex(), 4)
