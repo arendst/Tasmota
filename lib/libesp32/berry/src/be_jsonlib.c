@@ -178,6 +178,11 @@ static const char* parser_string(bvm *vm, const char *json)
                     }
                     default: be_free(vm, buf, len); return NULL; /* error */
                     }
+                } else if(ch >= 0 && ch <= 0x1f) {
+                    /* control characters must be escaped
+                       as per https://www.rfc-editor.org/rfc/rfc7159#section-7 */
+                    be_free(vm, buf, len);
+                    return NULL;
                 } else {
                     *dst++ = (char)ch;
                 }
@@ -273,6 +278,92 @@ static const char* parser_array(bvm *vm, const char *json)
     return json;
 }
 
+static const char* parser_number(bvm *vm, const char *json)
+{
+    char c = *json++;
+    bbool is_neg = c == '-';
+    if(is_neg) {
+        c = *json++;
+        if(!is_digit(c)) {
+            /* minus must be followed by digit */
+            return NULL;
+        }
+    }
+    bint intv = 0;
+    if(c != '0') {
+        /* parse integer part */
+        while(is_digit(c)) {
+            intv = intv * 10 + c - '0';
+            c = *json++;
+        }
+
+    } else {
+        /* 
+            Number starts with zero, this is only allowed  
+            if the number is just '0' or 
+            it has a fractional part or exponent.
+        */
+       c = *json++;
+
+    }
+    if(c != '.' && c != 'e' && c != 'E') {
+        /* 
+           No fractional part or exponent follows, this is an integer.
+           If digits follow after it (for example due to a leading zero) 
+           this will cause an error in the calling function.
+        */
+        be_pushint(vm, intv * (is_neg ? -1 : 1));
+        json--;
+        return json;
+    }
+    breal realval = (breal) intv;
+    if(c == '.') {
+
+        breal deci = 0.0, point = 0.1;
+        /* fractional part */
+        c = *json++;
+        if(!is_digit(c)) {
+            /* decimal point must be followed by digit */
+            return NULL;
+        }
+        while (is_digit(c)) {
+            deci = deci + ((breal)c - '0') * point;
+            point *= (breal)0.1;
+            c = *json++;
+        }
+
+        realval += deci;
+    }
+    if(c == 'e' || c == 'E') {
+        c = *json++;
+        /* exponent part */
+        breal ratio = c == '-' ? (breal)0.1 : 10;
+        if (c == '+' || c == '-') {
+            c = *json++;
+            if(!is_digit(c)) {
+                return NULL;
+            }
+        }
+        if(!is_digit(c)) {
+            /* e and sign must be followed by digit */
+            return NULL;
+        }
+        unsigned int e = 0;
+        while (is_digit(c)) {
+            e = e * 10 + c - '0';
+            c = *json++;
+        }
+        /* e > 0 must be here to prevent infinite loops when e overflows */
+        while (e--) {
+            realval *= ratio;
+        }
+   }
+
+   be_pushreal(vm, realval * (is_neg ? -1.0 : 1.0));
+   json--;
+   return json;
+}
+
 /* parser json value */
 static const char* parser_value(bvm *vm, const char *json)
 {
@@ -292,11 +383,7 @@ static const char* parser_value(bvm *vm, const char *json)
         return parser_null(vm, json);
     default: /* number */
         if (*json == '-' || is_digit(*json)) {
-            /* check invalid JSON syntax: 0\d+ */
-            if (json[0] == '0' && is_digit(json[1])) {
-                return NULL;
-            }
-            return be_str2num(vm, json);
+           return parser_number(vm, json);
         }
     }
     return NULL;
