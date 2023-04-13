@@ -40,13 +40,28 @@
 TasmotaModbus *Sdm72Modbus;
 
 const uint16_t sdm72_register[] {
-  0x0034,   // 0 SDM72D_POWER               [W]
-  0x0156,   // 3 SDM72D_TOTAL_ACTIVE        [kWh]
+  0x0000,  // Phase 1 line to neutral volts [V]
+  0x0002,  // Phase 2 line to neutral volts [V]
+  0x0004,  // Phase 3 line to neutral volts [V]
+  0x0006,  // Phase 1 current               [A]
+  0x0008,  // Phase 2 current               [A]
+  0x000A,  // Phase 3 current               [A]
+  0x000C,  // Phase 1 power                 [W]
+  0x000E,  // Phase 2 power                 [W]
+  0x0010,  // Phase 3 power                 [W]
+  0x0018,  // Phase 1 volt amps reactive    [VAr]
+  0x001A,  // Phase 2 volt amps reactive    [VAr]
+  0x001C,  // Phase 3 volt amps reactive    [VAr]
+  0x001E,  // Phase 1 power factor
+  0x0020,  // Phase 2 power factor
+  0x0022,  // Phase 3 power factor
+  0x0046,  // Frequency of supply voltages
+  0x0156,  // Total Energy                  [kWh]
 #ifdef SDM72_IMPEXP
-  0x0500,   // 1 SDM72D_IMPORT_POWER        [W]
-  0x0502,   // 2 SDM72D_EXPORT_POWER        [W]
-  0x0048,   // 4 SDM72D_IMPORT_ACTIVE       [kWh]
-  0x004A    // 5 SDM72D_EXPORT_ACTIVE       [kWh]
+  0x0500,   // Total import active power    [W]
+  0x0502,   // Total export active power    [W]
+  0x0048,   // Import active energy         [kWh]
+  0x004A    // Export active energy         [kWh]
 #endif  //  SDM72_IMPEXP
 };
 
@@ -77,6 +92,8 @@ void Sdm72Every250ms(void)
       AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: SDM72 error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
+      Energy->data_valid[1] = 0;
+      Energy->data_valid[2] = 0;
 
       float value;
       ((uint8_t*)&value)[3] = buffer[3];   // Get float values
@@ -86,35 +103,97 @@ void Sdm72Every250ms(void)
 
       switch(Sdm72.read_state) {
         case 0:
-          Energy->active_power[0] = value;     // W
+          Energy->voltage[0] = value;
           break;
 
         case 1:
+          Energy->voltage[1] = value;
+          break;
+
+        case 2:
+          Energy->voltage[2] = value;
+          break;
+
+        case 3:
+          Energy->current[0] = value;
+          break;
+
+        case 4:
+          Energy->current[1] = value;
+          break;
+
+        case 5:
+          Energy->current[2] = value;
+          break;
+
+        case 6:
+          Energy->active_power[0] = value;
+          break;
+
+        case 7:
+          Energy->active_power[1] = value;
+          break;
+
+        case 8:
+          Energy->active_power[2] = value;
+          break;
+
+        case 9:
+          Energy->reactive_power[0] = value;
+          break;
+
+        case 10:
+          Energy->reactive_power[1] = value;
+          break;
+
+        case 11:
+          Energy->reactive_power[2] = value;
+          break;
+
+        case 12:
+          Energy->power_factor[0] = value;
+          break;
+
+        case 13:
+          Energy->power_factor[1] = value;
+          break;
+
+        case 14:
+          Energy->power_factor[2] = value;
+          break;
+
+        case 15:
+          Energy->frequency[0] = value;
+          break;
+
+        case 16:
           Sdm72.total_active = value;         // kWh
           break;
 
 #ifdef SDM72_IMPEXP
-        case 2:
+        case 17:
           Sdm72.import_power = value;         // W
           break;
 
-        case 3:
+        case 18:
           Sdm72.export_power = value;         // W
           break;
 
-        case 4:
+        case 19:
           Energy->import_active[0] = value;    // kWh
           break;
 
-        case 5:
+        case 20:
           Energy->export_active[0] = value;    // kWh
           break;
 #endif  //  SDM72_IMPEXP
       }
 
       ++Sdm72.read_state %= nitems(sdm72_register);
-      if (0 == Sdm72.read_state && !isnan(Sdm72.total_active)) {
-        Energy->import_active[0] = Sdm72.total_active;
+      if (0 == Sdm72.read_state) {
+        if (!isnan(Sdm72.total_active)) {
+          Energy->import_active[0] = Sdm72.total_active;
+        }
         EnergyUpdateTotal();
       }
     }
@@ -136,6 +215,8 @@ void Sdm72SnsInit(void)
     if (2 == result) {
         ClaimSerial();
     }
+    Energy->phase_count = 3;
+    Energy->frequency_common = true;
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
@@ -144,8 +225,6 @@ void Sdm72SnsInit(void)
 void Sdm72DrvInit(void)
 {
   if (PinUsed(GPIO_SDM72_RX) && PinUsed(GPIO_SDM72_TX)) {
-    Energy->voltage_available = false;
-    Energy->current_available = false;
     TasmotaGlobal.energy_driver = XNRG_18;
   }
 }
