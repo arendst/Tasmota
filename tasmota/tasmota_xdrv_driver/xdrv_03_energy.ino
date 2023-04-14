@@ -1260,7 +1260,7 @@ void EnergyShow(bool json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
 
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s"),
-      GetDateAndTime(DT_ENERGY).c_str(),
+      GetDT(Settings->energy_kWhtotal_time).c_str(),
       EnergyFmt(Energy->total, Settings->flag2.energy_resolution, 2));
 
     if (energy_tariff) {
