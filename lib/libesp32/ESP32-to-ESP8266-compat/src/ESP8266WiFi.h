@@ -29,10 +29,24 @@
 #define WIFI_LIGHT_SLEEP	1
 #define WIFI_MODEM_SLEEP	2
 
+// ESP8266
 typedef enum WiFiPhyMode
 {
-    WIFI_PHY_MODE_11B = 1, WIFI_PHY_MODE_11G = 2, WIFI_PHY_MODE_11N = 3
+    TAS_WIFI_PHY_MODE_LR = 0, TAS_WIFI_PHY_MODE_11B = 1, TAS_WIFI_PHY_MODE_11G = 2, TAS_WIFI_PHY_MODE_11N = 3
 } WiFiPhyMode_t;
+
+/*
+// ESP32 was never defined until IDF 4.4
+typedef enum
+{
+    WIFI_PHY_MODE_LR,   // PHY mode for Low Rate
+    WIFI_PHY_MODE_11B,  // PHY mode for 11b
+    WIFI_PHY_MODE_11G,  // PHY mode for 11g
+    WIFI_PHY_MODE_HT20, // PHY mode for 11n Bandwidth HT20
+    WIFI_PHY_MODE_HT40, // PHY mode for 11n Bandwidth HT40
+    WIFI_PHY_MODE_HE20, // PHY mode for 11n Bandwidth HE20
+} wifi_phy_mode_t;
+*/
 
 class WiFiClass32 : public WiFiClass
 {

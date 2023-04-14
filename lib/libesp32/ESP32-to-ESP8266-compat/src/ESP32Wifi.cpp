@@ -137,10 +137,10 @@ int WiFiClass32::getPhyMode() {
   int phy_mode = 0;  // " BGNL"
   uint8_t protocol_bitmap;
   if (esp_wifi_get_protocol(WIFI_IF_STA, &protocol_bitmap) == ESP_OK) {
-    if (protocol_bitmap & 1) { phy_mode = WIFI_PHY_MODE_11B; }  // 1 = 11b
-    if (protocol_bitmap & 2) { phy_mode = WIFI_PHY_MODE_11G; }  // 2 = 11bg
-    if (protocol_bitmap & 4) { phy_mode = WIFI_PHY_MODE_11N; }  // 3 = 11bgn
-    if (protocol_bitmap & 8) { phy_mode = 4; }  // Low rate
+    if (protocol_bitmap & 1) { phy_mode = TAS_WIFI_PHY_MODE_11B; }  // 1 = 11b (WIFI_PHY_MODE_11B)
+    if (protocol_bitmap & 2) { phy_mode = TAS_WIFI_PHY_MODE_11G; }  // 2 = 11bg (WIFI_PHY_MODE_11G)
+    if (protocol_bitmap & 4) { phy_mode = TAS_WIFI_PHY_MODE_11N; }  // 3 = 11bgn (WIFI_PHY_MODE_11N)
+    if (protocol_bitmap & 8) { phy_mode = 4; }  // Low rate (WIFI_PHY_MODE_LR)
   }
   return phy_mode;
 }
@@ -240,7 +240,7 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
   ip_addr_t addr;
   aResult = (uint32_t) 0;     // by default set to IPv4 0.0.0.0
   dns_ipaddr = *IP4_ADDR_ANY;  // by default set to IPv4 0.0.0.0
-  
+
   scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
   ip_addr_counter++;      // increase counter, from now ignore previous responses
   clearStatusBits(WIFI_DNS_IDLE_BIT | WIFI_DNS_DONE_BIT);
@@ -260,7 +260,7 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
     waitStatusBits(WIFI_DNS_DONE_BIT, timer_ms);  //real internal timeout in lwip library is 14[s]
     clearStatusBits(WIFI_DNS_DONE_BIT);
   }
-  
+
   if (!ip_addr_isany_val(dns_ipaddr)) {
 #ifdef USE_IPV6
     aResult = dns_ipaddr;
