@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
 - Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps [#18214](https://github.com/arendst/Tasmota/issues/18214)
 - Support for DingTian virtual switch/button/relay [#18223](https://github.com/arendst/Tasmota/issues/18223)
+- Support for GDK101 gamma radiation sensor by Petr Novacek [#18390](https://github.com/arendst/Tasmota/issues/18390)
 - NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
 - Extended Tariff command for forced tariff [#18080](https://github.com/arendst/Tasmota/issues/18080)
 - Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
@@ -132,7 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.6 to v2.0.7
-- ESP32 LVGL library from v8.3.3 to v8.3.5 (no functional change)
+- ESP32 LVGL library from v8.3.3 to v8.3.6 (no functional change)
 - LibTeleinfo from v1.1.3 to v1.1.5 [#18050](https://github.com/arendst/Tasmota/issues/18050)
 - Increase number of (virtual)relays and (virtual)buttons to 32
 - ADC Range oversample from 2 to 32 [#17975](https://github.com/arendst/Tasmota/issues/17975)
