@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "muy bajo"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tiempo de bomba excedido"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "dosis media de radiación"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_ES_ES_H_

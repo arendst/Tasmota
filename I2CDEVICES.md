@@ -114,3 +114,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   76  | USE_SEN5X           | xsns_103 | SEN5X    | 0x69        | Gas (VOC/NOx index) and air quality (PPM <1,<2.5,<4,<10)
   77  | USE_MCP23XXX_DRV    | xdrv_67  | MCP23x17 | 0x20 - 0x26 | 16-bit I/O expander as virtual button/switch/relay
   78  | USE_PMSA003I        | xsns_104 | PMSA003I | 0x12        | PM2.5 Air Quality Sensor with I2C Interface
+  79  | USE_GDK101          | xsns_106 | GDK101   | 0x18 - 0x1B | Gamma Radiation Sensor

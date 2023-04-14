@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "te laag"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pomptijd bereikt"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "gemiddelde stralingsdosis"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_NL_NL_H_

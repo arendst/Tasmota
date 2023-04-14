@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "Average Radiation Dose"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_EN_GB_H_

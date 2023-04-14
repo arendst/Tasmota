@@ -885,8 +885,10 @@ void ResponseAppendFeatures(void)
 #ifdef USE_LOX_O2
     feature9 |= 0x00080000;  // xsns_105_lox_o2.ino
 #endif
+#if defined(USE_I2C) && defined(USE_GDK101)
+    feature9 |= 0x00100000;  // xsns_106_gdk101.ino
+#endif
 
-//    feature9 |= 0x00100000;
 //    feature9 |= 0x00200000;
 //    feature9 |= 0x00400000;
 //    feature9 |= 0x00800000;

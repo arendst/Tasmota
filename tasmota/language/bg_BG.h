@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "твърде ниско"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "превишено време за помпане"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "средна доза радиация"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_BG_BG_H_

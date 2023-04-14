@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "troppo basso"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "dose media di radiazioni"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_IT_IT_H_

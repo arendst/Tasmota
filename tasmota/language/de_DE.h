@@ -1189,4 +1189,8 @@
 #define D_NEOPOOL_PH_LOW                  "zu niedrig"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "Pumpzeit überschritten"
 
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "durchschnittliche Strahlendosis"
+#define D_UNIT_US_H                       "uSv/h"
+
 #endif  // _LANGUAGE_DE_DE_H_
