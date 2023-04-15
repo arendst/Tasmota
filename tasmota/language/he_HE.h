@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "מנהל"
 #define D_AIR_QUALITY "איכות אוויר"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "לחיצה מרובה"
 #define D_NOISE "רעש"
 #define D_NONE "כלום"
+#define D_NOX "NOx"
 #define D_O2 "Oxygen"
 #define D_OFF "כבוי"
 #define D_OFFLINE "מנותק"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "UV רמת"
 #define D_UV_POWER "UV Power"
 #define D_VERSION "גרסה"
+#define D_VOC "VOC"
 #define D_VOLTAGE "מתח"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "משקל"
@@ -927,6 +930,7 @@
 #define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
+#define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -939,6 +943,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"
@@ -1185,5 +1190,9 @@
 #define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "מינון קרינה ממוצע"
+#define D_UNIT_US_H                       "uSv/h"
 
 #endif  // _LANGUAGE_HE_HE_H_

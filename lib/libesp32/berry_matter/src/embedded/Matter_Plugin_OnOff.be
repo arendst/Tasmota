@@ -25,26 +25,49 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_OnOff,weak
 
 class Matter_Plugin_OnOff : Matter_Plugin
-  static var ENDPOINTS = [ 1 ]
   static var CLUSTERS  = {
-    0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
+    # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
-    0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
+    # 0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
   }
   static var TYPES = { 0x010A: 2 }       # On/Off Light
 
-  var onoff                           # fake status for now # TODO
+  var tasmota_relay_index             # Relay number in Tasmota (zero based)
+  var shadow_onoff                           # fake status for now # TODO
 
   #############################################################
   # Constructor
-  def init(device)
-    super(self).init(device)
-    self.endpoints = self.ENDPOINTS
-    self.clusters = self.CLUSTERS
-    self.onoff = false                # fake status for now # TODO
+  def init(device, endpoint, tasmota_relay_index)
+    super(self).init(device, endpoint)
+    self.get_onoff()                        # read actual value
+    if tasmota_relay_index == nil     tasmota_relay_index = 0   end
+    self.tasmota_relay_index = tasmota_relay_index
+  end
+
+  #############################################################
+  # Model
+  #
+  def set_onoff(v)
+    tasmota.set_power(self.tasmota_relay_index, bool(v))
+    self.get_onoff()
+  end
+  #############################################################
+  # get_onoff
+  #
+  # Update shadow and signal any change
+  def get_onoff()
+    var state = tasmota.get_power(self.tasmota_relay_index)
+    if state != nil
+      if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
+        self.onoff_changed()      # signal any change
+      end
+      self.shadow_onoff = state
+    end
+    if self.shadow_onoff == nil   self.shadow_onoff = false   end     # avoid any `nil` value when initializing
+    return self.shadow_onoff
   end
 
   #############################################################
@@ -56,45 +79,16 @@ class Matter_Plugin_OnOff : Matter_Plugin
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
-    if   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
-
-      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
-        var dtl = TLV.Matter_TLV_array()
-        for dt: self.TYPES.keys()
-          var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
-        end
-        return dtl
-      elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
-        var sl = TLV.Matter_TLV_array()
-        for cl: self.get_cluster_list()
-          sl.add_TLV(nil, TLV.U4, cl)
-        end
-        return sl
-      elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
-        var cl = TLV.Matter_TLV_array()
-        cl.add_TLV(nil, TLV.U2, 0x0006)
-        return cl
-      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
-        var pl = TLV.Matter_TLV_array()
-        return pl
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 1)    # 0 = no Level Control for Lighting
-      end
-
     # ====================================================================================================
-    elif cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
+    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
       if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
         return TLV.create_TLV(TLV.U2, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
         return TLV.create_TLV(TLV.U1, 0)      # IdentifyType = 0x00 None
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 0)    # no features
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 4)    # "new data model format and notation"
       end
 
     # ====================================================================================================
@@ -102,9 +96,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
       if   attribute == 0x0000          #  ----------  ----------
         return nil                      # TODO
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 0)#
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return TLV.create_TLV(TLV.U4, 4)# "new data model format and notation"
       end
 
     # ====================================================================================================
@@ -118,7 +112,7 @@ class Matter_Plugin_OnOff : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return TLV.create_TLV(TLV.BOOL, self.onoff)
+        return TLV.create_TLV(TLV.BOOL, self.get_onoff())
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
@@ -139,8 +133,9 @@ class Matter_Plugin_OnOff : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
       
+    else
+      return super(self).read_attribute(session, ctx)
     end
-    # no match found, return that the attribute is unsupported  end
   end
 
   #############################################################
@@ -182,16 +177,13 @@ class Matter_Plugin_OnOff : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if   command == 0x0000            # ---------- Off ----------
-        if self.onoff   self.onoff_changed(ctx) end
-        self.onoff = false
+        self.set_onoff(false)
         return true
       elif command == 0x0001            # ---------- On ----------
-        if !self.onoff   self.onoff_changed(ctx) end
-        self.onoff = true
+        self.set_onoff(true)
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        self.onoff_changed(ctx)
-        self.onoff = !self.onoff
+        self.set_onoff(!self.get_onoff())
         return true
       end
     # ====================================================================================================
@@ -218,10 +210,14 @@ class Matter_Plugin_OnOff : Matter_Plugin
 
   #############################################################
   # Signal that onoff attribute changed
-  def onoff_changed(ctx)
-    self.attribute_updated(ctx.endpoint, 0x0006, 0x0000)
+  def onoff_changed()
+    self.attribute_updated(nil, 0x0006, 0x0000)   # send to all endpoints
   end
 
+  #############################################################
+  # every_second
+  def every_second()
+    self.get_onoff()                    # force reading value and sending subscriptions
+  end
 end
 matter.Plugin_OnOff = Matter_Plugin_OnOff
-  

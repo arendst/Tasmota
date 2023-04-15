@@ -25,14 +25,14 @@
 
 /*******************************************************************************************\
  * ESP32/S2/S3/C3... PWM analog support
- * 
+ *
  * The following supersedes Arduino framework and provides more granular control:
  * - fine grained phase control (in addition to duty cycle)
  * - fine control of PWM frequency and resolution per GPIO
- * 
+ *
  * By default, all PWM are using the same timer called Timer 0.
  * Changes in frequency of resolution apply to all PWM using Timer 0.
- * 
+ *
  * You can specify a different a different resolution/frequency for
  * specific GPIOs, this will internally assign a new timer to the GPIO.
  * The limit is 3 specific values in addition to the global value.
@@ -129,7 +129,7 @@ uint32_t analogGetTimerFrequency(uint8_t timer);
 #define os_delay_us ets_delay_us
 // Serial minimal type to hold the config
 typedef int SerConfu8;
-typedef int SerialConfig;
+//typedef int SerialConfig;  // Will be replaced enum in esp32_hal-uart.h (#7926)
 
 //
 // UDP

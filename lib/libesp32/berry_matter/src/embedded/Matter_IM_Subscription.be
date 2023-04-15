@@ -29,7 +29,7 @@ import matter
 #################################################################################
 class Matter_IM_Subscription
   static var MAX_INTERVAL_MARGIN = 5              # we always keep 5s margin
-  var subs                                        # pointer to sub shop
+  var subs_shop                                   # pointer to sub shop
   # parameters of the subscription
   var subscription_id                             # id of the subcription as known by requester
   var session                                     # the session it belongs to
@@ -40,12 +40,14 @@ class Matter_IM_Subscription
   # manage time
   var not_before                                  # rate-limiting
   var expiration                                  # expiration epoch, we need to respond before
+  var wait_status                                 # if `true` wait for Status Response before sending anything new
+  var is_keep_alive                               # was the last message sent an empty keep-alive
   # updates
   var updates
 
   # req: SubscribeRequestMessage
-  def init(subs, id, session, req)
-    self.subs = subs
+  def init(subs_shop, id, session, req)
+    self.subs_shop = subs_shop
     self.subscription_id = id
     self.session = session
     # check values for min_interval
@@ -57,7 +59,9 @@ class Matter_IM_Subscription
     var max_interval = req.max_interval_ceiling
     if max_interval < 60                    max_interval = 60 end
     if max_interval > 3600                  max_interval = 3600 end
+    max_interval = 60
     self.max_interval = max_interval
+    self.wait_status = false
     
     self.fabric_filtered = req.fabric_filtered
 
@@ -74,23 +78,34 @@ class Matter_IM_Subscription
     
     # update next time interval
     self.updates = []
-    self.clear_and_arm()
+    self.clear_before_arm()
+    self.is_keep_alive = false
 
-    tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
+    # tasmota.log("MTR: new subsctiption " + matter.inspect(self), 3)
   end
   
-  # remove self from subs list
+  # remove self from subs_shop list
   def remove_self()
-    tasmota.log("MTR: Remove_Sub sub_id=" + str(self.subscription_id))
-    self.subs.remove_sub(self)
+    tasmota.log("MTR: -Sub_Del   (      ) sub=" + str(self.subscription_id), 2)
+    self.subs_shop.remove_sub(self)
   end
 
   # clear log after it was sent, and re-arm next expiration
-  def clear_and_arm()
+  def clear_before_arm()
     self.updates.clear()
+    self.wait_status = true
+  end
+
+  # we received a complete ack for previous message, rearm
+  def re_arm()
+    import string
+    self.wait_status = false
     var now = tasmota.millis()
     self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
     self.not_before = now + self.min_interval * 1000 - 1
+    if !self.is_keep_alive
+      tasmota.log(string.format("MTR: .Sub_Done  (      ) sub=%i", self.subscription_id), 2)
+    end
   end
 
   # signal that an attribute was updated, to add to the list of reportable
@@ -192,6 +207,12 @@ class Matter_IM_Subscription_Shop
     end
   end
 
+  def remove_by_fabric(fabric)
+    for session: fabric._sessions
+      self.remove_by_session(session)
+    end
+  end
+
   #############################################################
   # dispatch every 250ms click to sub-objects that need it
   def every_250ms()
@@ -199,9 +220,9 @@ class Matter_IM_Subscription_Shop
     var idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
-      if size(sub.updates) > 0 && tasmota.time_reached(sub.not_before)
+      if !sub.wait_status && size(sub.updates) > 0 && tasmota.time_reached(sub.not_before)
         self.im.send_subscribe_update(sub)
-        sub.clear_and_arm()
+        sub.clear_before_arm()
       end
       idx += 1
     end
@@ -210,9 +231,9 @@ class Matter_IM_Subscription_Shop
     idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
-      if tasmota.time_reached(sub.expiration)
+      if !sub.wait_status && tasmota.time_reached(sub.expiration)
         self.im.send_subscribe_update(sub)
-        sub.clear_and_arm()
+        sub.clear_before_arm()
       end
       idx += 1
     end

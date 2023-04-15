@@ -25,8 +25,6 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#include "be_matter_qrcode_min_js.h"
-
 // Matter logo
 static const uint8_t MATTER_LOGO[] = 
   "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
@@ -40,6 +38,7 @@ static const uint8_t MATTER_LOGO[] =
 
 extern const bclass be_class_Matter_Counter;
 extern const bclass be_class_Matter_Verhoeff;
+extern const bclass be_class_Matter_QRCode;
 
 #include "solidify/solidified_Matter_Module.h"
 
@@ -133,7 +132,10 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
+#include "solidify/solidified_Matter_Expirable.h"
+#include "solidify/solidified_Matter_Fabric.h"
 #include "solidify/solidified_Matter_Session.h"
+#include "solidify/solidified_Matter_Session_Store.h"
 #include "solidify/solidified_Matter_Commissioning_Data.h"
 #include "solidify/solidified_Matter_Commissioning.h"
 #include "solidify/solidified_Matter_Message.h"
@@ -141,6 +143,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_IM_Message.h"
 #include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
+#include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
@@ -149,7 +152,13 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "../generate/be_matter_certs.h"
 
 #include "solidify/solidified_Matter_Plugin_Root.h"
+#include "solidify/solidified_Matter_Plugin_Device.h"
 #include "solidify/solidified_Matter_Plugin_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Light0.h"
+#include "solidify/solidified_Matter_Plugin_Light1.h"
+#include "solidify/solidified_Matter_Plugin_Light2.h"
+#include "solidify/solidified_Matter_Plugin_Light3.h"
+#include "solidify/solidified_Matter_Plugin_Temp_Sensor.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -175,9 +184,8 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 
 /* @const_object_info_begin
 
-module matter (scope: global) {
+module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
-  _QRCODE_MINJS, comptr(QRCODE_MINJS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
 
   Verhoeff, class(be_class_Matter_Verhoeff)
@@ -270,7 +278,12 @@ module matter (scope: global) {
   UDPPacket_sent, class(be_class_Matter_UDPPacket_sent)
   UDPServer, class(be_class_Matter_UDPServer)
 
+  // Expirable
+  Expirable, class(be_class_Matter_Expirable)
+  Expirable_list, class(be_class_Matter_Expirable_list)
+
   // Sessions
+  Fabric, class(be_class_Matter_Fabric)
   Session, class(be_class_Matter_Session)
   Session_Store, class(be_class_Matter_Session_Store)
 
@@ -289,7 +302,11 @@ module matter (scope: global) {
   IM_Subscription, class(be_class_Matter_IM_Subscription)
   IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
+  Control_Message, class(be_class_Matter_Control_Message)
   UI, class(be_class_Matter_UI)
+
+  // QR Code
+  QRCode, class(be_class_Matter_QRCode)
 
   // Base38 for QR Code
   Base38, class(be_class_Matter_Base38)
@@ -308,7 +325,13 @@ module matter (scope: global) {
 
   // Plugins
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
+  Plugin_Device, class(be_class_Matter_Plugin_Device)   // Generic device (abstract)
   Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
+  Plugin_Light0, class(be_class_Matter_Plugin_Light0)     // OnOff Light
+  Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
+  Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
+  Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
+  Plugin_Temp_Sensor, class(be_class_Matter_Plugin_Temp_Sensor)   // Temperature Sensor
 }
 
 @const_object_info_end */

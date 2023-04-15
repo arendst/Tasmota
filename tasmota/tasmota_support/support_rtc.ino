@@ -186,9 +186,6 @@ String GetDateAndTime(uint8_t time_type) {
       }
       time = Rtc.restart_time;
       break;
-    case DT_ENERGY:
-      time = Settings->energy_kWhtotal_time;
-      break;
     case DT_BOOTCOUNT:
       time = Settings->bootcount_reset_time;
       break;

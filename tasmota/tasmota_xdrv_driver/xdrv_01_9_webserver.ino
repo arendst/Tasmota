@@ -1232,7 +1232,7 @@ void HandleRoot(void)
 #ifdef USE_SHUTTER
     if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, Settings->shutter_position[i], i+1);
+        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  ShutterRealToPercentPosition(-9999, i), i+1);
       }
     }
 #endif  // USE_SHUTTER
@@ -1482,9 +1482,9 @@ int32_t IsShutterWebButton(uint32_t idx) {
   /* 0: Not a shutter, 1..4: shutter up idx, -1..-4: shutter down idx */
   int32_t ShutterWebButton = 0;
   if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-    for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-      if (Settings->shutter_startrelay[i] && ((Settings->shutter_startrelay[i] == idx) || (Settings->shutter_startrelay[i] == (idx-1)))) {
-        ShutterWebButton = (Settings->shutter_startrelay[i] == idx) ? (i+1): (-1-i);
+    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present ; i++) {
+      if (ShutterGetStartRelay(i) && ((ShutterGetStartRelay(i) == idx) || (ShutterGetStartRelay(i) == (idx-1)))) {
+        ShutterWebButton = (ShutterGetStartRelay(i) == idx) ? (i+1): (-1-i);
         break;
       }
     }
@@ -2349,7 +2349,7 @@ void HandleInformation(void)
   }
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s %d (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WiFi.channel(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6
     String ipv6_addr = WifiGetIPv6Str();
@@ -3239,8 +3239,7 @@ int WebSend(char *buffer)
   return status;
 }
 
-int WebQuery(char *buffer)
-{
+int WebQuery(char *buffer) {
   // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
   // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
   // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
@@ -3343,8 +3342,7 @@ int WebQuery(char *buffer)
 }
 
 #ifdef USE_WEBGETCONFIG
-int WebGetConfig(char *buffer)
-{
+int WebGetConfig(char *buffer) {
   // http://user:password@server:port/path/%id%.dmp  : %id% will be expanded to MAC address
 
   int status = WEBCMND_WRONG_PARAMETERS;
@@ -3357,7 +3355,7 @@ int WebGetConfig(char *buffer)
 
 #if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
   HTTPClientLight http;
-  if (http.begin(UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+  if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
 #else // HTTP only
   WiFiClient http_client;
   HTTPClient http;
@@ -3602,8 +3600,7 @@ void CmndWebQuery(void)
 }
 
 #ifdef USE_WEBGETCONFIG
-void CmndWebGetConfig(void)
-{
+void CmndWebGetConfig(void) {
   // WebGetConfig http://myserver:8000/tasmota/conf/%id%.dmp where %id% is expanded to device mac address
   // WebGetConfig http://myserver:8000/tasmota/conf/Config_demo_9.5.0.8.dmp
   if (XdrvMailbox.data_len > 0) {
@@ -3631,10 +3628,9 @@ void CmndWebColor(void)
 #endif // FIRMWARE_MINIMAL
     }
   }
-  Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
+  Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
   for (uint32_t i = 0; i < COL_LAST; i++) {
-    if (i) { ResponseAppend_P(PSTR(",")); }
-    ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
+    ResponseAppend_P(PSTR("%s\"#%06x\""), (i>0)?",":"", WebColor(i));
   }
   ResponseAppend_P(PSTR("]}"));
 }

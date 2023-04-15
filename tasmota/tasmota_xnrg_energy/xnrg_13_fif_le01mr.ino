@@ -236,44 +236,14 @@ void FifLEReset(void)
   Le01mr.total_reactive = 0;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_ENERGY_LE01MR[] PROGMEM =
-  "{s}" D_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
-  ;
-#endif  // USE_WEBSERVER
-
-/*
 void FifLEShow(bool json) {
-  char total_reactive_chr[FLOATSZ];
-  dtostrfd(Le01mr.total_reactive, Settings->flag2.energy_resolution, total_reactive_chr);
-  char total_active_chr[FLOATSZ];
-  dtostrfd(Le01mr.total_active, Settings->flag2.energy_resolution, total_active_chr);
-
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),
-      total_active_chr, total_reactive_chr);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s"), EnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_REACTIVE "\":%s"), EnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_LE01MR, total_active_chr, total_reactive_chr);
-#endif  // USE_WEBSERVER
-  }
-}
-*/
-
-void FifLEShow(bool json) {
-  char value_chr[GUISZ];
-  char value2_chr[GUISZ];
-
-  if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),
-      EnergyFormat(value_chr, &Le01mr.total_active, Settings->flag2.energy_resolution),
-      EnergyFormat(value2_chr, &Le01mr.total_reactive, Settings->flag2.energy_resolution));
-#ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_PD(HTTP_ENERGY_LE01MR, WebEnergyFormat(value_chr, &Le01mr.total_active, Settings->flag2.energy_resolution),
-                                         WebEnergyFormat(value2_chr, &Le01mr.total_reactive, Settings->flag2.energy_resolution));
-
+    WSContentSend_PD(HTTP_SNS_TOTAL_ACTIVE, WebEnergyFmt(&Le01mr.total_active, Settings->flag2.energy_resolution));
+    WSContentSend_PD(HTTP_SNS_TOTAL_REACTIVE, WebEnergyFmt(&Le01mr.total_reactive, Settings->flag2.energy_resolution));
 #endif  // USE_WEBSERVER
   }
 }
@@ -294,11 +264,7 @@ bool Xnrg13(uint32_t function)
       FifLEShow(1);
       break;
 #ifdef USE_WEBSERVER
-#ifdef USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_COL_SENSOR:
-#else   // not USE_ENERGY_COLUMN_GUI
-    case FUNC_WEB_SENSOR:
-#endif  // USE_ENERGY_COLUMN_GUI
       FifLEShow(0);
       break;
 #endif  // USE_WEBSERVER

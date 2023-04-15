@@ -25,6 +25,7 @@
  *
  * Supported template fields:
  * NAME  - Template name
+ * BASE  - Optional. 0 = use relative buttons and switches (default), 1 = use absolute buttons and switches
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
  *         Function             Code      Description
  *         -------------------  --------  ----------------------------------------
@@ -35,8 +36,8 @@
  *         Button_in1..32  Bin  128..159  Button inverted to Vcc without internal pullup
  *         Switch1..28     S    160..187  Switch to Gnd with internal pullup
  *         Switch_n1..28   Sn   192..219  Switch to Gnd without internal pullup
- *         Relay1..28      R    224..255  Relay
- *         Relay_i1..28    Ri   256..287  Relay inverted
+ *         Relay1..32      R    224..255  Relay
+ *         Relay_i1..32    Ri   256..287  Relay inverted
  *         Output_Hi       Oh   3840      Fixed output high
  *         Output_lo       Ol   3872      Fixed output low
  *
@@ -153,6 +154,7 @@ struct MCP230 {
   uint8_t switch_max;
   int8_t button_offset;
   int8_t switch_offset;
+  bool base;
   bool interrupt;
 } Mcp23x;
 
@@ -485,9 +487,13 @@ bool MCP23xLoadTemplate(void) {
 
   // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
   // {"NAME":"MCP23017","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
-  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  JsonParserToken val = root[PSTR(D_JSON_BASE)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Template %s"), val.getStr());
+    Mcp23x.base = (val.getUInt()) ? true : false;
+  }
+  val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Base %d, Template '%s'"), Mcp23x.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -709,7 +715,7 @@ void MCP23xServiceInput(void) {
   }
 }
 
-void IRAM_ATTR MCP23xInputIsr(void) {
+static void IRAM_ATTR MCP23xInputIsr(void) {
   Mcp23x.interrupt = true;
 }
 
@@ -731,14 +737,19 @@ void MCP23xInit(void) {
 }
 
 void MCP23xPower(void) {
-  power_t rpower = XdrvMailbox.index >> Mcp23x.relay_offset;
-  for (uint32_t index = 0; index < Mcp23x.relay_max; index++) {
+  // XdrvMailbox.index = 32-bit rpower bit mask
+  // Use absolute relay indexes unique with main template
+  power_t rpower = XdrvMailbox.index;
+  uint32_t relay_max = TasmotaGlobal.devices_present;
+  if (!Mcp23x.base) {
+    // Use relative and sequential relay indexes
+    rpower >>= Mcp23x.relay_offset;
+    relay_max = Mcp23x.relay_max;
+  }
+  for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (MCP23xPinUsed(GPIO_REL1, index)) {
       uint32_t pin = MCP23xPin(GPIO_REL1, index) & 0x3F;   // Fix possible overflow over 63 gpios
-
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Power pin %d, state %d(%d)"), pin, state, bitRead(Mcp23x.relay_inverted, index));
-
       MCP23xDigitalWrite(pin, bitRead(Mcp23x.relay_inverted, index) ? !state : state);
     }
     rpower >>= 1;                                      // Select next power
@@ -747,21 +758,34 @@ void MCP23xPower(void) {
 
 bool MCP23xAddButton(void) {
   // XdrvMailbox.index = button/switch index
-  if (Mcp23x.button_offset < 0) { Mcp23x.button_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Mcp23x.button_offset;
-  if (index >= Mcp23x.button_max) { return false; }
+  uint32_t index = XdrvMailbox.index;
+  if (!Mcp23x.base) {
+    // Use relative and sequential button indexes
+    if (Mcp23x.button_offset < 0) { Mcp23x.button_offset = index; }
+    index -= Mcp23x.button_offset;
+    if (index >= Mcp23x.button_max) { return false; }
+  } else {
+    // Use absolute button indexes unique with main template
+    if (!MCP23xPinUsed(GPIO_KEY1, index)) { return false; }
+    Mcp23x.button_offset = 0;
+  }
   XdrvMailbox.index = (MCP23xDigitalRead(MCP23xPin(GPIO_KEY1, index)) != bitRead(Mcp23x.button_inverted, index));
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: AddButton index %d, state %d"), index, XdrvMailbox.index);
-
   return true;
 }
 
 bool MCP23xAddSwitch(void) {
   // XdrvMailbox.index = button/switch index
-  if (Mcp23x.switch_offset < 0) { Mcp23x.switch_offset = XdrvMailbox.index; }
-  uint32_t index = XdrvMailbox.index - Mcp23x.switch_offset;
-  if (index >= Mcp23x.switch_max) { return false; }
+  uint32_t index = XdrvMailbox.index;
+  if (!Mcp23x.base) {
+    // Use relative and sequential switch indexes
+    if (Mcp23x.switch_offset < 0) { Mcp23x.switch_offset = index; }
+    index -= Mcp23x.switch_offset;
+    if (index >= Mcp23x.switch_max) { return false; }
+  } else {
+    // Use absolute switch indexes unique with main template
+    if (!MCP23xPinUsed(GPIO_SWT1, index)) { return false; }
+    Mcp23x.switch_offset = 0;
+  }
   XdrvMailbox.index = MCP23xDigitalRead(MCP23xPin(GPIO_SWT1, index));
   return true;
 }
@@ -783,7 +807,7 @@ bool Xdrv67(uint32_t function) {
 
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     MCP23xModuleInit();
   } else if (Mcp23x.max_devices) {
     switch (function) {

@@ -615,7 +615,7 @@ void setup(void) {
   snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
-  GpioInit();                    // FUNC_I2C_INIT -> FUNC_MODULE_INIT -> FUNC_LED_LINK
+  GpioInit();                    // FUNC_SETUP_RING1 -> FUNC_SETUP_RING2 -> FUNC_MODULE_INIT -> FUNC_LED_LINK
   ButtonInit();                  // FUNC_ADD_BUTTON
   SwitchInit();                  // FUNC_ADD_SWITCH
 #ifdef ROTARY_V1

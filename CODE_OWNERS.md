@@ -76,6 +76,9 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_62_improv             | @arendst
 | xdrv_63_modbus_bridge      | @jeroenst
 | xdrv_64_pca9632            | Pascal Heinrich
+| xdrv_65_tuyamcubr          | David Gwynne
+| xdrv_66_tm1638             | @arendst
+| xdrv_67_mcp23xxx           | @arendst
 |                            |
 | xdrv_79_esp32_ble          | @staars, @btsimonh
 | xdrv_81_esp32_webcam       | @gemu, @philrich
@@ -120,7 +123,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_25                    |
 | xsns_26_lm75ad             | Andre Thomas
 | xsns_27_apds9960           | Shawn Hymel
-| xsns_28_tm1638             | @arendst
+| xsns_28                    |
 | xsns_29_mcp230xx           | Andre Thomas
 | xsns_30_mpr121             | Rene 'Renne' Bartsch
 | xsns_31_ccs811             | Gerhard Mutz
@@ -199,6 +202,9 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_101_hmc5883l          | Andreas Achtzehn
 | xsns_102_ld2410            | @arendst
 | xsns_103_sen5x             | @tyeth
+| xsns_104_pmsa003i          | Jean-Pierre Deschamps
+| xsns_105_lox_o2            | @ACE1046
+| xsns_106_gdk101            | @Szewcson
 |                            |
 | Libraries                  |
 |                            |
@@ -206,6 +212,7 @@ In addition to @arendst the following code is mainly owned by:
 | ext-printf                 | @s-hadinger
 | jsmn                       | @s-hadinger
 | unishox                    | @s-hadinger
+| matter                     | @s-hadinger
 |                            |
 | PlatformIO                 |
 |                            |

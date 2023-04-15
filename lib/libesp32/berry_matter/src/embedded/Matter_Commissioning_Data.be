@@ -70,7 +70,7 @@ class Matter_PBKDFParamResponse
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
 
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.initiatorRandom)
@@ -84,7 +84,7 @@ class Matter_PBKDFParamResponse
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.tlv2raw(b)
   end
 end
 matter.PBKDFParamResponse = Matter_PBKDFParamResponse
@@ -113,12 +113,12 @@ class Matter_Pake2
   var pB                # 65 bytes
   var cB                # 32 bytes
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     #
     s.add_TLV(1, matter.TLV.B1, self.pB)
     s.add_TLV(2, matter.TLV.B1, self.cB)
-    return s.encode()
+    return s.tlv2raw(b)
   end
 end
 matter.Pake2 = Matter_Pake2
@@ -168,8 +168,8 @@ class Matter_Sigma1
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
     end
-    var resumptionID = val.findsub(6)
-    var initiatorResumeMIC = val.findsub(7)
+    self.resumptionID = val.findsubval(6)
+    self.initiatorResumeMIC = val.findsubval(7)
     return self
   end
 end
@@ -186,7 +186,7 @@ class Matter_Sigma2
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.responderRandom)
@@ -198,7 +198,7 @@ class Matter_Sigma2
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.tlv2raw(b)
   end
 end
 matter.Sigma2 = Matter_Sigma2
@@ -213,18 +213,18 @@ class Matter_Sigma2Resume
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
   
-  def encode(b)
+  def tlv2raw(b)
     var s = matter.TLV.Matter_TLV_struct()
     # initiatorRandom
     s.add_TLV(1, matter.TLV.B1, self.resumptionID)
     s.add_TLV(2, matter.TLV.B1, self.sigma2ResumeMIC)
-    s.add_TLV(3, matter.TLV.B1, self.responderSessionID)
+    s.add_TLV(3, matter.TLV.U2, self.responderSessionID)
     if self.SLEEPY_IDLE_INTERVAL != nil || self.SLEEPY_ACTIVE_INTERVAL != nil
       var s2 = s.add_struct(4)
       s2.add_TLV(1, matter.TLV.U4, self.SLEEPY_IDLE_INTERVAL)
       s2.add_TLV(2, matter.TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
     end
-    return s.encode()
+    return s.tlv2raw(b)
   end
 end
 matter.Sigma2Resume = Matter_Sigma2Resume

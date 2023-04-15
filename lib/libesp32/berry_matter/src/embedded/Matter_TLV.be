@@ -46,6 +46,20 @@ class Matter_TLV
   ]
 
   # type values (enum like)
+  #
+  # Type|Description
+  # :----|:---
+  # I1 I2 I4|Signed integer of at most (1/2/4) bytes (as 32 bits signed Berry type)
+  # U1 U2 U4|Unsiged integer of at motst (1/2/4) bytes (as 32 bits signed Berry type, be careful when comparing. Use `matter.Counter.is_greater(a,b)`)
+  # I8 U8|Signed/insigned 8 bytes. You can pass `bytes(8)`, `int64()` or `int`. Type is collapsed to a lower type if possible when encoding.
+  # BOOL|boolean, takes `true` and `false`. Abstracts the internal `BTRUE` and `BFALSE` that you don't need to use
+  # FLOAT|32 bites float
+  # UTF1 UTF2|String as UTF, size is encoded as 1 or 2 bytes automatically
+  # B1 B2|raw `bytes()`, size is encoded as 1 or 2 bytes automatically
+  # NULL|takes only `nil` value
+  # STRUCT<BR>ARRAY<BR>LIST<BR>EOC|(internal) Use through abstractions
+  # DOUBLE<BR>UTF4 UTF8<BR>B4 B8|Unsuppored in Tasmota
+
   static var I1     = 0x00
   static var I2     = 0x01
   static var I4     = 0x02
@@ -107,7 +121,7 @@ class Matter_TLV
     #############################################################
     # create simple TLV
     static def create_TLV(t, value)
-      if value != nil
+      if value != nil || t == 0x14 #-t == matter.TLV.NULL-#   # put the actual number for performance
         var v = _class()      # parent is nil
         v.typ = t
         v.val = value
@@ -206,7 +220,7 @@ class Matter_TLV
     # encode TLV
     #
     # appends to the bytes() object
-    def encode(b)
+    def tlv2raw(b)
       var TLV = self.TLV
       if b == nil   b = bytes() end     # start new buffer if none passed
 
@@ -605,19 +619,20 @@ class Matter_TLV
 
     #############################################################
     # encode to bytes
-    def encode(b)
+    def tlv2raw(b)
       if b == nil   b = bytes() end
       # encode tag and type
       self._encode_tag(b)
       # sort values
-      var val_list = self.val.copy()
+      var val_list = self.val
       if self.is_struct
+        val_list = val_list.copy()
         self.sort(val_list)
       end
 
       # output each one after the other
       for v : val_list
-        v.encode(b)
+        v.tlv2raw(b)
       end
 
       # add 'end of container'
@@ -882,9 +897,9 @@ matter.TLV = Matter_TLV
 import matter
 
 def test_TLV(b, s)
-  var m =  matter.TLV.parse(b)
+  var m = matter.TLV.parse(b)
   assert(m.tostring() == s)
-  assert(m.encode() == b)
+  assert(m.tlv2raw() == b)
   assert(m.encode_len() == size(b))
 end
 

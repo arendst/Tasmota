@@ -469,7 +469,8 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
   uint16_t analog_max = 0;
 
   if (0 == Adc[idx].param1) {
-    for (uint32_t i = 0; i < samples; i++) {
+    unsigned long tstart=millis();
+    while (millis()-tstart < 35) {
       analog = analogRead(Adc[idx].pin);
       if (analog < analog_min) {
         analog_min = analog;
@@ -477,9 +478,11 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
       if (analog > analog_max) {
         analog_max = analog;
       }
-      delay(1);
     }
+    //AddLog(0, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
     Adc[idx].current = (float)(analog_max-analog_min) * ((float)(Adc[idx].param2) / 100000);
+    if (Adc[idx].current < (((float)Adc[idx].param4) / 10000.0))
+        Adc[idx].current = 0.0;
   }
   else {
     analog = AdcRead(Adc[idx].pin, 5);
@@ -834,7 +837,13 @@ void CmndAdcParam(void) {
       }
       char param3[FLOATSZ];
       dtostrfd(((double)Adc[idx].param3)/10000, precision, param3);
-      ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
+      if (ADC_CT_POWER == Adc[idx].type) {
+        char param4[FLOATSZ];
+        dtostrfd(((double)Adc[idx].param4)/10000, 3, param4);
+        ResponseAppend_P(PSTR(",%s,%s"), param3, param4);
+      } else {
+        ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
+      }
     }
     ResponseAppend_P(PSTR("]}"));
   }
@@ -851,7 +860,7 @@ bool Xsns02(uint32_t function) {
     case FUNC_COMMAND:
       result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
-    case FUNC_MODULE_INIT:
+    case FUNC_SETUP_RING2:
       AdcInit();
       break;
     default:

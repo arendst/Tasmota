@@ -167,6 +167,12 @@ static bstring* find_conststr(const char *str, size_t len)
     uint32_t hash = str_hash(str, len);
     bcstring *s = (bcstring*)tab->table[hash % tab->size];
     for (; s != NULL; s = next(s)) {
+        if (len == 0 && s->slen == 0) {
+            /* special case for the empty string,
+               since we don't want to compare it using strncmp, 
+               because str might be NULL */
+            return (bstring*)s;
+        }
         if (len == s->slen && !strncmp(str, s->s, len)) {
             return (bstring*)s;
         }

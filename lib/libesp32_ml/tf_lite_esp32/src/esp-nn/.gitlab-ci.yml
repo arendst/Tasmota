@@ -1,0 +1,55 @@
+stages:
+  - build
+
+variables:
+  BATCH_BUILD: "1"
+  V: "0"
+  MAKEFLAGS: "-j8 --no-keep-going"
+  IDF_PATH: "$CI_PROJECT_DIR/esp-idf"
+  LOG_PATH: "$CI_PROJECT_DIR"
+
+.set_git_config: &set_git_config
+  # Set git config
+  - git config user.email "test@espressif.com"
+  - git config user.name "Espressif"
+
+.add_ssh_key: &add_ssh_key
+  # Add gitlab ssh key
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo -n $GITLAB_KEY > ~/.ssh/id_rsa_base64
+  - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
+  - chmod 600 ~/.ssh/id_rsa
+  - echo -e "Host gitlab.espressif.cn\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+before_script:
+  # Add gitlab ssh key
+  - *add_ssh_key
+  # Set git config
+  - *set_git_config
+
+.build_esp32s3: &build_esp32s3
+  - idf.py set-target esp32s3 build
+
+.build_esp32: &build_esp32
+  - idf.py set-target esp32 build
+
+build_demo:
+  stage: build
+  image: $CI_DOCKER_REGISTRY/esp32-ci-env:esp-nn
+  tags:
+    - build
+  script:
+    # Clone IDF
+    - git clone --recursive --single-branch -b release/v4.4 --reference-if-able /local_references/gitlab/ https://gitlab-ci-token:${BOT_TOKEN}@gitlab.espressif.cn:6688/espressif/esp-idf.git
+    - cd esp-idf
+    - ./install.sh
+    - . ./export.sh
+    - cd ..
+    # Build examples now
+    - cd test_app
+    # Build esp32s3
+    - *build_esp32s3
+    # Build esp32
+    - *build_esp32
+    - cd -

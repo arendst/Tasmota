@@ -484,7 +484,7 @@ void ShellyProLedLinkWifiOff(void) {
 bool Xdrv88(uint32_t function) {
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     ShellyProPreInit();
     } else if (SPro.detected) {
       switch (function) {

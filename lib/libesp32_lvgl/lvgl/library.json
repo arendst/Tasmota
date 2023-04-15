@@ -1,6 +1,6 @@
 {
 	"name": "lvgl",
-	"version": "8.3.3",
+	"version": "8.3.6",
 	"keywords": "graphics, gui, embedded, tft, lvgl",
 	"description": "Graphics library to create embedded GUI with easy-to-use graphical elements, beautiful visual effects and low memory footprint. It offers anti-aliasing, opacity, and animations using only one frame buffer.",
 	"repository": {
@@ -8,13 +8,11 @@
 		"url": "https://github.com/lvgl/lvgl.git"
 	},
 	"build": {
-		"includeDir": "."
+		"includeDir": ".",
+		"flags": [ "-I$PROJECT_DIR/tasmota/lvgl_berry" ]
 	},
 	"license": "MIT",
 	"homepage": "https://lvgl.io",
 	"frameworks": "arduino",
-	"platforms": "espressif32",
-	"build": {
-	  "flags": [ "-I$PROJECT_DIR/tasmota/lvgl_berry" ]
-	}
+	"platforms": "espressif32"
 }

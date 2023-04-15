@@ -36,32 +36,192 @@ class Matter_UDPPacket_sent
   var raw                         # bytes() to be sent
   var addr                        # ip_address (string)
   var port                        # port (int)
-  var msg_id                      # (int) message identifier that needs to be acknowledged
+  var msg_id                      # (int) message identifier that needs to be acknowledged, or `nil` if no ack needed
+  var exchange_id                 # (int) exchange id, to match ack
+  var session_id                  # (int) session id, for logging only
   var retries                     # 0 in first attempts, goes up to RETRIES
   var next_try                    # timestamp (millis) when to try again
 
-  def init(raw, addr, port, id)
-    self.raw = raw
-    self.addr = addr
-    self.port = port
-    self.msg_id = id
+  def init(msg)
+    # extract information from msg
+    self.raw = msg.raw
+    self.addr = msg.remote_ip
+    self.port = msg.remote_port
+    self.msg_id = msg.x_flag_r ? msg.message_counter : nil
+    self.exchange_id = (msg.exchange_id != nil) ? msg.exchange_id : 0
+    self.session_id = (msg.local_session_id != nil) ?  msg.local_session_id : 0
+    # other information
     self.retries = 0
-    self.next_try = tasmota.millis() + self.backoff_time(self.retries)
+    self.next_try = tasmota.millis() + matter.UDPServer._backoff_time(self.retries)
   end
 
-  def send(udp_socket)
-    import string
-    var ok = udp_socket.send(self.addr ? self.addr : udp_socket.remote_ip, self.port ? self.port : udp_socket.remote_port, self.raw)
-    if ok
-      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", self.addr, self.port), 4)
-    else
-      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", self.addr, self.port), 3)
+end
+matter.UDPPacket_sent = Matter_UDPPacket_sent
+
+#################################################################################
+# Matter_UDPServer class
+#
+#################################################################################
+class Matter_UDPServer
+  static var RETRIES = 5            # 6 transmissions max (5 retries) - 1 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
+  static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
+  var addr, port                    # local addr and port
+  var listening                     # true if active
+  var udp_socket
+  var dispatch_cb                   # callback to call when a message is received
+  var packets_sent                  # list map of packets sent to be acknowledged
+
+  #############################################################
+  # Init UDP Server listening to `addr` and `port` (opt).
+  #
+  # By default, the server listens to `""` (all addresses) and port `5540`
+  def init(addr, port)
+    self.addr = addr ? addr : ""
+    self.port = port ? port : 5540
+    self.listening = false
+    self.packets_sent = []
+  end
+
+  #############################################################
+  # Starts the server.
+  # Registers as device handler to Tasmota
+  #
+  # `cb(packet, from_addr, from_port)`: callback to call when a message is received.
+  # Raises an exception if something is wrong.
+  def start(cb)
+    if !self.listening
+      self.udp_socket = udp()
+      var ok = self.udp_socket.begin(self.addr, self.port)
+      if !ok    raise "network_error", "could not open UDP server" end
+      self.listening = true
+      self.dispatch_cb = cb
+      tasmota.add_driver(self)
     end
   end
 
   #############################################################
+  # Stops the server and remove driver
+  def stop()
+    if self.listening
+      self.udp_socket.stop()
+      self.listening = false
+      tasmota.remove_driver(self)
+    end
+  end
+
+  #############################################################
+  # At every tick:
+  # Check if a packet has arrived, and dispatch to `cb`.
+  # Read at most `MAX_PACKETS_READ (4) packets at each tick to
+  # avoid any starvation.
+  # Then resend queued outgoing packets.
+  def every_50ms()
+    import string
+    var packet_read = 0
+    if self.udp_socket == nil  return end
+    var packet = self.udp_socket.read()
+    while packet != nil
+      # self.packet = packet
+      packet_read += 1
+      var from_addr = self.udp_socket.remote_ip
+      var from_port = self.udp_socket.remote_port
+      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 3)
+      if self.dispatch_cb
+        self.dispatch_cb(packet, from_addr, from_port)
+      end
+      # are we reading new packets?
+      if packet_read < self.MAX_PACKETS_READ
+        packet = self.udp_socket.read()
+      else
+        packet = nil
+      end
+    end
+    self._resend_packets()               # resend any packet
+  end
+
+  #############################################################
+  # Send packet now.
+  #
+  # Returns `true` if packet was successfully sent.
+  def send(packet)
+    import string
+    var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
+    if ok
+      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
+    else
+      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 2)
+    end
+    return ok
+  end
+
+  #############################################################
+  # Resend packets if they have not been acknowledged by receiver
+  # either with direct Ack packet or ack embedded in another packet.
+  # Packets with `id`=`nil` are not resent.
+  # <BR>
+  # Packets are re-sent at most `RETRIES` (4) times, i.e. sent maximum 5 times.
+  # Exponential backoff is added after each resending.
+  # <BR>
+  # If all retries expired, remove packet and log.
+  def _resend_packets()
+    var idx = 0
+    while idx < size(self.packets_sent)
+      var packet = self.packets_sent[idx]
+      if tasmota.time_reached(packet.next_try)
+        if packet.retries <= self.RETRIES
+          tasmota.log("MTR: .          Resending packet id=" + str(packet.msg_id), 3)
+          self.send(packet)
+          packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)
+          packet.retries += 1
+          idx += 1
+        else
+          import string
+          self.packets_sent.remove(idx)
+          tasmota.log(string.format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 2)
+        end
+      else
+        idx += 1
+      end
+    end
+  end
+
+  #############################################################
+  # Just received acknowledgment, remove packet from sender
+  def received_ack(msg)
+    var id = msg.ack_message_counter
+    var exch = msg.exchange_id
+    if id == nil   return end
+    tasmota.log("MTR: receveived ACK id="+str(id), 3)
+    var idx = 0
+    while idx < size(self.packets_sent)
+      var packet = self.packets_sent[idx]
+      if packet.msg_id == id && packet.exchange_id == exch
+        self.packets_sent.remove(idx)
+        tasmota.log("MTR: .          Removed packet from sending list id=" + str(id), 3)
+      else
+        idx += 1
+      end
+    end
+  end
+
+  #############################################################
+  # Send a packet, enqueue it if `id` is not `nil`
+  def send_UDP(msg)
+    var packet = matter.UDPPacket_sent(msg)
+    self.send(packet)
+    if packet.msg_id
+      self.packets_sent.push(packet)
+    end
+  end
+
+  #############################################################
+  # placeholder, nothing to run for now
+  def every_second()
+  end
+
+  #############################################################
   # Compute exponential backoff as per 4.11.2.1 p.137
-  def backoff_time(n)
+  static def _backoff_time(n)
     def power_int(v, n)
       var r = 1
       while n > 0
@@ -79,130 +239,4 @@ class Matter_UDPPacket_sent
     return int(mrpBackoffTime)
   end
 end
-matter.UDPPacket_sent = Matter_UDPPacket_sent
-
-#################################################################################
-# Matter_UDPServer class
-#
-#################################################################################
-class Matter_UDPServer
-  static var RETRIES = 4            # 5 transmissions max (4 retries) `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
-  static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
-  var address, port                 # local address and port
-  var listening                     # true if active
-  var udp_socket
-  var dispatch_cb                   # callback to call when a message is received
-  var packets_sent                  # map of packets sent to be acknowledged
-
-  #############################################################
-  def init(address, port)
-    self.address = address ? address : ""
-    self.port = port ? port : 5540
-    self.listening = false
-    self.packets_sent = {}
-  end
-
-  #############################################################
-  # start the server
-  # raises an exception if something is wrong
-  # registers as device handle
-  #
-  # `cb`: callback to call when a message is received
-  def start(cb)
-    if !self.listening
-      self.udp_socket = udp()
-      var ok = self.udp_socket.begin(self.address, self.port)
-      if !ok    raise "network_error", "could not open UDP server" end
-      self.listening = true
-      self.dispatch_cb = cb
-      tasmota.add_driver(self)
-    end
-  end
-
-  #############################################################
-  # stop the server
-  # remove driver
-  def stop()
-    if self.listening
-      self.udp_socket.stop()
-      self.listening = false
-      tasmota.remove_driver(self)
-    end
-  end
-
-  #############################################################
-  def every_50ms()
-    import string
-    var packet_read = 0
-    if self.udp_socket == nil  return end
-    var packet = self.udp_socket.read()
-    while packet != nil
-      # self.packet = packet
-      packet_read += 1
-      var from_addr = self.udp_socket.remote_ip
-      var from_port = self.udp_socket.remote_port
-      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
-      if self.dispatch_cb
-        self.dispatch_cb(packet, from_addr, from_port)
-      end
-      # are we reading new packets?
-      if packet_read < self.MAX_PACKETS_READ
-        packet = self.udp_socket.read()
-      else
-        packet = nil
-      end
-    end
-    self.resend_packets()               # resend any packet
-  end
-
-  #############################################################
-  def resend_packets()
-    for packet:self.packets_sent
-      if tasmota.time_reached(packet.next_try)
-        if packet.retries <= self.RETRIES
-          tasmota.log("MTR: resending packet id=" + str(packet.msg_id), 3)
-          packet.send(self.udp_socket)         # resend
-          packet.next_try = tasmota.millis() + packet.backoff_time(packet.retries)
-          packet.retries += 1
-        else
-          import string
-          self.packets_sent.remove(packet.msg_id)
-          tasmota.log(string.format("MTR: target unreachable '[%s]:%i' msg_id=%i", packet.addr, packet.port, packet.msg_id), 2)
-        end
-      end
-    end
-  end
-
-  #############################################################
-  # just received acknowledgment, remove packet from sender
-  def packet_ack(id)
-    if id == nil   return end
-    if self.packets_sent.contains(id)
-      self.packets_sent.remove(id)
-      tasmota.log("MTR: removed packet from sending list id=" + str(id), 4)
-    end
-  end
-
-  #############################################################
-  def send_response(raw, addr, port, id)
-    var packet = matter.UDPPacket_sent(raw, addr, port, id)
-    packet.send(self.udp_socket)    # send
-    if id
-      self.packets_sent[id] = packet
-    end
-  end
-
-  #############################################################
-  # placeholder, nothing to run for now
-  def every_second()
-  end
-end
 matter.UDPServer = Matter_UDPServer
-
-#-
-
-import matter
-var udps = matter.UDPServer()
-udps.listen()
-
--#

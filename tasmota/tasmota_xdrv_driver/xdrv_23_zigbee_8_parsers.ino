@@ -1395,15 +1395,21 @@ void Z_SendSimpleDescReq(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 //    Iterate among
 //
 void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
-  ZCLFrame zcl(4);   // message is 4 bytes
+  ZCLFrame zcl(12);   // message is 12 bytes
   zcl.shortaddr = shortaddr;
-  zcl.cluster = 0;
+  zcl.cluster = 0x0000;
   zcl.cmd = ZCL_READ_ATTRIBUTES;
   zcl.clusterSpecific = false;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
   zcl.payload.add16(0x0005);
   zcl.payload.add16(0x0004);
+  // Tuya needs a magic spell reading more attributes
+  // cf https://github.com/zigpy/zha-device-handlers/issues/2042
+  zcl.payload.add16(0x0000);  // Manufacturer Name
+  zcl.payload.add16(0x0001);  // Application Version
+  zcl.payload.add16(0x0007);  // Power Source
+  zcl.payload.add16(0xfffe);  // Unknown
   zigbeeZCLSendCmd(zcl);
 }
 

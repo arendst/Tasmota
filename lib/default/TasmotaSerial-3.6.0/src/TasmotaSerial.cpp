@@ -228,7 +228,7 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
 #ifdef ESP32
     if (TSerial == nullptr) {      // Allow for dynamic change in baudrate or config
       if (freeUart()) {            // We prefer UART1 and UART2 and keep UART0 for debugging
-#ifdef ARDUINO_USB_CDC_ON_BOOT
+#if ARDUINO_USB_MODE
         TSerial = new HardwareSerial(m_uart);
 #else
         if (0 == m_uart) {
@@ -239,7 +239,7 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
         } else {
           TSerial = new HardwareSerial(m_uart);
         }
-#endif  // ARDUINO_USB_CDC_ON_BOOT
+#endif  // ARDUINO_USB_MODE
         if (serial_buffer_size > 256) {  // RX Buffer can't be resized when Serial is already running (HardwareSerial.cpp)
           TSerial->setRxBufferSize(serial_buffer_size);
         }
@@ -460,6 +460,7 @@ size_t TasmotaSerial::write(uint8_t b) {
     size = 1;
   }
   if (m_tx_enable_pin > -1) {
+    flush();  // Must wait for all data sent
     digitalWrite(m_tx_enable_pin, LOW);
   }
   return size;

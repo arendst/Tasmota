@@ -86,7 +86,7 @@ void RC522ScanForTag(void) {
   }
 #endif  // USE_RC522_DATA_FUNCTION
 #ifdef USE_RC522_TYPE_INFORMATION
-  ResponseAppend_P(PSTR(",\"" D_JSON_TYPE "\":\"%s\""), Mfrc522->PICC_GetTypeName(picc_type));
+  ResponseAppend_P(PSTR(",\"" D_JSON_TYPE "\":\"%s\""), Mfrc522->PICC_GetTypeName(picc_type).c_str());
 #endif  // USE_RC522_TYPE_INFORMATION
   ResponseJsonEndEnd();
   MqttPublishTeleSensor();

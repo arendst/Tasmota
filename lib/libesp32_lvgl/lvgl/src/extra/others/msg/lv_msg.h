@@ -19,6 +19,8 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
+#define LV_MSG_ID_ANY UINT32_MAX
+LV_EXPORT_CONST_INT(LV_MSG_ID_ANY);
 
 /**********************
  *      TYPEDEFS
@@ -71,6 +73,14 @@ void * lv_msg_subsribe_obj(uint32_t msg_id, lv_obj_t * obj, void * user_data);
 void lv_msg_unsubscribe(void * s);
 
 /**
+ * Unsubscribe an object from a message ID
+ * @param msg_id        the message ID to unsubcribe from or `LV_MSG_ID_ANY` for any message ID
+ * @param obj           the object to unsubscribe or NULL for any object
+ * @return              number of unsubscriptions
+ */
+uint32_t lv_msg_unsubscribe_obj(uint32_t msg_id, lv_obj_t * obj);
+
+/**
  * Send a message with a given ID and payload
  * @param msg_id        ID of the message to send
  * @param data          pointer to the data to send
@@ -104,6 +114,17 @@ void * lv_msg_get_user_data(lv_msg_t * m);
  * @return      the message object or NULL if called with unrelated event code.
  */
 lv_msg_t * lv_event_get_msg(lv_event_t * e);
+
+/*Fix typo*/
+static inline void * lv_msg_subscribe(uint32_t msg_id, lv_msg_subscribe_cb_t cb, void * user_data)
+{
+    return lv_msg_subsribe(msg_id, cb, user_data);
+}
+
+static inline void * lv_msg_subscribe_obj(uint32_t msg_id, lv_obj_t * obj, void * user_data)
+{
+    return lv_msg_subsribe_obj(msg_id, obj, user_data);
+}
 
 /**********************
  * GLOBAL VARIABLES
