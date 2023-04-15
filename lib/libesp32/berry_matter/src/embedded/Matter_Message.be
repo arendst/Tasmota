@@ -383,22 +383,22 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    tasmota.log("MTR: p           =" + p.tohex(), 4)
-    tasmota.log("MTR: a           =" + a.tohex(), 4)
-    tasmota.log("MTR: n           =" + n.tohex(), 4)
-    tasmota.log("MTR: mic         =" + mic.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
+    # tasmota.log("MTR: p           =" + p.tohex(), 4)
+    # tasmota.log("MTR: a           =" + a.tohex(), 4)
+    # tasmota.log("MTR: n           =" + n.tohex(), 4)
+    # tasmota.log("MTR: mic         =" + mic.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(i2r, n, a, size(p), 16)
     var cleartext = aes.decrypt(p)
     var tag = aes.tag()
 
-    tasmota.log("MTR: ******************************", 4)
-    tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
-    tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
+    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
       tasmota.log("MTR: rejected packet due to invalid MIC", 2)
@@ -461,6 +461,7 @@ class Matter_Frame
   #############################################################
   # Decode a message we are about to send, to ease debug
   def debug(raw)
+    return      # disable logging for now
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()

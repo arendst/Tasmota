@@ -497,13 +497,13 @@ class Matter_Device
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+    # tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
 
     # build the list of candidates
 
     # list of all endpoints
     var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
-    tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
+    # tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
     for pi: self.plugins
       var ep = pi.get_endpoint()    # get supported endpoints for this plugin
 
@@ -514,7 +514,7 @@ class Matter_Device
 
       # now explore the cluster list for 'ep'
       var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-      tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+      # tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
       for cl: cluster_list
         if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
         # from now on, 'cl' is a good candidate
@@ -523,7 +523,7 @@ class Matter_Device
 
         # now filter on attributes
         var attr_list = pi.get_attribute_list(ep, cl)
-        tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+        # tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
         for at: attr_list
           if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
           # from now on, 'at' is a good candidate

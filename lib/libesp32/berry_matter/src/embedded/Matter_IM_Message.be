@@ -58,7 +58,7 @@ class Matter_IM_Message
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
-    tasmota.log("MTR: IM_Message ack_received exch="+str(self.resp.exchange_id), 3)
+    # tasmota.log("MTR: IM_Message ack_received exch="+str(self.resp.exchange_id), 3)
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     return false
   end
@@ -67,7 +67,7 @@ class Matter_IM_Message
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
     import string
-    tasmota.log(string.format("MTR: IM_Message status_ok_received exch=%i", self.resp.exchange_id), 3)
+    # tasmota.log(string.format("MTR: IM_Message status_ok_received exch=%i", self.resp.exchange_id), 3)
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     if msg
       self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
@@ -88,7 +88,7 @@ class Matter_IM_Message
   # default responder for data
   def send_im(responder)
     import string
-    tasmota.log(string.format("MTR: IM_Message send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # tasmota.log(string.format("MTR: IM_Message send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
     var resp = self.resp
     resp.encode_frame(self.data.to_TLV().tlv2raw())    # payload in cleartext
@@ -165,7 +165,7 @@ class Matter_IM_ReportData : Matter_IM_Message
   # default responder for data
   def send_im(responder)
     import string
-    tasmota.log(string.format("MTR: IM_ReportData send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # tasmota.log(string.format("MTR: IM_ReportData send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
     var resp = self.resp                          # response frame object
     var data = self.data                          # TLV data of the response (if any)
@@ -189,7 +189,7 @@ class Matter_IM_ReportData : Matter_IM_Message
       end
     end
 
-    tasmota.log(string.format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, sz_attribute_reports), 3)
+    # tasmota.log(string.format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, sz_attribute_reports), 3)
     var next_elemnts = []
     if data.attribute_reports != nil
       next_elemnts = data.attribute_reports[elements .. ]
@@ -261,8 +261,8 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
 
   # ack received, confirm the heartbeat
   def ack_received(msg)
-    import string
-    tasmota.log(string.format("MTR: IM_ReportDataSubscribed ack_received sub=%i", self.sub.subscription_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: IM_ReportDataSubscribed ack_received sub=%i", self.sub.subscription_id), 3)
     super(self).ack_received(msg)
     if !self.report_data_phase
       # if ack is received while all data is sent, means that it finished without error
@@ -277,16 +277,16 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
 
   # we received an ACK error, remove subscription
   def status_error_received(msg)
-    import string
-    tasmota.log(string.format("MTR: IM_ReportDataSubscribed status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: IM_ReportDataSubscribed status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     self.sub.remove_self()
   end
 
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    import string
-    tasmota.log(string.format("MTR: IM_ReportDataSubscribed status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: IM_ReportDataSubscribed status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
@@ -300,13 +300,13 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
   # default responder for data
   def send_im(responder)
     import string
-    tasmota.log(string.format("MTR: IM_ReportDataSubscribed send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
-    tasmota.log(string.format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
+    # tasmota.log(string.format("MTR: IM_ReportDataSubscribed send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # tasmota.log(string.format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
     if !self.ready   return false  end
     if size(self.data.attribute_reports) > 0      # do we have still attributes to send
       if self.report_data_phase
         super(self).send_im(responder)
-        tasmota.log(string.format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
+        # tasmota.log(string.format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
         if !self.finish return end              # ReportData needs to continue
         # ReportData is finished
         self.report_data_phase = false
@@ -361,8 +361,8 @@ class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData
 
   # ack received, confirm the heartbeat
   def ack_received(msg)
-    import string
-    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat ack_received sub=%i", self.sub.subscription_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat ack_received sub=%i", self.sub.subscription_id), 3)
     super(self).ack_received(msg)
     self.finish = true
     return true                       # proceed to calling send() which removes the message
@@ -370,8 +370,8 @@ class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData
 
   # we received an ACK error, remove subscription
   def status_error_received(msg)
-    import string
-    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     self.sub.remove_self()
     return false                            # let the caller to the ack
   end
@@ -379,15 +379,15 @@ class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    import string
-    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # import string
+    # tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     return false                            # let the caller to the ack
   end
 
   # default responder for data
   def send_im(responder)
-    import string
-    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # import string
+    # tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
 
     super(self).send_im(responder)
@@ -413,8 +413,8 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
 
   # default responder for data
   def send_im(responder)
-    import string
-    tasmota.log(string.format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i", self.sub.subscription_id, self.ready ? 1 : 0), 3)
+    # import string
+    # tasmota.log(string.format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i", self.sub.subscription_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
     if self.report_data_phase
       super(self).send_im(responder)
@@ -437,7 +437,7 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
       resp.encrypt()
       responder.send_response_frame(resp)
       self.last_counter = resp.message_counter
-      tasmota.log(string.format("MTR: Send SubscribeResponseMessage sub=%i id=%i", self.sub.subscription_id, resp.message_counter), 3)
+      # tasmota.log(string.format("MTR: Send SubscribeResponseMessage sub=%i id=%i", self.sub.subscription_id, resp.message_counter), 3)
       self.sub.re_arm()
       self.finish = true          # remove exchange
     end
@@ -445,10 +445,10 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
 
   # Status ok received
   def status_ok_received(msg)
-    import string
-    tasmota.log(string.format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
+    # import string
+    # tasmota.log(string.format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
     # once we receive ack, open flow for subscriptions
-    tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 2)
+    # tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 2)
     return super(self).status_ok_received(msg)
   end
     

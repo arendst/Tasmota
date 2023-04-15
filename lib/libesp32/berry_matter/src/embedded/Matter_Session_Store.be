@@ -279,9 +279,9 @@ class Matter_Session_Store
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
-      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)))
+      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 3)
       if session.resumption_id == resumption_id && session.shared_secret != nil
-        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)))
+        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)), 3)
         session.update()
         return session
       end
