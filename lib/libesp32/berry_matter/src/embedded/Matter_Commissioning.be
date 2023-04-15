@@ -595,8 +595,7 @@ class Matter_Commisioning_Context
     var initiatorNOCPubKey = initiatorNOCTLV.findsubval(9)
     var initiatorNOCListDN = initiatorNOCTLV.findsub(6)
     var initiatorFabricId = initiatorNOCListDN.findsubval(17)
-    if type(initiatorFabricId) == 'int'   initiatorFabricId = int64(initiatorFabricId) end
-    session.peer_node_id = initiatorFabricId.tobytes()
+    if type(initiatorFabricId) == 'int'   session.peer_node_id = int64.fromu32(initiatorFabricId).tobytes() else session.peer_node_id = initiatorFabricId.tobytes() end
     tasmota.log("MTR: initiatorFabricId="+str(session.peer_node_id), 3)
 
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
