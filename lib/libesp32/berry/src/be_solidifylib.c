@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 extern const bclass be_class_list;
 extern const bclass be_class_map;
@@ -323,7 +324,7 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
         for (int32_t i = 0; i < pr->nproto; i++) {
             size_t sub_len = strlen(func_name) + 10;
             char sub_name[sub_len];
-            snprintf(sub_name, sizeof(sub_name), "%s_%d", func_name, i);
+            snprintf(sub_name, sizeof(sub_name), "%s_%"PRId32, func_name, i);
             m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, indent+2, fout);
             logfmt(",\n");
         }
@@ -361,7 +362,7 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
     logfmt("%*s( &(const binstruction[%2d]) {  /* code */\n", indent, "", pr->codesize);
     for (int pc = 0; pc < pr->codesize; pc++) {
         uint32_t ins = pr->code[pc];
-        logfmt("%*s  0x%08X,  //", indent, "", ins);
+        logfmt("%*s  0x%08"PRIX32",  //", indent, "", ins);
         be_print_inst(ins, pc, fout);
         bopcode op = IGET_OP(ins);
         if (op == OP_GETGBL || op == OP_SETGBL) {

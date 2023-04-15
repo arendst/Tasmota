@@ -124,7 +124,7 @@ void Sr04TModeDetect(void) {
     if (PinUsed(GPIO_SR04_TRIG)) {
       SR04.type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != 0) ? SR04_MODE_SER_TRANSCEIVER : SR04_MODE_TRIGGER_ECHO;
     } else {
-      SR04.type = SR04_MODE_SER_RECEIVER;
+      SR04.type = (Sr04TMiddleValue(Sr04TMode2Distance(), Sr04TMode2Distance(), Sr04TMode2Distance()) != 0) ? SR04_MODE_SER_RECEIVER : SR04_MODE_TRIGGER_ECHO;
     }
   } else {
     SR04.type = SR04_MODE_TRIGGER_ECHO;

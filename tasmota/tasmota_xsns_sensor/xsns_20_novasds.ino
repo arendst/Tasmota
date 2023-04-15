@@ -214,32 +214,25 @@ void NovaSdsInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SDS0X1_SNS[] PROGMEM =
-  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
-void NovaSdsShow(bool json)
-{
+void NovaSdsShow(bool json) {
   if (novasds_valid) {
-    float pm10f = (float)(novasds_data.pm100) / 10.0f;
-    float pm2_5f = (float)(novasds_data.pm25) / 10.0f;
-    char pm10[33];
-    dtostrfd(pm10f, 1, pm10);
-    char pm2_5[33];
-    dtostrfd(pm2_5f, 1, pm2_5);
+    char types[10];
+    strcpy_P(types, PSTR("SDS0X1"));
+
+    float pm10 = (float)(novasds_data.pm100) / 10.0f;
+    float pm2_5 = (float)(novasds_data.pm25) / 10.0f;
     if (json) {
-      ResponseAppend_P(PSTR(",\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), pm2_5, pm10);
+      ResponseAppend_P(PSTR(",\"%s\":{\"PM2.5\":%1_f,\"PM10\":%1_f}"), types, &pm2_5, &pm10);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
-        DomoticzSensor(DZ_CURRENT, pm10);   // PM10
+        DomoticzFloatSensor(DZ_VOLTAGE, pm2_5);  // PM2.5 - VoltRes 1
+        DomoticzFloatSensor(DZ_CURRENT, pm10);   // PM10  - AmpRes 1
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SDS0X1_SNS, pm2_5, pm10);
+      WSContentSend_PD(HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION, types, "2.5", pm2_5);
+      WSContentSend_PD(HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION, types, "10", pm10);
 #endif  // USE_WEBSERVER
     }
   }

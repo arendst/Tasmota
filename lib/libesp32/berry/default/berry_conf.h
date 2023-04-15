@@ -259,7 +259,6 @@
  * are not required.
  * The default is to use the functions in the standard library.
  **/
-#ifdef USE_BERRY_PSRAM
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -270,6 +269,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#ifdef USE_BERRY_PSRAM
   #define BE_EXPLICIT_MALLOC              berry_malloc
   #define BE_EXPLICIT_FREE                berry_free
   #define BE_EXPLICIT_REALLOC             berry_realloc
@@ -306,6 +306,10 @@ extern "C" {
     #undef BE_STACK_START
     #define BE_STACK_START                  200
   #endif // USE_LVGL
+  #ifdef USE_MATTER_DEVICE
+    #undef BE_STACK_START
+    #define BE_STACK_START                  256
+  #endif // USE_MATTER_DEVICE
 #endif // USE_BERRY_DEBUG
 
 #endif

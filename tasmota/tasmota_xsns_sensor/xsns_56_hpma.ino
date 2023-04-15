@@ -78,31 +78,23 @@ void HpmaInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_HPMA_SNS[] PROGMEM =
-  "{s}HPMA " D_ENVIRONMENTAL_CONCENTRATION "2.5 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
-  "{s}HPMA " D_ENVIRONMENTAL_CONCENTRATION "10 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
-void HpmaShow(bool json)
-{
+void HpmaShow(bool json) {
   if (hpma_valid) {
-    char pm10[33];
-    snprintf_P(pm10, 33, PSTR("%d"), hpma_data.pm10);
-    char pm2_5[33];
-    snprintf_P(pm2_5, 33, PSTR("%d"), hpma_data.pm2_5);
+    char types[10];
+    strcpy_P(types, PSTR("HPMA"));
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"HPMA\":{\"PM2.5\":%d,\"PM10\":%d}"), hpma_data.pm2_5, hpma_data.pm10);
+      ResponseAppend_P(PSTR(",\"%s\":{\"PM2.5\":%d,\"PM10\":%d}"), types, hpma_data.pm2_5, hpma_data.pm10);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
-        DomoticzSensor(DZ_CURRENT, pm10);   // PM10
+        DomoticzSensor(DZ_VOLTAGE, hpma_data.pm2_5);  // PM2.5
+        DomoticzSensor(DZ_CURRENT, hpma_data.pm10);   // PM10
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_HPMA_SNS, pm2_5, pm10);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "2.5", hpma_data.pm2_5);
+      WSContentSend_PD(HTTP_SNS_ENVIRONMENTAL_CONCENTRATION, types, "10", hpma_data.pm10);
 #endif  // USE_WEBSERVER
     }
   }

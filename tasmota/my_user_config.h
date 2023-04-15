@@ -93,24 +93,6 @@
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO    // [WebLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 #define MQTT_LOG_LEVEL         LOG_LEVEL_NONE    // [MqttLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
-// -- Ota -----------------------------------------
-#ifdef ESP8266
-#define OTA_URL                "http://ota.tasmota.com/tasmota/release/tasmota.bin.gz"  // [OtaUrl]
-#endif  // ESP8266
-#ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32c3.bin"  // [OtaUrl]
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32s2.bin"  // [OtaUrl]
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32s3.bin"  // [OtaUrl]
-#elif defined(CORE32SOLO1)
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32solo1.bin"  // [OtaUrl]
-#else
-#define OTA_URL                "https://ota.tasmota.com/tasmota32/release/tasmota32.bin"  // [OtaUrl]
-#endif  //  CONFIG_IDF_TARGET_ESP32C3
-#endif  // ESP32
-
 // -- MQTT ----------------------------------------
 #define MQTT_USE               true              // [SetOption3] Select default MQTT use (false = Off, true = On)
 
@@ -631,6 +613,7 @@
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+2k2 code)
 //    #define USE_MCP230xx_DISPLAYOUTPUT           // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//  #define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //  #define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //    #define USE_PCA9685_ADDR 0x40                // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
 //    #define USE_PCA9685_FREQ 50                  // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
@@ -661,10 +644,11 @@
 //  #define USE_MLX90614                           // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 //  #define USE_CHIRP                              // [I2cDriver33] Enable CHIRP soil moisture sensor (variable I2C address, default 0x20)
 //  #define USE_PAJ7620                            // [I2cDriver34] Enable PAJ7620 gesture sensor (I2C address 0x73) (+2.5k code)
-//  #define USE_PCF8574                            // [I2cDriver2] Enable PCF8574 I/O Expander (I2C addresses 0x20 - 0x26 and 0x39 - 0x3F) (+1k9 code)
-//    #define USE_PCF8574_SENSOR                   // enable PCF8574 inputs and outputs in SENSOR message
-//    #define USE_PCF8574_DISPLAYINPUT             // enable PCF8574 inputs display in Web page
-//    #define USE_PCF8574_MQTTINPUT                // enable MQTT message & rule process on input change detection : stat/%topic%/PCF8574_INP = {"Time":"2021-03-07T16:19:23+01:00","PCF8574-1_INP":{"D1":1}}
+//  #define USE_PCF8574                            // [I2cDriver2] Enable PCF8574 I/O Expander (I2C addresses 0x20 - 0x26 and 0x39 - 0x3F) (+2k1 code)
+//    #define USE_PCF8574_MODE2                    // Enable Mode2 virtual relays/buttons/switches (+2k3 code)
+//    #define USE_PCF8574_SENSOR                   // Enable Mode1 inputs and outputs in SENSOR message (+0k2 code)
+//    #define USE_PCF8574_DISPLAYINPUT             // Enable Mode1 inputs display in Web page (+0k2 code)
+//    #define USE_PCF8574_MQTTINPUT                // Enable Mode1 MQTT message & rule process on input change detection : stat/%topic%/PCF8574_INP = {"Time":"2021-03-07T16:19:23+01:00","PCF8574-1_INP":{"D1":1}} (+0k5 code)
 //    #define PCF8574_ADDR1 0x20                   // First address to search for PCF8574
 //    #define PCF8574_ADDR1_COUNT 7                // Number of addresses to search for PCF8574 - Default to 0x20 to 0x26
 //    #define PCF8574_ADDR2 0x39                   // First address to search for PCF8574A
@@ -716,6 +700,13 @@
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
 //                                                 // Both settings together allow to limit searching for INA3221 to only a subset of addresses
+//  #define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
+//  #define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
+//    #define GDK101_SHOW_FW_VERSION
+//    #define GDK101_SHOW_STATUS
+//    #define GDK101_SHOW_VIBRATION_STATUS
+//    #define GDK101_SHOW_MEAS_TIME
+
 
 //  #define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //    #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -837,10 +828,10 @@
 //  #define VINDRIKTNING_SHOW_PM1                  // Display undocumented/supposed PM1.0 values
 //  #define VINDRIKTNING_SHOW_PM10                 // Display undocumented/supposed PM10 values
 //#define USE_LD2410                               // Add support for HLK-LD2410 24GHz smart wave motion sensor (+2k8 code)
+// #define USE_LOX_O2                               // Add support for LuminOx LOX O2 Sensor (+0k8 code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)
-#define USE_ENERGY_COLUMN_GUI                    // Add support for column display in GUI (+0k5 code)
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
   #define USE_ENERGY_POWER_LIMIT                 // Add additional support for Energy Power Limit detection (+1k2 code)
 #define USE_ENERGY_DUMMY                         // Add support for dummy Energy monitor allowing user values (+0k7 code)
@@ -994,6 +985,11 @@
 //  #define TM1638_MAX_LEDS        8               // Add support for 8 leds
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
+
+//#define USE_DINGTIAN_RELAY                       // Add support for the Dingian board using 74'595 et 74'165 shift registers
+//  #define DINGTIAN_INPUTS_INVERTED               // Invert input states (Hi => OFF, Low => ON)
+//  #define DINGTIAN_USE_AS_BUTTON                 // Inputs as Tasmota's virtual Buttons
+//  #define DINGTIAN_USE_AS_SWITCH                 // Inputs as Tasmota's virtual Switches
 
 // Select none or only one of the below defines
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
@@ -1217,6 +1213,14 @@
 //#define FIRMWARE_MINIMAL                         // Create tasmota-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
+ * Safe guard when needed defines are not done in Platformio                                                         *
+\*********************************************************************************************/
+
+#ifndef OTA_URL
+  #define OTA_URL ""
+#endif
+
+/*********************************************************************************************\
  * User configurable items override                                                          *
 \*********************************************************************************************/
 
@@ -1276,6 +1280,34 @@
 
 #if defined(USE_MQTT_TLS) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS)
   #define USE_TLS                                // flag indicates we need to include TLS code
+#endif
+
+/*********************************************************************************************\
+ * Post-process compile options for Matter
+\*********************************************************************************************/
+
+#ifdef ESP32
+#ifdef USE_MATTER_DEVICE
+  #undef  USE_DISCOVERY
+  #define USE_DISCOVERY
+
+// Enable all the crypto required by Matter
+  #undef  USE_BERRY_CRYPTO_EC_P256
+  #define USE_BERRY_CRYPTO_EC_P256
+  #undef  USE_BERRY_CRYPTO_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_HKDF_SHA256
+  #define USE_BERRY_CRYPTO_HKDF_SHA256
+  #undef  USE_BERRY_CRYPTO_AES_CCM
+  #define USE_BERRY_CRYPTO_AES_CCM
+  #undef  USE_BERRY_CRYPTO_AES_CTR
+  #define USE_BERRY_CRYPTO_AES_CTR
+  #undef  USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+  #undef  USE_BERRY_CRYPTO_SPAKE2P_MATTER
+  #define USE_BERRY_CRYPTO_SPAKE2P_MATTER
+
+#endif // USE_MATTER_DEVICE
 #endif
 
 /*********************************************************************************************\

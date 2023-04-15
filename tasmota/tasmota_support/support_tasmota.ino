@@ -556,6 +556,18 @@ void SetLedLink(uint32_t state) {
 #endif  // USE_PWM_DIMMER
 }
 
+void DebugLed(uint32_t mode) {
+  static bool toggle = false;
+
+  if (PinUsed(GPIO_LEDLNK)) {
+    if (2 == mode) {
+      toggle != toggle;
+      mode = toggle;
+    }
+    digitalWrite(Pin(GPIO_LEDLNK), (TasmotaGlobal.ledlnk_inverted) ? !mode : mode);
+  }
+}
+
 void SetPulseTimer(uint32_t index, uint32_t time)
 {
   TasmotaGlobal.pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
@@ -1501,6 +1513,9 @@ void Every250mSeconds(void)
           SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
           Settings->mqtt_port = mqtt_port;
         }
+
+        XdrvCall(FUNC_RESET_SETTINGS);
+
         TasmotaGlobal.restart_flag = 3;                   // Finish backlog then Restart 1
       }
       else if (213 == TasmotaGlobal.restart_flag) {       // Reset 3
@@ -2193,38 +2208,7 @@ void GpioInit(void)
 #endif
 #endif  // USE_I2C
 
-  XdrvCall(FUNC_I2C_INIT);                                 // Init RTC
-
   TasmotaGlobal.devices_present = 0;
-  TasmotaGlobal.light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
-
-  XsnsCall(FUNC_MODULE_INIT);
-
-  if (XdrvCall(FUNC_MODULE_INIT)) {
-    // Serviced
-  }
-#ifdef ESP8266
-  else if (YTF_IR_BRIDGE == TasmotaGlobal.module_type) {
-    ClaimSerial();  // Stop serial loopback mode
-//    TasmotaGlobal.devices_present = 1;
-  }
-  else if (SONOFF_DUAL == TasmotaGlobal.module_type) {
-    TasmotaGlobal.devices_present = 2;
-    SetSerial(19200, TS_SERIAL_8N1);
-  }
-  else if (CH4 == TasmotaGlobal.module_type) {
-    TasmotaGlobal.devices_present = 4;
-    SetSerial(19200, TS_SERIAL_8N1);
-  }
-#ifdef USE_SONOFF_SC
-  else if (SONOFF_SC == TasmotaGlobal.module_type) {
-    SetSerial(19200, TS_SERIAL_8N1);
-  }
-#endif  // USE_SONOFF_SC
-#endif  // ESP8266
-
-  GpioInitPwm();
-
   uint32_t bi_device = 0;
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
@@ -2240,6 +2224,30 @@ void GpioInit(void)
       }
     }
   }
+
+  XdrvCall(FUNC_SETUP_RING1);                              // Setup RTC hardware
+  XsnsXdrvCall(FUNC_SETUP_RING2);                          // Setup hardware supporting virtual switches/buttons/relays
+
+  TasmotaGlobal.light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
+
+  if (XdrvCall(FUNC_MODULE_INIT)) {                        // Init and claim single module (like tuya, armtronix, ifan, light)
+    // Serviced
+  }
+#ifdef ESP8266
+  else if (YTF_IR_BRIDGE == TasmotaGlobal.module_type) {
+    ClaimSerial();  // Stop serial loopback mode
+  }
+  else if (SONOFF_DUAL == TasmotaGlobal.module_type) {
+    UpdateDevicesPresent(2);
+    SetSerial(19200, TS_SERIAL_8N1);
+  }
+  else if (CH4 == TasmotaGlobal.module_type) {
+    UpdateDevicesPresent(4);
+    SetSerial(19200, TS_SERIAL_8N1);
+  }
+#endif  // ESP8266
+
+  GpioInitPwm();
 
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
     if (PinUsed(GPIO_LED1, i)) {

@@ -109,7 +109,7 @@ extern "C" {
     TwoWire & myWire = getWire(vm);
     if (top == 1 || (top == 2 && be_isbool(vm, 2))) {  // only 1 argument of type string accepted
       bool stop = true;
-      if (top == 1) {
+      if (top == 2) {
         stop = be_tobool(vm, 2);
       }
       uint32_t ret = myWire.endTransmission(stop);

@@ -85,7 +85,7 @@ BE_FUNC_CTYPE_DECLARE(vh_validate, "b", "s")
 #include "be_fixed_be_class_Matter_Verhoeff.h"
 
 /* @const_object_info_begin
-class be_class_Matter_Verhoeff (scope: global, name: Matter_Verhoeff) {
+class be_class_Matter_Verhoeff (scope: global, name: Matter_Verhoeff, strings: weak) {
   checksum, static_ctype_func(vh_checksum)
   validate, static_ctype_func(vh_validate)
 }

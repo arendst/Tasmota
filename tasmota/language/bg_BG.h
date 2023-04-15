@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Качество на въздуха"
 #define D_AP "Точка за достъп"       // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "неколкократно натискане"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
+#define D_NOX "NOx"
 #define D_O2 "Кислород"
 #define D_OFF "Изкл."
 #define D_OFFLINE "Извън мрежа"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "Ниво на UV"
 #define D_UV_POWER "Сила на UV"
 #define D_VERSION "Издание"
+#define D_VOC "VOC"
 #define D_VOLTAGE "Напрежение"
 #define D_VOLUME "Обем"
 #define D_WEIGHT "Тегло"
@@ -895,6 +898,9 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_PCF8574_INT   "PCF8574 Int"
+#define D_SENSOR_MCP23XXX_INT  "MCP23xxx Int"
+#define D_SENSOR_MCP23SXX_CS   "MCP23Sxx CS"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
@@ -922,6 +928,7 @@
 #define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
+#define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -935,6 +942,7 @@
 #define D_UNIT_GALLONS "гал"
 #define D_UNIT_GALLONS_PER_MIN "гал/мин"
 #define D_UNIT_KILOGRAM "кг"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "инч"
 #define D_UNIT_KELVIN "K"
@@ -1180,5 +1188,9 @@
 #define D_NEOPOOL_PH_HIGH                 "твърде високо"      // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "твърде ниско"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "превишено време за помпане"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "средна доза радиация"
+#define D_UNIT_US_H                       "uSv/h"
 
 #endif  // _LANGUAGE_BG_BG_H_

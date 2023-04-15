@@ -51,6 +51,7 @@
 #define D_DECIMAL_SEPARATOR "."
 
 // Common
+#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "空气质量"
 #define D_AP "AP"                    // Access Point
@@ -133,6 +134,7 @@
 #define D_MULTI_PRESS "多次按键"
 #define D_NOISE "嘈杂"
 #define D_NONE "无"
+#define D_NOX "NOx"
 #define D_O2 "氧"
 #define D_OFF "关"
 #define D_OFFLINE "离线"
@@ -201,6 +203,7 @@
 #define D_UV_LEVEL "紫外线水平"
 #define D_UV_POWER "紫外线功率 "
 #define D_VERSION "版本"
+#define D_VOC "VOC"
 #define D_VOLTAGE "电压"
 #define D_VOLUME "Volume"
 #define D_WEIGHT "重量"
@@ -895,6 +898,9 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_PCF8574_INT   "PCF8574 Int"
+#define D_SENSOR_MCP23XXX_INT  "MCP23xxx Int"
+#define D_SENSOR_MCP23SXX_CS   "MCP23Sxx CS"
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
@@ -922,6 +928,7 @@
 #define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
+#define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -934,6 +941,7 @@
 #define D_UNIT_HOUR "小时"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GRAM_PER_CUBIC_METER "g/m³"
 #define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"
@@ -1180,5 +1188,9 @@
 #define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+
+// xsns_106_gdk101.ino
+#define D_AVG_RAD_DOSE                    "平均辐射剂量"
+#define D_UNIT_US_H                       "uSv/h"
 
 #endif  // _LANGUAGE_ZH_CN_H_

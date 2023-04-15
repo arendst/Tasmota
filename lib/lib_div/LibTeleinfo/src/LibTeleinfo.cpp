@@ -50,6 +50,8 @@ TInfo::TInfo()
   _fn_data = NULL;   
   _fn_new_frame = NULL;   
   _fn_updated_frame = NULL;   
+
+  clearStats();
 }
 
 /* ======================================================================
@@ -76,6 +78,22 @@ void TInfo::init(_Mode_e mode)
   } else {
     _separator = ' ';
   } 
+}
+
+/* ======================================================================
+Function: clearStats
+Purpose : clear stats counters
+Input   : -
+Output  : -
+Comments: - 
+====================================================================== */
+void TInfo::clearStats()
+{
+   // reset Frame counters stats
+  _checksumerror =0;
+  _framesizeerror=0;
+  _frameformaterror=0;
+  _frameinterrupted=0;
 }
 
 /* ======================================================================
@@ -226,8 +244,11 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
       ValueList *parNode = NULL ;
       uint32_t ts = 0;
 
+      // Time stamped field?
       if (horodate && *horodate) {
         ts = horodate2Timestamp(horodate);
+        // We don't check horodate (not used) on storage so re calculate checksum without this one
+        checksum = calcChecksum(name,value) ;
       }
 
       // Loop thru the node
@@ -257,7 +278,6 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
               // Copy it
               strlcpy(me->value, value , lgvalue + 1 );
               me->checksum = checksum ;
-
               // That's all
               return (me);
             } else {
@@ -279,19 +299,12 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
       // Our linked list structure sizeof(ValueList)
       // + Name  + '\0'
       // + Value + '\0'
-      size_t size ;
-      #if defined (ESP8266) || defined (ESP32)
-        lgname = ESP_allocAlign(lgname+1);   // Align name buffer
-        lgvalue = ESP_allocAlign(lgvalue+1); // Align value buffer
-        // Align the whole structure
-        size = ESP_allocAlign( sizeof(ValueList) + lgname + lgvalue  ) ; 
-      #else
-        size = sizeof(ValueList) + lgname + 1 + lgvalue + 1  ;
-      #endif
+      size_t size = sizeof(ValueList) + lgname + 1 + lgvalue + 1  ;
 
       // Create new node with size to store strings
-      if ((newNode = (ValueList  *) malloc(size) ) == NULL) 
+      if ((newNode = (ValueList  *) malloc(size) ) == NULL)  {
         return ( (ValueList *) NULL );
+      }
 
       // get our buffer Safe
       memset(newNode, 0, size);
@@ -456,10 +469,13 @@ char * TInfo::valueGet(char * name, char * value)
       if (lgname==strlen(me->name) && strcmp(me->name, name)==0) {
         // this one has a value ?
         if (me->value) {
-          // copy to dest buffer
-          uint8_t lgvalue = strlen(me->value);
-          strlcpy(value, me->value , lgvalue + 1 );
-          return ( value );
+          // Check back checksum
+          if (me->checksum == calcChecksum(me->name, me->value)) {
+            // copy to dest buffer
+            uint8_t lgvalue = strlen(me->value);
+            strlcpy(value, me->value , lgvalue + 1 );
+            return ( value );
+          }
         }
       }
     }
@@ -494,10 +510,13 @@ char * TInfo::valueGet_P(const char * name, char * value)
       if (lgname==strlen(me->name) && strcmp_P(me->name, name)==0) {
         // this one has a value ?
         if (me->value) {
-          // copy to dest buffer
-          uint8_t lgvalue = strlen(me->value);
-          strlcpy(value, me->value , lgvalue + 1 );
-          return ( value );
+          // Check back checksum
+          if (me->checksum == calcChecksum(me->name, me->value)) {
+            // copy to dest buffer
+            uint8_t lgvalue = strlen(me->value);
+            strlcpy(value, me->value , lgvalue + 1 );
+            return ( value );
+          }
         }
       }
     }
@@ -529,6 +548,7 @@ uint8_t TInfo::valuesDump(void)
   // Get our linked list 
   ValueList * me = &_valueslist;
   uint8_t index = 0;
+  uint8_t checksum=0;
 
   // Got one ?
   if (me) {
@@ -541,7 +561,7 @@ uint8_t TInfo::valuesDump(void)
       TI_Debug(index) ;
       TI_Debug(F(") ")) ;
 
-      if (me->name) {
+      if (me->name ) {
         TI_Debug(me->name) ;
       } else {
         TI_Debug(F("NULL")) ;
@@ -555,9 +575,17 @@ uint8_t TInfo::valuesDump(void)
         TI_Debug(F("NULL")) ;
       }
 
+      if (me->name && me->value && *me->name && *me->value) {
+        checksum = calcChecksum(me->name, me->value);
+      }
+
       TI_Debug(F(" '")) ;
       TI_Debug(me->checksum) ;
-      TI_Debug(F("' ")); 
+      if (me->checksum != checksum ) {
+        TI_Debug(F("'!Err ")); 
+      } else {
+        TI_Debug(F("' ")); 
+      }
 
       // Flags management
       if ( me->flags) {
@@ -663,22 +691,51 @@ LF etiquette HT donnee HT Chk CR
 ====================================================================== */
 unsigned char TInfo::calcChecksum(char *etiquette, char *valeur, char * horodate) 
 {
+  char c;
   uint8_t sum = (_mode == TINFO_MODE_HISTORIQUE) ? _separator : (2 * _separator);  // Somme des codes ASCII du message + 2 separateurs
 
   // avoid dead loop, always check all is fine 
   if (etiquette && valeur) {
     // this will not hurt and may save our life ;-)
     if (strlen(etiquette) && strlen(valeur)) {
-      while (*etiquette)
-        sum += *etiquette++ ;
+      while (*etiquette) {
+        c =*etiquette++;
+        // Add another validity check since checksum may not be sufficient
+        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c=='-' || c=='+') {
+          sum += c ;
+        } else {
+          return 0;
+        }
+      }
   
-      while(*valeur)
-        sum += *valeur++ ;
+      while(*valeur) {
+        c = *valeur++ ;
+        // Add another validity check since checksum may not be sufficient (space authorized in Standard mode)
+        if ( (c>='A' && c<='Z') || (c>='0' && c<='9') || c==' ' || c=='.' || c=='-' || c=='+' || c=='/') {
+          sum += c ;
+        } else {
+          return 0;
+        }
+      }
 
       if (horodate) {
         sum += _separator;
-        while (*horodate)
-          sum += *horodate++ ;
+        c = *horodate++;
+        // Add another validity check starting season [E]té (Summer) or [H]iver (Winter)
+        if ( c=='E' || c=='H' || c=='e' || c=='h') {
+          sum += c ;
+          while (*horodate) {
+            c = *horodate++ ;
+            // Add another validity check for horodate digits
+            if ( c>='0' && c<='9') {
+              sum += c ;
+            } else {
+              return 0;
+            }
+          }
+        } else {
+          return 0;
+        }
       }
 
       return ( (sum & 0x3f) + ' ' ) ;
@@ -798,6 +855,7 @@ ValueList * TInfo::checkLine(char * pline)
   // 2 Label + Space + 1 etiquette + space + checksum + \r
   if ( len < 7 || len >= TINFO_BUFSIZE) {
     //AddLog(3, PSTR("LibTeleinfo: Error len < 7 || len >= TINFO_BUFSIZE"));
+    _framesizeerror++;
     return NULL;
   }
 
@@ -876,7 +934,8 @@ ValueList * TInfo::checkLine(char * pline)
         // Always check to avoid bad behavior 
         if(strlen(ptok) && strlen(pvalue)) {
           // Is checksum is OK
-          char   calc_checksum = calcChecksum(ptok,pvalue,pts);
+          char calc_checksum = calcChecksum(ptok,pvalue,pts);
+          
           if ( calc_checksum == checksum) {
             // In case we need to do things on specific labels
             customLabel(ptok, pvalue, &flags);
@@ -904,9 +963,18 @@ ValueList * TInfo::checkLine(char * pline)
           }
           else
           {
-            AddLog(1, PSTR("LibTeleinfo::checkLine Err checksum 0x%02X != 0x%02X"), calc_checksum, checksum);
+            _checksumerror++;
+            AddLog(1, PSTR("LibTeleinfo::checkLine Err checksum 0x%02X != 0x%02X (total errors=%d)"), calc_checksum, checksum, _checksumerror);
           }
         }
+      } 
+      else 
+      {
+        // Specific field not formated has others, don't set as an error
+        if ( strcmp(ptok, "DATE") ) {
+          _frameformaterror++;
+          AddLog(1, PSTR("LibTeleinfo::checkLine frame format error total=%d"), _frameformaterror);
+        } 
       }
     }           
     // Next char
@@ -948,7 +1016,17 @@ _State_e TInfo::process(char c)
          _state = TINFO_WAIT_ETX;
       } 
     break;
-      
+
+    // frame interruption
+    case TINFO_EOT:
+      //AddLog(3, PSTR("LibTeleinfo: case TINFO_EOT >>>>>>>>>>>>>>>>>>"));
+      // discard incomplete frame
+      // Clear buffer, begin to store in it
+      clearBuffer();
+      _frameinterrupted++;
+      _state = TINFO_WAIT_STX;
+    break;
+ 
     // End of transmission ?
     case  TINFO_ETX:
       //AddLog(3, PSTR("LibTeleinfo: case TINFO_ETX >>>>>>>>>>>>>>>>>>"));
@@ -1002,8 +1080,12 @@ _State_e TInfo::process(char c)
       // Are we ready to process ?
       if (_state == TINFO_READY) {
         // Store data recceived (we'll need it)
-        if ( _recv_idx < TINFO_BUFSIZE)
+        if ( _recv_idx < TINFO_BUFSIZE) {
           _recv_buff[_recv_idx++]=c;
+        } else {
+          // group is too big (some ETX missing)
+          _framesizeerror++;  
+        }
 
         // clear the end of buffer (paranoia inside)
         memset(&_recv_buff[_recv_idx], 0, TINFO_BUFSIZE-_recv_idx);

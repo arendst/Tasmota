@@ -163,22 +163,8 @@ void TmInit(void) {
     }
     digitalWrite(Tm1638.strobe_pin, HIGH);
 
-    // Dirty hack to offset TM1638 leds from GPIO relays
-    // At this time in code sequence the number of GPIO relays has not been established
-    uint32_t bi_device = 0;
-    uint32_t devices_present = 0;
-    for (uint32_t i = 0; i < MAX_RELAYS; i++) {
-      if (PinUsed(GPIO_REL1, i)) {
-        devices_present++;
-        if (bitRead(TasmotaGlobal.rel_bistable, i)) {
-          if (bi_device &1) { devices_present--; }
-          bi_device++;
-        }
-      }
-    }
-
-    Tm1638.led_offset = devices_present;
-    TasmotaGlobal.devices_present += TM1638_MAX_LEDS;
+    Tm1638.led_offset = TasmotaGlobal.devices_present;
+    UpdateDevicesPresent(TM1638_MAX_LEDS);
     Tm1638.key_offset = -1;
     Tm1638.detected = true;
   }
@@ -229,7 +215,7 @@ bool TmAddKey(void) {
 bool Xdrv66(uint32_t function) {
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
+  if (FUNC_SETUP_RING2 == function) {
     TmInit();
   } else if (Tm1638.detected) {
     switch (function) {

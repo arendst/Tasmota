@@ -137,7 +137,7 @@ void PWMModulePreInit(void)
       first_device_group_is_local = false;
 
       // Back out the changes made in the light module under the assumtion we have a relay or PWM.
-      TasmotaGlobal.devices_present--;
+      UpdateDevicesPresent(-1);
       TasmotaGlobal.light_type = 0;
     }
 

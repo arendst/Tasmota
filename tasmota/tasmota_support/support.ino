@@ -757,6 +757,22 @@ bool NewerVersion(char* version_str) {
   return (version > VERSION);
 }
 
+int32_t UpdateDevicesPresent(int32_t change) {
+  int32_t difference = 0;
+  int32_t devices_present = TasmotaGlobal.devices_present;  // Between 0 and 32
+  devices_present += change;
+  if (devices_present < 0) {                          // Support down to 0
+    difference = devices_present;
+    devices_present = 0;
+  }
+  else if (devices_present >= POWER_SIZE) {           // Support up to uint32_t as bitmask
+    difference = devices_present - POWER_SIZE;
+    devices_present = POWER_SIZE;
+  }
+  TasmotaGlobal.devices_present = devices_present;
+  return difference;
+}
+
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 {
   strncpy_P(dest, S_RSLT_POWER, size);                // POWER
@@ -773,35 +789,38 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-float ConvertTempToFahrenheit(float c) {
-  float result = c;
+float ConvertTempToFahrenheit(float tc) {
+  if (isnan(tc)) { return NAN; }
 
-  if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-    result = c * 1.8f + 32;                                    // Fahrenheit
+  float result = tc;
+  if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    result = tc * 1.8f + 32;                                    // Fahrenheit
   }
   result = result + (0.1f * Settings->temp_comp);
   return result;
 }
 
-float ConvertTempToCelsius(float c) {
-  float result = c;
-  if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-    result = (c - 32) / 1.8f;                                  // Celsius
+float ConvertTempToCelsius(float tf) {
+  if (isnan(tf)) { return NAN; }
+
+  float result = tf;
+  if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    result = (tf - 32) / 1.8f;                                  // Celsius
   }
   return result;
 }
 
-void UpdateGlobalTemperature(float c) {
+void UpdateGlobalTemperature(float t) {
   if (!Settings->global_sensor_index[0] && !TasmotaGlobal.user_globals[0]) {
     TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-    TasmotaGlobal.temperature_celsius = c;
+    TasmotaGlobal.temperature_celsius = t;
   }
 }
 
-float ConvertTemp(float c) {
-  UpdateGlobalTemperature(c);
+float ConvertTemp(float t) {
+  UpdateGlobalTemperature(t);
 
-  return ConvertTempToFahrenheit(c);
+  return ConvertTempToFahrenheit(t);
 }
 
 char TempUnit(void) {
@@ -826,16 +845,36 @@ float CalcTempHumToDew(float t, float h) {
   if (isnan(h) || isnan(t)) { return NAN; }
 
   if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
-    t = (t - 32) / 1.8f;                                        // Celsius
+    t = (t - 32) / 1.8f;                                       // Celsius
   }
 
   float gamma = TaylorLog(h / 100) + 17.62f * t / (243.5f + t);
   float result = (243.5f * gamma / (17.62f - gamma));
 
   if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
-    result = result * 1.8f + 32;                                // Fahrenheit
+    result = result * 1.8f + 32;                               // Fahrenheit
   }
   return result;
+}
+
+float CalcTempHumToAbsHum(float t, float h) {
+  if (isnan(t) || isnan(h)) { return NAN; }
+  // taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
+  // precision is about 0.1°C in range -30 to 35°C
+  // August-Roche-Magnus 	6.1094 exp(17.625 x T)/(T + 243.04)
+  // Buck (1981) 		6.1121 exp(17.502 x T)/(T + 240.97)
+  // reference https://www.eas.ualberta.ca/jdwilson/EAS372_13/Vomel_CIRES_satvpformulae.html
+
+  if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    t = (t - 32) / 1.8f;                                       // Celsius
+  }
+
+  float temp = FastPrecisePow(2.718281828f, (17.67f * t) / (t + 243.5f));
+
+  const float mw = 18.01534f;                                  // Molar mass of water g/mol
+  const float r = 8.31447215f;                                 // Universal gas constant J/mol/K
+//  return (6.112 * temp * h * 2.1674) / (273.15 + t);           // Simplified version
+  return (6.112f * temp * h * mw) / ((273.15f + t) * r);       // Long version
 }
 
 float ConvertHgToHpa(float p) {
@@ -1979,7 +2018,7 @@ void SetSerialBegin(void) {
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef ARDUINO_USB_CDC_ON_BOOT
+#if ARDUINO_USB_MODE
 //  Serial.end();
 //  Serial.begin();
   // Above sequence ends in "Exception":5,"Reason":"Load access fault"
@@ -1989,7 +2028,7 @@ void SetSerialBegin(void) {
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
-#endif  // Not ARDUINO_USB_CDC_ON_BOOT
+#endif  // Not ARDUINO_USB_MODE
 #endif  // ESP32
 }
 

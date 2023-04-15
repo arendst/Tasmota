@@ -453,58 +453,64 @@ extern "C" {
   }
 
   // Find for an operator in the string
-  // takes a string, an offset to start the search from, and works in 2 modes.
-  // mode1 (false): loog for the first char of an operato
-  // mode2 (true): finds the last char of the operator
+  // returns -1 if not found, or returns start in low 16 bits, end in high 16 bits
+  //
+  // Detects the following operators: `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`, `$<`, `$>`, `$!`, `$|`, `$^`, `|`
   int32_t tasm_find_op(bvm *vm);
   int32_t tasm_find_op(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    bool second_phase = false;
     int32_t ret = -1;
     if (top >= 2 && be_isstring(vm, 2)) {
       const char *c = be_tostring(vm, 2);
-      if (top >= 3) {
-        second_phase = be_tobool(vm, 3);
-      }
+      // new version, two phases in 1, return start in low 16 bits, end in high 16 bits
 
-      if (!second_phase) {
-        int32_t idx = 0;
-        // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`
-        while (*c && ret < 0) {
-          switch (c[0]) {
-            case '=':
-            case '<':
-            case '>':
-              ret = idx;
-              break;   // anything starting with `=`, `<` or `>` is a valid operator
-            case '!':
-              if (c[1] == '=') {
-                ret = idx; // needs to start with `!=`
-              }
-              break;
-            default:
-              break;
-          }
-          c++;
-          idx++;
-        }
-      } else {
-        // second phase
+      int32_t idx_start = -1;
+      int32_t idx = 0;
+      int32_t idx_end = -1; 
+      // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`, `$<`, `$>`, `$!`, `$|`, `$^`, `|`
+      while (*c && idx_start < 0) {
         switch (c[0]) {
+          case '=':
           case '<':
           case '>':
-          case '=':
-            if (c[1] != '=') { ret = 1; }    // `<` or `>` or `=`
-            else             { ret = 2; }    // `<=` or `>=` or `==`
+            idx_start = idx;
+            if (c[1] == '=') { idx_end = idx_start + 2; }     // `<=` or `>=` or `==`
+            else             { idx_end = idx_start + 1; }     // `<` or `>` or `=`
             break;
           case '!':
-            if (c[1] != '=') { ; }         // this is invalid if isolated `!`
-            if (c[2] != '=') { ret = 2; }    // `!=`
-            else             { ret = 3; }    // `!==`
+            if (c[1] == '=') {                                // this is invalid if isolated `!`
+              idx_start = idx;
+              if (c[2] != '=') { idx_end = idx_start + 2; }   // `!=`
+              else             { idx_end = idx_start + 3; }   // `!==`
+            }
+            break;
+          case '$':
+            switch (c[1]) {
+              case '<':
+              case '>':
+              case '!':
+              case '|':
+              case '^':
+                idx_start = idx;                              // `$<`, `$>`, `$!`, `$|`, `$^`
+                idx_end = idx_start + 2;
+                break;
+              default:
+                break;
+            }
+            break;
+          case '|':
+            idx_start = idx;                                  // `|`
+            idx_end = idx_start + 1;
             break;
           default:
             break;
         }
+        c++;
+        idx++;
+      }
+
+      if (idx_start >= 0 && idx_end >= idx_start) {
+        ret = ((idx_end & 0x7FFF) << 16) | (idx_start & 0x7FFF);
       }
     }
     be_pushint(vm, ret);
@@ -512,11 +518,162 @@ extern "C" {
   }
   /*
 
-  # test patterns
-  assert(tasmota._find_op("aaa#bbc==23",false) == 7)
-  assert(tasmota._find_op("==23",true) == 2)
-  assert(tasmota._find_op(">23",true) == 1)
-  assert(tasmota._find_op("aaa#bbc!23",false) == -1)
+  # test patterns for all-in-one version
+  assert(tasmota._find_op("aaa#bbc==23") == 0x80007)
+  assert(tasmota._find_op("az==23") == 0x30002)
+  assert(tasmota._find_op("a>23") == 0x10001)
+  assert(tasmota._find_op("aaa#bbc!23") == -1)
+
+  */
+
+  // String utilities
+  // From https://stackoverflow.com/questions/68816324/substring-exists-in-string-in-c
+  //
+  // changed to case-insensitive version
+  static const char* substr_i(const char *haystack, const char *needle) {
+    do {
+      const char *htmp = haystack;
+      const char *ntmp = needle;
+      while (toupper(*htmp) == toupper(*ntmp) && *ntmp) {
+        htmp++;
+        ntmp++;
+      }
+      if (!*ntmp) {
+        return haystack;  // Beginning of match
+      }
+    } while (*haystack++);
+
+    return NULL;
+  }
+
+  static bool startswith_i(const char *haystack, const char *needle) {
+    const char *htmp = haystack;
+    const char *ntmp = needle;
+    while (toupper(*htmp) == toupper(*ntmp) && *ntmp) {
+      htmp++;
+      ntmp++;
+    }
+    return !*ntmp;
+  }
+
+  static bool endswith_i(const char *haystack, const char *needle) {
+    size_t h_len = strlen(haystack);
+    size_t n_len = strlen(needle);
+    if (h_len >= n_len) {
+      const char *htmp = haystack + h_len - n_len;
+      const char *ntmp = needle;
+      return (strcasecmp(htmp, ntmp) == 0);
+    }
+    return false;
+  }
+
+  // Apply a string operator, without allocating any object (no pressure on GC)
+  //
+  // `tasmota._apply_str_op(op, a, b)`
+  // Args:
+  // op: operator (int)
+  //    1: `==` (equals) case insensitive
+  //    2: `!==` or `$!` (not equals) case insensitive
+  //    3: `$<` (starts with) case insensitive
+  //    4: `$>` (ends with) case insensitive
+  //    5: `$|` (contains) case insensitive
+  //    6: `$^` (does not contain) case insensitive
+  //  a: first string
+  //  b: second string
+  //
+  int32_t tasm_apply_str_op(bvm *vm);
+  int32_t tasm_apply_str_op(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    bbool ret = bfalse;
+    if (top >= 4 && be_isint(vm, 2) && be_isstring(vm, 3) && be_isstring(vm, 4)) {
+      int32_t op = be_toint(vm, 2);
+      const char *a = be_tostring(vm, 3);
+      const char *b = be_tostring(vm, 4);
+
+      switch (op) {
+        case 1:           // `==` (equals) case insensitive
+          ret = (strcasecmp(a, b) == 0);
+          break;
+        case 2:           // `!==` or `$!` (not equals) case insensitive
+          ret = (strcasecmp(a, b) != 0);
+          break;
+        case 3:           // `$<` (starts with) case insensitive
+          ret = startswith_i(a, b);
+          break;
+        case 4:           // `$>` (ends with) case insensitive
+          ret = endswith_i(a, b);
+          break;
+        case 5:           // `$|` (contains) case insensitive
+          ret = (substr_i(a, b) != NULL);
+          break;
+        case 6:           // `$^` (does not contain) case insensitive
+          ret = (substr_i(a, b) == NULL);
+          break;
+      }
+    }
+    be_pushbool(vm, ret);
+    be_return(vm);
+  }
+  /*
+  
+  # unit tests
+  # equals
+  assert(tasmota._apply_str_op(1, "aa", "AA") == true)
+  assert(tasmota._apply_str_op(1, "aa", "AAA") == false)
+  assert(tasmota._apply_str_op(1, "a", "AA") == false)
+  assert(tasmota._apply_str_op(1, "", "AA") == false)
+  assert(tasmota._apply_str_op(1, "aa", "") == false)
+  assert(tasmota._apply_str_op(1, "", "") == true)
+
+  # not equals
+  assert(tasmota._apply_str_op(2, "aa", "AA") == false)
+  assert(tasmota._apply_str_op(2, "aa", "AAA") == true)
+  assert(tasmota._apply_str_op(2, "a", "AA") == true)
+  assert(tasmota._apply_str_op(2, "", "AA") == true)
+  assert(tasmota._apply_str_op(2, "aa", "") == true)
+  assert(tasmota._apply_str_op(2, "", "") == false)
+
+  # starts with
+  assert(tasmota._apply_str_op(3, "aabbcc", "AA") == true)
+  assert(tasmota._apply_str_op(3, "aaabbcc", "AA") == true)
+  assert(tasmota._apply_str_op(3, "abbaacc", "AA") == false)
+  assert(tasmota._apply_str_op(3, "aabbcc", "a") == true)
+  assert(tasmota._apply_str_op(3, "aabbcc", "") == true)
+  assert(tasmota._apply_str_op(3, "", "") == true)
+  assert(tasmota._apply_str_op(3, "", "a") == false)
+
+  assert(tasmota._apply_str_op(3, "azeaze", "az") == true)
+  assert(tasmota._apply_str_op(3, "azeaze", "ze") == false)
+
+  # ends with
+  assert(tasmota._apply_str_op(4, "azeaze", "az") == false)
+  assert(tasmota._apply_str_op(4, "azeaze", "ze") == true)
+  assert(tasmota._apply_str_op(4, "azeaze", "") == true)
+  assert(tasmota._apply_str_op(4, "", "aa") == false)
+  assert(tasmota._apply_str_op(4, "aa", "aa") == true)
+  assert(tasmota._apply_str_op(4, "aabaa", "aa") == true)
+
+  # contains
+  assert(tasmota._apply_str_op(5, "azeaze", "az") == true)
+  assert(tasmota._apply_str_op(5, "azeaze", "ze") == true)
+  assert(tasmota._apply_str_op(5, "azeaze", "") == true)
+  assert(tasmota._apply_str_op(5, "azeaze", "e") == true)
+  assert(tasmota._apply_str_op(5, "azeaze", "a") == true)
+  assert(tasmota._apply_str_op(5, "azeaze", "z") == true)
+  assert(tasmota._apply_str_op(5, "azertyuiop", "tyui") == true)
+  assert(tasmota._apply_str_op(5, "azertyuiop", "azr") == false)
+  assert(tasmota._apply_str_op(5, "", "aze") == false)
+
+  # not contains
+  assert(tasmota._apply_str_op(6, "azeaze", "az") == false)
+  assert(tasmota._apply_str_op(6, "azeaze", "ze") == false)
+  assert(tasmota._apply_str_op(6, "azeaze", "") == false)
+  assert(tasmota._apply_str_op(6, "azeaze", "e") == false)
+  assert(tasmota._apply_str_op(6, "azeaze", "a") == false)
+  assert(tasmota._apply_str_op(6, "azeaze", "z") == false)
+  assert(tasmota._apply_str_op(6, "azertyuiop", "tyui") == false)
+  assert(tasmota._apply_str_op(6, "azertyuiop", "azr") == true)
+  assert(tasmota._apply_str_op(6, "", "aze") == true)
 
   */
 
@@ -551,17 +708,25 @@ extern "C" {
   int32_t l_getpower(bvm *vm) {
     power_t pow = TasmotaGlobal.power;
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 2 && be_isint(vm, 2)) {
-      pow = be_toint(vm, 2);
-    }
-    be_newobject(vm, "list");
-    for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      be_pushbool(vm, bitRead(pow, i));
-      be_data_push(vm, -2);
+    if (top >= 2 && be_isint(vm, 2)) {
+      int32_t idx = be_toint(vm, 2);
+      if (idx >= 0 && idx < TasmotaGlobal.devices_present) {
+        be_pushbool(vm, bitRead(pow, idx));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    } else {
+      // no parameter, return an array of all values
+      be_newobject(vm, "list");
+      for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
+        be_pushbool(vm, bitRead(pow, i));
+        be_data_push(vm, -2);
+        be_pop(vm, 1);
+      }
       be_pop(vm, 1);
+      be_return(vm); // Return
     }
-    be_pop(vm, 1);
-    be_return(vm); // Return
   }
 
   int32_t l_setpower(bvm *vm);

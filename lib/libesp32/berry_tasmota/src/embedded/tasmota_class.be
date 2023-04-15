@@ -1,7 +1,8 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Trigger end     # for compilation
+class Trigger end       # for compilation
+class Rule_Matche end   # for compilation
 
 tasmota = nil
 #@ solidify:Tasmota
@@ -65,22 +66,18 @@ class Tasmota
 
 
   # split the item when there is an operator, returns a list of (left,op,right)
-  # ex: "Dimmer>50" -> ["Dimmer",tasmota_gt,"50"]
+  #-
+    assert(tasmota.find_op("Dimmer>50") == ['Dimmer', '>', '50'])
+    assert(tasmota.find_op("Dimmer") == ['Dimmer', nil, nil])
+    assert(tasmota.find_op("Status!==Connected") == ['Status', '!==', 'Connected'])
+  -#
   def find_op(item)
-    import string
-    var op_chars = '=<>!'
-    var pos = self._find_op(item, false)   # initial run
-    if pos >= 0
-      var op_split = string.split(item,pos)
-      var op_left = op_split[0]
-      var op_rest = op_split[1]
-      pos = self._find_op(op_rest, true)
-      if pos >= 0
-        var op_split2 = string.split(op_rest,pos)
-        var op_middle = op_split2[0]
-        var op_right = op_split2[1]
-        return [op_left,op_middle,op_right]
-      end
+    var idx_composite = self._find_op(item)
+    if idx_composite >= 0
+      var idx_start = idx_composite & 0x7FFF
+      var idx_end = idx_composite >> 16
+
+      return [ item[0 .. idx_start-1], item[idx_start .. idx_end - 1], item[idx_end ..]]
     end
     return [item, nil, nil]
   end
@@ -92,7 +89,7 @@ class Tasmota
       self._rules=[]
     end
     if type(f) == 'function'
-      self._rules.push(Trigger(pat, f, id))
+      self._rules.push(Trigger(self.Rule_Matcher.parse(pat), f, id))
     else
       raise 'value_error', 'the second argument is not a function'
     end
@@ -102,7 +99,7 @@ class Tasmota
     if self._rules
       var i = 0
       while i < size(self._rules)
-        if self._rules[i].trig == pat && self._rules[i].id == id
+        if self._rules[i].trig.rule == pat && self._rules[i].id == id
           self._rules.remove(i)  #- don't increment i since we removed the object -#
         else
           i += 1
@@ -112,43 +109,19 @@ class Tasmota
   end
 
   # Rules trigger if match. return true if match, false if not
-  def try_rule(event, rule, f)
-    import string
-    var rl_list = self.find_op(rule)
-    var sub_event = event
-    var rl = string.split(rl_list[0],'#')
-    var i = 0
-    while i < size(rl)
-    # for it:rl
-      var it = rl[i]
-      var found=self.find_key_i(sub_event,it)
-      if found == nil return false end
-      sub_event = sub_event[found]
-      i += 1
-    end
-    var op=rl_list[1]
-    var op2=rl_list[2]
-    if op
-      if   op=='=='
-        if str(sub_event) != str(op2)   return false end
-      elif op=='!=='
-        if str(sub_event) == str(op2)   return false end
-      elif op=='='
-        if real(sub_event) != real(op2) return false end
-      elif op=='!='
-        if real(sub_event) == real(op2) return false end
-      elif op=='>'
-        if real(sub_event) <= real(op2) return false end
-      elif op=='>='
-        if real(sub_event) < real(op2)  return false end
-      elif op=='<'
-        if real(sub_event) >= real(op2) return false end
-      elif op=='<='
-        if real(sub_event) > real(op2)  return false end
+  #
+  # event: native Berry map representing the JSON input
+  # rule: Rule_Matcher instance
+  # f: callback to call in case of a match
+  def try_rule(event, rule_matcher, f)
+    var sub_event = rule_matcher.match(event)
+    if sub_event != nil
+      if f != nil
+        f(sub_event, rule_matcher.trigger, event)
       end
+      return true
     end
-    f(sub_event, rl_list[0], event)
-    return true
+    return false
   end
 
   # Run rules, i.e. check each individual rule
@@ -162,7 +135,7 @@ class Tasmota
       self.cmd_res = nil                  # disable sunsequent recording of results
       var ret = false
 
-      var ev = json.load(ev_json)   # returns nil if invalid JSON
+      var ev = json.load(ev_json)         # returns nil if invalid JSON
       if ev == nil
         self.log('BRY: ERROR, bad json: '+ev_json, 3)
         ev = ev_json                # revert to string
@@ -567,7 +540,8 @@ class Tasmota
 
     # iterate and call each closure
     var i = 0
-    while i < size(fl)
+    var sz = size(fl)
+    while i < sz
       # note: this is not guarded in try/except for performance reasons. The inner function must not raise exceptions
       fl[i]()
       i += 1
@@ -663,9 +637,20 @@ class Tasmota
   end
 
   # cmd high-level function
-  def cmd(command)
+  # mute: (opt, bool) if true temporarily reduce log_level to 1
+  def cmd(command, mute)
     var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
+
+    var seriallog_level = tasmota.global.seriallog_level
+    var mqttlog_level   = tasmota.settings.mqttlog_level
+    var weblog_level    = tasmota.settings.weblog_level
+
+    if mute                 # mute logging
+      if seriallog_level >= 2       tasmota.global.seriallog_level = 1    end
+      if mqttlog_level   >= 2       tasmota.settings.mqttlog_level = 1    end
+      if weblog_level    >= 2       tasmota.settings.weblog_level  = 1    end
+    end
 
     self._cmd(command)
     
@@ -675,6 +660,12 @@ class Tasmota
     end
     self.cmd_res = save_cmd_res       # restore previous state
     
+    # restore log_level
+    if mute
+      tasmota.global.seriallog_level = seriallog_level
+      tasmota.settings.mqttlog_level = mqttlog_level
+      tasmota.settings.weblog_level = weblog_level
+    end
     return ret
   end
 
@@ -764,6 +755,7 @@ class Tasmota
       end
     end
     var wc = webclient()
+    wc.set_follow_redirects(true)
     wc.begin(url)
     var st = wc.GET()
     if st != 200

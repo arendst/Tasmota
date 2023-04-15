@@ -876,11 +876,19 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_BIOPDU)
     feature9 |= 0x00010000;  // xnrg_24_biopdu.ino
 #endif
-//    feature9 |= 0x00020000;
-//    feature9 |= 0x00040000;
-//    feature9 |= 0x00080000;
+#if (defined(USE_I2C) || defined(USE_SPI)) && defined(USE_MCP23XXX_DRV)
+    feature9 |= 0x00020000;  // xdrv_67_mcp23xxx.ino
+#endif
+#if defined(USE_I2C) && defined(USE_PMSA003I)
+    feature9 |= 0x00040000;  // xsns_104_pmsa003i.ino
+#endif
+#ifdef USE_LOX_O2
+    feature9 |= 0x00080000;  // xsns_105_lox_o2.ino
+#endif
+#if defined(USE_I2C) && defined(USE_GDK101)
+    feature9 |= 0x00100000;  // xsns_106_gdk101.ino
+#endif
 
-//    feature9 |= 0x00100000;
 //    feature9 |= 0x00200000;
 //    feature9 |= 0x00400000;
 //    feature9 |= 0x00800000;

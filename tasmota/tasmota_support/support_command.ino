@@ -587,6 +587,31 @@ void CmndJson(void) {
     // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
     // Output:
     // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+/*
+    String backlog;
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          backlog = command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+          ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
+        }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
+      } else {
+        backlog = command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+        ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
+      }
+    }
+*/
     String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
@@ -604,16 +629,23 @@ void CmndJson(void) {
       } else if (parameters.isObject()) {       // Should have been escaped
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
       } else {
-        if (backlog.length()) { backlog += ";"; }
-        backlog += command;
-        backlog += " ";
-        backlog += parameters.getStr();         // HSBColor 51,97,100
+        String cmnd_param = command;
+        cmnd_param += " ";
+        cmnd_param += parameters.getStr();
+        if (cmnd_param.indexOf(";") == -1) {    // Rule1 ON Clock#Timer=1 DO Backlog Color #FF000000D0; Wakeup 100 ENDON
+          if (backlog.length()) { backlog += ";"; }
+          backlog += cmnd_param;                // HSBColor 51,97,100
+        } else {
+          ExecuteCommand((char*)cmnd_param.c_str(), SRC_FILE);
+        }
       }
     }
-    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
-    XdrvMailbox.data_len = 1;                   // Any data
-    XdrvMailbox.index = 0;                      // Backlog0 - no delay
-    CmndBacklog();
+    if (backlog.length()) {
+      XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+      XdrvMailbox.data_len = 1;                 // Any data
+      XdrvMailbox.index = 0;                    // Backlog0 - no delay
+      CmndBacklog();
+    }
   } else {
     ResponseCmndChar(PSTR(D_JSON_EMPTY));
   }
@@ -794,6 +826,10 @@ void CmndStatus(void)
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState(0);
+#ifdef USE_I2C
+    ResponseAppend_P(PSTR(",\"" D_CMND_I2CDRIVER "\":"));
+    I2cDriverState();
+#endif
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
@@ -913,24 +949,8 @@ void CmndStatus(void)
   }
 
 #ifdef USE_SHUTTER
-  if (Settings->flag3.shutter_mode) {
-    if ((0 == payload) || (13 == payload)) {
-      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":{"));
-      for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-        if (0 == Settings->shutter_startrelay[i]) { break; }
-        if (i > 0) { ResponseAppend_P(PSTR(",")); }
-        ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
-                                   "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
-                                   "\"Calib\":[%d,%d,%d,%d,%d],"
-                                   "\"Mode\":\"%d\"}"),
-                                   i, Settings->shutter_startrelay[i], Settings->shutter_startrelay[i] +1, Settings->shutter_opentime[i], Settings->shutter_closetime[i],
-                                   Settings->shutter_set50percent[i], Settings->shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
-                                   Settings->shuttercoeff[0][i], Settings->shuttercoeff[1][i], Settings->shuttercoeff[2][i], Settings->shuttercoeff[3][i], Settings->shuttercoeff[4][i],
-                                   Settings->shutter_mode);
-      }
-      ResponseJsonEndEnd();
-      CmndStatusResponse(13);
-    }
+  if ((0 == payload) || (13 == payload)) {
+    if (ShutterStatus()) { CmndStatusResponse(13); }
   }
 #endif
 
@@ -1050,13 +1070,17 @@ void CmndSleep(void)
 
 }
 
-void CmndUpgrade(void)
-{
+void CmndUpgrade(void) {
   // Check if the payload is numerically 1, and had no trailing chars.
   //   e.g. "1foo" or "1.2.3" could fool us.
   // Check if the version we have been asked to upgrade to is higher than our current version.
   //   We also need at least 3 chars to make a valid version number string.
+  // Upload 1 - OTA upload binary
+  // Upload 2 - (ESP32 only) OTA upload safeboot binary if partition is present
   if (((1 == XdrvMailbox.data_len) && (1 == XdrvMailbox.payload)) || ((XdrvMailbox.data_len >= 3) && NewerVersion(XdrvMailbox.data))) {
+#ifdef ESP32
+    TasmotaGlobal.ota_factory = false;  // Reset in case of failed safeboot upgrade
+#endif  // ESP32 and WEBCLIENT_HTTPS
     TasmotaGlobal.ota_state_flag = 3;
     char stemp1[TOPSZ];
     Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), XdrvMailbox.command, TasmotaGlobal.version, GetOtaUrl(stemp1, sizeof(stemp1)));
@@ -2135,13 +2159,28 @@ void CmndSwitchText(void) {
   }
 }
 
-void CmndSwitchMode(void)
-{
+void CmndSwitchMode(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SWITCHES_SET)) {
+    // SwitchMode1   - Show SwitchMode1
+    // SwitchMode1 2 - Set SwitchMode tot 2
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
       Settings->switchmode[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
     ResponseCmndIdxNumber(Settings->switchmode[XdrvMailbox.index-1]);
+  }
+  else if (0 == XdrvMailbox.index) {
+    // SwitchMode0   - Show all SwitchMode like {"SwitchMode":[2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+    // SwitchMode0 2 - Set all SwitchMode to 2
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        Settings->switchmode[i] = XdrvMailbox.payload;
+      }
+    }
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
+    for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+      ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings->switchmode[i]);
+    }
+    ResponseAppend_P(PSTR("]}"));
   }
 }
 

@@ -109,6 +109,7 @@ private:
     unsigned int mosi_pin;
     unsigned int sclk_pin;
     unsigned char mode;
+    uint8_t iniz = 0;
     void delay_busy(uint32_t wait);
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);

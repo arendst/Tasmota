@@ -304,6 +304,19 @@ struct PVVXPacket_t {
 	uint8_t		flags;
 };
 
+struct CGDK2Packet_t {
+	//uint8_t	size;	// = 17
+	uint16_t 	framedata;
+	uint8_t		MAC[6]; // [0] - lo, .. [6] - hi digits
+	uint16_t 	devicetype;
+	int16_t		temperature; // x 0.1 degree
+	uint16_t	humidity; // x 0.01 %
+	uint16_t	battery_mv; // mV
+	uint8_t		battery_level; // 0..100 %
+	uint8_t		counter; // measurement count
+	uint8_t		flags;
+};
+
 struct MiScaleV1Packet_t {
 	//uint8_t		size;	// = 14
 	//uint8_t		uid;	// = 0x16, 16-bit UUID
@@ -469,8 +482,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_DOOR        14
 #define MI_SCALE_V1    15
 #define MI_SCALE_V2    16
+#define MI_CGDK2       17
 
-#define MI_MI32_TYPES    16 //count this manually
+#define MI_MI32_TYPES    17 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -488,7 +502,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0a1c, // ATC -> this is a fake ID
   0x098b, // door/window sensor
   0x181d, // Mi Scale V1
-  0x181b  // Mi Scale V2
+  0x181b,  // Mi Scale V2
+  0x066f,  // CGDK2
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -507,7 +522,8 @@ const char kMI32DeviceType12[] PROGMEM ="ATC";
 const char kMI32DeviceType13[] PROGMEM ="DOOR";
 const char kMI32DeviceType14[] PROGMEM ="MISCALEV1";
 const char kMI32DeviceType15[] PROGMEM ="MISCALEV2";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15};
+const char kMI32DeviceType16[] PROGMEM ="CGDK2";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -1073,9 +1089,16 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     TasAutoMutex localmutex(&slotmutex, "Mi32AdCB2");
     switch(UUID){
       case 0xfe95: // std MI?
-      case 0xfdcd: // CGD1?
       {
-        MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
+          MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
+      } break;
+      case 0xfdcd: // CGD1 & CGDK2
+      {
+        if (ServiceDataLength == 17){ // CGDK2
+          MI32ParseCGDK2Packet(ServiceData, ServiceDataLength, addr, RSSI);
+        } else {
+          MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
+        }
       } break;
       case 0x181a: { //ATC
         MI32ParseATCPacket(ServiceData, ServiceDataLength, addr, RSSI);
@@ -1756,6 +1779,42 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
   } else {
 
   }
+}
+
+void MI32ParseCGDK2Packet(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI){
+  CGDK2Packet_t *cgdk_packet = (CGDK2Packet_t*)_buf;
+
+  if (length == 17){ // 
+    uint8_t addrrev[6];
+    memcpy(addrrev, addr, 6);
+    MI32_ReverseMAC(addrrev);
+
+    if (!memcmp(addrrev, cgdk_packet->MAC, 6)){
+        uint32_t _slot = MIBLEgetSensorSlot(addr, 0x066f, cgdk_packet->counter); // This must be a hard-coded fake ID
+        if(_slot==0xff) return;
+
+        if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
+          if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s:pvvx at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
+          MIBLEsensors[_slot].RSSI=RSSI;
+          MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+          MIBLEsensors[_slot].temp = (float)(cgdk_packet->temperature)/10.0f;
+          MIBLEsensors[_slot].hum = (float)(cgdk_packet->humidity)/10.0f;
+          MIBLEsensors[_slot].eventType.tempHum  = 1;
+          MIBLEsensors[_slot].bat = cgdk_packet->battery_level;
+          MIBLEsensors[_slot].eventType.bat  = 1;
+
+          if(MI32.option.directBridgeMode) {
+            MIBLEsensors[_slot].shallSendMQTT = 1;
+            MI32.mode.shallTriggerTele = 1;
+          }
+        }
+        return;
+      } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("M32: CGDK2 packet mac mismatch - ignored?"));
+        return;
+      }
+  }
+
 }
 
 void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID) {

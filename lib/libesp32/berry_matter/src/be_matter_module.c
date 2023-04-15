@@ -25,8 +25,6 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#include "be_matter_qrcode_min_js.h"
-
 // Matter logo
 static const uint8_t MATTER_LOGO[] = 
   "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
@@ -40,6 +38,7 @@ static const uint8_t MATTER_LOGO[] =
 
 extern const bclass be_class_Matter_Counter;
 extern const bclass be_class_Matter_Verhoeff;
+extern const bclass be_class_Matter_QRCode;
 
 #include "solidify/solidified_Matter_Module.h"
 
@@ -80,6 +79,34 @@ const char* matter_get_attribute_name(uint16_t cluster, uint16_t attribute) {
 }
 BE_FUNC_CTYPE_DECLARE(matter_get_attribute_name, "s", "ii")
 
+bbool matter_is_attribute_writable(uint16_t cluster, uint16_t attribute) {
+  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+    if (cl->id == cluster) {
+      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+        if (at->id == attribute) {
+          return (at->flags & 0x01) ? btrue : bfalse;
+        }
+      }
+    }
+  }
+  return bfalse;
+}
+BE_FUNC_CTYPE_DECLARE(matter_is_attribute_writable, "b", "ii")
+
+bbool matter_is_attribute_reportable(uint16_t cluster, uint16_t attribute) {
+  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+    if (cl->id == cluster) {
+      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+        if (at->id == attribute) {
+          return (at->flags & 0x02) ? btrue : bfalse;
+        }
+      }
+    }
+  }
+  return bfalse;
+}
+BE_FUNC_CTYPE_DECLARE(matter_is_attribute_reportable, "b", "ii")
+
 const char* matter_get_command_name(uint16_t cluster, uint16_t command) {
   for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
     if (cl->id == cluster) {
@@ -102,15 +129,22 @@ BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
 #include "solidify/solidified_Matter_inspect.h"
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
+#include "solidify/solidified_Matter_Path.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
+#include "solidify/solidified_Matter_Expirable.h"
+#include "solidify/solidified_Matter_Fabric.h"
 #include "solidify/solidified_Matter_Session.h"
+#include "solidify/solidified_Matter_Session_Store.h"
 #include "solidify/solidified_Matter_Commissioning_Data.h"
 #include "solidify/solidified_Matter_Commissioning.h"
 #include "solidify/solidified_Matter_Message.h"
 #include "solidify/solidified_Matter_MessageHandler.h"
+#include "solidify/solidified_Matter_IM_Message.h"
+#include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
+#include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
@@ -118,8 +152,14 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 
 #include "../generate/be_matter_certs.h"
 
-#include "solidify/solidified_Matter_Plugin_core.h"
-#include "solidify/solidified_Matter_Plugin_Relay.h"
+#include "solidify/solidified_Matter_Plugin_Root.h"
+#include "solidify/solidified_Matter_Plugin_Device.h"
+#include "solidify/solidified_Matter_Plugin_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Light0.h"
+#include "solidify/solidified_Matter_Plugin_Light1.h"
+#include "solidify/solidified_Matter_Plugin_Light2.h"
+#include "solidify/solidified_Matter_Plugin_Light3.h"
+#include "solidify/solidified_Matter_Plugin_Temp_Sensor.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -145,9 +185,8 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 
 /* @const_object_info_begin
 
-module matter (scope: global) {
+module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
-  _QRCODE_MINJS, comptr(QRCODE_MINJS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
 
   Verhoeff, class(be_class_Matter_Verhoeff)
@@ -158,6 +197,8 @@ module matter (scope: global) {
 
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
+  is_attribute_writable, ctype_func(matter_is_attribute_writable)
+  is_attribute_reportable, ctype_func(matter_is_attribute_reportable)
   get_command_name, ctype_func(matter_get_command_name)
   get_opcode_name, ctype_func(matter_get_opcode_name)
   TLV, class(be_class_Matter_TLV)
@@ -238,7 +279,12 @@ module matter (scope: global) {
   UDPPacket_sent, class(be_class_Matter_UDPPacket_sent)
   UDPServer, class(be_class_Matter_UDPServer)
 
+  // Expirable
+  Expirable, class(be_class_Matter_Expirable)
+  Expirable_list, class(be_class_Matter_Expirable_list)
+
   // Sessions
+  Fabric, class(be_class_Matter_Fabric)
   Session, class(be_class_Matter_Session)
   Session_Store, class(be_class_Matter_Session_Store)
 
@@ -247,10 +293,22 @@ module matter (scope: global) {
   MessageHandler, class(be_class_Matter_MessageHandler)
 
   // Interation Model
-  Response_container, class(be_class_Matter_Response_container)
+  Path, class(be_class_Matter_Path)
+  IM_Status, class(be_class_Matter_IM_Status)
+  IM_InvokeResponse, class(be_class_Matter_IM_InvokeResponse)
+  IM_WriteResponse, class(be_class_Matter_IM_WriteResponse)
+  IM_ReportData, class(be_class_Matter_IM_ReportData)
+  IM_ReportDataSubscribed, class(be_class_Matter_IM_ReportDataSubscribed)
+  IM_SubscribeResponse, class(be_class_Matter_IM_SubscribeResponse)
+  IM_SubscribedHeartbeat, class(be_class_Matter_IM_SubscribedHeartbeat)
+  IM_Subscription, class(be_class_Matter_IM_Subscription)
+  IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
-  Plugin_core, class(be_class_Matter_Plugin_core)
+  Control_Message, class(be_class_Matter_Control_Message)
   UI, class(be_class_Matter_UI)
+
+  // QR Code
+  QRCode, class(be_class_Matter_QRCode)
 
   // Base38 for QR Code
   Base38, class(be_class_Matter_Base38)
@@ -265,11 +323,17 @@ module matter (scope: global) {
   DAC_Cert_FFF1_8000, func(matter_DAC_Cert_FFF1_8000)
   DAC_Pub_FFF1_8000, func(matter_DAC_Pub_FFF1_8000)
   DAC_Priv_FFF1_8000, func(matter_DAC_Priv_FFF1_8000)
-  CD_FFF1_8000, func(matter_CD_FFF1_8000)   // Certification Declaration
+  CD_FFF1_8000, func(matter_CD_FFF1_8000)               // Certification Declaration
 
   // Plugins
-  Plugin_core, class(be_class_Matter_Plugin_core)       // Generic behavior common to all devices
-  Plugin_Relay, class(be_class_Matter_Plugin_Relay)     // Relay behavior (OnOff)
+  Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
+  Plugin_Device, class(be_class_Matter_Plugin_Device)   // Generic device (abstract)
+  Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
+  Plugin_Light0, class(be_class_Matter_Plugin_Light0)     // OnOff Light
+  Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
+  Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
+  Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
+  Plugin_Temp_Sensor, class(be_class_Matter_Plugin_Temp_Sensor)   // Temperature Sensor
 }
 
 @const_object_info_end */

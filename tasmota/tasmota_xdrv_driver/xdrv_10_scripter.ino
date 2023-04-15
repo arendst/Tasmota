@@ -43,7 +43,14 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define XDRV_10             10
 
 
-const uint8_t SCRIPT_VERS[2] = {5, 0};
+#ifndef TS_FLOAT
+#define TS_FLOAT float
+#endif
+
+
+// float = 4, double = 8 bytes
+
+const uint8_t SCRIPT_VERS[2] = {5, 1};
 
 #define SCRIPT_DEBUG 0
 
@@ -76,17 +83,19 @@ const uint8_t SCRIPT_VERS[2] = {5, 0};
 #endif
 #define MAX_SCRIPT_CMDBUFFER 4096
 
+#define SPI_FLASH_2SEC_SIZE SPI_FLASH_SEC_SIZE*2
 
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
 #define PMEM_SIZE sizeof(Settings->script_pram)
-#define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
+#define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(TS_FLOAT)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 #ifndef MAX_SARRAY_NUM
 #define MAX_SARRAY_NUM 32
 #endif
 
+int32_t fast_mux(uint32_t flag, uint32_t time, TS_FLOAT *buf, uint32_t len);
 void Draw_jpeg(uint8_t *mem, uint16_t jpgsize, uint16_t xp, uint16_t yp, uint8_t scale);
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
@@ -117,8 +126,12 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #pragma message "script 24c256 file option used"
 #else
 
-#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE
+#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+#pragma message "internal special flash script buffer used"
+#else
 #pragma message "internal compressed eeprom script buffer used"
+#endif
 #else
 #error "unsupported eeprom option used"
 #endif
@@ -203,23 +216,33 @@ extern uint8_t sml_options;
 
 uint32_t eeprom_block;
 
-// these support only one 4 k block below EEPROM this steals 4k of application area
+// these support only one 4 k block below EEPROM (eeprom @0x402FB000) this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
     //EEPROM.begin(size);
     //eeprom_block = (uint32_t)&_EEPROM_start - 0x40200000 - SPI_FLASH_SEC_SIZE;
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+    eeprom_block = SPEC_SCRIPT_FLASH - SPI_FLASH_SEC_SIZE;
+    //eeprom_block = SPEC_SCRIPT_FLASH;
+#else
     eeprom_block = SPEC_SCRIPT_FLASH;
+#endif
     return 1;
 }
 
 void alt_eeprom_writeBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
   uint32_t *lwp = (uint32_t*)buf;
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+  ESP.flashEraseSector(eeprom_block  / SPI_FLASH_SEC_SIZE);
+  ESP.flashEraseSector((eeprom_block + SPI_FLASH_SEC_SIZE)  / SPI_FLASH_SEC_SIZE);
+#else
   ESP.flashEraseSector(eeprom_block / SPI_FLASH_SEC_SIZE);
-  ESP.flashWrite(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
+#endif
+  ESP.flashWrite(eeprom_block , lwp, len);
 }
 
 void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
   uint32_t *lwp = (uint32_t*)buf;
-  ESP.flashRead(eeprom_block , lwp, SPI_FLASH_SEC_SIZE);
+  ESP.flashRead(eeprom_block, lwp, len);
 }
 #endif // EEP_SCRIPT_SIZE
 
@@ -241,7 +264,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 #include <TasmotaSerial.h>
 
 #ifdef TESLA_POWERWALL
-#include "powerwall.h"
+#include "include/powerwall.h"
 #endif
 
 #ifdef USE_DISPLAY_DUMP
@@ -293,11 +316,7 @@ extern VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 typedef union {
-#if defined(USE_SCRIPT_GLOBVARS) || defined(USE_HOMEKIT)
   uint16_t data;
-#else
-  uint8_t data;
-#endif
   struct {
     uint8_t is_string : 1;  // string or number
     uint8_t is_permanent : 1;
@@ -307,12 +326,9 @@ typedef union {
     uint8_t settable : 1;
     uint8_t is_filter : 1;
     uint8_t constant : 1;
-#ifdef USE_SCRIPT_GLOBVARS
     uint8_t global : 1;
-#endif
-#ifdef USE_SCRIPT_GLOBVARS
     uint8_t hchanged : 1;
-#endif
+    uint8_t integer : 1;
   };
 } SCRIPT_TYPE;
 
@@ -329,8 +345,8 @@ struct M_FILT {
   uint8_t numvals;
   uint8_t index;
 #endif // LARGE_ARRAYS
-  float maccu;
-  float rbuff[1];
+  TS_FLOAT maccu;
+  TS_FLOAT rbuff[1];
 };
 
 
@@ -426,8 +442,8 @@ struct SCRIPT_SPI {
 #define SFS_MAX 4
 // global memory
 struct SCRIPT_MEM {
-    float *fvars; // number var pointer
-    float *s_fvars; // shadow var pointer
+    TS_FLOAT *fvars; // number var pointer
+    TS_FLOAT *s_fvars; // shadow var pointer
     struct T_INDEX *type; // type and index pointer
     struct M_FILT *mfilt;
     char *glob_vnp; // var name pointer
@@ -484,7 +500,7 @@ struct SCRIPT_MEM {
     uint32_t script_lastmillis;
     bool event_handeled = false;
 #ifdef USE_BUTTON_EVENT
-    int8_t script_button[MAX_KEYS_SET];
+    int8_t script_button[MAX_KEYS];
 #endif //USE_BUTTON_EVENT
 
 #ifdef USE_HOMEKIT
@@ -494,7 +510,7 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_SERIAL
     TasmotaSerial *sp;
 #endif
-    float retval;
+    TS_FLOAT retval;
     char *retstr;
 #ifdef USE_SCRIPT_SPI
     struct SCRIPT_SPI spi;
@@ -511,12 +527,16 @@ struct SCRIPT_MEM {
 
 
 uint8_t tasm_cmd_activ = 0;
+void flt2char(TS_FLOAT num, char *nbuff);
 
-void flt2char(float num, char *nbuff) {
+void flt2char(TS_FLOAT num, char *nbuff) {
   dtostrfd(num, glob_script_mem.script_dprec, nbuff);
 }
+
+void f2char(TS_FLOAT num, uint32_t dprec, uint32_t lzeros, char *nbuff, char dsep);
+
 // convert float to char with leading zeros
-void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff, char dsep) {
+void f2char(TS_FLOAT num, uint32_t dprec, uint32_t lzeros, char *nbuff, char dsep) {
   dtostrfd(num, dprec, nbuff);
   if (lzeros > 1) {
     // check leading zeros
@@ -548,9 +568,10 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff, char dsep) 
   }
 }
 
-
+uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind);
+uint32_t script_sspi_trans(int32_t cs_index, TS_FLOAT *array, uint32_t len, uint32_t size);
 char *scripter_sub(char *lp, uint8_t fromscriptcmd);
-char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, struct GVARS *gv);
+char *GetNumericArgument(char *lp,uint8_t lastop,TS_FLOAT *fp, struct GVARS *gv);
 char *GetStringArgument(char *lp,uint8_t lastop,char *cp, struct GVARS *gv);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
@@ -559,20 +580,20 @@ uint8_t UfsReject(char *name);
 void fread_str_fp(File *fp, char *sp, uint16_t slen, uint16_t flg);
 int32_t script_copy_file(File *source, File *dest, uint32_t sf_from, uint32_t sf_to, uint32_t flag, WiFiClient *client);
 int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg);
-int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, float **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum);
+int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, TS_FLOAT **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum);
 #endif
-char *eval_sub(char *lp, float *fvar, char *rstr);
+char *eval_sub(char *lp, TS_FLOAT *fvar, char *rstr);
 
 void ScriptEverySecond(void) {
 
   if (bitRead(Settings->rule_enabled, 0)) {
     struct T_INDEX *vtp = glob_script_mem.type;
-    float delta = (millis() - glob_script_mem.script_lastmillis) / 1000.0;
+    TS_FLOAT delta = (millis() - glob_script_mem.script_lastmillis) / 1000.0;
     glob_script_mem.script_lastmillis = millis();
     for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_timer) {
         // decrements timers
-        float *fp = &glob_script_mem.fvars[vtp[count].index];
+        TS_FLOAT *fp = &glob_script_mem.fvars[vtp[count].index];
         if (*fp>0) {
           // decrement
           *fp -= delta;
@@ -581,7 +602,7 @@ void ScriptEverySecond(void) {
       }
       if (vtp[count].bits.is_autoinc) {
         // increments timers
-        float *fp = &glob_script_mem.fvars[vtp[count].index];
+        TS_FLOAT *fp = &glob_script_mem.fvars[vtp[count].index];
         if (*fp>=0) {
           *fp += delta;
         }
@@ -618,7 +639,39 @@ void SetChanged(uint32_t index) {
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
 #define SCRIPT_SKIP_EOL while (*lp == SCRIPT_EOL) lp++;
 
-float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos);
+TS_FLOAT *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos);
+
+uint32_t Script_Find_Vars(char *sp) {
+  uint16_t numvars = 0;
+  uint16_t svars = 0;
+  while (*sp) {
+    if (*sp == '\n' || *sp == '\r') {
+      sp++;
+      while (*sp == '=') {
+        sp++;
+      }
+      if (*sp == '#' || *sp == '>') {
+        break;
+      }
+      char *cp = strchr(sp, '=');
+      if (cp) {
+        cp++;
+        while (*cp == ' ') {
+          cp++;
+        }
+        if (*cp == '"') {
+          svars += 1;
+        } else if (isdigit(*cp) || *cp == '-') {
+          numvars += 1;
+        }
+        sp = cp;
+      }
+    }
+    sp++;
+  }
+  return (svars << 16) | numvars;
+}
+
 
 // allocates all variables and presets them
 int16_t Init_Scripter(void) {
@@ -628,38 +681,43 @@ char *script;
     script = glob_script_mem.script_ram;
     if (!*script) return -999;
 
+    uint32_t xvars = Script_Find_Vars(script + 1);
+    uint16_t maxnvars = xvars & 0xffff;
+    if (maxnvars < 1) {
+      maxnvars = 1;
+    }
+    uint16_t maxsvars = xvars >> 16;
+    if (maxsvars < 1) {
+      maxsvars = 1;
+    }
+    uint16_t maxvars = maxsvars + maxnvars;
+    //AddLog(LOG_LEVEL_INFO, PSTR("Script: svar = %d, nvars = %d"), maxsvars, maxnvars);
+    
     // scan lines for >DEF
     uint16_t lines = 0;
     uint16_t nvars = 0;
     uint16_t svars = 0;
     uint16_t vars = 0;
     char *lp = script;
-    uint16_t imemsize = (MAXVARS*10) + 4;
+    uint16_t imemsize = (maxvars * 10) + 4;
     uint8_t *imemptr = (uint8_t*)calloc(imemsize, 1);
     if (!imemptr) {
       return -7;
     }
 
-    //ClaimSerial();
-    //SetSerialBaudrate(115200);
-    //Serial.printf("size %d\n",imemsize);
-    //Serial.printf("stack %d\n",GetStack());  // 2848
-    // 2896
-    //char vnames[MAXVARS*10];
     char *vnames = (char*)imemptr;
 
-    char *vnp[MAXVARS];
-    float fvalues[MAXVARS];
-    struct T_INDEX vtypes[MAXVARS];
-
+    char *vnp[maxvars];
+    TS_FLOAT fvalues[maxvars];
+    struct T_INDEX vtypes[maxvars];
 
     //char strings[MAXSVARS*SCRIPT_MAXSSIZE];
     //char *strings_p = strings;
-    char *strings_op = (char*)calloc(MAXSVARS*SCRIPT_MAXSSIZE, 1);
+    char *strings_op = (char*)calloc(maxsvars * SCRIPT_MAXSSIZE, 1);
     char *strings_p = strings_op;
     if (!strings_op) {
       free(imemptr);
-      return -7;
+      return -8;
     }
 
 /*
@@ -674,9 +732,9 @@ char *script;
     imemp = (imemp & 0xfffc) + 4;
     Serial.printf(">2 %x\n",imemp);
 
-    float fvalues[MAXVARS];
-    //float *fvalues = (float*)imemp;
-    imemp += (sizeof(float*)*MAXVARS);
+    TS_FLOAT fvalues[MAXVARS];
+    //TS_FLOAT *fvalues = (TS_FLOAT*)imemp;
+    imemp += (sizeof(TS_FLOAT*)*MAXVARS);
     imemp = (imemp & 0xfffc) + 4;
     Serial.printf(">3 %x\n",imemp);
 
@@ -687,7 +745,7 @@ char *script;
     char *vnames_p = vnames;
     char **vnp_p = vnp;
 
-    char *snp[MAXSVARS];
+    char *snp[maxsvars];
 
     struct M_FILT mfilt[MAXFILT];
 
@@ -705,12 +763,12 @@ char *script;
         // skip leading spaces
         SCRIPT_SKIP_SPACES
         // skip empty line
-        if (*lp=='\n' || *lp=='\r') goto next_line;
+        if (*lp == '\n' || *lp == '\r') goto next_line;
         // skip comment
-        if (*lp==';') goto next_line;
+        if (*lp == ';') goto next_line;
         if (init) {
             // init section
-            if (*lp=='>' || !*lp) {
+            if (*lp == '>' || !*lp) {
                 init = 0;
                 break;
             }
@@ -718,22 +776,22 @@ char *script;
             if (op) {
                 vtypes[vars].bits.data = 0;
                 // found variable definition
-                if (*lp=='p' && *(lp+1)==':') {
+                if (*lp == 'p' && *(lp + 1) == ':') {
                     lp += 2;
-                    if (numperm<SCRIPT_MAXPERM) {
+                    if (numperm < SCRIPT_MAXPERM) {
                       vtypes[vars].bits.is_permanent = 1;
                       numperm++;
                     }
                 } else {
                     vtypes[vars].bits.is_permanent = 0;
                 }
-                if (*lp=='t' && *(lp+1)==':') {
+                if (*lp == 't' && *(lp + 1) == ':') {
                     lp += 2;
                     vtypes[vars].bits.is_timer = 1;
                 } else {
                     vtypes[vars].bits.is_timer = 0;
                 }
-                if (*lp=='i' && *(lp+1)==':') {
+                if (*lp == 'i' && *(lp + 1) == ':') {
                     lp += 2;
                     vtypes[vars].bits.is_autoinc = 1;
                 } else {
@@ -741,31 +799,37 @@ char *script;
                 }
 
 #ifdef USE_SCRIPT_GLOBVARS
-                if (*lp=='g' && *(lp+1)==':') {
+                if (*lp == 'g' && *(lp + 1) == ':') {
                     lp += 2;
                     vtypes[vars].bits.global = 1;
                     glob_script_mem.udp_flags.udp_used = 1;
-                  } else {
+                } else {
                     vtypes[vars].bits.global = 0;
-                  }
+                }
 #endif //USE_SCRIPT_GLOBVARS
-                if ((*lp=='m' || *lp=='M') && *(lp+1)==':') {
+                if (*lp == 'I' && *(lp + 1) == ':') {
+                    lp += 2;
+                    vtypes[vars].bits.integer = 1;
+                } else {
+                    vtypes[vars].bits.integer = 0;
+                }
+                if ((*lp == 'm' || *lp == 'M') && *(lp + 1) == ':') {
                     uint8_t flg = *lp;
                     lp += 2;
-                    if (*lp=='p' && *(lp+1)==':') {
+                    if (*lp == 'p' && *(lp + 1) == ':') {
                       vtypes[vars].bits.is_permanent = 1;
                       lp += 2;
                     }
-                    if (flg=='M') mfilt[numflt].numvals = 8;
+                    if (flg == 'M') mfilt[numflt].numvals = 8;
                     else mfilt[numflt].numvals = 5;
                     vtypes[vars].bits.is_filter = 1;
                     mfilt[numflt].index = 0;
-                    if (flg=='M') {
+                    if (flg == 'M') {
                       mfilt[numflt].numvals |= OR_FILT_MASK;
                     }
                     vtypes[vars].index = numflt;
                     numflt++;
-                    if (numflt>MAXFILT) {
+                    if (numflt > MAXFILT) {
                       if (imemptr) free(imemptr);
                       if (strings_op) free(strings_op);
                       return -6;
@@ -773,6 +837,7 @@ char *script;
                 } else {
                     vtypes[vars].bits.is_filter = 0;
                 }
+                
                 *vnp_p++ = vnames_p;
                 while (lp < op) {
                     *vnames_p++ = *lp++;
@@ -780,19 +845,30 @@ char *script;
                 *vnames_p++ = 0;
                 // init variable
                 op++;
-                if (*op!='"') {
-                    float fv;
-                    if (*op=='0' && *(op+1)=='x') {
+                while (*op == ' ') {
+                  op++;
+                }
+                if (*op != '"') {
+                    TS_FLOAT fv;
+                    if (*op == '0' && *(op + 1) == 'x') {
                       op += 2;
-                      fv=strtol(op, &op, 16);
+                      if (vtypes[vars].bits.integer) {
+                        *(uint32_t*)&fv = strtoll(op, &op, 16);
+                      } else {
+                        fv = strtol(op, &op, 16);
+                      }
                     } else {
-                      fv=CharToFloat(op);
+                      if (vtypes[vars].bits.integer) {
+                        *(int32_t*)&fv = strtol(op, &op, 10);
+                      } else {
+                        fv=CharToFloat(op);
+                      }
                     }
                     fvalues[nvars] = fv;
                     vtypes[vars].bits.is_string = 0;
                     if (!vtypes[vars].bits.is_filter) vtypes[vars].index = nvars;
                     nvars++;
-                    if (nvars>MAXNVARS) {
+                    if (nvars > maxnvars) {
                       if (imemptr) free(imemptr);
                       if (strings_op) free(strings_op);
                       return -1;
@@ -809,8 +885,8 @@ char *script;
                           // limit array size
                           flen = MAX_ARRAY_SIZE;
                         }
-                        mfilt[numflt-1].numvals &= OR_FILT_MASK;
-                        mfilt[numflt-1].numvals |= flen & AND_FILT_MASK;
+                        mfilt[numflt - 1].numvals &= OR_FILT_MASK;
+                        mfilt[numflt - 1].numvals |= flen & AND_FILT_MASK;
                       }
                     }
 
@@ -829,14 +905,14 @@ char *script;
                     vtypes[vars].bits.is_string = 1;
                     vtypes[vars].index = svars;
                     svars++;
-                    if (svars>MAXSVARS) {
+                    if (svars > maxsvars) {
                       if (imemptr) free(imemptr);
                       if (strings_op) free(strings_op);
                       return -2;
                     }
                 }
                 vars++;
-                if (vars>MAXVARS) {
+                if (vars > maxvars) {
                   if (imemptr) free(imemptr);
                   if (strings_op) free(strings_op);
                   return -3;
@@ -847,8 +923,8 @@ char *script;
               lp += 2;
               SCRIPT_SKIP_SPACES
               if (isdigit(*lp)) {
-                uint8_t ssize = atoi(lp)+1;
-                if (ssize<10 || ssize>SCRIPT_MAXSSIZE) ssize=SCRIPT_MAXSSIZE;
+                uint8_t ssize = atoi(lp) + 1;
+                if (ssize < 10 || ssize > SCRIPT_MAXSSIZE) ssize = SCRIPT_MAXSSIZE;
                 glob_script_mem.max_ssize = ssize;
               }
               init = 1;
@@ -862,15 +938,15 @@ char *script;
     }
 
     uint16_t fsize = 0;
-    for (count=0; count<numflt; count++) {
-      fsize += sizeof(struct M_FILT) + ((mfilt[count].numvals&AND_FILT_MASK) - 1)*sizeof(float);
+    for (count = 0; count < numflt; count++) {
+      fsize += sizeof(struct M_FILT) + ((mfilt[count].numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
     }
 
     // now copy vars to memory
     uint32_t script_mem_size =
     // number and number shadow vars
-    (sizeof(float)*nvars) +
-    (sizeof(float)*nvars) +
+    (sizeof(TS_FLOAT)*nvars) +
+    (sizeof(TS_FLOAT)*nvars) +
     // var names
     (vnames_p-vnames) +
     // vars offsets
@@ -901,12 +977,12 @@ char *script;
 
     // now copy all vars
     // numbers
-    glob_script_mem.fvars = (float*)script_mem;
-    uint16_t size = sizeof(float) * nvars;
+    glob_script_mem.fvars = (TS_FLOAT*)script_mem;
+    uint16_t size = sizeof(TS_FLOAT) * nvars;
     memcpy(script_mem, fvalues, size);
     script_mem += size;
-    glob_script_mem.s_fvars = (float*)script_mem;
-    size = sizeof(float) * nvars;
+    glob_script_mem.s_fvars = (TS_FLOAT*)script_mem;
+    size = sizeof(TS_FLOAT) * nvars;
     memcpy(script_mem, fvalues, size);
     script_mem += size;
 
@@ -961,7 +1037,7 @@ char *script;
 #define MAXVNSIZ 255
     uint8_t *cp = glob_script_mem.vnp_offset;
 #endif
-    for (count = 0; count<vars; count++) {
+    for (count = 0; count < vars; count++) {
         *cp++ = index;
         while (*namep) {
             index++;
@@ -985,7 +1061,7 @@ char *script;
     //char *sp = strings;
     char *sp = strings_op;
 
-    for (count = 0; count<svars; count++) {
+    for (count = 0; count < svars; count++) {
         strcpy(cp1,sp);
         sp += strlen(sp) + 1;
         cp1 += glob_script_mem.max_ssize;
@@ -996,7 +1072,7 @@ char *script;
     for (count = 0; count<numflt; count++) {
       struct M_FILT *mflp = (struct M_FILT*)mp;
       mflp->numvals = mfilt[count].numvals;
-      mp += sizeof(struct M_FILT) + ((mfilt[count].numvals & AND_FILT_MASK) - 1) * sizeof(float);
+      mp += sizeof(struct M_FILT) + ((mfilt[count].numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
     }
 
     glob_script_mem.numvars = vars;
@@ -1008,19 +1084,22 @@ char *script;
 
 #if SCRIPT_DEBUG>2
     struct T_INDEX *dvtp = glob_script_mem.type;
-    for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
+    char out[128];
+    char string[32];
+    for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
+      char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
       if (dvtp[count].bits.is_string) {
-
+        strlcpy(string, glob_script_mem.glob_snp + (dvtp[count].index * glob_script_mem.max_ssize), SCRIPT_MAXSSIZE);
       } else {
-        char string[32];
         f2char(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, glob_script_mem.script_lzero, string, '.');
-        toLog(string);
       }
+      sprintf(out, "%d : %s = %s", count, cp, string);
+      toLog(out);
     }
 #endif //SCRIPT_DEBUG
 
     // now preset permanent vars
-    float *fp = (float*)glob_script_mem.script_pram;
+    TS_FLOAT *fp = (TS_FLOAT*)glob_script_mem.script_pram;
     struct T_INDEX *vtp = glob_script_mem.type;
     for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
@@ -1028,7 +1107,7 @@ char *script;
         if (vtp[count].bits.is_filter) {
             // preset array
             uint16_t len = 0;
-            float *fa = Get_MFAddr(index, &len, 0);
+            TS_FLOAT *fa = Get_MFAddr(index, &len, 0);
             while (len--) {
               *fa++ = *fp++;
             }
@@ -1153,20 +1232,20 @@ void Script_PollUdp(void) {
       //AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
       AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %_I"), packet_buffer, len, (uint32_t)glob_script_mem.script_udp_remote_ip);
 #endif
-      char *lp=packet_buffer;
+      char *lp = packet_buffer;
       if (!strncmp(lp,"=>", 2)) {
         lp += 2;
         char *cp=strchr(lp, '=');
         if (cp) {
           char vnam[32];
           for (uint32_t count = 0; count<len; count++) {
-            if (lp[count]=='=') {
+            if (lp[count] == '=') {
               vnam[count] = 0;
               break;
             }
             vnam[count] = lp[count];
           }
-          float *fp;
+          TS_FLOAT *fp;
           char *sp;
           uint32_t index;
           uint32_t res = match_vars(vnam, &fp, &sp, &index);
@@ -1200,7 +1279,9 @@ void Script_PollUdp(void) {
   }
 }
 
-void script_udp_sendvar(char *vname,float *fp,char *sp) {
+void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp);
+
+void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (!glob_script_mem.udp_flags.udp_connected) return;
 
@@ -1231,7 +1312,9 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
 
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
-void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
+void ws2812_set_array(TS_FLOAT *array ,uint32_t len, uint32_t offset);
+
+void ws2812_set_array(TS_FLOAT *array ,uint32_t len, uint32_t offset) {
 
   Ws2812ForceSuspend();
   for (uint32_t cnt = 0; cnt < len; cnt++) {
@@ -1257,13 +1340,13 @@ void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 #endif //USE_WS2812
 #endif //USE_LIGHT
 
-
-float median_array(float *array, uint16_t len) {
+TS_FLOAT median_array(TS_FLOAT *array, uint16_t len);
+TS_FLOAT median_array(TS_FLOAT *array, uint16_t len) {
     uint8_t ind[len];
     uint8_t mind = 0;
     uint8_t index = 0;
     uint8_t flg;
-    float min = FLT_MAX;
+    TS_FLOAT min = FLT_MAX;
 
     for (uint16_t hcnt = 0; hcnt < len / 2 + 1; hcnt++) {
         for (uint16_t mcnt = 0; mcnt < len; mcnt++) {
@@ -1287,8 +1370,8 @@ float median_array(float *array, uint16_t len) {
     return array[ind[len / 2]];
 }
 
-
-float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
+TS_FLOAT *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos);
+TS_FLOAT *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
   *len = 0;
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count = 0; count < MAXFILT; count++) {
@@ -1298,14 +1381,15 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
         if (ipos) *ipos = mflp->index;
         return mflp->rbuff;
     }
-    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
+    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
   }
   return 0;
 }
 
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, struct GVARS *gv);
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *sp, struct GVARS *gv);
+char *get_array_by_name(char *lp, TS_FLOAT **fp, uint16_t *alen, uint16_t *ipos);
 
-char *get_array_by_name(char *lp, float **fp, uint16_t *alen, uint16_t *ipos) {
+char *get_array_by_name(char *lp, TS_FLOAT **fp, uint16_t *alen, uint16_t *ipos) {
   struct T_INDEX ind;
   uint8_t vtype;
   while (*lp == ' ') lp++;
@@ -1314,15 +1398,15 @@ char *get_array_by_name(char *lp, float **fp, uint16_t *alen, uint16_t *ipos) {
   if (vtype & STYPE) return 0;
   uint16_t index = glob_script_mem.type[ind.index].index;
   if (glob_script_mem.type[ind.index].bits.is_filter) {
-    float *fa = Get_MFAddr(index, alen, ipos);
+    TS_FLOAT *fa = Get_MFAddr(index, alen, ipos);
     *fp = fa;
     return lp;
   }
   *fp = 0;
   return lp;
 }
-
-float *get_array_by_name(char *name, uint16_t *alen) {
+TS_FLOAT *get_array_by_name(char *name, uint16_t *alen);
+TS_FLOAT *get_array_by_name(char *name, uint16_t *alen) {
   struct T_INDEX ind;
   uint8_t vtype;
   isvar(name, &vtype, &ind, 0, 0, 0);
@@ -1331,13 +1415,13 @@ float *get_array_by_name(char *name, uint16_t *alen) {
   uint16_t index = glob_script_mem.type[ind.index].index;
 
   if (glob_script_mem.type[ind.index].bits.is_filter) {
-    float *fa = Get_MFAddr(index, alen, 0);
+    TS_FLOAT *fa = Get_MFAddr(index, alen, 0);
     return fa;
   }
   return 0;
 }
-
-float Get_MFVal(uint8_t index, int16_t bind) {
+TS_FLOAT Get_MFVal(uint8_t index, int16_t bind);
+TS_FLOAT Get_MFVal(uint8_t index, int16_t bind) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
@@ -1350,21 +1434,28 @@ float Get_MFVal(uint8_t index, int16_t bind) {
           return maxind;
         }
         if (bind == -2) {
-          float summ = 0;
+          TS_FLOAT summ = 0;
           for (uint32_t cnt = 0; cnt < maxind; cnt++) {
             summ += mflp->rbuff[cnt];
           }
           return summ / maxind;
         }
+        if (bind == -3) {
+          TS_FLOAT summ = 0;
+          for (uint32_t cnt = 0; cnt < maxind; cnt++) {
+            summ += mflp->rbuff[cnt];
+          }
+          return summ;
+        }
         if (bind < -2 || bind > maxind ) bind = 1;
         return mflp->rbuff[bind - 1];
     }
-    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
+    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
   }
   return 0;
 }
-
-void Set_MFVal(uint8_t index, uint16_t bind, float val) {
+void Set_MFVal(uint8_t index, uint16_t bind, TS_FLOAT val);
+void Set_MFVal(uint8_t index, uint16_t bind, TS_FLOAT val) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
@@ -1385,12 +1476,12 @@ void Set_MFVal(uint8_t index, uint16_t bind, float val) {
         }
         return;
     }
-    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
+    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
   }
 }
 
-
-float Get_MFilter(uint8_t index) {
+TS_FLOAT Get_MFilter(uint8_t index);
+TS_FLOAT Get_MFilter(uint8_t index) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
@@ -1403,12 +1494,12 @@ float Get_MFilter(uint8_t index) {
         return median_array(mflp->rbuff, mflp->numvals);
       }
     }
-    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
+    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
   }
   return 0;
 }
-
-void Set_MFilter(uint8_t index, float invar) {
+void Set_MFilter(uint8_t index, TS_FLOAT invar);
+void Set_MFilter(uint8_t index, TS_FLOAT invar) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count = 0; count<MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
@@ -1428,7 +1519,7 @@ void Set_MFilter(uint8_t index, float invar) {
       }
       break;
     }
-    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
+    mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
   }
 }
 
@@ -1436,11 +1527,11 @@ void Set_MFilter(uint8_t index, float invar) {
 #define MEDIAN_FILTER_NUM 2
 
 struct MEDIAN_FILTER {
-float buffer[MEDIAN_SIZE];
+TS_FLOAT buffer[MEDIAN_SIZE];
 int8_t index;
 } script_mf[MEDIAN_FILTER_NUM];
-
-float DoMedian5(uint8_t index, float in) {
+TS_FLOAT DoMedian5(uint8_t index, TS_FLOAT in);
+TS_FLOAT DoMedian5(uint8_t index, TS_FLOAT in) {
 
   if (index >= MEDIAN_FILTER_NUM) index = 0;
 
@@ -1673,10 +1764,10 @@ int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg) {
   fread_str_fp(fp, tsf, sizeof(tsf), 0);
   uint32_t tssiz = tstamp2l(tsf) - ltsf;
   uint32_t tspos = tstamp2l(ts_from) - ltsf;
-  float perc =  (float)tspos / (float)tssiz * 0.8;
+  TS_FLOAT perc =  (TS_FLOAT)tspos / (TS_FLOAT)tssiz * 0.8;
   if (perc < 0) perc = 0;
   if (perc > 1) perc = 1;
-  float fsize = fp->size();
+  TS_FLOAT fsize = fp->size();
   uint32_t spos = perc * fsize;
   //AddLog(LOG_LEVEL_INFO,PSTR(">>> 1 %d, %d"), (uint32_t)perc, spos);
   fp->seek(spos, SeekSet);
@@ -1695,7 +1786,7 @@ int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg) {
 
 // assume 1. entry is timestamp, others are tab delimited values until LF
 // file reference, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
-int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, float **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
+int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, TS_FLOAT **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
 
   char rstr[32];
   uint8_t sindex = 0;
@@ -1770,8 +1861,8 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, f
   //AddLog(LOG_LEVEL_INFO, PSTR("from: %d  to: %d"),tsfrom,  tsto);
   uint16_t lines = 0;
   uint16_t rlines = 0;
-  float summs[numa];
-  float lastv[numa];
+  TS_FLOAT summs[numa];
+  TS_FLOAT lastv[numa];
   uint16_t accnt[numa];
   uint8_t mflg[numa];
   uint32_t lastpos = 0;
@@ -1831,7 +1922,7 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, f
             uint8_t curpos = colpos - coffs;
             if (colpos >= coffs && curpos < numa) {
               if (a_len[curpos]) {
-                float fval = CharToFloat(rstr);
+                TS_FLOAT fval = CharToFloat(rstr);
                 uint8_t flg = 1;
                 if ((mflg[curpos] & 1) == 1) {
                   // absolute values, build diffs
@@ -1841,7 +1932,7 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, f
                     flg = 0;
                   } else {
                     if (!(mflg[curpos] & 2)) {
-                      float tmp = fval;
+                      TS_FLOAT tmp = fval;
                       fval -= lastv[curpos];
                        // must be positive value
 #ifndef EXTRACT_DIFF_NOCHK
@@ -1890,6 +1981,7 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, f
 #endif // USE_FEXTRACT
 #endif // USE_UFILESYS
 
+
 uint32_t script_bcd(uint8_t sel, uint32_t val) {
 uint32_t res = 0;
   if (sel) {
@@ -1924,18 +2016,19 @@ uint8_t script_hexnibble(char chr) {
   return rVal;
 }
 
+
 #ifdef USE_LIGHT
 uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
-float r = 0, g = 0, b = 0;
+TS_FLOAT r = 0, g = 0, b = 0;
 struct HSV {
-	float H;
-	float S;
-	float V;
+	TS_FLOAT H;
+	TS_FLOAT S;
+	TS_FLOAT V;
 } hsv;
 
 hsv.H = hue;
-hsv.S = (float)saturation / 100.0;
-hsv.V = (float)value / 100.0;
+hsv.S = (TS_FLOAT)saturation / 100.0;
+hsv.V = (TS_FLOAT)value / 100.0;
 
 if (hsv.S == 0) {
 		r = hsv.V;
@@ -1943,7 +2036,7 @@ if (hsv.S == 0) {
 		b = hsv.V;
 	} else {
 		int i;
-		float f, p, q, t;
+		TS_FLOAT f, p, q, t;
 
 		if (hsv.H == 360)
 			hsv.H = 0;
@@ -2169,16 +2262,16 @@ uint32_t MeasurePulseTime(int32_t in) {
 #endif // USE_ANGLE_FUNC
 
 #ifdef USE_SCRIPT_GLOBVARS
-uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
+uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind) {
   uint16_t olen = strlen(dvnam);
   struct T_INDEX *vtp = glob_script_mem.type;
-  for (uint32_t count = 0; count<glob_script_mem.numvars; count++) {
+  for (uint32_t count = 0; count < glob_script_mem.numvars; count++) {
     char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
     uint8_t slen = strlen(cp);
-    if (slen==olen && *cp==dvnam[0]) {
+    if (slen == olen && *cp == dvnam[0]) {
       if (!strncmp(cp, dvnam, olen)) {
         uint8_t index = vtp[count].index;
-        if (vtp[count].bits.is_string==0) {
+        if (vtp[count].bits.is_string == 0) {
           if (vtp[count].bits.is_filter) {
             // error
             return 0;
@@ -2204,7 +2297,7 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
 #endif
 
 char *isargs(char *lp, uint32_t isind) {
-  float fvar;
+  TS_FLOAT fvar;
   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
   SCRIPT_SKIP_SPACES
   if (*lp != '"') {
@@ -2261,6 +2354,8 @@ char iob = *cp;
       iob = '\n';
     } else if (*cp == 'r') {
       iob = '\r';
+    } else if (*cp == '"') {
+      iob = '"';
     } else if (*cp == '0' && *(cp + 1) == 'x') {
       cp += 2;
       iob = strtol(cp, 0, 16);
@@ -2279,7 +2374,7 @@ char iob = *cp;
 
 
 char *isget(char *lp, char *sp, uint32_t isind, struct GVARS *gv) {
-float fvar;
+TS_FLOAT fvar;
   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
   SCRIPT_SKIP_SPACES
   char str[SCRIPT_MAXSSIZE];
@@ -2306,23 +2401,56 @@ float fvar;
   return lp;
 }
 
+
+#ifdef SCRIPT_SAVE_RAM
+#undef strncmp_XP
+#define strncmp_XP strncmp_P
+#undef XPSTR
+#define XPSTR(A) PSTR(A)
+#else
+#undef strncmp_XP
+#define strncmp_XP strncmp
+#undef XPSTR
+#define XPSTR(A) A
+#endif
+
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, struct GVARS *gv) {
-    uint16_t count,len = 0;
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *sp, struct GVARS *gv);
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *sp, struct GVARS *gv) {
+    uint16_t count, len = 0;
     uint8_t nres = 0;
     char vname[64];
-    float fvar = 0;
+    TS_FLOAT fvar = 0;
     tind->index = 0;
     tind->bits.data = 0;
 
     //Serial.printf("Stack 2: %d\n",GetStack());
-    if (isdigit(*lp) || (*lp == '-' && isdigit(*(lp+1))) || *lp == '.') {
+
+    if ( (*lp == '#') && (*(lp + 1) == '-' || isdigit(*(lp + 1))) ) {
+      // 32 bit integer
+      lp++;
+      if (fp) {
+          if (*lp == '0' && *(lp + 1) == 'x') {
+            lp += 2;
+            *(uint32_t*)fp = strtoll(lp, &lp, 16);
+          } else {
+            *(int32_t*)fp = strtoll(lp, &lp, 10);
+          }
+      }
+      tind->bits.constant = 1;
+      tind->bits.is_string = 0;
+      tind->bits.integer = 1;
+      *vtype = NUM_RES;
+      return lp;
+    }
+
+    if (isdigit(*lp) || (*lp == '-' && isdigit(*(lp + 1))) || *lp == '.') {
       // isnumber
         if (fp) {
           if (*lp == '0' && *(lp + 1) == 'x') {
             lp += 2;
-            *fp = strtol(lp, &lp, 16);
+            *fp = strtoll(lp, &lp, 16);
           } else {
             *fp = CharToFloat(lp);
             if (*lp == '-') lp++;
@@ -2399,11 +2527,11 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         uint8_t slen = strlen(cp);
         if (slen == olen && *cp == dvnam[0]) {
             if (!strncmp(cp, dvnam, olen)) {
-                uint8_t index = vtp[count].index;
+                uint16_t index = vtp[count].index;
                 *tind = vtp[count];
                 tind->index = count; // overwrite with global var index
                 if (vtp[count].bits.is_string == 0) {
-                    *vtype = NTYPE | index;
+                    *vtype = NTYPE; // | index;
                     if (vtp[count].bits.is_filter) {
                       if (ja) {
                         lp += olen + 1;
@@ -2422,7 +2550,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
                     if (nres) fvar = -fvar;
                     if (fp) *fp = fvar;
                 } else {
-                    *vtype = STYPE|index;
+                    *vtype = STYPE;  //|index;
                     if (sp) strlcpy(sp, glob_script_mem.glob_snp + (index * glob_script_mem.max_ssize), SCRIPT_MAXSSIZE);
                 }
                 return lp + len;
@@ -2441,7 +2569,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
   // epoch offset missing in this version
       char str_value[SCRIPT_MAXSSIZE];
       str_value[0]=0;
-      float fv;
+      TS_FLOAT fv;
       uint32_t res = JsonParsePath(gv->jo, vname, '#', &fv, str_value, sizeof(str_value));
       if (!res) {
         goto chknext;
@@ -2456,10 +2584,10 @@ nexit:
         return lp + len;
       } else {
         // string
-        if (!strncmp(str_value, "ON", 2)) {
+        if (!strncmp_XP(str_value, XPSTR("ON"), 2)) {
           if (fp) *fp = 1;
           goto nexit;
-        } else if (!strncmp(str_value, "OFF", 3)) {
+        } else if (!strncmp_XP(str_value, XPSTR("OFF"), 3)) {
           if (fp) *fp = 0;
           goto nexit;
         } else {
@@ -2484,7 +2612,7 @@ nexit:
         *ja = 0;
         ja++;
         // fetch array index
-        float fvar;
+        TS_FLOAT fvar;
         GetNumericArgument(ja, OPER_EQU, &fvar, 0);
         aindex = fvar;
         if (aindex<1 || aindex>6) aindex = 1;
@@ -2542,10 +2670,10 @@ nexit:
           }
           if (str_value && *str_value) {
             if ((*jpo)[vn].isStr()) {
-              if (!strncmp(str_value, "ON", 2)) {
+              if (!strncmp_XP(str_value, XPSTR("ON"), 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
-              } else if (!strncmp(str_value, "OFF", 3)) {
+              } else if (!strncmp_XP(str_value, XPSTR("OFF"), 3)) {
                 if (fp) *fp = 0;
                 goto nexit;
               } else {
@@ -2558,7 +2686,7 @@ nexit:
 
             } else {
               if (fp) {
-                if (!strncmp(vn.c_str(), "Epoch", 5)) {
+                if (!strncmp_XP(vn.c_str(), XPSTR("Epoch"), 5)) {
                   *fp = atoi(str_value) - (uint32_t)glob_script_mem.epoch_offset;
                 } else {
                   *fp = CharToFloat((char*)str_value);
@@ -2586,28 +2714,28 @@ chknext:
 
       case 'a':
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "acos(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("acos("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = acosf(fvar);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "abs(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("abs("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = fabs(fvar);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "asc(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("asc("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, gv);
           fvar = str[0];
           goto nfuncexit;
         }
-        if (!strncmp(lp, "adc(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("adc("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
-          float pin = 1;
+          TS_FLOAT pin = 1;
           if (*lp!=')') {
             lp = GetNumericArgument(lp, OPER_EQU, &pin, gv);
 #ifdef CONFIG_IDF_TARGET_ESP32S3
@@ -2630,37 +2758,37 @@ chknext:
 #ifndef USE_ADC_VCC
           fvar = AdcRead(17, fvar);
 #else
-          fvar = (float)ESP.getVcc() / 1000.0;
+          fvar = (TS_FLOAT)ESP.getVcc() / 1000.0;
 #endif // USE_ADC_VCC
 #endif // ESP32
           len = 0;
           goto exit;
         }
 
-        if (!strncmp(lp, "acp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("acp("), 4)) {
           lp += 4;
           SCRIPT_SKIP_SPACES
           uint16_t alend;
           fvar = -1;
-          float *fpd;
+          TS_FLOAT *fpd;
           lp = get_array_by_name(lp, &fpd, &alend, 0);
           SCRIPT_SKIP_SPACES
           uint16_t alens;
-          float *fps;
+          TS_FLOAT *fps;
           lp = get_array_by_name(lp, &fps, &alens, 0);
           SCRIPT_SKIP_SPACES
           if (alens < alend) {
             alend = alens;
           }
-          memcpy(fpd, fps, alend * sizeof(float));
+          memcpy(fpd, fps, alend * sizeof(TS_FLOAT));
           fvar = alend;
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "af(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("af("), 3)) {
           // array to float
           uint16_t alend;
-          float *fpd;
+          TS_FLOAT *fpd;
           lp = get_array_by_name(lp + 3, &fpd, &alend, 0);
           SCRIPT_SKIP_SPACES
           if (*lp != ')') {
@@ -2678,14 +2806,14 @@ chknext:
             fbytes[1] = *fpd++;
             fbytes[2] = *fpd++;
             fbytes[3] = *fpd++;
-            fpd = (float*)fbytes;
+            fpd = (TS_FLOAT*)fbytes;
             fvar = *fpd;
           } else {
             fvar = 0;
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ap(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ap("), 3)) {
           //TasmotaGlobal.restart_flag = 216;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           switch ((uint8_t)fvar) {
@@ -2719,7 +2847,7 @@ chknext:
         break;
 
       case 'b':
-        if (!strncmp(vname, "boot", 4)) {
+        if (!strncmp_XP(vname, XPSTR("boot"), 4)) {
           if (TasmotaGlobal.rules_flag.system_boot) {
             TasmotaGlobal.rules_flag.system_boot = 0;
             fvar = 1;
@@ -2727,17 +2855,17 @@ chknext:
           goto exit;
         }
 #ifdef USE_BUTTON_EVENT
-        if (!strncmp(lp, "bt[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("bt["), 3)) {
           // tasmota button state
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint32_t index = fvar;
-          if (index<1 || index>MAX_KEYS_SET) index = 1;
+          if (index<1 || index>MAX_KEYS) index = 1;
           fvar = glob_script_mem.script_button[index - 1];
           glob_script_mem.script_button[index - 1] |= 0x80;
           goto nfuncexit;
         }
 #endif //USE_BUTTON_EVENT
-        if (!strncmp(lp, "bcd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("bcd("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint32_t sel = fvar;
           while (*lp==' ') lp++;
@@ -2745,9 +2873,21 @@ chknext:
           fvar = script_bcd(sel, fvar);
           goto nfuncexit;
         }
+
+#ifdef USE_FLASH_BDIR
+        if (!strncmp_XP(lp, XPSTR("bdir("), 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          char str[SCRIPT_MAXSSIZE];
+          if (fvar > 1) {
+            lp = GetStringArgument(lp, OPER_EQU, str, 0);
+          }
+          fvar = flash_bindir(fvar, str);
+          goto nfuncexit;
+        }
+#endif // USE_FLASH_BDIR
         break;
       case 'c':
-        if (!strncmp(lp, "chg[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("chg["), 4)) {
           // var changed
           struct T_INDEX ind;
           uint8_t vtype;
@@ -2762,15 +2902,15 @@ chknext:
           goto nfuncexit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "core", 4)) {
+        if (!strncmp_XP(vname, XPSTR("core"), 4)) {
           fvar = xPortGetCoreID();
           goto exit;
         }
 #ifdef USE_M5STACK_CORE2
-        if (!strncmp(lp, "c2ps(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("c2ps("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
-          float fvar1;
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           fvar = Core2SetAxpPin(fvar, fvar1);
           goto nfuncexit;
@@ -2778,21 +2918,21 @@ chknext:
 #endif // USE_M5STACK_CORE2
 
 #ifdef USE_SCRIPT_TASK
-        if (!strncmp(lp, "ct(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ct("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
-          float fvar1;
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           while (*lp==' ') lp++;
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
-          float prio = STASK_PRIO;
+          TS_FLOAT prio = STASK_PRIO;
           if (*lp!=')') {
             lp = GetNumericArgument(lp, OPER_EQU, &prio, gv);
           }
           SCRIPT_SKIP_SPACES
-          float stack = STASK_STACK;
+          TS_FLOAT stack = STASK_STACK;
           if (*lp!=')') {
             lp = GetNumericArgument(lp, OPER_EQU, &stack, gv);
           }
@@ -2803,14 +2943,19 @@ chknext:
 #endif //ESP32
 
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "cos(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cos("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = cosf(fvar);
           goto nfuncexit;
         }
+        if (!strncmp_XP(lp, XPSTR("ceil("), 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
+          fvar = ceilf(fvar);
+          goto nfuncexit;
+        }
 #endif
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "cts(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cts("), 4)) {
           char tsin[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, tsin, 0);
           SCRIPT_SKIP_SPACES
@@ -2827,7 +2972,7 @@ chknext:
           goto strexit;
         }
 #endif // USE_FEXTRACT
-        if (!strncmp(lp, "cbs", 3)) {
+        if (!strncmp_XP(lp, XPSTR("cbs"), 3)) {
           fvar = glob_script_mem.cmdbuffer_size;
           tind->index = SCRIPT_CBSIZE;
           goto exit_settable;
@@ -2835,8 +2980,8 @@ chknext:
 #ifdef USE_W8960
 extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
-        if (!strncmp(lp, "codec(", 6)) {
-          float sel;
+        if (!strncmp_XP(lp, XPSTR("codec("), 6)) {
+          TS_FLOAT sel;
           lp = GetNumericArgument(lp + 6, OPER_EQU, &sel, gv);
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           W8960_SetGain(sel, fvar);
@@ -2846,9 +2991,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
 #ifdef USE_UFILESYS
-        if (!strncmp(lp, "cpf(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("cpf("), 4)) {
           // copy file with offsets sfd, sfstart, sfstop, df
-          float sfd, sf_from, sf_to, dfd;
+          TS_FLOAT sfd, sf_from, sf_to, dfd;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &sfd, 0);
           lp = GetNumericArgument(lp, OPER_EQU, &sf_from, 0);
           lp = GetNumericArgument(lp, OPER_EQU, &sf_to, 0);
@@ -2879,15 +3024,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
         break;
       case 'd':
-        if (!strncmp(vname, "day", 3)) {
+        if (!strncmp_XP(vname, XPSTR("day"), 3)) {
           fvar = RtcTime.day_of_month;
           goto exit;
         }
-        if (!strncmp(vname, "dvnm", 4)) {
+        if (!strncmp_XP(vname, XPSTR("dvnm"), 4)) {
           if (sp) strlcpy(sp, SettingsText(SET_DEVICENAME), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(lp, "dp(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("dp("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           glob_script_mem.script_lzero = fvar;
@@ -2901,7 +3046,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "diff[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("diff["), 5)) {
           struct T_INDEX ind;
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, gv);
@@ -2916,22 +3061,22 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
         break;
       case 'e':
-        if (!strncmp(vname, "epoch", 5)) {
+        if (!strncmp_XP(vname, XPSTR("epoch"), 5)) {
           fvar = UtcTime() - (uint32_t)glob_script_mem.epoch_offset;
           goto exit;
         }
-        if (!strncmp(vname, "epoffs", 6)) {
+        if (!strncmp_XP(vname, XPSTR("epoffs"), 6)) {
           fvar = (uint32_t)glob_script_mem.epoch_offset;
           tind->index = SCRIPT_EPOFFS;
           goto exit_settable;
         }
-        if (!strncmp(vname, "eres", 4)) {
+        if (!strncmp_XP(vname, XPSTR("eres"), 4)) {
           fvar = glob_script_mem.event_handeled;
           tind->index = SCRIPT_EVENT_HANDLED;
           goto exit_settable;
         }
 #ifdef USE_ENERGY_SENSOR
-        if (!strncmp(lp, "enrg[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("enrg["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
           switch ((uint32_t)fvar) {
@@ -2986,7 +3131,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
       case 'f':
 //#define DEBUG_FS
 #ifdef USE_SCRIPT_FATFS
-        if (!strncmp(lp, "fo(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fo("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           while (*lp == ' ') lp++;
@@ -3047,7 +3192,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fc("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar >= 0) {
             uint8_t ind = fvar;
@@ -3061,7 +3206,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ff(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("ff("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3069,7 +3214,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fw(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fw("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = ForceStringVar(lp + 3, str);
           while (*lp == ' ') lp++;
@@ -3083,7 +3228,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fwb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwb("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t buf[2];
           buf[0] = fvar;
@@ -3099,7 +3244,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "fr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fr("), 3)) {
           struct T_INDEX ind;
           uint8_t vtype;
           uint8_t sindex = 0;
@@ -3172,7 +3317,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "frb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frb("), 4)) {
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3186,7 +3331,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fa(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fa("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
@@ -3197,7 +3342,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fs(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fs("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t ind = fvar;
           SCRIPT_SKIP_SPACES
@@ -3211,7 +3356,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fz(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fz("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t ind = fvar;
@@ -3223,14 +3368,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fd(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fd("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           ufsp->remove(str);
           goto nfuncexit;
         }
 #ifdef USE_UFILESYS
-        if (!strncmp(lp, "frw(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frw("), 4)) {
           // read file from web
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
@@ -3242,16 +3387,16 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif
 #if defined(ESP32) && defined(USE_WEBCAM)
-        if (!strncmp(lp, "fwp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwp("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp == ' ') lp++;
-          float fvar1;
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           uint8_t ind = fvar1;
           if (ind >= SFS_MAX) ind = SFS_MAX - 1;
           if (glob_script_mem.file_flags[ind].is_open) {
             uint8_t *buff;
-            float maxps = WcGetPicstore(-1, 0);
+            TS_FLOAT maxps = WcGetPicstore(-1, 0);
             if (fvar < 1 || fvar > maxps) fvar = 1;
             uint32_t len = WcGetPicstore(fvar - 1, &buff);
             if (len) {
@@ -3268,14 +3413,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //ESP32 && USE_WEBCAM
 #ifdef USE_SCRIPT_FATFS_EXT
-        if (!strncmp(lp, "fe(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fe("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
           File ef = ufsp->open(str, FS_FILE_READ);
           if (ef) {
             uint16_t fsiz = ef.size();
-            if (fsiz<2048) {
+            if (fsiz < 2048) {
               char *script = (char*)special_malloc(fsiz + 16);
               if (script) {
                 memset(script, 0, fsiz + 16);
@@ -3289,13 +3434,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fmd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fmd("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->mkdir(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fmt(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fmt("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (!fvar) {
             LittleFS.format();
@@ -3304,13 +3449,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "frd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frd("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->rmdir(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fx(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fx("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           if (ufsp->exists(str)) fvar = 1;
@@ -3318,12 +3463,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 
-        if (!strncmp(lp, "fsi(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fsi("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = UfsInfo(fvar, 0);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "frn(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frn("), 4)) {
           // rename a file
           char fn_from[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, fn_from, 0);
@@ -3338,7 +3483,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "fxt", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fxt"), 3)) {
           lp += 3;
           uint8_t oflg = 0;
           if (*lp == 'o') {
@@ -3373,7 +3518,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             int16_t accum = fvar;
 
             uint16_t a_len[MAX_EXT_ARRAYS];
-            float *a_ptr[MAX_EXT_ARRAYS];
+            TS_FLOAT *a_ptr[MAX_EXT_ARRAYS];
 
             uint8_t index = 0;
             while (index < MAX_EXT_ARRAYS) {
@@ -3414,9 +3559,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif // USE_FEXTRACT
-        if (!strncmp(lp, "fwa(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fwa("), 4)) {
           uint16_t alen;
-          float *fa;
+          TS_FLOAT *fa;
           lp = get_array_by_name(lp + 4, &fa, &alen, 0);
           if (!fa) {
             fvar = 0;
@@ -3455,9 +3600,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fra(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("fra("), 4)) {
           uint16_t alen;
-          float *fa;
+          TS_FLOAT *fa;
           lp = get_array_by_name(lp + 4, &fa, &alen, 0);
           if (!fa) {
             fvar = 0;
@@ -3501,7 +3646,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 
 #endif // USE_SCRIPT_FATFS_EXT
-        if (!strncmp(lp, "fl1(", 4) || !strncmp(lp, "fl2(", 4) )  {
+        if (!strncmp_XP(lp, XPSTR("fl1("), 4) || !strncmp_XP(lp, XPSTR("fl2("), 4) )  {
           uint8_t lknum = *(lp + 2) & 3;
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
@@ -3510,12 +3655,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = 0;
           goto nfuncexit;
         }
-        if (!strncmp(lp, "fsm", 3)) {
+        if (!strncmp_XP(lp, XPSTR("fsm"), 3)) {
           fvar = (uint32_t)ufsp;
           goto exit;
         }
 #endif //USE_SCRIPT_FATFS
-        if (!strncmp(lp, "freq", 4)) {
+        if (!strncmp_XP(lp, XPSTR("freq"), 4)) {
 #ifdef ESP32
           fvar = getCpuFrequencyMhz();
 #else
@@ -3523,31 +3668,38 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
           goto exit;
         }
-        if (!strncmp(lp, "frnm", 4)) {
+        if (!strncmp_XP(lp, XPSTR("frnm"), 4)) {
           if (sp) strlcpy(sp, SettingsText(SET_FRIENDLYNAME1), glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp_XP(lp, XPSTR("floor("), 6)) {
+          lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
+          fvar = floorf(fvar);
+          goto nfuncexit;
+        }
+#endif
         break;
 
       case 'g':
-        if (!strncmp(vname, "gtmp", 4)) {
+        if (!strncmp_XP(vname, XPSTR("gtmp"), 4)) {
           fvar = TasmotaGlobal.temperature_celsius;
           goto exit;
         }
-        if (!strncmp(vname, "ghum", 4)) {
+        if (!strncmp_XP(vname, XPSTR("ghum"), 4)) {
           fvar = TasmotaGlobal.humidity;
           goto exit;
         }
-        if (!strncmp(vname, "gprs", 4)) {
+        if (!strncmp_XP(vname, XPSTR("gprs"), 4)) {
           fvar = TasmotaGlobal.pressure_hpa;
           goto exit;
         }
-        if (!strncmp(vname, "gtopic", 6)) {
+        if (!strncmp_XP(vname, XPSTR("gtopic"), 6)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTT_GRP_TOPIC), glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_WEBSEND_RESPONSE
-        if (!strncmp(lp, "gwr(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("gwr("), 4)) {
           char delim[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, delim, 0);
           SCRIPT_SKIP_SPACES
@@ -3616,7 +3768,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
 #ifdef SCRIPT_GET_HTTPS_JP
-        if (!strncmp(lp, "gjp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("gjp("), 4)) {
           char host[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, host, 0);
           SCRIPT_SKIP_SPACES
@@ -3626,19 +3778,52 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif //SCRIPT_GET_HTTPS_JP
+
+#ifdef TESLA_POWERWALL
+        if (!strncmp_XP(lp, XPSTR("gpwl("), 5)) {
+          char path[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
+          fvar = call2pwl(path);
+          goto nfuncexit;
+        }
+#endif
+
+        if (!strncmp_XP(lp, XPSTR("gi("), 3)) {
+          lp += 3;
+          if (!strncmp_XP(lp, XPSTR("epoch"), 5)) {
+            lp += 5;
+            *(uint32_t*)&fvar = UtcTime();
+          } else if (*lp == '0' && *(lp + 1) == 'x') {
+            lp += 2;
+            *(uint32_t*)&fvar = strtoll(lp, &lp, 16);
+          } else {
+            *(int32_t*)&fvar = strtol(lp, &lp, 10);
+          }
+          goto nfuncexit;
+        }
         break;
       case 'h':
-        if (!strncmp(vname, "hours", 5)) {
+        if (!strncmp_XP(vname, XPSTR("hours"), 5)) {
           fvar = RtcTime.hour;
           goto exit;
         }
-        if (!strncmp(vname, "heap", 4)) {
+        if (!strncmp_XP(vname, XPSTR("heap"), 4)) {
           fvar = ESP_getFreeHeap();
           goto exit;
         }
-        if (!strncmp(lp, "hn(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hni("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          uint8_t iob = *(uint32_t*)&fvar;
+          lp++;
+          len = 0;
+          if (sp) {
+            sprintf(sp, "%02x", iob);
+          }
+          goto strexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("hn("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
-          if (fvar<0 || fvar>255) fvar = 0;
+          if (fvar < 0 || fvar > 255) fvar = 0;
           lp++;
           len = 0;
           if (sp) {
@@ -3646,7 +3831,16 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hx(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hxi("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          lp++;
+          len = 0;
+          if (sp) {
+            sprintf(sp, "%08x", *(uint32_t*)&fvar);
+          }
+          goto strexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("hx("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           lp++;
           len = 0;
@@ -3655,13 +3849,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "hd(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hd("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = strtol(str, NULL, 16);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "hf(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("hf("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
@@ -3672,7 +3866,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             uint8_t rflg = 0;
             if (*lp == 'r') {
               rflg = 1;
-              ucp += sizeof(float);
+              ucp += sizeof(TS_FLOAT);
               lp++;
             }
             char substr[3];
@@ -3690,7 +3884,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "http(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("http("), 5)) {
           char host[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 5, OPER_EQU, host, 0);
           SCRIPT_SKIP_SPACES
@@ -3701,17 +3895,17 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #ifdef USE_LIGHT
-        if (!strncmp(lp, "hsvrgb(", 7)) {
+        if (!strncmp_XP(lp, XPSTR("hsvrgb("), 7)) {
           lp = GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
           if (fvar < 0 || fvar > 360) fvar = 0;
           SCRIPT_SKIP_SPACES
           // arg2
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           if (fvar2 < 0 || fvar2 > 100) fvar2 = 0;
           SCRIPT_SKIP_SPACES
           // arg3
-          float fvar3;
+          TS_FLOAT fvar3;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
           if (fvar3 < 0 || fvar3 > 100) fvar3 = 0;
 
@@ -3721,7 +3915,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif //USE_LIGHT
 
 #ifdef USE_HOMEKIT
-        if (!strncmp(lp, "hki(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("hki("), 4)) {
           if (!TasmotaGlobal.global_state.wifi_down) {
             // erase nvs
             lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
@@ -3734,7 +3928,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "hstr(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("hstr("), 5)) {
           char hstr[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 5, OPER_EQU, hstr, 0);
           uint16_t cnt;
@@ -3752,7 +3946,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'i':
-        if (!strncmp(lp, "ins(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ins("), 4)) {
           char s1[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, s1, 0);
           SCRIPT_SKIP_SPACES
@@ -3767,46 +3961,46 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "int(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("int("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = floor(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "is(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("is("), 3)) {
           lp = isargs(lp + 3, 0);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is1(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is1("), 4)) {
           lp = isargs(lp + 4, 1);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is2(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is2("), 4)) {
           lp = isargs(lp + 4, 2);
           fvar = 0;
           len = 0;
           goto exit;
         }
-        if (!strncmp(lp, "is[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("is["), 3)) {
           lp = isget(lp + 3, sp, 0, gv);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "is1[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is1["), 4)) {
           lp = isget(lp + 4, sp, 1, gv);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "is2[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("is2["), 4)) {
           lp = isget(lp + 4, sp, 2, gv);
           len = 0;
           goto strexit;
         }
 #ifdef USE_SCRIPT_I2C
-        if (!strncmp(lp, "ia", 2)) {
+        if (!strncmp_XP(lp, XPSTR("ia"), 2)) {
           uint8_t bus = 0;
           lp += 2;
           if (*lp == '2') {
@@ -3817,7 +4011,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           fvar = script_i2c(0, fvar, bus);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "iw", 2)) {
+        if (!strncmp_XP(lp, XPSTR("iw"), 2)) {
           uint8_t bytes = 1;
           lp += 2;
           if (*lp != '(') {
@@ -3829,12 +4023,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           lp = GetNumericArgument(lp + 1, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           // arg2
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           fvar = script_i2c(9 + bytes, fvar, fvar2);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ir", 2)) {
+        if (!strncmp_XP(lp, XPSTR("ir"), 2)) {
           uint8_t bytes = 1;
           lp += 2;
           if (*lp != '(') {
@@ -3851,11 +4045,11 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
 #ifdef ESP32
 #ifdef USE_I2S_AUDIO
-        if (!strncmp(lp, "i2sw(", 5)) {
-          float port;
+        if (!strncmp_XP(lp, XPSTR("i2sw("), 5)) {
+          TS_FLOAT port;
           lp = GetNumericArgument(lp + 5, OPER_EQU, &port, gv);
           uint16_t alen = 0;
-          float *fa = 0;
+          TS_FLOAT *fa = 0;
           lp = get_array_by_name(lp, &fa, &alen, 0);
           if (!fa) {
             fvar = -1;
@@ -3882,7 +4076,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #ifdef JPEG_PICTS
 #ifdef STREAM_JPEG_PICTS
       case 'j':
-        if (!strncmp(lp, "jpg(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("jpg("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           uint8_t selector = fvar;
           switch (selector) {
@@ -3890,7 +4084,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
               // start streaming
               char url[SCRIPT_MAXSSIZE];
               lp = GetStringArgument(lp, OPER_EQU, url, 0);
-              float xp, yp, scale ;
+              TS_FLOAT xp, yp, scale ;
               lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
               lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
               lp = GetNumericArgument(lp, OPER_EQU, &scale, 0);
@@ -3910,8 +4104,8 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
 #ifdef USE_KNX
       case 'k':
-        if (!strncmp(lp, "knx(", 4)) {
-          float type;
+        if (!strncmp_XP(lp, XPSTR("knx("), 4)) {
+          TS_FLOAT type;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &type, gv);
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
@@ -3922,17 +4116,17 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 
       case 'l':
-        if (!strncmp(lp, "lip", 3)) {
+        if (!strncmp_XP(lp, XPSTR("lip"), 3)) {
           if (sp) strlcpy(sp, (const char*)WiFi.localIP().toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_SCRIPT_GLOBVARS
-        if (!strncmp(vname, "luip", 4)) {
+        if (!strncmp_XP(vname, XPSTR("luip"), 4)) {
           if (sp) strlcpy(sp, glob_script_mem.last_udp_ip.toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
 #endif //USE_SCRIPT_GLOBVARS
-        if (!strncmp(vname, "loglvl", 6)) {
+        if (!strncmp_XP(vname, XPSTR("loglvl"), 6)) {
           fvar = glob_script_mem.script_loglevel;
           tind->index = SCRIPT_LOGLEVEL;
   exit_settable:
@@ -3943,7 +4137,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           return lp + len;
         }
 #ifdef USE_LVGL
-        if (!strncmp(lp, "lvgl(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("lvgl("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           fvar = lvgl_test(&lp, fvar);
@@ -3952,65 +4146,65 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif // USE_LVGL
         break;
       case 'm':
-        if (!strncmp(lp, "med(", 4)) {
-          float fvar1;
+        if (!strncmp_XP(lp, XPSTR("med("), 4)) {
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           // arg2
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           fvar = DoMedian5(fvar1, fvar2);
           goto nfuncexit;
         }
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "mpt(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("mpt("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = MeasurePulseTime(fvar);
           goto nfuncexit;
         }
 #endif //USE_ANGLE_FUNC
-        if (!strncmp(vname, "micros", 6)) {
+        if (!strncmp_XP(vname, XPSTR("micros"), 6)) {
           fvar = micros();
           goto exit;
         }
-        if (!strncmp(vname, "millis", 6)) {
+        if (!strncmp_XP(vname, XPSTR("millis"), 6)) {
           fvar = millis();
           goto exit;
         }
-        if (!strncmp(vname, "mins", 4)) {
+        if (!strncmp_XP(vname, XPSTR("mins"), 4)) {
           fvar = RtcTime.minute;
           goto exit;
         }
-        if (!strncmp(vname, "month", 5)) {
+        if (!strncmp_XP(vname, XPSTR("month"), 5)) {
           fvar = RtcTime.month;
           goto exit;
         }
-        if (!strncmp(vname, "mqttc", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqttc"), 5)) {
           if (TasmotaGlobal.rules_flag.mqtt_connected) {
             TasmotaGlobal.rules_flag.mqtt_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "mqttd", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqttd"), 5)) {
           if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
             TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "mqtts", 5)) {
+        if (!strncmp_XP(vname, XPSTR("mqtts"), 5)) {
           fvar = !TasmotaGlobal.global_state.mqtt_down;
           goto exit;
         }
-        if (!strncmp(lp, "mp(", 3)) {
-          float fvar1;
+        if (!strncmp_XP(lp, XPSTR("mp("), 3)) {
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           while (*lp != ')') {
             char *opp = lp;
             lp++;
-            float fvar2;
+            TS_FLOAT fvar2;
             lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
             SCRIPT_SKIP_SPACES
             fvar = fvar1;
@@ -4018,7 +4212,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                 (*opp == '>' && fvar1 > fvar2) ||
                 (*opp == '=' && fvar1 == fvar2)) {
                   if (*lp !='<' && *lp != '>' && *lp != '=' && *lp != ')' && *lp != SCRIPT_EOL) {
-                    float fvar3;
+                    TS_FLOAT fvar3;
                     lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
                     SCRIPT_SKIP_SPACES
                     fvar = fvar3;
@@ -4033,11 +4227,11 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #ifdef USE_MORITZ
-        if (!strncmp(lp, "mo(", 3)) {
-          float fvar1;
+        if (!strncmp_XP(lp, XPSTR("mo("), 3)) {
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
           char rbuff[64];
@@ -4049,19 +4243,19 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_MORITZ
 #ifdef ESP32_FAST_MUX
-        if (!strncmp(lp, "mux(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("mux("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar == 0) {
             // start
             lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
             uint16_t alen;
-            float *fa;
+            TS_FLOAT *fa;
             lp = get_array_by_name(lp, &fa, &alen, 0);
             if (!fa) {
               fvar = -1;
               goto nfuncexit;
             }
-            float falen;
+            TS_FLOAT falen;
             lp = GetNumericArgument(lp, OPER_EQU, &falen, gv);
             if (falen > alen) {
               falen = alen;
@@ -4073,7 +4267,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           } else if (fvar == 2) {
             // set array
             uint16_t alen;
-            float *fa;
+            TS_FLOAT *fa;
             lp = get_array_by_name(lp, &fa, &alen, 0);
             if (!fa) {
               fvar = -1;
@@ -4093,14 +4287,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'n':
-        if (!strncmp(vname, "npwr", 4)) {
+        if (!strncmp_XP(vname, XPSTR("npwr"), 4)) {
           fvar = TasmotaGlobal.devices_present;
           goto exit;
         }
         break;
 
       case 'p':
-        if (!strncmp(lp, "pin[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pin["), 4)) {
           // raw pin level
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = digitalRead((uint8_t)fvar);
@@ -4108,7 +4302,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(lp, "pn[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pn["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           fvar = Pin(fvar);
           // skip ] bracket
@@ -4116,7 +4310,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
-        if (!strncmp(lp, "pl(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pl("), 3)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
           Play_mp3(path);
@@ -4125,7 +4319,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #endif // USE_I2S_AUDIO
-        if (!strncmp(lp, "pd[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pd["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t gpiopin = fvar;
           if ((gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
@@ -4138,35 +4332,35 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "pheap", 5)) {
+        if (!strncmp_XP(vname, XPSTR("pheap"), 5)) {
           fvar = ESP.getFreePsram();
           goto exit;
         }
 #endif //ESP32
-        if (!strncmp(vname, "prefix1", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix1"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX1), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "prefix2", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix2"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX2), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "prefix3", 7)) {
+        if (!strncmp_XP(vname, XPSTR("prefix3"), 7)) {
           if (sp) strlcpy(sp, SettingsText(SET_MQTTPREFIX3), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(lp, "pow(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pow("), 4)) {
           // arg1
-          float fvar1;
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           // arg2
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           fvar = FastPrecisePowf(fvar1, fvar2);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "pwr[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("pwr["), 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index <= TasmotaGlobal.devices_present) {
@@ -4177,7 +4371,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len += 1;
           goto exit;
         }
-        if (!strncmp(lp, "pc[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("pc["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index < 1 || index > MAX_COUNTERS) index = 1;
@@ -4189,11 +4383,11 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 
       case 'r':
-        if (!strncmp(vname, "ram", 3)) {
+        if (!strncmp_XP(vname, XPSTR("ram"), 3)) {
           fvar = glob_script_mem.script_mem_size + (glob_script_mem.script_size) + (PMEM_SIZE);
           goto exit;
         }
-        if (!strncmp(lp, "rnd(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rnd("), 4)) {
           // tasmota switch state
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar<0) {
@@ -4206,9 +4400,9 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(lp, "rma(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rma("), 4)) {
           uint16_t alen;
-          float *array;
+          TS_FLOAT *array;
           lp = get_array_by_name(lp + 4, &array, &alen, 0);
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp, OPER_EQU, str, 0);
@@ -4238,7 +4432,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 /*
 #if defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC))
-        if (!strncmp(lp, "rec(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rec("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           //SCRIPT_SKIP_SPACES
@@ -4250,7 +4444,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif
 */
 
-        if (!strncmp(lp, "rr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("rr("), 3)) {
           lp += 4;
           len = 0;
           const char *cp = GetResetReason().c_str();
@@ -4263,22 +4457,34 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "rrsn", 4)) {
+        if (!strncmp_XP(lp, XPSTR("rrsn"), 4)) {
           fvar = ESP_ResetInfoReason();
           goto exit;
         }
-        if (!strncmp(lp, "rax", 3)) {
+        if (!strncmp_XP(lp, XPSTR("rax"), 3)) {
           TasmotaGlobal.no_autoexec = 0;
           goto exit;
         }
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp_XP(lp, XPSTR("rad("), 4)) {
+          GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          fvar = fvar * 3.1415916535f / 180.0f;
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("round("), 6)) {
+          lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
+          fvar = floorf(fvar);
+          goto nfuncexit;
+        }
+#endif
         break;
 
       case 's':
-        if (!strncmp(vname, "secs", 4)) {
+        if (!strncmp_XP(vname, XPSTR("secs"), 4)) {
           fvar = RtcTime.second;
           goto exit;
         }
-        if (!strncmp(lp, "sw[", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sw["), 3)) {
           // tasmota switch state
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           fvar = SwitchLastState((uint32_t)fvar);
@@ -4286,34 +4492,34 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len++;
           goto exit;
         }
-        if (!strncmp(vname, "stack", 5)) {
+        if (!strncmp_XP(vname, XPSTR("stack"), 5)) {
           fvar = GetStack();
           goto exit;
         }
 #ifdef ESP32
-        if (!strncmp(vname, "stkwm", 5)) {
+        if (!strncmp_XP(vname, XPSTR("stkwm"), 5)) {
           fvar = uxTaskGetStackHighWaterMark(NULL);
           goto exit;
         }
 #endif // ESP32
-        if (!strncmp(vname, "slen", 4)) {
+        if (!strncmp_XP(vname, XPSTR("slen"), 4)) {
           fvar = strlen(glob_script_mem.script_ram);
           goto exit;
         }
-        if (!strncmp(lp, "sl(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sl("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = strlen(str);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sb(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sb("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
-          float fvar1;
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           lp++;
           len = 0;
@@ -4326,7 +4532,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "st(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("st("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
@@ -4387,7 +4593,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "s(", 2)) {
+        if (!strncmp_XP(lp, XPSTR("s("), 2)) {
           lp += 2;
           uint8_t dprec = glob_script_mem.script_dprec;
           uint8_t lzero = glob_script_mem.script_lzero;
@@ -4413,7 +4619,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto strexit;
         }
 #if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
-        if (!strncmp(lp, "say(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("say("), 4)) {
           char text[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, text, 0);
           Say(text);
@@ -4424,7 +4630,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #endif // USE_I2S_AUDIO
 
 #ifdef ESP32
-        if (!strncmp(lp, "sf(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sf("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           if (fvar < 80) fvar = 80;
           if (fvar > 240) fvar = 240;
@@ -4434,7 +4640,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //ESP32
 #ifdef USE_TTGO_WATCH
-        if (!strncmp(lp, "slp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("slp("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           TTGO_Sleep(fvar);
@@ -4442,18 +4648,18 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_TTGO_WATCH
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-        if (!strncmp(vname, "sunrise", 7)) {
+        if (!strncmp_XP(vname, XPSTR("sunrise"), 7)) {
           fvar = SunMinutes(0);
           goto exit;
         }
-        if (!strncmp(vname, "sunset", 6)) {
+        if (!strncmp_XP(vname, XPSTR("sunset"), 6)) {
           fvar = SunMinutes(1);
           goto exit;
         }
 #endif //USE_TIMERS
 
 #ifdef USE_SHUTTER
-        if (!strncmp(lp, "sht[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sht["), 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index <= TasmotaGlobal.shutters_present) {
@@ -4466,12 +4672,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //USE_SHUTTER
 #ifdef USE_ANGLE_FUNC
-        if (!strncmp(lp, "sin(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sin("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = sinf(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sqrt(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("sqrt("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = sqrtf(fvar);
           goto nfuncexit;
@@ -4483,13 +4689,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 uint32_t sml_status(uint32_t meter);
 extern char *SML_GetSVal(uint32_t index);
 
-        if (!strncmp(lp, "sml[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sml["), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           fvar = SML_GetVal(fvar);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "smls[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smls["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           lp++;
@@ -4507,15 +4713,15 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto strexit;
         }
-        if (!strncmp(lp, "sml(", 4)) {
-          float fvar1;
+        if (!strncmp_XP(lp, XPSTR("sml("), 4)) {
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
-          float fvar2;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
           if (fvar2 == 0) {
-            float fvar3;
+            TS_FLOAT fvar3;
             lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
             fvar = SML_SetBaud(fvar1, fvar3);
           } else if (fvar2 == 1) {
@@ -4553,18 +4759,18 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(vname, "smlj", 4)) {
+        if (!strncmp_XP(vname, XPSTR("smlj"), 4)) {
           fvar = sml_options;
           tind->index = SML_JSON_ENABLE;
           goto exit_settable;
         }
-        if (!strncmp(lp, "smld(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smld("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           if (fvar < 1) fvar = 1;
           SML_Decode(fvar - 1);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "smlv[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("smlv["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = sml_getv(fvar);
           goto nfuncexit;
@@ -4572,8 +4778,8 @@ extern char *SML_GetSVal(uint32_t index);
 #endif //USE_SML_M
 
 #ifdef USE_SCRIPT_SERIAL
-        if (!strncmp(lp, "so(", 3)) {
-          float rxpin, txpin, br;
+        if (!strncmp_XP(lp, XPSTR("so("), 3)) {
+          TS_FLOAT rxpin, txpin, br;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &rxpin, gv);
           SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &txpin, gv);
@@ -4593,7 +4799,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           SCRIPT_SKIP_SPACES
           // check for rec buffer
-          float rxbsiz = 128;
+          TS_FLOAT rxbsiz = 128;
           if (*lp != ')') {
               lp = GetNumericArgument(lp, OPER_EQU, &rxbsiz, gv);
           }
@@ -4613,7 +4819,11 @@ extern char *SML_GetSVal(uint32_t index);
               //setRxBufferSize(TMSBSIZ);
 
               Settings->serial_config = sconfig;
-              AddLog(LOG_LEVEL_INFO, PSTR("Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz);
+              uint8_t uart = 0;
+#ifdef ESP32              
+              uart = glob_script_mem.sp->getUart();
+#endif
+              AddLog(LOG_LEVEL_INFO, PSTR("Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d uart=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz, uart);
               Settings->serial_config = savc;
               if (rxpin == 3 and txpin == 1) ClaimSerial();
 
@@ -4623,7 +4833,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sw(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sw("), 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           fvar = -1;
@@ -4633,7 +4843,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "swb(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("swb("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           if (glob_script_mem.sp) {
             glob_script_mem.sp->write((uint8_t)fvar);
@@ -4641,14 +4851,14 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sa(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sa("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "srb(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("srb("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
@@ -4658,7 +4868,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sp(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sp("), 3)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             fvar = glob_script_mem.sp->available();
@@ -4668,7 +4878,7 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto nfuncexit;
         }
-        if (!strncmp(lp, "sr(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sr("), 3)) {
           uint16_t size = glob_script_mem.max_ssize;
           char str[SCRIPT_MAXSSIZE];
           memset(str, 0, size);
@@ -4701,7 +4911,7 @@ extern char *SML_GetSVal(uint32_t index);
           if (sp) strlcpy(sp, str, size);
           goto strexit;;
         }
-        if (!strncmp(lp, "sc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("sc("), 3)) {
           fvar = -1;
           if (Script_Close_Serial()) {
             fvar = 0;
@@ -4711,23 +4921,23 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
         // serial write array
-        if (!strncmp(lp, "swa(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("swa("), 4)) {
           fvar = -1;
           uint8_t modbus_buffer[64];
           uint16_t alen;
-          float *array;
+          TS_FLOAT *array;
           lp = get_array_by_name(lp + 4, &array, &alen, 0);
           SCRIPT_SKIP_SPACES
           if (!array) {
             goto exit;
           }
-          float len;
+          TS_FLOAT len;
           lp = GetNumericArgument(lp, OPER_EQU, &len, 0);
           SCRIPT_SKIP_SPACES
           if (len > alen) len = alen;
           if (len < 1) len = 1;
           if (*lp != ')') {
-            float opt;
+            TS_FLOAT opt;
             lp = GetNumericArgument(lp, OPER_EQU, &opt, 0);
             SCRIPT_SKIP_SPACES
             uint16_t opts = opt;
@@ -4800,17 +5010,17 @@ extern char *SML_GetSVal(uint32_t index);
           goto nfuncexit;
         }
         // serial read array
-        if (!strncmp(lp, "sra(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("sra("), 4)) {
           fvar = -1;
           if (glob_script_mem.sp) {
             uint16_t alen;
-            float *array = 0;
+            TS_FLOAT *array = 0;
             lp = get_array_by_name(lp + 4, &array, &alen, 0);
             SCRIPT_SKIP_SPACES
             if (!array) {
               goto exit;
             }
-            float opts = -1;
+            TS_FLOAT opts = -1;
             if (*lp != ')') {
               lp = GetNumericArgument(lp, OPER_EQU, &opts, 0);
               SCRIPT_SKIP_SPACES
@@ -4857,22 +5067,22 @@ extern char *SML_GetSVal(uint32_t index);
         }
 #ifdef USE_SML_M
         // serial modbus write float, 010404ffffffffxxxx
-        if (!strncmp(lp, "smw(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("smw("), 4)) {
           fvar = -1;
           if (glob_script_mem.sp) {
-            float addr;
+            TS_FLOAT addr;
             lp = GetNumericArgument(lp + 4, OPER_EQU, &addr, 0);
             SCRIPT_SKIP_SPACES
-            float mode;
+            TS_FLOAT mode;
             lp = GetNumericArgument(lp, OPER_EQU, &mode, 0);
             SCRIPT_SKIP_SPACES
 
             uint16_t alend;
-            float *fpd;
+            TS_FLOAT *fpd;
             lp = get_array_by_name(lp, &fpd, &alend, 0);
             SCRIPT_SKIP_SPACES
 
-            float nvals;
+            TS_FLOAT nvals;
             lp = GetNumericArgument(lp, OPER_EQU, &nvals, 0);
             SCRIPT_SKIP_SPACES
 
@@ -4896,7 +5106,7 @@ extern char *SML_GetSVal(uint32_t index);
             mb_index++;
 
             for (uint16_t cnt = 0; cnt < nvals; cnt++) {
-              float fpval = *fpd++;
+              TS_FLOAT fpval = *fpd++;
               uint32_t ui32 = fpval;
               uint32_t uval, *uvp;
               uvp = &uval;
@@ -4966,7 +5176,7 @@ extern char *SML_GetSVal(uint32_t index);
 
 
 #ifdef USE_SCRIPT_SPI
-        if (!strncmp(lp, "spi(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("spi("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           uint8_t sel = fvar;
           uint8_t index;
@@ -5044,12 +5254,12 @@ extern char *SML_GetSVal(uint32_t index);
               lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
               int8_t index = fvar - 1;
 
-              float *fpd = 0;
+              TS_FLOAT *fpd = 0;
               uint16_t alend;
               lp = get_array_by_name(lp, &fpd, &alend, 0);
 
               // len
-              float len = alend;
+              TS_FLOAT len = alend;
               lp = GetNumericArgument(lp , OPER_EQU, &len, 0);
               if (len > alend) {
                 len = alend;
@@ -5066,7 +5276,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
 #endif // USE_SCRIPT_SPI
-        if (!strncmp(lp, "s2hms(", 6)) {
+        if (!strncmp_XP(lp, XPSTR("s2hms("), 6)) {
           lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, 0);
           lp++;
           char tbuff[16];
@@ -5080,7 +5290,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto strexit;
         }
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "s2t(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("s2t("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           char str[SCRIPT_MAXSSIZE];
           s2tstamp(str, SCRIPT_MAXSSIZE, fvar, 0);
@@ -5089,54 +5299,55 @@ extern char *SML_GetSVal(uint32_t index);
           goto strexit;
         }
 #endif // USE_FEXTRACT
+
         break;
 
       case 't':
-        if (!strncmp(vname, "time", 4)) {
+        if (!strncmp_XP(vname, XPSTR("time"), 4)) {
           fvar = MinutesPastMidnight();
           goto exit;
         }
-        if (!strncmp(vname, "tper", 4)) {
+        if (!strncmp_XP(vname, XPSTR("tper"), 4)) {
           fvar = Settings->tele_period;
           tind->index = SCRIPT_TELEPERIOD;
           goto exit_settable;
         }
-        if (!strncmp(vname, "tinit", 5)) {
+        if (!strncmp_XP(vname, XPSTR("tinit"), 5)) {
           fvar = TasmotaGlobal.rules_flag.time_init;
           goto exit;
         }
-        if (!strncmp(vname, "tset", 4)) {
+        if (!strncmp_XP(vname, XPSTR("tset"), 4)) {
           fvar = TasmotaGlobal.rules_flag.time_set;
           goto exit;
         }
-        if (!strncmp(vname, "tstamp", 6)) {
+        if (!strncmp_XP(vname, XPSTR("tstamp"), 6)) {
           if (sp) strlcpy(sp, GetDateAndTime(DT_LOCAL).c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
-        if (!strncmp(vname, "topic", 5)) {
+        if (!strncmp_XP(vname, XPSTR("topic"), 5)) {
           if (sp) strlcpy(sp, TasmotaGlobal.mqtt_topic, glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_SCRIPT_TIMER
-        if (!strncmp(lp, "ts1(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts1("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker1.attach_ms(fvar, Script_ticker1_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts2(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts2("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker2.attach_ms(fvar, Script_ticker2_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts3(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts3("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker3.attach_ms(fvar, Script_ticker3_end);
           goto nfuncexit;
         }
-        if (!strncmp(lp, "ts4(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("ts4("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (fvar < 10) fvar = 10;
           Script_ticker4.attach_ms(fvar, Script_ticker4_end);
@@ -5146,7 +5357,7 @@ extern char *SML_GetSVal(uint32_t index);
 
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
-        if (!strncmp(lp, "tbut[", 5)) {
+        if (!strncmp_XP(lp, XPSTR("tbut["), 5)) {
           GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
           if (index < 1 || index > MAX_TOUCH_BUTTONS) index = 1;
@@ -5165,11 +5376,13 @@ extern char *SML_GetSVal(uint32_t index);
 
 
 #if 0
-        if (!strncmp(lp, "test(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("test("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint32_t cycles;
           uint64_t accu = 0;
           char sbuffer[32];
+          
+          GT911_Touch_Init(&Wire1, -1, -1, 960, 540);
 
           /*
           // PSTR performance test
@@ -5191,7 +5404,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
 
 #ifdef USE_TIMERS
-        if (!strncmp(lp, "ttget(", 6)) {
+        if (!strncmp_XP(lp, XPSTR("ttget("), 6)) {
           lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t index = fvar;
@@ -5204,7 +5417,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "tso(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("tso("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = -1;
@@ -5222,14 +5435,14 @@ extern char *SML_GetSVal(uint32_t index);
           len = 0;
           goto strexit;
         }
-        if (!strncmp(lp, "tsn(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("tsn("), 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = tstamp2l(str);
           goto nfuncexit;
         }
 #endif
-        if (!strncmp(lp, "tc(", 3)) {
+        if (!strncmp_XP(lp, XPSTR("tc("), 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           lp++;
           if (sp) {
@@ -5241,15 +5454,15 @@ extern char *SML_GetSVal(uint32_t index);
         }
         break;
       case 'u':
-        if (!strncmp(vname, "uptime", 6)) {
+        if (!strncmp_XP(vname, XPSTR("uptime"), 6)) {
           fvar = MinutesUptime();
           goto exit;
         }
-        if (!strncmp(vname, "upsecs", 6)) {
+        if (!strncmp_XP(vname, XPSTR("upsecs"), 6)) {
           fvar = TasmotaGlobal.uptime;
           goto exit;
         }
-        if (!strncmp(lp, "upd[", 4)) {
+        if (!strncmp_XP(lp, XPSTR("upd["), 4)) {
           // var was updated
           struct T_INDEX ind;
           uint8_t vtype;
@@ -5268,10 +5481,10 @@ extern char *SML_GetSVal(uint32_t index);
           }
           goto notfound;
         }
-        if (!strncmp(lp, "udp(", 4)) {
+        if (!strncmp_XP(lp, XPSTR("udp("), 4)) {
           char url[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, url, 0);
-          float port;
+          TS_FLOAT port;
           lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
           char payload[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp, OPER_EQU, payload, 0);
@@ -5282,25 +5495,25 @@ extern char *SML_GetSVal(uint32_t index);
 
       case 'w':
 #if defined(ESP32) && defined(USE_WEBCAM)
-        if (!strncmp(lp, "wc(", 3)) {
-          float fvar1;
+        if (!strncmp_XP(lp, XPSTR("wc("), 3)) {
+          TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
           switch ((uint32)fvar1) {
             case 0:
-              { float fvar2;
+              { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetup(fvar2);
               }
               break;
             case 1:
-              { float fvar2;
+              { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcGetFrame(fvar2);
               }
               break;
             case 2:
-              { float fvar2,fvar3;
+              { TS_FLOAT fvar2,fvar3;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 SCRIPT_SKIP_SPACES
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
@@ -5314,13 +5527,13 @@ extern char *SML_GetSVal(uint32_t index);
               fvar = WcGetHeight();
               break;
             case 5:
-              { float fvar2;
+              { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetStreamserver(fvar2);
               }
               break;
             case 6:
-              { float fvar2;
+              { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetMotionDetect(fvar2);
               }
@@ -5328,7 +5541,7 @@ extern char *SML_GetSVal(uint32_t index);
               /*
 #ifdef USE_FACE_DETECT
             case 7:
-              { float fvar2;
+              { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
                 fvar = WcSetFaceDetect(fvar2);
               }
@@ -5342,55 +5555,55 @@ extern char *SML_GetSVal(uint32_t index);
         }
 #endif //ESP32, USE_WEBCAM
 #if defined(USE_TTGO_WATCH) && defined(USE_BMA423)
-        if (!strncmp(vname, "wdclk", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wdclk"), 5)) {
           fvar = TTGO_doubleclick();
           goto exit;
         }
-        if (!strncmp(vname, "wbut", 4)) {
+        if (!strncmp_XP(vname, XPSTR("wbut"), 4)) {
           fvar = TTGO_button();
           goto exit;
         }
 #endif // USE_TTGO_WATCH
 #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_GT911)
-        if (!strncmp(lp, "wtch(", 5)) {
+        if (!strncmp_XP(lp, XPSTR("wtch("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = Touch_Status(fvar);
           goto nfuncexit;
         }
 #endif // USE_FT5206
-        if (!strncmp(vname, "wm", 2)) {
+        if (!strncmp_XP(vname, XPSTR("wm"), 2)) {
           fvar = glob_script_mem.web_mode;
           goto exit;
         }
-        if (!strncmp(vname, "wday", 4)) {
+        if (!strncmp_XP(vname, XPSTR("wday"), 4)) {
           fvar = RtcTime.day_of_week;
           goto exit;
         }
-        if (!strncmp(vname, "wific", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wific"), 5)) {
           if (TasmotaGlobal.rules_flag.wifi_connected) {
             TasmotaGlobal.rules_flag.wifi_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "wifid", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wifid"), 5)) {
           if (TasmotaGlobal.rules_flag.wifi_disconnected) {
             TasmotaGlobal.rules_flag.wifi_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
-        if (!strncmp(vname, "wifis", 5)) {
+        if (!strncmp_XP(vname, XPSTR("wifis"), 5)) {
           fvar = !TasmotaGlobal.global_state.wifi_down;
           goto exit;
         }
-        if (!strncmp(vname, "wlp", 3)) {
+        if (!strncmp_XP(vname, XPSTR("wlp"), 3)) {
           OsWatchLoop();
           fvar = 0;
           goto exit;
         }
 #ifdef xUSE_SHINE
-        if (!strncmp(vname, "wav2mp3(", 8)) {
+        if (!strncmp_XP(vname, XPSTR("wav2mp3("), 8)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 8, OPER_EQU, path, 0);
           fvar = wav2mp3(path);
@@ -5399,7 +5612,7 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
         break;
       case 'y':
-        if (!strncmp(vname, "year", 4)) {
+        if (!strncmp_XP(vname, XPSTR("year"), 4)) {
           fvar = RtcTime.year;
           goto exit;
         }
@@ -5639,14 +5852,15 @@ char *GetStringArgument(char *lp, uint8_t lastop, char *cp, struct GVARS *gv) {
   }
   return lp;
 }
-
-char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, struct GVARS *gv) {
+char *GetNumericArgument(char *lp, uint8_t lastop, TS_FLOAT *fp, struct GVARS *gv);
+char *GetNumericArgument(char *lp, uint8_t lastop, TS_FLOAT *fp, struct GVARS *gv) {
 uint8_t operand = 0;
-float fvar1,fvar;
+TS_FLOAT fvar1,fvar;
 char *slp;
 uint8_t vtype;
 while (*lp == ' ') { lp++; } // skip leading spaces
 struct T_INDEX ind;
+    ind.bits.integer = 0;
     while (1) {
         // get 1. value
         if (*lp=='(') {
@@ -5656,12 +5870,52 @@ struct T_INDEX ind;
             //if (*lp==')') lp++;
         } else {
             lp = isvar(lp, &vtype, &ind, &fvar1, 0, gv);
-            if ((vtype!=NUM_RES) && (vtype&STYPE)) {
+            if ((vtype != NUM_RES) && (vtype & STYPE)) {
               // string type
               glob_script_mem.glob_error = 1;
             }
         }
-        switch (lastop) {
+        if (ind.bits.integer) {
+          switch (lastop) {
+            case OPER_EQU:
+                fvar = fvar1;
+                break;
+            case OPER_PLS:
+                *(int32_t*)&fvar += *(int32_t*)&fvar1;
+                break;
+            case OPER_MIN:
+                *(int32_t*)&fvar -= *(int32_t*)&fvar1;
+                break;
+            case OPER_MUL:
+                *(int32_t*)&fvar *= *(int32_t*)&fvar1;
+                break;
+            case OPER_DIV:
+                *(int32_t*)&fvar /= *(int32_t*)&fvar1;
+                break;
+            case OPER_PERC:
+                *(int32_t*)&fvar %= *(int32_t*)&fvar1;
+                break;
+            case OPER_XOR:
+                *(uint32_t*)&fvar ^= *(uint32_t*)&fvar1;
+                break;
+            case OPER_AND:
+                *(uint32_t*)&fvar &= *(uint32_t*)&fvar1;
+                break;
+            case OPER_OR:
+                *(uint32_t*)&fvar |= *(uint32_t*)&fvar1;
+                break;
+            case OPER_SHL:
+                *(uint32_t*)&fvar <<= *(uint32_t*)&fvar1;
+                break;
+            case OPER_SHR:
+                *(uint32_t*)&fvar >>= *(uint32_t*)&fvar1;
+                break;
+            default:
+                break;
+
+          }
+        } else {
+          switch (lastop) {
             case OPER_EQU:
                 fvar = fvar1;
                 break;
@@ -5698,6 +5952,7 @@ struct T_INDEX ind;
             default:
                 break;
 
+          }
         }
         slp = lp;
         lp = getop(lp, &operand);
@@ -5725,7 +5980,7 @@ struct T_INDEX ind;
 
 
 char *ForceStringVar(char *lp, char *dstr) {
-  float fvar;
+  TS_FLOAT fvar;
   char *slp = lp;
   glob_script_mem.glob_error = 0;
   lp = GetStringArgument(lp, OPER_EQU, dstr, 0);
@@ -5739,7 +5994,11 @@ char *ForceStringVar(char *lp, char *dstr) {
 }
 
 #ifdef USE_HOMEKIT
+
+int32_t UpdVar(char *vname, float *fvar, uint32_t mode);
+
 extern "C" {
+
   uint32_t Ext_UpdVar(char *vname, float *fvar, uint32_t mode) {
     return UpdVar(vname, fvar, mode);
   }
@@ -5779,7 +6038,7 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
           return 1;
           break;
         case 'b':
-          *fvar = ButtonLastState(index - 1);
+          *fvar = Button.last_state[index - 1];
           return 1;
           break;
       }
@@ -5787,7 +6046,7 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
   }
   struct T_INDEX ind;
   uint8_t vtype;
-  float res = *fvar;
+  TS_FLOAT res = *fvar;
   isvar(vname, &vtype, &ind, fvar, 0, 0);
   if (vtype != VAR_NV) {
     // found variable as result
@@ -5839,7 +6098,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     uint8_t dprec = glob_script_mem.script_dprec;
     char dsep = glob_script_mem.script_sepc;
     uint8_t lzero = glob_script_mem.script_lzero;
-    float fvar;
+    TS_FLOAT fvar;
     cp = srcbuf;
     struct T_INDEX ind;
     char string[SCRIPT_MAXSSIZE];
@@ -5884,11 +6143,15 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                 cp += 2;
               } else {
                 cp = isvar(cp, &vtype, &ind, &fvar, string, 0);
-                if (vtype!=VAR_NV) {
+                if (vtype != VAR_NV) {
                   // found variable as result
-                  if (vtype==NUM_RES || (vtype&STYPE)==0) {
+                  if (vtype == NUM_RES || (vtype & STYPE) == 0) {
                     // numeric result
-                    f2char(fvar, dprec, lzero, string, dsep);
+                    if (ind.bits.integer) {
+                      dtostrfd(*(int32_t*)&fvar, 0, string);
+                    } else {
+                      f2char(fvar, dprec, lzero, string, dsep);
+                    }
                   } else {
                     // string result
                   }
@@ -5978,7 +6241,7 @@ void toSLog(const char *str) {
 }
 
 char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, struct GVARS *gv) {
-  float fvar,*dfvar,fvar1;
+  TS_FLOAT fvar,*dfvar,fvar1;
   uint8_t numeric;
   struct T_INDEX ind;
   uint8_t vtype = 0,lastop;
@@ -6166,8 +6429,8 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
   }
 #endif // ESP32
 }
-
-char *eval_sub(char *lp, float *fvar, char *rstr) {
+char *eval_sub(char *lp, TS_FLOAT *fvar, char *rstr);
+char *eval_sub(char *lp, TS_FLOAT *fvar, char *rstr) {
   scripter_sub(lp - 1, 0);
   while (1) {
     if (*lp == ')') {
@@ -6254,7 +6517,6 @@ int16_t retval;
 
     if (js) {
       String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
-      //JsonParser parser((char*)jss.c_str());
       JsonParser parser((char*)jss.c_str());
       jo = parser.getRootObject();
       gv.jo = &jo;
@@ -6275,7 +6537,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     int8_t loopdepth = -1;
     char *lp_next[SCRIPT_LOOP_NEST];
     char *cv_ptr[SCRIPT_LOOP_NEST];
-    float *cv_count[SCRIPT_LOOP_NEST], cv_max[SCRIPT_LOOP_NEST], cv_inc[SCRIPT_LOOP_NEST];
+    TS_FLOAT *cv_count[SCRIPT_LOOP_NEST], cv_max[SCRIPT_LOOP_NEST], cv_inc[SCRIPT_LOOP_NEST];
     int16_t globaindex, saindex;
     struct T_INDEX ind;
     uint8_t operand, lastop, numeric = 1, if_state[IF_NEST], if_exe[IF_NEST], if_result[IF_NEST], and_or, ifstck = 0;
@@ -6283,9 +6545,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     if_result[ifstck] = 0;
     if_exe[ifstck] = 1;
     char cmpstr[SCRIPT_MAXSSIZE];
-    float *dfvar;
+    TS_FLOAT *dfvar;
 
-    float fvar = 0, fvar1, sysvar, swvar;
+    TS_FLOAT fvar = 0, fvar1, sysvar, swvar;
     uint8_t section = 0, sysv_type = 0, swflg = 0;
 
     char *lp;
@@ -6497,7 +6759,7 @@ getnext:
             } else if (!strncmp(lp, "case", 4) && swflg>0) {
               lp += 4;
               SCRIPT_SKIP_SPACES
-              float cvar;
+              TS_FLOAT cvar;
               if (!(swflg & 0x80)) {
                 lp = GetNumericArgument(lp, OPER_EQU, &cvar, 0);
                 if (swvar != cvar) {
@@ -6585,7 +6847,7 @@ getnext:
               goto next_line;
             }
 #ifdef USE_DISPLAY
-            else if (!strncmp(lp, "dt", 2)) {
+            else if (!strncmp(lp, "dt ", 3)) {
               //char dstbuf[256];
               lp += 2;
               SCRIPT_SKIP_SPACES
@@ -6679,7 +6941,7 @@ getnext:
                     // numeric result
                   if (glob_script_mem.type[ind.index].bits.is_filter) {
                     uint16_t len = 0;
-                    float *fa = Get_MFAddr(index, &len, 0);
+                    TS_FLOAT *fa = Get_MFAddr(index, &len, 0);
                     //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
                     if (fa && len) ws2812_set_array(fa, len, fvar);
                   }
@@ -6693,7 +6955,7 @@ getnext:
             else if (!strncmp(lp, "beep(", 5)) {
               lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
               SCRIPT_SKIP_SPACES
-              float fvar1;
+              TS_FLOAT fvar1;
               lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
               esp32_beep(fvar, fvar1);
               lp++;
@@ -6701,29 +6963,20 @@ getnext:
             }
 #endif //ESP32
 
-            else if (!strncmp(lp, "pwm", 3)) {
+            else if (!strncmp(lp, "pwm", 3) && lp[4] == '(') {
               lp += 3;
-              uint8_t channel = 1;
-              if (*(lp+1) == '(') {
-                channel = *lp & 0x0f;
+              uint8_t channel = *lp & 0x0f;
 #ifdef ESP8266
-                if (channel > 5) {channel = 5;}
+              if (channel > 5) {channel = 5;}
 #endif // ESP8266
 #ifdef ESP32
-                if (channel > 8) {channel = 8;}
+              if (channel > 8) {channel = 8;}
 #endif // ESP32
-                if (channel < 1) {channel = 1;}
-                lp += 2;
-              } else {
-                if (*lp == '(') {
-                  lp++;
-                } else {
-                  goto next_line;
-                }
-              }
+              if (channel < 1) {channel = 1;}
+              lp += 2;
               lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
               SCRIPT_SKIP_SPACES
-              float fvar1=4000;
+              TS_FLOAT fvar1 = 4000;
               if (*lp != ')') {
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
               }
@@ -6732,26 +6985,26 @@ getnext:
               goto next_line;
             }
 #ifdef USE_SCRIPT_WEB_DISPLAY
-            else if (!strncmp(lp, "wcs", 3)) {
+            else if (!strncmp(lp, "wcs ", 4)) {
               lp += 4;
               // skip one space after cmd
               web_send_line(0, lp);
               //WSContentFlush();
               goto next_line;
             }
-            else if (!strncmp(lp, "wfs", 3)) {
+            else if (!strncmp(lp, "wfs ", 4)) {
               lp += 4;
               // skip one space after cmd
               web_send_file(0, lp);
               //WSContentFlush();
               goto next_line;
             }
-            else if (!strncmp(lp, "wcf", 3)) {
+            else if (!strncmp(lp, "wcf\n", 4)) {
               WSContentFlush();
               goto next_line;
             }
 #endif
-            else if (!strncmp(lp, "rapp", 3)) {
+            else if (!strncmp(lp, "rapp ", 4)) {
               lp += 4;
               // skip one space after cmd
               char *tmp = (char*)malloc(256);
@@ -6765,7 +7018,7 @@ getnext:
 
 
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
-            else if (!strncmp(lp, "mail", 4)) {
+            else if (!strncmp(lp, "mail ", 5)) {
               lp += 5;
               //char tmp[256];
               char *tmp = (char*)malloc(256);
@@ -6922,7 +7175,51 @@ getnext:
 #ifdef SCRIPT_LM_SUB
                       }
 #endif
-                      switch (lastop) {
+                      if (ind.bits.integer) {
+                        switch (lastop) {
+                          case OPER_EQU:
+                              if (glob_script_mem.var_not_found) {
+                                if (!gv || !gv->jo) toLogEOL("var not found: ",lp);
+                                goto next_line;
+                              }
+                              *dfvar = fvar;
+                              break;
+                          case OPER_PLSEQU:
+                              *(int32_t*)dfvar += *(int32_t*)&fvar;
+                              break;
+                          case OPER_MINEQU:
+                              *(int32_t*)dfvar -= *(int32_t*)&fvar;
+                              break;
+                          case OPER_MULEQU:
+                              *(int32_t*)dfvar *= *(int32_t*)&fvar;
+                              break;
+                          case OPER_DIVEQU:
+                              *(int32_t*)dfvar /= *(int32_t*)&fvar;
+                              break;
+                          case OPER_PERCEQU:
+                              *(int32_t*)dfvar %= *(int32_t*)&fvar;
+                              break;
+                          case OPER_ANDEQU:
+                              *(uint32_t*)dfvar &= *(int32_t*)&fvar;
+                              break;
+                          case OPER_OREQU:
+                              *(uint32_t*)dfvar |= *(int32_t*)&fvar;
+                              break;
+                          case OPER_XOREQU:
+                              *(uint32_t*)dfvar ^= *(int32_t*)&fvar;
+                              break;
+                          case OPER_SHLEQU:
+                              *(uint32_t*)dfvar <<= *(int32_t*)&fvar;
+                              break;
+                          case OPER_SHREQU:
+                              *(uint32_t*)dfvar >>= *(int32_t*)&fvar;
+                              break;
+                          default:
+                              // error
+                              break;
+                        } 
+                      } else {
+                        switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
                                 if (!gv || !gv->jo) toLogEOL("var not found: ",lp);
@@ -6963,7 +7260,9 @@ getnext:
                           default:
                               // error
                               break;
+                        }
                       }
+                      
                       // var was changed
                       if (globvindex >= 0) SetChanged(globvindex);
 #ifdef USE_SCRIPT_GLOBVARS
@@ -7114,7 +7413,7 @@ getnext:
                   lp += tlen;
                   do {
                     if (*ctype == nxttok && *lp == nxttok) {
-                      float fparam;
+                      TS_FLOAT fparam;
                       numeric = 1;
                       glob_script_mem.glob_error = 0;
                       argptr = GetNumericArgument((char*)ctype + 1, OPER_EQU, &fparam, 0);
@@ -7187,7 +7486,7 @@ getnext:
 
 #ifdef USE_SCRIPT_SPI
 // transfer 1-3 bytes
-uint32_t script_sspi_trans(int32_t cs_index, float *array, uint32_t len, uint32_t size) {
+uint32_t script_sspi_trans(int32_t cs_index, TS_FLOAT *array, uint32_t len, uint32_t size) {
   uint32_t out = 0;
   if (cs_index >= 0) {
     cs_index &= 3;
@@ -7209,31 +7508,62 @@ uint32_t script_sspi_trans(int32_t cs_index, float *array, uint32_t len, uint32_
         out <<= 16;
         out |= glob_script_mem.spi.spip->transfer16((uint32_t)*array);
       }
+      if (size == 4) {
+        // special byte transfer with cs low
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+        out = glob_script_mem.spi.spip->transfer((uint8_t)*array);
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
+      }
       *array++ = out;
     }
     glob_script_mem.spi.spip->endTransaction();
 
   } else {
-    if (size < 1 || size > 3) size = 1;
-    for (uint32_t cnt = 0; cnt < len; cnt++) {
-      uint32_t bit = 1 << ((size * 8) - 1);
-      out = 0;
-      uint32_t uvar = *array;
-      while (bit) {
-        digitalWrite(glob_script_mem.spi.sclk, 0);
-        if (glob_script_mem.spi.mosi >= 0) {
-          if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
-          else   digitalWrite(glob_script_mem.spi.mosi, 0);
-        }
-        digitalWrite(glob_script_mem.spi.sclk, 1);
-        if (glob_script_mem.spi.miso >= 0) {
-          if (digitalRead(glob_script_mem.spi.miso)) {
-            out |= bit;
+    if (size == 4) {
+      for (uint32_t cnt = 0; cnt < len; cnt++) {
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+        uint32_t bit = 1 << ((1 * 8) - 1);
+        out = 0;
+        uint32_t uvar = *array;
+        while (bit) {
+          digitalWrite(glob_script_mem.spi.sclk, 0);
+          if (glob_script_mem.spi.mosi >= 0) {
+            if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
+            else   digitalWrite(glob_script_mem.spi.mosi, 0);
           }
+          digitalWrite(glob_script_mem.spi.sclk, 1);
+          if (glob_script_mem.spi.miso >= 0) {
+            if (digitalRead(glob_script_mem.spi.miso)) {
+              out |= bit;
+            }
+          }
+          bit >>= 1;
         }
-        bit >>= 1;
+        *array++ = out;
+        digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
       }
-      *array++ = out;
+    } else {
+      if (size < 1 || size > 3) size = 1;
+      for (uint32_t cnt = 0; cnt < len; cnt++) {
+        uint32_t bit = 1 << ((size * 8) - 1);
+        out = 0;
+        uint32_t uvar = *array;
+        while (bit) {
+          digitalWrite(glob_script_mem.spi.sclk, 0);
+          if (glob_script_mem.spi.mosi >= 0) {
+            if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
+            else   digitalWrite(glob_script_mem.spi.mosi, 0);
+          }
+          digitalWrite(glob_script_mem.spi.sclk, 1);
+          if (glob_script_mem.spi.miso >= 0) {
+            if (digitalRead(glob_script_mem.spi.miso)) {
+              out |= bit;
+            }
+          }
+          bit >>= 1;
+        }
+        *array++ = out;
+      }
     }
   }
   if (cs_index >= 0) {
@@ -7289,8 +7619,8 @@ void ScripterEvery100ms(void) {
 // should report overflow later
 void Scripter_save_pvars(void) {
   int16_t mlen = 0;
-  float *fp = (float*)glob_script_mem.script_pram;
-  mlen+=sizeof(float);
+  TS_FLOAT *fp = (TS_FLOAT*)glob_script_mem.script_pram;
+  mlen+=sizeof(TS_FLOAT);
   struct T_INDEX *vtp = glob_script_mem.type;
   for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
@@ -7298,8 +7628,8 @@ void Scripter_save_pvars(void) {
       if (vtp[count].bits.is_filter) {
         // save array
         uint16_t len = 0;
-        float *fa = Get_MFAddr(index, &len, 0);
-        mlen += sizeof(float) * len;
+        TS_FLOAT *fa = Get_MFAddr(index, &len, 0);
+        mlen += sizeof(TS_FLOAT) * len;
         if (mlen>glob_script_mem.script_pram_size) {
           vtp[count].bits.is_permanent = 0;
           return;
@@ -7308,7 +7638,7 @@ void Scripter_save_pvars(void) {
           *fp++ = *fa++;
         }
       } else {
-        mlen += sizeof(float);
+        mlen += sizeof(TS_FLOAT);
         if (mlen>glob_script_mem.script_pram_size) {
           vtp[count].bits.is_permanent = 0;
           return;
@@ -7657,9 +7987,12 @@ void SaveScript(void) {
 #ifdef EEP_SCRIPT_SIZE
   // here we handle EEPROM modes
   if (glob_script_mem.FLAGS.eeprom == true) {
-    if (EEP_SCRIPT_SIZE != SPECIAL_EEPMODE_SIZE) {
+    if (EEP_SCRIPT_SIZE < SPECIAL_EEPMODE_SIZE) {
       EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
     } else {
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+      alt_eeprom_writeBytes(0, SPI_FLASH_2SEC_SIZE, (uint8_t*)glob_script_mem.script_ram);
+#else
       uint8_t *ucs;
       ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
       if (ucs) {
@@ -7668,6 +8001,7 @@ void SaveScript(void) {
         }
         free(ucs);
       }
+#endif
     }
   }
 #else
@@ -7734,10 +8068,15 @@ void SaveScriptEnd(void) {
 #endif //USE_SCRIPT_GLOBVARS
 
   if (glob_script_mem.script_mem) {
+    // script was restarted
+    Run_Scripter1(">R\n", 3, 0);
     Scripter_save_pvars();
     free(glob_script_mem.script_mem);
     glob_script_mem.script_mem = 0;
     glob_script_mem.script_mem_size = 0;
+ #ifdef USE_SCRIPT_SERIAL
+    Script_Close_Serial();
+#endif   
   }
 
   if (bitRead(Settings->rule_enabled, 0)) {
@@ -7747,10 +8086,6 @@ void SaveScriptEnd(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
-
-#ifdef USE_SCRIPT_SERIAL
-    Script_Close_Serial();
-#endif
 
     set_callbacks();
 
@@ -7762,15 +8097,6 @@ void SaveScriptEnd(void) {
     script_set_web_pages();
 
   }
-}
-
-
-
-void set_callbacks() {
-  if (Run_Scripter1(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
-  if (Run_Scripter1(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
-  if (Run_Scripter1(">C", -2, 0) == 99) {glob_script_mem.html_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.html_script = 0;}
-  if (Run_Scripter1(">T", -2, 0) == 99) {glob_script_mem.teleperiod = glob_script_mem.section_ptr + 2;} else {glob_script_mem.teleperiod = 0;}
 }
 
 void set_wpages(char *id, uint16_t index) {
@@ -7802,6 +8128,15 @@ void script_set_web_pages(void) {
 
 #endif // USE_WEBSERVER
 
+void set_callbacks() {
+  if (Run_Scripter1(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
+  if (Run_Scripter1(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
+  if (Run_Scripter1(">C", -2, 0) == 99) {glob_script_mem.html_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.html_script = 0;}
+  if (Run_Scripter1(">T", -2, 0) == 99) {glob_script_mem.teleperiod = glob_script_mem.section_ptr + 2;} else {glob_script_mem.teleperiod = 0;}
+}
+
+
+//#define SCRIPT_HUE_DEBUG
 
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
 #define HUE_DEV_MVNUM 5
@@ -7980,7 +8315,7 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
     light_status += ",";
   }
 
-  float temp;
+  TS_FLOAT temp;
   switch (hue_script[hue_devs].type) {
     case 'C':
       response->replace("{type}","Color Ligh"); // alexa ok
@@ -8085,7 +8420,7 @@ void Script_Check_Hue(String *response) {
           struct T_INDEX ind;
           uint8_t vtype;
           char vname[16];
-          for (uint32_t cnt = 0; cnt<sizeof(vname) - 1; cnt++) {
+          for (uint32_t cnt = 0; cnt < sizeof(vname) - 1; cnt++) {
             if (*cp==',' || *cp==0) {
               vname[cnt] = 0;
               break;
@@ -8093,9 +8428,9 @@ void Script_Check_Hue(String *response) {
             vname[cnt] = *cp++;
           }
           isvar(vname, &vtype, &ind, 0, 0, 0);
-          if (vtype!=VAR_NV) {
+          if (vtype != VAR_NV) {
             // found variable as result
-            if (vtype==NUM_RES || (vtype&STYPE)==0) {
+            if (vtype == NUM_RES || (vtype & STYPE) == 0) {
               hue_script[hue_devs].vindex[vindex] = ind.index;
               hue_script[hue_devs].index[vindex] = glob_script_mem.type[ind.index].index+1;
             } else {
@@ -8105,6 +8440,9 @@ void Script_Check_Hue(String *response) {
         }
       }
       // append response
+#ifdef SCRIPT_HUE_DEBUG
+      AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),hue_script[hue_devs].name, hue_devs);
+#endif
       if (response) {
         if (TasmotaGlobal.devices_present) {
           *response += ",\"";
@@ -8115,9 +8453,10 @@ void Script_Check_Hue(String *response) {
         }
         *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
-        //AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+#ifdef SCRIPT_HUE_DEBUG
+        AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+#endif
       }
-
       hue_devs++;
     }
     if (*lp==SCRIPT_EOL) {
@@ -8128,7 +8467,7 @@ void Script_Check_Hue(String *response) {
       lp++;
     }
   }
-#if 0
+#ifdef SCRIPT_HUE_DEBUG
   if (response) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
@@ -8204,7 +8543,7 @@ void Script_Handle_Hue(String path) {
 
     JsonParserToken hue_xy = root[PSTR("xy")];
     if (hue_xy) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
-      float x, y;
+      TS_FLOAT x, y;
       JsonParserArray arr_xy = JsonParserArray(hue_xy);
       JsonParserToken tok_x = arr_xy[0];
       JsonParserToken tok_y = arr_xy[1];
@@ -8275,7 +8614,11 @@ void Script_Handle_Hue(String path) {
   } else {
     response = FPSTR(sHUE_ERROR_JSON);
   }
+#ifdef SCRIPT_HUE_DEBUG
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+#else
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+#endif
   WSSend(code, CT_APP_JSON, response);
   if (resp) {
     //Run_Scripter(">E", 2, 0);
@@ -8490,17 +8833,17 @@ bool ScriptCommand(void) {
         char *lp = XdrvMailbox.data;
         lp++;
         while (*lp==' ') lp++;
-        float fvar;
+        TS_FLOAT fvar;
         char str[SCRIPT_MAXSSIZE];
         glob_script_mem.glob_error = 0;
-        float *fpd = 0;
+        TS_FLOAT *fpd = 0;
         uint16_t alend;
         char *cp = get_array_by_name(lp, &fpd, &alend, 0);
         if (fpd && cp && (!strchr(lp, '[')) ) {
           // is array
           Response_P(PSTR("{\"script\":{\"%s\":["), lp);
           for (uint16_t cnt = 0; cnt < alend; cnt++) {
-            float tvar = *fpd++;
+            TS_FLOAT tvar = *fpd++;
             ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &tvar);
             if (cnt) {
               ResponseAppend_P(PSTR(",%s"), str);
@@ -9333,7 +9676,7 @@ void Script_Check_HTML_Setvars(void) {
     struct T_INDEX ind;
     uint8_t vtype;
     isvar(vname, &vtype, &ind, 0, 0, 0);
-    if (vtype!=NUM_RES && vtype&STYPE) {
+    if (vtype != NUM_RES && vtype & STYPE) {
       // string type must insert quotes
       uint8_t tlen = strlen(cp1);
       memmove(cp1 + 1, cp1, tlen);
@@ -9467,8 +9810,8 @@ const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 #define MAX_GARRAY 4
 #endif
 
-
-char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
+char *gc_get_arrays(char *lp, TS_FLOAT **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos);
+char *gc_get_arrays(char *lp, TS_FLOAT **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
 struct T_INDEX ind;
 uint8_t vtype;
 uint16 entries = 0;
@@ -9478,18 +9821,18 @@ uint16_t cipos = 0;
   while (anum < MAX_GARRAY) {
     if (*lp == ')' || *lp == 0) break;
     char *lp1 = lp;
-    float sysvar;
+    TS_FLOAT sysvar;
     lp = isvar(lp, &vtype, &ind, &sysvar, 0, 0);
     if (vtype != VAR_NV) {
       SCRIPT_SKIP_SPACES
       uint8_t index = glob_script_mem.type[ind.index].index;
-      if ((vtype&STYPE) == 0) {
+      if ((vtype & STYPE) == 0) {
         // numeric result
         //Serial.printf("numeric %d - %d \n",ind.index,index);
         if (glob_script_mem.type[ind.index].bits.is_filter) {
           //Serial.printf("numeric array\n");
           uint16_t len = 0;
-          float *fa = Get_MFAddr(index, &len, &cipos);
+          TS_FLOAT *fa = Get_MFAddr(index, &len, &cipos);
           //Serial.printf(">> 2 %d\n",len);
           if (fa && len >= entries) {
             if (!entries) {
@@ -9595,9 +9938,9 @@ char gs_ctype;
 #endif
 
 void ScriptWebShow(char mc, uint8_t page) {
-  float cv_max = 0;
-  float cv_inc = 0;
-  float *cv_count = 0;
+  TS_FLOAT cv_max = 0;
+  TS_FLOAT cv_inc = 0;
+  TS_FLOAT *cv_count = 0;
   char *cv_ptr;
 
   //uint8_t web_script;
@@ -9639,7 +9982,7 @@ void ScriptWebShow(char mc, uint8_t page) {
           struct T_INDEX ind;
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, 0);
-          if ((vtype != VAR_NV) && (vtype&STYPE) == 0) {
+          if ((vtype != VAR_NV) && (vtype & STYPE) == 0) {
             uint16_t index = glob_script_mem.type[ind.index].index;
             cv_count = &glob_script_mem.fvars[index];
             SCRIPT_SKIP_SPACES
@@ -9744,7 +10087,7 @@ const char *gc_str;
 
   if (!strncmp(lin, "so(", 3)) {
     // set options
-    float var;
+    TS_FLOAT var;
     lin = GetNumericArgument(lin + 3, OPER_EQU, &var, 0);
     specopt = var;
     return lin;
@@ -9775,14 +10118,14 @@ const char *gc_str;
     if (!strncmp(lin, "sl(", 3)) {
       // insert slider sl(min max var left mid right)
       char *lp = lin;
-      float min;
+      TS_FLOAT min;
       lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
       SCRIPT_SKIP_SPACES
       // arg2
-      float max;
+      TS_FLOAT max;
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
-      float val;
+      TS_FLOAT val;
       char *slp = lp;
       lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
       SCRIPT_SKIP_SPACES
@@ -9806,7 +10149,7 @@ const char *gc_str;
     } else if (!strncmp(lin, "ck(", 3)) {
       char *lp = lin + 3;
       char *slp = lp;
-      float val;
+      TS_FLOAT val;
       lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
       SCRIPT_SKIP_SPACES
 
@@ -9832,7 +10175,7 @@ const char *gc_str;
       // pull down
       char *lp = lin + 3;
       char *slp = lp;
-      float val;
+      TS_FLOAT val;
       lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
       SCRIPT_SKIP_SPACES
 
@@ -9846,7 +10189,7 @@ const char *gc_str;
 
       glob_script_mem.glob_error = 0;
       uint16_t tsiz = 200;
-      float fvar;
+      TS_FLOAT fvar;
       char *slp1 = lp;
       lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
       if (!glob_script_mem.glob_error) {
@@ -9915,7 +10258,7 @@ const char *gc_str;
       if (optflg) WSContentSend_P(SCRIPT_MSG_BUT_START_TBL);
       else WSContentSend_P(SCRIPT_MSG_BUT_START);
       for (uint32_t cnt = 0; cnt < bcnt; cnt++) {
-        float val;
+        TS_FLOAT val;
         char *slp = lp;
         lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
         SCRIPT_SKIP_SPACES
@@ -9957,7 +10300,7 @@ const char *gc_str;
 
     }  else if (!strncmp(lin, "tm(", 3)) {
       // time only HH:MM
-      float val;
+      TS_FLOAT val;
       char *lp = lin + 3;
       char *slp = lp;
       lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
@@ -9970,7 +10313,7 @@ const char *gc_str;
       SCRIPT_SKIP_SPACES
       uint16_t tsiz = 70;
       if (*lp != ')') {
-        float fvar;
+        TS_FLOAT fvar;
         lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
         tsiz = fvar;
       }
@@ -10001,7 +10344,7 @@ const char *gc_str;
       uint16_t tsiz = 200;
       if (*lp != ')') {
         glob_script_mem.glob_error = 0;
-        float fvar;
+        TS_FLOAT fvar;
         char *slp1 = lp;
         lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
         SCRIPT_SKIP_SPACES
@@ -10041,16 +10384,16 @@ const char *gc_str;
 
     } else if (!strncmp(lin, "nm(", 3)) {
       char *lp = lin;
-      float min;
+      TS_FLOAT min;
       lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
       SCRIPT_SKIP_SPACES
-      float max;
+      TS_FLOAT max;
       lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
       SCRIPT_SKIP_SPACES
-      float step;
+      TS_FLOAT step;
       lp = GetNumericArgument(lp, OPER_EQU, &step, 0);
       SCRIPT_SKIP_SPACES
-      float val;
+      TS_FLOAT val;
       char *slp = lp;
       lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
       SCRIPT_SKIP_SPACES
@@ -10063,7 +10406,7 @@ const char *gc_str;
       uint16_t tsiz = 200;
       uint8_t dprec = 1;
       if (*lp != ')') {
-        float val;
+        TS_FLOAT val;
         lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
         SCRIPT_SKIP_SPACES
         tsiz = val;
@@ -10117,14 +10460,14 @@ exgc:
         strncpy(valstr, lin, len);
         valstr[len] = 0;
         WSContentSend_P(PSTR("%s"), valstr);
-        float *fpd = 0;
+        TS_FLOAT *fpd = 0;
         uint16_t alend;
         uint16_t ipos;
         lp = get_array_by_name(cp + 5, &fpd, &alend, &ipos);
         SCRIPT_SKIP_SPACES
         if (*lp != ')') {
           // limit array lenght
-          float val;
+          TS_FLOAT val;
           lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
           if (val > alend) {
             val = alend;
@@ -10240,14 +10583,14 @@ exgc:
         SCRIPT_SKIP_SPACES
 
         //Serial.printf("type %d\n",ctype);
-        float max_entries = 0;
+        TS_FLOAT max_entries = 0;
 
         struct T_INDEX ind;
         uint8_t vtype;
         char *slp = lp;
         lp = isvar(lp, &vtype, &ind, &max_entries, 0, 0);
         if (vtype != VAR_NV) {
-          if ((vtype&STYPE) == 0) {
+          if ((vtype & STYPE) == 0) {
             // numeric result
             if (!ind.bits.constant && glob_script_mem.type[ind.index].bits.is_filter) {
               // is 1. array
@@ -10258,7 +10601,7 @@ exgc:
         }
         SCRIPT_SKIP_SPACES
 
-        float *arrays[MAX_GARRAY];
+        TS_FLOAT *arrays[MAX_GARRAY];
         uint8_t anum = 0;
         uint16_t entries = 0;
         uint16_t ipos = 0;
@@ -10297,7 +10640,7 @@ exgc:
 
             for (uint32_t ind = 0; ind < anum; ind++) {
               char lbl[16];
-              float *fp = arrays[ind];
+              TS_FLOAT *fp = arrays[ind];
               GetTextIndexed(lbl, sizeof(lbl), ind, label);
               char lbl2[16];
               if (lab2[0]) {
@@ -10399,7 +10742,7 @@ exgc:
           WSContentSend_P("['");
           char lbl[16];
           if (todflg >= 0) {
-            uint16_t mins = (float)(todflg % divflg) * (float)((float)60 / (float)divflg);
+            uint16_t mins = (TS_FLOAT)(todflg % divflg) * (TS_FLOAT)((TS_FLOAT)60 / (TS_FLOAT)divflg);
             if (hmflg) {
               sprintf(lbl, "%d:%02d", todflg / divflg, mins);
             } else {
@@ -10428,8 +10771,8 @@ exgc:
           WSContentSend_P("',");
           for (uint32_t ind = 0; ind < anum; ind++) {
             char acbuff[32];
-            float *fp = arrays[ind];
-            float fval;
+            TS_FLOAT *fp = arrays[ind];
+            TS_FLOAT fval;
             if (asflg) {
               fval = fp[aind];
             } else {
@@ -10469,10 +10812,10 @@ exgc:
         if (y2f) {
           // 2 y axes variant
           SCRIPT_SKIP_SPACES
-          float max1;
+          TS_FLOAT max1;
           lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
           SCRIPT_SKIP_SPACES
-          float max2;
+          TS_FLOAT max2;
           lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
           SCRIPT_SKIP_SPACES
           char maxstr1[16];
@@ -10485,10 +10828,10 @@ exgc:
           SCRIPT_SKIP_SPACES
           if (gs_ctype != 'g') {
             if (*lp != ')') {
-              float max1;
+              TS_FLOAT max1;
               lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
               SCRIPT_SKIP_SPACES
-              float max2;
+              TS_FLOAT max2;
               lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
               SCRIPT_SKIP_SPACES
               char maxstr1[16];
@@ -10502,17 +10845,17 @@ exgc:
         }
 
         if (gs_ctype == 'g') {
-          float yellowFrom;
+          TS_FLOAT yellowFrom;
           lp = GetNumericArgument(lp, OPER_EQU, &yellowFrom, 0);
           SCRIPT_SKIP_SPACES
-          float redFrom;
+          TS_FLOAT redFrom;
           lp = GetNumericArgument(lp, OPER_EQU, &redFrom, 0);
           SCRIPT_SKIP_SPACES
-          float maxValue;
+          TS_FLOAT maxValue;
           lp = GetNumericArgument(lp, OPER_EQU, &maxValue, 0);
           SCRIPT_SKIP_SPACES
-          float redTo = maxValue;
-          float yellowTo = redFrom;
+          TS_FLOAT redTo = maxValue;
+          TS_FLOAT yellowTo = redFrom;
           snprintf_P(options, sizeof(options), SCRIPT_MSG_GAUGEOPT, (uint32_t)maxValue, (uint32_t)redFrom, (uint32_t)redTo,
             (uint32_t)yellowFrom, (uint32_t)yellowTo);
           }
@@ -10690,7 +11033,7 @@ void IRAM_ATTR fast_mux_irq() {
 /* uint8_t pin nr, 0x40 = value, 0x80 = next
 */
 
-int32_t fast_mux(uint32_t flag, uint32_t time, float *buf, uint32_t len) {
+int32_t fast_mux(uint32_t flag, uint32_t time, TS_FLOAT *buf, uint32_t len) {
 int32_t retval;
   if (!flag) {
     if (len > MUX_SIZE) {
@@ -10839,14 +11182,14 @@ int32_t url2file(uint8_t fref, char *url) {
   HTTPClient http;
   int32_t httpCode = 0;
   String weburl = "http://"+UrlEncode(url);
-  //for (uint32_t retry = 0; retry < 15; retry++) {
+  for (uint32_t retry = 0; retry < 3; retry++) {
     http.begin(http_client, weburl);
     delay(100);
     httpCode = http.GET();
-    //if (httpCode > 0) {
-    //  break;
-    //}
-  //}
+    if (httpCode >= 0) {
+      break;
+    }
+  }
   if (httpCode < 0) {
     AddLog(LOG_LEVEL_INFO,PSTR("HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
   }
@@ -10939,26 +11282,73 @@ int32_t http_req(char *host, char *request) {
 
 
 #ifdef SCRIPT_GET_HTTPS_JP
+
+#ifdef TESLA_POWERWALL
+Powerwall powerwall = Powerwall();
+
+int32_t call2pwl(const char *url) {
+  uint8_t debug = 0;
+  if (*url == 'D') {
+    url++;
+    debug = 1;
+  }
+  String cookie = powerwall.AuthCookie();
+  if (*url == 'N') {
+    url++;
+    cookie = "";
+  } 
+  String result = powerwall.GetRequest(String(url), cookie);
+  //AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+
+  // shrink data size because it exceeds json parser maxsize
+  result.replace("communication_time", "ct");
+  result.replace("instant", "i");
+  result.replace("apparent", "a");
+  result.replace("reactive", "r");
+  if (result.length()>4095) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PWL: result overflow: %d"), result.length());
+  }
+
+  // meter aggregates has also too many tokens
+  char *cp = (char*)result.c_str();
+  if (!strncmp_P(cp, PSTR("{\"site\""), 7)) {
+    // split into 2 sets
+    char *sp = strstr_P(cp, PSTR(",\"load\":"));
+    if (sp) {
+      *sp = '}';
+      *(sp + 1 ) = 0;
+      if (debug) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PWL: result 1: %s"), cp);
+      }
+      Run_Scripter(">jp", 3, cp);
+      *sp = '{';
+      *(sp + 1 ) = '\"';
+      if (debug) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PWL: result 2: %s"), sp);
+      }
+      Run_Scripter(">jp", 3, sp);
+    }
+  } else {
+    if (debug) {
+      AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
+    }
+    Run_Scripter(">jp", 3, result.c_str());
+  }
+  return 0;
+}
+#endif // TESLA_POWERWALL
+
+
 #ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
 #else
 #include <WiFiClientSecure.h>
 #endif //ESP8266
 
-#ifdef TESLA_POWERWALL
-Powerwall powerwall = Powerwall();
-String authCookie   = "";
-#endif
-
-// get tesla powerwall info page json string
+// get https info page json string
 uint32_t call2https(const char *host, const char *path) {
   //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
-
-#ifdef TESLA_POWERWALL
-//  authCookie = powerwall.getAuthCookie();
-//  return 0;
-#endif
 
 #ifdef ESP32
   WiFiClientSecure *httpsClient;
@@ -10971,28 +11361,7 @@ uint32_t call2https(const char *host, const char *path) {
   httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
 
-#if 0
-  File file = ufsp->open("/tesla.cer", FS_FILE_READ);
-  uint16_t fsize = 0;
-  char *cert = 0;
-  if (file) {
-    fsize = file.size();
-    if (fsize) {
-      cert = (char*)malloc(fsize +2);
-      if (cert) {
-        file.read((uint8_t*)cert, fsize);
-        file.close();
-        httpsClient->setCACert(cert);
-      }
-      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
-    }
-  } else {
-    httpsClient->setCACert(root_ca);
-  }
-#endif
-
-
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> host %s"),host);
+ // AddLog(LOG_LEVEL_INFO,PSTR(">>> host %s"),host);
 
   uint32_t retry = 0;
   while ((!httpsClient->connect(host, 443)) && (retry < 10)) {
@@ -11002,36 +11371,9 @@ uint32_t call2https(const char *host, const char *path) {
   if (retry == 10) {
     return 2;
   }
-  AddLog(LOG_LEVEL_INFO,PSTR("connected"));
+  AddLog(LOG_LEVEL_DEBUG,PSTR("connected"));
 
-String request;
-#if 0
-
-  File file = ufsp->open("/login.txt", FS_FILE_READ);
-  uint16_t fsize = 0;
-  char *cert = 0;
-  if (file) {
-    fsize = file.size();
-    if (fsize) {
-      cert = (char*)calloc(fsize +2, 1);
-      if (cert) {
-        file.read((uint8_t*)cert, fsize);
-        file.close();
-        //httpsClient->setCACert(cert);
-      }
-      AddLog(LOG_LEVEL_INFO,PSTR(">>> cert %d"),fsize);
-    }
-  }
-
-  request = String("POST ") + "/api/login/Basic" + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + cert + "\r\n" + "Content-Type: application/json" + "\r\n";
-  httpsClient->print(request);
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post request %s"),(char*)request.c_str());
-
-  String line = httpsClient->readStringUntil('\n');
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1a %s"),(char*)line.c_str());
-  line = httpsClient->readStringUntil('\n');
-  AddLog(LOG_LEVEL_INFO,PSTR(">>> post response 1b %s"),(char*)line.c_str());
-#endif
+  String request;
 
   request = String("GET ") + path +
                     " HTTP/1.1\r\n" +
@@ -11220,7 +11562,7 @@ int32_t lvgl_test(char **lpp, int32_t p) {
   char *lp = *lpp;
   lv_obj_t *obj;
   lv_obj_t *label;
-  float xp, yp, xs, ys, min, max;
+  TS_FLOAT xp, yp, xs, ys, min, max;
   lv_meter_scale_t * scale;
   lv_meter_indicator_t * indic;
   char str[SCRIPT_MAXSSIZE];
@@ -11627,7 +11969,7 @@ bool Xdrv10(uint32_t function)
       if (EEP_INIT(EEP_SCRIPT_SIZE)) {
           // found 32kb eeprom,
           char *script;
-          if (EEP_SCRIPT_SIZE != SPECIAL_EEPMODE_SIZE) {
+#if EEP_SCRIPT_SIZE<SPECIAL_EEPMODE_SIZE
             script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
             if (!script) break;
             glob_script_mem.script_ram = script;
@@ -11637,8 +11979,20 @@ bool Xdrv10(uint32_t function)
               memset(script, EEP_SCRIPT_SIZE, 0);
             }
             script[EEP_SCRIPT_SIZE - 1] = 0;
-          } else {
+#else
             uint8_t *ucs;
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+            ucs = (uint8_t*)calloc(SPI_FLASH_2SEC_SIZE + 4, 1);
+            if (!ucs) break;
+            alt_eeprom_readBytes(0, SPI_FLASH_2SEC_SIZE, ucs);
+            if (*ucs == 0xff) {
+              memset(ucs, SPI_FLASH_2SEC_SIZE, 0);
+            }
+            ucs[SPI_FLASH_2SEC_SIZE- 1] = 0;
+            glob_script_mem.script_ram = (char*)ucs;
+            glob_script_mem.script_size = SPI_FLASH_2SEC_SIZE;
+
+#else
             ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
             if (!ucs) break;
             alt_eeprom_readBytes(0, SPI_FLASH_SEC_SIZE, ucs);
@@ -11657,8 +12011,8 @@ bool Xdrv10(uint32_t function)
             if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed] = 0;
 
             if (ucs) free(ucs);
-
-          }
+#endif // EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+#endif // EEP_SCRIPT_SIZE<SPECIAL_EEPMODE_SIZE
 
           // use rules storage for permanent vars
           glob_script_mem.script_pram = (uint8_t*)Settings->rules[0];
@@ -11688,7 +12042,7 @@ bool Xdrv10(uint32_t function)
       bitWrite(Settings->rule_once, 7, 1);
 
 #ifdef USE_BUTTON_EVENT
-      for (uint32_t cnt = 0; cnt < MAX_KEYS_SET; cnt++) {
+      for (uint32_t cnt = 0; cnt < MAX_KEYS; cnt++) {
         glob_script_mem.script_button[cnt] = -1;
       }
 #endif //USE_BUTTON_EVENT
@@ -11724,7 +12078,9 @@ bool Xdrv10(uint32_t function)
       if (bitRead(Settings->rule_enabled, 0)) {
         set_callbacks();
         Run_Scripter1(">B\n", 3, 0);
+#ifdef USE_WEBSERVER
         script_set_web_pages();
+#endif
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
 #endif //USE_SCRIPT_HUE
@@ -11879,6 +12235,8 @@ bool Xdrv10(uint32_t function)
 #endif
       break;
 
+    case FUNC_NETWORK_UP:
+      break;
   }
   return result;
 }

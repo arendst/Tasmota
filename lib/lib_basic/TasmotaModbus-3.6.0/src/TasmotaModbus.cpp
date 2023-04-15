@@ -171,6 +171,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   write(frame, framepointer);
 #ifdef TASMOTA_MODBUS_TX_ENABLE
   if (mb_tx_enable_pin > -1) {
+    flush();  // Must wait for all data sent
     digitalWrite(mb_tx_enable_pin, LOW);
   }
 #endif  // TASMOTA_MODBUS_TX_ENABLE
@@ -203,7 +204,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, ui
         }
       }
 
-      timeout = millis() + 10;
+      timeout = millis() + 20;
 
     }
   }

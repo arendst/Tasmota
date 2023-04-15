@@ -27,8 +27,9 @@
 
 #ifdef FIRMWARE_SENSORS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "sensors"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "sensors"
+#endif
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -103,6 +104,7 @@
 #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //#define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+//#define USE_MCP23XXX_DRV                       // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 //#define USE_PCA9685                            // [I2cDriver1] Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
 //#define USE_MPR121                             // [I2cDriver23] Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
 #define USE_CCS811                             // [I2cDriver24] Enable CCS811 sensor (I2C address 0x5A) (+2k2 code)
@@ -121,7 +123,11 @@
 //#define USE_MLX90614                           // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 //#define USE_CHIRP                              // [I2cDriver33] Enable CHIRP soil moisture sensor (variable I2C address, default 0x20)
 //#define USE_PAJ7620                            // [I2cDriver34] Enable PAJ7620 gesture sensor (I2C address 0x73) (+2.5k code)
-//#define USE_PCF8574                            // [I2cDriver2] Enable PCF8574 I/O Expander (I2C addresses 0x20 - 0x26 and 0x39 - 0x3F) (+1k9 code)
+//#define USE_PCF8574                            // [I2cDriver2] Enable PCF8574 I/O Expander (I2C addresses 0x20 - 0x26 and 0x39 - 0x3F) (+2k1 code)
+//  #define USE_PCF8574_MODE2                    // Enable Mode2 virtual relays/buttons/switches (+2k3 code)
+//  #define USE_PCF8574_SENSOR                   // Enable Mode1 inputs and outputs in SENSOR message (+0k2 code)
+//  #define USE_PCF8574_DISPLAYINPUT             // Enable Mode1 inputs display in Web page (+0k2 code)
+//  #define USE_PCF8574_MQTTINPUT                // Enable Mode1 MQTT message & rule process on input change detection : stat/%topic%/PCF8574_INP = {"Time":"2021-03-07T16:19:23+01:00","PCF8574-1_INP":{"D1":1}} (+0k5 code)
 #define USE_HIH6                               // [I2cDriver36] Enable Honeywell HIH Humidity and Temperature sensor (I2C address 0x27) (+0k6)
 #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
@@ -156,6 +162,8 @@
 //#define USE_DS3502                             // [I2CDriver67] Enable DS3502 digital potentiometer (I2C address 0x28 - 0x2B) (+0k4 code)
 //#define USE_HYT                                // [I2CDriver68] Enable HYTxxx temperature and humidity sensor (I2C address 0x28) (+0k5 code)
 //#define USE_LUXV30B                            // [I2CDriver70] Enable RFRobot SEN0390 LuxV30b ambient light sensor (I2C address 0x4A) (+0k5 code)
+//#define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
+//#define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -243,6 +251,7 @@
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
+#define USE_LOX_O2                               // Add support for LuminOx LOX O2 Sensor (+0k8 code)
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_SENSORS
@@ -254,8 +263,9 @@
 
 #ifdef FIRMWARE_KNX_NO_EMULATION
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "knx"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "knx"
+#endif
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -280,8 +290,9 @@
 
 #ifdef FIRMWARE_DISPLAYS
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "display"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "display"
+#endif
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -366,8 +377,9 @@
 
 #ifdef FIRMWARE_IR
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "ir"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "ir"
+#endif
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -475,6 +487,7 @@
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 #undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
+#undef USE_LOX_O2                                // Disable support for LuminOx LOX O2 Sensor
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -501,8 +514,9 @@
 
 #ifdef FIRMWARE_ZBBRIDGE  // *******************************************************************
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "zbbridge"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "zbbridge"
+#endif
 
 #undef MODULE
 #define MODULE                 SONOFF_ZB_BRIDGE  // [Module] Select default module from tasmota_template.h
@@ -607,6 +621,7 @@
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 #undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
+#undef USE_LOX_O2                                // Disable support for LuminOx LOX O2 Sensor
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_ADE7880                               // Disable ADE7880 Energy monitor as used on Shelly 3EM (I2C address 0x38) (+3k8)
@@ -664,8 +679,9 @@
 
 #ifdef FIRMWARE_LITE
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lite"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "lite"
+#endif
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -762,6 +778,7 @@
 #undef USE_TFMINIPLUS                            // Disable support for TFmini Plus (TFmini, TFmini-S) LiDAR modules via UART interface (+0k8)
 #undef USE_HRG15                                 // Disable support for Hydreon RG-15 Solid State Rain sensor (+1k5 code)
 #undef USE_VINDRIKTNING                          // Disable support for IKEA VINDRIKTNING particle concentration sensor (+1k code)
+#undef USE_LOX_O2                                // Disable support for LuminOx LOX O2 Sensor
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -818,8 +835,9 @@
 #ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "minimal"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "minimal"
+#endif
 
 #define FIRMWARE_MINIMAL_ONLY
 
@@ -918,6 +936,7 @@
 #undef USE_TFMINIPLUS                            // Disable support for TFmini Plus (TFmini, TFmini-S) LiDAR modules via UART interface (+0k8)
 #undef USE_HRG15                                 // Disable support for Hydreon RG-15 Solid State Rain sensor (+1k5 code)
 #undef USE_VINDRIKTNING                          // Disable support for IKEA VINDRIKTNING particle concentration sensor (+0k6 code)
+#undef USE_LOX_O2                                // Disable support for LuminOx LOX O2 Sensor
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 
@@ -953,8 +972,9 @@
 #ifdef FIRMWARE_MINICUSTOM
 #define FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "mini-custom"
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "mini-custom"
+#endif
 
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
@@ -1092,5 +1112,13 @@
 #if defined(USE_MQTT_TLS)                        // Enable TLS if required:
   #define USE_TLS                                // flag indicates we need to include TLS code
 #endif                                           // USE_MQTT_TLS
+
+/*********************************************************************************************\
+ * Default image
+\*********************************************************************************************/
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "tasmota"
+#endif
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

@@ -129,6 +129,44 @@ static int32_t m_mdns_add_service(struct bvm *vm) {
   be_raise(vm, "value_error", "wrong or missing arguments");
 }
 
+
+//
+// `mdns.remove_service(service:string, proto:string [, instance:string, hostname:string]) -> nil`
+//
+// remove service from mDNS server with hostname.
+//
+// Test:
+//    import mdns mdns.remove_service("_arduino","_tcp")
+//
+//    import mdns mdns.remove_service("_matterc","_udp")
+static int32_t m_mdns_remove_service(struct bvm *vm) {
+  int32_t top = be_top(vm);
+  if (top >= 2 && be_isstring(vm, 1) && be_isstring(vm, 2)) {
+    const char* service_type = be_tostring(vm, 1);
+    const char* proto = be_tostring(vm, 2);
+    const char * instance = nullptr;
+    const char * hostname = nullptr;
+    if (top >= 3 && be_isstring(vm, 3)) {
+      instance = be_tostring(vm, 3);
+    }
+    if (top >= 4 && be_isstring(vm, 4)) {
+      hostname = be_tostring(vm, 4);
+    }
+
+    esp_err_t err;
+    if (hostname == nullptr) {
+      err = mdns_service_remove(service_type, proto);
+    } else {
+      err = mdns_service_remove_for_host(instance, service_type, proto, hostname);
+    }
+    if (err != ESP_OK) {
+      be_raisef(vm, "internal_error", "mdns service_remove err=%i", err);
+    }
+    be_return_nil(vm);
+  }
+  be_raise(vm, "value_error", "wrong or missing arguments");
+}
+
 // `mdns_service_subtype_add_for_host()` is only available in most recent esp-protocols version
 //
 // This alias makes sure that the compilation succeeds even if the function is not available
@@ -309,6 +347,7 @@ module mdns (scope: global) {
     add_service, func(m_mdns_add_service)
     add_hostname, func(m_dns_add_hostname)
     add_subtype, func(m_dns_add_subtype)
+    remove_service, func(m_mdns_remove_service)
 
     // querying
     find_service, func(m_dns_find_service)

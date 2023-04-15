@@ -52,7 +52,7 @@ class Matter_Frame
   var x_flag_a
   var x_flag_i
   var opcode
-  var exchange_id
+  var exchange_id                 # exchange_id is 16 bits unsigned, we set bit 16 if it's an id generated locally
   var protocol_id
   var vendor_id                   # (opt)
   var ack_message_counter         # (opt)
@@ -140,6 +140,7 @@ class Matter_Frame
 
     self.opcode = raw.get(idx+1, 1)
     self.exchange_id = raw.get(idx+2, 2)
+    if !self.x_flag_i    self.exchange_id |= 0x10000  end      # special encoding for local exchange_id
     self.protocol_id = raw.get(idx+4, 2)
     idx += 6
 
@@ -170,7 +171,7 @@ class Matter_Frame
   #
   # Header is built from attributes
   # `payload` is a bytes() buffer for the app payload
-  def encode(payload)
+  def encode_frame(payload)
     var raw = bytes()
     # compute flags
     if self.flags == nil
@@ -210,7 +211,7 @@ class Matter_Frame
     raw.add(self.x_flags, 1)
     # opcode (mandatory)
     raw.add(self.opcode, 1)
-    raw.add(self.exchange_id, 2)
+    raw.add(self.exchange_id & 0xFFFF, 2)
     raw.add(self.protocol_id, 2)
     if self.x_flag_a    raw.add(self.ack_message_counter, 4) end
     # finally payload
@@ -227,38 +228,7 @@ class Matter_Frame
   #############################################################
   # Generate a Standalone Acknowledgment
   # Uses `PROTOCOL_ID_SECURE_CHANNEL` no ecnryption required
-  def build_standalone_ack()
-    import string
-    # send back response
-    var resp = classof(self)(self.message_handler)
-
-    if self.flag_s
-      resp.flag_dsiz = 0x01
-      resp.dest_node_id_8 = self.source_node_id
-    else
-      resp.flag_dsiz = 0x00
-    end
-    resp.session = self.session         # also copy the session object
-    # message counter
-    resp.message_counter = self.session.counter_snd.next()
-    resp.local_session_id = self.session.initiator_session_id
-      
-    resp.x_flag_i = 0           # not sent by initiator
-    resp.opcode = 0x10          # MRP Standalone Acknowledgement
-    resp.exchange_id = self.exchange_id
-    resp.protocol_id = 0                # PROTOCOL_ID_SECURE_CHANNEL
-    resp.x_flag_a = 1           # ACK of previous message
-    resp.ack_message_counter = self.message_counter
-    resp.x_flag_r = 0
-
-    tasmota.log(string.format("MTR: <Replied       %s", matter.get_opcode_name(resp.opcode)), 2)
-    return resp
-  end
-
-  #############################################################
-  # Generate response to message with default parameter
-  # does not handle encryption which is done in a later step
-  def build_response(opcode, reliable)
+  def build_standalone_ack(reliable)
     import string
     # send back response
     var resp = classof(self)(self.message_handler)
@@ -274,16 +244,52 @@ class Matter_Frame
     end
     resp.session = self.session         # also copy the session object
     # message counter
+    resp.message_counter = self.session.counter_snd_next()
+    resp.local_session_id = self.session.initiator_session_id
+      
+    resp.x_flag_i = (self.x_flag_i ? 0 : 1)     # invert the initiator flag
+    resp.opcode = 0x10          # MRP Standalone Acknowledgement
+    resp.exchange_id = self.exchange_id
+    resp.protocol_id = 0                # PROTOCOL_ID_SECURE_CHANNEL
+    resp.x_flag_a = 1           # ACK of previous message
+    resp.ack_message_counter = self.message_counter
+    resp.x_flag_r = reliable ? 1 : 0
+    return resp
+  end
+
+  #############################################################
+  # Generate response to message with default parameter
+  # does not handle encryption which is done in a later step
+  #
+  # if 'resp' is not nil, update frame
+  def build_response(opcode, reliable, resp)
+    import string
+    # send back response
+    if resp == nil
+      resp = classof(self)(self.message_handler)
+    end
+
+    resp.remote_ip = self.remote_ip
+    resp.remote_port = self.remote_port
+
+    if self.flag_s
+      resp.flag_dsiz = 0x01
+      resp.dest_node_id_8 = self.source_node_id
+    else
+      resp.flag_dsiz = 0x00
+    end
+    resp.session = self.session         # also copy the session object
+    # message counter
     # if self.session && self.session.initiator_session_id != 0
     if self.local_session_id != 0 && self.session && self.session.initiator_session_id != 0
-      resp.message_counter = self.session.counter_snd.next()
+      resp.message_counter = self.session.counter_snd_next()
       resp.local_session_id = self.session.initiator_session_id
     else
       resp.message_counter = self.session._counter_insecure_snd.next()
       resp.local_session_id = 0
     end
       
-    resp.x_flag_i = 0           # not sent by initiator
+    resp.x_flag_i = (self.x_flag_i ? 0 : 1)     # invert the initiator flag
     resp.opcode = opcode
     resp.exchange_id = self.exchange_id
     resp.protocol_id = self.protocol_id
@@ -296,10 +302,46 @@ class Matter_Frame
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
       if !op_name   op_name = string.format("0x%02X", resp.opcode) end
-      tasmota.log(string.format("MTR: <Replied       %s", op_name), 2)
+      tasmota.log(string.format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 2)
     end
     return resp
   end
+
+  #############################################################
+  # Generate a message - we are the initiator
+ #
+  # if 'resp' is not nil, update frame
+  static def initiate_response(message_handler, session, opcode, reliable, resp)
+    import string
+    # send back response
+    if resp == nil
+      resp = matter.Frame(message_handler)
+    end
+
+    resp.remote_ip = session._ip
+    resp.remote_port = session._port
+
+    resp.flag_dsiz = 0x00
+    resp.session = session         # also copy the session object
+    # message counter
+    if session && session.initiator_session_id != 0
+      resp.message_counter = session.counter_snd_next()
+      resp.local_session_id = session.initiator_session_id
+    else
+      resp.message_counter = session._counter_insecure_snd.next()
+      resp.local_session_id = 0
+    end
+      
+    resp.x_flag_i = 1                                     # we are the initiator
+    resp.opcode = opcode
+    session._exchange_id += 1                            # move to next exchange_id
+    resp.exchange_id = session._exchange_id | 0x10000    # special encoding for local exchange_id
+    resp.protocol_id = 0x0001                             # PROTOCOL_ID_INTERACTION_MODEL
+    resp.x_flag_r = reliable ? 1 : 0
+
+    return resp
+  end
+
 
   #############################################################
   # decrypt with I2S key
@@ -316,6 +358,7 @@ class Matter_Frame
     # check privacy flag, p.127
     if self.sec_p
       # compute privacy key, p.71
+      tasmota.log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
       var k = session.get_i2r_privacy()
       var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
       var m = self.raw[4 .. self.payload_idx-1]
@@ -340,25 +383,25 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: i2r         =" + i2r.tohex(), 3)
-    tasmota.log("MTR: p           =" + p.tohex(), 3)
-    tasmota.log("MTR: a           =" + a.tohex(), 3)
-    tasmota.log("MTR: n           =" + n.tohex(), 3)
-    tasmota.log("MTR: mic         =" + mic.tohex(), 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
+    tasmota.log("MTR: p           =" + p.tohex(), 4)
+    tasmota.log("MTR: a           =" + a.tohex(), 4)
+    tasmota.log("MTR: n           =" + n.tohex(), 4)
+    tasmota.log("MTR: mic         =" + mic.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(i2r, n, a, size(p), 16)
     var cleartext = aes.decrypt(p)
     var tag = aes.tag()
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 3)
-    tasmota.log("MTR: tag         =" + tag.tohex(), 3)
-    tasmota.log("MTR: ******************************", 3)
+    tasmota.log("MTR: ******************************", 4)
+    tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
+    tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
-      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
+      tasmota.log("MTR: rejected packet due to invalid MIC", 2)
       return nil
     end
 
@@ -384,35 +427,35 @@ class Matter_Frame
     var n = bytes()
     n.add(self.flags, 1)
     n.add(self.message_counter, 4)
-    if session.get_mode() == session.__CASE && session.deviceid
-      n .. session.deviceid
+    if session.is_CASE() && session.get_device_id()
+      n .. session.get_device_id()
     end
     n.resize(13)        # add zeros
 
-    tasmota.log("MTR: cleartext: " + self.raw.tohex(), 3)
+    # tasmota.log("MTR: cleartext: " + self.raw.tohex(), 4)
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: r2i         =" + r2i.tohex(), 3)
-    tasmota.log("MTR: p           =" + p.tohex(), 3)
-    tasmota.log("MTR: a           =" + a.tohex(), 3)
-    tasmota.log("MTR: n           =" + n.tohex(), 3)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: r2i         =" + r2i.tohex(), 4)
+    # tasmota.log("MTR: p           =" + p.tohex(), 4)
+    # tasmota.log("MTR: a           =" + a.tohex(), 4)
+    # tasmota.log("MTR: n           =" + n.tohex(), 4)
 
     # decrypt
     var aes = crypto.AES_CCM(r2i, n, a, size(p), 16)
     var ciphertext = aes.encrypt(p)
     var tag = aes.tag()
 
-    tasmota.log("MTR: ******************************", 3)
-    tasmota.log("MTR: ciphertext  =" + ciphertext.tohex(), 3)
-    tasmota.log("MTR: tag         =" + tag.tohex(), 3)
-    tasmota.log("MTR: ******************************", 3)
+    # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: ciphertext  =" + ciphertext.tohex(), 4)
+    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
+    # tasmota.log("MTR: ******************************", 4)
 
     # packet is good, put back content in raw
     self.raw.resize(self.payload_idx)              # remove cleartext payload
     self.raw .. ciphertext                          # add ciphertext
     self.raw .. tag                                 # add MIC
 
-    # tasmota.log("MTR: encrypted: " + self.raw.tohex(), 3)
+    # tasmota.log("MTR: encrypted: " + self.raw.tohex(), 4)
   end
 
   #############################################################
@@ -421,7 +464,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    tasmota.log("MTR: sending decode: " + matter.inspect(r), 3)
+    tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

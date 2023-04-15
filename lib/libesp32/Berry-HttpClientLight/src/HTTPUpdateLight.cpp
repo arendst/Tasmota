@@ -229,17 +229,17 @@ HTTPUpdateResult HTTPUpdateLight::handleUpdate(HTTPClientLight& http, const Stri
 
     uint32_t http_connect_time = millis();
 
-    int code = http.GET();
-    int len = http.getSize();
+    int code = http.GET();      // 0 if ok or < 0 if error
+    int len = http.getSize();   // -1 if no info or > 0 when Content-Length is set by server
 
     // Add specific logging for Tasmota
-    if (len < 0) {
-      if (len <= -1000) {
-        AddLog(LOG_LEVEL_INFO, "OTA: TLS connection error %d after %d ms", -len - 1000, millis() - http_connect_time);
-      } else if (len == -1) {
-        AddLog(LOG_LEVEL_INFO, "OTA: Connection timeout after %d ms", len, millis() - http_connect_time);
+    if (len < 0) {              // -1 if no info or > 0 when Content-Length is set by server
+      if (code <= -1000) {      // BearSSL error 46 transformed to -1046
+        AddLog(LOG_LEVEL_INFO, "OTA: TLS connection error %d after %d ms", -code - 1000, millis() - http_connect_time);
+      } else if (code == -1) {  // HTTPC_ERROR_CONNECTION_REFUSED
+        AddLog(LOG_LEVEL_INFO, "OTA: Connection timeout after %d ms", millis() - http_connect_time);
       } else {
-        AddLog(LOG_LEVEL_INFO, "OTA: Connection error %d after %d ms", len, millis() - http_connect_time);
+        AddLog(LOG_LEVEL_INFO, "OTA: Connection error %d after %d ms", code, millis() - http_connect_time);
       }
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Connected in %d ms, stack low mark %d"),

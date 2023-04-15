@@ -59,6 +59,8 @@ fprint("* Compact form for attributes and clusters")
 fprint("*")
 fprint("* Generated content, do not edit")
 fprint("\\*********************************************************************************/")
+fprint("#include <stddef.h>")
+fprint("#include <stdint.h>")
 fprint()
 fprint("typedef struct {")
 fprint("  uint16_t id;")
@@ -89,7 +91,10 @@ for cl:cl_ids
   var attr_ids_local = k2l(attr_id_name)
 
   for attr_id:attr_ids_local
-    fprint(string.format('  { 0x%04X, %i, 0x%02X, "%s" },', attr_id, 0, 0, attributes[attr_id]['attributeName']))
+    var reportable = attributes[attr_id].find('reportable', false)
+    var writable = attributes[attr_id].find('writable', false)
+    var flags = (writable ? 0x01 : 0x00) | (reportable ? 0x02 : 0x00)
+    fprint(string.format('  { 0x%04X, %i, 0x%02X, "%s" },', attr_id, 0, flags, attributes[attr_id]['attributeName']))
   end
   fprint('  { 0xFFFF, 0, 0x00, NULL },')
   fprint("};")

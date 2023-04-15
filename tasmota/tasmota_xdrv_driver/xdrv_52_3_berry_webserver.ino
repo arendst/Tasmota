@@ -247,6 +247,20 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: `webserver.html_escape(string) -> string`
+  //
+  int32_t w_webserver_html_escape(struct bvm *vm);
+  int32_t w_webserver_html_escape(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * text = be_tostring(vm, 1);
+      String html = HtmlEscape(text);
+      be_pushstring(vm, html.c_str());
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: `webserver.args() -> int`
   //
   // Returns the number of arguments

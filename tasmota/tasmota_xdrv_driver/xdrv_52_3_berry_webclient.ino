@@ -259,6 +259,55 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // wc.set_follow_redirects(bool) -> self
+  int32_t wc_set_follow_redirects(struct bvm *vm);
+  int32_t wc_set_follow_redirects(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isbool(vm, 2)) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      bbool follow = be_tobool(vm, 2);
+      cl->setFollowRedirects(follow ? HTTPC_STRICT_FOLLOW_REDIRECTS : HTTPC_DISABLE_FOLLOW_REDIRECTS);
+      be_pushvalue(vm, 1);
+      be_return(vm);  /* return self */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // wc.collect_headers( [header:string]+ ) -> self
+  int32_t wc_collect_headers(struct bvm *vm);
+  int32_t wc_collect_headers(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2) {
+      size_t header_len = argc-1;
+      const char** header_array = (const char**) be_os_malloc((header_len) * sizeof(const char*));
+      if (!header_array) { be_throw(vm, BE_MALLOC_FAIL); }
+
+      for (int32_t i = 0; i < header_len; i++) {
+        header_array[i] = be_tostring(vm, i + 2);
+      }
+      HTTPClientLight * cl = wc_getclient(vm);
+      cl->collectHeaders(header_array, header_len);
+
+      be_os_free(header_array);
+    }
+    be_pushvalue(vm, 1);
+    be_return(vm);  /* return self */
+  }
+
+  // wc.get_header(header_name:string) -> string
+  int32_t wc_get_header(struct bvm *vm);
+  int32_t wc_get_header(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isstring(vm, 2)) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      const char * header_name = be_tostring(vm, 2);
+      String ret = cl->header(header_name);
+      be_pushstring(vm, ret.c_str());
+      be_return(vm);  /* return self */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // wc.wc_set_auth(auth:string | (user:string, password:string)) -> self
   int32_t wc_set_auth(struct bvm *vm);
   int32_t wc_set_auth(struct bvm *vm) {
