@@ -112,6 +112,7 @@
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frequency"
 #define D_GAS "Gas"
+#define D_WATER "Water"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Group"
 #define D_HOST "Host"

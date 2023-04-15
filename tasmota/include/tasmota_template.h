@@ -52,6 +52,7 @@ enum UserSelectablePins {
   GPIO_SR04_TRIG, GPIO_SR04_ECHO,      // SR04 interface
   GPIO_SDM120_TX, GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
+  GPIO_S0_FLOW_METER1,                 // Flow Meter
   GPIO_TM1638CLK, GPIO_TM1638DIO, GPIO_TM1638STB,  // TM1638 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
@@ -1116,6 +1117,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DINGTIAN_Q7),
   AGPIO(GPIO_DINGTIAN_PL),
   AGPIO(GPIO_DINGTIAN_RCK),
+#endif
+
+#ifdef USE_S0_FLOW_METER
+  AGPIO(GPIO_S0_FLOW_METER1)+4,        
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

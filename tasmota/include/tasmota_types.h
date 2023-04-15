@@ -614,7 +614,17 @@ typedef struct {
 #endif  // ESP32
   mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
+#ifdef USE_S0_FLOW_METER
+  uint32_t      s0flow_usage[4];           // 41A     
+  uint32_t      s0flow_resolution[4];      // 42A 
+  uint8_t       s0flow_type[4];            // 43A 
+  uint16_t      s0flow_low_debounce[4];    // 43E
+  uint16_t      s0flow_high_debounce[4];   // 446 
+
+  uint8_t       free_esp8266_44E[1];       // 44E            
+#else
   uint8_t       free_esp8266_41A[55];      // 41A
+#endif  // USE_S0_FLOW_METER
 #endif  // ESP8266
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32C3
