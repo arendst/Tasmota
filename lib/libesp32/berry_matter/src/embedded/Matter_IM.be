@@ -38,7 +38,7 @@ class Matter_IM
 
   def process_incoming(msg)
     # messages are always TLV, decode payload
-    tasmota.log("MTR: received IM message " + matter.inspect(msg), 3)
+    # tasmota.log("MTR: received IM message " + matter.inspect(msg), 3)
 
     var val = matter.TLV.parse(msg.raw, msg.app_payload_idx)
 
@@ -218,7 +218,6 @@ class Matter_IM
       import string
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
-      # tasmota.log(string.format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
       # Special case to report unsupported item, if pi==nil
       var res = (pi != nil) ? pi.read_attribute(session, ctx) : nil
       if res != nil
@@ -325,7 +324,7 @@ class Matter_IM
       self.subs_shop.remove_by_session(msg.session)      # if `keep_subscriptions`, kill all subscriptions from current session
     end
 
-    tasmota.log("MTR: received SubscribeRequestMessage=" + str(query), 3)
+    # tasmota.log("MTR: received SubscribeRequestMessage=" + str(query), 3)
 
     var sub = self.subs_shop.new_subscription(msg.session, query)
 
@@ -357,7 +356,7 @@ class Matter_IM
   def process_invoke_request(msg, val)
     import string
     # structure is `ReadRequestMessage` 10.6.2 p.558
-    tasmota.log("MTR: IM:invoke_request processing start", 4)
+    # tasmota.log("MTR: IM:invoke_request processing start", 4)
     var ctx = matter.Path()
 
     var query = matter.InvokeRequestMessage().from_TLV(val)
@@ -416,10 +415,10 @@ class Matter_IM
         end
       end
 
-      tasmota.log("MTR: invoke_responses="+str(ret.invoke_responses), 4)
+      # tasmota.log("MTR: invoke_responses="+str(ret.invoke_responses), 4)
       if size(ret.invoke_responses) > 0
-        tasmota.log("MTR: InvokeResponse=" + str(ret), 4)
-        tasmota.log("MTR: InvokeResponseTLV=" + str(ret.to_TLV()), 3)
+        # tasmota.log("MTR: InvokeResponse=" + str(ret), 4)
+        # tasmota.log("MTR: InvokeResponseTLV=" + str(ret.to_TLV()), 3)
 
         self.send_invoke_response(msg, ret)
       else
@@ -455,7 +454,7 @@ class Matter_IM
   def process_write_request(msg, val)
     import string
     var query = matter.WriteRequestMessage().from_TLV(val)
-    tasmota.log("MTR: received WriteRequestMessage=" + str(query), 3)
+    # tasmota.log("MTR: received WriteRequestMessage=" + str(query), 3)
 
     var suppress_response = query.suppress_response
     # var timed_request = query.timed_request   # TODO not supported
@@ -502,7 +501,7 @@ class Matter_IM
     end
 
     # structure is `ReadRequestMessage` 10.6.2 p.558
-    tasmota.log("MTR: IM:write_request processing start", 4)
+    # tasmota.log("MTR: IM:write_request processing start", 4)
     var ctx = matter.Path()
 
     if query.write_requests != nil
@@ -541,8 +540,8 @@ class Matter_IM
         )
       end
 
-      tasmota.log("MTR: ReportWriteMessage=" + str(ret), 4)
-      tasmota.log("MTR: ReportWriteMessageTLV=" + str(ret.to_TLV()), 3)
+      # tasmota.log("MTR: ReportWriteMessage=" + str(ret), 4)
+      # tasmota.log("MTR: ReportWriteMessageTLV=" + str(ret.to_TLV()), 3)
 
       # send the reponse that may need to be chunked if too large to fit in a single UDP message
       if !suppress_response
@@ -578,7 +577,7 @@ class Matter_IM
   def process_timed_request(msg, val)
     import string
     var query = matter.TimedRequestMessage().from_TLV(val)
-    tasmota.log("MTR: received TimedRequestMessage=" + str(query), 3)
+    # tasmota.log("MTR: received TimedRequestMessage=" + str(query), 3)
 
     tasmota.log(string.format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 2)
     

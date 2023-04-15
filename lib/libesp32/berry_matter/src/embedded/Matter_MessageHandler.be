@@ -89,15 +89,15 @@ class Matter_MessageHandler
       # do we need decryption?
       if frame.sec_p
         # Control message
-        tasmota.log("MTR: CONTROL MESSAGE=" + matter.inspect(frame))
+        tasmota.log("MTR: CONTROL MESSAGE=" + matter.inspect(frame), 4)
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
-        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 2)
+        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
         return self.control_message.process_incoming_control_message(frame)
       elif frame.local_session_id == 0 && frame.sec_sesstype == 0
         #############################################################
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
-        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 3)
+        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
         if addr     session._ip = addr     end
         if port     session._port = port   end
         session._message_handler = self
@@ -166,7 +166,7 @@ class Matter_MessageHandler
         var protocol_id = frame.protocol_id
         if protocol_id == 0x0000    # PROTOCOL_ID_SECURE_CHANNEL
           # it should not be encrypted
-          tasmota.log("MTR: PROTOCOL_ID_SECURE_CHANNEL " + matter.inspect(frame), 3)
+          # tasmota.log("MTR: PROTOCOL_ID_SECURE_CHANNEL " + matter.inspect(frame), 3)
           if frame.opcode == 0x10                             # MRPStandaloneAcknowledgement
             ret = self.im.process_incoming_ack(frame)
             if ret
