@@ -1014,7 +1014,7 @@
 //  #define NEOPOOL_MODBUS_ADDRESS       1         // Any modbus address
 
 //#define USE_FLOWRATEMETER                        // Add support for water flow meter YF-DN50 and similary (+1k7 code)
-#define USE_S0_FLOW_METER                          // Add support for water/gas S0-based meter
+//#define USE_S0_FLOW_METER                          // Add support for water/gas S0-based meter
 
 // -- Thermostat control ----------------------------
 //#define USE_THERMOSTAT                           // Add support for Thermostat
