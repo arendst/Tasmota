@@ -19,45 +19,14 @@
 
 import matter
 
-#@ solidify:Matter_Path,weak
 #@ solidify:Matter_IM_Message,weak
 #@ solidify:Matter_IM_Status,weak
 #@ solidify:Matter_IM_InvokeResponse,weak
 #@ solidify:Matter_IM_WriteResponse,weak
 #@ solidify:Matter_IM_ReportData,weak
 #@ solidify:Matter_IM_ReportDataSubscribed,weak
+#@ solidify:Matter_IM_SubscribedHeartbeat,weak
 #@ solidify:Matter_IM_SubscribeResponse,weak
-
-#################################################################################
-# Matter_Path
-#
-# Used to store all the elements of the reponse to an attribute or command
-#################################################################################
-class Matter_Path
-  var endpoint                # endpoint or `nil` if expansion
-  var cluster                 # cluster or `nil` if expansion
-  var attribute               # attribute or `nil` if expansion
-  var command                 # command
-  var status                  # status to be returned (matter.SUCCESS or matter.<ERROR>)
-  var log                     # any string that needs to be logged (used to show significant parameters for commands)
-
-  def tostring()
-    try
-      import string
-      var s = ""
-      s += (self.endpoint  != nil ? string.format("[%02X]", self.endpoint) : "[**]")
-      s += (self.cluster   != nil ? string.format("%04X/", self.cluster) : "****/")
-      s += (self.attribute != nil ? string.format("%04X", self.attribute) : "")
-      s += (self.command   != nil ? string.format("%04X", self.command) : "")
-      if self.attribute == nil && self.command == nil     s += "****" end
-      return s
-    except .. as e, m
-      return "Exception> " + str(e) + ", " + str(m)
-    end
-  end
-
-end
-matter.Path = Matter_Path
 
 #################################################################################
 # Matter_IM_Message
@@ -69,6 +38,7 @@ class Matter_IM_Message
   var expiration                      # expiration time for the reporting 
   var resp                            # response Frame object
   var ready                           # bool: ready to send (true) or wait (false)
+  var finish                          # if true, the message is removed from the queue
   var data                            # TLV data of the response (if any)
   var last_counter                    # counter value of last sent packet (to match ack)
 
@@ -78,6 +48,7 @@ class Matter_IM_Message
     self.ready = true                # by default send immediately
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     self.last_counter = 0            # avoid `nil` value
+    self.finish = false
   end
 
   # the message is being removed due to expiration
@@ -87,6 +58,7 @@ class Matter_IM_Message
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
+    tasmota.log("MTR: IM_Message ack_received exch="+str(self.resp.exchange_id), 3)
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     return false
   end
@@ -113,7 +85,6 @@ class Matter_IM_Message
     return self.resp.exchange_id
   end
 
-  # return true if transaction is complete (remove object from queue)
   # default responder for data
   def send_im(responder)
     import string
@@ -125,7 +96,7 @@ class Matter_IM_Message
     tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter),3)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
-    return true
+    self.finish = true              # by default we remove the packet after it is sent
   end
 
 end
@@ -191,7 +162,6 @@ class Matter_IM_ReportData : Matter_IM_Message
     self.data = data
   end
 
-  # return true if transaction is complete (remove object from queue)
   # default responder for data
   def send_im(responder)
     import string
@@ -204,11 +174,12 @@ class Matter_IM_ReportData : Matter_IM_Message
     # compute the acceptable size
     var msg_sz = 0                  # message size up to now
     var elements = 0                # number of elements added
-    if size(data.attribute_reports) > 0
+    var sz_attribute_reports = (data.attribute_reports != nil) ? size(data.attribute_reports) : 0
+    if sz_attribute_reports > 0
       msg_sz = data.attribute_reports[0].to_TLV().encode_len()
       elements = 1
     end
-    while msg_sz < self.MAX_MESSAGE && elements < size(data.attribute_reports)
+    while msg_sz < self.MAX_MESSAGE && elements < sz_attribute_reports
       var next_sz = data.attribute_reports[elements].to_TLV().encode_len()
       if msg_sz + next_sz < self.MAX_MESSAGE
         msg_sz += next_sz
@@ -218,11 +189,15 @@ class Matter_IM_ReportData : Matter_IM_Message
       end
     end
 
-
-    tasmota.log(string.format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, size(data.attribute_reports)), 3)
-    var next_elemnts = data.attribute_reports[elements .. ]
-    data.attribute_reports = data.attribute_reports[0 .. elements - 1]
-    data.more_chunked_messages = (size(next_elemnts) > 0)
+    tasmota.log(string.format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, sz_attribute_reports), 3)
+    var next_elemnts = []
+    if data.attribute_reports != nil
+      next_elemnts = data.attribute_reports[elements .. ]
+      data.attribute_reports = data.attribute_reports[0 .. elements - 1]
+      data.more_chunked_messages = (size(next_elemnts) > 0)
+    else
+      data.more_chunked_messages = false
+    end
 
     if was_chunked
       tasmota.log(string.format("MTR: .Read_Attr next_chunk exch=%i", self.get_exchangeid()), 3)
@@ -251,9 +226,9 @@ class Matter_IM_ReportData : Matter_IM_Message
       data.attribute_reports = next_elemnts
       tasmota.log(string.format("MTR: to_be_sent_later size=%i exch=%i", size(data.attribute_reports), resp.exchange_id), 3)
       self.ready = false    # wait for Status Report before continuing sending
-      return false          # keep alive
+      # keep alive
     else
-      return true           # finished, remove
+      self.finish = true         # finished, remove
     end
   end
 
@@ -264,7 +239,7 @@ matter.IM_ReportData = Matter_IM_ReportData
 #################################################################################
 # Matter_IM_ReportDataSubscribed
 #
-# Main difference is that we are the spontaneous inititor
+# Main difference is that we are the spontaneous initiator
 #################################################################################
 class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
   var sub                         # subscription object
@@ -326,14 +301,17 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
   def send_im(responder)
     import string
     tasmota.log(string.format("MTR: IM_ReportDataSubscribed send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    tasmota.log(string.format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
     if !self.ready   return false  end
-    if size(self.data.attribute_reports) > 0
+    if size(self.data.attribute_reports) > 0      # do we have still attributes to send
       if self.report_data_phase
-        var ret = super(self).send_im(responder)
-        if !ret   return false end              # ReportData needs to continue
+        super(self).send_im(responder)
+        tasmota.log(string.format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
+        if !self.finish return end              # ReportData needs to continue
         # ReportData is finished
         self.report_data_phase = false
-        return false
+        self.ready = false
+        self.finish = false                     # while a ReadReport would stop here, we continue for subscription
       else
         # send a simple ACK
         var resp = self.resp.build_standalone_ack(false)
@@ -342,7 +320,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
         tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
-        return true                             # we received a ack(), just finish
+        self.finish = true
       end
 
     else
@@ -350,14 +328,73 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
       if self.report_data_phase
         super(self).send_im(responder)
         self.report_data_phase = false
-        return false                             # don't expect any response
       else
-        return true                              # we're done, remove message
+        self.finish = true
       end
     end
   end
 end
 matter.IM_ReportDataSubscribed = Matter_IM_ReportDataSubscribed
+
+#################################################################################
+# Matter_IM_SubscribedHeartbeat
+#
+# Send a subscription heartbeat, which is an empty DataReport with no SuppressResponse
+#
+# Main difference is that we are the spontaneous initiator
+#################################################################################
+class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData
+  var sub                         # subscription object
+
+  def init(message_handler, session, data, sub)
+    self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
+    self.data = data
+    self.ready = true                # by default send immediately
+    self.expiration = tasmota.millis() + self.MSG_TIMEOUT
+    #
+    self.sub = sub
+  end
+
+  def reached_timeout()
+    self.sub.remove_self()
+  end
+
+  # ack received, confirm the heartbeat
+  def ack_received(msg)
+    import string
+    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat ack_received sub=%i", self.sub.subscription_id), 3)
+    super(self).ack_received(msg)
+    self.finish = true
+    return true                       # proceed to calling send() which removes the message
+  end
+
+  # we received an ACK error, remove subscription
+  def status_error_received(msg)
+    import string
+    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    self.sub.remove_self()
+    return false                            # let the caller to the ack
+  end
+
+  # ack received for previous message, proceed to next (if any)
+  # return true if we manage the ack ourselves, false if it needs to be done upper
+  def status_ok_received(msg)
+    import string
+    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    return false                            # let the caller to the ack
+  end
+
+  # default responder for data
+  def send_im(responder)
+    import string
+    tasmota.log(string.format("MTR: Matter_IM_SubscribedHeartbeat send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    if !self.ready   return false  end
+
+    super(self).send_im(responder)
+    self.ready = false
+  end
+end
+matter.IM_SubscribedHeartbeat = Matter_IM_SubscribedHeartbeat
 
 #################################################################################
 # Matter_IM_SubscribeResponse
@@ -374,20 +411,19 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
     self.report_data_phase = true
   end
 
-  # return true if transaction is complete (remove object from queue)
   # default responder for data
   def send_im(responder)
     import string
     tasmota.log(string.format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i", self.sub.subscription_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
     if self.report_data_phase
-      var ret = super(self).send_im(responder)
-      if ret
+      super(self).send_im(responder)
+      if self.finish
         # finished reporting of data, we still need to send SubscribeResponseMessage after next StatusReport
         self.report_data_phase = false
+        self.finish = false       # we continue to subscribe response
       end
       self.ready = false    # wait for Status Report before continuing sending
-      return false
 
     else
       # send the final SubscribeReponse
@@ -403,7 +439,7 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
       self.last_counter = resp.message_counter
       tasmota.log(string.format("MTR: Send SubscribeResponseMessage sub=%i id=%i", self.sub.subscription_id, resp.message_counter), 3)
       self.sub.re_arm()
-      return true
+      self.finish = true          # remove exchange
     end
   end
 
