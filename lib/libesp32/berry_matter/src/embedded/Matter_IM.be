@@ -83,8 +83,10 @@ class Matter_IM
   #
   # return `true` if handled
   def process_incoming_ack(msg)
+    import string
     # check if there is an exchange_id interested in receiving this
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
+    tasmota.log(string.format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 3)
     if message
       return message.ack_received(msg)                # dispatch to IM_Message
     end
@@ -109,13 +111,16 @@ class Matter_IM
     while idx < size(self.send_queue)
       var message = self.send_queue[idx]
 
-      var finish = message.send_im(responder)         # send message
-      if finish
-        self.send_queue.remove(idx)
-        idx -= 1
+      if !message.finish && message.ready
+        message.send_im(responder)         # send message
       end
-      
-      idx += 1
+
+      if message.finish
+        tasmota.log("MTR: remove IM message exch="+str(message.resp.exchange_id), 3)
+        self.send_queue.remove(idx)
+      else
+        idx += 1
+      end
     end
   end
 
@@ -603,19 +608,34 @@ class Matter_IM
       fake_read.attributes_requests.push(p1)
     end
 
-    if size(fake_read.attributes_requests) > 0
-      tasmota.log(string.format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
-      sub.is_keep_alive = false             # sending an actual data update
-    else
-      tasmota.log(string.format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
-      sub.is_keep_alive = true              # sending keep-alive
-    end
+    tasmota.log(string.format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
+    sub.is_keep_alive = false             # sending an actual data update
 
     var ret = self._inner_process_read_request(session, fake_read)
-    ret.suppress_response = (size(fake_read.attributes_requests) == 0)        # ret is of class `ReportDataMessage`
+    ret.suppress_response = false
     ret.subscription_id = sub.subscription_id
 
     var report_data_msg = matter.IM_ReportDataSubscribed(session._message_handler, session, ret, sub)
+    self.send_queue.push(report_data_msg)           # push message to queue
+    self.send_enqueued(session._message_handler)    # and send queued messages now
+  end
+  
+  #############################################################
+  # send regular update for data subscribed
+  #
+  def send_subscribe_heartbeat(sub)
+    import string
+    var session = sub.session
+    
+    tasmota.log(string.format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
+    sub.is_keep_alive = true              # sending keep-alive
+
+    # prepare the response
+    var ret = matter.ReportDataMessage()
+    ret.suppress_response = true
+    ret.subscription_id = sub.subscription_id
+
+    var report_data_msg = matter.IM_SubscribedHeartbeat(session._message_handler, session, ret, sub)
     self.send_queue.push(report_data_msg)           # push message to queue
     self.send_enqueued(session._message_handler)    # and send queued messages now
   end

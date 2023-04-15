@@ -232,8 +232,9 @@ class Matter_IM_Subscription_Shop
     while idx < size(self.subs)
       var sub = self.subs[idx]
       if !sub.wait_status && tasmota.time_reached(sub.expiration)
-        self.im.send_subscribe_update(sub)
+        self.im.send_subscribe_heartbeat(sub)
         sub.clear_before_arm()
+        sub.re_arm()                 # signal that we can proceed to next sub report
       end
       idx += 1
     end

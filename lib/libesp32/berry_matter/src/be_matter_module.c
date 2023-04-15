@@ -129,6 +129,7 @@ BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
 #include "solidify/solidified_Matter_inspect.h"
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
+#include "solidify/solidified_Matter_Path.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
@@ -299,6 +300,7 @@ module matter (scope: global, strings: weak) {
   IM_ReportData, class(be_class_Matter_IM_ReportData)
   IM_ReportDataSubscribed, class(be_class_Matter_IM_ReportDataSubscribed)
   IM_SubscribeResponse, class(be_class_Matter_IM_SubscribeResponse)
+  IM_SubscribedHeartbeat, class(be_class_Matter_IM_SubscribedHeartbeat)
   IM_Subscription, class(be_class_Matter_IM_Subscription)
   IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)

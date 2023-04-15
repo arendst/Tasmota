@@ -80,7 +80,7 @@ class Matter_MessageHandler
     var ret = false
 
     try
-      tasmota.log("MTR: MessageHandler::msg_received raw="+raw.tohex(), 4)
+      # tasmota.log("MTR: MessageHandler::msg_received raw="+raw.tohex(), 4)
       var frame = matter.Frame(self, raw, addr, port)
 
       var ok = frame.decode_header()
