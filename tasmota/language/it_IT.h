@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 06.04.2023
+ * Updated until v9.4.0.1 - Last update 15.04.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1190,7 +1190,7 @@
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 // xsns_106_gdk101.ino
-#define D_AVG_RAD_DOSE                    "dose media di radiazioni"
+#define D_AVG_RAD_DOSE                    "Dose media radiazioni"
 #define D_UNIT_US_H                       "uSv/h"
 
 #endif  // _LANGUAGE_IT_IT_H_
