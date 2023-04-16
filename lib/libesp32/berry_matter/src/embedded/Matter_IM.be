@@ -216,6 +216,7 @@ class Matter_IM
     # should return true if answered, false if passing to next handler
     def read_single_attribute(ret, pi, ctx, direct)
       import string
+      var TLV = matter.TLV
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
       # Special case to report unsupported item, if pi==nil
@@ -230,7 +231,12 @@ class Matter_IM
         a1.attribute_data.path.attribute = ctx.attribute
         a1.attribute_data.data = res
 
-        ret.attribute_reports.push(a1)
+        var a1_tlv = a1.to_TLV()
+        var a1_len = a1_tlv.encode_len()
+        var a1_bytes = bytes(a1_len)
+        var a2 = TLV.create_TLV(TLV.RAW, a1_tlv.tlv2raw(a1_bytes))
+
+        ret.attribute_reports.push(a2)
         if !no_log
           tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, str(res)), 2)
         end
@@ -246,7 +252,12 @@ class Matter_IM
           a1.attribute_status.path.attribute = ctx.attribute
           a1.attribute_status.status.status = ctx.status
 
-          ret.attribute_reports.push(a1)
+          var a1_tlv = a1.to_TLV()
+          var a1_len = a1_tlv.encode_len()
+          var a1_bytes = bytes(a1_len)
+          var a2 = TLV.create_TLV(TLV.RAW, a1_tlv.tlv2raw(a1_bytes))
+  
+          ret.attribute_reports.push(a2)
           tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 2)
           return true
         end
