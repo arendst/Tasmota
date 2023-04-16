@@ -188,6 +188,31 @@ static int m_ismethod(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_name(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        const char* name = NULL;
+        switch (var_type(v)) {
+            case BE_CLOSURE:
+                name = str(((bclosure*) var_toobj(v))->proto->name);
+                break;
+            case BE_CLASS:
+                name = str(((bclass*) var_toobj(v))->name);
+                break;
+            case BE_MODULE:
+                name = be_module_name(var_toobj(v));
+                break;
+        }
+        if (name) {
+            be_pushstring(vm, name);
+            be_return(vm);
+        }
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(introspect) {
     be_native_module_function("members", m_attrlist),
@@ -200,6 +225,8 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("toptr", m_toptr),
     be_native_module_function("fromptr", m_fromptr),
+
+    be_native_module_function("name", m_name),
 
     be_native_module_function("ismethod", m_ismethod),
 };
@@ -218,6 +245,8 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     toptr, func(m_toptr)
     fromptr, func(m_fromptr)
+
+    name, func(m_name)
 
     ismethod, func(m_ismethod)
 }

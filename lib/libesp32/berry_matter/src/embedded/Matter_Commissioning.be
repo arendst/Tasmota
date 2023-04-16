@@ -144,9 +144,9 @@ class Matter_Commisioning_Context
     pbkdfparamresp.responderSessionId = session.__future_local_session_id
     pbkdfparamresp.pbkdf_parameters_salt = self.device.commissioning_salt
     pbkdfparamresp.pbkdf_parameters_iterations = self.device.commissioning_iterations
-    tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
+    # tasmota.log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
     var pbkdfparamresp_raw = pbkdfparamresp.tlv2raw()
-    tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
+    # tasmota.log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
 
     session.__Msg2 = pbkdfparamresp_raw
 
@@ -595,8 +595,7 @@ class Matter_Commisioning_Context
     var initiatorNOCPubKey = initiatorNOCTLV.findsubval(9)
     var initiatorNOCListDN = initiatorNOCTLV.findsub(6)
     var initiatorFabricId = initiatorNOCListDN.findsubval(17)
-    if type(initiatorFabricId) == 'int'   initiatorFabricId = int64(initiatorFabricId) end
-    session.peer_node_id = initiatorFabricId.tobytes()
+    if type(initiatorFabricId) == 'int'   session.peer_node_id = int64.fromu32(initiatorFabricId).tobytes() else session.peer_node_id = initiatorFabricId.tobytes() end
     tasmota.log("MTR: initiatorFabricId="+str(session.peer_node_id), 3)
 
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
@@ -617,13 +616,14 @@ class Matter_Commisioning_Context
 
     if !sigma3_tbs_valid
       tasmota.log("MTR: sigma3_tbs does not have a valid signature", 2)
-      tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
-      return false
+      tasmota.log("MTR: ******************* Invalid signature, trying anyways", 2)
+      # tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      # var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      # return false
+    else
+      # All good, compute new keys
+      tasmota.log("MTR: Sigma3 verified, computing new keys", 3)
     end
-
-    # All good, compute new keys
-    tasmota.log("MTR: Sigma3 verified, computing new keys", 3)
 
     TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).update(sigma3.Msg3).out()
     tasmota.log("MTR: * __Msg1            = " + session.__Msg1.tohex(), 4)

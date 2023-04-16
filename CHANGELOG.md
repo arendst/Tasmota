@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode (#18295)
 - Berry `webserver.html_escape()` reusing the internal HTML escaping function
 - Support for GDK101 gamma radiation sensor by Petr Novacek (#18390)
+- Matter support in now stabilized for Apple and Google (not tested with Alexa)
+- Berry `instrospect.name()` to get names of functions, modules and classes (#18422)
 
 ### Changed
 - ESP32 LVGL library from v8.3.5 to v8.3.6 (no functional change)

@@ -98,7 +98,7 @@ class Matter_Pake1
   def parse(b, idx)
     if idx == nil    idx = 0 end
     var val = matter.TLV.parse(b, idx)
-    tasmota.log("MTR: parsed TLV: " + str(val), 4)
+    # tasmota.log("MTR: parsed TLV: " + str(val), 4)
 
     self.pA = val.getsubval(1)
     return self
@@ -130,7 +130,7 @@ class Matter_Pake3
   def parse(b, idx)
     if idx == nil    idx = 0 end
     var val = matter.TLV.parse(b, idx)
-    tasmota.log("MTR: parsed TLV: " + str(val), 4)
+    # tasmota.log("MTR: parsed TLV: " + str(val), 4)
 
     self.cA = val.getsubval(1)
     return self
@@ -157,7 +157,7 @@ class Matter_Sigma1
     if idx == nil    idx = 0 end
     var val = matter.TLV.parse(b, idx)
     self.Msg1 = b[idx..]
-    tasmota.log("MTR: Sigma1 TLV=" + str(val), 4)
+    # tasmota.log("MTR: Sigma1 TLV=" + str(val), 4)
 
     self.initiatorRandom = val.getsubval(1)
     self.initiator_session_id = val.getsubval(2)
@@ -240,7 +240,7 @@ class Matter_Sigma3
     if idx == nil    idx = 0 end
     var val = matter.TLV.parse(b, idx)
     self.Msg3 = b[idx..]
-    tasmota.log("MTR: Sigma3 TLV=" + str(val), 4)
+    # tasmota.log("MTR: Sigma3 TLV=" + str(val), 4)
 
     self.TBEData3Encrypted = val.getsubval(1)
     return self
