@@ -1307,9 +1307,9 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
     const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
 #else
-    const char *aqara_cube = F("AqaraCube");
-    const char *aqara_cube_side = F("AqaraCubeSide");
-    const char *aqara_cube_from_side = F("AqaraCubeFromSide");
+    const char *aqara_cube = "AqaraCube";
+    const char *aqara_cube_side = "AqaraCubeSide";
+    const char *aqara_cube_from_side = "AqaraCubeFromSide";
 #endif
 
     switch (val) {
@@ -1365,8 +1365,8 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     const __FlashStringHelper *aqara_click = F("click");    // deprecated
     const __FlashStringHelper *aqara_action = F("action");  // deprecated
 #else
-    const char *aqara_click = F("click");    // deprecated
-    const char *aqara_action = F("action");  // deprecated
+    const char *aqara_click = "click";    // deprecated
+    const char *aqara_action = "action";  // deprecated
 #endif
     Z_attribute & attr_click = attr_list.addAttribute(PSTR("Click"), true);
 
@@ -1419,18 +1419,14 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
     case 0x0055:
       {
         int32_t ivalue = attr.getInt();
-#ifdef ESP8266
-        const __FlashStringHelper * svalue;
-#else
         const char * svalue;
-#endif
         switch (ivalue) {
-          case 1: svalue = F("vibrate"); break;
-          case 2: svalue = F("tilt"); break;
-          case 3: svalue = F("drop"); break;
-          default: svalue = F("unknown"); break;
+          case 1: svalue = PSTR("vibrate"); break;
+          case 2: svalue = PSTR("tilt"); break;
+          case 3: svalue = PSTR("drop"); break;
+          default: svalue = PSTR("unknown"); break;
         }
-        attr.setStr((const char*)svalue);
+        attr.setStr(svalue);
       }
       break;
     case 0x0503:
