@@ -114,7 +114,7 @@ class Matter_Commisioning_Context
     if msg.opcode != 0x20 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid PBKDFParamRequest message", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
     var pbkdfparamreq = matter.PBKDFParamRequest().parse(msg.raw, msg.app_payload_idx)
@@ -126,7 +126,7 @@ class Matter_Commisioning_Context
     if pbkdfparamreq.passcodeId != 0
       tasmota.log("MTR: non-zero passcode id", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
 
@@ -164,7 +164,7 @@ class Matter_Commisioning_Context
     if msg.opcode != 0x22 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid Pake1 message", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
     var pake1 = matter.Pake1().parse(msg.raw, msg.app_payload_idx)
@@ -247,7 +247,7 @@ class Matter_Commisioning_Context
     if msg.opcode != 0x24 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: invalid Pake3 message", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
     var pake3 = matter.Pake3().parse(msg.raw, msg.app_payload_idx)
@@ -259,7 +259,7 @@ class Matter_Commisioning_Context
     if cA != session.__spake_cA
       tasmota.log("MTR: invalid cA received", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
 
@@ -278,7 +278,7 @@ class Matter_Commisioning_Context
     # tasmota.log("MTR: ******************************", 4)
 
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
-    var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
+    self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
 
     self.add_session(session.__future_local_session_id, session.__future_initiator_session_id, I2RKey, R2IKey, AttestationChallenge, created)
     return true
@@ -315,7 +315,7 @@ class Matter_Commisioning_Context
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
       # tasmota.log("MTR: invalid Sigma1 message", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
     var sigma1 = matter.Sigma1().parse(msg.raw, msg.app_payload_idx)
@@ -445,7 +445,7 @@ class Matter_Commisioning_Context
 
       if session == nil || session._fabric == nil
         tasmota.log("MTR: StatusReport(GeneralCode: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: NO_SHARED_TRUST_ROOTS)", 2)
-        var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0001, false)
+        self.send_status_report(msg, 0x01, 0x0000, 0x0001, false)
         return false
       end
       session._source_node_id = msg.source_node_id
@@ -539,7 +539,7 @@ class Matter_Commisioning_Context
     # sanity checks
     if msg.opcode != 0x32 || msg.local_session_id != 0 || msg.protocol_id != 0
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
     var session = msg.session
@@ -576,7 +576,7 @@ class Matter_Commisioning_Context
     if TBETag3 != tag
       tasmota.log("MTR: Tag don't match", 2)
       tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       return false
     end
 
@@ -618,7 +618,7 @@ class Matter_Commisioning_Context
       tasmota.log("MTR: sigma3_tbs does not have a valid signature", 2)
       tasmota.log("MTR: ******************* Invalid signature, trying anyways", 2)
       # tasmota.log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      # var raw = self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      # self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
       # return false
     else
       # All good, compute new keys
@@ -654,7 +654,7 @@ class Matter_Commisioning_Context
     tasmota.log("MTR: ******************************", 4)
 
     # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
-    var raw = self.send_status_report(msg, 0x00, 0x0000, 0x0000, true)
+    self.send_status_report(msg, 0x00, 0x0000, 0x0000, true)
 
     session.close()
     session.set_keys(i2r, r2i, ac, created)

@@ -116,8 +116,8 @@ class Matter_Device
     # autoconfigure other plugins
     self.autoconf_device()
 
-    # for now read sensors every 5 seconds
-    tasmota.add_cron("*/5 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_5s")
+    # for now read sensors every 30 seconds
+    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
@@ -908,6 +908,7 @@ class Matter_Device
   #
   def autoconf_device()
     import string
+    import json
     # check if we have a light
     var endpoint = 1
     var light_present = false
@@ -944,7 +945,33 @@ class Matter_Device
       endpoint += 1
     end
 
+    # auto-detect sensors
+    var sensors = json.load(tasmota.read_sensors())
+
+    # temperature sensors
+    # they are starting at endpoint `32..39` (8 max)
+    endpoint = 0x20
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
+        var temp_rule = k1 + "#Temperature"
+        self.plugins.push(matter.Plugin_Temp_Sensor(self, endpoint, temp_rule))
+        tasmota.log(string.format("MTR: Endpoint:%i Temperature (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
+      end
+      if endpoint > 0x28 break end
+    end
+
   end
+
+  # get keys of a map in sorted order
+  static def k2l(m) var l=[] if m==nil return l end for k:m.keys() l.push(k) end
+    for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
+    
+  # keys to llist
+  
 end
 matter.Device = Matter_Device
 
