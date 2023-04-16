@@ -1302,9 +1302,15 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
     int32_t val = attr.getInt();
+#ifdef ESP8266
     const __FlashStringHelper *aqara_cube = F("AqaraCube");
     const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
     const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
+#else
+    const char *aqara_cube = F("AqaraCube");
+    const char *aqara_cube_side = F("AqaraCubeSide");
+    const char *aqara_cube_from_side = F("AqaraCubeFromSide");
+#endif
 
     switch (val) {
       case 0:
@@ -1355,8 +1361,13 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 512 = double tap while side x is on top
   } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
+#ifdef ESP8266
     const __FlashStringHelper *aqara_click = F("click");    // deprecated
     const __FlashStringHelper *aqara_action = F("action");  // deprecated
+#else
+    const char *aqara_click = F("click");    // deprecated
+    const char *aqara_action = F("action");  // deprecated
+#endif
     Z_attribute & attr_click = attr_list.addAttribute(PSTR("Click"), true);
 
     switch (val) {
@@ -1408,7 +1419,11 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
     case 0x0055:
       {
         int32_t ivalue = attr.getInt();
+#ifdef ESP8266
         const __FlashStringHelper * svalue;
+#else
+        const char * svalue;
+#endif
         switch (ivalue) {
           case 1: svalue = F("vibrate"); break;
           case 2: svalue = F("tilt"); break;
