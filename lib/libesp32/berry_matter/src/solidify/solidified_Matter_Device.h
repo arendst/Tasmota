@@ -3457,11 +3457,11 @@ be_local_closure(Matter_Device_autoconf_device,   /* name */
       0x5C381800,  //  0079  MOVE	R14	R12
       0x603C0013,  //  007A  GETGBL	R15	G19
       0x7C340400,  //  007B  CALL	R13	2
-      0x78360016,  //  007C  JMPF	R13	#0094
+      0x78360017,  //  007C  JMPF	R13	#0095
       0x8C34191C,  //  007D  GETMET	R13	R12	K28
       0x583C001D,  //  007E  LDCONST	R15	K29
       0x7C340400,  //  007F  CALL	R13	2
-      0x78360012,  //  0080  JMPF	R13	#0094
+      0x78360013,  //  0080  JMPF	R13	#0095
       0x0034171E,  //  0081  ADD	R13	R11	K30
       0x88380109,  //  0082  GETMBR	R14	R0	K9
       0x8C381D0A,  //  0083  GETMET	R14	R14	K10

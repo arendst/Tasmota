@@ -957,8 +957,8 @@ class Matter_Device
         var temp_rule = k1 + "#Temperature"
         self.plugins.push(matter.Plugin_Temp_Sensor(self, endpoint, temp_rule))
         tasmota.log(string.format("MTR: Endpoint:%i Temperature (%s)", endpoint, temp_rule), 2)
+        endpoint += 1
       end
-      endpoint += 1
       if endpoint > 0x28 break end
     end
 
