@@ -116,8 +116,8 @@ class Matter_Device
     # autoconfigure other plugins
     self.autoconf_device()
 
-    # for now read sensors every 5 seconds
-    tasmota.add_cron("*/5 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_5s")
+    # for now read sensors every 30 seconds
+    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
