@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Matter support in now stabilized for Apple and Google (not tested with Alexa)
 - Berry `instrospect.name()` to get names of functions, modules and classes (#18422)
 - Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns
+- Matter automatically exposes all detected Temperature sensors
 
 ### Breaking Changed
 
