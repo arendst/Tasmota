@@ -175,6 +175,42 @@ int re_pattern_search(bvm *vm) {
   be_raise(vm, "type_error", NULL);
 }
 
+// Berry: `re_pattern.searchall(s:string) -> list(list(string))`
+int re_pattern_match_search_all(bvm *vm, bbool is_anchored) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 2 && be_isstring(vm, 2)) {
+    const char * hay = be_tostring(vm, 2);
+    be_getmember(vm, 1, "_p");
+    ByteProg * code = (ByteProg*) be_tocomptr(vm, -1);
+    int limit = -1;
+    if (argc >= 3) {
+      limit = be_toint(vm, 3);
+    }
+
+    be_newobject(vm, "list");
+    for (int i = limit; i != 0 && hay != NULL; i--) {
+      hay = be_re_match_search_run(vm, code, hay, is_anchored);
+      if (hay != NULL) {
+        be_data_push(vm, -2);   // add sub list to list
+      }
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);
+    be_return(vm);
+  }
+  be_raise(vm, "type_error", NULL);
+}
+
+// Berry: `re_pattern.searchall(s:string) -> list(list(string))`
+int re_pattern_search_all(bvm *vm) {
+  return re_pattern_match_search_all(vm, bfalse);
+}
+
+// Berry: `re_pattern.matchall(s:string) -> list(list(string))`
+int re_pattern_match_all(bvm *vm) {
+  return re_pattern_match_search_all(vm, btrue);
+}
+
 // Berry: `re_pattern.match(s:string) -> list(string)`
 int re_pattern_match(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
@@ -277,7 +313,9 @@ module re (scope: global) {
 class be_class_re_pattern (scope: global, name: re_pattern) {
   _p, var
   search, func(re_pattern_search)
+  searchall, func(re_pattern_search_all)
   match, func(re_pattern_match)
+  matchall, func(re_pattern_match_all)
   split, func(re_pattern_split)
 }
 @const_object_info_end */
