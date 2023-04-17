@@ -1861,25 +1861,35 @@ be_local_closure(Matter_TLV_list_add_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(to_TLV),
-    /* K1   */  be_nested_str_weak(tag_sub),
-    /* K2   */  be_nested_str_weak(val),
-    /* K3   */  be_nested_str_weak(push),
+    /* K0   */  be_nested_str_weak(val),
+    /* K1   */  be_nested_str_weak(push),
+    /* K2   */  be_nested_str_weak(to_TLV),
+    /* K3   */  be_nested_str_weak(tag_sub),
     }),
     be_str_weak(add_obj),
     &be_const_str_solidified,
-    ( &(const binstruction[11]) {  /* code */
+    ( &(const binstruction[21]) {  /* code */
       0x4C0C0000,  //  0000  LDNIL	R3
       0x200C0403,  //  0001  NE	R3	R2	R3
-      0x780E0006,  //  0002  JMPF	R3	#000A
-      0x8C0C0500,  //  0003  GETMET	R3	R2	K0
-      0x7C0C0200,  //  0004  CALL	R3	1
-      0x900E0201,  //  0005  SETMBR	R3	K1	R1
-      0x88100102,  //  0006  GETMBR	R4	R0	K2
-      0x8C100903,  //  0007  GETMET	R4	R4	K3
-      0x5C180600,  //  0008  MOVE	R6	R3
-      0x7C100400,  //  0009  CALL	R4	2
-      0x80040000,  //  000A  RET	1	R0
+      0x780E0010,  //  0002  JMPF	R3	#0014
+      0x600C000F,  //  0003  GETGBL	R3	G15
+      0x5C100400,  //  0004  MOVE	R4	R2
+      0x60140015,  //  0005  GETGBL	R5	G21
+      0x7C0C0400,  //  0006  CALL	R3	2
+      0x780E0004,  //  0007  JMPF	R3	#000D
+      0x880C0100,  //  0008  GETMBR	R3	R0	K0
+      0x8C0C0701,  //  0009  GETMET	R3	R3	K1
+      0x5C140400,  //  000A  MOVE	R5	R2
+      0x7C0C0400,  //  000B  CALL	R3	2
+      0x70020006,  //  000C  JMP		#0014
+      0x8C0C0502,  //  000D  GETMET	R3	R2	K2
+      0x7C0C0200,  //  000E  CALL	R3	1
+      0x900E0601,  //  000F  SETMBR	R3	K3	R1
+      0x88100100,  //  0010  GETMBR	R4	R0	K0
+      0x8C100901,  //  0011  GETMET	R4	R4	K1
+      0x5C180600,  //  0012  MOVE	R6	R3
+      0x7C100400,  //  0013  CALL	R4	2
+      0x80040000,  //  0014  RET	1	R0
     })
   )
 );
@@ -2516,7 +2526,7 @@ be_local_closure(Matter_TLV_list_tlv2raw,   /* name */
     }),
     be_str_weak(tlv2raw),
     &be_const_str_solidified,
-    ( &(const binstruction[37]) {  /* code */
+    ( &(const binstruction[44]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
       0x1C080202,  //  0001  EQ	R2	R1	R2
       0x780A0002,  //  0002  JMPF	R2	#0006
@@ -2538,22 +2548,29 @@ be_local_closure(Matter_TLV_list_tlv2raw,   /* name */
       0x600C0010,  //  0012  GETGBL	R3	G16
       0x5C100400,  //  0013  MOVE	R4	R2
       0x7C0C0200,  //  0014  CALL	R3	1
-      0xA8020005,  //  0015  EXBLK	0	#001C
+      0xA802000C,  //  0015  EXBLK	0	#0023
       0x5C100600,  //  0016  MOVE	R4	R3
       0x7C100000,  //  0017  CALL	R4	0
-      0x8C140905,  //  0018  GETMET	R5	R4	K5
-      0x5C1C0200,  //  0019  MOVE	R7	R1
-      0x7C140400,  //  001A  CALL	R5	2
-      0x7001FFF9,  //  001B  JMP		#0016
-      0x580C0006,  //  001C  LDCONST	R3	K6
-      0xAC0C0200,  //  001D  CATCH	R3	1	0
-      0xB0080000,  //  001E  RAISE	2	R0	R0
-      0x8C0C0307,  //  001F  GETMET	R3	R1	K7
-      0x88140108,  //  0020  GETMBR	R5	R0	K8
-      0x88140B09,  //  0021  GETMBR	R5	R5	K9
-      0x5818000A,  //  0022  LDCONST	R6	K10
-      0x7C0C0600,  //  0023  CALL	R3	3
-      0x80040200,  //  0024  RET	1	R1
+      0x6014000F,  //  0018  GETGBL	R5	G15
+      0x5C180800,  //  0019  MOVE	R6	R4
+      0x601C0015,  //  001A  GETGBL	R7	G21
+      0x7C140400,  //  001B  CALL	R5	2
+      0x78160001,  //  001C  JMPF	R5	#001F
+      0x40140204,  //  001D  CONNECT	R5	R1	R4
+      0x70020002,  //  001E  JMP		#0022
+      0x8C140905,  //  001F  GETMET	R5	R4	K5
+      0x5C1C0200,  //  0020  MOVE	R7	R1
+      0x7C140400,  //  0021  CALL	R5	2
+      0x7001FFF2,  //  0022  JMP		#0016
+      0x580C0006,  //  0023  LDCONST	R3	K6
+      0xAC0C0200,  //  0024  CATCH	R3	1	0
+      0xB0080000,  //  0025  RAISE	2	R0	R0
+      0x8C0C0307,  //  0026  GETMET	R3	R1	K7
+      0x88140108,  //  0027  GETMBR	R5	R0	K8
+      0x88140B09,  //  0028  GETMBR	R5	R5	K9
+      0x5818000A,  //  0029  LDCONST	R6	K10
+      0x7C0C0600,  //  002A  CALL	R3	3
+      0x80040200,  //  002B  RET	1	R1
     })
   )
 );

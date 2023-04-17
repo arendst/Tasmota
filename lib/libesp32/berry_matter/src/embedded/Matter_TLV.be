@@ -637,7 +637,11 @@ class Matter_TLV
 
       # output each one after the other
       for v : val_list
-        v.tlv2raw(b)
+        if isinstance(v, bytes)
+          b .. v
+        else
+          v.tlv2raw(b)
+        end
       end
 
       # add 'end of container'
@@ -728,9 +732,13 @@ class Matter_TLV
     # returns `self` to allow calls to be chained
     def add_obj(tag, obj)
       if obj != nil
-        var value = obj.to_TLV()
-        value.tag_sub = tag
-        self.val.push(value)
+        if isinstance(obj, bytes)
+          self.val.push(obj)
+        else
+          var value = obj.to_TLV()
+          value.tag_sub = tag
+          self.val.push(value)
+        end
       end
       return self
     end
