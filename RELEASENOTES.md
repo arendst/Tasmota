@@ -127,7 +127,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry support for Tensorflow Lite (TFL) by Christiaan Baars [#18119](https://github.com/arendst/Tasmota/issues/18119)
 - Berry `webclient` features
 - Berry `instrospect.name()` to get names of functions, modules and classes [#18422](https://github.com/arendst/Tasmota/issues/18422)
+- Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns [#18429](https://github.com/arendst/Tasmota/issues/18429)
 - Matter support for Light and Relays by Stephan Hadinger [#18320](https://github.com/arendst/Tasmota/issues/18320)
+- Matter automatically exposes all detected Temperature sensors [#18430](https://github.com/arendst/Tasmota/issues/18430)
 
 ### Breaking Changed
 - Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration

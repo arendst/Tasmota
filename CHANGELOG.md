@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.4.0.5]
+## [12.4.0.5] 20230417
 ### Added
 - Matter support for Light and Relays on ESP32 by Stephan Hadinger (#18320)
 - ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode (#18295)
@@ -11,8 +11,8 @@ All notable changes to this project will be documented in this file.
 - Support for GDK101 gamma radiation sensor by Petr Novacek (#18390)
 - Matter support in now stabilized for Apple and Google (not tested with Alexa)
 - Berry `instrospect.name()` to get names of functions, modules and classes (#18422)
-- Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns
-- Matter automatically exposes all detected Temperature sensors
+- Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns (#18429)
+- Matter automatically exposes all detected Temperature sensors (#18430)
 
 ### Breaking Changed
 
