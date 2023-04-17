@@ -304,6 +304,11 @@ class Matter_Commisioning_Context
         return fabric
       end
     end
+    # TODO if there is only 1 fabric, we can try to use it anyways
+    if size(self.device.sessions.fabrics) == 1
+      tasmota.log("MTR: *** Could not find fabric, trying only fabric in store", 2)
+      return self.device.sessions.fabrics[0]
+    end
     return nil
   end
 
