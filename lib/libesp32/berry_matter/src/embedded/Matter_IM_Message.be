@@ -445,10 +445,10 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
 
   # Status ok received
   def status_ok_received(msg)
-    # import string
+    import string
     # tasmota.log(string.format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
     # once we receive ack, open flow for subscriptions
-    # tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 2)
+    tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 2)
     return super(self).status_ok_received(msg)
   end
     
