@@ -171,26 +171,11 @@ class Matter_IM_ReportData : Matter_IM_Message
     var data = self.data                          # TLV data of the response (if any)
     var was_chunked = data.more_chunked_messages  # is this following a chunked packet?
 
-    # compute the acceptable size
-    var msg_sz = 0                  # message size up to now
-    var elements = 0                # number of elements added
-    var sz_attribute_reports = (data.attribute_reports != nil) ? size(data.attribute_reports) : 0
-    if sz_attribute_reports > 0
-      msg_sz = data.attribute_reports[0].to_TLV().encode_len()
-      elements = 1
-    end
-    while msg_sz < self.MAX_MESSAGE && elements < sz_attribute_reports
-      var next_sz = data.attribute_reports[elements].to_TLV().encode_len()
-      if msg_sz + next_sz < self.MAX_MESSAGE
-        msg_sz += next_sz
-        elements += 1
-      else  
-        break
-      end
-    end
+    # the message were grouped by right-sized binaries upfront, we just need to send one block at time
+    var elements = 1                # number of elements added
 
     # tasmota.log(string.format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, sz_attribute_reports), 3)
-    var next_elemnts = []
+    var next_elemnts
     if data.attribute_reports != nil
       next_elemnts = data.attribute_reports[elements .. ]
       data.attribute_reports = data.attribute_reports[0 .. elements - 1]
@@ -222,7 +207,7 @@ class Matter_IM_ReportData : Matter_IM_Message
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
 
-    if size(next_elemnts) > 0
+    if next_elemnts != nil && size(next_elemnts) > 0
       data.attribute_reports = next_elemnts
       tasmota.log(string.format("MTR: to_be_sent_later size=%i exch=%i", size(data.attribute_reports), resp.exchange_id), 3)
       self.ready = false    # wait for Status Report before continuing sending

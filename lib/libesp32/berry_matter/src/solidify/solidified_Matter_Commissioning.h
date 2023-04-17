@@ -66,7 +66,7 @@ be_local_closure(Matter_Commisioning_Context_find_fabric_by_destination_id,   /*
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[25]) {     /* constants */
+    ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
     /* K1   */  be_nested_str_weak(tasmota),
     /* K2   */  be_nested_str_weak(log),
@@ -88,14 +88,10 @@ be_local_closure(Matter_Commisioning_Context_find_fabric_by_destination_id,   /*
     /* K18  */  be_nested_str_weak(out),
     /* K19  */  be_nested_str_weak(MTR_X3A_X20SIGMA1_X3A_X20candidateDestinationId_X3D),
     /* K20  */  be_nested_str_weak(stop_iteration),
-    /* K21  */  be_const_int(1),
-    /* K22  */  be_nested_str_weak(MTR_X3A_X20_X2A_X2A_X2A_X20Could_X20not_X20find_X20fabric_X2C_X20trying_X20only_X20fabric_X20in_X20store),
-    /* K23  */  be_const_int(2),
-    /* K24  */  be_const_int(0),
     }),
     be_str_weak(find_fabric_by_destination_id),
     &be_const_str_solidified,
-    ( &(const binstruction[94]) {  /* code */
+    ( &(const binstruction[77]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
       0x8C100902,  //  0002  GETMET	R4	R4	K2
@@ -171,25 +167,8 @@ be_local_closure(Matter_Commisioning_Context_find_fabric_by_destination_id,   /*
       0x58100014,  //  0048  LDCONST	R4	K20
       0xAC100200,  //  0049  CATCH	R4	1	0
       0xB0080000,  //  004A  RAISE	2	R0	R0
-      0x6010000C,  //  004B  GETGBL	R4	G12
-      0x88140106,  //  004C  GETMBR	R5	R0	K6
-      0x88140B07,  //  004D  GETMBR	R5	R5	K7
-      0x88140B08,  //  004E  GETMBR	R5	R5	K8
-      0x7C100200,  //  004F  CALL	R4	1
-      0x1C100915,  //  0050  EQ	R4	R4	K21
-      0x78120009,  //  0051  JMPF	R4	#005C
-      0xB8120200,  //  0052  GETNGBL	R4	K1
-      0x8C100902,  //  0053  GETMET	R4	R4	K2
-      0x58180016,  //  0054  LDCONST	R6	K22
-      0x581C0017,  //  0055  LDCONST	R7	K23
-      0x7C100600,  //  0056  CALL	R4	3
-      0x88100106,  //  0057  GETMBR	R4	R0	K6
-      0x88100907,  //  0058  GETMBR	R4	R4	K7
-      0x88100908,  //  0059  GETMBR	R4	R4	K8
-      0x94100918,  //  005A  GETIDX	R4	R4	K24
-      0x80040800,  //  005B  RET	1	R4
-      0x4C100000,  //  005C  LDNIL	R4
-      0x80040800,  //  005D  RET	1	R4
+      0x4C100000,  //  004B  LDNIL	R4
+      0x80040800,  //  004C  RET	1	R4
     })
   )
 );

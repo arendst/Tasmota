@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Berry `instrospect.name()` to get names of functions, modules and classes (#18422)
 - Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns (#18429)
 - Matter automatically exposes all detected Temperature sensors (#18430)
+- Matter add sensors: Humidity, Pressure, Illuminance; optimize memory
 
 ### Changed
 - ESP32 LVGL library from v8.3.5 to v8.3.6 (no functional change)
