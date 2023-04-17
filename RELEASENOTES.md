@@ -75,7 +75,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.4.0
+- http://ota.tasmota.com/tasmota/release-12.5.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -100,7 +100,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-12.4.0
+- https://ota.tasmota.com/tasmota32/release-12.5.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -110,50 +110,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.4.0.5
+## Changelog v12.5.0.1
 ### Added
-- Command ``SwitchMode0`` to show or set all SwitchModes
-- Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay if enabled with `#define USE_MCP23XXX_DRV`
-- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
-- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps [#18214](https://github.com/arendst/Tasmota/issues/18214)
-- Support for DingTian virtual switch/button/relay [#18223](https://github.com/arendst/Tasmota/issues/18223)
-- Support for GDK101 gamma radiation sensor by Petr Novacek [#18390](https://github.com/arendst/Tasmota/issues/18390)
-- NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
-- Extended Tariff command for forced tariff [#18080](https://github.com/arendst/Tasmota/issues/18080)
-- Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
-- VSC Pio menu bar extensions by @Jason2866 [#18233](https://github.com/arendst/Tasmota/issues/18233)
-- Zigbee send Tuya 'magic spell' to unlock devices when pairing [#18144](https://github.com/arendst/Tasmota/issues/18144)
-- ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode [#18295](https://github.com/arendst/Tasmota/issues/18295)
-- Berry support for Tensorflow Lite (TFL) by Christiaan Baars [#18119](https://github.com/arendst/Tasmota/issues/18119)
-- Berry `webclient` features
-- Berry `instrospect.name()` to get names of functions, modules and classes [#18422](https://github.com/arendst/Tasmota/issues/18422)
-- Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns [#18429](https://github.com/arendst/Tasmota/issues/18429)
-- Matter support for Light and Relays by Stephan Hadinger [#18320](https://github.com/arendst/Tasmota/issues/18320)
-- Matter automatically exposes all detected Temperature sensors [#18430](https://github.com/arendst/Tasmota/issues/18430)
 
 ### Breaking Changed
-- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
 
 ### Changed
-- ESP32 Framework (Core) from v2.0.6 to v2.0.7
-- ESP32 LVGL library from v8.3.3 to v8.3.6 (no functional change)
-- LibTeleinfo from v1.1.3 to v1.1.5 [#18050](https://github.com/arendst/Tasmota/issues/18050)
-- Increase number of (virtual)relays and (virtual)buttons to 32
-- ADC Range oversample from 2 to 32 [#17975](https://github.com/arendst/Tasmota/issues/17975)
-- Move #define OTA_URL from user_config.h to board files for better inital support [#18008](https://github.com/arendst/Tasmota/issues/18008)
-- Removed absolute url from filesystem [#18148](https://github.com/arendst/Tasmota/issues/18148)
 
 ### Fixed
-- TuyaMcu v1 sequence fix [#17625](https://github.com/arendst/Tasmota/issues/17625)
-- SEN5X floats and units [#17961](https://github.com/arendst/Tasmota/issues/17961)
-- Energytotals cannot be set to negative values [#17965](https://github.com/arendst/Tasmota/issues/17965)
-- SR04 driver single pin ultrasonic sensor detection [#17966](https://github.com/arendst/Tasmota/issues/17966)
-- IR panasonic protocol regression from v12.0.2.4 [#18013](https://github.com/arendst/Tasmota/issues/18013)
-- EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 [#18024](https://github.com/arendst/Tasmota/issues/18024)
-- TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
-- PZEM energy monitor stabilize period on larger configs [#18103](https://github.com/arendst/Tasmota/issues/18103)
-- Rule topic comparison [#18144](https://github.com/arendst/Tasmota/issues/18144)
-- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs [#18164](https://github.com/arendst/Tasmota/issues/18164)
-- ESP32 ``Upload``, ``Upgrade``, ``WebGetConfig``, ``WebQuery`` and ``WebSend`` random HTTP(S) connection timeout set to 5 sec (commit 542eca3)
-- ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 [#15856](https://github.com/arendst/Tasmota/issues/15856)
-- ESP32 energy monitoring set StartTotalTime regression from v12.3.1.5 [#18385](https://github.com/arendst/Tasmota/issues/18385)
