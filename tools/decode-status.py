@@ -207,7 +207,8 @@ a_setoption = [[
     "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
     "(Energy) Force no voltage/frequency common",
     "(Matter) Enable Matter protocol over Wifi",
-    "","",
+    "(Power) Switch between two (0) or one (1) pin bistable relay control",
+    "",
     "","","","",
     "","","","",
     "","","","",
@@ -324,7 +325,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.4.0.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.5.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

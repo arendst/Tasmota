@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.5.0.1
 ### Added
+- Command ``SetOption152 0/1`` to select two (default) or one pin bistable relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 
 ### Breaking Changed

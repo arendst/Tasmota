@@ -1472,6 +1472,7 @@ void CmndSetoptionBase(bool indexed) {
             bitWrite(Settings->flag6.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
               case 5:                     // SetOption151 - Matter enabled
+              case 6:                     // SetOption152 - (Power) Use single pin bistable
                 TasmotaGlobal.restart_flag = 2;
                 break;
             }
