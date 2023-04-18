@@ -104,6 +104,8 @@ class Matter_Device
     self._init_basic_commissioning()
 
     tasmota.add_driver(self)
+
+    self.register_commands()
   end
 
   #############################################################
@@ -1011,13 +1013,37 @@ class Matter_Device
       end
       if endpoint > 0x40 break end
     end
-
+    tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
 
   # get keys of a map in sorted order
   static def k2l(m) var l=[] if m==nil return l end for k:m.keys() l.push(k) end
     for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
   end
+
+  #####################################################################
+  # Commands `Mtr___`
+  #####################################################################
+  #
+  def register_commands()
+    tasmota.add_cmd("MtrJoin", /cmd_found, idx, payload, payload_json -> self.MtrJoin(cmd_found, idx, payload, payload_json))
+  end
+
+  #####################################################################
+  # `MtrJoin`
+  #
+  # Open or close commissioning
+  #
+  def MtrJoin(cmd_found, idx, payload, payload_json)
+    var payload_int = int(payload)
+    if payload_int
+      self.start_root_basic_commissioning()
+    else
+      self.stop_basic_commissioning()
+    end
+    tasmota.resp_cmnd_done()
+  end
+
 
 end
 matter.Device = Matter_Device

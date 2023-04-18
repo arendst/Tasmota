@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Matter sensors Humidity, Pressure, Illuminance; optimize memory (#18441)
 - Command ``SetOption152 0/1`` to select two (default) or one pin bistable relay control (#18386)
+- Matter allow `Matter#Initialized` rule once the device is configured
 
 ### Breaking Changed
 
