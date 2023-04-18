@@ -119,3 +119,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- ESP8266 Energy Export Active no update regression from v12.3.1.3

@@ -99,6 +99,7 @@ typedef struct {
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy->kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
   int32_t kWhtoday[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
+  int32_t kWhtoday_export[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
   int32_t period[ENERGY_MAX_PHASES];            // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
 
   char* value;
@@ -278,7 +279,12 @@ void EnergyUpdateToday(void) {
       Energy->kWhtoday_delta[i] -= (delta * 1000);
       Energy->kWhtoday[i] += delta;
       if (delta < 0) {     // Export energy
-        RtcSettings.energy_kWhexport_ph[i] += ((delta / 100) *-1);
+        Energy->kWhtoday_export[i] += (delta *-1);
+        if (Energy->kWhtoday_export[i] > 100) {
+          int32_t delta_export = Energy->kWhtoday_export[i] / 100;
+          Energy->kWhtoday_export[i] -= (delta_export * 100);
+          RtcSettings.energy_kWhexport_ph[i] += delta_export;
+        }
       }
     }
 
