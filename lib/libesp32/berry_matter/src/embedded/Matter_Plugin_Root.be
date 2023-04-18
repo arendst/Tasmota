@@ -522,6 +522,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
       elif command == 0x000A            # ---------- RemoveFabric ----------
         var index = val.findsubval(0)     # FabricIndex
+        ctx.log = "fabric_index:"+str(index)
 
         for fab: self.device.sessions.active_fabrics()
           if fab.get_fabric_index() == index
@@ -533,7 +534,6 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
         ctx.status = matter.INVALID_ACTION
-        ctx.log = "fabric_index:"+str(index)
         return nil                      # trigger a standalone ack
 
       end
