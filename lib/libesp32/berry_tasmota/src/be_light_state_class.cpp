@@ -44,9 +44,9 @@ extern void ls_set_reachable(class LightStateClass* l, int32_t pow); BE_FUNC_CTY
 
 extern void ls_signal_change(void) {} BE_FUNC_CTYPE_DECLARE(ls_signal_change, "", ".");
 
-extern int32_t ls_gamma8(int32_t val);      BE_FUNC_CTYPE_DECLARE(ls_gamma8, "i", "-i")
-extern int32_t ls_gamma10(int32_t val);     BE_FUNC_CTYPE_DECLARE(ls_gamma10, "i", "-i")
-extern int32_t ls_rev_gamma10(int32_t val); BE_FUNC_CTYPE_DECLARE(ls_rev_gamma10, "i", "-i")
+extern int32_t ls_gamma8(int32_t val);      BE_FUNC_CTYPE_DECLARE(ls_gamma8, "i", "i")
+extern int32_t ls_gamma10(int32_t val);     BE_FUNC_CTYPE_DECLARE(ls_gamma10, "i", "i")
+extern int32_t ls_rev_gamma10(int32_t val); BE_FUNC_CTYPE_DECLARE(ls_rev_gamma10, "i", "i")
 
 //  moved to constants array
 const be_const_member_t light_state_members[] = {
@@ -112,9 +112,9 @@ class be_class_light_state (scope: global, name: light_state) {
 
   signal_change, ctype_func(ls_signal_change)
 
-  gamma8, ctype_func(ls_gamma8)
-  gamma10, ctype_func(ls_gamma10)
-  reverse_gamma10, ctype_func(ls_rev_gamma10)
+  gamma8, static_ctype_func(ls_gamma8)
+  gamma10, static_ctype_func(ls_gamma10)
+  reverse_gamma10, static_ctype_func(ls_rev_gamma10)
 }
 @const_object_info_end */
 
