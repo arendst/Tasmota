@@ -17,13 +17,13 @@ assert(l.power == false)
 l.set_power(true)
 assert(l.power == true)
 
-import hue_ntv
-print(l._p)
-print(hue_ntv.light_state(l))
+# import hue_ntv
+# print(l._p)
+# print(hue_ntv.light_state(l))
 
-print(hue_ntv.full_state(3, l, "aaa", "bbb", "ccc"))
+# print(hue_ntv.full_state(3, l, "aaa", "bbb", "ccc"))
 
-
+import hue_bridge
 hue_bridge.add_light(10, l, "Synthetic Light", "V1", "DeadParrot")
 
 l1 = light_state(light_state.DIMMER)

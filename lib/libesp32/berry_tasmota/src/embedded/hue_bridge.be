@@ -23,7 +23,7 @@ hue_bridge.init = def (m)
       if !manuf     manuf = "Tasmota" end
 
       self.lights[id] = { 'light': light, 'name':name, 'model': str(model), 'manuf':str(manuf) }
-      light
+      return light
     end
 
     def remove_light(id)
