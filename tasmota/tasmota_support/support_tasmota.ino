@@ -320,12 +320,12 @@ void SetDevicePower(power_t rpower, uint32_t source) {
       bool update = true;
       if (bitRead(TasmotaGlobal.rel_bistable, port)) {
         if (Settings->flag6.bistable_single_pin) {  // SetOption152 - (Power) Use single pin bistable
-          if (0x80000000 == TasmotaGlobal.power_bistable) {
-            TasmotaGlobal.power_bistable = TasmotaGlobal.power;  // Init last known state
+          if (0x80000000 == TasmotaGlobal.power_latching) {
+            TasmotaGlobal.power_latching = TasmotaGlobal.power;  // Init last known state
           }
-          update = (bitRead(TasmotaGlobal.power_bistable, port) != state);
+          update = (bitRead(TasmotaGlobal.power_latching, port) != state);
           if (update) {
-            bitWrite(TasmotaGlobal.power_bistable, port, state);
+            bitWrite(TasmotaGlobal.power_latching, port, state);
             bitSet(bistable, port);
           }
 
@@ -418,6 +418,7 @@ void SetPowerOnState(void)
   } else {
     power_t devices_mask = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     if (ResetReasonPowerOn()) {
+      TasmotaGlobal.power_latching = 0;   // Single pin latching relay is powered off after re-applying power
       switch (Settings->poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:

@@ -254,7 +254,7 @@ struct TasmotaGlobal_t {
   void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings->power
-  power_t power_bistable;                   // Current state of single pin bistable power
+  power_t power_latching;                   // Current state of single pin latching power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
   power_t rel_bistable;                     // Relay bistable bitmap
   power_t last_power;                       // Last power set state
@@ -431,7 +431,7 @@ void setup(void) {
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
   TasmotaGlobal.enable_logging = 1;
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
-  TasmotaGlobal.power_bistable = 0x80000000;
+  TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {

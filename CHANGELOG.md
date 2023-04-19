@@ -6,8 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [12.5.0.1]
 ### Added
 - Matter sensors Humidity, Pressure, Illuminance; optimize memory (#18441)
-- Command ``SetOption152 0/1`` to select two (default) or one pin bistable relay control (#18386)
-- Matter allow `Matter#Initialized` rule once the device is configured
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control (#18386)
+- Matter allow `Matter#Initialized` rule once the device is configured (#18451)
 
 ### Breaking Changed
 
