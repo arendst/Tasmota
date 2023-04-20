@@ -28,5 +28,11 @@ def bin_map_copy(source, target, env):
     shutil.move(tasmotapiolib.get_source_map_path(env), map_file)
     if env["PIOPLATFORM"] == "espressif32":
         shutil.copy(factory, one_bin_file)
-
+        # Print Metrics for firmware using "map" file
+        import esp_idf_size
+        CYAN = '\033[96m'
+        ENDC = '\033[0m'
+        print(CYAN + "=============================================================================================" + ENDC)
+        env.Execute("$PYTHONEXE -m esp_idf_size " + str(map_file.resolve()))
+        print(CYAN + "=============================================================================================" + ENDC)
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", bin_map_copy)
