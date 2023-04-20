@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 Framework (Core) from v2.0.7 to v2.0.8
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
