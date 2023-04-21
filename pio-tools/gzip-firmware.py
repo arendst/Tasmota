@@ -20,6 +20,10 @@ def map_gzip(source, target, env):
         with map_file.open("rb") as fp:
             with gzip.open(gzip_file, "wb", compresslevel=9) as f:
                 shutil.copyfileobj(fp, f)
+        if env["PIOPLATFORM"] == "espressif32":
+            # Print Metrics for firmware using "map" file
+            import tasmota_metrics
+            env.Execute("$PYTHONEXE -m tasmota_metrics " + str(map_file.resolve()))
 
         # remove map file
         if map_file.is_file():
