@@ -30,3 +30,10 @@ m.remove(2)
 assert(str(m) == '{1: 2}')
 m.remove(1)
 assert(str(m) == '{}')
+
+# allow booleans to be used as keys
+m={true:10, false:20}
+assert(m.contains(true))
+assert(m.contains(false))
+assert(m[true] == 10)
+assert(m[false] == 20)
