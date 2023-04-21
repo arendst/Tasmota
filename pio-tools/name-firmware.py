@@ -25,7 +25,10 @@ def bin_map_copy(source, target, env):
 
     # copy firmware.bin and map to final destination
     shutil.copy(firsttarget, bin_file)
-    shutil.copy(tasmotapiolib.get_source_map_path(env), map_file)
     if env["PIOPLATFORM"] == "espressif32":
+        # the map file is needed later for fimrmware-metrics.py
+        shutil.copy(tasmotapiolib.get_source_map_path(env), map_file)
         shutil.copy(factory, one_bin_file)
+    else:
+        shutil.move(tasmotapiolib.get_source_map_path(env), map_file)
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", bin_map_copy)
