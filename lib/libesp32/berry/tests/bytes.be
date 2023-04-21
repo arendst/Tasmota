@@ -248,3 +248,12 @@ assert(bytes("0011223344").reverse(1, nil) == bytes("0044332211"))
 
 assert(bytes("0011223344").reverse(nil, nil, 2) == bytes("2233001144"))
 assert(bytes("001122334455").reverse(nil, nil, 3) == bytes("334455001122"))
+
+# tobool returns `true` is bytes() is not null, `false` if empty
+assert(bool(bytes()) == false)
+assert(bytes().tobool() == false)
+assert(!bytes())
+
+assert(bool(bytes("00")) == true)
+assert(bytes("01").tobool() == true)
+assert(bytes("02"))
