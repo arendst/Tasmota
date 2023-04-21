@@ -765,7 +765,6 @@ BERRY_API bint be_str2int(const char *str, const char **endstr);
  * @return (???)
  */
 BERRY_API breal be_str2real(const char *str, const char **endstr);
-BERRY_API const char *be_str2num(bvm *vm, const char *str);
 
 /**
  * @fn const char* be_str2num(bvm *vm, const char *str)
@@ -791,7 +790,6 @@ BERRY_API const char* be_str2num(bvm *vm, const char *str);
  * @return (???)
  */
 BERRY_API int be_top(bvm *vm);
-
 
 /**
  * @fn const char* be_typename(bvm *vm, int index)
