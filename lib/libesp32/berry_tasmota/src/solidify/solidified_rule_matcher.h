@@ -789,7 +789,7 @@ be_local_closure(Rule_Matcher_Operator_op_parse,   /* name */
       0x90022C13,  //  005A  SETMBR	R0	K22	R19
       0x70020003,  //  005B  JMP		#0060
       0x60480008,  //  005C  GETGBL	R18	G8
-      0x5C4C0200,  //  005D  MOVE	R19	R1
+      0x5C4C0400,  //  005D  MOVE	R19	R2
       0x7C480200,  //  005E  CALL	R18	1
       0x90022C12,  //  005F  SETMBR	R0	K22	R18
       0x80000000,  //  0060  RET	0
