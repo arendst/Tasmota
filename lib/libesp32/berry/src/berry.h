@@ -238,7 +238,6 @@ struct bclass;
  * @brief we need only the pointer to `bclass` here
  */
 typedef const struct bclass *bclass_ptr;
-typedef bclass_ptr bclass_array[];              /* array of bclass* pointers, NULL terminated */
 
 /**
  * @brief array of bclass* pointers, NULL terminated
