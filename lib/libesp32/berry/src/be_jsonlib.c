@@ -202,6 +202,7 @@ static const char* parser_string(bvm *vm, const char *json)
 
 static const char* parser_field(bvm *vm, const char *json)
 {
+    be_stack_require(vm, 2 + BE_STACK_FREE_MIN);
     if (json && *json == '"') {
         json = parser_string(vm, json);
         if (json) {
@@ -368,6 +369,11 @@ static const char* parser_number(bvm *vm, const char *json)
 static const char* parser_value(bvm *vm, const char *json)
 {
     json = skip_space(json);
+    /*
+      Each value will push at least one thig to the stack, so we must ensure it's big enough.
+      We need to take special care to extend the stack in values which have variable length (arrays and objects)
+    */
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
     switch (*json) {
     case '{': /* object */
         return parser_object(vm, json);
@@ -404,6 +410,7 @@ static int m_json_load(bvm *vm)
 static void make_indent(bvm *vm, int stridx, int indent)
 {
     if (indent) {
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         char buf[MAX_INDENT * INDENT_WIDTH + 1];
         indent = (indent < MAX_INDENT ? indent : MAX_INDENT) * INDENT_WIDTH;
         memset(buf, INDENT_CHAR, indent);
@@ -417,6 +424,7 @@ static void make_indent(bvm *vm, int stridx, int indent)
 
 void string_dump(bvm *vm, int index)
 {
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
     be_tostring(vm, index); /* convert value to string */
     be_toescape(vm, index, 'u');
     be_pushvalue(vm, index);
@@ -424,11 +432,14 @@ void string_dump(bvm *vm, int index)
 
 static void object_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+
+    be_stack_require(vm, 3 + BE_STACK_FREE_MIN); /* 3 pushes outside the loop */
     be_getmember(vm, idx, ".p");
     be_pushstring(vm, fmt ? "{\n" : "{");
     be_pushiter(vm, -2); /* map iterator use 1 register */
     *indent += fmt;
     while (be_iter_hasnext(vm, -3)) {
+        be_stack_require(vm, 3 + BE_STACK_FREE_MIN); /* 3 pushes inside the loop */
         make_indent(vm, -2, fmt ? *indent : 0);
         be_iter_next(vm, -3);
         /* key.tostring() */
@@ -463,6 +474,7 @@ static void object_dump(bvm *vm, int *indent, int idx, int fmt)
 
 static void array_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+    be_stack_require(vm, 3 + BE_STACK_FREE_MIN); 
     be_getmember(vm, idx, ".p");
     be_pushstring(vm, fmt ? "[\n" : "[");
     be_pushiter(vm, -2);
@@ -473,6 +485,7 @@ static void array_dump(bvm *vm, int *indent, int idx, int fmt)
         value_dump(vm, indent, -1, fmt);
         be_strconcat(vm, -4);
         be_pop(vm, 2);
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         if (be_iter_hasnext(vm, -3)) {
             be_pushstring(vm, fmt ? ",\n" : ",");
             be_strconcat(vm, -3);
@@ -494,13 +507,16 @@ static void array_dump(bvm *vm, int *indent, int idx, int fmt)
 
 static void value_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+    // be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
     if (is_object(vm, "map", idx)) { /* convert to json object */
         object_dump(vm, indent, idx, fmt);
     } else if (is_object(vm, "list", idx)) { /* convert to json array */
         array_dump(vm, indent, idx, fmt);
     } else if (be_isnil(vm, idx)) { /* convert to json null */
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_pushstring(vm, "null");
     } else if (be_isnumber(vm, idx) || be_isbool(vm, idx)) { /* convert to json number and boolean */
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_tostring(vm, idx);
         be_pushvalue(vm, idx); /* push to top */
     } else { /* convert to string */
