@@ -137,7 +137,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         logbuf("%s", opc2str(op));
         break;
     }
-    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf));
+    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf)+1);
     logbuf("%s\n", __lbuf_tmp);
     if (fout) {
         be_fwrite(fout, __lbuf, strlen(__lbuf));
