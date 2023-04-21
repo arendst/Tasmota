@@ -1191,6 +1191,6 @@
 
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "平均辐射剂量"
-#define D_UNIT_US_H                       "uSv/h"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_ZH_CN_H_

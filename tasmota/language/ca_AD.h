@@ -1191,6 +1191,6 @@
 
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "dosi mitjana de radiació"
-#define D_UNIT_US_H                       "uSv/h"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_CA_AD_H_
