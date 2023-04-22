@@ -111,10 +111,6 @@ class Matter_Device
     tasmota.add_driver(self)
 
     self.register_commands()
-
-    if self.sessions.count_active_fabrics() > 0
-      self.plugins_persist = true    # if there are active fabrics, then we persist plugins configuration
-    end
   end
 
   #############################################################
@@ -983,6 +979,10 @@ class Matter_Device
     tasmota.log("MTR: autoconfig = " + str(config), 3)
     self._load_plugins_config(config)
 
+    if !self.plugins_persist && self.sessions.count_active_fabrics() > 0
+      self.plugins_persist = true
+      self.save_param()
+    end
   end
 
   #############################################################
