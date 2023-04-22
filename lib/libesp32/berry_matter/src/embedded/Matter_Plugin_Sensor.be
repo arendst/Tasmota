@@ -31,10 +31,12 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
 
   #############################################################
   # Constructor
-  def init(device, endpoint, sensor_filter)
-    super(self).init(device, endpoint)
-    self.tasmota_sensor_filter = sensor_filter
-    self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(sensor_filter)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
+    self.tasmota_sensor_filter = arguments.find('filter')
+    if self.tasmota_sensor_filter
+      self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
+    end
   end
 
   #############################################################
@@ -70,6 +72,17 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
     return val
+  end
+
+  #############################################################
+  # to_json_parameters
+  #
+  # To be overriden.
+  # returns a json sub-string to add after endpoint and type name
+  def to_json_parameters(s)
+    import string
+    s += string.format(',"filter":"%s"', self.tasmota_sensor_filter)
+    return s
   end
 
 end

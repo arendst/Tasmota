@@ -25,6 +25,7 @@ class Matter_Plugin_Light0 end
 #@ solidify:Matter_Plugin_Light1,weak
 
 class Matter_Plugin_Light1 : Matter_Plugin_Light0
+  static var NAME = "light1"                        # name of the plug-in in json
   static var CLUSTERS  = {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -40,8 +41,8 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
   #############################################################
   # Constructor
-  def init(device, endpoint)
-    super(self).init(device, endpoint)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
     self.shadow_bri = 0
   end
 

@@ -7,6 +7,101 @@
 extern const bclass be_class_Matter_Plugin_OnOff;
 
 /********************************************************************
+** Solidified function: get_onoff
+********************************************************************/
+be_local_closure(Matter_Plugin_OnOff_get_onoff,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(get_power),
+    /* K2   */  be_nested_str_weak(tasmota_relay_index),
+    /* K3   */  be_nested_str_weak(shadow_onoff),
+    /* K4   */  be_nested_str_weak(onoff_changed),
+    }),
+    be_str_weak(get_onoff),
+    &be_const_str_solidified,
+    ( &(const binstruction[28]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x880C0102,  //  0002  GETMBR	R3	R0	K2
+      0x7C040400,  //  0003  CALL	R1	2
+      0x4C080000,  //  0004  LDNIL	R2
+      0x20080202,  //  0005  NE	R2	R1	R2
+      0x780A000C,  //  0006  JMPF	R2	#0014
+      0x88080103,  //  0007  GETMBR	R2	R0	K3
+      0x4C0C0000,  //  0008  LDNIL	R3
+      0x20080403,  //  0009  NE	R2	R2	R3
+      0x780A0007,  //  000A  JMPF	R2	#0013
+      0x88080103,  //  000B  GETMBR	R2	R0	K3
+      0x600C0017,  //  000C  GETGBL	R3	G23
+      0x5C100200,  //  000D  MOVE	R4	R1
+      0x7C0C0200,  //  000E  CALL	R3	1
+      0x20080403,  //  000F  NE	R2	R2	R3
+      0x780A0001,  //  0010  JMPF	R2	#0013
+      0x8C080104,  //  0011  GETMET	R2	R0	K4
+      0x7C080200,  //  0012  CALL	R2	1
+      0x90020601,  //  0013  SETMBR	R0	K3	R1
+      0x88080103,  //  0014  GETMBR	R2	R0	K3
+      0x4C0C0000,  //  0015  LDNIL	R3
+      0x1C080403,  //  0016  EQ	R2	R2	R3
+      0x780A0001,  //  0017  JMPF	R2	#001A
+      0x50080000,  //  0018  LDBOOL	R2	0	0
+      0x90020602,  //  0019  SETMBR	R0	K3	R2
+      0x88080103,  //  001A  GETMBR	R2	R0	K3
+      0x80040400,  //  001B  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_onoff
+********************************************************************/
+be_local_closure(Matter_Plugin_OnOff_set_onoff,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(set_power),
+    /* K2   */  be_nested_str_weak(tasmota_relay_index),
+    /* K3   */  be_nested_str_weak(get_onoff),
+    }),
+    be_str_weak(set_onoff),
+    &be_const_str_solidified,
+    ( &(const binstruction[10]) {  /* code */
+      0xB80A0000,  //  0000  GETNGBL	R2	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x60140017,  //  0003  GETGBL	R5	G23
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x7C140200,  //  0005  CALL	R5	1
+      0x7C080600,  //  0006  CALL	R2	3
+      0x8C080103,  //  0007  GETMET	R2	R0	K3
+      0x7C080200,  //  0008  CALL	R2	1
+      0x80000000,  //  0009  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
 be_local_closure(Matter_Plugin_OnOff_invoke_request,   /* name */
@@ -163,56 +258,49 @@ be_local_closure(Matter_Plugin_OnOff_invoke_request,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_onoff
+** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Plugin_OnOff_get_onoff,   /* name */
+be_local_closure(Matter_Plugin_OnOff_init,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
+    9,                          /* nstack */
+    4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(get_power),
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(get_onoff),
     /* K2   */  be_nested_str_weak(tasmota_relay_index),
-    /* K3   */  be_nested_str_weak(shadow_onoff),
-    /* K4   */  be_nested_str_weak(onoff_changed),
+    /* K3   */  be_nested_str_weak(find),
+    /* K4   */  be_nested_str_weak(relay),
+    /* K5   */  be_const_int(0),
     }),
-    be_str_weak(get_onoff),
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[28]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x880C0102,  //  0002  GETMBR	R3	R0	K2
-      0x7C040400,  //  0003  CALL	R1	2
-      0x4C080000,  //  0004  LDNIL	R2
-      0x20080202,  //  0005  NE	R2	R1	R2
-      0x780A000C,  //  0006  JMPF	R2	#0014
-      0x88080103,  //  0007  GETMBR	R2	R0	K3
-      0x4C0C0000,  //  0008  LDNIL	R3
-      0x20080403,  //  0009  NE	R2	R2	R3
-      0x780A0007,  //  000A  JMPF	R2	#0013
-      0x88080103,  //  000B  GETMBR	R2	R0	K3
-      0x600C0017,  //  000C  GETGBL	R3	G23
-      0x5C100200,  //  000D  MOVE	R4	R1
-      0x7C0C0200,  //  000E  CALL	R3	1
-      0x20080403,  //  000F  NE	R2	R2	R3
-      0x780A0001,  //  0010  JMPF	R2	#0013
-      0x8C080104,  //  0011  GETMET	R2	R0	K4
-      0x7C080200,  //  0012  CALL	R2	1
-      0x90020601,  //  0013  SETMBR	R0	K3	R1
-      0x88080103,  //  0014  GETMBR	R2	R0	K3
-      0x4C0C0000,  //  0015  LDNIL	R3
-      0x1C080403,  //  0016  EQ	R2	R2	R3
-      0x780A0001,  //  0017  JMPF	R2	#001A
-      0x50080000,  //  0018  LDBOOL	R2	0	0
-      0x90020602,  //  0019  SETMBR	R0	K3	R2
-      0x88080103,  //  001A  GETMBR	R2	R0	K3
-      0x80040400,  //  001B  RET	1	R2
+    ( &(const binstruction[20]) {  /* code */
+      0x60100003,  //  0000  GETGBL	R4	G3
+      0x5C140000,  //  0001  MOVE	R5	R0
+      0x7C100200,  //  0002  CALL	R4	1
+      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x5C1C0400,  //  0005  MOVE	R7	R2
+      0x5C200600,  //  0006  MOVE	R8	R3
+      0x7C100800,  //  0007  CALL	R4	4
+      0x8C100101,  //  0008  GETMET	R4	R0	K1
+      0x7C100200,  //  0009  CALL	R4	1
+      0x8C100703,  //  000A  GETMET	R4	R3	K3
+      0x58180004,  //  000B  LDCONST	R6	K4
+      0x7C100400,  //  000C  CALL	R4	2
+      0x90020404,  //  000D  SETMBR	R0	K2	R4
+      0x88100102,  //  000E  GETMBR	R4	R0	K2
+      0x4C140000,  //  000F  LDNIL	R5
+      0x1C100805,  //  0010  EQ	R4	R4	R5
+      0x78120000,  //  0011  JMPF	R4	#0013
+      0x90020505,  //  0012  SETMBR	R0	K2	K5
+      0x80000000,  //  0013  RET	0
     })
   )
 );
@@ -252,9 +340,9 @@ be_local_closure(Matter_Plugin_OnOff_onoff_changed,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_onoff
+** Solidified function: to_json_parameters
 ********************************************************************/
-be_local_closure(Matter_Plugin_OnOff_set_onoff,   /* name */
+be_local_closure(Matter_Plugin_OnOff_to_json_parameters,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -265,24 +353,49 @@ be_local_closure(Matter_Plugin_OnOff_set_onoff,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(set_power),
-    /* K2   */  be_nested_str_weak(tasmota_relay_index),
-    /* K3   */  be_nested_str_weak(get_onoff),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(format),
+    /* K2   */  be_nested_str_weak(_X2C_X22relay_X22_X3A_X25i),
+    /* K3   */  be_nested_str_weak(tasmota_relay_index),
     }),
-    be_str_weak(set_onoff),
+    be_str_weak(to_json_parameters),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0xB80A0000,  //  0000  GETNGBL	R2	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
-      0x60140017,  //  0003  GETGBL	R5	G23
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x7C140200,  //  0005  CALL	R5	1
-      0x7C080600,  //  0006  CALL	R2	3
-      0x8C080103,  //  0007  GETMET	R2	R0	K3
-      0x7C080200,  //  0008  CALL	R2	1
-      0x80000000,  //  0009  RET	0
+    ( &(const binstruction[ 7]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x8C0C0501,  //  0001  GETMET	R3	R2	K1
+      0x58140002,  //  0002  LDCONST	R5	K2
+      0x88180103,  //  0003  GETMBR	R6	R0	K3
+      0x7C0C0600,  //  0004  CALL	R3	3
+      0x00040203,  //  0005  ADD	R1	R1	R3
+      0x80040200,  //  0006  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: every_second
+********************************************************************/
+be_local_closure(Matter_Plugin_OnOff_every_second,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(get_onoff),
+    }),
+    be_str_weak(every_second),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 3]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0x80000000,  //  0002  RET	0
     })
   )
 );
@@ -503,95 +616,24 @@ be_local_closure(Matter_Plugin_OnOff_read_attribute,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Matter_Plugin_OnOff_init,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(get_onoff),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(tasmota_relay_index),
-    }),
-    be_str_weak(init),
-    &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x5C1C0400,  //  0005  MOVE	R7	R2
-      0x7C100600,  //  0006  CALL	R4	3
-      0x8C100101,  //  0007  GETMET	R4	R0	K1
-      0x7C100200,  //  0008  CALL	R4	1
-      0x4C100000,  //  0009  LDNIL	R4
-      0x1C100604,  //  000A  EQ	R4	R3	R4
-      0x78120000,  //  000B  JMPF	R4	#000D
-      0x580C0002,  //  000C  LDCONST	R3	K2
-      0x90020603,  //  000D  SETMBR	R0	K3	R3
-      0x80000000,  //  000E  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: every_second
-********************************************************************/
-be_local_closure(Matter_Plugin_OnOff_every_second,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(get_onoff),
-    }),
-    be_str_weak(every_second),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0x80000000,  //  0002  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_Plugin_OnOff
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin;
 be_local_class(Matter_Plugin_OnOff,
     2,
     &be_class_Matter_Plugin,
-    be_nested_map(11,
+    be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(shadow_onoff, -1), be_const_var(1) },
+        { be_const_key_weak(tasmota_relay_index, -1), be_const_var(0) },
+        { be_const_key_weak(get_onoff, -1), be_const_closure(Matter_Plugin_OnOff_get_onoff_closure) },
         { be_const_key_weak(every_second, -1), be_const_closure(Matter_Plugin_OnOff_every_second_closure) },
-        { be_const_key_weak(get_onoff, 8), be_const_closure(Matter_Plugin_OnOff_get_onoff_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_OnOff_init_closure) },
-        { be_const_key_weak(shadow_onoff, 5), be_const_var(1) },
-        { be_const_key_weak(TYPES, 7), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(266, -1), be_const_int(2) },
-    }))    ) } )) },
         { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_OnOff_read_attribute_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_OnOff_invoke_request_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_OnOff_init_closure) },
+        { be_const_key_weak(onoff_changed, -1), be_const_closure(Matter_Plugin_OnOff_onoff_changed_closure) },
+        { be_const_key_weak(to_json_parameters, -1), be_const_closure(Matter_Plugin_OnOff_to_json_parameters_closure) },
+        { be_const_key_weak(NAME, 3), be_nested_str_weak(relay) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -630,10 +672,12 @@ be_local_class(Matter_Plugin_OnOff,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(set_onoff, -1), be_const_closure(Matter_Plugin_OnOff_set_onoff_closure) },
-        { be_const_key_weak(onoff_changed, -1), be_const_closure(Matter_Plugin_OnOff_onoff_changed_closure) },
-        { be_const_key_weak(tasmota_relay_index, 2), be_const_var(0) },
-        { be_const_key_weak(invoke_request, 0), be_const_closure(Matter_Plugin_OnOff_invoke_request_closure) },
+        { be_const_key_weak(set_onoff, 4), be_const_closure(Matter_Plugin_OnOff_set_onoff_closure) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(266, -1), be_const_int(2) },
+    }))    ) } )) },
     })),
     be_str_weak(Matter_Plugin_OnOff)
 );

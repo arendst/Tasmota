@@ -32,9 +32,9 @@ class Matter_Plugin_Device : Matter_Plugin
 
   #############################################################
   # Constructor
-  def init(device, endpoint, tasmota_relay_index)
-    super(self).init(device, endpoint)
-  end
+  # def init(device, endpoint, arguments)
+  #   super(self).init(device, endpoint, arguments)
+  # end
 
   #############################################################
   # read an attribute

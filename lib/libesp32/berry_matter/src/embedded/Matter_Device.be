@@ -29,8 +29,10 @@ class Matter_Device
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
   var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
   var plugins                         # list of plugins
+  var plugins_persist                 # true if plugins configuration needs to be saved
+  var plugins_classes                 # map of registered classes by type name
   var udp_server                      # `matter.UDPServer()` object
-  var message_handler                     # `matter.MessageHandler()` object
+  var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
   # Commissioning open
@@ -73,14 +75,17 @@ class Matter_Device
 
     self.started = false
     self.plugins = []
+    self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
+    self.plugins_classes = {}
+    self.register_native_classes()                # register all native classes
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.root_iterations = self.PBKDF_ITERATIONS
-    self.root_salt = crypto.random(16)         # bytes("5350414B453250204B65792053616C74")
+    self.root_salt = crypto.random(16)
     self.ipv4only = false
     self.load_param()
 
-    self.sessions = matter.Session_Store()
+    self.sessions = matter.Session_Store(self)
     self.sessions.load_fabrics()
     self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
@@ -106,6 +111,10 @@ class Matter_Device
     tasmota.add_driver(self)
 
     self.register_commands()
+
+    if self.sessions.count_active_fabrics() > 0
+      self.plugins_persist = true    # if there are active fabrics, then we persist plugins configuration
+    end
   end
 
   #############################################################
@@ -113,9 +122,7 @@ class Matter_Device
   def start()
     if self.started  return end      # abort if already started
 
-    # add the default plugin
-    self.plugins.push(matter.Plugin_Root(self, 0))
-    # autoconfigure other plugins
+    # autoconfigure other plugins if needed
     self.autoconf_device()
 
     # for now read sensors every 30 seconds
@@ -596,13 +603,18 @@ class Matter_Device
   #############################################################
   # 
   def save_param()
-    import json
-    var j = json.dump({'distinguish':self.root_discriminator, 'passcode':self.root_passcode, 'ipv4only':self.ipv4only})
+    import string
+    var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false')
+    if self.plugins_persist
+      j += ',"config":'
+      j += self.plugins_to_json()
+    end
+    j += '}'
     try
-      import string
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
+      tasmota.log(string.format("MTR: =Saved     parameters%s", self.plugins_persist ? " and condiguration" : ""), 2)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
@@ -627,6 +639,11 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      var config = j.find("config")
+      if config
+        self._load_plugins_config(config)
+        self.plugins_persist = true
+      end
     except .. as e, m
       if e != "io_error"
         tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
@@ -645,6 +662,44 @@ class Matter_Device
     if dirty    self.save_param() end
   end
 
+  #############################################################
+  # Load plugins configuration from json
+  #
+  # 'config' is a map
+  # Ex:
+  #   {'32': {'filter': 'AXP192#Temperature', 'type': 'temperature'}, '40': {'filter': 'BMP280#Pressure', 'type': 'pressure'}, '34': {'filter': 'SHT3X#Temperature', 'type': 'temperature'}, '33': {'filter': 'BMP280#Temperature', 'type': 'temperature'}, '1': {'relay': 0, 'type': 'relay'}, '56': {'filter': 'SHT3X#Humidity', 'type': 'humidity'}, '0': {'type': 'root'}}
+  def _load_plugins_config(config)
+    import string
+    
+    var endpoints = self.k2l_num(config)
+    tasmota.log("MTR: endpoints to be configured "+str(endpoints), 3)
+
+    for ep: endpoints
+      try
+        var plugin_conf = config[str(ep)]
+        tasmota.log(string.format("MTR: endpoint %i config %s", ep, plugin_conf), 3)
+
+        var pi_class_name = plugin_conf.find('type')
+        if pi_class_name == nil   tasmota.log("MTR: no class name, skipping", 3)  continue end
+        var pi_class = self.plugins_classes.find(pi_class_name)
+        if pi_class == nil        tasmota.log("MTR: unknown class name '"+str(pi_class_name)+"' skipping", 2)  continue  end
+
+        var pi = pi_class(self, ep, plugin_conf)
+        self.plugins.push(pi)
+
+        var param_log = ''
+        for k:self.k2l(plugin_conf)
+          if k == 'type'  continue  end
+          param_log += string.format(" %s:%s", k, plugin_conf[k])
+        end
+        tasmota.log(string.format("MTR: endpoint:%i type:%s%s", ep, pi_class_name, param_log), 2)
+      except .. as e, m
+        tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
+      end
+    end
+
+    tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+  end
 
   #############################################################
   # Matter plugin management
@@ -916,9 +971,31 @@ class Matter_Device
   #############################################################
   # Autoconfigure device from template
   #
+  # Applies only if there are no plugins already configured
+  ## TODO generate map instead
   def autoconf_device()
     import string
     import json
+
+    if size(self.plugins) > 0   return end                    # already configured
+
+    var config = self.autoconf_device_map()
+    tasmota.log("MTR: autoconfig = " + str(config), 3)
+    self._load_plugins_config(config)
+
+  end
+
+  #############################################################
+  # Autoconfigure device from template to map
+  #
+  # Applies only if there are no plugins already configured
+  def autoconf_device_map()
+    import json
+    var m = {}
+
+    # add the default plugin
+    m["0"] = {'type':'root'}
+
     # check if we have a light
     var endpoint = 1
     var light_present = false
@@ -929,14 +1006,11 @@ class Matter_Device
       var channels_count = size(light_status.find('channels', ""))
       if channels_count > 0
         if   channels_count == 1
-          self.plugins.push(matter.Plugin_Light1(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_Dimmer", endpoint), 2)
+          m[str(endpoint)] = {'type':'light1'}
         elif channels_count == 2
-          self.plugins.push(matter.Plugin_Light2(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_CT", endpoint), 2)
+          m[str(endpoint)] = {'type':'light2'}
         else
-          self.plugins.push(matter.Plugin_Light3(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_RGB", endpoint), 2)
+          m[str(endpoint)] = {'type':'light3'}
         end
         light_present = true
         endpoint += 1
@@ -949,8 +1023,7 @@ class Matter_Device
     if light_present    relay_count -= 1  end       # last power is taken for lights
 
     while relay_index < relay_count
-      self.plugins.push(matter.Plugin_OnOff(self, endpoint, relay_index))
-      tasmota.log(string.format("MTR: Endpoint:%i Relay_%i", endpoint, relay_index + 1), 2)
+      m[str(endpoint)] = {'type':'relay','relay':relay_index}
       relay_index += 1
       endpoint += 1
     end
@@ -965,8 +1038,7 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
         var temp_rule = k1 + "#Temperature"
-        self.plugins.push(matter.Plugin_Sensor_Temp(self, endpoint, temp_rule))
-        tasmota.log(string.format("MTR: Endpoint:%i Temperature (%s)", endpoint, temp_rule), 2)
+        m[str(endpoint)] = {'type':'temperature','filter':temp_rule}
         endpoint += 1
       end
       if endpoint > 0x28 break end
@@ -979,8 +1051,7 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Pressure")
         var temp_rule = k1 + "#Pressure"
-        self.plugins.push(matter.Plugin_Sensor_Pressure(self, endpoint, temp_rule))
-        tasmota.log(string.format("MTR: Endpoint:%i Pressure (%s)", endpoint, temp_rule), 2)
+        m[str(endpoint)] = {'type':'pressure','filter':temp_rule}
         endpoint += 1
       end
       if endpoint > 0x2F break end
@@ -993,8 +1064,7 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Illuminance")
         var temp_rule = k1 + "#Illuminance"
-        self.plugins.push(matter.Plugin_Sensor_Light(self, endpoint, temp_rule))
-        tasmota.log(string.format("MTR: Endpoint:%i Light (%s)", endpoint, temp_rule), 2)
+        m[str(endpoint)] = {'type':'illuminance','filter':temp_rule}
         endpoint += 1
       end
       if endpoint > 0x38 break end
@@ -1007,18 +1077,78 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Humidity")
         var temp_rule = k1 + "#Humidity"
-        self.plugins.push(matter.Plugin_Sensor_Humidity(self, endpoint, temp_rule))
-        tasmota.log(string.format("MTR: Endpoint:%i Humidity (%s)", endpoint, temp_rule), 2)
+        m[str(endpoint)] = {'type':'humidity','filter':temp_rule}
         endpoint += 1
       end
       if endpoint > 0x40 break end
     end
-    tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+    return m
   end
 
   # get keys of a map in sorted order
   static def k2l(m) var l=[] if m==nil return l end for k:m.keys() l.push(k) end
     for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
+  # get keys of a map in sorted order, as numbers
+  static def k2l_num(m) var l=[] if m==nil return l end for k:m.keys() l.push(int(k)) end
+    for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
+  #############################################################
+  # plugins_to_json
+  #
+  # Export plugins configuration as a JSON string
+  def plugins_to_json()
+    import string
+    var s = '{'
+    var i = 0
+    while i < size(self.plugins)
+      var pi = self.plugins[i]
+      if i > 0    s += ','    end
+      s += string.format('"%i":%s', pi.get_endpoint(), pi.to_json())
+      i += 1
+    end
+    s += '}'
+    return s
+  end
+
+  #############################################################
+  # register_plugin_class
+  #
+  # Adds a class by name
+  def register_plugin_class(name, cl)
+    self.plugins_classes[name] = cl
+  end
+
+  #############################################################
+  # register_native_classes
+  #
+  # Adds a class by name
+  def register_native_classes(name, cl)
+    self.register_plugin_class('root',          matter.Plugin_Root)
+    self.register_plugin_class('light0',        matter.Plugin_Light0)
+    self.register_plugin_class('light1',        matter.Plugin_Light1)
+    self.register_plugin_class('light2',        matter.Plugin_Light2)
+    self.register_plugin_class('light3',        matter.Plugin_Light3)
+    self.register_plugin_class('relay',         matter.Plugin_OnOff)
+    self.register_plugin_class('temperature',   matter.Plugin_Sensor_Temp)
+    self.register_plugin_class('humidity',      matter.Plugin_Sensor_Humidity)
+    self.register_plugin_class('illuminance',   matter.Plugin_Sensor_Illuminance)
+    self.register_plugin_class('pressure',      matter.Plugin_Sensor_Pressure)
+    tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
+  end
+  
+  #####################################################################
+  # Events
+  #####################################################################
+  def event_fabrics_saved()
+    # if the plugins configuration was not persisted and a new fabric is saved, persist it
+    if self.sessions.count_active_fabrics() > 0 && !self.plugins_persist
+      self.plugins_persist = true
+      self.save_param()
+    end
   end
 
   #####################################################################
