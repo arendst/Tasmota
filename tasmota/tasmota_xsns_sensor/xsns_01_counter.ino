@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
-  Copyright (C) 2021  Maarten Damen and Theo Arends
+  Copyright (C) 2023  Maarten Damen and Theo Arends
                       Stefan Bode (Zero-Cross Dimmer)
 
   This program is free software: you can redistribute it and/or modify
@@ -58,7 +58,6 @@ struct AC_ZERO_CROSS_DIMMER {
   /// Time since last ZC pulse to disable gate pin. 0 means no disable.
   uint32_t disable_time_us[MAX_COUNTERS];
   uint8_t  current_state_in_phase[MAX_COUNTERS];  // 0=before fire HIGH, 1=HIGH, 2=after setting LOW
-  uint32_t countInttr = 0;
 } ac_zero_cross_dimmer;
 
 #endif //USE_AC_ZERO_CROSS_DIMMER
@@ -244,7 +243,6 @@ void CounterShow(bool json)
 static const uint32_t GATE_ENABLE_TIME = 100;
 
 uint32_t IRAM_ATTR timer_intr_ESP8266() {
-  ac_zero_cross_dimmer.countInttr++;
   timer_intr();
   return 4000;
 }
@@ -310,9 +308,9 @@ void IRAM_ATTR timer_intr() {
 
 void SyncACDimmer(void)
 {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: ESP32 cycle time %ld, enable: %ld, disable: %ld, phasestate %d, intr: %ld"),
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: ESP32 cycle time %ld, enable: %ld, disable: %ld, phasestate %d"),
     ac_zero_cross_dimmer.cycle_time_us, ac_zero_cross_dimmer.enable_time_us[0], ac_zero_cross_dimmer.disable_time_us[0], 
-    ac_zero_cross_dimmer.current_state_in_phase[0], ac_zero_cross_dimmer.countInttr);
+    ac_zero_cross_dimmer.current_state_in_phase[0]);
 } // end SyncACDimmer
 #endif //USE_AC_ZERO_CROSS_DIMMER
 
