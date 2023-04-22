@@ -1151,8 +1151,8 @@ be_local_closure(Matter_Plugin_Root_write_attribute,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Root_init,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
+    9,                          /* nstack */
+    4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -1164,15 +1164,16 @@ be_local_closure(Matter_Plugin_Root_init,   /* name */
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x600C0003,  //  0000  GETGBL	R3	G3
-      0x5C100000,  //  0001  MOVE	R4	R0
-      0x7C0C0200,  //  0002  CALL	R3	1
-      0x8C0C0700,  //  0003  GETMET	R3	R3	K0
-      0x5C140200,  //  0004  MOVE	R5	R1
-      0x5C180400,  //  0005  MOVE	R6	R2
-      0x7C0C0600,  //  0006  CALL	R3	3
-      0x80000000,  //  0007  RET	0
+    ( &(const binstruction[ 9]) {  /* code */
+      0x60100003,  //  0000  GETGBL	R4	G3
+      0x5C140000,  //  0001  MOVE	R5	R0
+      0x7C100200,  //  0002  CALL	R4	1
+      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x5C1C0400,  //  0005  MOVE	R7	R2
+      0x5C200600,  //  0006  MOVE	R8	R3
+      0x7C100800,  //  0007  CALL	R4	4
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -2073,15 +2074,17 @@ extern const bclass be_class_Matter_Plugin;
 be_local_class(Matter_Plugin_Root,
     0,
     &be_class_Matter_Plugin,
-    be_nested_map(6,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Root_read_attribute_closure) },
-        { be_const_key_weak(write_attribute, -1), be_const_closure(Matter_Plugin_Root_write_attribute_closure) },
+        { be_const_key_weak(read_attribute, 2), be_const_closure(Matter_Plugin_Root_read_attribute_closure) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(root) },
+        { be_const_key_weak(invoke_request, 6), be_const_closure(Matter_Plugin_Root_invoke_request_closure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(22, -1), be_const_int(1) },
     }))    ) } )) },
+        { be_const_key_weak(write_attribute, -1), be_const_closure(Matter_Plugin_Root_write_attribute_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Root_init_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(13,
@@ -2186,7 +2189,6 @@ be_local_class(Matter_Plugin_Root,
         be_const_int(8),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Root_invoke_request_closure) },
     })),
     be_str_weak(Matter_Plugin_Root)
 );

@@ -23,6 +23,7 @@
 #@ solidify:Matter_Plugin,weak
 
 class Matter_Plugin
+  static var NAME = "generic" # name of the plug-in in json
   static var CLUSTERS = {
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
   }
@@ -39,7 +40,10 @@ class Matter_Plugin
   #############################################################
   # Constructor
   #
-  def init(device, endpoint)
+  # device: contains the root device object so the plugin can "call home"
+  # endpoint: (int) the endpoint number (16 bits)
+  # arguments: (map) the map for all complementary arguments that are plugin specific
+  def init(device, endpoint, arguments)
     self.device = device
     self.endpoint = endpoint
     self.clusters = self.consolidate_clusters()
@@ -215,6 +219,31 @@ class Matter_Plugin
   def every_second()
     self.update_shadow()                    # force reading value and sending subscriptions
   end
+
+  #############################################################
+  # to_json
+  #
+  # generate the json string for parameter of the plug-in
+  # this function calls a method to be overriden with custom parameters
+  def to_json()
+    import string
+    var s = string.format('{"type":"%s"', self.NAME)
+    s = self.to_json_parameters(s)
+    s += '}'
+    return s
+  end
+
+  #############################################################
+  # to_json_parameters
+  #
+  # To be overriden.
+  # returns a json sub-string to add after endpoint and type name
+  def to_json_parameters(s)
+    # s += ',"my_param":"my_value"'
+    return s
+  end
+
+
 end
 
 matter.Plugin = Matter_Plugin

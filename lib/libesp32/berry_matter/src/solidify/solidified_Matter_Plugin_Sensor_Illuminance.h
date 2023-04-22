@@ -1,15 +1,42 @@
-/* Solidification of Matter_Plugin_Sensor_Light.h */
+/* Solidification of Matter_Plugin_Sensor_Illuminance.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
 
-extern const bclass be_class_Matter_Plugin_Sensor_Light;
+extern const bclass be_class_Matter_Plugin_Sensor_Illuminance;
+
+/********************************************************************
+** Solidified function: pre_value
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(pre_value),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x80040400,  //  0003  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: valued_changed
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Light_valued_changed,   /* name */
+be_local_closure(Matter_Plugin_Sensor_Illuminance_valued_changed,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -39,36 +66,9 @@ be_local_closure(Matter_Plugin_Sensor_Light_valued_changed,   /* name */
 
 
 /********************************************************************
-** Solidified function: pre_value
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Light_pre_value,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(pre_value),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x60080009,  //  0000  GETGBL	R2	G9
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x80040400,  //  0003  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Light_read_attribute,   /* name */
+be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
@@ -176,22 +176,22 @@ be_local_closure(Matter_Plugin_Sensor_Light_read_attribute,   /* name */
 
 
 /********************************************************************
-** Solidified class: Matter_Plugin_Sensor_Light
+** Solidified class: Matter_Plugin_Sensor_Illuminance
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor;
-be_local_class(Matter_Plugin_Sensor_Light,
+be_local_class(Matter_Plugin_Sensor_Illuminance,
     0,
     &be_class_Matter_Plugin_Sensor,
-    be_nested_map(5,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(valued_changed, 3), be_const_closure(Matter_Plugin_Sensor_Light_valued_changed_closure) },
-        { be_const_key_weak(pre_value, -1), be_const_closure(Matter_Plugin_Sensor_Light_pre_value_closure) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_Light_read_attribute_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(NAME, 1), be_nested_str_weak(illuminance) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_read_attribute_closure) },
+        { be_const_key_weak(TYPES, 5), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(262, -1), be_const_int(2) },
     }))    ) } )) },
+        { be_const_key_weak(valued_changed, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_valued_changed_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -205,14 +205,15 @@ be_local_class(Matter_Plugin_Sensor_Light,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
+        { be_const_key_weak(pre_value, -1), be_const_closure(Matter_Plugin_Sensor_Illuminance_pre_value_closure) },
     })),
-    be_str_weak(Matter_Plugin_Sensor_Light)
+    be_str_weak(Matter_Plugin_Sensor_Illuminance)
 );
 /*******************************************************************/
 
-void be_load_Matter_Plugin_Sensor_Light_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Sensor_Light);
-    be_setglobal(vm, "Matter_Plugin_Sensor_Light");
+void be_load_Matter_Plugin_Sensor_Illuminance_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_Matter_Plugin_Sensor_Illuminance);
+    be_setglobal(vm, "Matter_Plugin_Sensor_Illuminance");
     be_pop(vm, 1);
 }
 /********************************************************************/
