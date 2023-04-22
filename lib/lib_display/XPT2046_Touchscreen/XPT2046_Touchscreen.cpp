@@ -37,11 +37,13 @@ bool XPT2046_Touchscreen::begin(SPIClass &wspi) {
 		_pspi = &wspi;
 	} else {
 #ifndef CONFIG_IDF_TARGET_ESP32C3
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 		if (bus == 1) {
 			_pspi = new SPIClass(HSPI);
 		} else {
 			_pspi = new SPIClass(VSPI);
 		}
+#endif
 #endif
 	}
 	//Serial.printf("sclk=%d  ::  miso=%d,  mosi=%d, irq=%d, bus=%d  ", sclk, miso, mosi, tirqPin, bus);
