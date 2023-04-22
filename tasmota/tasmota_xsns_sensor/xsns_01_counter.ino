@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
-  Copyright (C) 2023  Maarten Damen and Theo Arends
+  Copyright (C) 2021  Maarten Damen and Theo Arends
                       Stefan Bode (Zero-Cross Dimmer)
 
   This program is free software: you can redistribute it and/or modify
@@ -96,14 +96,14 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
         ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
         ac_zero_cross_dimmer.crossed_zero_at = time;
         for (uint8_t i=0; i < MAX_COUNTERS; i++) {
-          ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
           ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1024 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
           // Dimmer is physically off. Skip swich on
           if (ac_zero_cross_dimmer.enable_time_us[i] > 0.95*ac_zero_cross_dimmer.cycle_time_us ) {
-            ac_zero_cross_dimmer.current_state_in_phase[i]++;
+            ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
+            ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.cycle_time_us /2;
+          } else {
+            ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
           }
-          //ac_zero_cross_dimmer.enable_time_us[i] = tmin(ac_zero_cross_dimmer.enable_time_us[i], 0.95*ac_zero_cross_dimmer.cycle_time_us);
-          //ac_zero_cross_dimmer.enable_time_us[i] = tmax(ac_zero_cross_dimmer.enable_time_us[i], 0.15*ac_zero_cross_dimmer.cycle_time_us);
         }
       }
 #endif //USE_AC_ZERO_CROSS_DIMMER
