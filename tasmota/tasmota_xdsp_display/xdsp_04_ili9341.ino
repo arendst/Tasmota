@@ -132,7 +132,7 @@ void ILI9341_InitDriver()
 #endif // ESP32
 
 #ifdef USE_XPT2046
-	  XPT2046_Touch_Init(Pin(GPIO_XPT2046_CS));
+	  XPT2046_Touch_Init(Pin(GPIO_XPT2046_CS),-1,0);
 #endif
 
     tft_init_done = true;
