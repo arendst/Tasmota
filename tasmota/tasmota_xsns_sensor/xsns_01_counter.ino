@@ -99,8 +99,12 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
         for (uint8_t i=0; i < MAX_COUNTERS; i++) {
           ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
           ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1024 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
-          ac_zero_cross_dimmer.enable_time_us[i] = tmin(ac_zero_cross_dimmer.enable_time_us[i], 0.95*ac_zero_cross_dimmer.cycle_time_us);
-          ac_zero_cross_dimmer.enable_time_us[i] = tmax(ac_zero_cross_dimmer.enable_time_us[i], 0.15*ac_zero_cross_dimmer.cycle_time_us);
+          // Dimmer is physically off. Skip swich on
+          if (ac_zero_cross_dimmer.enable_time_us[i] > 0.95*ac_zero_cross_dimmer.cycle_time_us ) {
+            ac_zero_cross_dimmer.current_state_in_phase[i]++;
+          }
+          //ac_zero_cross_dimmer.enable_time_us[i] = tmin(ac_zero_cross_dimmer.enable_time_us[i], 0.95*ac_zero_cross_dimmer.cycle_time_us);
+          //ac_zero_cross_dimmer.enable_time_us[i] = tmax(ac_zero_cross_dimmer.enable_time_us[i], 0.15*ac_zero_cross_dimmer.cycle_time_us);
         }
       }
 #endif //USE_AC_ZERO_CROSS_DIMMER
@@ -285,11 +289,16 @@ void IRAM_ATTR timer_intr() {
     time_since_zc = now - ac_zero_cross_dimmer.crossed_zero_at;
   }
   for (uint8_t i = 0 ; i < MAX_COUNTERS; i++ ) {
-
+    //if (ac_zero_cross_dimmer.enable_time_us[i] > 0.95*ac_zero_cross_dimmer.cycle_time_us) DIMMER OFF
     if (ac_zero_cross_dimmer.enable_time_us[i] != 0 && ac_zero_cross_dimmer.current_state_in_phase[i] == 0 && time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]) {
       digitalWrite(Pin(GPIO_PWM1, i), HIGH);
       // Prevent too short pulses
       ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.enable_time_us[i] + GATE_ENABLE_TIME;
+
+      // If full cycle is required keep pin HIGH, skip LOW by skipping phase
+      if (ac_zero_cross_dimmer.enable_time_us[i] < 0.15 * ac_zero_cross_dimmer.cycle_time_us) {
+        ac_zero_cross_dimmer.current_state_in_phase[i]++;
+      }
       ac_zero_cross_dimmer.current_state_in_phase[i]++;
     }
     if (ac_zero_cross_dimmer.current_state_in_phase[i] == 1 && time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
