@@ -2012,7 +2012,7 @@ be_local_closure(Matter_Device_autoconf_device,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(json),
     /* K2   */  be_nested_str_weak(plugins),
@@ -2023,10 +2023,14 @@ be_local_closure(Matter_Device_autoconf_device,   /* name */
     /* K7   */  be_nested_str_weak(MTR_X3A_X20autoconfig_X20_X3D_X20),
     /* K8   */  be_const_int(3),
     /* K9   */  be_nested_str_weak(_load_plugins_config),
+    /* K10  */  be_nested_str_weak(plugins_persist),
+    /* K11  */  be_nested_str_weak(sessions),
+    /* K12  */  be_nested_str_weak(count_active_fabrics),
+    /* K13  */  be_nested_str_weak(save_param),
     }),
     be_str_weak(autoconf_device),
     &be_const_str_solidified,
-    ( &(const binstruction[22]) {  /* code */
+    ( &(const binstruction[33]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x600C000C,  //  0002  GETGBL	R3	G12
@@ -2048,7 +2052,18 @@ be_local_closure(Matter_Device_autoconf_device,   /* name */
       0x8C100109,  //  0012  GETMET	R4	R0	K9
       0x5C180600,  //  0013  MOVE	R6	R3
       0x7C100400,  //  0014  CALL	R4	2
-      0x80000000,  //  0015  RET	0
+      0x8810010A,  //  0015  GETMBR	R4	R0	K10
+      0x74120008,  //  0016  JMPT	R4	#0020
+      0x8810010B,  //  0017  GETMBR	R4	R0	K11
+      0x8C10090C,  //  0018  GETMET	R4	R4	K12
+      0x7C100200,  //  0019  CALL	R4	1
+      0x24100903,  //  001A  GT	R4	R4	K3
+      0x78120003,  //  001B  JMPF	R4	#0020
+      0x50100200,  //  001C  LDBOOL	R4	1	0
+      0x90021404,  //  001D  SETMBR	R0	K10	R4
+      0x8C10010D,  //  001E  GETMET	R4	R0	K13
+      0x7C100200,  //  001F  CALL	R4	1
+      0x80000000,  //  0020  RET	0
     })
   )
 );
@@ -2275,7 +2290,7 @@ be_local_closure(Matter_Device_init,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[41]) {     /* constants */
+    ( &(const bvalue[39]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(tasmota),
@@ -2315,12 +2330,10 @@ be_local_closure(Matter_Device_init,   /* name */
     /* K36  */  be_nested_str_weak(_init_basic_commissioning),
     /* K37  */  be_nested_str_weak(add_driver),
     /* K38  */  be_nested_str_weak(register_commands),
-    /* K39  */  be_nested_str_weak(count_active_fabrics),
-    /* K40  */  be_const_int(0),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[108]) {  /* code */
+    ( &(const binstruction[101]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0xB80E0400,  //  0002  GETNGBL	R3	K2
@@ -2420,15 +2433,8 @@ be_local_closure(Matter_Device_init,   /* name */
       0x7C0C0400,  //  0060  CALL	R3	2
       0x8C0C0126,  //  0061  GETMET	R3	R0	K38
       0x7C0C0200,  //  0062  CALL	R3	1
-      0x880C0116,  //  0063  GETMBR	R3	R0	K22
-      0x8C0C0727,  //  0064  GETMET	R3	R3	K39
-      0x7C0C0200,  //  0065  CALL	R3	1
-      0x240C0728,  //  0066  GT	R3	R3	K40
-      0x780E0001,  //  0067  JMPF	R3	#006A
-      0x500C0200,  //  0068  LDBOOL	R3	1	0
-      0x90021203,  //  0069  SETMBR	R0	K9	R3
-      0xA0000000,  //  006A  CLOSE	R0
-      0x80000000,  //  006B  RET	0
+      0xA0000000,  //  0063  CLOSE	R0
+      0x80000000,  //  0064  RET	0
     })
   )
 );
