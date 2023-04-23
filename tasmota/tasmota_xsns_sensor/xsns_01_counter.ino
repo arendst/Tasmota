@@ -109,7 +109,7 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
         ac_zero_cross_dimmer.crossed_zero_at = time;
         for (uint8_t i=0; i < MAX_PWMS; i++) {
           ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1023;
-          ac_zero_cross_dimmer.dimmer_in_use ^= ac_zero_cross_dimmer.enable_time_us[i] != ac_zero_cross_dimmer.cycle_time_us;
+          ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.enable_time_us[i] != ac_zero_cross_dimmer.cycle_time_us;
           // Dimmer is physically off. Skip swich on
           if (100 * ac_zero_cross_dimmer.enable_time_us[i] > 95 * ac_zero_cross_dimmer.cycle_time_us ) {
             ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
