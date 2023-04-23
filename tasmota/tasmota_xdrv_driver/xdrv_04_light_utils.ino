@@ -40,7 +40,7 @@ const gamma_table_t ac_dimmer_table[] = {   // don't put in PROGMEM for performa
   {   900,    704 },
   {   950,    748 },
   {   990,    850 },
-  {  1024,   1024 },
+  {  1023,   1023 },
   { 0xFFFF, 0xFFFF }          // fail-safe if out of range
 };
 
