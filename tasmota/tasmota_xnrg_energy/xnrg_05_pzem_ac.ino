@@ -50,6 +50,7 @@ struct PZEMAC {
 void PzemAcEverySecond(void)
 {
   bool data_ready = PzemAcModbus->ReceiveReady();
+  uint16_t addr;
 
   if (data_ready) {
     uint8_t buffer[30];  // At least 5 + (2 * 10) = 25
@@ -95,7 +96,8 @@ void PzemAcEverySecond(void)
     }
     PzemAc.send_retry = ENERGY_WATCHDOG;
     if (ADDR_SEND == PzemAc.address_step) {
-      PzemAcModbus->Send(0xF8, 0x06, 0x0002, (uint16_t)PzemAc.address);
+      addr = PzemAc.address;
+      PzemAcModbus->Send(0xF8, 0x06, 0x0002, 1, (uint16_t *) &addr);
       PzemAc.address_step--;
     } else {
       PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, 0x04, 0, 10);
