@@ -30,10 +30,31 @@
 static XPT2046_Touchscreen 	*isrPinptr;
 void isrPin(void);
 
-bool XPT2046_Touchscreen::begin(SPIClass &wspi)
-{
+bool XPT2046_Touchscreen::begin(SPIClass &wspi) {
+
+#ifdef ESP32
+	if (!bus) {
+		_pspi = &wspi;
+	} else {
+#ifndef CONFIG_IDF_TARGET_ESP32C3
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+		if (bus == 1) {
+			_pspi = new SPIClass(HSPI);
+		} else {
+#ifndef CONFIG_IDF_TARGET_ESP32S3
+			_pspi = new SPIClass(VSPI);
+#endif
+		}
+#endif
+#endif
+	}
+	//Serial.printf("sclk=%d  ::  miso=%d,  mosi=%d, irq=%d, bus=%d  ", sclk, miso, mosi, tirqPin, bus);
+	_pspi->begin(sclk, miso, mosi, -1);
+#else
 	_pspi = &wspi;
 	_pspi->begin();
+#endif
+	
 	pinMode(csPin, OUTPUT);
 	digitalWrite(csPin, HIGH);
 	if (255 != tirqPin) {
