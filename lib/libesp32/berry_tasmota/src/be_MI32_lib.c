@@ -44,11 +44,16 @@ module MI32 (scope: global) {
  * To use: `import BLE`
  *******************************************************************/
 
+extern int be_BLE_init(bvm *vm);
+
 extern void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
 BE_FUNC_CTYPE_DECLARE(be_BLE_reg_conn_cb, "", "cc");
 
 extern void be_BLE_reg_adv_cb(void* function, uint8_t *buffer);
 BE_FUNC_CTYPE_DECLARE(be_BLE_reg_adv_cb, "", "c[c]");
+
+extern void be_BLE_reg_server_cb(void* function, uint8_t *buffer);
+BE_FUNC_CTYPE_DECLARE(be_BLE_reg_server_cb, "", "c[c]");
 
 extern void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
 BE_FUNC_CTYPE_DECLARE(be_BLE_set_MAC, "", "@(bytes)~[i]");
@@ -73,6 +78,7 @@ BE_FUNC_CTYPE_DECLARE(be_BLE_adv_block, "", "@(bytes)~[i]");
 
 /* @const_object_info_begin
 module BLE (scope: global) {
+  init,       func(be_BLE_init)
   conn_cb,    ctype_func(be_BLE_reg_conn_cb)
   set_svc,    ctype_func(be_BLE_set_service)
   run,        ctype_func(be_BLE_run)
@@ -81,6 +87,7 @@ module BLE (scope: global) {
   set_MAC,    ctype_func(be_BLE_set_MAC)
   adv_watch,  ctype_func(be_BLE_adv_watch)
   adv_block,  ctype_func(be_BLE_adv_block)
+  serv_cb,    ctype_func(be_BLE_reg_server_cb)
 }
 @const_object_info_end */
 

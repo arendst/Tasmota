@@ -148,6 +148,7 @@ struct MI32connectionContextBerry_t{
   NimBLEUUID serviceUUID;
   NimBLEUUID charUUID;
   uint16_t returnCharUUID;
+  uint16_t handle;
   uint8_t MAC[6];
   uint8_t * buffer;
   uint8_t operation;
@@ -162,17 +163,29 @@ struct MI32notificationBuffer_t{
   uint16_t returnCharUUID;
 };
 
+struct BLEqueueBuffer_t{
+  union{
+    uint8_t *buffer;
+    int32_t value;
+  };
+  size_t length;
+  uint16_t returnCharUUID;
+  uint16_t handle;
+  uint16_t type;
+};
+
 struct {
   // uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   TaskHandle_t ScanTask = nullptr;
   TaskHandle_t ConnTask = nullptr;
+  TaskHandle_t ServerTask = nullptr;
   MI32connectionContextBerry_t *conCtx = nullptr;
   union {
     struct {
       uint32_t init:1;
       uint32_t connected:1;
       uint32_t autoScan:1;
-      uint32_t canScan:1;
+      // uint32_t canScan:1;
       uint32_t runningScan:1;
       uint32_t updateScan:1;
       uint32_t deleteScanTask:1;
@@ -191,6 +204,11 @@ struct {
       uint32_t triggerNextConnJob:1;
       uint32_t readyForNextConnJob:1;
       uint32_t discoverAttributes:1;
+
+      uint32_t triggerNextServerJob:1;
+      uint32_t readyForNextServerJob:1;
+      uint32_t triggerBerryServerCB:1;
+      uint32_t deleteServerTask:1;
     };
     uint32_t all = 0;
   } mode;
@@ -218,8 +236,9 @@ struct {
   uint8_t HKinfoMsg = 0;
   char hk_setup_code[11];
 #endif //USE_MI_HOMEKIT
-  void *beConnCB; 
+  void *beConnCB;
   void *beAdvCB;
+  void *beServerCB;
   uint8_t *beAdvBuf;
   uint8_t infoMsg = 0;
 } MI32;
@@ -379,7 +398,7 @@ const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
-const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning";
+const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning|Server characteristic set|Server advertisement set|Server scan response set|Server client did connect|Server client did disconnect";
 
 const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
 
@@ -397,6 +416,33 @@ enum MI32_Commands {          // commands useable in console or rules
 enum MI32_TASK {
   MI32_TASK_SCAN = 0,
   MI32_TASK_CONN = 1,
+  MI32_TASK_SERV = 2,
+};
+
+enum BLE_CLIENT_OP {
+BLE_OP_READ = 1,
+BLE_OP_WRITE,
+BLE_OP_SUBSCRIBE,
+BLE_OP_UNSUBSCRIBE, //maybe used later
+BLE_OP_DISCONNECT,
+BLE_OP_GET_NOTIFICATION = 103,
+};
+
+enum BLE_SERVER_OP {
+//commands
+BLE_OP_SET_ADV = 201,
+BLE_OP_SET_SCAN_RESP,
+BLE_OP_SET_CHARACTERISTIC = 211,
+//response
+BLE_OP_ON_READ = 221,
+BLE_OP_ON_WRITE,
+BLE_OP_ON_UNSUBSCRIBE,
+BLE_OP_ON_SUBSCRIBE_TO_NOTIFICATIONS,
+BLE_OP_ON_SUBSCRIBE_TO_INDICATIONS,
+BLE_OP_ON_SUBSCRIBE_TO_NOTIFICATIONS_AND_INDICATIONS,
+BLE_OP_ON_CONNECT,
+BLE_OP_ON_DISCONNECT,
+BLE_OP_ON_STATUS,
 };
 
 enum MI32_ConnErrorMsg {
@@ -419,7 +465,12 @@ enum MI32_BLEInfoMsg {
   MI32_DID_DISCONNECT,
   MI32_STILL_CONNECTED,
   MI32_START_SCANNING_PASSIVE,
-  MI32_START_SCANNING_ACTIVE
+  MI32_START_SCANNING_ACTIVE,
+  MI32_SERV_CHARACTERISTIC_ADDED,
+  MI32_SERV_ADVERTISEMENT_ADDED,
+  MI32_SERV_SCANRESPONSE_ADDED,
+  MI32_SERV_CLIENT_CONNECTED,
+  MI32_SERV_CLIENT_DISCONNECTED
 };
 
 enum MI32_HKInfoMsg {
