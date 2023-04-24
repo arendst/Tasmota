@@ -1,8 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
-  Copyright (C) 2023  Maarten Damen and Theo Arends
-                      Stefan Bode (Zero-Cross Dimmer)
+  Copyright (C) 2021  Maarten Damen and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -48,32 +47,6 @@ struct COUNTER {
 
 } Counter;
 
-#ifdef USE_AC_ZERO_CROSS_DIMMER
-
-static const uint32_t GATE_ENABLE_TIME = 100;
-
-struct AC_ZERO_CROSS_DIMMER {
-  uint32_t cycle_time_us;
-  /// Time (in micros()) of last ZC signal
-  uint32_t crossed_zero_at;
-  /// Time since last ZC pulse to enable gate pin. 0 means not set.
-  bool     timer_iterrupt_started = false;
-  bool     dimmer_in_use = false;
-  // Check if 50µs timer is running.
-  uint32_t enable_time_us[MAX_PWMS];
-  /// Time since last ZC pulse to disable gate pin. 0 means no disable.
-  uint32_t disable_time_us[MAX_PWMS];
-  uint8_t  current_state_in_phase[MAX_PWMS];  // 0=before fire HIGH, 1=HIGH, 2=after setting LOW, 3=before HIGH without setting LOW (POWER ON)
-  uint32_t lastlight[MAX_PWMS];
-  uint32_t intr_counter = 0;
-} ac_zero_cross_dimmer;
-
-#ifdef ESP32
-  static hw_timer_t *dimmer_timer = nullptr;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-#endif
-
-#endif //USE_AC_ZERO_CROSS_DIMMER
-
 void IRAM_ATTR CounterIsrArg(void *arg) {
   uint32_t index = *static_cast<uint8_t*>(arg);
 
@@ -103,26 +76,7 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
       // restart initiated by setting Counter.startReSync = true;
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-
-      if (index == 3)  {
-        ac_zero_cross_dimmer.dimmer_in_use = false;
-        ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
-        ac_zero_cross_dimmer.crossed_zero_at = time;
-        for (uint8_t i=0; i < MAX_PWMS; i++) {
-          if (Pin(GPIO_PWM1, i) == -1) continue;
-          ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.enable_time_us[i] != ac_zero_cross_dimmer.cycle_time_us;
-          // Dimmer is physically off. Skip swich on
-          ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
-          if (100 * ac_zero_cross_dimmer.enable_time_us[i] > 95 * ac_zero_cross_dimmer.cycle_time_us ) {
-            ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
-            ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.cycle_time_us / 2;
-          } 
-          // If full cycle is required keep pin HIGH, skip LOW by skipping phase
-          if (100 * ac_zero_cross_dimmer.enable_time_us[i] < 15 * ac_zero_cross_dimmer.cycle_time_us) {
-            ac_zero_cross_dimmer.current_state_in_phase[i] = 3;
-          } 
-        }
-      }
+      if (index == 3) ACDimmerZeroCross(time);
 #endif //USE_AC_ZERO_CROSS_DIMMER
       return;
     }
@@ -252,127 +206,6 @@ void CounterShow(bool json)
   }
 }
 
-#ifdef USE_AC_ZERO_CROSS_DIMMER
-
-uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
-  //ACDimmerTimer_intr();
-  ACDimmerTimer_intr();
-  return 4000;
-}
-
-void ACDimmerInterruptDisable(bool disable)
-{ 
-  AddLog(LOG_LEVEL_INFO, PSTR("CNT: Zero-CrossDimmer enabled: %d"),!disable);
-  ac_zero_cross_dimmer.timer_iterrupt_started = !disable;
-  if (disable) {
-    //stop the interrupt
-#ifdef ESP32   
-    if (dimmer_timer != nullptr) { 
-     timerAlarmDisable(dimmer_timer);
-    }
-#endif  
-#ifdef ESP8266  
-    //setTimer1Callback(NULL);
-#endif  
-  } else {
-    for (uint8_t i = 0 ; i < MAX_PWMS; i++) {
-      if (Pin(GPIO_PWM1, i) > -1)
-        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-    }
-#ifdef ESP32
-    if (dimmer_timer == nullptr) {
-      // 80 Divider -> 1 count=1µs
-      dimmer_timer = timerBegin(0, 80, true);
-      timerAttachInterrupt(dimmer_timer, &ACDimmerTimer_intr, true);
-      // For ESP32, we can't use dynamic interval calculation because the timerX functions
-      // are not callable from ISR (placed in flash storage).
-      // Here we just use an interrupt firing every 50 µs.
-      timerAlarmWrite(dimmer_timer, 50, true);
-    }
-    timerAlarmEnable(dimmer_timer);
-#endif
-
-#ifdef ESP8266
-    // Uses ESP8266 waveform (soft PWM) class
-    // PWM and AcDimmer can even run at the same time this way
-    //setTimer1Callback(&ACDimmerTimer_intr_ESP8266);
-#endif    
-  }
-}
-
-void IRAM_ATTR ACDimmerTimer_intr() {
-  // If no ZC signal received yet.
-  uint32_t now = micros();
-  ac_zero_cross_dimmer.intr_counter++;
-  if (ac_zero_cross_dimmer.crossed_zero_at == 0)
-    return;
-
-  uint32_t time_since_zc = now - ac_zero_cross_dimmer.crossed_zero_at;
-  if (time_since_zc > 10100) {
-    memset(&ac_zero_cross_dimmer.current_state_in_phase, 0x00, sizeof(ac_zero_cross_dimmer.current_state_in_phase));
-    ac_zero_cross_dimmer.crossed_zero_at += ac_zero_cross_dimmer.cycle_time_us;
-    time_since_zc = now - ac_zero_cross_dimmer.crossed_zero_at;
-  }
-
-  for (uint8_t i = 0 ; i < MAX_PWMS; i++ ) {
-    if (Pin(GPIO_PWM1, i) == -1) continue;
-    switch (ac_zero_cross_dimmer.current_state_in_phase[i]) {
-      case 1:
-        if (time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
-          digitalWrite(Pin(GPIO_PWM1, i), LOW);
-          ac_zero_cross_dimmer.current_state_in_phase[i]++;
-        }
-        break;    
-      case 0:
-      case 3:
-        if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]) {
-          digitalWrite(Pin(GPIO_PWM1, i), HIGH);
-          ac_zero_cross_dimmer.current_state_in_phase[i]++;
-        }    
-        break;
-    } 
-  }
-}
-
-void ACDimmerControllTrigger(void) {
-
-  if (ac_zero_cross_dimmer.timer_iterrupt_started != ac_zero_cross_dimmer.dimmer_in_use) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: ZeroEnable %d --> %d ... change..."),ac_zero_cross_dimmer.timer_iterrupt_started, ac_zero_cross_dimmer.dimmer_in_use);
-    ACDimmerInterruptDisable(!ac_zero_cross_dimmer.dimmer_in_use);
-  }
-  for (uint8_t i = 0; i < MAX_PWMS; i++){
-    if (Pin(GPIO_PWM1, i) == -1) continue;
-    ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1023;
-    ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.enable_time_us[i] + GATE_ENABLE_TIME;
-  }
-  
-}
-
-void ACDimmerLogging(void)
-{
-    bool alarmEnabled = false;
-    uint32_t timercounter = ac_zero_cross_dimmer.intr_counter;
-
-#ifdef ESP32    
-    if (dimmer_timer != nullptr) {
-      alarmEnabled = timerAlarmEnabled(dimmer_timer);
-      timercounter = (uint32_t)timerRead(dimmer_timer);
-    }
-#endif    
-
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CNT: ZeroEnable %d -> %d, Alarm %d, intr: %ld, cycle time: %ld µs"),
-      ac_zero_cross_dimmer.dimmer_in_use, ac_zero_cross_dimmer.timer_iterrupt_started, alarmEnabled, timercounter, ac_zero_cross_dimmer.cycle_time_us
-      );
-    for (uint8_t i = 0; i < MAX_PWMS; i++){
-      if (Pin(GPIO_PWM1, i) == -1) continue;
-       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d"), 
-        i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], Light.fade_cur_10[i], Light.fade_start_10[i]
-      );
-    }
-
-} // end SyncACDimmer
-#endif //USE_AC_ZERO_CROSS_DIMMER
-
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -443,15 +276,7 @@ bool Xsns01(uint32_t function)
     switch (function) {
       case FUNC_EVERY_SECOND:
         CounterEverySecond();
-#ifdef USE_AC_ZERO_CROSS_DIMMER        
-        ACDimmerLogging();
-#endif        
         break;
-#ifdef USE_AC_ZERO_CROSS_DIMMER         
-      case FUNC_EVERY_100_MSECOND:
-        ACDimmerControllTrigger();
-        break;
-#endif     
       case FUNC_JSON_APPEND:
         CounterShow(1);
         break;
@@ -469,26 +294,15 @@ bool Xsns01(uint32_t function)
         break;
       case FUNC_INTERRUPT_STOP:
         CounterInterruptDisable(true);
-#ifdef USE_AC_ZERO_CROSS_DIMMER            
-        ACDimmerInterruptDisable(true);
-#endif          
         break;
       case FUNC_INTERRUPT_START:
         CounterInterruptDisable(false);
-#ifdef USE_AC_ZERO_CROSS_DIMMER            
-        ACDimmerInterruptDisable(false);
-#endif  
         break;
     }
   } else {
     switch (function) {
       case FUNC_INIT:
         CounterInit();
-#ifdef USE_AC_ZERO_CROSS_DIMMER     
-#ifdef ESP8266
-        setTimer1Callback(&ACDimmerTimer_intr_ESP8266);       
-#endif
-#endif   
         break;
       case FUNC_PIN_STATE:
         result = CounterPinState();
