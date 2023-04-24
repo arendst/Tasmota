@@ -50,23 +50,23 @@ struct AC_ZERO_CROSS_DIMMER {
 #endif
 
 void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
-    ac_zero_cross_dimmer.dimmer_in_use = false;
-    ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
-    ac_zero_cross_dimmer.crossed_zero_at = time;
-    for (uint8_t i=0; i < MAX_PWMS; i++) {
-        if (Pin(GPIO_PWM1, i) == -1) continue;
-        ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.enable_time_us[i] != ac_zero_cross_dimmer.cycle_time_us;
-        // Dimmer is physically off. Skip swich on
-        ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
-        if (100 * ac_zero_cross_dimmer.enable_time_us[i] > 95 * ac_zero_cross_dimmer.cycle_time_us ) {
-        ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
-        ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.cycle_time_us / 2;
-        } 
-        // If full cycle is required keep pin HIGH, skip LOW by skipping phase
-        if (100 * ac_zero_cross_dimmer.enable_time_us[i] < 15 * ac_zero_cross_dimmer.cycle_time_us) {
-        ac_zero_cross_dimmer.current_state_in_phase[i] = 3;
-        } 
-    }
+  ac_zero_cross_dimmer.dimmer_in_use = false;
+  ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
+  ac_zero_cross_dimmer.crossed_zero_at = time;
+  for (uint8_t i=0; i < MAX_PWMS; i++) {
+    if (Pin(GPIO_PWM1, i) == -1) continue;
+    ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.lastlight[i] > 0;
+    // Dimmer is physically off. Skip swich on
+    ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
+    if (100 * ac_zero_cross_dimmer.enable_time_us[i] > 95 * ac_zero_cross_dimmer.cycle_time_us ) {
+      ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
+      ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.cycle_time_us / 2;
+    } 
+    // If full cycle is required keep pin HIGH, skip LOW by skipping phase
+    if (100 * ac_zero_cross_dimmer.enable_time_us[i] < 15 * ac_zero_cross_dimmer.cycle_time_us) {
+      ac_zero_cross_dimmer.current_state_in_phase[i] = 3;
+    } 
+  }
 }
 
 uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
@@ -91,8 +91,10 @@ void ACDimmerInterruptDisable(bool disable)
 #endif  
   } else {
     for (uint8_t i = 0 ; i < MAX_PWMS; i++) {
-      if (Pin(GPIO_PWM1, i) > -1)
+      if (Pin(GPIO_PWM1, i) != -1) {
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+        AddLog(LOG_LEVEL_INFO, PSTR("CNT: Zero-CrossDimmer Pin %d set"),Pin(GPIO_PWM1, i));
+      }
     }
 #ifdef ESP32
     if (dimmer_timer == nullptr) {
@@ -157,13 +159,14 @@ void ACDimmerControllTrigger(void) {
   }
   for (uint8_t i = 0; i < MAX_PWMS; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
+    ac_zero_cross_dimmer.lastlight[i] = Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i];
 #ifdef AC_DIMMER_DETAILED_POWER_MGMT    
-    float state = (float)(1023 - (Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))/1023.00;
+    float state = (float)(1023 - ac_zero_cross_dimmer.lastlight[i])/1023.00;
     state = std::acos(1 - (2 * state)) / 3.14159 * ac_zero_cross_dimmer.cycle_time_us;
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: Float2: %*_f"),0,&state);
     ac_zero_cross_dimmer.enable_time_us[i] = (uint32_t)state;
 #else    
-    ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1023;
+    ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(ac_zero_cross_dimmer.lastlight[i]))) / 1023;
 #endif    
     ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.enable_time_us[i] + GATE_ENABLE_TIME;
   }
@@ -187,8 +190,8 @@ void ACDimmerLogging(void)
       );
     for (uint8_t i = 0; i < MAX_PWMS; i++){
       if (Pin(GPIO_PWM1, i) == -1) continue;
-       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d"), 
-        i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], Light.fade_cur_10[i], Light.fade_start_10[i]
+       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: PWM[%d] en: %ld µs, dis: %ld µs, state %d, fade: %d, cur: %d"), 
+        i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], ac_zero_cross_dimmer.current_state_in_phase[i], Light.fade_cur_10[i], Light.fade_start_10[i]
       );
     }
 
@@ -210,6 +213,9 @@ bool Xdrv91(uint32_t function)
   bool result = false;
     switch (function) {
       case FUNC_INIT:
+#ifdef ESP32      
+        //ACDimmerInterruptDisable(false);
+#endif      
 #ifdef ESP8266
         setTimer1Callback(&ACDimmerTimer_intr_ESP8266);       
 #endif   
@@ -217,11 +223,9 @@ bool Xdrv91(uint32_t function)
       case FUNC_EVERY_SECOND:
         ACDimmerLogging();
         break;
-     
       case FUNC_EVERY_100_MSECOND:
         ACDimmerControllTrigger();
         break;
-
       case FUNC_INTERRUPT_STOP:
         ACDimmerInterruptDisable(true);
         break;
