@@ -1,8 +1,7 @@
 /*
-  xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
+  xdrv_91_zerocrossdimmer.ino - Zero-Cross Dimmer support for Tasmota
 
-  Copyright (C) 2023  Maarten Damen and Theo Arends
-                      Stefan Bode (Zero-Cross Dimmer)
+  Copyright (C) 2023  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,10 +19,12 @@
 
 #ifdef USE_AC_ZERO_CROSS_DIMMER
 /*********************************************************************************************\
- * Counter sensors (water meters, electricity meters etc.)
+ * Zero-Cross AC Dimmer PMM 1..xx use 
 \*********************************************************************************************/
 
 #define XDRV_91             1
+
+// #define AC_DIMMER_DETAILED_POWER_MGMT 1
 
 static const uint32_t GATE_ENABLE_TIME = 100;
 
@@ -156,11 +157,14 @@ void ACDimmerControllTrigger(void) {
   }
   for (uint8_t i = 0; i < MAX_PWMS; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
+#ifdef AC_DIMMER_DETAILED_POWER_MGMT    
     float state = (float)(1023 - (Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))/1023.00;
     state = std::acos(1 - (2 * state)) / 3.14159 * ac_zero_cross_dimmer.cycle_time_us;
-    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: Float2: %*_f"),0,&state);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: Float2: %*_f"),0,&state);
     ac_zero_cross_dimmer.enable_time_us[i] = (uint32_t)state;
-    //ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1023;
+#else    
+    ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1023;
+#endif    
     ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.enable_time_us[i] + GATE_ENABLE_TIME;
   }
   
@@ -214,7 +218,7 @@ bool Xdrv91(uint32_t function)
         ACDimmerLogging();
         break;
      
-      case FUNC_EVERY_250_MSECOND:
+      case FUNC_EVERY_100_MSECOND:
         ACDimmerControllTrigger();
         break;
 
