@@ -22,7 +22,7 @@
  * Zero-Cross AC Dimmer PMM 1..xx use 
 \*********************************************************************************************/
 
-#define XDRV_68             1
+#define XDRV_68             68
 
 // #define AC_DIMMER_DETAILED_POWER_MGMT 1
 
