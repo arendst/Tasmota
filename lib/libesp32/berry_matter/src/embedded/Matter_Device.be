@@ -21,16 +21,16 @@
 
 class Matter_Device
   static var UDP_PORT = 5540          # this is the default port for group multicast, we also use it for unicast
-  static var PASSCODE_DEFAULT = 20202021
   static var PBKDF_ITERATIONS = 1000  # I don't see any reason to choose a different number
   static var VENDOR_ID = 0xFFF1
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
   var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
-  var plugins                         # list of plugins
+  var plugins                         # list of plugins instances
   var plugins_persist                 # true if plugins configuration needs to be saved
   var plugins_classes                 # map of registered classes by type name
+  var plugins_config                  # map of JSON configuration for plugins
   var udp_server                      # `matter.UDPServer()` object
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
@@ -600,10 +600,11 @@ class Matter_Device
   # 
   def save_param()
     import string
+    import json
     var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false')
     if self.plugins_persist
       j += ',"config":'
-      j += self.plugins_to_json()
+      j += json.dump(self.plugins_config)
     end
     j += '}'
     try
@@ -635,9 +636,9 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
-      var config = j.find("config")
-      if config
-        self._load_plugins_config(config)
+      self.plugins_config = j.find("config")
+      if self.plugins_config
+        self._load_plugins_config(self.plugins_config)
         self.plugins_persist = true
       end
     except .. as e, m
@@ -652,7 +653,7 @@ class Matter_Device
       dirty = true
     end
     if self.root_passcode == nil
-      self.root_passcode = self.PASSCODE_DEFAULT
+      self.root_passcode = self.generate_random_passcode()
       dirty = true
     end
     if dirty    self.save_param() end
@@ -975,9 +976,9 @@ class Matter_Device
 
     if size(self.plugins) > 0   return end                    # already configured
 
-    var config = self.autoconf_device_map()
-    tasmota.log("MTR: autoconfig = " + str(config), 3)
-    self._load_plugins_config(config)
+    self.plugins_config = self.autoconf_device_map()
+    tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
+    self._load_plugins_config(self.plugins_config)
 
     if !self.plugins_persist && self.sessions.count_active_fabrics() > 0
       self.plugins_persist = true
@@ -1097,29 +1098,29 @@ class Matter_Device
   end
 
   #############################################################
-  # plugins_to_json
-  #
-  # Export plugins configuration as a JSON string
-  def plugins_to_json()
-    import string
-    var s = '{'
-    var i = 0
-    while i < size(self.plugins)
-      var pi = self.plugins[i]
-      if i > 0    s += ','    end
-      s += string.format('"%i":%s', pi.get_endpoint(), pi.to_json())
-      i += 1
-    end
-    s += '}'
-    return s
-  end
-
-  #############################################################
   # register_plugin_class
   #
   # Adds a class by name
   def register_plugin_class(name, cl)
     self.plugins_classes[name] = cl
+  end
+
+  #############################################################
+  # get_plugin_class_displayname
+  #
+  # get a class name light "light0" and return displayname
+  def get_plugin_class_displayname(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.NAME : ""
+  end
+
+  #############################################################
+  # get_plugin_class_arg
+  #
+  # get a class name light "light0" and return the name of the json argumen (or empty)
+  def get_plugin_class_arg(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.ARG : ""
   end
 
   #############################################################
@@ -1148,6 +1149,23 @@ class Matter_Device
     if self.sessions.count_active_fabrics() > 0 && !self.plugins_persist
       self.plugins_persist = true
       self.save_param()
+    end
+  end
+
+  #####################################################################
+  # Generate random passcode
+  #####################################################################
+  static var PASSCODE_INVALID = [ 0, 11111111, 22222222, 33333333, 44444444, 55555555, 66666666, 77777777, 88888888, 99999999, 12345678, 87654321]
+  def generate_random_passcode()
+    import crypto
+    var passcode
+    while true
+      passcode = crypto.random(4).get(0, 4) & 0x7FFFFFF
+      if passcode > 0x5F5E0FE     continue      end         # larger than allowed
+      for inv: self.PASSCODE_INVALID
+        if passcode == inv    passcode = nil    end
+      end
+      if passcode != nil    return passcode     end
     end
   end
 

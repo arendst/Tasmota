@@ -7,66 +7,6 @@
 extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 
 /********************************************************************
-** Solidified function: pre_value
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Humidity_pre_value,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(pre_value),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x60080009,  //  0000  GETGBL	R2	G9
-      0x540E0063,  //  0001  LDINT	R3	100
-      0x080C0203,  //  0002  MUL	R3	R1	R3
-      0x7C080200,  //  0003  CALL	R2	1
-      0x80040400,  //  0004  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: valued_changed
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Humidity_valued_changed,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
-    be_str_weak(valued_changed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x4C100000,  //  0001  LDNIL	R4
-      0x54160404,  //  0002  LDINT	R5	1029
-      0x58180001,  //  0003  LDCONST	R6	K1
-      0x7C080800,  //  0004  CALL	R2	4
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Humidity_read_attribute,   /* name */
@@ -177,22 +117,76 @@ be_local_closure(Matter_Plugin_Sensor_Humidity_read_attribute,   /* name */
 
 
 /********************************************************************
+** Solidified function: pre_value
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Humidity_pre_value,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(pre_value),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x540E0063,  //  0001  LDINT	R3	100
+      0x080C0203,  //  0002  MUL	R3	R1	R3
+      0x7C080200,  //  0003  CALL	R2	1
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: valued_changed
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Humidity_valued_changed,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_const_int(0),
+    }),
+    be_str_weak(valued_changed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x4C100000,  //  0001  LDNIL	R4
+      0x54160404,  //  0002  LDINT	R5	1029
+      0x58180001,  //  0003  LDCONST	R6	K1
+      0x7C080800,  //  0004  CALL	R2	4
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_Plugin_Sensor_Humidity
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_class(Matter_Plugin_Sensor_Humidity,
     0,
     &be_class_Matter_Plugin_Sensor,
-    be_nested_map(6,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(NAME, 1), be_nested_str_weak(humidity) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_Humidity_read_attribute_closure) },
-        { be_const_key_weak(TYPES, 5), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(775, -1), be_const_int(2) },
-    }))    ) } )) },
-        { be_const_key_weak(valued_changed, -1), be_const_closure(Matter_Plugin_Sensor_Humidity_valued_changed_closure) },
+        { be_const_key_weak(read_attribute, 2), be_const_closure(Matter_Plugin_Sensor_Humidity_read_attribute_closure) },
+        { be_const_key_weak(pre_value, 5), be_const_closure(Matter_Plugin_Sensor_Humidity_pre_value_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -206,7 +200,14 @@ be_local_class(Matter_Plugin_Sensor_Humidity,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(pre_value, -1), be_const_closure(Matter_Plugin_Sensor_Humidity_pre_value_closure) },
+        { be_const_key_weak(TYPES, 4), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(775, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(humidity) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Humidity) },
+        { be_const_key_weak(valued_changed, -1), be_const_closure(Matter_Plugin_Sensor_Humidity_valued_changed_closure) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Humidity)
 );

@@ -390,11 +390,17 @@ extern const bclass be_class_Matter_Plugin;
 be_local_class(Matter_Plugin_Light0,
     1,
     &be_class_Matter_Plugin,
-    be_nested_map(8,
+    be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(shadow_onoff, -1), be_const_var(0) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Light0_init_closure) },
-        { be_const_key_weak(CLUSTERS, 4), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(shadow_onoff, 8), be_const_var(0) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(256, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Light_X200_X20On) },
+        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(4, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -432,15 +438,10 @@ be_local_class(Matter_Plugin_Light0,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(invoke_request, 1), be_const_closure(Matter_Plugin_Light0_invoke_request_closure) },
-        { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Light0_read_attribute_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Light0_invoke_request_closure) },
+        { be_const_key_weak(read_attribute, 0), be_const_closure(Matter_Plugin_Light0_read_attribute_closure) },
         { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Light0_update_shadow_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(light0) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(256, -1), be_const_int(2) },
-    }))    ) } )) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(light0) },
     })),
     be_str_weak(Matter_Plugin_Light0)
 );

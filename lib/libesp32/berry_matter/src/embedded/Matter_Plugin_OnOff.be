@@ -25,7 +25,10 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_OnOff,weak
 
 class Matter_Plugin_OnOff : Matter_Plugin
-  static var NAME = "relay"                         # name of the plug-in in json
+  static var TYPE = "relay"                         # name of the plug-in in json
+  static var NAME = "Relay"                         # display name of the plug-in
+  static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
@@ -44,7 +47,7 @@ class Matter_Plugin_OnOff : Matter_Plugin
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
     self.get_onoff()                        # read actual value
-    self.tasmota_relay_index = arguments.find('relay')
+    self.tasmota_relay_index = arguments.find(self.ARG #-'relay'-#)
     if self.tasmota_relay_index == nil     self.tasmota_relay_index = 0   end
   end
 
@@ -213,17 +216,6 @@ class Matter_Plugin_OnOff : Matter_Plugin
   # Signal that onoff attribute changed
   def onoff_changed()
     self.attribute_updated(nil, 0x0006, 0x0000)   # send to all endpoints
-  end
-
-  #############################################################
-  # to_json_parameters
-  #
-  # To be overriden.
-  # returns a json sub-string to add after endpoint and type name
-  def to_json_parameters(s)
-    import string
-    s += string.format(',"relay":%i', self.tasmota_relay_index)
-    return s
   end
 
   #############################################################

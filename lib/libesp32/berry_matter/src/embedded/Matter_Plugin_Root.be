@@ -25,7 +25,8 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_Root,weak
 
 class Matter_Plugin_Root : Matter_Plugin
-  static var NAME = "root"            # name of the plug-in in json
+  static var TYPE = "root"            # name of the plug-in in json
+  static var NAME = "Root node"       # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
