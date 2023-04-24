@@ -32,6 +32,8 @@ import matter
 # WebUI for the partition manager
 #################################################################################
 class Matter_UI
+  static var _CLASSES_TYPES = "root|relay|light0|light1|light2|light3"
+                              "|temperature|pressure|illuminance|humidity"
   var device
 
   def init(device)
@@ -64,7 +66,7 @@ class Matter_UI
     webserver.content_send(string.format("<fieldset><legend><b>&nbsp;Matter %s&nbsp;</b></legend><p></p>",
                                           matter_enabled ? "Enabled" : "Disabled"))
 
-    webserver.content_send("<p style='width:320px;'>Matter support is experimental.</p>")
+    webserver.content_send("<p style='width:320px;'>Check the <a href='https://tasmota.github.io/docs/Matter/' target='_blank'>Matter documentation</a>.</p>")
 
     webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>")
     webserver.content_send(string.format("<p></p><button name='%s' class='button bgrn'>", matter_enabled ? "disable" : "enable"))
@@ -158,7 +160,7 @@ class Matter_UI
     import string
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter Passcode&nbsp;</b></legend><p></p>")
-    webserver.content_send("<form action='/matterc' method='post' >")
+    webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>")
     webserver.content_send("<p>Passcode:</p>")
     webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.root_passcode))
     webserver.content_send("<p>Distinguish id:</p>")
@@ -172,7 +174,7 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   #- Show commissioning information and QR Code
   #- ---------------------------------------------------------------------- -#
-  def show_fabric_info(p)
+  def show_fabric_info()
     import webserver
     import string
 
@@ -198,7 +200,7 @@ class Matter_UI
         webserver.content_send(string.format("Fabric: %s<br>", fabric_rev.tohex()))
         webserver.content_send(string.format("Device: %s<br>&nbsp;", deviceid_rev.tohex()))
 
-        webserver.content_send("<form action='/matterc' method='post'>")
+        webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"Are you sure?\");'>")
         webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%i'>", f.get_fabric_index()))
         webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
 
@@ -208,6 +210,79 @@ class Matter_UI
 
     webserver.content_send("<p></p></fieldset><p></p>")
 
+  end
+
+  #- ---------------------------------------------------------------------- -#
+  #- Show plugins configuration
+  #- ---------------------------------------------------------------------- -#
+  def show_plugins_configuration()
+    import webserver
+    import string
+
+    webserver.content_send("<fieldset><legend><b>&nbsp;Current Configuration&nbsp;</b></legend><p></p>")
+
+    webserver.content_send("<form action='/matterc' method='post'")
+    webserver.content_send("onsubmit='return confirm(\"This will RESET the configuration to the default. You will need to associate again.\");'>")
+    webserver.content_send("<button name='auto' class='button bred'>Reset to default</button><p></p></form>")
+
+    webserver.content_send("<form action='/matterc' method='post'")
+    webserver.content_send("onsubmit='return confirm(\"Changing the configuration requires to associate again.\");'>")
+    webserver.content_send("<table style='width:100%'>")
+    webserver.content_send("<tr><td width='35'><b>Ep.</b></td><td><b>Type</b></td><td><b>Param</b></td></tr>")
+
+    # display one line per plug-in
+    var endpoints = self.device.k2l_num(self.device.plugins_config)
+    var i = 0
+    while i < size(endpoints)
+      var ep = endpoints[i]
+      var conf = self.device.plugins_config[str(ep)]
+      var typ = conf.find('type')
+      if !typ   continue    end
+
+      var arg_name = self.device.get_plugin_class_arg(typ)
+      var arg = arg_name ? str(conf.find(arg_name, '')) : ''
+
+      webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value='%i'></td>", i, ep))
+
+      webserver.content_send(string.format("<td><select name='pi%03i'>", i))
+      self.plugin_option(conf.find('type', ''))
+      webserver.content_send(string.format("</select></td>"))
+      webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value='%s'></font></td>",
+                             i, webserver.html_escape(arg)))
+  
+      i += 1
+    end
+
+    # add an empty line for adding a configuration
+    webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value=''></td>", i))
+    webserver.content_send(string.format("<td><select name='pi%03i'>", i))
+    self.plugin_option('')
+    webserver.content_send(string.format("</select></td>"))
+    webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value=''></font></td>", i))
+
+    webserver.content_send("</table><p></p>")
+    webserver.content_send("<button name='config' class='button bgrn'>Change configuration</button></form>")
+
+    webserver.content_send("<p></p></fieldset><p></p>")
+
+  end
+
+  #- ---------------------------------------------------------------------- -#
+  #- Show all possible classes for plugin
+  #- ---------------------------------------------------------------------- -#
+  def plugin_option(cur)
+    import webserver
+    import string
+    var class_types = string.split(self._CLASSES_TYPES, '|')
+    
+    var i = 0
+    webserver.content_send("<option value=''></option>")
+    while i < size(class_types)
+      var typ = class_types[i]
+      var nam = self.device.get_plugin_class_displayname(typ)
+      webserver.content_send(string.format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
+      i += 1
+    end
   end
 
   #######################################################################
@@ -224,6 +299,7 @@ class Matter_UI
 
     if self.show_enable()
       self.show_passcode_form()
+      self.show_plugins_configuration()
       self.show_fabric_info()
     end
     webserver.content_button(webserver.BUTTON_CONFIGURATION)
@@ -241,9 +317,7 @@ class Matter_UI
     import partition_core
     import persist
 
-
-    #- check that the partition is valid -#
-    var p = partition_core.Partition()
+    var error
 
     try
 
@@ -251,6 +325,7 @@ class Matter_UI
       # Change Passcode and/or Passcode
       #---------------------------------------------------------------------#
       if webserver.has_arg("passcode") || webserver.has_arg("discriminator")
+        tasmota.log(string.format("MTR: /matterc received '%s' command", 'passcode'), 3)
         if webserver.has_arg("passcode")
           self.device.root_passcode = int(webserver.arg("passcode"))
         end
@@ -263,17 +338,29 @@ class Matter_UI
         #- and force restart -#
         webserver.redirect("/?rst=")
 
+      #---------------------------------------------------------------------#
+      # Enable Matter
+      #---------------------------------------------------------------------#
       elif webserver.has_arg("enable")
+        tasmota.log(string.format("MTR: /matterc received '%s' command", 'enable'), 3)
         tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
         #- and force restart -#
         webserver.redirect("/?rst=")
 
+      #---------------------------------------------------------------------#
+      # Disable Matter
+      #---------------------------------------------------------------------#
       elif webserver.has_arg("disable")
+        tasmota.log(string.format("MTR: /matterc received '%s' command", 'disable'), 3)
         tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 0")
         #- and force restart -#
         webserver.redirect("/?rst=")
 
+      #---------------------------------------------------------------------#
+      # Delete Fabric
+      #---------------------------------------------------------------------#
       elif webserver.has_arg("del_fabric")
+        tasmota.log(string.format("MTR: /matterc received '%s' command", 'del_fabric'), 3)
         var del_fabric = int(webserver.arg("del_fabric"))
         var idx = 0
         var fabrics = self.device.sessions.fabrics
@@ -285,11 +372,87 @@ class Matter_UI
             idx += 1
           end
         end
-
-        #- and force restart -#
+        #- reload same page -#
         webserver.redirect("/matterc?")
 
+      #---------------------------------------------------------------------#
+      # Reset to default auto-configuration
+      #---------------------------------------------------------------------#
+      elif webserver.has_arg("auto")
+        tasmota.log(string.format("MTR: /matterc received '%s' command", 'auto'), 3)
+        self.device.plugins_persist = false
+        self.device.save_param()
+        #- and force restart -#
+        webserver.redirect("/?rst=")
+
+      #---------------------------------------------------------------------#
+      # Apply new configuration template
+      #---------------------------------------------------------------------#
+    elif webserver.has_arg("config")
+      var config = {}
+
+      tasmota.log(string.format("MTR: /matterc received '%s' command", 'config'), 3)
+      # iterate by id
+      var idx = 0
+      var idx_str = string.format("%03i", idx)
+      while webserver.has_arg('ep'+idx_str)
+
+        var ep = webserver.arg('ep'+idx_str)
+        var ep_int = int(ep)
+        var typ = webserver.arg('pi'+idx_str)
+        var arg = webserver.arg('arg'+idx_str)
+        tasmota.log(string.format("MTR: ep=%i type=%s arg=%s", ep, typ, arg), 3)
+
+        if ep != '' && typ != ''
+        
+          # check if type exists
+          var typ_class = self.device.plugins_classes.find(typ)
+          if typ_class != nil
+            var elt = {'type':typ}
+            var arg_name = typ_class.ARG
+            var arg_type = typ_class.ARG_TYPE
+            if arg && arg_name
+              elt[arg_name] = arg_type(arg)
+            end
+            config[ep] = elt
+
+          else
+            tasmota.log(string.format("MTR: unknown type = %s", typ), 2)
+          end
+
+        else
+            tasmota.log("MTR: skipping parameter", 2)
+        end
+
+        idx += 1
+        idx_str = string.format("%03i", idx)
       end
+
+      tasmota.log(string.format("MTR: config = %s", str(config)), 3)
+
+      # sanity check
+      if !config.contains("0")    error = "Missing endpoint 0"    end
+
+      if error
+        tasmota.log(string.format("MTR: config error = %s", error), 3)
+      else
+        self.device.plugins_config = config
+        self.device.plugins_persist = true
+        self.device.save_param()
+        #- and force restart -#
+        webserver.redirect("/?rst=")
+      end
+
+    end
+
+    if error
+      webserver.content_start("Parameter error")           #- title of the web page -#
+      webserver.content_send_style()                  #- send standard Tasmota styles -#
+      webserver.content_send(string.format("<p style='width:340px;'><b>Error:</b>%s</p>", webserver.html_escape(error)))
+      webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to configuration page -#
+      webserver.content_stop()                        #- end of web page -#
+    end
+
     except .. as e, m
       tasmota.log(string.format("BRY: Exception> '%s' - %s", e, m), 2)
       #- display error page -#
@@ -298,7 +461,7 @@ class Matter_UI
 
       webserver.content_send(string.format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
 
-      webserver.content_button(webserver.BUTTON_MANAGEMENT) #- button back to management page -#
+      webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to configuration page -#
       webserver.content_stop()                        #- end of web page -#
     end
   end

@@ -25,7 +25,8 @@ class Matter_Plugin_Sensor end
 #@ solidify:Matter_Plugin_Sensor_Temp,weak
 
 class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
-  static var NAME = "temperature"                   # name of the plug-in in json
+  static var TYPE = "temperature"                   # name of the plug-in in json
+  static var NAME = "Temperature"                   # display name of the plug-in
   static var CLUSTERS  = {
     0x0402: [0,1,2,0xFFFC,0xFFFD],                  # Temperature Measurement p.97 - no writable
   }

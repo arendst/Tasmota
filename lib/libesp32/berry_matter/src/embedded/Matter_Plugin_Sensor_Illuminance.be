@@ -25,7 +25,8 @@ class Matter_Plugin_Sensor end
 #@ solidify:Matter_Plugin_Sensor_Illuminance,weak
 
 class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
-  static var NAME = "illuminance"                   # name of the plug-in in json
+  static var TYPE = "illuminance"                   # name of the plug-in in json
+  static var NAME = "Illuminance"                   # display name of the plug-in
   static var CLUSTERS  = {
     0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
   }

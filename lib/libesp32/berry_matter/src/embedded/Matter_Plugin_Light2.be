@@ -25,7 +25,8 @@ class Matter_Plugin_Light1 end
 #@ solidify:Matter_Plugin_Light2,weak
 
 class Matter_Plugin_Light2 : Matter_Plugin_Light1
-  static var NAME = "light2"                        # name of the plug-in in json
+  static var TYPE = "light2"                                # name of the plug-in in json
+  static var NAME = "Light 2 CT"                            # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
