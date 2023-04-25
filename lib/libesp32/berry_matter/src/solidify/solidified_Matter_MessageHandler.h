@@ -300,7 +300,7 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
     }),
     be_str_weak(msg_received),
     &be_const_str_solidified,
-    ( &(const binstruction[390]) {  /* code */
+    ( &(const binstruction[391]) {  /* code */
       0xA4120000,  //  0000  IMPORT	R4	K0
       0x50140000,  //  0001  LDBOOL	R5	0	0
       0xA802016A,  //  0002  EXBLK	0	#016E
@@ -666,9 +666,9 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
       0xA8040001,  //  016A  EXBLK	1	1
       0x80040A00,  //  016B  RET	1	R5
       0xA8040001,  //  016C  EXBLK	1	1
-      0x70020016,  //  016D  JMP		#0185
+      0x70020017,  //  016D  JMP		#0186
       0xAC180002,  //  016E  CATCH	R6	0	2
-      0x70020013,  //  016F  JMP		#0184
+      0x70020014,  //  016F  JMP		#0185
       0xB8220A00,  //  0170  GETNGBL	R8	K5
       0x8C201106,  //  0171  GETMET	R8	R8	K6
       0x60280008,  //  0172  GETGBL	R10	G8
@@ -681,16 +681,17 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
       0x7C2C0200,  //  0179  CALL	R11	1
       0x0028140B,  //  017A  ADD	R10	R10	R11
       0x7C200400,  //  017B  CALL	R8	2
-      0x88200148,  //  017C  GETMBR	R8	R0	K72
-      0x78220002,  //  017D  JMPF	R8	#0181
-      0xA4229200,  //  017E  IMPORT	R8	K73
-      0x8C24114A,  //  017F  GETMET	R9	R8	K74
-      0x7C240200,  //  0180  CALL	R9	1
-      0x50200000,  //  0181  LDBOOL	R8	0	0
-      0x80041000,  //  0182  RET	1	R8
-      0x70020000,  //  0183  JMP		#0185
-      0xB0080000,  //  0184  RAISE	2	R0	R0
-      0x80000000,  //  0185  RET	0
+      0xB8220A00,  //  017C  GETNGBL	R8	K5
+      0x88201148,  //  017D  GETMBR	R8	R8	K72
+      0x78220002,  //  017E  JMPF	R8	#0182
+      0xA4229200,  //  017F  IMPORT	R8	K73
+      0x8C24114A,  //  0180  GETMET	R9	R8	K74
+      0x7C240200,  //  0181  CALL	R9	1
+      0x50200000,  //  0182  LDBOOL	R8	0	0
+      0x80041000,  //  0183  RET	1	R8
+      0x70020000,  //  0184  JMP		#0186
+      0xB0080000,  //  0185  RAISE	2	R0	R0
+      0x80000000,  //  0186  RET	0
     })
   )
 );

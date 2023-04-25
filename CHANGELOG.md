@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control (#18386)
 - Matter allow `Matter#Initialized` rule once the device is configured (#18451)
 - Matter add UI to change endpoints configuration (#18498)
+- Matter add support for Shutters (without Tilt)
 
 ### Breaking Changed
 

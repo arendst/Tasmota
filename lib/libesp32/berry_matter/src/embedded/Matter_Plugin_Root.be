@@ -616,7 +616,7 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
         if type(write_data) == 'int' || isinstance(write_data, int64)
           session._breadcrumb = write_data
-          self.attribute_updated(ctx.endpoint, ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
+          self.attribute_updated(ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR
