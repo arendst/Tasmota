@@ -2183,7 +2183,7 @@ bool Xdrv27(uint32_t function)
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
           uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
-          uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i)
+          uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
 
           ResponseAppend_P(",");
           ResponseAppend_P(JSON_SHUTTER_POS, i+1, ((ShutterSettings.shutter_options[i] & 1) ? 100 - position : position), Shutter[i].direction,
