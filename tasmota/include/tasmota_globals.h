@@ -45,6 +45,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 extern "C" void resetPins();
 extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t lowCcys,
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
+extern "C" void setTimer1Callback(uint32_t (*fn)());
 #ifdef USE_SERIAL_BRIDGE
 void SerialBridgePrintf(PGM_P formatP, ...);
 #endif
