@@ -101,7 +101,7 @@ be_local_closure(Matter_Plugin_Sensor_parse_sensors,   /* name */
     /* K1   */  be_nested_str_weak(pre_value),
     /* K2   */  be_nested_str_weak(match),
     /* K3   */  be_nested_str_weak(shadow_value),
-    /* K4   */  be_nested_str_weak(valued_changed),
+    /* K4   */  be_nested_str_weak(value_changed),
     }),
     be_str_weak(parse_sensors),
     &be_const_str_solidified,
@@ -134,9 +134,9 @@ be_local_closure(Matter_Plugin_Sensor_parse_sensors,   /* name */
 
 
 /********************************************************************
-** Solidified function: valued_changed
+** Solidified function: value_changed
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_valued_changed,   /* name */
+be_local_closure(Matter_Plugin_Sensor_value_changed,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -147,7 +147,7 @@ be_local_closure(Matter_Plugin_Sensor_valued_changed,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_weak(valued_changed),
+    be_str_weak(value_changed),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -171,7 +171,7 @@ be_local_class(Matter_Plugin_Sensor,
         { be_const_key_weak(tasmota_sensor_matcher, 6), be_const_var(1) },
         { be_const_key_weak(init, 1), be_const_closure(Matter_Plugin_Sensor_init_closure) },
         { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Sensor_parse_sensors_closure) },
-        { be_const_key_weak(valued_changed, -1), be_const_closure(Matter_Plugin_Sensor_valued_changed_closure) },
+        { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Sensor_value_changed_closure) },
         { be_const_key_weak(tasmota_sensor_filter, -1), be_const_var(0) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(filter) },
     })),

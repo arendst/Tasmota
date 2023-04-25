@@ -45,9 +45,9 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   # Called when the value changed compared to shadow value
   #
   # This must be overriden.
-  # This is where you call `self.attribute_updated(nil, <cluster>, <attribute>)`
-  def valued_changed(val)
-    self.attribute_updated(nil, 0x0405, 0x0000)
+  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
+  def value_changed(val)
+    self.attribute_updated(0x0405, 0x0000)
   end
 
   #############################################################

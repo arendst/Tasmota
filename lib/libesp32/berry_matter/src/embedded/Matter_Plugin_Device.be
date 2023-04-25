@@ -27,6 +27,7 @@ class Matter_Plugin_Device : Matter_Plugin
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
+    0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
   }
   static var TYPES = { 0x0000: 0 }                  # fake type
 
@@ -67,6 +68,14 @@ class Matter_Plugin_Device : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 4)# "new data model format and notation"
       end
 
+    # ====================================================================================================
+    elif cluster == 0x0005              # ========== Scenes 1.4 p.30 - no writable ==========
+      if   attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
+        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
+        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+      end
+
     else
       return super(self).read_attribute(session, ctx)
     end
@@ -105,6 +114,11 @@ class Matter_Plugin_Device : Matter_Plugin
       # TODO
       return true
 
+    # ====================================================================================================
+    elif cluster == 0x0005              # ========== Scenes 1.4 p.30 ==========
+      # TODO
+      return true
+      
     else
       return super(self).invoke_request(session, val, ctx)
     end

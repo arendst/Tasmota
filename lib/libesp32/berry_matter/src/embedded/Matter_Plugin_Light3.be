@@ -59,8 +59,8 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     var sat = light_status.find('sat', nil)
     if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
     if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
-    if hue != self.shadow_hue   self.attribute_updated(nil, 0x0300, 0x0000)   self.shadow_hue = hue   end
-    if sat != self.shadow_sat   self.attribute_updated(nil, 0x0300, 0x0001)   self.shadow_sat = sat   end
+    if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
+    if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
   end
 
   #############################################################
@@ -74,6 +74,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
         return TLV.create_TLV(TLV.U1, self.shadow_hue)
       elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
@@ -117,6 +118,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToHue ----------
         var hue_in = val.findsubval(0)  # Hue 0..254
         var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)

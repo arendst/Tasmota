@@ -54,8 +54,13 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     import light
     var light_status = light.get()
     var bri = light_status.find('bri', nil)
-    if bri != nil     bri = tasmota.scale_uint(bri, 0, 255, 0, 254)   else bri = self.shadow_bri      end
-    if bri != self.shadow_bri   self.attribute_updated(nil, 0x0008, 0x0000)   self.shadow_bri = bri   end
+    if bri != nil
+      bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
+      if bri != self.shadow_bri
+        self.attribute_updated(0x0008, 0x0000)
+        self.shadow_bri = bri
+      end
+    end
     super(self).update_shadow()     # superclass manages 'power'
   end
 
@@ -70,6 +75,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
         return TLV.create_TLV(TLV.U1, self.shadow_bri)
       elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
@@ -104,6 +110,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_in = val.findsubval(0)  # Hue 0..254
         var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 255)

@@ -36,7 +36,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[76]) {  /* code */
+    ( &(const binstruction[97]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
       0x88100902,  //  0002  GETMBR	R4	R4	K2
@@ -77,7 +77,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x542A0003,  //  0025  LDINT	R10	4
       0x7C1C0600,  //  0026  CALL	R7	3
       0x80040E00,  //  0027  RET	1	R7
-      0x70020021,  //  0028  JMP		#004B
+      0x70020036,  //  0028  JMP		#0060
       0x541E0003,  //  0029  LDINT	R7	4
       0x1C1C0A07,  //  002A  EQ	R7	R5	R7
       0x781E0016,  //  002B  JMPF	R7	#0043
@@ -103,16 +103,37 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x542A0003,  //  003F  LDINT	R10	4
       0x7C1C0600,  //  0040  CALL	R7	3
       0x80040E00,  //  0041  RET	1	R7
-      0x70020007,  //  0042  JMP		#004B
-      0x601C0003,  //  0043  GETGBL	R7	G3
-      0x5C200000,  //  0044  MOVE	R8	R0
-      0x7C1C0200,  //  0045  CALL	R7	1
-      0x8C1C0F0C,  //  0046  GETMET	R7	R7	K12
-      0x5C240200,  //  0047  MOVE	R9	R1
-      0x5C280400,  //  0048  MOVE	R10	R2
-      0x7C1C0600,  //  0049  CALL	R7	3
-      0x80040E00,  //  004A  RET	1	R7
-      0x80000000,  //  004B  RET	0
+      0x7002001C,  //  0042  JMP		#0060
+      0x541E0004,  //  0043  LDINT	R7	5
+      0x1C1C0A07,  //  0044  EQ	R7	R5	R7
+      0x781E0011,  //  0045  JMPF	R7	#0058
+      0x541EFFFB,  //  0046  LDINT	R7	65532
+      0x1C1C0C07,  //  0047  EQ	R7	R6	R7
+      0x781E0005,  //  0048  JMPF	R7	#004F
+      0x8C1C0907,  //  0049  GETMET	R7	R4	K7
+      0x8824090B,  //  004A  GETMBR	R9	R4	K11
+      0x58280006,  //  004B  LDCONST	R10	K6
+      0x7C1C0600,  //  004C  CALL	R7	3
+      0x80040E00,  //  004D  RET	1	R7
+      0x70020007,  //  004E  JMP		#0057
+      0x541EFFFC,  //  004F  LDINT	R7	65533
+      0x1C1C0C07,  //  0050  EQ	R7	R6	R7
+      0x781E0004,  //  0051  JMPF	R7	#0057
+      0x8C1C0907,  //  0052  GETMET	R7	R4	K7
+      0x8824090B,  //  0053  GETMBR	R9	R4	K11
+      0x542A0003,  //  0054  LDINT	R10	4
+      0x7C1C0600,  //  0055  CALL	R7	3
+      0x80040E00,  //  0056  RET	1	R7
+      0x70020007,  //  0057  JMP		#0060
+      0x601C0003,  //  0058  GETGBL	R7	G3
+      0x5C200000,  //  0059  MOVE	R8	R0
+      0x7C1C0200,  //  005A  CALL	R7	1
+      0x8C1C0F0C,  //  005B  GETMET	R7	R7	K12
+      0x5C240200,  //  005C  MOVE	R9	R1
+      0x5C280400,  //  005D  MOVE	R10	R2
+      0x7C1C0600,  //  005E  CALL	R7	3
+      0x80040E00,  //  005F  RET	1	R7
+      0x80000000,  //  0060  RET	0
     })
   )
 );
@@ -147,7 +168,7 @@ be_local_closure(Matter_Plugin_Device_invoke_request,   /* name */
     }),
     be_str_weak(invoke_request),
     &be_const_str_solidified,
-    ( &(const binstruction[45]) {  /* code */
+    ( &(const binstruction[51]) {  /* code */
       0xB8120000,  //  0000  GETNGBL	R4	K0
       0x88100901,  //  0001  GETMBR	R4	R4	K1
       0x88140702,  //  0002  GETMBR	R5	R3	K2
@@ -176,23 +197,29 @@ be_local_closure(Matter_Plugin_Device_invoke_request,   /* name */
       0x781E0001,  //  0019  JMPF	R7	#001C
       0x501C0200,  //  001A  LDBOOL	R7	1	0
       0x80040E00,  //  001B  RET	1	R7
-      0x7002000E,  //  001C  JMP		#002C
+      0x70020014,  //  001C  JMP		#0032
       0x541E0003,  //  001D  LDINT	R7	4
       0x1C1C0A07,  //  001E  EQ	R7	R5	R7
       0x781E0002,  //  001F  JMPF	R7	#0023
       0x501C0200,  //  0020  LDBOOL	R7	1	0
       0x80040E00,  //  0021  RET	1	R7
-      0x70020008,  //  0022  JMP		#002C
-      0x601C0003,  //  0023  GETGBL	R7	G3
-      0x5C200000,  //  0024  MOVE	R8	R0
-      0x7C1C0200,  //  0025  CALL	R7	1
-      0x8C1C0F0A,  //  0026  GETMET	R7	R7	K10
-      0x5C240200,  //  0027  MOVE	R9	R1
-      0x5C280400,  //  0028  MOVE	R10	R2
-      0x5C2C0600,  //  0029  MOVE	R11	R3
-      0x7C1C0800,  //  002A  CALL	R7	4
-      0x80040E00,  //  002B  RET	1	R7
-      0x80000000,  //  002C  RET	0
+      0x7002000E,  //  0022  JMP		#0032
+      0x541E0004,  //  0023  LDINT	R7	5
+      0x1C1C0A07,  //  0024  EQ	R7	R5	R7
+      0x781E0002,  //  0025  JMPF	R7	#0029
+      0x501C0200,  //  0026  LDBOOL	R7	1	0
+      0x80040E00,  //  0027  RET	1	R7
+      0x70020008,  //  0028  JMP		#0032
+      0x601C0003,  //  0029  GETGBL	R7	G3
+      0x5C200000,  //  002A  MOVE	R8	R0
+      0x7C1C0200,  //  002B  CALL	R7	1
+      0x8C1C0F0A,  //  002C  GETMET	R7	R7	K10
+      0x5C240200,  //  002D  MOVE	R9	R1
+      0x5C280400,  //  002E  MOVE	R10	R2
+      0x5C2C0600,  //  002F  MOVE	R11	R3
+      0x7C1C0800,  //  0030  CALL	R7	4
+      0x80040E00,  //  0031  RET	1	R7
+      0x80000000,  //  0032  RET	0
     })
   )
 );
@@ -209,8 +236,16 @@ be_local_class(Matter_Plugin_Device,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(3, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(4,
+    ( (struct bvalue*) &(const bvalue[]) {
+        be_const_int(0),
+        be_const_int(1),
+        be_const_int(65532),
+        be_const_int(65533),
+    }))    ) } )) },
         { be_const_key_int(4, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(3,
     ( (struct bvalue*) &(const bvalue[]) {
@@ -218,11 +253,15 @@ be_local_class(Matter_Plugin_Device,
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
-        { be_const_key_int(3, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(4,
+        { be_const_key_int(5, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(8,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
+        be_const_int(2),
+        be_const_int(3),
+        be_const_int(4),
+        be_const_int(5),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },

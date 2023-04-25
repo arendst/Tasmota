@@ -35,6 +35,7 @@ class Matter_Device
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
+  var tick                            # increment at each tick, avoids to repeat too frequently some actions
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
@@ -74,6 +75,7 @@ class Matter_Device
     end    # abort if SetOption 151 is not set
 
     self.started = false
+    self.tick = 0
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
     self.plugins_classes = {}
@@ -324,6 +326,12 @@ class Matter_Device
       tasmota.log("MTR: unable to parse read_sensors: "+str(rs_json), 3)
     end
 
+  end
+
+  #############################################################
+  # ticks
+  def every_50ms()
+    self.tick += 1
   end
 
   #############################################################
@@ -991,6 +999,7 @@ class Matter_Device
   #
   # Applies only if there are no plugins already configured
   def autoconf_device_map()
+    import string
     import json
     var m = {}
 
@@ -1018,15 +1027,46 @@ class Matter_Device
       end
     end
 
+    # handle shutters before relays (as we steal relays for shutters)
+    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
+    var relays_reserved = []                        # list of relays that are used for non-relay (shutters)
+    tasmota.log("MTR: Status 13 = "+str(r_st13), 3)
+
+    if r_st13.contains('StatusSHT')
+      r_st13 = r_st13['StatusSHT']        # skip root
+      # Shutter is enabled, iterate
+      var idx = 0
+      while true
+        var k = 'SHT' + str(idx)                    # SHT is zero based
+        if !r_st13.contains(k)   break     end           # no more SHTxxx
+        var d = r_st13[k]
+        tasmota.log(string.format("MTR: '%s' = %s", k, str(d)), 3)
+        var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
+        var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
+
+        if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
+        if relay2 >= 0    relays_reserved.push(relay2)    end
+
+        tasmota.log(string.format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        # add shutter to definition
+        m[str(endpoint)] = {'type':'shutter','shutter':idx}
+        endpoint += 1
+        idx += 1
+      end
+
+    end
+
     # how many relays are present
     var relay_count = size(tasmota.get_power())
     var relay_index = 0         # start at index 0
     if light_present    relay_count -= 1  end       # last power is taken for lights
 
     while relay_index < relay_count
-      m[str(endpoint)] = {'type':'relay','relay':relay_index}
+      if relays_reserved.find(relay_index) == nil   # if relay is actual relay
+        m[str(endpoint)] = {'type':'relay','relay':relay_index}
+        endpoint += 1
+      end
       relay_index += 1
-      endpoint += 1
     end
 
     # auto-detect sensors
@@ -1101,8 +1141,12 @@ class Matter_Device
   # register_plugin_class
   #
   # Adds a class by name
-  def register_plugin_class(name, cl)
-    self.plugins_classes[name] = cl
+  def register_plugin_class(cl)
+    import introspect
+    var typ = introspect.get(cl, 'TYPE')      # make sure we don't crash if TYPE does not exist
+    if typ
+      self.plugins_classes[typ] = cl
+    end
   end
 
   #############################################################
@@ -1128,16 +1172,15 @@ class Matter_Device
   #
   # Adds a class by name
   def register_native_classes(name, cl)
-    self.register_plugin_class('root',          matter.Plugin_Root)
-    self.register_plugin_class('light0',        matter.Plugin_Light0)
-    self.register_plugin_class('light1',        matter.Plugin_Light1)
-    self.register_plugin_class('light2',        matter.Plugin_Light2)
-    self.register_plugin_class('light3',        matter.Plugin_Light3)
-    self.register_plugin_class('relay',         matter.Plugin_OnOff)
-    self.register_plugin_class('temperature',   matter.Plugin_Sensor_Temp)
-    self.register_plugin_class('humidity',      matter.Plugin_Sensor_Humidity)
-    self.register_plugin_class('illuminance',   matter.Plugin_Sensor_Illuminance)
-    self.register_plugin_class('pressure',      matter.Plugin_Sensor_Pressure)
+    # try to register any class that starts with 'Plugin_'
+    import introspect
+    import string
+    for k: introspect.members(matter)
+      var v = introspect.get(matter, k)
+      if type(v) == 'class' && string.find(k, "Plugin_") == 0
+        self.register_plugin_class(v)
+      end
+    end
     tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
   end
   

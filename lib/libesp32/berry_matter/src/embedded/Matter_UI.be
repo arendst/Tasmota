@@ -32,7 +32,8 @@ import matter
 # WebUI for the partition manager
 #################################################################################
 class Matter_UI
-  static var _CLASSES_TYPES = "root|relay|light0|light1|light2|light3"
+  static var _ROOT_TYPES    = "root"
+  static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter"
                               "|temperature|pressure|illuminance|humidity"
   var device
 
@@ -179,7 +180,7 @@ class Matter_UI
     import string
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Fabrics&nbsp;</b></legend><p></p>")
-    webserver.content_send("<p>Existing fabrics:</p>")
+    webserver.content_send("<p>Associated fabrics:</p>")
 
     if size(self.device.sessions.sessions) == 0
       webserver.content_send("<p><b>None</b></p>")
@@ -233,11 +234,27 @@ class Matter_UI
     # display one line per plug-in
     var endpoints = self.device.k2l_num(self.device.plugins_config)
     var i = 0
+  
+    # special case for root node
+    if endpoints[0] == 0
+      var ep = endpoints[i]
+      var conf = self.device.plugins_config[str(ep)]
+      var typ = conf.find('type')
+      
+      webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' value='0' readonly></td>", i))
+      webserver.content_send(string.format("<td><select name='pi%03i'>", i))
+      self.plugin_option(conf.find('type', ''), self._ROOT_TYPES)
+      webserver.content_send(string.format("</select></td>"))
+      webserver.content_send("<td><font size='-1'>&nbsp;</font></td>")
+
+      i += 1
+    end
+
     while i < size(endpoints)
       var ep = endpoints[i]
       var conf = self.device.plugins_config[str(ep)]
       var typ = conf.find('type')
-      if !typ   continue    end
+      if !typ   i += 1   continue    end
 
       var arg_name = self.device.get_plugin_class_arg(typ)
       var arg = arg_name ? str(conf.find(arg_name, '')) : ''
@@ -245,7 +262,7 @@ class Matter_UI
       webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value='%i'></td>", i, ep))
 
       webserver.content_send(string.format("<td><select name='pi%03i'>", i))
-      self.plugin_option(conf.find('type', ''))
+      self.plugin_option(conf.find('type', ''), self._CLASSES_TYPES)
       webserver.content_send(string.format("</select></td>"))
       webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value='%s'></font></td>",
                              i, webserver.html_escape(arg)))
@@ -256,7 +273,7 @@ class Matter_UI
     # add an empty line for adding a configuration
     webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value=''></td>", i))
     webserver.content_send(string.format("<td><select name='pi%03i'>", i))
-    self.plugin_option('')
+    self.plugin_option('', self._CLASSES_TYPES)
     webserver.content_send(string.format("</select></td>"))
     webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value=''></font></td>", i))
 
@@ -270,17 +287,20 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   #- Show all possible classes for plugin
   #- ---------------------------------------------------------------------- -#
-  def plugin_option(cur)
+  def plugin_option(cur, class_list)
     import webserver
     import string
-    var class_types = string.split(self._CLASSES_TYPES, '|')
+    var class_types = class_list ? string.split(class_list, '|') : []
     
     var i = 0
-    webserver.content_send("<option value=''></option>")
     while i < size(class_types)
       var typ = class_types[i]
-      var nam = self.device.get_plugin_class_displayname(typ)
-      webserver.content_send(string.format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
+      if typ == ''
+        webserver.content_send("<option value=''></option>")
+      else
+        var nam = self.device.get_plugin_class_displayname(typ)
+        webserver.content_send(string.format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
+      end
       i += 1
     end
   end

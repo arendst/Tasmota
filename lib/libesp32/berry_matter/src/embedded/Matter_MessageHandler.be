@@ -203,7 +203,7 @@ class Matter_MessageHandler
       return ret
     except .. as e, m
       tasmota.log("MTR: MessageHandler::msg_received exception: "+str(e)+";"+str(m))
-      if self._debug_present
+      if tasmota._debug_present
         import debug
         debug.traceback()
       end

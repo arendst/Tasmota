@@ -159,6 +159,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Light1.h"
 #include "solidify/solidified_Matter_Plugin_Light2.h"
 #include "solidify/solidified_Matter_Plugin_Light3.h"
+#include "solidify/solidified_Matter_Plugin_Shutter.h"
 #include "solidify/solidified_Matter_Plugin_Sensor.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Pressure.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Temp.h"
@@ -337,6 +338,7 @@ module matter (scope: global, strings: weak) {
   Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
   Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
   Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
+  Plugin_Shutter, class(be_class_Matter_Plugin_Shutter)   // Shutter
   Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
   Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
   Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
