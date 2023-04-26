@@ -34,7 +34,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
-    0x0102: [0,5,6,7,8,9,0xA,0xB,0xC,0xD,0xE,0xF,0x17,0xFFFC,0xFFFD],                      # Window Covering 5.3 p.289
+    0x0102: [0,5,7,0xA,0xB,0xD,0xE,0x17,0xFFFC,0xFFFD],                      # Window Covering 5.3 p.289
   }
   static var TYPES = { 0x0202: 2 }                  # New data model format and notation
 
@@ -79,34 +79,24 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
         return TLV.create_TLV(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x0005          #  ---------- NumberOfActuationsLift / u16 ----------
         return TLV.create_TLV(TLV.U2, 0)
-      elif attribute == 0x0006          #  ---------- NumberOfActuationsTilt / u16 ----------
-        return TLV.create_TLV(TLV.U2, 0)
       elif attribute == 0x0007          #  ---------- ConfigStatus / u8 ----------
-        return TLV.create_TLV(TLV.U1, 1 + 8 + 16)   # Operational + Lift Position Aware + Tilt Position Aware
+        return TLV.create_TLV(TLV.U1, 1 + 8)   # Operational + Lift Position Aware
       elif attribute == 0x000D          #  ---------- EndProductType / u8 ----------
         return TLV.create_TLV(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
 
-      elif attribute == 0x0008          #  ---------- CurrentPositionLiftPercentage / u8 ----------
-        return TLV.create_TLV(TLV.U2, 100 - self.shadow_shutter_pos)
       elif attribute == 0x000E          #  ---------- CurrentPositionLiftPercent100ths / u16 ----------
         return TLV.create_TLV(TLV.U2, (100 - self.shadow_shutter_pos) * 100)
-      elif attribute == 0x0009          #  ---------- CurrentPositionTiltPercentage / u8 ----------
-        return TLV.create_TLV(TLV.U2, 100 - self.shadow_shutter_tilt)
-      elif attribute == 0x000F          #  ---------- CurrentPositionTiltPercent100ths / u8 ----------
-        return TLV.create_TLV(TLV.U2, (100 - self.shadow_shutter_tilt) * 100)
       elif attribute == 0x000A          #  ---------- OperationalStatus / u8 ----------
         var op = self.shadow_shutter_direction == 0 ? 0 : (self.shadow_shutter_direction > 0 ? 1 : 2)
-        return TLV.create_TLV(TLV.U1, op)    # TODO from sensors
+        return TLV.create_TLV(TLV.U1, op)
       elif attribute == 0x000B          #  ---------- TargetPositionLiftPercent100ths / u16 ----------
         return TLV.create_TLV(TLV.U2, (100 - self.shadow_shutter_target) * 100)
-      elif attribute == 0x000C          #  ---------- TargetPositionTiltPercent100ths / u16 ----------
-        return TLV.create_TLV(TLV.U1, 0)    # TODO
 
       elif attribute == 0x0017          #  ---------- Mode / u8 ----------
         return TLV.create_TLV(TLV.U1, 0)    # normal mode
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 3 + 4 + 16)    # Lift + Tilt + PA_LF + PA_TL
+        return TLV.create_TLV(TLV.U4, 1 + 4)    # Lift + PA_LF
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
         return TLV.create_TLV(TLV.U4, 5)    # New data model format and notation
       end
@@ -152,13 +142,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
           self.update_shadow()
         end
         return true
-      elif command == 0x0008            # ---------- GoToTiltPercentage ----------
-        var tilt = val.findsubval(0)
-        if tilt != nil
-          tilt = tilt / 10
-          ctx.log = "tilt%:"+str(tilt)
-        end
-        return true
       end
     
     else
@@ -182,16 +165,14 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       var val_pos = v.find("Position")
       if val_pos != nil
         if val_pos != self.shadow_shutter_pos
-          # self.attribute_updated(0x0102, 0x0008)   # CurrentPositionLiftPercentage
           self.attribute_updated(0x0102, 0x000E)   # CurrentPositionLiftPercent100ths
         end
         self.shadow_shutter_pos = val_pos
       end
-      # Tilt
+      # Tilt - we can keep it here knowing that it won't change if not implemented
       var val_tilt = v.find("Tilt")
       if val_tilt != nil
         if val_tilt != self.shadow_shutter_tilt
-          # self.attribute_updated(0x0102, 0x0009)   # CurrentPositionTiltPercentage
           self.attribute_updated(0x0102, 0x000F)   # CurrentPositionTiltPercent100ths
         end
         self.shadow_shutter_tilt = val_tilt

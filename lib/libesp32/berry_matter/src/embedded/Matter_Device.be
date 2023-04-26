@@ -1048,8 +1048,11 @@ class Matter_Device
         if relay2 >= 0    relays_reserved.push(relay2)    end
 
         tasmota.log(string.format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        # is there tilt support
+        var tilt_array = d.find('TiltConfig')
+        var tilt_config = tilt_array && (tilt_array[2] > 0)
         # add shutter to definition
-        m[str(endpoint)] = {'type':'shutter','shutter':idx}
+        m[str(endpoint)] = {'type': tilt_config ? 'shutter+tilt' : 'shutter', 'shutter':idx}
         endpoint += 1
         idx += 1
       end

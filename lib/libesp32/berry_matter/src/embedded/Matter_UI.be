@@ -33,7 +33,7 @@ import matter
 #################################################################################
 class Matter_UI
   static var _ROOT_TYPES    = "root"
-  static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter"
+  static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|temperature|pressure|illuminance|humidity"
   var device
 
