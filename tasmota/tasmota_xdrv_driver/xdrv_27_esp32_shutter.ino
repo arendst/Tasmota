@@ -327,11 +327,14 @@ bool ShutterStatus(void) {
       ResponseAppend_P(PSTR("\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
                                   "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
                                   "\"Calib\":[%d,%d,%d,%d,%d],"
-                                  "\"Mode\":\"%d\"}"),
+                                  "\"Mode\":\"%d\","
+                                  "\"TiltConfig\":[%d,%d,%d,%d,%d]}"),
                                   i, ShutterSettings.shutter_startrelay[i], ShutterSettings.shutter_startrelay[i] +1, ShutterSettings.shutter_opentime[i], ShutterSettings.shutter_closetime[i],
                                   ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
                                   ShutterSettings.shuttercoeff[0][i], ShutterSettings.shuttercoeff[1][i], ShutterSettings.shuttercoeff[2][i], ShutterSettings.shuttercoeff[3][i], ShutterSettings.shuttercoeff[4][i],
-                                  ShutterSettings.shutter_mode);
+                                  ShutterSettings.shutter_mode, 
+                                  ShutterSettings.shutter_tilt_config[0][i], ShutterSettings.shutter_tilt_config[1][i], ShutterSettings.shutter_tilt_config[2][i], ShutterSettings.shutter_tilt_config[3][i], ShutterSettings.shutter_tilt_config[4][i]
+                                  );
     }
     ResponseJsonEndEnd();
     return true;
