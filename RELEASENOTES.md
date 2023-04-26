@@ -115,7 +115,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
-- Matter add UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
+- Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
+- Matter support for Shutters (without Tilt) [#18509](https://github.com/arendst/Tasmota/issues/18509)
 
 ### Breaking Changed
 
