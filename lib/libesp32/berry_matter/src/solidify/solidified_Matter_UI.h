@@ -1792,7 +1792,7 @@ be_local_class(Matter_UI,
     be_nested_map(17,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(show_plugins_configuration, -1), be_const_closure(Matter_UI_show_plugins_configuration_closure) },
-        { be_const_key_weak(_CLASSES_TYPES, 2), be_nested_str_weak(_X7Crelay_X7Clight0_X7Clight1_X7Clight2_X7Clight3_X7Cshutter_X7Ctemperature_X7Cpressure_X7Cilluminance_X7Chumidity) },
+        { be_const_key_weak(_CLASSES_TYPES, 2), be_nested_str_weak(_X7Crelay_X7Clight0_X7Clight1_X7Clight2_X7Clight3_X7Cshutter_X7Cshutter_X2Btilt_X7Ctemperature_X7Cpressure_X7Cilluminance_X7Chumidity) },
         { be_const_key_weak(show_fabric_info, 7), be_const_closure(Matter_UI_show_fabric_info_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_UI_init_closure) },
         { be_const_key_weak(web_add_handler, -1), be_const_closure(Matter_UI_web_add_handler_closure) },
