@@ -485,7 +485,7 @@ void ModbusBridgeHandle(void)
                 ((uint8_t *)&value)[0] = modbusBridge.buffer[dataOffset + 3 + (count * 4)];
               }
               if (modbusBridge.type == ModbusBridgeType::mb_int32)
-                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", value);
+                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", (int32_t)value);
               else
                 snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", value);
             }
@@ -506,7 +506,7 @@ void ModbusBridgeHandle(void)
                 ((uint8_t *)&value)[0] = modbusBridge.buffer[dataOffset + 1 + (count * 2)];
               }
               if (modbusBridge.type == ModbusBridgeType::mb_int16)
-                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", value);
+                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", (int16_t)value);
               else
                 snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", value);
             }
@@ -515,7 +515,7 @@ void ModbusBridgeHandle(void)
             {
               uint8_t value = modbusBridge.buffer[dataOffset + (count * 1)];
               if (modbusBridge.type == ModbusBridgeType::mb_int8)
-                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", value);
+                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", (int8_t)value);
               else
                 snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", value);
             }
