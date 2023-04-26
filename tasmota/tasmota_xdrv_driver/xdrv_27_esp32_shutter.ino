@@ -1595,11 +1595,6 @@ void CmndShutterCloseTime(void)
       ShutterSettings.shutter_closetime[XdrvMailbox.index -1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
-/*
-    char time_chr[10];
-    dtostrfd((float)(ShutterSettings.shutter_closetime[XdrvMailbox.index -1]) / 10, 1, time_chr);
-    ResponseCmndIdxChar(time_chr);
-*/
     ResponseCmndIdxFloat((float)(ShutterSettings.shutter_closetime[XdrvMailbox.index -1]) / 10, 1);
   }
 }
@@ -1612,11 +1607,6 @@ void CmndShutterMotorDelay(void)
       ShutterInit();
       //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr Init1. realdelay %d"),Shutter[XdrvMailbox.index -1].motordelay);
     }
-/*
-    char time_chr[10];
-    dtostrfd((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2, time_chr);
-    ResponseCmndIdxChar(time_chr);
-*/
     ResponseCmndIdxFloat((float)(Shutter[XdrvMailbox.index -1].motordelay) / STEPS_PER_SECOND, 2);
   }
 }
@@ -2192,11 +2182,12 @@ bool Xdrv27(uint32_t function)
         break;
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-          uint8_t position = (ShutterSettings.shutter_options[i] & 1) ? 100 - ShutterSettings.shutter_position[i] : ShutterSettings.shutter_position[i];
-          uint8_t target   = (ShutterSettings.shutter_options[i] & 1) ? 100 - ShutterRealToPercentPosition(Shutter[i].target_position, i) : ShutterRealToPercentPosition(Shutter[i].target_position, i);
+          uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
 
           ResponseAppend_P(",");
-          ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter[i].direction,target, Shutter[i].tilt_real_pos);
+          ResponseAppend_P(JSON_SHUTTER_POS, i+1, ((ShutterSettings.shutter_options[i] & 1) ? 100 - position : position), Shutter[i].direction,
+                                                  ((ShutterSettings.shutter_options[i] & 1) ? 100 - target : target), Shutter[i].tilt_real_pos);
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
              DomoticzSensor(DZ_SHUTTER, position);
@@ -2308,6 +2299,6 @@ void CmndShutterUnitTest(void) {
 }
 #else
 void CmndShutterUnitTest(void) {}
-#endif
+#endif // SHUTTER_UNITTEST
 
 #endif  // ESP32

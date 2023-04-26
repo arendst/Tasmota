@@ -1922,6 +1922,13 @@ bool Xdrv27(uint32_t function)
           result = DecodeCommand(kShutterCommands, ShutterCommand);
         }
         break;
+        for (uint8_t i = counter; i <= counterend; i++) {
+          XdrvMailbox.index = i;
+          XdrvMailbox.payload = rescue_payload;
+          XdrvMailbox.data_len = rescue_data_len;
+          result = DecodeCommand(kShutterCommands, ShutterCommand);
+        }
+        break;
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
           uint8_t position = (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i] : Settings->shutter_position[i];
