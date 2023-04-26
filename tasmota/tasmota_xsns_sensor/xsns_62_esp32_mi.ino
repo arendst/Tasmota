@@ -163,9 +163,77 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   };
 };
 
+static std::queue<BLEqueueBuffer_t> BLEmessageQueue;
+
+class MI32ServerCallbacks: public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) {
+        BLEqueueBuffer_t q;
+        q.length = 6;
+        q.type = BLE_OP_ON_CONNECT;
+        q.buffer = new uint8_t[q.length];
+        memcpy(q.buffer,desc->peer_ota_addr.val,6);
+        BLEmessageQueue.push(q);
+        MI32.infoMsg = MI32_SERV_CLIENT_CONNECTED;
+    };
+    void onDisconnect(NimBLEServer* pServer) {
+        BLEqueueBuffer_t q;
+        q.length = 0;
+        q.type = BLE_OP_ON_DISCONNECT;
+        memset(MI32.conCtx->MAC,0,6);
+        BLEmessageQueue.push(q);
+        MI32.infoMsg = MI32_SERV_CLIENT_DISCONNECTED;
+        NimBLEDevice::startAdvertising();
+    };
+};
+
+class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* pCharacteristic){
+        BLEqueueBuffer_t q;
+        q.length = 0;
+        q.type = BLE_OP_ON_READ;
+        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        q.handle = pCharacteristic->getHandle();
+        BLEmessageQueue.push(q);
+    };
+
+    void onWrite(NimBLECharacteristic* pCharacteristic) {
+        BLEqueueBuffer_t q;
+        q.type = BLE_OP_ON_WRITE;
+        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        q.handle = pCharacteristic->getHandle();
+        q.length = pCharacteristic->getDataLength();
+        q.buffer = new uint8_t[q.length];
+        memcpy(q.buffer,pCharacteristic->getValue(),pCharacteristic->getDataLength());
+        BLEmessageQueue.push(q);
+    };
+
+    /** The status returned in status is defined in NimBLECharacteristic.h.
+     *  The value returned in code is the NimBLE host return code.
+     */
+    void onStatus(NimBLECharacteristic* pCharacteristic, Status status, int code) {
+        BLEqueueBuffer_t q;
+        q.length = 0;
+        q.type = BLE_OP_ON_STATUS;
+        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        q.handle = pCharacteristic->getHandle();
+        q.value = code;
+        BLEmessageQueue.push(q);
+    };
+
+    void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue) {
+        BLEqueueBuffer_t q;
+        q.length = 0;
+        q.type = BLE_OP_ON_UNSUBSCRIBE + subValue;
+        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        q.handle = pCharacteristic->getHandle();
+        BLEmessageQueue.push(q);
+    };
+};
+
 
 static MI32AdvCallbacks MI32ScanCallbacks;
 static MI32SensorCallback MI32SensorCB;
+static MI32CharacteristicCallbacks MI32ChrCallback;
 static NimBLEClient* MI32Client;
 static std::queue<MI32notificationBuffer_t> MI32NotificationQueue;
 
@@ -653,8 +721,9 @@ void MI32Init(void) {
   if (!MI32.mode.init) {
     NimBLEDevice::setScanFilterMode(CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE);
     NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
-    NimBLEDevice::init("");
-    AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device"));
+    const std::string name(TasmotaGlobal.hostname);
+    NimBLEDevice::init(name);
+    AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device: %s"),TasmotaGlobal.hostname);
     MI32.mode.init = 1;
     MI32.mode.readyForNextConnJob = 1;
     MI32StartTask(MI32_TASK_SCAN); // Let's get started !!
@@ -672,21 +741,41 @@ void MI32Init(void) {
 \*********************************************************************************************/
 extern "C" {
 
+  bool MI32checkBLEinitialization(){
+    return (MI32.mode.init && Settings->flag5.mi32_enable);
+  }
+
+  bool MI32runBerryServer(uint16_t operation, bool response){
+    MI32.conCtx->operation = operation;
+    MI32.conCtx->response = response;
+    AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Berry server op: %d, response: %u"),MI32.conCtx->operation, MI32.conCtx->response);
+    if(MI32.mode.readyForNextServerJob == 0){
+      MI32.mode.triggerNextServerJob = 0;
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: old server job not finished yet!!"));
+      return false;
+    }
+    MI32.mode.triggerNextServerJob = 1;
+    return true;
+  }
+
   bool MI32runBerryConnection(uint8_t operation, bool response){
     if(MI32.conCtx != nullptr){
+      if(operation > 200){
+        return MI32runBerryServer(operation,response);
+      }
       MI32.conCtx->oneOp = (operation > 9);
       MI32.conCtx->operation = operation%10;
       MI32.conCtx->response = response;
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Berry connection op: %d, addrType: %d, oneOp: %u, response: %u"),MI32.conCtx->operation, MI32.conCtx->addrType, MI32.conCtx->oneOp, MI32.conCtx->response);
+      AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Berry connection op: %d, addrType: %d, oneOp: %u, response: %u"),MI32.conCtx->operation, MI32.conCtx->addrType, MI32.conCtx->oneOp, MI32.conCtx->response);
       if(MI32.conCtx->oneOp){
         MI32StartConnectionTask();
       }
       else{
         if(MI32.mode.connected){
-          AddLog(LOG_LEVEL_DEBUG,PSTR("M32: continue connection job"));
+          AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: continue connection job"));
           MI32.mode.triggerNextConnJob = 1;
           if(!MI32.mode.readyForNextConnJob){
-            AddLog(LOG_LEVEL_DEBUG,PSTR("M32: old connection job not finished yet!!"));
+            AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: old connection job not finished yet!!"));
           }
         }
         else{
@@ -704,7 +793,24 @@ extern "C" {
     }
     MI32.conCtx->buffer = buffer;
     MI32.beConnCB = function;
-    AddLog(LOG_LEVEL_INFO,PSTR("M32: Connection Ctx created"));
+    AddLog(LOG_LEVEL_INFO,PSTR("BLE: Connection Ctx created"));
+  }
+
+  void MI32setBerryServerCB(void* function, uint8_t *buffer){
+    if(function == nullptr || buffer == nullptr)
+    {
+      MI32.mode.deleteServerTask = 1;
+      MI32.beServerCB = nullptr;
+      AddLog(LOG_LEVEL_INFO,PSTR("BLE: Server session stopping"));
+      return;
+    }
+    if(MI32.conCtx == nullptr){
+      MI32.conCtx = new MI32connectionContextBerry_t;
+    }
+    MI32.conCtx->buffer = buffer;
+    MI32.beServerCB = function;
+    MI32StartTask(MI32_TASK_SERV);
+    AddLog(LOG_LEVEL_INFO,PSTR("BLE: Server Ctx created"));
   }
 
   bool MI32setBerryCtxSvc(const char *Svc, bool discoverAttributes){
@@ -723,7 +829,7 @@ extern "C" {
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: CHR: %s"),MI32.conCtx->charUUID.toString().c_str());
       uint16_t _uuid = MI32.conCtx->charUUID.getNative()->u16.value; //if not "notify op" -> present requested characteristic as return UUID
       MI32.conCtx->returnCharUUID = _uuid;
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: return UUID: %04x"),MI32.conCtx->returnCharUUID);
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: return 16-bit UUID: %04x"),MI32.conCtx->returnCharUUID);
       return true;
     }
     return false;
@@ -846,7 +952,7 @@ extern "C" {
       case 5: //HAP_EVENT_PAIRING_STARTED
         MI32suspendScanTask();
       default:
-        vTaskResume(MI32.ScanTask);
+        MI32resumeScanTask();
     }
     if(event==4){
       MI32.HKinfoMsg = MI32_HAP_CONTROLLER_DISCONNECTED;
@@ -1042,7 +1148,11 @@ void MI32saveConfig(){
 \*********************************************************************************************/
 
 void MI32suspendScanTask(void){
-  if (MI32.ScanTask != nullptr) vTaskSuspend(MI32.ScanTask);
+  if (MI32.ScanTask != nullptr && MI32.mode.runningScan == 1) vTaskSuspend(MI32.ScanTask);
+}
+
+void MI32resumeScanTask(void){
+  if (MI32.ScanTask != nullptr && MI32.mode.runningScan == 1) vTaskResume(MI32.ScanTask);
 }
 
 void MI32StartTask(uint32_t task){
@@ -1057,15 +1167,22 @@ void MI32StartTask(uint32_t task){
       MI32.mode.deleteScanTask = 1;
       MI32StartConnectionTask();
       break;
+    case MI32_TASK_SERV:
+      MI32.mode.deleteScanTask = 1;
+      MI32StartServerTask();
+      break;
     default:
       break;
   }
 }
 
+// Scan task section
+
 void MI32StartScanTask(){
-    if (MI32.mode.connected) return;
+    if (MI32.mode.connected == 1) return;
     if(MI32.ScanTask!=nullptr) vTaskDelete(MI32.ScanTask);
     MI32.mode.runningScan = 1;
+    MI32.mode.deleteScanTask = 0;
     xTaskCreatePinnedToCore(
     MI32ScanTask,    /* Function to implement the task */
     "MI32ScanTask",  /* Name of the task */
@@ -1098,13 +1215,14 @@ void MI32ScanTask(void *pvParameters){
 
   uint32_t timer = 0;
   for(;;){
-    vTaskDelay(1000/ portTICK_PERIOD_MS);
-    if(MI32.mode.deleteScanTask){
+    vTaskDelay(100/ portTICK_PERIOD_MS);
+    if(MI32.mode.deleteScanTask == 1){
       MI32Scan->stop();
       MI32.mode.runningScan = 0;
+      MI32.ScanTask = nullptr;
       break;
     }
-    if(MI32.mode.updateScan){
+    if(MI32.mode.updateScan == 1){
       MI32Scan->stop();
       MI32Scan->setActiveScan(MI32.option.activeScan == 1);
       MI32Scan->start(0,true);
@@ -1114,6 +1232,8 @@ void MI32ScanTask(void *pvParameters){
   }
   vTaskDelete( NULL );
 }
+
+// connection task section
 
 bool MI32ConnectActiveSensor(){ // only use inside a task !!
   if(MI32.conCtx->operation == 5) {
@@ -1305,6 +1425,144 @@ void MI32ConnectionTask(void *pvParameters){
   MI32.mode.triggerBerryConnCB = 1;
   MI32StartTask(MI32_TASK_SCAN);
   vTaskDelete( NULL );
+}
+
+// server task section
+
+bool MI32StartServerTask(){
+  AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Server task ... start"));
+  MI32NotificationQueue = {};
+  xTaskCreatePinnedToCore(
+    MI32ServerTask,    /* Function to implement the task */
+    "MI32ServerTask",  /* Name of the task */
+    8192,             /* Stack size in words */
+    NULL,             /* Task input parameter */
+    2,                /* Priority of the task */
+    &MI32.ServerTask,   /* Task handle. */
+    0);               /* Core where the task should run */
+    return true;
+}
+
+void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
+void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
+  NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  BLEqueueBuffer_t q;
+  q.length = 0;
+  if(shallStartServices && MI32.conCtx->operation == BLE_OP_SET_ADV){
+    q.buffer = new uint8_t[256];
+    for (auto & pService : servicesToStart) {
+        pService->start();
+    }
+    shallStartServices = false; // only do this at the first run
+    if(servicesToStart.size() != 0){
+      pServer->start();         // only start server when svc and chr do exist
+      uint32_t idx = 0;
+      for (auto & pService : servicesToStart) {
+        std::vector<NimBLECharacteristic *> characteristics = pService->getCharacteristics();
+        for (auto & pCharacteristic : characteristics) {
+          uint16_t handle = pCharacteristic->getHandle(); // now we have handles, so pass them to Berry
+          q.buffer[idx] = (uint8_t)handle>>8;
+          q.buffer[idx+1] = (uint8_t)handle&0xff;
+          if (idx > 254) break; // limit to 127 characteristics
+          idx += 2;
+        }
+      }
+      q.length = idx;
+    }
+    servicesToStart.clear(); // release vector
+  }
+  NimBLEAdvertisementData adv;
+  adv.addData((char *)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
+  if(MI32.conCtx->operation == BLE_OP_SET_ADV){
+    pAdvertising->setAdvertisementData(adv); // replace whole advertisement with our custom data from the Berry side
+    pAdvertising->start();
+  } else
+  {
+    pAdvertising->setScanResponseData(adv);
+    pAdvertising->setScanResponse(true);
+  }
+
+  MI32.infoMsg = MI32_SERV_SCANRESPONSE_ADDED + (MI32.conCtx->operation - BLE_OP_SET_SCAN_RESP); // .. ADV or SCAN RESPONSE
+  q.type = MI32.conCtx->operation;
+  q.returnCharUUID = 0; // does not matter
+  q.handle = 0; //dito
+  BLEmessageQueue.push(q);
+}
+
+void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
+void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
+  MI32.conCtx->error = MI32_CONN_NO_ERROR;
+  NimBLEService *pService = pServer->getServiceByUUID(MI32.conCtx->serviceUUID); // retrieve ...
+  if(pService == nullptr){
+    pService = pServer->createService(MI32.conCtx->serviceUUID);  //... or create service.
+    if(pService == nullptr){
+      MI32.conCtx->error = MI32_CONN_NO_SERVICE;
+      return;
+    }
+
+    if(shallStartServices){
+      servicesToStart.push_back(pService);
+    }
+  }
+  NimBLECharacteristic *pCharacteristic = pService->getCharacteristic(MI32.conCtx->charUUID); // again retrieve ...
+  if(pCharacteristic == nullptr){
+    uint32_t _writeRSP = MI32.conCtx->response ?  NIMBLE_PROPERTY::WRITE :  NIMBLE_PROPERTY::WRITE_NR;
+    pCharacteristic = pService->createCharacteristic(MI32.conCtx->charUUID,
+                                                    NIMBLE_PROPERTY::READ |
+                                                    _writeRSP |
+                                                    NIMBLE_PROPERTY::NOTIFY |
+                                                    NIMBLE_PROPERTY::INDICATE);  //... or create characteristic.
+    if(pCharacteristic == nullptr){
+      MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
+      return;
+    }
+    pCharacteristic->setCallbacks(&MI32ChrCallback);
+    MI32.infoMsg = MI32_SERV_CHARACTERISTIC_ADDED;
+  }
+  pCharacteristic->setValue(MI32.conCtx->buffer + 1, MI32.conCtx->buffer[0]); // set value
+  pCharacteristic->notify(true); // always notify .. for now
+  BLEqueueBuffer_t q;
+  q.length = 0;
+  q.type = BLE_OP_SET_CHARACTERISTIC;
+  q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+  q.handle = pCharacteristic->getHandle(); // this returns "-1", no valid handle yet :(                   
+  BLEmessageQueue.push(q);
+}
+
+void MI32ServerTask(void *pvParameters){
+  MI32.conCtx->error = MI32_CONN_NO_ERROR;
+  NimBLEServer *pServer = NimBLEDevice::createServer();
+  pServer->setCallbacks(new MI32ServerCallbacks());
+  MI32.mode.readyForNextServerJob = 1;
+  MI32.mode.deleteServerTask = 0;
+  std::vector<NimBLEService*> servicesToStart;
+  bool shallStartServices = true; //will start service at the first call MI32ServerSetAdv()
+
+  for(;;){
+    while(MI32.mode.triggerNextServerJob == 0){
+      if(MI32.mode.deleteServerTask == 1){
+        delete MI32.conCtx;
+        MI32.conCtx = nullptr;
+        pServer->stopAdvertising();
+        MI32StartTask(MI32_TASK_SCAN);
+        vTaskDelete( NULL );
+      }
+      vTaskDelay(50/ portTICK_PERIOD_MS);
+    }
+    MI32.mode.readyForNextServerJob = 0;
+    switch(MI32.conCtx->operation){
+      case BLE_OP_SET_ADV: case BLE_OP_SET_SCAN_RESP:
+        MI32ServerSetAdv(pServer, servicesToStart, shallStartServices);
+        break;
+      case BLE_OP_SET_CHARACTERISTIC:
+        MI32ServerSetCharacteristic(pServer, servicesToStart, shallStartServices);
+        break;
+    }
+
+    MI32.mode.triggerNextServerJob = 0;
+    MI32.mode.readyForNextServerJob = 1;
+    MI32.mode.triggerBerryServerCB = 1;
+  }
 }
 
 /*********************************************************************************************\
@@ -1720,6 +1978,28 @@ void MI32Every50mSecond(){
     }
     MI32.mode.triggerBerryConnCB = 0;
   }
+
+  if(!BLEmessageQueue.empty()){
+    BLEqueueBuffer_t q = BLEmessageQueue.front();
+    BLEmessageQueue.pop();
+    MI32.conCtx->returnCharUUID = q.returnCharUUID;
+    MI32.conCtx->handle = q.handle;
+    MI32.conCtx->operation = q.type;
+    MI32.conCtx->error = 0;
+    if(q.length != 0){
+      MI32.conCtx->buffer[0] = q.length;
+      memcpy(MI32.conCtx->buffer + 1,q.buffer,q.length);
+      delete q.buffer;
+    }
+    if(MI32.beServerCB != nullptr){
+      void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beServerCB;
+      char _message[32];
+      GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
+      func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
+    }
+  }
+
   if(MI32.infoMsg > 0){
     char _message[32];
     GetTextIndexed(_message, sizeof(_message), MI32.infoMsg-1, kMI32_BLEInfoMsg);
@@ -2057,7 +2337,7 @@ void MI32InitGUI(void){
   WSContentSend_P(PSTR("</div>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-  vTaskResume(MI32.ScanTask);
+  MI32resumeScanTask();
 }
 
 void MI32HandleWebGUI(void){
@@ -2246,7 +2526,7 @@ void MI32Show(bool json)
     MI32addHistory(MI32.energy_history,Energy->active_power[0],100); //TODO: which value??
 #endif //USE_MI_ESP32_ENERGY
 #endif //USE_MI_EXT_GUI
-    vTaskResume(MI32.ScanTask);
+    MI32resumeScanTask();
 #ifdef USE_WEBSERVER
     } else {
       MI32suspendScanTask();
@@ -2309,7 +2589,7 @@ void MI32Show(bool json)
 #endif //USE_MI_EXT_GUI
 #endif  // USE_WEBSERVER
     }
-    vTaskResume(MI32.ScanTask);
+    MI32resumeScanTask();
 }
 
 int ExtStopBLE(){
