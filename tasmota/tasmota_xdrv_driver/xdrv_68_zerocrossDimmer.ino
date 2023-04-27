@@ -182,7 +182,6 @@ void ACDimmerControllTrigger(void) {
   }
   for (uint8_t i = 0; i < MAX_PWMS; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
-    ac_zero_cross_dimmer.lastlight[i] = Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i];
 
     if (ac_zero_cross_dimmer.detailpower[i]){
       ac_zero_cross_dimmer.lastlight[i] = changeUIntScale(ac_zero_cross_dimmer.detailpower[i]/10, 0, 1000, 0, 1023);
