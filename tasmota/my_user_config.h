@@ -398,7 +398,7 @@
 //#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
 
 // -- OTA -----------------------------------------
-//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
+//#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA with ESP8266 (+13k code)
 
 // -- Influxdb ------------------------------------
 //#define USE_INFLUXDB                             // Enable influxdb support (+5k code)

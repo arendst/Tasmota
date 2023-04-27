@@ -1638,7 +1638,7 @@ void Every250mSeconds(void)
   }
 }
 
-#ifdef USE_ARDUINO_OTA
+#if defined(ESP8266) && defined(USE_ARDUINO_OTA)
 /*********************************************************************************************\
  * Allow updating via the Arduino OTA-protocol.
  *
