@@ -53,12 +53,14 @@
 #include <LList.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
   #define USE_DISCOVERY
   #endif
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 #ifdef USE_DISCOVERY
   #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
@@ -642,9 +644,11 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 
   XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
@@ -757,9 +761,11 @@ void Scheduler(void) {
   if (!tasconsole_serial) { TasConsoleInput(); }
 #endif  // ESP32
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 }
 
 void loop(void) {
