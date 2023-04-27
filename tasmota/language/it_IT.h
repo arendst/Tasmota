@@ -800,6 +800,8 @@
 #define D_SENSOR_OUTPUT_LO              "Uscita - Lo"
 #define D_SENSOR_AS608_TX               "AS608 - TX"
 #define D_SENSOR_AS608_RX               "AS608 - RX"
+#define D_SENSOR_GM861_TX      "GM861 Tx"
+#define D_SENSOR_GM861_RX      "GM861 Rx"
 #define D_SENSOR_DDS2382_TX             "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX             "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX             "DDSU666 - TX"

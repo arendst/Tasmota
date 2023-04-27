@@ -209,6 +209,7 @@ enum UserSelectablePins {
   GPIO_MCP23XXX_INT, GPIO_MCP23SXX_CS,  // MCP23xxx Int and SPI Chip select
   GPIO_PCF8574_INT,                     // PCF8574 interrupt
   GPIO_LOX_O2_RX,                       // LOX-O2 RX
+  GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -465,6 +466,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
   D_SENSOR_PCF8574_INT "|"
   D_SENSOR_LOX_O2_RX "|"
+  D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1015,6 +1017,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_AS608                        // xsns_79_as608.ino
   AGPIO(GPIO_AS608_TX),
   AGPIO(GPIO_AS608_RX),
+#endif
+#ifdef USE_GM861                        // xsns_107_gm861.ino
+  AGPIO(GPIO_GM861_TX),
+  AGPIO(GPIO_GM861_RX),
 #endif
 #ifdef USE_HRG15                        // xsns_90_hrg15.ino
   AGPIO(GPIO_HRG15_TX),
