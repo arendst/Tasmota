@@ -83,7 +83,7 @@ void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
 uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
   //ACDimmerTimer_intr();
   ACDimmerTimer_intr();
-  return 4000;
+  return 6000;
 }
 
 void ACDimmerInterruptDisable(bool disable)
