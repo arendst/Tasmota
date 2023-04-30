@@ -467,8 +467,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
   D_SENSOR_PCF8574_INT "|"
   D_SENSOR_LOX_O2_RX "|"
-  D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"  
-  D_GPIO_DINGTIAN_OE "|" 
+  D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
+  D_GPIO_DINGTIAN_OE "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
