@@ -30,6 +30,9 @@
 #error DINGTIAN - Only one of DINGTIAN_USE_AS_BUTTON or DINGTIAN_USE_AS_SWITCH should be defined
 #endif
 
+#define DINGTIAN_SET_OUTPUT(pin,value)  { pinMode((pin), OUTPUT); digitalWrite((pin), (value)); }
+#define DINGTIAN_SET_INPUT(pin)         { pinMode((pin), INPUT); }
+
 /********************************************************************************************************
  * Global private data
  */
@@ -71,7 +74,11 @@ uint32_t DingtianReadWrite(uint32_t outputs)
   // ending
   digitalWrite(Dingtian->pin_rck, 1);    // rclk pulse to load '595 into output registers
   if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 ouputs (old board version)
-  if (PinUsed(GPIO_DINGTIAN_OE))digitalWrite(Dingtian->pin_oe, 0);      // enable '595 ouputs (new board version)
+  if (PinUsed(GPIO_DINGTIAN_OE))
+  {
+    digitalWrite(Dingtian->pin_oe, 0);      // enable '595 ouputs (new board version)
+    DINGTIAN_SET_OUTPUT(Dingtian->pin_oe, 0);
+  }
 
 #ifdef DINGTIAN_INPUTS_INVERTED
   return ~inputs;
@@ -83,9 +90,6 @@ uint32_t DingtianReadWrite(uint32_t outputs)
 /********************************************************************************************************
  * Driver initialisation
  */
-
-#define DINGTIAN_SET_OUTPUT(pin,value)  { pinMode((pin), OUTPUT); digitalWrite((pin), (value)); }
-#define DINGTIAN_SET_INPUT(pin)         { pinMode((pin), INPUT); }
 
 void DingtianInit(void) {
   if (PinUsed(GPIO_DINGTIAN_CLK, GPIO_ANY) && PinUsed(GPIO_DINGTIAN_SDI) && PinUsed(GPIO_DINGTIAN_Q7)
@@ -111,6 +115,7 @@ void DingtianInit(void) {
       DINGTIAN_SET_INPUT( Dingtian->pin_q7);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_pl, 0);
       //Do not initialize Dingtian->pin_oe so the relays will not toggle while restarting
+      DINGTIAN_SET_OUTPUT(Dingtian->pin_pl, 0);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_rck, 0);
 
       Dingtian->first = TasmotaGlobal.devices_present;
