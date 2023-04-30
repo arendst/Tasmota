@@ -38,11 +38,12 @@
  */
 
 struct DINGTIAN_DATA {
-  uint32_t    outputs;          // keep ouputs state
-  uint32_t    last_inputs;      // previous inputs state
-  uint8_t     count;            // number of relay and input (8 * numver of shift registers)
-  uint8_t     first;            // index of 1st Tasmota relay assigned to 1st Dingtian relays
-  int8_t      key_offset;       // index of virtual key
+  uint32_t    outputs;              // keep ouputs state
+  uint32_t    last_inputs;          // previous inputs state
+  uint8_t     count;                // number of relay and input (8 * numver of shift registers)
+  uint8_t     first;                // index of 1st Tasmota relay assigned to 1st Dingtian relays
+  int8_t      key_offset;           // index of virtual key
+  bool        outputs_initialized;  // set when the outputs are initialized
   // pins
   uint8_t     pin_clk, pin_sdi, pin_q7, pin_pl, pin_oe, pin_rck;
 } *Dingtian = nullptr;
@@ -74,10 +75,11 @@ uint32_t DingtianReadWrite(uint32_t outputs)
   // ending
   digitalWrite(Dingtian->pin_rck, 1);    // rclk pulse to load '595 into output registers
   if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 ouputs (old board version)
-  if (PinUsed(GPIO_DINGTIAN_OE))
+  if (!Dingtian->outputs_initialized && PinUsed(GPIO_DINGTIAN_OE))
   {
     digitalWrite(Dingtian->pin_oe, 0);      // enable '595 ouputs (new board version)
     DINGTIAN_SET_OUTPUT(Dingtian->pin_oe, 0);
+    Dingtian->outputs_initialized = true;
   }
 
 #ifdef DINGTIAN_INPUTS_INVERTED
@@ -115,9 +117,9 @@ void DingtianInit(void) {
       DINGTIAN_SET_INPUT( Dingtian->pin_q7);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_pl, 0);
       //Do not initialize Dingtian->pin_oe so the relays will not toggle while restarting
-      DINGTIAN_SET_OUTPUT(Dingtian->pin_pl, 0);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_rck, 0);
 
+      Dingtian->outputs_initialized = false;
       Dingtian->first = TasmotaGlobal.devices_present;
       Dingtian->key_offset = -1;
       UpdateDevicesPresent(Dingtian->count);
