@@ -919,6 +919,7 @@
 #define D_GPIO_DINGTIAN_SDI    "Dingtian SDI"
 #define D_GPIO_DINGTIAN_Q7     "Dingtian Q7"
 #define D_GPIO_DINGTIAN_PL     "Dingtian PL"
+#define D_GPIO_DINGTIAN_OE     "Dingtian OE"
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCk"
 #define D_SENSOR_CM11_TX       "CM110x Tx"
 #define D_SENSOR_CM11_RX       "CM110x Rx"

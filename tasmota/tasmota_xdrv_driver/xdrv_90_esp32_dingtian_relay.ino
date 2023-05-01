@@ -30,18 +30,22 @@
 #error DINGTIAN - Only one of DINGTIAN_USE_AS_BUTTON or DINGTIAN_USE_AS_SWITCH should be defined
 #endif
 
+#define DINGTIAN_SET_OUTPUT(pin,value)  { pinMode((pin), OUTPUT); digitalWrite((pin), (value)); }
+#define DINGTIAN_SET_INPUT(pin)         { pinMode((pin), INPUT); }
+
 /********************************************************************************************************
  * Global private data
  */
 
 struct DINGTIAN_DATA {
-  uint32_t    outputs;          // keep ouputs state
-  uint32_t    last_inputs;      // previous inputs state
-  uint8_t     count;            // number of relay and input (8 * numver of shift registers)
-  uint8_t     first;            // index of 1st Tasmota relay assigned to 1st Dingtian relays
-  int8_t      key_offset;       // index of virtual key
+  uint32_t    outputs;              // keep ouputs state
+  uint32_t    last_inputs;          // previous inputs state
+  uint8_t     count;                // number of relay and input (8 * numver of shift registers)
+  uint8_t     first;                // index of 1st Tasmota relay assigned to 1st Dingtian relays
+  int8_t      key_offset;           // index of virtual key
+  bool        outputs_initialized;  // set when the outputs are initialized
   // pins
-  uint8_t     pin_clk, pin_sdi, pin_q7, pin_pl, pin_rck;
+  uint8_t     pin_clk, pin_sdi, pin_q7, pin_pl, pin_oe, pin_rck;
 } *Dingtian = nullptr;
 
 
@@ -56,7 +60,7 @@ uint32_t DingtianReadWrite(uint32_t outputs)
 
   // setup
   digitalWrite(Dingtian->pin_rck, 0);    // rclk and clkinh to 0
-  digitalWrite(Dingtian->pin_pl, 1);      // load inputs in '165, ready for shift-in (side effect '595 in tri-state)
+  if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 1);      // load inputs in '165, ready for shift-in (side effect '595 in tri-state)
   for ( int i = Dingtian->count ; i > 0 ; i-- ) {
     // relay out to '595
     digitalWrite(Dingtian->pin_sdi, outputs & 1);
@@ -70,7 +74,13 @@ uint32_t DingtianReadWrite(uint32_t outputs)
   }
   // ending
   digitalWrite(Dingtian->pin_rck, 1);    // rclk pulse to load '595 into output registers
-  digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 ouputs
+  if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 ouputs (old board version)
+  if (!Dingtian->outputs_initialized && PinUsed(GPIO_DINGTIAN_OE))
+  {
+    digitalWrite(Dingtian->pin_oe, 0);      // enable '595 ouputs (new board version)
+    DINGTIAN_SET_OUTPUT(Dingtian->pin_oe, 0);
+    Dingtian->outputs_initialized = true;
+  }
 
 #ifdef DINGTIAN_INPUTS_INVERTED
   return ~inputs;
@@ -83,33 +93,33 @@ uint32_t DingtianReadWrite(uint32_t outputs)
  * Driver initialisation
  */
 
-#define DINGTIAN_SET_OUTPUT(pin,value)  { pinMode((pin), OUTPUT); digitalWrite((pin), (value)); }
-#define DINGTIAN_SET_INPUT(pin)         { pinMode((pin), INPUT); }
-
 void DingtianInit(void) {
   if (PinUsed(GPIO_DINGTIAN_CLK, GPIO_ANY) && PinUsed(GPIO_DINGTIAN_SDI) && PinUsed(GPIO_DINGTIAN_Q7)
-   && PinUsed(GPIO_DINGTIAN_PL) && PinUsed(GPIO_DINGTIAN_RCK)) {
+   && (PinUsed(GPIO_DINGTIAN_PL) || PinUsed(GPIO_DINGTIAN_OE)) && PinUsed(GPIO_DINGTIAN_RCK)) {
     // allocate Dingtian data structure
     Dingtian = (struct DINGTIAN_DATA*)calloc(1, sizeof(struct DINGTIAN_DATA));
     if (Dingtian) {
       // get pins
-      Dingtian->pin_clk = Pin(GPIO_DINGTIAN_CLK, GPIO_ANY);   // shift clock  : 595's SCLK & 165's CLK
-      Dingtian->pin_sdi = Pin(GPIO_DINGTIAN_SDI);             // Serial out   : 595's SER
-      Dingtian->pin_q7  = Pin(GPIO_DINGTIAN_Q7);              // Serial in    : 165's Q7
-      Dingtian->pin_pl  = Pin(GPIO_DINGTIAN_PL);              // Input load   : 595's nOE  & 165's PL (or SH/LD on some datasheet)
-      Dingtian->pin_rck = Pin(GPIO_DINGTIAN_RCK);             // Output load  : 595's RCLK & 165's CLKINH
+      Dingtian->pin_clk = Pin(GPIO_DINGTIAN_CLK, GPIO_ANY);                     // shift clock   : 595's SCLK & 165's CLK
+      Dingtian->pin_sdi = Pin(GPIO_DINGTIAN_SDI);                               // Serial out    : 595's SER
+      Dingtian->pin_q7  = Pin(GPIO_DINGTIAN_Q7);                                // Serial in     : 165's Q7
+      if (PinUsed(GPIO_DINGTIAN_PL)) Dingtian->pin_pl  = Pin(GPIO_DINGTIAN_PL); // Input load    : 595's nOE  & 165's PL (or SH/LD on some datasheet)
+      if (PinUsed(GPIO_DINGTIAN_OE)) Dingtian->pin_oe  = Pin(GPIO_DINGTIAN_OE); // Output enable : 595's nOE (v3.6.10)
+      Dingtian->pin_rck = Pin(GPIO_DINGTIAN_RCK);                               // Output load   : 595's RCLK & 165's CLKINH
       // number of shift registers is the CLK index
       Dingtian->count   = ((GetPin(Dingtian->pin_clk) - AGPIO(GPIO_DINGTIAN_CLK)) + 1) * 8;
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: clk:%d, sdi:%d, q7:%d, pl:%d, rck:%d, count:%d"),
-        Dingtian->pin_clk, Dingtian->pin_sdi, Dingtian->pin_q7, Dingtian->pin_pl, Dingtian->pin_rck, Dingtian->count);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: clk:%d, sdi:%d, q7:%d, pl:%d, oe:%d, rck:%d, count:%d"),
+        Dingtian->pin_clk, Dingtian->pin_sdi, Dingtian->pin_q7, Dingtian->pin_pl, Dingtian->pin_oe, Dingtian->pin_rck, Dingtian->count);
 
       DINGTIAN_SET_OUTPUT(Dingtian->pin_clk, 0);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_sdi, 0);
       DINGTIAN_SET_INPUT( Dingtian->pin_q7);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_pl, 0);
+      //Do not initialize Dingtian->pin_oe so the relays will not toggle while restarting
       DINGTIAN_SET_OUTPUT(Dingtian->pin_rck, 0);
 
+      Dingtian->outputs_initialized = false;
       Dingtian->first = TasmotaGlobal.devices_present;
       Dingtian->key_offset = -1;
       UpdateDevicesPresent(Dingtian->count);
