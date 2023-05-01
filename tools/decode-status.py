@@ -295,7 +295,7 @@ a_features = [[
     "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
-    "USE_GDK101","","","",
+    "USE_GDK101","USE_GM861","USE_TC74","",
     "","","","",
     "","","",""
     ]]

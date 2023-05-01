@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Matter allow `Matter#Initialized` rule once the device is configured (#18451)
 - Matter UI to change endpoints configuration (#18498)
 - Matter support for Shutters (without Tilt) (#18509)
+- Support for TC74 temperature sensor by Michael Loftis (#18042)
 
 ### Breaking Changed
 
