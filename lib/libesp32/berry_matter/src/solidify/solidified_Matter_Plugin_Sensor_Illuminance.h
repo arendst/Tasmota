@@ -132,11 +132,16 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
     NULL,                       /* no const */
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x60080009,  //  0000  GETGBL	R2	G9
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x80040400,  //  0003  RET	1	R2
+    ( &(const binstruction[ 9]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x20080202,  //  0001  NE	R2	R1	R2
+      0x780A0003,  //  0002  JMPF	R2	#0007
+      0x60080009,  //  0003  GETGBL	R2	G9
+      0x5C0C0200,  //  0004  MOVE	R3	R1
+      0x7C080200,  //  0005  CALL	R2	1
+      0x70020000,  //  0006  JMP		#0008
+      0x4C080000,  //  0007  LDNIL	R2
+      0x80040400,  //  0008  RET	1	R2
     })
   )
 );

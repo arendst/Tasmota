@@ -132,12 +132,17 @@ be_local_closure(Matter_Plugin_Sensor_Humidity_pre_value,   /* name */
     NULL,                       /* no const */
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x60080009,  //  0000  GETGBL	R2	G9
-      0x540E0063,  //  0001  LDINT	R3	100
-      0x080C0203,  //  0002  MUL	R3	R1	R3
-      0x7C080200,  //  0003  CALL	R2	1
-      0x80040400,  //  0004  RET	1	R2
+    ( &(const binstruction[10]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x20080202,  //  0001  NE	R2	R1	R2
+      0x780A0004,  //  0002  JMPF	R2	#0008
+      0x60080009,  //  0003  GETGBL	R2	G9
+      0x540E0063,  //  0004  LDINT	R3	100
+      0x080C0203,  //  0005  MUL	R3	R1	R3
+      0x7C080200,  //  0006  CALL	R2	1
+      0x70020000,  //  0007  JMP		#0009
+      0x4C080000,  //  0008  LDNIL	R2
+      0x80040400,  //  0009  RET	1	R2
     })
   )
 );

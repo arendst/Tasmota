@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_OnOff.be - implements the behavior for a Relay (OnOff)
+# Matter_Plugin_Bridge_OnOff.be - implements the behavior for a Relay via HTTP (OnOff)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -20,16 +20,15 @@
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin_Device end
+class Matter_Plugin_Bridge_HTTP end
 
-#@ solidify:Matter_Plugin_OnOff,weak
+#@ solidify:Matter_Plugin_Bridge_OnOff,weak
 
-class Matter_Plugin_OnOff : Matter_Plugin_Device
-  static var TYPE = "relay"                         # name of the plug-in in json
-  static var NAME = "Relay"                         # display name of the plug-in
+class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_HTTP
+  static var TYPE = "http_relay"                    # name of the plug-in in json
+  static var NAME = "&#x1F517; Relay"                       # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
@@ -39,12 +38,14 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   }
   static var TYPES = { 0x010A: 2 }       # On/Off Light
 
-  var tasmota_relay_index             # Relay number in Tasmota (zero based)
-  var shadow_onoff                           # fake status for now # TODO
+  var tasmota_http                                  # domain name for HTTP
+  var tasmota_relay_index                           # Relay number in Tasmota (zero based)
+  var shadow_onoff                                  # fake status for now # TODO
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
+    import string
     super(self).init(device, endpoint, arguments)
     self.shadow_onoff = false
     self.tasmota_relay_index = arguments.find(self.ARG #-'relay'-#)
@@ -55,8 +56,10 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    var state = tasmota.get_power(self.tasmota_relay_index)
-    if state != nil
+    var st11 = self.get_status_11()
+    if st11
+      st11 = st11.find('StatusSTS', {})             # remove first level
+      var state = (st11.find("POWER") == "ON")
       if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
         self.attribute_updated(0x0006, 0x0000)
       end
@@ -69,7 +72,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # Model
   #
   def set_onoff(v)
-    tasmota.set_power(self.tasmota_relay_index, bool(v))
+    self.call_remote("Power", v ? "1" : "0")
     self.update_shadow()
   end
 
@@ -129,4 +132,4 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   end
 
 end
-matter.Plugin_OnOff = Matter_Plugin_OnOff
+matter.Plugin_Bridge_OnOff = Matter_Plugin_Bridge_OnOff

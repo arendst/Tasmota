@@ -38,7 +38,7 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    return int(val * 100)
+    return val != nil ? int(val * 100) : nil
   end
 
   #############################################################

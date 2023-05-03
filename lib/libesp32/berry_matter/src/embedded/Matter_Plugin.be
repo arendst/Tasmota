@@ -23,10 +23,15 @@
 #@ solidify:Matter_Plugin,weak
 
 class Matter_Plugin
+  # Global type system for plugins
   static var TYPE = ""                      # name of the plug-in in json
   static var NAME = ""                      # display name of the plug-in
   static var ARG  = ""                      # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
+  # Behavior of the plugin, frequency at which `update_shadow()` is called
+  static var UPDATE_TIME = 5000             # default is every 5 seconds
+  var update_next                           # next timestamp for update
+  # Configuration of the plugin: clusters and type
   static var CLUSTERS = {
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
   }
@@ -51,6 +56,12 @@ class Matter_Plugin
     self.device = device
     self.endpoint = endpoint
     self.clusters = self.consolidate_clusters()
+  end
+
+  #############################################################
+  # return the map of all types
+  def get_types()
+    return self.TYPES
   end
 
   #############################################################
@@ -139,10 +150,11 @@ class Matter_Plugin
 
       if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
         var dtl = TLV.Matter_TLV_array()
-        for dt: self.TYPES.keys()
+        var types = self.get_types()
+        for dt: types.keys()
           var d1 = dtl.add_struct()
           d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, self.TYPES[dt])      # Revision
+          d1.add_TLV(1, TLV.U2, types[dt])      # Revision
         end
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
@@ -227,9 +239,48 @@ class Matter_Plugin
   end
 
   #############################################################
-  # every_second
-  def every_second()
-    self.update_shadow()                    # force reading value and sending subscriptions
+  # every_250ms
+  #
+  # check if the timer expired and update_shadow() needs to be called
+  def every_250ms()
+    if self.update_next == nil
+      # initialization to a random value within range
+      import crypto
+      var rand31 = crypto.random(4).get(0,4) & 0x7FFFFFFF     # random int over 31 bits
+      self.update_next = tasmota.millis(rand31 % self.UPDATE_TIME)
+    else
+      if tasmota.time_reached(self.update_next)
+        self.update_shadow_lazy()                             # call update_shadow if not already called
+        self.update_next = tasmota.millis(self.UPDATE_TIME)   # rearm timer
+      end
+    end
+  end
+
+  #############################################################
+  # UI Methods
+  #############################################################
+  # ui_conf_to_string
+  #
+  # Convert the current plugin parameters to a single string
+  static def ui_conf_to_string(cl, conf)
+    var arg_name = cl.ARG
+    var arg = arg_name ? str(conf.find(arg_name, '')) : ''
+    # print("MTR: ui_conf_to_string", conf, cl, arg_name, arg)
+    return arg
+  end
+
+  #############################################################
+  # ui_string_to_conf
+  #
+  # Convert the string in UI to actual parameters added to the map
+  static def ui_string_to_conf(cl, conf, arg)
+    var arg_name = cl.ARG
+    var arg_type = cl.ARG_TYPE
+    if arg && arg_name
+      conf[arg_name] = arg_type(arg)
+    end
+    # print("ui_string_to_conf", conf, arg)
+    return conf
   end
 
 end
