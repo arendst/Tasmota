@@ -153,8 +153,8 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   #############################################################
   # parse sensor
   #
-  # The device calls regularly `tasmota.read_sensors()` and converts
-  # it to json.
+  # parse the output from `ShutterPosition`
+  # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
   def parse_sensors(payload)
     import string
     var k = "Shutter" + str(self.tasmota_shutter_index + 1)
@@ -168,14 +168,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
           self.attribute_updated(0x0102, 0x000E)   # CurrentPositionLiftPercent100ths
         end
         self.shadow_shutter_pos = val_pos
-      end
-      # Tilt - we can keep it here knowing that it won't change if not implemented
-      var val_tilt = v.find("Tilt")
-      if val_tilt != nil
-        if val_tilt != self.shadow_shutter_tilt
-          self.attribute_updated(0x0102, 0x000F)   # CurrentPositionTiltPercent100ths
-        end
-        self.shadow_shutter_tilt = val_tilt
       end
       # Direction
       var val_dir = v.find("Direction")

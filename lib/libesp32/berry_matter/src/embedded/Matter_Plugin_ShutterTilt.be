@@ -44,12 +44,53 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # var shadow_shutter_target
   # var shadow_shutter_tilt
   # var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
+  var tilt_min, tilt_max
 
   #############################################################
   # Constructor inherited
 
   #############################################################
   # Update shadow inherited
+
+  #############################################################
+  # parse sensor
+  #
+  # parse the output from `ShutterPosition`
+  # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
+  def parse_sensors(payload)
+    import string
+    var k = "Shutter" + str(self.tasmota_shutter_index + 1)
+    if payload.contains(k)
+      var v = payload[k]
+      # Tilt - we can keep it here knowing that it won't change if not implemented
+      var val_tilt = v.find("Tilt")
+      if val_tilt != nil
+        if val_tilt != self.shadow_shutter_tilt
+          self.attribute_updated(0x0102, 0x000F)   # CurrentPositionTiltPercent100ths
+        end
+        self.shadow_shutter_tilt = val_tilt
+      end
+      #
+    end
+    super(self).parse_sensors(payload)            # parse other shutter values
+  end
+
+  #############################################################
+  # Update tilt min/max
+  #
+  # Update the min and max tilt values from Status 12
+  def update_tilt_min_max()
+    # get the min/max tilt values
+    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
+    if r_st13.contains('StatusSHT')
+      r_st13 = r_st13['StatusSHT']        # skip root
+      var d = r_st13.find("SHT"+str(self.tasmota_shutter_index), {}).find('TiltConfig')
+      if d != nil
+        self.tilt_min = int(d[0])
+        self.tilt_max = int(d[1])
+      end
+    end
+  end
 
   #############################################################
   # read an attribute
@@ -67,9 +108,20 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
         return TLV.create_TLV(TLV.U1, 1 + 8 + 16)   # Operational + Lift Position Aware + Tilt Position Aware
 
       elif attribute == 0x000F          #  ---------- CurrentPositionTiltPercent100ths / u8 ----------
-        return TLV.create_TLV(TLV.U2, (100 - self.shadow_shutter_tilt) * 100)
+        self.update_tilt_min_max()
+        if self.tilt_min != nil && self.tilt_max != nil
+          var tilt_percentage = tasmota.scale_uint(self.shadow_shutter_tilt, self.tilt_min, self.tilt_max, 0, 1000)
+          return TLV.create_TLV(TLV.U2, tilt_percentage)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)                    # return invalid
+        end
       elif attribute == 0x000C          #  ---------- TargetPositionTiltPercent100ths / u16 ----------
-        return TLV.create_TLV(TLV.U1, 0)    # TODO
+        if self.tilt_min != nil && self.tilt_max != nil
+          var tilt_percentage = tasmota.scale_uint(self.shadow_shutter_tilt, self.tilt_min, self.tilt_max, 0, 1000)
+          return TLV.create_TLV(TLV.U2, tilt_percentage)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)                    # return invalid
+        end
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 3 + 4 + 16)    # Lift + Tilt + PA_LF + PA_TL
@@ -96,8 +148,16 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
       if   command == 0x0008            # ---------- GoToTiltPercentage ----------
         var tilt = val.findsubval(0)
         if tilt != nil
-          tilt = tilt / 10
-          ctx.log = "tilt%:"+str(tilt)
+          self.update_tilt_min_max()
+          if self.tilt_min != nil && self.tilt_max !=  nil
+            var tilt_val = tasmota.scale_uint(tilt, 0, 1000, self.tilt_min, self.tilt_max)
+            tasmota.cmd("ShutterTilt"+str(self.tasmota_shutter_index+1) + " " + str(tilt_val), false)   # TODO
+            self.update_shadow()
+            ctx.log = "tilt%:"+str(tilt)
+          else
+            ctx.log = "tilt%(no_tilt_support):"+str(tilt)
+          end
+
         end
         return true
       end
