@@ -1,8 +1,10 @@
 Import("env")
 
+import os
 import shutil
 import pathlib
 import tasmotapiolib
+from os.path import join
 
 
 def bin_map_copy(source, target, env):
@@ -30,5 +32,7 @@ def bin_map_copy(source, target, env):
         shutil.copy(tasmotapiolib.get_source_map_path(env), map_file)
         shutil.copy(factory, one_bin_file)
     else:
+        map_firm = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
+        shutil.copy(tasmotapiolib.get_source_map_path(env), map_firm)
         shutil.move(tasmotapiolib.get_source_map_path(env), map_file)
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", bin_map_copy)
