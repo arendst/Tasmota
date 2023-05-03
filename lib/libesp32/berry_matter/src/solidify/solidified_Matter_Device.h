@@ -1546,20 +1546,17 @@ be_local_closure(Matter_Device_every_second,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(sessions),
     /* K1   */  be_nested_str_weak(every_second),
     /* K2   */  be_nested_str_weak(message_handler),
     /* K3   */  be_nested_str_weak(commissioning_open),
     /* K4   */  be_nested_str_weak(tasmota),
     /* K5   */  be_nested_str_weak(time_reached),
-    /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_weak(plugins),
-    /* K8   */  be_const_int(1),
     }),
     be_str_weak(every_second),
     &be_const_str_solidified,
-    ( &(const binstruction[30]) {  /* code */
+    ( &(const binstruction[18]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
@@ -1577,19 +1574,7 @@ be_local_closure(Matter_Device_every_second,   /* name */
       0x78060001,  //  000E  JMPF	R1	#0011
       0x4C040000,  //  000F  LDNIL	R1
       0x90020601,  //  0010  SETMBR	R0	K3	R1
-      0x58040006,  //  0011  LDCONST	R1	K6
-      0x6008000C,  //  0012  GETGBL	R2	G12
-      0x880C0107,  //  0013  GETMBR	R3	R0	K7
-      0x7C080200,  //  0014  CALL	R2	1
-      0x14080202,  //  0015  LT	R2	R1	R2
-      0x780A0005,  //  0016  JMPF	R2	#001D
-      0x88080107,  //  0017  GETMBR	R2	R0	K7
-      0x94080401,  //  0018  GETIDX	R2	R2	R1
-      0x8C080501,  //  0019  GETMET	R2	R2	K1
-      0x7C080200,  //  001A  CALL	R2	1
-      0x00040308,  //  001B  ADD	R1	R1	K8
-      0x7001FFF4,  //  001C  JMP		#0012
-      0x80000000,  //  001D  RET	0
+      0x80000000,  //  0011  RET	0
     })
   )
 );
@@ -4714,7 +4699,7 @@ be_local_closure(Matter_Device_start_operational_discovery,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Device_every_250ms,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
+    4,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -4722,17 +4707,32 @@ be_local_closure(Matter_Device_every_250ms,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(message_handler),
     /* K1   */  be_nested_str_weak(every_250ms),
+    /* K2   */  be_const_int(0),
+    /* K3   */  be_nested_str_weak(plugins),
+    /* K4   */  be_const_int(1),
     }),
     be_str_weak(every_250ms),
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
+    ( &(const binstruction[16]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
-      0x80000000,  //  0003  RET	0
+      0x58040002,  //  0003  LDCONST	R1	K2
+      0x6008000C,  //  0004  GETGBL	R2	G12
+      0x880C0103,  //  0005  GETMBR	R3	R0	K3
+      0x7C080200,  //  0006  CALL	R2	1
+      0x14080202,  //  0007  LT	R2	R1	R2
+      0x780A0005,  //  0008  JMPF	R2	#000F
+      0x88080103,  //  0009  GETMBR	R2	R0	K3
+      0x94080401,  //  000A  GETIDX	R2	R2	R1
+      0x8C080501,  //  000B  GETMET	R2	R2	K1
+      0x7C080200,  //  000C  CALL	R2	1
+      0x00040304,  //  000D  ADD	R1	R1	K4
+      0x7001FFF4,  //  000E  JMP		#0004
+      0x80000000,  //  000F  RET	0
     })
   )
 );

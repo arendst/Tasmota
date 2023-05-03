@@ -35,6 +35,7 @@ class Matter_UI
   static var _ROOT_TYPES    = "root"
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|temperature|pressure|illuminance|humidity"
+                              "|-http|http_relay"
   var device
 
   def init(device)
@@ -256,8 +257,13 @@ class Matter_UI
       var typ = conf.find('type')
       if !typ   i += 1   continue    end
 
-      var arg_name = self.device.get_plugin_class_arg(typ)
-      var arg = arg_name ? str(conf.find(arg_name, '')) : ''
+      var cl = self.device.plugins_classes.find(typ)
+      var arg = ""
+      if cl != nil
+        arg = cl.ui_conf_to_string(cl, conf)
+      end
+      # var arg_name = self.device.get_plugin_class_arg(typ)
+      # var arg = arg_name ? str(conf.find(arg_name, '')) : ''
 
       webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value='%i'></td>", i, ep))
 
@@ -297,6 +303,8 @@ class Matter_UI
       var typ = class_types[i]
       if typ == ''
         webserver.content_send("<option value=''></option>")
+      elif typ == '-http'
+        webserver.content_send("<option value='' disabled>--- Tasmota Remote ---</option>")
       else
         var nam = self.device.get_plugin_class_displayname(typ)
         webserver.content_send(string.format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
@@ -429,11 +437,12 @@ class Matter_UI
           var typ_class = self.device.plugins_classes.find(typ)
           if typ_class != nil
             var elt = {'type':typ}
-            var arg_name = typ_class.ARG
-            var arg_type = typ_class.ARG_TYPE
-            if arg && arg_name
-              elt[arg_name] = arg_type(arg)
-            end
+            typ_class.ui_string_to_conf(typ_class, elt, arg)
+            # var arg_name = typ_class.ARG
+            # var arg_type = typ_class.ARG_TYPE
+            # if arg && arg_name
+            #   elt[arg_name] = arg_type(arg)
+            # end
             config[ep] = elt
 
           else

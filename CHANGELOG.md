@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Matter support for Shutters (without Tilt) (#18509)
 - Support for TC74 temperature sensor by Michael Loftis (#18042)
 - Matter support for Shutters with Tilt
+- Matter POC for remote Relay
 
 ### Breaking Changed
 

@@ -297,10 +297,16 @@ class Matter_Device
     if self.commissioning_open != nil && tasmota.time_reached(self.commissioning_open)    # timeout reached, close provisioning
       self.commissioning_open = nil
     end
-    # call all plugins
+  end
+
+  #############################################################
+  # dispatch every 250ms to all plugins
+  def every_250ms()
+    self.message_handler.every_250ms()
+    # call all plugins, use a manual loop to avoid creating a new object
     var idx = 0
     while idx < size(self.plugins)
-      self.plugins[idx].every_second()
+      self.plugins[idx].every_250ms()
       idx += 1
     end
   end
@@ -332,12 +338,6 @@ class Matter_Device
   # ticks
   def every_50ms()
     self.tick += 1
-  end
-
-  #############################################################
-  # dispatch every 250ms click to sub-objects that need it
-  def every_250ms()
-    self.message_handler.every_250ms()
   end
 
   #############################################################

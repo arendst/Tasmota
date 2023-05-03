@@ -166,6 +166,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Sensor_Temp.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -346,6 +348,8 @@ module matter (scope: global, strings: weak) {
   Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
   Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
   Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
+  Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
+  Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
 }
 
 @const_object_info_end */
