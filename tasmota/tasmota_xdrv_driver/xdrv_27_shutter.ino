@@ -1256,6 +1256,7 @@ void CmndShutterStop(void)
 
         AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
         Shutter[i].target_position = Shutter[i].real_position;
+        TasmotaGlobal.last_source = SRC_SHUTTER;
       }
       if (XdrvMailbox.command)
         ResponseCmndDone();
@@ -1710,6 +1711,7 @@ void CmndShutterSetClose(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     Shutter[XdrvMailbox.index -1].real_position = 0;
     Shutter[XdrvMailbox.index -1].tilt_real_pos = Shutter[XdrvMailbox.index -1].tilt_config[0];
+    Shutter[XdrvMailbox.index -1].lastdirection = -1;
     ShutterStartInit(XdrvMailbox.index -1, 0, 0);
     Settings->shutter_position[XdrvMailbox.index -1] = 0;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
@@ -1721,6 +1723,7 @@ void CmndShutterSetOpen(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     Shutter[XdrvMailbox.index -1].real_position = Shutter[XdrvMailbox.index -1].open_max;
     Shutter[XdrvMailbox.index -1].tilt_real_pos = Shutter[XdrvMailbox.index -1].tilt_config[1];
+    Shutter[XdrvMailbox.index -1].lastdirection = 1;
     ShutterStartInit(XdrvMailbox.index -1, 0, Shutter[XdrvMailbox.index -1].open_max);
     Settings->shutter_position[XdrvMailbox.index -1] = 100;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
