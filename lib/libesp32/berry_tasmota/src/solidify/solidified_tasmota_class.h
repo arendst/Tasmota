@@ -1082,16 +1082,17 @@ be_local_closure(Tasmota_add_driver,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(instance),
     /* K1   */  be_nested_str(value_error),
     /* K2   */  be_nested_str(instance_X20required),
     /* K3   */  be_nested_str(_drivers),
-    /* K4   */  be_nested_str(push),
+    /* K4   */  be_nested_str(find),
+    /* K5   */  be_nested_str(push),
     }),
     &be_const_str_add_driver,
     &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x60080004,  //  0000  GETGBL	R2	G4
       0x5C0C0200,  //  0001  MOVE	R3	R1
       0x7C080200,  //  0002  CALL	R2	1
@@ -1099,17 +1100,24 @@ be_local_closure(Tasmota_add_driver,   /* name */
       0x780A0000,  //  0004  JMPF	R2	#0006
       0xB0060302,  //  0005  RAISE	1	K1	K2
       0x88080103,  //  0006  GETMBR	R2	R0	K3
-      0x780A0004,  //  0007  JMPF	R2	#000D
+      0x780A000B,  //  0007  JMPF	R2	#0014
       0x88080103,  //  0008  GETMBR	R2	R0	K3
       0x8C080504,  //  0009  GETMET	R2	R2	K4
       0x5C100200,  //  000A  MOVE	R4	R1
       0x7C080400,  //  000B  CALL	R2	2
-      0x70020003,  //  000C  JMP		#0011
-      0x60080012,  //  000D  GETGBL	R2	G18
-      0x7C080000,  //  000E  CALL	R2	0
-      0x400C0401,  //  000F  CONNECT	R3	R2	R1
-      0x90020602,  //  0010  SETMBR	R0	K3	R2
-      0x80000000,  //  0011  RET	0
+      0x4C0C0000,  //  000C  LDNIL	R3
+      0x1C080403,  //  000D  EQ	R2	R2	R3
+      0x780A0003,  //  000E  JMPF	R2	#0013
+      0x88080103,  //  000F  GETMBR	R2	R0	K3
+      0x8C080505,  //  0010  GETMET	R2	R2	K5
+      0x5C100200,  //  0011  MOVE	R4	R1
+      0x7C080400,  //  0012  CALL	R2	2
+      0x70020003,  //  0013  JMP		#0018
+      0x60080012,  //  0014  GETGBL	R2	G18
+      0x7C080000,  //  0015  CALL	R2	0
+      0x400C0401,  //  0016  CONNECT	R3	R2	R1
+      0x90020602,  //  0017  SETMBR	R0	K3	R2
+      0x80000000,  //  0018  RET	0
     })
   )
 );
