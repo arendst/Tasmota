@@ -64,6 +64,7 @@ class TasmotaSerial : public Stream {
     uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
+    HardwareSerial *getesp32hws(void) { return TSerial; }
 #endif
     bool isValid(void) { return m_valid; }
     bool overflow(void);
