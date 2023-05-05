@@ -5,6 +5,14 @@
 /*********************************************************************************************\
  * Helper functions to create a map with single line calls
 \*********************************************************************************************/
+/* Insert an nil to a key */
+void be_map_insert_nil(bvm *vm, const char *key)
+{
+  be_pushstring(vm, key);
+  be_pushnil(vm);
+  be_data_insert(vm, -3);
+  be_pop(vm, 2);
+}
 /* Insert an int to a key */
 void be_map_insert_int(bvm *vm, const char *key, bint value)
 {
