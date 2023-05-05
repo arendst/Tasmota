@@ -50,6 +50,10 @@
 #undef  MAX_SHUTTERS_ESP32
 #define MAX_SHUTTERS_ESP32 16
 
+// Define Std Text Strings
+#define D_ERROR_FILESYSTEM_NOT_READY "SHT: ERROR File system not enabled"
+#define D_ERROR_FILE_NOT_FOUND "SHT: ERROR File system not ready or file not found"
+
 //
 const uint32_t SHUTTER_VERSION = 0x01010100;  // Latest driver version (See settings deltas below)
 
@@ -271,12 +275,12 @@ void ShutterSettingsDelta(void) {
       }
 
     }
-/*
-    if (ShutterSettings.version < 0x01010101) {
-      AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update old version restore"));
 
-    }
-*/
+    // if (ShutterSettings.version < 0x01010101) {
+    //   AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update old version restore"));
+
+    // }
+
     // Set current version and save settings
     ShutterSettings.version = SHUTTER_VERSION;
     ShutterSettingsSave();
@@ -291,12 +295,10 @@ void ShutterSettingsLoad(bool erase) {
 
   // Try to load file /.drvset027
   char filename[20];
-  // Use for sensors:
-//  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_27);
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_27);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: About to load settings from file %s"), filename);
+  AddLog(LOG_LEVEL_INFO, PSTR("SHT: About to load settings from file %s"), filename);
 
 #ifdef USE_UFILESYS
   if (erase) {
@@ -307,11 +309,11 @@ void ShutterSettingsLoad(bool erase) {
     ShutterSettingsDelta();
   } else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or file not found"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_ERROR_FILE_NOT_FOUND));
 
   }
 #else
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not enabled"));
+  AddLog(LOG_LEVEL_INFO, D_ERROR_FILESYSTEM_NOT_READY);
 #endif  // USE_UFILESYS
 
 }
@@ -324,20 +326,18 @@ void ShutterSettingsSave(void) {
     ShutterSettings.crc32 = crc32;
 
     char filename[20];
-    // Use for sensors:
-//    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_27);
     // Use for drivers:
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_27);
 
-    AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: About to save settings to file %s"), filename);
+    AddLog(LOG_LEVEL_INFO, PSTR("SHT: About to save settings to file %s"), filename);
 
 #ifdef USE_UFILESYS
     if (!TfsSaveFile(filename, (const uint8_t*)&ShutterSettings, sizeof(ShutterSettings))) {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_INFO, PSTR("DRV: ERROR File system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_INFO, D_ERROR_FILE_NOT_FOUND);
     }
 #else
-    AddLog(LOG_LEVEL_INFO, PSTR("SHUTTER: ERROR File system not enabled"));
+    AddLog(LOG_LEVEL_INFO, D_ERROR_FILESYSTEM_NOT_READY);
 #endif  // USE_UFILESYS
   }
 }
@@ -903,7 +903,7 @@ void ShutterUpdatePosition(void)
         XnrgCall(FUNC_ENERGY_EVERY_SECOND);
         // fency calculation with direction gives index 0 and 1 of the energy meter
         // stop if endpoint is reached
-        if (Energy->active_power[(1 - Shutter[i].direction ) / 2] < 1.0 && Shutter[i].time > 20){
+        if (Energy->active_power[0]+Energy->active_power[1] < 1.0 && Shutter[i].time > 20){
           ShutterGlobal.stopp_armed++;
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: stopp_armed:%d"),ShutterGlobal.stopp_armed);
           if (ShutterGlobal.stopp_armed > 2) {
@@ -1058,6 +1058,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
       case SHT_TIME_UP_DOWN:
       case SHT_TIME_GARAGE:
         if (Shutter[i].tilt_config[2] > 0) {
+          // the tilt time is defined and therefore the tiltposition must be calculated
           if (Shutter[i].time <= Shutter[i].venetian_delay+Shutter[i].motordelay) {
            Shutter[i].tilt_real_pos = (Shutter[i].tilt_start_pos + ((Shutter[i].direction * (int16_t)(Shutter[i].time - tmin(Shutter[i].motordelay, Shutter[i].time)) * (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])) / Shutter[i].tilt_config[2]));
           } else {
@@ -1114,53 +1115,39 @@ void ShutterRelayChanged(void)
       if (powerstate_local > 0) {
         Shutter[i].tiltmoving = 0;
       }
-      switch (ShutterGlobal.position_mode) {
-        // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
-        case SHT_TIME_UP_DOWN:
-        case SHT_COUNTER:
-        case SHT_PWM_VALUE:
-        case SHT_PWM_TIME:
-          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: power off manual change"));
-          ShutterPowerOff(i);
-          switch (powerstate_local) {
-            case 1:
-              ShutterStartInit(i, 1, Shutter[i].open_max);
-              break;
-            case 3:
-              ShutterStartInit(i, -1, 0);
-              break;
-            default:
-              //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i);
+         switch (ShutterGlobal.position_mode) {
+          // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+          case SHT_TIME_UP_DOWN:
+          case SHT_COUNTER:
+          case SHT_PWM_VALUE:
+          case SHT_PWM_TIME:
+          case SHT_TIME: {
+            ShutterPowerOff(i);
+            // powerstate_local == 0 => direction=0, stop
+            // powerstate_local == 1 => direction=1, target=Shutter[i].open_max
+            // powerstate_local == 2 => direction=-1, target=0 // only happen on SHT_TIME
+            // powerstate_local == 3 => direction=-1, target=0 // only happen if NOT SHT_TIME
+            int direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
+            int target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
+
+            if (direction != 0) {
+              ShutterStartInit(i, direction, target);
+            } else {
               Shutter[i].target_position = Shutter[i].real_position;
               Shutter[i].last_stop_time = millis();
             }
-        break;
-        case SHT_TIME:
-          switch (powerstate_local) {
-            case 1:
-              ShutterStartInit(i, 1, Shutter[i].open_max);
-              break;
-            case 2:
-              ShutterStartInit(i, -1, 0);
-              break;
-              default:
-                //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Switch OFF motor."),i+1);
-                Shutter[i].target_position = Shutter[i].real_position;
-                Shutter[i].last_stop_time = millis();
+            break;
           }
-        break;
-        case SHT_TIME_GARAGE:
-         switch (powerstate_local) {
-           case 1:
-             ShutterStartInit(i, Shutter[i].lastdirection*-1 , Shutter[i].lastdirection == 1 ?  0 : Shutter[i].open_max);
-             AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
-           break;
-           default:
-            Shutter[i].target_position = Shutter[i].real_position;
-         }
-
-
-			  } // switch (ShutterGlobal.position_mode)
+          case SHT_TIME_GARAGE:
+            switch (powerstate_local) {
+              case 1:
+                ShutterStartInit(i, Shutter[i].lastdirection * -1, Shutter[i].lastdirection == 1 ? 0 : Shutter[i].open_max);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Garage. NewTarget %d"), i, Shutter[i].target_position);
+                break;
+              default:
+                Shutter[i].target_position = Shutter[i].real_position;
+            }
+        }        
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Power: %d, tiltmv: %d"), i+1, Shutter[i].target_position, powerstate_local,Shutter[i].tiltmoving);
 		 } // if (manual_relays_changed)
   } // for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++)
