@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
 - Support for TC74 temperature sensor by Michael Loftis (#18042)
 - Matter support for Shutters with Tilt
 - Matter POC for remote Relay
+- Added support for Zero-Cross Dimmer on ESP32, changed calculation on EPS8266, high resolution control e.g. Solar: `ZCDimmerSet`
+- ESP32: Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
+- ESP32: `Shuttersetup` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 
 ### Breaking Changed
 
@@ -25,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
 - NovaSDS GUI values (#18444)
 - Berry fix rules for string comparisons (#18464)
+- Shutter: GarageMode does not stop on console commands, `ShutterSetOpen` and `ShutterSetClose` does not reset direction (#18539)
 
 ### Removed
 
