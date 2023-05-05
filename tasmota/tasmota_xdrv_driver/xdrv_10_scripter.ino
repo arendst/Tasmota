@@ -7699,6 +7699,7 @@ getnext:
 uint32_t script_ow(uint8_t sel, uint32_t val) {
 uint32_t res = 0;
 uint8_t bits;
+bool invert = false;
 ScriptOneWire *ow = &glob_script_mem.ow;
 
   if (sel >= 10 && sel <= 18) {
@@ -7715,10 +7716,37 @@ ScriptOneWire *ow = &glob_script_mem.ow;
   switch (sel) {
     case 0:
       if (val & 0x8000) {
+        if (val & 0x10000) {
+          // inverted serial
+          invert = true;
+        }
         val &= 0x7fff;
         ow->ts = new TasmotaSerial(val & 0xff, (val >> 8) & 0x7f, 1, 0, 64);
         if (ow->ts) {
+
           ow->ts->begin(9600);
+
+#ifdef ESP8266          
+          if (ow->ts->hardwareSerial()) {
+            ClaimSerial();
+#ifdef ALLOW_OW_INVERT
+            if (invert == true) {
+              U0C0 = U0C0 | BIT(UCRXI) | BIT(UCTXI); // Inverse RX, TX
+            }
+#endif
+          }
+#endif // ESP8266
+
+#ifdef ESP32
+#ifdef ALLOW_OW_INVERT
+          if (invert == true) {
+            HardwareSerial *hws = ow->ts->getesp32hws();
+            hws->end();
+            hws->begin(9600, SERIAL_8N1, val & 0xff, (val >> 8) & 0x7f, true);
+          }
+#endif
+#endif // ESP32
+ 
           ow->dsh = new DS2480B(ow->ts);
           ow->dsh->begin();
         }
