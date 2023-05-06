@@ -26,7 +26,7 @@ class Partition_info
   var type
   var subtype
   var start
-  var size
+  var sz
   var label
   var flags
 
@@ -46,7 +46,7 @@ class Partition_info
       self.type = 0
       self.subtype = 0
       self.start = 0
-      self.size = 0
+      self.sz = 0
       self.label = ''
       self.flags = 0
       return
@@ -59,7 +59,7 @@ class Partition_info
       self.type = raw.get(2,1)
       self.subtype = raw.get(3,1)
       self.start = raw.get(4,4)
-      self.size = raw.get(8,4)
+      self.sz = raw.get(8,4)
       self.label = self.remove_trailing_zeroes(raw[12..27]).asstring()
       self.flags = raw.get(28,4)
 
@@ -149,7 +149,7 @@ class Partition_info
     return string.format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
                           self.type, type_s,
                           self.subtype, subtype_s,
-                          self.start, self.size,
+                          self.start, self.sz,
                           self.label, self.flags)
   end
 
@@ -160,7 +160,7 @@ class Partition_info
     b.add(self.type, 1)
     b.add(self.subtype, 1)
     b.add(self.start, 4)
-    b.add(self.size, 4)
+    b.add(self.sz, 4)
     var label = bytes().fromstring(self.label)
     label.resize(16)
     b = b + label
@@ -525,12 +525,12 @@ class Partition_manager_UI
     webserver.content_send(string.format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s&nbsp;</b></legend>",
                                          slot.start / 0x1000, slot.label, active ? " (active)" : ""))
 
-    webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.size / 1024))
+    webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.sz / 1024))
     var used = slot.get_image_size()
-    if used > slot.size   slot.used = -1 end         # we may have a leftover of a previous firmware but the slot shrank - in this case the slot is inknown
+    if used > slot.sz   slot.used = -1 end         # we may have a leftover of a previous firmware but the slot shrank - in this case the slot is inknown
     if used >= 0
       webserver.content_send(string.format("<p><b>Used: </b>%i KB</p>", used / 1024))
-      webserver.content_send(string.format("<p><b>Free: </b>%i KB</p>", (slot.size - used) / 1024))
+      webserver.content_send(string.format("<p><b>Free: </b>%i KB</p>", (slot.sz - used) / 1024))
     else
       webserver.content_send("<p><b>Used</b>: unknown</p>")
       webserver.content_send("<p><b>Free</b>: unknown</p>")
@@ -567,10 +567,10 @@ class Partition_manager_UI
     webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;filesystem&nbsp;</b></legend>",
                                          slot.start / 0x1000))
 
-    webserver.content_send(string.format("<p><b>Partition size:</b> %i KB</p>", slot.size / 1024))
+    webserver.content_send(string.format("<p><b>Partition size:</b> %i KB</p>", slot.sz / 1024))
     
     if free_mem != nil
-      webserver.content_send(string.format("<p><b>Max size: </b>%i KB</p>", (slot.size + free_mem) / 1024))
+      webserver.content_send(string.format("<p><b>Max size: </b>%i KB</p>", (slot.sz + free_mem) / 1024))
       webserver.content_send(string.format("<p><b>Unallocated: </b>%i KB</p>", free_mem / 1024))
     end
 
@@ -578,7 +578,7 @@ class Partition_manager_UI
     webserver.content_send("<hr><p><b>New size:</b> (multiple of 16 KB)</p>")
     webserver.content_send("<form action='/part_mgr' method='post' ")
     webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
-    webserver.content_send(string.format("<input type='number' min='0' max='%d' step='16' name='fs_size' value='%i'>", (slot.size + free_mem) / 1024, ((slot.size + free_mem) / 1024 / 16)*16))
+    webserver.content_send(string.format("<input type='number' min='0' max='%d' step='16' name='fs_size' value='%i'>", (slot.sz + free_mem) / 1024, ((slot.sz + free_mem) / 1024 / 16)*16))
     webserver.content_send("<p></p><button name='resize' class='button bred'>Resize filesystem</button></form></p>")
     webserver.content_send("<p></p></fieldset><p></p>")
   end
@@ -598,7 +598,7 @@ class Partition_manager_UI
         self.page_show_partition(slot, false, nil, nil)
       elif slot.is_spiffs()
         var flash_size = tasmota.memory()['flash'] * 1024
-        var used_size = (slot.start + slot.size)
+        var used_size = (slot.start + slot.sz)
         self.page_show_spiffs(slot, slot == p.slots[-1] ? flash_size - used_size : nil)
       end
     end
@@ -615,11 +615,11 @@ class Partition_manager_UI
     else
       # we can proceed
       var app0 = p.get_ota_slot(0)
-      var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+      var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
       var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
 
       var app1 = p.get_ota_slot(1)
-      var app1_size_kb = ((app1.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+      var app1_size_kb = ((app1.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
       # var app1_used_kb = (((app1.get_image_size()) / 1024 / 64) + 1) * 64   # we don't actually need it
 
       var flash_size_kb = tasmota.memory()['flash']
@@ -723,10 +723,10 @@ class Partition_manager_UI
         if spiffs_size_kb < 0 || spiffs_size_kb > spiffs_max_size
           raise "value_error", string.format("Invalid fs_size %i, should be between 0 and %i", spiffs_size_kb, spiffs_max_size)
         end
-        if spiffs_size_kb == spiffs_slot.size/1024 raise "value_error", "FS size unchanged, abort" end
+        if spiffs_size_kb == spiffs_slot.sz/1024 raise "value_error", "FS size unchanged, abort" end
 
         #- write the new SPIFFS partition size -#
-        spiffs_slot.size = spiffs_size_kb * 1024
+        spiffs_slot.sz = spiffs_size_kb * 1024
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
 
@@ -750,7 +750,7 @@ class Partition_manager_UI
         if p.ota_max() != 1
           raise "internal_error", "There are more than 2 OTA partition, abort"
         end
-        var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
         var flash_size_kb = tasmota.memory()['flash']
 
@@ -762,13 +762,13 @@ class Partition_manager_UI
 
         #- all good, proceed -#
         # resize app0
-        app0.size = part_size_kb * 1024
+        app0.sz = part_size_kb * 1024
         # change app1
-        app1.start = app0.start + app0.size
-        app1.size = part_size_kb * 1024
+        app1.start = app0.start + app0.sz
+        app1.sz = part_size_kb * 1024
         # change spiffs
-        spiffs.start = app1.start + app1.size
-        spiffs.size = flash_size_kb * 1024 - spiffs.start
+        spiffs.start = app1.start + app1.sz
+        spiffs.sz = flash_size_kb * 1024 - spiffs.start
 
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
@@ -792,9 +792,9 @@ class Partition_manager_UI
         if p.ota_max() != 1
           raise "internal_error", "There are more than 2 OTA partition, abort"
         end
-        var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
-        var app1_size_kb = ((app1.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app1_size_kb = ((app1.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var flash_size_kb = tasmota.memory()['flash']
 
         var part0_size_kb = int(webserver.arg("app0"))
@@ -809,13 +809,13 @@ class Partition_manager_UI
 
         #- all good, proceed -#
         # resize app0
-        app0.size = part0_size_kb * 1024
+        app0.sz = part0_size_kb * 1024
         # change app1
-        app1.start = app0.start + app0.size
-        app1.size = part1_size_kb * 1024
+        app1.start = app0.start + app0.sz
+        app1.sz = part1_size_kb * 1024
         # change spiffs
-        spiffs.start = app1.start + app1.size
-        spiffs.size = flash_size_kb * 1024 - spiffs.start
+        spiffs.start = app1.start + app1.sz
+        spiffs.sz = flash_size_kb * 1024 - spiffs.start
 
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt

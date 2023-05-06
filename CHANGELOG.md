@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Partition_Manager.tapp fixed
 
 ### Removed
 
