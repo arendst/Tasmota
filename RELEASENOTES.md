@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `tcpclientasync` class for non-blocking TCP client
 
 ### Breaking Changed
+- Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.7 to v2.0.8

@@ -28,6 +28,7 @@
  * GM861Zone<byte> <value>  - Set zone byte to value
  *   GM861Zone5 20          - Set read interval to 2 seconds (default 10 = 0x0A)
  *   GM861Zone44 0x02       - Enable all barcodes using full area (default 5 = 0x05)
+ *   GM861Zone208 0x80      - Enable AIM ID (default 0 = 0x00)
  * GM861Save                - Save changes in zone bytes to flash
  * GM861Reset 1             - Reset to factory settings and re-init the scanner
  * GM861Dump                - Dump zone bytes 0 to 97 if logging level 4

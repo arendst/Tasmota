@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Support for GM861 1D and 2D bar code reader (#18399)
 
 ### Breaking Changed
+- Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
 

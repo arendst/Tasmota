@@ -408,7 +408,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
     type[i] = '\0';
 
-    bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
+    bool binary_data = (index > 299);        // Suppose binary data on topic index > 299
     if (!binary_data) {
       bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
       if (!keep_spaces) {
