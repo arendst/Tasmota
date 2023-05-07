@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.8 to v2.0.9
+- autoconf extract `display.ini` to file system
 
 ### Fixed
 - Partition_Manager.tapp fixed
