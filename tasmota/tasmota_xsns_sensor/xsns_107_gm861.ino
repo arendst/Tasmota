@@ -36,6 +36,8 @@
 
 #define XSNS_107                    107
 
+//#define GM861_DECODE_AIM            // Decode AIM-id (+0k3 code)
+
 /*
 #define GPIO_GM861_TX      304
 #define D_SENSOR_GM861_TX  "GM861 Tx"
@@ -94,6 +96,23 @@ struct GDK {
 } Gm861;
 
 /*********************************************************************************************/
+
+#ifdef GM861_DECODE_AIM
+const char kGm861AIMID[] PROGMEM = "A1C0E0E4F0G0H1I0I1L0M1Q1R0S0X0X1X4X5d1emzm";
+const char kGm861AIM[] PROGMEM = "Code39|Code128|EAN13|EAN8|Codabar|Code93|Code11|I2of5|ITF|PDF417|MSIPlessey|QRCode|S2of5|D2of5|CnPost|M2of5|ISBN|ISSN|DMCode|GS1|Aztec";
+
+String Gm861AIMId2AIM(const char* aim_id) {
+  char aim_ids[sizeof(kGm861AIMID)];
+  strcpy_P(aim_ids, kGm861AIMID);
+  int index = (strstr(aim_ids, aim_id) -aim_ids) /2;
+  if (index < 0) {                     // Unknown
+    strcpy(aim_ids, aim_id);           // Return AIM-id
+  } else {
+    GetTextIndexed(aim_ids, sizeof(aim_ids), index, kGm861AIM);
+  }
+  return aim_ids;
+}
+#endif  // GM861_DECODE_AIM
 
 uint32_t Gm861Crc(uint8_t* ptr, uint32_t len) {
   // When no need for checking CRC, CRC byte can be filled in 0xAB 0xCD
@@ -197,16 +216,26 @@ void Gm861SerialInput(void) {
     // 5D 45 30 38 37 31 31 32 31 38 39 37 32 38 37 35 0D  - AIM ]E0, Barcode 8711218972875
     RemoveControlCharacter(buffer);    // Remove control character (0x00 .. 0x1F and 0x7F)
     uint32_t offset = 0;
-    if (']' == buffer[0]) {            // AIM code
+    char aim_id[3] = { 0 };
+    if (']' == buffer[0]) {            // AIM code ]xy
       offset = 3;
+      aim_id[0] = buffer[1];
+      aim_id[1] = buffer[2];
     }
+
+    // Prepare GUI result
     snprintf_P(Gm861.barcode, sizeof(Gm861.barcode) -3, PSTR("%s"), buffer + offset);
     if (strlen(buffer) > sizeof(Gm861.barcode) -3) {
       strcat(Gm861.barcode, "...");
     }
+
     ResponseTime_P(PSTR(",\"GM861\":{"));
     if (offset) {
-      ResponseAppend_P(PSTR("\"AIM\":\"%c%c\","), buffer[1], buffer[2]);
+#ifdef GM861_DECODE_AIM
+      ResponseAppend_P(PSTR("\"AIM\":\"%s\","), Gm861AIMId2AIM(aim_id).c_str());
+#else
+      ResponseAppend_P(PSTR("\"AIM\":\"%s\","), aim_id);
+#endif  // GM861_DECODE_AIM
     }
     ResponseAppend_P(PSTR("\"Code\":\"%s\"}}"), buffer + offset);
     MqttPublishTeleSensor();
