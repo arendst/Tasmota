@@ -431,13 +431,18 @@ bool CmndTM1637Float(bool clear)
   char sPrecision[CMD_MAX_LEN];
   char sPosition[CMD_MAX_LEN];
   char sLength[CMD_MAX_LEN];
+  char sAlignment[CMD_MAX_LEN];
   uint8_t length = 0;
   uint8_t precision = Settings->display_width;
   uint8_t position = 0;
+  uint8_t alignment = 0;
   float fnum = 0.0f;
 
   switch (ArgC())
   {
+  case 5:
+    subStr(sAlignment, XdrvMailbox.data, ",", 5);
+    alignment = atoi(sAlignment);
   case 4:
     subStr(sLength, XdrvMailbox.data, ",", 4);
     length = atoi(sLength);
@@ -469,7 +474,7 @@ bool CmndTM1637Float(bool clear)
     length = Settings->display_width;
 
   // Add leading spaces before value if txt is shorter than length
-  if (strlen(txt) < length + 1) 
+  if ((alignment == 1) && (strlen(txt) < length + 1))
   {
     char tmptxt[30];
     ext_snprintf_P(tmptxt, sizeof(tmptxt), "%*s%s", strlen(txt)-(length+1), "", txt);
