@@ -175,11 +175,15 @@ int8_t cs;
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
       if (wire_n == 1) {
-        I2cBegin(sda, scl);
+        if (!TasmotaGlobal.i2c_enabled) {
+          I2cBegin(sda, scl);
+        }
       }
 #ifdef ESP32
       if (wire_n == 2) {
-        I2c2Begin(sda, scl);
+        if (!TasmotaGlobal.i2c_enabled_2) {
+          I2c2Begin(sda, scl);
+        }
       }
       if (I2cSetDevice(i2caddr, wire_n - 1)) {
         I2cSetActiveFound(i2caddr, "DSP-I2C", wire_n - 1);
@@ -333,11 +337,15 @@ int8_t cs;
       }
 
       if (wire_n == 0) {
-        I2cBegin(sda, scl);
+        if (!TasmotaGlobal.i2c_enabled) {
+          I2cBegin(sda, scl);
+        }
       }
 #ifdef ESP32
       if (wire_n == 1) {
-        I2c2Begin(sda, scl, 400000);
+        if (!TasmotaGlobal.i2c_enabled_2) {
+          I2c2Begin(sda, scl, 400000);
+        }
       }
       if (I2cSetDevice(i2caddr, wire_n)) {
         if (i2caddr == GT911_address) {
