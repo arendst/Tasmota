@@ -83,14 +83,14 @@
 
 
 
-  DisplayFloat          num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width}]]]
+  DisplayFloat          num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width} [,alignment {0=left 1=right}]]]]
 
                                Clears and then displays float (with decimal point)  command e.g., "DisplayFloat 12.34"
                                See function description below for more details.
 
 
 
-  DisplayFloatNC        num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width}]]]
+  DisplayFloatNC        num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width} [,alignment {0=left 1=right}]]]]
 
                                Displays float (with decimal point) as above, but without clearing first. command e.g., "DisplayFloatNC 12.34"
                                See function description below for more details.
@@ -434,7 +434,6 @@ bool CmndTM1637Float(bool clear)
   uint8_t length = 0;
   uint8_t precision = Settings->display_width;
   uint8_t position = 0;
-
   float fnum = 0.0f;
 
   switch (ArgC())
@@ -468,6 +467,14 @@ bool CmndTM1637Float(bool clear)
     length = strlen(txt);
   if ((length <= 0) || (length > Settings->display_width))
     length = Settings->display_width;
+
+  // Add leading spaces before value if txt is shorter than length
+  if (strlen(txt) < length + 1) 
+  {
+    char tmptxt[30];
+    ext_snprintf_P(tmptxt, sizeof(tmptxt), "%*s%s", strlen(txt)-(length+1), "", txt);
+    strcpy (txt, tmptxt);
+  }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: num %4_f, prec %d, len %d"), &fnum, precision, length);
 
