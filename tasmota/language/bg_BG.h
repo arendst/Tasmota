@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "Резервна тема"
 #define D_FALSE "Невярно"
 #define D_FILE "Файл"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Дебит"
 #define D_FRAGMENTATION "фраг."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Кадъра в секунда"

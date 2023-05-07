@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "Tópico para retornar"
 #define D_FALSE "Falso"
 #define D_FILE "Arquivo"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Quociente de vazão"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"

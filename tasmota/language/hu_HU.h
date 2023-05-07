@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "fallback topik"
 #define D_FALSE "Hamis"
 #define D_FILE "Fájl"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Átfolyás ráta"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"

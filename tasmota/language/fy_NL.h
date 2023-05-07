@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "Fallback Underwerp"
 #define D_FALSE "Falsk"
 #define D_FILE "Bestân"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Stromingssnelheid"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"

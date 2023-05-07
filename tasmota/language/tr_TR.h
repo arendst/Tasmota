@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "Geri İletim Topiği"
 #define D_FALSE "False"
 #define D_FILE "Dosya"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Flow rate"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"

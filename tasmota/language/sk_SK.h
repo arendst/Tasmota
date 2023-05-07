@@ -80,6 +80,7 @@
 #define D_CURRENT "Prúd"          // As in Voltage and Current
 #define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Dáta"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Flow rate"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"

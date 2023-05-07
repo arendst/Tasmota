@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC "Topic de secours"
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE "Débit"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Fréq. image"

@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC       "Topic Riserva"
 #define D_FALSE                "Falso"
 #define D_FILE                 "File"
+#define D_FILE_SYSTEM_SIZE "File System Size"
 #define D_FLOW_RATE            "Flusso dati"
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE           "Frequenza fotogrammi"
