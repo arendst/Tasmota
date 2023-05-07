@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
+- ESP32 Framework (Core) from v2.0.8 to v2.0.9
 
 ### Fixed
 - Partition_Manager.tapp fixed
