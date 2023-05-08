@@ -232,12 +232,21 @@ namespace {
     ext_snprintf_P(s, sizeof(s), PSTR("%-1_f"), &value);
     json.addStrRaw(key, s);
   }
+
+  void addModelToJson(JsonGeneratorObject& json, const char* key, decode_type_t protocol, const int16_t model) {
+    String modelStr = irutils::modelToStr(protocol, model);
+    if (modelStr != kUnknownStr) {
+      json.add(key, modelStr);
+    } else {  // Fallback to int value
+      json.add(key, model);
+    }
+  }
 } // namespace {
 
 String sendACJsonState(const stdAc::state_t &state) {
   JsonGeneratorObject json;
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
-  json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
+  addModelToJson(json, PSTR(D_JSON_IRHVAC_MODEL), state.protocol, state.model);
   json.add(PSTR(D_JSON_IRHVAC_COMMAND), IRac::commandTypeToString(state.command));
   json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
   // Home Assistant wants power to be off if mode is also off.
