@@ -54,8 +54,6 @@ jobs:
           python-version: '3.x'
       - name: Remove old solidified code
         run: |
-          ls -R ./lib/libesp32/berry_matter/src/solidify
-          ls -R ./lib/libesp32/berry_tasmota/src/solidify
           rm ./lib/libesp32/berry_matter/src/solidify/*
           rm ./lib/libesp32/berry_tasmota/src/solidify/*
       - uses: actions/download-artifact@v3
@@ -71,6 +69,7 @@ jobs:
           commit_message: Solidified Code updated
 
   safeboot-images:
+    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
