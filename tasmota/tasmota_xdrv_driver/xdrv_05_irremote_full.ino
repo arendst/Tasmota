@@ -221,11 +221,24 @@ void IrReceiveInit(void)
   irrecv->enableIRIn();                  // Start the receiver
 }
 
+namespace {
+  void addFloatToJson(JsonGeneratorObject& json, const char* key, float value, float noValueConstant = NAN) {
+    if (!isnan(noValueConstant) && value == noValueConstant) {
+      //The "no sensor value" may not be straightforward (e.g.-100.0), hence replacing with explicit n/a
+      json.add(key, PSTR(D_JSON_NA));
+      return;
+    }
+    char s[6];  // Range: -99.9 <> 999.9 should be fine for any sensible temperature value :)
+    ext_snprintf_P(s, sizeof(s), PSTR("%-1_f"), &value);
+    json.addStrRaw(key, s);
+  }
+} // namespace {
+
 String sendACJsonState(const stdAc::state_t &state) {
   JsonGeneratorObject json;
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
   json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
-
+  json.add(PSTR(D_JSON_IRHVAC_COMMAND), IRac::commandTypeToString(state.command));
   json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
   // Home Assistant wants power to be off if mode is also off.
   if (state.mode == stdAc::opmode_t::kOff) {
@@ -234,12 +247,7 @@ String sendACJsonState(const stdAc::state_t &state) {
     json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
   }
   json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
-  if (floorf(state.degrees) == state.degrees) {
-    json.add(PSTR(D_JSON_IRHVAC_TEMP), (int32_t) floorf(state.degrees));       // integer
-  } else {
-    // TODO can do better here
-    json.addStrRaw(PSTR(D_JSON_IRHVAC_TEMP), String(state.degrees, 1).c_str());   // non-integer, limit to only 1 sub-digit
-  }
+  addFloatToJson(json, PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
 
   json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
   json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
@@ -252,6 +260,9 @@ String sendACJsonState(const stdAc::state_t &state) {
   json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
   json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
   json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+  // json.add(PSTR(D_JSON_IRHVAC_CLOCK), state.clock); //Not supported as unsure if useful (see comments below)
+  json.add(PSTR(D_JSON_IRHVAC_IFEEL), IRac::boolToString(state.iFeel));
+  addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
 
   String payload = json.toString(); // copy string before returning, the original is on the stack
   return payload;
@@ -393,7 +404,7 @@ StateModes strToStateMode(class JsonParserToken token, StateModes def) {
 
 // used to convert values 0-5 to fanspeed_t
 const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
-                      stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium,
+                      stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium, stdAc::fanspeed_t::kMediumHigh,
                       stdAc::fanspeed_t::kHigh, stdAc::fanspeed_t::kMax };
 
 uint32_t IrRemoteCmndIrHvacJson(void)
@@ -408,6 +419,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   // from: https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/CommonAcControl/CommonAcControl.ino
   state.protocol = decode_type_t::UNKNOWN;
   state.model = 1;  // Some A/C's have different models. Let's try using just 1.
+  state.command = stdAc::ac_command_t::kControlCommand;
   state.mode = stdAc::opmode_t::kAuto;  // Run in cool mode initially.
   state.power = false;  // Initially start with the unit off.
   state.celsius = true;  // Use Celsius for units of temp. False = Fahrenheit
@@ -424,6 +436,8 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = -1;  // Don't set any sleep time or modes.
   state.clean = false;  // Turn off any Cleaning options if we can.
   state.clock = -1;  // Don't set any current time if we can avoid it.
+  state.iFeel = false;
+  state.sensorTemperature = kNoTempValue;  // Don't set any sensor (ambient) temperature if not provided
 
   JsonParserToken val;
   if (val = root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(val.getStr()); }
@@ -431,18 +445,20 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (decode_type_t::UNKNOWN == state.protocol) { return IE_UNSUPPORTED_HVAC; }
   if (!IRac::isProtocolSupported(state.protocol)) { return IE_UNSUPPORTED_HVAC; }
 
-  // for fan speed, we also support 1-5 values
+  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_COMMAND)]) { state.command = IRac::strToCommandType(val.getStr()); }
+
+  // for fan speed, we also support 1-6 values
   JsonParserToken tok_fan_speed = root[PSTR(D_JSON_IRHVAC_FANSPEED)];
   if (tok_fan_speed) {
     uint32_t fan_speed = tok_fan_speed.getUInt();
-    if ((fan_speed >= 1) && (fan_speed <= 5)) {
+    if ((fan_speed >= 1) && (fan_speed <= 6)) {
       state.fanspeed = (stdAc::fanspeed_t) pgm_read_byte(&IrHvacFanSpeed[fan_speed]);
     } else {
       state.fanspeed = IRac::strToFanspeed(tok_fan_speed.getStr());
     }
   }
 
-  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
@@ -468,6 +484,9 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   // optional timer and clock
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
+
+  state.iFeel = strToBool(root[PSTR(D_JSON_IRHVAC_IFEEL)], state.iFeel);
+  state.sensorTemperature = root.getFloat(PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature);
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
