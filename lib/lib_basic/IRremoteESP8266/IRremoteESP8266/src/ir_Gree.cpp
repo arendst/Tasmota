@@ -591,6 +591,8 @@ stdAc::state_t IRGreeAC::toCommon(void) {
   result.mode = toCommonMode(_.Mode);
   result.celsius = !_.UseFahrenheit;
   result.degrees = getTemp();
+  // no support for Sensor temp.
+  result.iFeel = getIFeel();
   result.fanspeed = toCommonFanSpeed(_.Fan);
   if (_.SwingAuto)
     result.swingv = stdAc::swingv_t::kAuto;

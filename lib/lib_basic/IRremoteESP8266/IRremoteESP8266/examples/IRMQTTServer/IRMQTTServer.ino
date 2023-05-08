@@ -231,6 +231,49 @@
  *
  * In HA's configuration.yaml, add:
  *
+ * #### New format (Post Home Assistant 2022.6 release)
+ *
+ * mqtt:
+ *   climate:
+ *     - name: Living Room Aircon
+ *       modes:
+ *         - "off"
+ *         - "auto"
+ *         - "cool"
+ *         - "heat"
+ *         - "dry"
+ *         - "fan_only"
+ *       fan_modes:
+ *         - "Auto"
+ *         - "Min"
+ *         - "Low"
+ *         - "Medium"
+ *         - "High"
+ *         - "Max"
+ *       swing_modes:
+ *         - "Off"
+ *         - "Auto"
+ *         - "Highest"
+ *         - "High"
+ *         - "Middle"
+ *         - "Low"
+ *         - "Lowest"
+ *       power_command_topic: "ir_server/ac/cmnd/power"
+ *       mode_command_topic: "ir_server/ac/cmnd/mode"
+ *       mode_state_topic: "ir_server/ac/stat/mode"
+ *       temperature_command_topic: "ir_server/ac/cmnd/temp"
+ *       temperature_state_topic: "ir_server/ac/stat/temp"
+ *       fan_mode_command_topic: "ir_server/ac/cmnd/fanspeed"
+ *       fan_mode_state_topic: "ir_server/ac/stat/fanspeed"
+ *       swing_mode_command_topic: "ir_server/ac/cmnd/swingv"
+ *       swing_mode_state_topic: "ir_server/ac/stat/swingv"
+ *       min_temp: 16
+ *       max_temp: 32
+ *       temp_step: 1
+ *       retain: false
+ *
+ * #### Old format (Pre Home Assistant 2022.6 release)
+ *
  * climate:
  *   - platform: mqtt
  *     name: Living Room Aircon
@@ -256,8 +299,7 @@
  *       - "Middle"
  *       - "Low"
  *       - "Lowest"
- *     # `power_command_topic` is probably not needed for most HA configurations
- *     # power_command_topic: "ir_server/ac/cmnd/power"
+ *     power_command_topic: "ir_server/ac/cmnd/power"
  *     mode_command_topic: "ir_server/ac/cmnd/mode"
  *     mode_state_topic: "ir_server/ac/stat/mode"
  *     temperature_command_topic: "ir_server/ac/cmnd/temp"
@@ -377,6 +419,10 @@ using irutils::msToString;
   ADC_MODE(ADC_VCC);
 #endif  // REPORT_VCC
 
+#ifdef SHT3X_SUPPORT
+#include <WEMOS_SHT3X.h>
+#endif
+
 // Globals
 uint8_t _sanity = 0;
 #if defined(ESP8266)
@@ -453,9 +499,15 @@ String MqttClimateCmnd;  // Sub-topic for the climate command topics.
 #if MQTT_DISCOVERY_ENABLE
 String MqttDiscovery;
 String MqttUniqueId;
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+String MqttDiscoverySensor;
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
 #endif  // MQTT_DISCOVERY_ENABLE
 String MqttHAName;
 String MqttClientId;
+#if SHT3X_SUPPORT
+String MqttSensorStat;
+#endif  // SHT3X_SUPPORT
 
 // Primative lock file for gating MQTT state broadcasts.
 bool lockMqttBroadcast = true;
@@ -494,6 +546,11 @@ bool isSerialGpioUsedByIr(void) {
     }
   return false;  // Not in use as far as we can tell.
 }
+
+#if SHT3X_SUPPORT
+SHT3X TemperatureSensor(SHT3X_I2C_ADDRESS);
+TimerMs statSensorReadTime = TimerMs();
+#endif  // SHT3X_SUPPORT
 
 // Debug messages get sent to the serial port.
 #pragma GCC diagnostic push
@@ -905,7 +962,7 @@ void handleExamples(void) {
 #endif  // EXAMPLES_ENABLE
 
 String htmlSelectBool(const String name, const bool def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (uint16_t i = 0; i < 2; i++)
     html += htmlOptionItem(IRac::boolToString(i), IRac::boolToString(i),
                            i == def);
@@ -913,8 +970,20 @@ String htmlSelectBool(const String name, const bool def) {
   return html;
 }
 
+String htmlDisableCheckbox(const String name, const String targetControlId,
+                           const bool checked, const String toggleJsFnName) {
+  String html = String(F("<input type='checkbox' name='")) + name + F("' id='")
+    + name + F("' onclick=\"") + toggleJsFnName + F("(this, '") +
+    targetControlId + F("')\"");
+  if (checked) {
+    html += F(" checked");
+  }
+  html += "/><label for='" + name + F("'>Disabled</label>");
+  return html;
+}
+
 String htmlSelectClimateProtocol(const String name, const decode_type_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (uint8_t i = 1; i <= decode_type_t::kLastDecodeType; i++) {
     if (IRac::isProtocolSupported((decode_type_t)i)) {
       html += htmlOptionItem(String(i), typeToString((decode_type_t)i),
@@ -926,7 +995,7 @@ String htmlSelectClimateProtocol(const String name, const decode_type_t def) {
 }
 
 String htmlSelectModel(const String name, const int16_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (int16_t i = -1; i <= 6; i++) {
     String num = String(i);
     String text;
@@ -942,9 +1011,21 @@ String htmlSelectModel(const String name, const int16_t def) {
   return html;
 }
 
+String htmlSelectCommandType(const String name, const stdAc::ac_command_t def) {
+  String html = String(F("<select name='")) + name + F("'>");
+  for (uint8_t i = 0;
+       i <= (int8_t)stdAc::ac_command_t::kLastAcCommandEnum;
+       i++) {
+    String mode = IRac::commandTypeToString((stdAc::ac_command_t)i);
+    html += htmlOptionItem(mode, mode, (stdAc::ac_command_t)i == def);
+  }
+  html += F("</select>");
+  return html;
+}
+
 String htmlSelectUint(const String name, const uint16_t max,
                       const uint16_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (uint16_t i = 0; i < max; i++) {
     String num = String(i);
     html += htmlOptionItem(num, num, i == def);
@@ -955,7 +1036,7 @@ String htmlSelectUint(const String name, const uint16_t max,
 
 String htmlSelectGpio(const String name, const int16_t def,
                       const int8_t list[], const int16_t length) {
-  String html = F(": <select name='") + name + F("'>");
+  String html = String(F(": <select name='")) + name + F("'>");
   for (int16_t i = 0; i < length; i++) {
     String num = String(list[i]);
     html += htmlOptionItem(num, list[i] == kGpioUnused ? F("Unused") : num,
@@ -967,7 +1048,7 @@ String htmlSelectGpio(const String name, const int16_t def,
 }
 
 String htmlSelectMode(const String name, const stdAc::opmode_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (int8_t i = -1; i <= (int8_t)stdAc::opmode_t::kLastOpmodeEnum; i++) {
     String mode = IRac::opmodeToString((stdAc::opmode_t)i);
     html += htmlOptionItem(mode, mode, (stdAc::opmode_t)i == def);
@@ -977,7 +1058,7 @@ String htmlSelectMode(const String name, const stdAc::opmode_t def) {
 }
 
 String htmlSelectFanspeed(const String name, const stdAc::fanspeed_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (int8_t i = 0; i <= (int8_t)stdAc::fanspeed_t::kLastFanspeedEnum; i++) {
     String speed = IRac::fanspeedToString((stdAc::fanspeed_t)i);
     html += htmlOptionItem(speed, speed, (stdAc::fanspeed_t)i == def);
@@ -987,7 +1068,7 @@ String htmlSelectFanspeed(const String name, const stdAc::fanspeed_t def) {
 }
 
 String htmlSelectSwingv(const String name, const stdAc::swingv_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (int8_t i = -1; i <= (int8_t)stdAc::swingv_t::kLastSwingvEnum; i++) {
     String swing = IRac::swingvToString((stdAc::swingv_t)i);
     html += htmlOptionItem(swing, swing, (stdAc::swingv_t)i == def);
@@ -997,7 +1078,7 @@ String htmlSelectSwingv(const String name, const stdAc::swingv_t def) {
 }
 
 String htmlSelectSwingh(const String name, const stdAc::swingh_t def) {
-  String html = F("<select name='") + name + F("'>");
+  String html = String(F("<select name='")) + name + F("'>");
   for (int8_t i = -1; i <= (int8_t)stdAc::swingh_t::kLastSwinghEnum; i++) {
     String swing = IRac::swinghToString((stdAc::swingh_t)i);
     html += htmlOptionItem(swing, swing, (stdAc::swingh_t)i == def);
@@ -1006,14 +1087,20 @@ String htmlSelectSwingh(const String name, const stdAc::swingh_t def) {
   return html;
 }
 
-String htmlHeader(const String title, const String h1_text) {
+String htmlHeader(const String title, const String h1_text,
+                  const String headScriptsJS) {
   String html = F("<html><head><title>");
   html += title;
   html += F("</title><meta http-equiv=\"Content-Type\" "
             "content=\"text/html;charset=utf-8\">"
             "<meta name=\"viewport\" content=\"width=device-width,"
-            "initial-scale=1.0,minimum-scale=1.0,maximum-scale=5.0\">"
-            "</head><body><center><h1>");
+            "initial-scale=1.0,minimum-scale=1.0,maximum-scale=5.0\">");
+  if (headScriptsJS.length()) {
+    html += F("<script type=\"text/javascript\">\n");
+    html += headScriptsJS;
+    html += F("</script>\n");
+  }
+  html += F("</head><body><center><h1>");
   if (h1_text.length())
     html += h1_text;
   else
@@ -1036,15 +1123,26 @@ String htmlButton(const String url, const String button, const String text) {
   return html;
 }
 
+String getJsToggleCheckbox(const String functionName) {
+  const String javascript =
+    String(F("  function ")) + functionName + F("(checkbox, targetInputId) {\n"
+      "     var targetControl = document.getElementById(targetInputId);\n"
+      "     targetControl.disabled = checkbox.checked;\n"
+      "     if (!targetControl.disabled) { targetControl.focus(); }\n"
+      "  }\n");
+  return javascript;
+}
+
 // Admin web page
 void handleAirCon(void) {
-  String html = htmlHeader(F("Air Conditioner Control"));
+  String html = htmlHeader(F("Air Conditioner Control"), "",
+                           getJsToggleCheckbox());
   html += htmlMenu();
   if (kNrOfIrTxGpios > 1) {
-    html += F("<form method='POST' action='/aircon/set'"
+    html += String(F("<form method='POST' action='/aircon/set'"
         " enctype='multipart/form-data'>"
         "<table>"
-        "<tr><td><b>Climate #</b></td><td>") +
+        "<tr><td><b>Climate #</b></td><td>")) +
         htmlSelectUint(KEY_CHANNEL, kNrOfIrTxGpios, chan) +
         F("<input type='submit' value='Change'>"
         "</td></tr>"
@@ -1053,11 +1151,12 @@ void handleAirCon(void) {
         "<hr>");
   }
   if (climate[chan] != NULL) {
-    html += F("<h3>Current Settings</h3>"
+    bool noSensorTemp = (climate[chan]->next.sensorTemperature == kNoTempValue);
+    html += String(F("<h3>Current Settings</h3>"
         "<form method='POST' action='/aircon/set'"
         " enctype='multipart/form-data'>"
-        "<input type='hidden' name='" KEY_CHANNEL "' value='") + String(chan) +
-            F("'>") +
+        "<input type='hidden' name='" KEY_CHANNEL "' value='")) + String(chan)
+            + F("'>") +
         F("<table style='width:33%'>"
         "<tr><td>" D_STR_PROTOCOL "</td><td>") +
             htmlSelectClimateProtocol(KEY_PROTOCOL,
@@ -1065,6 +1164,9 @@ void handleAirCon(void) {
             F("</td></tr>"
         "<tr><td>" D_STR_MODEL "</td><td>") +
             htmlSelectModel(KEY_MODEL, climate[chan]->next.model) +
+            F("</td></tr>"
+        "<tr><td>" D_STR_COMMAND "</td><td>") +
+            htmlSelectCommandType(KEY_COMMAND, climate[chan]->next.command) +
             F("</td></tr>"
         "<tr><td>" D_STR_POWER "</td><td>") +
             htmlSelectBool(KEY_POWER, climate[chan]->next.power) +
@@ -1084,6 +1186,16 @@ void handleAirCon(void) {
                 (!climate[chan]->next.celsius ? " selected='selected'" : "") +
                 F(">F</option>"
             "</select></td></tr>"
+        "<tr><td>" D_STR_SENSORTEMP "</td><td>"
+            "<input type='number' name='" KEY_SENSORTEMP "' "
+            "id='" KEY_SENSORTEMP "' min='16' max='90' step='0.5' value='") +
+            (noSensorTemp ? String(climate[chan]->next.degrees, 1) :
+                            String(climate[chan]->next.sensorTemperature, 1)) +
+            F("'") +
+            (noSensorTemp ? " disabled" : "") + F(">") +
+            htmlDisableCheckbox(KEY_SENSORTEMP_DISABLED, KEY_SENSORTEMP,
+                                noSensorTemp) +
+            F("</td></tr>"
         "<tr><td>" D_STR_FAN "</td><td>") +
             htmlSelectFanspeed(KEY_FANSPEED, climate[chan]->next.fanspeed) +
             F("</td></tr>"
@@ -1095,6 +1207,9 @@ void handleAirCon(void) {
             F("</td></tr>"
         "<tr><td>" D_STR_QUIET "</td><td>") +
             htmlSelectBool(KEY_QUIET, climate[chan]->next.quiet) +
+            F("</td></tr>"
+        "<tr><td>" D_STR_IFEEL "</td><td>") +
+            htmlSelectBool(KEY_IFEEL, climate[chan]->next.iFeel) +
             F("</td></tr>"
         "<tr><td>" D_STR_TURBO "</td><td>") +
             htmlSelectBool(KEY_TURBO, climate[chan]->next.turbo) +
@@ -1190,7 +1305,13 @@ void handleAdmin(void) {
 #if MQTT_DISCOVERY_ENABLE
   html += htmlButton(
       kUrlSendDiscovery, F("Send MQTT Discovery"),
-      F("Send a Climate MQTT discovery message to Home Assistant.<br><br>"));
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+      F("Send a Climate and Sensor MQTT"
+#else
+      F("Send a Climate MQTT"
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+      " discovery message to Home Assistant.<br><br>"));
+
 #endif  // MQTT_DISCOVERY_ENABLE
 #if MQTT_CLEAR_ENABLE
   html += htmlButton(
@@ -1244,8 +1365,8 @@ void handleInfo(void) {
   String html = htmlHeader(F("IR MQTT server info"));
   html += htmlMenu();
   html +=
-    F("<h3>General</h3>"
-    "<p>Hostname: ") + String(Hostname) + F("<br>"
+    String(F("<h3>General</h3>"
+    "<p>Hostname: ")) + String(Hostname) + F("<br>"
     "IP address: ") + WiFi.localIP().toString() + F("<br>"
     "MAC address: ") + WiFi.macAddress() + F("<br>"
     "Booted: ") + timeSince(1) + F("<br>") +
@@ -1392,6 +1513,10 @@ bool clearMqttSavedStates(const String topic_base) {
 #if MQTT_DISCOVERY_ENABLE
   // Clear the HA climate discovery message.
   success &= mqtt_client.publish(MqttDiscovery.c_str(), "", true);
+#if SHT3X_SUPPORT && MQTT_DISCOVERY_ENABLE
+  // Clear the HA sensor discovery message.
+  success &= mqtt_client.publish(MqttDiscoverySensor.c_str(), "", true);
+#endif  // SHT3X_SUPPORT && MQTT_DISCOVERY_ENABLE
 #endif  // MQTT_DISCOVERY_ENABLE
   for (size_t channel = 0;
        channel <= kNrOfIrTxGpios;
@@ -2106,13 +2231,20 @@ void init_vars(void) {
   MqttClimateCmnd = MqttClimate + '/' + MQTT_CLIMATE_CMND + '/';
   // Sub-topic for the climate stat topics.
 #if MQTT_DISCOVERY_ENABLE
-  MqttDiscovery = "homeassistant/climate/" + String(Hostname) + "/config";
+  MqttDiscovery = "homeassistant/climate/" + String(Hostname);
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+  MqttDiscoverySensor = "homeassistant/sensor/" + String(Hostname);
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
   MqttUniqueId = WiFi.macAddress();
   MqttUniqueId.replace(":", "");
 #endif  // MQTT_DISCOVERY_ENABLE
   MqttHAName = String(Hostname) + "_aircon";
   // Create a unique MQTT client id.
   MqttClientId = String(Hostname) + String(kChipId, HEX);
+#if SHT3X_SUPPORT
+  // Sub-topic for the climate stat topics.
+  MqttSensorStat = String(MqttPrefix) + '/' + MQTT_SENSOR_STAT + '/';
+#endif  // SHT3X_SUPPORT
 #endif  // MQTT_ENABLE
 }
 
@@ -2418,6 +2550,9 @@ void handleSendMqttDiscovery(void) {
       htmlMenu() +
       F("<p>The Home Assistant MQTT Discovery message is being sent to topic: ")
       + MqttDiscovery +
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+      F(" and ") + MqttDiscoverySensor +
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
       F(". It will show up in Home Assistant in a few seconds."
       "</p>"
       "<h3>Warning!</h3>"
@@ -2425,7 +2560,15 @@ void handleSendMqttDiscovery(void) {
       " is sent.</p>") +
       addJsReloadUrl(kUrlRoot, kRebootTime, true) +
       htmlEnd());
-  sendMQTTDiscovery(MqttDiscovery.c_str());
+  for (uint16_t i = 0; i < kNrOfIrTxGpios; i++) {
+    String channel_id = "";
+    if (i > 0) channel_id = "_" + String(i);
+    sendMQTTDiscovery(MqttDiscovery.c_str(), channel_id);
+  }
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+  sendMQTTDiscoverySensor(MqttDiscoverySensor.c_str(), KEY_TEMP);
+  sendMQTTDiscoverySensor(MqttDiscoverySensor.c_str(), KEY_HUMIDITY);
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
 }
 #endif  // MQTT_DISCOVERY_ENABLE
 
@@ -2598,12 +2741,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 #if MQTT_DISCOVERY_ENABLE
-void sendMQTTDiscovery(const char *topic) {
+void sendMQTTDiscovery(const char *topic, String channel_id) {
+  String pub_topic = String(topic) + channel_id + F("/config");
   if (mqtt_client.publish(
-      topic, String(
+      pub_topic.c_str(), String(
       F("{"
-      "\"~\":\"") + MqttClimate + F("\","
-      "\"name\":\"") + MqttHAName + F("\","
+      "\"~\":\"") + MqttClimate + channel_id + F("\","
+      "\"name\":\"") + MqttHAName + channel_id + F("\","
 #if (!MQTT_CLIMATE_HA_MODE)
       // Typically we don't need or use the power command topic if we are using
       // our Home Assistant Climate compatiblity mode. It causes odd behaviour
@@ -2629,9 +2773,12 @@ void sendMQTTDiscovery(const char *topic) {
       "\"swing_modes\":[\"" D_STR_OFF "\",\"" D_STR_AUTO "\",\"" D_STR_HIGHEST
                         "\",\"" D_STR_HIGH "\",\"" D_STR_MIDDLE "\",\""
                         D_STR_LOW "\",\"" D_STR_LOWEST "\"],"
-      "\"uniq_id\":\"") + MqttUniqueId + F("\","
+#if SHT3X_SUPPORT
+      "\"curr_temp_t\":\"") + MqttSensorStat + F(KEY_TEMP "\","
+#endif  // SHT3X_SUPPORT
+      "\"uniq_id\":\"") + MqttUniqueId + channel_id + F("\","
       "\"device\":{"
-        "\"identifiers\":[\"") + MqttUniqueId + F("\"],"
+        "\"identifiers\":[\"") + MqttUniqueId + channel_id + F("\"],"
         "\"connections\":[[\"mac\",\"") + WiFi.macAddress() + F("\"]],"
         "\"manufacturer\":\"IRremoteESP8266\","
         "\"model\":\"IRMQTTServer\","
@@ -2647,6 +2794,47 @@ void sendMQTTDiscovery(const char *topic) {
     mqttLog(PSTR("MQTT climate discovery FAILED to send."));
   }
 }
+
+#if SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
+// Send the MQTT Discovery data for the SHT3X sensor.
+// type must be a String of either KEY_TEMP or KEY_HUMIDITY.
+void sendMQTTDiscoverySensor(const char *topic, String type) {
+  String pub_topic = String(topic) + F("_") + type + F("/config");
+  String uom = "%";
+  String ha_class = type;
+  // XXX Update units of measure for temperature.
+  if (type == KEY_TEMP) {
+      uom = "°C";
+      ha_class = "temperature";
+  }
+  if (mqtt_client.publish(
+      pub_topic.c_str(), String(
+      F("{"
+      "\"name\":\"") + MqttHAName + "_" + type + F("\","
+
+      "\"stat_t\":\"") + MqttSensorStat + type + F("\","
+      "\"dev_cla\":\"") + ha_class + F("\","
+      "\"unit_of_meas\":\"") + uom + F("\","
+
+      "\"uniq_id\":\"") + MqttUniqueId + type + F("\","
+      "\"device\":{"
+        "\"identifiers\":[\"") + MqttUniqueId + type + F("\"],"
+        "\"connections\":[[\"mac\",\"") + WiFi.macAddress() + F("\"]],"
+        "\"manufacturer\":\"IRremoteESP8266\","
+        "\"model\":\"IRMQTTServer\","
+        "\"name\":\"") + Hostname + F("\","
+        "\"sw_version\":\"" _MY_VERSION_ "\""
+        "}"
+      "}")).c_str(), true)) {
+    mqttLog(PSTR("MQTT sensor discovery successful sent."));
+    hasDiscoveryBeenSent = true;
+    lastDiscovery.reset();
+    mqttSentCounter++;
+  } else {
+    mqttLog(PSTR("MQTT sensor discovery FAILED to send."));
+  }
+}
+#endif  // SHT3X_SUPPORT && SHT3X_MQTT_DISCOVERY_ENABLE
 #endif  // MQTT_DISCOVERY_ENABLE
 #endif  // MQTT_ENABLE
 
@@ -2678,8 +2866,8 @@ void loop(void) {
           boot = false;
         } else {
           mqttLog(String(
-              F("IRMQTTServer just (re)connected to MQTT. "
-                "Lost connection about ")
+              String(F("IRMQTTServer just (re)connected to MQTT. "
+                "Lost connection about "))
               + timeSince(lastConnectedTime)).c_str());
         }
         lastConnectedTime = now;
@@ -2715,6 +2903,29 @@ void loop(void) {
     }
     // Periodically send all of the climate state via MQTT.
     doBroadcast(&lastBroadcast, kBroadcastPeriodMs, climate, false, false);
+#if SHT3X_SUPPORT
+    // Check if it's time to read the SHT3x sensor.
+    if (statSensorReadTime.elapsed() > SHT3X_CHECK_FREQ * 1000) {
+      byte result = TemperatureSensor.get();
+      if (result == 0) {
+        // Success
+        float temp = TemperatureSensor.cTemp;
+        // XXX Convert units
+        float humidity = TemperatureSensor.humidity;
+        // Publish the temp and humidity to MQTT.
+        String mqttTempTopic = MqttSensorStat + KEY_TEMP;
+        String mqttHumidityTopic = MqttSensorStat + KEY_HUMIDITY;
+        mqtt_client.publish(mqttTempTopic.c_str(), String(temp).c_str());
+        mqtt_client.publish(mqttHumidityTopic.c_str(),
+                            String(humidity).c_str());
+      } else {
+        // Error
+        mqttLog((String(F("SHT3x sensor read error: ")) +
+                 String(result)).c_str());
+      }
+      statSensorReadTime.reset();
+    }
+#endif  // SHT3X_SUPPORT
   }
 #endif  // MQTT_ENABLE
 #if IR_RX
@@ -2934,6 +3145,7 @@ void sendJsonState(const stdAc::state_t state, const String topic,
   DynamicJsonDocument json(kJsonAcStateMaxSize);
   json[KEY_PROTOCOL] = typeToString(state.protocol);
   json[KEY_MODEL] = state.model;
+  json[KEY_COMMAND] = IRac::commandToString(state.command);
   json[KEY_POWER] = IRac::boolToString(state.power);
   json[KEY_MODE] = IRac::opmodeToString(state.mode, ha_mode);
   // Home Assistant wants mode to be off if power is also off & vice-versa.
@@ -2943,10 +3155,12 @@ void sendJsonState(const stdAc::state_t state, const String topic,
   }
   json[KEY_CELSIUS] = IRac::boolToString(state.celsius);
   json[KEY_TEMP] = state.degrees;
+  json[KEY_SENSORTEMP] = state.sensorTemperature;
   json[KEY_FANSPEED] = IRac::fanspeedToString(state.fanspeed);
   json[KEY_SWINGV] = IRac::swingvToString(state.swingv);
   json[KEY_SWINGH] = IRac::swinghToString(state.swingh);
   json[KEY_QUIET] = IRac::boolToString(state.quiet);
+  json[KEY_IFEEL] = IRac::boolToString(state.iFeel);
   json[KEY_TURBO] = IRac::boolToString(state.turbo);
   json[KEY_ECONO] = IRac::boolToString(state.econo);
   json[KEY_LIGHT] = IRac::boolToString(state.light);
@@ -2984,6 +3198,10 @@ stdAc::state_t jsonToState(const stdAc::state_t current, const char *str) {
     result.model = IRac::strToModel(json[KEY_MODEL].as<char*>());
   else if (validJsonInt(json, KEY_MODEL))
     result.model = json[KEY_MODEL];
+  if (validJsonStr(json, KEY_COMMAND))
+    result.command = IRac::strToCommand(json[KEY_COMMAND].as<char*>());
+  else if (validJsonInt(json, KEY_COMMAND))
+    result.command = json[KEY_COMMAND];
   if (validJsonStr(json, KEY_MODE))
     result.mode = IRac::strToOpmode(json[KEY_MODE]);
   if (validJsonStr(json, KEY_FANSPEED))
@@ -2994,10 +3212,14 @@ stdAc::state_t jsonToState(const stdAc::state_t current, const char *str) {
     result.swingh = IRac::strToSwingH(json[KEY_SWINGH]);
   if (json.containsKey(KEY_TEMP))
     result.degrees = json[KEY_TEMP];
+  if (json.containsKey(KEY_SENSORTEMP))
+    result.sensorTemperature = json[KEY_SENSORTEMP];
   if (validJsonInt(json, KEY_SLEEP))
     result.sleep = json[KEY_SLEEP];
   if (validJsonStr(json, KEY_POWER))
     result.power = IRac::strToBool(json[KEY_POWER]);
+  if (validJsonStr(json, KEY_IFEEL))
+    result.iFeel = IRac::strToBool(json[KEY_IFEEL]);
   if (validJsonStr(json, KEY_QUIET))
     result.quiet = IRac::strToBool(json[KEY_QUIET]);
   if (validJsonStr(json, KEY_TURBO))
@@ -3029,6 +3251,8 @@ void updateClimate(stdAc::state_t *state, const String str,
     state->protocol = strToDecodeType(payload.c_str());
   } else if (str.equals(prefix + F(KEY_MODEL))) {
     state->model = IRac::strToModel(payload.c_str());
+  } else if (str.equals(prefix + F(KEY_COMMAND))) {
+    state->command = IRac::strToCommandType(payload.c_str());
   } else if (str.equals(prefix + F(KEY_POWER))) {
     state->power = IRac::strToBool(payload.c_str());
 #if MQTT_CLIMATE_HA_MODE
@@ -3039,16 +3263,32 @@ void updateClimate(stdAc::state_t *state, const String str,
     state->mode = IRac::strToOpmode(payload.c_str());
 #if MQTT_CLIMATE_HA_MODE
     // When in Home Assistant mode, a Mode of Off, means turn the Power off too.
-    if (state->mode == stdAc::opmode_t::kOff) state->power = false;
+    if (state->mode == stdAc::opmode_t::kOff) {
+      state->power = false;
+    } else {
+      state->power = true;
+    }
 #endif  // MQTT_CLIMATE_HA_MODE
   } else if (str.equals(prefix + F(KEY_TEMP))) {
     state->degrees = payload.toFloat();
+  } else if (str.equals(prefix + F(KEY_SENSORTEMP))) {
+    state->sensorTemperature = payload.toFloat();
+  } else if (str.equals(prefix + F(KEY_SENSORTEMP_DISABLED))) {
+    // The "disabled" html form field appears after the actual sensorTemp field
+    // and the spec guarantees the form POST field order preserves body order
+    // => this will always execute after KEY_SENSORTEMP has been parsed already
+    if (IRac::strToBool(payload.c_str())) {
+      // UI control was disabled, ignore the value
+      state->sensorTemperature = kNoTempValue;
+    }
   } else if (str.equals(prefix + F(KEY_FANSPEED))) {
     state->fanspeed = IRac::strToFanspeed(payload.c_str());
   } else if (str.equals(prefix + F(KEY_SWINGV))) {
     state->swingv = IRac::strToSwingV(payload.c_str());
   } else if (str.equals(prefix + F(KEY_SWINGH))) {
     state->swingh = IRac::strToSwingH(payload.c_str());
+  } else if (str.equals(prefix + F(KEY_IFEEL))) {
+    state->iFeel = IRac::strToBool(payload.c_str());
   } else if (str.equals(prefix + F(KEY_QUIET))) {
     state->quiet = IRac::strToBool(payload.c_str());
   } else if (str.equals(prefix + F(KEY_TURBO))) {
@@ -3086,14 +3326,16 @@ bool sendClimate(const String topic_prefix, const bool retain,
     diff = true;
     success &= sendInt(topic_prefix + KEY_MODEL, next.model, retain);
   }
+  if (prev.command != next.command || forceMQTT) {
+    String command_str = IRac::commandTypeToString(next.command);
+    diff = true;
+    success &= sendString(topic_prefix + KEY_COMMAND, command_str, retain);
+  }
 #ifdef MQTT_CLIMATE_HA_MODE
   String mode_str = IRac::opmodeToString(next.mode, MQTT_CLIMATE_HA_MODE);
 #else  // MQTT_CLIMATE_HA_MODE
   String mode_str = IRac::opmodeToString(next.mode);
 #endif  // MQTT_CLIMATE_HA_MODE
-  // I don't know why, but the modes need to be lower case to work with
-  // Home Assistant & Google Home.
-  mode_str.toLowerCase();
 #if MQTT_CLIMATE_HA_MODE
   // Home Assistant want's these two bound together.
   if (prev.power != next.power || prev.mode != next.mode || forceMQTT) {
@@ -3107,6 +3349,10 @@ bool sendClimate(const String topic_prefix, const bool retain,
   }
   if (prev.mode != next.mode || forceMQTT) {
 #endif  // MQTT_CLIMATE_HA_MODE
+    // I don't know why, but the modes need to be lower case to work with
+    // Home Assistant & Google Home.
+    mode_str.toLowerCase();
+
     success &= sendString(topic_prefix + KEY_MODE, mode_str, retain);
     diff = true;
   }
@@ -3117,6 +3363,11 @@ bool sendClimate(const String topic_prefix, const bool retain,
   if (prev.celsius != next.celsius || forceMQTT) {
     diff = true;
     success &= sendBool(topic_prefix + KEY_CELSIUS, next.celsius, retain);
+  }
+  if (prev.sensorTemperature != next.sensorTemperature || forceMQTT) {
+    diff = true;
+    success &= sendFloat(topic_prefix + KEY_SENSORTEMP,
+                         next.sensorTemperature, retain);
   }
   if (prev.fanspeed != next.fanspeed || forceMQTT) {
     diff = true;
@@ -3132,6 +3383,10 @@ bool sendClimate(const String topic_prefix, const bool retain,
     diff = true;
     success &= sendString(topic_prefix + KEY_SWINGH,
                           IRac::swinghToString(next.swingh), retain);
+  }
+  if (prev.iFeel != next.iFeel || forceMQTT) {
+    diff = true;
+    success &= sendBool(topic_prefix + KEY_IFEEL, next.iFeel, retain);
   }
   if (prev.quiet != next.quiet || forceMQTT) {
     diff = true;
