@@ -135,7 +135,7 @@ struct PICSTORE {
 #endif // ENABLE_RTSPSERVER
 
 struct {
-  uint8_t  up;
+  uint8_t  up = 0;
   uint16_t width;
   uint16_t height;
   uint8_t  stream_active;
@@ -1455,6 +1455,9 @@ bool Xdrv81(uint32_t function) {
       break;
     case FUNC_PRE_INIT:
       WcInit();
+      break;
+    case FUNC_INIT:
+      if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
       break;
 
   }
