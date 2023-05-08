@@ -67,6 +67,8 @@ Headr Ty Ln Addrs Data  Check   Headr Ty Ln Data  Check
 7E 00 08 01 00 B0 03    AB CD                             Output center part
 7E 00 08 01 00 B1 03    AB CD                             Cut out N bytes from start (Eg: three characters)
 7E 00 08 01 00 B2 02    AB CD                             Cut out N bytes from end (Eg: two characters)
+7E 00 08 01 00 D0 80    AB CD                             Enabling AIM ID
+7E 00 08 01 00 D0 00    AB CD                             Disabling AIM ID
 7E 00 08 01 00 D9 50    81 D3   02 00 00 01 00    33 31   Zone bytes reset to defaults
 7E 00 08 01 00 D9 55    D1 76   02 00 00 01 00    33 31   Restore user-defined factory settings
 7E 00 08 01 00 D9 56    E1 15   02 00 00 01 00    33 31   Save as user-defined factory settings
