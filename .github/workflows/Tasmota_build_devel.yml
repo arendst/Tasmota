@@ -106,6 +106,7 @@ jobs:
           path: ./build_output
 
   base-images:
+    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
