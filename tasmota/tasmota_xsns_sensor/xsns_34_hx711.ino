@@ -430,7 +430,7 @@ void HxEvery100mSecond(void) {
           Hx.weight_diff = Hx.weight;
           Hx.weight_changed = true;
         }
-        else if (Hx.weight_changed && (Hx.weight == Hx.weight_diff)) {
+        else if (Hx.weight_changed && (abs(Hx.weight - Hx.weight_diff) < Hx.weight_delta)) {
           ResponseClear();
           ResponseAppendTime();
           HxShow(true);
