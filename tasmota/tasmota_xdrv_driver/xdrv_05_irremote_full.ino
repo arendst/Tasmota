@@ -248,30 +248,50 @@ String sendACJsonState(const stdAc::state_t &state) {
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
   addModelToJson(json, PSTR(D_JSON_IRHVAC_MODEL), state.protocol, state.model);
   json.add(PSTR(D_JSON_IRHVAC_COMMAND), IRac::commandTypeToString(state.command));
-  json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
-  // Home Assistant wants power to be off if mode is also off.
-  if (state.mode == stdAc::opmode_t::kOff) {
-    json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
-  } else {
-    json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
-  }
-  json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
-  addFloatToJson(json, PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
 
-  json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
-  json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
-  json.add(PSTR(D_JSON_IRHVAC_SWINGH), IRac::swinghToString(state.swingh));
-  json.add(PSTR(D_JSON_IRHVAC_QUIET), IRac::boolToString(state.quiet));
-  json.add(PSTR(D_JSON_IRHVAC_TURBO), IRac::boolToString(state.turbo));
-  json.add(PSTR(D_JSON_IRHVAC_ECONO), IRac::boolToString(state.econo));
-  json.add(PSTR(D_JSON_IRHVAC_LIGHT), IRac::boolToString(state.light));
-  json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
-  json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
-  json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
-  json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
-  // json.add(PSTR(D_JSON_IRHVAC_CLOCK), state.clock); //Not supported as unsure if useful (see comments below)
-  json.add(PSTR(D_JSON_IRHVAC_IFEEL), IRac::boolToString(state.iFeel));
-  addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
+  switch (state.command) {
+    case stdAc::ac_command_t::kSensorTempReport:
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
+      break;
+    case stdAc::ac_command_t::kConfigCommand:
+      // Note: for `kConfigCommand` the semantics of clock/sleep is abused IRremoteESP8266 lib-side for key/value pair
+      //       Ref: lib/lib_basic/IRremoteESP8266/IRremoteESP8266/src/IRac.cpp[L3062-3066]
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_KEY), state.clock);
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), state.sleep);
+      break;
+    case stdAc::ac_command_t::kTimerCommand:
+      json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(state.power));
+      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), irutils::minsToString(state.clock)); }
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      break;
+    case stdAc::ac_command_t::kControlCommand:
+    default:
+      json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
+      // Home Assistant wants power to be off if mode is also off.
+      if (state.mode == stdAc::opmode_t::kOff) {
+        json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
+      } else {
+        json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
+      }
+      json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
+
+      json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
+      json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
+      json.add(PSTR(D_JSON_IRHVAC_SWINGH), IRac::swinghToString(state.swingh));
+      json.add(PSTR(D_JSON_IRHVAC_QUIET), IRac::boolToString(state.quiet));
+      json.add(PSTR(D_JSON_IRHVAC_TURBO), IRac::boolToString(state.turbo));
+      json.add(PSTR(D_JSON_IRHVAC_ECONO), IRac::boolToString(state.econo));
+      json.add(PSTR(D_JSON_IRHVAC_LIGHT), IRac::boolToString(state.light));
+      json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
+      json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
+      json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), state.clock); }
+      json.add(PSTR(D_JSON_IRHVAC_IFEEL), IRac::boolToString(state.iFeel));
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
+      break;
+  }
 
   String payload = json.toString(); // copy string before returning, the original is on the stack
   return payload;
@@ -490,9 +510,15 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.quiet   = strToBool(root[PSTR(D_JSON_IRHVAC_QUIET)], state.quiet);
   state.clean   = strToBool(root[PSTR(D_JSON_IRHVAC_CLEAN)], state.clean);
 
-  // optional timer and clock
-  state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
-  //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
+  if (state.command == stdAc::ac_command_t::kConfigCommand) {
+    // Note: for `kConfigCommand` the semantics of clock/sleep is abused IRremoteESP8266 lib-side for key/value pair
+    state.clock = root.getInt(PSTR(D_JSON_IRHVAC_CONFIG_KEY), state.clock);
+    state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), state.sleep);
+  } else {
+    // optional timer and clock (Note: different json field names w/ time semantics)
+    state.clock = root.getInt(PSTR(D_JSON_IRHVAC_CLOCK), state.clock);
+    state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+  }
 
   state.iFeel = strToBool(root[PSTR(D_JSON_IRHVAC_IFEEL)], state.iFeel);
   state.sensorTemperature = root.getFloat(PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature);

@@ -554,6 +554,8 @@
   #define D_JSON_IRHVAC_SLEEP "Sleep"
   #define D_JSON_IRHVAC_CLOCK "Clock"
   #define D_JSON_IRHVAC_IFEEL "iFeel"
+  #define D_JSON_IRHVAC_CONFIG_KEY "ConfigKey"
+  #define D_JSON_IRHVAC_CONFIG_VALUE "ConfigValue"
   #define D_JSON_IRHVAC_SENSOR_TEMP "SensorTemp"
   #define D_JSON_IRHVAC_STATE_MODE "StateMode"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
