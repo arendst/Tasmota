@@ -365,6 +365,7 @@ stdAc::state_t IREcoclimAc::toCommon(void) const {
   result.mode = toCommonMode(getMode());
   result.celsius = true;
   result.degrees = getTemp();
+  result.sensorTemperature = getSensorTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
   result.sleep = (getMode() == kEcoclimSleep) ? 0 : -1;
   result.clock = getClock();

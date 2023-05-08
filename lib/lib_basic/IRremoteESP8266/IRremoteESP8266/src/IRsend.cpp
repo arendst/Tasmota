@@ -603,7 +603,10 @@ uint16_t IRsend::minRepeats(const decode_type_t protocol) {
 uint16_t IRsend::defaultBits(const decode_type_t protocol) {
   switch (protocol) {
     case MULTIBRACKETS:
+    case GORENJE:
       return 8;
+    case WOWWEE:
+      return 11;
     case RC5:
     case SYMPHONY:
       return 12;
@@ -690,6 +693,8 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
       return kBosch144Bits;
     case CORONA_AC:
       return kCoronaAcBits;
+    case CARRIER_AC84:
+      return kCarrierAc84Bits;
     case CARRIER_AC128:
       return kCarrierAc128Bits;
     case DAIKIN:
@@ -791,6 +796,8 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
       return kWhirlpoolAcBits;
     case XMP:
       return kXmpBits;
+    case YORK:
+      return kYorkBits;
     // No default amount of bits.
     case FUJITSU_AC:
     case MWM:
@@ -914,6 +921,11 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
 #if SEND_GOODWEATHER
     case GOODWEATHER:
       sendGoodweather(data, nbits, min_repeat);
+      break;
+#endif
+#if SEND_GORENJE
+    case GORENJE:
+      sendGorenje(data, nbits, min_repeat);
       break;
 #endif
 #if SEND_GREE
@@ -1114,6 +1126,11 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
       sendWhynter(data, nbits, min_repeat);
       break;
 #endif
+#if SEND_WOWWEE
+    case WOWWEE:
+      sendWowwee(data, nbits, min_repeat);
+      break;
+#endif  // SEND_WOWWEE
 #if SEND_XMP
     case XMP:
       sendXmp(data, nbits, min_repeat);
@@ -1159,6 +1176,11 @@ bool IRsend::send(const decode_type_t type, const uint8_t *state,
       sendBosch144(state, nbytes);
       break;
 #endif  // SEND_BOSCH144
+#if SEND_CARRIER_AC84
+    case CARRIER_AC84:
+      sendCarrierAC84(state, nbytes);
+      break;
+#endif  // SEND_CARRIER_AC84
 #if SEND_CARRIER_AC128
     case CARRIER_AC128:
       sendCarrierAC128(state, nbytes);
@@ -1407,6 +1429,11 @@ bool IRsend::send(const decode_type_t type, const uint8_t *state,
       sendWhirlpoolAC(state, nbytes);
       break;
 #endif  // SEND_WHIRLPOOL_AC
+#if SEND_YORK
+    case YORK:
+      sendYork(state, nbytes);
+      break;
+#endif  // SEND_YORK
     default:
       return false;
   }

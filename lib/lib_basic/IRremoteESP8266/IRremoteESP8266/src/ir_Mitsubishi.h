@@ -36,6 +36,7 @@
 //   Brand: Mitsubishi Electric,  Model: MSZ-ZW4017S A/C (MITSUBISHI_AC)
 //   Brand: Mitsubishi Electric,  Model: MSZ-FHnnVE A/C (MITSUBISHI_AC)
 //   Brand: Mitsubishi Electric,  Model: RH151 remote (MITSUBISHI_AC)
+//   Brand: Mitsubishi Electric,  Model: PAR-FA32MA remote (MITSUBISHI136)
 
 #ifndef IR_MITSUBISHI_H_
 #define IR_MITSUBISHI_H_

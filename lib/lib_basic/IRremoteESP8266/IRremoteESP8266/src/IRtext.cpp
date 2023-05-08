@@ -68,10 +68,13 @@ IRTEXT_CONST_STRING(kOffTimerStr, D_STR_OFFTIMER);  ///< "Off Timer"
 IRTEXT_CONST_STRING(kTimerModeStr, D_STR_TIMERMODE);  ///< "Timer Mode"
 IRTEXT_CONST_STRING(kClockStr, D_STR_CLOCK);  ///< "Clock"
 IRTEXT_CONST_STRING(kCommandStr, D_STR_COMMAND);  ///< "Command"
+IRTEXT_CONST_STRING(kConfigCommandStr, D_STR_CONFIG);  ///< "Config"
+IRTEXT_CONST_STRING(kControlCommandStr, D_STR_CONTROL);  ///< "Control"
 IRTEXT_CONST_STRING(kXFanStr, D_STR_XFAN);  ///< "XFan"
 IRTEXT_CONST_STRING(kHealthStr, D_STR_HEALTH);  ///< "Health"
 IRTEXT_CONST_STRING(kModelStr, D_STR_MODEL);  ///< "Model"
 IRTEXT_CONST_STRING(kTempStr, D_STR_TEMP);  ///< "Temp"
+IRTEXT_CONST_STRING(kIFeelReportStr, D_STR_IFEELREPORT);  ///< "IFeel Report"
 IRTEXT_CONST_STRING(kIFeelStr, D_STR_IFEEL);  ///< "IFeel"
 IRTEXT_CONST_STRING(kHumidStr, D_STR_HUMID);  ///< "Humid"
 IRTEXT_CONST_STRING(kSaveStr, D_STR_SAVE);  ///< "Save"
@@ -123,6 +126,7 @@ IRTEXT_CONST_STRING(kOutsideStr, D_STR_OUTSIDE);  ///< "Outside"
 IRTEXT_CONST_STRING(kLoudStr, D_STR_LOUD);  ///< "Loud"
 IRTEXT_CONST_STRING(kLowerStr, D_STR_LOWER);  ///< "Lower"
 IRTEXT_CONST_STRING(kUpperStr, D_STR_UPPER);  ///< "Upper"
+IRTEXT_CONST_STRING(kUpperMiddleStr, D_STR_UPPER_MIDDLE);  ///< "Upper-Middle"
 IRTEXT_CONST_STRING(kBreezeStr, D_STR_BREEZE);  ///< "Breeze"
 IRTEXT_CONST_STRING(kCirculateStr, D_STR_CIRCULATE);  ///< "Circulate"
 IRTEXT_CONST_STRING(kCeilingStr, D_STR_CEILING);  ///< "Ceiling"
@@ -160,6 +164,7 @@ IRTEXT_CONST_STRING(kMaxStr, D_STR_MAX);  ///< "Max"
 IRTEXT_CONST_STRING(kMaximumStr, D_STR_MAXIMUM);  ///< "Maximum"
 IRTEXT_CONST_STRING(kMinStr, D_STR_MIN);  ///< "Min"
 IRTEXT_CONST_STRING(kMinimumStr, D_STR_MINIMUM);  ///< "Minimum"
+IRTEXT_CONST_STRING(kMedHighStr, D_STR_MED_HIGH);  ///< "Med-high"
 IRTEXT_CONST_STRING(kMedStr, D_STR_MED);  ///< "Med"
 IRTEXT_CONST_STRING(kMediumStr, D_STR_MEDIUM);  ///< "Medium"
 
@@ -205,6 +210,13 @@ IRTEXT_CONST_STRING(kSwingVModeStr, D_STR_SWINGVMODE);  ///< "Swing(V) Mode"
 IRTEXT_CONST_STRING(kSwingVToggleStr, D_STR_SWINGVTOGGLE);  ///<
 ///< "Swing(V) Toggle"
 IRTEXT_CONST_STRING(kTurboToggleStr, D_STR_TURBOTOGGLE);  ///< "Turbo Toggle"
+IRTEXT_CONST_STRING(kSetTimerCommandStr, D_STR_SET_TIMER);  ///< "Set Timer"
+IRTEXT_CONST_STRING(kScheduleStr, D_STR_SCHEDULE);  ///< "Schedule"
+IRTEXT_CONST_STRING(kChStr, D_STR_CH);  ///< "CH#"
+IRTEXT_CONST_STRING(kTimerActiveDaysStr, D_STR_TIMER_ACTIVE_DAYS);
+///< "TimerActiveDays"
+IRTEXT_CONST_STRING(kKeyStr, D_STR_KEY);  ///< "Key"
+IRTEXT_CONST_STRING(kValueStr, D_STR_VALUE);  ///< "Value"
 
 // Separators & Punctuation
 const char kTimeSep = D_CHR_TIME_SEP;  ///< ':'
@@ -281,6 +293,8 @@ IRTEXT_CONST_STRING(k122lzfStr, D_STR_122LZF);  ///< "122LZF"
 IRTEXT_CONST_STRING(kDg11j13aStr, D_STR_DG11J13A);  ///< "DG11J13A"
 IRTEXT_CONST_STRING(kDg11j104Str, D_STR_DG11J104);  ///< "DG11J104"
 IRTEXT_CONST_STRING(kDg11j191Str, D_STR_DG11J191);  ///< "DG11J191"
+IRTEXT_CONST_STRING(kArgoWrem2Str, D_STR_ARGO_WREM2);  ///< "WREM3"
+IRTEXT_CONST_STRING(kArgoWrem3Str, D_STR_ARGO_WREM3);  ///< "WREM3"
 
 #define D_STR_UNSUPPORTED "?"  // Unsupported protocols will be showing as
                                // a question mark, check for length > 1
@@ -533,6 +547,14 @@ IRTEXT_CONST_BLOB_DECL(kAllProtocolNamesStr) {
             D_STR_SANYO_AC152, D_STR_UNSUPPORTED) "\x0"
     COND(DECODE_DAIKIN312 || SEND_DAIKIN312,
             D_STR_DAIKIN312, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_GORENJE || SEND_GORENJE,
+            D_STR_GORENJE, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_WOWWEE || SEND_WOWWEE,
+            D_STR_WOWWEE, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_CARRIER_AC84 || SEND_CARRIER_AC84,
+            D_STR_CARRIER_AC84, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_YORK || SEND_YORK,
+            D_STR_YORK, D_STR_UNSUPPORTED) "\x0"
     ///< New protocol (macro) strings should be added just above this line.
     "\x0"  ///< This string requires double null termination.
 };

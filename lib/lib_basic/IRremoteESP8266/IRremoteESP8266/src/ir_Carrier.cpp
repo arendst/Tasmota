@@ -46,6 +46,15 @@ const uint16_t kCarrierAc64OneSpace = 1736;
 const uint16_t kCarrierAc64ZeroSpace = 615;
 const uint32_t kCarrierAc64Gap = kDefaultMessageGap;  // A guess.
 
+//< @see: https://github.com/crankyoldgit/IRremoteESP8266/issues/1943#issue-1519570772
+const uint16_t kCarrierAc84HdrMark = 5850;
+const uint16_t kCarrierAc84Zero = 1175;
+const uint16_t kCarrierAc84One = 430;
+const uint16_t kCarrierAc84HdrSpace = kCarrierAc84Zero;
+const uint32_t kCarrierAc84Gap = kDefaultMessageGap;  // A guess.
+const uint8_t  kCarrierAc84ExtraBits = 4;
+const uint8_t  kCarrierAc84ExtraTolerance = 5;
+
 const uint16_t kCarrierAc128HdrMark = 4600;
 const uint16_t kCarrierAc128HdrSpace = 2600;
 const uint16_t kCarrierAc128Hdr2Mark = 9300;
@@ -645,3 +654,94 @@ bool IRrecv::decodeCarrierAC128(decode_results *results, uint16_t offset,
   return true;
 }
 #endif  // DECODE_CARRIER_AC128
+
+#if SEND_CARRIER_AC84
+/// Send a Carroer A/C 84 Bit formatted message.
+/// Status: BETA / Untested but probably works.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The byte size of the message being sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+void IRsend::sendCarrierAC84(const uint8_t data[], const uint16_t nbytes,
+                             const uint16_t repeat) {
+  // Protocol uses a constant bit time encoding.
+  for (uint16_t r = 0; r <= repeat; r++) {
+    if (nbytes) {
+      // The least significant `kCarrierAc84ExtraBits` bits of the first byte
+      sendGeneric(kCarrierAc84HdrMark, kCarrierAc84HdrSpace,  // Header
+                  kCarrierAc84Zero, kCarrierAc84One,  // Data
+                  kCarrierAc84One, kCarrierAc84Zero,
+                  0, 0,  // No footer
+                  GETBITS64(data[0], 0, kCarrierAc84ExtraBits),
+                  kCarrierAc84ExtraBits,
+                  38000, false, 0, 33);
+      // The rest of the data.
+      sendGeneric(0, 0,  // No Header
+                  kCarrierAc84Zero, kCarrierAc84One,  // Data
+                  kCarrierAc84One, kCarrierAc84Zero,
+                  kCarrierAc84Zero, kDefaultMessageGap,  // Footer
+                  data + 1, nbytes - 1, 38000, false, 0, 33);
+    }
+  }
+}
+#endif  // SEND_CARRIER_AC84
+
+#if DECODE_CARRIER_AC84
+/// Decode the supplied Carroer A/C 84 Bit formatted message.
+/// Status: STABLE / Confirmed Working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+bool IRrecv::decodeCarrierAC84(decode_results *results, uint16_t offset,
+                                const uint16_t nbits, const bool strict) {
+  // Check if we have enough data to even possibly match.
+  if (results->rawlen < 2 * nbits + kHeader + kFooter - 1 + offset)
+    return false;  // Can't possibly be a valid Carrier message.
+  // Compliance check.
+  if (strict && nbits != kCarrierAc84Bits) return false;
+
+  // This decoder expects to decode an unusual number of bits. Check before we
+  // start.
+  if (nbits % 8 != kCarrierAc84ExtraBits) return false;
+
+  uint64_t data = 0;
+  uint16_t used = 0;
+
+  // Header + Data (kCarrierAc84ExtraBits only)
+  used = matchGenericConstBitTime(results->rawbuf + offset, &data,
+                                  results->rawlen - offset,
+                                  kCarrierAc84ExtraBits,
+                                  // Header (None)
+                                  kCarrierAc84HdrMark, kCarrierAc84HdrSpace,
+                                  // Data
+                                  kCarrierAc84Zero, kCarrierAc84One,
+                                  // No Footer
+                                  0, 0,
+                                  false,
+                                  _tolerance + kCarrierAc84ExtraTolerance,
+                                  kMarkExcess, false);
+  if (!used) return false;
+  // Stuff the captured data so far into the first byte of the state.
+  *results->state = data;
+  offset += used;
+  // Capture the rest of the data as normal as we should be on a byte boundary.
+  // Data + Footer
+  if (!matchGeneric(results->rawbuf + offset, results->state + 1,
+                    results->rawlen - offset, nbits - kCarrierAc84ExtraBits,
+                    0, 0,  // No Header expected.
+                    kCarrierAc84Zero, kCarrierAc84One,  // Data
+                    kCarrierAc84One, kCarrierAc84Zero,
+                    kCarrierAc84Zero, kDefaultMessageGap, true,
+                    _tolerance + kCarrierAc84ExtraTolerance,
+                    kMarkExcess, false)) return false;
+
+  // Success
+  results->decode_type = decode_type_t::CARRIER_AC84;
+  results->bits = nbits;
+  results->repeat = false;
+  return true;
+}
+#endif  // DECODE_CARRIER_AC84

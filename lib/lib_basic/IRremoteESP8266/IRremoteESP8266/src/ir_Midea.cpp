@@ -679,6 +679,7 @@ stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
   result.mode = toCommonMode(_.Mode);
   result.celsius = !_.useFahrenheit;
   result.degrees = getTemp(result.celsius);
+  result.sensorTemperature = getSensorTemp(result.celsius);
   result.fanspeed = toCommonFanSpeed(_.Fan);
   result.sleep = _.Sleep ? 0 : -1;
   result.econo = getEconoToggle();

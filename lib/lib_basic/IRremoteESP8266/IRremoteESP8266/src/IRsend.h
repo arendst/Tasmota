@@ -39,6 +39,9 @@ const uint8_t kDutyMax = 100;     // Percentage
 const uint16_t kMaxAccurateUsecDelay = 16383;
 //  Usecs to wait between messages we don't know the proper gap time.
 const uint32_t kDefaultMessageGap = 100000;
+/// Placeholder for missing sensor temp value
+/// @note Not using "-1" as it may be a valid external temp
+const float kNoTempValue = -100.0;
 
 /// Enumerators and Structures for the Common A/C API.
 namespace stdAc {
@@ -56,14 +59,15 @@ enum class opmode_t {
 
 /// Common A/C settings for Fan Speeds.
 enum class fanspeed_t {
-  kAuto =   0,
-  kMin =    1,
-  kLow =    2,
-  kMedium = 3,
-  kHigh =   4,
-  kMax =    5,
+  kAuto =       0,
+  kMin =        1,
+  kLow =        2,
+  kMedium =     3,
+  kHigh =       4,
+  kMax =        5,
+  kMediumHigh = 6,
   // Add new entries before this one, and update it to point to the last entry
-  kLastFanspeedEnum = kMax,
+  kLastFanspeedEnum = kMediumHigh,
 };
 
 /// Common A/C settings for Vertical Swing.
@@ -75,8 +79,21 @@ enum class swingv_t {
   kMiddle =  3,
   kLow =     4,
   kLowest =  5,
+  kUpperMiddle = 6,
   // Add new entries before this one, and update it to point to the last entry
-  kLastSwingvEnum = kLowest,
+  kLastSwingvEnum = kUpperMiddle,
+};
+
+/// @brief Tyoe of A/C command (if the remote uses different codes for each)
+/// @note Most remotes support only a single command or aggregate multiple
+///       into one (e.g. control+timer). Use @c kControlCommand in such case
+enum class ac_command_t {
+  kControlCommand = 0,
+  kSensorTempReport = 1,
+  kTimerCommand = 2,
+  kConfigCommand = 3,
+  // Add new entries before this one, and update it to point to the last entry
+  kLastAcCommandEnum = kConfigCommand,
 };
 
 /// Common A/C settings for Horizontal Swing.
@@ -113,6 +130,9 @@ struct state_t {
   bool beep = false;
   int16_t sleep = -1;  // `-1` means off.
   int16_t clock = -1;  // `-1` means not set.
+  stdAc::ac_command_t command = stdAc::ac_command_t::kControlCommand;
+  bool iFeel = false;
+  float sensorTemperature = kNoTempValue;  // `kNoTempValue` means not set.
 };
 };  // namespace stdAc
 
@@ -202,6 +222,11 @@ enum lg_ac_remote_model_t {
   LG6711A20083V,      // (5) Same as GE6711AR2853M, but only SwingV toggle.
 };
 
+/// Argo A/C model numbers
+enum argo_ac_remote_model_t {
+  SAC_WREM2 = 1,   // (1) ARGO WREM2 remote (default)
+  SAC_WREM3        // (2) ARGO WREM3 remote (touch buttons), bit-len vary by cmd
+};
 
 // Classes
 
@@ -519,14 +544,22 @@ class IRsend {
                        const uint16_t nbits = kGoodweatherBits,
                        const uint16_t repeat = kGoodweatherMinRepeat);
 #endif  // SEND_GOODWEATHER
+#if SEND_GORENJE
+  void sendGorenje(const uint64_t data, const uint16_t nbits = kGorenjeBits,
+                   const uint16_t repeat = kNoRepeat);
+#endif  // SEND_GORENJE
 #if SEND_PRONTO
   void sendPronto(uint16_t data[], uint16_t len, uint16_t repeat = kNoRepeat);
 #endif
 #if SEND_ARGO
   void sendArgo(const unsigned char data[],
                 const uint16_t nbytes = kArgoStateLength,
+                const uint16_t repeat = kArgoDefaultRepeat,
+                bool sendFooter = false);
+  void sendArgoWREM3(const unsigned char data[],
+                const uint16_t nbytes = kArgoStateLength,
                 const uint16_t repeat = kArgoDefaultRepeat);
-#endif
+#endif  // SEND_ARGO
 #if SEND_TROTEC
   void sendTrotec(const unsigned char data[],
                   const uint16_t nbytes = kTrotecStateLength,
@@ -575,6 +608,11 @@ class IRsend {
   void sendCarrierAC64(uint64_t data, uint16_t nbits = kCarrierAc64Bits,
                        uint16_t repeat = kCarrierAc64MinRepeat);
 #endif
+#if SEND_CARRIER_AC84
+  void sendCarrierAC84(const uint8_t data[],
+                       const uint16_t nbytes = kCarrierAc84StateLength,
+                       const uint16_t repeat = kNoRepeat);
+#endif  // SEND_CARRIER_AC84
 #if SEND_CARRIER_AC128
   void sendCarrierAC128(const uint8_t data[],
                         uint16_t nbytes = kCarrierAc128StateLength,
@@ -837,6 +875,15 @@ class IRsend {
                     const uint16_t nbytes = kBosch144StateLength,
                     const uint16_t repeat = kNoRepeat);
 #endif  // SEND_BOSCH144
+#if SEND_WOWWEE
+  void sendWowwee(const uint64_t data, const uint16_t nbits = kWowweeBits,
+                  const uint16_t repeat = kWowweeDefaultRepeat);
+#endif  // SEND_WOWWEE
+#if SEND_YORK
+  void sendYork(const unsigned char data[],
+                    const uint16_t nbytes = kYorkStateLength,
+                    const uint16_t repeat = kNoRepeat);
+#endif  // SEND_YORK
 
  protected:
 #ifdef UNIT_TEST
