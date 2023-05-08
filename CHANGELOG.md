@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Partition_Manager.tapp fixed
+- Berry fixed a rare condition when a GC causes a memory corruption
 
 ### Removed
 
