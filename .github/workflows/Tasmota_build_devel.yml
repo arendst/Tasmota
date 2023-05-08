@@ -34,6 +34,10 @@ jobs:
         run: |
           cd lib/libesp32/berry_matter
           ../berry/berry -s -g solidify_all.be
+      - name: LVGL Berry Code
+        run: |
+          cd lib/libesp32_lvgl/lv_binding_berry
+          ../../libesp32/berry/berry -s -g solidify_all.be
       - uses: actions/upload-artifact@v3
         with:
           name: berry_matter
@@ -42,6 +46,10 @@ jobs:
         with:
           name: berry_tasmota
           path: ./lib/libesp32/berry_tasmota/src/solidify
+      - uses: actions/upload-artifact@v3
+        with:
+          name: lvgl_tasmota
+          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
 
   push_solidified:
     needs: be_solidify
@@ -57,6 +65,7 @@ jobs:
         run: |
           rm ./lib/libesp32/berry_matter/src/solidify/*
           rm ./lib/libesp32/berry_tasmota/src/solidify/*
+          rm ./lib/libesp32_lvgl/lv_binding_berry/src/solidify/*
       - uses: actions/download-artifact@v3
         with:
           name: berry_matter
@@ -65,6 +74,10 @@ jobs:
         with:
           name: berry_tasmota
           path: ./lib/libesp32/berry_tasmota/src/solidify
+      - uses: actions/download-artifact@v3
+        with:
+          name: lvgl_tasmota
+          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Solidified Code updated
