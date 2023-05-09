@@ -40,10 +40,10 @@ int be_re_compile(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
   if (argc >= 1 && be_isstring(vm, 1)) {
     const char * regex_str = be_tostring(vm, 1);
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -107,10 +107,10 @@ int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
     if (offset >= hay_len) { be_return_nil(vm); }      // any match of empty string returns nil, this catches implicitly when hay_len == 0
     hay += offset;                  // shift to offset
 
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -132,10 +132,10 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
     if (argc >= 3) {
       limit = be_toint(vm, 3);
     }
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -322,10 +322,10 @@ int be_re_split(bvm *vm) {
     if (argc >= 3) {
       split_limit = be_toint(vm, 3);
     }
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
