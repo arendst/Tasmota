@@ -1032,7 +1032,7 @@ class Matter_Device
     var relays_reserved = []                        # list of relays that are used for non-relay (shutters)
     tasmota.log("MTR: Status 13 = "+str(r_st13), 3)
 
-    if r_st13.contains('StatusSHT')
+    if r_st13 != nil && r_st13.contains('StatusSHT')
       r_st13 = r_st13['StatusSHT']        # skip root
       # Shutter is enabled, iterate
       var idx = 0
