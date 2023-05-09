@@ -1,8 +1,6 @@
-#! ../berry/berry -s -g
+#!/usr/bin/env -S ../berry/berry -s -g
 #
 # Berry solidify files
-#
-# `../berry/berry -s -g`
 
 import os
 import global
