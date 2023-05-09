@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   be_solidify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.repository == 'arendst/Tasmota'
     steps:
       - uses: actions/checkout@v3
