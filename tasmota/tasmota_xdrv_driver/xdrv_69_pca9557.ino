@@ -63,7 +63,7 @@
 #define PCA9557_ADDR_START       0x18     // 24
 #define PCA9557_ADDR_END         0x20     // 32 (not included)
 
-#define PCA9557_MAX_DEVICES      4
+#define PCA9557_MAX_DEVICES      8        
 
 
 /*********************************************************************************************\
