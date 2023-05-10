@@ -37,9 +37,6 @@ jobs:
         run: |
           cd lib/libesp32_lvgl/lv_binding_berry
           ../../libesp32/berry/berry -s -g solidify_all.be
-      - name: LVGL Berry Code
-        run: |
-          ls -R
       - uses: jason2866/upload-artifact@v2.0.2
         with:
           name: '["berry_matter", "berry_tasmota", "lvgl_tasmota"]'
