@@ -574,7 +574,7 @@ void ModbusBridgeInit(void)
       ModbusBridgeAllocError(PSTR("TCP"));
       return;
     }
-#if defined(USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT)
+#ifdef USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT
     else 
     {
       AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT);
