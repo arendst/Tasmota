@@ -306,7 +306,7 @@
 #define SHOW_SPLASH
 #define USE_XPT2046
 #define USE_FT5206
-//#define USE_GT911                                // TODO Fix GT911 Touch driver with LVGL HASPMOTA
+#define USE_GT911
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
