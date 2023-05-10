@@ -574,12 +574,12 @@ void ModbusBridgeInit(void)
       ModbusBridgeAllocError(PSTR("TCP"));
       return;
     }
-#ifdef USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT
+#ifdef MODBUS_BRIDGE_TCP_DEFAULT_PORT
     else 
     {
-      AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT);
+      AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), MODBUS_BRIDGE_TCP_DEFAULT_PORT);
 
-      modbusBridgeTCP.server_tcp = new WiFiServer(USE_MODBUS_BRIDGE_TCP_DEFAULT_PORT);
+      modbusBridgeTCP.server_tcp = new WiFiServer(MODBUS_BRIDGE_TCP_DEFAULT_PORT);
       modbusBridgeTCP.server_tcp->begin(); // start TCP server
       modbusBridgeTCP.server_tcp->setNoDelay(true);
     }
