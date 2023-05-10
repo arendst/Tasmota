@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   be_solidify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.repository == 'arendst/Tasmota'
     steps:
       - uses: actions/checkout@v3
@@ -37,18 +37,13 @@ jobs:
         run: |
           cd lib/libesp32_lvgl/lv_binding_berry
           ../../libesp32/berry/berry -s -g solidify_all.be
-      - uses: actions/upload-artifact@v3
+      - name: LVGL Berry Code
+        run: |
+          ls -R
+      - uses: jason2866/upload-artifact@v2.0.2
         with:
-          name: berry_matter
-          path: ./lib/libesp32/berry_matter/src/solidify
-      - uses: actions/upload-artifact@v3
-        with:
-          name: berry_tasmota
-          path: ./lib/libesp32/berry_tasmota/src/solidify
-      - uses: actions/upload-artifact@v3
-        with:
-          name: lvgl_tasmota
-          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+          name: '["berry_matter", "berry_tasmota", "lvgl_tasmota"]'
+          path: '["./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify"]'
 
   push_solidified:
     needs: be_solidify
@@ -60,23 +55,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      - name: Remove old solidified code
-        run: |
-          rm ./lib/libesp32/berry_matter/src/solidify/*
-          rm ./lib/libesp32/berry_tasmota/src/solidify/*
-          rm ./lib/libesp32_lvgl/lv_binding_berry/src/solidify/*
-      - uses: actions/download-artifact@v3
+      - uses: jason2866/download-artifact@v3
         with:
-          name: berry_matter
-          path: ./lib/libesp32/berry_matter/src/solidify
-      - uses: actions/download-artifact@v3
-        with:
-          name: berry_tasmota
-          path: ./lib/libesp32/berry_tasmota/src/solidify
-      - uses: actions/download-artifact@v3
-        with:
-          name: lvgl_tasmota
-          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+          name: |
+            berry_matter
+            berry_tasmota
+            lvgl_tasmota 
+          path: |
+           ./lib/libesp32/berry_matter/src/solidify
+           ./lib/libesp32/berry_tasmota/src/solidify
+           ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Solidified Code updated
