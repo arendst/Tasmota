@@ -214,9 +214,9 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_zigbee_zcl_frame_struct = {
     sizeof(ZCLFrame),  /* size in bytes */
-    12,  /* number of elements */
+    13,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[12]) {
+    (const be_ctypes_structure_item_t[13]) {
       { "cluster", offsetof(ZCLFrame, cluster), 0, 0, ctypes_u16, 0 },
       { "cluster_specific", offsetof(ZCLFrame, clusterSpecific), 0, 0, ctypes_u8, 0 },
       { "cmd", offsetof(ZCLFrame, cmd), 0, 0, ctypes_u8, 0 },
@@ -227,6 +227,7 @@ extern "C" {
       { "need_response", offsetof(ZCLFrame, needResponse), 0, 0, ctypes_u8, 0 },
       { "payload_ptr", offsetof(ZCLFrame, payload), 0, 0, ctypes_ptr32, 0 },
       { "shortaddr", offsetof(ZCLFrame, shortaddr), 0, 0, ctypes_u16, 0 },
+      { "srcendpoint", offsetof(ZCLFrame, srcendpoint), 0, 0, ctypes_u8, 0 },
       { "transactseq", offsetof(ZCLFrame, transactseq), 0, 0, ctypes_u8, 0 },
       { "transactseq_set", offsetof(ZCLFrame, transacSet), 0, 0, ctypes_u8, 0 },
   }};

@@ -60,16 +60,19 @@ namespace irutils {
   String addLabeledString(const String value, const String label,
                           const bool precomma = true);
   String addTempToString(const uint16_t degrees, const bool celsius = true,
-                         const bool precomma = true);
+                         const bool precomma = true,
+                         const bool isSensorTemp = false);
   String addTempFloatToString(const float degrees, const bool celsius = true,
-                              const bool precomma = true);
+                              const bool precomma = true,
+                              const bool isSensorTemp = false);
   String addModeToString(const uint8_t mode, const uint8_t automatic,
                          const uint8_t cool, const uint8_t heat,
                          const uint8_t dry, const uint8_t fan);
   String addFanToString(const uint8_t speed, const uint8_t high,
                         const uint8_t low, const uint8_t automatic,
                         const uint8_t quiet, const uint8_t medium,
-                        const uint8_t maximum = 0xFF);
+                        const uint8_t maximum = 0xFF,
+                        const uint8_t medium_high = 0xFF);
   String addSwingHToString(const uint8_t position, const uint8_t automatic,
                            const uint8_t maxleft, const uint8_t left,
                            const uint8_t middle,
@@ -87,6 +90,19 @@ namespace irutils {
                            const uint8_t breeze, const uint8_t circulate);
   String addDayToString(const uint8_t day_of_week, const int8_t offset = 0,
                         const bool precomma = true);
+  String addTimerModeToString(const uint8_t timerType, const uint8_t noTimer,
+                              const uint8_t delayTimer,
+                              const uint8_t schedule1 = 0xFF,
+                              const uint8_t schedule2 = 0xFF,
+                              const uint8_t schedule3 = 0xFF,
+                              const bool precomma = true);
+  String irCommandTypeToString(uint8_t commandType, uint8_t acControlCmd,
+                               uint8_t iFeelReportCmd = 0xFF,
+                               uint8_t timerCmd = 0xFF,
+                               uint8_t configCmd = 0xFF);
+  String dayToString(const uint8_t day_of_week, const int8_t offset = 0);
+  String daysBitmaskToString(uint8_t daysBitmap, uint8_t offset = 0);
+  String channelToString(const uint8_t channel);
   String htmlEscape(const String unescaped);
   String msToString(uint32_t const msecs);
   String minsToString(const uint16_t mins);

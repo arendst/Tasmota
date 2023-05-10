@@ -129,6 +129,7 @@ BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
 #include "solidify/solidified_Matter_inspect.h"
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
+#include "solidify/solidified_Matter_Path.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
@@ -158,7 +159,15 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Light1.h"
 #include "solidify/solidified_Matter_Plugin_Light2.h"
 #include "solidify/solidified_Matter_Plugin_Light3.h"
-#include "solidify/solidified_Matter_Plugin_Temp_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_Shutter.h"
+#include "solidify/solidified_Matter_Plugin_ShutterTilt.h"
+#include "solidify/solidified_Matter_Plugin_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -299,6 +308,7 @@ module matter (scope: global, strings: weak) {
   IM_ReportData, class(be_class_Matter_IM_ReportData)
   IM_ReportDataSubscribed, class(be_class_Matter_IM_ReportDataSubscribed)
   IM_SubscribeResponse, class(be_class_Matter_IM_SubscribeResponse)
+  IM_SubscribedHeartbeat, class(be_class_Matter_IM_SubscribedHeartbeat)
   IM_Subscription, class(be_class_Matter_IM_Subscription)
   IM_Subscription_Shop, class(be_class_Matter_IM_Subscription_Shop)
   IM, class(be_class_Matter_IM)
@@ -331,7 +341,15 @@ module matter (scope: global, strings: weak) {
   Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
   Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
   Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
-  Plugin_Temp_Sensor, class(be_class_Matter_Plugin_Temp_Sensor)   // Temperature Sensor
+  Plugin_Shutter, class(be_class_Matter_Plugin_Shutter)   // Shutter
+  Plugin_ShutterTilt, class(be_class_Matter_Plugin_ShutterTilt)   // Shutter + Tilt
+  Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
+  Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
+  Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
+  Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
+  Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
+  Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
+  Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
 }
 
 @const_object_info_end */

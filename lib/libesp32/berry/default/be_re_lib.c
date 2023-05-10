@@ -40,10 +40,10 @@ int be_re_compile(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
   if (argc >= 1 && be_isstring(vm, 1)) {
     const char * regex_str = be_tostring(vm, 1);
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -62,7 +62,7 @@ int be_re_compile(bvm *vm) {
 
 // pushes either a list if matched, else `nil`
 // return index of next offset, or -1 if not found
-const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbool is_anchored) {
+const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbool is_anchored, bbool size_only) {
   Subject subj = {hay, hay + strlen(hay)};
 
   int sub_els = (code->sub + 1) * 2;
@@ -80,7 +80,11 @@ const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbo
     if (sub[i] == nil || sub[i+1] == nil) {
       be_pushnil(vm);
     } else {
-    be_pushnstring(vm, sub[i], sub[i+1] - sub[i]);
+      if (size_only && i==0) {
+        be_pushint(vm, sub[i+1] - sub[i]);
+      } else {
+        be_pushnstring(vm, sub[i], sub[i+1] - sub[i]);
+      }
     }
     be_data_push(vm, -2);
     be_pop(vm, 1);
@@ -89,22 +93,31 @@ const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbo
   return sub[1];
 }
 
-int be_re_match_search(bvm *vm, bbool is_anchored) {
+int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
   int32_t argc = be_top(vm); // Get the number of arguments
   if (argc >= 2 && be_isstring(vm, 1) && be_isstring(vm, 2)) {
     const char * regex_str = be_tostring(vm, 1);
     const char * hay = be_tostring(vm, 2);
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int32_t offset = 0;
+    if (argc >= 3 && be_isint(vm, 3)) {
+      offset = be_toint(vm, 3);
+    }
+    int32_t hay_len = strlen(hay);
+    if (offset < 0) { offset = 0; }
+    if (offset >= hay_len) { be_return_nil(vm); }      // any match of empty string returns nil, this catches implicitly when hay_len == 0
+    hay += offset;                  // shift to offset
+
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
       be_raise(vm, "internal_error", "error in regex");
     }
-    be_re_match_search_run(vm, code, hay, is_anchored);
+    be_re_match_search_run(vm, code, hay, is_anchored, size_only);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -119,10 +132,10 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
     if (argc >= 3) {
       limit = be_toint(vm, 3);
     }
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -132,7 +145,7 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
 
     be_newobject(vm, "list");
     for (int i = limit; i != 0 && hay != NULL; i--) {
-      hay = be_re_match_search_run(vm, code, hay, is_anchored);
+      hay = be_re_match_search_run(vm, code, hay, is_anchored, bfalse);
       if (hay != NULL) {
         be_data_push(vm, -2);   // add sub list to list
       }
@@ -144,13 +157,17 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
   be_raise(vm, "type_error", NULL);
 }
 
-// Berry: `re.match(value:int | s:string) -> nil`
+// Berry: `re.match(s:string [, offset:int]) -> nil`
 int be_re_match(bvm *vm) {
-  return be_re_match_search(vm, btrue);
+  return be_re_match_search(vm, btrue, bfalse);
 }
-// Berry: `re.search(value:int | s:string) -> nil`
+// Berry: `re.match2(s:string [, offset:int]) -> nil`
+int be_re_match2(bvm *vm) {
+  return be_re_match_search(vm, btrue, btrue);
+}
+// Berry: `re.search(s:string [, offset:int]) -> nil`
 int be_re_search(bvm *vm) {
-  return be_re_match_search(vm, bfalse);
+  return be_re_match_search(vm, bfalse, bfalse);
 }
 
 // Berry: `re.search_all`
@@ -162,32 +179,93 @@ int be_re_search_all(bvm *vm) {
   return be_re_match_search_all(vm, bfalse);
 }
 
-// Berry: `re_pattern.search(s:string) -> list(string)`
+// Berry: `re_pattern.search(s:string [, offset:int]) -> list(string)`
 int re_pattern_search(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
   if (argc >= 2 && be_isstring(vm, 2)) {
     const char * hay = be_tostring(vm, 2);
+    int32_t offset = 0;
+    if (argc >= 3 && be_isint(vm, 3)) {
+      offset = be_toint(vm, 3);
+    }
+    int32_t hay_len = strlen(hay);
+    if (offset < 0) { offset = 0; }
+    if (offset >= hay_len) { be_return_nil(vm); }      // any match of empty string returns nil, this catches implicitly when hay_len == 0
+    hay += offset;                  // shift to offset
     be_getmember(vm, 1, "_p");
     ByteProg * code = (ByteProg*) be_tocomptr(vm, -1);
-    be_re_match_search_run(vm, code, hay, bfalse);
+    be_re_match_search_run(vm, code, hay, bfalse, bfalse);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
 }
 
-// Berry: `re_pattern.match(s:string) -> list(string)`
-int re_pattern_match(bvm *vm) {
+// Berry: `re_pattern.searchall(s:string) -> list(list(string))`
+int re_pattern_match_search_all(bvm *vm, bbool is_anchored) {
   int32_t argc = be_top(vm); // Get the number of arguments
   if (argc >= 2 && be_isstring(vm, 2)) {
     const char * hay = be_tostring(vm, 2);
     be_getmember(vm, 1, "_p");
     ByteProg * code = (ByteProg*) be_tocomptr(vm, -1);
-    be_re_match_search_run(vm, code, hay, btrue);
+    int limit = -1;
+    if (argc >= 3) {
+      limit = be_toint(vm, 3);
+    }
+
+    be_newobject(vm, "list");
+    for (int i = limit; i != 0 && hay != NULL; i--) {
+      hay = be_re_match_search_run(vm, code, hay, is_anchored, bfalse);
+      if (hay != NULL) {
+        be_data_push(vm, -2);   // add sub list to list
+      }
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
 }
 
+// Berry: `re_pattern.searchall(s:string) -> list(list(string))`
+int re_pattern_search_all(bvm *vm) {
+  return re_pattern_match_search_all(vm, bfalse);
+}
+
+// Berry: `re_pattern.matchall(s:string) -> list(list(string))`
+int re_pattern_match_all(bvm *vm) {
+  return re_pattern_match_search_all(vm, btrue);
+}
+
+// Berry: `re_pattern.match(s:string [, offset:int]) -> list(string)`
+int re_pattern_match_size(bvm *vm, bbool size_only) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 2 && be_isstring(vm, 2)) {
+    const char * hay = be_tostring(vm, 2);
+    int32_t offset = 0;
+    if (argc >= 3 && be_isint(vm, 3)) {
+      offset = be_toint(vm, 3);
+    }
+    int32_t hay_len = strlen(hay);
+    if (offset < 0) { offset = 0; }
+    if (offset >= hay_len) { be_return_nil(vm); }      // any match of empty string returns nil, this catches implicitly when hay_len == 0
+    hay += offset;                  // shift to offset
+    be_getmember(vm, 1, "_p");
+    ByteProg * code = (ByteProg*) be_tocomptr(vm, -1);
+    be_re_match_search_run(vm, code, hay, btrue, size_only);
+    be_return(vm);
+  }
+  be_raise(vm, "type_error", NULL);
+}
+
+// Berry: `re_pattern.match(s:string [, offset:int]) -> list(string)`
+int re_pattern_match(bvm *vm) {
+  return re_pattern_match_size(vm, bfalse);
+}
+
+// Berry: `re_pattern.match(s:string [, offset:int]) -> list(string)`
+int re_pattern_match2(bvm *vm) {
+  return re_pattern_match_size(vm, btrue);
+}
 
 int re_pattern_split_run(bvm *vm, ByteProg *code, const char *hay, int split_limit) {
   Subject subj = {hay, hay + strlen(hay)};
@@ -244,10 +322,10 @@ int be_re_split(bvm *vm) {
     if (argc >= 3) {
       split_limit = be_toint(vm, 3);
     }
-	  int sz = re1_5_sizecode(regex_str);
-  	if (sz < 0) {
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
       be_raise(vm, "internal_error", "error in regex");
-	  }
+    }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
     int ret = re1_5_compilecode(code, regex_str);
@@ -268,6 +346,7 @@ module re (scope: global) {
   search, func(be_re_search)
   searchall, func(be_re_search_all)
   match, func(be_re_match)
+  match2, func(be_re_match2)
   matchall, func(be_re_match_all)
   split, func(be_re_split)
 }
@@ -277,7 +356,10 @@ module re (scope: global) {
 class be_class_re_pattern (scope: global, name: re_pattern) {
   _p, var
   search, func(re_pattern_search)
+  searchall, func(re_pattern_search_all)
   match, func(re_pattern_match)
+  match2, func(re_pattern_match2)
+  matchall, func(re_pattern_match_all)
   split, func(re_pattern_split)
 }
 @const_object_info_end */

@@ -548,6 +548,8 @@ stdAc::state_t IRCoolixAC::toCommon(const stdAc::state_t *prev) const {
   // Back to "normal" stateful messages.
   result.mode = toCommonMode(getMode());
   result.degrees = getTemp();
+  result.sensorTemperature = getSensorTemp();
+  result.iFeel = getZoneFollow();
   result.fanspeed = toCommonFanSpeed(getFan());
   return result;
 }

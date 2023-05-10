@@ -223,6 +223,10 @@ void sayTime(int hour, int minutes);
 void Cmd_MicRec(void);
 void Cmd_wav2mp3(void);
 void Cmd_Time(void);
+#ifdef USE_I2S_RTTTL
+void Rtttl(char *buffer);
+void Cmd_I2SRtttl(void);
+#endif
 
 void copy_micpars(uint32_t port) {
   audio_i2s.mic_mclk = audio_i2s.mclk;
@@ -606,6 +610,9 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #ifdef USE_I2S_SAY_TIME
   "|Time"
 #endif // USE_I2S_SAY_TIME
+#ifdef USE_I2S_RTTTL
+  "|Rtttl"
+#endif
 #ifdef ESP32
   "|Play"
 #ifdef USE_I2S_WEBRADIO
@@ -629,6 +636,9 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #ifdef USE_I2S_SAY_TIME
   ,&Cmd_Time
 #endif // USE_I2S_SAY_TIME
+#ifdef USE_I2S_RTTTL
+  ,&Cmd_I2SRtttl
+#endif
 #ifdef ESP32
   ,&Cmd_Play
 #ifdef USE_I2S_WEBRADIO
@@ -670,6 +680,15 @@ void Cmd_Say(void) {
   }
   ResponseCmndChar(XdrvMailbox.data);
 }
+
+#ifdef USE_I2S_RTTTL
+void Cmd_I2SRtttl(void) {
+  if (XdrvMailbox.data_len > 0) {
+    Rtttl(XdrvMailbox.data);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+#endif
 
 /*********************************************************************************************\
  * Interface

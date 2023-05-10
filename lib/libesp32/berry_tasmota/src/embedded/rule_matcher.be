@@ -17,8 +17,8 @@ tasmota.Rule_Matcher.parse("AA#BB#CC")
 tasmota.Rule_Matcher.parse("AA")
 # [<Matcher key='AA'>]
 
-tasmota.Rule_Matcher.parse("AA#BB#CC=2")
-# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '=' val='2'>]
+tasmota.Rule_Matcher.parse("AA#BB#CC==2")
+# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '==' val='2'>]
 
 tasmota.Rule_Matcher.parse("AA#BB#CC>=3.5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '>=' val='3.5'>]
@@ -26,8 +26,8 @@ tasmota.Rule_Matcher.parse("AA#BB#CC>=3.5")
 tasmota.Rule_Matcher.parse("AA#BB#CC!3.5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC!3.5'>]
 
-tasmota.Rule_Matcher.parse("AA#BB#CC==3=5")
-# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '==' val='3=5'>]
+tasmota.Rule_Matcher.parse("AA#BB#CC=3=5")
+# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '=' val='3=5'>]
 
 tasmota.Rule_Matcher.parse("AA#BB#!CC!==3=5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='!CC'>, <Matcher op '!==' val='3=5'>]
@@ -39,16 +39,16 @@ tasmota.Rule_Matcher.parse("A#?#B")
 # [<Matcher key='A'>, <Matcher any>, <Matcher key='B'>]
 
 tasmota.Rule_Matcher.parse("A#?>50")
-# [<Matcher key='A'>, <Matcher any>, <Matcher op '>' val='50'>]
+# [<Matcher key='A'>, <Matcher any>, <Matcher op '>' val=50>]
 
 tasmota.Rule_Matcher.parse("A[1]")
-# [<instance: Rule_Matcher_Key()>, <Matcher [0]>]
+# [<Matcher key='A'>, <Matcher [1]>]
 
 tasmota.Rule_Matcher.parse("A[1]#B[2]>3")
-# [<instance: Rule_Matcher_Key()>, <Matcher [0]>, <instance: Rule_Matcher_Key()>, <Matcher [0]>, <Matcher op '>' val='3'>]
+# [<Matcher key='A'>, <Matcher [1]>, <Matcher key='B'>, <Matcher [2]>, <Matcher op '>' val=3>]
 
 tasmota.Rule_Matcher.parse("A#B[]>3")
-# [<instance: Rule_Matcher_Key()>, <instance: Rule_Matcher_Key()>, <Matcher [0]>, <Matcher op '>' val='3'>]
+# [<Matcher key='A'>, <Matcher key='B'>, <Matcher [0]>, <Matcher op '>' val=3>]
 
 #################################################################################
 
@@ -67,7 +67,13 @@ assert(m.match({'aa':{'bb':1}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':1}}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
-m = tasmota.Rule_Matcher.parse("AA#?#CC==2")
+m = tasmota.Rule_Matcher.parse("AA#BB#CC=Foo")
+assert(m.match({'aa':{'bb':{'cc':1}}}) == nil)
+assert(m.match({'aa':{'bb':{'cc':'Foo'}}}) == 'Foo')
+assert(m.match({'aa':{'bb':{'cc':'foo'}}}) == 'foo')
+assert(m.match({'aa':{'bb':{'cc':'foobar'}}}) == nil)
+
+m = tasmota.Rule_Matcher.parse("AA#?#CC=2")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
@@ -251,7 +257,7 @@ class Rule_Matcher
         self.op_value = val_num
       end
     else
-      self.op_value = str(op)
+      self.op_value = str(op_value)
     end
 
   end

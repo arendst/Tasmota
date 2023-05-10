@@ -24,6 +24,7 @@ class Powerwall {
     String GetRequest(String url, String authCookie);
     String GetRequest(String url);
     String AuthCookie();
+    void resetAuthCookie();
 };
 
 
@@ -36,6 +37,9 @@ Powerwall::Powerwall() {
 
 String Powerwall::AuthCookie() {
     return authCookie;
+}
+void Powerwall::resetAuthCookie() {
+    authCookie = "";
 }
 
 /**
@@ -165,6 +169,7 @@ String Powerwall::GetRequest(String url, String authCookie) {
                 // in case of error 401, get new cookie
                 if (result == 401) {
                     authCookie = "";
+                    resetAuthCookie();
                 }
             }
         }

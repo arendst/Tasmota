@@ -210,7 +210,7 @@ void CmndFileUpload(void) {
   const char* base64_data = nullptr;
   uint32_t rcv_id = 0;
 
-  bool binary_data = (XdrvMailbox.index > 199);              // Check for raw data
+  bool binary_data = (XdrvMailbox.index > 299);              // Check for raw data
 
   if (!binary_data) {
     if (strlen(XdrvMailbox.data) > 8) {                      // Workaround exception if empty JSON like {} - Needs checks

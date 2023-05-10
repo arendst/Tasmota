@@ -32,12 +32,14 @@ class Matter_Expirable end
 #################################################################################
 #################################################################################
 class Matter_Session_Store
+  var device                      # device root object
   var sessions
   var fabrics                     # list of provisioned fabrics
   static var _FABRICS  = "_matter_fabrics.json"
 
   #############################################################
-  def init()
+  def init(device)
+    self.device = device
     self.sessions = matter.Expirable_list()
     self.fabrics = matter.Expirable_list()
   end
@@ -279,9 +281,9 @@ class Matter_Session_Store
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
-      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)))
+      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 3)
       if session.resumption_id == resumption_id && session.shared_secret != nil
-        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)))
+        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)), 3)
         session.update()
         return session
       end
@@ -327,6 +329,7 @@ class Matter_Session_Store
       f.write(fabs)
       f.close()
       tasmota.log(string.format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
+      self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
     end

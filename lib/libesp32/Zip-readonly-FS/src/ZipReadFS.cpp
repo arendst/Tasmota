@@ -37,7 +37,7 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 time_t dos2unixtime(uint32_t dostime)
      /* Return the Unix time_t value (GMT/UTC time) for the DOS format (local)
       * time dostime, where dostime is a four byte value (date in most
-      * significant word, time in least significant word), see dostime() 
+      * significant word, time in least significant word), see dostime()
       * function.
       */
 {
@@ -174,8 +174,6 @@ public:
   bool setBufferSize(size_t size) {
     return true;
   }
-
-  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
   bool seekDir(long position){
     if(!_f){
         return false;
@@ -189,7 +187,14 @@ public:
     }
     return _f.getNextFileName();
   }
-  #endif
+  String getNextFileName(bool *isDir)
+  {
+    if (!_f) {
+        return "";
+    }
+    return _f.getNextFileName(isDir);
+
+  }
 
 protected:
   File _f;
@@ -300,15 +305,12 @@ public:
   FileImplPtr openNextFile(const char* mode) {
     return nullptr;     // TODO
   }
-
-  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
   bool seekDir(long position){
     if(!_f){
         return false;
     }
     return _f.seekDir(position);
   }
-
   String getNextFileName(void)
   {
     if (!_f) {
@@ -316,8 +318,14 @@ public:
     }
     return _f.getNextFileName();
   }
-  #endif
+    String getNextFileName(bool *isDir)
+  {
+    if (!_f) {
+        return "";
+    }
+    return _f.getNextFileName(isDir);
 
+  }
   void rewindDirectory(void) {
     // ignore
   }

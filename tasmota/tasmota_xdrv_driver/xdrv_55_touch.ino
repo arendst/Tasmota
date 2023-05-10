@@ -228,6 +228,8 @@ bool GT911_Touch_Init(TwoWire *i2c, int8_t irq_pin, int8_t rst_pin, uint16_t xs,
   if (ESP_OK == GT911_touchp->begin(i2c, irq_pin, rst_pin, xs, ys)) {
     AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911"));
     GT911_found = true;
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911 failed"));
   }
   return GT911_found;
 }
@@ -247,8 +249,31 @@ void GT911_CheckTouch(void) {
 #include <XPT2046_Touchscreen.h>
 XPT2046_Touchscreen *XPT2046_touchp;
 
-bool XPT2046_Touch_Init(uint16_t CS) {
-  XPT2046_touchp = new XPT2046_Touchscreen(CS);
+bool XPT2046_Touch_Init(uint16_t CS, int8_t irqpin, uint8_t bus) {
+  int8_t sclk = -1;
+  int8_t mosi = -1;
+  int8_t miso = -1;
+  uint8_t xbus = bus;
+  bus &= 1;
+ #ifdef ESP32
+ if (PinUsed(GPIO_SPI_CLK, bus) && PinUsed(GPIO_SPI_MISO, bus) && PinUsed(GPIO_SPI_MOSI, bus)) {
+    // must init SPI with pins
+    sclk = Pin(GPIO_SPI_CLK, bus);
+    miso = Pin(GPIO_SPI_MISO, bus);
+    mosi = Pin(GPIO_SPI_MOSI, bus);
+ }
+ #endif // ESP32
+
+ #ifdef ESP8266
+ if (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_MOSI)) {
+    // must init SPI with pins
+    sclk = Pin(GPIO_SPI_CLK);
+    miso = Pin(GPIO_SPI_MISO);
+    mosi = Pin(GPIO_SPI_MOSI);
+ }
+ #endif // ESP8266
+
+  XPT2046_touchp = new XPT2046_Touchscreen(CS, irqpin, xbus, sclk, miso, mosi);
   XPT2046_found = XPT2046_touchp->begin();
   if (XPT2046_found) {
 	   AddLog(LOG_LEVEL_INFO, PSTR("TS: XPT2046"));

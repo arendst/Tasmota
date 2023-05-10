@@ -21,18 +21,21 @@
 
 class Matter_Device
   static var UDP_PORT = 5540          # this is the default port for group multicast, we also use it for unicast
-  static var PASSCODE_DEFAULT = 20202021
   static var PBKDF_ITERATIONS = 1000  # I don't see any reason to choose a different number
   static var VENDOR_ID = 0xFFF1
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
   var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
-  var plugins                         # list of plugins
+  var plugins                         # list of plugins instances
+  var plugins_persist                 # true if plugins configuration needs to be saved
+  var plugins_classes                 # map of registered classes by type name
+  var plugins_config                  # map of JSON configuration for plugins
   var udp_server                      # `matter.UDPServer()` object
-  var message_handler                     # `matter.MessageHandler()` object
+  var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
+  var tick                            # increment at each tick, avoids to repeat too frequently some actions
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
@@ -72,15 +75,19 @@ class Matter_Device
     end    # abort if SetOption 151 is not set
 
     self.started = false
+    self.tick = 0
     self.plugins = []
+    self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
+    self.plugins_classes = {}
+    self.register_native_classes()                # register all native classes
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.root_iterations = self.PBKDF_ITERATIONS
-    self.root_salt = crypto.random(16)         # bytes("5350414B453250204B65792053616C74")
+    self.root_salt = crypto.random(16)
     self.ipv4only = false
     self.load_param()
 
-    self.sessions = matter.Session_Store()
+    self.sessions = matter.Session_Store(self)
     self.sessions.load_fabrics()
     self.message_handler = matter.MessageHandler(self)
     self.ui = matter.UI(self)
@@ -104,6 +111,8 @@ class Matter_Device
     self._init_basic_commissioning()
 
     tasmota.add_driver(self)
+
+    self.register_commands()
   end
 
   #############################################################
@@ -111,13 +120,11 @@ class Matter_Device
   def start()
     if self.started  return end      # abort if already started
 
-    # add the default plugin
-    self.plugins.push(matter.Plugin_Root(self, 0))
-    # autoconfigure other plugins
+    # autoconfigure other plugins if needed
     self.autoconf_device()
 
-    # for now read sensors every 5 seconds
-    tasmota.add_cron("*/5 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_5s")
+    # for now read sensors every 30 seconds
+    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
@@ -147,6 +154,10 @@ class Matter_Device
     var pairing_code = self.compute_manual_pairing_code()
     tasmota.log(string.format("MTR: Manual pairing code: %s-%s-%s", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]), 2)
     
+    # output MQTT
+    var qr_code = self.compute_qrcode_content()
+    tasmota.publish_result(string.format('{"Matter":{"Commissioning":1,"PairingCode":"%s","QRCode":"%s"}}', pairing_code, qr_code), 'Matter')
+
     # compute PBKDF
     self._compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
     self.start_basic_commissioning(timeout_s, self.root_iterations, self.root_discriminator, self.root_salt, self.root_w0, #-self.root_w1,-# self.root_L, nil)
@@ -202,6 +213,9 @@ class Matter_Device
   #############################################################
   # Stop PASE commissioning, mostly called when CASE is about to start
   def stop_basic_commissioning()
+    if self.is_root_commissioning_open()
+      tasmota.publish_result('{"Matter":{"Commissioning":0}}', 'Matter')
+    end
     self.commissioning_open = nil
 
     self.mdns_remove_PASE()
@@ -283,10 +297,16 @@ class Matter_Device
     if self.commissioning_open != nil && tasmota.time_reached(self.commissioning_open)    # timeout reached, close provisioning
       self.commissioning_open = nil
     end
-    # call all plugins
+  end
+
+  #############################################################
+  # dispatch every 250ms to all plugins
+  def every_250ms()
+    self.message_handler.every_250ms()
+    # call all plugins, use a manual loop to avoid creating a new object
     var idx = 0
     while idx < size(self.plugins)
-      self.plugins[idx].every_second()
+      self.plugins[idx].every_250ms()
       idx += 1
     end
   end
@@ -315,9 +335,9 @@ class Matter_Device
   end
 
   #############################################################
-  # dispatch every 250ms click to sub-objects that need it
-  def every_250ms()
-    self.message_handler.every_250ms()
+  # ticks
+  def every_50ms()
+    self.tick += 1
   end
 
   #############################################################
@@ -497,13 +517,13 @@ class Matter_Device
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+    # tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
 
     # build the list of candidates
 
     # list of all endpoints
     var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
-    tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
+    # tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
     for pi: self.plugins
       var ep = pi.get_endpoint()    # get supported endpoints for this plugin
 
@@ -514,7 +534,7 @@ class Matter_Device
 
       # now explore the cluster list for 'ep'
       var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-      tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+      # tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
       for cl: cluster_list
         if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
         # from now on, 'cl' is a good candidate
@@ -523,7 +543,7 @@ class Matter_Device
 
         # now filter on attributes
         var attr_list = pi.get_attribute_list(ep, cl)
-        tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+        # tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
         for at: attr_list
           if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
           # from now on, 'at' is a good candidate
@@ -548,6 +568,7 @@ class Matter_Device
             ctx.cluster = cl
             ctx.attribute = at
             var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
+            # tasmota.log("MTR: gc="+str(tasmota.gc()), 2)
             if direct && finished     return end
           end
         end
@@ -586,13 +607,19 @@ class Matter_Device
   #############################################################
   # 
   def save_param()
+    import string
     import json
-    var j = json.dump({'distinguish':self.root_discriminator, 'passcode':self.root_passcode, 'ipv4only':self.ipv4only})
+    var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false')
+    if self.plugins_persist
+      j += ',"config":'
+      j += json.dump(self.plugins_config)
+    end
+    j += '}'
     try
-      import string
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
+      tasmota.log(string.format("MTR: =Saved     parameters%s", self.plugins_persist ? " and condiguration" : ""), 2)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
@@ -617,6 +644,11 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.plugins_config = j.find("config")
+      if self.plugins_config
+        self._load_plugins_config(self.plugins_config)
+        self.plugins_persist = true
+      end
     except .. as e, m
       if e != "io_error"
         tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
@@ -629,12 +661,50 @@ class Matter_Device
       dirty = true
     end
     if self.root_passcode == nil
-      self.root_passcode = self.PASSCODE_DEFAULT
+      self.root_passcode = self.generate_random_passcode()
       dirty = true
     end
     if dirty    self.save_param() end
   end
 
+  #############################################################
+  # Load plugins configuration from json
+  #
+  # 'config' is a map
+  # Ex:
+  #   {'32': {'filter': 'AXP192#Temperature', 'type': 'temperature'}, '40': {'filter': 'BMP280#Pressure', 'type': 'pressure'}, '34': {'filter': 'SHT3X#Temperature', 'type': 'temperature'}, '33': {'filter': 'BMP280#Temperature', 'type': 'temperature'}, '1': {'relay': 0, 'type': 'relay'}, '56': {'filter': 'SHT3X#Humidity', 'type': 'humidity'}, '0': {'type': 'root'}}
+  def _load_plugins_config(config)
+    import string
+    
+    var endpoints = self.k2l_num(config)
+    tasmota.log("MTR: endpoints to be configured "+str(endpoints), 3)
+
+    for ep: endpoints
+      try
+        var plugin_conf = config[str(ep)]
+        tasmota.log(string.format("MTR: endpoint %i config %s", ep, plugin_conf), 3)
+
+        var pi_class_name = plugin_conf.find('type')
+        if pi_class_name == nil   tasmota.log("MTR: no class name, skipping", 3)  continue end
+        var pi_class = self.plugins_classes.find(pi_class_name)
+        if pi_class == nil        tasmota.log("MTR: unknown class name '"+str(pi_class_name)+"' skipping", 2)  continue  end
+
+        var pi = pi_class(self, ep, plugin_conf)
+        self.plugins.push(pi)
+
+        var param_log = ''
+        for k:self.k2l(plugin_conf)
+          if k == 'type'  continue  end
+          param_log += string.format(" %s:%s", k, plugin_conf[k])
+        end
+        tasmota.log(string.format("MTR: endpoint:%i type:%s%s", ep, pi_class_name, param_log), 2)
+      except .. as e, m
+        tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
+      end
+    end
+
+    tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+  end
 
   #############################################################
   # Matter plugin management
@@ -906,8 +976,36 @@ class Matter_Device
   #############################################################
   # Autoconfigure device from template
   #
+  # Applies only if there are no plugins already configured
+  ## TODO generate map instead
   def autoconf_device()
     import string
+    import json
+
+    if size(self.plugins) > 0   return end                    # already configured
+
+    self.plugins_config = self.autoconf_device_map()
+    tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
+    self._load_plugins_config(self.plugins_config)
+
+    if !self.plugins_persist && self.sessions.count_active_fabrics() > 0
+      self.plugins_persist = true
+      self.save_param()
+    end
+  end
+
+  #############################################################
+  # Autoconfigure device from template to map
+  #
+  # Applies only if there are no plugins already configured
+  def autoconf_device_map()
+    import string
+    import json
+    var m = {}
+
+    # add the default plugin
+    m["0"] = {'type':'root'}
+
     # check if we have a light
     var endpoint = 1
     var light_present = false
@@ -918,18 +1016,47 @@ class Matter_Device
       var channels_count = size(light_status.find('channels', ""))
       if channels_count > 0
         if   channels_count == 1
-          self.plugins.push(matter.Plugin_Light1(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_Dimmer", endpoint), 2)
+          m[str(endpoint)] = {'type':'light1'}
         elif channels_count == 2
-          self.plugins.push(matter.Plugin_Light2(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_CT", endpoint), 2)
+          m[str(endpoint)] = {'type':'light2'}
         else
-          self.plugins.push(matter.Plugin_Light3(self, endpoint))
-          tasmota.log(string.format("MTR: Endpoint:%i Light_RGB", endpoint), 2)
+          m[str(endpoint)] = {'type':'light3'}
         end
         light_present = true
         endpoint += 1
       end
+    end
+
+    # handle shutters before relays (as we steal relays for shutters)
+    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
+    var relays_reserved = []                        # list of relays that are used for non-relay (shutters)
+    tasmota.log("MTR: Status 13 = "+str(r_st13), 3)
+
+    if r_st13 != nil && r_st13.contains('StatusSHT')
+      r_st13 = r_st13['StatusSHT']        # skip root
+      # Shutter is enabled, iterate
+      var idx = 0
+      while true
+        var k = 'SHT' + str(idx)                    # SHT is zero based
+        if !r_st13.contains(k)   break     end           # no more SHTxxx
+        var d = r_st13[k]
+        tasmota.log(string.format("MTR: '%s' = %s", k, str(d)), 3)
+        var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
+        var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
+
+        if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
+        if relay2 >= 0    relays_reserved.push(relay2)    end
+
+        tasmota.log(string.format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        # is there tilt support
+        var tilt_array = d.find('TiltConfig')
+        var tilt_config = tilt_array && (tilt_array[2] > 0)
+        # add shutter to definition
+        m[str(endpoint)] = {'type': tilt_config ? 'shutter+tilt' : 'shutter', 'shutter':idx}
+        endpoint += 1
+        idx += 1
+      end
+
     end
 
     # how many relays are present
@@ -938,13 +1065,180 @@ class Matter_Device
     if light_present    relay_count -= 1  end       # last power is taken for lights
 
     while relay_index < relay_count
-      self.plugins.push(matter.Plugin_OnOff(self, endpoint, relay_index))
-      tasmota.log(string.format("MTR: Endpoint:%i Relay_%i", endpoint, relay_index + 1), 2)
+      if relays_reserved.find(relay_index) == nil   # if relay is actual relay
+        m[str(endpoint)] = {'type':'relay','relay':relay_index}
+        endpoint += 1
+      end
       relay_index += 1
-      endpoint += 1
     end
 
+    # auto-detect sensors
+    var sensors = json.load(tasmota.read_sensors())
+
+    # temperature sensors
+    # they are starting at endpoint `32..39` (8 max)
+    endpoint = 0x20
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
+        var temp_rule = k1 + "#Temperature"
+        m[str(endpoint)] = {'type':'temperature','filter':temp_rule}
+        endpoint += 1
+      end
+      if endpoint > 0x28 break end
+    end
+
+    # pressure sensors
+    # they are starting at endpoint `40..47` (8 max)
+    endpoint = 0x28
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Pressure")
+        var temp_rule = k1 + "#Pressure"
+        m[str(endpoint)] = {'type':'pressure','filter':temp_rule}
+        endpoint += 1
+      end
+      if endpoint > 0x2F break end
+    end
+
+    # light sensors
+    # they are starting at endpoint `48..55` (8 max)
+    endpoint = 0x30
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Illuminance")
+        var temp_rule = k1 + "#Illuminance"
+        m[str(endpoint)] = {'type':'illuminance','filter':temp_rule}
+        endpoint += 1
+      end
+      if endpoint > 0x38 break end
+    end
+
+    # huidity sensors
+    # they are starting at endpoint `56..63` (8 max)
+    endpoint = 0x38
+    for k1:self.k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Humidity")
+        var temp_rule = k1 + "#Humidity"
+        m[str(endpoint)] = {'type':'humidity','filter':temp_rule}
+        endpoint += 1
+      end
+      if endpoint > 0x40 break end
+    end
+    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+    return m
   end
+
+  # get keys of a map in sorted order
+  static def k2l(m) var l=[] if m==nil return l end for k:m.keys() l.push(k) end
+    for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
+  # get keys of a map in sorted order, as numbers
+  static def k2l_num(m) var l=[] if m==nil return l end for k:m.keys() l.push(int(k)) end
+    for i:1..size(l)-1 var k = l[i] var j = i while (j > 0) && (l[j-1] > k) l[j] = l[j-1] j -= 1 end l[j] = k end return l
+  end
+
+  #############################################################
+  # register_plugin_class
+  #
+  # Adds a class by name
+  def register_plugin_class(cl)
+    import introspect
+    var typ = introspect.get(cl, 'TYPE')      # make sure we don't crash if TYPE does not exist
+    if typ
+      self.plugins_classes[typ] = cl
+    end
+  end
+
+  #############################################################
+  # get_plugin_class_displayname
+  #
+  # get a class name light "light0" and return displayname
+  def get_plugin_class_displayname(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.NAME : ""
+  end
+
+  #############################################################
+  # get_plugin_class_arg
+  #
+  # get a class name light "light0" and return the name of the json argumen (or empty)
+  def get_plugin_class_arg(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.ARG : ""
+  end
+
+  #############################################################
+  # register_native_classes
+  #
+  # Adds a class by name
+  def register_native_classes(name, cl)
+    # try to register any class that starts with 'Plugin_'
+    import introspect
+    import string
+    for k: introspect.members(matter)
+      var v = introspect.get(matter, k)
+      if type(v) == 'class' && string.find(k, "Plugin_") == 0
+        self.register_plugin_class(v)
+      end
+    end
+    tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
+  end
+  
+  #####################################################################
+  # Events
+  #####################################################################
+  def event_fabrics_saved()
+    # if the plugins configuration was not persisted and a new fabric is saved, persist it
+    if self.sessions.count_active_fabrics() > 0 && !self.plugins_persist
+      self.plugins_persist = true
+      self.save_param()
+    end
+  end
+
+  #####################################################################
+  # Generate random passcode
+  #####################################################################
+  static var PASSCODE_INVALID = [ 0, 11111111, 22222222, 33333333, 44444444, 55555555, 66666666, 77777777, 88888888, 99999999, 12345678, 87654321]
+  def generate_random_passcode()
+    import crypto
+    var passcode
+    while true
+      passcode = crypto.random(4).get(0, 4) & 0x7FFFFFF
+      if passcode > 0x5F5E0FE     continue      end         # larger than allowed
+      for inv: self.PASSCODE_INVALID
+        if passcode == inv    passcode = nil    end
+      end
+      if passcode != nil    return passcode     end
+    end
+  end
+
+  #####################################################################
+  # Commands `Mtr___`
+  #####################################################################
+  #
+  def register_commands()
+    tasmota.add_cmd("MtrJoin", /cmd_found, idx, payload, payload_json -> self.MtrJoin(cmd_found, idx, payload, payload_json))
+  end
+
+  #####################################################################
+  # `MtrJoin`
+  #
+  # Open or close commissioning
+  #
+  def MtrJoin(cmd_found, idx, payload, payload_json)
+    var payload_int = int(payload)
+    if payload_int
+      self.start_root_basic_commissioning()
+    else
+      self.stop_basic_commissioning()
+    end
+    tasmota.resp_cmnd_done()
+  end
+
+
 end
 matter.Device = Matter_Device
 

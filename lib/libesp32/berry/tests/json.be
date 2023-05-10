@@ -80,3 +80,16 @@ class map2 : map def init() super(self).init() end end
 var m = map2()
 m['key'] = 1
 assert_dump(m, '{"key":1}')
+
+# sweep dumping nested arrays of diffrent sizes
+# this tests for any unexpanded stack conditions
+for count : 10..200
+    var arr = [[]]
+    var last_arr = arr
+    for i : 0..count
+        var pushed = [i]
+        last_arr.push(pushed)
+        last_arr = pushed
+    end
+    json.dump(arr)
+end

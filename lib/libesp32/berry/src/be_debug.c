@@ -49,7 +49,7 @@ static const char* opc2str(bopcode op)
 
 void be_print_inst(binstruction ins, int pc, void* fout)
 {
-    char __lbuf[INST_BUF_SIZE];
+    char __lbuf[INST_BUF_SIZE + 1], __lbuf_tmp[INST_BUF_SIZE];
     bopcode op = IGET_OP(ins);
 
     logbuf("  %.4X  ", pc);
@@ -137,7 +137,8 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         logbuf("%s", opc2str(op));
         break;
     }
-    logbuf("%s\n", __lbuf);
+    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf)+1);
+    logbuf("%s\n", __lbuf_tmp);
     if (fout) {
         be_fwrite(fout, __lbuf, strlen(__lbuf));
     } else {
@@ -253,7 +254,7 @@ void be_tracestack(bvm *vm)
 
 static void hook_callnative(bvm *vm, int mask)
 {
-    bhookinfo info;
+    bhookinfo_t info;
     int top = be_top(vm);
     bcallframe *cf = vm->cf;
     bclosure *cl = var_toobj(cf->func);

@@ -13,7 +13,7 @@
 // Tests for encodePanasonic().
 
 TEST(TestEncodePanasonic, General) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   EXPECT_EQ(0x0, irsend.encodePanasonic(0, 0, 0, 0));
   EXPECT_EQ(0x101010101, irsend.encodePanasonic(1, 1, 1, 1));
   EXPECT_EQ(0xFFFF, irsend.encodePanasonic(0, 0, 0, 0xFF));
@@ -28,7 +28,7 @@ TEST(TestEncodePanasonic, General) {
 
 // Test sending typical data only.
 TEST(TestSendPanasonic64, SendDataOnly) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -76,7 +76,7 @@ TEST(TestSendPanasonic64, SendDataOnly) {
 
 // Test sending with different repeats.
 TEST(TestSendPanasonic64, SendWithRepeats) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -147,7 +147,7 @@ TEST(TestSendPanasonic64, SendWithRepeats) {
 
 // Test sending an atypical data size.
 TEST(TestSendPanasonic64, SendUnusualSize) {
-  IRsendTest irsend(4);
+  IRsendTest irsend(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -213,8 +213,8 @@ TEST(TestSendPanasonic, CompareToSendPanasonic64) {
 
 // Decode normal Panasonic messages.
 TEST(TestDecodePanasonic, NormalDecodeWithStrict) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   // Normal Panasonic 48-bit message.
@@ -259,8 +259,8 @@ TEST(TestDecodePanasonic, NormalDecodeWithStrict) {
 
 // Decode normal repeated Panasonic messages.
 TEST(TestDecodePanasonic, NormalDecodeWithRepeatAndStrict) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   // Normal Panasonic 48-bit message with 2 repeats.
@@ -293,8 +293,8 @@ TEST(TestDecodePanasonic, NormalDecodeWithRepeatAndStrict) {
 
 // Decode Panasonic messages with unsupported values.
 TEST(TestDecodePanasonic, DecodeWithNonStrictValues) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -331,8 +331,8 @@ TEST(TestDecodePanasonic, DecodeWithNonStrictValues) {
 
 // Decode Panasonic messages with unsupported size/lengths.
 TEST(TestDecodePanasonic, DecodeWithNonStrictSize) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -375,8 +375,8 @@ TEST(TestDecodePanasonic, DecodeWithNonStrictSize) {
 
 // Decode (non-standard) 64-bit messages.
 TEST(TestDecodePanasonic, Decode64BitMessages) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -395,8 +395,8 @@ TEST(TestDecodePanasonic, Decode64BitMessages) {
 
 // Decode a 'real' example via GlobalCache
 TEST(TestDecodePanasonic, DecodeGlobalCacheExample) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -432,8 +432,8 @@ TEST(TestDecodePanasonic, DecodeGlobalCacheExample) {
 
 // Fail to decode a non-Panasonic example via GlobalCache
 TEST(TestDecodePanasonic, FailToDecodeNonPanasonicExample) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -452,8 +452,8 @@ TEST(TestDecodePanasonic, FailToDecodeNonPanasonicExample) {
 
 // Failing to decode Panasonic in Issue #245
 TEST(TestDecodePanasonic, DecodeIssue245) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -813,8 +813,8 @@ TEST(TestIRPanasonicAcClass, HumanReadable) {
 
 // Decode normal Panasonic AC messages.
 TEST(TestDecodePanasonicAC, RealExample) {
-  IRsendTest irsend(4);
-  IRrecv irrecv(4);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   // Data from Issue #525
@@ -1585,4 +1585,74 @@ TEST(TestIRPanasonicAc32Class, HumanReadable) {
       "Power Toggle: On, Mode: 4 (Heat), Temp: 24C, Fan: 4 (Medium), "
       "Swing(H): Off, Swing(V): 5 (Lowest)",
       ac.toString());
+}
+
+// Decode a 'real' example of a captured 40 bit panasonic message
+TEST(TestDecodePanasonic, RealPanasonic40BitMesg) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  // Panasonic 40 bit code https://github.com/crankyoldgit/IRremoteESP8266/issues/1976#issue-1660147581
+  const uint16_t rawData1[83] = {
+      3486, 1742,
+      432, 456, 406, 456, 406, 1336, 406, 1312, 430, 456, 406, 1334, 408, 456,
+      406, 456, 408, 456, 406, 1334, 408, 456, 408, 454, 408, 1334, 408, 456,
+      406, 1336, 406, 456, 408, 1334, 408, 456, 406, 456, 408, 1336, 406, 456,
+      408, 454, 406, 456, 406, 454, 408, 1332, 410, 1332, 408, 1334, 408, 1336,
+      406, 1334, 410, 1332, 410, 454, 406, 456, 406, 456, 406, 1332, 410, 1334,
+      408, 454, 406, 1336, 406, 1336, 406, 454, 410, 454, 408};  // UKN 1D41D404
+
+  irsend.sendRaw(rawData1, 83, 38);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(PANASONIC, irsend.capture.decode_type);
+  EXPECT_EQ(kPanasonic40Bits, irsend.capture.bits);
+  EXPECT_EQ(0x344A90FC6C, irsend.capture.value);
+  EXPECT_EQ(0x34, irsend.capture.address);
+  EXPECT_EQ(0x4A90FC6C, irsend.capture.command);
+  EXPECT_FALSE(irsend.capture.repeat);
+
+  // night ch3 from https://github.com/crankyoldgit/IRremoteESP8266/issues/1976#issuecomment-1501736104
+  const uint16_t rawData2[83] = {
+      3490, 1734,
+      440, 426, 460, 400, 438, 1304, 438, 1302, 440, 426, 436, 1302, 464, 400,
+      462, 400, 462, 402, 462, 1278, 438, 426, 438, 426, 460, 1282, 434, 428,
+      434, 1308, 460, 402, 460, 1280, 440, 422, 438, 426, 436, 1306, 438, 424,
+      462, 402, 436, 426, 462, 400, 438, 426, 436, 1304, 434, 1308, 438, 1304,
+      464, 1278, 436, 1306, 466, 398, 464, 398, 466, 1276, 466, 1274, 464, 1280,
+      462, 402, 436, 1304, 466, 1276, 440, 422, 440, 424, 460};  // UKN DAE32FFC
+  irsend.reset();
+
+  irsend.sendRaw(rawData2, 83, 38);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(PANASONIC, irsend.capture.decode_type);
+  EXPECT_EQ(kPanasonic40Bits, irsend.capture.bits);
+  EXPECT_EQ(0x344A907CEC, irsend.capture.value);
+  EXPECT_EQ(0x34, irsend.capture.address);
+  EXPECT_EQ(0x4A907CEC, irsend.capture.command);
+  EXPECT_FALSE(irsend.capture.repeat);
+}
+
+// recreate the above real message, synthetically.
+TEST(TestDecodePanasonic, SynthticPanasonic40BitMesg) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+  irsend.reset();
+
+  irsend.sendPanasonic64(0x344A90FC6C, kPanasonic40Bits);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(PANASONIC, irsend.capture.decode_type);
+  EXPECT_EQ(kPanasonic40Bits, irsend.capture.bits);
+  EXPECT_EQ(0x344A90FC6C, irsend.capture.value);
+  EXPECT_EQ(0x34, irsend.capture.address);
+  EXPECT_EQ(0x4A90FC6C, irsend.capture.command);
+  EXPECT_FALSE(irsend.capture.repeat);
 }

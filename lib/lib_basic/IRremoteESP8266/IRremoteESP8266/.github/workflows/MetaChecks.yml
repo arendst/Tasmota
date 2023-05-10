@@ -37,7 +37,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Check all the version numbers match.
       run: |
-        LIB_VERSION=$(egrep "^#define\s+_IRREMOTEESP8266_VERSION_\s+" src/IRremoteESP8266.h  | cut -d\" -f2)
+        LIB_VERSION=$(tools/extract_lib_version.sh)
         test ${LIB_VERSION} == "$(jq -r .version library.json)"
         grep -q "^version=${LIB_VERSION}$" library.properties
   examples-have-platformio_ini:

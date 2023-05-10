@@ -328,7 +328,7 @@ class Matter_Session : Matter_Expirable
   end
 
   #############################################################
-  # Session::to_json()
+  # Session::tojson()
   #
   # convert a single entry as json
   # returns a JSON string

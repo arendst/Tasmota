@@ -165,6 +165,7 @@ class IRCoolixAC {
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(const stdAc::state_t *prev = NULL) const;
   String toString(void) const;
+  void setZoneFollow(const bool on);
 #ifndef UNIT_TEST
 
  private:
@@ -189,7 +190,6 @@ class IRCoolixAC {
   void setTempRaw(const uint8_t code);
   uint8_t getTempRaw(void) const;
   void setSensorTempRaw(const uint8_t code);
-  void setZoneFollow(const bool on);
   bool isSpecialState(void) const;
   bool handleSpecialState(const uint32_t data);
   void updateAndSaveState(const uint32_t raw_state);

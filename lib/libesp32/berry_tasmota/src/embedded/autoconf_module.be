@@ -1,22 +1,6 @@
-#-  autocong module for Berry -#
-#- -#
-#- To solidify: -#
-#-
-  # load only persis_module and persist_module.init
-  import autoconf
-  solidify.dump(autoconf_module)
-  # copy and paste into `be_autoconf_lib.c`
--#
-#-
-
-# For external compile:
-
-display = module("display")
-self = nil
-tasmota = nil
-def load() end
-
--#
+#  autocong module for Berry
+#
+#
 
 var autoconf_module = module("autoconf")
 
@@ -39,7 +23,7 @@ autoconf_module.init = def (m)
         if string.find(dir[i], ".autoconf") > 0   # does the file contain '*.autoconf', >0 to skip `.autoconf`
           if entry != nil
             # we have multiple configuration files, not allowed
-            print(string.format("CFG: multiple autoconf files found, aborting ('%s' + '%s')", entry, dir[i]))
+            tasmota.log(string.format("CFG: multiple autoconf files found, aborting ('%s' + '%s')", entry, dir[i]), 2)
             self._error = true
             return nil
           end
@@ -57,9 +41,9 @@ autoconf_module.init = def (m)
     end
 
 
-    # ####################################################################################################
+    #####################################################################################################
     # Manage first time marker
-    # ####################################################################################################
+    #####################################################################################################
     def is_first_time()
       import path
       return !path.exists("/.autoconf")
@@ -73,9 +57,9 @@ autoconf_module.init = def (m)
       path.remove("/.autoconf")
     end
 
-    # ####################################################################################################
+    #####################################################################################################
     # Delete all autoconfig files present
-    # ####################################################################################################
+    #####################################################################################################
     def delete_all_configs()
       import path
       import string
@@ -88,11 +72,11 @@ autoconf_module.init = def (m)
       end
     end
 
-    # ####################################################################################################
+    #####################################################################################################
     # Get current module
     # contains the name of the archive without leading `/`, ex: `M5Stack_Fire.autoconf`
     # or `nil` if none
-    # ####################################################################################################
+    #####################################################################################################
     def get_current_module_path()
       return self._archive
     end
@@ -100,9 +84,9 @@ autoconf_module.init = def (m)
       return self._archive[0..-10]
     end
 
-    # ####################################################################################################
+    #####################################################################################################
     # Load templates from Github
-    # ####################################################################################################
+    #####################################################################################################
     def load_templates()
       import string
       import json
@@ -135,9 +119,9 @@ autoconf_module.init = def (m)
       end
     end
 
-    # ####################################################################################################
+    #####################################################################################################
     # Init web handlers
-    # ####################################################################################################
+    #####################################################################################################
     # Displays a "Autoconf" button on the configuration page
     def web_add_config_button()
       import webserver
@@ -197,11 +181,11 @@ autoconf_module.init = def (m)
       webserver.content_stop()
     end
 
-    # ####################################################################################################
+    #####################################################################################################
     # Web controller
     #
     # Applies the changes and restart
-    # ####################################################################################################
+    #####################################################################################################
     # This HTTP POST manager handles the submitted web form data
     def page_autoconf_ctl()
       import webserver
@@ -293,7 +277,11 @@ autoconf_module.init = def (m)
       self._error = nil
     end
 
+    #####################################################################################################
+    # preinit
     # called by the synthetic event `preinit`
+    # load and run `preinit.be`
+    #####################################################################################################
     def preinit()
       if self._archive == nil  return end
       # try to launch `preinit.be`
@@ -307,6 +295,10 @@ autoconf_module.init = def (m)
       end
     end
 
+    #####################################################################################################
+    # run_bat
+    # load and run `<fname>.bat` file as Tasmota commands
+    #####################################################################################################
     def run_bat(fname)    # read a '*.bat' file and run each command
       import string
       var f
@@ -323,17 +315,26 @@ autoconf_module.init = def (m)
         end
         f.close()                         # close, we don't expect exception with read-only, could be added later though
       except .. as e, m
-        print(string.format('CFG: could not run %s (%s - %s)', fname, e, m))
-        f.close()
+        tasmota.log(string.format('CFG: could not run %s (%s - %s)', fname, e, m), 1)
+        if f != nil   f.close()   end
       end
     end
 
+    #####################################################################################################
+    # autoexec
     # called by the synthetic event `autoexec`
+    #
+    # Step 1. if first run, only apply `init.bat`
+    # Step 2. if '<archive>#display.ini' is present, and first run or `display.ini` nor present, extract and copy
+    # Step 3. if 'autoexec.bat' is present, run it
+    # Step 4. if 'autoexec.be' is present, load it
+    #####################################################################################################
     def autoexec()
       if self._archive == nil  return end
       # try to launch `preinit.be`
       import path
 
+      var reboot = false
       # Step 1. if first run, only apply `init.bat`
       var fname = self._archive + '#init.bat'
       if self.is_first_time() && path.exists(fname)
@@ -343,23 +344,39 @@ autoconf_module.init = def (m)
         # if path.exists(fname)    # we know it exists from initial test
         self.run_bat(fname)
         tasmota.log("CFG: 'init.bat' done, restarting", 2)
-        tasmota.cmd("Restart 1")
+        reboot = true
         return                    # if init was run, force a restart anyways and don't run the remaining code
         # end
       end
 
-      # Step 2. if 'display.ini' is present, launch Universal Display
+      # Step 2. if 'display.ini' is present, copy it to file system (first run or if not already in file system)
       fname = self._archive + '#display.ini'
-      if gpio.pin_used(gpio.OPTION_A, 2) && path.exists(fname)
-        if path.exists("display.ini")
-          tasmota.log("CFG: skipping 'display.ini' because already present in file-system", 2)
-        else
-          import display
-          var f = open(fname,"r")
-          var desc = f.read()
-          f.close()
-          display.start(desc)
+      if path.exists(fname) && (self.is_first_time() || !path.exists('display.ini'))
+        # create the '.autoconf' file to avoid running it again, even if it crashed
+        if (self.is_first_time() && !reboot)      # we may have already created it with init.bat
+          self.set_first_time()
         end
+
+        var f, f_out
+        try
+          f = open(fname, "r")
+          f_out = open("display.ini", "w")
+          var content = f.readbytes()
+          f_out.write(content)
+          f.close()
+          f_out.close()
+          reboot = true
+          tasmota.log("CFG: 'display.ini' extracted, restarting", 2)
+        except .. as e, m
+          print(string.format("CFG: could not copy 'display.ini' (%s - %s)'", e, m))
+          if f != nil   f.close()   end
+          if f_out != nil   f_out.close()   end
+        end
+      end
+
+      if reboot
+        tasmota.cmd("Restart 1")
+        return
       end
 
       # Step 3. if 'autoexec.bat' is present, run it

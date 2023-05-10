@@ -171,7 +171,7 @@ be_local_closure(hue_bridge_monad_add_light,   /* name */
       0x7C200200,  //  0027  CALL	R8	1
       0x981E1A08,  //  0028  SETIDX	R7	K13	R8
       0x98180207,  //  0029  SETIDX	R6	R1	R7
-      0x80000000,  //  002A  RET	0
+      0x80040400,  //  002A  RET	1	R2
     })
   )
 );

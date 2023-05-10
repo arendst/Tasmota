@@ -156,7 +156,7 @@ while Run_flag:
             # Message length used by Tasmota (FileTransferHeaderSize)
             client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
          else:
-            client.publish(mypublish+"201", chunk)
+            client.publish(mypublish+"301", chunk)
          Ack_flag = True
 
       else:

@@ -25,6 +25,8 @@ class Matter_Plugin end
 #@ solidify:Matter_Plugin_Root,weak
 
 class Matter_Plugin_Root : Matter_Plugin
+  static var TYPE = "root"            # name of the plug-in in json
+  static var NAME = "Root node"       # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
@@ -46,8 +48,8 @@ class Matter_Plugin_Root : Matter_Plugin
 
   #############################################################
   # Constructor
-  def init(device, endpoint)
-    super(self).init(device, endpoint)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
   end
 
   #############################################################
@@ -522,6 +524,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
       elif command == 0x000A            # ---------- RemoveFabric ----------
         var index = val.findsubval(0)     # FabricIndex
+        ctx.log = "fabric_index:"+str(index)
 
         for fab: self.device.sessions.active_fabrics()
           if fab.get_fabric_index() == index
@@ -533,7 +536,6 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
         ctx.status = matter.INVALID_ACTION
-        ctx.log = "fabric_index:"+str(index)
         return nil                      # trigger a standalone ack
 
       end
@@ -614,7 +616,7 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
         if type(write_data) == 'int' || isinstance(write_data, int64)
           session._breadcrumb = write_data
-          self.attribute_updated(ctx.endpoint, ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
+          self.attribute_updated(ctx.cluster, ctx.attribute)    # TODO should we have a more generalized way each time a write_attribute is triggered, declare the attribute as changed?
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR

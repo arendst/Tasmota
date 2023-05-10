@@ -888,9 +888,12 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_GDK101)
     feature9 |= 0x00100000;  // xsns_106_gdk101.ino
 #endif
-
-//    feature9 |= 0x00200000;
-//    feature9 |= 0x00400000;
+#ifdef USE_GM861
+    feature9 |= 0x00200000;  // xsns_107_gm861.ino
+#endif
+#if defined(USE_I2C) && defined(USE_TC74)
+    feature9 |= 0x00400000;  // xsns_108_tc74.ino
+#endif
 //    feature9 |= 0x00800000;
 
 //    feature9 |= 0x01000000;

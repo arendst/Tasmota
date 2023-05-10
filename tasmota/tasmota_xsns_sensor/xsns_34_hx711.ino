@@ -43,6 +43,10 @@
 #ifndef HX_SCALE
 #define HX_SCALE             120     // Default result of measured weight / reference weight when scale is 1
 #endif
+#ifndef HX711_CAL_PRECISION
+#define HX711_CAL_PRECISION  1     // When calibration is to course, raise this value.
+#endif
+
 
 #define HX_TIMEOUT           120     // A reading at default 10Hz (pin RATE to Gnd on HX711) can take up to 100 milliseconds
 #define HX_SAMPLES           10      // Number of samples for average calculation
@@ -340,7 +344,7 @@ void HxEvery100mSecond(void) {
     for (uint32_t i = 2; i < HX_SAMPLES -2; i++) {
       sum_raw += Hx.reads[i];
     }
-    Hx.raw_absolute = sum_raw / (HX_SAMPLES -4);     // Uncalibrated value
+    Hx.raw_absolute = (sum_raw / (HX_SAMPLES -4)) * HX711_CAL_PRECISION;     // Uncalibrated value
     Hx.raw = Hx.raw_absolute / Hx.scale;             // grams
 
     if ((0 == Settings->weight_user_tare) && Hx.tare_flg) {  // Reset scale based on current load
@@ -430,7 +434,7 @@ void HxEvery100mSecond(void) {
           Hx.weight_diff = Hx.weight;
           Hx.weight_changed = true;
         }
-        else if (Hx.weight_changed && (Hx.weight == Hx.weight_diff)) {
+        else if (Hx.weight_changed && (abs(Hx.weight - Hx.weight_diff) < Hx.weight_delta)) {
           ResponseClear();
           ResponseAppendTime();
           HxShow(true);

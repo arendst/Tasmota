@@ -267,6 +267,14 @@ uint32_t UfsInfo(uint32_t sel, uint32_t type) {
   return result / 1024;
 }
 
+uint32_t UfsSize(void) {
+  return UfsInfo(0, ufs_dir == 2 ? 1:0);
+}
+
+uint32_t UfsFree(void) {
+  return UfsInfo(1, ufs_dir == 2 ? 1:0);
+}
+
 #if USE_LONG_FILE_NAMES>0
 #undef REJCMPL
 #define REJCMPL 6

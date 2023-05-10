@@ -53,12 +53,14 @@
 #include <LList.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
   #define USE_DISCOVERY
   #endif
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 #ifdef USE_DISCOVERY
   #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
@@ -254,6 +256,7 @@ struct TasmotaGlobal_t {
   void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings->power
+  power_t power_latching;                   // Current state of single pin latching power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
   power_t rel_bistable;                     // Relay bistable bitmap
   power_t last_power;                       // Last power set state
@@ -430,6 +433,7 @@ void setup(void) {
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
   TasmotaGlobal.enable_logging = 1;
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -640,9 +644,11 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 
   XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
@@ -755,9 +761,11 @@ void Scheduler(void) {
   if (!tasconsole_serial) { TasConsoleInput(); }
 #endif  // ESP32
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 }
 
 void loop(void) {

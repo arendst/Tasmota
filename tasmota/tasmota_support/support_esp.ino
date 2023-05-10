@@ -673,7 +673,7 @@ uint32_t ESP_getFreeHeap(void) {
 
 uint32_t ESP_getMaxAllocHeap(void) {
   // arduino returns IRAM but we want only DRAM
-#ifdef RGB_DISPLAY
+#ifdef USE_GT911 // GT911 IRQ crashes with heap_caps_get_largest_free_block
   return ESP_getFreeHeap();
 #endif
   uint32_t free_block_size = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);

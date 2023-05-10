@@ -200,7 +200,8 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, ui
       } else {
         buffer[mb_len++] = data;
         if (3 == mb_len) {
-          if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4; // Addr, Func, StartAddr
+          // If functioncode is 5,6,15 or 16 the header length is 4 instead of 3
+          if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4;
         }
       }
 

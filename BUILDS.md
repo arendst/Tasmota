@@ -112,6 +112,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_ADS1115               | - | - / x | - | x | - | - |
 | USE_INA219                | - | - / x | - | x | - | - |
 | USE_INA226                | - | - / - | - | - | - | - |
+| USE_INA3221               | - | - / - | - | - | - | - |
 | USE_SHT3X                 | - | - / x | - | x | - | - |
 | USE_TSL2561               | - | - / - | - | - | - | - |
 | USE_TSL2591               | - | - / - | - | - | - | - |
@@ -147,6 +148,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_PMSA003I              | - | - / - | - | - | - | - |
 | USE_LOX_O2                | - | - / x | - | x | - | - |
 | USE_GDK101                | - | - / - | - | - | - | - |
+| USE_TC74                  | - | - / - | - | - | - | - |
 |                           |   |       |   |   |   |   |
 | Feature or Sensor         | l | t     | k | s | i | d | Remarks
 | USE_HIH6                  | - | - / x | - | x | - | - |
@@ -213,6 +215,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
 | USE_AS608                 | - | - / - | - | - | - | - |
 | USE_LD2410                | - | - / - | - | - | - | - |
+| USE_GM861                 | - | - / - | - | - | - | - |
 | USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge / zbbrdgpro
 |                           |   |       |   |   |   |   |
 | USE_NRF24                 | - | - / - | - | - | - | - |
@@ -272,5 +275,6 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SHELLY_PRO            |   |   / x |   |   |   |   |
 | USE_DALI                  |   |   / - |   |   |   |   |
 | USE_DINGTIAN_RELAY        |   |   / - |   |   |   |   |
+| USE_MATTER_DEVICE         |   |   / - |   |   |   |   | See SetOption151
 
 * USE_MQTT_TLS is enabled by default in every ESP32 variants

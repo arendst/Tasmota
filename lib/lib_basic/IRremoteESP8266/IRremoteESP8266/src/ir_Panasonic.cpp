@@ -128,8 +128,15 @@ uint64_t IRsend::encodePanasonic(const uint16_t manufacturer,
 bool IRrecv::decodePanasonic(decode_results *results, uint16_t offset,
                              const uint16_t nbits, const bool strict,
                              const uint32_t manufacturer) {
-  if (strict && nbits != kPanasonicBits)
-    return false;  // Request is out of spec.
+  if (strict) {  // Compliance checks
+    switch (nbits) {
+      case kPanasonic40Bits:
+      case kPanasonicBits:
+        break;
+      default:
+        return false;  // Request is out of spec.
+    }
+  }
 
   uint64_t data = 0;
 
@@ -147,8 +154,10 @@ bool IRrecv::decodePanasonic(decode_results *results, uint16_t offset,
     if (address != manufacturer)  // Verify the Manufacturer code.
       return false;
     // Verify the checksum.
-    uint8_t checksumOrig = data;
-    uint8_t checksumCalc = (data >> 24) ^ (data >> 16) ^ (data >> 8);
+    const uint8_t checksumOrig = data;
+    uint8_t checksumCalc = (data >> 16) ^ (data >> 8);
+    if (nbits != kPanasonic40Bits)
+      checksumCalc ^= (data >> 24);
     if (checksumOrig != checksumCalc) return false;
   }
 

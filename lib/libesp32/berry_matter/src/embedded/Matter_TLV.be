@@ -86,6 +86,7 @@ class Matter_TLV
   static var ARRAY  = 0x16
   static var LIST   = 0x17
   static var EOC    = 0x18
+  static var RAW    = 0xFF  # encodes an anonymous raw value (already encoded in TLV to save memory)
 
   #################################################################################
   # Matter_TLV_item class
@@ -224,6 +225,8 @@ class Matter_TLV
       var TLV = self.TLV
       if b == nil   b = bytes() end     # start new buffer if none passed
 
+      if self.typ == TLV.RAW  b..self.val return b   end
+
       # special case for bool
       # we need to change the type according to the value
       if self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
@@ -319,6 +322,8 @@ class Matter_TLV
     def encode_len()
       var TLV = self.TLV
       var len = 0
+
+      if self.typ == TLV.RAW  return size(self.val)   end
 
       # special case for bool
       # we need to change the type according to the value
@@ -632,7 +637,11 @@ class Matter_TLV
 
       # output each one after the other
       for v : val_list
-        v.tlv2raw(b)
+        if isinstance(v, bytes)
+          b .. v
+        else
+          v.tlv2raw(b)
+        end
       end
 
       # add 'end of container'
@@ -723,9 +732,13 @@ class Matter_TLV
     # returns `self` to allow calls to be chained
     def add_obj(tag, obj)
       if obj != nil
-        var value = obj.to_TLV()
-        value.tag_sub = tag
-        self.val.push(value)
+        if isinstance(obj, bytes)
+          self.val.push(obj)
+        else
+          var value = obj.to_TLV()
+          value.tag_sub = tag
+          self.val.push(value)
+        end
       end
       return self
     end

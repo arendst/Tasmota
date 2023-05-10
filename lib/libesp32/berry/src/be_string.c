@@ -195,6 +195,9 @@ static bstring* newshortstr(bvm *vm, const char *str, size_t len)
     }
     s = createstrobj(vm, len, 0);
     if (s) {
+        /* recompute size and list that may have changed due to a GC */
+        size = vm->strtab.size;
+        list = vm->strtab.table + (hash & (size - 1));
         memcpy(cast(char *, sstr(s)), str, len);
         s->extra = 0;
         s->next = cast(void*, *list);
@@ -265,9 +268,13 @@ void be_gcstrtab(bvm *vm)
             }
         }
     }
+#if BE_USE_DEBUG_GC == 0
     if (tab->count < size >> 2 && size > 8) {
         resize(vm, size >> 1);
     }
+#else
+    resize(vm, tab->count + 4);
+#endif
 }
 
 uint32_t be_strhash(const bstring *s)

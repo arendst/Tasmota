@@ -198,7 +198,7 @@ extern "C" {
       be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
       // give info about stack size
       be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
-      be_map_insert_int(vm, "stack_low", uxTaskGetStackHighWaterMark(nullptr) / 1024);
+      be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
       if (UsePSRAM()) {
         be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);

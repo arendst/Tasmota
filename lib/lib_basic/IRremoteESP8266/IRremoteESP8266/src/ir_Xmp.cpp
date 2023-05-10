@@ -115,7 +115,7 @@ using IRXmpUtils::adjustRepeat;
 
 #if SEND_XMP
 /// Send a XMP packet.
-/// Status:  Beta / Untested against a real device.
+/// Status:  STABLE / Confirmed working against a real device.
 /// @param[in] data The message to be sent.
 /// @param[in] nbits The number of bits of message to be sent.
 /// @param[in] repeat The number of times the command is to be repeated.
@@ -150,7 +150,7 @@ void IRsend::sendXmp(const uint64_t data, const uint16_t nbits,
 
 #if DECODE_XMP
 /// Decode the supplied XMP packet/message.
-/// Status:  BETA / Probably works.
+/// Status:  STABLE / Confirmed working against a real device.
 /// @param[in,out] results Ptr to the data to decode & where to store the result
 /// @param[in] offset The starting index to use when attempting to decode the
 ///   raw data. Typically/Defaults to kStartOffset.

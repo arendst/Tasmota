@@ -36,11 +36,6 @@ assert(l.ct == 400)
 
 assert(l.mode_ct)
 
-
-
-
-
-
 # assert(l.x == 0.215944)
 # assert(l.y == 0.700957)
 
@@ -69,7 +64,22 @@ c.set_xy(0.422, 0.548)
 l = light_state(light_state.RGBCT)
 
 l.set_rgb(30,40,90)
-assert(str(l.get()) == "{'mode_ct': false, 'hue': 230, 'rgb': '1E285A', 'bri': 90, 'channels': [30, 40, 90, 0, 0], 'mode_rgb': true, 'sat': 170}")
+assert(str(l.get()) == "{'rgb': '1E285A', 'hue': 230, 'type': 5, 'power': false, 'bri': 90, 'mode_rgb': true, 'sat': 170, 'mode_ct': false, 'channels': [30, 40, 90, 0, 0]}")
 
 l.set_ct(340)
-assert(str(l.get()) == "{'bri': 90, 'ct': 340, 'mode_ct': true, 'mode_rgb': false, 'channels': [0, 0, 0, 42, 48]}")
+assert(str(l.get()) == "{'mode_ct': true, 'ct': 340, 'channels': [0, 0, 0, 42, 48], 'bri': 90, 'type': 5, 'mode_rgb': false, 'power': false}")
+
+# gamma functions
+assert(light_state.gamma8(0) == 0)
+assert(light_state.gamma8(100) == 20)
+assert(light_state.gamma8(255) == 255)
+
+assert(light_state.gamma10(0) == 0)
+assert(light_state.gamma10(100) == 7)
+assert(light_state.gamma10(255) == 25)
+assert(light_state.gamma10(1023) == 1023)
+
+assert(light_state.reverse_gamma10(0) == 0)
+assert(light_state.reverse_gamma10(7) == 107)
+assert(light_state.reverse_gamma10(25) == 253)
+assert(light_state.reverse_gamma10(1023) == 1023)

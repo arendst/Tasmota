@@ -621,8 +621,10 @@ class Tasmota
       raise "value_error", "instance required"
     end
     if self._drivers
-      self._drivers.push(d)
-        else
+      if self._drivers.find(d) == nil     # add only if not already added
+        self._drivers.push(d)
+      end
+    else
       self._drivers = [d]
     end
   end
