@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Framework (Core) from v2.0.8 to v2.0.9
 - autoconf extract `display.ini` to file system
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
+- Energy power delta report delayed by two seconds allowing hardware to stabilize (#17751)
 
 ### Fixed
 - Partition_Manager.tapp fixed

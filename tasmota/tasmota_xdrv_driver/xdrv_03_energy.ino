@@ -124,6 +124,7 @@ typedef struct {
 #ifdef USE_ENERGY_MARGIN_DETECTION
   uint16_t power_history[ENERGY_MAX_PHASES][3];
   uint8_t power_steady_counter;                 // Allow for power on stabilization
+  uint8_t margin_stable;
   bool min_power_flag;
   bool max_power_flag;
   bool min_voltage_flag;
@@ -556,7 +557,8 @@ void EnergyMarginCheck(void) {
   if (jsonflg) {
     ResponseJsonEndEnd();
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-    EnergyMqttShow();
+//    EnergyMqttShow();
+    Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -681,6 +683,12 @@ void EnergyEverySecond(void) {
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
   EnergyMarginCheck();
+  if (Energy->margin_stable) {
+    Energy->margin_stable--;
+    if (!Energy->margin_stable) {
+      EnergyMqttShow();
+    }
+  }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 }
 

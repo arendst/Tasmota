@@ -127,10 +127,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
 - ESP32 Framework (Core) from v2.0.7 to v2.0.9
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
+- Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
 - NovaSDS GUI values [#18444](https://github.com/arendst/Tasmota/issues/18444)
 - Berry fix rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- Berry a rare condition when a GC causes a memory corruption
+- Partition_Manager.tapp
