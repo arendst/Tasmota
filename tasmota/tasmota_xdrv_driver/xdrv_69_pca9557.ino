@@ -510,8 +510,6 @@ bool Xdrv69(uint32_t function) {
     PCA9557ModuleInit();
   } else if (Pca9557.max_devices) {
     switch (function) {
-      case FUNC_LOOP:
-      case FUNC_SLEEP_LOOP:
       case FUNC_EVERY_100_MSECOND:
         if (Pca9557.button_max || Pca9557.switch_max) {
           PCA9557ServiceInput();
