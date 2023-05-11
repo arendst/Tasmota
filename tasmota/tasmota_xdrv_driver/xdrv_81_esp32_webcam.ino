@@ -974,14 +974,14 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 
 void WcInterruptControl() {
   WcSetStreamserver(Settings->webcam_config.stream);
-  WcSetup(Settings->webcam_config.resolution);
+  if(Wc.up != 0) {WcSetup(Settings->webcam_config.resolution);}
 }
 
 /*********************************************************************************************/
 
 
 void WcLoop(void) {
-  if (4 == Wc.stream_active) { return; }
+  // if (4 == Wc.stream_active) { return; }
 
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
@@ -1042,11 +1042,10 @@ void WcShowStream(void) {
 //    if (!Wc.CamServer || !Wc.up) {
     if (!Wc.CamServer) {
       WcInterruptControl();
-      delay(50);   // Give the webcam webserver some time to prepare the stream
     }
-    if (Wc.CamServer && Wc.up) {
-      WSContentSend_P(PSTR("<p></p><center><img src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
-        (uint32_t)WiFi.localIP());
+    if (Wc.CamServer && Wc.up!=0) {
+      // Give the webcam webserver some time to prepare the stream - catch error in JS
+      WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
     }
   }
 }
@@ -1383,6 +1382,7 @@ void CmndWebcamClock(void){
 }
 
 void CmndWebcamInit(void) {
+  Wc.up = 0;
   WcInterruptControl();
   ResponseCmndDone();
 }
