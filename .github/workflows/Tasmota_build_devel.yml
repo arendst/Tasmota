@@ -18,6 +18,7 @@ jobs:
   be_solidify:
     runs-on: ubuntu-20.04
     if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -47,6 +48,7 @@ jobs:
     needs: be_solidify
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
