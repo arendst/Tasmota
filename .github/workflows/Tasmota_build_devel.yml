@@ -48,8 +48,8 @@ jobs:
           ../../libesp32/berry/berry -s -g solidify_all.be
       - uses: jason2866/upload-artifact@v2.0.2
         with:
-          name: '["berry_matter", "berry_tasmota", "berry_lvgl"]'
-          path: '["./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify"]'
+          name: '["berry_tasmota", "berry_matter", "berry_lvgl"]'
+          path: '["./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify"]'
 
   push_solidified:
     needs: be_solidify
