@@ -15,14 +15,22 @@ concurrency:
 
 jobs:
   be_solidify:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+      - name: Install clang compiler
+        run: |
+          sudo apt-get install -f clang
+      - name: Run coc
+        run: |
+          cd lib/libesp32/berry
+          ./gen.sh
       - name: Make Berry and Tasmota Berry code
         run: |
           cd lib/libesp32/berry
@@ -39,13 +47,14 @@ jobs:
           ../../libesp32/berry/berry -s -g solidify_all.be
       - uses: jason2866/upload-artifact@v2.0.2
         with:
-          name: '["berry_matter", "berry_tasmota", "lvgl_tasmota"]'
-          path: '["./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify"]'
+          name: '["berry_tasmota", "berry_matter", "berry_lvgl"]'
+          path: '["./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify"]'
 
   push_solidified:
     needs: be_solidify
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -55,13 +64,13 @@ jobs:
       - uses: jason2866/download-artifact@v3
         with:
           name: |
-            berry_matter
             berry_tasmota
-            lvgl_tasmota 
+            berry_matter
+            berry_lvgl
           path: |
-           ./lib/libesp32/berry_matter/src/solidify
-           ./lib/libesp32/berry_tasmota/src/solidify
-           ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+            ./lib/libesp32/berry_tasmota/src/solidify
+            ./lib/libesp32/berry_matter/src/solidify
+            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Solidified Code updated
