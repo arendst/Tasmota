@@ -38,7 +38,6 @@ class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_HTTP
   }
   static var TYPES = { 0x010A: 2 }       # On/Off Light
 
-  var tasmota_http                                  # domain name for HTTP
   var tasmota_relay_index                           # Relay number in Tasmota (zero based)
   var shadow_onoff                                  # fake status for now # TODO
 
@@ -56,23 +55,40 @@ class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_HTTP
   # Update shadow
   #
   def update_shadow()
-    var st11 = self.get_status_11()
-    if st11
-      st11 = st11.find('StatusSTS', {})             # remove first level
-      var state = (st11.find("POWER") == "ON")
+    var ret = self.call_remote_sync("Status", "11")
+    super(self).update_shadow()
+  end
+
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # TO BE OVERRIDDEN
+  # This call is synnchronous and blocking.
+  def parse_update(data, index)
+    if index == 11                              # Status 11
+      var state = (data.find("POWER") == "ON")
       if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
         self.attribute_updated(0x0006, 0x0000)
       end
       self.shadow_onoff = state
     end
-    super(self).update_shadow()
+  end
+
+  #############################################################
+  # probe_shadow_async
+  #
+  # ### TO BE OVERRIDDEN - DON'T CALL SUPER - default is just calling `update_shadow()`
+  # This is called on a regular basis, depending on the type of plugin.
+  # Whenever the data is returned, call `update_shadow(<data>)` to update values
+  def probe_shadow_async()
+    self.call_remote_async("Status", "11")
   end
 
   #############################################################
   # Model
   #
   def set_onoff(v)
-    self.call_remote("Power", v ? "1" : "0")
+    self.call_remote_sync("Power", v ? "1" : "0")
     self.update_shadow()
   end
 

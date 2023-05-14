@@ -133,6 +133,9 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
+#include "solidify/solidified_Matter_TCP_async.h"
+#include "solidify/solidified_Matter_HTTP_async.h"
+#include "solidify/solidified_Matter_HTTP_remote.h"
 #include "solidify/solidified_Matter_Expirable.h"
 #include "solidify/solidified_Matter_Fabric.h"
 #include "solidify/solidified_Matter_Session.h"
@@ -286,6 +289,9 @@ module matter (scope: global, strings: weak) {
   // UDP Server
   UDPPacket_sent, class(be_class_Matter_UDPPacket_sent)
   UDPServer, class(be_class_Matter_UDPServer)
+  TCP_async, class(be_class_Matter_TCP_async)
+  HTTP_async, class(be_class_Matter_HTTP_async)
+  HTTP_remote, class(be_class_Matter_HTTP_remote)
 
   // Expirable
   Expirable, class(be_class_Matter_Expirable)

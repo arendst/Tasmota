@@ -66,16 +66,44 @@ class Matter_Plugin
 
   #############################################################
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  def update_shadow()
-    self.tick = self.device.tick
+  #
+  # TO BE OVERRIDDEN
+  # This call is synnchronous and blocking.
+  def parse_update(data)
   end
 
   #############################################################
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This method should collect the data from the local or remote device
+  # and call `parse_update(<data>)` when data is available.
+  #
+  # TO BE OVERRIDDEN
+  # This call is synnchronous and blocking.
+  def update_shadow()
+    self.tick = self.device.tick
+    self.parse_update(nil)
+  end
+
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
   def update_shadow_lazy()
     if self.tick != self.device.tick
       self.update_shadow()
+      self.tick = self.device.tick
     end
+  end
+
+  #############################################################
+  # probe_shadow_async
+  #
+  # TO BE OVERRIDDEN - DON'T CALL SUPER - default is just calling `update_shadow()`
+  # This is called on a regular basis, depending on the type of plugin.
+  # Whenever the data is returned, call `parse_update(<data>)` to update values
+  def probe_shadow_async()
+    self.update_shadow()
   end
 
   #############################################################
@@ -250,7 +278,9 @@ class Matter_Plugin
       self.update_next = tasmota.millis(rand31 % self.UPDATE_TIME)
     else
       if tasmota.time_reached(self.update_next)
-        self.update_shadow_lazy()                             # call update_shadow if not already called
+        if self.tick != self.device.tick
+          self.probe_shadow_async()                             # call update_shadow if not already called
+        end
         self.update_next = tasmota.millis(self.UPDATE_TIME)   # rearm timer
       end
     end
