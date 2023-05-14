@@ -115,6 +115,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
 - Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
 - Support for GM861 1D and 2D bar code reader [#18399](https://github.com/arendst/Tasmota/issues/18399)
+- Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
 - Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)

@@ -1,13 +1,13 @@
 /*
-  xdrv_69_pca95xx.ino - PCA9557 GPIO Expander support for Tasmota
+  xdrv_69_pca9557.ino - PCA9557 GPIO Expander support for Tasmota
 
   SPDX-FileCopyrightText: 2023 Theo Arends
 
   SPDX-License-Identifier: GPL-3.0-only
 */
 
-#if defined(USE_I2C)
-#ifdef USE_PCA9557_DRV
+#ifdef USE_I2C
+#ifdef USE_PCA9557
 /*********************************************************************************************\
  * 8-bit PCA9557 I2C GPIO Expander to be used as virtual relay
  *

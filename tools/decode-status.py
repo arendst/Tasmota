@@ -295,7 +295,7 @@ a_features = [[
     "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
-    "USE_GDK101","USE_GM861","USE_TC74","",
+    "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
     "","","","",
     "","","",""
     ]]
@@ -325,7 +325,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.5.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.5.0.2 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
