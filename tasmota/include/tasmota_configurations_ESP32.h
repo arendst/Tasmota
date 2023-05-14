@@ -205,7 +205,7 @@
 #define USE_SPI
 #define USE_SDCARD
 
-#undef USE_I2C
+#define USE_I2C
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_DOMOTICZ

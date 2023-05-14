@@ -347,7 +347,7 @@ uint32_t WcSetup(int32_t fsiz) {
     if(TasmotaGlobal.i2c_enabled_2){              // configure SIOD and SIOC as SDA,2 and SCL,2
       config.sccb_i2c_port = 1;                   // reuse initialized bus 2, can be shared now
       if(config.pin_sccb_sda < 0){                // GPIO_WEBCAM_SIOD must not be set to really make it happen
-        AddLog(LOG_LEVEL_INFO, PSTR("CAM: use I2C bus 2"));
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Use I2C bus2"));
       }
     }
     config.pin_pwdn = Pin(GPIO_WEBCAM_PWDN);       // PWDN_GPIO_NUM;
