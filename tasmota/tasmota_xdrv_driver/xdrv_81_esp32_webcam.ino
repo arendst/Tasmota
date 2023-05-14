@@ -974,7 +974,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 
 void WcInterruptControl() {
   WcSetStreamserver(Settings->webcam_config.stream);
-  if(Wc.up != 0) {WcSetup(Settings->webcam_config.resolution);}
+  if(Wc.up == 0) {WcSetup(Settings->webcam_config.resolution);}
 }
 
 /*********************************************************************************************/
