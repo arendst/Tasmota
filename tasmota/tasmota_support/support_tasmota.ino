@@ -2224,8 +2224,13 @@ void GpioInit(void)
   }
 #ifdef ESP32
   TasmotaGlobal.i2c_enabled_2 = (PinUsed(GPIO_I2C_SCL, 1) && PinUsed(GPIO_I2C_SDA, 1));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("INI: i2c pins: SCL:%d SDA:%d i2c_enabled_2:%d"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1), TasmotaGlobal.i2c_enabled_2);
+
   if (TasmotaGlobal.i2c_enabled_2) {
     TasmotaGlobal.i2c_enabled_2 = I2c2Begin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1));
+    if (!TasmotaGlobal.i2c_enabled_2) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("INI: i2c_enabled_2 %d - I2c2Begin failed"), TasmotaGlobal.i2c_enabled_2);
+    }
   }
 #endif
 #endif  // USE_I2C
