@@ -318,9 +318,9 @@ public:
   }
 
   uint8_t       type;             // zigbee type, Zunk by default
-  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
-  uint16_t      divider;          // divide by x (ignore if 0 or 1)
-  int16_t       base;             // add x (ignore if 0)
+  uint32_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint32_t      divider;          // divide by x (ignore if 0 or 1)
+  int32_t       base;             // add x (ignore if 0)
   uint16_t      cluster;          // cluster number
   uint16_t      attribute;        // attribute number
   uint16_t      manuf;            // manufacturer code, 0 if none
@@ -338,7 +338,7 @@ public:
     {};
   
   void set(uint16_t cluster, uint16_t attribute, uint16_t new_cluster, uint16_t new_attribute,
-          int8_t multiplier = 1, int8_t divider = 1, int16_t base = 0) {
+          uint32_t multiplier = 1, uint32_t divider = 1, int32_t base = 0) {
     this->cluster = cluster;
     this->attribute = attribute;
     this->new_cluster = new_cluster;
@@ -354,9 +354,9 @@ public:
   uint16_t      attribute;        // attribute to match
   uint16_t      new_cluster;      // replace with this cluster
   uint16_t      new_attribute;    // replace with this attribute
-  uint16_t      multiplier;       // multiply by x (ignore if 0 or 1)
-  uint16_t      divider;          // divide by x (ignore if 0 or 1)
-  int16_t       base;           // add x (ignore if 0)
+  uint32_t      multiplier;       // multiply by x (ignore if 0 or 1)
+  uint32_t      divider;          // divide by x (ignore if 0 or 1)
+  int32_t       base;           // add x (ignore if 0)
 };
 
 //
@@ -530,9 +530,9 @@ public:
   uint16_t cluster = 0xFFFF;
   uint16_t attribute = 0xFFFF;
   const char * name = nullptr;
-  uint16_t multiplier = 1;
-  uint16_t divider = 1;
-  int16_t  base = 0;
+  uint32_t multiplier = 1;
+  uint32_t divider = 1;
+  int32_t  base = 0;
   uint8_t zigbee_type = Znodata;
   uint8_t map_offset = 0;
   Z_Data_Type map_type = Z_Data_Type::Z_Unknown;

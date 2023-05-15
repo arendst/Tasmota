@@ -214,9 +214,9 @@ bool ZbLoad_inner(const char *filename, File &fp) {
         uint16_t attr_id = 0xFFFF;
         uint16_t cluster_id = 0xFFFF;
         uint8_t  type_id = Zunk;
-        uint16_t multiplier = 1;
-        uint16_t divider = 1;
-        int16_t  base = 0;
+        uint32_t multiplier = 1;
+        uint32_t divider = 1;
+        int32_t  base = 0;
         char *   name = nullptr;
         uint16_t manuf = 0;
 
@@ -281,9 +281,9 @@ bool ZbLoad_inner(const char *filename, File &fp) {
         char * delimiter_slash2 = strchr(tok2, '/');
         uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
         uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
-        uint16_t multiplier = 1;
-        uint16_t divider = 1;
-        int16_t  base = 0;
+        uint32_t multiplier = 1;
+        uint32_t divider = 1;
+        int32_t  base = 0;
 
         // ADDITIONAL ELEMENTS?
         while (token = strtok_r(rest, ",", &rest)) {
@@ -386,7 +386,7 @@ bool ZbUnload(const char *filename_raw) {
 }
 
 // append modifiers like mul/div/manuf
-void Z_AppendModifiers(char * buf, size_t buf_len, uint16_t multiplier, uint16_t divider, int16_t base, uint16_t manuf) {
+void Z_AppendModifiers(char * buf, size_t buf_len, uint32_t multiplier, uint32_t divider, int32_t base, uint16_t manuf) {
   if (multiplier != 0 && multiplier != 1) {
     ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_MUL, multiplier);
   }

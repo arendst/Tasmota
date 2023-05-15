@@ -232,7 +232,7 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
 // I.e. multipliers and dividers are inversed
 // multiplier == 0: ignore
 // multiplier == 1: ignore
-void ZbApplyMultiplierForWrites(double &val_d, uint16_t multiplier, uint16_t divider, int16_t base) {
+void ZbApplyMultiplierForWrites(double &val_d, uint32_t multiplier, uint32_t divider, int32_t base) {
   if (0 != base) {
     val_d = val_d - base;
   }
