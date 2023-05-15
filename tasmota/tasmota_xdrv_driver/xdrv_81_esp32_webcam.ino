@@ -333,6 +333,7 @@ uint32_t WcSetup(int32_t fsiz) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetup"));
   if (fsiz >= FRAMESIZE_FHD) { fsiz = FRAMESIZE_FHD - 1; }
 
+  int stream_active = Wc.stream_active;
   Wc.stream_active = 0;
 
   if (fsiz < 0) {
@@ -478,6 +479,9 @@ uint32_t WcSetup(int32_t fsiz) {
 
   Wc.up = 1;
   if (psram) { Wc.up = 2; }
+
+  // restore stream_active if we setup ok.
+  Wc.stream_active = stream_active;
 
   return Wc.up;
 }
@@ -999,12 +1003,14 @@ void HandleWebcamRoot(void) {
 /*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
-  if (TasmotaGlobal.global_state.network_down) { return 0; }
-
-  Wc.stream_active = 0;
+  if (TasmotaGlobal.global_state.network_down) { 
+    Wc.stream_active = 0;
+    return 0; 
+  }
 
   if (flag) {
     if (!Wc.CamServer) {
+      Wc.stream_active = 0;
       Wc.CamServer = new ESP8266WebServer(81);
       Wc.CamServer->on("/", HandleWebcamRoot);
       Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
@@ -1015,6 +1021,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
     }
   } else {
     if (Wc.CamServer) {
+      Wc.stream_active = 0;
       Wc.CamServer->stop();
       delete Wc.CamServer;
       Wc.CamServer = NULL;
@@ -1025,10 +1032,13 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 }
 
 void WcInterruptControl() {
-  TasAutoMutex localmutex(&WebcamMutex, "HandleWebcamMjpegTask");
+  TasAutoMutex localmutex(&WebcamMutex, "WcInterruptControl");
 
   WcSetStreamserver(Settings->webcam_config.stream);
-  if(Wc.up == 0) {WcSetup(Settings->webcam_config.resolution);}
+  if(Wc.up == 0) {
+    WcSetup(Settings->webcam_config.resolution);
+  }
+
 }
 
 /*********************************************************************************************/
