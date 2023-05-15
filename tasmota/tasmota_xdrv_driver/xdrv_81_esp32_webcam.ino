@@ -439,19 +439,22 @@ uint32_t WcSetup(int32_t fsiz) {
 
   esp_err_t err;
   // cannot hurt to retry...
-  for (int i = 0; i < 2; i++){
+  for (int i = 0; i < 3; i++){
     err = esp_camera_init(&config);
 
     if (err != ESP_OK) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x try %d"), err, (i+1));
       esp_camera_deinit();
     } else {
+      if (i){
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitOK try %d"), (i+1));
+      }
       break;
     }
   }
 
   if (err != ESP_OK) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x"), err);
     return 0;
   }
 
