@@ -1,0 +1,8 @@
+// THIS IS A GENERATED FILE - DO NOT HAND EDIT
+
+
+#if DEBUG_LINK
+#define COINS_COUNT 16
+#else
+#define COINS_COUNT 13
+#endif

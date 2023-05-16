@@ -43,6 +43,84 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
 
+// #include "esp_event.h"
+// #include "esp_system.h"
+// #include "esp_partition.h"
+// #include "nvs_flash.h"
+// #include <Preferences.h>
+
+#include "trezor-crypto/options.h"
+#include "trezor-crypto/address.h"
+#include "trezor-crypto/aes/aes.h"
+#include "trezor-crypto/base32.h"
+#include "trezor-crypto/base58.h"
+#include "trezor-crypto/bignum.h"
+#include "trezor-crypto/bip32.h"
+#include "trezor-crypto/bip39.h"
+#include "trezor-crypto/blake256.h"
+#include "trezor-crypto/blake2b.h"
+#include "trezor-crypto/blake2s.h"
+#include "trezor-crypto/curves.h"
+#include "trezor-crypto/ecdsa.h"
+#include "trezor-crypto/ed25519-donna/ed25519-donna.h"
+#include "trezor-crypto/ed25519-donna/curve25519-donna-scalarmult-base.h"
+#include "trezor-crypto/ed25519-donna/ed25519-keccak.h"
+#include "trezor-crypto/ed25519-donna/ed25519.h"
+#include "trezor-crypto/hmac.h"
+#include "trezor-crypto/memzero.h"
+#include "trezor-crypto/nist256p1.h"
+#include "trezor-crypto/pbkdf2.h"
+#include "trezor-crypto/rand.h"
+#include "trezor-crypto/rc4.h"
+#include "trezor-crypto/rfc6979.h"
+#include "trezor-crypto/script.h"
+#include "trezor-crypto/secp256k1.h"
+#include "trezor-crypto/sha2.h"
+#include "trezor-crypto/sha3.h"
+
+#define FROMHEX_MAXLEN 512
+
+#define VERSION_PUBLIC 0x0488b21e
+#define VERSION_PRIVATE 0x0488ade4
+
+#define BDB_VERSION_PUBLIC 0x02d41400   //0x03A3FDC2
+#define BDB_VERSION_PRIVATE 0x02d40fc0   //0x03A3F988
+
+#define PLANET_VERSION_PUBLIC 0x03e25d83
+#define PLANET_VERSION_PRIVATE 0x03e25944 
+
+#define LIQUIDBTC_VERSION_PUBLIC 0X76067358
+#define LIQUIDBTC_VERSION_PRIVATE 0x76066276
+
+#define ETHEREUM_VERSION_PUBLIC 0x0488b21e
+#define ETHEREUM_VERSION_PRIVATE 0x0488ade4
+
+const uint8_t *fromhex(const char *str) {
+  static uint8_t buf[FROMHEX_MAXLEN];
+  size_t len = strlen(str) / 2;
+  if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+  for (size_t i = 0; i < len; i++) {
+    uint8_t c = 0;
+    if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+    if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+    if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9')
+      c += (str[i * 2 + 1] - '0');
+    if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+    buf[i] = c;
+  }
+  return buf;
+}
+
+void tohex(char *hexbuf, uint8_t *str, int strlen){
+   // char hexbuf[strlen];
+    for (int i = 0 ; i < strlen/2 ; i++) {
+        sprintf(&hexbuf[2*i], "%02X", str[i]);
+    }
+  hexbuf[strlen-2] = '\0';
+}
+
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
 
@@ -63,6 +141,98 @@ const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/
                                             "|WPA2-Enterprise|WPA3/PSK|WPA2/WPA3/PSK|WAPI/PSK"
 #endif  // ESP32
 ;
+
+String SignDataHash(const char* data_hash)
+{
+//    char* str = "\"ENERGY\":{\"TotalStartTime\":\"2022-10-13T10:12:20\",\"Total\":100.293,\"Yesterday\":0.508,\"Today\":0.222,\"Power\":21,\"ApparentPower\":39,\"ReactivePower\":32,\"Factor\":0.54,\"Voltage\":229,\"Current\":0.168}";
+    uint8_t hash2[32];
+
+    // Initialize the SHA-256 hasher
+    SHA256_CTX ctx;
+    sha256_Init(&ctx);
+
+    // Hash the string
+    sha256_Update(&ctx, (const uint8_t*) data_hash, strlen(data_hash));
+    sha256_Final(&ctx, hash2);
+
+    // Print the hash
+    for (int i = 0; i < 32; i++) {
+        SLIPSerial.printf("%02x", hash2[i]);
+    }
+    SLIPSerial.printf("\n");
+
+    // Initialize the ECDSA context
+    const ecdsa_curve *curve = &secp256k1;
+    uint8_t priv_key[32] = {0};
+    uint8_t pub_key[33] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t expected_sig[64] = {0};
+    uint8_t computed_sig[64] = {0};
+    int res = 0;
+
+    memcpy(priv_key, node2.private_key, 32);
+
+    //res = ecdsa_sign_digest_fn(curve, priv_key, hash2, computed_sig, NULL, NULL);
+    res = ecdsa_sign_digest(curve, priv_key, hash2, computed_sig, NULL, NULL);
+
+    // Print the signature and verification result
+    SLIPSerial.printf("\n");
+    printf("Signature: ");
+    for (int i = 0; i < 64; i++) {
+        SLIPSerial.printf("%02x", computed_sig[i]);
+    }
+    SLIPSerial.printf("\n");
+
+    memcpy(pub_key, node2.public_key, 33);
+
+    int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
+
+    SLIPSerial.printf("\n");
+    if (verified == 0) {
+        SLIPSerial.printf("Signature verified.\n");
+    } else {
+        SLIPSerial.printf("Signature verification failed.\n");
+    }
+}
+
+const char* WifiMnemonic(const char* entropy)
+{
+  HDNode node;
+  uint8_t seed[64];
+  const char *m;
+  int i;
+  
+  /* The entropy has to come from a TRNG running on a secure element */
+  const char entropy_buffer [] = "0A01020B040506C708090a0bDc0d0e0f00010E030405060708FF0a0b0c0d0e0f";
+  
+  m = mnemonic_from_data(fromhex(entropy_buffer), strlen(entropy_buffer)/2);  
+
+  uint8_t buf[32] = {0};
+  esp_fill_random(buf, 32);
+
+  String data;
+  for (int i=0; i<32; i++)
+  {
+    static char tmp[4] = {};
+    sprintf(tmp, "%02X", buf[i]);
+    Serial.write(tmp);
+    data += tmp;
+  }
+
+
+  const char *m2;
+  m2 = mnemonic_from_data(fromhex(data.c_str()), 32); 
+
+  entropy = (const char*)m2;
+  
+  /*mnemonic_to_seed(m, "TREZOR", seed, 0);
+  hdnode_from_seed(seed, 16,
+                   ED25519_NAME, &node);*/
+  //const char addr[64];
+  //hdnode_get_address(&node, PLANET_VERSION_PUBLIC, addr, sizeof(addr));
+
+  return entropy;
+}
 
 String WifiEncryptionType(uint32_t i) {
 #ifdef ESP8266

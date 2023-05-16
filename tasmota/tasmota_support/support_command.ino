@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "trezor-crypto/base58.h"
+
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_WIFINOSLEEP "|"
@@ -707,6 +709,49 @@ void CmndStatusResponse(uint32_t index) {
   }
 }
 
+#define FROMHEX_MAXLEN 512
+
+#define VERSION_PUBLIC 0x0488b21e
+#define VERSION_PRIVATE 0x0488ade4
+
+#define BDB_VERSION_PUBLIC 0x02d41400   //0x03A3FDC2
+#define BDB_VERSION_PRIVATE 0x02d40fc0   //0x03A3F988
+
+#define PLANET_VERSION_PUBLIC 0x03e25d83
+#define PLANET_VERSION_PRIVATE 0x03e25944 
+
+#define LIQUIDBTC_VERSION_PUBLIC 0X76067358
+#define LIQUIDBTC_VERSION_PRIVATE 0x76066276
+
+#define ETHEREUM_VERSION_PUBLIC 0x0488b21e
+#define ETHEREUM_VERSION_PRIVATE 0x0488ade4
+
+const uint8_t *fromhex2(const char *str) {
+  static uint8_t buf[FROMHEX_MAXLEN];
+  size_t len = strlen(str) / 2;
+  if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+  for (size_t i = 0; i < len; i++) {
+    uint8_t c = 0;
+    if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+    if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+    if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9')
+      c += (str[i * 2 + 1] - '0');
+    if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+    buf[i] = c;
+  }
+  return buf;
+}
+
+void tohex2(char *hexbuf, uint8_t *str, int strlen){
+   // char hexbuf[strlen];
+    for (int i = 0 ; i < strlen/2 ; i++) {
+        sprintf(&hexbuf[2*i], "%02X", str[i]);
+    }
+  hexbuf[strlen-2] = '\0';
+}
+
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
@@ -735,11 +780,30 @@ void CmndStatus(void)
     for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%d" ), stemp2, (i > 0 ? "," : ""), Settings->switchmode[i]);
     }
+
+    const char *entropy;
+    const char *m;
+  
+    m = WifiMnemonic(entropy);
+
+    const char raw[] = "00112233445566778899aabbcceeff00112233445566778899aabbcceeff";
+    uint8_t raw_t[4];
+    int len = 2;
+    char strn[53];
+
+    memcpy(raw_t, fromhex2(raw), len);
+    int r;
+    r = base58_encode_check(raw_t, len, HASHER_SHA2, strn, sizeof(strn));
+
+    
+
+  // const char mnemonic[] = "art art art art art art art art art art art abundance";
+  // Response_P(PSTR("{\"Mnemonic\":\"%s\"}"), m );
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"" D_CMND_STATUSRETAIN "\":%d}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"hash\":%s}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings->poweronstate, Settings->ledstate,
                           Settings->ledmask, Settings->save_data,
@@ -751,9 +815,8 @@ void CmndStatus(void)
                           Settings->flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings->flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings->flag5.mqtt_info_retain,    // CMND_INFORETAIN
-                          Settings->flag5.mqtt_state_retain,   // CMND_STATERETAIN
-                          Settings->flag5.mqtt_status_retain   // CMND_STATUSRETAIN
-                          );
+                          Settings->flag5.mqtt_state_retain,  // CMND_STATERETAIN
+                          strn);                                 // CMND_STATERETAIN
     CmndStatusResponse(0);
   }
 
@@ -929,6 +992,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor(true);
     ResponseJsonEnd();
+    SignDataHash();
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
