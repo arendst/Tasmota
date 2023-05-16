@@ -17,7 +17,34 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "trezor-crypto/options.h"
+#include "trezor-crypto/address.h"
+#include "trezor-crypto/aes/aes.h"
+#include "trezor-crypto/base32.h"
 #include "trezor-crypto/base58.h"
+#include "trezor-crypto/bignum.h"
+#include "trezor-crypto/bip32.h"
+#include "trezor-crypto/bip39.h"
+#include "trezor-crypto/blake256.h"
+#include "trezor-crypto/blake2b.h"
+#include "trezor-crypto/blake2s.h"
+#include "trezor-crypto/curves.h"
+#include "trezor-crypto/ecdsa.h"
+#include "trezor-crypto/ed25519-donna/ed25519-donna.h"
+#include "trezor-crypto/ed25519-donna/curve25519-donna-scalarmult-base.h"
+#include "trezor-crypto/ed25519-donna/ed25519-keccak.h"
+#include "trezor-crypto/ed25519-donna/ed25519.h"
+#include "trezor-crypto/hmac.h"
+#include "trezor-crypto/memzero.h"
+#include "trezor-crypto/nist256p1.h"
+#include "trezor-crypto/pbkdf2.h"
+#include "trezor-crypto/rand.h"
+#include "trezor-crypto/rc4.h"
+#include "trezor-crypto/rfc6979.h"
+#include "trezor-crypto/script.h"
+#include "trezor-crypto/secp256k1.h"
+#include "trezor-crypto/sha2.h"
+#include "trezor-crypto/sha3.h"
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
@@ -752,6 +779,62 @@ void tohex2(char *hexbuf, uint8_t *str, int strlen){
   hexbuf[strlen-2] = '\0';
 }
 
+bool SignDataHash(int json_data_start)
+{
+    uint8_t seed[64];
+    const char *m;
+
+    m = "art art art art art art art art art art art abundance";
+    mnemonic_to_seed(m, "TREZOR", seed, 0);
+    HDNode node2;
+
+  // test vector from https://en.bitcoin.it/wiki/BIP_0032_TestVectors for Elliptic Curves SECP256K1
+    hdnode_from_seed( seed, 64, SECP256K1_NAME, &node2);
+    hdnode_fill_public_key(&node2);
+
+//    char* str = "\"ENERGY\":{\"TotalStartTime\":\"2022-10-13T10:12:20\",\"Total\":100.293,\"Yesterday\":0.508,\"Today\":0.222,\"Power\":21,\"ApparentPower\":39,\"ReactivePower\":32,\"Factor\":0.54,\"Voltage\":229,\"Current\":0.168}";
+    uint8_t hash2[32];
+
+    int current_length  = ResponseLength();
+    size_t p2bsigned_length = current_length - json_data_start;
+    char* p2Bsigned = ResponseData() + json_data_start;
+
+    // Initialize the SHA-256 hasher
+    SHA256_CTX ctx;
+    sha256_Init(&ctx);
+
+    // Hash the string
+    sha256_Update(&ctx, (const uint8_t*) p2Bsigned, p2bsigned_length);
+    sha256_Final(&ctx, hash2);
+
+    // Initialize the ECDSA context
+    const ecdsa_curve *curve = &secp256k1;
+    uint8_t priv_key[32] = {0};
+    uint8_t pub_key[33] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t expected_sig[64] = {0};
+    uint8_t computed_sig[64] = {0};
+    int res = 0;
+
+    memcpy(priv_key, node2.private_key, 32);
+
+    //res = ecdsa_sign_digest_fn(curve, priv_key, hash2, computed_sig, NULL, NULL);
+    res = ecdsa_sign_digest(curve, priv_key, hash2, computed_sig, NULL, NULL);
+
+    // Print the signature and verification result
+    memcpy(pub_key, node2.public_key, 33);
+
+    int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
+
+    Response_P(PSTR("{\"" "rddl \":"));
+    Response_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash2);
+    Response_P(PSTR(",\"%s\":\"%s\""), "EnergySig", computed_sig);
+    Response_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pub_key);
+    ResponseJsonEnd();
+
+    return true;
+}
+
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
@@ -784,7 +867,7 @@ void CmndStatus(void)
     const char *entropy;
     const char *m;
   
-    m = WifiMnemonic(entropy);
+    m = "art art art art art art art art art art art abundance";
 
     const char raw[] = "00112233445566778899aabbcceeff00112233445566778899aabbcceeff";
     uint8_t raw_t[4];
@@ -796,8 +879,6 @@ void CmndStatus(void)
     r = base58_encode_check(raw_t, len, HASHER_SHA2, strn, sizeof(strn));
 
     
-
-  // const char mnemonic[] = "art art art art art art art art art art art abundance";
   // Response_P(PSTR("{\"Mnemonic\":\"%s\"}"), m );
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
@@ -989,10 +1070,11 @@ void CmndStatus(void)
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
+    int current_length = ResponseLength();
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor(true);
     ResponseJsonEnd();
-    SignDataHash();
+    SignDataHash(current_length);
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
