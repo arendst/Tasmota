@@ -110,11 +110,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.5.0.2
+## Changelog v12.5.0.3
 ### Added
-- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin
-latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
 - Command ``I2cScan0`` to scan both busses on ESP32 with one command
+- Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er [#15443](https://github.com/arendst/Tasmota/issues/15443)
 - Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
 - Support for GM861 1D and 2D bar code reader [#18399](https://github.com/arendst/Tasmota/issues/18399)
 - Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)

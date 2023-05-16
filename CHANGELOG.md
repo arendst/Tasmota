@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.5.0.2]
+## [12.5.0.3]
+### Added
+- Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er (#15443)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.5.0.2] 20230516
 ### Added
 - Matter support for Shutters with Tilt
 - Matter POC for remote Relay
@@ -30,8 +42,6 @@ All notable changes to this project will be documented in this file.
 - Partition_Manager.tapp fixed
 - Berry fixed a rare condition when a GC causes a memory corruption
 - LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 (#18666)
-
-### Removed
 
 ## [12.5.0.1] 20230505
 ### Added

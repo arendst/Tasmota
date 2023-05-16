@@ -105,6 +105,7 @@
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
 struct WIFI {
+  int last_tx_pwr;
   uint32_t last_event = 0;                 // Last wifi connection event
   uint32_t downtime = 0;                   // Wifi down duration
   uint16_t link_count = 0;                 // Number of wifi re-connect

@@ -1241,6 +1241,10 @@ void Every100mSeconds(void)
       }
     }
   }
+
+  if (0 == Settings->wifi_output_power) {
+    WiFiSetTXpowerBasedOnRssi();
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*\

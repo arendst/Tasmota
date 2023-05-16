@@ -966,9 +966,114 @@ String WifiGetOutputPower(void)
   return String(stemp1);
 }
 
-void WifiSetOutputPower(void)
-{
-  WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+void WifiSetOutputPower(void) {
+  if (Settings->wifi_output_power) {
+    WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+  }
+}
+
+/*
+  Dynamic WiFi transmit power based on RSSI lowering overall DC power usage
+
+  Original idea by ESPEasy (@TD-er)
+*/
+#ifdef ESP32
+  #if defined(CONFIG_IDF_TARGET_ESP32S2)
+    #define MAX_TX_PWR_DBM_11b    195
+    #define MAX_TX_PWR_DBM_54g    150
+    #define MAX_TX_PWR_DBM_n      130
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -750
+    #define WIFI_SENSITIVITY_n    -720
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define MAX_TX_PWR_DBM_11b    210
+    #define MAX_TX_PWR_DBM_54g    190
+    #define MAX_TX_PWR_DBM_n      185
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -760
+    #define WIFI_SENSITIVITY_n    -720
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define MAX_TX_PWR_DBM_11b    210
+    #define MAX_TX_PWR_DBM_54g    190
+    #define MAX_TX_PWR_DBM_n      185
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -760
+    #define WIFI_SENSITIVITY_n    -730
+  #else
+    #define MAX_TX_PWR_DBM_11b    195
+    #define MAX_TX_PWR_DBM_54g    160
+    #define MAX_TX_PWR_DBM_n      140
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -750
+    #define WIFI_SENSITIVITY_n    -700
+  #endif
+#endif
+#ifdef ESP8266
+  #define MAX_TX_PWR_DBM_11b    200
+  #define MAX_TX_PWR_DBM_54g    170
+  #define MAX_TX_PWR_DBM_n      140
+  #define WIFI_SENSITIVITY_11b  -910
+  #define WIFI_SENSITIVITY_54g  -750
+  #define WIFI_SENSITIVITY_n    -720
+#endif
+
+void WiFiSetTXpowerBasedOnRssi(void) {
+  const WiFiMode_t cur_mode = WiFi.getMode();
+  if (cur_mode == WIFI_OFF) { return; }
+
+  // Range ESP32  : 2dBm - 20dBm
+  // Range ESP8266: 0dBm - 20.5dBm
+//  int maxTXpwr = Settings->wifi_output_power;
+  int maxTXpwr = 210;
+  int threshold = WIFI_SENSITIVITY_n;
+  int phy_mode = WiFi.getPhyMode();
+  switch (phy_mode) {
+    case 1:                  // 11b (WIFI_PHY_MODE_11B)
+      threshold = WIFI_SENSITIVITY_11b;
+      if (maxTXpwr > MAX_TX_PWR_DBM_11b) maxTXpwr = MAX_TX_PWR_DBM_11b;
+      break;
+    case 2:                  // 11bg (WIFI_PHY_MODE_11G)
+      threshold = WIFI_SENSITIVITY_54g;
+      if (maxTXpwr > MAX_TX_PWR_DBM_54g) maxTXpwr = MAX_TX_PWR_DBM_54g;
+      break;
+    case 3:                  // 11bgn (WIFI_PHY_MODE_11N)
+      threshold = WIFI_SENSITIVITY_n;
+      if (maxTXpwr > MAX_TX_PWR_DBM_n) maxTXpwr = MAX_TX_PWR_DBM_n;
+      break;
+  }
+  threshold += 30;           // Margin in dBm * 10 on top of threshold
+  int minTXpwr = 0;
+
+  // Assume AP sends with max set by ETSI standard.
+  // 2.4 GHz: 100 mWatt (20 dBm)
+  // US and some other countries allow 1000 mW (30 dBm)
+  int rssi = WiFi.RSSI() * 10;
+  int newrssi = rssi - 200;  // We cannot send with over 20 dBm, thus it makes no sense to force higher TX power all the time.
+
+  if (newrssi < threshold) {
+    minTXpwr = threshold - newrssi;
+  }
+  if (minTXpwr > maxTXpwr) {
+    minTXpwr = maxTXpwr;
+  }
+  int dBm = 0;
+  if (dBm > maxTXpwr) {
+    dBm = maxTXpwr;
+  } else if (dBm < minTXpwr) {
+    dBm = minTXpwr;
+  }
+  WiFi.setOutputPower((float)dBm / 10);
+
+  delay(Wifi.last_tx_pwr < dBm);  // If increase the TX power, give power supply of the unit some rest
+  Wifi.last_tx_pwr = dBm;
+
+/*
+  int TX_pwr_int = Wifi.last_tx_pwr * 4;
+  int maxTXpwr_int = maxTXpwr * 4;
+  if (TX_pwr_int != maxTXpwr_int) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: TX power %d, Sensitivity %d, RSSI %d"), dBm / 10, threshold/ 10, rssi / 10);
+  }
+*/
 }
 
 /*
