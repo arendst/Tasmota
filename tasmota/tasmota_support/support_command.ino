@@ -809,6 +809,7 @@ bool SignDataHash(int json_data_start)
 
     // Initialize the ECDSA context
     const ecdsa_curve *curve = &secp256k1;
+
     uint8_t priv_key[32] = {0};
     uint8_t pub_key[33] = {0};
     uint8_t digest[32] = {0};
@@ -818,6 +819,7 @@ bool SignDataHash(int json_data_start)
 
     memcpy(priv_key, node2.private_key, 32);
 
+
     //res = ecdsa_sign_digest_fn(curve, priv_key, hash2, computed_sig, NULL, NULL);
     res = ecdsa_sign_digest(curve, priv_key, hash2, computed_sig, NULL, NULL);
 
@@ -826,11 +828,23 @@ bool SignDataHash(int json_data_start)
 
     int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
 
-    Response_P(PSTR("{\"" "rddl \":"));
-    Response_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash2);
-    Response_P(PSTR(",\"%s\":\"%s\""), "EnergySig", computed_sig);
-    Response_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pub_key);
-    ResponseJsonEnd();
+
+    // prepare and convert outputs to hex-strings
+
+    char pubkey_out[68] = {0};
+    char sig_out[130] = {0};
+    char hash_out[66] = {0};
+    tohex2( pubkey_out, pub_key, 68);
+    tohex2( sig_out, hash2, 130);
+    tohex2( hash_out, computed_sig, 66);
+
+
+    //Response_P(PSTR("{\"" "rddl \":"));
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
+    ResponseAppend_P(PSTR(",\"%s\":\"%u\""), "Verified", verified);
+    //ResponseJsonEnd();
 
     return true;
 }
@@ -1070,11 +1084,13 @@ void CmndStatus(void)
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
-    int current_length = ResponseLength();
+    
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
+    int current_length = ResponseLength();
     MqttShowSensor(true);
-    ResponseJsonEnd();
     SignDataHash(current_length);
+    ResponseJsonEnd();
+    
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
