@@ -828,9 +828,7 @@ bool SignDataHash(int json_data_start)
 
     int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
 
-
     // prepare and convert outputs to hex-strings
-
     char pubkey_out[68] = {0};
     char sig_out[130] = {0};
     char hash_out[66] = {0};
@@ -845,6 +843,7 @@ bool SignDataHash(int json_data_start)
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%u\""), "Verified", verified);
     //ResponseJsonEnd();
+
 
     return true;
 }
@@ -1084,13 +1083,11 @@ void CmndStatus(void)
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
-    
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     int current_length = ResponseLength();
     MqttShowSensor(true);
     SignDataHash(current_length);
     ResponseJsonEnd();
-    
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
