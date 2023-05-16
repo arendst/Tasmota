@@ -199,7 +199,7 @@ void TasDiscoverMessage(void) {
                         light_controller_isCTRGBLinked,
                         light_subtype);
 
-  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < tmin(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
 #ifdef USE_SHUTTER
     ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
 #else
