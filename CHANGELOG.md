@@ -9,12 +9,13 @@ All notable changes to this project will be documented in this file.
 - Matter POC for remote Relay
 - Support for Zero-Cross Dimmer on ESP32, changed calculation on EPS8266, high resolution control e.g. Solar: `ZCDimmerSet`
 - ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
-- ESP32 `Shuttersetup` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
+- ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - Berry `tcpclientasync` class for non-blocking TCP client
 - Support for GM861 1D and 2D bar code reader (#18399)
 - Berry `re` (regex) add `match2` and optional offset
 - Support for PCA9557 8-bit I/O expander (#18632)
-- Zigbee support for air sensors
+- Zigbee support for air sensors (#18665)
+- Command ``I2cScan0`` to scan both busses on ESP32 with one command
 
 ### Breaking Changed
 - Change command ``FileUpload`` index binary data detection from >199 to >299
@@ -28,7 +29,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Partition_Manager.tapp fixed
 - Berry fixed a rare condition when a GC causes a memory corruption
-- LED PWM ac_dimmer curve was wrongly applied instead of Gamma
+- LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 (#18666)
 
 ### Removed
 

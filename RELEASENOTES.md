@@ -112,16 +112,19 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v12.5.0.2
 ### Added
-- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin
+latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
+- Command ``I2cScan0`` to scan both busses on ESP32 with one command
 - Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
 - Support for GM861 1D and 2D bar code reader [#18399](https://github.com/arendst/Tasmota/issues/18399)
 - Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)
+- Zigbee support for air sensors [#18665](https://github.com/arendst/Tasmota/issues/18665)
+- ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
+- ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
 - Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
 - Matter support for Shutters with Tilt [#18509](https://github.com/arendst/Tasmota/issues/18509)
-- ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
-- ESP32 `Shuttersetup` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - Berry `tcpclientasync` class for non-blocking TCP client
 
 ### Breaking Changed
@@ -136,6 +139,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
 - NovaSDS GUI values [#18444](https://github.com/arendst/Tasmota/issues/18444)
-- Berry fix rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 [#18666](https://github.com/arendst/Tasmota/issues/18666)
+- Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
 - Berry a rare condition when a GC causes a memory corruption
 - Partition_Manager.tapp
