@@ -125,6 +125,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
 - Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
 - Matter support for Shutters with Tilt [#18509](https://github.com/arendst/Tasmota/issues/18509)
+- Matter support for remote relays [#18656](https://github.com/arendst/Tasmota/issues/18656)
 - Berry `tcpclientasync` class for non-blocking TCP client
 
 ### Breaking Changed
@@ -142,4 +143,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 [#18666](https://github.com/arendst/Tasmota/issues/18666)
 - Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
 - Berry a rare condition when a GC causes a memory corruption
+- AIThinker webcam issues [#18652](https://github.com/arendst/Tasmota/issues/18652)
+- Shutter bootloop using more than 4 shutters [#18673](https://github.com/arendst/Tasmota/issues/18673)
 - Partition_Manager.tapp
