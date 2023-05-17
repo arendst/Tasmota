@@ -138,6 +138,7 @@ class lvh_obj
     # "text_rule": nil,
     # "text_rule_formula": nil,
     # "text_rule_format": nil,
+    # "meta": nil,
     # roller
     # "options": nil,
     # qrcode
@@ -154,6 +155,7 @@ class lvh_obj
   var _lv_label                             # sub-label if exists
   var _page                                 # parent page object
   var _action                               # value of the HASPmota `action` attribute, shouldn't be called `self.action` since we want to trigger the set/member functions
+  var _meta                                 # free form metadata
 
   #====================================================================
   # Rule engine to map value and text to rules
@@ -776,6 +778,17 @@ class lvh_obj
     else
       print("HSP: unknown attribute:", k)
     end
+  end
+
+  #====================================================================
+  #  Metadata
+  #
+  #====================================================================
+  def set_meta(t)
+    self._meta = t
+  end
+  def get_meta()
+    return self._meta
   end
 
   #====================================================================
@@ -1725,13 +1738,12 @@ class HASPmota
 
     # first run any Berry code embedded
     var berry_run = str(jline.find("berry_run"))
+    var func_compiled
     if berry_run != "nil"
       try
-        var func_compiled = compile(berry_run)
-        # run the compiled code once
-        func_compiled()
+        func_compiled = compile(berry_run)
       except .. as e,m
-        print(string.format("HSP: unable to run berry code \"%s\" - '%s' - %s", berry_run, e, m))
+        print(string.format("HSP: unable to compile berry code \"%s\" - '%s' - %s", berry_run, e, m))
       end
     end
 
@@ -1795,6 +1807,19 @@ class HASPmota
       # create a global variable for this object of form p<page>b<id>, ex p1b2
       var glob_name = string.format("p%ib%i", lvh_page_cur.id(), obj_id)
       global.(glob_name) = obj_lvh
+
+    end
+
+    if func_compiled != nil
+      try
+        # run the compiled code once
+        var f_ret = func_compiled()
+        if type(f_ret) == 'function'
+          f_ret(obj_lvh)
+        end
+      except .. as e,m
+        print(string.format("HSP: unable to run berry code \"%s\" - '%s' - %s", berry_run, e, m))
+      end
     end
 
     if obj_id == 0 && obj_type != "nil"
