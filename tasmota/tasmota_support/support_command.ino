@@ -833,9 +833,8 @@ bool SignDataHash(int json_data_start)
     char sig_out[130] = {0};
     char hash_out[66] = {0};
     tohex2( pubkey_out, pub_key, 68);
-    tohex2( sig_out, hash2, 130);
-    tohex2( hash_out, computed_sig, 66);
-
+    tohex2( sig_out, computed_sig, 130);
+    tohex2( hash_out, hash2, 66);
 
     //Response_P(PSTR("{\"" "rddl \":"));
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
@@ -846,6 +845,27 @@ bool SignDataHash(int json_data_start)
 
 
     return true;
+}
+
+int validateSignature() {
+      const ecdsa_curve *curve = &secp256k1;
+
+
+      uint8_t pub_key[33] = {0};
+      uint8_t hash2[32] = {0};
+      uint8_t computed_sig[64] = {0};
+
+      const char pub_key_str[] = "02F8BC8B413BF803EA1DA9BE0FBFF4ED23FEED17A859187242007544F8535D3457";
+      const char hash_str[] = "83EC230810630863EEB5C873206F45E60D5FB9EA3F5241EEECFB514F261A57DF";
+      const char sig_str[] = "F551CDF6156FD2A8CC29428B61FDB9F5224928D5A5937E38F36D2D566C11B1DF13CD12E3BA2DAE6A33F091C549A5ADE537A5F07121AA1F4D4286B51260B228DE";
+
+
+      memcpy(pub_key, fromhex2(pub_key_str), 33);
+      memcpy(hash2, fromhex2(hash_str), 32);
+      memcpy(computed_sig, fromhex2(sig_str), 64);
+
+      int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
+      return verified;
 }
 
 void CmndStatus(void)
@@ -891,13 +911,15 @@ void CmndStatus(void)
     int r;
     r = base58_encode_check(raw_t, len, HASHER_SHA2, strn, sizeof(strn));
 
+    int verified = validateSignature();
+
     
   // Response_P(PSTR("{\"Mnemonic\":\"%s\"}"), m );
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"hash\":%s}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"sig_is_valid\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings->poweronstate, Settings->ledstate,
                           Settings->ledmask, Settings->save_data,
@@ -910,7 +932,7 @@ void CmndStatus(void)
                           Settings->flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings->flag5.mqtt_info_retain,    // CMND_INFORETAIN
                           Settings->flag5.mqtt_state_retain,  // CMND_STATERETAIN
-                          strn);                                 // CMND_STATERETAIN
+                          verified);                                 // CMND_STATERETAIN
     CmndStatusResponse(0);
   }
 
