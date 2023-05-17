@@ -756,6 +756,7 @@ String IPForUrl(const IPAddress & ip)
 // IPv4 has always priority
 // Copy the value of the IP if pointer provided (optional)
 bool WifiGetIP(IPAddress *ip) {
+#ifdef ESP32
   wifi_mode_t mode = WiFi.getMode();
   if ((mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.localIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
@@ -765,6 +766,17 @@ bool WifiGetIP(IPAddress *ip) {
     if (ip != nullptr) { *ip = WiFi.softAPIP(); }
     return true;
   }
+#else
+  WiFiMode_t mode = WiFi.getMode();
+  if ((mode == WIFI_STA || mode == WIFI_AP_STA) && (uint32_t)WiFi.localIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.localIP(); }
+    return true;
+  }
+  if ((mode == WIFI_AP || mode == WIFI_AP_STA) && (uint32_t)WiFi.softAPIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.softAPIP(); }
+    return true;
+  }
+#endif
 #ifdef USE_IPV6
   IPAddress lip;
   if (WifiGetIPv6(&lip)) {
