@@ -2187,27 +2187,13 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (i != channel_ct) {   // if CT don't use pwm_min and pwm_max
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
-        
-#ifdef USE_AC_ZERO_CROSS_DIMMER
-        if (Settings->flag4.zerocross_dimmer) {
 #ifdef ESP32
-          TasmotaGlobal.pwm_value[i] = ac_zero_cross_power(cur_col);   // mark the new expected value
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
+        TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
+        // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
 #else // ESP32
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - ac_zero_cross_power(cur_col) : ac_zero_cross_power(cur_col));
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - ac_zero_cross_power(cur_col) : ac_zero_cross_power(cur_col));
+        analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+        // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
 #endif // ESP32
-        } else
-#endif // USE_AC_ZERO_CROSS_DIMMER
-        if (1) {      // if true used to balance the optional if (Settings->flag4.zerocross_dimmer)
-#ifdef ESP32
-          TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
-#else // ESP32
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
-#endif // ESP32
-        }
       }
     }
 #ifdef ESP32
