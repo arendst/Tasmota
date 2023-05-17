@@ -756,11 +756,12 @@ String IPForUrl(const IPAddress & ip)
 // IPv4 has always priority
 // Copy the value of the IP if pointer provided (optional)
 bool WifiGetIP(IPAddress *ip) {
-  if ((uint32_t)WiFi.localIP() != 0) {
+  wifi_mode_t mode = WiFi.getMode();
+  if ((mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.localIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
     return true;
   }
-  if ((uint32_t)WiFi.softAPIP() != 0) {
+  if ((mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.softAPIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.softAPIP(); }
     return true;
   }
