@@ -198,7 +198,6 @@ void WiFiSetSleepMode(void)
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
     }
   }
-  WifiSetOutputPower();
 }
 
 void WifiBegin(uint8_t flag, uint8_t channel) {
@@ -224,6 +223,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #endif
 
   WiFiSetSleepMode();
+  WifiSetOutputPower();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
 #ifdef ESP32
@@ -972,14 +972,15 @@ String WifiGetOutputPower(void) {
 void WifiSetOutputPower(void) {
   if (Settings->wifi_output_power) {
     WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Dynamic Tx power enabled"));  // WifiPower 0
   }
 }
 
-/*
-  Dynamic WiFi transmit power based on RSSI lowering overall DC power usage.
-  Original idea by ESPEasy (@TD-er)
-*/
 void WiFiSetTXpowerBasedOnRssi(void) {
+  // Dynamic WiFi transmit power based on RSSI lowering overall DC power usage.
+  // Original idea by ESPEasy (@TD-er)
+  if (!Settings->flag4.network_wifi || Settings->wifi_output_power) { return; }
   const WiFiMode_t cur_mode = WiFi.getMode();
   if (cur_mode == WIFI_OFF) { return; }
 
@@ -1021,7 +1022,7 @@ void WiFiSetTXpowerBasedOnRssi(void) {
   delay(Wifi.last_tx_pwr < min_tx_pwr);  // If increase the TX power, give power supply of the unit some rest
 /*
   if (Wifi.last_tx_pwr != min_tx_pwr) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: TX power %d, Sensitivity %d, RSSI %d"), min_tx_pwr / 10, threshold/ 10, rssi / 10);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: TX power %d, Sensitivity %d, RSSI %d"), min_tx_pwr / 10, threshold / 10, rssi / 10);
   }
 */
   Wifi.last_tx_pwr = min_tx_pwr;
@@ -1077,7 +1078,7 @@ void WifiConnect(void)
   }
 #endif // ESP32
   WifiSetState(0);
-  WifiSetOutputPower();
+//  WifiSetOutputPower();
 
 //#ifdef ESP8266
   // https://github.com/arendst/Tasmota/issues/16061#issuecomment-1216970170

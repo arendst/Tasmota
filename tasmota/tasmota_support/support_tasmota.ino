@@ -1242,9 +1242,7 @@ void Every100mSeconds(void)
     }
   }
 
-  if (0 == Settings->wifi_output_power) {
-    WiFiSetTXpowerBasedOnRssi();
-  }
+  WiFiSetTXpowerBasedOnRssi();
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -2227,7 +2225,7 @@ void GpioInit(void)
     TasmotaGlobal.i2c_enabled = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
 #ifdef ESP32
     if (TasmotaGlobal.i2c_enabled) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Pins bus1 SCL %d, SDA %d"), Pin(GPIO_I2C_SCL), Pin(GPIO_I2C_SDA));
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus1 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL), Pin(GPIO_I2C_SDA));
     }
 #endif
   }
@@ -2236,7 +2234,7 @@ void GpioInit(void)
   if (TasmotaGlobal.i2c_enabled_2) {
     TasmotaGlobal.i2c_enabled_2 = I2c2Begin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1));
     if (TasmotaGlobal.i2c_enabled_2) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Pins bus2 SCL %d, SDA %d"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1));
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus2 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1));
     }
   }
 #endif
