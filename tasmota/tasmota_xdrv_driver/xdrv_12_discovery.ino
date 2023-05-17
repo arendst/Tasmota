@@ -200,8 +200,9 @@ void TasDiscoverMessage(void) {
                         light_subtype);
 
   for (uint32_t i = 0; i < tmin(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 #ifdef USE_SHUTTER
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), ShutterGetOptions(i));
 #else
     ResponseAppend_P(PSTR("%s0"), (i > 0 ? "," : ""));
 #endif  // USE_SHUTTER
