@@ -389,6 +389,10 @@ uint8_t ShutterGetStartRelay(uint8_t index) {
   return ShutterSettings.shutter_startrelay[index];
 }
 
+uint8_t ShutterGetOptions(uint8_t index) {
+   return ShutterSettings.shutter_options[index];
+}
+
 int8_t ShutterGetTiltConfig(uint8_t config_idx,uint8_t index) {
   return Shutter[index].tilt_config[config_idx];
 }
