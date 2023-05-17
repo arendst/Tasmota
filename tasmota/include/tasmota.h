@@ -300,6 +300,46 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define XPT2046_MINY			346
 #define	XPT2046_MAXY			3870
 
+#ifdef ESP32
+  #if defined(CONFIG_IDF_TARGET_ESP32S2)
+    #define MAX_TX_PWR_DBM_11b    195
+    #define MAX_TX_PWR_DBM_54g    150
+    #define MAX_TX_PWR_DBM_n      130
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -750
+    #define WIFI_SENSITIVITY_n    -720
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define MAX_TX_PWR_DBM_11b    210
+    #define MAX_TX_PWR_DBM_54g    190
+    #define MAX_TX_PWR_DBM_n      185
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -760
+    #define WIFI_SENSITIVITY_n    -720
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define MAX_TX_PWR_DBM_11b    210
+    #define MAX_TX_PWR_DBM_54g    190
+    #define MAX_TX_PWR_DBM_n      185
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -760
+    #define WIFI_SENSITIVITY_n    -730
+  #else
+    #define MAX_TX_PWR_DBM_11b    195
+    #define MAX_TX_PWR_DBM_54g    160
+    #define MAX_TX_PWR_DBM_n      140
+    #define WIFI_SENSITIVITY_11b  -880
+    #define WIFI_SENSITIVITY_54g  -750
+    #define WIFI_SENSITIVITY_n    -700
+  #endif
+#endif
+#ifdef ESP8266
+  #define MAX_TX_PWR_DBM_11b    200
+  #define MAX_TX_PWR_DBM_54g    170
+  #define MAX_TX_PWR_DBM_n      140
+  #define WIFI_SENSITIVITY_11b  -910
+  #define WIFI_SENSITIVITY_54g  -750
+  #define WIFI_SENSITIVITY_n    -720
+#endif
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

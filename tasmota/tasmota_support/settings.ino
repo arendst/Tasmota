@@ -929,7 +929,7 @@ void SettingsDefaultSet2(void) {
   flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
-  Settings->wifi_output_power = 170;
+  Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
   Settings->dns_timeout = DNS_TIMEOUT;
   Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
   ParseIPv4(&Settings->ipv4_address[0], PSTR(WIFI_IP_ADDRESS));

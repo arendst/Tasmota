@@ -2526,16 +2526,16 @@ void CmndLedPwmMode(void) {
 void CmndWifiPower(void) {
   if (XdrvMailbox.data_len > 0) {
     Settings->wifi_output_power = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
-    if (Settings->wifi_output_power > 205) {
-      Settings->wifi_output_power = 205;
+    if (10 == Settings->wifi_output_power) {
+      // WifiPower 1
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
+    }
+    else if (Settings->wifi_output_power > MAX_TX_PWR_DBM_11b) {
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_11b;
     }
     WifiSetOutputPower();
   }
-  if (Settings->wifi_output_power) {
-    ResponseCmndChar(WifiGetOutputPower().c_str());
-  } else {
-    ResponseCmndNumber(Wifi.last_tx_pwr / 10);
-  }
+  ResponseCmndChar(WifiGetOutputPower().c_str());
 }
 
 void CmndWifi(void)
