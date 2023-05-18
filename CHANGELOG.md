@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Shutter bootloop using more than 4 shutters (#18673)
 - AIThinker webcam issues (#18652)
+- Berry `tasmota.wifi()` would wrongly report wifi as up
 
 ### Removed
 
