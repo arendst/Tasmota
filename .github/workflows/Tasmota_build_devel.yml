@@ -295,22 +295,22 @@ jobs:
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
-    - name: Push Firmware files to tmp_copy repo
+    - name: Push tasmota32 files to tmp_copy repo
       uses: Jason2866/copy_file_to_another_repo_action@development
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'firmware/tasmota*'
+        source_file: 'firmware/tasmota32'
         destination_repo: 'arendst/tmp_copy'
         destination_branch_create: 'firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
-    - name: Push MAP files to tmp_copy repo
+    - name: Push tasmota files to tmp_copy repo
       uses: Jason2866/copy_file_to_another_repo_action@development
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'firmware/map*'
+        source_file: 'firmware/tasmota'
         destination_repo: 'arendst/tmp_copy'
         destination_branch:: 'firmware'
         user_email: 'github-actions@github.com'
