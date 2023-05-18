@@ -3701,8 +3701,8 @@ bool Xdrv01(uint32_t function)
       if (Wifi.wifi_test_counter) {
         Wifi.wifi_test_counter--;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
-        IPAddress local_ip = WiFi.localIP();
-        if (IPIsValid(local_ip)) {            // Got IP - Connection Established (only IPv4 supported for )
+        IPAddress local_ip;
+        if (WifiGetIP(&local_ip, true)) {            // Got IP - Connection Established (exclude AP address)
           Wifi.wifi_test_AP_TIMEOUT = false;
           Wifi.wifi_test_counter = 0;
           Wifi.wifiTest = WIFI_TEST_FINISHED;
