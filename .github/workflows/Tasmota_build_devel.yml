@@ -300,9 +300,19 @@ jobs:
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'firmware'
+        source_file: 'firmware/tasmota*'
         destination_repo: 'arendst/tmp_copy'
         destination_branch_create: 'firmware'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'
+    - name: Push MAP files to tmp_copy repo
+      uses: Jason2866/copy_file_to_another_repo_action@development
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'firmware/map*'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch:: 'firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
   Start_final_copy:
