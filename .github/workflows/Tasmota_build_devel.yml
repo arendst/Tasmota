@@ -302,6 +302,7 @@ jobs:
       with:
         source_file: 'firmware'
         destination_repo: 'arendst/tmp_copy'
+        destination_branch_create: 'firmware'
         destination_branch: 'firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
