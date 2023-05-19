@@ -97,7 +97,7 @@ be_local_closure(Tasmota_exec_rules,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_cmd,   /* name */
   be_nested_proto(
-    10,                          /* nstack */
+    11,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -105,21 +105,22 @@ be_local_closure(Tasmota_cmd,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(cmd_res),
     /* K1   */  be_nested_str(tasmota),
     /* K2   */  be_nested_str(global),
     /* K3   */  be_nested_str(seriallog_level),
-    /* K4   */  be_nested_str(settings),
-    /* K5   */  be_nested_str(mqttlog_level),
-    /* K6   */  be_nested_str(weblog_level),
-    /* K7   */  be_const_int(2),
-    /* K8   */  be_const_int(1),
-    /* K9   */  be_nested_str(_cmd),
+    /* K4   */  be_nested_str(syslog_level),
+    /* K5   */  be_nested_str(settings),
+    /* K6   */  be_nested_str(mqttlog_level),
+    /* K7   */  be_nested_str(weblog_level),
+    /* K8   */  be_const_int(2),
+    /* K9   */  be_const_int(1),
+    /* K10  */  be_nested_str(_cmd),
     }),
     &be_const_str_cmd,
     &be_const_str_solidified,
-    ( &(const binstruction[49]) {  /* code */
+    ( &(const binstruction[60]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x50100200,  //  0001  LDBOOL	R4	1	0
       0x90020004,  //  0002  SETMBR	R0	K0	R4
@@ -127,48 +128,59 @@ be_local_closure(Tasmota_cmd,   /* name */
       0x88100902,  //  0004  GETMBR	R4	R4	K2
       0x88100903,  //  0005  GETMBR	R4	R4	K3
       0xB8160200,  //  0006  GETNGBL	R5	K1
-      0x88140B04,  //  0007  GETMBR	R5	R5	K4
-      0x88140B05,  //  0008  GETMBR	R5	R5	K5
+      0x88140B02,  //  0007  GETMBR	R5	R5	K2
+      0x88140B04,  //  0008  GETMBR	R5	R5	K4
       0xB81A0200,  //  0009  GETNGBL	R6	K1
-      0x88180D04,  //  000A  GETMBR	R6	R6	K4
+      0x88180D05,  //  000A  GETMBR	R6	R6	K5
       0x88180D06,  //  000B  GETMBR	R6	R6	K6
-      0x780A000E,  //  000C  JMPF	R2	#001C
-      0x281C0907,  //  000D  GE	R7	R4	K7
-      0x781E0002,  //  000E  JMPF	R7	#0012
-      0xB81E0200,  //  000F  GETNGBL	R7	K1
-      0x881C0F02,  //  0010  GETMBR	R7	R7	K2
-      0x901E0708,  //  0011  SETMBR	R7	K3	K8
-      0x281C0B07,  //  0012  GE	R7	R5	K7
-      0x781E0002,  //  0013  JMPF	R7	#0017
-      0xB81E0200,  //  0014  GETNGBL	R7	K1
-      0x881C0F04,  //  0015  GETMBR	R7	R7	K4
-      0x901E0B08,  //  0016  SETMBR	R7	K5	K8
-      0x281C0D07,  //  0017  GE	R7	R6	K7
-      0x781E0002,  //  0018  JMPF	R7	#001C
-      0xB81E0200,  //  0019  GETNGBL	R7	K1
-      0x881C0F04,  //  001A  GETMBR	R7	R7	K4
-      0x901E0D08,  //  001B  SETMBR	R7	K6	K8
-      0x8C1C0109,  //  001C  GETMET	R7	R0	K9
-      0x5C240200,  //  001D  MOVE	R9	R1
-      0x7C1C0400,  //  001E  CALL	R7	2
-      0x4C1C0000,  //  001F  LDNIL	R7
-      0x88200100,  //  0020  GETMBR	R8	R0	K0
-      0x50240200,  //  0021  LDBOOL	R9	1	0
-      0x20201009,  //  0022  NE	R8	R8	R9
-      0x78220000,  //  0023  JMPF	R8	#0025
-      0x881C0100,  //  0024  GETMBR	R7	R0	K0
-      0x90020003,  //  0025  SETMBR	R0	K0	R3
-      0x780A0008,  //  0026  JMPF	R2	#0030
-      0xB8220200,  //  0027  GETNGBL	R8	K1
-      0x88201102,  //  0028  GETMBR	R8	R8	K2
-      0x90220604,  //  0029  SETMBR	R8	K3	R4
-      0xB8220200,  //  002A  GETNGBL	R8	K1
-      0x88201104,  //  002B  GETMBR	R8	R8	K4
-      0x90220A05,  //  002C  SETMBR	R8	K5	R5
-      0xB8220200,  //  002D  GETNGBL	R8	K1
-      0x88201104,  //  002E  GETMBR	R8	R8	K4
-      0x90220C06,  //  002F  SETMBR	R8	K6	R6
-      0x80040E00,  //  0030  RET	1	R7
+      0xB81E0200,  //  000C  GETNGBL	R7	K1
+      0x881C0F05,  //  000D  GETMBR	R7	R7	K5
+      0x881C0F07,  //  000E  GETMBR	R7	R7	K7
+      0x780A0013,  //  000F  JMPF	R2	#0024
+      0x28200908,  //  0010  GE	R8	R4	K8
+      0x78220002,  //  0011  JMPF	R8	#0015
+      0xB8220200,  //  0012  GETNGBL	R8	K1
+      0x88201102,  //  0013  GETMBR	R8	R8	K2
+      0x90220709,  //  0014  SETMBR	R8	K3	K9
+      0x28200B08,  //  0015  GE	R8	R5	K8
+      0x78220002,  //  0016  JMPF	R8	#001A
+      0xB8220200,  //  0017  GETNGBL	R8	K1
+      0x88201102,  //  0018  GETMBR	R8	R8	K2
+      0x90220909,  //  0019  SETMBR	R8	K4	K9
+      0x28200D08,  //  001A  GE	R8	R6	K8
+      0x78220002,  //  001B  JMPF	R8	#001F
+      0xB8220200,  //  001C  GETNGBL	R8	K1
+      0x88201105,  //  001D  GETMBR	R8	R8	K5
+      0x90220D09,  //  001E  SETMBR	R8	K6	K9
+      0x28200F08,  //  001F  GE	R8	R7	K8
+      0x78220002,  //  0020  JMPF	R8	#0024
+      0xB8220200,  //  0021  GETNGBL	R8	K1
+      0x88201105,  //  0022  GETMBR	R8	R8	K5
+      0x90220F09,  //  0023  SETMBR	R8	K7	K9
+      0x8C20010A,  //  0024  GETMET	R8	R0	K10
+      0x5C280200,  //  0025  MOVE	R10	R1
+      0x7C200400,  //  0026  CALL	R8	2
+      0x4C200000,  //  0027  LDNIL	R8
+      0x88240100,  //  0028  GETMBR	R9	R0	K0
+      0x50280200,  //  0029  LDBOOL	R10	1	0
+      0x2024120A,  //  002A  NE	R9	R9	R10
+      0x78260000,  //  002B  JMPF	R9	#002D
+      0x88200100,  //  002C  GETMBR	R8	R0	K0
+      0x90020003,  //  002D  SETMBR	R0	K0	R3
+      0x780A000B,  //  002E  JMPF	R2	#003B
+      0xB8260200,  //  002F  GETNGBL	R9	K1
+      0x88241302,  //  0030  GETMBR	R9	R9	K2
+      0x90260604,  //  0031  SETMBR	R9	K3	R4
+      0xB8260200,  //  0032  GETNGBL	R9	K1
+      0x88241302,  //  0033  GETMBR	R9	R9	K2
+      0x90260805,  //  0034  SETMBR	R9	K4	R5
+      0xB8260200,  //  0035  GETNGBL	R9	K1
+      0x88241305,  //  0036  GETMBR	R9	R9	K5
+      0x90260C06,  //  0037  SETMBR	R9	K6	R6
+      0xB8260200,  //  0038  GETNGBL	R9	K1
+      0x88241305,  //  0039  GETMBR	R9	R9	K5
+      0x90260E07,  //  003A  SETMBR	R9	K7	R7
+      0x80041000,  //  003B  RET	1	R8
     })
   )
 );
