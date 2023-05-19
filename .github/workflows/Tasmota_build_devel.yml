@@ -296,7 +296,7 @@ jobs:
     - name: Display files to transfer
       run: ls -R ./*
     - name: Push tasmota files to tmp_copy repo
-      uses: Jason2866/copy_file_to_another_repo_action@development
+      uses: Jason2866/copy_file_to_another_repo_action@http408_fix
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
@@ -315,7 +315,7 @@ jobs:
          echo ${GITHUB_SHA}  &> trigger.txt
          echo "$(<trigger.txt)"
     - name: Push trigger.txt to start workflow copy in tmp repo
-      uses: Jason2866/copy_file_to_another_repo_action@development
+      uses: Jason2866/copy_file_to_another_repo_action@http408_fix
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
