@@ -644,16 +644,9 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
 
-    var seriallog_level = tasmota.global.seriallog_level
-    var syslog_level    = tasmota.global.syslog_level
-    var mqttlog_level   = tasmota.settings.mqttlog_level
-    var weblog_level    = tasmota.settings.weblog_level
-
+    var maxlog_level = tasmota.global.maxlog_level
     if mute                 # mute logging
-      if seriallog_level >= 2       tasmota.global.seriallog_level = 1    end
-      if syslog_level    >= 2       tasmota.global.syslog_level    = 1    end
-      if mqttlog_level   >= 2       tasmota.settings.mqttlog_level = 1    end
-      if weblog_level    >= 2       tasmota.settings.weblog_level  = 1    end
+      if maxlog_level >= 2 tasmota.global.maxlog_level = 1 end
     end
 
     self._cmd(command)
@@ -666,10 +659,7 @@ class Tasmota
 
     # restore log_level
     if mute
-      tasmota.global.seriallog_level = seriallog_level
-      tasmota.global.syslog_level = syslog_level
-      tasmota.settings.mqttlog_level = mqttlog_level
-      tasmota.settings.weblog_level = weblog_level
+      tasmota.global.maxlog_level = maxlog_level
     end
     return ret
   end
