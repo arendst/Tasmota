@@ -797,7 +797,8 @@ bool SignDataHash(int json_data_start)
 
     int current_length  = ResponseLength();
     size_t p2bsigned_length = current_length - json_data_start;
-    char* p2Bsigned = ResponseData() + json_data_start;
+    char* p2Bsigned = (char*)TasmotaGlobal.mqtt_data.c_str() + json_data_start;;
+    // char* response = ResponseData();
 
     // Initialize the SHA-256 hasher
     SHA256_CTX ctx;
@@ -837,10 +838,11 @@ bool SignDataHash(int json_data_start)
     tohex2( hash_out, hash2, 66);
 
     //Response_P(PSTR("{\"" "rddl \":"));
+    // ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "p2Bsigned", p2Bsigned);
+    // ResponseAppend_P(PSTR(",\"%s\":\"%d\""), "p2bsigned_length", p2bsigned_length);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%u\""), "Verified", verified);
     //ResponseJsonEnd();
 
 
