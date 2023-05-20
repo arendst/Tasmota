@@ -303,13 +303,13 @@ int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
+  int64_t realpercent;
   if (realpos == -9999) {
     realpos = Shutter[index].real_position;
   }
 	if (Settings->shutter_set50percent[index] != 50) {
-		return (Settings->shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, Settings->shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-Settings->shuttercoeff[0][index]*10, Settings->shuttercoeff[1][index]);
+		realpercent = (Settings->shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, Settings->shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-Settings->shuttercoeff[0][index]*10, Settings->shuttercoeff[1][index]);
 	} else {
-    int64_t realpercent;
     for (uint32_t j = 0; j < 5; j++) {
       if (realpos >= Shutter[index].open_max * calibrate_pos[j+1] / 100) {
         realpercent = SHT_DIV_ROUND(Settings->shuttercoeff[j][index], 10);
@@ -327,8 +327,10 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
         break;
       }
     }
-    return realpercent < 0 ? 0 : realpercent;
   }
+   realpercent = realpercent < 0 ? 0 : realpercent;
+  // if inverted recalculate the percentposition
+  return (Settings->shutter_options[index] & 1) ? 100 - realpercent : realpercent;
 }
 
 void ShutterInit(void)
