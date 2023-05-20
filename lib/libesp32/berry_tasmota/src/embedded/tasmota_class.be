@@ -34,7 +34,7 @@ class Tasmota
     try
       import debug
       self._debug_present = true
-    except .. 
+    except ..
     end
     # declare `UrlFetch` command
     self.add_cmd('UrlFetch', def (cmd, idx, payload, payload_json) self.urlfetch_cmd(cmd, idx, payload, payload_json) end)
@@ -131,7 +131,7 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # save initial state (for reentrance)
     if self._rules || save_cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
-      
+
       self.cmd_res = nil                  # disable sunsequent recording of results
       var ret = false
 
@@ -241,7 +241,7 @@ class Tasmota
       end
     end
   end
-  
+
   # crontab style recurring events
   def add_cron(pattern,f,id)
     self.check_not_method(f)
@@ -470,7 +470,7 @@ class Tasmota
       end
       # print("f_time",f_time,"f_time_bec",f_time_bec,"suffix_bec",suffix_bec)
     end
-    
+
     # recall the working directory
     if f_archive
       self.wd = f_prefix + "#"
@@ -644,29 +644,22 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
 
-    var seriallog_level = tasmota.global.seriallog_level
-    var mqttlog_level   = tasmota.settings.mqttlog_level
-    var weblog_level    = tasmota.settings.weblog_level
-
+    var maxlog_level = tasmota.global.maxlog_level
     if mute                 # mute logging
-      if seriallog_level >= 2       tasmota.global.seriallog_level = 1    end
-      if mqttlog_level   >= 2       tasmota.settings.mqttlog_level = 1    end
-      if weblog_level    >= 2       tasmota.settings.weblog_level  = 1    end
+      if maxlog_level >= 2 tasmota.global.maxlog_level = 1 end
     end
 
     self._cmd(command)
-    
+
     var ret = nil
     if self.cmd_res != true       # unchanged
       ret = self.cmd_res
     end
     self.cmd_res = save_cmd_res       # restore previous state
-    
+
     # restore log_level
     if mute
-      tasmota.global.seriallog_level = seriallog_level
-      tasmota.settings.mqttlog_level = mqttlog_level
-      tasmota.settings.weblog_level = weblog_level
+      tasmota.global.maxlog_level = maxlog_level
     end
     return ret
   end
@@ -709,14 +702,14 @@ class Tasmota
     var g = 255
     # we take brightness at 100%, brightness should be set separately
     hue = hue % 360   # normalize to 0..359
-  
+
     if sat > 0
       var i = hue / 60    # quadrant 0..5
       var f = hue % 60    # 0..59
       var p = 255 - sat
       var q = tasmota.scale_uint(f, 0, 60, 255, p)    # 0..59
       var t = tasmota.scale_uint(f, 0, 60, p, 255)
-  
+
       if   i == 0
         # r = 255
         g = t
@@ -743,7 +736,7 @@ class Tasmota
         b = q
       end
     end
-  
+
     return (r << 16) | (g << 8) | b
   end
 

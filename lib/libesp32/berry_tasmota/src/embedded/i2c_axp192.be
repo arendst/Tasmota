@@ -1,8 +1,9 @@
 #-------------------------------------------------------------
  - Generic driver for AXP192 - solidified
  -------------------------------------------------------------#
- 
- #@ solidify:AXP192
+class I2C_Driver end    # for solidification
+
+#@ solidify:AXP192
 class AXP192 : I2C_Driver
   def init()
     super(self, I2C_Driver).init("AXP192", 0x34)
@@ -103,7 +104,7 @@ class AXP192 : I2C_Driver
 
   # Set voltage on DC-DC1/2/3
   #   dcdc: 1/2/3 (warning some C libs start at 0)
-  #   voltage: 
+  #   voltage:
   def set_dc_voltage(dcdc, voltage)
     if dcdc < 1 || dcdc > 3 return end
     var v

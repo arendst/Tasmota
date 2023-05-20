@@ -295,14 +295,14 @@ jobs:
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
-    - name: Push Firmware files to tmp_copy repo
-      uses: Jason2866/copy_file_to_another_repo_action@main
+    - name: Push tasmota files to tmp_copy repo
+      uses: Jason2866/copy_file_to_another_repo_action@http408_fix
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'firmware'
         destination_repo: 'arendst/tmp_copy'
-        destination_branch: 'firmware'
+        destination_branch_create: 'firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
   Start_final_copy:
@@ -315,7 +315,7 @@ jobs:
          echo ${GITHUB_SHA}  &> trigger.txt
          echo "$(<trigger.txt)"
     - name: Push trigger.txt to start workflow copy in tmp repo
-      uses: Jason2866/copy_file_to_another_repo_action@main
+      uses: Jason2866/copy_file_to_another_repo_action@http408_fix
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:

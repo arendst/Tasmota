@@ -308,7 +308,6 @@ struct TasmotaGlobal_t {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
-  bool enable_logging;                      // Enable logging
 
   uint8_t user_globals[3];                  // User set global temp/hum/press
   uint8_t init_state;                       // Tasmota init state
@@ -336,6 +335,7 @@ struct TasmotaGlobal_t {
   uint8_t serial_in_byte;                   // Received byte
   uint8_t serial_skip;                      // Skip number of received messages
   uint8_t devices_present;                  // Max number of devices supported
+  uint8_t maxlog_level;                     // Max allowed log level
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings->seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings->syslog_level
@@ -432,7 +432,7 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-  TasmotaGlobal.enable_logging = 1;
+  TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
   TasmotaGlobal.power_latching = 0x80000000;
 

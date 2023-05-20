@@ -503,6 +503,7 @@ void WifiSetState(uint8_t state)
  * - DNS reporting actual values used (not the Settings):
  *    `DNSGetIP(n)`, `DNSGetIPStr(n)` with n=`0`/`1` (same dns for Wifi and Eth)
 \*****************************************************************************************************/
+bool WifiGetIP(IPAddress *ip, bool exclude_ap = false);
 // IPv4 for Wifi
 // Returns only IPv6 global address (no loopback and no link-local)
 bool WifiGetIPv4(IPAddress *ip)
@@ -755,15 +756,29 @@ String IPForUrl(const IPAddress & ip)
 // Check to see if we have any routable IP address
 // IPv4 has always priority
 // Copy the value of the IP if pointer provided (optional)
-bool WifiGetIP(IPAddress *ip) {
-  if ((uint32_t)WiFi.localIP() != 0) {
+// `exclude_ap` allows to exlude AP IP address and focus only on local STA
+bool WifiGetIP(IPAddress *ip, bool exclude_ap) {
+#ifdef ESP32
+  wifi_mode_t mode = WiFi.getMode();
+  if ((mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.localIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
     return true;
   }
-  if ((uint32_t)WiFi.softAPIP() != 0) {
+  if (!exclude_ap && (mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.softAPIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.softAPIP(); }
     return true;
   }
+#else
+  WiFiMode_t mode = WiFi.getMode();
+  if ((mode == WIFI_STA || mode == WIFI_AP_STA) && (uint32_t)WiFi.localIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.localIP(); }
+    return true;
+  }
+  if (!exclude_ap && (mode == WIFI_AP || mode == WIFI_AP_STA) && (uint32_t)WiFi.softAPIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.softAPIP(); }
+    return true;
+  }
+#endif
 #ifdef USE_IPV6
   IPAddress lip;
   if (WifiGetIPv6(&lip)) {
@@ -959,14 +974,11 @@ int WifiState(void)
   return state;
 }
 
-String WifiGetOutputPower(void) {
-  char stemp1[TOPSZ];
+float WifiGetOutputPower(void) {
   if (Settings->wifi_output_power) {
-    dtostrfd((float)(Settings->wifi_output_power) / 10, 1, stemp1);
-  } else {
-    dtostrfd((float)(Wifi.last_tx_pwr) / 10, 0, stemp1);  // No decimal to indicate dynamic tx power
+    Wifi.last_tx_pwr = Settings->wifi_output_power;
   }
-  return String(stemp1);
+  return (float)(Wifi.last_tx_pwr) / 10;
 }
 
 void WifiSetOutputPower(void) {
