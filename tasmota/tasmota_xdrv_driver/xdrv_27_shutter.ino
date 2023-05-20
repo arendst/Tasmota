@@ -268,7 +268,7 @@ void ShutterRtc50mS(void)
 int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 {
   // if inverted recalculate the percentposition
-  percent = (ShutterSettings.shutter_options[index] & 1) ? 100 - percent : percent;
+  percent = (Settings->shutter_options[index] & 1) ? 100 - percent : percent;
 	if (Settings->shutter_set50percent[index] != 50) {
     return (percent <= 5) ? Settings->shuttercoeff[2][index] * percent*10 : (Settings->shuttercoeff[1][index] * percent + (Settings->shuttercoeff[0][index]*10))*10;
 	} else {
