@@ -264,9 +264,6 @@ const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
   "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'>"
   "<input id='sl%d' type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'>"
   "</div>";
-const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
-  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
 
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
@@ -1229,13 +1226,6 @@ void HandleRoot(void)
       }  // Settings->flag3.pwm_multi_channels
     }
 #endif // USE_LIGHT
-#ifdef USE_SHUTTER
-    if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-      for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  ShutterRealToPercentPosition(-9999, i), i+1);
-      }
-    }
-#endif  // USE_SHUTTER
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
 #ifdef USE_SONOFF_IFAN
@@ -1258,7 +1248,7 @@ void HandleRoot(void)
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((Settings->shutter_options[abs(ShutterWebButton)-1] & 2) /* is locked */ ? "-" : ((Settings->shutter_options[abs(ShutterWebButton)-1] & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
+            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((Settings->shutter_options[abs(ShutterWebButton)-1] & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
             "");
         } else {
 #endif  // USE_SHUTTER
@@ -1410,10 +1400,12 @@ bool HandleRootStatusRefresh(void)
 #endif  // USE_LIGHT
 #ifdef USE_SHUTTER
   for (uint32_t j = 1; j <= TasmotaGlobal.shutters_present; j++) {
+    uint8_t percent;
     snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
+    percent = atoi(tmp);
     if (strlen(tmp)) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), j, tmp);
+      snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %d"), j, (ShutterGetOptions(j-1) & 1) ? 100 - percent : percent);
       ExecuteWebCommand(svalue);
     }
   }

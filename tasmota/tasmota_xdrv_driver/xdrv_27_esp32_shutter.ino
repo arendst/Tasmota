@@ -54,7 +54,10 @@
 #define D_ERROR_FILESYSTEM_NOT_READY "SHT: ERROR File system not enabled"
 #define D_ERROR_FILE_NOT_FOUND "SHT: ERROR File system not ready or file not found"
 
-//
+const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
+  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
+  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
+
 const uint32_t SHUTTER_VERSION = 0x01010100;  // Latest driver version (See settings deltas below)
 
 typedef struct { // depreciated 2023-04-28
@@ -364,7 +367,7 @@ bool ShutterStatus(void) {
                                   "\"Mode\":\"%d\","
                                   "\"TiltConfig\":[%d,%d,%d,%d,%d]}"),
                                   i, ShutterSettings.shutter_startrelay[i], ShutterSettings.shutter_startrelay[i] +1, ShutterSettings.shutter_opentime[i], ShutterSettings.shutter_closetime[i],
-                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(Settings->shutter_options[i], 4).c_str(),
+                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(ShutterSettings.shutter_options[i], 4).c_str(),
                                   ShutterSettings.shuttercoeff[0][i], ShutterSettings.shuttercoeff[1][i], ShutterSettings.shuttercoeff[2][i], ShutterSettings.shuttercoeff[3][i], ShutterSettings.shuttercoeff[4][i],
                                   ShutterSettings.shutter_mode, 
                                   ShutterSettings.shutter_tilt_config[0][i], ShutterSettings.shutter_tilt_config[1][i], ShutterSettings.shutter_tilt_config[2][i], ShutterSettings.shutter_tilt_config[3][i], ShutterSettings.shutter_tilt_config[4][i]
@@ -387,6 +390,10 @@ void ShutterLogPos(uint32_t i)
 
 uint8_t ShutterGetStartRelay(uint8_t index) {
   return ShutterSettings.shutter_startrelay[index];
+}
+
+uint8_t ShutterGetOptions(uint8_t index) {
+   return ShutterSettings.shutter_options[index];
 }
 
 int8_t ShutterGetTiltConfig(uint8_t config_idx,uint8_t index) {
@@ -497,13 +504,13 @@ int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
+  int64_t realpercent;
   if (realpos == -9999) {
     realpos = Shutter[index].real_position;
   }
 	if (ShutterSettings.shutter_set50percent[index] != 50) {
-		return (ShutterSettings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, ShutterSettings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-ShutterSettings.shuttercoeff[0][index]*10, ShutterSettings.shuttercoeff[1][index]);
+		realpercent = (ShutterSettings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, ShutterSettings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-ShutterSettings.shuttercoeff[0][index]*10, ShutterSettings.shuttercoeff[1][index]);
 	} else {
-    int64_t realpercent;
     for (uint32_t j = 0; j < 5; j++) {
       if (realpos >= Shutter[index].open_max * calibrate_pos[j+1] / 100) {
         realpercent = SHT_DIV_ROUND(ShutterSettings.shuttercoeff[j][index], 10);
@@ -521,10 +528,10 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
         break;
       }
     }
-    realpercent = realpercent < 0 ? 0 : realpercent;
-      // if inverted recalculate the percentposition
-    return (ShutterSettings.shutter_options[index] & 1) ? 100 - realpercent : realpercent;
   }
+   realpercent = realpercent < 0 ? 0 : realpercent;
+  // if inverted recalculate the percentposition
+  return (ShutterSettings.shutter_options[index] & 1) ? 100 - realpercent : realpercent;
 }
 
 void ShutterInit(void)
@@ -1127,8 +1134,8 @@ void ShutterRelayChanged(void)
             // powerstate_local == 1 => direction=1, target=Shutter[i].open_max
             // powerstate_local == 2 => direction=-1, target=0 // only happen on SHT_TIME
             // powerstate_local == 3 => direction=-1, target=0 // only happen if NOT SHT_TIME
-            int direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
-            int target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
+            int8_t direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
+            int8_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
 
             if (direction != 0) {
               ShutterStartInit(i, direction, target);
@@ -1318,6 +1325,11 @@ void ShutterToggle(bool dir)
   }
 }
 
+void ShutterShow(){
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (ShutterSettings.shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(ShutterSettings.shutter_options[i] & 1) ? D_CLOSE : D_OPEN, ShutterRealToPercentPosition(-9999, i), i+1);
+  }
+}
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -2328,6 +2340,11 @@ bool Xdrv27(uint32_t function)
           result = false;
         }
       break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        ShutterShow();
+        break;
+#endif  // USE_WEBSERVER
     }
   }
   return result;

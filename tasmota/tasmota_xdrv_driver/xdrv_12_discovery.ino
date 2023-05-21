@@ -200,9 +200,9 @@ void TasDiscoverMessage(void) {
                         light_controller_isCTRGBLinked,
                         light_subtype);
 
-  for (uint32_t i = 0; i < tmin(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 #ifdef USE_SHUTTER
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), ShutterGetOptions(i));
 #else
     ResponseAppend_P(PSTR("%s0"), (i > 0 ? "," : ""));
 #endif  // USE_SHUTTER
@@ -210,7 +210,7 @@ void TasDiscoverMessage(void) {
 
   ResponseAppend_P(PSTR("],"                                   // Shutter Options (end)
                         "\"sht\":["));                         // Shutter Tilt (start)
-  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 #ifdef USE_SHUTTER
     ResponseAppend_P(PSTR("%s[%d,%d,%d]"), (i > 0 ? "," : ""),
                           ShutterGetTiltConfig(0,i),
