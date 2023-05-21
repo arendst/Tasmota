@@ -138,13 +138,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - InfluxDb resolves DNS name before request [#18015](https://github.com/arendst/Tasmota/issues/18015)
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
 - Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
+- Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement [#18701](https://github.com/arendst/Tasmota/issues/18701)
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
+- ESP32 InfluxDb initial connection delays using HTTPClient [#18015](https://github.com/arendst/Tasmota/issues/18015)
 - NovaSDS GUI values [#18444](https://github.com/arendst/Tasmota/issues/18444)
 - LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 [#18666](https://github.com/arendst/Tasmota/issues/18666)
-- Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
-- Berry a rare condition when a GC causes a memory corruption
 - AIThinker webcam issues [#18652](https://github.com/arendst/Tasmota/issues/18652)
 - Shutter bootloop using more than 4 shutters [#18673](https://github.com/arendst/Tasmota/issues/18673)
-- Partition_Manager.tapp
+- Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant [#18701](https://github.com/arendst/Tasmota/issues/18701)
+- Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- Berry a rare condition when a GC causes a memory corruption
+- ESP32 Partition_Manager.tapp

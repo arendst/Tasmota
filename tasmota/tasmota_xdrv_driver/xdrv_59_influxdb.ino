@@ -76,17 +76,18 @@
 #ifndef INFLUXDB_RP
 #define INFLUXDB_RP        ""            // [IfxRP] Influxdb v1 retention policy (blank is default, usually autogen infinite)
 #endif
-#ifndef INFLUXDB_CONNECT_TIMEOUT
-#define INFLUXDB_CONNECT_TIMEOUT 2000    // Default timeout in milliseconds
-#endif
 
 static const char UninitializedMessage[] PROGMEM = "Unconfigured instance";
 // This cannot be put to PROGMEM due to the way how it is used
 static const char RetryAfter[] = "Retry-After";
 static const char TransferEncoding[] = "Transfer-Encoding";
 
-WiFiClient *IFDBwifiClient = nullptr;
-HTTPClient *IFDBhttpClient = nullptr;
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  HTTPClientLight *IFDBhttpClient = nullptr;
+#else
+  WiFiClient *IFDBwifiClient = nullptr;
+  HTTPClient *IFDBhttpClient = nullptr;
+#endif
 
 struct {
   String _serverUrl;                     // Connection info
@@ -159,14 +160,17 @@ bool InfluxDbParameterInit(void) {
 }
 
 bool InfluxDbInit(void) {
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  if (!IFDBhttpClient) {
+    IFDBhttpClient = new HTTPClientLight;
+  }
+#else
   IFDBwifiClient = new WiFiClient;
   if (!IFDBhttpClient) {
     IFDBhttpClient = new HTTPClient;
   }
+#endif
   IFDBhttpClient->setReuse(IFDB._connectionReuse);
-#ifdef ESP32
-  IFDBhttpClient->setConnectTimeout(INFLUXDB_CONNECT_TIMEOUT);
-#endif  // ESP32
   char server[32];
   snprintf_P(server, sizeof(server), PSTR("Tasmota/%s (%s)"), TasmotaGlobal.version, GetDeviceHardware().c_str());
   IFDBhttpClient->setUserAgent(server);
@@ -209,7 +213,11 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
 }
 
 bool InfluxDbValidateConnection(void) {
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  if (!InfluxDbInit()) {
+#else
   if (!IFDBwifiClient && !InfluxDbInit()) {
+#endif
     IFDB._lastStatusCode = 0;
     IFDB._lastErrorResponse = FPSTR(UninitializedMessage);
     return false;
@@ -223,7 +231,11 @@ bool InfluxDbValidateConnection(void) {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("IFX: Validating connection to %s"), url.c_str());
 
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  if (!IFDBhttpClient->begin(url)) {
+#else // HTTP only
   if (!IFDBhttpClient->begin(*IFDBwifiClient, url)) {
+#endif
     AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
     return false;
   }
@@ -238,13 +250,21 @@ bool InfluxDbValidateConnection(void) {
 }
 
 int InfluxDbPostData(const char *data) {
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  if (!InfluxDbInit()) {
+#else
   if (!IFDBwifiClient && !InfluxDbInit()) {
+#endif
     IFDB._lastStatusCode = 0;
     IFDB._lastErrorResponse = FPSTR(UninitializedMessage);
     return 0;
   }
   if (data) {
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+    if (!IFDBhttpClient->begin(IFDB._writeUrl)) {
+#else
     if (!IFDBhttpClient->begin(*IFDBwifiClient, IFDB._writeUrl)) {
+#endif
       AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Begin failed"));
       return false;
     }
