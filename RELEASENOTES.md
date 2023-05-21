@@ -135,6 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - IRremoteESP8266 library from v2.8.4 to v2.8.5
 - ESP32 Framework (Core) from v2.0.7 to v2.0.9
+- InfluxDb resolves DNS name before request [#18015](https://github.com/arendst/Tasmota/issues/18015)
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
 - Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
 

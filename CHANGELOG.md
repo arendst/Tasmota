@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- InfluxDb resolves DNS name before request (#18015)
 
 ### Fixed
 - Shutter bootloop using more than 4 shutters (#18673)

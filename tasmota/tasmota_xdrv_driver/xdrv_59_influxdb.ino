@@ -40,6 +40,7 @@
  * IfxPeriod   - Set Influxdb period. If not set (or 0), use Teleperiod
  * IfxSensor   - Set Influxdb sensor logging off (0) or on (1)
  * IfxRP       - Set Influxdb retention policy
+ * IfxLog      - Set Influxdb logging level (4 = default)
  *
  * The following triggers result in automatic influxdb numeric feeds without appended time:
  * - this driver initiated state message
@@ -73,7 +74,10 @@
 #define INFLUXDB_BUCKET    "db"          // [IfxDatabase, IfxBucket] Influxdb v1 database or v2 bucket
 #endif
 #ifndef INFLUXDB_RP
-#define INFLUXDB_RP        ""          // [IfxRP] Influxdb v1 retention policy (blank is default, usually autogen infinite)
+#define INFLUXDB_RP        ""            // [IfxRP] Influxdb v1 retention policy (blank is default, usually autogen infinite)
+#endif
+#ifndef INFLUXDB_CONNECT_TIMEOUT
+#define INFLUXDB_CONNECT_TIMEOUT 2000    // Default timeout in milliseconds
 #endif
 
 static const char UninitializedMessage[] PROGMEM = "Unconfigured instance";
@@ -112,6 +116,19 @@ String InfluxDbAuth(void) {
   return auth;
 }
 
+bool InfluxDbHostByName(void) {
+  IPAddress ifdb_ip;
+  if (!WifiHostByName(SettingsText(SET_INFLUXDB_HOST), ifdb_ip)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Invalid ifxhost"));
+    return false;
+  }
+  IFDB._serverUrl = "http://";
+  IFDB._serverUrl += ifdb_ip.toString();
+  IFDB._serverUrl += ":";
+  IFDB._serverUrl += Settings->influxdb_port;
+  return true;
+}
+
 bool InfluxDbParameterInit(void) {
   if (strlen(SettingsText(SET_INFLUXDB_BUCKET)) == 0 ||
       (2 == Settings->influxdb_version && (strlen(SettingsText(SET_INFLUXDB_ORG)) == 0 ||
@@ -119,10 +136,7 @@ bool InfluxDbParameterInit(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Invalid parameters"));
     return false;
   }
-  IFDB._serverUrl = "http://";
-  IFDB._serverUrl += SettingsText(SET_INFLUXDB_HOST);
-  IFDB._serverUrl += ":";
-  IFDB._serverUrl += Settings->influxdb_port;
+  if (!InfluxDbHostByName()) { return false; }
 
   IFDB._writeUrl = IFDB._serverUrl;
   if (2 == Settings->influxdb_version) {
@@ -150,6 +164,9 @@ bool InfluxDbInit(void) {
     IFDBhttpClient = new HTTPClient;
   }
   IFDBhttpClient->setReuse(IFDB._connectionReuse);
+#ifdef ESP32
+  IFDBhttpClient->setConnectTimeout(INFLUXDB_CONNECT_TIMEOUT);
+#endif  // ESP32
   char server[32];
   snprintf_P(server, sizeof(server), PSTR("Tasmota/%s (%s)"), TasmotaGlobal.version, GetDeviceHardware().c_str());
   IFDBhttpClient->setUserAgent(server);
@@ -186,6 +203,8 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
     }
     IFDB._lastErrorResponse.trim();  // Remove trailing \n
     AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
+  } else {
+    AddLog(IFDB.log_level, PSTR("IFX: Done"));
   }
 }
 
@@ -196,6 +215,8 @@ bool InfluxDbValidateConnection(void) {
     return false;
   }
   // on version 1.x /ping will by default return status code 204, without verbose
+  if (!InfluxDbHostByName()) { return false; }
+
   String url = IFDB._serverUrl + (2 == Settings->influxdb_version ? "/health" : "/ping?verbose=true");
   if (1 == Settings->influxdb_version) {
     url += InfluxDbAuth();
@@ -433,7 +454,7 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBBUCKET   "Bucket"
 #define D_CMND_INFLUXDBPERIOD   "Period"
 #define D_CMND_INFLUXDBSENSOR   "Sensor"
-#define D_CMND_INFLUXDBRP "RP"
+#define D_CMND_INFLUXDBRP       "RP"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   "|" D_CMND_INFLUXDBLOG "|"
