@@ -138,6 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - InfluxDb resolves DNS name before request [#18015](https://github.com/arendst/Tasmota/issues/18015)
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
 - Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
+- Shuttersliders in WEBGUI automatically apeear and disapear during configuration and update during movement.
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3
@@ -148,3 +149,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - AIThinker webcam issues [#18652](https://github.com/arendst/Tasmota/issues/18652)
 - Shutter bootloop using more than 4 shutters [#18673](https://github.com/arendst/Tasmota/issues/18673)
 - Partition_Manager.tapp
+- Inverted shutter now reflect status also in WEBGUI. Several minor fixes to make "inverted" consistant.
