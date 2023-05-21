@@ -1,5 +1,5 @@
 {
-  "name": "HttpClient light for Berry",
+  "name": "HttpClient light",
   "version": "1.0",
   "description": "Forked version of Arduino HttpClient to support BearSSL instead of mbedTLS",
   "license": "MIT",
