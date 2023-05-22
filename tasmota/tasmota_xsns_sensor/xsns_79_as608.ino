@@ -20,6 +20,9 @@
 #ifdef USE_AS608
 /*********************************************************************************************\
  * AS608 optical and R503 capacitive Fingerprint sensor
+ * - AS608 supports no color leds
+ * - R503 v1.1 supports 3 color ring (Red, Blue, Purple)
+ * - R503 v1.2 supports 7 color ring (Red, Blue, Purple, Green, Yellow, Cyan, White)
  *
  * Uses Adafruit-Fingerprint-sensor-library with TasmotaSerial
  *
@@ -35,8 +38,11 @@
 #ifndef AS608_DUPLICATE
 #define AS608_DUPLICATE       4    // Number of 0.25 Sec to disable detection
 #endif
+#ifndef AS608_COLOR_INIT
+#define AS608_COLOR_INIT      1    // Red = 1, Blue = 2, Purple = 3, Green = 4, Yellow = 5, Cyan = 6, White = 7
+#endif
 #ifndef AS608_COLOR_SCAN
-#define AS608_COLOR_SCAN      3    // Red = 1, Blue = 2, Purple = 3
+#define AS608_COLOR_SCAN      3    // Red = 1, Blue = 2, Purple = 3, Green = 4, Yellow = 5, Cyan = 6, White = 7
 #endif
 
 #define D_JSON_FPRINT "FPrint"
@@ -115,6 +121,8 @@ void As608Init(void) {
       As608Finger->getTemplateCount();
       AddLog(LOG_LEVEL_INFO, PSTR("AS6: Detected with %d fingerprint(s) stored"), As608Finger->templateCount);
       As608.selected = true;
+
+      As608Finger->LEDcontrol(FINGERPRINT_LED_BREATHING, 100, AS608_COLOR_INIT, 3);
     }
   }
 }
@@ -138,6 +146,7 @@ int As608ConvertFingerImage(uint8_t slot) {
 }
 
 void As608Loop(void) {
+  if (TasmotaGlobal.uptime < 6) { return; }  // Alow time for initial led breathing
   uint32_t p = 0;
 
   if (!As608.enroll_step) {
@@ -149,12 +158,6 @@ void As608Loop(void) {
     }
 
     // Search for Finger
-
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_RED);
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_BLUE);
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_PURPLE);
-//    As608Finger->LEDcontrol(0);
-
     p = As608Finger->getImage();          // Take image
     if (p != FINGERPRINT_OK) { return; }
 
