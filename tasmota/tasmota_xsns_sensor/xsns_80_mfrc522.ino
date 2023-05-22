@@ -100,7 +100,11 @@ void RC522ScanForTag(void) {
 void RC522Init(void) {
   if (PinUsed(GPIO_RC522_CS) && PinUsed(GPIO_RC522_RST) && TasmotaGlobal.spi_enabled) {
     Mfrc522 = new MFRC522(Pin(GPIO_RC522_CS), Pin(GPIO_RC522_RST));
+#ifdef RC522_USE_CONFIGURED_SPI_PINS
+    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI));
+#else
     SPI.begin();
+#endif
     Mfrc522->PCD_Init();
 //    if (Mfrc522->PCD_PerformSelfTest()) {  // Saves 0k5 code
       uint8_t v = Mfrc522->PCD_ReadRegister(Mfrc522->VersionReg);
