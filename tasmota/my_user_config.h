@@ -773,6 +773,7 @@
 //    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
 //    #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
 //  #define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
+//    #define RC522_USE_CONFIGURED_SPI_PINS        // Use the SPI 1 interface as configured via the template for communication with RC522
 //    #define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
 //    #define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)
 //  #define USE_MCP2515                            // Add support for can bus using MCP2515 (+7k code)
