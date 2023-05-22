@@ -324,3 +324,9 @@ jobs:
         destination_branch: 'action-development'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
+    - name: Dispatch worflow in Jason2866/Tasmota-firmware
+      run: |
+         curl -X POST https://api.github.com/repos/Jason2866/Tasmota-firmware/dispatches \
+         -H 'Accept: application/vnd.github.everest-preview+json' \
+         -u ${{ secrets.API_TOKEN_GITHUB }} \
+         --data '{"event_type": "Trigger Workflow", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
