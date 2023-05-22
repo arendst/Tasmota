@@ -48,6 +48,9 @@ class Matter_Session : Matter_Expirable
   var created                     # timestamp (UTC) when the session was created
   var last_used                   # timestamp (UTC) when the session was last used
   var _source_node_id             # source node if bytes(8) (opt, used only when session is not established)
+  # temporary data for ArmFailSafe provisioning - before it is stored in a fabric
+  var _temp_root_ca_certificate   # temporary root_ca_certificate added by `AddTrustedRootCertificate` before `AddNoc`
+  var _temp_pk
   # session_ids when the session will be active
   var __future_initiator_session_id
   var __future_local_session_id
@@ -108,7 +111,7 @@ class Matter_Session : Matter_Expirable
     self._breadcrumb = 0
     self._exchange_id = crypto.random(2).get(0,2)      # generate a random 16 bits number, then increment with rollover
 
-    self._fabric = fabric ? fabric : self._store.create_fabric()
+    self._fabric = fabric
     self.update()
   end
 
@@ -172,31 +175,6 @@ class Matter_Session : Matter_Expirable
   def set_mode_CASE()   self.set_mode(self._CASE)   end
   def is_PASE()   return self.mode == self._PASE    end
   def is_CASE()   return self.mode == self._CASE    end
-  
-  #############################################################
-  # Assign a new fabric index
-  def assign_fabric_index()
-    if (self._fabric.get_fabric_index() == nil)
-      self._fabric.set_fabric_index(self._store.next_fabric_idx())
-    end
-  end
-
-  #############################################################
-  # Register the fabric as complete (end of commissioning)
-  def fabric_completed()
-    self._fabric.set_no_expiration()
-    self._fabric.set_persist(true)
-    self.assign_fabric_index()
-    self._store.add_fabric(self._fabric)
-  end
-
-  #############################################################
-  # Register the frabric as complete (end of commissioning)
-  def fabric_candidate()
-    self._fabric.set_expire_in_seconds(120)       # expire in 2 minutes
-    self.assign_fabric_index()
-    self._store.add_fabric(self._fabric)
-  end
 
   #############################################################
   # Persist to fabric
@@ -241,26 +219,16 @@ class Matter_Session : Matter_Expirable
     self.attestation_challenge = ac
     self.created = st
   end
-  def set_ca(ca)
-    self._fabric.root_ca_certificate = ca
+  def set_temp_ca(ca)
+    self._temp_root_ca_certificate = ca
   end
-  def set_noc(noc, icac)
-    self._fabric.noc = noc
-    self._fabric.icac = icac
-  end
-  def set_ipk_epoch_key(ipk_epoch_key)
-    self._fabric.ipk_epoch_key = ipk_epoch_key
-  end
-  def set_admin_subject_vendor(admin_subject, admin_vendor)
-    self._fabric.admin_subject = admin_subject
-    self._fabric.admin_vendor = admin_vendor
-  end
-
-  def set_fabric_device(fabric_id, device_id, fc, fabric_parent)
-    self._fabric.fabric_id = fabric_id
-    self._fabric.device_id = device_id
-    self._fabric.fabric_compressed = fc
-    self._fabric.fabric_parent = (fabric_parent != nil) ? fabric_parent.get_fabric_index() : nil
+  def get_temp_ca()           return self._temp_root_ca_certificate end
+  def get_temp_ca_pub()
+    var ca = self._temp_root_ca_certificate
+    if ca
+      var m = matter.TLV.parse(ca)
+      return m.findsubval(9)
+    end
   end
   def set_fabric_label(s)
     if type(s) == 'string'
@@ -269,12 +237,8 @@ class Matter_Session : Matter_Expirable
   end
 
   #############################################################
-  def get_mode()
-    return self.mode
-  end
-  def get_i2r()
-    return self.i2rkey
-  end
+  def get_mode()              return self.mode                    end
+  def get_i2r()               return self.i2rkey                  end
   def get_i2r_privacy()       # get and cache privacy key
     if self._i2r_privacy == nil
       import crypto
@@ -283,18 +247,11 @@ class Matter_Session : Matter_Expirable
     end
     return self._i2r_privacy
   end
-  def get_r2i()
-    return self.r2ikey
-  end
-  def get_ac()
-    return self.attestation_challenge
-  end
-  def get_ca()
-    return self._fabric.root_ca_certificate
-  end
-  def get_ca_pub()
-    return self._fabric.get_ca_pub()
-  end
+  def get_r2i()               return self.r2ikey                   end
+  def get_ac()                return self.attestation_challenge     end
+
+  def get_ca()                return self._fabric.root_ca_certificate end
+  def get_ca_pub()            return self._fabric.get_ca_pub()      end
   def get_fabric()            return self._fabric                   end
   def get_noc()               return self._fabric.noc               end
   def get_icac()              return self._fabric.icac              end
@@ -307,24 +264,27 @@ class Matter_Session : Matter_Expirable
   def get_admin_vendor()      return self._fabric.admin_vendor      end
 
   #############################################################
-  # Generate a private key (or retrieve it)
+  # Get operational key pair (private key)
+  #
+  # If there is a fabric, retrieve the PK from the fabric
+  # If there is no fabric, create a temporary PK in `_temp_pk`
+  # to be stored later in the fabric
   def get_pk()
-    if !self._fabric.no_private_key
-      import crypto
-      self._fabric.no_private_key = crypto.random(32)
+    if self._fabric
+      return self._fabric.get_pk()
+    else
+      if !self._temp_pk
+        import crypto
+        self._temp_pk = crypto.random(32)
+      end
+      return self._temp_pk
     end
-    return self._fabric.no_private_key
   end
 
   #############################################################
   # Operational Group Key Derivation, 4.15.2, p.182
   def get_ipk_group_key()
-    if self.get_ipk_epoch_key() == nil || self.get_fabric_compressed() == nil   return nil end
-    import crypto
-    var hk = crypto.HKDF_SHA256()
-    var info = bytes().fromstring(self._GROUP_KEY)
-    var hash = hk.derive(self.get_ipk_epoch_key(), self.get_fabric_compressed(), info, 16)
-    return hash
+    return self._fabric.get_ipk_group_key()
   end
 
   #############################################################

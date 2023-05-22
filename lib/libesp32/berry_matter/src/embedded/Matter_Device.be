@@ -381,9 +381,9 @@ class Matter_Device
   # Start Operational Discovery for this session
   #
   # Deferred until next tick.
-  def start_operational_discovery_deferred(session)
+  def start_operational_discovery_deferred(fabric)
     # defer to next click
-    tasmota.set_timer(0, /-> self.start_operational_discovery(session))
+    tasmota.set_timer(0, /-> self.start_operational_discovery(fabric))
   end
 
   #############################################################
@@ -400,7 +400,7 @@ class Matter_Device
   #
   # Stop Basic Commissioning and clean PASE specific values (to save memory).
   # Announce fabric entry in mDNS.
-  def start_operational_discovery(session)
+  def start_operational_discovery(fabric)
     import crypto
     import mdns
     import string
@@ -411,10 +411,7 @@ class Matter_Device
     # self.root_w1 = nil
     self.root_L = nil
 
-    # we keep the PASE session for 1 minute
-    session.set_expire_in_seconds(60)
-
-    self.mdns_announce_op_discovery(session.get_fabric())
+    self.mdns_announce_op_discovery(fabric)
   end
 
   #############################################################
