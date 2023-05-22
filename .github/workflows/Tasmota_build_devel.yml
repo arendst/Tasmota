@@ -247,3 +247,9 @@ jobs:
          -H 'Accept: application/vnd.github.everest-preview+json' \
          -u ${{ secrets.API_TOKEN_GITHUB }} \
          --data '{"ref": "main"}'
+    - name: Dispatch workflow in arendst/Tasmota-firmware Part2         # Needed until complete refactoring is done
+      run: |
+         curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/copy_development_firmware.yml/dispatches \
+         -H 'Accept: application/vnd.github.everest-preview+json' \
+         -u ${{ secrets.API_TOKEN_GITHUB }} \
+         --data '{"ref": "action-development"}'
