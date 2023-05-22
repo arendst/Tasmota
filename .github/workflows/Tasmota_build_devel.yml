@@ -2,7 +2,11 @@
 name: Build_development
 
 on:
-  workflow_dispatch:      # Manually start a workflow
+  workflow_dispatch:      # Start a workflow
+    inputs:
+      Store_Tasmota_firmwares:  # workflow name of the remote gh workflow
+        description: "Workflow Store_Tasmota_firmwares which will be triggered"
+        default: "Store_Tasmota_firmwares"
   push:
     branches: development
     paths-ignore:
