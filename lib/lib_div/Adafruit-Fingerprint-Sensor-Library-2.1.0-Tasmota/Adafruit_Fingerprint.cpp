@@ -64,6 +64,7 @@
 /**************************************************************************/
 //Adafruit_Fingerprint::Adafruit_Fingerprint(SoftwareSerial *ss,
 Adafruit_Fingerprint::Adafruit_Fingerprint(TasmotaSerial *ss,
+
                                            uint32_t password) {
   thePassword = password;
   theAddress = 0xFFFFFFFF;
@@ -413,10 +414,64 @@ uint8_t Adafruit_Fingerprint::getTemplateCount(void) {
 */
 /**************************************************************************/
 uint8_t Adafruit_Fingerprint::setPassword(uint32_t password) {
-  SEND_CMD_PACKET(FINGERPRINT_SETPASSWORD, (uint8_t)(password >> 24), (uint8_t)(password >> 16),
-                  (uint8_t)(password >> 8), (uint8_t)password);
+  SEND_CMD_PACKET(FINGERPRINT_SETPASSWORD, (uint8_t)(password >> 24),
+                  (uint8_t)(password >> 16), (uint8_t)(password >> 8),
+                  (uint8_t)(password & 0xFF));
 }
 
+/**************************************************************************/
+/*!
+    @brief   Writing module registers
+    @param   regAdd 8-bit address of register
+    @param   value 8-bit value will write to register
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+    @returns <code>FINGERPRINT_ADDRESS_ERROR</code> on register address error
+*/
+/**************************************************************************/
+uint8_t Adafruit_Fingerprint::writeRegister(uint8_t regAdd, uint8_t value) {
+
+  SEND_CMD_PACKET(FINGERPRINT_WRITE_REG, regAdd, value);
+}
+
+/**************************************************************************/
+/*!
+    @brief   Change UART baudrate
+    @param   baudrate 8-bit Uart baudrate
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+*/
+/**************************************************************************/
+uint8_t Adafruit_Fingerprint::setBaudRate(uint8_t baudrate) {
+
+  return (writeRegister(FINGERPRINT_BAUD_REG_ADDR, baud_rate));
+}
+
+/**************************************************************************/
+/*!
+    @brief   Change security level
+    @param   level 8-bit security level
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+*/
+/**************************************************************************/
+uint8_t Adafruit_Fingerprint::setSecurityLevel(uint8_t level) {
+
+  return (writeRegister(FINGERPRINT_SECURITY_REG_ADDR, level));
+}
+
+/**************************************************************************/
+/*!
+    @brief   Change packet size
+    @param   size 8-bit packet size
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+*/
+/**************************************************************************/
+uint8_t Adafruit_Fingerprint::setPacketSize(uint8_t size) {
+
+  return (writeRegister(FINGERPRINT_PACKET_REG_ADDR, size));
+}
 /**************************************************************************/
 /*!
     @brief   Helper function to process a packet and send it over UART to the
@@ -559,6 +614,9 @@ Adafruit_Fingerprint::getStructuredPacket(Adafruit_Fingerprint_Packet *packet,
       break;
     }
     idx++;
+    if ((idx + 9) >= sizeof(packet->data)) {
+      return FINGERPRINT_BADPACKET;
+    }
   }
   // Shouldn't get here so...
   return FINGERPRINT_BADPACKET;

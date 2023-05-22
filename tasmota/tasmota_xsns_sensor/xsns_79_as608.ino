@@ -32,6 +32,10 @@
 
 //#define USE_AS608_MESSAGES
 
+#ifndef AS608_DUPLICATE
+#define AS608_DUPLICATE       4    // Number of 0.25Sec to disable detection
+#endif
+
 #define D_JSON_FPRINT "FPrint"
 
 #define D_PRFX_FP "Fp"
@@ -62,9 +66,12 @@ Adafruit_Fingerprint *As608Finger;
 TasmotaSerial *As608Serial;
 
 struct AS608 {
+  uint16_t finger_id;
+  uint16_t confidence;
   bool selected = false;
   uint8_t enroll_step = 0;
   uint8_t model_number = 0;
+  uint8_t duplicate;
 } As608;
 
 char* As608Message(char* response, uint32_t index) {
@@ -131,6 +138,13 @@ void As608Loop(void) {
   uint32_t p = 0;
 
   if (!As608.enroll_step) {
+    if (As608.duplicate) {
+      As608.duplicate--;
+    }
+    if (!As608.duplicate) {
+      As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_PURPLE);
+    }
+
     // Search for Finger
 
 //    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_RED);
@@ -152,7 +166,15 @@ void As608Loop(void) {
     }
 
     // Found a match
-    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"" D_JSON_ID "\":%d,\"" D_JSON_CONFIDENCE "\":%d}}"), As608Finger->fingerID, As608Finger->confidence);
+    if (As608.duplicate && (As608.finger_id == As608Finger->fingerID)) {
+      return;                             // Skip duplicate during AS608_DUPLICATE * 0.25 second
+    }
+    As608.duplicate = AS608_DUPLICATE;    // AS608_DUPLICATE * 250mS
+    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_PURPLE);
+
+    As608.finger_id = As608Finger->fingerID;
+    As608.confidence = As608Finger->confidence;
+    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"" D_JSON_ID "\":%d,\"" D_JSON_CONFIDENCE "\":%d}}"), As608.finger_id, As608.confidence);
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_FPRINT));
     return;
   } else {
@@ -305,6 +327,11 @@ bool Xsns79(uint32_t function) {
       case FUNC_EVERY_250_MSECOND:
         As608Loop();
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        WSContentSend_PD(PSTR("{s}AS608{m}%d-%d{e}"), As608.finger_id, As608.confidence);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kAs608Commands, As608Commands);
         break;

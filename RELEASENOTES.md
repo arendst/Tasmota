@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Change command ``FileUpload`` index binary data detection from >199 to >299
 
 ### Changed
+- AdafruitFingerprint library from v2.0.4 to v2.1.0
 - IRremoteESP8266 library from v2.8.4 to v2.8.5
 - ESP32 Framework (Core) from v2.0.7 to v2.0.9
 - InfluxDb resolves DNS name before request [#18015](https://github.com/arendst/Tasmota/issues/18015)

@@ -5,7 +5,11 @@ on: [pull_request, push, repository_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        arduino-platform: ["uno", "leonardo", "mega2560", "zero", "esp8266", "esp32", "metro_m4", "trinket_m0"]
+
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -20,7 +24,7 @@ jobs:
       run: bash ci/actions_install.sh
 
     - name: test platforms
-      run: python3 ci/build_platform.py main_platforms
+      run: python3 ci/build_platform.py ${{ matrix.arduino-platform }}
 
     - name: clang
       run: python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -r . 

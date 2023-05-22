@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - InfluxDb resolves DNS name before request (#18015)
 - Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement (#18701)
+- AdafruitFingerprint library from v2.0.4 to v2.1.0
 
 ### Fixed
 - ESP32 InfluxDb initial connection delays using HTTPClient (#18015)

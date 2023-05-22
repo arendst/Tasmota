@@ -87,7 +87,40 @@
 #define FINGERPRINT_LED_GRADUAL_OFF 0x06 //!< Gradually off
 #define FINGERPRINT_LED_RED 0x01         //!< Red LED
 #define FINGERPRINT_LED_BLUE 0x02        //!< Blue LED
-#define FINGERPRINT_LED_PURPLE 0x03      //!< Purple LED
+#define FINGERPRINT_LED_PURPLE 0x03      //!< Purple LEDpassword
+
+#define FINGERPRINT_REG_ADDR_ERROR 0x1A //!< shows register address error
+#define FINGERPRINT_WRITE_REG 0x0E      //!< Write system register instruction
+
+#define FINGERPRINT_BAUD_REG_ADDR 0x4   //!< BAUDRATE register address
+#define FINGERPRINT_BAUDRATE_9600 0x1   //!< UART baud 9600
+#define FINGERPRINT_BAUDRATE_19200 0x2  //!< UART baud 19200
+#define FINGERPRINT_BAUDRATE_28800 0x3  //!< UART baud 28800
+#define FINGERPRINT_BAUDRATE_38400 0x4  //!< UART baud 38400
+#define FINGERPRINT_BAUDRATE_48000 0x5  //!< UART baud 48000
+#define FINGERPRINT_BAUDRATE_57600 0x6  //!< UART baud 57600
+#define FINGERPRINT_BAUDRATE_67200 0x7  //!< UART baud 67200
+#define FINGERPRINT_BAUDRATE_76800 0x8  //!< UART baud 76800
+#define FINGERPRINT_BAUDRATE_86400 0x9  //!< UART baud 86400
+#define FINGERPRINT_BAUDRATE_96000 0xA  //!< UART baud 96000
+#define FINGERPRINT_BAUDRATE_105600 0xB //!< UART baud 105600
+#define FINGERPRINT_BAUDRATE_115200 0xC //!< UART baud 115200
+
+#define FINGERPRINT_SECURITY_REG_ADDR 0x5 //!< Security level register address
+// The safety level is 1 The highest rate of false recognition , The rejection
+// rate is the lowest . The safety level is 5 The lowest tate of false
+// recognition, The rejection rate is the highest .
+#define FINGERPRINT_SECURITY_LEVEL_1 0X1 //!< Security level 1
+#define FINGERPRINT_SECURITY_LEVEL_2 0X2 //!< Security level 2
+#define FINGERPRINT_SECURITY_LEVEL_3 0X3 //!< Security level 3
+#define FINGERPRINT_SECURITY_LEVEL_4 0X4 //!< Security level 4
+#define FINGERPRINT_SECURITY_LEVEL_5 0X5 //!< Security level 5
+
+#define FINGERPRINT_PACKET_REG_ADDR 0x6 //!< Packet size register address
+#define FINGERPRINT_PACKET_SIZE_32 0X0  //!< Packet size is 32 Byte
+#define FINGERPRINT_PACKET_SIZE_64 0X1  //!< Packet size is 64 Byte
+#define FINGERPRINT_PACKET_SIZE_128 0X2 //!< Packet size is 128 Byte
+#define FINGERPRINT_PACKET_SIZE_256 0X3 //!< Packet size is 256 Byte
 
 //#define FINGERPRINT_DEBUG
 
@@ -158,6 +191,10 @@ public:
   uint8_t LEDcontrol(uint8_t control, uint8_t speed, uint8_t coloridx,
                      uint8_t count = 0);
 
+  uint8_t setBaudRate(uint8_t baudrate);
+  uint8_t setSecurityLevel(uint8_t level);
+  uint8_t setPacketSize(uint8_t size);
+
   void writeStructuredPacket(const Adafruit_Fingerprint_Packet &p);
   uint8_t getStructuredPacket(Adafruit_Fingerprint_Packet *p,
                               uint16_t timeout = DEFAULTTIMEOUT);
@@ -181,6 +218,7 @@ public:
 
 private:
   uint8_t checkPassword(void);
+  uint8_t writeRegister(uint8_t regAdd, uint8_t value);
   uint32_t thePassword;
   uint32_t theAddress;
   uint8_t recvPacket[20];
