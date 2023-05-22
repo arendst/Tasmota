@@ -33,7 +33,10 @@
 //#define USE_AS608_MESSAGES
 
 #ifndef AS608_DUPLICATE
-#define AS608_DUPLICATE       4    // Number of 0.25Sec to disable detection
+#define AS608_DUPLICATE       4    // Number of 0.25 Sec to disable detection
+#endif
+#ifndef AS608_COLOR_SCAN
+#define AS608_COLOR_SCAN      3    // Red = 1, Blue = 2, Purple = 3
 #endif
 
 #define D_JSON_FPRINT "FPrint"
@@ -142,7 +145,7 @@ void As608Loop(void) {
       As608.duplicate--;
     }
     if (!As608.duplicate) {
-      As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_PURPLE);
+      As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, AS608_COLOR_SCAN);
     }
 
     // Search for Finger
@@ -155,8 +158,12 @@ void As608Loop(void) {
     p = As608Finger->getImage();          // Take image
     if (p != FINGERPRINT_OK) { return; }
 
+    As608Finger->LEDcontrol(FINGERPRINT_LED_GRADUAL_ON, 150, AS608_COLOR_SCAN);
+
     p = As608Finger->image2Tz();          // Convert image
     if (p != FINGERPRINT_OK) { return; }
+
+//    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_BLUE);
 
 //    p = As608Finger->fingerFastSearch();  // Match found - fails on R503
     p = As608Finger->fingerSearch();      // Match found
@@ -170,7 +177,7 @@ void As608Loop(void) {
       return;                             // Skip duplicate during AS608_DUPLICATE * 0.25 second
     }
     As608.duplicate = AS608_DUPLICATE;    // AS608_DUPLICATE * 250mS
-    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_PURPLE);
+    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, AS608_COLOR_SCAN);
 
     As608.finger_id = As608Finger->fingerID;
     As608.confidence = As608Finger->confidence;
