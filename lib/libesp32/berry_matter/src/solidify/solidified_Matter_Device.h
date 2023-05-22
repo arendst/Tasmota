@@ -4652,7 +4652,7 @@ be_local_closure(Matter_Device_msg_received,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Device_start_operational_discovery,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
+    8,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -4660,20 +4660,18 @@ be_local_closure(Matter_Device_start_operational_discovery,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
+    ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
     /* K1   */  be_nested_str_weak(mdns),
     /* K2   */  be_nested_str_weak(string),
     /* K3   */  be_nested_str_weak(stop_basic_commissioning),
     /* K4   */  be_nested_str_weak(root_w0),
     /* K5   */  be_nested_str_weak(root_L),
-    /* K6   */  be_nested_str_weak(set_expire_in_seconds),
-    /* K7   */  be_nested_str_weak(mdns_announce_op_discovery),
-    /* K8   */  be_nested_str_weak(get_fabric),
+    /* K6   */  be_nested_str_weak(mdns_announce_op_discovery),
     }),
     be_str_weak(start_operational_discovery),
     &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
+    ( &(const binstruction[13]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xA40E0200,  //  0001  IMPORT	R3	K1
       0xA4120400,  //  0002  IMPORT	R4	K2
@@ -4683,14 +4681,10 @@ be_local_closure(Matter_Device_start_operational_discovery,   /* name */
       0x90020805,  //  0006  SETMBR	R0	K4	R5
       0x4C140000,  //  0007  LDNIL	R5
       0x90020A05,  //  0008  SETMBR	R0	K5	R5
-      0x8C140306,  //  0009  GETMET	R5	R1	K6
-      0x541E003B,  //  000A  LDINT	R7	60
+      0x8C140106,  //  0009  GETMET	R5	R0	K6
+      0x5C1C0200,  //  000A  MOVE	R7	R1
       0x7C140400,  //  000B  CALL	R5	2
-      0x8C140107,  //  000C  GETMET	R5	R0	K7
-      0x8C1C0308,  //  000D  GETMET	R7	R1	K8
-      0x7C1C0200,  //  000E  CALL	R7	1
-      0x7C140400,  //  000F  CALL	R5	2
-      0x80000000,  //  0010  RET	0
+      0x80000000,  //  000C  RET	0
     })
   )
 );

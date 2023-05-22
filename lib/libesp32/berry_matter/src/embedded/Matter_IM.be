@@ -402,9 +402,10 @@ class Matter_IM
         ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
 
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
+        var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
-        tasmota.log(string.format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, str(ctx), cmd_name ? cmd_name : "", params_log), 2)
+        tasmota.log(string.format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 2)
         ctx.log = nil
         var a1 = matter.InvokeResponseIB()
         if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
