@@ -3,10 +3,6 @@ name: Build_development
 
 on:
   workflow_dispatch:      # Start a workflow
-    inputs:
-      Store_Tasmota_firmwares:  # workflow name of the remote gh workflow
-        description: "Workflow Store_Tasmota_firmwares which will be triggered"
-        default: "Store_Tasmota_firmwares"
   push:
     branches: development
     paths-ignore:
@@ -330,7 +326,7 @@ jobs:
         user_name: 'github-actions'
     - name: Dispatch worflow in Jason2866/Tasmota-firmware
       run: |
-         curl -X POST https://api.github.com/repos/Jason2866/Tasmota-firmware/dispatches \
+         curl -X POST https://api.github.com/repos/Jason2866/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
          -H 'Accept: application/vnd.github.everest-preview+json' \
          -u ${{ secrets.API_TOKEN_GITHUB }} \
-         --data '{"event_type": "Trigger Workflow", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
+         --data '{"ref": "development"}'
