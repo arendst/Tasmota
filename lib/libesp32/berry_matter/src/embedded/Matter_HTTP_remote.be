@@ -43,7 +43,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
   # returns nil if no network
   def begin(cmd)
     import string
-    tasmota.log(string.format("MTR: HTTP async request 'http://%s:%i/%s'", self.addr, self.port, cmd), 3)
+    tasmota.log(string.format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd), 3)
     return super(self).begin(cmd)
   end
 
@@ -56,7 +56,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
   # returns the payload as string
   def begin_sync(cmd, timeout)
     import string
-    tasmota.log(string.format("MTR: HTTP sync request 'http://%s:%i/%s'", self.addr, self.port, cmd), 3)
+    tasmota.log(string.format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd), 3)
     return super(self).begin_sync(cmd, timeout)
   end
 
