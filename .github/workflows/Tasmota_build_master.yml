@@ -263,7 +263,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Start_final_copy:
-    needs: [base-images, base32-images, language-images]
+    needs: Release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
