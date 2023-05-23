@@ -4750,7 +4750,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
               lp++;
             }
           }
-          bool isint = is_int_var(lp);
+          bool isint = false;
+          if (*lp != '(') {
+            isint = is_int_var(lp);
+          }
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           char str[SCRIPT_MAXSSIZE];
           if (isint) {
