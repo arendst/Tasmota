@@ -9,7 +9,6 @@ All notable changes to this project will be documented in this file.
 - Command ``WifiPower 1`` to restore default wifi power
 - HASPmota `meta` attribute and improved `berry_run`
 
-
 ### Breaking Changed
 
 ### Changed
@@ -23,7 +22,8 @@ All notable changes to this project will be documented in this file.
 - AIThinker webcam issues (#18652)
 - Berry `tasmota.wifi()` would wrongly report wifi as up
 - Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant (#18701)
-- Matter fix fabric provisioning from CASE session for iOS 16.5
+- Matter fix fabric provisioning from CASE session for iOS 16.5 (#18709)
+- ESP32 SPI initialization for MFRC522 (#18711)
 
 ### Removed
 
