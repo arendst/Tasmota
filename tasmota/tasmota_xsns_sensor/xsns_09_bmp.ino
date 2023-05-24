@@ -73,7 +73,9 @@ typedef struct {
 
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 uint8_t bmp_count = 0;
-uint8_t bmp_once = 1;
+#ifdef USE_DEEPSLEEP
+uint8_t bmp_deepsleep = 0;  // Prevent updating measurments once BMP has been put to sleep (just before ESP enters deepsleep)
+#endif
 
 bmp_sensors_t *bmp_sensors = nullptr;
 
@@ -478,12 +480,10 @@ void Bme680Read(uint8_t bmp_idx) {
 /********************************************************************************************/
 
 void BmpDetect(void) {
-  int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
   if (!bmp_sensors) {
-    bmp_sensors = (bmp_sensors_t*)malloc(bmp_sensor_size);
+    bmp_sensors = (bmp_sensors_t*)calloc(BMP_MAX_SENSORS, sizeof(bmp_sensors_t));
   }
   if (!bmp_sensors) { return; }
-  memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bus = i >>1;
@@ -523,6 +523,10 @@ void BmpDetect(void) {
 }
 
 void BmpRead(void) {
+#ifdef USE_DEEPSLEEP
+  // Prevent updating measurments once BMP has been put to sleep (just before ESP enters deepsleep)
+  if (bmp_deepsleep) return;
+#endif
   for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
       case BMP180_CHIPID:
@@ -692,6 +696,7 @@ bool Xsns09(uint32_t function) {
 #ifdef USE_DEEPSLEEP
       case FUNC_SAVE_BEFORE_RESTART:
         BMP_EnterSleep();
+        bmp_deepsleep = 1;
         break;
 #endif // USE_DEEPSLEEP
     }
