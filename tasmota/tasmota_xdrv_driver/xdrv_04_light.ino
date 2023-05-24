@@ -2322,7 +2322,6 @@ void calcGammaBulb5Channels_8(uint8_t in8[LST_MAX], uint16_t col10[LST_MAX]) {
 
 bool calcGammaBulbs(uint16_t cur_col_10[5]) {
   bool rgbwwtable_applied_white = false;
-  bool pwm_ct = false;
   bool white_free_cw = false;         // true if White channels are uncorrelated. Happens when CW+WW>255, i.e. manually setting white channels to exceed to total power of a single channel (may harm the power supply)
   // Various values needed for accurate White calculation
   // CT value streteched to 0..1023 (from within CT range, so not necessarily from 153 to 500). 0=Cold, 1023=Warm
@@ -2348,7 +2347,6 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
 #else
     if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
 #endif  // ESP8266
-      pwm_ct = true;
       // Xiaomi Philips bulbs follow a different scheme:
       // channel 0=intensity, channel1=temperature
       cur_col_10[cw0] = white_bri10;
