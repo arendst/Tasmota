@@ -136,7 +136,9 @@ extern "C" {
           case 2: // # 02 : show         void -> void
             if (s_ws2812_grb)       s_ws2812_grb->Show();
             if (s_sk6812_grbw)      s_sk6812_grbw->Show();
-            SystemSetBusy(4);
+            // Wait for RMT/I2S to complete fixes distortion due to analogRead
+//            delay(5);
+            SystemBusyDelay(5);  // Max 256 leds
             break;
           case 3: // # 03 : CanShow      void -> bool
             if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->CanShow());
