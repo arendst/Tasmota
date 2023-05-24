@@ -2210,6 +2210,31 @@ bool TimeReachedUsec(uint32_t timer)
   return (passed >= 0);
 }
 
+void SystemSetBusy(uint32_t busy) {
+/*
+  TasmotaGlobal.busy_time = millis();
+  SetNextTimeInterval(TasmotaGlobal.busy_time, busy +1);
+  if (!TasmotaGlobal.busy_time) {
+    TasmotaGlobal.busy_time++;
+  }
+*/
+  TasmotaGlobal.busy_time = busy;
+}
+
+void SystemWaitIfBusy(void) {
+  if (TasmotaGlobal.busy_time) {
+/*
+    // Calls to millis() interrupt RMT and defeats our goal
+    if (!TimeReached(TasmotaGlobal.busy_time)) {
+      delay(1);
+    }
+*/
+    delay(TasmotaGlobal.busy_time);
+
+    TasmotaGlobal.busy_time = 0;
+  }
+}
+
 /*********************************************************************************************\
  * Syslog
  *

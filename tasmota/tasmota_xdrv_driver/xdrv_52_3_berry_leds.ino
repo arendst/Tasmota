@@ -39,15 +39,15 @@ typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32RmtNSk6812Method> neopixel_sk6812_gr
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import unishox
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
   // # Native commands
-  // # 00 : ctor         
+  // # 00 : ctor
   // # 01 : begin        void -> void
   // # 02 : show         void -> void
   // # 03 : CanShow      void -> bool
@@ -88,7 +88,7 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 2)) {
       int32_t cmd = be_toint(vm, 2);
-      
+
       if (0 == cmd) { // 00 : ctor         (leds:int, gpio:int) -> void
         if (!(argc >= 6 && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6))) {
           be_raise(vm, "value_error", "bad arguments for neopixelbus:ctor");
@@ -136,6 +136,7 @@ extern "C" {
           case 2: // # 02 : show         void -> void
             if (s_ws2812_grb)       s_ws2812_grb->Show();
             if (s_sk6812_grbw)      s_sk6812_grbw->Show();
+            SystemSetBusy(4);
             break;
           case 3: // # 03 : CanShow      void -> bool
             if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->CanShow());
@@ -154,7 +155,7 @@ extern "C" {
             uint8_t * pixels;
             if (s_ws2812_grb)       pixels = s_ws2812_grb->Pixels();
             if (s_sk6812_grbw)      pixels = s_sk6812_grbw->Pixels();
-            
+
             be_pushcomptr(vm, pixels);
             }
             break;
@@ -196,11 +197,11 @@ extern "C" {
 
             if (s_ws2812_grb) {
               RgbColor rgb = s_ws2812_grb->GetPixelColor(idx);
-              be_pushint(vm, (rgb.R << 16) | (rgb.G << 8) | rgb.B); 
+              be_pushint(vm, (rgb.R << 16) | (rgb.G << 8) | rgb.B);
             }
             if (s_sk6812_grbw) {
               RgbwColor rgbw = s_sk6812_grbw->GetPixelColor(idx);
-              be_pushint(vm, (rgbw.W << 24) | (rgb.R << 16) | (rgb.G << 8) | rgb.B); 
+              be_pushint(vm, (rgbw.W << 24) | (rgb.R << 16) | (rgb.G << 8) | rgb.B);
             }
             }
             break;

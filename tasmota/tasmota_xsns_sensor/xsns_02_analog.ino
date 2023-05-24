@@ -317,11 +317,8 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 3 = 8 samples
   // factor 4 = 16 samples
   // factor 5 = 32 samples
-#ifdef USE_LIGHT
-  if ((XLGT_01 == TasmotaGlobal.light_driver) && LightPower()) {
-    delay(5);  // analogRead() interferes with DMA/RMT so wait for a decent amount of time
-  }
-#endif  // USE_LIGHT
+  SystemWaitIfBusy();
+
   uint32_t samples = 1 << factor;
   uint32_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {
