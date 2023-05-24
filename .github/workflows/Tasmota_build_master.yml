@@ -272,4 +272,4 @@ jobs:
          curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
          -H 'Accept: application/vnd.github.everest-preview+json' \
          -u ${{ secrets.API_TOKEN_GITHUB }} \
-         --data '{"ref": "main"}'
+         --data '{"ref": "gh_actions"}'
