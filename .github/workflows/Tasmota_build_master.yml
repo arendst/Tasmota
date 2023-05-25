@@ -16,7 +16,7 @@ concurrency:
 jobs:
   be_solidify:
     runs-on: ubuntu-latest
-    if: github.repository == 'arendst/Tasmota'
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
@@ -49,7 +49,7 @@ jobs:
   push_solidified:
     needs: be_solidify
     runs-on: ubuntu-latest
-    if: github.repository == 'arendst/Tasmota'
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
