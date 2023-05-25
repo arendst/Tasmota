@@ -253,12 +253,16 @@ jobs:
         path: ./mv_firmware
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
+    - name: Zip all map.gz files in one file -> map_all.zip
+      run: 7z a -mx=9 -tzip -xr'!.*' map_all.zip mv_firmware/map
     - name: Release
       uses: jason2866/action-gh-release@v1.2
       #if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ github.run_number }}
-        files: ./mv_firmware/firmware/*
+        files: |
+          ./mv_firmware/firmware/*
+          map_all.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
