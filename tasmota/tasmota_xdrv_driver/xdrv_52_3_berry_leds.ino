@@ -134,10 +134,15 @@ extern "C" {
             if (s_sk6812_grbw)      s_sk6812_grbw->Begin();
             break;
           case 2: // # 02 : show         void -> void
-            if (s_ws2812_grb)       s_ws2812_grb->Show();
-            if (s_sk6812_grbw)      s_sk6812_grbw->Show();
+            {
+              uint32_t pixels_size;       // number of bytes to push
+            if (s_ws2812_grb)     { s_ws2812_grb->Show();   pixels_size = s_ws2812_grb->PixelsSize(); }
+            if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_ws2812_grb->PixelsSize(); }
+
             // Wait for RMT/I2S to complete fixes distortion due to analogRead
-            SystemBusyDelay(8);  // Max 256 leds
+            // 1ms is needed for 96 bytes
+            SystemBusyDelay((pixels_size + 95) / 96);
+            }
             break;
           case 3: // # 03 : CanShow      void -> bool
             if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->CanShow());
