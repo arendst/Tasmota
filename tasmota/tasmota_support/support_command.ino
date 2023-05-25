@@ -1474,6 +1474,7 @@ void CmndSetoptionBase(bool indexed) {
             switch (pindex) {
               case 5:                     // SetOption151 - Matter enabled
               case 6:                     // SetOption152 - (Power) Use single pin bistable
+              case 7:                     // SetOption153 - (Berry) Disable autoexec.be on restart (1)
                 TasmotaGlobal.restart_flag = 2;
                 break;
             }
