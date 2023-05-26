@@ -379,7 +379,7 @@ void BrLoad(const char * script_name) {
   if (berry.vm == nullptr || TasmotaGlobal.no_autoexec) { return; }   // abort is berry is not running, or bootloop prevention kicked in
 
   if (!strcmp_P(script_name, "autoexec.be")) {
-    if (Settings->flag6.berry_autoexec) {   // SetOption153 - (Berry) Disable autoexec.be on restart (1)
+    if (Settings->flag6.berry_no_autoexec) {   // SetOption153 - (Berry) Disable autoexec.be on restart (1)
       return;
     }
   }

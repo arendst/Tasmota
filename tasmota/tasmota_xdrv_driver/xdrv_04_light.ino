@@ -50,7 +50,8 @@
  * 10            yes     no         no          Kwanzaa
  * 11            yes     no         no          Rainbow
  * 12            yes     no         no          Fire
- *
+ * 13            yes     no         no          Stairs
+ * 14            yes     no         no          Clear (= Berry)
 \*********************************************************************************************/
 
 /*********************************************************************************************\
@@ -1866,7 +1867,7 @@ void LightAnimate(void)
         break;
 #endif
       default:
-          XlgtCall(FUNC_SET_SCHEME);
+        XlgtCall(FUNC_SET_SCHEME);
     }
 
 #ifdef USE_DEVICE_GROUPS
@@ -2858,7 +2859,7 @@ void CmndHsbColor(void)
 
 void CmndScheme(void)
 {
-  // Scheme 0..12  - Select one of schemes 0 to 12
+  // Scheme 0..14  - Select one of schemes 0 to 14
   // Scheme 2      - Select scheme 2
   // Scheme 2,0    - Select scheme 2 with color wheel set to 0 (HSB Red)
   // Scheme +      - Select next scheme

@@ -33,15 +33,13 @@
  *  6 (11)       yes     no         no          Rainbow
  *  7 (12)       yes     no         no          Fire
  *  8 (13)       yes     no         no          Stairs
+ *  9 (14)       yes     no         no          Clear (= Berry)
+ * 10 (15)       yes     no         no          Optional DDP
 \*********************************************************************************************/
 
 #define XLGT_01             1
 
-#ifdef USE_NETWORK_LIGHT_SCHEMES
 const uint8_t WS2812_SCHEMES = 10;      // Number of WS2812 schemes
-#else
-const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
-#endif
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
@@ -172,11 +170,7 @@ WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,2
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
 WsColor kStairs[2] = { 0,0,0, 255,255,255 };
 
-#ifdef USE_NETWORK_LIGHT_SCHEMES
-ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock scheme and DDP scheme
-#else
-ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
-#endif
+ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock and clear scheme
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,
@@ -203,6 +197,7 @@ struct WS2812 {
   uint8_t show_next = 1;
   uint8_t scheme_offset = 0;
   bool suspend_update = false;
+  bool scheme9;
 } Ws2812;
 
 /********************************************************************************************/
@@ -554,7 +549,7 @@ void Ws2812DDP(void)
     Ws2812StripShow();
   }
 }
-#endif
+#endif  // USE_NETWORK_LIGHT_SCHEMES
 
 void Ws2812Clear(void)
 {
@@ -645,8 +640,11 @@ void Ws2812ShowScheme(void)
 {
   uint32_t scheme = Settings->light_scheme - Ws2812.scheme_offset;
 
+  if (scheme != 9) {
+    Ws2812.scheme9 = 0;
+  }
 #ifdef USE_NETWORK_LIGHT_SCHEMES
-  if ((scheme != 9) && (ddp_udp_up)) {
+  if ((scheme != 10) && (ddp_udp_up)) {
     ddp_udp.stop();
     ddp_udp_up = 0;
     AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: WS2812 Scheme not DDP");
@@ -659,11 +657,17 @@ void Ws2812ShowScheme(void)
         Ws2812.show_next = 0;
       }
       break;
+    case 9:  // Clear
+      if (!Ws2812.scheme9) {
+        Ws2812Clear();
+        Ws2812.scheme9 = 1;
+      }
+      break;
 #ifdef USE_NETWORK_LIGHT_SCHEMES
-    case 9:
+    case 10:
       Ws2812DDP();
       break;
-#endif
+#endif  // USE_NETWORK_LIGHT_SCHEMES
     default:
 			if(Settings->light_step_pixels > 0){
 				Ws2812Steps(scheme -1);
@@ -712,6 +716,10 @@ void Ws2812ModuleSelected(void)
   if (Ws2812ReinitStrip()) {
     Ws2812.scheme_offset = Light.max_scheme +1;
     Light.max_scheme += WS2812_SCHEMES;
+
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    Light.max_scheme++;
+#endif
 
 #if (USE_WS2812_CTYPE > NEO_3LED)
     TasmotaGlobal.light_type = LT_RGBW;

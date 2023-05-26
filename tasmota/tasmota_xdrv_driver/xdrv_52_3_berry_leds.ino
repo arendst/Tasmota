@@ -135,7 +135,23 @@ extern "C" {
             break;
           case 2: // # 02 : show         void -> void
             {
-              uint32_t pixels_size;       // number of bytes to push
+            if (Settings->flag6.berry_light_scheme &&
+                (1 == TasmotaGlobal.light_driver)) {  // XLGT_01
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+              bool scheme_berry = ((Light.max_scheme -1) == Settings->light_scheme);
+#else
+              bool scheme_berry = (Light.max_scheme == Settings->light_scheme);
+#endif
+              if (scheme_berry) {
+                if (!Light.power) {
+                  break;
+                }
+              } else {
+                // Skip berry Show() but use WS2812 driver Show() instead
+                break;
+              }
+            }
+            uint32_t pixels_size;       // number of bytes to push
             if (s_ws2812_grb)     { s_ws2812_grb->Show();   pixels_size = s_ws2812_grb->PixelsSize(); }
             if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_ws2812_grb->PixelsSize(); }
 
