@@ -137,6 +137,7 @@ extern "C" {
             {
             if (Settings->flag6.berry_light_scheme &&
                 (1 == TasmotaGlobal.light_driver)) {  // XLGT_01
+              // TODO: Need to add test for RMT0
 #ifdef USE_NETWORK_LIGHT_SCHEMES
               bool scheme_berry = ((Light.max_scheme -1) == Settings->light_scheme);
 #else
@@ -144,6 +145,7 @@ extern "C" {
 #endif
               if (scheme_berry) {
                 if (!Light.power) {
+                  // Skip berry Show() as WS2812 driver Show() has powered off leds
                   break;
                 }
               } else {
