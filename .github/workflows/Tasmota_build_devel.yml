@@ -240,7 +240,6 @@ jobs:
     needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
     - name: Dispatch workflow in arendst/Tasmota-firmware
       run: |
          curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
