@@ -197,7 +197,6 @@ struct WS2812 {
   uint8_t show_next = 1;
   uint8_t scheme_offset = 0;
   bool suspend_update = false;
-  bool scheme9;
 } Ws2812;
 
 /********************************************************************************************/
@@ -640,9 +639,6 @@ void Ws2812ShowScheme(void)
 {
   uint32_t scheme = Settings->light_scheme - Ws2812.scheme_offset;
 
-  if (scheme != 9) {
-    Ws2812.scheme9 = 0;
-  }
 #ifdef USE_NETWORK_LIGHT_SCHEMES
   if ((scheme != 10) && (ddp_udp_up)) {
     ddp_udp.stop();
@@ -658,9 +654,8 @@ void Ws2812ShowScheme(void)
       }
       break;
     case 9:  // Clear
-      if (!Ws2812.scheme9) {
+      if (Settings->light_scheme != Light.last_scheme) {
         Ws2812Clear();
-        Ws2812.scheme9 = 1;
       }
       break;
 #ifdef USE_NETWORK_LIGHT_SCHEMES
