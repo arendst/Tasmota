@@ -24,7 +24,7 @@
 
 /*********************************************************************************************\
  * [tasmota32x-safeboot.bin]
- * Provide aan image with useful supported sensors enabled
+ * Provide an image with useful supported sensors enabled
  *
  * Is a copy of FIRMWARE_MINIMAL with some additional features enabled
 \*********************************************************************************************/
