@@ -2403,29 +2403,23 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
     cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
   }
 
-  if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
-#ifdef ESP8266
-    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#else
-    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#endif  // ESP8266
-      // Xiaomi Philips bulbs follow a different scheme:
-      // channel 0=intensity, channel1=temperature
-      // Need to compute white_bri10 and ct_10 from cur_col_10[] for compatibility with VirtualCT
-      white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
-      ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
-      if (white_free_cw || white_bri10 > 1023) {
-        // Cannot represent white_free_cw in pwm_ct_mode because we can't set white_bri10 > 1023,
-        // so we set the maximum brightness instead. Note that in white_free_cw, the gamma correction
-        // is done for cw and ww separately, so their gamma-corrected sum may be smaller than 1023.
-        // For consistent behaviour we still set the white_bri10 to 1023 in this case; otherwise, 
-        // Color1 0000007979 is much brighter than Color1 0000008181.
-        white_bri10 = 1023;
-      }
-
-      cur_col_10[cw0] = white_bri10;
-      cur_col_10[cw0+1] = ct_10;
+  // Implement SO92: Some lights like Xiaomi Philips bulbs follow the scheme
+  // cw0=intensity, cw0+1=temperature
+  if (ChannelCT() >= 0) {
+    // Need to compute white_bri10 and ct_10 from cur_col_10[] for compatibility with VirtualCT
+    white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
+    ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
+    if (white_free_cw || white_bri10 > 1023) {
+      // Cannot represent white_free_cw in pwm_ct_mode because we can't set white_bri10 > 1023,
+      // so we set the maximum brightness instead. Note that in white_free_cw, the gamma correction
+      // is done for cw and ww separately, so their gamma-corrected sum may be smaller than 1023.
+      // We nevertheless set white_bri10=1023 in this case; if we did not do so,
+      // Color1 0000007979 would be much brighter than Color1 0000008181.
+      white_bri10 = 1023;
     }
+
+    cur_col_10[cw0] = white_bri10;
+    cur_col_10[cw0+1] = ct_10;
   }
 }
 
