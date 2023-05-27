@@ -2339,22 +2339,6 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     calcGammaBulbCW(cur_col_10, &white_bri10, &white_free_cw);
   }
 
-  // Now we know ct_10 and white_bri10 (gamma corrected if needed)
-
-  if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
-#ifdef ESP8266
-    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#else
-    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#endif  // ESP8266
-      // Xiaomi Philips bulbs follow a different scheme:
-      // channel 0=intensity, channel1=temperature
-      cur_col_10[cw0] = white_bri10;
-      cur_col_10[cw0+1] = ct_10;
-      return false;     // avoid any interference
-    }
-  }
-
   // Now see if we need to mix RGB and  White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
   if ((LST_RGBW <= Light.subtype) && (Settings->flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
@@ -2419,6 +2403,32 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
       cur_col_10[cw0] = white_bri10 - cur_col_10[cw0+1];
     }
   }
+
+  if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
+#ifdef ESP8266
+    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#else
+    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#endif  // ESP8266
+      // Xiaomi Philips bulbs follow a different scheme:
+      // channel 0=intensity, channel1=temperature
+      white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
+      ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
+      if (white_free_cw || white_bri10 > 1023) {
+        // cannot represent free_ct_mode here.
+        // There is one edge case: In white_free_cw, the gamma correction
+        // is done for cw and ww separately, so their gamma-corrected sum might
+        // turn out to be smaller than 1023. For consistent behaviour we still set
+        // the brightness to 1023 in this case; otherwise, Color1 0000007979 is much brighter
+        // than Color1 0000008181
+        white_bri10 = 1023;
+      }
+      cur_col_10[cw0] = white_bri10;
+      cur_col_10[cw0+1] = ct_10;
+      return false;     // avoid any interference
+    }
+  }
+
   return rgbwwtable_applied_white;
 }
 
