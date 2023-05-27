@@ -24,7 +24,7 @@
 
 /*********************************************************************************************\
  * [tasmota32x-safeboot.bin]
- * Provide an image with useful supported sensors enabled
+ * Provide aan image with useful supported sensors enabled
  *
  * Is a copy of FIRMWARE_MINIMAL with some additional features enabled
 \*********************************************************************************************/
@@ -314,7 +314,7 @@
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
-#undef USE_DISPLAY_MODES1TO5
+//#undef USE_DISPLAY_MODES1TO5
 #undef USE_DISPLAY_LCD
 #undef USE_DISPLAY_SSD1306
 #undef USE_DISPLAY_MATRIX
