@@ -76,5 +76,9 @@
     },
     "cmake.sourceDirectory": "C:/Users/vince_000/OneDrive/Documents/PlatformIO/Projects/Tasmota-MAX17043-Extension/lib/libesp32_eink/epdiy/src/epd_driver",
     "idf.flashType": "UART",
-    "idf.portWin": "COM6"
+    "idf.portWin": "COM6",
+    "idf.adapterTargetName": "esp32",
+    "idf.openOcdConfigs": [
+      "board/esp32-wrover-kit-3.3v.cfg"
+    ]
   }

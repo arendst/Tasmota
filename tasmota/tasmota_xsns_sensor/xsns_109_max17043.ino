@@ -21,7 +21,7 @@
 #ifdef USE_MAX17043
 
 #include "DFRobot_MAX17043.h"
-#include "Wire.h"
+// #include "Wire.h"
 
 
 // TODO: Update description
@@ -74,7 +74,7 @@ void Max17043SerialInput(void) {
 bool Xsns109(uint32_t function) {
 
   // Set return value to `false`
-  boolean result = false;
+  bool result = false;
 
   // Check which callback ID is called by Tasmota
   switch (function) {
