@@ -35,7 +35,8 @@ class Matter_UI
   static var _ROOT_TYPES    = "root"
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|temperature|pressure|illuminance|humidity"
-                              "|-http|http_relay"
+  static var _CLASSES_TYPES2= "-http|http_relay|http_light0|http_light1|http_light2|http_light3"
+                              "|http_temperature|http_pressure|http_illuminance|http_humidity"
   var device
 
   def init(device)
@@ -268,7 +269,7 @@ class Matter_UI
       webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value='%i'></td>", i, ep))
 
       webserver.content_send(string.format("<td><select name='pi%03i'>", i))
-      self.plugin_option(conf.find('type', ''), self._CLASSES_TYPES)
+      self.plugin_option(conf.find('type', ''), self._CLASSES_TYPES, self._CLASSES_TYPES2)
       webserver.content_send(string.format("</select></td>"))
       webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value='%s'></font></td>",
                              i, webserver.html_escape(arg)))
@@ -279,7 +280,7 @@ class Matter_UI
     # add an empty line for adding a configuration
     webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value=''></td>", i))
     webserver.content_send(string.format("<td><select name='pi%03i'>", i))
-    self.plugin_option('', self._CLASSES_TYPES)
+    self.plugin_option('', self._CLASSES_TYPES, self._CLASSES_TYPES2)
     webserver.content_send(string.format("</select></td>"))
     webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value=''></font></td>", i))
 
@@ -293,10 +294,13 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   #- Show all possible classes for plugin
   #- ---------------------------------------------------------------------- -#
-  def plugin_option(cur, class_list)
+  def plugin_option(cur, *class_list)
     import webserver
     import string
-    var class_types = class_list ? string.split(class_list, '|') : []
+    var class_types = []
+    for cl: class_list
+      class_types += string.split(cl, '|')
+    end
     
     var i = 0
     while i < size(class_types)
@@ -495,6 +499,53 @@ class Matter_UI
     end
   end
 
+  #######################################################################
+  # Show bridge status
+  #######################################################################
+  def show_bridge_status()
+    import webserver
+    import string
+    var bridge_plugin_by_host
+    
+    var idx = 0
+    while idx < size(self.device.plugins)
+      var plg = self.device.plugins[idx]
+
+      if isinstance(plg, matter.Plugin_Bridge_HTTP)
+        if bridge_plugin_by_host == nil     bridge_plugin_by_host = {}   end
+        var host = plg.http_remote.addr
+
+        if !bridge_plugin_by_host.contains(host)    bridge_plugin_by_host[host] = []    end
+        bridge_plugin_by_host[host].push(plg)
+
+      end
+      idx += 1
+    end
+
+    if bridge_plugin_by_host == nil     return    end         # no remote device, abort
+
+    # set specific styles
+    webserver.content_send("<hr>")
+    webserver.content_send("<table style='width:100%'>")
+    webserver.content_send(matter._STYLESHEET)
+
+    for host: bridge_plugin_by_host.keys()
+      webserver.content_send(string.format("<tr class='ztdm htrm'><td><b>%s</b></td>", webserver.html_escape(host)))
+      var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
+      webserver.content_send(http_remote.web_last_seen())
+
+      for plg: bridge_plugin_by_host[host]
+        webserver.content_send("<tr class='htrm'><td colspan='2'>")
+        plg.web_values()                                      # show values
+        webserver.content_send("</td></tr>")
+      end
+    end
+
+
+    webserver.content_send("</table><hr>")
+
+  end
+
   #- display sensor value in the web UI -#
   def web_sensor()
     import webserver
@@ -503,25 +554,31 @@ class Matter_UI
     var matter_enabled = tasmota.get_option(matter.MATTER_OPTION)
 
     if matter_enabled
-      if self.device.is_root_commissioning_open()
-        self.show_commissioning_info()
-      end
 
       # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = self.device.sessions.count_active_fabrics()
       if fabrics_count == 0
-        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", "No active association"))
+        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: No active association"))
       else
         var plural = fabrics_count > 1
-        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;'>%s</div>", str(fabrics_count) + " active association" + (plural ? "s" : "")))
+        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: " + str(fabrics_count) + " active association" + (plural ? "s" : "")))
       end
 
-      webserver.content_send(string.format("<button onclick='la(\"&mtc%i=1\");'>", self.device.commissioning_open == nil ? 1 : 0))
-      webserver.content_send(matter._LOGO)
-      if self.device.commissioning_open == nil
-        webserver.content_send(" Open Commissioning</button>")
-      else
-        webserver.content_send(" Close Commissioning</button>")
+      self.show_bridge_status()
+
+      if self.device.is_root_commissioning_open()
+        self.show_commissioning_info()
+      end
+
+      # display the open/close commissioning button only if there is no active session
+      if fabrics_count == 0
+        webserver.content_send(string.format("<button onclick='la(\"&mtc%i=1\");'>", self.device.commissioning_open == nil ? 1 : 0))
+        webserver.content_send(matter._LOGO)
+        if self.device.commissioning_open == nil
+          webserver.content_send(" Open Commissioning</button>")
+        else
+          webserver.content_send(" Close Commissioning</button>")
+        end
       end
     end
   end

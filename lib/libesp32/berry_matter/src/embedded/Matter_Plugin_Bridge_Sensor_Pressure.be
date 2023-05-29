@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Pressure.be - implements the behavior for a Pressure Sensor
+# Matter_Plugin_Bridge_Sensor_Temp.be - implements base class for a Pressure Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -20,26 +20,18 @@
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin_Sensor end
+class Matter_Plugin_Bridge_Sensor end
 
-#@ solidify:Matter_Plugin_Sensor_Pressure,weak
+#@ solidify:Matter_Plugin_Bridge_Sensor_Pressure,weak
 
-class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
-  static var TYPE = "pressure"                      # name of the plug-in in json
-  static var NAME = "Pressure"                      # display name of the plug-in
+class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
+  static var TYPE = "http_pressure"                 # name of the plug-in in json
+  static var NAME = "&#x1F517; Pressure"            # display name of the plug-in
+
   static var CLUSTERS  = {
     0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement
   }
-  static var TYPES = { 0x0305: 2 }                  # Pressure Sensor, rev 2
-
-  #############################################################
-  # Pre-process value
-  #
-  # This must be overriden.
-  # This allows to convert the raw sensor value to the target one, typically int
-  def pre_value(val)
-    return val != nil ? int(val) : nil
-  end
+  static var TYPES = { 0x0305: 2, 0x0013: 1  }      # Temperature Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value
@@ -48,6 +40,15 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
   # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
   def value_changed(val)
     self.attribute_updated(0x0403, 0x0000)
+  end
+
+  #############################################################
+  # Pre-process value
+  #
+  # This must be overriden.
+  # This allows to convert the raw sensor value to the target one, typically int
+  def pre_value(val)
+    return val != nil ? int(val) : nil
   end
 
   #############################################################
@@ -82,5 +83,17 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     end
   end
 
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    import string
+    webserver.content_send(string.format("| %s &#x26C5; %i hPa",
+                                         self.filter_name_html(),
+                                         int(self.shadow_value)))
+  end
+  
 end
-matter.Plugin_Sensor_Pressure = Matter_Plugin_Sensor_Pressure
+matter.Plugin_Bridge_Sensor_Pressure = Matter_Plugin_Bridge_Sensor_Pressure

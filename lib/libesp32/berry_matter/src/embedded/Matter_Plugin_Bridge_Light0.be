@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light0.be - implements the behavior for a generic Lighting (OnOff only)
+# Matter_Plugin_Bridge_Light0.be - implements the behavior for a remote generic Lighting (OnOff only) via HTTP
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -20,14 +20,17 @@
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin_Device end
+class Matter_Plugin_Bridge_HTTP end
 
-#@ solidify:Matter_Plugin_Light0,weak
+#@ solidify:Matter_Plugin_Bridge_Light0,weak
 
-class Matter_Plugin_Light0 : Matter_Plugin_Device
-  static var TYPE = "light0"                        # name of the plug-in in json
-  static var NAME = "Light 0 On"                    # display name of the plug-in
-  static var UPDATE_TIME = 250                      # update every 250ms
+class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
+  static var TYPE = "http_light0"                   # name of the plug-in in json
+  static var NAME = "&#x1F517; Light 0 On"          # display name of the plug-in
+  static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  # static var UPDATE_TIME = 3000                     # update every 3s
+  # static var UPDATE_CMD = "Status 11"               # command to send for updates
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
@@ -35,28 +38,49 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
-  static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
+  static var TYPES = { 0x0100: 2, 0x0013: 1 }       # OnOff Light, but not actually used because Relay is managed by OnOff
 
-  var shadow_onoff
+  var tasmota_relay_index                           # Relay number in Tasmota (one based)
+  var shadow_onoff                                  # fake status for now # TODO
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
     self.shadow_onoff = false
+    self.tasmota_relay_index = int(arguments.find(self.ARG #-'relay'-#, 1))
+    if self.tasmota_relay_index <= 0    self.tasmota_relay_index = 1    end
   end
 
   #############################################################
-  # Update shadow
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
-  def update_shadow()
-    import light
-    var light_status = light.get()
-    if light_status != nil
-      var pow = light_status.find('power', nil)
-      if pow != self.shadow_onoff self.attribute_updated(0x0006, 0x0000)   self.shadow_onoff = pow end
+  # This call is synnchronous and blocking.
+  def parse_update(data, index)
+    if index == 11                              # Status 11
+      var state = false
+
+      if self.tasmota_relay_index == 1 && data.contains("POWER")        # special case, can be `POWER` or `POWER1`
+        state = (data.find("POWER") == "ON")
+      else
+        state = (data.find("POWER" + str(self.tasmota_relay_index)) == "ON")
+      end
+
+      if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
+        self.attribute_updated(0x0006, 0x0000)
+      end
+      self.shadow_onoff = state
     end
-    super(self).update_shadow()
+  end
+
+  #############################################################
+  # Model
+  #
+  def set_onoff(v)
+    var ret = self.call_remote_sync("Power" + str(self.tasmota_relay_index), v ? "1" : "0")
+    if ret != nil
+      self.parse_update(ret, 11)        # update shadow from return value
+    end
   end
 
   #############################################################
@@ -90,7 +114,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
-    import light
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -99,20 +122,34 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
-        light.set({'power':false})
-        self.update_shadow()
+        self.set_onoff(false)
         return true
       elif command == 0x0001            # ---------- On ----------
-        light.set({'power':true})
-        self.update_shadow()
+        self.set_onoff(true)
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        light.set({'power':!self.shadow_onoff})
-        self.update_shadow()
+        self.set_onoff(!self.shadow_onoff)
         return true
       end
     end
+
   end
 
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    import string
+    webserver.content_send(string.format("| Light %s", self.web_value_onoff()))
+  end
+
+  # Show on/off value as html
+  def web_value_onoff()
+    var onoff_html = (self.shadow_onoff != nil ? (self.shadow_onoff ? "<b>On</b>" : "Off") : "")
+    return onoff_html
+  end
+  
 end
-matter.Plugin_Light0 = Matter_Plugin_Light0
+matter.Plugin_Bridge_Light0 = Matter_Plugin_Bridge_Light0

@@ -152,7 +152,7 @@ be_local_closure(Matter_Plugin_Light2_update_shadow,   /* name */
     }),
     be_str_weak(update_shadow),
     &be_const_str_solidified,
-    ( &(const binstruction[27]) {  /* code */
+    ( &(const binstruction[30]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080101,  //  0001  GETMET	R2	R0	K1
       0x7C080200,  //  0002  CALL	R2	1
@@ -163,23 +163,26 @@ be_local_closure(Matter_Plugin_Light2_update_shadow,   /* name */
       0x7C080200,  //  0007  CALL	R2	1
       0x8C080303,  //  0008  GETMET	R2	R1	K3
       0x7C080200,  //  0009  CALL	R2	1
-      0x8C0C0504,  //  000A  GETMET	R3	R2	K4
-      0x58140005,  //  000B  LDCONST	R5	K5
-      0x4C180000,  //  000C  LDNIL	R6
-      0x7C0C0600,  //  000D  CALL	R3	3
-      0x4C100000,  //  000E  LDNIL	R4
-      0x1C100604,  //  000F  EQ	R4	R3	R4
-      0x78120000,  //  0010  JMPF	R4	#0012
-      0x880C0106,  //  0011  GETMBR	R3	R0	K6
-      0x88100106,  //  0012  GETMBR	R4	R0	K6
-      0x20100604,  //  0013  NE	R4	R3	R4
-      0x78120004,  //  0014  JMPF	R4	#001A
-      0x8C100107,  //  0015  GETMET	R4	R0	K7
-      0x541A02FF,  //  0016  LDINT	R6	768
-      0x541E0006,  //  0017  LDINT	R7	7
-      0x7C100600,  //  0018  CALL	R4	3
-      0x90020C03,  //  0019  SETMBR	R0	K6	R3
-      0x80000000,  //  001A  RET	0
+      0x4C0C0000,  //  000A  LDNIL	R3
+      0x200C0403,  //  000B  NE	R3	R2	R3
+      0x780E000F,  //  000C  JMPF	R3	#001D
+      0x8C0C0504,  //  000D  GETMET	R3	R2	K4
+      0x58140005,  //  000E  LDCONST	R5	K5
+      0x4C180000,  //  000F  LDNIL	R6
+      0x7C0C0600,  //  0010  CALL	R3	3
+      0x4C100000,  //  0011  LDNIL	R4
+      0x1C100604,  //  0012  EQ	R4	R3	R4
+      0x78120000,  //  0013  JMPF	R4	#0015
+      0x880C0106,  //  0014  GETMBR	R3	R0	K6
+      0x88100106,  //  0015  GETMBR	R4	R0	K6
+      0x20100604,  //  0016  NE	R4	R3	R4
+      0x78120004,  //  0017  JMPF	R4	#001D
+      0x8C100107,  //  0018  GETMET	R4	R0	K7
+      0x541A02FF,  //  0019  LDINT	R6	768
+      0x541E0006,  //  001A  LDINT	R7	7
+      0x7C100600,  //  001B  CALL	R4	3
+      0x90020C03,  //  001C  SETMBR	R0	K6	R3
+      0x80000000,  //  001D  RET	0
     })
   )
 );

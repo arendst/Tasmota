@@ -35,6 +35,19 @@ def sort(l)
 end
 matter.sort = sort
 
+#@ solidify:matter.jitter,weak
+#############################################################
+# jitter
+#
+# compute a random jitter time for an update_time value
+def jitter(update_time)
+  # initialization to a random value within range
+  import crypto
+  var rand31 = crypto.random(4).get(0,4) & 0x7FFFFFFF     # random int over 31 bits
+  return tasmota.millis(rand31 % update_time)
+end
+matter.jitter = jitter
+
 #@ solidify:matter.inspect,weak
 # debug function
 def inspect(p)

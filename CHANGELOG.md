@@ -8,8 +8,10 @@ All notable changes to this project will be documented in this file.
 - Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er (#15443)
 - Command ``WifiPower 1`` to restore default wifi power
 - HASPmota `meta` attribute and improved `berry_run`
+- Matter Border Router for ESP8266 (experimental)
 
 ### Breaking Changed
+- Matter relay number starts at 1 instead of 0 to match Tasmota numbering
 
 ### Changed
 - InfluxDb resolves DNS name before request (#18015)

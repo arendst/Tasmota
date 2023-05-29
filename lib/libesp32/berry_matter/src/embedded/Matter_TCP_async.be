@@ -95,6 +95,7 @@ class Matter_TCP_async
     if timeout == nil   timeout = self.TIMEOUT  end
     self.timeout = timeout
   end
+  def get_timeout()   return self.timeout       end
 
   #############################################################
   # Reset the instance to send a open a new connection

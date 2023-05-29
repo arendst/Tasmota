@@ -61,6 +61,51 @@ be_local_closure(matter_sort,   /* name */
 
 
 /********************************************************************
+** Solidified function: jitter
+********************************************************************/
+be_local_closure(matter_jitter,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_weak(crypto),
+    /* K1   */  be_nested_str_weak(random),
+    /* K2   */  be_nested_str_weak(get),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_const_int(2147483647),
+    /* K5   */  be_nested_str_weak(tasmota),
+    /* K6   */  be_nested_str_weak(millis),
+    }),
+    be_str_weak(jitter),
+    &be_const_str_solidified,
+    ( &(const binstruction[14]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x8C080301,  //  0001  GETMET	R2	R1	K1
+      0x54120003,  //  0002  LDINT	R4	4
+      0x7C080400,  //  0003  CALL	R2	2
+      0x8C080502,  //  0004  GETMET	R2	R2	K2
+      0x58100003,  //  0005  LDCONST	R4	K3
+      0x54160003,  //  0006  LDINT	R5	4
+      0x7C080600,  //  0007  CALL	R2	3
+      0x2C080504,  //  0008  AND	R2	R2	K4
+      0xB80E0A00,  //  0009  GETNGBL	R3	K5
+      0x8C0C0706,  //  000A  GETMET	R3	R3	K6
+      0x10140400,  //  000B  MOD	R5	R2	R0
+      0x7C0C0400,  //  000C  CALL	R3	2
+      0x80040600,  //  000D  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: inspect
 ********************************************************************/
 be_local_closure(matter_inspect,   /* name */

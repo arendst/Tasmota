@@ -59,20 +59,6 @@ class Matter_Plugin
   end
 
   #############################################################
-  # return the map of all types
-  def get_types()
-    return self.TYPES
-  end
-
-  #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  #
-  # TO BE OVERRIDDEN
-  # This call is synnchronous and blocking.
-  def parse_update(data)
-  end
-
-  #############################################################
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
   # This method should collect the data from the local or remote device
@@ -82,7 +68,6 @@ class Matter_Plugin
   # This call is synnchronous and blocking.
   def update_shadow()
     self.tick = self.device.tick
-    self.parse_update(nil)
   end
 
   #############################################################
@@ -94,16 +79,6 @@ class Matter_Plugin
       self.update_shadow()
       self.tick = self.device.tick
     end
-  end
-
-  #############################################################
-  # probe_shadow_async
-  #
-  # TO BE OVERRIDDEN - DON'T CALL SUPER - default is just calling `update_shadow()`
-  # This is called on a regular basis, depending on the type of plugin.
-  # Whenever the data is returned, call `parse_update(<data>)` to update values
-  def probe_shadow_async()
-    self.update_shadow()
   end
 
   #############################################################
@@ -178,7 +153,7 @@ class Matter_Plugin
 
       if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
         var dtl = TLV.Matter_TLV_array()
-        var types = self.get_types()
+        var types = self.TYPES
         for dt: types.keys()
           var d1 = dtl.add_struct()
           d1.add_TLV(0, TLV.U2, dt)     # DeviceType
@@ -272,14 +247,11 @@ class Matter_Plugin
   # check if the timer expired and update_shadow() needs to be called
   def every_250ms()
     if self.update_next == nil
-      # initialization to a random value within range
-      import crypto
-      var rand31 = crypto.random(4).get(0,4) & 0x7FFFFFFF     # random int over 31 bits
-      self.update_next = tasmota.millis(rand31 % self.UPDATE_TIME)
+      self.update_next = matter.jitter(self.UPDATE_TIME)
     else
       if tasmota.time_reached(self.update_next)
         if self.tick != self.device.tick
-          self.probe_shadow_async()                             # call update_shadow if not already called
+          self.update_shadow()                                # call update_shadow if not already called
         end
         self.update_next = tasmota.millis(self.UPDATE_TIME)   # rearm timer
       end

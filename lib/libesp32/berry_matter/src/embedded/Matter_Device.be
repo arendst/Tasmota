@@ -54,6 +54,8 @@ class Matter_Device
   # mDNS active announces
   var mdns_pase_eth                   # do we have an active PASE mDNS announce for eth
   var mdns_pase_wifi                  # do we have an active PASE mDNS announce for wifi
+  # for brige mode, list of HTTP_remote objects (only one instance per remote object)
+  var http_remotes                    # map of 'domain:port' or `nil` if no bridge
   # saved in parameters
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
@@ -1210,6 +1212,28 @@ class Matter_Device
       end
       if passcode != nil    return passcode     end
     end
+  end
+
+  #####################################################################
+  # Manager HTTP remotes
+  #####################################################################
+  # register new http remote
+  #
+  # If already registered, return current instance and check timeout
+  def register_http_remote(addr, timeout)
+    if self.http_remotes == nil     self.http_remotes = {}    end     # lazy initialization
+    var http_remote
+
+    if self.http_remotes.contains(addr)
+      http_remote = self.http_remotes[addr]
+      if timeout < http_remote.get_timeout()
+        http_remote.set_timeout(timeout)          # reduce timeout if new value is shorter
+      end
+    else
+      http_remote = matter.HTTP_remote(addr, timeout)
+      self.http_remotes[addr] = http_remote
+    end
+    return http_remote
   end
 
   #####################################################################
