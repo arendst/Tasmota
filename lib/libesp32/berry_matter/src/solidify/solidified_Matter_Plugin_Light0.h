@@ -31,28 +31,31 @@ be_local_closure(Matter_Plugin_Light0_update_shadow,   /* name */
     }),
     be_str_weak(update_shadow),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[24]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C0C0502,  //  0003  GETMET	R3	R2	K2
-      0x58140003,  //  0004  LDCONST	R5	K3
-      0x4C180000,  //  0005  LDNIL	R6
-      0x7C0C0600,  //  0006  CALL	R3	3
-      0x88100104,  //  0007  GETMBR	R4	R0	K4
-      0x20100604,  //  0008  NE	R4	R3	R4
-      0x78120004,  //  0009  JMPF	R4	#000F
-      0x8C100105,  //  000A  GETMET	R4	R0	K5
-      0x541A0005,  //  000B  LDINT	R6	6
-      0x581C0006,  //  000C  LDCONST	R7	K6
-      0x7C100600,  //  000D  CALL	R4	3
-      0x90020803,  //  000E  SETMBR	R0	K4	R3
-      0x60100003,  //  000F  GETGBL	R4	G3
-      0x5C140000,  //  0010  MOVE	R5	R0
-      0x7C100200,  //  0011  CALL	R4	1
-      0x8C100907,  //  0012  GETMET	R4	R4	K7
-      0x7C100200,  //  0013  CALL	R4	1
-      0x80000000,  //  0014  RET	0
+      0x4C0C0000,  //  0003  LDNIL	R3
+      0x200C0403,  //  0004  NE	R3	R2	R3
+      0x780E000B,  //  0005  JMPF	R3	#0012
+      0x8C0C0502,  //  0006  GETMET	R3	R2	K2
+      0x58140003,  //  0007  LDCONST	R5	K3
+      0x4C180000,  //  0008  LDNIL	R6
+      0x7C0C0600,  //  0009  CALL	R3	3
+      0x88100104,  //  000A  GETMBR	R4	R0	K4
+      0x20100604,  //  000B  NE	R4	R3	R4
+      0x78120004,  //  000C  JMPF	R4	#0012
+      0x8C100105,  //  000D  GETMET	R4	R0	K5
+      0x541A0005,  //  000E  LDINT	R6	6
+      0x581C0006,  //  000F  LDCONST	R7	K6
+      0x7C100600,  //  0010  CALL	R4	3
+      0x90020803,  //  0011  SETMBR	R0	K4	R3
+      0x600C0003,  //  0012  GETGBL	R3	G3
+      0x5C100000,  //  0013  MOVE	R4	R0
+      0x7C0C0200,  //  0014  CALL	R3	1
+      0x8C0C0707,  //  0015  GETMET	R3	R3	K7
+      0x7C0C0200,  //  0016  CALL	R3	1
+      0x80000000,  //  0017  RET	0
     })
   )
 );

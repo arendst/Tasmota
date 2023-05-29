@@ -59,7 +59,7 @@ class Matter_Commisioning_Context
       return false
     end
 
-    tasmota.log("MTR: received message " + matter.inspect(msg), 3)
+    tasmota.log("MTR: received message " + matter.inspect(msg), 4)
     if   msg.opcode == 0x10
       # don't need to do anything, the message is acked already before this call
     elif msg.opcode == 0x20

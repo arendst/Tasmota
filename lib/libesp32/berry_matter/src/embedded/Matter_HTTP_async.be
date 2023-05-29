@@ -42,7 +42,7 @@ class Matter_HTTP_async : Matter_TCP_async
   var chunk_size                                  # nil or int, size of the current chunk
   static var HTTP_GET = "GET %s HTTP/1.1\r\nHost %s:%s\r\nConnection: close\r\n\r\n"    # see https://stackoverflow.com/questions/6686261/what-at-the-bare-minimum-is-required-for-an-http-request
 
-  static var HTTP_STATUS_REGEX = "HTTP/1\\.[1-2] (\\d+) .*?\r\n"    # extract stattus code from first line
+  static var HTTP_STATUS_REGEX = "HTTP/1\\.[0-1] (\\d+) .*?\r\n"    # extract stattus code from first line
   static var HTTP_HEADER_REGEX = "([A-Za-z0-9-]+): (.*?)\r\n"       # extract a header with its 2 parts
   static var HTTP_BODY_REGEX   = "\r\n"                             # end of headers
   static var HTTP_CHUNK_REGEX   = "\r\n([A-Fa-f0-9]+)[ \t]*.*?\r\n"              # extract the length of a chunk
@@ -250,7 +250,6 @@ class Matter_HTTP_async : Matter_TCP_async
     end
 
     var req = string.format(self.HTTP_GET, self.cmd, addr, self.port)
-    #print("sending ", req)
     var ret = self.write(req)
     if ret != size(req)
       # print("Could not send","size=",size(req),"ret=",ret)

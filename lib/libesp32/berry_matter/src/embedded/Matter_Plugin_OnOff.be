@@ -37,7 +37,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
-  static var TYPES = { 0x010A: 2 }       # On/Off Light
+  static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   var tasmota_relay_index             # Relay number in Tasmota (zero based)
   var shadow_onoff                           # fake status for now # TODO
@@ -47,15 +47,15 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
     self.shadow_onoff = false
-    self.tasmota_relay_index = arguments.find(self.ARG #-'relay'-#)
-    if self.tasmota_relay_index == nil     self.tasmota_relay_index = 0   end
+    self.tasmota_relay_index = int(arguments.find(self.ARG #-'relay'-#, 1))
+    if self.tasmota_relay_index <= 0    self.tasmota_relay_index = 1    end
   end
 
   #############################################################
   # Update shadow
   #
   def update_shadow()
-    var state = tasmota.get_power(self.tasmota_relay_index)
+    var state = tasmota.get_power(self.tasmota_relay_index - 1)
     if state != nil
       if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
         self.attribute_updated(0x0006, 0x0000)
@@ -69,7 +69,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # Model
   #
   def set_onoff(v)
-    tasmota.set_power(self.tasmota_relay_index, bool(v))
+    tasmota.set_power(self.tasmota_relay_index - 1, bool(v))
     self.update_shadow()
   end
 

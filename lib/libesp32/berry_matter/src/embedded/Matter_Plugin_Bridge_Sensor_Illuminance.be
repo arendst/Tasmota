@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Pressure.be - implements the behavior for a Pressure Sensor
+# Matter_Plugin_Bridge_Sensor_Illuminance.be - implements base class for a Light/Illuminance Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -20,26 +20,18 @@
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin_Sensor end
+class Matter_Plugin_Bridge_Sensor end
 
-#@ solidify:Matter_Plugin_Sensor_Pressure,weak
+#@ solidify:Matter_Plugin_Bridge_Sensor_Illuminance,weak
 
-class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
-  static var TYPE = "pressure"                      # name of the plug-in in json
-  static var NAME = "Pressure"                      # display name of the plug-in
+class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
+  static var TYPE = "http_illuminance"              # name of the plug-in in json
+  static var NAME = "&#x1F517; Illuminance"         # display name of the plug-in
+
   static var CLUSTERS  = {
-    0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement
+    0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
   }
-  static var TYPES = { 0x0305: 2 }                  # Pressure Sensor, rev 2
-
-  #############################################################
-  # Pre-process value
-  #
-  # This must be overriden.
-  # This allows to convert the raw sensor value to the target one, typically int
-  def pre_value(val)
-    return val != nil ? int(val) : nil
-  end
+  static var TYPES = { 0x0106: 2, 0x0013: 1  }      # Illuminance Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value
@@ -47,7 +39,16 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
   # This must be overriden.
   # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
   def value_changed(val)
-    self.attribute_updated(0x0403, 0x0000)
+    self.attribute_updated(0x0400, 0x0000)
+  end
+
+  #############################################################
+  # Pre-process value
+  #
+  # This must be overriden.
+  # This allows to convert the raw sensor value to the target one, typically int
+  def pre_value(val)
+    return val != nil ? int(val) : nil        # value in lux
   end
 
   #############################################################
@@ -60,7 +61,7 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0403              # ========== Pressure Measurement 2.4 p.98 ==========
+    if   cluster == 0x0400              # ========== Illuminance Measurement 2.2 p.95 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
         if self.shadow_value != nil
           return TLV.create_TLV(TLV.I2, int(self.shadow_value))
@@ -68,11 +69,11 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
           return TLV.create_TLV(TLV.NULL, nil)
         end
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return TLV.create_TLV(TLV.I2, 500)  # 500 hPA
+        return TLV.create_TLV(TLV.I2, 0)  # 0 lux
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return TLV.create_TLV(TLV.I2, 1500)  # 1500 hPA
+        return TLV.create_TLV(TLV.I2, 10000)  # 10000 lux
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Extended Range
+        return TLV.create_TLV(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
         return TLV.create_TLV(TLV.U4, 3)    # 3 = New data model format and notation
       end
@@ -82,5 +83,17 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     end
   end
 
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    import string
+    webserver.content_send(string.format("| %s &#128261; %ilux",
+                                         self.filter_name_html(),
+                                         int(self.shadow_value)))
+  end
+  
 end
-matter.Plugin_Sensor_Pressure = Matter_Plugin_Sensor_Pressure
+matter.Plugin_Bridge_Sensor_Illuminance = Matter_Plugin_Bridge_Sensor_Illuminance
