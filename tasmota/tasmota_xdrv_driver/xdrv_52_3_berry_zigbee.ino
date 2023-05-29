@@ -255,22 +255,23 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_zigbee_zcl_attribute_struct = {
     sizeof(Z_attribute),  /* size in bytes */
-    10,  /* number of elements */
+    11,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[10]) {
+    (const be_ctypes_structure_item_t[11]) {
       { "_attr_id", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u16, 0 },
       { "_cluster", offsetof(Z_attribute, cluster), 0, 0, ctypes_u16, 0 },
       { "_cmd", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u8, 0 },       // low 8 bits of attr_id
       { "_cmd_general", offsetof(Z_attribute, attr_id) + 1, 1, 1, ctypes_u8, 0 },       // bit #1 of byte+1
       { "_direction", offsetof(Z_attribute, attr_id) + 1, 0, 1, ctypes_u8, 0 },         // bit #0 of byte+1
       { "_iscmd", offsetof(Z_attribute, key_is_cmd), 0, 0, ctypes_u8, 0 },
-      { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_i8, 0 },
-      { "attr_divider", offsetof(Z_attribute, attr_divider), 0, 0, ctypes_i8, 0 },
-      { "attr_type", offsetof(Z_attribute, attr_type), 0, 0, ctypes_u8, 0 },
+      { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_u32, 0 },
+      { "attr_divider", offsetof(Z_attribute, attr_divider), 0, 0, ctypes_u32, 0 },
+      { "attr_type", offsetof(Z_attribute, attr_type), 0, 0, ctypes_i32, 0 },
       // { "key", offsetof(Z_attribute, key), 0, 0, ctypes_ptr32, 0 },
       // { "key_is_pmem", offsetof(Z_attribute, key_is_pmem), 0, 0, ctypes_u8, 0 },
       // { "key_is_str", offsetof(Z_attribute, key_is_str), 0, 0, ctypes_u8, 0 },
       { "key_suffix", offsetof(Z_attribute, key_suffix), 0, 0, ctypes_u8, 0 },
+      { "manuf", offsetof(Z_attribute, manuf), 0, 0, ctypes_u16, 0 },
       // { "type", offsetof(Z_attribute, type), 0, 0, ctypes_u8, 0 },
       // { "val_float", offsetof(Z_attribute, val), 0, 0, ctypes_float, 0 },
       // { "val_i32", offsetof(Z_attribute, val), 0, 0, ctypes_i32, 0 },

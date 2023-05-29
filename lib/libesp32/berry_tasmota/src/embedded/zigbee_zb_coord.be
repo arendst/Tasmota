@@ -17,9 +17,20 @@ class zb_coord : zb_coord_ntv
       raise "value_error", "instance required"
     end
     if self._handlers
-      self._handlers.push(h)
-        else
+      if self._handlers.find(h) == nil      # make it idempotent
+        self._handlers.push(h)
+      end
+    else
       self._handlers = [h]
+    end
+  end
+
+  def remove_handler(h)
+    if self._handlers
+      var idx = self._handlers.find(h)
+      if idx != nil
+        self._handlers.remove(idx)
+      end
     end
   end
 

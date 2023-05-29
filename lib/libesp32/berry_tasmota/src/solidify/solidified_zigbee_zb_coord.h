@@ -50,16 +50,17 @@ be_local_closure(zb_coord_add_handler,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
     /* K1   */  be_nested_str_weak(value_error),
     /* K2   */  be_nested_str_weak(instance_X20required),
     /* K3   */  be_nested_str_weak(_handlers),
-    /* K4   */  be_nested_str_weak(push),
+    /* K4   */  be_nested_str_weak(find),
+    /* K5   */  be_nested_str_weak(push),
     }),
     be_str_weak(add_handler),
     &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x60080004,  //  0000  GETGBL	R2	G4
       0x5C0C0200,  //  0001  MOVE	R3	R1
       0x7C080200,  //  0002  CALL	R2	1
@@ -67,17 +68,24 @@ be_local_closure(zb_coord_add_handler,   /* name */
       0x780A0000,  //  0004  JMPF	R2	#0006
       0xB0060302,  //  0005  RAISE	1	K1	K2
       0x88080103,  //  0006  GETMBR	R2	R0	K3
-      0x780A0004,  //  0007  JMPF	R2	#000D
+      0x780A000B,  //  0007  JMPF	R2	#0014
       0x88080103,  //  0008  GETMBR	R2	R0	K3
       0x8C080504,  //  0009  GETMET	R2	R2	K4
       0x5C100200,  //  000A  MOVE	R4	R1
       0x7C080400,  //  000B  CALL	R2	2
-      0x70020003,  //  000C  JMP		#0011
-      0x60080012,  //  000D  GETGBL	R2	G18
-      0x7C080000,  //  000E  CALL	R2	0
-      0x400C0401,  //  000F  CONNECT	R3	R2	R1
-      0x90020602,  //  0010  SETMBR	R0	K3	R2
-      0x80000000,  //  0011  RET	0
+      0x4C0C0000,  //  000C  LDNIL	R3
+      0x1C080403,  //  000D  EQ	R2	R2	R3
+      0x780A0003,  //  000E  JMPF	R2	#0013
+      0x88080103,  //  000F  GETMBR	R2	R0	K3
+      0x8C080505,  //  0010  GETMET	R2	R2	K5
+      0x5C100200,  //  0011  MOVE	R4	R1
+      0x7C080400,  //  0012  CALL	R2	2
+      0x70020003,  //  0013  JMP		#0018
+      0x60080012,  //  0014  GETGBL	R2	G18
+      0x7C080000,  //  0015  CALL	R2	0
+      0x400C0401,  //  0016  CONNECT	R3	R2	R1
+      0x90020602,  //  0017  SETMBR	R0	K3	R2
+      0x80000000,  //  0018  RET	0
     })
   )
 );
@@ -196,18 +204,60 @@ be_local_closure(zb_coord_dispatch,   /* name */
 
 
 /********************************************************************
+** Solidified function: remove_handler
+********************************************************************/
+be_local_closure(zb_coord_remove_handler,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_handlers),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(remove),
+    }),
+    be_str_weak(remove_handler),
+    &be_const_str_solidified,
+    ( &(const binstruction[14]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x780A000A,  //  0001  JMPF	R2	#000D
+      0x88080100,  //  0002  GETMBR	R2	R0	K0
+      0x8C080501,  //  0003  GETMET	R2	R2	K1
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x4C0C0000,  //  0006  LDNIL	R3
+      0x200C0403,  //  0007  NE	R3	R2	R3
+      0x780E0003,  //  0008  JMPF	R3	#000D
+      0x880C0100,  //  0009  GETMBR	R3	R0	K0
+      0x8C0C0702,  //  000A  GETMET	R3	R3	K2
+      0x5C140400,  //  000B  MOVE	R5	R2
+      0x7C0C0400,  //  000C  CALL	R3	2
+      0x80000000,  //  000D  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: zb_coord
 ********************************************************************/
 extern const bclass be_class_zb_coord_ntv;
 be_local_class(zb_coord,
     1,
     &be_class_zb_coord_ntv,
-    be_nested_map(4,
+    be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(dispatch, 1), be_const_closure(zb_coord_dispatch_closure) },
-        { be_const_key_weak(add_handler, 2), be_const_closure(zb_coord_add_handler_closure) },
-        { be_const_key_weak(_handlers, -1), be_const_var(0) },
-        { be_const_key_weak(init, 0), be_const_closure(zb_coord_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(zb_coord_init_closure) },
+        { be_const_key_weak(remove_handler, 2), be_const_closure(zb_coord_remove_handler_closure) },
+        { be_const_key_weak(add_handler, -1), be_const_closure(zb_coord_add_handler_closure) },
+        { be_const_key_weak(dispatch, -1), be_const_closure(zb_coord_dispatch_closure) },
+        { be_const_key_weak(_handlers, 1), be_const_var(0) },
     })),
     be_str_weak(zb_coord)
 );
