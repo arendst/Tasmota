@@ -27,7 +27,22 @@
  *
  * For background information see https://github.com/DFRobot/DFRobot_MAX17043/tree/master
  *
- * Battery voltage in Volt, remaining capacity in percent
+ * Battery voltage in Volt and State Of Charge (SOC) in percent are published via MQTT
+ * 
+ * The alert flag and alert threshold are not required for MQTT, the alert pin is not used 
+ * by this sensor driver.
+ * 
+ * Wirering and other information:
+ * 
+ * \lib\lib_i2c\DFRobot_MAX17043\resources
+ * 
+ * Tested module(s):
+ * 
+ * https://www.dfrobot.com/product-1734.html
+ * 
+ * Not yet tested module(s):
+ * 
+ * https://www.aliexpress.us/item/2251832479401925.html 
  * 
  \*********************************************************************************************/
 
@@ -35,12 +50,12 @@
 
 /*********************************************************************************************/
   
- #define D_JSON_BATTPERCENT "BatteryPercentage" // TODO Move to 18n.h
-const char JSON_SNS_BGAUGE[] PROGMEM = ",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_BATTPERCENT "\":%s}"; // TODO Move to i18n.h at JSON_SNS_GNGPM
+// #define D_JSON_BATTPERCENT "BatteryPercentage" // TODO Move to 18n.h
+// const char JSON_SNS_BGAUGE[] PROGMEM = ",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_BATTPERCENT "\":%s}"; // TODO Move to i18n.h at JSON_SNS_GNGPM
 
 const char *mqttId = "MAX17043";
 
-DFRobot_MAX17043     gauge; // Library to read out the MAX17043
+DFRobot_MAX17043     gauge; // Class to read from MAX17043
 
 struct MAX17043 
 {
@@ -60,6 +75,7 @@ void Max17043Init(void) {
 }
 
 void Max17043Read(void) {
+// TODO: consider to clip values over 100% 
   max17043->voltage = gauge.readVoltage();
   max17043->percentage = gauge.readPercentage();
 }
