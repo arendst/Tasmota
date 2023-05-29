@@ -19,6 +19,7 @@
 
 #ifdef USE_I2C
 #ifdef USE_MAX17043
+#define XI2C_82   82    // See I2CDEVICES.md
 
 #include "DFRobot_MAX17043.h"
 
@@ -93,7 +94,7 @@ void Max17043Json(void) {
 #ifdef USE_WEBSERVER
 void Max17043Show(void) {
 
-  WSContentSend_P(PSTR("Battery: %.1f V,  "), max17043->voltage/1000);
+  WSContentSend_P(PSTR("Battery: %1_f V,  "), max17043->voltage/1000);
   WSContentSend_P(PSTR("%.1f %%"), max17043->percentage);
 }
 #endif  // USE_WEBSERVER
@@ -103,7 +104,9 @@ void Max17043Show(void) {
 \*********************************************************************************************/
 
 bool Xsns109(uint32_t function) {
-
+  if (!I2cEnabled(XI2C_82)) {
+     return false; 
+  }
   // Set return value to `false`
   bool result = false;
 
