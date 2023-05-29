@@ -389,6 +389,9 @@ void Energy200ms(void) {
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+      if (!Settings->energy_kWhtotal_time) {
+        Settings->energy_kWhtotal_time = LocalTime();
+      }
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Settings->energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;

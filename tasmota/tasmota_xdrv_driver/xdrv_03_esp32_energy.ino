@@ -309,6 +309,7 @@ void EnergySettingsLoad(bool erase) {
 //      Settings->energy_kWhtoday_ph[i], &Energy->Settings.energy_today_kWh[i],
 //      Settings->energy_kWhyesterday_ph[i], &Energy->Settings.energy_yesterday_kWh[i]);
   }
+  Energy->Settings.energy_kWhtotal_time = Settings->energy_kWhtotal_time;
 
   // v0102 additions
   Energy->Settings.gui_display = ENERGY_GUI_DISPLAY_MODE;
@@ -609,6 +610,9 @@ void Energy200ms(void) {
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+      if (!Energy->Settings.energy_kWhtotal_time) {
+        Energy->Settings.energy_kWhtotal_time = LocalTime();
+      }
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Energy->Settings.energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;

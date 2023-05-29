@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - Change command ``FileUpload`` index binary data detection from >199 to >299
+- Matter relay number starts at 1 instead of 0 to match Tasmota numbering
 
 ### Changed
 - AdafruitFingerprint library from v2.0.4 to v2.1.0
