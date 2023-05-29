@@ -23,9 +23,7 @@
 #include "DFRobot_MAX17043.h"
 
 /*********************************************************************************************\
- * MAX17043 fuel-gauge for 3,7 volt Lipo battery
- *
- * For background information see https://github.com/DFRobot/DFRobot_MAX17043/tree/master
+ * MAX17043 fuel-gauge for 3.7 volt Lipo batteries
  *
  * Battery voltage in Volt and State Of Charge (SOC) in percent are published via MQTT
  * 
@@ -48,24 +46,20 @@
 
 #define XSNS_109        109
 
-/*********************************************************************************************/
-  
-// #define D_JSON_BATTPERCENT "BatteryPercentage" // TODO Move to 18n.h
-// const char JSON_SNS_BGAUGE[] PROGMEM = ",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_BATTPERCENT "\":%s}"; // TODO Move to i18n.h at JSON_SNS_GNGPM
-
 const char *mqttId = "MAX17043";
 
 DFRobot_MAX17043     gauge; // Class to read from MAX17043
 
 struct MAX17043 
 {
-  float voltage = 0.0; // Battery voltage in miliVolt
-  float percentage = 0.0; // Battery remaining capacity in percent
+  float voltage = 0.0;      // Battery voltage in miliVolt
+  float percentage = 0.0;   // Battery remaining capacity in percent
 } *max17043 = nullptr;
 
  /*********************************************************************************************/
 
 void Max17043Init(void) {
+
   if (gauge.begin() != 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("I2C: MAX17043 not found"));
   } else {
@@ -75,17 +69,30 @@ void Max17043Init(void) {
 }
 
 void Max17043Read(void) {
-// TODO: consider to clip values over 100% 
+
+  float percentage = 0.0;
+  
   max17043->voltage = gauge.readVoltage();
-  max17043->percentage = gauge.readPercentage();
+
+  // During charging the percentage might be (slightly) above 100%. To avoid stange numbers
+  // in the statistics we the percentage provided by this driver will not go above 100%
+  percentage = gauge.readPercentage();
+  if (percentage > 100.0) {
+    max17043->percentage = 100.0;
+  }
+  else {
+    max17043->percentage = percentage;
+  }
 }
 
 void Max17043Json(void) {
+
   ResponseAppend_P(JSON_SNS_BGAUGE, mqttId, String(max17043->voltage/1000, 2), String(max17043->percentage, 1));
 }
 
 #ifdef USE_WEBSERVER
 void Max17043Show(void) {
+
   WSContentSend_P(PSTR("Battery: %.1f V,  "), max17043->voltage/1000);
   WSContentSend_P(PSTR("%.1f %%"), max17043->percentage);
 }
