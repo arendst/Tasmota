@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er (#15443)
 - Command ``WifiPower 1`` to restore default wifi power
 - HASPmota `meta` attribute and improved `berry_run`
-- Matter Border Router for ESP8266 (experimental)
+- Matter bridge for ESP8266 remote endpoints (experimental)
 - Display descriptor for ST7735 128x160 display
 - Matter support for Occupancy via Switch (experimental)
 
