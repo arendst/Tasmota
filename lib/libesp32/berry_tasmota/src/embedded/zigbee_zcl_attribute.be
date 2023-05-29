@@ -46,7 +46,7 @@ class zcl_attribute : zcl_attribute_ntv
     elif k == "key"
       return self._get_key()
     else
-      return super(self).member(k)
+      return super(self).member(k)      # natural mapping
     end
   end
 
