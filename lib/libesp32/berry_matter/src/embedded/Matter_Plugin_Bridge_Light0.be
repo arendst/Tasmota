@@ -142,14 +142,8 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| Light %s", self.web_value_onoff()))
+    webserver.content_send(string.format("| Light %s", self.web_value_onoff(self.shadow_onoff)))
   end
 
-  # Show on/off value as html
-  def web_value_onoff()
-    var onoff_html = (self.shadow_onoff != nil ? (self.shadow_onoff ? "<b>On</b>" : "Off") : "")
-    return onoff_html
-  end
-  
 end
 matter.Plugin_Bridge_Light0 = Matter_Plugin_Bridge_Light0

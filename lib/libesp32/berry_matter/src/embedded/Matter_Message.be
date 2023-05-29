@@ -364,7 +364,7 @@ class Matter_Frame
       var m = self.raw[4 .. self.payload_idx-1]
       var m_clear = crypto.AES_CTR(k).decrypt(m, n, 2)
       # replace in-place
-      self.raw = self.raw[0..3] + m_clear + m[self.self.payload_idx .. ]
+      self.raw = self.raw[0..3] + m_clear + m[self.payload_idx .. ]
     end
 
     # use AES_CCM

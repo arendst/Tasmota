@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota `meta` attribute and improved `berry_run`
 - Matter Border Router for ESP8266 (experimental)
 - Display descriptor for ST7735 128x160 display
+- Matter support for Occupancy via Switch (experimental)
 
 ### Breaking Changed
 - Matter relay number starts at 1 instead of 0 to match Tasmota numbering

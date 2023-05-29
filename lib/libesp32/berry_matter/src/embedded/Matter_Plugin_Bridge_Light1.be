@@ -171,7 +171,7 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| Light %s %s", self.web_value_onoff(), self.web_value_dimmer()))
+    webserver.content_send(string.format("| Light %s %s", self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer()))
   end
 
   # Show on/off value as html

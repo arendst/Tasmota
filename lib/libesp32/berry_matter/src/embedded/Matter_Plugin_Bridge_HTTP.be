@@ -232,5 +232,10 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
     webserver.content_send("| &lt;-- (" + self.NAME + ") --&gt;")
   end
 
+  # Show on/off value as html
+  def web_value_onoff(onoff)
+    var onoff_html = (onoff != nil ? (onoff ? "<b>On</b>" : "Off") : "")
+    return onoff_html
+  end
 end
 matter.Plugin_Bridge_HTTP = Matter_Plugin_Bridge_HTTP
