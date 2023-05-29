@@ -66,6 +66,7 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
     
         /* Case 2: deallocate */
         else if (new_size == 0) {
+            if (ptr == NULL) { return NULL; }   /* safeguard */
 #if BE_USE_DEBUG_GC
             memset(ptr, 0xFF, old_size); /* fill the structure with invalid pointers */
 #endif
