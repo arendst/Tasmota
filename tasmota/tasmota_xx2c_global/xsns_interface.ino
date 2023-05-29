@@ -456,7 +456,7 @@ bool (* const xsns_func_ptr[])(uint32_t) = {  // Sensor Function Pointers for si
 #endif
 
 #ifdef XSNS_109
-  &Xsns109
+  &Xsns109,
 #endif
 
 #ifdef XSNS_110
