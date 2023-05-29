@@ -34,9 +34,10 @@ import matter
 class Matter_UI
   static var _ROOT_TYPES    = "root"
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
-                              "|temperature|pressure|illuminance|humidity"
+                              "|temperature|pressure|illuminance|humidity|occupancy"
   static var _CLASSES_TYPES2= "-http|http_relay|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
+                              "|http_occupancy"
   var device
 
   def init(device)

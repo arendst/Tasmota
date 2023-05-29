@@ -176,33 +176,35 @@ be_local_closure(Matter_Plugin_Bridge_Light3_web_values,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(content_send),
     /* K3   */  be_nested_str_weak(format),
     /* K4   */  be_nested_str_weak(_X7C_X20Light_X20_X25s_X20_X25s_X20_X25s),
     /* K5   */  be_nested_str_weak(web_value_onoff),
-    /* K6   */  be_nested_str_weak(web_value_dimmer),
-    /* K7   */  be_nested_str_weak(web_value_RGB),
+    /* K6   */  be_nested_str_weak(shadow_onoff),
+    /* K7   */  be_nested_str_weak(web_value_dimmer),
+    /* K8   */  be_nested_str_weak(web_value_RGB),
     }),
     be_str_weak(web_values),
     &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x8C0C0302,  //  0002  GETMET	R3	R1	K2
       0x8C140503,  //  0003  GETMET	R5	R2	K3
       0x581C0004,  //  0004  LDCONST	R7	K4
       0x8C200105,  //  0005  GETMET	R8	R0	K5
-      0x7C200200,  //  0006  CALL	R8	1
-      0x8C240106,  //  0007  GETMET	R9	R0	K6
-      0x7C240200,  //  0008  CALL	R9	1
-      0x8C280107,  //  0009  GETMET	R10	R0	K7
-      0x7C280200,  //  000A  CALL	R10	1
-      0x7C140A00,  //  000B  CALL	R5	5
-      0x7C0C0400,  //  000C  CALL	R3	2
-      0x80000000,  //  000D  RET	0
+      0x88280106,  //  0006  GETMBR	R10	R0	K6
+      0x7C200400,  //  0007  CALL	R8	2
+      0x8C240107,  //  0008  GETMET	R9	R0	K7
+      0x7C240200,  //  0009  CALL	R9	1
+      0x8C280108,  //  000A  GETMET	R10	R0	K8
+      0x7C280200,  //  000B  CALL	R10	1
+      0x7C140A00,  //  000C  CALL	R5	5
+      0x7C0C0400,  //  000D  CALL	R3	2
+      0x80000000,  //  000E  RET	0
     })
   )
 );

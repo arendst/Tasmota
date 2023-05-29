@@ -11,7 +11,7 @@ extern const bclass be_class_Matter_Plugin_Bridge_OnOff;
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    12,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -19,7 +19,7 @@ be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
+    ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(content_send),
@@ -27,10 +27,11 @@ be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
     /* K4   */  be_nested_str_weak(_X7C_X20Relay_X20_X25i_X20_X25s),
     /* K5   */  be_nested_str_weak(tasmota_relay_index),
     /* K6   */  be_nested_str_weak(web_value_onoff),
+    /* K7   */  be_nested_str_weak(shadow_onoff),
     }),
     be_str_weak(web_values),
     &be_const_str_solidified,
-    ( &(const binstruction[11]) {  /* code */
+    ( &(const binstruction[12]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x8C0C0302,  //  0002  GETMET	R3	R1	K2
@@ -38,10 +39,11 @@ be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
       0x581C0004,  //  0004  LDCONST	R7	K4
       0x88200105,  //  0005  GETMBR	R8	R0	K5
       0x8C240106,  //  0006  GETMET	R9	R0	K6
-      0x7C240200,  //  0007  CALL	R9	1
-      0x7C140800,  //  0008  CALL	R5	4
-      0x7C0C0400,  //  0009  CALL	R3	2
-      0x80000000,  //  000A  RET	0
+      0x882C0107,  //  0007  GETMBR	R11	R0	K7
+      0x7C240400,  //  0008  CALL	R9	2
+      0x7C140800,  //  0009  CALL	R5	4
+      0x7C0C0400,  //  000A  CALL	R3	2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
