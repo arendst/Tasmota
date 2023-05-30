@@ -561,7 +561,7 @@ be_local_closure(Matter_Plugin_Bridge_Light3_read_attribute,   /* name */
       0x7C1C0600,  //  004F  CALL	R7	3
       0x80040E00,  //  0050  RET	1	R7
       0x70020022,  //  0051  JMP		#0075
-      0x541E4009,  //  0052  LDINT	R7	16394
+      0x541E000F,  //  0052  LDINT	R7	16
       0x1C1C0C07,  //  0053  EQ	R7	R6	R7
       0x781E0005,  //  0054  JMPF	R7	#005B
       0x8C1C0908,  //  0055  GETMET	R7	R4	K8
@@ -570,12 +570,12 @@ be_local_closure(Matter_Plugin_Bridge_Light3_read_attribute,   /* name */
       0x7C1C0600,  //  0058  CALL	R7	3
       0x80040E00,  //  0059  RET	1	R7
       0x70020019,  //  005A  JMP		#0075
-      0x541E000F,  //  005B  LDINT	R7	16
+      0x541E4009,  //  005B  LDINT	R7	16394
       0x1C1C0C07,  //  005C  EQ	R7	R6	R7
       0x781E0005,  //  005D  JMPF	R7	#0064
       0x8C1C0908,  //  005E  GETMET	R7	R4	K8
-      0x88240909,  //  005F  GETMBR	R9	R4	K9
-      0x58280006,  //  0060  LDCONST	R10	K6
+      0x8824090D,  //  005F  GETMBR	R9	R4	K13
+      0x5828000B,  //  0060  LDCONST	R10	K11
       0x7C1C0600,  //  0061  CALL	R7	3
       0x80040E00,  //  0062  RET	1	R7
       0x70020010,  //  0063  JMP		#0075

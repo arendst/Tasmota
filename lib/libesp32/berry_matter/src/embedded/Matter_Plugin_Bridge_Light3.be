@@ -122,13 +122,13 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return TLV.create_TLV(TLV.U1, 0)
 
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
 
+      elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
+        return TLV.create_TLV(TLV.U4, 0x01)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0x01)    # HS
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
