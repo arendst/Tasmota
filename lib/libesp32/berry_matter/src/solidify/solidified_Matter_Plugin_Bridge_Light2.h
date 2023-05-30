@@ -425,7 +425,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[92]) {  /* code */
+    ( &(const binstruction[101]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
       0x88100902,  //  0002  GETMBR	R4	R4	K2
@@ -433,7 +433,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x88180504,  //  0004  GETMBR	R6	R2	K4
       0x541E02FF,  //  0005  LDINT	R7	768
       0x1C1C0A07,  //  0006  EQ	R7	R5	R7
-      0x781E004A,  //  0007  JMPF	R7	#0053
+      0x781E0053,  //  0007  JMPF	R7	#005C
       0x8C1C0105,  //  0008  GETMET	R7	R0	K5
       0x7C1C0200,  //  0009  CALL	R7	1
       0x541E0006,  //  000A  LDINT	R7	7
@@ -454,7 +454,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x4C280000,  //  0019  LDNIL	R10
       0x7C1C0600,  //  001A  CALL	R7	3
       0x80040E00,  //  001B  RET	1	R7
-      0x70020034,  //  001C  JMP		#0052
+      0x7002003D,  //  001C  JMP		#005B
       0x541E0007,  //  001D  LDINT	R7	8
       0x1C1C0C07,  //  001E  EQ	R7	R6	R7
       0x781E0005,  //  001F  JMPF	R7	#0026
@@ -463,7 +463,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x5828000A,  //  0022  LDCONST	R10	K10
       0x7C1C0600,  //  0023  CALL	R7	3
       0x80040E00,  //  0024  RET	1	R7
-      0x7002002B,  //  0025  JMP		#0052
+      0x70020034,  //  0025  JMP		#005B
       0x541E000E,  //  0026  LDINT	R7	15
       0x1C1C0C07,  //  0027  EQ	R7	R6	R7
       0x781E0005,  //  0028  JMPF	R7	#002F
@@ -472,7 +472,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x5828000B,  //  002B  LDCONST	R10	K11
       0x7C1C0600,  //  002C  CALL	R7	3
       0x80040E00,  //  002D  RET	1	R7
-      0x70020022,  //  002E  JMP		#0052
+      0x7002002B,  //  002E  JMP		#005B
       0x541E400A,  //  002F  LDINT	R7	16395
       0x1C1C0C07,  //  0030  EQ	R7	R6	R7
       0x781E0005,  //  0031  JMPF	R7	#0038
@@ -481,7 +481,7 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x8828010C,  //  0034  GETMBR	R10	R0	K12
       0x7C1C0600,  //  0035  CALL	R7	3
       0x80040E00,  //  0036  RET	1	R7
-      0x70020019,  //  0037  JMP		#0052
+      0x70020022,  //  0037  JMP		#005B
       0x541E400B,  //  0038  LDINT	R7	16396
       0x1C1C0C07,  //  0039  EQ	R7	R6	R7
       0x781E0005,  //  003A  JMPF	R7	#0041
@@ -490,8 +490,8 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x8828010D,  //  003D  GETMBR	R10	R0	K13
       0x7C1C0600,  //  003E  CALL	R7	3
       0x80040E00,  //  003F  RET	1	R7
-      0x70020010,  //  0040  JMP		#0052
-      0x541EFFFB,  //  0041  LDINT	R7	65532
+      0x70020019,  //  0040  JMP		#005B
+      0x541E4009,  //  0041  LDINT	R7	16394
       0x1C1C0C07,  //  0042  EQ	R7	R6	R7
       0x781E0005,  //  0043  JMPF	R7	#004A
       0x8C1C0907,  //  0044  GETMET	R7	R4	K7
@@ -499,25 +499,34 @@ be_local_closure(Matter_Plugin_Bridge_Light2_read_attribute,   /* name */
       0x542A000F,  //  0046  LDINT	R10	16
       0x7C1C0600,  //  0047  CALL	R7	3
       0x80040E00,  //  0048  RET	1	R7
-      0x70020007,  //  0049  JMP		#0052
-      0x541EFFFC,  //  004A  LDINT	R7	65533
+      0x70020010,  //  0049  JMP		#005B
+      0x541EFFFB,  //  004A  LDINT	R7	65532
       0x1C1C0C07,  //  004B  EQ	R7	R6	R7
-      0x781E0004,  //  004C  JMPF	R7	#0052
+      0x781E0005,  //  004C  JMPF	R7	#0053
       0x8C1C0907,  //  004D  GETMET	R7	R4	K7
       0x8824090E,  //  004E  GETMBR	R9	R4	K14
-      0x542A0004,  //  004F  LDINT	R10	5
+      0x542A000F,  //  004F  LDINT	R10	16
       0x7C1C0600,  //  0050  CALL	R7	3
       0x80040E00,  //  0051  RET	1	R7
       0x70020007,  //  0052  JMP		#005B
-      0x601C0003,  //  0053  GETGBL	R7	G3
-      0x5C200000,  //  0054  MOVE	R8	R0
-      0x7C1C0200,  //  0055  CALL	R7	1
-      0x8C1C0F0F,  //  0056  GETMET	R7	R7	K15
-      0x5C240200,  //  0057  MOVE	R9	R1
-      0x5C280400,  //  0058  MOVE	R10	R2
+      0x541EFFFC,  //  0053  LDINT	R7	65533
+      0x1C1C0C07,  //  0054  EQ	R7	R6	R7
+      0x781E0004,  //  0055  JMPF	R7	#005B
+      0x8C1C0907,  //  0056  GETMET	R7	R4	K7
+      0x8824090E,  //  0057  GETMBR	R9	R4	K14
+      0x542A0004,  //  0058  LDINT	R10	5
       0x7C1C0600,  //  0059  CALL	R7	3
       0x80040E00,  //  005A  RET	1	R7
-      0x80000000,  //  005B  RET	0
+      0x70020007,  //  005B  JMP		#0064
+      0x601C0003,  //  005C  GETGBL	R7	G3
+      0x5C200000,  //  005D  MOVE	R8	R0
+      0x7C1C0200,  //  005E  CALL	R7	1
+      0x8C1C0F0F,  //  005F  GETMET	R7	R7	K15
+      0x5C240200,  //  0060  MOVE	R9	R1
+      0x5C280400,  //  0061  MOVE	R10	R2
+      0x7C1C0600,  //  0062  CALL	R7	3
+      0x80040E00,  //  0063  RET	1	R7
+      0x80000000,  //  0064  RET	0
     })
   )
 );
@@ -541,11 +550,12 @@ be_local_class(Matter_Plugin_Bridge_Light2,
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(768, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(7,
+        be_const_list( *     be_nested_list(8,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(7),
         be_const_int(8),
         be_const_int(15),
+        be_const_int(16394),
         be_const_int(16395),
         be_const_int(16396),
         be_const_int(65532),
