@@ -2409,12 +2409,9 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
     // Need to compute white_bri10 and ct_10 from cur_col_10[] for compatibility with VirtualCT
     white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
     ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
-    if (white_free_cw || white_bri10 > 1023) {
-      // Cannot represent white_free_cw in pwm_ct_mode because we can't set white_bri10 > 1023,
-      // so we set the maximum brightness instead. Note that in white_free_cw, the gamma correction
-      // is done for cw and ww separately, so their gamma-corrected sum may be smaller than 1023.
-      // We nevertheless set white_bri10=1023 in this case; if we did not do so,
-      // Color1 0000007979 would be much brighter than Color1 0000008181.
+    if (white_bri10 > 1023) {
+      // In white_free_cw mode, the combined brightness of cw and ww may be larger than 1023.
+      // This cannot be represented in pwm_ct_mode, so we set the maximum brightness instead.
       white_bri10 = 1023;
     }
 
