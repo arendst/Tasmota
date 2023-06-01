@@ -11,6 +11,8 @@
 extern int be_class_crypto_member(bvm *vm);
 extern int m_crypto_random(bvm *vm);
 
+extern int m_rsa_rsassa_pkcs1_v1_5(bvm *vm);
+
 extern int m_aes_ccm_init(bvm *vm);
 extern int m_aes_ccm_encryt(bvm *vm);
 extern int m_aes_ccm_decryt(bvm *vm);
@@ -56,6 +58,7 @@ extern const bclass be_class_md5;
 #include "solidify/solidified_crypto_pbkdf2_hmac_sha256.h"
 #include "solidify/solidified_crypto_spake2p_matter.h"
 
+#include "be_fixed_be_class_rsa.h"
 #include "be_fixed_be_class_aes_ccm.h"
 #include "be_fixed_be_class_aes_gcm.h"
 #include "be_fixed_be_class_aes_ctr.h"
@@ -104,6 +107,10 @@ const be_const_member_t be_crypto_members[] = {
   { "/PBKDF2_HMAC_SHA256", (intptr_t) &be_class_pbkdf2_hmac_sha256 },
 #endif // USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
 
+#ifdef USE_BERRY_CRYPTO_RSA
+  { "/RSA", (intptr_t) &be_class_rsa },
+#endif // USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+
 #ifdef USE_BERRY_CRYPTO_SHA256
   { "/SHA256", (intptr_t) &be_class_sha256 },
 #endif // USE_BERRY_CRYPTO_SHA256
@@ -117,6 +124,10 @@ const size_t be_crypto_members_size = sizeof(be_crypto_members)/sizeof(be_crypto
 
 
 /* @const_object_info_begin
+
+class be_class_rsa (scope: global, name: RSA) {
+    rs256, static_func(m_rsa_rsassa_pkcs1_v1_5)
+}
 
 class be_class_aes_ccm (scope: global, name: AES_CCM) {
     .p1, var

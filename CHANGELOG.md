@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Matter bridge for ESP8266 remote endpoints (experimental)
 - Display descriptor for ST7735 128x160 display
 - Matter support for Occupancy via Switch (experimental)
+- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT
 
 ### Breaking Changed
 - Matter relay number starts at 1 instead of 0 to match Tasmota numbering
