@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 #@ solidify:Matter_TCP_async,weak
 
 # Status:
