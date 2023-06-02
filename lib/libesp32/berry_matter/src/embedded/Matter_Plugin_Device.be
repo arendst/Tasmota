@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # dummy declaration for solidification
 class Matter_Plugin end
 
