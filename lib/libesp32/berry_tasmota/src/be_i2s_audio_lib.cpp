@@ -149,6 +149,14 @@ int32_t be_audio_output_consume_silence(struct bvm *vm) {
 
 #include "AudioOutputI2S.h"
 
+// AudioOutputI2S.set_lsb_justified(gain:real) -> nil
+int i2s_output_i2s_set_lsb_justified_ntv(AudioOutputI2S* out, bbool lsbJustified) {
+  return out->SetLsbJustified(lsbJustified);
+}
+int32_t i2s_output_i2s_set_lsb_justified(struct bvm *vm) {
+  return be_call_c_func(vm, (void*) &i2s_output_i2s_set_lsb_justified_ntv, "", ".b");
+}
+
 extern "C" {
   
 #include "be_fixed_be_class_AudioOutput.h"
@@ -196,6 +204,8 @@ class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_cl
     init, func(i2s_output_i2s_init)
     deinit, func(i2s_output_i2s_deinit)
     stop, func(i2s_output_i2s_stop)
+
+    set_lsb_justified, func(i2s_output_i2s_set_lsb_justified)
 }
 
 class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super: be_class_AudioGenerator, strings: weak) {

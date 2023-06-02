@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Display descriptor for ST7735 128x160 display
 - Matter support for Occupancy via Switch (experimental)
 - Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT
+- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S`
 
 ### Breaking Changed
 - Matter relay number starts at 1 instead of 0 to match Tasmota numbering
