@@ -153,12 +153,12 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  // wc.url_encode(string) -> string
+  // wc.url_encode(string) -> string  (static method)
   int32_t wc_urlencode(struct bvm *vm);
   int32_t wc_urlencode(struct bvm *vm) {
     int32_t argc = be_top(vm);
-    if (argc >= 2 && be_isstring(vm, 2)) {
-      const char * s = be_tostring(vm, 2);
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * s = be_tostring(vm, 1);
       String url = wc_UrlEncode(String(s));
       be_pushstring(vm, url.c_str());
       be_return(vm);  /* return self */
