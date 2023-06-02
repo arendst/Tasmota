@@ -10,8 +10,10 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
 
 ### Fixed
+- Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
 
 ### Removed
 
@@ -19,12 +21,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er (#15443)
 - Command ``WifiPower 1`` to restore default wifi power
-- HASPmota `meta` attribute and improved `berry_run`
-- Matter bridge for ESP8266 remote endpoints (experimental)
-- Display descriptor for ST7735 128x160 display
-- Matter support for Occupancy via Switch (experimental)
-- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT
-- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S`
+- HASPmota `meta` attribute and improved `berry_run` (#18685)
+- Matter bridge for ESP8266 remote endpoints (experimental) (#18734)
+- Display descriptor for ST7735 128x160 display (#18741)
+- Matter support for Occupancy via Switch (experimental) (#18742)
+- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT (#18763)
+- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S` (#18774)
 
 ### Breaking Changed
 - Matter relay number starts at 1 instead of 0 to match Tasmota numbering
@@ -33,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - InfluxDb resolves DNS name before request (#18015)
 - Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement (#18701)
 - AdafruitFingerprint library from v2.0.4 to v2.1.0
-- Berry `webclient.url_encode()` is now a static class method, no change required to existing code
 
 ### Fixed
 - ESP32 InfluxDb initial connection delays using HTTPClient (#18015)
@@ -43,6 +44,9 @@ All notable changes to this project will be documented in this file.
 - Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant (#18701)
 - Matter fix fabric provisioning from CASE session for iOS 16.5 (#18709)
 - ESP32 SPI initialization for MFRC522 (#18711)
+- Freeze BMP readings before deepsleep (#18720)
+- ESP32 Neopixel busy time adjustment (#18723)
+- Zigbee attributes handling in Berry mapping (#18747)
 
 ## [12.5.0.2] 20230516
 ### Added

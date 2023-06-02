@@ -119,15 +119,21 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
 - Support for GM861 1D and 2D bar code reader [#18399](https://github.com/arendst/Tasmota/issues/18399)
 - Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)
+- Display descriptor for ST7735 128x160 display [#18741](https://github.com/arendst/Tasmota/issues/18741)
 - Zigbee support for air sensors [#18665](https://github.com/arendst/Tasmota/issues/18665)
 - ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
+- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT [#18763](https://github.com/arendst/Tasmota/issues/18763)
+- Berry `tcpclientasync` class for non-blocking TCP client
+- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S` [#18774](https://github.com/arendst/Tasmota/issues/18774)
+- HASPmota `meta` attribute and improved `berry_run` [#18685](https://github.com/arendst/Tasmota/issues/18685)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
 - Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
 - Matter support for Shutters with Tilt [#18509](https://github.com/arendst/Tasmota/issues/18509)
-- Matter support for remote relays [#18656](https://github.com/arendst/Tasmota/issues/18656)
-- Berry `tcpclientasync` class for non-blocking TCP client
+- Matter support for async HTTP used for bridged devices and remote relays [#18656](https://github.com/arendst/Tasmota/issues/18656)
+- Matter bridge for ESP8266 remote endpoints (experimental) [#18734](https://github.com/arendst/Tasmota/issues/18734)
+- Matter support for Occupancy via Switch (experimental) [#18742](https://github.com/arendst/Tasmota/issues/18742)
 
 ### Breaking Changed
 - Change command ``FileUpload`` index binary data detection from >199 to >299
@@ -141,6 +147,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
 - Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
 - Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement [#18701](https://github.com/arendst/Tasmota/issues/18701)
+- Berry `webclient.url_encode()` is now a static class method, no change required to existing code [#18775](https://github.com/arendst/Tasmota/issues/18775)
 
 ### Fixed
 - ESP8266 no update on Energy Export Active regression from v12.3.1.3
@@ -148,10 +155,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 [#18666](https://github.com/arendst/Tasmota/issues/18666)
 - Shutter bootloop using more than 4 shutters [#18673](https://github.com/arendst/Tasmota/issues/18673)
 - Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant [#18701](https://github.com/arendst/Tasmota/issues/18701)
+- Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` [#18768](https://github.com/arendst/Tasmota/issues/18768)
+- Freeze BMP readings before deepsleep [#18720](https://github.com/arendst/Tasmota/issues/18720)
 - ESP32 Partition_Manager.tapp
 - ESP32 InfluxDb initial connection delays using HTTPClient [#18015](https://github.com/arendst/Tasmota/issues/18015)
 - ESP32 AIThinker webcam issues [#18652](https://github.com/arendst/Tasmota/issues/18652)
 - ESP32 SPI initialization for MFRC522 [#18711](https://github.com/arendst/Tasmota/issues/18711)
+- ESP32 Neopixel busy time adjustment [#18723](https://github.com/arendst/Tasmota/issues/18723)
 - Berry a rare condition when a GC causes a memory corruption
 - Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- Zigbee attributes handling in Berry mapping [#18747](https://github.com/arendst/Tasmota/issues/18747)
 - Matter fix fabric provisioning from CASE session for iOS 16.5 [#18709](https://github.com/arendst/Tasmota/issues/18709)
