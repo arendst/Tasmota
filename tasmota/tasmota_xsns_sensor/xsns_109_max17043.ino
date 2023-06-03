@@ -19,12 +19,15 @@
 
 #ifdef USE_I2C
 #ifdef USE_MAX17043
-#define XI2C_82   82    // See I2CDEVICES.md
+
+#define XI2C_82       82    // See I2CDEVICES.md
+
+#define SENSOR_NAME    "MAX17043"
 
 #include "DFRobot_MAX17043.h"
 
 /*********************************************************************************************\
- * MAX17043 fuel-gauge for 3.7 volt Lipo batteries
+ * MAX17043 fuel-gauge for 3.7 Volt Lipo batteries
  *
  * Battery voltage in Volt and State Of Charge (SOC) in percent are published via MQTT
  * 
@@ -53,7 +56,7 @@ DFRobot_MAX17043     gauge; // Class to read from MAX17043
 
 struct MAX17043 
 {
-  float voltage = 0.0;      // Battery voltage in miliVolt
+  float voltage = 0.0;      // Battery voltage in Volt
   float percentage = 0.0;   // Battery remaining capacity in percent
 } *max17043 = nullptr;
 
@@ -61,11 +64,11 @@ struct MAX17043
 
 void Max17043Init(void) {
 
-  if (gauge.begin() != 0) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("I2C: MAX17043 not found"));
-  } else {
-    max17043 = (MAX17043 *)calloc(1, sizeof(struct MAX17043));
-    AddLog(LOG_LEVEL_INFO, PSTR("I2C: MAX17043 initialized"));
+  if (I2cSetDevice(MAX17043_ADDRESS)) { 
+    I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+    if (gauge.begin() == 0) {
+      max17043 = (MAX17043 *)calloc(1, sizeof(struct MAX17043));
+    }
   }
 }
 
@@ -73,7 +76,7 @@ void Max17043Read(void) {
 
   float percentage = 0.0;
   
-  max17043->voltage = gauge.readVoltage();
+  max17043->voltage = gauge.readVoltage()/1000.0;
 
   // During charging the percentage might be (slightly) above 100%. To avoid stange numbers
   // in the statistics we the percentage provided by this driver will not go above 100%
@@ -87,16 +90,14 @@ void Max17043Read(void) {
 }
 
 void Max17043Json(void) {
-
-  ResponseAppend_P(JSON_SNS_BGAUGE, mqttId, String(max17043->voltage/1000, 2), String(max17043->percentage, 1));
+  ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_VOLTAGE "\":%3_f,\"" D_JSON_BATTPERCENT "\":%2_f}"), mqttId, &max17043->voltage, &max17043->percentage );
 }
 
 #ifdef USE_WEBSERVER
 void Max17043Show(void) {
-
-  WSContentSend_P(PSTR("Battery: %1_f V,  "), max17043->voltage/1000);
-  WSContentSend_P(PSTR("%.1f %%"), max17043->percentage);
-}
+  WSContentSend_PD(PSTR("{s}%s Voltage  {m}%1_f V  {e}"), SENSOR_NAME, &max17043->voltage);
+  WSContentSend_PD(PSTR("{s}%s Capacity {m}%1_f %% {e}"), SENSOR_NAME, &max17043->percentage);
+}  
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -104,13 +105,8 @@ void Max17043Show(void) {
 \*********************************************************************************************/
 
 bool Xsns109(uint32_t function) {
-  if (!I2cEnabled(XI2C_82)) {
-     return false; 
-  }
-  // Set return value to `false`
-  bool result = false;
+if (!I2cEnabled(MAX17043_ADDRESS)) { return false; } 
 
-  // Check which callback ID is called by Tasmota
   switch (function) {
     case FUNC_INIT:
       Max17043Init(); 
@@ -121,18 +117,13 @@ bool Xsns109(uint32_t function) {
     case FUNC_JSON_APPEND:
       Max17043Json();
       break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Max17043Show();
-      break;
-#endif // USE_WEBSERVER
-    case FUNC_SAVE_BEFORE_RESTART:
-      break;
-    case FUNC_COMMAND:
-      break;
+    #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Max17043Show();
+        break;
+    #endif // USE_WEBSERVER
   }
-  // Return boolean result
-  return result;
+  return false;
 }
 
 #endif  // USE_MAX17043
