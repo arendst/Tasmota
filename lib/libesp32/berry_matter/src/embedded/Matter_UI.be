@@ -248,8 +248,8 @@ class Matter_UI
   
     # special case for root node
     # display a fake configuration item (disabled)
-    webserver.content_send("<tr><td><input type='text' name='ep000' maxlength='4' size='3' value='0' readonly disabled></td>")
-    webserver.content_send("<td><select name='pi000'>")
+    webserver.content_send("<tr><td><input type='text' name='epnone' maxlength='4' size='3' value='0' readonly disabled></td>")
+    webserver.content_send("<td><select name='pinone'>")
     webserver.content_send("<option value='' selected disabled>Root node</option>")
     webserver.content_send("</select></td>")
     webserver.content_send("<td><font size='-1'>&nbsp;</font></td>")
@@ -438,7 +438,7 @@ class Matter_UI
 
         tasmota.log(string.format("MTR: /matterc received '%s' command", 'config'), 3)
         # iterate by id
-        var idx = 1
+        var idx = 0
         var idx_str = string.format("%03i", idx)
         while webserver.has_arg('ep'+idx_str)
 
