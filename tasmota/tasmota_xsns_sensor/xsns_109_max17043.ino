@@ -95,8 +95,8 @@ void Max17043Json(void) {
 
 #ifdef USE_WEBSERVER
 void Max17043Show(void) {
-  WSContentSend_PD(PSTR("{s}%s D_VOLTAGE {m}%1_f V  {e}"), SENSOR_NAME, &max17043->voltage);
-  WSContentSend_PD(PSTR("{s}%s D_BATTERY_CAPACITY {m}%1_f %% {e}"), SENSOR_NAME, &max17043->percentage);
+  WSContentSend_PD(PSTR("{s}%s " D_VOLTAGE "{m}%1_f" D_UNIT_VOLT "{e}"), SENSOR_NAME, &max17043->voltage);
+  WSContentSend_PD(PSTR("{s}%s" D_BATTERY_CAPACITY "{m}%1_f %% {e}"), SENSOR_NAME, &max17043->percentage);
 }  
 #endif  // USE_WEBSERVER
 
