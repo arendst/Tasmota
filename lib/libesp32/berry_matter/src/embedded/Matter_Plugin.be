@@ -36,6 +36,7 @@ class Matter_Plugin
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = {
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
+    0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
   }
   var device                                # reference to the `device` global object
   var endpoint                              # current endpoint
@@ -180,6 +181,12 @@ class Matter_Plugin
         return TLV.create_TLV(TLV.U4, 1)    # "Initial Release"
       end
 
+    # ====================================================================================================
+    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+
+      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+      end
     else
       return nil
     end

@@ -680,13 +680,23 @@ class Matter_Device
     var endpoints = self.k2l_num(config)
     tasmota.log("MTR: endpoints to be configured "+str(endpoints), 3)
 
+    # start with mandatory endpoint 0 for root node
+    self.plugins.push(matter.Plugin_Root(self, 0, {}))
+    tasmota.log(string.format("MTR: endpoint:%i type:%s%s", 0, 'root', ''), 2)
+
+    # always include an aggregator for dynamic endpoints
+    self.plugins.push(matter.Plugin_Aggregator(self, 0xFF00, {}))
+    tasmota.log(string.format("MTR: endpoint:%i type:%s%s", 0xFF00, 'aggregator', ''), 2)
+
     for ep: endpoints
+      if ep == 0  continue end          # skip endpoint 0
       try
         var plugin_conf = config[str(ep)]
         tasmota.log(string.format("MTR: endpoint %i config %s", ep, plugin_conf), 3)
 
         var pi_class_name = plugin_conf.find('type')
         if pi_class_name == nil   tasmota.log("MTR: no class name, skipping", 3)  continue end
+        if pi_class_name == 'root'  tasmota.log("MTR: only one root node allowed", 3)  continue end
         var pi_class = self.plugins_classes.find(pi_class_name)
         if pi_class == nil        tasmota.log("MTR: unknown class name '"+str(pi_class_name)+"' skipping", 2)  continue  end
 
@@ -1003,9 +1013,6 @@ class Matter_Device
     import string
     import json
     var m = {}
-
-    # add the default plugin
-    m["0"] = {'type':'root'}
 
     # check if we have a light
     var endpoint = 1

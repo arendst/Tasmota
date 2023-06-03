@@ -459,50 +459,46 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
     /* K1   */  be_nested_str_weak(TLV),
     /* K2   */  be_nested_str_weak(cluster),
     /* K3   */  be_nested_str_weak(attribute),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(create_TLV),
-    /* K6   */  be_nested_str_weak(BOOL),
-    /* K7   */  be_nested_str_weak(http_remote),
-    /* K8   */  be_nested_str_weak(reachable),
-    /* K9   */  be_nested_str_weak(read_attribute),
+    /* K4   */  be_nested_str_weak(create_TLV),
+    /* K5   */  be_nested_str_weak(BOOL),
+    /* K6   */  be_nested_str_weak(http_remote),
+    /* K7   */  be_nested_str_weak(reachable),
+    /* K8   */  be_nested_str_weak(read_attribute),
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[29]) {  /* code */
+    ( &(const binstruction[26]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
       0x880C0701,  //  0001  GETMBR	R3	R3	K1
       0x88100502,  //  0002  GETMBR	R4	R2	K2
       0x88140503,  //  0003  GETMBR	R5	R2	K3
       0x541A0038,  //  0004  LDINT	R6	57
       0x1C180806,  //  0005  EQ	R6	R4	R6
-      0x781A000C,  //  0006  JMPF	R6	#0014
-      0x1C180B04,  //  0007  EQ	R6	R5	K4
-      0x781A0000,  //  0008  JMPF	R6	#000A
-      0x70020008,  //  0009  JMP		#0013
-      0x541A0010,  //  000A  LDINT	R6	17
-      0x1C180A06,  //  000B  EQ	R6	R5	R6
-      0x781A0005,  //  000C  JMPF	R6	#0013
-      0x8C180705,  //  000D  GETMET	R6	R3	K5
-      0x88200706,  //  000E  GETMBR	R8	R3	K6
-      0x88240107,  //  000F  GETMBR	R9	R0	K7
-      0x88241308,  //  0010  GETMBR	R9	R9	K8
-      0x7C180600,  //  0011  CALL	R6	3
-      0x80040C00,  //  0012  RET	1	R6
-      0x70020007,  //  0013  JMP		#001C
-      0x60180003,  //  0014  GETGBL	R6	G3
-      0x5C1C0000,  //  0015  MOVE	R7	R0
-      0x7C180200,  //  0016  CALL	R6	1
-      0x8C180D09,  //  0017  GETMET	R6	R6	K9
-      0x5C200200,  //  0018  MOVE	R8	R1
-      0x5C240400,  //  0019  MOVE	R9	R2
-      0x7C180600,  //  001A  CALL	R6	3
-      0x80040C00,  //  001B  RET	1	R6
-      0x80000000,  //  001C  RET	0
+      0x781A0009,  //  0006  JMPF	R6	#0011
+      0x541A0010,  //  0007  LDINT	R6	17
+      0x1C180A06,  //  0008  EQ	R6	R5	R6
+      0x781A0005,  //  0009  JMPF	R6	#0010
+      0x8C180704,  //  000A  GETMET	R6	R3	K4
+      0x88200705,  //  000B  GETMBR	R8	R3	K5
+      0x88240106,  //  000C  GETMBR	R9	R0	K6
+      0x88241307,  //  000D  GETMBR	R9	R9	K7
+      0x7C180600,  //  000E  CALL	R6	3
+      0x80040C00,  //  000F  RET	1	R6
+      0x70020007,  //  0010  JMP		#0019
+      0x60180003,  //  0011  GETGBL	R6	G3
+      0x5C1C0000,  //  0012  MOVE	R7	R0
+      0x7C180200,  //  0013  CALL	R6	1
+      0x8C180D08,  //  0014  GETMET	R6	R6	K8
+      0x5C200200,  //  0015  MOVE	R8	R1
+      0x5C240400,  //  0016  MOVE	R9	R2
+      0x7C180600,  //  0017  CALL	R6	3
+      0x80040C00,  //  0018  RET	1	R6
+      0x80000000,  //  0019  RET	0
     })
   )
 );
@@ -628,13 +624,8 @@ be_local_class(Matter_Plugin_Bridge_HTTP,
         { be_const_key_weak(ui_conf_to_string, -1), be_const_static_closure(Matter_Plugin_Bridge_HTTP_ui_conf_to_string_closure) },
         { be_const_key_weak(http_remote, -1), be_const_var(0) },
         { be_const_key_weak(CLUSTERS, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
+        be_const_map( *     be_nested_map(0,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(57, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(1,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(17),
-    }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak() },
         { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X2011) },
