@@ -28,7 +28,7 @@ platformio_tasmota_cenv.ini
 platformio_tasmota_user_env.ini
 lib/libesp32/berry/generate/*
 lib/libesp32/berry/berry
-## TODO remove next line
+
 tasmota/tasmota_xx2c_global/xsns_interface.ino
 
 ## Visual Studio Code specific ######
