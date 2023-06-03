@@ -58,6 +58,7 @@
 #define D_AS "как"
 #define D_AUTO "АВТО"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CAPACITY "Capacity"
 #define D_BLINK "Мигать"
 #define D_BLINKOFF "Не Мигать"
 #define D_BOOT_COUNT "Количество загрузок"
