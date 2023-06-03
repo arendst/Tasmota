@@ -43,7 +43,7 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
     # 0x0006: [0,0xFFFC,0xFFFD],                    # On/Off 1.5 p.48
 
     # 0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
-    0x0039: [0x11]                                  # Bridged Device Basic Information 9.13 p.485
+    # 0x0039: [0x11]                                  # Bridged Device Basic Information 9.13 p.485
 
   }
   # static var TYPES = { 0x010A: 2 }       # On/Off Light
@@ -176,9 +176,7 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
 
-      if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
-        # return TLV.create_TLV(TLV.U2, 1)
-      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
+      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
         # self.is_reachable_lazy_sync()   # Not needed anymore
         return TLV.create_TLV(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
       end

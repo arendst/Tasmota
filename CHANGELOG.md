@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
+- Matter Bridge mode always on
 
 ### Fixed
 - Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
