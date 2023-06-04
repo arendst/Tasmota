@@ -307,21 +307,22 @@ be_local_closure(Matter_Fabric_log_new_fabric,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(tasmota),
     /* K2   */  be_nested_str_weak(log),
     /* K3   */  be_nested_str_weak(format),
-    /* K4   */  be_nested_str_weak(MTR_X3A_X20_X2BFabric_X20_X20_X20_X20fab_X3D_X27_X25s_X27),
+    /* K4   */  be_nested_str_weak(MTR_X3A_X20_X2BFabric_X20_X20_X20_X20fab_X3D_X27_X25s_X27_X20vendorid_X3D0x_X2504X),
     /* K5   */  be_nested_str_weak(get_fabric_id),
     /* K6   */  be_nested_str_weak(copy),
     /* K7   */  be_nested_str_weak(reverse),
     /* K8   */  be_nested_str_weak(tohex),
-    /* K9   */  be_const_int(2),
+    /* K9   */  be_nested_str_weak(admin_vendor),
+    /* K10  */  be_const_int(2),
     }),
     be_str_weak(log_new_fabric),
     &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
+    ( &(const binstruction[18]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xB80A0200,  //  0001  GETNGBL	R2	K1
       0x8C080502,  //  0002  GETMET	R2	R2	K2
@@ -335,10 +336,11 @@ be_local_closure(Matter_Fabric_log_new_fabric,   /* name */
       0x7C1C0200,  //  000A  CALL	R7	1
       0x8C1C0F08,  //  000B  GETMET	R7	R7	K8
       0x7C1C0200,  //  000C  CALL	R7	1
-      0x7C100600,  //  000D  CALL	R4	3
-      0x58140009,  //  000E  LDCONST	R5	K9
-      0x7C080600,  //  000F  CALL	R2	3
-      0x80000000,  //  0010  RET	0
+      0x88200109,  //  000D  GETMBR	R8	R0	K9
+      0x7C100800,  //  000E  CALL	R4	4
+      0x5814000A,  //  000F  LDCONST	R5	K10
+      0x7C080600,  //  0010  CALL	R2	3
+      0x80000000,  //  0011  RET	0
     })
   )
 );

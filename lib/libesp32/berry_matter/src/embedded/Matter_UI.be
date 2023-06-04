@@ -205,7 +205,7 @@ class Matter_UI
         if !label   label = "<No label>"    end
         label = webserver.html_escape(label)      # protect against HTML injection
         
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s&nbsp;</b></legend><p></p>", f.get_fabric_index(), label))
+        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s</b> (0x%04X)&nbsp;</legend><p></p>", f.get_fabric_index(), label, f.get_admin_vendor()))
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
@@ -235,7 +235,7 @@ class Matter_UI
 
     webserver.content_send("<form action='/matterc' method='post'")
     webserver.content_send("onsubmit='return confirm(\"This will RESET the configuration to the default. You will need to associate again.\");'>")
-    webserver.content_send("<button name='auto' class='button bred'>Reset to default</button><p></p></form>")
+    webserver.content_send("<button name='auto' class='button bred'>Reset and Auto-discover</button><p></p></form>")
 
     webserver.content_send("<form action='/matterc' method='post'")
     webserver.content_send("onsubmit='return confirm(\"Changing the configuration requires to associate again.\");'>")

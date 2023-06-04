@@ -62,6 +62,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  var next_ep                         # next endpoint to be allocated for bridge, start at 51
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
   # PBKDF information used only during PASE (freed afterwards)
@@ -87,6 +88,7 @@ class Matter_Device
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.root_iterations = self.PBKDF_ITERATIONS
+    self.next_ep = 51                             # start at endpoint 51 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
     self.load_param()
@@ -128,6 +130,7 @@ class Matter_Device
     self.autoconf_device()
 
     # for now read sensors every 30 seconds
+    # TODO still needed?
     tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
@@ -610,7 +613,7 @@ class Matter_Device
   def save_param()
     import string
     import json
-    var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false')
+    var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
@@ -638,16 +641,17 @@ class Matter_Device
       var f = open(self.FILENAME)
       var s = f.read()
       f.close()
-
       import json
       var j = json.load(s)
 
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
-      if self.plugins_config
-        self._load_plugins_config(self.plugins_config)
+      if self.plugins_config != nil
+        tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
+        self.adjust_next_ep()
         self.plugins_persist = true
       end
     except .. as e, m
@@ -674,7 +678,7 @@ class Matter_Device
   # 'config' is a map
   # Ex:
   #   {'32': {'filter': 'AXP192#Temperature', 'type': 'temperature'}, '40': {'filter': 'BMP280#Pressure', 'type': 'pressure'}, '34': {'filter': 'SHT3X#Temperature', 'type': 'temperature'}, '33': {'filter': 'BMP280#Temperature', 'type': 'temperature'}, '1': {'relay': 0, 'type': 'relay'}, '56': {'filter': 'SHT3X#Humidity', 'type': 'humidity'}, '0': {'type': 'root'}}
-  def _load_plugins_config(config)
+  def _instantiate_plugins_from_config(config)
     import string
     
     var endpoints = self.k2l_num(config)
@@ -995,9 +999,12 @@ class Matter_Device
 
     if size(self.plugins) > 0   return end                    # already configured
 
-    self.plugins_config = self.autoconf_device_map()
-    tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
-    self._load_plugins_config(self.plugins_config)
+    if !self.plugins_persist
+      self.plugins_config = self.autoconf_device_map()
+      self.adjust_next_ep()
+      tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
+    end
+    self._instantiate_plugins_from_config(self.plugins_config)
 
     if !self.plugins_persist && self.sessions.count_active_fabrics() > 0
       self.plugins_persist = true
@@ -1084,8 +1091,6 @@ class Matter_Device
     var sensors = json.load(tasmota.read_sensors())
 
     # temperature sensors
-    # they are starting at endpoint `32..39` (8 max)
-    endpoint = 0x20
     for k1:self.k2l(sensors)
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
@@ -1093,12 +1098,9 @@ class Matter_Device
         m[str(endpoint)] = {'type':'temperature','filter':temp_rule}
         endpoint += 1
       end
-      if endpoint > 0x28 break end
     end
 
     # pressure sensors
-    # they are starting at endpoint `40..47` (8 max)
-    endpoint = 0x28
     for k1:self.k2l(sensors)
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Pressure")
@@ -1106,12 +1108,9 @@ class Matter_Device
         m[str(endpoint)] = {'type':'pressure','filter':temp_rule}
         endpoint += 1
       end
-      if endpoint > 0x2F break end
     end
 
     # light sensors
-    # they are starting at endpoint `48..55` (8 max)
-    endpoint = 0x30
     for k1:self.k2l(sensors)
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Illuminance")
@@ -1119,12 +1118,9 @@ class Matter_Device
         m[str(endpoint)] = {'type':'illuminance','filter':temp_rule}
         endpoint += 1
       end
-      if endpoint > 0x38 break end
     end
 
     # huidity sensors
-    # they are starting at endpoint `56..63` (8 max)
-    endpoint = 0x38
     for k1:self.k2l(sensors)
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Humidity")
@@ -1132,9 +1128,8 @@ class Matter_Device
         m[str(endpoint)] = {'type':'humidity','filter':temp_rule}
         endpoint += 1
       end
-      if endpoint > 0x40 break end
     end
-    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
+    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')    # MQTT is not yet connected
     return m
   end
 
@@ -1195,6 +1190,103 @@ class Matter_Device
     tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
   end
   
+  #############################################################
+  # Dynamic adding and removal of endpoints (bridge mode)
+  #############################################################
+  # Add endpoint
+  #
+  # Args:
+  # `pi_class_name`: name of the type of pluging, ex: `light3`
+  # `plugin_conf`: map of configuration as native Berry map
+  # returns endpoint number newly allocated, or `nil` if failed
+  def bridge_add_endpoint(pi_class_name, plugin_conf)
+    var pi_class = self.plugins_classes.find(pi_class_name)
+    if pi_class == nil        tasmota.log("MTR: unknown class name '"+str(pi_class_name)+"' skipping", 2)  return  end
+
+    # get the next allocated endpoint number
+    var ep = self.next_ep
+    var ep_str = str(ep)
+
+    var pi = pi_class(self, ep, plugin_conf)
+    self.plugins.push(pi)
+
+    # add to in-memoru config
+    # Example: {'filter': 'AXP192#Temperature', 'type': 'temperature'}
+    var pi_conf = {'type': pi_class_name}
+    # copy args
+    for k:plugin_conf.keys()
+      pi_conf[k] = plugin_conf[k]
+    end
+    # add to main
+    self.plugins_config[ep_str] = pi_conf
+    self.plugins_persist = true
+    self.next_ep += 1     # increment next allocated endpoint before saving
+
+    # try saving parameters
+    self.save_param()
+    self.signal_endpoints_changed()
+
+    return ep
+  end
+
+  #############################################################
+  # Remove an existing endpoint
+  #
+  def bridge_remove_endpoint(ep)
+    import string
+    import json
+
+    var ep_str = str(ep)
+    var config
+    var f_in
+
+    if !self.plugins_config.contains(ep_str)
+      tasmota.log("MTR: Cannot remove an enpoint not configured: " + ep_str, 3)
+      return
+    end
+    self.plugins_config.remove(ep_str)
+    self.plugins_persist = true
+
+    # try saving parameters
+    self.save_param()
+    self.signal_endpoints_changed()
+
+    # now remove from in-memory configuration
+    var idx = 0
+    while idx < size(self.plugins)
+      if ep == self.plugins[idx].get_endpoint()
+        self.plugins.remove(idx)
+        self.signal_endpoints_changed()
+        break
+      else
+        idx += 1
+      end
+    end
+  end
+
+  #############################################################
+  # Signal to controller that endpoints changed via subcriptions
+  #
+  def signal_endpoints_changed()
+    # mark parts lists as changed
+    self.attribute_updated(0x0000, 0x001D, 0x0003, false)
+    self.attribute_updated(0xFF00, 0x001D, 0x0003, false)
+  end
+
+  #############################################################
+  # Adjust next_ep
+  #
+  # Make sure that next_ep (used to allow dynamic endpoints)
+  # will not collide with an existing ep
+  def adjust_next_ep()
+    for k: self.plugins_config.keys()
+      var ep = int(k)
+      if ep >= self.next_ep
+        self.next_ep = ep + 1
+      end
+    end
+  end
+
   #####################################################################
   # Events
   #####################################################################
