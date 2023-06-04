@@ -70,6 +70,5 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ],
-    "C_Cpp.dimInactiveRegions": true
+    ]
   }
