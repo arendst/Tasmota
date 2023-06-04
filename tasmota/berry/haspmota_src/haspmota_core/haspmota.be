@@ -338,16 +338,16 @@ class lvh_obj
     var event_hasp = self._event_map.find(code)
     if event_hasp != nil
       import string
+      import json
 
       var tas_event_more = ""   # complementary data
       if event.code == lv.EVENT_VALUE_CHANGED
         try
           # try to get the new val
           var val = self.val
-          if val != nil   tas_event_more = string.format(',"val":%i', val) end
+          if val != nil   tas_event_more = string.format(',"val":%s', json.dump(val)) end
           var text = self.text
           if text != nil
-            import json
             tas_event_more += ',"text":'
             tas_event_more += json.dump(text)
           end
