@@ -36,6 +36,7 @@
 //#define USE_I2S_NO_DAC                         // Add support for transistor-based output without DAC
 //#define USE_I2S_WEBRADIO                       // Add support for web radio
 //#define USE_I2S_SAY_TIME                       // Add support for english speaking clock
+//#define USE_I2S_RTTTL                          // Add support for Rtttl playback
 
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioFileSourceID3.h"
@@ -251,6 +252,11 @@ int32_t I2S_Init_0(void) {
 #else
     audio_i2s.out = new AudioOutputI2S();
 #endif
+
+#ifdef USE_I2S_LSB
+    audio_i2s.lsbJustified = true;
+#endif // Allow supporting LSBJ chips, e.g. TM8211/PT8211
+
     audio_i2s.bclk = DAC_IIS_BCK;
     audio_i2s.ws = DAC_IIS_WS;
     audio_i2s.dout = DAC_IIS_DOUT;
