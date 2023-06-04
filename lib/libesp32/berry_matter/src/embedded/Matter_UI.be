@@ -205,7 +205,7 @@ class Matter_UI
         if !label   label = "<No label>"    end
         label = webserver.html_escape(label)      # protect against HTML injection
         
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s</b> (0x%04X)&nbsp;</legend><p></p>", f.get_fabric_index(), label, f.get_admin_vendor()))
+        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s</b> (%s)&nbsp;</legend><p></p>", f.get_fabric_index(), label, f.get_admin_vendor_name()))
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
