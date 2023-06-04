@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Matter ability to add or remove endpoint in bridge mode (code only)
+- Matter add controller's Vendor Name to logs and UI
 
 ### Breaking Changed
 

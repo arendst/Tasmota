@@ -77,6 +77,17 @@ extern const bclass be_class_Matter_QRCode;
 
 #include "../generate/be_matter_clusters.h"
 #include "../generate/be_matter_opcodes.h"
+#include "../generate/be_matter_vendors.h"
+
+const char* matter_get_vendor_name(uint16_t id) {
+  for (const matter_vendor_t * vnd = matter_Vendors; vnd->id != 0xFFFF; vnd++) {
+    if (vnd->id == id) {
+      return vnd->name;
+    }
+  }
+  return NULL;
+}
+BE_FUNC_CTYPE_DECLARE(matter_get_vendor_name, "s", "i")
 
 const char* matter_get_cluster_name(uint16_t cluster) {
   for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
@@ -253,6 +264,7 @@ module matter (scope: global, strings: weak) {
   member, closure(matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
 
+  get_vendor_name, ctype_func(matter_get_vendor_name)
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
   is_attribute_writable, ctype_func(matter_is_attribute_writable)
