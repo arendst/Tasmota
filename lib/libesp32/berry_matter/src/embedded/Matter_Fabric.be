@@ -205,7 +205,7 @@ class Matter_Fabric : Matter_Expirable
   # Called before removal
   def log_new_fabric()
     import string
-    tasmota.log(string.format("MTR: +Fabric    fab='%s'", self.get_fabric_id().copy().reverse().tohex()), 2)
+    tasmota.log(string.format("MTR: +Fabric    fab='%s' vendorid=0x%04X", self.get_fabric_id().copy().reverse().tohex(), self.admin_vendor), 2)
   end
 
   #############################################################

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.5.0.4]
 
 ### Added
+- Matter ability to add or remove endpoint in bridge mode (code only)
 
 ### Breaking Changed
 

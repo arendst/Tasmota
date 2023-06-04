@@ -60,7 +60,7 @@ be_local_closure(Matter_Plugin_Aggregator_read_attribute,   /* name */
       0x5C281200,  //  0014  MOVE	R10	R9
       0x7C280000,  //  0015  CALL	R10	0
       0x542EFEFF,  //  0016  LDINT	R11	65280
-      0x202C140B,  //  0017  NE	R11	R10	R11
+      0x142C140B,  //  0017  LT	R11	R10	R11
       0x782E0004,  //  0018  JMPF	R11	#001E
       0x8C2C0F09,  //  0019  GETMET	R11	R7	K9
       0x4C340000,  //  001A  LDNIL	R13
