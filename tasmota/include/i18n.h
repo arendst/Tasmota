@@ -238,6 +238,7 @@
 #define D_JSON_MY "YaxisInduction"
 #define D_JSON_MZ "ZaxisInduction"
 #define D_JSON_MAGNETICFLD "MagneticInduction"
+#define D_JSON_BATTPERCENT "BatteryPercentage"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
