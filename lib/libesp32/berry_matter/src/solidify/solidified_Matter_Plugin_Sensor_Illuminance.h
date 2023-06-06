@@ -121,27 +121,38 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(math),
+    /* K1   */  be_const_int(1),
+    /* K2   */  be_nested_str_weak(log10),
+    }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
+    ( &(const binstruction[16]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0003,  //  0002  JMPF	R2	#0007
-      0x60080009,  //  0003  GETGBL	R2	G9
-      0x5C0C0200,  //  0004  MOVE	R3	R1
-      0x7C080200,  //  0005  CALL	R2	1
-      0x70020000,  //  0006  JMP		#0008
-      0x4C080000,  //  0007  LDNIL	R2
-      0x80040400,  //  0008  RET	1	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0001,  //  0002  JMPF	R2	#0005
+      0x4C080000,  //  0003  LDNIL	R2
+      0x80040400,  //  0004  RET	1	R2
+      0xA40A0000,  //  0005  IMPORT	R2	K0
+      0x140C0301,  //  0006  LT	R3	R1	K1
+      0x780E0000,  //  0007  JMPF	R3	#0009
+      0x58040001,  //  0008  LDCONST	R1	K1
+      0x8C0C0502,  //  0009  GETMET	R3	R2	K2
+      0x5C140200,  //  000A  MOVE	R5	R1
+      0x7C0C0400,  //  000B  CALL	R3	2
+      0x5412270F,  //  000C  LDINT	R4	10000
+      0x080C0604,  //  000D  MUL	R3	R3	R4
+      0x000C0701,  //  000E  ADD	R3	R3	K1
+      0x80040600,  //  000F  RET	1	R3
     })
   )
 );
