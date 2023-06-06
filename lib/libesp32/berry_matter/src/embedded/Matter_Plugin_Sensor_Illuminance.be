@@ -40,7 +40,11 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    return val != nil ? int(val) : nil        # value in lux
+    if val == nil   return nil    end
+    import math
+
+    if val < 1  val = 1   end
+    return math.log10(val) * 10000 + 1
   end
 
   #############################################################
