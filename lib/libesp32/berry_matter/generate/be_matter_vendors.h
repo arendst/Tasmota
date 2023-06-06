@@ -51,7 +51,6 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x133F, "ASR"},
   { 0x1342, "Beken Corporation"},
   { 0x1344, "Eltako"},
-  { 0x134B, "Nabu Casa"},
   { 0x1345, "Meross"},
   { 0x1346, "Rafael"},
   { 0x1349, "Apple Home"},
@@ -88,6 +87,8 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x142D, "QH"},
   { 0x142F, "QIACHIP"},
   { 0x6006, "Google LLC"},
+  
+  { 0x134B, "Nabu Casa"},
 
   { 0xFFFF, NULL },
 };
