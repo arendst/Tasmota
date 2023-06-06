@@ -95,6 +95,18 @@ class Matter_Fabric : Matter_Expirable
   def get_ca()                return self.root_ca_certificate end
   def get_fabric_index()      return self.fabric_index      end
 
+  def get_admin_vendor_name()
+    var vnd = self.admin_vendor
+    if vnd == nil   return ""  end
+    var name = matter.get_vendor_name(vnd)
+    if name != nil
+      return name
+    else
+      import string
+      return string.format("0x%04X", vnd)
+    end
+  end
+
   def set_fabric_index(v)     self.fabric_index = v         end
   def set_ca(ca)
     self.root_ca_certificate = ca
@@ -205,7 +217,7 @@ class Matter_Fabric : Matter_Expirable
   # Called before removal
   def log_new_fabric()
     import string
-    tasmota.log(string.format("MTR: +Fabric    fab='%s'", self.get_fabric_id().copy().reverse().tohex()), 2)
+    tasmota.log(string.format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 2)
   end
 
   #############################################################

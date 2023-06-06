@@ -6,14 +6,18 @@ All notable changes to this project will be documented in this file.
 ## [12.5.0.4]
 
 ### Added
+- Matter ability to add or remove endpoint in bridge mode (code only)
+- Matter add controller's Vendor Name to logs and UI
 
 ### Breaking Changed
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
+- Matter Bridge mode always on
 
 ### Fixed
 - Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
+- Fixed HASPmota event when value is non-integer (fixes #18229)
 
 ### Removed
 
