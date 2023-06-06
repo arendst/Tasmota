@@ -5280,7 +5280,7 @@ be_local_closure(Matter_Device_save_param,   /* name */
     /* K19  */  be_nested_str_weak(tasmota),
     /* K20  */  be_nested_str_weak(log),
     /* K21  */  be_nested_str_weak(MTR_X3A_X20_X3DSaved_X20_X20_X20_X20_X20parameters_X25s),
-    /* K22  */  be_nested_str_weak(_X20and_X20condiguration),
+    /* K22  */  be_nested_str_weak(_X20and_X20configuration),
     /* K23  */  be_nested_str_weak(),
     /* K24  */  be_const_int(2),
     /* K25  */  be_nested_str_weak(MTR_X3A_X20Session_Store_X3A_X3Asave_X20Exception_X3A),
