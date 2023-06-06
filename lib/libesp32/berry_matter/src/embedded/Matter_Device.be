@@ -623,7 +623,7 @@ class Matter_Device
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
-      tasmota.log(string.format("MTR: =Saved     parameters%s", self.plugins_persist ? " and condiguration" : ""), 2)
+      tasmota.log(string.format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 2)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
