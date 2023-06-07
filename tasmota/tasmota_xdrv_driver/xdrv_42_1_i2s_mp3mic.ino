@@ -79,8 +79,12 @@ esp_err_t err = ESP_OK;
 
 #ifdef USE_I2S_MIC
   // mic select to GND
-  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
-  i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+    #ifdef MIC_PDM 
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
+    #else
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
+    i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+    #endif
 #endif
 
 #ifdef ESP32S3_BOX
