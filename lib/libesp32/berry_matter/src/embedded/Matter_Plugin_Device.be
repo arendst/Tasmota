@@ -27,11 +27,13 @@ class Matter_Plugin end
 class Matter_Plugin_Device : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
+    0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
   }
-  static var TYPES = { 0x0000: 0 }                  # fake type
+  static var TYPES = { 0x0013: 1 }                  # fake type
+  static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
 
   #############################################################
   # Constructor
@@ -78,6 +80,30 @@ class Matter_Plugin_Device : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
+    # ====================================================================================================
+    elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+
+      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
+        # for device sub-classes, automatically add the Bridge Node type `0x0013: 1`
+        # unless the fabric doesn't support bridge mode (currently Alexa)
+        var dtl = TLV.Matter_TLV_array()
+        var types = self.TYPES
+        for dt: types.keys()
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
+          d1.add_TLV(1, TLV.U2, types[dt])      # Revision
+        end
+        # if fabric is not Alexa
+        if self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, 0x0013)     # DeviceType
+          d1.add_TLV(1, TLV.U2, 1)      # Revision
+        end
+        return dtl
+      else
+        return super(self).read_attribute(session, ctx)
+      end
+    
     else
       return super(self).read_attribute(session, ctx)
     end

@@ -563,10 +563,9 @@ be_local_class(Matter_Plugin_Bridge_Light2,
     }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(268, -1), be_const_int(2) },
-        { be_const_key_int(19, -1), be_const_int(1) },
     }))    ) } )) },
         { be_const_key_weak(web_value_ct, -1), be_const_closure(Matter_Plugin_Bridge_Light2_web_value_ct_closure) },
         { be_const_key_weak(set_ct, -1), be_const_closure(Matter_Plugin_Bridge_Light2_set_ct_closure) },

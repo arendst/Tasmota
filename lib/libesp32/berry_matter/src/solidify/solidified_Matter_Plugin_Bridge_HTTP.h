@@ -472,17 +472,17 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[26]) {  /* code */
+    ( &(const binstruction[35]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
       0x880C0701,  //  0001  GETMBR	R3	R3	K1
       0x88100502,  //  0002  GETMBR	R4	R2	K2
       0x88140503,  //  0003  GETMBR	R5	R2	K3
       0x541A0038,  //  0004  LDINT	R6	57
       0x1C180806,  //  0005  EQ	R6	R4	R6
-      0x781A0009,  //  0006  JMPF	R6	#0011
+      0x781A0012,  //  0006  JMPF	R6	#001A
       0x541A0010,  //  0007  LDINT	R6	17
       0x1C180A06,  //  0008  EQ	R6	R5	R6
-      0x781A0005,  //  0009  JMPF	R6	#0010
+      0x781A0006,  //  0009  JMPF	R6	#0011
       0x8C180704,  //  000A  GETMET	R6	R3	K4
       0x88200705,  //  000B  GETMBR	R8	R3	K5
       0x88240106,  //  000C  GETMBR	R9	R0	K6
@@ -498,7 +498,16 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
       0x5C240400,  //  0016  MOVE	R9	R2
       0x7C180600,  //  0017  CALL	R6	3
       0x80040C00,  //  0018  RET	1	R6
-      0x80000000,  //  0019  RET	0
+      0x70020007,  //  0019  JMP		#0022
+      0x60180003,  //  001A  GETGBL	R6	G3
+      0x5C1C0000,  //  001B  MOVE	R7	R0
+      0x7C180200,  //  001C  CALL	R6	1
+      0x8C180D08,  //  001D  GETMET	R6	R6	K8
+      0x5C200200,  //  001E  MOVE	R8	R1
+      0x5C240400,  //  001F  MOVE	R9	R2
+      0x7C180600,  //  0020  CALL	R6	3
+      0x80040C00,  //  0021  RET	1	R6
+      0x80000000,  //  0022  RET	0
     })
   )
 );

@@ -206,7 +206,7 @@ be_local_closure(Matter_Plugin_Light3_read_attribute,   /* name */
       0x781E0005,  //  0040  JMPF	R7	#0047
       0x8C1C0907,  //  0041  GETMET	R7	R4	K7
       0x88240908,  //  0042  GETMBR	R9	R4	K8
-      0x58280006,  //  0043  LDCONST	R10	K6
+      0x5828000A,  //  0043  LDCONST	R10	K10
       0x7C1C0600,  //  0044  CALL	R7	3
       0x80040E00,  //  0045  RET	1	R7
       0x70020019,  //  0046  JMP		#0061

@@ -33,7 +33,7 @@ class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
   static var CLUSTERS  = {
     0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
   }
-  static var TYPES = { 0x0106: 2, 0x0013: 1  }      # Illuminance Sensor, rev 2
+  static var TYPES = { 0x0106: 2 }                  # Illuminance Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value

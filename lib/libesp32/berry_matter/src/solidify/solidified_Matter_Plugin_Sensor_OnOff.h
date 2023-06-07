@@ -256,7 +256,7 @@ be_local_class(Matter_Plugin_Sensor_OnOff,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
-        { be_const_key_weak(TYPE, 11), be_nested_str_weak(occupancy) },
+        { be_const_key_weak(TYPE, 11), be_nested_str_weak(onoff) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {

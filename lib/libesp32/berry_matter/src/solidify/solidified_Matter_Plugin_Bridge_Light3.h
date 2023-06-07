@@ -561,21 +561,21 @@ be_local_closure(Matter_Plugin_Bridge_Light3_read_attribute,   /* name */
       0x7C1C0600,  //  004F  CALL	R7	3
       0x80040E00,  //  0050  RET	1	R7
       0x70020022,  //  0051  JMP		#0075
-      0x541E000F,  //  0052  LDINT	R7	16
+      0x541E4009,  //  0052  LDINT	R7	16394
       0x1C1C0C07,  //  0053  EQ	R7	R6	R7
       0x781E0005,  //  0054  JMPF	R7	#005B
       0x8C1C0908,  //  0055  GETMET	R7	R4	K8
-      0x88240909,  //  0056  GETMBR	R9	R4	K9
-      0x58280006,  //  0057  LDCONST	R10	K6
+      0x8824090D,  //  0056  GETMBR	R9	R4	K13
+      0x5828000B,  //  0057  LDCONST	R10	K11
       0x7C1C0600,  //  0058  CALL	R7	3
       0x80040E00,  //  0059  RET	1	R7
       0x70020019,  //  005A  JMP		#0075
-      0x541E4009,  //  005B  LDINT	R7	16394
+      0x541E000F,  //  005B  LDINT	R7	16
       0x1C1C0C07,  //  005C  EQ	R7	R6	R7
       0x781E0005,  //  005D  JMPF	R7	#0064
       0x8C1C0908,  //  005E  GETMET	R7	R4	K8
-      0x8824090D,  //  005F  GETMBR	R9	R4	K13
-      0x5828000B,  //  0060  LDCONST	R10	K11
+      0x88240909,  //  005F  GETMBR	R9	R4	K9
+      0x58280006,  //  0060  LDCONST	R10	K6
       0x7C1C0600,  //  0061  CALL	R7	3
       0x80040E00,  //  0062  RET	1	R7
       0x70020010,  //  0063  JMP		#0075
@@ -715,10 +715,9 @@ be_local_class(Matter_Plugin_Bridge_Light3,
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Bridge_Light3_invoke_request_closure) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(_X26_X23x1F517_X3B_X20Light_X203_X20RGB) },
         { be_const_key_weak(TYPES, 11), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(269, -1), be_const_int(2) },
-        { be_const_key_int(19, 0), be_const_int(1) },
     }))    ) } )) },
         { be_const_key_weak(shadow_hue, 6), be_const_var(0) },
         { be_const_key_weak(set_hue, -1), be_const_closure(Matter_Plugin_Bridge_Light3_set_hue_closure) },

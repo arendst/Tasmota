@@ -25,7 +25,7 @@ class Matter_Plugin_Device end
 #@ solidify:Matter_Plugin_Sensor_OnOff,weak
 
 class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
-  static var TYPE = "occupancy"                     # name of the plug-in in json
+  static var TYPE = "onoff"                         # name of the plug-in in json
   static var NAME = "OnOff"                         # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type

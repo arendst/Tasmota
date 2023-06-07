@@ -252,10 +252,9 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Pressure,
         { be_const_key_weak(TYPE, 4), be_nested_str_weak(http_pressure) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(_X26_X23x1F517_X3B_X20Pressure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(773, -1), be_const_int(2) },
-        { be_const_key_int(19, 0), be_const_int(1) },
     }))    ) } )) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Pressure)

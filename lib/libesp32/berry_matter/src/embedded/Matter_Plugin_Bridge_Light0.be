@@ -40,7 +40,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
-  static var TYPES = { 0x0100: 2, 0x0013: 1 }       # OnOff Light, but not actually used because Relay is managed by OnOff
+  static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
 
   var tasmota_relay_index                           # Relay number in Tasmota (one based)
   var shadow_onoff                                  # fake status for now # TODO
