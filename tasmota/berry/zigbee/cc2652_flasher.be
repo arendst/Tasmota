@@ -11,7 +11,7 @@
 # When starting the flasher, normal zigbee operations are aborterd. Restarting
 # normal zigbee functions requires a Tasmota restart.
 #
-# Required condiguration:
+# Required configuration:
 # - Zigbee Rx: must be configured as `Zigbee Rx` or `TCP Rx`
 # - Zigbee Tx: must be configured as `Zigbee Tx` or `TCP Tx`
 # - Zigbee Reset: must be configured as `Zigbee Rst - 1``
