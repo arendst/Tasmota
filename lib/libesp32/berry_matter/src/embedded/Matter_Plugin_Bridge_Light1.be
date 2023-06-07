@@ -39,7 +39,7 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
     # 0x0006: inherited                             # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],        # Level Control 1.6 p.57
   }
-  static var TYPES = { 0x0101: 2, 0x0013: 1 }       # Dimmable Light
+  static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
   var shadow_bri
   # var tasmota_relay_index # ingerited

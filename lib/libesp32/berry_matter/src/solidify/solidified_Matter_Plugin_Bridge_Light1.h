@@ -503,10 +503,9 @@ be_local_class(Matter_Plugin_Bridge_Light1,
         { be_const_key_weak(web_value_dimmer, -1), be_const_closure(Matter_Plugin_Bridge_Light1_web_value_dimmer_closure) },
         { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_Light1_parse_update_closure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(257, -1), be_const_int(2) },
-        { be_const_key_int(19, 0), be_const_int(1) },
     }))    ) } )) },
         { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_Light1_read_attribute_closure) },
         { be_const_key_weak(TYPE, 2), be_nested_str_weak(http_light1) },

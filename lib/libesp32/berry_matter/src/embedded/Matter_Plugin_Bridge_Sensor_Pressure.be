@@ -33,7 +33,7 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   static var CLUSTERS  = {
     0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement
   }
-  static var TYPES = { 0x0305: 2, 0x0013: 1  }      # Temperature Sensor, rev 2
+  static var TYPES = { 0x0305: 2 }                  # Temperature Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value

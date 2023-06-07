@@ -921,6 +921,12 @@ test_TLV(bytes("0001"), "1")
 test_TLV(bytes("08"), "false")
 test_TLV(bytes("09"), "true")
 
+var TLV = matter.TLV
+assert(TLV.create_TLV(TLV.BOOL, 1).tlv2raw() == bytes("09"))
+assert(TLV.create_TLV(TLV.BOOL, true).tlv2raw() == bytes("09"))
+assert(TLV.create_TLV(TLV.BOOL, 0).tlv2raw() == bytes("08"))
+assert(TLV.create_TLV(TLV.BOOL, false).tlv2raw() == bytes("08"))
+
 test_TLV(bytes("00FF"), "-1")
 test_TLV(bytes("05FFFF"), "65535U")
 

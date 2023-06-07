@@ -46,7 +46,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
     # 0x0039: [0x11]                                  # Bridged Device Basic Information 9.13 p.485
 
   }
-  # static var TYPES = { 0x010A: 2 }       # On/Off Light
 
   var http_remote                                   # instance of Matter_HTTP_remote
 
@@ -179,6 +178,8 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
       if   attribute == 0x0011          #  ---------- Reachable / bool ----------
         # self.is_reachable_lazy_sync()   # Not needed anymore
         return TLV.create_TLV(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
+      else
+        return super(self).read_attribute(session, ctx)
       end
 
     else

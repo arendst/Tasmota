@@ -40,7 +40,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
     # 0x0008: inherited                             # Level Control 1.6 p.57
     0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
   }
-  static var TYPES = { 0x010D: 2, 0x0013: 1 }       # Extended Color Light
+  static var TYPES = { 0x010D: 2 }                  # Extended Color Light
 
   var shadow_hue, shadow_sat                        # 0..254
 
@@ -124,13 +124,13 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
+      elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
+        return TLV.create_TLV(TLV.U4, 0x01)    # HS
 
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
 
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x01)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0x01)    # HS
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
