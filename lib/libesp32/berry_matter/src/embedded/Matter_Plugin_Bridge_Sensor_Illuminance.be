@@ -53,8 +53,11 @@ class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
     if val == nil   return nil    end
     import math
 
-    if val < 1  val = 1   end
-    return math.log10(val) * 10000 + 1
+    if val < 1
+      return 0
+    else
+      return math.log10(val) * 10000 + 1
+    end
   end
 
   #############################################################
