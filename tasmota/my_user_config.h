@@ -1154,6 +1154,7 @@
   // #define USE_BERRY_CRYPTO_SPAKE2P_MATTER      // SPAKE2+ used in Matter 1.0, complete name is SPAKE2+-P256-SHA256-HKDF-SHA256-HMAC-SHA256
   // #define USE_BERRY_CRYPTO_RSA                 // RSA primitives including JWT RS256 (3.9KB flash)
   // #define USE_I2S_AUDIO_BERRY                  // Enable Berry I2S Audio support 
+  // #define USE_BERRY_TF_LITE                    // Enable Berry TensorFlow Lite for Microcontrollers support
 #define USE_CSE7761                               // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
