@@ -1065,13 +1065,11 @@
                                                    // For details on the configuration please see the header of tasmota/xdrv_49_pid.ino
 
 // -- I2S Audio -------------------------------------
-#ifdef USE_I2S
 //#define USE_I2S_AUDIO                            // Add support for audio playback using I2S audio driver
   //#define USE_I2S_NO_DAC                         // Add support for transistor-based output without DAC
   //#define USE_I2S_LSB                            // Add support for LSBJ chips, e.g. TM8211/PT8211
   //#define USE_I2S_SAY_TIME                       // Enable english speaking clock
   //#define USE_I2S_RTTTL                          // Enable RTTTL playback
-#endif  // USE_I2S
 
 // -- End of general directives ---------------------
 
