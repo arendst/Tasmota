@@ -265,10 +265,6 @@ int32_t I2S_Init_0(void) {
     audio_i2s.out = new AudioOutputI2S();
 #endif
 
-#ifdef USE_I2S_LSB
-    audio_i2s.lsbJustified = true;
-#endif // Allow supporting LSBJ chips, e.g. TM8211/PT8211
-
     audio_i2s.bclk = DAC_IIS_BCK;
     audio_i2s.ws = DAC_IIS_WS;
     audio_i2s.dout = DAC_IIS_DOUT;
@@ -339,6 +335,11 @@ int32_t I2S_Init_0(void) {
   if (audio_i2s.mic_port != 0) {
     AddLog(LOG_LEVEL_INFO, PSTR("Init audio I2S mic: port=%d, bclk=%d, ws=%d, din=%d"), audio_i2s.mic_port, audio_i2s.mic_bclk, audio_i2s.mic_ws, audio_i2s.mic_din);
   }
+
+#ifdef USE_I2S_LSB
+  audio_i2s.out->SetLsbJustified(true);
+#endif // Allow supporting LSBJ chips, e.g. TM8211/PT8211
+
 #else
 
 #ifdef USE_I2S_NO_DAC
