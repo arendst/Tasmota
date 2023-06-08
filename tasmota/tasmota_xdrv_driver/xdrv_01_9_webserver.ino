@@ -3051,9 +3051,6 @@ void HandleHttpCommand(void)
   String svalue = Webserver->arg(F("cmnd"));
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
-    int offset = 3;
-    if (0 == strncasecmp((char*)svalue.c_str(), "status", 6) && Settings->flag5.mqtt_status_retain)
-      offset += 11;
     TasmotaGlobal.templog_level = LOG_LEVEL_INFO;
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
     WSContentSend_P(PSTR("{"));
@@ -3066,8 +3063,9 @@ void HandleHttpCommand(void)
       char* JSON = (char*)memchr(line, '{', len);
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
         if (cflg) { WSContentSend_P(PSTR(",")); }
-        uint32_t JSONlen = len - (JSON - line) -offset;
-        WSContentSend(JSON +1, JSONlen);
+        uint32_t JSONlen = len - (JSON - line) -3;
+        for( ++JSON ; JSON[JSONlen] != '}' ; JSONlen-- );
+        WSContentSend(JSON, JSONlen);
         cflg = true;
       }
     }
