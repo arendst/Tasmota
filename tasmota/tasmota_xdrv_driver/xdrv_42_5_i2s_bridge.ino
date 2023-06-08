@@ -1,6 +1,6 @@
 
 /*
-  audio is2 support pcm bridge
+  I2S audio support PCM bridge
 
   Copyright (C) 2022  Gerhard Mutz and Theo Arends
 

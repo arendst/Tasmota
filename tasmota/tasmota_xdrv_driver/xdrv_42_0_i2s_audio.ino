@@ -1,5 +1,5 @@
 /*
-  xdrv_42_i2s_audio.ino - Audio dac support for Tasmota
+  xdrv_42_i2s_audio.ino - Audio DAC support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -34,11 +34,12 @@
 
 #define USE_I2S_EXTERNAL_DAC   1
 //#define USE_I2S_NO_DAC                         // Add support for transistor-based output without DAC
+//#define USE_I2S_LSB                            // Add support for LSBJ chips, e.g. TM8211/PT8211
 //#define USE_I2S_WEBRADIO                       // Add support for web radio
-//#define USE_I2S_SAY_TIME                       // Add support for english speaking clock
-//#define USE_I2S_RTTTL                          // Add support for Rtttl playback
-//#define USE_LSB                                // Add support for LSBJ chips, e.g. TM8211/PT8211
-// Microphone support
+//#define USE_I2S_SAY_TIME                       // Enable english speaking clock
+//#define USE_I2S_RTTTL                          // Enable RTTTL playback
+
+// Microphone support (ESP32 only)
 //#define USE_I2S_MIC                            // Add support for I2S microphone
   //#define MIC_CHANNELS 1                       // 1 = mono (I2S_CHANNEL_FMT_ONLY_RIGHT), 2 = stereo (I2S_CHANNEL_FMT_RIGHT_LEFT)
   //#define MICSRATE 32000                       // Set sample rate
@@ -326,7 +327,7 @@ int32_t I2S_Init_0(void) {
     return -1;
   }
 #ifdef ESP8266
-  // esp8266 have fixed pins
+  // ESP8266 has fixed pins
   if  ((audio_i2s.bclk != 15) || (audio_i2s.ws != 2) || (audio_i2s.dout != 3)) {
     return -2;
   }
@@ -521,7 +522,7 @@ void Cmd_WebRadio(void) {
 
 #ifdef USE_WEBSERVER
 const char HTTP_WEBRADIO[] PROGMEM =
-   "{s}" "I2S_WR-Title" "{m}%s{e}";
+   "{s}" "WebRadio Now Playing" "{m}%s{e}";
 
 void I2S_WR_Show(bool json) {
     if (audio_i2s.decoder) {
@@ -637,13 +638,13 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
   "|WR"
 #endif  // USE_I2S_WEBRADIO
 #if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
-  "|REC"
+  "|Rec"
   "|MGain"
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
-  "|STREAM"
+  "|Stream"
 #endif // MP3_MIC_STREAM
 #ifdef I2S_BRIDGE
-  "|BRIDGE"
+  "|Bridge"
 #endif // I2S_BRIDGE
 #endif // USE_SHINE
 #endif  // ESP32

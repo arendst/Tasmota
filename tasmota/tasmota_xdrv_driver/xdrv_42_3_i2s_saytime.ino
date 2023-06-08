@@ -1,6 +1,6 @@
 
 /*
-  audio is2 say time
+  xdrv_42_i2s_saytime.ino - I2S audio say time support
 
   Copyright (C) 2022  Gerhard Mutz and Theo Arends
 
@@ -125,4 +125,4 @@ void Cmd_Time(void) {
   ResponseCmndDone();
 }
 #endif  // USE_I2S_SAY_TIME
-#endif // is2audio
+#endif // I2S_AUDIO

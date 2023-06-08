@@ -1,6 +1,6 @@
 
 /*
-  audio is2 RTTTL
+  I2S audio RTTTL playback
 
   Copyright (C) 2023  Fernando Pena López
 
@@ -51,4 +51,4 @@ void Rtttl(char *buffer) {
   delete file;
 }
 #endif // USE_I2S_RTTTL
-#endif // is2audio
+#endif // I2S_AUDIO

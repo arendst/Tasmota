@@ -1,5 +1,5 @@
 /*
-  xdrv_42_i2s_audio.ino - Audio dac support for Tasmota
+  xdrv_42_i2s_audio.ino - I2S/PDM microphone support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -278,7 +278,7 @@ esp_err_t err = ESP_OK;
     if (audio_i2s.mic_port == 0) {
       SpeakerMic(MODE_SPK);
     }
-    AddLog(LOG_LEVEL_INFO, PSTR("mic init error: %d"), err);
+    AddLog(LOG_LEVEL_INFO, PSTR("Mic init error: %d"), err);
     return err;
   }
 
@@ -303,7 +303,7 @@ void Cmd_MicRec(void) {
 
   if (XdrvMailbox.data_len > 0) {
     if (!strncmp(XdrvMailbox.data, "-?", 2)) {
-      Response_P("{\"I2SREC-duration\":%d}", audio_i2s.recdur);
+      Response_P("{\"Recording Duration\":%d}", audio_i2s.recdur);
     } else {
       i2s_record_shine(XdrvMailbox.data);
       ResponseCmndChar(XdrvMailbox.data);

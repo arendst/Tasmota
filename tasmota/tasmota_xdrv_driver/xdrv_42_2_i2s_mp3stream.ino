@@ -1,4 +1,8 @@
 
+/*
+  xdrv_42_i2s_mp3stream.ino - MP3 streaming server support for Tasmota
+*/
+
 #ifdef ESP32
 #if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
@@ -20,7 +24,7 @@ void Stream_mp3(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("I2S: Handle mp3server"));
   audio_i2s.stream_active = 1;
   audio_i2s.client = audio_i2s.MP3Server->client();
-  AddLog(LOG_LEVEL_INFO, PSTR("I2S: Create client"));
+  AddLog(LOG_LEVEL_INFO, PSTR("I2S: Client connected"));
   i2s_record_shine((char*)"stream.mp3");
 }
 
@@ -37,7 +41,7 @@ void i2s_mp3_init(uint32_t on) {
       audio_i2s.MP3Server->on(PSTR("/stream.mp3"), Stream_mp3);
       audio_i2s.MP3Server->on(PSTR("/stream.m3a"), Stream_mp3);
       audio_i2s.MP3Server->begin();
-      AddLog(LOG_LEVEL_INFO, PSTR("MP3: server created on port: %d "), MP3_STREAM_PORT);
+      AddLog(LOG_LEVEL_INFO, PSTR("MP3: server created on http://%s:%d"), IPGetListeningAddressStr().c_str(), MP3_STREAM_PORT);  
     }
   } else {
     if (audio_i2s.MP3Server) {

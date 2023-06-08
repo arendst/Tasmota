@@ -1,6 +1,6 @@
 
 /*
-  audio is2 support for ESP32-S3 box and box lite
+  I2S audio support for ESP32-S3-BOX and ESP32-S3-BOX-Lite
 
   Copyright (C) 2022  Gerhard Mutz and Theo Arends
 

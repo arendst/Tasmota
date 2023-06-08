@@ -904,7 +904,7 @@
   #define IR_SEND_USE_MODULATION    true         // Do we do frequency modulation during transmission? i.e. If not, assume a 100% duty cycle.
 
   // ====> IR Full protocols are enabled with the line below
-  // #define USE_IR_REMOTE_FULL                     // Support all IR protocols from IRremoteESP8266
+  // #define USE_IR_REMOTE_FULL                  // Support all IR protocols from IRremoteESP8266
   //
   // WARNING: if you change any IR configuration, you need to clear Platform.io cache
   //          currently the include change detection does not work for these parameters
@@ -935,15 +935,15 @@
     #define IR_RCV_TOLERANCE        25           // Base tolerance percentage for matching incoming IR messages (default 25, max 100)
 
 // -- SD Card support -----------------------------
-// #define USE_SDCARD                               // mount SD Card, requires configured SPI pins and setting of `SDCard CS` gpio
+// #define USE_SDCARD                            // mount SD Card, requires configured SPI pins and setting of `SDCard CS` gpio
   #define SDC_HIDE_INVISIBLES                    // hide hidden directories from the SD Card, which prevents crashes when dealing SD created on MacOS
 
 // -- Zigbee interface ----------------------------
-//#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530/CC2652 flashed with ZNP or EFR32 flashed with EZSP (+49k code, +3k mem)
+//#define USE_ZIGBEE                             // Enable serial communication with Zigbee CC2530/CC2652 flashed with ZNP or EFR32 flashed with EZSP (+49k code, +3k mem)
   #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530/CC2652 based devices
-//  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
+//  #define USE_ZIGBEE_EZSP                      // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
-  // #define USE_ZIGBEE_EEPROM                      // Use the EEPROM from the Sonoff ZBBridge to save Zigbee configuration and data
+  // #define USE_ZIGBEE_EEPROM                     // Use the EEPROM from the Sonoff ZBBridge to save Zigbee configuration and data
   #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
   #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 
@@ -955,7 +955,7 @@
   #define USE_ZIGBEE_BATT_REPROBE_PAUSE (3600)   // Min wait period when sending an autoprobe, default: wait at least 1 hour
   #define USE_ZBBRIDGE_TLS                       // TLS support for zbbridge
   #define USE_ZIGBEE_ZBBRIDGE_EEPROM 0x50        // I2C id for the ZBBridge EEPROM
-  // #define USE_ZIGBEE_FORCE_NO_CHILDREN           // This feature forces `CONFIG_MAX_END_DEVICE_CHILDREN` to zero which means that the coordinator does not accept any direct child. End-devices must pair through a router.
+  // #define USE_ZIGBEE_FORCE_NO_CHILDREN        // This feature forces `CONFIG_MAX_END_DEVICE_CHILDREN` to zero which means that the coordinator does not accept any direct child. End-devices must pair through a router.
                                                  // This may mitigate some battery drain issues with IKEA devices.
                                                  // **DO NOT USE UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING** See #10413
 
@@ -973,11 +973,11 @@
   #define USE_ZIGBEE_AUTOBIND_HUMIDITY      1.0     // %
   #define USE_ZIGBEE_AUTOBIND_LIFT          1.0     // %
   // Below are the Max Thresholds for reporting time (in seconds)
-  #define USE_ZIGBEE_MAXTIME_BATT           4*60*60   // 4h
-  #define USE_ZIGBEE_MAXTIME_TRV            60*10     // 10m
-  #define USE_ZIGBEE_MAXTIME_SENSOR         60*60     // 1h
-  #define USE_ZIGBEE_MAXTIME_LIGHT          60*60     // 1h
-  #define USE_ZIGBEE_MAXTIME_LIFT           4*60*60   // 4h
+  #define USE_ZIGBEE_MAXTIME_BATT           4*60*60 // 4h
+  #define USE_ZIGBEE_MAXTIME_TRV            60*10   // 10m
+  #define USE_ZIGBEE_MAXTIME_SENSOR         60*60   // 1h
+  #define USE_ZIGBEE_MAXTIME_LIGHT          60*60   // 1h
+  #define USE_ZIGBEE_MAXTIME_LIFT           4*60*60 // 4h
 
 // -- Other sensors/drivers -----------------------
 
@@ -1063,6 +1063,16 @@
                                                    // For details on the configuration please see the header of tasmota/xdrv_48_timeprop.ino
 // #define USE_PID                                 // Add suport for the PID  feature (+11k2 code)
                                                    // For details on the configuration please see the header of tasmota/xdrv_49_pid.ino
+
+// -- I2S Audio -------------------------------------
+#ifdef USE_I2S
+//#define USE_I2S_AUDIO                            // Add support for audio playback using I2S audio driver
+  //#define USE_I2S_NO_DAC                         // Add support for transistor-based output without DAC
+  //#define USE_I2S_LSB                            // Add support for LSBJ chips, e.g. TM8211/PT8211
+  //#define USE_I2S_SAY_TIME                       // Enable english speaking clock
+  //#define USE_I2S_RTTTL                          // Enable RTTTL playback
+#endif  // USE_I2S
+
 // -- End of general directives ---------------------
 
 /*********************************************************************************************\
@@ -1071,95 +1081,96 @@
 
 #ifdef ESP32
 
-#define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
+#define SET_ESP32_STACK_SIZE  (8 * 1024)          // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
 
-#ifdef SOC_TOUCH_VERSION_1                       // ESP32
-  #define ESP32_TOUCH_THRESHOLD   40             // [TouchThres] Below this level a touch is detected
+#ifdef SOC_TOUCH_VERSION_1                        // ESP32
+  #define ESP32_TOUCH_THRESHOLD   40              // [TouchThres] Below this level a touch is detected
 #endif
-#ifdef SOC_TOUCH_VERSION_2                       // ESP32-S2 and ESP32-S3
-  #define ESP32_TOUCH_THRESHOLD   40000          // [TouchThres] Above this level a touch is detected
+#ifdef SOC_TOUCH_VERSION_2                        // ESP32-S2 and ESP32-S3
+  #define ESP32_TOUCH_THRESHOLD   40000           // [TouchThres] Above this level a touch is detected
 #endif
 
-#define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
+#define USE_ESP32_SENSORS                         // Add support for ESP32 temperature and optional hall effect sensor
 
-// #define USE_DALI                              // Add support for DALI
-    #define DALI_IN_INVERT  0                 // DALI RX inverted ?
-    #define DALI_OUT_INVERT  0                // DALI TX inverted ?
-    #define DALI_TIMER 0                      // ESP32 hardware timer number 0-3 !!! timer 3 used in xdrv_10_scripter.ino !!!
+// #define USE_DALI                               // Add support for DALI
+    #define DALI_IN_INVERT  0                     // DALI RX inverted ?
+    #define DALI_OUT_INVERT  0                    // DALI TX inverted ?
+    #define DALI_TIMER 0                          // ESP32 hardware timer number 0-3 !!! timer 3 used in xdrv_10_scripter.ino !!!
 
-//#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
-//#define USE_DISPLAY_TM1621_SONOFF                // Add support for TM1621 dsiplay driver used by Sonoff POWR3xxD and THR3xxD
+//#define USE_SONOFF_SPM                          // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
+//#define USE_DISPLAY_TM1621_SONOFF               // Add support for TM1621 dsiplay driver used by Sonoff POWR3xxD and THR3xxD
 
-//#define USE_ETHERNET                             // Add support for ethernet (+20k code)
-//  #define USE_WT32_ETH01                         // Add support for Wireless-Tag WT32-ETH01
-//  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
-//  #define ETH_ADDRESS       1                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
-//  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+//#define USE_ETHERNET                            // Add support for ethernet (+20k code)
+//  #define USE_WT32_ETH01                        // Add support for Wireless-Tag WT32-ETH01
+//  #define ETH_TYPE          0                   // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+//  #define ETH_ADDRESS       1                   // [EthAddress] 0 = PHY0 .. 31 = PHY31
+//  #define ETH_CLKMODE       0                   // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
   // Olimex ESP32-PoE
-  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
-  #define ETH_ADDRESS       0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
-  #define ETH_CLKMODE       3                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+  #define ETH_TYPE          0                     // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+  #define ETH_ADDRESS       0                     // [EthAddress] 0 = PHY0 .. 31 = PHY31
+  #define ETH_CLKMODE       3                     // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
   // wESP32-PoE
-//  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
-//  #define ETH_ADDRESS       0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
-//  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+//  #define ETH_TYPE          0                   // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+//  #define ETH_ADDRESS       0                   // [EthAddress] 0 = PHY0 .. 31 = PHY31
+//  #define ETH_CLKMODE       0                   // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
 
-#define USE_ADC                                  // Add support for ADC on GPIO32 to GPIO39
+#define USE_ADC                                   // Add support for ADC on GPIO32 to GPIO39
 
-#define USE_NETWORK_LIGHT_SCHEMES                // Add support for light schemes via DDP (via UDP on port 4048)
+#define USE_NETWORK_LIGHT_SCHEMES                 // Add support for light schemes via DDP (via UDP on port 4048)
 
-//#define USE_SPI                                  // Add support for hardware SPI
-//#define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
-//#define USE_BLE_ESP32                            // Add support for ESP32 as a BLE-bridge (+9k2? mem, +292k? flash)
-  //#define BLE_ESP32_ENABLE false                 // [SetOption115] Default value for SetOption115
-  //#define USE_IBEACON                            // Add support for Bluetooth LE passive scan of iBeacon devices (uses HM17 module)
-  //#define USE_IBEACON_ESP32                      // Add support for Bluetooth LE passive scan of iBeacon devices using the internal ESP32 Bluetooth module
-//#define USE_WEBCAM                               // Add support for webcam
+//#define USE_SPI                                 // Add support for hardware SPI
+//#define USE_MI_ESP32                            // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+//#define USE_BLE_ESP32                           // Add support for ESP32 as a BLE-bridge (+9k2? mem, +292k? flash)
+  //#define BLE_ESP32_ENABLE false                // [SetOption115] Default value for SetOption115
+  //#define USE_IBEACON                           // Add support for Bluetooth LE passive scan of iBeacon devices (uses HM17 module)
+  //#define USE_IBEACON_ESP32                     // Add support for Bluetooth LE passive scan of iBeacon devices using the internal ESP32 Bluetooth module
+//#define USE_WEBCAM                              // Add support for webcam
 
-#define USE_AUTOCONF                             // Enable Esp32 autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
-#define USE_BERRY                                // Enable Berry scripting language
-  #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
-  #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
-  #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-  #define USE_BERRY_IRAM                         // Allocate some data structures in IRAM (which is ususally unused) when possible and if no PSRAM is available
-  // #define USE_BERRY_DEBUG                        // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
-  //   #define UBE_BERRY_DEBUG_GC                   // Print low-level GC metrics
-  // #define USE_BERRY_INT64                        // Add 64 bits integer support (+1.7KB Flash)
-  #define USE_WEBCLIENT                          // Enable `webclient` to make HTTP/HTTPS requests. Can be disabled for security reasons.
-    // #define USE_WEBCLIENT_HTTPS                  // Enable HTTPS outgoing requests based on BearSSL (much ligher then mbedTLS, 42KB vs 150KB) in insecure mode (no verification of server's certificate)
-                                                 // Note that only one cipher is enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256 which is very commonly used and highly secure
+#define USE_AUTOCONF                              // Enable Esp32 autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
+#define USE_BERRY                                 // Enable Berry scripting language
+  #define USE_BERRY_PYTHON_COMPAT                 // Enable by default `import python_compat`
+  #define USE_BERRY_TIMEOUT             4000      // Timeout in ms, will raise an exception if running time exceeds this timeout
+  #define USE_BERRY_PSRAM                         // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #define USE_BERRY_IRAM                          // Allocate some data structures in IRAM (which is ususally unused) when possible and if no PSRAM is available
+  // #define USE_BERRY_DEBUG                      // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
+  //   #define UBE_BERRY_DEBUG_GC                 // Print low-level GC metrics
+  // #define USE_BERRY_INT64                      // Add 64 bits integer support (+1.7KB Flash)
+  #define USE_WEBCLIENT                           // Enable `webclient` to make HTTP/HTTPS requests. Can be disabled for security reasons.
+    // #define USE_WEBCLIENT_HTTPS                // Enable HTTPS outgoing requests based on BearSSL (much ligher then mbedTLS, 42KB vs 150KB) in insecure mode (no verification of server's certificate)
+                                                  // Note that only one cipher is enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256 which is very commonly used and highly secure
     #define USE_BERRY_WEBCLIENT_USERAGENT  "TasmotaClient" // default user-agent used, can be changed with `wc.set_useragent()`
-    #define USE_BERRY_WEBCLIENT_TIMEOUT  2000    // Default timeout in milliseconds
-  #define USE_BERRY_TCPSERVER                    // Enable TCP socket server (+0.6k)
-  // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
+    #define USE_BERRY_WEBCLIENT_TIMEOUT  2000     // Default timeout in milliseconds
+  #define USE_BERRY_TCPSERVER                     // Enable TCP socket server (+0.6k)
+  // #define USE_BERRY_ULP                        // Enable ULP (Ultra Low Power) support (+4.9k)
   // Berry crypto extensions below:
-  #define USE_BERRY_CRYPTO_AES_GCM               // enable AES GCM 256 bits
-  // #define USE_BERRY_CRYPTO_AES_CCM               // enable AES CCM 128 bits
-  // #define USE_BERRY_CRYPTO_AES_CTR               // enable AES CTR 256 bits
-  // #define USE_BERRY_CRYPTO_EC_P256               // enable EC P256r1
-  // #define USE_BERRY_CRYPTO_EC_C25519             // enable Elliptic Curve C C25519
-  #define USE_BERRY_CRYPTO_SHA256                // enable SHA256 hash function
-  #define USE_BERRY_CRYPTO_HMAC_SHA256           // enable HMAC SHA256 hash function
-  // #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256    // PBKDF2 with HMAC SHA256, used in Matter protocol
-  // #define USE_BERRY_CRYPTO_HKDF_SHA256      // HKDF with HMAC SHA256, used in Matter protocol
-  // #define USE_BERRY_CRYPTO_SPAKE2P_MATTER   // SPAKE2+ used in Matter 1.0, complete name is SPAKE2+-P256-SHA256-HKDF-SHA256-HMAC-SHA256
-  // #define USE_BERRY_CRYPTO_RSA              // RSA primitives including JWT RS256 (3.9KB flash)
-#define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
+  #define USE_BERRY_CRYPTO_AES_GCM                // enable AES GCM 256 bits
+  // #define USE_BERRY_CRYPTO_AES_CCM             // enable AES CCM 128 bits
+  // #define USE_BERRY_CRYPTO_AES_CTR             // enable AES CTR 256 bits
+  // #define USE_BERRY_CRYPTO_EC_P256             // enable EC P256r1
+  // #define USE_BERRY_CRYPTO_EC_C25519           // enable Elliptic Curve C C25519
+  #define USE_BERRY_CRYPTO_SHA256                 // enable SHA256 hash function
+  #define USE_BERRY_CRYPTO_HMAC_SHA256            // enable HMAC SHA256 hash function
+  // #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256  // PBKDF2 with HMAC SHA256, used in Matter protocol
+  // #define USE_BERRY_CRYPTO_HKDF_SHA256         // HKDF with HMAC SHA256, used in Matter protocol
+  // #define USE_BERRY_CRYPTO_SPAKE2P_MATTER      // SPAKE2+ used in Matter 1.0, complete name is SPAKE2+-P256-SHA256-HKDF-SHA256-HMAC-SHA256
+  // #define USE_BERRY_CRYPTO_RSA                 // RSA primitives including JWT RS256 (3.9KB flash)
+  // #define USE_I2S_AUDIO_BERRY                  // Enable Berry I2S Audio support 
+#define USE_CSE7761                               // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
-//#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
-  #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-  // #define USE_LVGL_HASPMOTA                      // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
-  #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
-  #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
-  //#define USE_LVGL_TOUCHSCREEN                   // Use virtual touch screen with Berry driver
-  //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
-    #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
-    #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache
-    #define USE_LVGL_FREETYPE_MAX_SIZES 4        // max number of sizes in cache
-    #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024  // max bytes in cache
+//#define USE_LVGL                                // LVGL Engine, requires Berry (+382KB)
+  #define USE_LVGL_PSRAM                          // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  // #define USE_LVGL_HASPMOTA                    // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
+  #define USE_LVGL_MAX_SLEEP  10                  // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
+  #define USE_LVGL_PNG_DECODER                    // include a PNG image decoder from file system (+16KB)
+  //#define USE_LVGL_TOUCHSCREEN                  // Use virtual touch screen with Berry driver
+  //#define USE_LVGL_FREETYPE                     // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
+    #define LV_USE_FT_CACHE_MANAGER 1             // define whether glyphs are cached by FreeType library
+    #define USE_LVGL_FREETYPE_MAX_FACES 64        // max number of FreeType faces in cache
+    #define USE_LVGL_FREETYPE_MAX_SIZES 4         // max number of sizes in cache
+    #define USE_LVGL_FREETYPE_MAX_BYTES 16*1024   // max bytes in cache
     #define USE_LVGL_FREETYPE_MAX_BYTES_PSRAM 64*1024  // max bytes in cache when using PSRAM
-  #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
+  #define USE_LVGL_BG_DEFAULT 0x000000            // Default color for the uninitialized background screen (black)
   // Disabling select widgets that will be rarely used in Tasmota (-13KB)
   // Main widgets as defined in LVGL8
     #define BE_LV_WIDGET_ARC
@@ -1188,6 +1199,23 @@
     #define BE_LV_WIDGET_SPINNER
 
     #define BE_LV_WIDGET_QRCODE
+
+// -- I2S Audio -------------------------------------
+#ifdef USE_I2S_AUDIO
+  // #define USE_I2S_WEBRADIO                     // Add support for MP3 web radio streaming (only on ESP32 with PSRAM)
+// -- Microphone support ----------------------------
+//#define USE_I2S_MIC                             // Add support for I2S microphone
+  //#define MIC_CHANNELS 1                        // 1 = mono (I2S_CHANNEL_FMT_ONLY_RIGHT), 2 = stereo (I2S_CHANNEL_FMT_RIGHT_LEFT)
+  //#define MICSRATE 32000                        // Set sample rate
+  //#define USE_INMP441                           // Add support for INMP441 MEMS microphone
+  //#define MIC_PDM                               // Set microphone as PDM (only on ESP32)
+//#define USE_SHINE                               // Use MP3 encoding (only on ESP32 with PSRAM)
+//#define MP3_MIC_STREAM                          // Add support for streaming microphone via http (only on ESP32 with PSRAM)
+  //#define MP3_STREAM_PORT 81                    // Choose MP3 stream port (default = 81)
+//#define I2S_BRIDGE                              // Add support for UDP PCM audio bridge
+  //#define I2S_BRIDGE_PORT    6970               // Set bridge port (default = 6970)
+#endif  // USE_I2S_AUDIO
+
 
 #endif  // ESP32
 
