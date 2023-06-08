@@ -1116,6 +1116,7 @@
 
 #define USE_NETWORK_LIGHT_SCHEMES                 // Add support for light schemes via DDP (via UDP on port 4048)
 
+//#define USE_I2S                                 // Add I2S support (used with Berry Audio and TensorFlow lite)
 //#define USE_SPI                                 // Add support for hardware SPI
 //#define USE_MI_ESP32                            // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 //#define USE_BLE_ESP32                           // Add support for ESP32 as a BLE-bridge (+9k2? mem, +292k? flash)
