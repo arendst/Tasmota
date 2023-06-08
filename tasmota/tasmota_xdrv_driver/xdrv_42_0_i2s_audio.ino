@@ -522,7 +522,7 @@ void Cmd_WebRadio(void) {
 
 #ifdef USE_WEBSERVER
 const char HTTP_WEBRADIO[] PROGMEM =
-   "{s}" "WebRadio Now Playing" "{m}%s{e}";
+   "{s}" "Playing" "{m}%s{e}";
 
 void I2S_WR_Show(bool json) {
     if (audio_i2s.decoder) {
