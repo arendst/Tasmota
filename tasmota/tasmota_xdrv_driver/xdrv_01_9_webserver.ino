@@ -3064,7 +3064,8 @@ void HandleHttpCommand(void)
       if (JSON) {  // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
         if (cflg) { WSContentSend_P(PSTR(",")); }
         uint32_t JSONlen = len - (JSON - line) -3;
-        WSContentSend(JSON +1, JSONlen);
+        for( ++JSON ; JSONlen && JSON[JSONlen] != '}' ; JSONlen-- );
+        WSContentSend(JSON, JSONlen);
         cflg = true;
       }
     }
