@@ -74,7 +74,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Illuminance_read_attribute,   /* na
     /* K5   */  be_const_int(0),
     /* K6   */  be_nested_str_weak(shadow_value),
     /* K7   */  be_nested_str_weak(create_TLV),
-    /* K8   */  be_nested_str_weak(I2),
+    /* K8   */  be_nested_str_weak(U2),
     /* K9   */  be_nested_str_weak(NULL),
     /* K10  */  be_const_int(1),
     /* K11  */  be_const_int(2),
@@ -117,7 +117,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Illuminance_read_attribute,   /* na
       0x781E0005,  //  001D  JMPF	R7	#0024
       0x8C1C0907,  //  001E  GETMET	R7	R4	K7
       0x88240908,  //  001F  GETMBR	R9	R4	K8
-      0x58280005,  //  0020  LDCONST	R10	K5
+      0x5828000A,  //  0020  LDCONST	R10	K10
       0x7C1C0600,  //  0021  CALL	R7	3
       0x80040E00,  //  0022  RET	1	R7
       0x70020018,  //  0023  JMP		#003D
@@ -125,7 +125,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Illuminance_read_attribute,   /* na
       0x781E0005,  //  0025  JMPF	R7	#002C
       0x8C1C0907,  //  0026  GETMET	R7	R4	K7
       0x88240908,  //  0027  GETMBR	R9	R4	K8
-      0x542A270F,  //  0028  LDINT	R10	10000
+      0x542AFFFD,  //  0028  LDINT	R10	65534
       0x7C1C0600,  //  0029  CALL	R7	3
       0x80040E00,  //  002A  RET	1	R7
       0x70020010,  //  002B  JMP		#003D
