@@ -54,9 +54,6 @@ extern uint16_t bg_color;
 #define DISPDESC_SIZE 1000
 #endif
 
-void Core2DisplayPower(uint8_t on);
-void Core2DisplayDim(uint8_t dim);
-
 //#define DSP_ROM_DESC
 
 #ifndef DISP_DESC_FILE
@@ -443,11 +440,6 @@ int8_t cs;
     fg_color = renderer->fgcol();
     bg_color = renderer->bgcol();
     color_type = renderer->color_type();
-
-#ifdef USE_M5STACK_CORE2
-    renderer->SetPwrCB(Core2DisplayPower);
-    renderer->SetDimCB(Core2DisplayDim);
-#endif // USE_M5STACK_CORE2
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
 

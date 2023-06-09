@@ -162,19 +162,9 @@ struct AUDIO_I2S_t {
 #define MIC_CHANNELS 1
 #endif
 
-#ifdef USE_TTGO_WATCH
-#undef AUDIO_PWR_ON
-#undef AUDIO_PWR_OFF
-#define AUDIO_PWR_ON TTGO_audio_power(true);
-#define AUDIO_PWR_OFF TTGO_audio_power(false);
-#endif  // USE_TTGO_WATCH
 
 #ifdef USE_M5STACK_CORE2
 // leave this predefined currently
-#undef AUDIO_PWR_ON
-#undef AUDIO_PWR_OFF
-#define AUDIO_PWR_ON Core2AudioPower(true);
-#define AUDIO_PWR_OFF Core2AudioPower(false);
 #undef DAC_IIS_BCK
 #undef DAC_IIS_WS
 #undef DAC_IIS_DOUT
@@ -191,10 +181,6 @@ struct AUDIO_I2S_t {
 
 
 #ifdef ESP32S3_BOX
-#undef AUDIO_PWR_ON
-#undef AUDIO_PWR_OFF
-#define AUDIO_PWR_ON S3boxAudioPower(true);
-#define AUDIO_PWR_OFF S3boxAudioPower(false);
 #undef MIC_CHANNELS
 #define MIC_CHANNELS 2
 #endif // ESP32S3_BOX
