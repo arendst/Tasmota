@@ -654,5 +654,57 @@ extern "C" {
   }
 }
 
+class StreamBytes: public Stream
+{
+public:
+  StreamBytes(uint8_t * buf_in, int len_in) : buf(buf_in), offset(0), len(len_in) {};
+
+  size_t write(const uint8_t *buffer, size_t size) override {
+    // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
+    if (size > 0) {
+      if (offset + size > len){
+        AddLog(LOG_LEVEL_ERROR, "BERRYWC: bufer overrun");
+        return size;
+      }
+      memcpy(buf+offset, buffer, size);
+      offset += size;
+    }
+    return size;
+  }
+  size_t write(uint8_t data) override {
+    write(&data, 1);
+    return 1;
+  }
+
+  int available() override { return 0; }
+  int read() override { return -1; }
+  int peek() override { return -1; }
+  void flush() override { }
+
+protected:
+  uint8_t *buf;          // start address
+  uint32_t offset;       // how many bytes have already been written
+  uint32_t len;          // allocated len
+};
+
+extern "C" {
+  int32_t wc_getbytes(struct bvm *vm);
+  int32_t wc_getbytes(struct bvm *vm) {
+    HTTPClientLight * cl = wc_getclient(vm);
+    int32_t sz = cl->getSize();
+    // abort if we exceed 32KB size, things will not go well otherwise
+    if (sz >= 32767 || sz < 0) {
+      be_raise(vm, "value_error", "response size -1 or too big (>32KB)");
+    }
+    uint8_t * buf = (uint8_t*) be_pushbuffer(vm, sz);
+    StreamBytes memory_writer(buf, sz);
+    int32_t written = cl->writeToStream(&memory_writer);
+
+    be_pushbytes(vm, buf, sz);
+    cl->end();  // free allocated memory ~16KB
+    be_return(vm);  /* return code */
+  }
+}
+
 #endif // USE_WEBCLIENT
 #endif  // USE_BERRY
