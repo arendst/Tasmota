@@ -162,6 +162,12 @@ struct AUDIO_I2S_t {
 #define MIC_CHANNELS 1
 #endif
 
+#ifdef USE_TTGO_WATCH
+#undef AUDIO_PWR_ON
+#undef AUDIO_PWR_OFF
+#define AUDIO_PWR_ON TTGO_audio_power(true);
+#define AUDIO_PWR_OFF TTGO_audio_power(false);
+#endif  // USE_TTGO_WATCH
 
 #ifdef USE_M5STACK_CORE2
 // leave this predefined currently
