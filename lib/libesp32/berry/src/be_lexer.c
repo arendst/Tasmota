@@ -394,7 +394,9 @@ static int skip_delimiter(blexer *lexer) {
     int c = lgetc(lexer);
     int delimeter_present = 0;
     while (1) {
-        if (c == '\r' || c == '\n') {
+        if (c == '#') {
+            skip_comment(lexer);
+        } else if (c == '\r' || c == '\n') {
             skip_newline(lexer);
         } else if (c == ' ' || c == '\t' || c == '\f' || c ==  '\v') {
             next(lexer);

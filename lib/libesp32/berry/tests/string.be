@@ -88,3 +88,25 @@ assert(string.replace("hellollo", "aa", "xx") == "hellollo")
 assert(string.replace("hello", "ll", "") == "heo")
 assert(string.replace("hello", "", "xx") == "hello")
 assert(string.replace("hello", "", "") == "hello")
+
+# multi-line strings
+var s = "a" "b""c"
+assert(s == 'abc')
+
+s = 'a'"b"'''c'
+assert(s == 'abc')
+
+s = "a"
+'b'
+    ""
+    "c"
+assert(s == 'abc')
+
+s = "a" #- b -# "b"  #--# "c"
+assert(s == 'abc')
+
+s = "a"#
+    # "z"
+    "b"  # zz
+    "c"
+assert(s == 'abc')
