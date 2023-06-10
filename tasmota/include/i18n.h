@@ -561,6 +561,7 @@
     #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
     #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
+  #define D_JSON_IRHVAC_INCREMENTAL "Incremental"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
