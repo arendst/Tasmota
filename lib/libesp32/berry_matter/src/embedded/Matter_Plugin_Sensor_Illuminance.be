@@ -43,10 +43,10 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     if val == nil   return nil    end
     import math
 
-    if val < 1
+    if val < 0
       return 0
     else
-      return math.log10(val) * 10000 + 1
+      return math.log10(val + 1) * 10000
     end
   end
 
