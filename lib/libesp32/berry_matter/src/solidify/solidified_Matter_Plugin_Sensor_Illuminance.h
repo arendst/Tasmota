@@ -131,13 +131,13 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(math),
-    /* K1   */  be_const_int(1),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(log10),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_weak(log10),
+    /* K3   */  be_const_int(1),
     }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
+    ( &(const binstruction[17]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
       0x1C080202,  //  0001  EQ	R2	R1	R2
       0x780A0001,  //  0002  JMPF	R2	#0005
@@ -146,16 +146,15 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
       0xA40A0000,  //  0005  IMPORT	R2	K0
       0x140C0301,  //  0006  LT	R3	R1	K1
       0x780E0001,  //  0007  JMPF	R3	#000A
-      0x80060400,  //  0008  RET	1	K2
-      0x70020006,  //  0009  JMP		#0011
-      0x8C0C0503,  //  000A  GETMET	R3	R2	K3
-      0x5C140200,  //  000B  MOVE	R5	R1
+      0x80060200,  //  0008  RET	1	K1
+      0x70020005,  //  0009  JMP		#0010
+      0x8C0C0502,  //  000A  GETMET	R3	R2	K2
+      0x00140303,  //  000B  ADD	R5	R1	K3
       0x7C0C0400,  //  000C  CALL	R3	2
       0x5412270F,  //  000D  LDINT	R4	10000
       0x080C0604,  //  000E  MUL	R3	R3	R4
-      0x000C0701,  //  000F  ADD	R3	R3	K1
-      0x80040600,  //  0010  RET	1	R3
-      0x80000000,  //  0011  RET	0
+      0x80040600,  //  000F  RET	1	R3
+      0x80000000,  //  0010  RET	0
     })
   )
 );
