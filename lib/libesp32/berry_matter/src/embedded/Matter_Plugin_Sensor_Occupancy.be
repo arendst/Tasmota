@@ -54,20 +54,17 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   #
   def update_shadow()
     super(self).update_shadow()
+    var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-    import json
-    var ret = tasmota.cmd("Status 8", true)
-    if ret != nil
-      var j = json.load(ret)
-      if j != nil
-        var state = false
-        state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+    var j = tasmota.cmd("Status 8", true)
+    if j != nil   j = j.find("StatusSNS") end
+    if j != nil && j.contains(switch_str)
+      var state = (j.find(switch_str) == "ON")
 
-        if self.shadow_occupancy != nil && self.shadow_occupancy != bool(state)
-          self.attribute_updated(0x0406, 0x0000)
-        end
-        self.shadow_occupancy = state
+      if (self.shadow_occupancy != state)
+        self.attribute_updated(0x0406, 0x0000)
       end
+      self.shadow_occupancy = state
     end
   end
 
