@@ -18,7 +18,10 @@
 #include "be_sys.h"
 #include <time.h>
 
+// from be_port.c
 extern int m_path_listdir(bvm *vm);
+extern int m_path_mkdir(bvm *vm);
+extern int m_path_rmdir(bvm *vm);
 
 static int m_path_exists(bvm *vm)
 {
@@ -79,6 +82,8 @@ module path (scope: global, file: tasmota_path) {
     listdir, func(m_path_listdir)
     remove, func(m_path_remove)
     format, func(m_path_format)
+    mkdir, func(m_path_mkdir)
+    rmdir, func(m_path_rmdir)
 }
 @const_object_info_end */
 #include "be_fixed_tasmota_path.h"
