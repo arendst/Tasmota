@@ -131,6 +131,36 @@ extern "C" {
 #endif // USE_UFILESYS
         be_return_nil(vm);
     }
+
+    static int _m_path_mkdir_rmdir(bvm *vm, int remove) {
+#ifdef USE_UFILESYS
+        const char *path = NULL;
+        if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+            path = be_tostring(vm, 1);
+            int res = 0;
+            if (path != nullptr) {
+                if (remove) 
+                    res = zip_ufsp.rmdir(path);
+                else
+                    res = zip_ufsp.mkdir(path);
+            }
+            be_pushbool(vm, res);
+        } else {
+            be_pushbool(vm, bfalse);
+        }
+        be_return(vm);
+#else // USE_UFILESYS
+        be_return_nil(vm);
+#endif // USE_UFILESYS
+    }
+
+    int m_path_mkdir(bvm *vm) {
+        return _m_path_mkdir_rmdir(vm, 0);
+    }
+    int m_path_rmdir(bvm *vm) {
+        return _m_path_mkdir_rmdir(vm, 1);
+    }
+
 }
 
 BERRY_API char* be_readstring(char *buffer, size_t size)
@@ -161,6 +191,7 @@ void* be_fopen(const char *filename, const char *modes)
     return nullptr;
     // return fopen(filename, modes);
 }
+
 #endif // USE_UFILESYS
 
 
