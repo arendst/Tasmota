@@ -61,6 +61,15 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   end
 
   #############################################################
+  # is_local_device
+  #
+  # Returns true if it's a local device, or false for a
+  # remotely device controlled via HTTP
+  def is_local_device()
+    return false
+  end
+  
+  #############################################################
   # register_cmd_cb
   #
   # Register recurrent command and callback
@@ -194,34 +203,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   def every_250ms()
     self.http_remote.scheduler()          # defer to HTTP scheduler
     # avoid calling update_shadow() since it's not applicable for HTTP remote
-  end
-
-  #############################################################
-  # UI Methods
-  #############################################################
-  # ui_conf_to_string
-  #
-  # Convert the current plugin parameters to a single string
-  static def ui_conf_to_string(cl, conf)
-    var s = super(_class).ui_conf_to_string(cl, conf)
-
-    var url = str(conf.find(_class.ARG_HTTP, ''))
-    var arg = s + "," + url
-    # print("MTR: ui_conf_to_string", conf, cl, arg)
-    return arg
-  end
-
-  #############################################################
-  # ui_string_to_conf
-  #
-  # Convert the string in UI to actual parameters added to the map
-  static def ui_string_to_conf(cl, conf, arg)
-    import string
-    var elts = string.split(arg + ',', ',', 3)     # add ',' at the end to be sure to have at least 2 arguments
-    conf[_class.ARG_HTTP] = elts[1]
-    super(_class).ui_string_to_conf(cl, conf, elts[0])
-    # print("ui_string_to_conf", conf, arg)
-    return conf
   end
 
   #############################################################

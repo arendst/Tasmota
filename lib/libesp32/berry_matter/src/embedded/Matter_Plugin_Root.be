@@ -50,9 +50,9 @@ class Matter_Plugin_Root : Matter_Plugin
 
   #############################################################
   # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-  end
+  # def init(device, endpoint, config)
+  #   super(self).init(device, endpoint, config)
+  # end
 
   #############################################################
   # read an attribute

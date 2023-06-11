@@ -573,49 +573,40 @@ be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: parse_configuration
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_init,   /* name */
+be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
+    5,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(tasmota_shutter_index),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(ARG),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(shadow_shutter_inverted),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota_shutter_index),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(ARG),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_nested_str_weak(shadow_shutter_inverted),
     }),
-    be_str_weak(init),
+    be_str_weak(parse_configuration),
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x5C1C0400,  //  0005  MOVE	R7	R2
-      0x5C200600,  //  0006  MOVE	R8	R3
-      0x7C100800,  //  0007  CALL	R4	4
-      0x8C100702,  //  0008  GETMET	R4	R3	K2
-      0x88180103,  //  0009  GETMBR	R6	R0	K3
-      0x7C100400,  //  000A  CALL	R4	2
-      0x90020204,  //  000B  SETMBR	R0	K1	R4
-      0x88100101,  //  000C  GETMBR	R4	R0	K1
-      0x4C140000,  //  000D  LDNIL	R5
-      0x1C100805,  //  000E  EQ	R4	R4	R5
-      0x78120000,  //  000F  JMPF	R4	#0011
-      0x90020304,  //  0010  SETMBR	R0	K1	K4
-      0x5411FFFE,  //  0011  LDINT	R4	-1
-      0x90020A04,  //  0012  SETMBR	R0	K5	R4
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[12]) {  /* code */
+      0x8C080301,  //  0000  GETMET	R2	R1	K1
+      0x88100102,  //  0001  GETMBR	R4	R0	K2
+      0x7C080400,  //  0002  CALL	R2	2
+      0x90020002,  //  0003  SETMBR	R0	K0	R2
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x4C0C0000,  //  0005  LDNIL	R3
+      0x1C080403,  //  0006  EQ	R2	R2	R3
+      0x780A0000,  //  0007  JMPF	R2	#0009
+      0x90020103,  //  0008  SETMBR	R0	K0	K3
+      0x5409FFFE,  //  0009  LDINT	R2	-1
+      0x90020802,  //  000A  SETMBR	R0	K4	R2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -684,14 +675,14 @@ be_local_class(Matter_Plugin_Shutter,
     &be_class_Matter_Plugin_Device,
     be_nested_map(18,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(shadow_shutter_direction, -1), be_const_var(4) },
+        { be_const_key_weak(shadow_shutter_tilt, -1), be_const_var(3) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(shutter) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(514, -1), be_const_int(2) },
     }))    ) } )) },
-        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Shutter_update_shadow_closure) },
+        { be_const_key_weak(update_shadow, 13), be_const_closure(Matter_Plugin_Shutter_update_shadow_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -711,18 +702,18 @@ be_local_class(Matter_Plugin_Shutter,
     }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(invoke_request, 14), be_const_closure(Matter_Plugin_Shutter_invoke_request_closure) },
-        { be_const_key_weak(read_attribute, 13), be_const_closure(Matter_Plugin_Shutter_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, 16), be_const_closure(Matter_Plugin_Shutter_read_attribute_closure) },
         { be_const_key_weak(shadow_shutter_inverted, 3), be_const_var(5) },
         { be_const_key_weak(shadow_shutter_pos, -1), be_const_var(1) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(shutter) },
         { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(Matter_Plugin_Shutter__X3Clambda_X3E_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Shutter_init_closure) },
-        { be_const_key_weak(update_inverted, 16), be_const_closure(Matter_Plugin_Shutter_update_inverted_closure) },
-        { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Shutter_parse_sensors_closure) },
-        { be_const_key_weak(shadow_shutter_target, -1), be_const_var(2) },
-        { be_const_key_weak(tasmota_shutter_index, 11), be_const_var(0) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(Shutter) },
-        { be_const_key_weak(shadow_shutter_tilt, 0), be_const_var(3) },
+        { be_const_key_weak(update_inverted, 11), be_const_closure(Matter_Plugin_Shutter_update_inverted_closure) },
+        { be_const_key_weak(parse_configuration, -1), be_const_closure(Matter_Plugin_Shutter_parse_configuration_closure) },
+        { be_const_key_weak(shadow_shutter_target, -1), be_const_var(2) },
+        { be_const_key_weak(tasmota_shutter_index, -1), be_const_var(0) },
+        { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Shutter_parse_sensors_closure) },
+        { be_const_key_weak(shadow_shutter_direction, 0), be_const_var(4) },
     })),
     be_str_weak(Matter_Plugin_Shutter)
 );

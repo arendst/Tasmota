@@ -62,7 +62,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
-  var next_ep                         # next endpoint to be allocated for bridge, start at 51
+  var next_ep                         # next endpoint to be allocated for bridge, start at 1
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
   # PBKDF information used only during PASE (freed afterwards)
@@ -88,7 +88,7 @@ class Matter_Device
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.root_iterations = self.PBKDF_ITERATIONS
-    self.next_ep = 51                             # start at endpoint 51 for dynamically allocated endpoints
+    self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
     self.load_param()
@@ -606,6 +606,20 @@ class Matter_Device
   end
 
   #############################################################
+  # Find plugin by endpoint
+  def find_plugin_by_endpoint(ep)
+    var idx = 0
+    while idx < size(self.plugins)
+      var pl = self.plugins[idx]
+      if pl.get_endpoint() == ep
+        return pl
+      end
+      idx += 1
+    end
+    return nil
+  end
+
+  #############################################################
   # Persistance of Matter Device parameters
   #
   #############################################################
@@ -1090,13 +1104,30 @@ class Matter_Device
     # auto-detect sensors
     var sensors = json.load(tasmota.read_sensors())
 
+    var sensors_list = self.autoconf_sensors_list(sensors)
+
+    for s: sensors_list
+      m[str(endpoint)] = s
+      endpoint += 1
+    end
+
+    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')    # MQTT is not yet connected
+    return m
+  end
+
+
+  #############################################################
+  # Autoconfigure from sensors
+  #
+  # Returns an ordered list
+  def autoconf_sensors_list(sensors)
+    var ret = []
     # temperature sensors
     for k1:self.k2l(sensors)
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Temperature")
         var temp_rule = k1 + "#Temperature"
-        m[str(endpoint)] = {'type':'temperature','filter':temp_rule}
-        endpoint += 1
+        ret.push({'type':'temperature','filter':temp_rule})
       end
     end
 
@@ -1105,8 +1136,7 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Pressure")
         var temp_rule = k1 + "#Pressure"
-        m[str(endpoint)] = {'type':'pressure','filter':temp_rule}
-        endpoint += 1
+        ret.push({'type':'pressure','filter':temp_rule})
       end
     end
 
@@ -1115,8 +1145,7 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Illuminance")
         var temp_rule = k1 + "#Illuminance"
-        m[str(endpoint)] = {'type':'illuminance','filter':temp_rule}
-        endpoint += 1
+        ret.push({'type':'illuminance','filter':temp_rule})
       end
     end
 
@@ -1125,12 +1154,11 @@ class Matter_Device
       var sensor_2 = sensors[k1]
       if isinstance(sensor_2, map) && sensor_2.contains("Humidity")
         var temp_rule = k1 + "#Humidity"
-        m[str(endpoint)] = {'type':'humidity','filter':temp_rule}
-        endpoint += 1
+        ret.push({'type':'humidity','filter':temp_rule})
       end
     end
-    # tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')    # MQTT is not yet connected
-    return m
+
+    return ret
   end
 
   # get keys of a map in sorted order
@@ -1262,6 +1290,8 @@ class Matter_Device
         idx += 1
       end
     end
+    # clean any orphan remote
+    self.clean_remotes()
   end
 
   #############################################################
@@ -1336,6 +1366,51 @@ class Matter_Device
     end
     return http_remote
   end
+
+  #####################################################################
+  # Remove HTTP remotes that are no longer referenced
+  def clean_remotes()
+    import introspect
+    import string
+
+    var remotes_map = {}    # key: remote object, value: count of references
+
+    # init all remotes with count 0
+    for http_remote: self.http_remotes
+      remotes_map[http_remote] = 0
+    end
+
+    # scan all endpoints
+    for pi: self.plugins
+      var http_remote = introspect.get(pi, "http_remote")
+      if http_remote !=  nil
+        remotes_map[http_remote] = remotes_map.find(http_remote, 0) + 1
+      end
+    end
+
+    tasmota.log("MTR: remotes references: " + str(remotes_map))
+
+    for remote:remotes_map.keys()
+      if remotes_map[remote] == 0
+        # remove
+        tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
+        remote.close()
+        self.http_remotes.remove(remote)
+      end
+    end
+
+  end
+
+  # def get_remotes_list()
+  #####################################################################
+  # Get sorted list of remote endpoints
+  # def get_remotes_list()
+  #   var ret = []
+  #   for hr: self.http_remotes
+  #     ret.push(hr.addr)
+  #   end
+  #   return self.sort_distinct(ret)
+  # end
 
   #####################################################################
   # Commands `Mtr___`

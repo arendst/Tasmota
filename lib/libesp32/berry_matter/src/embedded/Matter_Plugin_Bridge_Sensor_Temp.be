@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Sensor end
 
 class Matter_Plugin_Bridge_Sensor_Temp : Matter_Plugin_Bridge_Sensor
   static var TYPE = "http_temperature"              # name of the plug-in in json
-  static var NAME = "&#x1F517; Temperature"         # display name of the plug-in
+  static var NAME = "Temperature"         # display name of the plug-in
 
   static var CLUSTERS  = {
     0x0402: [0,1,2,0xFFFC,0xFFFD],                  # Temperature Measurement p.97 - no writable

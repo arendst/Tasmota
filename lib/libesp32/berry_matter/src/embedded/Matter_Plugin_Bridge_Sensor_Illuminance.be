@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Sensor end
 
 class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
   static var TYPE = "http_illuminance"              # name of the plug-in in json
-  static var NAME = "&#x1F517; Illuminance"         # display name of the plug-in
+  static var NAME = "Illuminance"         # display name of the plug-in
 
   static var CLUSTERS  = {
     0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable

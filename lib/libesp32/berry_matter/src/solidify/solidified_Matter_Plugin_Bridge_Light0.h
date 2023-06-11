@@ -418,7 +418,7 @@ be_local_class(Matter_Plugin_Bridge_Light0,
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Light0_init_closure) },
         { be_const_key_weak(set_onoff, 13), be_const_closure(Matter_Plugin_Bridge_Light0_set_onoff_closure) },
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Bridge_Light0_invoke_request_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(_X26_X23x1F517_X3B_X20Light_X200_X20On) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Light_X200_X20On) },
         { be_const_key_weak(tasmota_relay_index, -1), be_const_var(0) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,

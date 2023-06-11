@@ -7,49 +7,40 @@
 extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: parse_configuration
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_init,   /* name */
+be_local_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
+    7,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(tasmota_switch_index),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(ARG),
-    /* K4   */  be_const_int(1),
-    /* K5   */  be_const_int(0),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota_switch_index),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(ARG),
+    /* K3   */  be_const_int(1),
+    /* K4   */  be_const_int(0),
     }),
-    be_str_weak(init),
+    be_str_weak(parse_configuration),
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x5C1C0400,  //  0005  MOVE	R7	R2
-      0x5C200600,  //  0006  MOVE	R8	R3
-      0x7C100800,  //  0007  CALL	R4	4
-      0x60100009,  //  0008  GETGBL	R4	G9
-      0x8C140702,  //  0009  GETMET	R5	R3	K2
-      0x881C0103,  //  000A  GETMBR	R7	R0	K3
-      0x58200004,  //  000B  LDCONST	R8	K4
-      0x7C140600,  //  000C  CALL	R5	3
-      0x7C100200,  //  000D  CALL	R4	1
-      0x90020204,  //  000E  SETMBR	R0	K1	R4
-      0x88100101,  //  000F  GETMBR	R4	R0	K1
-      0x18100905,  //  0010  LE	R4	R4	K5
-      0x78120000,  //  0011  JMPF	R4	#0013
-      0x90020304,  //  0012  SETMBR	R0	K1	K4
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[12]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x8C0C0301,  //  0001  GETMET	R3	R1	K1
+      0x88140102,  //  0002  GETMBR	R5	R0	K2
+      0x58180003,  //  0003  LDCONST	R6	K3
+      0x7C0C0600,  //  0004  CALL	R3	3
+      0x7C080200,  //  0005  CALL	R2	1
+      0x90020002,  //  0006  SETMBR	R0	K0	R2
+      0x88080100,  //  0007  GETMBR	R2	R0	K0
+      0x18080504,  //  0008  LE	R2	R2	K4
+      0x780A0000,  //  0009  JMPF	R2	#000B
+      0x90020103,  //  000A  SETMBR	R0	K0	K3
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -283,18 +274,20 @@ be_local_class(Matter_Plugin_Sensor_Occupancy,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
-        { be_const_key_weak(TYPE, 9), be_nested_str_weak(occupancy) },
+        { be_const_key_weak(parse_configuration, 9), be_const_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration_closure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(263, -1), be_const_int(2) },
     }))    ) } )) },
-        { be_const_key_weak(init, 11), be_const_closure(Matter_Plugin_Sensor_Occupancy_init_closure) },
+        { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
         { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E_closure) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(Occupancy) },
         { be_const_key_weak(read_attribute, 5), be_const_closure(Matter_Plugin_Sensor_Occupancy_read_attribute_closure) },
         { be_const_key_weak(shadow_occupancy, -1), be_const_var(1) },
-        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(tasmota_switch_index, -1), be_const_var(0) },
+        { be_const_key_weak(TYPE, 11), be_nested_str_weak(occupancy) },
+        { be_const_key_weak(CLUSTERS, 8), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(1030, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -308,8 +301,6 @@ be_local_class(Matter_Plugin_Sensor_Occupancy,
     }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Sensor_Occupancy_update_shadow_closure) },
-        { be_const_key_weak(tasmota_switch_index, 8), be_const_var(0) },
-        { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Occupancy)
 );

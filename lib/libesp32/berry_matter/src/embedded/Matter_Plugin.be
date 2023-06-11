@@ -55,10 +55,28 @@ class Matter_Plugin
   # device: contains the root device object so the plugin can "call home"
   # endpoint: (int) the endpoint number (16 bits)
   # arguments: (map) the map for all complementary arguments that are plugin specific
-  def init(device, endpoint, arguments)
+  def init(device, endpoint, config)
     self.device = device
     self.endpoint = endpoint
     self.clusters = self.consolidate_clusters()
+    self.parse_configuration(config)
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map
+  # TO BE OVERRIDEN
+  def parse_configuration(config)
+  end
+
+  #############################################################
+  # is_local_device
+  #
+  # Returns true if it's a local device, or false for a
+  # remotely device controlled via HTTP
+  def is_local_device()
+    return true
   end
 
   #############################################################

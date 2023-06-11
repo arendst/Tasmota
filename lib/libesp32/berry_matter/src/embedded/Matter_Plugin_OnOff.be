@@ -46,10 +46,17 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
 
   #############################################################
   # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
     self.shadow_onoff = false
-    self.tasmota_relay_index = int(arguments.find(self.ARG #-'relay'-#, 1))
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, 1))
     if self.tasmota_relay_index <= 0    self.tasmota_relay_index = 1    end
   end
 

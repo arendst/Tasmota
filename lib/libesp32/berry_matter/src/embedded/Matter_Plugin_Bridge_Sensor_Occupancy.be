@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_HTTP end
 
 class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   static var TYPE = "http_occupancy"                # name of the plug-in in json
-  static var NAME = "&#x1F517; Occupancy"           # display name of the plug-in
+  static var NAME = "Occupancy"           # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 5s

@@ -43,8 +43,8 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
 
   #############################################################
   # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
     self.shadow_onoff = false
   end
 

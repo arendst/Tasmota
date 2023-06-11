@@ -713,7 +713,7 @@ be_local_class(Matter_Plugin_Bridge_Light3,
         { be_const_key_weak(web_value_RGB, 1), be_const_closure(Matter_Plugin_Bridge_Light3_web_value_RGB_closure) },
         { be_const_key_weak(shadow_sat, 9), be_const_var(1) },
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Bridge_Light3_invoke_request_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(_X26_X23x1F517_X3B_X20Light_X203_X20RGB) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Light_X203_X20RGB) },
         { be_const_key_weak(TYPES, 11), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {

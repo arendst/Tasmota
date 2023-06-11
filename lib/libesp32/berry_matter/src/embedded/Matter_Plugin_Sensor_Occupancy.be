@@ -41,10 +41,11 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   var shadow_occupancy
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-    self.tasmota_switch_index = int(arguments.find(self.ARG #-'relay'-#, 1))
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
