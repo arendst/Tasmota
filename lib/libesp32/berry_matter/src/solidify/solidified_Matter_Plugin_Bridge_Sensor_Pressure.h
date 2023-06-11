@@ -250,7 +250,7 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Pressure,
         { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Bridge_Sensor_Pressure_read_attribute_closure) },
         { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Pressure_value_changed_closure) },
         { be_const_key_weak(TYPE, 4), be_nested_str_weak(http_pressure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(_X26_X23x1F517_X3B_X20Pressure) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Pressure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {

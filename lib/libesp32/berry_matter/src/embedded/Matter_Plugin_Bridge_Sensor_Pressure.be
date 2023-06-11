@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Sensor end
 
 class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   static var TYPE = "http_pressure"                 # name of the plug-in in json
-  static var NAME = "&#x1F517; Pressure"            # display name of the plug-in
+  static var NAME = "Pressure"            # display name of the plug-in
 
   static var CLUSTERS  = {
     0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement

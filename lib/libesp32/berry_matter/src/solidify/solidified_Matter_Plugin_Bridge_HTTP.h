@@ -7,6 +7,111 @@
 extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
 
 /********************************************************************
+** Solidified function: read_attribute
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
+  be_nested_proto(
+    10,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(matter),
+    /* K1   */  be_nested_str_weak(TLV),
+    /* K2   */  be_nested_str_weak(cluster),
+    /* K3   */  be_nested_str_weak(attribute),
+    /* K4   */  be_nested_str_weak(create_TLV),
+    /* K5   */  be_nested_str_weak(BOOL),
+    /* K6   */  be_nested_str_weak(http_remote),
+    /* K7   */  be_nested_str_weak(reachable),
+    /* K8   */  be_nested_str_weak(read_attribute),
+    }),
+    be_str_weak(read_attribute),
+    &be_const_str_solidified,
+    ( &(const binstruction[35]) {  /* code */
+      0xB80E0000,  //  0000  GETNGBL	R3	K0
+      0x880C0701,  //  0001  GETMBR	R3	R3	K1
+      0x88100502,  //  0002  GETMBR	R4	R2	K2
+      0x88140503,  //  0003  GETMBR	R5	R2	K3
+      0x541A0038,  //  0004  LDINT	R6	57
+      0x1C180806,  //  0005  EQ	R6	R4	R6
+      0x781A0012,  //  0006  JMPF	R6	#001A
+      0x541A0010,  //  0007  LDINT	R6	17
+      0x1C180A06,  //  0008  EQ	R6	R5	R6
+      0x781A0006,  //  0009  JMPF	R6	#0011
+      0x8C180704,  //  000A  GETMET	R6	R3	K4
+      0x88200705,  //  000B  GETMBR	R8	R3	K5
+      0x88240106,  //  000C  GETMBR	R9	R0	K6
+      0x88241307,  //  000D  GETMBR	R9	R9	K7
+      0x7C180600,  //  000E  CALL	R6	3
+      0x80040C00,  //  000F  RET	1	R6
+      0x70020007,  //  0010  JMP		#0019
+      0x60180003,  //  0011  GETGBL	R6	G3
+      0x5C1C0000,  //  0012  MOVE	R7	R0
+      0x7C180200,  //  0013  CALL	R6	1
+      0x8C180D08,  //  0014  GETMET	R6	R6	K8
+      0x5C200200,  //  0015  MOVE	R8	R1
+      0x5C240400,  //  0016  MOVE	R9	R2
+      0x7C180600,  //  0017  CALL	R6	3
+      0x80040C00,  //  0018  RET	1	R6
+      0x70020007,  //  0019  JMP		#0022
+      0x60180003,  //  001A  GETGBL	R6	G3
+      0x5C1C0000,  //  001B  MOVE	R7	R0
+      0x7C180200,  //  001C  CALL	R6	1
+      0x8C180D08,  //  001D  GETMET	R6	R6	K8
+      0x5C200200,  //  001E  MOVE	R8	R1
+      0x5C240400,  //  001F  MOVE	R9	R2
+      0x7C180600,  //  0020  CALL	R6	3
+      0x80040C00,  //  0021  RET	1	R6
+      0x80000000,  //  0022  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: web_value_onoff
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_X3Cb_X3EOn_X3C_X2Fb_X3E),
+    /* K1   */  be_nested_str_weak(Off),
+    /* K2   */  be_nested_str_weak(),
+    }),
+    be_str_weak(web_value_onoff),
+    &be_const_str_solidified,
+    ( &(const binstruction[10]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x20080202,  //  0001  NE	R2	R1	R2
+      0x780A0004,  //  0002  JMPF	R2	#0008
+      0x78060001,  //  0003  JMPF	R1	#0006
+      0x58080000,  //  0004  LDCONST	R2	K0
+      0x70020000,  //  0005  JMP		#0007
+      0x58080001,  //  0006  LDCONST	R2	K1
+      0x70020000,  //  0007  JMP		#0009
+      0x58080002,  //  0008  LDCONST	R2	K2
+      0x80040400,  //  0009  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: update_shadow
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
@@ -43,116 +148,6 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
       0x88180103,  //  000A  GETMBR	R6	R0	K3
       0x7C080800,  //  000B  CALL	R2	4
       0x80000000,  //  000C  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: register_cmd_cb
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
-      be_nested_proto(
-        8,                          /* nstack */
-        3,                          /* argc */
-        0,                          /* varg */
-        1,                          /* has upvals */
-        ( &(const bupvaldesc[ 1]) {  /* upvals */
-          be_local_const_upval(1, 0),
-        }),
-        0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
-        1,                          /* has constants */
-        ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str_weak(parse_http_response),
-        }),
-        be_str_weak(_X3Clambda_X3E),
-        &be_const_str_solidified,
-        ( &(const binstruction[ 7]) {  /* code */
-          0x680C0000,  //  0000  GETUPV	R3	U0
-          0x8C0C0700,  //  0001  GETMET	R3	R3	K0
-          0x5C140000,  //  0002  MOVE	R5	R0
-          0x5C180200,  //  0003  MOVE	R6	R1
-          0x5C1C0400,  //  0004  MOVE	R7	R2
-          0x7C0C0800,  //  0005  CALL	R3	4
-          0x80040600,  //  0006  RET	1	R3
-        })
-      ),
-    }),
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(http_remote),
-    /* K1   */  be_nested_str_weak(add_schedule),
-    /* K2   */  be_nested_str_weak(UPDATE_CMD),
-    /* K3   */  be_nested_str_weak(UPDATE_TIME),
-    }),
-    be_str_weak(register_cmd_cb),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x880C0102,  //  0002  GETMBR	R3	R0	K2
-      0x88100103,  //  0003  GETMBR	R4	R0	K3
-      0x84140000,  //  0004  CLOSURE	R5	P0
-      0x7C040800,  //  0005  CALL	R1	4
-      0xA0000000,  //  0006  CLOSE	R0
-      0x80000000,  //  0007  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: ui_conf_to_string
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_ui_conf_to_string,   /* name */
-  be_nested_proto(
-    9,                          /* nstack */
-    2,                          /* argc */
-    4,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_const_class(be_class_Matter_Plugin_Bridge_HTTP),
-    /* K1   */  be_nested_str_weak(ui_conf_to_string),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(ARG_HTTP),
-    /* K4   */  be_nested_str_weak(),
-    /* K5   */  be_nested_str_weak(_X2C),
-    }),
-    be_str_weak(ui_conf_to_string),
-    &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
-      0x58080000,  //  0000  LDCONST	R2	K0
-      0x600C0003,  //  0001  GETGBL	R3	G3
-      0x5C100400,  //  0002  MOVE	R4	R2
-      0x7C0C0200,  //  0003  CALL	R3	1
-      0x8C0C0701,  //  0004  GETMET	R3	R3	K1
-      0x5C140000,  //  0005  MOVE	R5	R0
-      0x5C180200,  //  0006  MOVE	R6	R1
-      0x7C0C0600,  //  0007  CALL	R3	3
-      0x60100008,  //  0008  GETGBL	R4	G8
-      0x8C140302,  //  0009  GETMET	R5	R1	K2
-      0x881C0503,  //  000A  GETMBR	R7	R2	K3
-      0x58200004,  //  000B  LDCONST	R8	K4
-      0x7C140600,  //  000C  CALL	R5	3
-      0x7C100200,  //  000D  CALL	R4	1
-      0x00140705,  //  000E  ADD	R5	R3	K5
-      0x00140A04,  //  000F  ADD	R5	R5	R4
-      0x80040A00,  //  0010  RET	1	R5
     })
   )
 );
@@ -228,60 +223,6 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
       0x5C2C0E00,  //  0024  MOVE	R11	R7
       0x7C200600,  //  0025  CALL	R8	3
       0x80000000,  //  0026  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
-  be_nested_proto(
-    10,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(init),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(ARG_HTTP),
-    /* K4   */  be_nested_str_weak(http_remote),
-    /* K5   */  be_nested_str_weak(device),
-    /* K6   */  be_nested_str_weak(register_http_remote),
-    /* K7   */  be_nested_str_weak(PROBE_TIMEOUT),
-    /* K8   */  be_nested_str_weak(register_cmd_cb),
-    }),
-    be_str_weak(init),
-    &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
-      0xA4120000,  //  0000  IMPORT	R4	K0
-      0x60140003,  //  0001  GETGBL	R5	G3
-      0x5C180000,  //  0002  MOVE	R6	R0
-      0x7C140200,  //  0003  CALL	R5	1
-      0x8C140B01,  //  0004  GETMET	R5	R5	K1
-      0x5C1C0200,  //  0005  MOVE	R7	R1
-      0x5C200400,  //  0006  MOVE	R8	R2
-      0x5C240600,  //  0007  MOVE	R9	R3
-      0x7C140800,  //  0008  CALL	R5	4
-      0x8C140702,  //  0009  GETMET	R5	R3	K2
-      0x881C0103,  //  000A  GETMBR	R7	R0	K3
-      0x7C140400,  //  000B  CALL	R5	2
-      0x88180105,  //  000C  GETMBR	R6	R0	K5
-      0x8C180D06,  //  000D  GETMET	R6	R6	K6
-      0x5C200A00,  //  000E  MOVE	R8	R5
-      0x88240107,  //  000F  GETMBR	R9	R0	K7
-      0x7C180600,  //  0010  CALL	R6	3
-      0x90020806,  //  0011  SETMBR	R0	K4	R6
-      0x8C180108,  //  0012  GETMET	R6	R0	K8
-      0x7C180200,  //  0013  CALL	R6	1
-      0x80000000,  //  0014  RET	0
     })
   )
 );
@@ -371,150 +312,6 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
 
 
 /********************************************************************
-** Solidified function: parse_update
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(parse_update),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: ui_string_to_conf
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_ui_string_to_conf,   /* name */
-  be_nested_proto(
-    11,                          /* nstack */
-    3,                          /* argc */
-    4,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_const_class(be_class_Matter_Plugin_Bridge_HTTP),
-    /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(split),
-    /* K3   */  be_nested_str_weak(_X2C),
-    /* K4   */  be_const_int(3),
-    /* K5   */  be_nested_str_weak(ARG_HTTP),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str_weak(ui_string_to_conf),
-    /* K8   */  be_const_int(0),
-    }),
-    be_str_weak(ui_string_to_conf),
-    &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
-      0x580C0000,  //  0000  LDCONST	R3	K0
-      0xA4120200,  //  0001  IMPORT	R4	K1
-      0x8C140902,  //  0002  GETMET	R5	R4	K2
-      0x001C0503,  //  0003  ADD	R7	R2	K3
-      0x58200003,  //  0004  LDCONST	R8	K3
-      0x58240004,  //  0005  LDCONST	R9	K4
-      0x7C140800,  //  0006  CALL	R5	4
-      0x88180705,  //  0007  GETMBR	R6	R3	K5
-      0x941C0B06,  //  0008  GETIDX	R7	R5	K6
-      0x98040C07,  //  0009  SETIDX	R1	R6	R7
-      0x60180003,  //  000A  GETGBL	R6	G3
-      0x5C1C0600,  //  000B  MOVE	R7	R3
-      0x7C180200,  //  000C  CALL	R6	1
-      0x8C180D07,  //  000D  GETMET	R6	R6	K7
-      0x5C200000,  //  000E  MOVE	R8	R0
-      0x5C240200,  //  000F  MOVE	R9	R1
-      0x94280B08,  //  0010  GETIDX	R10	R5	K8
-      0x7C180800,  //  0011  CALL	R6	4
-      0x80040200,  //  0012  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: read_attribute
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
-  be_nested_proto(
-    10,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(cluster),
-    /* K3   */  be_nested_str_weak(attribute),
-    /* K4   */  be_nested_str_weak(create_TLV),
-    /* K5   */  be_nested_str_weak(BOOL),
-    /* K6   */  be_nested_str_weak(http_remote),
-    /* K7   */  be_nested_str_weak(reachable),
-    /* K8   */  be_nested_str_weak(read_attribute),
-    }),
-    be_str_weak(read_attribute),
-    &be_const_str_solidified,
-    ( &(const binstruction[35]) {  /* code */
-      0xB80E0000,  //  0000  GETNGBL	R3	K0
-      0x880C0701,  //  0001  GETMBR	R3	R3	K1
-      0x88100502,  //  0002  GETMBR	R4	R2	K2
-      0x88140503,  //  0003  GETMBR	R5	R2	K3
-      0x541A0038,  //  0004  LDINT	R6	57
-      0x1C180806,  //  0005  EQ	R6	R4	R6
-      0x781A0012,  //  0006  JMPF	R6	#001A
-      0x541A0010,  //  0007  LDINT	R6	17
-      0x1C180A06,  //  0008  EQ	R6	R5	R6
-      0x781A0006,  //  0009  JMPF	R6	#0011
-      0x8C180704,  //  000A  GETMET	R6	R3	K4
-      0x88200705,  //  000B  GETMBR	R8	R3	K5
-      0x88240106,  //  000C  GETMBR	R9	R0	K6
-      0x88241307,  //  000D  GETMBR	R9	R9	K7
-      0x7C180600,  //  000E  CALL	R6	3
-      0x80040C00,  //  000F  RET	1	R6
-      0x70020007,  //  0010  JMP		#0019
-      0x60180003,  //  0011  GETGBL	R6	G3
-      0x5C1C0000,  //  0012  MOVE	R7	R0
-      0x7C180200,  //  0013  CALL	R6	1
-      0x8C180D08,  //  0014  GETMET	R6	R6	K8
-      0x5C200200,  //  0015  MOVE	R8	R1
-      0x5C240400,  //  0016  MOVE	R9	R2
-      0x7C180600,  //  0017  CALL	R6	3
-      0x80040C00,  //  0018  RET	1	R6
-      0x70020007,  //  0019  JMP		#0022
-      0x60180003,  //  001A  GETGBL	R6	G3
-      0x5C1C0000,  //  001B  MOVE	R7	R0
-      0x7C180200,  //  001C  CALL	R6	1
-      0x8C180D08,  //  001D  GETMET	R6	R6	K8
-      0x5C200200,  //  001E  MOVE	R8	R1
-      0x5C240400,  //  001F  MOVE	R9	R2
-      0x7C180600,  //  0020  CALL	R6	3
-      0x80040C00,  //  0021  RET	1	R6
-      0x80000000,  //  0022  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: every_250ms
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
@@ -545,36 +342,24 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
 
 
 /********************************************************************
-** Solidified function: web_value_onoff
+** Solidified function: is_local_device
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
+be_local_closure(Matter_Plugin_Bridge_HTTP_is_local_device,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
-    2,                          /* argc */
+    2,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_X3Cb_X3EOn_X3C_X2Fb_X3E),
-    /* K1   */  be_nested_str_weak(Off),
-    /* K2   */  be_nested_str_weak(),
-    }),
-    be_str_weak(web_value_onoff),
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(is_local_device),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0004,  //  0002  JMPF	R2	#0008
-      0x78060001,  //  0003  JMPF	R1	#0006
-      0x58080000,  //  0004  LDCONST	R2	K0
-      0x70020000,  //  0005  JMP		#0007
-      0x58080001,  //  0006  LDCONST	R2	K1
-      0x70020000,  //  0007  JMP		#0009
-      0x58080002,  //  0008  LDCONST	R2	K2
-      0x80040400,  //  0009  RET	1	R2
+    ( &(const binstruction[ 2]) {  /* code */
+      0x50040000,  //  0000  LDBOOL	R1	0	0
+      0x80040200,  //  0001  RET	1	R1
     })
   )
 );
@@ -618,39 +403,179 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
 
 
 /********************************************************************
+** Solidified function: parse_update
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(parse_update),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
+  be_nested_proto(
+    10,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(init),
+    /* K2   */  be_nested_str_weak(find),
+    /* K3   */  be_nested_str_weak(ARG_HTTP),
+    /* K4   */  be_nested_str_weak(http_remote),
+    /* K5   */  be_nested_str_weak(device),
+    /* K6   */  be_nested_str_weak(register_http_remote),
+    /* K7   */  be_nested_str_weak(PROBE_TIMEOUT),
+    /* K8   */  be_nested_str_weak(register_cmd_cb),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[21]) {  /* code */
+      0xA4120000,  //  0000  IMPORT	R4	K0
+      0x60140003,  //  0001  GETGBL	R5	G3
+      0x5C180000,  //  0002  MOVE	R6	R0
+      0x7C140200,  //  0003  CALL	R5	1
+      0x8C140B01,  //  0004  GETMET	R5	R5	K1
+      0x5C1C0200,  //  0005  MOVE	R7	R1
+      0x5C200400,  //  0006  MOVE	R8	R2
+      0x5C240600,  //  0007  MOVE	R9	R3
+      0x7C140800,  //  0008  CALL	R5	4
+      0x8C140702,  //  0009  GETMET	R5	R3	K2
+      0x881C0103,  //  000A  GETMBR	R7	R0	K3
+      0x7C140400,  //  000B  CALL	R5	2
+      0x88180105,  //  000C  GETMBR	R6	R0	K5
+      0x8C180D06,  //  000D  GETMET	R6	R6	K6
+      0x5C200A00,  //  000E  MOVE	R8	R5
+      0x88240107,  //  000F  GETMBR	R9	R0	K7
+      0x7C180600,  //  0010  CALL	R6	3
+      0x90020806,  //  0011  SETMBR	R0	K4	R6
+      0x8C180108,  //  0012  GETMET	R6	R0	K8
+      0x7C180200,  //  0013  CALL	R6	1
+      0x80000000,  //  0014  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: register_cmd_cb
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        8,                          /* nstack */
+        3,                          /* argc */
+        0,                          /* varg */
+        1,                          /* has upvals */
+        ( &(const bupvaldesc[ 1]) {  /* upvals */
+          be_local_const_upval(1, 0),
+        }),
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        1,                          /* has constants */
+        ( &(const bvalue[ 1]) {     /* constants */
+        /* K0   */  be_nested_str_weak(parse_http_response),
+        }),
+        be_str_weak(_X3Clambda_X3E),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 7]) {  /* code */
+          0x680C0000,  //  0000  GETUPV	R3	U0
+          0x8C0C0700,  //  0001  GETMET	R3	R3	K0
+          0x5C140000,  //  0002  MOVE	R5	R0
+          0x5C180200,  //  0003  MOVE	R6	R1
+          0x5C1C0400,  //  0004  MOVE	R7	R2
+          0x7C0C0800,  //  0005  CALL	R3	4
+          0x80040600,  //  0006  RET	1	R3
+        })
+      ),
+    }),
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(http_remote),
+    /* K1   */  be_nested_str_weak(add_schedule),
+    /* K2   */  be_nested_str_weak(UPDATE_CMD),
+    /* K3   */  be_nested_str_weak(UPDATE_TIME),
+    }),
+    be_str_weak(register_cmd_cb),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x880C0102,  //  0002  GETMBR	R3	R0	K2
+      0x88100103,  //  0003  GETMBR	R4	R0	K3
+      0x84140000,  //  0004  CLOSURE	R5	P0
+      0x7C040800,  //  0005  CALL	R1	4
+      0xA0000000,  //  0006  CLOSE	R0
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_Plugin_Bridge_HTTP
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Device;
 be_local_class(Matter_Plugin_Bridge_HTTP,
     1,
     &be_class_Matter_Plugin_Device,
-    be_nested_map(22,
+    be_nested_map(21,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(NAME, 2), be_nested_str_weak() },
-        { be_const_key_weak(web_values, 11), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_closure) },
-        { be_const_key_weak(web_value_onoff, 21), be_const_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff_closure) },
-        { be_const_key_weak(register_cmd_cb, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb_closure) },
-        { be_const_key_weak(ui_conf_to_string, -1), be_const_static_closure(Matter_Plugin_Bridge_HTTP_ui_conf_to_string_closure) },
-        { be_const_key_weak(http_remote, -1), be_const_var(0) },
-        { be_const_key_weak(CLUSTERS, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_read_attribute_closure) },
+        { be_const_key_weak(web_value_onoff, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff_closure) },
+        { be_const_key_weak(SYNC_TIMEOUT, -1), be_const_int(500) },
+        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(0,
     ( (struct bmapnode*) &(const bmapnode[]) {
     }))    ) } )) },
+        { be_const_key_weak(is_local_device, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_is_local_device_closure) },
+        { be_const_key_weak(parse_http_response, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
+        { be_const_key_weak(init, 18), be_const_closure(Matter_Plugin_Bridge_HTTP_init_closure) },
+        { be_const_key_weak(update_shadow, 3), be_const_closure(Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
+        { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_every_250ms_closure) },
+        { be_const_key_weak(UPDATE_TIME, -1), be_const_int(3000) },
+        { be_const_key_weak(TYPE, 4), be_nested_str_weak() },
+        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_closure) },
+        { be_const_key_weak(ARG_HTTP, 6), be_nested_str_weak(url) },
+        { be_const_key_weak(PROBE_TIMEOUT, -1), be_const_int(1700) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak() },
-        { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X2011) },
-        { be_const_key_weak(parse_http_response, 19), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
-        { be_const_key_weak(call_remote_sync, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
+        { be_const_key_weak(NAME, 14), be_nested_str_weak() },
+        { be_const_key_weak(call_remote_sync, 17), be_const_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
         { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_update_closure) },
-        { be_const_key_weak(ARG_HTTP, 16), be_nested_str_weak(url) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak() },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_read_attribute_closure) },
-        { be_const_key_weak(PROBE_TIMEOUT, 13), be_const_int(1700) },
-        { be_const_key_weak(ui_string_to_conf, -1), be_const_static_closure(Matter_Plugin_Bridge_HTTP_ui_string_to_conf_closure) },
-        { be_const_key_weak(update_shadow, 8), be_const_closure(Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
-        { be_const_key_weak(every_250ms, 5), be_const_closure(Matter_Plugin_Bridge_HTTP_every_250ms_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_init_closure) },
-        { be_const_key_weak(UPDATE_TIME, 1), be_const_int(3000) },
-        { be_const_key_weak(SYNC_TIMEOUT, -1), be_const_int(500) },
+        { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X2011) },
+        { be_const_key_weak(http_remote, -1), be_const_var(0) },
+        { be_const_key_weak(register_cmd_cb, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb_closure) },
     })),
     be_str_weak(Matter_Plugin_Bridge_HTTP)
 );

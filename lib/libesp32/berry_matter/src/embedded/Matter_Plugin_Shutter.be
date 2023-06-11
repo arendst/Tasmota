@@ -48,10 +48,11 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   var shadow_shutter_inverted                       # 1=same as matter 0=matter must invert
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-    self.tasmota_shutter_index = arguments.find(self.ARG #-'relay'-#)
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_shutter_index = config.find(self.ARG #-'relay'-#)
     if self.tasmota_shutter_index == nil     self.tasmota_shutter_index = 0   end
     self.shadow_shutter_inverted = -1
   end

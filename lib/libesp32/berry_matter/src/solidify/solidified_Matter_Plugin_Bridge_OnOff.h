@@ -61,7 +61,7 @@ be_local_class(Matter_Plugin_Bridge_OnOff,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_OnOff_web_values_closure) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_relay) },
-        { be_const_key_weak(NAME, 3), be_nested_str_weak(_X26_X23x1F517_X3B_X20Relay) },
+        { be_const_key_weak(NAME, 3), be_nested_str_weak(Relay) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
