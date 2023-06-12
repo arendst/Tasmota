@@ -1188,7 +1188,8 @@ bool Xdrv50(uint32_t function) {
 
 #ifdef UFILESYS_STATIC_SERVING
       // NOTE - this is expensive on flash -> +2.5kbytes.
-      Webserver->serveStatic("/fs/", *ufsp, "/");
+      Webserver->serveStatic("/fs/", *ffsp, "/");
+      Webserver->enableCORS(true);
 #endif
 
       break;
