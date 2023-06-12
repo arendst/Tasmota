@@ -217,14 +217,14 @@ class Matter_Fabric : Matter_Expirable
   # Called before removal
   def log_new_fabric()
     import string
-    tasmota.log(string.format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 2)
+    tasmota.log(string.format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 3)
   end
 
   #############################################################
   # Called before removal
   def before_remove()
     import string
-    tasmota.log(string.format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 2)
+    tasmota.log(string.format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 3)
   end
 
   #############################################################

@@ -86,7 +86,7 @@ class Matter_IM_Subscription
   
   # remove self from subs_shop list
   def remove_self()
-    tasmota.log("MTR: -Sub_Del   (      ) sub=" + str(self.subscription_id), 2)
+    tasmota.log("MTR: -Sub_Del   (      ) sub=" + str(self.subscription_id), 3)
     self.subs_shop.remove_sub(self)
   end
 
@@ -104,7 +104,7 @@ class Matter_IM_Subscription
     self.expiration = now + (self.max_interval - self.MAX_INTERVAL_MARGIN) * 1000
     self.not_before = now + self.min_interval * 1000 - 1
     if !self.is_keep_alive
-      tasmota.log(string.format("MTR: .Sub_Done  (      ) sub=%i", self.subscription_id), 2)
+      tasmota.log(string.format("MTR: .Sub_Done  (      ) sub=%i", self.subscription_id), 3)
     end
   end
 

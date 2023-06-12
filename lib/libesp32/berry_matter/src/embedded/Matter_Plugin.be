@@ -30,6 +30,7 @@ class Matter_Plugin
   static var NAME = ""                      # display name of the plug-in
   static var ARG  = ""                      # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
+  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   var update_next                           # next timestamp for update

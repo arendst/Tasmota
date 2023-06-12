@@ -1096,7 +1096,7 @@ be_local_closure(Matter_Session_Store_find_session_by_resumption_id,   /* name *
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[13]) {     /* constants */
+    ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_const_int(0),
     /* K2   */  be_nested_str_weak(sessions),
@@ -1105,15 +1105,13 @@ be_local_closure(Matter_Session_Store_find_session_by_resumption_id,   /* name *
     /* K5   */  be_nested_str_weak(format),
     /* K6   */  be_nested_str_weak(MTR_X3A_X20session_X2Eresumption_id_X3D_X25s_X20vs_X20_X25s),
     /* K7   */  be_nested_str_weak(resumption_id),
-    /* K8   */  be_const_int(3),
-    /* K9   */  be_nested_str_weak(shared_secret),
-    /* K10  */  be_nested_str_weak(MTR_X3A_X20session_X2Eshared_secret_X3D_X25s),
-    /* K11  */  be_nested_str_weak(update),
-    /* K12  */  be_const_int(1),
+    /* K8   */  be_nested_str_weak(shared_secret),
+    /* K9   */  be_nested_str_weak(update),
+    /* K10  */  be_const_int(1),
     }),
     be_str_weak(find_session_by_resumption_id),
     &be_const_str_solidified,
-    ( &(const binstruction[49]) {  /* code */
+    ( &(const binstruction[39]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0x5C0C0200,  //  0001  MOVE	R3	R1
       0x740E0001,  //  0002  JMPT	R3	#0005
@@ -1125,7 +1123,7 @@ be_local_closure(Matter_Session_Store_find_session_by_resumption_id,   /* name *
       0x5C180800,  //  0008  MOVE	R6	R4
       0x7C140200,  //  0009  CALL	R5	1
       0x14140605,  //  000A  LT	R5	R3	R5
-      0x78160023,  //  000B  JMPF	R5	#0030
+      0x78160019,  //  000B  JMPF	R5	#0026
       0x94140803,  //  000C  GETIDX	R5	R4	R3
       0xB81A0600,  //  000D  GETNGBL	R6	K3
       0x8C180D04,  //  000E  GETMET	R6	R6	K4
@@ -1138,31 +1136,21 @@ be_local_closure(Matter_Session_Store_find_session_by_resumption_id,   /* name *
       0x5C340200,  //  0015  MOVE	R13	R1
       0x7C300200,  //  0016  CALL	R12	1
       0x7C200800,  //  0017  CALL	R8	4
-      0x58240008,  //  0018  LDCONST	R9	K8
+      0x54260003,  //  0018  LDINT	R9	4
       0x7C180600,  //  0019  CALL	R6	3
       0x88180B07,  //  001A  GETMBR	R6	R5	K7
       0x1C180C01,  //  001B  EQ	R6	R6	R1
-      0x781A0010,  //  001C  JMPF	R6	#002E
-      0x88180B09,  //  001D  GETMBR	R6	R5	K9
+      0x781A0006,  //  001C  JMPF	R6	#0024
+      0x88180B08,  //  001D  GETMBR	R6	R5	K8
       0x4C1C0000,  //  001E  LDNIL	R7
       0x20180C07,  //  001F  NE	R6	R6	R7
-      0x781A000C,  //  0020  JMPF	R6	#002E
-      0xB81A0600,  //  0021  GETNGBL	R6	K3
-      0x8C180D04,  //  0022  GETMET	R6	R6	K4
-      0x8C200505,  //  0023  GETMET	R8	R2	K5
-      0x5828000A,  //  0024  LDCONST	R10	K10
-      0x602C0008,  //  0025  GETGBL	R11	G8
-      0x88300B09,  //  0026  GETMBR	R12	R5	K9
-      0x7C2C0200,  //  0027  CALL	R11	1
-      0x7C200600,  //  0028  CALL	R8	3
-      0x58240008,  //  0029  LDCONST	R9	K8
-      0x7C180600,  //  002A  CALL	R6	3
-      0x8C180B0B,  //  002B  GETMET	R6	R5	K11
-      0x7C180200,  //  002C  CALL	R6	1
-      0x80040A00,  //  002D  RET	1	R5
-      0x000C070C,  //  002E  ADD	R3	R3	K12
-      0x7001FFD6,  //  002F  JMP		#0007
-      0x80000000,  //  0030  RET	0
+      0x781A0002,  //  0020  JMPF	R6	#0024
+      0x8C180B09,  //  0021  GETMET	R6	R5	K9
+      0x7C180200,  //  0022  CALL	R6	1
+      0x80040A00,  //  0023  RET	1	R5
+      0x000C070A,  //  0024  ADD	R3	R3	K10
+      0x7001FFE0,  //  0025  JMP		#0007
+      0x80000000,  //  0026  RET	0
     })
   )
 );
@@ -1182,7 +1170,7 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[28]) {     /* constants */
+    ( &(const bvalue[29]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
     /* K1   */  be_nested_str_weak(remove_expired),
     /* K2   */  be_const_int(0),
@@ -1206,11 +1194,12 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
     /* K20  */  be_nested_str_weak(log),
     /* K21  */  be_nested_str_weak(format),
     /* K22  */  be_nested_str_weak(MTR_X3A_X20_X3DSaved_X20_X20_X20_X20_X20_X25i_X20fabric_X28s_X29_X20and_X20_X25i_X20session_X28s_X29),
-    /* K23  */  be_const_int(2),
+    /* K23  */  be_const_int(3),
     /* K24  */  be_nested_str_weak(device),
     /* K25  */  be_nested_str_weak(event_fabrics_saved),
     /* K26  */  be_nested_str_weak(MTR_X3A_X20Session_Store_X3A_X3Asave_X20Exception_X3A),
     /* K27  */  be_nested_str_weak(_X7C),
+    /* K28  */  be_const_int(2),
     }),
     be_str_weak(save_fabrics),
     &be_const_str_solidified,
@@ -1297,7 +1286,7 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
       0x5C2C0C00,  //  004F  MOVE	R11	R6
       0x7C280200,  //  0050  CALL	R10	1
       0x0024120A,  //  0051  ADD	R9	R9	R10
-      0x58280017,  //  0052  LDCONST	R10	K23
+      0x5828001C,  //  0052  LDCONST	R10	K28
       0x7C1C0600,  //  0053  CALL	R7	3
       0x70020000,  //  0054  JMP		#0056
       0xB0080000,  //  0055  RAISE	2	R0	R0

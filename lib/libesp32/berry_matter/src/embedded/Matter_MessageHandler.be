@@ -48,7 +48,7 @@ class Matter_MessageHandler
     if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
       var resp = frame.build_standalone_ack(reliable)
       resp.encode_frame()
-      tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
+      tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 4)
       self.send_response_frame(resp)
     end
   end
@@ -64,7 +64,7 @@ class Matter_MessageHandler
       var resp = frame.build_standalone_ack(reliable)
       resp.encode_frame()
       resp.encrypt()
-      tasmota.log(string.format("MTR: <Ack*      (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 3)
+      tasmota.log(string.format("MTR: <Ack*      (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 4)
       self.send_response_frame(resp)
     end
   end
@@ -89,15 +89,15 @@ class Matter_MessageHandler
       # do we need decryption?
       if frame.sec_p
         # Control message
-        tasmota.log("MTR: CONTROL MESSAGE=" + matter.inspect(frame), 4)
+        # tasmota.log("MTR: CONTROL MESSAGE=" + matter.inspect(frame), 4)
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
-        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
+        # tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
         return self.control_message.process_incoming_control_message(frame)
       elif frame.local_session_id == 0 && frame.sec_sesstype == 0
         #############################################################
         ### unencrypted session, handled by commissioning
         var session = self.device.sessions.find_session_source_id_unsecure(frame.source_node_id, 90)    # 90 seconds max
-        tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
+        # tasmota.log("MTR: find session by source_node_id = " + str(frame.source_node_id) + " session_id = " + str(session.local_session_id), 4)
         if addr     session._ip = addr     end
         if port     session._port = port   end
         session._message_handler = self
@@ -105,7 +105,7 @@ class Matter_MessageHandler
         
         # check if it's a duplicate
         if !session._counter_insecure_rcv.validate(frame.message_counter, false)
-          tasmota.log(string.format("MTR: .          Duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 3)
+          tasmota.log(string.format("MTR: .          Duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 4)
           self.send_simple_ack(frame, false #-not reliable-#)
           return false
         end
@@ -115,9 +115,9 @@ class Matter_MessageHandler
         if frame.opcode != 0x10                                 # don't show `MRP_Standalone_Acknowledgement`
           var op_name = matter.get_opcode_name(frame.opcode)
           if !op_name   op_name = string.format("0x%02X", frame.opcode) end
-          tasmota.log(string.format("MTR: >Received  (%6i) %s rid=%i exch=%i from [%s]:%i", session.local_session_id, op_name, frame.message_counter, frame.exchange_id, addr, port), 2)
+          tasmota.log(string.format("MTR: >Received  (%6i) %s rid=%i exch=%i from [%s]:%i", session.local_session_id, op_name, frame.message_counter, frame.exchange_id, addr, port), 3)
         else
-          tasmota.log(string.format("MTR: >rcv Ack   (%6i) rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.message_counter, frame.x_flag_r ? "{reliable} " : "", frame.exchange_id, str(frame.ack_message_counter), addr, port), 3)
+          tasmota.log(string.format("MTR: >rcv Ack   (%6i) rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.message_counter, frame.x_flag_r ? "{reliable} " : "", frame.exchange_id, str(frame.ack_message_counter), addr, port), 4)
         end
         ret = self.commissioning.process_incoming(frame)
         # if ret is false, the implicit Ack was not sent
@@ -126,11 +126,11 @@ class Matter_MessageHandler
       else
         #############################################################
         # encrypted message
-        tasmota.log(string.format("MTR: decode header: local_session_id=%i message_counter=%i", frame.local_session_id, frame.message_counter), 3)
+        tasmota.log(string.format("MTR: decode header: local_session_id=%i message_counter=%i", frame.local_session_id, frame.message_counter), 4)
 
         var session = self.device.sessions.get_session_by_local_session_id(frame.local_session_id)
         if session == nil
-          tasmota.log("MTR: unknown local_session_id="+str(frame.local_session_id), 2)
+          tasmota.log("MTR: unknown local_session_id="+str(frame.local_session_id), 3)
           # tasmota.log("MTR: frame="+matter.inspect(frame), 3)
           return false
         end
@@ -141,7 +141,7 @@ class Matter_MessageHandler
        
         # check if it's a duplicate
         if !session.counter_rcv_validate(frame.message_counter, true)
-          tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
+          tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 4)
           self.send_encrypted_ack(frame, false #-not reliable-#)
           return false
         end
@@ -154,11 +154,11 @@ class Matter_MessageHandler
         frame.raw .. cleartext                          # add cleartext
 
         # continue decoding
-        tasmota.log(string.format("MTR: idx=%i clear=%s", frame.payload_idx, frame.raw.tohex()), 4)
+        # tasmota.log(string.format("MTR: idx=%i clear=%s", frame.payload_idx, frame.raw.tohex()), 4)
         frame.decode_payload()
-        tasmota.log("MTR: >          Decrypted message: protocol_id:"+str(frame.protocol_id)+" opcode="+str(frame.opcode)+" exchange_id="+str(frame.exchange_id & 0xFFFF), 3)
+        tasmota.log("MTR: >          Decrypted message: protocol_id:"+str(frame.protocol_id)+" opcode="+str(frame.opcode)+" exchange_id="+str(frame.exchange_id & 0xFFFF), 4)
 
-        tasmota.log(string.format("MTR: >rcv       (%6i) [%02X/%02X] rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.protocol_id, frame.opcode, frame.message_counter, frame.exchange_id, str(frame.ack_message_counter), frame.x_flag_r ? "{reliable} " : "", addr, port), 3)
+        # tasmota.log(string.format("MTR: >rcv       (%6i) [%02X/%02X] rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.protocol_id, frame.opcode, frame.message_counter, frame.exchange_id, str(frame.ack_message_counter), frame.x_flag_r ? "{reliable} " : "", addr, port), 3)
 
         self.device.received_ack(frame)                     # remove acknowledge packet from sending list
 
@@ -202,7 +202,7 @@ class Matter_MessageHandler
 
       return ret
     except .. as e, m
-      tasmota.log("MTR: MessageHandler::msg_received exception: "+str(e)+";"+str(m))
+      tasmota.log("MTR: MessageHandler::msg_received exception: "+str(e)+";"+str(m), 2)
       if tasmota._debug_present
         import debug
         debug.traceback()

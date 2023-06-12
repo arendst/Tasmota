@@ -155,13 +155,13 @@ be_local_closure(Matter_Control_Message_process_incoming_control_message,   /* n
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
     /* K1   */  be_nested_str_weak(log),
     /* K2   */  be_nested_str_weak(MTR_X3A_X20received_X20control_X20message_X20),
     /* K3   */  be_nested_str_weak(matter),
     /* K4   */  be_nested_str_weak(inspect),
-    /* K5   */  be_const_int(2),
+    /* K5   */  be_const_int(3),
     /* K6   */  be_nested_str_weak(opcode),
     /* K7   */  be_const_int(0),
     /* K8   */  be_nested_str_weak(parse_MsgCounterSyncReq),
@@ -170,6 +170,7 @@ be_local_closure(Matter_Control_Message_process_incoming_control_message,   /* n
     /* K11  */  be_nested_str_weak(string),
     /* K12  */  be_nested_str_weak(format),
     /* K13  */  be_nested_str_weak(MTR_X3A_X20_X3E_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X20Unknown_X20OpCode_X20_X28control_X20message_X29_X20_X2502X),
+    /* K14  */  be_const_int(2),
     }),
     be_str_weak(process_incoming_control_message),
     &be_const_str_solidified,
@@ -206,7 +207,7 @@ be_local_closure(Matter_Control_Message_process_incoming_control_message,   /* n
       0x581C000D,  //  001D  LDCONST	R7	K13
       0x88200306,  //  001E  GETMBR	R8	R1	K6
       0x7C140600,  //  001F  CALL	R5	3
-      0x58180005,  //  0020  LDCONST	R6	K5
+      0x5818000E,  //  0020  LDCONST	R6	K14
       0x7C0C0600,  //  0021  CALL	R3	3
       0x500C0000,  //  0022  LDBOOL	R3	0	0
       0x80040600,  //  0023  RET	1	R3

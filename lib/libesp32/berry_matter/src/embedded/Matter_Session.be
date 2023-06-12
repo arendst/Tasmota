@@ -130,8 +130,7 @@ class Matter_Session : Matter_Expirable
   def counter_snd_next()
     import string
     var next = self._counter_snd_impl.next()
-    tasmota.log(string.format("MTR: .          Counter_snd=%i", next), 3)
-    # print(">>> NEXT counter_snd=", self.counter_snd, "_impl=", self._counter_snd_impl.val(), 4)
+    # tasmota.log(string.format("MTR: .          Counter_snd=%i", next), 4)
     if matter.Counter.is_greater(next, self.counter_snd)
       self.counter_snd = next + self._COUNTER_SND_INCR
       if self.does_persist()

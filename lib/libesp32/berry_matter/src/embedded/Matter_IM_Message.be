@@ -93,7 +93,7 @@ class Matter_IM_Message
     var resp = self.resp
     resp.encode_frame(self.data.to_TLV().tlv2raw())    # payload in cleartext
     resp.encrypt()
-    tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter),3)
+    tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
     self.finish = true              # by default we remove the packet after it is sent
@@ -185,11 +185,11 @@ class Matter_IM_ReportData : Matter_IM_Message
     end
 
     if was_chunked
-      tasmota.log(string.format("MTR: .Read_Attr next_chunk exch=%i", self.get_exchangeid()), 3)
+      # tasmota.log(string.format("MTR: .Read_Attr next_chunk exch=%i", self.get_exchangeid()), 4)
     end
     if data.more_chunked_messages
       if !was_chunked
-        tasmota.log(string.format("MTR: .Read_Attr first_chunk exch=%i", self.get_exchangeid()), 3)
+        # tasmota.log(string.format("MTR: .Read_Attr first_chunk exch=%i", self.get_exchangeid()), 4)
       end
       # tasmota.log("MTR: sending TLV" + str(data), 4)
     end
@@ -203,13 +203,13 @@ class Matter_IM_ReportData : Matter_IM_Message
     # print(">>>>> send elements after encode")
     resp.encrypt()
     # print(">>>>> send elements after encrypt")
-    tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter),3)
+    # tasmota.log(string.format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
 
     if next_elemnts != nil && size(next_elemnts) > 0
       data.attribute_reports = next_elemnts
-      tasmota.log(string.format("MTR: to_be_sent_later size=%i exch=%i", size(data.attribute_reports), resp.exchange_id), 3)
+      # tasmota.log(string.format("MTR: to_be_sent_later size=%i exch=%i", size(data.attribute_reports), resp.exchange_id), 4)
       self.ready = false    # wait for Status Report before continuing sending
       # keep alive
     else
@@ -302,7 +302,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
         var resp = self.resp.build_standalone_ack(false)
         resp.encode_frame()
         resp.encrypt()
-        tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 3)
+        tasmota.log(string.format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
         self.finish = true
@@ -433,7 +433,7 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
     import string
     # tasmota.log(string.format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
     # once we receive ack, open flow for subscriptions
-    tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 2)
+    tasmota.log(string.format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 3)
     return super(self).status_ok_received(msg)
   end
     

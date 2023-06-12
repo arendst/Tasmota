@@ -92,7 +92,7 @@ class Matter_UI
     import string
     var matter_enabled = self.matter_enabled
 
-    webserver.content_send("<fieldset><legend><b>&nbsp;Matter &nbsp;</b></legend><p></p>"
+    webserver.content_send("<fieldset><legend><b>&nbsp;Matter &nbsp;</b></legend>"
                            "<p style='width:320px;'>Check the <a href='https://tasmota.github.io/docs/Matter/' target='_blank'>Matter documentation</a>.</p>"
                            "<form action='/matterc' method='post'>")
 
@@ -107,7 +107,7 @@ class Matter_UI
     end
 
     webserver.content_send("<p></p><button name='save' class='button bgrn'>Save</button></form></p>"
-                           "<p></p></fieldset><p></p>")
+                           "</fieldset><p></p>")
   end
 
   #- ---------------------------------------------------------------------- -#
@@ -243,9 +243,55 @@ class Matter_UI
 
   end
 
-  #- ---------------------------------------------------------------------- -#
+  #----------------------------------------------------------------------- -#
+  #- Show Javasrcript hints for classes arguments
+  #----------------------------------------------------------------------- -#
+  #
+  # Exmaple:
+  #   var hm = {"relay":0,"shutter+tilt":0,"light2":1,"illuminance":2,"onoff":1,"pressure":2,"light1":1,"humidity":2,"shutter":0,"occupancy":3,"temperature":2,"light3":1,"light0":1};
+  #   var hl = ["Enter Relay number","Not used","Enter Filter pattern","Enter Switch number"];
+  def show_plugins_hints_js(*class_list)
+    import webserver
+    import string
+    import json
+
+    var class_types = []
+    for cl: class_list
+      class_types += string.split(cl, '|')
+    end
+    
+    var hm = {}
+    var hl = []
+
+    for typ: class_types
+      if typ == ''    continue  end
+      var cl = self.device.plugins_classes.find(typ)
+      if cl != nil
+        var hint = cl.ARG_HINT
+        if hint != nil
+          var idx = hl.find(hint)
+          if idx == nil           # not already in list, add it
+            idx = size(hl)        # save index for assignment
+            hl.push(hint)
+          end
+          hm[typ] = idx
+        end
+      end
+    end
+
+    webserver.content_send(string.format(
+      "<script type='text/javascript'>"
+      "var hm=%s;"
+      "var hl=%s;"
+      "</script>", json.dump(hm), json.dump(hl)))
+
+    webserver.content_send(matter._ADD_ENDPOINT_JS)
+
+  end
+
+  #----------------------------------------------------------------------- -#
   #- Show plugins configuration
-  #- ---------------------------------------------------------------------- -#
+  #----------------------------------------------------------------------- -#
   def show_plugins_configuration()
     import webserver
     import string
@@ -253,10 +299,7 @@ class Matter_UI
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Current Configuration&nbsp;</b></legend><p></p>")
 
-    # webserver.content_send("<p></p><form style='display: block;' action='matteradd' method='get'><button class='button bgrn' name=''>Create new endpoint</button></form>")
-    # webserver.content_send("<div style='display: block;'></div><hr>")
-
-    webserver.content_send("<form action='/matterc' method='post'"
+    webserver.content_send("<form action='/matterc' method='post'>"
                            "<p><b>Local sensors and devices</b></p>"
                            "<table style='width:100%'>"
                            "<tr><td width='25'>#</td><td width='115'>Type</td><td>Parameter</td><td width='15'></td></tr>")
@@ -283,11 +326,11 @@ class Matter_UI
       end
 
       found = true
-      webserver.content_send(string.format("<tr><td><font size='-1'><b>%i</b></font></td>", ep))
+      webserver.content_send(string.format("<tr><td style='font-size:smaller;'><b>%i</b></td>", ep))
 
-      webserver.content_send(string.format("<td><font size='-1'><b>%s</b></font></td>", self.plugin_name(conf.find('type', ''))))
-      webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%i' minlength='0' size='8' value='%s'></font></td>",
-                             ep, webserver.html_escape(arg)))
+      webserver.content_send(string.format("<td style='font-size:smaller;'><b>%s</b></td>", self.plugin_name(conf.find('type', ''))))
+      webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s' placeholder='%s'></td>",
+                             ep, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
       webserver.content_send(string.format("<td style='text-align:center;'><button name='del%i' "
                                            "style='background:none;border:none;line-height:1;'"
                                            " onclick=\"return confirm('Confirm removing endpoint')\""
@@ -301,21 +344,9 @@ class Matter_UI
     if !found
       webserver.content_send("<p>&lt;none&gt;</p>")
     end
-
-    # add an empty line for adding a configuration
-    # webserver.content_send(string.format("<tr><td><input type='text' name='ep%03i' maxlength='4' size='3' pattern='[0-9]{1,4}' value=''></td>", i))
-    # webserver.content_send(string.format("<td><select name='pi%03i'>", i))
-    # self.plugin_option('', self._CLASSES_TYPES, self._CLASSES_TYPES2)
-    # webserver.content_send(string.format("</select></td>"))
-    # webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%03i' minlength='0' size='8' value=''></font></td></td></td></tr>", i))
-
-
-    # remote devices
-
     webserver.content_send("<p></p>")
 
     # iterate on each remote device
-
     var remotes = []
     for conf: self.device.plugins_config
       var url = conf.find("url")
@@ -324,7 +355,7 @@ class Matter_UI
       end
     end
     self.device.sort_distinct(remotes)
-    tasmota.log("MTR: remotes: "+str(remotes), 3)
+    # tasmota.log("MTR: remotes: "+str(remotes), 4)
 
     for remote: remotes
 
@@ -352,10 +383,10 @@ class Matter_UI
         end
 
         found = true
-        webserver.content_send(string.format("<tr><td width='22'><font size='-1'><b>%i</b></font></td>", ep))
+        webserver.content_send(string.format("<tr><td width='22' style='font-size:smaller;'><b>%i</b></td>", ep))
 
-        webserver.content_send(string.format("<td width='115'><font size='-1'><b>%s</b></select></font></td>", self.plugin_name(conf.find('type', ''))))
-        webserver.content_send(string.format("<td><font size='-1'><input type='text' name='arg%i' minlength='0' size='8' value='%s'></font></td>",
+        webserver.content_send(string.format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
+        webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
                               ep, webserver.html_escape(arg)))
         webserver.content_send(string.format("<td width='15' style='text-align:center;'><button name='del%i' "
                                             "style='background:none;border:none;line-height:1;'"
@@ -379,16 +410,18 @@ class Matter_UI
 
     
     # Add new endpoint section
+    self.show_plugins_hints_js(self._CLASSES_TYPES)
+
     webserver.content_send("<p></p><fieldset><legend><b>&nbsp;Add to Configuration&nbsp;</b></legend><p></p>")
     webserver.content_send("<p><b>Add local sensor or device</b></p>"
                            "<form action='/matterc' method='post'>"
                            "<table style='width:100%'>"
                            "<tr><td width='145'>Type</td><td>Parameter</td></tr>")
 
-    webserver.content_send("<tr><td><font size='-1'><select name='pi'>")
+    webserver.content_send("<tr><td style='font-size:smaller;'><select id='pi' name='pi' onchange='otm(\"arg\",this.value)'>")
     self.plugin_option('', self._CLASSES_TYPES)
-    webserver.content_send("</select></font></td>")
-    webserver.content_send("<td><font size='-1'><input type='text' name='arg' minlength='0' size='8' value=''></font></td>"
+    webserver.content_send("</select></td>")
+    webserver.content_send("<td style='font-size:smaller;'><input type='text' id='arg' name='arg' size='8' value=''></td>"
                            "</tr></table>")
     
     webserver.content_send("<div style='display: block;'></div>")
@@ -399,7 +432,7 @@ class Matter_UI
     webserver.content_send("<hr><p><b>Add Remote Tasmota</b></p>"
                            "<form action='/matteradd' method='get'>"
                            "<table style='width:100%'>")
-    webserver.content_send("<tr><td width='30'><font size='-1'><b>http://</b></font></td><td><input type='text' name='url' minlength='0' size='8' value='' required placeholder='IP or domain'></td><td width='10'><font size='-1'><b>/</b></font></td></tr>"
+    webserver.content_send("<tr><td width='30' style='font-size:smaller;'><b>http://</b></td><td><input type='text' name='url' size='8' value='' required placeholder='IP or domain'></td><td width='10' style='font-size:smaller;'><b>/</b></td></tr>"
                            "</tr></table>")
     
     webserver.content_send("<div style='display: block;'></div>")
@@ -584,6 +617,8 @@ class Matter_UI
 
       var config_list = self.generate_config_from_status(status8, status11)
 
+      self.show_plugins_hints_js(self._CLASSES_TYPES2)
+
       webserver.content_send("<fieldset><legend><b>&nbsp;Matter Remote Device&nbsp;</b></legend><p></p>"
                              "<p><b>Add Remote sensor or device</b></p>")
 
@@ -608,23 +643,23 @@ class Matter_UI
           arg = cl.ui_conf_to_string(cl, config)
         end
 
-        webserver.content_send(string.format("<tr><td><font size='-1'><select name='pi%i'>", i))
+        webserver.content_send(string.format("<tr><td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
         self.plugin_option(typ, self._CLASSES_TYPES2)
-        webserver.content_send("</select></font></td>"
-                               "<td><font size='-1'>")
-        webserver.content_send(string.format("<input type='text' name='arg%i' minlength='0' size='8' value='%s'>",
-                               i, webserver.html_escape(arg)))
-        webserver.content_send("</font></td></tr>")
+        webserver.content_send("</select></td>"
+                               "<td style='font-size:smaller;'>")
+        webserver.content_send(string.format("<input type='text' id='arg%i' name='arg%i' size='8' value='%s' placeholder='%s'>",
+                               i, i, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
+        webserver.content_send("</td></tr>")
         i += 1
       end
       # empty line for new endpoint
-      webserver.content_send(string.format("<tr><td><font size='-1'><select name='pi%i'>", i))
+      webserver.content_send(string.format("<tr><td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
       self.plugin_option('', self._CLASSES_TYPES2)
-      webserver.content_send("</select></font></td>"
-                             "<td><font size='-1'>")
-      webserver.content_send(string.format("<input type='text' name='arg%i' minlength='0' size='8' value='%s'>",
-                             i, ''))
-      webserver.content_send("</font></td></tr>")
+      webserver.content_send("</select></td>"
+                             "<td style='font-size:smaller;'>")
+      webserver.content_send(string.format("<input type='text' id='arg%i' name='arg%i' size='8' value='%s'>",
+                             i, i, ''))
+      webserver.content_send("</td></tr>")
 
       # end of table
       webserver.content_send("</table>")
@@ -633,7 +668,7 @@ class Matter_UI
       webserver.content_send("<button name='addrem' class='button bgrn'>"
                             "Add endpoints</button></form>")
 
-      webserver.content_send("</form></fieldset><p></p>")
+      webserver.content_send("</form></fieldset>")
 
     else
       webserver.content_send(string.format("<p><b>Unable to connect to '%s'</b></p>", webserver.html_escape(url)))
@@ -679,9 +714,9 @@ class Matter_UI
     try
 
       # debug information about parameters
-      for i:0..webserver.arg_size()-1
-        tasmota.log(string.format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
-      end
+      # for i:0..webserver.arg_size()-1
+      #   tasmota.log(string.format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
+      # end
 
       #---------------------------------------------------------------------#
       # Change Passcode and/or Passcode
@@ -807,7 +842,7 @@ class Matter_UI
             self.device.save_param()
           end
           #- and reload -#
-          webserver.redirect("/cn?")
+          webserver.redirect("/matterc?")
         end
       #---------------------------------------------------------------------#
       # Add new endpoint for local sensor or device
@@ -881,7 +916,6 @@ class Matter_UI
         end
         # check if we found an endpoint to be deleted
         if ep_deleted != nil
-          tasmota.log(string.format("MTR: deleting endpoint %i", ep_deleted), 2)
           self.device.bridge_remove_endpoint(ep_deleted)
           webserver.redirect("/matterc?")
         end
