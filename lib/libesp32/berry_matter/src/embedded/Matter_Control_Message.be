@@ -39,7 +39,7 @@ class Matter_Control_Message
 
   def process_incoming_control_message(msg)
 
-    tasmota.log("MTR: received control message " + matter.inspect(msg), 2)
+    tasmota.log("MTR: received control message " + matter.inspect(msg), 3)
     if   msg.opcode == 0x00
       return self.parse_MsgCounterSyncReq(msg)
     elif msg.opcode == 0x01

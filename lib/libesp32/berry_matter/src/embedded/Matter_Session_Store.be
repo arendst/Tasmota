@@ -281,9 +281,9 @@ class Matter_Session_Store
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
-      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 3)
+      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 4)
       if session.resumption_id == resumption_id && session.shared_secret != nil
-        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)), 3)
+        # tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)), 4)
         session.update()
         return session
       end
@@ -328,7 +328,7 @@ class Matter_Session_Store
       var f = open(self._FABRICS, "w")
       f.write(fabs)
       f.close()
-      tasmota.log(string.format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
+      tasmota.log(string.format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 3)
       self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)

@@ -39,13 +39,21 @@ static const uint8_t MATTER_LOGO[] =
 
 // Matter stylesheet
 static const uint8_t MATTER_STYLESHEET[] = 
-    "<style>"
-    ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
-    ".ztdm td:not(:first-child){width:20px;font-size:70%}"
-    ".ztdm td:last-child{width:45px}"
-    ".ztdm .bt{margin-right:10px;}"
-    ".htrm{line-height:20px}"
-    "</style>";
+  "<style>"
+  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
+  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
+  ".ztdm td:last-child{width:45px}"
+  ".ztdm .bt{margin-right:10px;}"
+  ".htrm{line-height:20px}"
+  "</style>";
+
+static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
+  "<script type='text/javascript'>"
+  "function otm(arg_name,val){"
+  "var s=eb(arg_name);"
+  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
+  "};"
+  "</script>";
 
 extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
 
@@ -256,6 +264,7 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
   _STYLESHEET, comptr(MATTER_STYLESHEET)
+  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
