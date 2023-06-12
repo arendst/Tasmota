@@ -18,6 +18,17 @@
 */
 
 #ifdef USE_UFILESYS
+
+// saves 80 bytes of flash, makes the UI cleaner for folders containing lots of files.
+// disables recursive folder listing in file UI
+//#define UFILESYS_NO_RECURSE_GUI
+
+// Enables serving of static files on /fs/
+// costs 1844 bytes of flash and 40 bytes of RAM
+// probably not useful on esp8266, but useful on esp32
+// You could serve a whole webapp from Tas itself.
+//#define UFILESYS_STATIC_SERVING
+
 /*********************************************************************************************\
 This driver adds universal file system support for
 - ESP8266 (sd card or littlefs on  > 1 M devices with special linker file e.g. eagle.flash.4m2m.ld)
@@ -823,6 +834,7 @@ void UfsListDir(char *path, uint8_t depth) {
         if (entry.isDirectory()) {
           ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, ppe, epe);
           WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
+#ifndef UFILESYS_NO_RECURSE_GUI
           uint8_t plen = strlen(path);
           if (plen > 1) {
             strcat(path, "/");
@@ -830,6 +842,7 @@ void UfsListDir(char *path, uint8_t depth) {
           strcat(path, ep);
           UfsListDir(path, depth + 4);
           path[plen] = 0;
+#endif          
         } else {
   #ifdef GUI_TRASH_FILE
           char delpath[128];
@@ -1172,6 +1185,12 @@ bool Xdrv50(uint32_t function) {
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);
 #endif
+
+#ifdef UFILESYS_STATIC_SERVING
+      // NOTE - this is expensive on flash -> +2.5kbytes.
+      Webserver->serveStatic("/fs/", *ufsp, "/");
+#endif
+
       break;
 #endif // USE_WEBSERVER
   }
