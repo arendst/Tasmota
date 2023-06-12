@@ -375,10 +375,12 @@ class Matter_UI
     end
 
     webserver.content_send("<button name='config' class='button bgrn'>"
-                           "Change configuration</button></form>")
+                           "Change configuration</button></form><p></p></fieldset>")
 
+    
     # Add new endpoint section
-    webserver.content_send("<hr><p><b>Add local sensor or device</b></p>"
+    webserver.content_send("<p></p><fieldset><legend><b>&nbsp;Add to Configuration&nbsp;</b></legend><p></p>")
+    webserver.content_send("<p><b>Add local sensor or device</b></p>"
                            "<form action='/matterc' method='post'>"
                            "<table style='width:100%'>"
                            "<tr><td width='145'>Type</td><td>Parameter</td></tr>")
@@ -407,7 +409,7 @@ class Matter_UI
     # button "Reset and Auto-discover"
     webserver.content_send("<form action='/matterc' method='post'"
                            "onsubmit='return confirm(\"This will RESET the configuration to the default. You will need to associate again.\");'>"
-                           "<button name='auto' class='button bred'>Reset and Auto-discover</button><p></p></form>")
+                           "<button name='auto' class='button bred'>Reset all and Auto-discover</button><p></p></form>")
     
     webserver.content_send("<p></p></fieldset>")
 

@@ -2325,7 +2325,7 @@ be_local_closure(Matter_UI_show_plugins_configuration,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[58]) {     /* constants */
+    ( &(const bvalue[59]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(string),
     /* K2   */  be_nested_str_weak(introspect),
@@ -2370,24 +2370,25 @@ be_local_closure(Matter_UI_show_plugins_configuration,   /* name */
     /* K41  */  be_nested_str_weak(_X3Ctd_X20width_X3D_X27115_X27_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cb_X3E_X25s_X3C_X2Fb_X3E_X3C_X2Fselect_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E),
     /* K42  */  be_nested_str_weak(_X3Ctd_X20width_X3D_X2715_X27_X20style_X3D_X27text_X2Dalign_X3Acenter_X3B_X27_X3E_X3Cbutton_X20name_X3D_X27del_X25i_X27_X20style_X3D_X27background_X3Anone_X3Bborder_X3Anone_X3Bline_X2Dheight_X3A1_X3B_X27_X20onclick_X3D_X22return_X20confirm_X28_X27Confirm_X20removing_X20endpoint_X27_X29_X22_X3E_X26_X23128293_X3B_X3C_X2Fbutton_X3E_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E),
     /* K43  */  be_nested_str_weak(_X3C_X2Ftable_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
-    /* K44  */  be_nested_str_weak(_X3Cbutton_X20name_X3D_X27config_X27_X20class_X3D_X27button_X20bgrn_X27_X3EChange_X20configuration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E),
-    /* K45  */  be_nested_str_weak(_X3Chr_X3E_X3Cp_X3E_X3Cb_X3EAdd_X20local_X20sensor_X20or_X20device_X3C_X2Fb_X3E_X3C_X2Fp_X3E_X3Cform_X20action_X3D_X27_X2Fmatterc_X27_X20method_X3D_X27post_X27_X3E_X3Ctable_X20style_X3D_X27width_X3A100_X25_X27_X3E_X3Ctr_X3E_X3Ctd_X20width_X3D_X27145_X27_X3EType_X3C_X2Ftd_X3E_X3Ctd_X3EParameter_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E),
-    /* K46  */  be_nested_str_weak(_X3Ctr_X3E_X3Ctd_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cselect_X20name_X3D_X27pi_X27_X3E),
-    /* K47  */  be_nested_str_weak(plugin_option),
-    /* K48  */  be_nested_str_weak(_CLASSES_TYPES),
-    /* K49  */  be_nested_str_weak(_X3C_X2Fselect_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E),
-    /* K50  */  be_nested_str_weak(_X3Ctd_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cinput_X20type_X3D_X27text_X27_X20name_X3D_X27arg_X27_X20minlength_X3D_X270_X27_X20size_X3D_X278_X27_X20value_X3D_X27_X27_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E_X3C_X2Ftable_X3E),
-    /* K51  */  be_nested_str_weak(_X3Cdiv_X20style_X3D_X27display_X3A_X20block_X3B_X27_X3E_X3C_X2Fdiv_X3E),
-    /* K52  */  be_nested_str_weak(_X3Cbutton_X20name_X3D_X27addep_X27_X20class_X3D_X27button_X20bgrn_X27_X3ECreate_X20new_X20endpoint_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E),
-    /* K53  */  be_nested_str_weak(_X3Chr_X3E_X3Cp_X3E_X3Cb_X3EAdd_X20Remote_X20Tasmota_X3C_X2Fb_X3E_X3C_X2Fp_X3E_X3Cform_X20action_X3D_X27_X2Fmatteradd_X27_X20method_X3D_X27get_X27_X3E_X3Ctable_X20style_X3D_X27width_X3A100_X25_X27_X3E),
-    /* K54  */  be_nested_str_weak(_X3Ctr_X3E_X3Ctd_X20width_X3D_X2730_X27_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cb_X3Ehttp_X3A_X2F_X2F_X3C_X2Fb_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3Ctd_X3E_X3Cinput_X20type_X3D_X27text_X27_X20name_X3D_X27url_X27_X20minlength_X3D_X270_X27_X20size_X3D_X278_X27_X20value_X3D_X27_X27_X20required_X20placeholder_X3D_X27IP_X20or_X20domain_X27_X3E_X3C_X2Ftd_X3E_X3Ctd_X20width_X3D_X2710_X27_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cb_X3E_X2F_X3C_X2Fb_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E_X3C_X2Ftr_X3E_X3C_X2Ftable_X3E),
-    /* K55  */  be_nested_str_weak(_X3Cbutton_X20class_X3D_X27button_X20bgrn_X27_X3EAuto_X2Dconfigure_X20remote_X20Tasmota_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3Chr_X3E),
-    /* K56  */  be_nested_str_weak(_X3Cform_X20action_X3D_X27_X2Fmatterc_X27_X20method_X3D_X27post_X27onsubmit_X3D_X27return_X20confirm_X28_X22This_X20will_X20RESET_X20the_X20configuration_X20to_X20the_X20default_X2E_X20You_X20will_X20need_X20to_X20associate_X20again_X2E_X22_X29_X3B_X27_X3E_X3Cbutton_X20name_X3D_X27auto_X27_X20class_X3D_X27button_X20bred_X27_X3EReset_X20and_X20Auto_X2Ddiscover_X3C_X2Fbutton_X3E_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Fform_X3E),
-    /* K57  */  be_nested_str_weak(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E),
+    /* K44  */  be_nested_str_weak(_X3Cbutton_X20name_X3D_X27config_X27_X20class_X3D_X27button_X20bgrn_X27_X3EChange_X20configuration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E),
+    /* K45  */  be_nested_str_weak(_X3Cp_X3E_X3C_X2Fp_X3E_X3Cfieldset_X3E_X3Clegend_X3E_X3Cb_X3E_X26nbsp_X3BAdd_X20to_X20Configuration_X26nbsp_X3B_X3C_X2Fb_X3E_X3C_X2Flegend_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
+    /* K46  */  be_nested_str_weak(_X3Cp_X3E_X3Cb_X3EAdd_X20local_X20sensor_X20or_X20device_X3C_X2Fb_X3E_X3C_X2Fp_X3E_X3Cform_X20action_X3D_X27_X2Fmatterc_X27_X20method_X3D_X27post_X27_X3E_X3Ctable_X20style_X3D_X27width_X3A100_X25_X27_X3E_X3Ctr_X3E_X3Ctd_X20width_X3D_X27145_X27_X3EType_X3C_X2Ftd_X3E_X3Ctd_X3EParameter_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E),
+    /* K47  */  be_nested_str_weak(_X3Ctr_X3E_X3Ctd_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cselect_X20name_X3D_X27pi_X27_X3E),
+    /* K48  */  be_nested_str_weak(plugin_option),
+    /* K49  */  be_nested_str_weak(_CLASSES_TYPES),
+    /* K50  */  be_nested_str_weak(_X3C_X2Fselect_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E),
+    /* K51  */  be_nested_str_weak(_X3Ctd_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cinput_X20type_X3D_X27text_X27_X20name_X3D_X27arg_X27_X20minlength_X3D_X270_X27_X20size_X3D_X278_X27_X20value_X3D_X27_X27_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E_X3C_X2Ftable_X3E),
+    /* K52  */  be_nested_str_weak(_X3Cdiv_X20style_X3D_X27display_X3A_X20block_X3B_X27_X3E_X3C_X2Fdiv_X3E),
+    /* K53  */  be_nested_str_weak(_X3Cbutton_X20name_X3D_X27addep_X27_X20class_X3D_X27button_X20bgrn_X27_X3ECreate_X20new_X20endpoint_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E),
+    /* K54  */  be_nested_str_weak(_X3Chr_X3E_X3Cp_X3E_X3Cb_X3EAdd_X20Remote_X20Tasmota_X3C_X2Fb_X3E_X3C_X2Fp_X3E_X3Cform_X20action_X3D_X27_X2Fmatteradd_X27_X20method_X3D_X27get_X27_X3E_X3Ctable_X20style_X3D_X27width_X3A100_X25_X27_X3E),
+    /* K55  */  be_nested_str_weak(_X3Ctr_X3E_X3Ctd_X20width_X3D_X2730_X27_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cb_X3Ehttp_X3A_X2F_X2F_X3C_X2Fb_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3Ctd_X3E_X3Cinput_X20type_X3D_X27text_X27_X20name_X3D_X27url_X27_X20minlength_X3D_X270_X27_X20size_X3D_X278_X27_X20value_X3D_X27_X27_X20required_X20placeholder_X3D_X27IP_X20or_X20domain_X27_X3E_X3C_X2Ftd_X3E_X3Ctd_X20width_X3D_X2710_X27_X3E_X3Cfont_X20size_X3D_X27_X2D1_X27_X3E_X3Cb_X3E_X2F_X3C_X2Fb_X3E_X3C_X2Ffont_X3E_X3C_X2Ftd_X3E_X3C_X2Ftr_X3E_X3C_X2Ftr_X3E_X3C_X2Ftable_X3E),
+    /* K56  */  be_nested_str_weak(_X3Cbutton_X20class_X3D_X27button_X20bgrn_X27_X3EAuto_X2Dconfigure_X20remote_X20Tasmota_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3Chr_X3E),
+    /* K57  */  be_nested_str_weak(_X3Cform_X20action_X3D_X27_X2Fmatterc_X27_X20method_X3D_X27post_X27onsubmit_X3D_X27return_X20confirm_X28_X22This_X20will_X20RESET_X20the_X20configuration_X20to_X20the_X20default_X2E_X20You_X20will_X20need_X20to_X20associate_X20again_X2E_X22_X29_X3B_X27_X3E_X3Cbutton_X20name_X3D_X27auto_X27_X20class_X3D_X27button_X20bred_X27_X3EReset_X20all_X20and_X20Auto_X2Ddiscover_X3C_X2Fbutton_X3E_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Fform_X3E),
+    /* K58  */  be_nested_str_weak(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E),
     }),
     be_str_weak(show_plugins_configuration),
     &be_const_str_solidified,
-    ( &(const binstruction[308]) {  /* code */
+    ( &(const binstruction[311]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0xA40E0400,  //  0002  IMPORT	R3	K2
@@ -2661,13 +2662,13 @@ be_local_closure(Matter_UI_show_plugins_configuration,   /* name */
       0x8C200303,  //  010E  GETMET	R8	R1	K3
       0x5828002E,  //  010F  LDCONST	R10	K46
       0x7C200400,  //  0110  CALL	R8	2
-      0x8C20012F,  //  0111  GETMET	R8	R0	K47
-      0x58280011,  //  0112  LDCONST	R10	K17
-      0x882C0130,  //  0113  GETMBR	R11	R0	K48
-      0x7C200600,  //  0114  CALL	R8	3
-      0x8C200303,  //  0115  GETMET	R8	R1	K3
-      0x58280031,  //  0116  LDCONST	R10	K49
-      0x7C200400,  //  0117  CALL	R8	2
+      0x8C200303,  //  0111  GETMET	R8	R1	K3
+      0x5828002F,  //  0112  LDCONST	R10	K47
+      0x7C200400,  //  0113  CALL	R8	2
+      0x8C200130,  //  0114  GETMET	R8	R0	K48
+      0x58280011,  //  0115  LDCONST	R10	K17
+      0x882C0131,  //  0116  GETMBR	R11	R0	K49
+      0x7C200600,  //  0117  CALL	R8	3
       0x8C200303,  //  0118  GETMET	R8	R1	K3
       0x58280032,  //  0119  LDCONST	R10	K50
       0x7C200400,  //  011A  CALL	R8	2
@@ -2684,10 +2685,10 @@ be_local_closure(Matter_UI_show_plugins_configuration,   /* name */
       0x58280036,  //  0125  LDCONST	R10	K54
       0x7C200400,  //  0126  CALL	R8	2
       0x8C200303,  //  0127  GETMET	R8	R1	K3
-      0x58280033,  //  0128  LDCONST	R10	K51
+      0x58280037,  //  0128  LDCONST	R10	K55
       0x7C200400,  //  0129  CALL	R8	2
       0x8C200303,  //  012A  GETMET	R8	R1	K3
-      0x58280037,  //  012B  LDCONST	R10	K55
+      0x58280034,  //  012B  LDCONST	R10	K52
       0x7C200400,  //  012C  CALL	R8	2
       0x8C200303,  //  012D  GETMET	R8	R1	K3
       0x58280038,  //  012E  LDCONST	R10	K56
@@ -2695,7 +2696,10 @@ be_local_closure(Matter_UI_show_plugins_configuration,   /* name */
       0x8C200303,  //  0130  GETMET	R8	R1	K3
       0x58280039,  //  0131  LDCONST	R10	K57
       0x7C200400,  //  0132  CALL	R8	2
-      0x80000000,  //  0133  RET	0
+      0x8C200303,  //  0133  GETMET	R8	R1	K3
+      0x5828003A,  //  0134  LDCONST	R10	K58
+      0x7C200400,  //  0135  CALL	R8	2
+      0x80000000,  //  0136  RET	0
     })
   )
 );
