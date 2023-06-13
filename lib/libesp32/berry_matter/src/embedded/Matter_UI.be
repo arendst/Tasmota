@@ -429,7 +429,7 @@ class Matter_UI
                            ">Create new endpoint</button></form>")
 
     # Add remote endpoint
-    webserver.content_send("<hr><p><b>Add Remote Tasmota</b></p>"
+    webserver.content_send("<hr><p><b>Add Remote Tasmota or OpenBK</b></p>"
                            "<form action='/matteradd' method='get'>"
                            "<table style='width:100%'>")
     webserver.content_send("<tr><td width='30' style='font-size:smaller;'><b>http://</b></td><td><input type='text' name='url' size='8' value='' required placeholder='IP or domain'></td><td width='10' style='font-size:smaller;'><b>/</b></td></tr>"
