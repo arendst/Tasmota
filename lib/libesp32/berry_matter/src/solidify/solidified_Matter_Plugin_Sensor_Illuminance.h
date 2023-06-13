@@ -28,7 +28,7 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
     /* K5   */  be_const_int(0),
     /* K6   */  be_nested_str_weak(shadow_value),
     /* K7   */  be_nested_str_weak(create_TLV),
-    /* K8   */  be_nested_str_weak(I2),
+    /* K8   */  be_nested_str_weak(U2),
     /* K9   */  be_nested_str_weak(NULL),
     /* K10  */  be_const_int(1),
     /* K11  */  be_const_int(2),
@@ -71,7 +71,7 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
       0x781E0005,  //  001D  JMPF	R7	#0024
       0x8C1C0907,  //  001E  GETMET	R7	R4	K7
       0x88240908,  //  001F  GETMBR	R9	R4	K8
-      0x58280005,  //  0020  LDCONST	R10	K5
+      0x5828000A,  //  0020  LDCONST	R10	K10
       0x7C1C0600,  //  0021  CALL	R7	3
       0x80040E00,  //  0022  RET	1	R7
       0x70020018,  //  0023  JMP		#003D
@@ -79,7 +79,7 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
       0x781E0005,  //  0025  JMPF	R7	#002C
       0x8C1C0907,  //  0026  GETMET	R7	R4	K7
       0x88240908,  //  0027  GETMBR	R9	R4	K8
-      0x542A270F,  //  0028  LDINT	R10	10000
+      0x542AFFFD,  //  0028  LDINT	R10	65534
       0x7C1C0600,  //  0029  CALL	R7	3
       0x80040E00,  //  002A  RET	1	R7
       0x70020010,  //  002B  JMP		#003D
@@ -121,27 +121,40 @@ be_local_closure(Matter_Plugin_Sensor_Illuminance_read_attribute,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Illuminance_pre_value,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(math),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_weak(log10),
+    /* K3   */  be_const_int(1),
+    }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
+    ( &(const binstruction[17]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0003,  //  0002  JMPF	R2	#0007
-      0x60080009,  //  0003  GETGBL	R2	G9
-      0x5C0C0200,  //  0004  MOVE	R3	R1
-      0x7C080200,  //  0005  CALL	R2	1
-      0x70020000,  //  0006  JMP		#0008
-      0x4C080000,  //  0007  LDNIL	R2
-      0x80040400,  //  0008  RET	1	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0001,  //  0002  JMPF	R2	#0005
+      0x4C080000,  //  0003  LDNIL	R2
+      0x80040400,  //  0004  RET	1	R2
+      0xA40A0000,  //  0005  IMPORT	R2	K0
+      0x140C0301,  //  0006  LT	R3	R1	K1
+      0x780E0001,  //  0007  JMPF	R3	#000A
+      0x80060200,  //  0008  RET	1	K1
+      0x70020005,  //  0009  JMP		#0010
+      0x8C0C0502,  //  000A  GETMET	R3	R2	K2
+      0x00140303,  //  000B  ADD	R5	R1	K3
+      0x7C0C0400,  //  000C  CALL	R3	2
+      0x5412270F,  //  000D  LDINT	R4	10000
+      0x080C0604,  //  000E  MUL	R3	R3	R4
+      0x80040600,  //  000F  RET	1	R3
+      0x80000000,  //  0010  RET	0
     })
   )
 );

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Matter ability to add or remove endpoint in bridge mode (code only)
 - Matter add controller's Vendor Name to logs and UI
+- Matter redesigned UI
 
 ### Breaking Changed
 
@@ -18,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
 - Fixed HASPmota event when value is non-integer (fixes #18229)
+- Matter fix local Occupancy sensor
 
 ### Removed
 

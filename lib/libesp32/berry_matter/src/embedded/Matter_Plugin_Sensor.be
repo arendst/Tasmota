@@ -28,16 +28,18 @@ class Matter_Plugin_Device end
 
 class Matter_Plugin_Sensor : Matter_Plugin_Device
   static var ARG  = "filter"                        # additional argument name (or empty if none)
+  static var ARG_HINT = "Enter Filter pattern"
   static var UPDATE_TIME = 5000                     # update sensor every 5s
   var tasmota_sensor_filter                         # Rule-type filter to the value, like "ESP32#Temperature"
   var tasmota_sensor_matcher                        # Actual matcher object
   var shadow_value                                  # Last known value
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-    self.tasmota_sensor_filter = arguments.find(self.ARG#-'filter'-#)
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_sensor_filter = config.find(self.ARG#-'filter'-#)
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
     end

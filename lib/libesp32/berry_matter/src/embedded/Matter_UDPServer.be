@@ -125,7 +125,7 @@ class Matter_UDPServer
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
-      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 3)
+      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
       if self.dispatch_cb
         self.dispatch_cb(packet, from_addr, from_port)
       end
@@ -149,7 +149,7 @@ class Matter_UDPServer
     if ok
       tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
     else
-      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 2)
+      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
     end
     return ok
   end
@@ -169,7 +169,7 @@ class Matter_UDPServer
       var packet = self.packets_sent[idx]
       if tasmota.time_reached(packet.next_try)
         if packet.retries <= self.RETRIES
-          tasmota.log("MTR: .          Resending packet id=" + str(packet.msg_id), 3)
+          tasmota.log("MTR: .          Resending packet id=" + str(packet.msg_id), 4)
           self.send(packet)
           packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)
           packet.retries += 1
@@ -177,7 +177,7 @@ class Matter_UDPServer
         else
           import string
           self.packets_sent.remove(idx)
-          tasmota.log(string.format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 2)
+          tasmota.log(string.format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 3)
         end
       else
         idx += 1
@@ -191,13 +191,13 @@ class Matter_UDPServer
     var id = msg.ack_message_counter
     var exch = msg.exchange_id
     if id == nil   return end
-    tasmota.log("MTR: receveived ACK id="+str(id), 3)
+    # tasmota.log("MTR: receveived ACK id="+str(id), 4)
     var idx = 0
     while idx < size(self.packets_sent)
       var packet = self.packets_sent[idx]
       if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
-        tasmota.log("MTR: .          Removed packet from sending list id=" + str(id), 3)
+        tasmota.log("MTR: .          Removed packet from sending list id=" + str(id), 4)
       else
         idx += 1
       end

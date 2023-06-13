@@ -31,6 +31,7 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   # static var NAME = ""                              # display name of the plug-in
   static var ARG  = "filter"                        # additional argument name (or empty if none)
   static var ARG_HTTP = "url"                       # domain name
+  static var ARG_HINT = "Enter Filter pattern"
   static var UPDATE_TIME = 5000                     # update every 5s
   static var UPDATE_CMD = "Status 8"                # command to send for updates
   static var PROBE_TIMEOUT = 1700                   # timeout of 1700 ms for probing, which gives at least 1s for TCP recovery
@@ -40,10 +41,11 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   var shadow_value                                  # Last known value
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-    self.tasmota_sensor_filter = arguments.find(self.ARG#-'filter'-#)
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_sensor_filter = config.find(self.ARG#-'filter'-#)
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
     end

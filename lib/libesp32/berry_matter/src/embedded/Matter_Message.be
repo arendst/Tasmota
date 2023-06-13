@@ -302,7 +302,7 @@ class Matter_Frame
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
       if !op_name   op_name = string.format("0x%02X", resp.opcode) end
-      tasmota.log(string.format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 2)
+      tasmota.log(string.format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
     end
     return resp
   end
@@ -401,7 +401,7 @@ class Matter_Frame
     # tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
-      tasmota.log("MTR: rejected packet due to invalid MIC", 2)
+      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
       return nil
     end
 
@@ -465,7 +465,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
+    # tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

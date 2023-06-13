@@ -28,8 +28,9 @@ class Matter_Plugin_Bridge_HTTP end
 
 class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   static var TYPE = "http_light0"                   # name of the plug-in in json
-  static var NAME = "&#x1F517; Light 0 On"          # display name of the plug-in
+  static var NAME = "Light 0 On"          # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_HINT = "Enter Power<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 3000                     # update every 3s
   # static var UPDATE_CMD = "Status 11"               # command to send for updates
@@ -40,7 +41,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
-  static var TYPES = { 0x0100: 2, 0x0013: 1 }       # OnOff Light, but not actually used because Relay is managed by OnOff
+  static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
 
   var tasmota_relay_index                           # Relay number in Tasmota (one based)
   var shadow_onoff                                  # fake status for now # TODO

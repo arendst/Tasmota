@@ -87,6 +87,8 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x142D, "QH"},
   { 0x142F, "QIACHIP"},
   { 0x6006, "Google LLC"},
+  
+  { 0x134B, "Nabu Casa"},
 
   { 0xFFFF, NULL },
 };

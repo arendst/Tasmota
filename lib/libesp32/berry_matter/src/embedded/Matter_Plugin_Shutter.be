@@ -31,6 +31,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var NAME = "Shutter"                       # display name of the plug-in
   static var ARG  = "shutter"                       # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  static var ARG_HINT = "Enter Relay<x> number"
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
@@ -48,10 +49,11 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   var shadow_shutter_inverted                       # 1=same as matter 0=matter must invert
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-    self.tasmota_shutter_index = arguments.find(self.ARG #-'relay'-#)
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_shutter_index = config.find(self.ARG #-'relay'-#)
     if self.tasmota_shutter_index == nil     self.tasmota_shutter_index = 0   end
     self.shadow_shutter_inverted = -1
   end
@@ -67,10 +69,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       if r_st13.contains('StatusSHT')
         r_st13 = r_st13['StatusSHT']        # skip root
         var d = r_st13.find("SHT"+str(self.tasmota_shutter_index), {}).find('Opt')
-        tasmota.log("MTR: opt: "+str(d))
+        # tasmota.log("MTR: opt: "+str(d))
         if d != nil
           self.shadow_shutter_inverted = int(d[size(d)-1])  # inverted is at the most right character
-          tasmota.log("MTR: Inverted flag: "+str(self.shadow_shutter_inverted))
+          # tasmota.log("MTR: Inverted flag: "+str(self.shadow_shutter_inverted))
         end
       end
     end

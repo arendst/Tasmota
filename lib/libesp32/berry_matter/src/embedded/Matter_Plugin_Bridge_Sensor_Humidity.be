@@ -28,12 +28,12 @@ class Matter_Plugin_Bridge_Sensor end
 
 class Matter_Plugin_Bridge_Sensor_Humidity : Matter_Plugin_Bridge_Sensor
   static var TYPE = "http_humidity"                 # name of the plug-in in json
-  static var NAME = "&#x1F517; Humidity"            # display name of the plug-in
+  static var NAME = "Humidity"            # display name of the plug-in
 
   static var CLUSTERS  = {
     0x0405: [0,1,2,0xFFFC,0xFFFD],                  # Humidity Measurement p.102 - no writable
   }
-  static var TYPES = { 0x0307: 2, 0x0013: 1  }      # Humidity Sensor, rev 2
+  static var TYPES = { 0x0307: 2 }                  # Humidity Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value

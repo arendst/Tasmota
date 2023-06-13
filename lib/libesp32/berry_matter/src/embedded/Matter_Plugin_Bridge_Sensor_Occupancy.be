@@ -27,17 +27,18 @@ class Matter_Plugin_Bridge_HTTP end
 #@ solidify:Matter_Plugin_Bridge_Sensor_Occupancy,weak
 
 class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
-  static var TYPE = "http_occupancy"              # name of the plug-in in json
-  static var NAME = "&#x1F517; Occupancy"         # display name of the plug-in
-  static var ARG  = "switch"                      # additional argument name (or empty if none)
+  static var TYPE = "http_occupancy"                # name of the plug-in in json
+  static var NAME = "Occupancy"           # display name of the plug-in
+  static var ARG  = "switch"                        # additional argument name (or empty if none)
+  static var ARG_HINT = "Enter Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 5s
-  static var UPDATE_CMD = "Status 8"               # command to send for updates
+  static var UPDATE_CMD = "Status 8"                # command to send for updates
 
   static var CLUSTERS  = {
     0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
   }
-  static var TYPES = { 0x0107: 2, 0x0013: 1  }      # Occupancy Sensor, rev 2
+  static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_occupancy

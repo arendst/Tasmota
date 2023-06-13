@@ -50,9 +50,9 @@ class Matter_Plugin_Root : Matter_Plugin
 
   #############################################################
   # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
-  end
+  # def init(device, endpoint, config)
+  #   super(self).init(device, endpoint, config)
+  # end
 
   #############################################################
   # read an attribute
@@ -416,7 +416,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
         var ac = session.get_ac()
         var attestation_tbs = attestation_message + ac
-        tasmota.log("MTR: attestation_tbs=" + attestation_tbs.tohex(), 3)
+        # tasmota.log("MTR: attestation_tbs=" + attestation_tbs.tohex(), 4)
 
         var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.DAC_Priv_FFF1_8000(), attestation_tbs)
 
@@ -433,7 +433,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool
-        tasmota.log(string.format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 3)
+        # tasmota.log(string.format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 4)
 
         var csr = session.gen_CSR()
 
@@ -443,7 +443,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var nocsr_elements_message = nocsr_elements.tlv2raw()
         # sign with attestation challenge
         var nocsr_tbs = nocsr_elements_message + session.get_ac()
-        tasmota.log("MTR: nocsr_tbs=" + nocsr_tbs.tohex(), 3)
+        # tasmota.log("MTR: nocsr_tbs=" + nocsr_tbs.tohex(), 4)
         var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.DAC_Priv_FFF1_8000(), nocsr_tbs)
         
         # create CSRResponse
@@ -459,12 +459,12 @@ class Matter_Plugin_Root : Matter_Plugin
         var RootCACertificate = val.findsubval(0)     # octstr 400 max
         # TODO - additional tests are expected according to 11.17.7.13. AddTrustedRootCertificate Command
         session.set_temp_ca(RootCACertificate)
-        tasmota.log("MTR: received ca_root="+RootCACertificate.tohex(), 3)
+        # tasmota.log("MTR: received ca_root="+RootCACertificate.tohex(), 4)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
       elif command == 0x0006            # ---------- AddNOC ----------
-        tasmota.log("MTR: AddNoc Args=" + str(val), 3)
+        tasmota.log("MTR: AddNoc Args=" + str(val), 4)
         var NOCValue = val.findsubval(0)        # octstr max 400
         var ICACValue = val.findsubval(1)       # octstr max 400
         # Apple sends an empty ICAC instead of a missing attribute, fix this
@@ -550,7 +550,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0009            # ---------- UpdateFabricLabel ----------
         var label = val.findsubval(0)     # Label string max 32
         session.set_fabric_label(label)
-        tasmota.log(string.format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 2)
+        tasmota.log(string.format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
@@ -560,7 +560,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
         for fab: self.device.sessions.active_fabrics()
           if fab.get_fabric_index() == index
-            tasmota.log("MTR: removing fabric " + fab.get_fabric_id().copy().reverse().tohex(), 2)
+            # tasmota.log("MTR: removing fabric " + fab.get_fabric_id().copy().reverse().tohex(), 2)
             # defer actual removal to send a response
             tasmota.set_timer(2000, def () self.device.remove_fabric(fab) end)
             return true                 # Ok
@@ -583,7 +583,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var salt = val.findsubval(4)                # Salt octstr
 
         tasmota.log(string.format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
-                                  timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 2)
+                                  timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 4)
 
         # check values
         if timeout == nil || passcode_verifier == nil || discriminator == nil || iterations == nil || salt == nil
@@ -591,7 +591,7 @@ class Matter_Plugin_Root : Matter_Plugin
           return nil                      # trigger a standalone ack
         end
         if size(passcode_verifier) != 32+65 || size(salt) < 16 || size(salt) > 32
-          tasmota.log("MTR: wrong size for PAKE parameters")
+          tasmota.log("MTR: wrong size for PAKE parameters", 2)
           ctx.status = matter.CONSTRAINT_ERROR
           return nil                      # trigger a standalone ack
         end
@@ -604,7 +604,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return true                   # OK
       elif command == 0x0001          #  ---------- OpenBasicCommissioningWindow  ----------
         var commissioning_timeout = val.findsubval(0)     # CommissioningTimeout
-        tasmota.log("MTR: OpenBasicCommissioningWindow commissioning_timeout="+str(commissioning_timeout), 2)
+        tasmota.log("MTR: OpenBasicCommissioningWindow commissioning_timeout="+str(commissioning_timeout), 3)
         self.device.start_root_basic_commissioning(commissioning_timeout)
         return true
       elif command == 0x0002          #  ---------- RevokeCommissioning  ----------

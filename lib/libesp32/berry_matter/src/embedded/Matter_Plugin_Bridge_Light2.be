@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Light1 end
 
 class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   static var TYPE = "http_light2"                   # name of the plug-in in json
-  static var NAME = "&#x1F517; Light 2 CT"      # display name of the plug-in
+  static var NAME = "Light 2 CT"      # display name of the plug-in
   # static var ARG  = "relay"                         # additional argument name (or empty if none)
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = {
@@ -40,7 +40,7 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
     # 0x0008: inherited                             # Level Control 1.6 p.57
     0x0300: [7,8,0xF,0x400A,0x400B,0x400C,0xFFFC,0xFFFD],  # Color Control 3.2 p.111
   }
-  static var TYPES = { 0x010C: 2, 0x0013: 1 }       # Dimmable Light
+  static var TYPES = { 0x010C: 2 }                  # Dimmable Light
 
   var shadow_ct
   var ct_min, ct_max
