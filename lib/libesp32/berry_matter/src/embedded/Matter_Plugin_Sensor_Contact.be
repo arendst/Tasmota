@@ -33,9 +33,9 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 250ms
   static var CLUSTERS  = {
-    0x0015: [0,1,2,0xFFFC,0xFFFD],                  # Contact Sensing p.105 - no writable
+    0x0045: [0,0xFFFC,0xFFFD],                       # Boolean State p.70 - no writable
   }
-  static var TYPES = { 0x0107: 2 }                  # Contact Sensor, rev 2
+  static var TYPES = { 0x0015: 1 }                   # Contact Sensor, rev 1
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_Contact
@@ -81,22 +81,17 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    // CHIP_DEVICE_CONFIG_DEVICE_TYPE 0x0015 // Contact sensor
-    if   cluster == 0x0015              # ========== Contact Sensing ==========
-      if   attribute == 0x0000          #  ---------- Contact / U8 ----------
+    if   cluster == 0x0045              # ========== Boolean State ==========
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
         if self.shadow_Contact != nil
-          return TLV.create_TLV(TLV.U1, self.shadow_Contact)
+          return TLV.create_TLV(TLV.BOOL, self.shadow_Contact)
         else
           return TLV.create_TLV(TLV.NULL, nil)
         end
-      elif attribute == 0x0001          #  ---------- ContactSensorType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 3)  # physical contact
-      elif attribute == 0x0002          #  ---------- ContactSensorTypeBitmap / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0)  # unknown
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 4 = New data model format and notation
+        return TLV.create_TLV(TLV.U4, 1)    # 1 = Initial release
       end
 
     else
