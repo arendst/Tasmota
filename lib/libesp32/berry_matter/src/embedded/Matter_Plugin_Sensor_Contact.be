@@ -33,9 +33,9 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 250ms
   static var CLUSTERS  = {
-    0x0045: [0,0xFFFC,0xFFFD],                       # Boolean State p.70 - no writable
+    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
   }
-  static var TYPES = { 0x0015: 1 }                   # Contact Sensor, rev 1
+  static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_Contact
