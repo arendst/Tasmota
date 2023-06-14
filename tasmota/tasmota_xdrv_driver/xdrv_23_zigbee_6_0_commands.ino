@@ -509,18 +509,10 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         break;
       }
     } else {  // general case
-      // do we send command with endpoint suffix
-      char command_suffix[4] = { 0x00 };  // empty string by default
-      // if SO101 and multiple endpoints, append endpoint number
-      if (Settings->flag4.zb_index_ep) {
-        if (zigbee_devices.getShortAddr(shortaddr).countEndpoints() > 0) {
-          snprintf_P(command_suffix, sizeof(command_suffix), PSTR("%d"), srcendpoint);
-        }
-      }
       if (0 == xyz.x_type) {
-        attr_list.addAttribute(command_name, command_suffix).setBool(true);
+        attr_list.addAttribute(command_name).setBool(true);
       } else if (0 == xyz.y_type) {
-        attr_list.addAttribute(command_name, command_suffix).setUInt(xyz.x);
+        attr_list.addAttribute(command_name).setUInt(xyz.x);
       } else {
         // multiple answers, create an array
         JsonGeneratorArray arr;
@@ -529,7 +521,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         if (xyz.z_type) {
           arr.add(xyz.z);
         }
-        attr_list.addAttribute(command_name, command_suffix).setStrRaw(arr.toString().c_str());
+        attr_list.addAttribute(command_name).setStrRaw(arr.toString().c_str());
       }
     }
   }
