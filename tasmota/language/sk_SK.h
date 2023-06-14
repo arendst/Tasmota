@@ -58,7 +58,7 @@
 #define D_AS "ako"
 #define D_AUTO "AUTO"
 #define D_BATT "Batt"                // Short for Battery
-#define D_BATTERY_CAPACITY "Capacity"
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blikanie"
 #define D_BLINKOFF "BlikanieVyp"
 #define D_BOOT_COUNT "Počítadlo spustení"

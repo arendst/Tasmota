@@ -58,7 +58,7 @@
 #define D_AS "als"
 #define D_AUTO "AUTO"
 #define D_BATT "Batt"                // Short for Battery
-#define D_BATTERY_CAPACITY "Capaciteit"
+#define D_BATTERY_CHARGE "Lading"    // Battery charge in %
 #define D_BLINK "Blinkje"
 #define D_BLINKOFF "BlinkjeUit"
 #define D_BOOT_COUNT "Op 'e nij begjinne"
