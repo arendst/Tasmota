@@ -223,6 +223,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Light0.h"
@@ -235,8 +237,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Occupancy.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_OnOff.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Contact.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -441,6 +442,7 @@ module matter (scope: global, strings: weak) {
   Plugin_Bridge_Sensor_Illuminance, class(be_class_Matter_Plugin_Bridge_Sensor_Illuminance)   // HTTP Illuminance sensor
   Plugin_Bridge_Sensor_Humidity, class(be_class_Matter_Plugin_Bridge_Sensor_Humidity)   // HTTP Humidity sensor
   Plugin_Bridge_Sensor_Occupancy, class(be_class_Matter_Plugin_Bridge_Sensor_Occupancy)   // HTTP Occupancy sensor
+  Plugin_Bridge_Sensor_Contact, class(be_class_Matter_Plugin_Bridge_Sensor_Contact)   // HTTP Contact sensor
 }
 
 @const_object_info_end */

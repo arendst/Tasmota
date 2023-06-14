@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Contact.be - implements the behavior for a Contact Sensor
+# Matter_Plugin_Bridge_Sensor_Contact.be - implements Contact Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -22,17 +22,19 @@ import matter
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin_Device end
+class Matter_Plugin_Bridge_HTTP end
 
-#@ solidify:Matter_Plugin_Sensor_Contact,weak
+#@ solidify:Matter_Plugin_Bridge_Sensor_Contact,weak
 
-class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
-  static var TYPE = "contact"                       # name of the plug-in in json
+class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
+  static var TYPE = "http_contact"                  # name of the plug-in in json
   static var NAME = "Contact"                       # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Enter Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 5000                     # update every 250ms
+  static var UPDATE_TIME = 5000                     # update every 5s
+  static var UPDATE_CMD = "Status 8"                # command to send for updates
+
   static var CLUSTERS  = {
     0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
   }
@@ -42,33 +44,27 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   var shadow_contact
 
   #############################################################
-  # parse_configuration
-  #
-  # Parse configuration map
-  def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
+  # Constructor
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
+    self.tasmota_switch_index = int(arguments.find(self.ARG #-'switch'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
   #############################################################
-  # Update shadow
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
-  def update_shadow()
-    super(self).update_shadow()
+  # This call is synnchronous and blocking.
+  def parse_update(data, index)
+    if index == 8                              # Status 8 
+      var state = false
 
-    import json
-    var ret = tasmota.cmd("Status 8", true)
-    if ret != nil
-      var j = json.load(ret)
-      if j != nil
-        var state = false
-        state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
 
-        if self.shadow_contact != nil && self.shadow_contact != bool(state)
-          self.attribute_updated(0x0045, 0x0000)
-        end
-        self.shadow_contact = state
+      if self.shadow_contact != nil && self.shadow_contact != bool(state)
+        self.attribute_updated(0x0045, 0x0000)
       end
+      self.shadow_contact = state
     end
   end
 
@@ -100,5 +96,15 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     end
   end
 
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    import string
+    webserver.content_send(string.format("| Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_contact)))
+  end
+
 end
-matter.Plugin_Sensor_Contact = Matter_Plugin_Sensor_Contact
+matter.Plugin_Bridge_Sensor_Contact = Matter_Plugin_Bridge_Sensor_Contact
