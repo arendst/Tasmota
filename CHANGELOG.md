@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Matter ability to add or remove endpoint in bridge mode (code only)
 - Matter add controller's Vendor Name to logs and UI
 - Matter redesigned UI
+- Matter add support for Contact Sensor
 
 ### Breaking Changed
 
