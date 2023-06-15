@@ -43,41 +43,6 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
 
-// #include "esp_event.h"
-// #include "esp_system.h"
-// #include "esp_partition.h"
-// #include "nvs_flash.h"
-// #include <Preferences.h>
-
-// #include "trezor-crypto/options.h"
-// #include "trezor-crypto/address.h"
-// #include "trezor-crypto/aes/aes.h"
-// #include "trezor-crypto/base32.h"
-// #include "trezor-crypto/base58.h"
-// #include "trezor-crypto/bignum.h"
-// #include "trezor-crypto/bip32.h"
-// #include "trezor-crypto/bip39.h"
-// #include "trezor-crypto/blake256.h"
-// #include "trezor-crypto/blake2b.h"
-// #include "trezor-crypto/blake2s.h"
-// #include "trezor-crypto/curves.h"
-// #include "trezor-crypto/ecdsa.h"
-// #include "trezor-crypto/ed25519-donna/ed25519-donna.h"
-// #include "trezor-crypto/ed25519-donna/curve25519-donna-scalarmult-base.h"
-// #include "trezor-crypto/ed25519-donna/ed25519-keccak.h"
-// #include "trezor-crypto/ed25519-donna/ed25519.h"
-// #include "trezor-crypto/hmac.h"
-// #include "trezor-crypto/memzero.h"
-// #include "trezor-crypto/nist256p1.h"
-// #include "trezor-crypto/pbkdf2.h"
-// #include "trezor-crypto/rand.h"
-// #include "trezor-crypto/rc4.h"
-// #include "trezor-crypto/rfc6979.h"
-// #include "trezor-crypto/script.h"
-// #include "trezor-crypto/secp256k1.h"
-// #include "trezor-crypto/sha2.h"
-// #include "trezor-crypto/sha3.h"
-
 #define FROMHEX_MAXLEN 512
 
 #define VERSION_PUBLIC 0x0488b21e
@@ -142,45 +107,7 @@ const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/
 #endif  // ESP32
 ;
 
-//const char* WifiMnemonic(const char* entropy)
-//{
-//  HDNode node;
-//  uint8_t seed[64];
-//  const char *m;
-//  int i;
-//
-//  /* The entropy has to come from a TRNG running on a secure element */
-//  const char entropy_buffer [] = "0A01020B040506C708090a0bDc0d0e0f00010E030405060708FF0a0b0c0d0e0f";
-//
-//  m = mnemonic_from_data(fromhex(entropy_buffer), strlen(entropy_buffer)/2);
-//
-//  uint8_t buf[32] = {0};
-//  esp_fill_random(buf, 32);
-//
-//  String data;
-//  for (int i=0; i<32; i++)
-//  {
-//    static char tmp[4] = {};
-//    sprintf(tmp, "%02X", buf[i]);
-//    Serial.write(tmp);
-//    data += tmp;
-//  }
-//
-//
-//  const char *m2;
-//  m2 = mnemonic_from_data(fromhex(data.c_str()), 32);
-//
-//  entropy = (const char*)m2;
-//
-//  /*mnemonic_to_seed(m, "TREZOR", seed, 0);
-//  hdnode_from_seed(seed, 16,
-//                   ED25519_NAME, &node);*/
-//  //const char addr[64];
-//  //hdnode_get_address(&node, PLANET_VERSION_PUBLIC, addr, sizeof(addr));
-//
-//  return entropy;
-//}
-
+/
 String WifiEncryptionType(uint32_t i) {
 #ifdef ESP8266
   // Reference. WiFi.encryptionType =
