@@ -107,7 +107,6 @@ const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/
 #endif  // ESP32
 ;
 
-/
 String WifiEncryptionType(uint32_t i) {
 #ifdef ESP8266
   // Reference. WiFi.encryptionType =
