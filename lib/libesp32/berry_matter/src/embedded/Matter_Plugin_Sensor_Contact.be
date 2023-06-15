@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Occupancy.be - implements the behavior for a Occupany Switch
+# Matter_Plugin_Sensor_Contact.be - implements the behavior for a Contact Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -24,29 +24,29 @@ import matter
 # dummy declaration for solidification
 class Matter_Plugin_Device end
 
-#@ solidify:Matter_Plugin_Sensor_Occupancy,weak
+#@ solidify:Matter_Plugin_Sensor_Contact,weak
 
-class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
-  static var TYPE = "occupancy"                     # name of the plug-in in json
-  static var NAME = "Occupancy"                     # display name of the plug-in
+class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
+  static var TYPE = "contact"                       # name of the plug-in in json
+  static var NAME = "Contact"                       # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Enter Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 250ms
   static var CLUSTERS  = {
-    0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
+    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
   }
-  static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
+  static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_occupancy
+  var shadow_contact
 
   #############################################################
   # parse_configuration
   #
   # Parse configuration map
   def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
+    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
@@ -55,17 +55,20 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   #
   def update_shadow()
     super(self).update_shadow()
-    var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-    var j = tasmota.cmd("Status 8", true)
-    if j != nil   j = j.find("StatusSNS") end
-    if j != nil && j.contains(switch_str)
-      var state = (j.find(switch_str) == "ON")
+    import json
+    var ret = tasmota.cmd("Status 8", true)
+    if ret != nil
+      var j = json.load(ret)
+      if j != nil
+        var state = false
+        state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
 
-      if (self.shadow_occupancy != state)
-        self.attribute_updated(0x0406, 0x0000)
+        if self.shadow_contact != nil && self.shadow_contact != bool(state)
+          self.attribute_updated(0x0045, 0x0000)
+        end
+        self.shadow_contact = state
       end
-      self.shadow_occupancy = state
     end
   end
 
@@ -79,21 +82,17 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0406              # ========== Occupancy Sensing ==========
-      if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        if self.shadow_occupancy != nil
-          return TLV.create_TLV(TLV.U1, self.shadow_occupancy)
+    if   cluster == 0x0045              # ========== Boolean State ==========
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
+        if self.shadow_contact != nil
+          return TLV.create_TLV(TLV.BOOL, self.shadow_contact)
         else
           return TLV.create_TLV(TLV.NULL, nil)
         end
-      elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 3)  # physical contact
-      elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0)  # unknown
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 4 = New data model format and notation
+        return TLV.create_TLV(TLV.U4, 1)    # 1 = Initial release
       end
 
     else
@@ -102,4 +101,4 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   end
 
 end
-matter.Plugin_Sensor_Occupancy = Matter_Plugin_Sensor_Occupancy
+matter.Plugin_Sensor_Contact = Matter_Plugin_Sensor_Contact

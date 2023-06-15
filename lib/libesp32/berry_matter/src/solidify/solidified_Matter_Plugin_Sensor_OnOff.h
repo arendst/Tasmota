@@ -7,6 +7,33 @@
 extern const bclass be_class_Matter_Plugin_Sensor_OnOff;
 
 /********************************************************************
+** Solidified function: <lambda>
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_OnOff__X3Clambda_X3E,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(_X3Clambda_X3E),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x60040009,  //  0000  GETGBL	R1	G9
+      0x5C080000,  //  0001  MOVE	R2	R0
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_OnOff_parse_configuration,   /* name */
@@ -41,33 +68,6 @@ be_local_closure(Matter_Plugin_Sensor_OnOff_parse_configuration,   /* name */
       0x780A0000,  //  0009  JMPF	R2	#000B
       0x90020103,  //  000A  SETMBR	R0	K0	K3
       0x80000000,  //  000B  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: <lambda>
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_OnOff__X3Clambda_X3E,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(_X3Clambda_X3E),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x60040009,  //  0000  GETGBL	R1	G9
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -240,23 +240,19 @@ extern const bclass be_class_Matter_Plugin_Device;
 be_local_class(Matter_Plugin_Sensor_OnOff,
     2,
     &be_class_Matter_Plugin_Device,
-    be_nested_map(12,
+    be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(ARG, 8), be_nested_str_weak(switch) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Switch_X3Cx_X3E_X20number) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(onoff) },
+        { be_const_key_weak(ARG_TYPE, 1), be_const_static_closure(Matter_Plugin_Sensor_OnOff__X3Clambda_X3E_closure) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
-        { be_const_key_weak(parse_configuration, 8), be_const_closure(Matter_Plugin_Sensor_OnOff_parse_configuration_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(2128, -1), be_const_int(2) },
-    }))    ) } )) },
-        { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
-        { be_const_key_weak(ARG_TYPE, 9), be_const_static_closure(Matter_Plugin_Sensor_OnOff__X3Clambda_X3E_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(OnOff) },
-        { be_const_key_weak(read_attribute, 5), be_const_closure(Matter_Plugin_Sensor_OnOff_read_attribute_closure) },
-        { be_const_key_weak(tasmota_switch_index, -1), be_const_var(0) },
-        { be_const_key_weak(TYPE, 11), be_nested_str_weak(onoff) },
+        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_update_shadow_closure) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(OnOff_X20Sensor) },
+        { be_const_key_weak(parse_configuration, 5), be_const_closure(Matter_Plugin_Sensor_OnOff_parse_configuration_closure) },
         { be_const_key_weak(shadow_onoff, -1), be_const_var(1) },
-        { be_const_key_weak(CLUSTERS, 7), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(tasmota_switch_index, 6), be_const_var(0) },
+        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(6, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -267,7 +263,12 @@ be_local_class(Matter_Plugin_Sensor_OnOff,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_update_shadow_closure) },
+        { be_const_key_weak(read_attribute, 4), be_const_closure(Matter_Plugin_Sensor_OnOff_read_attribute_closure) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(2128, -1), be_const_int(2) },
+    }))    ) } )) },
     })),
     be_str_weak(Matter_Plugin_Sensor_OnOff)
 );

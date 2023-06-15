@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Occupancy.be - implements base class for a Occupancy Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Contact.be - implements Contact Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -24,11 +24,11 @@ import matter
 # dummy declaration for solidification
 class Matter_Plugin_Bridge_HTTP end
 
-#@ solidify:Matter_Plugin_Bridge_Sensor_Occupancy,weak
+#@ solidify:Matter_Plugin_Bridge_Sensor_Contact,weak
 
-class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
-  static var TYPE = "http_occupancy"                # name of the plug-in in json
-  static var NAME = "Occupancy"           # display name of the plug-in
+class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
+  static var TYPE = "http_contact"                  # name of the plug-in in json
+  static var NAME = "Contact"                       # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Enter Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
@@ -36,18 +36,18 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   static var UPDATE_CMD = "Status 8"                # command to send for updates
 
   static var CLUSTERS  = {
-    0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
+    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
   }
-  static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
+  static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_occupancy
+  var shadow_contact
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
-    self.tasmota_switch_index = int(arguments.find(self.ARG #-'relay'-#, 1))
+    self.tasmota_switch_index = int(arguments.find(self.ARG #-'switch'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
@@ -61,10 +61,10 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
 
       state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
 
-      if self.shadow_occupancy != nil && self.shadow_occupancy != bool(state)
-        self.attribute_updated(0x0406, 0x0000)
+      if self.shadow_contact != nil && self.shadow_contact != bool(state)
+        self.attribute_updated(0x0045, 0x0000)
       end
-      self.shadow_occupancy = state
+      self.shadow_contact = state
     end
   end
 
@@ -78,21 +78,17 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0406              # ========== Occupancy Sensing ==========
-      if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        if self.shadow_occupancy != nil
-          return TLV.create_TLV(TLV.U1, self.shadow_occupancy)
+    if   cluster == 0x0045              # ========== Boolean State ==========
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
+        if self.shadow_contact != nil
+          return TLV.create_TLV(TLV.BOOL, self.shadow_contact)
         else
           return TLV.create_TLV(TLV.NULL, nil)
         end
-      elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 3)  # physical contact
-      elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0)  # unknown
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 4 = New data model format and notation
+        return TLV.create_TLV(TLV.U4, 1)    # 1 = Initial release
       end
 
     else
@@ -107,8 +103,8 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| Occupancy%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_occupancy)))
+    webserver.content_send(string.format("| Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_contact)))
   end
 
 end
-matter.Plugin_Bridge_Sensor_Occupancy = Matter_Plugin_Bridge_Sensor_Occupancy
+matter.Plugin_Bridge_Sensor_Contact = Matter_Plugin_Bridge_Sensor_Contact
