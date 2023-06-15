@@ -9,6 +9,8 @@
 *.gcno
 *.gcda
 
+.idea
+
 ## Project files ######
 .platformio
 .pio

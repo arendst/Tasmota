@@ -43,6 +43,49 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
 
+#define FROMHEX_MAXLEN 512
+
+#define VERSION_PUBLIC 0x0488b21e
+#define VERSION_PRIVATE 0x0488ade4
+
+#define BDB_VERSION_PUBLIC 0x02d41400   //0x03A3FDC2
+#define BDB_VERSION_PRIVATE 0x02d40fc0   //0x03A3F988
+
+#define PLANET_VERSION_PUBLIC 0x03e25d83
+#define PLANET_VERSION_PRIVATE 0x03e25944 
+
+#define LIQUIDBTC_VERSION_PUBLIC 0X76067358
+#define LIQUIDBTC_VERSION_PRIVATE 0x76066276
+
+#define ETHEREUM_VERSION_PUBLIC 0x0488b21e
+#define ETHEREUM_VERSION_PRIVATE 0x0488ade4
+
+const uint8_t *fromhex(const char *str) {
+  static uint8_t buf[FROMHEX_MAXLEN];
+  size_t len = strlen(str) / 2;
+  if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+  for (size_t i = 0; i < len; i++) {
+    uint8_t c = 0;
+    if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+    if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+    if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9')
+      c += (str[i * 2 + 1] - '0');
+    if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+    buf[i] = c;
+  }
+  return buf;
+}
+
+void tohex(char *hexbuf, uint8_t *str, int strlen){
+   // char hexbuf[strlen];
+    for (int i = 0 ; i < strlen/2 ; i++) {
+        sprintf(&hexbuf[2*i], "%02X", str[i]);
+    }
+  hexbuf[strlen-2] = '\0';
+}
+
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
 
@@ -64,6 +107,7 @@ const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/
 #endif  // ESP32
 ;
 
+/
 String WifiEncryptionType(uint32_t i) {
 #ifdef ESP8266
   // Reference. WiFi.encryptionType =

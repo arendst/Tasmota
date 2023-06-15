@@ -17,6 +17,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "trezor-crypto/options.h"
+#include "trezor-crypto/address.h"
+#include "trezor-crypto/aes/aes.h"
+#include "trezor-crypto/base32.h"
+#include "trezor-crypto/base58.h"
+#include "trezor-crypto/bignum.h"
+#include "trezor-crypto/bip32.h"
+#include "trezor-crypto/bip39.h"
+#include "trezor-crypto/blake256.h"
+#include "trezor-crypto/blake2b.h"
+#include "trezor-crypto/blake2s.h"
+#include "trezor-crypto/curves.h"
+#include "trezor-crypto/ecdsa.h"
+#include "trezor-crypto/ed25519-donna/ed25519-donna.h"
+#include "trezor-crypto/ed25519-donna/curve25519-donna-scalarmult-base.h"
+#include "trezor-crypto/ed25519-donna/ed25519-keccak.h"
+#include "trezor-crypto/ed25519-donna/ed25519.h"
+#include "trezor-crypto/hmac.h"
+#include "trezor-crypto/memzero.h"
+#include "trezor-crypto/nist256p1.h"
+#include "trezor-crypto/pbkdf2.h"
+#include "trezor-crypto/rand.h"
+#include "trezor-crypto/rc4.h"
+#include "trezor-crypto/rfc6979.h"
+#include "trezor-crypto/script.h"
+#include "trezor-crypto/secp256k1.h"
+#include "trezor-crypto/sha2.h"
+#include "trezor-crypto/sha3.h"
+
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_WIFINOSLEEP "|"
@@ -707,6 +736,140 @@ void CmndStatusResponse(uint32_t index) {
   }
 }
 
+#define FROMHEX_MAXLEN 512
+
+#define VERSION_PUBLIC 0x0488b21e
+#define VERSION_PRIVATE 0x0488ade4
+
+#define BDB_VERSION_PUBLIC 0x02d41400   //0x03A3FDC2
+#define BDB_VERSION_PRIVATE 0x02d40fc0   //0x03A3F988
+
+#define PLANET_VERSION_PUBLIC 0x03e25d83
+#define PLANET_VERSION_PRIVATE 0x03e25944 
+
+#define LIQUIDBTC_VERSION_PUBLIC 0X76067358
+#define LIQUIDBTC_VERSION_PRIVATE 0x76066276
+
+#define ETHEREUM_VERSION_PUBLIC 0x0488b21e
+#define ETHEREUM_VERSION_PRIVATE 0x0488ade4
+
+const uint8_t *fromhex2(const char *str) {
+  static uint8_t buf[FROMHEX_MAXLEN];
+  size_t len = strlen(str) / 2;
+  if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+  for (size_t i = 0; i < len; i++) {
+    uint8_t c = 0;
+    if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+    if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+    if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9')
+      c += (str[i * 2 + 1] - '0');
+    if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F')
+      c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+    buf[i] = c;
+  }
+  return buf;
+}
+
+void tohex2(char *hexbuf, uint8_t *str, int strlen){
+   // char hexbuf[strlen];
+    for (int i = 0 ; i < strlen/2 ; i++) {
+        sprintf(&hexbuf[2*i], "%02X", str[i]);
+    }
+  hexbuf[strlen-2] = '\0';
+}
+
+bool SignDataHash(int json_data_start)
+{
+    uint8_t seed[64];
+    const char *m;
+
+    m = "art art art art art art art art art art art abundance";
+    mnemonic_to_seed(m, "TREZOR", seed, 0);
+    HDNode node2;
+
+  // test vector from https://en.bitcoin.it/wiki/BIP_0032_TestVectors for Elliptic Curves SECP256K1
+    hdnode_from_seed( seed, 64, SECP256K1_NAME, &node2);
+    hdnode_fill_public_key(&node2);
+
+//    char* str = "\"ENERGY\":{\"TotalStartTime\":\"2022-10-13T10:12:20\",\"Total\":100.293,\"Yesterday\":0.508,\"Today\":0.222,\"Power\":21,\"ApparentPower\":39,\"ReactivePower\":32,\"Factor\":0.54,\"Voltage\":229,\"Current\":0.168}";
+    uint8_t hash2[32];
+
+    int current_length  = ResponseLength();
+    size_t p2bsigned_length = current_length - json_data_start;
+    char* p2Bsigned = (char*)TasmotaGlobal.mqtt_data.c_str() + json_data_start;;
+    // char* response = ResponseData();
+
+    // Initialize the SHA-256 hasher
+    SHA256_CTX ctx;
+    sha256_Init(&ctx);
+
+    // Hash the string
+    sha256_Update(&ctx, (const uint8_t*) p2Bsigned, p2bsigned_length);
+    sha256_Final(&ctx, hash2);
+
+    // Initialize the ECDSA context
+    const ecdsa_curve *curve = &secp256k1;
+
+    uint8_t priv_key[32] = {0};
+    uint8_t pub_key[33] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t expected_sig[64] = {0};
+    uint8_t computed_sig[64] = {0};
+    int res = 0;
+
+    memcpy(priv_key, node2.private_key, 32);
+
+
+    //res = ecdsa_sign_digest_fn(curve, priv_key, hash2, computed_sig, NULL, NULL);
+    res = ecdsa_sign_digest(curve, priv_key, hash2, computed_sig, NULL, NULL);
+
+    // Print the signature and verification result
+    memcpy(pub_key, node2.public_key, 33);
+
+    int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
+
+    // prepare and convert outputs to hex-strings
+    char pubkey_out[68] = {0};
+    char sig_out[130] = {0};
+    char hash_out[66] = {0};
+    tohex2( pubkey_out, pub_key, 68);
+    tohex2( sig_out, computed_sig, 130);
+    tohex2( hash_out, hash2, 66);
+
+    //Response_P(PSTR("{\"" "rddl \":"));
+    // ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "p2Bsigned", p2Bsigned);
+    // ResponseAppend_P(PSTR(",\"%s\":\"%d\""), "p2bsigned_length", p2bsigned_length);
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
+    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
+    //ResponseJsonEnd();
+
+
+    return true;
+}
+
+int validateSignature() {
+      const ecdsa_curve *curve = &secp256k1;
+
+
+      uint8_t pub_key[33] = {0};
+      uint8_t hash2[32] = {0};
+      uint8_t computed_sig[64] = {0};
+
+      const char pub_key_str[] = "02F8BC8B413BF803EA1DA9BE0FBFF4ED23FEED17A859187242007544F8535D3457";
+      const char hash_str[] = "83EC230810630863EEB5C873206F45E60D5FB9EA3F5241EEECFB514F261A57DF";
+      const char sig_str[] = "F551CDF6156FD2A8CC29428B61FDB9F5224928D5A5937E38F36D2D566C11B1DF13CD12E3BA2DAE6A33F091C549A5ADE537A5F07121AA1F4D4286B51260B228DE";
+
+
+      memcpy(pub_key, fromhex2(pub_key_str), 33);
+      memcpy(hash2, fromhex2(hash_str), 32);
+      memcpy(computed_sig, fromhex2(sig_str), 64);
+
+      int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash2);
+      return verified;
+}
+
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
@@ -735,11 +898,30 @@ void CmndStatus(void)
     for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%d" ), stemp2, (i > 0 ? "," : ""), Settings->switchmode[i]);
     }
+
+    const char *entropy;
+    const char *m;
+  
+    m = "art art art art art art art art art art art abundance";
+
+    const char raw[] = "00112233445566778899aabbcceeff00112233445566778899aabbcceeff";
+    uint8_t raw_t[4];
+    int len = 2;
+    char strn[53];
+
+    memcpy(raw_t, fromhex2(raw), len);
+    int r;
+    r = base58_encode_check(raw_t, len, HASHER_SHA2, strn, sizeof(strn));
+
+    int verified = validateSignature();
+
+    
+  // Response_P(PSTR("{\"Mnemonic\":\"%s\"}"), m );
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"" D_CMND_STATUSRETAIN "\":%d}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"sig_is_valid\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings->poweronstate, Settings->ledstate,
                           Settings->ledmask, Settings->save_data,
@@ -751,9 +933,8 @@ void CmndStatus(void)
                           Settings->flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings->flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings->flag5.mqtt_info_retain,    // CMND_INFORETAIN
-                          Settings->flag5.mqtt_state_retain,   // CMND_STATERETAIN
-                          Settings->flag5.mqtt_status_retain   // CMND_STATUSRETAIN
-                          );
+                          Settings->flag5.mqtt_state_retain,  // CMND_STATERETAIN
+                          verified);                                 // CMND_STATERETAIN
     CmndStatusResponse(0);
   }
 
@@ -927,7 +1108,9 @@ void CmndStatus(void)
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
+    int current_length = ResponseLength();
     MqttShowSensor(true);
+    SignDataHash(current_length);
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
