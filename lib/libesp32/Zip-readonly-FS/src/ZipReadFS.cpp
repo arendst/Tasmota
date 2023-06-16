@@ -299,7 +299,8 @@ public:
   }
 
   boolean isDirectory(void) {
-    return false;       // no directory allowed
+    return _f.isDirectory();
+    //return false;       // no directory allowed
   }
 
   FileImplPtr openNextFile(const char* mode) {
