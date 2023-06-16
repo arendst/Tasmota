@@ -514,10 +514,18 @@ char* UfsFilename(char* fname, char* fname_in) {
 }
 
 const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
-  "|Type|Size|Free|Delete|Rename|Run";
+  "|Type|Size|Free|Delete|Rename|Run"
+#ifdef UFILESYS_STATIC_SERVING
+  "|Serve"
+#endif
+  ;
 
 void (* const kUFSCommand[])(void) PROGMEM = {
-  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun};
+  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun
+#ifdef UFILESYS_STATIC_SERVING
+  ,&UFSServe
+#endif  
+  };
 
 void UFSInfo(void) {
   Response_P(PSTR("{\"Ufs\":{\"Type\":%d,\"Size\":%d,\"Free\":%d}"), ufs_type, UfsInfo(0, 0), UfsInfo(1, 0));
@@ -597,6 +605,49 @@ void UFSRename(void) {
   }
 }
 
+#ifdef UFILESYS_STATIC_SERVING
+// NOTE - this is expensive on flash -> +2.5kbytes.
+// like "UFSServe /,/fs/"
+/*
+Serves a filesystem folder at a web url.
+Due to (bugs?) the filesystems, on esp32, 
+this ONLY works for serving the root of the fs.
+But..  it does serve files from both flash and /sd/, 
+when given the root of the FS to serve
+
+working:
+UFSServe /,/fs/
+UFSServe /,/
+
+not working:
+UFSServe /sd,/
+UFSServe /sd/,/
+UFSServe /sd/timelapse/,/
+UFSServe /www,/www
+UFSServe /www/,/www
+UFSServe /www/,/www/
+
+it also doe NOT observe web admin authentication.  use at your own risk.
+*/
+void UFSServe(void) {
+  if (XdrvMailbox.data_len > 0) {
+    bool result = false;
+    char *fpath = strtok(XdrvMailbox.data, ",");
+    char *url = strtok(nullptr, ",");
+    if (fpath && url) {
+      Webserver->serveStatic(url, *ffsp, fpath);
+      Webserver->enableCORS(true);
+      result = true;
+    }
+    if (!result) {
+      ResponseCmndFailed();
+    } else {
+      ResponseCmndDone();
+    }
+  }
+}
+#endif
+
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
     char fname[UFS_FILENAME_SIZE];
@@ -611,6 +662,8 @@ void UFSRun(void) {
     ResponseCmndChar(not_active ? PSTR(D_JSON_DONE) : PSTR(D_JSON_ABORTED));
   }
 }
+
+
 
 /*********************************************************************************************\
  * Web support
@@ -1185,13 +1238,6 @@ bool Xdrv50(uint32_t function) {
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);
 #endif
-
-#ifdef UFILESYS_STATIC_SERVING
-      // NOTE - this is expensive on flash -> +2.5kbytes.
-      Webserver->serveStatic("/fs/", *ffsp, "/");
-      Webserver->enableCORS(true);
-#endif
-
       break;
 #endif // USE_WEBSERVER
   }
