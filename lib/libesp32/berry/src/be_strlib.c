@@ -12,6 +12,7 @@
 #include "be_module.h"
 #include "be_exec.h"
 #include "be_mem.h"
+#include "be_baselib.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -556,6 +557,48 @@ static void mode_fixlen(char *mode, const char *lenmode)
     mode[l + lm] = '\0';
 }
 
+static bbool convert_to_int(bvm *vm, int index, bint *val)
+{
+    bbool converted = bfalse;
+    if (val == NULL) { return bfalse; }
+    if (be_isint(vm, index)) {
+        *val = be_toint(vm, index);
+        converted = btrue;
+    } else {
+        be_pushntvfunction(vm, be_baselib_int);
+        be_pushvalue(vm, index);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        if (be_isint(vm, -1)) {
+            *val = be_toint(vm, -1);
+            converted = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return converted;
+}
+
+static bbool convert_to_real(bvm *vm, int index, breal *val)
+{
+    bbool converted = bfalse;
+    if (val == NULL) { return bfalse; }
+    if (be_isnumber(vm, index)) {
+        *val = be_toreal(vm, index);
+        converted = btrue;
+    } else {
+        be_pushntvfunction(vm, be_baselib_real);
+        be_pushvalue(vm, index);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        if (be_isnumber(vm, -1)) {
+            *val = be_toreal(vm, -1);
+            converted = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return converted;
+}
+
 static int str_format(bvm *vm)
 {
     int top = be_top(vm);
@@ -585,25 +628,34 @@ static int str_format(bvm *vm)
                 break;
             case 'd': case 'i': case 'o':
             case 'u': case 'x': case 'X':
-                if (be_isint(vm, index)) {
+            {
+                bint val;
+                if (convert_to_int(vm, index, &val)) {
                     mode_fixlen(mode, BE_INT_FMTLEN);
-                    sprintf(buf, mode, be_toint(vm, index));
+                    sprintf(buf, mode, val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 'e': case 'E':
             case 'f': case 'g': case 'G':
-                if (be_isnumber(vm, index)) {
-                    sprintf(buf, mode, be_toreal(vm, index));
+            {
+                breal val;
+                if (convert_to_real(vm, index, &val)) {
+                    sprintf(buf, mode, val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 'c':
-                if (be_isint(vm, index)) {
-                    sprintf(buf, "%c", (int)be_toint(vm, index));
+            {
+                bint val;
+                if (convert_to_int(vm, index, &val)) {
+                    sprintf(buf, "%c", (int)val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 's': {
                 const char *s = be_tostring(vm, index);
                 int len = be_strlen(vm, index);
