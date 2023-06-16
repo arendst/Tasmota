@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Matter add controller's Vendor Name to logs and UI
 - Matter redesigned UI
 - Matter add support for Contact Sensor
+- Berry `string.format()` now automatically converts type according to format
 
 ### Breaking Changed
 
