@@ -610,22 +610,6 @@ void UFSRename(void) {
 // like "UFSServe /,/fs/"
 /*
 Serves a filesystem folder at a web url.
-Due to (bugs?) the filesystems, on esp32, 
-this ONLY works for serving the root of the fs.
-But..  it does serve files from both flash and /sd/, 
-when given the root of the FS to serve
-
-working:
-UFSServe /,/fs/
-UFSServe /,/
-
-not working:
-UFSServe /sd,/
-UFSServe /sd/,/
-UFSServe /sd/timelapse/,/
-UFSServe /www,/www
-UFSServe /www/,/www
-UFSServe /www/,/www/
 
 it also doe NOT observe web admin authentication.  use at your own risk.
 */
