@@ -606,22 +606,107 @@ void UFSRename(void) {
 }
 
 #ifdef UFILESYS_STATIC_SERVING
-// NOTE - this is expensive on flash -> +2.5kbytes.
-// like "UFSServe /,/fs/"
 /*
-Serves a filesystem folder at a web url.
-
-it also doe NOT observe web admin authentication.  use at your own risk.
+* Serves a filesystem folder at a web url.
+* NOTE - this is expensive on flash -> +2.5kbytes.
+* like "UFSServe <fs path>,<url>[,<noauth>]"
+* e.g. "UFSServe /sd/,/mysdcard/,1" - will serve the /sd/ fs folder as https://<ip>/mysdcard/ with no auth required
+* e.g. "UFSServe /www/,/" - will serve the /www/ fs folder as https://<ip>/ with auth required if TAS has a password setup
+* <noauth> defaults to 0 - i.e. the default is to require auth if configured
+* it WILL serve on / - so conflicting urls could occur.  I beleive native TAS urls will have priority.
+* you can serve multiple folders, and they can each be auth or noauth
+*
+* by default, it also enables cors on the webserver - this allows you to have 
+* a website external to TAS which can access the files, else the browser refuses.
 */
+#include "detail/RequestHandlersImpl.h"
+
+// class to allow us to request auth when required.
+// StaticRequestHandler is in the above header
+class StaticRequestHandlerAuth : public StaticRequestHandler {
+public:
+    StaticRequestHandlerAuth(FS& fs, const char* path, const char* uri, const char* cache_header):
+      StaticRequestHandler(fs, path, uri, cache_header)
+    {
+    }
+
+    // we replace the handle method, 
+    // and look for authentication only if we would serve the file.
+    // if we check earlier, then we will reject as unauth even though a later
+    // handler may be public, and so fail to serve public files.
+    bool handle(WebServer& server, HTTPMethod requestMethod, String requestUri) override {
+        if (!canHandle(requestMethod, requestUri))
+            return false;
+
+        log_v("StaticRequestHandler::handle: request=%s _uri=%s\r\n", requestUri.c_str(), _uri.c_str());
+
+        String path(_path);
+
+        if (!_isFile) {
+            // Base URI doesn't point to a file.
+            // If a directory is requested, look for index file.
+            if (requestUri.endsWith("/")) 
+              requestUri += "index.htm";
+
+            // Append whatever follows this URI in request to get the file path.
+            path += requestUri.substring(_baseUriLength);
+        }
+        log_v("StaticRequestHandler::handle: path=%s, isFile=%d\r\n", path.c_str(), _isFile);
+
+        String contentType = getContentType(path);
+
+        // look for gz file, only if the original specified path is not a gz.  So part only works to send gzip via content encoding when a non compressed is asked for
+        // if you point the the path to gzip you will serve the gzip as content type "application/x-gzip", not text or javascript etc...
+        if (!path.endsWith(FPSTR(mimeTable[gz].endsWith)) && !_fs.exists(path))  {
+            String pathWithGz = path + FPSTR(mimeTable[gz].endsWith);
+            if(_fs.exists(pathWithGz))
+                path += FPSTR(mimeTable[gz].endsWith);
+        }
+
+        File f = _fs.open(path, "r");
+        if (!f || !f.available())
+            return false;
+
+        /////////////////////////////////////////////////
+        // this is the TAS specific addition to the base class
+        if (!WebAuthenticate()) {
+          AddLog(LOG_LEVEL_ERROR, PSTR("UFS: serv of %s denied"), requestUri.c_str());
+          server.requestAuthentication();
+          return true;
+        }
+        /////////////////////////////////////////////////
+
+        if (_cache_header.length() != 0)
+            server.sendHeader("Cache-Control", _cache_header);
+
+        server.streamFile(f, contentType);
+        return true;
+    }
+};
+
 void UFSServe(void) {
   if (XdrvMailbox.data_len > 0) {
     bool result = false;
     char *fpath = strtok(XdrvMailbox.data, ",");
     char *url = strtok(nullptr, ",");
+    char *noauth = strtok(nullptr, ",");
     if (fpath && url) {
-      Webserver->serveStatic(url, *ffsp, fpath);
-      Webserver->enableCORS(true);
-      result = true;
+      char t[] = "";
+      StaticRequestHandlerAuth *staticHandler;
+      if (noauth && *noauth == '1'){
+        staticHandler = (StaticRequestHandlerAuth *) new StaticRequestHandler(*ffsp, fpath, url, (char *)nullptr);
+      } else {
+        staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr);
+      }
+      if (staticHandler) {
+        //Webserver->serveStatic(url, *ffsp, fpath);
+        Webserver->addHandler(staticHandler);
+        Webserver->enableCORS(true);
+        result = true;
+      } else {
+        // could this happen?  only lack of memory.
+        result = false;
+      }
     }
     if (!result) {
       ResponseCmndFailed();
@@ -630,7 +715,7 @@ void UFSServe(void) {
     }
   }
 }
-#endif
+#endif // UFILESYS_STATIC_SERVING
 
 void UFSRun(void) {
   if (XdrvMailbox.data_len > 0) {
