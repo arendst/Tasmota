@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Fixed HASPmota event when value is non-integer (fixes #18229)
 - Matter fix local Occupancy sensor
 - Zigbee fixed regression with SetOption101
+- Berry fixed parser error with upvals in closures
 
 ### Removed
 
