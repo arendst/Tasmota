@@ -286,32 +286,35 @@ be_local_closure(Matter_Plugin_Bridge_Light1_web_values,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(content_send),
-    /* K3   */  be_nested_str_weak(format),
-    /* K4   */  be_nested_str_weak(_X7C_X20Light_X20_X25s_X20_X25s),
-    /* K5   */  be_nested_str_weak(web_value_onoff),
-    /* K6   */  be_nested_str_weak(shadow_onoff),
-    /* K7   */  be_nested_str_weak(web_value_dimmer),
+    /* K2   */  be_nested_str_weak(web_values_prefix),
+    /* K3   */  be_nested_str_weak(content_send),
+    /* K4   */  be_nested_str_weak(format),
+    /* K5   */  be_nested_str_weak(_X25s_X20_X25s),
+    /* K6   */  be_nested_str_weak(web_value_onoff),
+    /* K7   */  be_nested_str_weak(shadow_onoff),
+    /* K8   */  be_nested_str_weak(web_value_dimmer),
     }),
     be_str_weak(web_values),
     &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0302,  //  0002  GETMET	R3	R1	K2
-      0x8C140503,  //  0003  GETMET	R5	R2	K3
-      0x581C0004,  //  0004  LDCONST	R7	K4
-      0x8C200105,  //  0005  GETMET	R8	R0	K5
-      0x88280106,  //  0006  GETMBR	R10	R0	K6
-      0x7C200400,  //  0007  CALL	R8	2
-      0x8C240107,  //  0008  GETMET	R9	R0	K7
-      0x7C240200,  //  0009  CALL	R9	1
-      0x7C140800,  //  000A  CALL	R5	4
-      0x7C0C0400,  //  000B  CALL	R3	2
-      0x80000000,  //  000C  RET	0
+      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
+      0x7C0C0200,  //  0003  CALL	R3	1
+      0x8C0C0303,  //  0004  GETMET	R3	R1	K3
+      0x8C140504,  //  0005  GETMET	R5	R2	K4
+      0x581C0005,  //  0006  LDCONST	R7	K5
+      0x8C200106,  //  0007  GETMET	R8	R0	K6
+      0x88280107,  //  0008  GETMBR	R10	R0	K7
+      0x7C200400,  //  0009  CALL	R8	2
+      0x8C240108,  //  000A  GETMET	R9	R0	K8
+      0x7C240200,  //  000B  CALL	R9	1
+      0x7C140800,  //  000C  CALL	R5	4
+      0x7C0C0400,  //  000D  CALL	R3	2
+      0x80000000,  //  000E  RET	0
     })
   )
 );

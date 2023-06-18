@@ -7,6 +7,140 @@
 extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
 
 /********************************************************************
+** Solidified function: <lambda>
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(_X3Clambda_X3E),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x60040009,  //  0000  GETGBL	R1	G9
+      0x5C080000,  //  0001  MOVE	R2	R0
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(tasmota_switch_index),
+    /* K2   */  be_nested_str_weak(find),
+    /* K3   */  be_nested_str_weak(ARG),
+    /* K4   */  be_const_int(1),
+    /* K5   */  be_const_int(0),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[20]) {  /* code */
+      0x60100003,  //  0000  GETGBL	R4	G3
+      0x5C140000,  //  0001  MOVE	R5	R0
+      0x7C100200,  //  0002  CALL	R4	1
+      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x5C1C0400,  //  0005  MOVE	R7	R2
+      0x5C200600,  //  0006  MOVE	R8	R3
+      0x7C100800,  //  0007  CALL	R4	4
+      0x60100009,  //  0008  GETGBL	R4	G9
+      0x8C140702,  //  0009  GETMET	R5	R3	K2
+      0x881C0103,  //  000A  GETMBR	R7	R0	K3
+      0x58200004,  //  000B  LDCONST	R8	K4
+      0x7C140600,  //  000C  CALL	R5	3
+      0x7C100200,  //  000D  CALL	R4	1
+      0x90020204,  //  000E  SETMBR	R0	K1	R4
+      0x88100101,  //  000F  GETMBR	R4	R0	K1
+      0x18100905,  //  0010  LE	R4	R4	K5
+      0x78120000,  //  0011  JMPF	R4	#0013
+      0x90020304,  //  0012  SETMBR	R0	K1	K4
+      0x80000000,  //  0013  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: web_values_prefix
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[10]) {     /* constants */
+    /* K0   */  be_nested_str_weak(webserver),
+    /* K1   */  be_nested_str_weak(string),
+    /* K2   */  be_nested_str_weak(get_name),
+    /* K3   */  be_nested_str_weak(Switch),
+    /* K4   */  be_nested_str_weak(tasmota_switch_index),
+    /* K5   */  be_nested_str_weak(content_send),
+    /* K6   */  be_nested_str_weak(format),
+    /* K7   */  be_nested_str_weak(PREFIX),
+    /* K8   */  be_nested_str_weak(html_escape),
+    /* K9   */  be_nested_str_weak(),
+    }),
+    be_str_weak(web_values_prefix),
+    &be_const_str_solidified,
+    ( &(const binstruction[23]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0xA40A0200,  //  0001  IMPORT	R2	K1
+      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
+      0x7C0C0200,  //  0003  CALL	R3	1
+      0x5C100600,  //  0004  MOVE	R4	R3
+      0x74120004,  //  0005  JMPT	R4	#000B
+      0x60100008,  //  0006  GETGBL	R4	G8
+      0x88140104,  //  0007  GETMBR	R5	R0	K4
+      0x7C100200,  //  0008  CALL	R4	1
+      0x00120604,  //  0009  ADD	R4	K3	R4
+      0x5C0C0800,  //  000A  MOVE	R3	R4
+      0x8C100305,  //  000B  GETMET	R4	R1	K5
+      0x8C180506,  //  000C  GETMET	R6	R2	K6
+      0x88200107,  //  000D  GETMBR	R8	R0	K7
+      0x780E0003,  //  000E  JMPF	R3	#0013
+      0x8C240308,  //  000F  GETMET	R9	R1	K8
+      0x5C2C0600,  //  0010  MOVE	R11	R3
+      0x7C240400,  //  0011  CALL	R9	2
+      0x70020000,  //  0012  JMP		#0014
+      0x58240009,  //  0013  LDCONST	R9	K9
+      0x7C180600,  //  0014  CALL	R6	3
+      0x7C100400,  //  0015  CALL	R4	2
+      0x80000000,  //  0016  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: parse_update
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
@@ -59,77 +193,6 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
       0x7C100600,  //  0019  CALL	R4	3
       0x90020803,  //  001A  SETMBR	R0	K4	R3
       0x80000000,  //  001B  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: web_values
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values,   /* name */
-  be_nested_proto(
-    12,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(content_send),
-    /* K3   */  be_nested_str_weak(format),
-    /* K4   */  be_nested_str_weak(_X7C_X20Contact_X25i_X20_X25s),
-    /* K5   */  be_nested_str_weak(tasmota_switch_index),
-    /* K6   */  be_nested_str_weak(web_value_onoff),
-    /* K7   */  be_nested_str_weak(shadow_contact),
-    }),
-    be_str_weak(web_values),
-    &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0302,  //  0002  GETMET	R3	R1	K2
-      0x8C140503,  //  0003  GETMET	R5	R2	K3
-      0x581C0004,  //  0004  LDCONST	R7	K4
-      0x88200105,  //  0005  GETMBR	R8	R0	K5
-      0x8C240106,  //  0006  GETMET	R9	R0	K6
-      0x882C0107,  //  0007  GETMBR	R11	R0	K7
-      0x7C240400,  //  0008  CALL	R9	2
-      0x7C140800,  //  0009  CALL	R5	4
-      0x7C0C0400,  //  000A  CALL	R3	2
-      0x80000000,  //  000B  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: <lambda>
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(_X3Clambda_X3E),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x60040009,  //  0000  GETGBL	R1	G9
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -227,49 +290,46 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute,   /* name *
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: web_values
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
+be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
+    12,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(tasmota_switch_index),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(ARG),
-    /* K4   */  be_const_int(1),
-    /* K5   */  be_const_int(0),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(webserver),
+    /* K1   */  be_nested_str_weak(string),
+    /* K2   */  be_nested_str_weak(web_values_prefix),
+    /* K3   */  be_nested_str_weak(content_send),
+    /* K4   */  be_nested_str_weak(format),
+    /* K5   */  be_nested_str_weak(Contact_X25i_X20_X25s),
+    /* K6   */  be_nested_str_weak(tasmota_switch_index),
+    /* K7   */  be_nested_str_weak(web_value_onoff),
+    /* K8   */  be_nested_str_weak(shadow_contact),
     }),
-    be_str_weak(init),
+    be_str_weak(web_values),
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x5C1C0400,  //  0005  MOVE	R7	R2
-      0x5C200600,  //  0006  MOVE	R8	R3
-      0x7C100800,  //  0007  CALL	R4	4
-      0x60100009,  //  0008  GETGBL	R4	G9
-      0x8C140702,  //  0009  GETMET	R5	R3	K2
-      0x881C0103,  //  000A  GETMBR	R7	R0	K3
-      0x58200004,  //  000B  LDCONST	R8	K4
-      0x7C140600,  //  000C  CALL	R5	3
-      0x7C100200,  //  000D  CALL	R4	1
-      0x90020204,  //  000E  SETMBR	R0	K1	R4
-      0x88100101,  //  000F  GETMBR	R4	R0	K1
-      0x18100905,  //  0010  LE	R4	R4	K5
-      0x78120000,  //  0011  JMPF	R4	#0013
-      0x90020304,  //  0012  SETMBR	R0	K1	K4
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[14]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0xA40A0200,  //  0001  IMPORT	R2	K1
+      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
+      0x7C0C0200,  //  0003  CALL	R3	1
+      0x8C0C0303,  //  0004  GETMET	R3	R1	K3
+      0x8C140504,  //  0005  GETMET	R5	R2	K4
+      0x581C0005,  //  0006  LDCONST	R7	K5
+      0x88200106,  //  0007  GETMBR	R8	R0	K6
+      0x8C240107,  //  0008  GETMET	R9	R0	K7
+      0x882C0108,  //  0009  GETMBR	R11	R0	K8
+      0x7C240400,  //  000A  CALL	R9	2
+      0x7C140800,  //  000B  CALL	R5	4
+      0x7C0C0400,  //  000C  CALL	R3	2
+      0x80000000,  //  000D  RET	0
     })
   )
 );
@@ -283,27 +343,19 @@ extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
 be_local_class(Matter_Plugin_Bridge_Sensor_Contact,
     2,
     &be_class_Matter_Plugin_Bridge_HTTP,
-    be_nested_map(15,
+    be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ARG_HINT, 3), be_nested_str_weak(Enter_X20Switch_X3Cx_X3E_X20number) },
-        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update_closure) },
-        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_init_closure) },
-        { be_const_key_weak(ARG_TYPE, 10), be_const_static_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(21, -1), be_const_int(1) },
-    }))    ) } )) },
-        { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
-        { be_const_key_weak(tasmota_switch_index, -1), be_const_var(0) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(Contact) },
-        { be_const_key_weak(UPDATE_CMD, 11), be_nested_str_weak(Status_X208) },
-        { be_const_key_weak(TYPE, 14), be_nested_str_weak(http_contact) },
-        { be_const_key_weak(ARG, 8), be_nested_str_weak(switch) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute_closure) },
+        { be_const_key_weak(ARG_TYPE, 5), be_const_static_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E_closure) },
+        { be_const_key_weak(ARG_HINT, 4), be_nested_str_weak(Enter_X20Switch_X3Cx_X3E_X20number) },
         { be_const_key_weak(shadow_contact, -1), be_const_var(1) },
-        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_init_closure) },
+        { be_const_key_weak(web_values_prefix, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_closure) },
+        { be_const_key_weak(NAME, -1), be_nested_str_weak(Contact) },
+        { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
+        { be_const_key_weak(UPDATE_TIME, 14), be_const_int(5000) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute_closure) },
+        { be_const_key_weak(CLUSTERS, 11), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(69, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -314,6 +366,15 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Contact,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
+        { be_const_key_weak(TYPES, 12), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(21, -1), be_const_int(1) },
+    }))    ) } )) },
+        { be_const_key_weak(tasmota_switch_index, 9), be_const_var(0) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_contact) },
+        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update_closure) },
+        { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X208) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Contact)
 );

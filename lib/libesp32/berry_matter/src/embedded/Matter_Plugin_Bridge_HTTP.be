@@ -24,6 +24,7 @@ import matter
 # dummy declaration for solidification
 class Matter_Plugin_Device end
 
+#@ solidify:Matter_Plugin_Bridge_HTTP.GetOptionReader,weak
 #@ solidify:Matter_Plugin_Bridge_HTTP,weak
 
 class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
@@ -209,9 +210,20 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   # web_values
   #
   # Show values of the remote device as HTML
+  static var PREFIX = "| <i>%s</i> "
   def web_values()
     import webserver
-    webserver.content_send("| &lt;-- (" + self.NAME + ") --&gt;")
+    import string
+    self.web_values_prefix()
+    webserver.content_send("&lt;-- (" + self.NAME + ") --&gt;")
+  end
+
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    import string
+    var name = self.get_name()
+    webserver.content_send(string.format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
   # Show on/off value as html
@@ -219,5 +231,52 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
     var onoff_html = (onoff != nil ? (onoff ? "<b>On</b>" : "Off") : "")
     return onoff_html
   end
+
+  #############################################################
+  # GetOption reader to decode `SetOption<x>` values from `Status 3`
+  static class GetOptionReader
+    var flag, flag2, flag3, flag4, flag5, flag6
+
+    def init(j)
+      if j == nil  raise "value_error", "invalid json"  end
+      var so = j['SetOption']
+      self.flag  = bytes().fromhex(so[0]).reverse()
+      self.flag2 = bytes().fromhex(so[1])
+      self.flag3 = bytes().fromhex(so[2]).reverse()
+      self.flag4 = bytes().fromhex(so[3]).reverse()
+      self.flag5 = bytes().fromhex(so[4]).reverse()
+      self.flag6 = bytes().fromhex(so[5]).reverse()
+    end
+    def getoption(x)
+      if   x < 32  # SetOption0 .. 31 = Settings->flag
+        return self.flag.getbits(x, 1)
+      elif x < 50  # SetOption32 .. 49 = Settings->param
+        return self.flag2.get(x - 32, 1)
+      elif x < 82  # SetOption50 .. 81 = Settings->flag3
+        return self.flag3.getbits(x - 50, 1)
+      elif x < 114 # SetOption82 .. 113 = Settings->flag4
+        return self.flag4.getbits(x - 82, 1)
+      elif x < 146 # SetOption114 .. 145 = Settings->flag5
+        return self.flag5.getbits(x - 114, 1)
+      elif x < 178 # SetOption146 .. 177 = Settings->flag6
+        return self.flag6.getbits(x - 146, 1)
+      end
+    end
+  end
+
+  #- Examples
+
+  import json
+
+  var p = '{"SerialLog":2,"WebLog":3,"MqttLog":0,"SysLog":0,"LogHost":"","LogPort":514,"SSId":["Livebox-781A",""],"TelePeriod":300,"Resolution":"558180C0","SetOption":["00008009","2805C80001800600003C5A0A192800000000","00000080","00006000","00006000","00000020"]}'
+  var j = json.load(p)
+
+  var gor = matter.Plugin_Bridge_HTTP.GetOptionReader(j)
+  assert(gor.getoption(151) == 1)
+  assert(gor.getoption(150) == 0)
+  assert(gor.getoption(32) == 40)
+  assert(gor.getoption(37) == 128)
+
+  -#
 end
 matter.Plugin_Bridge_HTTP = Matter_Plugin_Bridge_HTTP

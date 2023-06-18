@@ -92,8 +92,8 @@ class Matter_Plugin_Bridge_Sensor_Humidity : Matter_Plugin_Bridge_Sensor
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| %s &#x1F4A7; %2.0f%%",
-                                         self.filter_name_html(),
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(string.format("&#x1F4A7; %2.0f%%",
                                          self.shadow_value != nil ? real(self.shadow_value) / 100 : nil))
   end
   

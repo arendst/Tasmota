@@ -39,7 +39,8 @@ class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_Light0
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| Relay %i %s", self.tasmota_relay_index, self.web_value_onoff(self.shadow_onoff)))
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(string.format("Relay %i %s", self.tasmota_relay_index, self.web_value_onoff(self.shadow_onoff)))
   end
 
 end

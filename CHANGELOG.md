@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Matter redesigned UI
 - Matter add support for Contact Sensor
 - Berry `string.format()` now automatically converts type according to format
+- Matter add friendly-name (NodeLabel) to each endpoint
 
 ### Breaking Changed
 
