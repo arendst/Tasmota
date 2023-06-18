@@ -5,6 +5,7 @@
 #@ solidify:Rule_Matcher_Wildcard
 #@ solidify:Rule_Matcher_Operator
 #@ solidify:Rule_Matcher_Array
+#@ solidify:Rule_Matcher_AND_List
 #@ solidify:Rule_Matcher
 
 

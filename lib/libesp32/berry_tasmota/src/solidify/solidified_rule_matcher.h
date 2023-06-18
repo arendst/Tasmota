@@ -1052,6 +1052,144 @@ void be_load_Rule_Matcher_Array_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+extern const bclass be_class_Rule_Matcher_AND_List;
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Rule_Matcher_AND_List_init,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str(and_list),
+    }),
+    &be_const_str_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: tostring
+********************************************************************/
+be_local_closure(Rule_Matcher_AND_List_tostring,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str(_X3CMatcher_AND_List_X20),
+    /* K1   */  be_nested_str(and_list),
+    /* K2   */  be_nested_str(_X3E),
+    }),
+    &be_const_str_tostring,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x60040008,  //  0000  GETGBL	R1	G8
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x00060001,  //  0003  ADD	R1	K0	R1
+      0x00040302,  //  0004  ADD	R1	R1	K2
+      0x80040200,  //  0005  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: match
+********************************************************************/
+be_local_closure(Rule_Matcher_AND_List_match,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str(and_list),
+    /* K2   */  be_nested_str(match),
+    /* K3   */  be_nested_str(push),
+    /* K4   */  be_const_int(1),
+    }),
+    &be_const_str_match,
+    &be_const_str_solidified,
+    ( &(const binstruction[24]) {  /* code */
+      0x58080000,  //  0000  LDCONST	R2	K0
+      0x600C0012,  //  0001  GETGBL	R3	G18
+      0x7C0C0000,  //  0002  CALL	R3	0
+      0x6010000C,  //  0003  GETGBL	R4	G12
+      0x88140101,  //  0004  GETMBR	R5	R0	K1
+      0x7C100200,  //  0005  CALL	R4	1
+      0x14100404,  //  0006  LT	R4	R2	R4
+      0x7812000E,  //  0007  JMPF	R4	#0017
+      0x88100101,  //  0008  GETMBR	R4	R0	K1
+      0x94100802,  //  0009  GETIDX	R4	R4	R2
+      0x8C140902,  //  000A  GETMET	R5	R4	K2
+      0x5C1C0200,  //  000B  MOVE	R7	R1
+      0x7C140400,  //  000C  CALL	R5	2
+      0x4C180000,  //  000D  LDNIL	R6
+      0x1C180A06,  //  000E  EQ	R6	R5	R6
+      0x781A0001,  //  000F  JMPF	R6	#0012
+      0x4C180000,  //  0010  LDNIL	R6
+      0x80040C00,  //  0011  RET	1	R6
+      0x8C180703,  //  0012  GETMET	R6	R3	K3
+      0x5C200A00,  //  0013  MOVE	R8	R5
+      0x7C180400,  //  0014  CALL	R6	2
+      0x00080504,  //  0015  ADD	R2	R2	K4
+      0x7001FFEB,  //  0016  JMP		#0003
+      0x80040600,  //  0017  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified class: Rule_Matcher_AND_List
+********************************************************************/
+be_local_class(Rule_Matcher_AND_List,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key(and_list, -1), be_const_var(0) },
+        { be_const_key(tostring, -1), be_const_closure(Rule_Matcher_AND_List_tostring_closure) },
+        { be_const_key(match, -1), be_const_closure(Rule_Matcher_AND_List_match_closure) },
+        { be_const_key(init, 0), be_const_closure(Rule_Matcher_AND_List_init_closure) },
+    })),
+    (bstring*) &be_const_str_Rule_Matcher_AND_List
+);
+/*******************************************************************/
+
+void be_load_Rule_Matcher_AND_List_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_Rule_Matcher_AND_List);
+    be_setglobal(vm, "Rule_Matcher_AND_List");
+    be_pop(vm, 1);
+}
+
 extern const bclass be_class_Rule_Matcher;
 
 /********************************************************************
