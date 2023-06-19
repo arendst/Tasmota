@@ -125,6 +125,8 @@ protected:
 class ZipReadFileImpl;
 typedef std::shared_ptr<FileImpl> ZipReadFileImplPtr;
 
+
+// this is the proxy FileImpl - used for passing through real files.
 class ZipReadFileImpl : public FileImpl {
 public:
   ZipReadFileImpl(File f) { _f = f; }
@@ -163,7 +165,9 @@ public:
     return _f.isDirectory();
   }
   FileImplPtr openNextFile(const char* mode) {
-    return nullptr; // TODO
+    File f = _f.openNextFile(mode);
+    return ZipReadFileImplPtr(new ZipReadFileImpl(f));
+    //return nullptr; // TODO
   }
   void rewindDirectory(void) {
     return _f.rewindDirectory();
@@ -469,6 +473,9 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
     char *tok;
     char *prefix = strtok_r(sub_path, "#", &tok);
     char *suffix = strtok_r(NULL, "", &tok);
+    if (!suffix || *suffix == 0){ // bad filename - nothing after #
+      return ZipReadFileImplPtr();    // return an error
+    }
     // if suffix starts with '/', skip the first char
     if (*suffix == '/') { suffix++; }
     // AddLog(LOG_LEVEL_DEBUG, "ZIP: prefix=%s suffix=%s", prefix, suffix);

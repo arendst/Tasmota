@@ -698,7 +698,7 @@ class Matter_Device
     var param_log = ''
     for k:_class.k2l(plugin_conf)
       if k == 'type'  continue  end
-      param_log += string.format(" %s = %s", k, plugin_conf[k])
+      param_log += string.format(" %s:%s", k, plugin_conf[k])
     end
     return param_log
   end
@@ -718,7 +718,7 @@ class Matter_Device
 
     # start with mandatory endpoint 0 for root node
     self.plugins.push(matter.Plugin_Root(self, 0, {}))
-    tasmota.log(string.format("MTR:   endpoint = %5i type = %s%s", 0, 'root', ''), 2)
+    tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
     self.plugins.push(matter.Plugin_Aggregator(self, 0xFF00, {}))
@@ -738,12 +738,12 @@ class Matter_Device
         var pi = pi_class(self, ep, plugin_conf)
         self.plugins.push(pi)
 
-        tasmota.log(string.format("MTR:   endpoint = %5i type = %s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
+        tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
       except .. as e, m
         tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
     end
-    tasmota.log(string.format("MTR:   endpoint = %5i type = %s%s", 0xFF00, 'aggregator', ''), 2)
+    tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", 0xFF00, 'aggregator', ''), 2)
 
     tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
@@ -1260,7 +1260,7 @@ class Matter_Device
       pi_conf[k] = plugin_conf[k]
     end
     # add to main
-    tasmota.log(string.format("MTR: adding endpoint = %i type = %s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
+    tasmota.log(string.format("MTR: adding endpoint = %i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
     self.plugins_config[ep_str] = pi_conf
     self.plugins_persist = true
     self.next_ep += 1     # increment next allocated endpoint before saving

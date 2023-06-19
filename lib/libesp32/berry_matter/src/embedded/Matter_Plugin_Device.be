@@ -27,7 +27,7 @@ class Matter_Plugin end
 class Matter_Plugin_Device : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
-    0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
+    0x0039: [5],                                    # Bridged Device Basic Information 9.13 p.485
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
@@ -35,11 +35,22 @@ class Matter_Plugin_Device : Matter_Plugin
   static var TYPES = { 0x0013: 1 }                  # fake type
   static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
 
+  var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+
+  def set_name(n)
+    if n != self.node_label
+      self.attribute_updated(0x0039, 0x0005)
+    end
+    self.node_label = n
+  end
+  def get_name()    return self.node_label  end
+
   #############################################################
   # Constructor
-  # def init(device, endpoint, arguments)
-  #   super(self).init(device, endpoint, arguments)
-  # end
+  def init(device, endpoint, config)
+    self.node_label = config.find("name", "")
+    super(self).init(device, endpoint, config)
+  end
 
   #############################################################
   # read an attribute
@@ -103,7 +114,16 @@ class Matter_Plugin_Device : Matter_Plugin
       else
         return super(self).read_attribute(session, ctx)
       end
-    
+
+    # ====================================================================================================
+    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+
+      if   attribute == 0x0005          #  ---------- NodeLabel / string ----------
+        return TLV.create_TLV(TLV.UTF1, self.get_name())
+      else
+        return super(self).read_attribute(session, ctx)
+      end
+
     else
       return super(self).read_attribute(session, ctx)
     end

@@ -1128,14 +1128,14 @@ void ShutterRelayChanged(void)
           case SHT_COUNTER:
           case SHT_PWM_VALUE:
           case SHT_PWM_TIME:
+            ShutterPowerOff(i);			 
           case SHT_TIME: {
-            ShutterPowerOff(i);
             // powerstate_local == 0 => direction=0, stop
             // powerstate_local == 1 => direction=1, target=Shutter[i].open_max
             // powerstate_local == 2 => direction=-1, target=0 // only happen on SHT_TIME
             // powerstate_local == 3 => direction=-1, target=0 // only happen if NOT SHT_TIME
             int8_t direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
-            int8_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
+            int32_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
 
             if (direction != 0) {
               ShutterStartInit(i, direction, target);

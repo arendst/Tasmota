@@ -175,7 +175,8 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| Light %s %s %s",
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(string.format("%s %s %s",
                               self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer(),
                               self.web_value_ct()))
   end

@@ -92,8 +92,8 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| %s &#x26C5; %i hPa",
-                                         self.filter_name_html(),
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(string.format("&#x26C5; %i hPa",
                                          int(self.shadow_value)))
   end
   

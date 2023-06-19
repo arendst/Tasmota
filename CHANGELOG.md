@@ -9,17 +9,23 @@ All notable changes to this project will be documented in this file.
 - Matter ability to add or remove endpoint in bridge mode (code only)
 - Matter add controller's Vendor Name to logs and UI
 - Matter redesigned UI
+- Matter add support for Contact Sensor
+- Berry `string.format()` now automatically converts type according to format
+- Matter add friendly-name (NodeLabel) to each endpoint
 
 ### Breaking Changed
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
 - Matter Bridge mode always on
+- ESP32 Framework (Core) from v2.0.9 to v2.0.10
 
 ### Fixed
 - Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
 - Fixed HASPmota event when value is non-integer (fixes #18229)
 - Matter fix local Occupancy sensor
+- Zigbee fixed regression with SetOption101
+- Berry fixed parser error with upvals in closures
 
 ### Removed
 

@@ -92,8 +92,8 @@ class Matter_Plugin_Bridge_Sensor_Temp : Matter_Plugin_Bridge_Sensor
   def web_values()
     import webserver
     import string
-    webserver.content_send(string.format("| %s &#x2600;&#xFE0F; %.1f °C",
-                                         self.filter_name_html(),
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(string.format("&#x2600;&#xFE0F; %.1f °C",
                                          self.shadow_value != nil ? real(self.shadow_value) / 100 : nil))
   end
 

@@ -964,9 +964,10 @@ static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
     bbool is_suffix = l->type == ETINDEX || l->type == ETMEMBER;   /* is suffix */
     bbool is_suffix_reg = l->v.ss.tt == ETREG || l->v.ss.tt == ETLOCAL || l->v.ss.tt == ETGLOBAL || l->v.ss.tt == ETNGLOBAL;   /* if suffix, does it need a register */
     bbool is_global = l->type == ETGLOBAL || l->type == ETNGLOBAL;
+    bbool is_upval = l->type == ETUPVAL;
     /* in the suffix expression, if the object is a temporary
      * variable (l->v.ss.tt == ETREG), it needs to be cached. */
-    if (is_global || (is_suffix && is_suffix_reg)) {
+    if (is_global || is_upval || (is_suffix && is_suffix_reg)) {
         be_code_allocregs(finfo, 1);
     }
 }
