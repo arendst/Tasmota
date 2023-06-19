@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Matter fix local Occupancy sensor
 - Zigbee fixed regression with SetOption101
 - Berry fixed parser error with upvals in closures
+- NeoPool fix NPFiltration switch result (#18871)
 
 ### Removed
 
