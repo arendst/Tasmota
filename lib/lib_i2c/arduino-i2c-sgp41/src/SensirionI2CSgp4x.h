@@ -36,19 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SENSIRIONI2CSGP41_H
-#define SENSIRIONI2CSGP41_H
+#ifndef SENSIRIONI2CSGP4X_H
+#define SENSIRIONI2CSGP4X_H
 
 #include <Wire.h>
 
 #include <SensirionCore.h>
 
-class SensirionI2CSgp41 {
+class SensirionI2CSgp4x {
 
   public:
-    SensirionI2CSgp41();
+    SensirionI2CSgp4x();
     /**
-     * begin() - Initializes the SensirionI2CSgp41 class.
+     * begin() - Initializes the SensirionI2CSgp4x class.
      *
      * @param serial Arduino stream object to be communicated with.
      *
@@ -72,8 +72,9 @@ class SensirionI2CSgp41 {
      *
      * @return 0 on success, an error code otherwise
      */
-    uint16_t executeConditioning(uint16_t defaultRh, uint16_t defaultT,
-                                 uint16_t& srawVoc);
+    uint16_t sendConditioningCmd(uint16_t defaultRh, uint16_t defaultT);
+
+    uint16_t readConditioningValue(uint16_t& srawVoc);
 
     /**
      * measureRawSignals() - This command starts/continues the VOC+NOx
@@ -97,8 +98,11 @@ class SensirionI2CSgp41 {
      *
      * @return 0 on success, an error code otherwise
      */
-    uint16_t measureRawSignals(uint16_t relativeHumidity, uint16_t temperature,
-                               uint16_t& srawVoc, uint16_t& srawNox);
+    uint16_t sendRawSignalsCmd(uint16_t relativeHumidity, uint16_t temperature);
+    uint16_t readRawSignalsValue(uint16_t& srawVoc, uint16_t& srawNox);
+
+    uint16_t sendRawSignalCmd(uint16_t relativeHumidity, uint16_t temperature);
+    uint16_t readRawSignalValue(uint16_t& srawVoc);
 
     /**
      * executeSelfTest() - This command triggers the built-in self-test checking
@@ -113,7 +117,8 @@ class SensirionI2CSgp41 {
      *
      * @return 0 on success, an error code otherwise
      */
-    uint16_t executeSelfTest(uint16_t& testResult);
+    uint16_t sendSelfTestCmd(void);
+    uint16_t readSelfTestValue(uint16_t& testResult);
 
     /**
      * turnHeaterOff() - This command turns the hotplate off and stops the
@@ -137,4 +142,4 @@ class SensirionI2CSgp41 {
     TwoWire* _i2cBus = nullptr;
 };
 
-#endif /* SENSIRIONI2CSGP41_H */
+#endif /* SENSIRIONI2CSGP4X_H */
