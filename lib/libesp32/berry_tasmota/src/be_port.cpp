@@ -101,6 +101,7 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
 // provides MPATH_ constants
 #include "be_port.h"
 extern "C" {
+#define BE_MAX_FILELIST_COUNT 25
     // this combined action is called from be_path_tasmota_lib.c
     // by using a single function, we save >200 bytes of flash
     // by reducing code repetition.
@@ -147,10 +148,11 @@ extern "C" {
                         File *dir = (File *)be_fopen(path, "r");
                         if (dir) {
                             switch (action){
-                                case MPATH_LISTDIR:
+                                case MPATH_LISTDIR:{
+                                    int maxcount = BE_MAX_FILELIST_COUNT;
                                     // fill out the list object
                                     dir->rewindDirectory();
-                                    while (1) {
+                                    while (maxcount--) {
                                         File entry = dir->openNextFile();
                                         if (!entry) {
                                             break;
@@ -161,8 +163,15 @@ extern "C" {
                                             be_data_push(vm, -2);
                                             be_pop(vm, 1);
                                         }
+                                        entry.close();
                                     }
-                                    break;
+                                    if (maxcount <= 0){
+                                        char *fn = "_more";
+                                        be_pushstring(vm, fn);
+                                        be_data_push(vm, -2);
+                                        be_pop(vm, 1);
+                                    }
+                                } break;
                                 case MPATH_ISDIR:
                                     // push bool belowthe only one to push an int, so do it here.
                                     res = dir->isDirectory();
