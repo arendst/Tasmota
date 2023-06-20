@@ -366,7 +366,7 @@ class Matter_UI
 
     for remote: remotes
 
-      webserver.content_send(string.format("&#x1F517; <a target='_blank' href=\"http://%s/\">%s</a>", webserver.html_escape(remote), webserver.html_escape(remote)))
+      webserver.content_send(string.format("&#x1F517; <a target='_blank' href=\"http://%s/?\">%s</a>", webserver.html_escape(remote), webserver.html_escape(remote)))
       webserver.content_send("<table style='width:100%'>")
       webserver.content_send("<tr>"
                              "<td width='25'></td>"
@@ -643,7 +643,7 @@ class Matter_UI
       webserver.content_send("<fieldset><legend><b>&nbsp;Matter Remote Device&nbsp;</b></legend><p></p>"
                              "<p><b>Add Remote sensor or device</b></p>")
 
-      webserver.content_send(string.format("<p>&#x1F517; <a target='_blank' href=\"http://%s/\">%s</a></p>", webserver.html_escape(url), webserver.html_escape(url)))
+      webserver.content_send(string.format("<p>&#x1F517; <a target='_blank' href=\"http://%s/?\">%s</a></p>", webserver.html_escape(url), webserver.html_escape(url)))
 
       # Add new endpoint section
       webserver.content_send("<form action='/matterc' method='post'>"
@@ -1031,8 +1031,9 @@ class Matter_UI
     webserver.content_send("<table style='width:100%'>")
     webserver.content_send(matter._STYLESHEET)
 
-    for host: bridge_plugin_by_host.keys()
-      webserver.content_send(string.format("<tr class='ztdm htrm'><td><b>%s</b></td>", webserver.html_escape(host)))
+    for host: self.device.k2l(bridge_plugin_by_host)
+      var host_html = webserver.html_escape(host)
+      webserver.content_send(string.format("<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://%s/' href=\"http://%s/?\"'>%s</a></td>", host_html, host_html, host_html))
       var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
       webserver.content_send(http_remote.web_last_seen())
 
