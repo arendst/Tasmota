@@ -77,7 +77,10 @@ def esp32_build_filesystem(fs_size):
             else:
                 print("Failed to download: ",file)
             continue
-        shutil.copy(file, filesystem_dir)
+        if os.path.isdir(file):
+            shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
+        else:
+            shutil.copy(file, filesystem_dir)
     if not os.listdir(filesystem_dir):
         print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False
