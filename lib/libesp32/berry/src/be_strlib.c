@@ -599,7 +599,7 @@ static bbool convert_to_real(bvm *vm, int index, breal *val)
     return converted;
 }
 
-static int str_format(bvm *vm)
+int be_str_format(bvm *vm)
 {
     int top = be_top(vm);
     if (top > 0 && be_isstring(vm, 1)) {
@@ -940,7 +940,7 @@ static int str_escape(bvm *vm)
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(string) {
-    be_native_module_function("format", str_format),
+    be_native_module_function("format", be_str_format),
     be_native_module_function("count", str_count),
     be_native_module_function("split", str_split),
     be_native_module_function("find", str_find),
@@ -958,7 +958,7 @@ be_define_native_module(string, NULL);
 #else
 /* @const_object_info_begin
 module string (scope: global, depend: BE_USE_STRING_MODULE) {
-    format, func(str_format)
+    format, func(be_str_format)
     count, func(str_count)
     split, func(str_split)
     find, func(str_find)

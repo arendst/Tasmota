@@ -14,6 +14,7 @@
 #include "be_vector.h"
 #include "be_string.h"
 #include "be_map.h"
+#include "be_strlib.h"
 #include <string.h>
 
 #define READLINE_STEP       100
@@ -504,6 +505,7 @@ void be_load_baselib_next(bvm *vm)
 {
     be_regfunc(vm, "call", l_call);
     be_regfunc(vm, "bool", l_bool);
+    be_regfunc(vm, "format", be_str_format);
 }
 #else
 extern const bclass be_class_list;
@@ -537,6 +539,7 @@ vartab m_builtin (scope: local) {
     bytes, class(be_class_bytes)
     call, func(l_call)
     bool, func(l_bool)
+    format, func(be_str_format)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_m_builtin.h"
