@@ -183,8 +183,9 @@ int be_protectedparser(bvm *vm,
     return res;
 }
 
-static const char* _sgets(void *data, size_t *size)
+static const char* _sgets(struct blexer* lexer, void *data, size_t *size)
 {
+    (void)lexer;
     struct strbuf *sb = data;
     *size = sb->len;
     if (sb->len) {
@@ -194,8 +195,9 @@ static const char* _sgets(void *data, size_t *size)
     return NULL;
 }
 
-static const char* _fgets(void *data, size_t *size)
+static const char* _fgets(struct blexer* lexer, void *data, size_t *size)
 {
+    (void)lexer;
     struct filebuf *fb = data;
     *size = be_fread(fb->fp, fb->buf, sizeof(fb->buf));
     if (*size) {

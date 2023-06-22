@@ -137,7 +137,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         logbuf("%s", opc2str(op));
         break;
     }
-    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf)+1);
+    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf) + 1);
     logbuf("%s\n", __lbuf_tmp);
     if (fout) {
         be_fwrite(fout, __lbuf, strlen(__lbuf));
@@ -184,7 +184,7 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         blineinfo *end = it + proto->nlineinfo;
         int pc = cast_int(ip - proto->code - 1); /* now vm->ip has been increased */
         for (; it < end && pc > it->endpc; ++it);
-        sprintf(buf, ":%d:", it->linenumber);
+        snprintf(buf, sizeof(buf), ":%d:", it->linenumber);
         be_writestring(str(proto->source));
         be_writestring(buf);
     } else {
