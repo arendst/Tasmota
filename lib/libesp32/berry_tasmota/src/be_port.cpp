@@ -146,17 +146,19 @@ extern "C" {
                         // without this TAS fails to find stuff at boot...
                         File *dir = (File *)be_fopen(path, "r");
                         if (dir) {
+                            String fpath;
                             String fname;
                             switch (action){
                                 case MPATH_LISTDIR:
                                     dir->seekDir(0);
-                                    fname = dir->getNextFileName();
-                                    while (fname.length() != 0) {
+                                    fpath = dir->getNextFileName();
+                                    while (fpath.length() != 0) {
+                                        fname = fpath.substring(fpath.lastIndexOf("/") + 1);
                                         const char * fn = fname.c_str();
                                         be_pushstring(vm, fn);
                                         be_data_push(vm, -2);
                                         be_pop(vm, 1);
-                                        fname = dir->getNextFileName();
+                                        fpath = dir->getNextFileName();
                                     }
                                     break;
                                 case MPATH_ISDIR:
