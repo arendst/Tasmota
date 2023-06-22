@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry `string.format()` now automatically converts type according to format
 - Matter add friendly-name (NodeLabel) to each endpoint
 - Berry add global function `format` as a simpler syntax to `string.format`
+- Berry added f-strings as an alternative to string formatting
 
 ### Breaking Changed
 

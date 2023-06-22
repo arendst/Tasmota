@@ -89,7 +89,6 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_enable()
     import webserver
-    import string
     var matter_enabled = self.matter_enabled
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter &nbsp;</b></legend>"
@@ -97,12 +96,14 @@ class Matter_UI
                            "<form action='/matterc' method='post'>")
 
     # checkbox for Matter enable
-    webserver.content_send(string.format("<p><input id='menable' type='checkbox' name='menable' %s>", self.matter_enabled() ? "checked" : ""))
+    var matter_enabled_checked = self.matter_enabled() ? 'checked' : ''
+    webserver.content_send(f"<p><input id='menable' type='checkbox' name='menable' {matter_enabled_checked}>")
     webserver.content_send("<label for='menable'><b>Matter enable</b></label></p>")
 
     if self.matter_enabled()
       # checkbox for Matter commissioning
-      webserver.content_send(string.format("<p><input id='comm' type='checkbox' name='comm' %s>", self.device.commissioning_open != nil ? "checked" : ""))
+      var commissioning_open_checked = self.device.commissioning_open != nil ? "checked" : ""
+      webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
       webserver.content_send("<label for='comm'><b>Commissioning open</b></label></p>")
     end
 
@@ -163,21 +164,20 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_commissioning_info()
     import webserver
-    import string
 
     var seconds_left = (self.device.commissioning_open - tasmota.millis()) / 1000
     if seconds_left < 0   seconds_left = 0 end
     var min_left = (seconds_left + 30) / 60
 
-    webserver.content_send(string.format("<fieldset><legend><b>&nbsp;Commissioning open for %i min&nbsp;</b></legend><p></p>", min_left))
+    webserver.content_send(f"<fieldset><legend><b>&nbsp;Commissioning open for {min_left:i} min&nbsp;</b></legend><p></p>")
 
     var pairing_code = self.device.compute_manual_pairing_code()
-    webserver.content_send(string.format("<p>Manual pairing code:<br><b>%s-%s-%s</b></p><hr>", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]))
+    webserver.content_send(f"<p>Manual pairing code:<br><b>{pairing_code[0..3]}-{pairing_code[4..6]}-{pairing_code[7..]}</b></p><hr>")
 
     webserver.content_send("<div><center>")
     var qr_text = self.device.compute_qrcode_content()
     self.show_qrcode(qr_text)
-    webserver.content_send(string.format("<p> %s</p>", qr_text))
+    webserver.content_send(f"<p> {qr_text}</p>")
     webserver.content_send("</div><p></p></fieldset><p></p>")
 
   end
@@ -187,16 +187,16 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_passcode_form()
     import webserver
-    import string
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter Advanced Configuration&nbsp;</b></legend><p></p>")
     #
     webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>"
                            "<p>Passcode:</p>")
-    webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.root_passcode))
+    webserver.content_send(f"<input type='number' min='1' max='99999998' name='passcode' value='{self.device.root_passcode:i}'>")
     webserver.content_send("<p>Distinguish id:</p>")
-    webserver.content_send(string.format("<input type='number' min='0' max='4095' name='discriminator' value='%i'>", self.device.root_discriminator))
-    webserver.content_send(string.format("<p><input type='checkbox' name='ipv4'%s>IPv4 only</p>", self.device.ipv4only ? " checked" : ""))
+    webserver.content_send(f"<input type='number' min='0' max='4095' name='discriminator' value='{self.device.root_discriminator:i}'>")
+    var ipv4only_checked = self.device.ipv4only ? " checked" : ""
+    webserver.content_send(f"<p><input type='checkbox' name='ipv4'{ipv4only_checked}>IPv4 only</p>")
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>"
                            "<p></p></fieldset><p></p>")
 
@@ -224,15 +224,15 @@ class Matter_UI
         if !label   label = "<No label>"    end
         label = webserver.html_escape(label)      # protect against HTML injection
         
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s</b> (%s)&nbsp;</legend><p></p>", f.get_fabric_index(), label, f.get_admin_vendor_name()))
+        webserver.content_send(f"<fieldset><legend><b>&nbsp;#{f.get_fabric_index():i} {label}</b> ({f.get_admin_vendor_name()})&nbsp;</legend><p></p>")
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
-        webserver.content_send(string.format("Fabric: %s<br>", fabric_rev.tohex()))
-        webserver.content_send(string.format("Device: %s<br>&nbsp;", deviceid_rev.tohex()))
+        webserver.content_send(f"Fabric: {fabric_rev.tohex()}<br>")
+        webserver.content_send(f"Device: {deviceid_rev.tohex()}<br>&nbsp;")
 
         webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"Are you sure?\");'>")
-        webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%i'>", f.get_fabric_index()))
+        webserver.content_send(f"<input name='del_fabric' type='hidden' value='{f.get_fabric_index():i}'>")
         webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
 
         webserver.content_send("<p></p></fieldset><p></p>")
@@ -252,8 +252,8 @@ class Matter_UI
   #   var hl = ["Enter Relay number","Not used","Enter Filter pattern","Enter Switch number"];
   def show_plugins_hints_js(*class_list)
     import webserver
-    import string
     import json
+    import string
 
     var class_types = []
     for cl: class_list
@@ -279,11 +279,11 @@ class Matter_UI
       end
     end
 
-    webserver.content_send(string.format(
+    webserver.content_send(f""
       "<script type='text/javascript'>"
-      "var hm=%s;"
-      "var hl=%s;"
-      "</script>", json.dump(hm), json.dump(hl)))
+      "var hm={json.dump(hm)};"
+      "var hl={json.dump(hl)};"
+      "</script>")
 
     webserver.content_send(matter._ADD_ENDPOINT_JS)
 
@@ -332,17 +332,17 @@ class Matter_UI
       end
 
       found = true
-      webserver.content_send(string.format("<tr><td style='font-size:smaller;'><b>%i</b></td>", ep))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s'></td>",
+      webserver.content_send(f"<tr><td style='font-size:smaller;'><b>{ep:i}</b></td>")
+      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s'></td>",
                              ep, webserver.html_escape(conf.find('name', ''))))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><b>%s</b></td>", self.plugin_name(conf.find('type', ''))))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s'></td>",
+      webserver.content_send(f"<td style='font-size:smaller;'><b>{self.plugin_name(conf.find('type', ''))}</b></td>")
+      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s'></td>",
                              ep, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
-      webserver.content_send(string.format("<td style='text-align:center;'><button name='del%i' "
-                                           "style='background:none;border:none;line-height:1;'"
-                                           " onclick=\"return confirm('Confirm removing endpoint')\""
-                                           ">"
-                                           "&#128293;</button></td></tr>", ep))
+      webserver.content_send(f"<td style='text-align:center;'><button name='del{ep:i}' "
+                              "style='background:none;border:none;line-height:1;'"
+                              " onclick=\"return confirm('Confirm removing endpoint')\""
+                              ">"
+                              "&#128293;</button></td></tr>")
       i += 1
     end
     webserver.content_send("</table>")
@@ -366,7 +366,8 @@ class Matter_UI
 
     for remote: remotes
 
-      webserver.content_send(string.format("&#x1F517; <a target='_blank' href=\"http://%s/?\">%s</a>", webserver.html_escape(remote), webserver.html_escape(remote)))
+      var remote_html = webserver.html_escape(remote)
+      webserver.content_send(f"&#x1F517; <a target='_blank' href=\"http://{remote_html}/?\">{remote_html}</a>")
       webserver.content_send("<table style='width:100%'>")
       webserver.content_send("<tr>"
                              "<td width='25'></td>"
@@ -396,18 +397,18 @@ class Matter_UI
         end
 
         found = true
-        webserver.content_send(string.format("<tr><td width='22' style='font-size:smaller;'><b>%i</b></td>", ep))
-        webserver.content_send(string.format("<td width='78' style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s' placeholder='(optional)'></td>",
+        webserver.content_send(f"<tr><td width='22' style='font-size:smaller;'><b>{ep:i}</b></td>")
+        webserver.content_send(format("<td width='78' style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s' placeholder='(optional)'></td>",
                                ep, webserver.html_escape(conf.find('name', ''))))
 
-        webserver.content_send(string.format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
-        webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
+        webserver.content_send(format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
+        webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
                               ep, webserver.html_escape(arg)))
-        webserver.content_send(string.format("<td width='15' style='text-align:center;'><button name='del%i' "
-                                            "style='background:none;border:none;line-height:1;'"
-                                            " onclick=\"return confirm('Confirm removing endpoint')\""
-                                            ">"
-                                            "&#128293;</button></td></tr>", ep))
+        webserver.content_send(f"<td width='15' style='text-align:center;'><button name='del{ep:i}' "
+                                "style='background:none;border:none;line-height:1;'"
+                                " onclick=\"return confirm('Confirm removing endpoint')\""
+                                ">"
+                                "&#128293;</button></td></tr>")
         i += 1
       end
       webserver.content_send("</table><p></p>")

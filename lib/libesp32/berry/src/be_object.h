@@ -195,7 +195,8 @@ typedef struct {
     bntvfunc destroy;
 } bcommomobj;
 
-typedef const char* (*breader)(void*, size_t*);
+struct blexer;
+typedef const char* (*breader)(struct blexer*, void*, size_t*);
 
 #define cast(_T, _v)            ((_T)(_v))
 #define cast_int(_v)            cast(int, _v)
