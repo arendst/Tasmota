@@ -11,7 +11,7 @@ extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
+    10,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -19,41 +19,38 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
+    ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(get_name),
-    /* K3   */  be_nested_str_weak(filter_name_html),
-    /* K4   */  be_nested_str_weak(content_send),
-    /* K5   */  be_nested_str_weak(format),
-    /* K6   */  be_nested_str_weak(PREFIX),
-    /* K7   */  be_nested_str_weak(html_escape),
-    /* K8   */  be_nested_str_weak(),
+    /* K1   */  be_nested_str_weak(get_name),
+    /* K2   */  be_nested_str_weak(filter_name_html),
+    /* K3   */  be_nested_str_weak(content_send),
+    /* K4   */  be_nested_str_weak(PREFIX),
+    /* K5   */  be_nested_str_weak(html_escape),
+    /* K6   */  be_nested_str_weak(),
     }),
     be_str_weak(web_values_prefix),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[20]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
-      0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
-      0x7C0C0200,  //  0003  CALL	R3	1
-      0x5C100600,  //  0004  MOVE	R4	R3
-      0x74120002,  //  0005  JMPT	R4	#0009
-      0x8C100103,  //  0006  GETMET	R4	R0	K3
-      0x7C100200,  //  0007  CALL	R4	1
-      0x5C0C0800,  //  0008  MOVE	R3	R4
-      0x8C100304,  //  0009  GETMET	R4	R1	K4
-      0x8C180505,  //  000A  GETMET	R6	R2	K5
-      0x88200106,  //  000B  GETMBR	R8	R0	K6
-      0x780E0003,  //  000C  JMPF	R3	#0011
-      0x8C240307,  //  000D  GETMET	R9	R1	K7
-      0x5C2C0600,  //  000E  MOVE	R11	R3
-      0x7C240400,  //  000F  CALL	R9	2
-      0x70020000,  //  0010  JMP		#0012
-      0x58240008,  //  0011  LDCONST	R9	K8
-      0x7C180600,  //  0012  CALL	R6	3
-      0x7C100400,  //  0013  CALL	R4	2
-      0x80000000,  //  0014  RET	0
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C0C0400,  //  0003  MOVE	R3	R2
+      0x740E0002,  //  0004  JMPT	R3	#0008
+      0x8C0C0102,  //  0005  GETMET	R3	R0	K2
+      0x7C0C0200,  //  0006  CALL	R3	1
+      0x5C080600,  //  0007  MOVE	R2	R3
+      0x8C0C0303,  //  0008  GETMET	R3	R1	K3
+      0x60140018,  //  0009  GETGBL	R5	G24
+      0x88180104,  //  000A  GETMBR	R6	R0	K4
+      0x780A0003,  //  000B  JMPF	R2	#0010
+      0x8C1C0305,  //  000C  GETMET	R7	R1	K5
+      0x5C240400,  //  000D  MOVE	R9	R2
+      0x7C1C0400,  //  000E  CALL	R7	2
+      0x70020000,  //  000F  JMP		#0011
+      0x581C0006,  //  0010  LDCONST	R7	K6
+      0x7C140400,  //  0011  CALL	R5	2
+      0x7C0C0400,  //  0012  CALL	R3	2
+      0x80000000,  //  0013  RET	0
     })
   )
 );

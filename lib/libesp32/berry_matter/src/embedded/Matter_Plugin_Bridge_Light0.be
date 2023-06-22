@@ -90,7 +90,6 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -144,20 +143,18 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(string.format("%s", self.web_value_onoff(self.shadow_onoff)))
+    webserver.content_send(format("%s", self.web_value_onoff(self.shadow_onoff)))
   end
 
   # Show prefix before web value
   def web_values_prefix()
     import webserver
-    import string
     var name = self.get_name()
     if !name
       name = "Power" + str(self.tasmota_relay_index)
     end
-    webserver.content_send(string.format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
 end

@@ -73,7 +73,6 @@ class Matter_Device
   #############################################################
   def init()
     import crypto
-    import string
     if !tasmota.get_option(matter.MATTER_OPTION)
       matter.UI(self)   # minimal UI
       return
@@ -154,16 +153,15 @@ class Matter_Device
   #
   # Open window for `timeout_s` (default 10 minutes)
   def start_root_basic_commissioning(timeout_s)
-    import string
     if timeout_s == nil   timeout_s = self.PASE_TIMEOUT end
 
     # show Manual pairing code in logs
     var pairing_code = self.compute_manual_pairing_code()
-    tasmota.log(string.format("MTR: Manual pairing code: %s", pairing_code), 2)
+    tasmota.log(format("MTR: Manual pairing code: %s", pairing_code), 2)
     
     # output MQTT
     var qr_code = self.compute_qrcode_content()
-    tasmota.publish_result(string.format('{"Matter":{"Commissioning":1,"PairingCode":"%s","QRCode":"%s"}}', pairing_code, qr_code), 'Matter')
+    tasmota.publish_result(format('{"Matter":{"Commissioning":1,"PairingCode":"%s","QRCode":"%s"}}', pairing_code, qr_code), 'Matter')
 
     # compute PBKDF
     self._compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
@@ -246,7 +244,6 @@ class Matter_Device
   #
   def _compute_pbkdf(passcode_int, iterations, salt)
     import crypto
-    import string
     var passcode = bytes().add(passcode_int, 4)
 
     var tv = crypto.PBKDF2_HMAC_SHA256().derive(passcode, salt, iterations, 80)
@@ -287,12 +284,11 @@ class Matter_Device
   # <BR>
   # can be done only for root PASE (we need the passcode, but we don't get it with OpenCommissioningWindow command)
   def compute_manual_pairing_code()
-    import string
     var digit_1 = (self.root_discriminator & 0x0FFF) >> 10
     var digit_2_6 = ((self.root_discriminator & 0x0300) << 6) | (self.root_passcode & 0x3FFF)
     var digit_7_10 = (self.root_passcode >> 14)
 
-    var ret = string.format("%1i%05i%04i", digit_1, digit_2_6, digit_7_10)
+    var ret = format("%1i%05i%04i", digit_1, digit_2_6, digit_7_10)
     ret += matter.Verhoeff.checksum(ret)
     return ret
   end
@@ -411,7 +407,6 @@ class Matter_Device
   def start_operational_discovery(fabric)
     import crypto
     import mdns
-    import string
 
     self.stop_basic_commissioning()    # close all PASE commissioning information
     # clear any PBKDF information to free memory
@@ -427,11 +422,10 @@ class Matter_Device
   #
   # Stop basic commissioning.
   def start_commissioning_complete(session)
-    import string
     var fabric = session.get_fabric()
     var fabric_id = fabric.get_fabric_id().copy().reverse().tohex()
     var vendor_name = fabric.get_admin_vendor_name()
-    tasmota.log(string.format("MTR: --- Commissioning complete for Fabric '%s' (Vendor %s) ---", fabric_id, vendor_name), 2)
+    tasmota.log(format("MTR: --- Commissioning complete for Fabric '%s' (Vendor %s) ---", fabric_id, vendor_name), 2)
     self.stop_basic_commissioning()     # by default close commissioning when it's complete
   end
 
@@ -513,7 +507,6 @@ class Matter_Device
       return l
     end
   
-    import string
     var endpoint = ctx.endpoint
     # var endpoint_mono = [ endpoint ]
     var endpoint_found = false                # did any endpoint match
@@ -526,13 +519,13 @@ class Matter_Device
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    # tasmota.log(string.format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+    # tasmota.log(format("MTR: process_attribute_expansion %s", str(ctx)), 4)
 
     # build the list of candidates
 
     # list of all endpoints
     var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
-    # tasmota.log(string.format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
+    # tasmota.log(format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
     for pi: self.plugins
       var ep = pi.get_endpoint()    # get supported endpoints for this plugin
 
@@ -543,7 +536,7 @@ class Matter_Device
 
       # now explore the cluster list for 'ep'
       var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-      # tasmota.log(string.format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
+      # tasmota.log(format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
       for cl: cluster_list
         if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
         # from now on, 'cl' is a good candidate
@@ -552,7 +545,7 @@ class Matter_Device
 
         # now filter on attributes
         var attr_list = pi.get_attribute_list(ep, cl)
-        # tasmota.log(string.format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
+        # tasmota.log(format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
         for at: attr_list
           if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
           # from now on, 'at' is a good candidate
@@ -572,7 +565,7 @@ class Matter_Device
       for cl: keys_sorted(all[ep])
         for at: keys_sorted(all[ep][cl])
           for pi: all[ep][cl][at]
-            # tasmota.log(string.format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
+            # tasmota.log(format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
             ctx.endpoint = ep
             ctx.cluster = cl
             ctx.attribute = at
@@ -630,9 +623,8 @@ class Matter_Device
   #############################################################
   # 
   def save_param()
-    import string
     import json
-    var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
@@ -642,7 +634,7 @@ class Matter_Device
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
-      tasmota.log(string.format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 3)
+      tasmota.log(format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 3)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
@@ -653,7 +645,6 @@ class Matter_Device
   #############################################################
   # Load Matter Device parameters
   def load_param()
-    import string
     import crypto
     try
 
@@ -694,11 +685,10 @@ class Matter_Device
   #############################################################
   # Convert a configuration to a log string
   static def conf_to_log(plugin_conf)
-    import string
     var param_log = ''
     for k:_class.k2l(plugin_conf)
       if k == 'type'  continue  end
-      param_log += string.format(" %s:%s", k, plugin_conf[k])
+      param_log += format(" %s:%s", k, plugin_conf[k])
     end
     return param_log
   end
@@ -710,15 +700,13 @@ class Matter_Device
   # Ex:
   #   {'32': {'filter': 'AXP192#Temperature', 'type': 'temperature'}, '40': {'filter': 'BMP280#Pressure', 'type': 'pressure'}, '34': {'filter': 'SHT3X#Temperature', 'type': 'temperature'}, '33': {'filter': 'BMP280#Temperature', 'type': 'temperature'}, '1': {'relay': 0, 'type': 'relay'}, '56': {'filter': 'SHT3X#Humidity', 'type': 'humidity'}, '0': {'type': 'root'}}
   def _instantiate_plugins_from_config(config)
-    import string
-    
     var endpoints = self.k2l_num(config)
     # tasmota.log("MTR: endpoints to be configured "+str(endpoints), 4)
     tasmota.log("MTR: Configuring endpoints", 2)
 
     # start with mandatory endpoint 0 for root node
     self.plugins.push(matter.Plugin_Root(self, 0, {}))
-    tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
+    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
     self.plugins.push(matter.Plugin_Aggregator(self, 0xFF00, {}))
@@ -727,7 +715,7 @@ class Matter_Device
       if ep == 0  continue end          # skip endpoint 0
       try
         var plugin_conf = config[str(ep)]
-        # tasmota.log(string.format("MTR: endpoint %i config %s", ep, plugin_conf), 3)
+        # tasmota.log(format("MTR: endpoint %i config %s", ep, plugin_conf), 3)
 
         var pi_class_name = plugin_conf.find('type')
         if pi_class_name == nil   tasmota.log("MTR: no class name, skipping", 3)  continue end
@@ -738,12 +726,12 @@ class Matter_Device
         var pi = pi_class(self, ep, plugin_conf)
         self.plugins.push(pi)
 
-        tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
+        tasmota.log(format("MTR:   endpoint = %5i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
       except .. as e, m
         tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
     end
-    tasmota.log(string.format("MTR:   endpoint = %5i type:%s%s", 0xFF00, 'aggregator', ''), 2)
+    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0xFF00, 'aggregator', ''), 2)
 
     tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
@@ -813,24 +801,24 @@ class Matter_Device
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
         if !self.ipv4only
-          # tasmota.log(string.format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
+          # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
           mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
         else
-          tasmota.log(string.format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, eth.find('ip','')), 3)
+          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, eth.find('ip','')), 3)
           mdns.add_hostname(self.hostname_eth, eth.find('ip',''))
         end
       else
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
         if !self.ipv4only
-          # tasmota.log(string.format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
+          # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
         else
-          tasmota.log(string.format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, wifi.find('ip','')), 3)
+          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, wifi.find('ip','')), 3)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
         end
       end
-      tasmota.log(string.format("MTR: start mDNS on %s host '%s.local'", is_eth ? "eth" : "wifi", is_eth ? self.hostname_eth : self.hostname_wifi), 3)
+      tasmota.log(format("MTR: start mDNS on %s host '%s.local'", is_eth ? "eth" : "wifi", is_eth ? self.hostname_eth : self.hostname_wifi), 3)
     except .. as e, m
       tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
     end
@@ -842,7 +830,6 @@ class Matter_Device
   # Announce MDNS for PASE commissioning
   def mdns_announce_PASE()
     import mdns
-    import string
     import crypto
 
     var services = {
@@ -859,11 +846,11 @@ class Matter_Device
     try
       if self.hostname_eth
         # Add Matter `_matterc._udp` service
-        # tasmota.log(string.format("MTR: calling mdns.add_service(%s, %s, %i, %s, %s, %s)", "_matterc", "_udp", 5540, str(services), self.commissioning_instance_eth, self.hostname_eth), 4)
+        # tasmota.log(format("MTR: calling mdns.add_service(%s, %s, %i, %s, %s, %s)", "_matterc", "_udp", 5540, str(services), self.commissioning_instance_eth, self.hostname_eth), 4)
         mdns.add_service("_matterc", "_udp", 5540, services, self.commissioning_instance_eth, self.hostname_eth)
         self.mdns_pase_eth = true
 
-        tasmota.log(string.format("MTR: announce mDNS on %s '%s' ptr to `%s.local`", "eth", self.commissioning_instance_eth, self.hostname_eth), 2)
+        tasmota.log(format("MTR: announce mDNS on %s '%s' ptr to `%s.local`", "eth", self.commissioning_instance_eth, self.hostname_eth), 2)
 
         # `mdns.add_subtype(service:string, proto:string, instance:string, hostname:string, subtype:string) -> nil`
         var subtype = "_L" + str(self.commissioning_discriminator & 0xFFF)
@@ -881,11 +868,11 @@ class Matter_Device
       end
       if self.hostname_wifi
 
-        # tasmota.log(string.format("MTR: calling mdns.add_service(%s, %s, %i, %s, %s, %s)", "_matterc", "_udp", 5540, str(services), self.commissioning_instance_wifi, self.hostname_wifi), 4)
+        # tasmota.log(format("MTR: calling mdns.add_service(%s, %s, %i, %s, %s, %s)", "_matterc", "_udp", 5540, str(services), self.commissioning_instance_wifi, self.hostname_wifi), 4)
         mdns.add_service("_matterc", "_udp", 5540, services, self.commissioning_instance_wifi, self.hostname_wifi)
         self.mdns_pase_wifi = true
 
-        tasmota.log(string.format("MTR: starting mDNS on %s '%s' ptr to `%s.local`", "wifi", self.commissioning_instance_wifi, self.hostname_wifi), 3)
+        tasmota.log(format("MTR: starting mDNS on %s '%s' ptr to `%s.local`", "wifi", self.commissioning_instance_wifi, self.hostname_wifi), 3)
 
         # `mdns.add_subtype(service:string, proto:string, instance:string, hostname:string, subtype:string) -> nil`
         var subtype = "_L" + str(self.commissioning_discriminator & 0xFFF)
@@ -911,18 +898,17 @@ class Matter_Device
   # MDNS remove any PASE announce
   def mdns_remove_PASE()
     import mdns
-    import string
 
     try
       if self.mdns_pase_eth
-        tasmota.log(string.format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth), 3)
-        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "eth", self.commissioning_instance_eth), 3)
+        tasmota.log(format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth), 3)
+        tasmota.log(format("MTR: remove mDNS on %s '%s'", "eth", self.commissioning_instance_eth), 3)
         self.mdns_pase_eth = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth)
       end
       if self.mdns_pase_wifi
-        tasmota.log(string.format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi), 3)
-        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "wifi", self.commissioning_instance_wifi), 3)
+        tasmota.log(format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi), 3)
+        tasmota.log(format("MTR: remove mDNS on %s '%s'", "wifi", self.commissioning_instance_wifi), 3)
         self.mdns_pase_wifi = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi)
       end
@@ -945,7 +931,6 @@ class Matter_Device
   # Start UDP mDNS announcements for commissioning
   def mdns_announce_op_discovery(fabric)
     import mdns
-    import string
     try
       var device_id = fabric.get_device_id().copy().reverse()
       var k_fabric = fabric.get_fabric_compressed()
@@ -954,14 +939,14 @@ class Matter_Device
 
       # mdns
       if (tasmota.eth().find("up"))
-        tasmota.log(string.format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "eth", op_node, self.hostname_eth), 3)
+        tasmota.log(format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "eth", op_node, self.hostname_eth), 3)
         mdns.add_service("_matter","_tcp", 5540, nil, op_node, self.hostname_eth)
         var subtype = "_I" + k_fabric.tohex()
         tasmota.log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matter", "_tcp", op_node, self.hostname_eth, subtype)
       end
       if (tasmota.wifi().find("up"))
-        tasmota.log(string.format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "wifi", op_node, self.hostname_wifi), 3)
+        tasmota.log(format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "wifi", op_node, self.hostname_wifi), 3)
         mdns.add_service("_matter","_tcp", 5540, nil, op_node, self.hostname_wifi)
         var subtype = "_I" + k_fabric.tohex()
         tasmota.log("MTR: adding subtype: "+subtype, 3)
@@ -986,7 +971,6 @@ class Matter_Device
   # Remove mDNS announce for fabric
   def mdns_remove_op_discovery(fabric)
     import mdns
-    import string
     try
       var device_id = fabric.get_device_id().copy().reverse()
       var k_fabric = fabric.get_fabric_compressed()
@@ -994,11 +978,11 @@ class Matter_Device
 
       # mdns
       if (tasmota.eth().find("up"))
-        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "eth", op_node), 3)
+        tasmota.log(format("MTR: remove mDNS on %s '%s'", "eth", op_node), 3)
         mdns.remove_service("_matter", "_tcp", op_node, self.hostname_eth)
       end
       if (tasmota.wifi().find("up"))
-        tasmota.log(string.format("MTR: remove mDNS on %s '%s'", "wifi", op_node), 3)
+        tasmota.log(format("MTR: remove mDNS on %s '%s'", "wifi", op_node), 3)
         mdns.remove_service("_matter", "_tcp", op_node, self.hostname_wifi)
       end
     except .. as e, m
@@ -1021,7 +1005,6 @@ class Matter_Device
   # Applies only if there are no plugins already configured
   ## TODO generate map instead
   def autoconf_device()
-    import string
     import json
 
     if size(self.plugins) > 0   return end                    # already configured
@@ -1044,7 +1027,6 @@ class Matter_Device
   #
   # Applies only if there are no plugins already configured
   def autoconf_device_map()
-    import string
     import json
     var m = {}
 
@@ -1082,14 +1064,14 @@ class Matter_Device
         var k = 'SHT' + str(idx)                    # SHT is zero based
         if !r_st13.contains(k)   break     end           # no more SHTxxx
         var d = r_st13[k]
-        tasmota.log(string.format("MTR: '%s' = %s", k, str(d)), 3)
+        tasmota.log(format("MTR: '%s' = %s", k, str(d)), 3)
         var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
         var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
 
         if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
         if relay2 >= 0    relays_reserved.push(relay2)    end
 
-        tasmota.log(string.format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        tasmota.log(format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
         # is there tilt support
         var tilt_array = d.find('TiltConfig')
         var tilt_config = tilt_array && (tilt_array[2] > 0)
@@ -1241,7 +1223,6 @@ class Matter_Device
   # `plugin_conf`: map of configuration as native Berry map
   # returns endpoint number newly allocated, or `nil` if failed
   def bridge_add_endpoint(pi_class_name, plugin_conf)
-    import string
     var pi_class = self.plugins_classes.find(pi_class_name)
     if pi_class == nil        tasmota.log("MTR: unknown class name '"+str(pi_class_name)+"' skipping", 3)  return  end
 
@@ -1260,7 +1241,7 @@ class Matter_Device
       pi_conf[k] = plugin_conf[k]
     end
     # add to main
-    tasmota.log(string.format("MTR: adding endpoint = %i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
+    tasmota.log(format("MTR: adding endpoint = %i type:%s%s", ep, pi_class_name, self.conf_to_log(plugin_conf)), 2)
     self.plugins_config[ep_str] = pi_conf
     self.plugins_persist = true
     self.next_ep += 1     # increment next allocated endpoint before saving
@@ -1276,7 +1257,6 @@ class Matter_Device
   # Remove an existing endpoint
   #
   def bridge_remove_endpoint(ep)
-    import string
     import json
 
     var ep_str = str(ep)
@@ -1287,7 +1267,7 @@ class Matter_Device
       tasmota.log("MTR: Cannot remove an enpoint not configured: " + ep_str, 3)
       return
     end
-    tasmota.log(string.format("MTR: deleting endpoint = %i", ep), 2)
+    tasmota.log(format("MTR: deleting endpoint = %i", ep), 2)
     self.plugins_config.remove(ep_str)
     self.plugins_persist = true
 
@@ -1387,7 +1367,6 @@ class Matter_Device
   # Remove HTTP remotes that are no longer referenced
   def clean_remotes()
     import introspect
-    import string
 
     # init all remotes with count 0
     if self.http_remotes

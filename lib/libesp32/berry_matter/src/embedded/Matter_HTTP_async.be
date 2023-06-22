@@ -251,7 +251,7 @@ class Matter_HTTP_async : Matter_TCP_async
       addr = "[" + addr + "]"       # IPv6 must be enclosed in brakets
     end
 
-    var req = string.format(self.HTTP_GET, self.cmd, addr, self.port)
+    var req = format(self.HTTP_GET, self.cmd, addr, self.port)
     var ret = self.write(req)
     if ret != size(req)
       # print("Could not send","size=",size(req),"ret=",ret)

@@ -71,7 +71,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

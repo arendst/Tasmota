@@ -326,7 +326,6 @@ class Matter_Plugin_Root : Matter_Plugin
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
     import crypto
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -433,7 +432,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool
-        # tasmota.log(string.format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 4)
+        # tasmota.log(format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 4)
 
         var csr = session.gen_CSR()
 
@@ -550,7 +549,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0009            # ---------- UpdateFabricLabel ----------
         var label = val.findsubval(0)     # Label string max 32
         session.set_fabric_label(label)
-        tasmota.log(string.format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
+        tasmota.log(format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
@@ -582,7 +581,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var iterations = val.findsubval(3)          # Iterations u4
         var salt = val.findsubval(4)                # Salt octstr
 
-        tasmota.log(string.format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
+        tasmota.log(format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
                                   timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 4)
 
         # check values
@@ -630,7 +629,6 @@ class Matter_Plugin_Root : Matter_Plugin
   # write an attribute
   #
   def write_attribute(session, ctx, write_data)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

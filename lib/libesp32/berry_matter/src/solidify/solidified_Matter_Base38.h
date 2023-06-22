@@ -19,7 +19,7 @@ be_local_closure(Matter_Base38_encode,   /* name */
     1,                          /* has sup protos */
     ( &(const struct bproto*[ 1]) {
       be_nested_proto(
-        7,                          /* nstack */
+        6,                          /* nstack */
         2,                          /* argc */
         0,                          /* varg */
         0,                          /* has upvals */
@@ -27,31 +27,29 @@ be_local_closure(Matter_Base38_encode,   /* name */
         0,                          /* has sup protos */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
-        ( &(const bvalue[ 5]) {     /* constants */
-        /* K0   */  be_nested_str_weak(string),
-        /* K1   */  be_nested_str_weak(0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_X2D_X2E),
-        /* K2   */  be_const_int(0),
-        /* K3   */  be_nested_str_weak(),
-        /* K4   */  be_const_int(1),
+        ( &(const bvalue[ 4]) {     /* constants */
+        /* K0   */  be_nested_str_weak(0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_X2D_X2E),
+        /* K1   */  be_const_int(0),
+        /* K2   */  be_nested_str_weak(),
+        /* K3   */  be_const_int(1),
         }),
         be_str_weak(b38_enc),
         &be_const_str_solidified,
-        ( &(const binstruction[15]) {  /* code */
-          0xA40A0000,  //  0000  IMPORT	R2	K0
+        ( &(const binstruction[14]) {  /* code */
+          0x58080000,  //  0000  LDCONST	R2	K0
           0x580C0001,  //  0001  LDCONST	R3	K1
           0x58100002,  //  0002  LDCONST	R4	K2
-          0x58140003,  //  0003  LDCONST	R5	K3
-          0x14180801,  //  0004  LT	R6	R4	R1
-          0x781A0007,  //  0005  JMPF	R6	#000E
-          0x541A0025,  //  0006  LDINT	R6	38
-          0x10180006,  //  0007  MOD	R6	R0	R6
-          0x94180606,  //  0008  GETIDX	R6	R3	R6
-          0x00140A06,  //  0009  ADD	R5	R5	R6
-          0x541A0025,  //  000A  LDINT	R6	38
-          0x0C000006,  //  000B  DIV	R0	R0	R6
-          0x00100904,  //  000C  ADD	R4	R4	K4
-          0x7001FFF5,  //  000D  JMP		#0004
-          0x80040A00,  //  000E  RET	1	R5
+          0x14140601,  //  0003  LT	R5	R3	R1
+          0x78160007,  //  0004  JMPF	R5	#000D
+          0x54160025,  //  0005  LDINT	R5	38
+          0x10140005,  //  0006  MOD	R5	R0	R5
+          0x94140405,  //  0007  GETIDX	R5	R2	R5
+          0x00100805,  //  0008  ADD	R4	R4	R5
+          0x54160025,  //  0009  LDINT	R5	38
+          0x0C000005,  //  000A  DIV	R0	R0	R5
+          0x000C0703,  //  000B  ADD	R3	R3	K3
+          0x7001FFF5,  //  000C  JMP		#0003
+          0x80040800,  //  000D  RET	1	R4
         })
       ),
     }),

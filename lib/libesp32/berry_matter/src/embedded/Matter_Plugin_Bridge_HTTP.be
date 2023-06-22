@@ -53,7 +53,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
-    import string
     super(self).init(device, endpoint, arguments)
 
     var addr = arguments.find(self.ARG_HTTP)
@@ -107,7 +106,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   # arg can be nil, in this case `cmd` has it all
   def call_remote_sync(cmd, arg)
     # if !self.http_remote  return nil  end
-    import string
     import json
 
     var retry = 2         # try 2 times if first failed
@@ -213,7 +211,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   static var PREFIX = "| <i>%s</i> "
   def web_values()
     import webserver
-    import string
     self.web_values_prefix()
     webserver.content_send("&lt;-- (" + self.NAME + ") --&gt;")
   end
@@ -221,9 +218,8 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   # Show prefix before web value
   def web_values_prefix()
     import webserver
-    import string
     var name = self.get_name()
-    webserver.content_send(string.format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
   # Show on/off value as html

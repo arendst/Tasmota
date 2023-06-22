@@ -44,9 +44,8 @@ class Matter_Commisioning_Context
 
   #############################################################
   def add_session(local_session_id, initiator_session_id, i2r, r2i, ac)
-    import string
     # create session object
-    tasmota.log(string.format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 4)
+    tasmota.log(format("MTR: add_session local_session_id=%i initiator_session_id=%i", local_session_id, initiator_session_id), 4)
     
     var session = self.device.sessions.create_session(local_session_id, initiator_session_id)
     session.set_keys(i2r, r2i, ac)
@@ -75,8 +74,7 @@ class Matter_Commisioning_Context
     elif msg.opcode == 0x40
       return self.parse_StatusReport(msg)
     else
-      import string
-      tasmota.log(string.format("MTR: >????????? Unknown OpCode (secure channel) %02X", msg.opcode), 2)
+      tasmota.log(format("MTR: >????????? Unknown OpCode (secure channel) %02X", msg.opcode), 2)
       return false
     end
 
@@ -108,7 +106,6 @@ class Matter_Commisioning_Context
 
   def parse_PBKDFParamRequest(msg)
     import crypto
-    import string
     var session = msg.session
     # sanity checks
     if msg.opcode != 0x20 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -133,7 +130,7 @@ class Matter_Commisioning_Context
     # record the initiator_session_id
     session.__future_initiator_session_id = pbkdfparamreq.initiator_session_id
     session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-    tasmota.log(string.format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+    tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
     # prepare response
     var pbkdfparamresp = matter.PBKDFParamResponse()
@@ -159,7 +156,6 @@ class Matter_Commisioning_Context
 
   def parse_Pake1(msg)
     import crypto
-    import string
 
     var session = msg.session
     # sanity checks
@@ -239,7 +235,7 @@ class Matter_Commisioning_Context
     var raw = resp.encode_frame(pake2_raw)
 
     # log the fact that a new commissioning is starting
-    tasmota.log(string.format("MTR: New Commissioning (PASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
+    tasmota.log(format("MTR: New Commissioning (PASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
 
     self.responder.send_response_frame(resp)
     return true
@@ -319,7 +315,6 @@ class Matter_Commisioning_Context
 
   def parse_Sigma1(msg)
     import crypto
-    import string
     var session = msg.session
     # sanity checks
     if msg.opcode != 0x30 || msg.local_session_id != 0 || msg.protocol_id != 0
@@ -329,13 +324,13 @@ class Matter_Commisioning_Context
       return false
     end
     var sigma1 = matter.Sigma1().parse(msg.raw, msg.app_payload_idx)
-    # tasmota.log(string.format("MTR: sigma1=%s", matter.inspect(sigma1)), 4)
+    # tasmota.log(format("MTR: sigma1=%s", matter.inspect(sigma1)), 4)
 
     session.__initiator_pub = sigma1.initiatorEphPubKey
 
     # find session
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
-    # tasmota.log(string.format("MTR: is_resumption=%i", is_resumption ? 1 : 0), 4)
+    # tasmota.log(format("MTR: is_resumption=%i", is_resumption ? 1 : 0), 4)
     # TODO disable resumption until fixed
     is_resumption = false
 
@@ -343,7 +338,7 @@ class Matter_Commisioning_Context
     var session_resumption
     if is_resumption
       session_resumption = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
-      # tasmota.log(string.format("MTR: session_resumption found session=%s session_resumption=%s", matter.inspect(session), matter.inspect(session_resumption)), 4)
+      # tasmota.log(format("MTR: session_resumption found session=%s session_resumption=%s", matter.inspect(session), matter.inspect(session_resumption)), 4)
       if session_resumption == nil || session_resumption._fabric == nil
         is_resumption = false
       end
@@ -375,7 +370,7 @@ class Matter_Commisioning_Context
         session.set_mode_CASE()
         session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
         session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-        tasmota.log(string.format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+        tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
         # Generate and Send Sigma2_Resume
         session.shared_secret = session_resumption.shared_secret
@@ -463,7 +458,7 @@ class Matter_Commisioning_Context
   
       session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
       session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-      tasmota.log(string.format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+      tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
       # tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
       # tasmota.log("MTR: no_private_key="+session.get_pk().tohex(), 4)
@@ -543,7 +538,7 @@ class Matter_Commisioning_Context
       var raw = resp.encode_frame(sigma2_raw)
   
       # log the fact that a new connection is starting
-      tasmota.log(string.format("MTR: New Connection (CASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
+      tasmota.log(format("MTR: New Connection (CASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
       
       self.responder.send_response_frame(resp)
       return true
