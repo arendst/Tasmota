@@ -118,8 +118,7 @@ class Matter_Session : Matter_Expirable
   #############################################################
   # Called before removal
   def before_remove()
-    import string
-    tasmota.log(string.format("MTR: -Session   (%6i) (removed)", self.local_session_id), 3)
+    tasmota.log(format("MTR: -Session   (%6i) (removed)", self.local_session_id), 3)
   end
 
   #############################################################
@@ -128,9 +127,8 @@ class Matter_Session : Matter_Expirable
   # Provide the next counter value, and update the last know persisted if needed
   #
   def counter_snd_next()
-    import string
     var next = self._counter_snd_impl.next()
-    # tasmota.log(string.format("MTR: .          Counter_snd=%i", next), 4)
+    # tasmota.log(format("MTR: .          Counter_snd=%i", next), 4)
     if matter.Counter.is_greater(next, self.counter_snd)
       self.counter_snd = next + self._COUNTER_SND_INCR
       if self.does_persist()
@@ -294,7 +292,6 @@ class Matter_Session : Matter_Expirable
   #############################################################
   def tojson()
     import json
-    import string
     import introspect
 
     self.persist_pre()
@@ -314,7 +311,7 @@ class Matter_Session : Matter_Expirable
       elif type(v) == 'instance'    continue                    # skip any other instance
       end
       
-      r.push(string.format("%s:%s", json.dump(str(k)), json.dump(v)))
+      r.push(format("%s:%s", json.dump(str(k)), json.dump(v)))
     end
     self.persist_post()
     return "{" + r.concat(",") + "}"

@@ -94,7 +94,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -197,11 +196,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # parse the output from `ShutterPosition`
   # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
   def parse_sensors(payload)
-    import string
     var k = "Shutter" + str(self.tasmota_shutter_index + 1)
     if payload.contains(k)
       var v = payload[k]
-      # tasmota.log(string.format("MTR: getting shutter values(%i): %s", self.endpoint, str(v)), 2)
+      # tasmota.log(format("MTR: getting shutter values(%i): %s", self.endpoint, str(v)), 2)
       # Position
       var val_pos = v.find("Position")
       if val_pos != nil

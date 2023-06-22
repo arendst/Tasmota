@@ -136,34 +136,33 @@ class Matter_TLV
     # We are trying to follow the official Matter way of printing TLV
     # Ex: '42U' or '1 = 42U' or '0xFFF1::0xDEED:0xAA55FEED = 42U'
     def tostring()
-      import string
       # var s = "<instance: Matter_TLV_item("
       var s = ""
       try       # any exception raised in `tostring()` causes a crash, so better catch it here
 
         if self.tag_profile == -1
           s += "Matter::"
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
+          if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
         else
-          if self.tag_vendor != nil   s += string.format("0x%04X::", self.tag_vendor) end
-          if self.tag_profile != nil   s += string.format("0x%04X:", self.tag_profile) end
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-          if self.tag_sub != nil   s += string.format("%i ", self.tag_sub) end
+          if self.tag_vendor != nil   s += format("0x%04X::", self.tag_vendor) end
+          if self.tag_profile != nil   s += format("0x%04X:", self.tag_profile) end
+          if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+          if self.tag_sub != nil   s += format("%i ", self.tag_sub) end
         end
 
         if size(s) > 0    s += "= " end
 
         # print value
-        if type(self.val) == 'int'        s += string.format("%i", self.val)
+        if type(self.val) == 'int'        s += format("%i", self.val)
           if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
         elif type(self.val) == 'bool'     s += self.val ? "true" : "false"
         elif self.val == nil              s += "null"
-        elif type(self.val) == 'real'     s += string.format("%g", self.val)
-        elif type(self.val) == 'string'   s += string.format('"%s"', self.val)
+        elif type(self.val) == 'real'     s += format("%g", self.val)
+        elif type(self.val) == 'string'   s += format('"%s"', self.val)
         elif isinstance(self.val, int64)  s += self.val.tostring()
           if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
         elif type(self.val) == 'instance'
-          s += string.format("%s", self.val.tohex())
+          s += format("%s", self.val.tohex())
         end
         
       except .. as e, m
@@ -572,18 +571,17 @@ class Matter_TLV
     end
 
     def tostring_inner(sorted, pre, post)
-      import string
       var s = ""
       try
 
         if self.tag_profile == -1
           s += "Matter::"
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
+          if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
         else
-          if self.tag_vendor != nil   s += string.format("0x%04X::", self.tag_vendor) end
-          if self.tag_profile != nil   s += string.format("0x%04X:", self.tag_profile) end
-          if self.tag_number != nil   s += string.format("0x%08X ", self.tag_number) end
-          if self.tag_sub != nil   s += string.format("%i ", self.tag_sub) end
+          if self.tag_vendor != nil   s += format("0x%04X::", self.tag_vendor) end
+          if self.tag_profile != nil   s += format("0x%04X:", self.tag_profile) end
+          if self.tag_number != nil   s += format("0x%08X ", self.tag_number) end
+          if self.tag_sub != nil   s += format("%i ", self.tag_sub) end
         end
 
         if size(s) > 0    s += "= " end

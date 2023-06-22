@@ -52,7 +52,6 @@ matter.jitter = jitter
 # debug function
 def inspect(p)
   try
-    import string
     import introspect
 
     var keys = []
@@ -66,7 +65,7 @@ def inspect(p)
     for k : keys
       var v = introspect.get(p, k)
       # if type(v) == 'string'    v = string.escape(v, true) end
-      r.push(string.format("'%s': %s", str(k), str(v)))
+      r.push(format("'%s': %s", str(k), str(v)))
     end
 
     return "{" + r.concat(", ") + "}"

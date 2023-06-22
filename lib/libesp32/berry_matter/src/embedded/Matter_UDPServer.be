@@ -116,7 +116,6 @@ class Matter_UDPServer
   # avoid any starvation.
   # Then resend queued outgoing packets.
   def every_50ms()
-    import string
     var packet_read = 0
     if self.udp_socket == nil  return end
     var packet = self.udp_socket.read()
@@ -125,7 +124,7 @@ class Matter_UDPServer
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
-      tasmota.log(string.format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
+      tasmota.log(format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
       if self.dispatch_cb
         self.dispatch_cb(packet, from_addr, from_port)
       end
@@ -144,12 +143,11 @@ class Matter_UDPServer
   #
   # Returns `true` if packet was successfully sent.
   def send(packet)
-    import string
     var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
     if ok
-      tasmota.log(string.format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
+      tasmota.log(format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
     else
-      tasmota.log(string.format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
+      tasmota.log(format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
     end
     return ok
   end
@@ -175,9 +173,8 @@ class Matter_UDPServer
           packet.retries += 1
           idx += 1
         else
-          import string
           self.packets_sent.remove(idx)
-          tasmota.log(string.format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 3)
+          tasmota.log(format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 3)
         end
       else
         idx += 1

@@ -101,10 +101,9 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   # Show prefix before web value
   def web_values_prefix()
     import webserver
-    import string
     var name = self.get_name()
     if (!name)    name = self.filter_name_html()    end
-    webserver.content_send(string.format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
 end

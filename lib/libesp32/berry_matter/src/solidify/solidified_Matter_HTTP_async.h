@@ -507,7 +507,7 @@ be_local_closure(Matter_HTTP_async_parse_http_payload,   /* name */
 ********************************************************************/
 be_local_closure(Matter_HTTP_async_send_http,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
+    8,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -515,7 +515,7 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[18]) {     /* constants */
+    ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(response),
     /* K2   */  be_nested_str_weak(),
@@ -525,15 +525,14 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
     /* K6   */  be_const_int(0),
     /* K7   */  be_nested_str_weak(_X5B),
     /* K8   */  be_nested_str_weak(_X5D),
-    /* K9   */  be_nested_str_weak(format),
-    /* K10  */  be_nested_str_weak(HTTP_GET),
-    /* K11  */  be_nested_str_weak(cmd),
-    /* K12  */  be_nested_str_weak(port),
-    /* K13  */  be_nested_str_weak(write),
-    /* K14  */  be_nested_str_weak(close),
-    /* K15  */  be_nested_str_weak(status),
-    /* K16  */  be_nested_str_weak(http_status),
-    /* K17  */  be_nested_str_weak(event_http_failed),
+    /* K9   */  be_nested_str_weak(HTTP_GET),
+    /* K10  */  be_nested_str_weak(cmd),
+    /* K11  */  be_nested_str_weak(port),
+    /* K12  */  be_nested_str_weak(write),
+    /* K13  */  be_nested_str_weak(close),
+    /* K14  */  be_nested_str_weak(status),
+    /* K15  */  be_nested_str_weak(http_status),
+    /* K16  */  be_nested_str_weak(event_http_failed),
     }),
     be_str_weak(send_http),
     &be_const_str_solidified,
@@ -550,13 +549,13 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
       0x000E0E02,  //  0009  ADD	R3	K7	R2
       0x000C0708,  //  000A  ADD	R3	R3	K8
       0x5C080600,  //  000B  MOVE	R2	R3
-      0x8C0C0309,  //  000C  GETMET	R3	R1	K9
-      0x8814010A,  //  000D  GETMBR	R5	R0	K10
-      0x8818010B,  //  000E  GETMBR	R6	R0	K11
-      0x5C1C0400,  //  000F  MOVE	R7	R2
-      0x8820010C,  //  0010  GETMBR	R8	R0	K12
-      0x7C0C0A00,  //  0011  CALL	R3	5
-      0x8C10010D,  //  0012  GETMET	R4	R0	K13
+      0x600C0018,  //  000C  GETGBL	R3	G24
+      0x88100109,  //  000D  GETMBR	R4	R0	K9
+      0x8814010A,  //  000E  GETMBR	R5	R0	K10
+      0x5C180400,  //  000F  MOVE	R6	R2
+      0x881C010B,  //  0010  GETMBR	R7	R0	K11
+      0x7C0C0800,  //  0011  CALL	R3	4
+      0x8C10010C,  //  0012  GETMET	R4	R0	K12
       0x5C180600,  //  0013  MOVE	R6	R3
       0x7C100400,  //  0014  CALL	R4	2
       0x6014000C,  //  0015  GETGBL	R5	G12
@@ -564,13 +563,13 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
       0x7C140200,  //  0017  CALL	R5	1
       0x20140805,  //  0018  NE	R5	R4	R5
       0x78160007,  //  0019  JMPF	R5	#0022
-      0x8C14010E,  //  001A  GETMET	R5	R0	K14
+      0x8C14010D,  //  001A  GETMET	R5	R0	K13
       0x7C140200,  //  001B  CALL	R5	1
       0x5415FFFB,  //  001C  LDINT	R5	-4
-      0x90021E05,  //  001D  SETMBR	R0	K15	R5
+      0x90021C05,  //  001D  SETMBR	R0	K14	R5
       0x5415FFFE,  //  001E  LDINT	R5	-1
-      0x90022005,  //  001F  SETMBR	R0	K16	R5
-      0x8C140111,  //  0020  GETMET	R5	R0	K17
+      0x90021E05,  //  001F  SETMBR	R0	K15	R5
+      0x8C140110,  //  0020  GETMET	R5	R0	K16
       0x7C140200,  //  0021  CALL	R5	1
       0x80000000,  //  0022  RET	0
     })

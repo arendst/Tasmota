@@ -139,7 +139,7 @@ be_local_closure(Matter_Plugin_Bridge_Light0_init,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Light0_read_attribute,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    10,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -147,68 +147,66 @@ be_local_closure(Matter_Plugin_Bridge_Light0_read_attribute,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(matter),
-    /* K2   */  be_nested_str_weak(TLV),
-    /* K3   */  be_nested_str_weak(cluster),
-    /* K4   */  be_nested_str_weak(attribute),
-    /* K5   */  be_nested_str_weak(update_shadow_lazy),
-    /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_weak(create_TLV),
-    /* K8   */  be_nested_str_weak(BOOL),
-    /* K9   */  be_nested_str_weak(shadow_onoff),
-    /* K10  */  be_nested_str_weak(U4),
-    /* K11  */  be_nested_str_weak(read_attribute),
+    ( &(const bvalue[11]) {     /* constants */
+    /* K0   */  be_nested_str_weak(matter),
+    /* K1   */  be_nested_str_weak(TLV),
+    /* K2   */  be_nested_str_weak(cluster),
+    /* K3   */  be_nested_str_weak(attribute),
+    /* K4   */  be_nested_str_weak(update_shadow_lazy),
+    /* K5   */  be_const_int(0),
+    /* K6   */  be_nested_str_weak(create_TLV),
+    /* K7   */  be_nested_str_weak(BOOL),
+    /* K8   */  be_nested_str_weak(shadow_onoff),
+    /* K9   */  be_nested_str_weak(U4),
+    /* K10  */  be_nested_str_weak(read_attribute),
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[45]) {  /* code */
-      0xA40E0000,  //  0000  IMPORT	R3	K0
-      0xB8120200,  //  0001  GETNGBL	R4	K1
-      0x88100902,  //  0002  GETMBR	R4	R4	K2
+    ( &(const binstruction[44]) {  /* code */
+      0xB80E0000,  //  0000  GETNGBL	R3	K0
+      0x880C0701,  //  0001  GETMBR	R3	R3	K1
+      0x88100502,  //  0002  GETMBR	R4	R2	K2
       0x88140503,  //  0003  GETMBR	R5	R2	K3
-      0x88180504,  //  0004  GETMBR	R6	R2	K4
-      0x541E0005,  //  0005  LDINT	R7	6
-      0x1C1C0A07,  //  0006  EQ	R7	R5	R7
-      0x781E001B,  //  0007  JMPF	R7	#0024
-      0x8C1C0105,  //  0008  GETMET	R7	R0	K5
-      0x7C1C0200,  //  0009  CALL	R7	1
-      0x1C1C0D06,  //  000A  EQ	R7	R6	K6
-      0x781E0005,  //  000B  JMPF	R7	#0012
-      0x8C1C0907,  //  000C  GETMET	R7	R4	K7
-      0x88240908,  //  000D  GETMBR	R9	R4	K8
-      0x88280109,  //  000E  GETMBR	R10	R0	K9
-      0x7C1C0600,  //  000F  CALL	R7	3
-      0x80040E00,  //  0010  RET	1	R7
-      0x70020010,  //  0011  JMP		#0023
-      0x541EFFFB,  //  0012  LDINT	R7	65532
-      0x1C1C0C07,  //  0013  EQ	R7	R6	R7
-      0x781E0005,  //  0014  JMPF	R7	#001B
-      0x8C1C0907,  //  0015  GETMET	R7	R4	K7
-      0x8824090A,  //  0016  GETMBR	R9	R4	K10
-      0x58280006,  //  0017  LDCONST	R10	K6
-      0x7C1C0600,  //  0018  CALL	R7	3
-      0x80040E00,  //  0019  RET	1	R7
-      0x70020007,  //  001A  JMP		#0023
-      0x541EFFFC,  //  001B  LDINT	R7	65533
-      0x1C1C0C07,  //  001C  EQ	R7	R6	R7
-      0x781E0004,  //  001D  JMPF	R7	#0023
-      0x8C1C0907,  //  001E  GETMET	R7	R4	K7
-      0x8824090A,  //  001F  GETMBR	R9	R4	K10
-      0x542A0003,  //  0020  LDINT	R10	4
-      0x7C1C0600,  //  0021  CALL	R7	3
-      0x80040E00,  //  0022  RET	1	R7
-      0x70020007,  //  0023  JMP		#002C
-      0x601C0003,  //  0024  GETGBL	R7	G3
-      0x5C200000,  //  0025  MOVE	R8	R0
-      0x7C1C0200,  //  0026  CALL	R7	1
-      0x8C1C0F0B,  //  0027  GETMET	R7	R7	K11
-      0x5C240200,  //  0028  MOVE	R9	R1
-      0x5C280400,  //  0029  MOVE	R10	R2
-      0x7C1C0600,  //  002A  CALL	R7	3
-      0x80040E00,  //  002B  RET	1	R7
-      0x80000000,  //  002C  RET	0
+      0x541A0005,  //  0004  LDINT	R6	6
+      0x1C180806,  //  0005  EQ	R6	R4	R6
+      0x781A001B,  //  0006  JMPF	R6	#0023
+      0x8C180104,  //  0007  GETMET	R6	R0	K4
+      0x7C180200,  //  0008  CALL	R6	1
+      0x1C180B05,  //  0009  EQ	R6	R5	K5
+      0x781A0005,  //  000A  JMPF	R6	#0011
+      0x8C180706,  //  000B  GETMET	R6	R3	K6
+      0x88200707,  //  000C  GETMBR	R8	R3	K7
+      0x88240108,  //  000D  GETMBR	R9	R0	K8
+      0x7C180600,  //  000E  CALL	R6	3
+      0x80040C00,  //  000F  RET	1	R6
+      0x70020010,  //  0010  JMP		#0022
+      0x541AFFFB,  //  0011  LDINT	R6	65532
+      0x1C180A06,  //  0012  EQ	R6	R5	R6
+      0x781A0005,  //  0013  JMPF	R6	#001A
+      0x8C180706,  //  0014  GETMET	R6	R3	K6
+      0x88200709,  //  0015  GETMBR	R8	R3	K9
+      0x58240005,  //  0016  LDCONST	R9	K5
+      0x7C180600,  //  0017  CALL	R6	3
+      0x80040C00,  //  0018  RET	1	R6
+      0x70020007,  //  0019  JMP		#0022
+      0x541AFFFC,  //  001A  LDINT	R6	65533
+      0x1C180A06,  //  001B  EQ	R6	R5	R6
+      0x781A0004,  //  001C  JMPF	R6	#0022
+      0x8C180706,  //  001D  GETMET	R6	R3	K6
+      0x88200709,  //  001E  GETMBR	R8	R3	K9
+      0x54260003,  //  001F  LDINT	R9	4
+      0x7C180600,  //  0020  CALL	R6	3
+      0x80040C00,  //  0021  RET	1	R6
+      0x70020007,  //  0022  JMP		#002B
+      0x60180003,  //  0023  GETGBL	R6	G3
+      0x5C1C0000,  //  0024  MOVE	R7	R0
+      0x7C180200,  //  0025  CALL	R6	1
+      0x8C180D0A,  //  0026  GETMET	R6	R6	K10
+      0x5C200200,  //  0027  MOVE	R8	R1
+      0x5C240400,  //  0028  MOVE	R9	R2
+      0x7C180600,  //  0029  CALL	R6	3
+      0x80040C00,  //  002A  RET	1	R6
+      0x80000000,  //  002B  RET	0
     })
   )
 );
@@ -364,7 +362,7 @@ be_local_closure(Matter_Plugin_Bridge_Light0_invoke_request,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Light0_web_values,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    9,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -372,32 +370,29 @@ be_local_closure(Matter_Plugin_Bridge_Light0_web_values,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(web_values_prefix),
-    /* K3   */  be_nested_str_weak(content_send),
-    /* K4   */  be_nested_str_weak(format),
-    /* K5   */  be_nested_str_weak(_X25s),
-    /* K6   */  be_nested_str_weak(web_value_onoff),
-    /* K7   */  be_nested_str_weak(shadow_onoff),
+    /* K1   */  be_nested_str_weak(web_values_prefix),
+    /* K2   */  be_nested_str_weak(content_send),
+    /* K3   */  be_nested_str_weak(_X25s),
+    /* K4   */  be_nested_str_weak(web_value_onoff),
+    /* K5   */  be_nested_str_weak(shadow_onoff),
     }),
     be_str_weak(web_values),
     &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
+    ( &(const binstruction[12]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
-      0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
-      0x7C0C0200,  //  0003  CALL	R3	1
-      0x8C0C0303,  //  0004  GETMET	R3	R1	K3
-      0x8C140504,  //  0005  GETMET	R5	R2	K4
-      0x581C0005,  //  0006  LDCONST	R7	K5
-      0x8C200106,  //  0007  GETMET	R8	R0	K6
-      0x88280107,  //  0008  GETMBR	R10	R0	K7
-      0x7C200400,  //  0009  CALL	R8	2
-      0x7C140600,  //  000A  CALL	R5	3
-      0x7C0C0400,  //  000B  CALL	R3	2
-      0x80000000,  //  000C  RET	0
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080302,  //  0003  GETMET	R2	R1	K2
+      0x60100018,  //  0004  GETGBL	R4	G24
+      0x58140003,  //  0005  LDCONST	R5	K3
+      0x8C180104,  //  0006  GETMET	R6	R0	K4
+      0x88200105,  //  0007  GETMBR	R8	R0	K5
+      0x7C180400,  //  0008  CALL	R6	2
+      0x7C100400,  //  0009  CALL	R4	2
+      0x7C080400,  //  000A  CALL	R2	2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -409,7 +404,7 @@ be_local_closure(Matter_Plugin_Bridge_Light0_web_values,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Light0_web_values_prefix,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
+    10,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -417,44 +412,41 @@ be_local_closure(Matter_Plugin_Bridge_Light0_web_values_prefix,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(string),
-    /* K2   */  be_nested_str_weak(get_name),
-    /* K3   */  be_nested_str_weak(Power),
-    /* K4   */  be_nested_str_weak(tasmota_relay_index),
-    /* K5   */  be_nested_str_weak(content_send),
-    /* K6   */  be_nested_str_weak(format),
-    /* K7   */  be_nested_str_weak(PREFIX),
-    /* K8   */  be_nested_str_weak(html_escape),
-    /* K9   */  be_nested_str_weak(),
+    /* K1   */  be_nested_str_weak(get_name),
+    /* K2   */  be_nested_str_weak(Power),
+    /* K3   */  be_nested_str_weak(tasmota_relay_index),
+    /* K4   */  be_nested_str_weak(content_send),
+    /* K5   */  be_nested_str_weak(PREFIX),
+    /* K6   */  be_nested_str_weak(html_escape),
+    /* K7   */  be_nested_str_weak(),
     }),
     be_str_weak(web_values_prefix),
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
+    ( &(const binstruction[22]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
-      0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0102,  //  0002  GETMET	R3	R0	K2
-      0x7C0C0200,  //  0003  CALL	R3	1
-      0x5C100600,  //  0004  MOVE	R4	R3
-      0x74120004,  //  0005  JMPT	R4	#000B
-      0x60100008,  //  0006  GETGBL	R4	G8
-      0x88140104,  //  0007  GETMBR	R5	R0	K4
-      0x7C100200,  //  0008  CALL	R4	1
-      0x00120604,  //  0009  ADD	R4	K3	R4
-      0x5C0C0800,  //  000A  MOVE	R3	R4
-      0x8C100305,  //  000B  GETMET	R4	R1	K5
-      0x8C180506,  //  000C  GETMET	R6	R2	K6
-      0x88200107,  //  000D  GETMBR	R8	R0	K7
-      0x780E0003,  //  000E  JMPF	R3	#0013
-      0x8C240308,  //  000F  GETMET	R9	R1	K8
-      0x5C2C0600,  //  0010  MOVE	R11	R3
-      0x7C240400,  //  0011  CALL	R9	2
-      0x70020000,  //  0012  JMP		#0014
-      0x58240009,  //  0013  LDCONST	R9	K9
-      0x7C180600,  //  0014  CALL	R6	3
-      0x7C100400,  //  0015  CALL	R4	2
-      0x80000000,  //  0016  RET	0
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C0C0400,  //  0003  MOVE	R3	R2
+      0x740E0004,  //  0004  JMPT	R3	#000A
+      0x600C0008,  //  0005  GETGBL	R3	G8
+      0x88100103,  //  0006  GETMBR	R4	R0	K3
+      0x7C0C0200,  //  0007  CALL	R3	1
+      0x000E0403,  //  0008  ADD	R3	K2	R3
+      0x5C080600,  //  0009  MOVE	R2	R3
+      0x8C0C0304,  //  000A  GETMET	R3	R1	K4
+      0x60140018,  //  000B  GETGBL	R5	G24
+      0x88180105,  //  000C  GETMBR	R6	R0	K5
+      0x780A0003,  //  000D  JMPF	R2	#0012
+      0x8C1C0306,  //  000E  GETMET	R7	R1	K6
+      0x5C240400,  //  000F  MOVE	R9	R2
+      0x7C1C0400,  //  0010  CALL	R7	2
+      0x70020000,  //  0011  JMP		#0013
+      0x581C0007,  //  0012  LDCONST	R7	K7
+      0x7C140400,  //  0013  CALL	R5	2
+      0x7C0C0400,  //  0014  CALL	R3	2
+      0x80000000,  //  0015  RET	0
     })
   )
 );

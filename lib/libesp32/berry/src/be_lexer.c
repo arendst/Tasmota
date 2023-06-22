@@ -467,6 +467,14 @@ static void scan_f_string(blexer *lexer)
                 if ((i+1 < buf_unparsed_fstr.len) && (buf_unparsed_fstr.s[i+1] == '}')) { i++; }      /* if '}}' replace with '}' */
                 save_char(lexer, '}');
                 break;
+            case '\n':
+                save_char(lexer, '\\');
+                save_char(lexer, 'n');
+                break;
+            case '\r':
+                save_char(lexer, '\\');
+                save_char(lexer, 'r');
+                break;
             default:        /* copy any other character */
                 save_char(lexer, ch);
                 break;

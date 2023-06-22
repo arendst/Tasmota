@@ -123,7 +123,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = cmd
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(string.format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
+    tasmota.log(format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
     var ret = self.begin(cmd_url)
   end
 
@@ -142,20 +142,19 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = nil
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(string.format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
+    tasmota.log(format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
     var ret = super(self).begin_sync(cmd_url, timeout)
     var payload_short = (ret) ? ret : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(string.format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    tasmota.log(format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     return ret
   end
 
   def event_http_finished()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    import string
     var payload_short = (self.payload != nil) ? self.payload : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(string.format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    tasmota.log(format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     self.dispatch_cb(self.http_status, self.payload)
   end
   def event_http_failed()
@@ -164,9 +163,8 @@ class Matter_HTTP_remote : Matter_HTTP_async
     self.dispatch_cb(self.http_status, nil)
   end
   def event_http_timeout()
-    import string
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    tasmota.log(string.format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
+    tasmota.log(format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
     self.dispatch_cb(self.http_status, nil)
   end
 
@@ -212,7 +210,6 @@ class Matter_HTTP_remote : Matter_HTTP_async
   # Show when the device was last seen
   def web_last_seen()
     import webserver
-    import string
 
     var seconds = -1                      # default if no known value
     if self.reachable_utc != nil

@@ -36,12 +36,11 @@ class Matter_Path
 
   def tostring()
     try
-      import string
       var s = ""
-      s += (self.endpoint  != nil ? string.format("[%02X]", self.endpoint) : "[**]")
-      s += (self.cluster   != nil ? string.format("%04X/", self.cluster) : "****/")
-      s += (self.attribute != nil ? string.format("%04X", self.attribute) : "")
-      s += (self.command   != nil ? string.format("%04X", self.command) : "")
+      s += (self.endpoint  != nil ? format("[%02X]", self.endpoint) : "[**]")
+      s += (self.cluster   != nil ? format("%04X/", self.cluster) : "****/")
+      s += (self.attribute != nil ? format("%04X", self.attribute) : "")
+      s += (self.command   != nil ? format("%04X", self.command) : "")
       if self.attribute == nil && self.command == nil     s += "****" end
       return s
     except .. as e, m
