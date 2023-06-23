@@ -482,6 +482,18 @@ typedef bclass_ptr bclass_array[];
  * @brief conditional block in bproto depending on compilation options
  *
  */
+#if BE_SOURCE_FILE
+  #define PROTO_SOURCE_FILE(n)   \
+    ((bstring*) _source),                                       /**< source */
+#else
+  #define PROTO_SOURCE_FILE(n)
+#endif
+
+/**
+ * @def PROTO_RUNTIME_BLOCK
+ * @brief conditional block in bproto depending on compilation options
+ *
+ */
 #if BE_DEBUG_RUNTIME_INFO
   #define PROTO_RUNTIME_BLOCK   \
     NULL,     /**< varinfo */ \
@@ -554,7 +566,7 @@ typedef bclass_ptr bclass_array[];
     (struct bproto**) _protos,                                  /**< bproto **ptab */        \
     (binstruction*) _code,                                      /**< code */                 \
     ((bstring*) _fname),                                        /**< name */                 \
-    ((bstring*) _source),                                       /**< source */               \
+    PROTO_SOURCE_FILE(_source)                                  /**< source */               \
     PROTO_RUNTIME_BLOCK                                         /**< */                      \
     PROTO_VAR_INFO_BLOCK                                        /**< */                      \
   }
