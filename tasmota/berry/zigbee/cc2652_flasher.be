@@ -58,7 +58,6 @@
 
 #- Example
 
-import string
 import cc2652_flasher as cc
 cc.start()
 cc.ping()
@@ -82,8 +81,6 @@ class cc2652_flasher
   # init - abort zigbee operations and starts the serial driver
   # args are optional
   def init(rx, tx, rst, bsl)
-    import string
-
     self.debug = false
     self.rx  = (rx  == nil) ? -1 : rx
     self.tx  = (tx  == nil) ? -1 : tx
@@ -338,8 +335,6 @@ class cc2652_flasher
 
   # higher level
   def flash_write(addr, data)
-    import string
-
     var sz = size(data)
     if (sz % 4 != 0) raise "value_error", "len must be a multiple of 4" end
     if sz > 128      raise "value_error", "len is bigger than 128" end

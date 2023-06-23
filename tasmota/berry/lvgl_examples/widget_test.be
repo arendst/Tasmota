@@ -1,20 +1,15 @@
 #- start LVGL and init environment -#
 lv.start()
 
-import string
-
 scr = lv.scr_act()            # default screean object
 
 def ctorcb(class_p, obj)
-    import string
     print(format("> ctorcb class_p=0x%08X obj=0x%08X", class_p, obj))
 end
 def dtorcb(class_p, obj)
-    import string
     print(format("> dtorcb class_p=0x%08X obj=0x%08X", class_p, obj))
 end
 def eventcb(class_p, e)
-    import string
     import introspect
     var event = lv_event(e)
     var obj = introspect.fromptr(event.user_data)

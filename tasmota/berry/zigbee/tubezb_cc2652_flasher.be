@@ -125,11 +125,8 @@ class tubezb_cc2652_flasher
   # don't flash so ignore data
   # check CCFG at location 0x57FD8 (4 bytes)
   def _check_cb(addr, sz, data, offset)
-    # import string
-
     # check than sz is a multiple of 4
     if (sz % 4 != 0)
-      import string
       raise "value_error", format("size of payload is not a mutliple of 4: 0x%06X", addr)
     end
 
@@ -140,7 +137,6 @@ class tubezb_cc2652_flasher
       var ccfg_bytes = data.get(4 + CCFG - addr, 4)
 
       if ccfg_bytes != self.CCFG_reference
-        import string
         raise "value_error", format("incorrect CCFG, BSL is not set to DIO_8 LOW (0x%08X expected 0x%08X)", ccfg_bytes, self.CCFG_reference) end
       self.file_validated = true    # if we are here, it means that the file looks correct
     end

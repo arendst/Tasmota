@@ -65,7 +65,6 @@ class Partition_info
 
     elif magic == 0xEBEB  #- MD5 -#
     else
-      import string
       raise  "internal_error", format("invalid magic number %02X", magic)
     end
     
@@ -122,7 +121,6 @@ class Partition_info
   end
 
   def tostring()
-    import string
     var type_s = ""
     var subtype_s = ""
     if   self.type == 0  type_s = "app"
@@ -351,7 +349,6 @@ class Partition_otadata
 
   # Produce a human-readable representation of the object with relevant information
   def tostring()
-    import string
     return format("<instance: Partition_otadata(ota_active:%d, ota_seq=[%d,%d], ota_max=%d)>",
                           self.active_otadata, self.seq0, self.seq1, self.maxota)
   end
@@ -519,7 +516,6 @@ class Partition_manager_UI
   #- ---------------------------------------------------------------------- -#
   def page_show_partition(slot, active, ota_num, maxota)
     import webserver
-    import string
     #- define `bdis` style for gray disabled buttons -#
     webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
     webserver.content_send(format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s&nbsp;</b></legend>",
@@ -563,7 +559,6 @@ class Partition_manager_UI
   #- ---------------------------------------------------------------------- -#
   def page_show_spiffs(slot, free_mem)
     import webserver
-    import string
     webserver.content_send(format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;filesystem&nbsp;</b></legend>",
                                          slot.start / 0x1000))
 
@@ -609,7 +604,6 @@ class Partition_manager_UI
   #- ---------------------------------------------------------------------- -#
   def page_show_repartition_asym(p)
     import webserver
-    import string
     if p.get_active() != 0
       webserver.content_send("<p style='width:320px;'>Re-partition can be done only if 'app0' is active.</p>")
     else
@@ -650,7 +644,6 @@ class Partition_manager_UI
   #######################################################################
   def page_part_mgr()
     import webserver
-    import string
     import partition_core
     if !webserver.check_privileged_access() return nil end
     var p = partition_core.Partition()
@@ -679,7 +672,6 @@ class Partition_manager_UI
   #######################################################################
   def page_part_ctl()
     import webserver
-    import string
     import partition_core
     if !webserver.check_privileged_access() return nil end
 
@@ -756,7 +748,7 @@ class Partition_manager_UI
 
         var part_size_kb = int(webserver.arg("repartition"))
         if part_size_kb < app0_used_kb || part_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size %i KB, should be between %i and %i", part_size_kb, app0_used_kb, self.app_size_max)
+          raise "value_error", format("Invalid partition size %i KB, should be between %i and %i", part_size_kb, app0_used_kb, self.app_size_max)
         end
         if part_size_kb == app0_size_kb raise "value_error", "No change to partition size, abort" end
 
@@ -799,11 +791,11 @@ class Partition_manager_UI
 
         var part0_size_kb = int(webserver.arg("app0"))
         if part0_size_kb < app0_used_kb || part0_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size app%i %i KB, should be between %i and %i", 0, part0_size_kb, app0_used_kb, self.app_size_max)
+          raise "value_error", format("Invalid partition size app%i %i KB, should be between %i and %i", 0, part0_size_kb, app0_used_kb, self.app_size_max)
         end
         var part1_size_kb = int(webserver.arg("app1"))
         if part1_size_kb < self.app_size_min || part1_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size app%i %i KB, should be between %i and %i", 1, part1_size_kb, self.app_size_min, self.app_size_max)
+          raise "value_error", format("Invalid partition size app%i %i KB, should be between %i and %i", 1, part1_size_kb, self.app_size_min, self.app_size_max)
         end
         if part0_size_kb == app0_size_kb && part1_size_kb == app1_size_kb raise "value_error", "No change to partition sizes, abort" end
 

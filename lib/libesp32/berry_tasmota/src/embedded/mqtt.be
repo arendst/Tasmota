@@ -46,7 +46,6 @@ class MQTT : MQTT_ntv
       end
 
       def tostring()
-        import string
         return format("<instance: %s('%s')>", classname(self), self.fulltopic)
       end
 

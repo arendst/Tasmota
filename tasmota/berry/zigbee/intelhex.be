@@ -118,7 +118,6 @@ class intelhex
 
         # OK
         # do whatever needed
-        import string
         # print(format("addr=0x%06X len=0x%02X", address, sz))
       elif record_type == 4
         if offset_low != 0      raise "value_error", "offset_low not null for cmd 04" end

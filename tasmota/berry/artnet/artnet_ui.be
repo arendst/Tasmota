@@ -87,7 +87,6 @@ class ArtNet_UI
   #######################################################################
   def page_artnet_ui()
     import webserver
-    import string
     if !webserver.check_privileged_access() return nil end
 
     # read configuration
@@ -183,7 +182,6 @@ class ArtNet_UI
     import webserver
     if !webserver.check_privileged_access() return nil end
 
-    import string
     import persist
     import introspect
     

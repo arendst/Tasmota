@@ -337,7 +337,6 @@ class lvh_obj
 
     var event_hasp = self._event_map.find(code)
     if event_hasp != nil
-      import string
       import json
 
       var tas_event_more = ""   # complementary data
@@ -413,7 +412,6 @@ class lvh_obj
   #====================================================================
   def set_toggle(t)
     if type(t) == 'string'
-      import string
       t = string.toupper(str(t))
       if   t == "TRUE"  t = true
       elif t == "FALSE" t = false
@@ -840,7 +838,6 @@ class lvh_obj
       var func = compile(code)
       self._val_rule_function = func()
     except .. as e, m
-      import string
       print(format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
     end
   end
@@ -855,7 +852,6 @@ class lvh_obj
       var func = compile(code)
       self._text_rule_function = func()
     except .. as e, m
-      import string
       print(format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
     end
   end
@@ -873,7 +869,6 @@ class lvh_obj
       try
         val_n = func(val_n)
       except .. as e, m
-        import string
         print(format("HSP: failed to run self._val_rule_function - %s (%s)", e, m))
       end
     end
@@ -894,14 +889,12 @@ class lvh_obj
       try
         val = func(val)
       except .. as e, m
-        import string
         print(format("HSP: failed to run self._text_rule_function - %s (%s)", e, m))
       end
     end
 
     var format = self._text_rule_format
     if type(format) == 'string'
-      import string
       format = format(format, val)
     else
       format = ""
@@ -1348,7 +1341,6 @@ class lvh_page
     end
 
     # send page events
-    import string
     var event_str_in = format('{"hasp":{"p%i":"out"}}', self._oh.lvh_page_cur_idx)
     tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
     var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
@@ -1728,7 +1720,6 @@ class HASPmota
   #====================================================================
   def parse_obj(jline, page)
     import global
-    import string
     import introspect
 
     var obj_id = int(jline.find("id"))        # id number or nil

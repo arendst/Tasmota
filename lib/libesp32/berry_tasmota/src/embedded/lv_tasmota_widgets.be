@@ -37,7 +37,6 @@ class lv_clock: lv_label
   end
 
   def set_time(hour, minute, sec)
-    import string
     if hour != self.hour || minute != self.minute || sec != self.sec
       var txt = format("%02d%s%02d", hour, sec % 2 ? ":" : " ", minute)
       self.hour = hour

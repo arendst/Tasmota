@@ -165,7 +165,6 @@ ts_calibrate.init = def (m)
     # All values are computed and correct, log results and store to 'display.ini'
     def finish()
       # calibration is finished, do the housekeeping
-      import string
       var p0x = real(self.raw_pts[0].x)
       var p0y = real(self.raw_pts[0].y)
       var p1x = real(self.raw_pts[1].x)
@@ -254,7 +253,6 @@ ts_calibrate.init = def (m)
 
     def calc_geometry(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, hres, vres, padding)
       import math
-      import string
 
       tasmota.log(format("TS : Geometry (%i,%i) (%i,%i) (%i,%i) (%i,%i) - %ix%i pad %i",
                                   int(p0x), int(p0y),

@@ -49,7 +49,6 @@ class zb_coord : zb_coord_ntv
     if self._handlers == nil   return end
 
     import introspect
-    import string
 
     var frame
     var attr_list

@@ -38,7 +38,6 @@ class Partition_wizard_UI
   end
 
   def default_safeboot_URL()
-    import string
     var arch_sub = tasmota.arch()
     if arch_sub[0..4] == "esp32"
       arch_sub = arch_sub[5..]    # get the esp32 variant
@@ -109,7 +108,6 @@ class Partition_wizard_UI
     var flash_definition_sector = self.get_flash_definition_sector(p)
     if (flash_size_k != flash_size_real_k) && flash_definition_sector != nil
       import flash
-      import string
 
       flash_size_k = flash_size_real_k    # try to expand the flash size definition
 
@@ -173,7 +171,6 @@ class Partition_wizard_UI
   #- ---------------------------------------------------------------------- -#
   def show_resize_fs(p)
     import webserver
-    import string
     var unallocated = self.get_unallocated_k(p)
 
     # if there is unallocated space, propose only to claim it
@@ -257,7 +254,6 @@ class Partition_wizard_UI
   # - true if DONE
   # - string if ERROR, indicating the error
   def test_step_1(p)
-    import string
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
 
     var cur_part = p.otadata.active_otadata     # -1=factory 0=ota_0 1=ota_1...
@@ -294,7 +290,6 @@ class Partition_wizard_UI
   # - true if DONE
   # - string if ERROR, indicating the error
   def test_step_2(p)
-    import string
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
 
     var app0 = p.get_ota_slot(0)
@@ -325,7 +320,6 @@ class Partition_wizard_UI
   # - true if DONE
   # - string if ERROR, indicating the error
   def test_step_3(p)
-    import string
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
 
     return false
@@ -343,7 +337,6 @@ class Partition_wizard_UI
   # - true if DONE
   # - string if ERROR, indicating the error
   def test_step_4(p)
-    import string
     
     return false
     # var app0 = p.get_ota_slot(0)
@@ -352,7 +345,6 @@ class Partition_wizard_UI
 
   static def copy_ota(from_addr, to_addr, sz)
     import flash
-    import string
     var size_left = sz
     var offset = 0
   
@@ -390,7 +382,6 @@ class Partition_wizard_UI
   end
 
   def do_step_2(p, safeboot_url)
-    import string
     if safeboot_url == nil || safeboot_url == ""
       safeboot_url = self.default_safeboot_URL()
       tasmota.log("UPL: no `safeboot` URL, defaulting to "+safeboot_url, 2)
@@ -418,7 +409,6 @@ class Partition_wizard_UI
 
 
   def do_step_3(p)
-    import string
     import flash
 
     var step3_state = self.test_step_3(p)
@@ -476,7 +466,6 @@ class Partition_wizard_UI
   def show_migrate_to_factory(p)
     # display ota partitions
     import webserver
-    import string
 
     if !self.factory_migrate_eligible(p)  return end
 
@@ -513,7 +502,6 @@ class Partition_wizard_UI
   def show_current_partitions(p)
     # display ota partitions
     import webserver
-    import string
     var cur_part = p.otadata.active_otadata     # -1=factory 0=ota_0 1=ota_1...
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Current partitions&nbsp;</b></legend><p></p><table>")
@@ -573,7 +561,6 @@ class Partition_wizard_UI
   #######################################################################
   def page_part_mgr()
     import webserver
-    import string
     import partition_core
     if !webserver.check_privileged_access() return nil end
     var p = partition_core.Partition()                    # load partition layout
@@ -603,7 +590,6 @@ class Partition_wizard_UI
     import webserver
     if !webserver.check_privileged_access() return nil end
 
-    import string
     import partition_core
     import persist
     
@@ -710,7 +696,6 @@ class Partition_wizard_UI
   #  string: error with description of error
   def do_safeboot_partitioning()
     import webserver
-    import string
     import partition_core
 
     var p = partition_core.Partition()                    # load partition layout

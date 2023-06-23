@@ -336,7 +336,6 @@ class Tasmota
   end
 
   def time_str(time)
-    import string
     var tm = self.time_dump(time)
     return format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
   end
@@ -376,7 +375,6 @@ class Tasmota
         f.close()
       except .. as e
         if f != nil     f.close() end
-        import string
         print(format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
       end
       return nil
@@ -399,7 +397,6 @@ class Tasmota
         var compiled = compile(f_name, 'file')
         return compiled
       except .. as e, m
-        import string
         print(format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
@@ -413,7 +410,6 @@ class Tasmota
           compiled_code()
           return true
         except .. as e, m
-          import string
           print(format("BRY: failed to run compiled code '%s' - %s", e, m))
         end
       end
@@ -566,7 +562,6 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
-    import string
     if event_type=='every_50ms'
       self.run_deferred()
     end  #- first run deferred events -#

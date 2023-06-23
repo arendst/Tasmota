@@ -268,7 +268,7 @@ extern const bclass be_class_mqtt_listener;
 ********************************************************************/
 be_local_closure(mqtt_listener_tostring,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -276,23 +276,21 @@ be_local_closure(mqtt_listener_tostring,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(string),
-    /* K1   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X27_X25s_X27_X29_X3E),
-    /* K2   */  be_nested_str(fulltopic),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X27_X25s_X27_X29_X3E),
+    /* K1   */  be_nested_str(fulltopic),
     }),
     &be_const_str_tostring,
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x60080018,  //  0001  GETGBL	R2	G24
-      0x580C0001,  //  0002  LDCONST	R3	K1
-      0x60100005,  //  0003  GETGBL	R4	G5
-      0x5C140000,  //  0004  MOVE	R5	R0
-      0x7C100200,  //  0005  CALL	R4	1
-      0x88140102,  //  0006  GETMBR	R5	R0	K2
-      0x7C080600,  //  0007  CALL	R2	3
-      0x80040400,  //  0008  RET	1	R2
+    ( &(const binstruction[ 8]) {  /* code */
+      0x60040018,  //  0000  GETGBL	R1	G24
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x600C0005,  //  0002  GETGBL	R3	G5
+      0x5C100000,  //  0003  MOVE	R4	R0
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x88100101,  //  0005  GETMBR	R4	R0	K1
+      0x7C040600,  //  0006  CALL	R1	3
+      0x80040200,  //  0007  RET	1	R1
     })
   )
 );

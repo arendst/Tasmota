@@ -163,7 +163,6 @@ class AXP202 : I2C_Driver
 #   #- display sensor value in the web UI -#
 #   def web_sensor()
 #     if !self.wire return nil end  #- exit if not initialized -#
-#     import string
 #     var msg = format(
 #              "{s}VBus Voltage{m}%.3f V{e}"..
 #              "{s}VBus Current{m}%.1f mA{e}"..
@@ -182,7 +181,6 @@ class AXP202 : I2C_Driver
 #   #- add sensor value to teleperiod -#
 #   def json_append()
 #     if !self.wire return nil end  #- exit if not initialized -#
-#     # import string
 #     # var ax = int(self.accel[0] * 1000)
 #     # var ay = int(self.accel[1] * 1000)
 #     # var az = int(self.accel[2] * 1000)

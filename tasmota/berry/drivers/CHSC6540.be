@@ -55,7 +55,6 @@
     self.touched = self.is_pressed()
     # tasmota.log("DEBUG> int="+str(self.tp_int)+" touched="+str(self.touched), 2)
     if self.touched
-      import string
       var raw_read = self.wire.read_bytes(self.addr, 0x02, 11)    # read a series of 11 bytes at from register 0x02
       var pts = raw_read[0]
       if pts <= 0 || pts > 2 return end     # wrong

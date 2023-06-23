@@ -88,7 +88,6 @@ autoconf_module.init = def (m)
     # Load templates from Github
     #####################################################################################################
     def load_templates()
-      import string
       import json
       try 
         var url = format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", tasmota.arch())
@@ -189,7 +188,6 @@ autoconf_module.init = def (m)
     # This HTTP POST manager handles the submitted web form data
     def page_autoconf_ctl()
       import webserver
-      import string
       import path
       if !webserver.check_privileged_access() return nil end
 
@@ -300,7 +298,6 @@ autoconf_module.init = def (m)
     # load and run `<fname>.bat` file as Tasmota commands
     #####################################################################################################
     def run_bat(fname)    # read a '*.bat' file and run each command
-      import string
       var f
       try
         f = open(fname, "r")       # open file in read-only mode, it is expected to exist

@@ -103,7 +103,6 @@ class zcl_attribute : zcl_attribute_ntv
   end
 
   def key_tostring()
-    import string
     var s = "<undefined>"
 
     var key = self.key
@@ -130,7 +129,6 @@ class zcl_attribute : zcl_attribute_ntv
   def tostring()
     import introspect
     import json
-    import string
 
     var s = json.dump(self.key_tostring())
     s += ":"
@@ -200,7 +198,6 @@ class zcl_attribute_list : zcl_attribute_list_ntv
   end
 
   def tostring()
-    import string
     import json
 
     var items = []
@@ -266,7 +263,6 @@ class zcl_attributes
   end
 
   def tostring()
-    import string
     import json
 
     var items = []

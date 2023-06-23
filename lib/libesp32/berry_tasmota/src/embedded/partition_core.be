@@ -76,7 +76,6 @@ class Partition_info
 
     # elif magic == 0xEBEB  #- MD5 -#
     else
-      import string
       raise  "internal_error", format("invalid magic number %02X", magic)
     end
     
@@ -147,7 +146,6 @@ class Partition_info
     if   self.type == 0 return "app"
     elif self.type == 1  return "data"
     end
-    import string
     return format("0x%02X", self.type)
   end
 
@@ -169,7 +167,6 @@ class Partition_info
       elif self.subtype == 0x82  return "spiffs"
       end
     end
-    import string
     return format("0x%02X", self.subtype)
   end
 
@@ -177,7 +174,6 @@ class Partition_info
   # this method is not included in the solidified version to save space,
   # it is included only in the optional application `tapp` version
   def tostring()
-    import string
     var type_s = self.type_to_string()
     var subtype_s = self.subtype_to_string()
 
@@ -361,7 +357,6 @@ class Partition_otadata
 
   # Produce a human-readable representation of the object with relevant information
   def tostring()
-    import string
     return format("<instance: Partition_otadata(ota_active:%s, ota_seq=[%d,%d], ota_max=%d)>",
                           self.active_otadata >= 0 ? "ota_" + str(self.active_otadata) : "factory",
                           self.seq0, self.seq1, self.maxota)
@@ -552,7 +547,6 @@ class Partition
     var flash_definition_sector = self.get_flash_definition_sector()
     if (flash_size_k != flash_size_real_k) && flash_definition_sector != nil
       import flash
-      import string
 
       flash_size_k = flash_size_real_k    # try to expand the flash size definition
 
@@ -586,7 +580,6 @@ class Partition
   # Called at first boot
   # Try to expand FS to max of flash size
   def resize_fs_to_max()
-    import string
     try
       var unallocated = self.get_unallocated_k()
       if unallocated <= 0     return nil end

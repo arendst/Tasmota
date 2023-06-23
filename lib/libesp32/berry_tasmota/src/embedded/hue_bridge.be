@@ -60,7 +60,6 @@ hue_bridge.init = def (m)
     def discover()
       import hue_ntv
       import json
-      import string
 
       var fragments = []          # store json elements
       for id: self.lights.keys()
