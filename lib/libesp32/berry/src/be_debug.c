@@ -156,7 +156,9 @@ void be_dumpclosure(bclosure *cl)
 #if BE_DEBUG_RUNTIME_INFO
     blineinfo *lineinfo = proto->lineinfo;
 #endif
+#if BE_DEBUG_SOURCE_FILE
     logfmt("source '%s', ", str(proto->source));
+#endif
     logfmt("function '%s':\n", str(proto->name));
 #if BE_DEBUG_RUNTIME_INFO
     if (lineinfo) { /* first line */
@@ -185,7 +187,9 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         int pc = cast_int(ip - proto->code - 1); /* now vm->ip has been increased */
         for (; it < end && pc > it->endpc; ++it);
         snprintf(buf, sizeof(buf), ":%d:", it->linenumber);
+#if BE_DEBUG_SOURCE_FILE
         be_writestring(str(proto->source));
+#endif
         be_writestring(buf);
     } else {
         be_writestring("<unknown source>:");

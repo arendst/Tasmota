@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
 - Matter Bridge mode always on
 - ESP32 Framework (Core) from v2.0.9 to v2.0.10
+- Berry code size optimizations
 
 ### Fixed
 - Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)

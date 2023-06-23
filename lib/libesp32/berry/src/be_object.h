@@ -160,7 +160,9 @@ typedef struct bproto {
     struct bproto **ptab; /* proto table */
     binstruction *code; /* instructions sequence */
     bstring *name; /* function name */
+#if BE_DEBUG_SOURCE_FILE
     bstring *source; /* source file name */
+#endif
 #if BE_DEBUG_RUNTIME_INFO /* debug information */
     blineinfo *lineinfo;
     int nlineinfo;
