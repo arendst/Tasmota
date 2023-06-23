@@ -772,11 +772,10 @@ extern "C" {
   // 11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100
 
   // N=bytes('11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100')
-  // import string
   // s = ''
   // while size(N) > 0
   //   var n = N.get(0, 2)
-  //   s += string.format("0x%04X, ", n)
+  //   s += format("0x%04X, ", n)
   //   N = N[2..]
   // end
   // print(s)

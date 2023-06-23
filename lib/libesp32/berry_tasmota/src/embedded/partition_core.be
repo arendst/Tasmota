@@ -76,8 +76,7 @@ class Partition_info
 
     # elif magic == 0xEBEB  #- MD5 -#
     else
-      import string
-      raise  "internal_error", string.format("invalid magic number %02X", magic)
+      raise  "internal_error", format("invalid magic number %02X", magic)
     end
     
   end
@@ -121,11 +120,11 @@ class Partition_info
 
       var seg_num = 0
       while seg_num < seg_count
-        # print(string.format("Reading 0x%08X", seg_offset))
+        # print(format("Reading 0x%08X", seg_offset))
         var segment_header = flash.read(seg_offset - 8, 8)
         var seg_start_addr = segment_header.get(0, 4)
         var seg_size = segment_header.get(4,4)
-        # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X sz=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
+        # print(format("Segment %i: flash_offset=0x%08X start_addr=0x%08X sz=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
 
         seg_offset += seg_size + 8    # add segment_length + sizeof(esp_image_segment_header_t)
         if seg_offset >= (addr + sz)   return -1 end
@@ -134,7 +133,7 @@ class Partition_info
       end
       var total_size = seg_offset - addr + 1 # add 1KB for safety
 
-      # print(string.format("Total size = %i KB", total_size/1024))
+      # print(format("Total size = %i KB", total_size/1024))
 
       return total_size
     except .. as e, m
@@ -147,8 +146,7 @@ class Partition_info
     if   self.type == 0 return "app"
     elif self.type == 1  return "data"
     end
-    import string
-    return string.format("0x%02X", self.type)
+    return format("0x%02X", self.type)
   end
 
   def subtype_to_string()
@@ -169,22 +167,20 @@ class Partition_info
       elif self.subtype == 0x82  return "spiffs"
       end
     end
-    import string
-    return string.format("0x%02X", self.subtype)
+    return format("0x%02X", self.subtype)
   end
 
   # Human readable version of Partition information
   # this method is not included in the solidified version to save space,
   # it is included only in the optional application `tapp` version
   def tostring()
-    import string
     var type_s = self.type_to_string()
     var subtype_s = self.subtype_to_string()
 
     # reformat strings
     if type_s != ""    type_s = " (" + type_s + ")" end
     if subtype_s != "" subtype_s = " (" + subtype_s + ")" end
-    return string.format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
+    return format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
                           self.type, type_s,
                           self.subtype, subtype_s,
                           self.start, self.sz,
@@ -361,8 +357,7 @@ class Partition_otadata
 
   # Produce a human-readable representation of the object with relevant information
   def tostring()
-    import string
-    return string.format("<instance: Partition_otadata(ota_active:%s, ota_seq=[%d,%d], ota_max=%d)>",
+    return format("<instance: Partition_otadata(ota_active:%s, ota_seq=[%d,%d], ota_max=%d)>",
                           self.active_otadata >= 0 ? "ota_" + str(self.active_otadata) : "factory",
                           self.seq0, self.seq1, self.maxota)
   end
@@ -552,7 +547,6 @@ class Partition
     var flash_definition_sector = self.get_flash_definition_sector()
     if (flash_size_k != flash_size_real_k) && flash_definition_sector != nil
       import flash
-      import string
 
       flash_size_k = flash_size_real_k    # try to expand the flash size definition
 
@@ -576,7 +570,7 @@ class Partition
         var old_def = flash_def[3]
         flash_def[3] = (flash_def[3] & 0x0F) | flash_size_code
         flash.write(flash_definition_sector, flash_def)
-        tasmota.log(string.format("UPL: changing flash definition from 0x02X to 0x%02X", old_def, flash_def[3]), 3)
+        tasmota.log(format("UPL: changing flash definition from 0x02X to 0x%02X", old_def, flash_def[3]), 3)
       else
         raise "internal_error", "wrong flash size "+str(flash_size_real_m)
       end
@@ -586,12 +580,11 @@ class Partition
   # Called at first boot
   # Try to expand FS to max of flash size
   def resize_fs_to_max()
-    import string
     try
       var unallocated = self.get_unallocated_k()
       if unallocated <= 0     return nil end
 
-      tasmota.log(string.format("BRY: Trying to expand FS by %i kB", unallocated), 2)
+      tasmota.log(format("BRY: Trying to expand FS by %i kB", unallocated), 2)
 
       self.resize_max_flash_size_k()   # resize if needed
       # since unallocated succeeded, we know the last slot is FS
@@ -604,7 +597,7 @@ class Partition
       tasmota.global.restart_flag = 2
       tasmota.log("BRY: Successfully resized FS, restarting", 2)
     except .. as e, m
-      tasmota.log(string.format("BRY: Exception> '%s' - %s", e, m), 2)
+      tasmota.log(format("BRY: Exception> '%s' - %s", e, m), 2)
     end
   end
 

@@ -118,8 +118,7 @@ class intelhex
 
         # OK
         # do whatever needed
-        import string
-        # print(string.format("addr=0x%06X len=0x%02X", address, sz))
+        # print(format("addr=0x%06X len=0x%02X", address, sz))
       elif record_type == 4
         if offset_low != 0      raise "value_error", "offset_low not null for cmd 04" end
         offset_high = b_get(b, 4, -2)                   # b.get(4,-2)

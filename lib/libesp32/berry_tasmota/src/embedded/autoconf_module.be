@@ -23,7 +23,7 @@ autoconf_module.init = def (m)
         if string.find(dir[i], ".autoconf") > 0   # does the file contain '*.autoconf', >0 to skip `.autoconf`
           if entry != nil
             # we have multiple configuration files, not allowed
-            tasmota.log(string.format("CFG: multiple autoconf files found, aborting ('%s' + '%s')", entry, dir[i]), 2)
+            tasmota.log(format("CFG: multiple autoconf files found, aborting ('%s' + '%s')", entry, dir[i]), 2)
             self._error = true
             return nil
           end
@@ -88,24 +88,23 @@ autoconf_module.init = def (m)
     # Load templates from Github
     #####################################################################################################
     def load_templates()
-      import string
       import json
       try 
-        var url = string.format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", tasmota.arch())
-        tasmota.log(string.format("CFG: loading '%s'", url), 3)
+        var url = format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", tasmota.arch())
+        tasmota.log(format("CFG: loading '%s'", url), 3)
         # load the template
         var cl = webclient()
         cl.begin(url)
         var r = cl.GET()
         if r != 200
-          tasmota.log(string.format("CFG: return_code=%i", r), 2)
+          tasmota.log(format("CFG: return_code=%i", r), 2)
           return nil
         end
         var s = cl.get_string()
         cl.close()
         # convert to json
         var j = json.load(s)
-        tasmota.log(string.format("CFG: loaded '%s'", str(j)), 3)
+        tasmota.log(format("CFG: loaded '%s'", str(j)), 3)
 
         var t = j.find("files")
         if isinstance(t, list)
@@ -114,7 +113,7 @@ autoconf_module.init = def (m)
 
         return nil
       except .. as e, m
-        tasmota.log(string.format("CFG: exception '%s' - '%s'", e, m), 2)
+        tasmota.log(format("CFG: exception '%s' - '%s'", e, m), 2)
         return nil
       end
     end
@@ -143,8 +142,8 @@ autoconf_module.init = def (m)
       var cur_module_display = cur_module ? string.tr(self.get_current_module_name(), "_", " ") : self._error ? "&lt;Error: apply new or remove&gt;" : "&lt;None&gt;"
 
       webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
-      webserver.content_send(string.format("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>"))
-      webserver.content_send(string.format("<p>Current configuration: </p><p><b>%s</b></p>", cur_module_display))
+      webserver.content_send(format("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>"))
+      webserver.content_send(format("<p>Current configuration: </p><p><b>%s</b></p>", cur_module_display))
 
       if cur_module
         # add button to reapply template
@@ -156,7 +155,7 @@ autoconf_module.init = def (m)
       webserver.content_send("<p></p></fieldset><p></p>")
 
       webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
-      webserver.content_send(string.format("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>"))
+      webserver.content_send(format("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>"))
 
       webserver.content_send("<p><form id=zip style='display: block;' action='/ac' method='post' ")
       webserver.content_send("onsubmit='return confirm(\"This will change the current configuration and cause a restart.\");'>")
@@ -166,13 +165,13 @@ autoconf_module.init = def (m)
       var templates = self.load_templates()
       webserver.content_send("<option value='reset'>&lt;Remove autoconf&gt;</option>")
       for t:templates
-        webserver.content_send(string.format("<option value='%s'>%s</option>", t, string.tr(t, "_", " ")))
+        webserver.content_send(format("<option value='%s'>%s</option>", t, string.tr(t, "_", " ")))
       end
 
       webserver.content_send("</select><p></p>")
 
       webserver.content_send("<button name='zipapply' class='button bgrn'>Apply configuration</button>")
-      # webserver.content_send(string.format("<input name='ota' type='hidden' value='%d'>", ota_num))
+      # webserver.content_send(format("<input name='ota' type='hidden' value='%d'>", ota_num))
       webserver.content_send("</form></p>")
 
 
@@ -189,7 +188,6 @@ autoconf_module.init = def (m)
     # This HTTP POST manager handles the submitted web form data
     def page_autoconf_ctl()
       import webserver
-      import string
       import path
       if !webserver.check_privileged_access() return nil end
 
@@ -211,16 +209,16 @@ autoconf_module.init = def (m)
           var arch_name = webserver.arg("zip")
 
           if arch_name != "reset"
-            var url = string.format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s.autoconf", tasmota.arch(), arch_name)
-            tasmota.log(string.format("CFG: downloading '%s'", url), 2);
+            var url = format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s.autoconf", tasmota.arch(), arch_name)
+            tasmota.log(format("CFG: downloading '%s'", url), 2);
 
-            var local_file = string.format("%s.autoconf", arch_name)
+            var local_file = format("%s.autoconf", arch_name)
 
             # download file and write directly to file system
             var cl = webclient()
             cl.begin(url)
             var r = cl.GET()
-            if r != 200  raise "connection_error", string.format("return code=%i", r) end
+            if r != 200  raise "connection_error", format("return code=%i", r) end
             cl.write_file(local_file)
             cl.close()
           end
@@ -234,12 +232,12 @@ autoconf_module.init = def (m)
           raise "value_error", "Unknown command"
         end
       except .. as e, m
-        print(string.format("CFG: Exception> '%s' - %s", e, m))
+        print(format("CFG: Exception> '%s' - %s", e, m))
         #- display error page -#
         webserver.content_start("Parameter error")           #- title of the web page -#
         webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-        webserver.content_send(string.format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
+        webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
 
         webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to management page -#
         webserver.content_stop()                        #- end of web page -#
@@ -268,7 +266,7 @@ autoconf_module.init = def (m)
         var fname = dir[i]
         if string.find(fname, ".autoconf") > 0   # does the file contain '*.autoconf'
           path.remove(fname)
-          print(string.format("CFG: removed file '%s'", fname))
+          print(format("CFG: removed file '%s'", fname))
         end
         i += 1
       end
@@ -300,7 +298,6 @@ autoconf_module.init = def (m)
     # load and run `<fname>.bat` file as Tasmota commands
     #####################################################################################################
     def run_bat(fname)    # read a '*.bat' file and run each command
-      import string
       var f
       try
         f = open(fname, "r")       # open file in read-only mode, it is expected to exist
@@ -315,7 +312,7 @@ autoconf_module.init = def (m)
         end
         f.close()                         # close, we don't expect exception with read-only, could be added later though
       except .. as e, m
-        tasmota.log(string.format('CFG: could not run %s (%s - %s)', fname, e, m), 1)
+        tasmota.log(format('CFG: could not run %s (%s - %s)', fname, e, m), 1)
         if f != nil   f.close()   end
       end
     end
@@ -368,7 +365,7 @@ autoconf_module.init = def (m)
           reboot = true
           tasmota.log("CFG: 'display.ini' extracted, restarting", 2)
         except .. as e, m
-          print(string.format("CFG: could not copy 'display.ini' (%s - %s)'", e, m))
+          print(format("CFG: could not copy 'display.ini' (%s - %s)'", e, m))
           if f != nil   f.close()   end
           if f_out != nil   f_out.close()   end
         end

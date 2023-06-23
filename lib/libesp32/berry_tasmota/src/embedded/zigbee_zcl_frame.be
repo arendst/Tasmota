@@ -30,9 +30,8 @@ class zcl_frame : zcl_frame_ntv
   end
 
   def tomap()
-    import string
     var m = super(self).tomap()
-    m["shortaddr_hex"] = string.format("0x%04X", self.shortaddr)
+    m["shortaddr_hex"] = format("0x%04X", self.shortaddr)
     m["payload"] = self.payload    # add payload object which is a synthetic attribute not included in tomap()
     return m
   end

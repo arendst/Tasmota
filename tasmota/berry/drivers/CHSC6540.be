@@ -55,7 +55,6 @@
     self.touched = self.is_pressed()
     # tasmota.log("DEBUG> int="+str(self.tp_int)+" touched="+str(self.touched), 2)
     if self.touched
-      import string
       var raw_read = self.wire.read_bytes(self.addr, 0x02, 11)    # read a series of 11 bytes at from register 0x02
       var pts = raw_read[0]
       if pts <= 0 || pts > 2 return end     # wrong
@@ -63,7 +62,7 @@
       #var p0f = (raw_read[4] & 0x10) != 0   # unused for now
       self.x = raw_read.get(1,-2) & 0x0FFF
       self.y = raw_read.get(3,-2) & 0x0FFF
-      # tasmota.log(string.format("I2C: screen pressed x=%i y=%i", self.x, self.y), 2)
+      # tasmota.log(format("I2C: screen pressed x=%i y=%i", self.x, self.y), 2)
       # var p1x = raw_read.get(7,2) & 0x0FFF
       # var p1y = raw_read.get(9,2) & 0x0FFF
    end
