@@ -172,7 +172,7 @@ be_local_closure(AXP202_get_bat_power,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read24),
-    /* K1   */  be_const_real_hex(0x3A102DE1),
+    /* K1   */  be_const_real_hex(0x3A102DE0),
     }),
     &be_const_str_get_bat_power,
     &be_const_str_solidified,
