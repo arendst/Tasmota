@@ -151,15 +151,15 @@ typedef struct bproto {
     bbyte nupvals; /* upvalue count */
     bbyte argc; /* argument count */
     bbyte varg; /* variable argument position + 1 */
+    int16_t codesize; /* code size */
+    int16_t nconst; /* constants count */
+    int16_t nproto; /* proto count */
     bgcobject *gray; /* for gc gray list */
     bupvaldesc *upvals;
     bvalue *ktab; /* constants table */
     struct bproto **ptab; /* proto table */
     binstruction *code; /* instructions sequence */
     bstring *name; /* function name */
-    int codesize; /* code size */
-    int nconst; /* constants count */
-    int nproto; /* proto count */
     bstring *source; /* source file name */
 #if BE_DEBUG_RUNTIME_INFO /* debug information */
     blineinfo *lineinfo;
