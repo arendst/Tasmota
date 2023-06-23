@@ -63,7 +63,7 @@
       #var p0f = (raw_read[4] & 0x10) != 0   # unused for now
       self.x = raw_read.get(1,-2) & 0x0FFF
       self.y = raw_read.get(3,-2) & 0x0FFF
-      # tasmota.log(string.format("I2C: screen pressed x=%i y=%i", self.x, self.y), 2)
+      # tasmota.log(format("I2C: screen pressed x=%i y=%i", self.x, self.y), 2)
       # var p1x = raw_read.get(7,2) & 0x0FFF
       # var p1y = raw_read.get(9,2) & 0x0FFF
    end

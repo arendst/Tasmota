@@ -62,7 +62,7 @@ import string
 import cc2652_flasher as cc
 cc.start()
 cc.ping()
-print(string.format("0x%08X", cc.cmd_get_chip_id()))
+print(format("0x%08X", cc.cmd_get_chip_id()))
 # output: 0x3202F000
 
 # Dumping CC2652 flash into filesystem
@@ -96,8 +96,8 @@ class cc2652_flasher
     if self.tx < 0  self.tx = gpio.pin(gpio.TCP_TX) end
     if self.rst < 0 self.rst = gpio.pin(gpio.ZIGBEE_RST, 0) end
     if self.bsl < 0 self.bsl = gpio.pin(gpio.ZIGBEE_RST, 1) end
-    print(string.format("FLH: cc2652_flasher rx=%i tx=%i rst=%i bsl=%i", self.rx, self.tx, self.rst, self.bsl))
-    # tasmota.log(string.format("FLH: cc2652_flasher rx=%i tx=%i rst=%i bsl=%i", self.rx, self.tx, self.rst, self.bsl), 3)
+    print(format("FLH: cc2652_flasher rx=%i tx=%i rst=%i bsl=%i", self.rx, self.tx, self.rst, self.bsl))
+    # tasmota.log(format("FLH: cc2652_flasher rx=%i tx=%i rst=%i bsl=%i", self.rx, self.tx, self.rst, self.bsl), 3)
     if self.rx < 0 || self.tx < 0 || self.rst < 0 || self.bsl < 0
       raise "value_error", "cc2652_flasher unspecified GPIOs"
     end
@@ -351,12 +351,12 @@ class cc2652_flasher
     
     var ack
     ack = self.cmd_get_status()
-    if ack != 0x40    raise "serial_error", string.format("command failed: 0x%02X - 0x%06X (%i)", ack, addr, sz) end
+    if ack != 0x40    raise "serial_error", format("command failed: 0x%02X - 0x%06X (%i)", ack, addr, sz) end
     
     ret = self.cmd_send_data(data)
 
     ack = self.cmd_get_status()
-    if ack != 0x40    raise "serial_error", string.format("command failed: 0x%02X - 0x%06X (%i)", ack, addr, sz) end
+    if ack != 0x40    raise "serial_error", format("command failed: 0x%02X - 0x%06X (%i)", ack, addr, sz) end
 
   end
 

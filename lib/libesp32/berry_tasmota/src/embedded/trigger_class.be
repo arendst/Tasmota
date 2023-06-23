@@ -21,7 +21,7 @@ class Trigger
 
   def tostring()
     import string
-    return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
+    return format("<instance: %s(%s, %s, %s)", str(classof(self)),
               str(self.trig), str(self.f), str(self.id))
   end
 

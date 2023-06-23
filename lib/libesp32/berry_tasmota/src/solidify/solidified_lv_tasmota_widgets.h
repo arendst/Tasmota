@@ -11,7 +11,7 @@ extern const bclass be_class_lv_clock;
 ********************************************************************/
 be_local_closure(lv_clock_set_time,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    10,                          /* nstack */
     4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -19,17 +19,16 @@ be_local_closure(lv_clock_set_time,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(hour),
     /* K2   */  be_nested_str_weak(minute),
     /* K3   */  be_nested_str_weak(sec),
-    /* K4   */  be_nested_str_weak(format),
-    /* K5   */  be_nested_str_weak(_X2502d_X25s_X2502d),
-    /* K6   */  be_const_int(2),
-    /* K7   */  be_nested_str_weak(_X3A),
-    /* K8   */  be_nested_str_weak(_X20),
-    /* K9   */  be_nested_str_weak(set_text),
+    /* K4   */  be_nested_str_weak(_X2502d_X25s_X2502d),
+    /* K5   */  be_const_int(2),
+    /* K6   */  be_nested_str_weak(_X3A),
+    /* K7   */  be_nested_str_weak(_X20),
+    /* K8   */  be_nested_str_weak(set_text),
     }),
     be_str_weak(set_time),
     &be_const_str_solidified,
@@ -44,20 +43,20 @@ be_local_closure(lv_clock_set_time,   /* name */
       0x88140103,  //  0007  GETMBR	R5	R0	K3
       0x20140605,  //  0008  NE	R5	R3	R5
       0x7816000F,  //  0009  JMPF	R5	#001A
-      0x8C140904,  //  000A  GETMET	R5	R4	K4
-      0x581C0005,  //  000B  LDCONST	R7	K5
-      0x5C200200,  //  000C  MOVE	R8	R1
-      0x10240706,  //  000D  MOD	R9	R3	K6
-      0x78260001,  //  000E  JMPF	R9	#0011
-      0x58240007,  //  000F  LDCONST	R9	K7
+      0x60140018,  //  000A  GETGBL	R5	G24
+      0x58180004,  //  000B  LDCONST	R6	K4
+      0x5C1C0200,  //  000C  MOVE	R7	R1
+      0x10200705,  //  000D  MOD	R8	R3	K5
+      0x78220001,  //  000E  JMPF	R8	#0011
+      0x58200006,  //  000F  LDCONST	R8	K6
       0x70020000,  //  0010  JMP		#0012
-      0x58240008,  //  0011  LDCONST	R9	K8
-      0x5C280400,  //  0012  MOVE	R10	R2
-      0x7C140A00,  //  0013  CALL	R5	5
+      0x58200007,  //  0011  LDCONST	R8	K7
+      0x5C240400,  //  0012  MOVE	R9	R2
+      0x7C140800,  //  0013  CALL	R5	4
       0x90020201,  //  0014  SETMBR	R0	K1	R1
       0x90020402,  //  0015  SETMBR	R0	K2	R2
       0x90020603,  //  0016  SETMBR	R0	K3	R3
-      0x8C180109,  //  0017  GETMET	R6	R0	K9
+      0x8C180108,  //  0017  GETMET	R6	R0	K8
       0x5C200A00,  //  0018  MOVE	R8	R5
       0x7C180400,  //  0019  CALL	R6	2
       0x80000000,  //  001A  RET	0

@@ -338,7 +338,7 @@ class Tasmota
   def time_str(time)
     import string
     var tm = self.time_dump(time)
-    return string.format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
+    return format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
   end
 
   def load(f)
@@ -377,7 +377,7 @@ class Tasmota
       except .. as e
         if f != nil     f.close() end
         import string
-        print(string.format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
+        print(format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
       end
       return nil
     end
@@ -400,7 +400,7 @@ class Tasmota
         return compiled
       except .. as e, m
         import string
-        print(string.format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
+        print(format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
     end
@@ -414,7 +414,7 @@ class Tasmota
           return true
         except .. as e, m
           import string
-          print(string.format("BRY: failed to run compiled code '%s' - %s", e, m))
+          print(format("BRY: failed to run compiled code '%s' - %s", e, m))
         end
       end
       return false
@@ -487,10 +487,10 @@ class Tasmota
       var bec_version = try_get_bec_version(f_name_bec)
       var version_ok = true
       if bec_version == nil
-        print(string.format('BRY: corrupt bytecode \'%s\'',f_name_bec))
+        print(format('BRY: corrupt bytecode \'%s\'',f_name_bec))
         version_ok = false
       elif bec_version != 0x04          # -- this is the currenlty supported version
-        print(string.format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
+        print(format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
         version_ok = false
       end
 
@@ -516,7 +516,7 @@ class Tasmota
       try
         self.save(f_name_bec, compiled_code)
       except .. as e
-        print(string.format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
+        print(format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
       end
     end
     # call the compiled code
@@ -596,7 +596,7 @@ class Tasmota
             done = f(d, cmd, idx, payload, raw) || done
             if done && !keep_going   break end
           except .. as e,m
-            print(string.format("BRY: Exception> '%s' - %s", e, m))
+            print(format("BRY: Exception> '%s' - %s", e, m))
             if self._debug_present
               import debug
               debug.traceback()

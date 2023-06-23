@@ -1104,7 +1104,7 @@ be_local_closure(Tasmota_add_driver,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_load,   /* name */
   be_nested_proto(
-    27,                          /* nstack */
+    26,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1178,7 +1178,7 @@ be_local_closure(Tasmota_load,   /* name */
         })
       ),
       be_nested_proto(
-        10,                          /* nstack */
+        9,                          /* nstack */
         1,                          /* argc */
         0,                          /* varg */
         0,                          /* has upvals */
@@ -1186,7 +1186,7 @@ be_local_closure(Tasmota_load,   /* name */
         0,                          /* has sup protos */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
-        ( &(const bvalue[10]) {     /* constants */
+        ( &(const bvalue[ 9]) {     /* constants */
         /* K0   */  be_nested_str(r),
         /* K1   */  be_nested_str(readbytes),
         /* K2   */  be_const_int(3),
@@ -1195,8 +1195,7 @@ be_local_closure(Tasmota_load,   /* name */
         /* K5   */  be_const_int(0),
         /* K6   */  be_nested_str(close),
         /* K7   */  be_nested_str(string),
-        /* K8   */  be_nested_str(format),
-        /* K9   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20compiled_X20_X27_X25s_X27_X20_X28_X25s_X29),
+        /* K8   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20compiled_X20_X27_X25s_X27_X20_X28_X25s_X29),
         }),
         &be_const_str_try_get_bec_version,
         &be_const_str_solidified,
@@ -1235,11 +1234,11 @@ be_local_closure(Tasmota_load,   /* name */
           0x7C0C0200,  //  001F  CALL	R3	1
           0xA40E0E00,  //  0020  IMPORT	R3	K7
           0x60100001,  //  0021  GETGBL	R4	G1
-          0x8C140708,  //  0022  GETMET	R5	R3	K8
-          0x581C0009,  //  0023  LDCONST	R7	K9
-          0x5C200000,  //  0024  MOVE	R8	R0
-          0x5C240400,  //  0025  MOVE	R9	R2
-          0x7C140800,  //  0026  CALL	R5	4
+          0x60140018,  //  0022  GETGBL	R5	G24
+          0x58180008,  //  0023  LDCONST	R6	K8
+          0x5C1C0000,  //  0024  MOVE	R7	R0
+          0x5C200400,  //  0025  MOVE	R8	R2
+          0x7C140600,  //  0026  CALL	R5	3
           0x7C100200,  //  0027  CALL	R4	1
           0x70020000,  //  0028  JMP		#002A
           0xB0080000,  //  0029  RAISE	2	R0	R0
@@ -1281,7 +1280,7 @@ be_local_closure(Tasmota_load,   /* name */
         })
       ),
       be_nested_proto(
-        11,                          /* nstack */
+        10,                          /* nstack */
         1,                          /* argc */
         0,                          /* varg */
         0,                          /* has upvals */
@@ -1289,11 +1288,10 @@ be_local_closure(Tasmota_load,   /* name */
         0,                          /* has sup protos */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
-        ( &(const bvalue[ 4]) {     /* constants */
+        ( &(const bvalue[ 3]) {     /* constants */
         /* K0   */  be_nested_str(file),
         /* K1   */  be_nested_str(string),
-        /* K2   */  be_nested_str(format),
-        /* K3   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29),
+        /* K2   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29),
         }),
         &be_const_str_try_compile,
         &be_const_str_solidified,
@@ -1311,12 +1309,12 @@ be_local_closure(Tasmota_load,   /* name */
           0x70020009,  //  000A  JMP		#0015
           0xA40E0200,  //  000B  IMPORT	R3	K1
           0x60100001,  //  000C  GETGBL	R4	G1
-          0x8C140702,  //  000D  GETMET	R5	R3	K2
-          0x581C0003,  //  000E  LDCONST	R7	K3
-          0x5C200000,  //  000F  MOVE	R8	R0
-          0x5C240200,  //  0010  MOVE	R9	R1
-          0x5C280400,  //  0011  MOVE	R10	R2
-          0x7C140A00,  //  0012  CALL	R5	5
+          0x60140018,  //  000D  GETGBL	R5	G24
+          0x58180002,  //  000E  LDCONST	R6	K2
+          0x5C1C0000,  //  000F  MOVE	R7	R0
+          0x5C200200,  //  0010  MOVE	R8	R1
+          0x5C240400,  //  0011  MOVE	R9	R2
+          0x7C140800,  //  0012  CALL	R5	4
           0x7C100200,  //  0013  CALL	R4	1
           0x70020000,  //  0014  JMP		#0016
           0xB0080000,  //  0015  RAISE	2	R0	R0
@@ -1325,7 +1323,7 @@ be_local_closure(Tasmota_load,   /* name */
         })
       ),
       be_nested_proto(
-        10,                          /* nstack */
+        9,                          /* nstack */
         1,                          /* argc */
         0,                          /* varg */
         0,                          /* has upvals */
@@ -1333,10 +1331,9 @@ be_local_closure(Tasmota_load,   /* name */
         0,                          /* has sup protos */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
-        ( &(const bvalue[ 3]) {     /* constants */
+        ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str(string),
-        /* K1   */  be_nested_str(format),
-        /* K2   */  be_nested_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+        /* K1   */  be_nested_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X27_X25s_X27_X20_X2D_X20_X25s),
         }),
         &be_const_str_try_run_compiled,
         &be_const_str_solidified,
@@ -1356,11 +1353,11 @@ be_local_closure(Tasmota_load,   /* name */
           0x70020008,  //  000C  JMP		#0016
           0xA40E0000,  //  000D  IMPORT	R3	K0
           0x60100001,  //  000E  GETGBL	R4	G1
-          0x8C140701,  //  000F  GETMET	R5	R3	K1
-          0x581C0002,  //  0010  LDCONST	R7	K2
-          0x5C200200,  //  0011  MOVE	R8	R1
-          0x5C240400,  //  0012  MOVE	R9	R2
-          0x7C140800,  //  0013  CALL	R5	4
+          0x60140018,  //  000F  GETGBL	R5	G24
+          0x58180001,  //  0010  LDCONST	R6	K1
+          0x5C1C0200,  //  0011  MOVE	R7	R1
+          0x5C200400,  //  0012  MOVE	R8	R2
+          0x7C140600,  //  0013  CALL	R5	3
           0x7C100200,  //  0014  CALL	R4	1
           0x70020000,  //  0015  JMP		#0017
           0xB0080000,  //  0016  RAISE	2	R0	R0
@@ -1370,7 +1367,7 @@ be_local_closure(Tasmota_load,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[22]) {     /* constants */
+    ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str(string),
     /* K1   */  be_nested_str(path),
     /* K2   */  be_const_int(0),
@@ -1388,11 +1385,10 @@ be_local_closure(Tasmota_load,   /* name */
     /* K14  */  be_nested_str(c),
     /* K15  */  be_nested_str(wd),
     /* K16  */  be_nested_str(),
-    /* K17  */  be_nested_str(format),
-    /* K18  */  be_nested_str(BRY_X3A_X20corrupt_X20bytecode_X20_X27_X25s_X27),
-    /* K19  */  be_nested_str(BRY_X3A_X20bytecode_X20has_X20wrong_X20version_X20_X27_X25s_X27_X20_X28_X25i_X29),
-    /* K20  */  be_nested_str(save),
-    /* K21  */  be_nested_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29),
+    /* K17  */  be_nested_str(BRY_X3A_X20corrupt_X20bytecode_X20_X27_X25s_X27),
+    /* K18  */  be_nested_str(BRY_X3A_X20bytecode_X20has_X20wrong_X20version_X20_X27_X25s_X27_X20_X28_X25i_X29),
+    /* K19  */  be_nested_str(save),
+    /* K20  */  be_nested_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29),
     }),
     &be_const_str_load,
     &be_const_str_solidified,
@@ -1502,10 +1498,10 @@ be_local_closure(Tasmota_load,   /* name */
       0x1C542615,  //  0066  EQ	R21	R19	R21
       0x78560007,  //  0067  JMPF	R21	#0070
       0x60540001,  //  0068  GETGBL	R21	G1
-      0x8C581111,  //  0069  GETMET	R22	R8	K17
-      0x58600012,  //  006A  LDCONST	R24	K18
-      0x5C642200,  //  006B  MOVE	R25	R17
-      0x7C580600,  //  006C  CALL	R22	3
+      0x60580018,  //  0069  GETGBL	R22	G24
+      0x585C0011,  //  006A  LDCONST	R23	K17
+      0x5C602200,  //  006B  MOVE	R24	R17
+      0x7C580400,  //  006C  CALL	R22	2
       0x7C540200,  //  006D  CALL	R21	1
       0x50500000,  //  006E  LDBOOL	R20	0	0
       0x7002000A,  //  006F  JMP		#007B
@@ -1513,11 +1509,11 @@ be_local_closure(Tasmota_load,   /* name */
       0x20542615,  //  0071  NE	R21	R19	R21
       0x78560007,  //  0072  JMPF	R21	#007B
       0x60540001,  //  0073  GETGBL	R21	G1
-      0x8C581111,  //  0074  GETMET	R22	R8	K17
-      0x58600013,  //  0075  LDCONST	R24	K19
-      0x5C642200,  //  0076  MOVE	R25	R17
-      0x5C682600,  //  0077  MOVE	R26	R19
-      0x7C580800,  //  0078  CALL	R22	4
+      0x60580018,  //  0074  GETGBL	R22	G24
+      0x585C0012,  //  0075  LDCONST	R23	K18
+      0x5C602200,  //  0076  MOVE	R24	R17
+      0x5C642600,  //  0077  MOVE	R25	R19
+      0x7C580600,  //  0078  CALL	R22	3
       0x7C540200,  //  0079  CALL	R21	1
       0x50500000,  //  007A  LDBOOL	R20	0	0
       0x78520003,  //  007B  JMPF	R20	#0080
@@ -1548,7 +1544,7 @@ be_local_closure(Tasmota_load,   /* name */
       0x5C4C1A00,  //  0094  MOVE	R19	R13
       0x744E0011,  //  0095  JMPT	R19	#00A8
       0xA8020005,  //  0096  EXBLK	0	#009D
-      0x8C4C0114,  //  0097  GETMET	R19	R0	K20
+      0x8C4C0113,  //  0097  GETMET	R19	R0	K19
       0x5C542200,  //  0098  MOVE	R21	R17
       0x5C582400,  //  0099  MOVE	R22	R18
       0x7C4C0600,  //  009A  CALL	R19	3
@@ -1557,11 +1553,11 @@ be_local_closure(Tasmota_load,   /* name */
       0xAC4C0001,  //  009D  CATCH	R19	0	1
       0x70020007,  //  009E  JMP		#00A7
       0x60500001,  //  009F  GETGBL	R20	G1
-      0x8C541111,  //  00A0  GETMET	R21	R8	K17
-      0x585C0015,  //  00A1  LDCONST	R23	K21
-      0x5C602200,  //  00A2  MOVE	R24	R17
-      0x5C642600,  //  00A3  MOVE	R25	R19
-      0x7C540800,  //  00A4  CALL	R21	4
+      0x60540018,  //  00A0  GETGBL	R21	G24
+      0x58580014,  //  00A1  LDCONST	R22	K20
+      0x5C5C2200,  //  00A2  MOVE	R23	R17
+      0x5C602600,  //  00A3  MOVE	R24	R19
+      0x7C540600,  //  00A4  CALL	R21	3
       0x7C500200,  //  00A5  CALL	R20	1
       0x70020000,  //  00A6  JMP		#00A8
       0xB0080000,  //  00A7  RAISE	2	R0	R0
@@ -1750,7 +1746,7 @@ be_local_closure(Tasmota_exec_tele,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_time_str,   /* name */
   be_nested_proto(
-    13,                          /* nstack */
+    12,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1758,17 +1754,16 @@ be_local_closure(Tasmota_time_str,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(string),
     /* K1   */  be_nested_str(time_dump),
-    /* K2   */  be_nested_str(format),
-    /* K3   */  be_nested_str(_X2504d_X2D_X2502d_X2D_X2502dT_X2502d_X3A_X2502d_X3A_X2502d),
-    /* K4   */  be_nested_str(year),
-    /* K5   */  be_nested_str(month),
-    /* K6   */  be_nested_str(day),
-    /* K7   */  be_nested_str(hour),
-    /* K8   */  be_nested_str(min),
-    /* K9   */  be_nested_str(sec),
+    /* K2   */  be_nested_str(_X2504d_X2D_X2502d_X2D_X2502dT_X2502d_X3A_X2502d_X3A_X2502d),
+    /* K3   */  be_nested_str(year),
+    /* K4   */  be_nested_str(month),
+    /* K5   */  be_nested_str(day),
+    /* K6   */  be_nested_str(hour),
+    /* K7   */  be_nested_str(min),
+    /* K8   */  be_nested_str(sec),
     }),
     &be_const_str_time_str,
     &be_const_str_solidified,
@@ -1777,15 +1772,15 @@ be_local_closure(Tasmota_time_str,   /* name */
       0x8C0C0101,  //  0001  GETMET	R3	R0	K1
       0x5C140200,  //  0002  MOVE	R5	R1
       0x7C0C0400,  //  0003  CALL	R3	2
-      0x8C100502,  //  0004  GETMET	R4	R2	K2
-      0x58180003,  //  0005  LDCONST	R6	K3
-      0x941C0704,  //  0006  GETIDX	R7	R3	K4
-      0x94200705,  //  0007  GETIDX	R8	R3	K5
-      0x94240706,  //  0008  GETIDX	R9	R3	K6
-      0x94280707,  //  0009  GETIDX	R10	R3	K7
-      0x942C0708,  //  000A  GETIDX	R11	R3	K8
-      0x94300709,  //  000B  GETIDX	R12	R3	K9
-      0x7C101000,  //  000C  CALL	R4	8
+      0x60100018,  //  0004  GETGBL	R4	G24
+      0x58140002,  //  0005  LDCONST	R5	K2
+      0x94180703,  //  0006  GETIDX	R6	R3	K3
+      0x941C0704,  //  0007  GETIDX	R7	R3	K4
+      0x94200705,  //  0008  GETIDX	R8	R3	K5
+      0x94240706,  //  0009  GETIDX	R9	R3	K6
+      0x94280707,  //  000A  GETIDX	R10	R3	K7
+      0x942C0708,  //  000B  GETIDX	R11	R3	K8
+      0x7C100E00,  //  000C  CALL	R4	7
       0x80040800,  //  000D  RET	1	R4
     })
   )
@@ -2315,7 +2310,7 @@ be_local_closure(Tasmota_gen_cb,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_event,   /* name */
   be_nested_proto(
-    21,                          /* nstack */
+    20,                          /* nstack */
     6,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -2323,7 +2318,7 @@ be_local_closure(Tasmota_event,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[27]) {     /* constants */
+    ( &(const bvalue[26]) {     /* constants */
     /* K0   */  be_nested_str(introspect),
     /* K1   */  be_nested_str(string),
     /* K2   */  be_nested_str(every_50ms),
@@ -2342,15 +2337,14 @@ be_local_closure(Tasmota_event,   /* name */
     /* K15  */  be_const_int(0),
     /* K16  */  be_nested_str(get),
     /* K17  */  be_nested_str(function),
-    /* K18  */  be_nested_str(format),
-    /* K19  */  be_nested_str(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
-    /* K20  */  be_nested_str(_debug_present),
-    /* K21  */  be_nested_str(debug),
-    /* K22  */  be_nested_str(traceback),
-    /* K23  */  be_const_int(1),
-    /* K24  */  be_nested_str(save_before_restart),
-    /* K25  */  be_nested_str(persist),
-    /* K26  */  be_nested_str(save),
+    /* K18  */  be_nested_str(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+    /* K19  */  be_nested_str(_debug_present),
+    /* K20  */  be_nested_str(debug),
+    /* K21  */  be_nested_str(traceback),
+    /* K22  */  be_const_int(1),
+    /* K23  */  be_nested_str(save_before_restart),
+    /* K24  */  be_nested_str(persist),
+    /* K25  */  be_nested_str(save),
     }),
     &be_const_str_event,
     &be_const_str_solidified,
@@ -2443,25 +2437,25 @@ be_local_closure(Tasmota_event,   /* name */
       0xAC340002,  //  0055  CATCH	R13	0	2
       0x7002000C,  //  0056  JMP		#0064
       0x603C0001,  //  0057  GETGBL	R15	G1
-      0x8C400F12,  //  0058  GETMET	R16	R7	K18
-      0x58480013,  //  0059  LDCONST	R18	K19
-      0x5C4C1A00,  //  005A  MOVE	R19	R13
-      0x5C501C00,  //  005B  MOVE	R20	R14
-      0x7C400800,  //  005C  CALL	R16	4
+      0x60400018,  //  0058  GETGBL	R16	G24
+      0x58440012,  //  0059  LDCONST	R17	K18
+      0x5C481A00,  //  005A  MOVE	R18	R13
+      0x5C4C1C00,  //  005B  MOVE	R19	R14
+      0x7C400600,  //  005C  CALL	R16	3
       0x7C3C0200,  //  005D  CALL	R15	1
-      0x883C0114,  //  005E  GETMBR	R15	R0	K20
+      0x883C0113,  //  005E  GETMBR	R15	R0	K19
       0x783E0002,  //  005F  JMPF	R15	#0063
-      0xA43E2A00,  //  0060  IMPORT	R15	K21
-      0x8C401F16,  //  0061  GETMET	R16	R15	K22
+      0xA43E2800,  //  0060  IMPORT	R15	K20
+      0x8C401F15,  //  0061  GETMET	R16	R15	K21
       0x7C400200,  //  0062  CALL	R16	1
       0x70020000,  //  0063  JMP		#0065
       0xB0080000,  //  0064  RAISE	2	R0	R0
-      0x00281517,  //  0065  ADD	R10	R10	K23
+      0x00281516,  //  0065  ADD	R10	R10	K22
       0x7001FFCA,  //  0066  JMP		#0032
-      0x1C280318,  //  0067  EQ	R10	R1	K24
+      0x1C280317,  //  0067  EQ	R10	R1	K23
       0x782A0002,  //  0068  JMPF	R10	#006C
-      0xA42A3200,  //  0069  IMPORT	R10	K25
-      0x8C2C151A,  //  006A  GETMET	R11	R10	K26
+      0xA42A3000,  //  0069  IMPORT	R10	K24
+      0x8C2C1519,  //  006A  GETMET	R11	R10	K25
       0x7C2C0200,  //  006B  CALL	R11	1
       0x80041000,  //  006C  RET	1	R8
     })

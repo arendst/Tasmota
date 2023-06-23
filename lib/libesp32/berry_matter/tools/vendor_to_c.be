@@ -8,7 +8,7 @@ f.close()
 
 for elt: j["vendorInfo"]
 
-  print(string.format('  { 0x%04X, "%s"},', elt['vendorID'], elt['vendorName']))
+  print(format('  { 0x%04X, "%s"},', elt['vendorID'], elt['vendorName']))
 
 end
 

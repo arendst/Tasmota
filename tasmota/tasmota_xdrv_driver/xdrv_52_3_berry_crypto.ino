@@ -776,7 +776,7 @@ extern "C" {
   // s = ''
   // while size(N) > 0
   //   var n = N.get(0, 2)
-  //   s += string.format("0x%04X, ", n)
+  //   s += format("0x%04X, ", n)
   //   N = N[2..]
   // end
   // print(s)

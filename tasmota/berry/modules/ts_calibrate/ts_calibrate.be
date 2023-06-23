@@ -174,7 +174,7 @@ ts_calibrate.init = def (m)
       var p2y = real(self.raw_pts[2].y)
       var p3x = real(self.raw_pts[3].x)
       var p3y = real(self.raw_pts[3].y)
-      tasmota.log(string.format("TS : Calibration (%i,%i) - (%i,%i) - (%i,%i) - (%i,%i)",
+      tasmota.log(format("TS : Calibration (%i,%i) - (%i,%i) - (%i,%i) - (%i,%i)",
                                 int(p0x), int(p0y), int(p1x), int(p1y), int(p2x), int(p2y), int(p3x), int(p3y))
                                 , 2)
       var m_line = self.calc_geometry(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, self.hres, self.vres, 20)
@@ -256,7 +256,7 @@ ts_calibrate.init = def (m)
       import math
       import string
 
-      tasmota.log(string.format("TS : Geometry (%i,%i) (%i,%i) (%i,%i) (%i,%i) - %ix%i pad %i",
+      tasmota.log(format("TS : Geometry (%i,%i) (%i,%i) (%i,%i) (%i,%i) - %ix%i pad %i",
                                   int(p0x), int(p0y),
                                   int(p1x), int(p1y),
                                   int(p2x), int(p2y),
@@ -314,8 +314,8 @@ ts_calibrate.init = def (m)
       ymax += extend_y
       tasmota.log("final xmin=" + str(xmin) + " xmax=" + str(xmax) + " ymin=" + str(ymin) + " ymax=" + str(ymax), 4)
 
-      var M_string = string.format(":M,%i,%i,%i,%i", int(xmin), int(xmax), int(ymin), int(ymax))
-      tasmota.log(string.format("TS : Add this to display.ini '%s'", M_string))
+      var M_string = format(":M,%i,%i,%i,%i", int(xmin), int(xmax), int(ymin), int(ymax))
+      tasmota.log(format("TS : Add this to display.ini '%s'", M_string))
       return M_string
     end
   end

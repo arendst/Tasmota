@@ -97,7 +97,7 @@ be_local_closure(zb_coord_add_handler,   /* name */
 ********************************************************************/
 be_local_closure(zb_coord_dispatch,   /* name */
   be_nested_proto(
-    21,                          /* nstack */
+    20,                          /* nstack */
     5,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -105,7 +105,7 @@ be_local_closure(zb_coord_dispatch,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[16]) {     /* constants */
+    ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(_handlers),
     /* K1   */  be_nested_str_weak(introspect),
     /* K2   */  be_nested_str_weak(string),
@@ -115,13 +115,12 @@ be_local_closure(zb_coord_dispatch,   /* name */
     /* K6   */  be_nested_str_weak(zcl_attribute_list),
     /* K7   */  be_nested_str_weak(get),
     /* K8   */  be_nested_str_weak(function),
-    /* K9   */  be_nested_str_weak(format),
-    /* K10  */  be_nested_str_weak(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
-    /* K11  */  be_nested_str_weak(tasmota),
-    /* K12  */  be_nested_str_weak(_debug_present),
-    /* K13  */  be_nested_str_weak(debug),
-    /* K14  */  be_nested_str_weak(traceback),
-    /* K15  */  be_const_int(1),
+    /* K9   */  be_nested_str_weak(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+    /* K10  */  be_nested_str_weak(tasmota),
+    /* K11  */  be_nested_str_weak(_debug_present),
+    /* K12  */  be_nested_str_weak(debug),
+    /* K13  */  be_nested_str_weak(traceback),
+    /* K14  */  be_const_int(1),
     }),
     be_str_weak(dispatch),
     &be_const_str_solidified,
@@ -180,21 +179,21 @@ be_local_closure(zb_coord_dispatch,   /* name */
       0xAC340002,  //  0033  CATCH	R13	0	2
       0x7002000D,  //  0034  JMP		#0043
       0x603C0001,  //  0035  GETGBL	R15	G1
-      0x8C400D09,  //  0036  GETMET	R16	R6	K9
-      0x5848000A,  //  0037  LDCONST	R18	K10
-      0x5C4C1A00,  //  0038  MOVE	R19	R13
-      0x5C501C00,  //  0039  MOVE	R20	R14
-      0x7C400800,  //  003A  CALL	R16	4
+      0x60400018,  //  0036  GETGBL	R16	G24
+      0x58440009,  //  0037  LDCONST	R17	K9
+      0x5C481A00,  //  0038  MOVE	R18	R13
+      0x5C4C1C00,  //  0039  MOVE	R19	R14
+      0x7C400600,  //  003A  CALL	R16	3
       0x7C3C0200,  //  003B  CALL	R15	1
-      0xB83E1600,  //  003C  GETNGBL	R15	K11
-      0x883C1F0C,  //  003D  GETMBR	R15	R15	K12
+      0xB83E1400,  //  003C  GETNGBL	R15	K10
+      0x883C1F0B,  //  003D  GETMBR	R15	R15	K11
       0x783E0002,  //  003E  JMPF	R15	#0042
-      0xA43E1A00,  //  003F  IMPORT	R15	K13
-      0x8C401F0E,  //  0040  GETMET	R16	R15	K14
+      0xA43E1800,  //  003F  IMPORT	R15	K12
+      0x8C401F0D,  //  0040  GETMET	R16	R15	K13
       0x7C400200,  //  0041  CALL	R16	1
       0x70020000,  //  0042  JMP		#0044
       0xB0080000,  //  0043  RAISE	2	R0	R0
-      0x0028150F,  //  0044  ADD	R10	R10	K15
+      0x0028150E,  //  0044  ADD	R10	R10	K14
       0x7001FFD2,  //  0045  JMP		#0019
       0x80000000,  //  0046  RET	0
     })

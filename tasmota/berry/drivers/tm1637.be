@@ -146,7 +146,7 @@ class Tm1637
         if size(num) > max_str_len
             num = string.split(num, max_str_len)[0]
         end
-        num = string.format('%4s', num)
+        num = format('%4s', num)
         var payload = bytes(-5)
         payload[0] = self.CMD_ADDR
         var int_offset = 1

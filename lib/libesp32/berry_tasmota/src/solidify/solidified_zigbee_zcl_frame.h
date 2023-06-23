@@ -135,7 +135,7 @@ be_local_closure(zcl_frame_init,   /* name */
 ********************************************************************/
 be_local_closure(zcl_frame_tomap,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    6,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -143,14 +143,13 @@ be_local_closure(zcl_frame_tomap,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
     /* K1   */  be_nested_str_weak(tomap),
     /* K2   */  be_nested_str_weak(shortaddr_hex),
-    /* K3   */  be_nested_str_weak(format),
-    /* K4   */  be_nested_str_weak(0x_X2504X),
-    /* K5   */  be_nested_str_weak(shortaddr),
-    /* K6   */  be_nested_str_weak(payload),
+    /* K3   */  be_nested_str_weak(0x_X2504X),
+    /* K4   */  be_nested_str_weak(shortaddr),
+    /* K5   */  be_nested_str_weak(payload),
     }),
     be_str_weak(tomap),
     &be_const_str_solidified,
@@ -161,13 +160,13 @@ be_local_closure(zcl_frame_tomap,   /* name */
       0x7C080200,  //  0003  CALL	R2	1
       0x8C080501,  //  0004  GETMET	R2	R2	K1
       0x7C080200,  //  0005  CALL	R2	1
-      0x8C0C0303,  //  0006  GETMET	R3	R1	K3
-      0x58140004,  //  0007  LDCONST	R5	K4
-      0x88180105,  //  0008  GETMBR	R6	R0	K5
-      0x7C0C0600,  //  0009  CALL	R3	3
+      0x600C0018,  //  0006  GETGBL	R3	G24
+      0x58100003,  //  0007  LDCONST	R4	K3
+      0x88140104,  //  0008  GETMBR	R5	R0	K4
+      0x7C0C0400,  //  0009  CALL	R3	2
       0x980A0403,  //  000A  SETIDX	R2	K2	R3
-      0x880C0106,  //  000B  GETMBR	R3	R0	K6
-      0x980A0C03,  //  000C  SETIDX	R2	K6	R3
+      0x880C0105,  //  000B  GETMBR	R3	R0	K5
+      0x980A0A03,  //  000C  SETIDX	R2	K5	R3
       0x80040400,  //  000D  RET	1	R2
     })
   )

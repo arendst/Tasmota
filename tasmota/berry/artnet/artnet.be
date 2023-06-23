@@ -75,7 +75,7 @@ class ArtNet
             dirty = true
           end
           # import string
-          # tasmota.log(string.format("DMX: opcode=0x%04X protocol=%i seq=%i phy=%i universe=%i data_len=%i data=%s",
+          # tasmota.log(format("DMX: opcode=0x%04X protocol=%i seq=%i phy=%i universe=%i data_len=%i data=%s",
           #             opcode, protocol, seq, phy, universe, data_len, packet[18..-1].tohex()))
         end
       end
