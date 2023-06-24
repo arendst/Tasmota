@@ -276,6 +276,6 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SHELLY_PRO            |   |   / x |   |   |   |   |
 | USE_DALI                  |   |   / - |   |   |   |   |
 | USE_DINGTIAN_RELAY        |   |   / - |   |   |   |   |
-| USE_MATTER_DEVICE         |   |   / - |   |   |   |   | See SetOption151
+| USE_MATTER_DEVICE         |   |   / x |   |   |   |   | See SetOption151
 
 * USE_MQTT_TLS is enabled by default in every ESP32 variants
