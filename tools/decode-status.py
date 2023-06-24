@@ -207,7 +207,8 @@ a_setoption = [[
     "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
     "(Energy) Force no voltage/frequency common",
     "(Matter) Enable Matter protocol over Wifi",
-    "","",
+    "(Power) Switch between two (0) or one (1) pin bistable relay control",
+    "(Berry) Disable autoexec.be on restart (1)",
     "","","","",
     "","","","",
     "","","","",
@@ -294,7 +295,7 @@ a_features = [[
     "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
-    "USE_GDK101","","","",
+    "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
     "","","","",
     "","","",""
     ]]
@@ -324,7 +325,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.4.0.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.5.0.3 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

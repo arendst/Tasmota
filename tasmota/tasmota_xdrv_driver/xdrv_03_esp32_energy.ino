@@ -176,6 +176,7 @@ typedef struct {
   uint8_t fifth_second;
   uint8_t command_code;
   uint8_t power_steady_counter;                 // Allow for power on stabilization
+  uint8_t margin_stable;
   uint8_t mplr_counter;
   uint8_t max_energy_state;
 
@@ -308,6 +309,7 @@ void EnergySettingsLoad(bool erase) {
 //      Settings->energy_kWhtoday_ph[i], &Energy->Settings.energy_today_kWh[i],
 //      Settings->energy_kWhyesterday_ph[i], &Energy->Settings.energy_yesterday_kWh[i]);
   }
+  Energy->Settings.energy_kWhtotal_time = Settings->energy_kWhtotal_time;
 
   // v0102 additions
   Energy->Settings.gui_display = ENERGY_GUI_DISPLAY_MODE;
@@ -608,6 +610,9 @@ void Energy200ms(void) {
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+      if (!Energy->Settings.energy_kWhtotal_time) {
+        Energy->Settings.energy_kWhtotal_time = LocalTime();
+      }
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Energy->Settings.energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;
@@ -772,7 +777,8 @@ void EnergyMarginCheck(void) {
   if (jsonflg) {
     ResponseJsonEndEnd();
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-    EnergyMqttShow();
+//    EnergyMqttShow();
+    Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
   // Max Power
@@ -893,6 +899,12 @@ void EnergyEverySecond(void) {
   }
 
   EnergyMarginCheck();
+  if (Energy->margin_stable) {
+    Energy->margin_stable--;
+    if (!Energy->margin_stable) {
+      EnergyMqttShow();
+    }
+  }
 }
 
 /*********************************************************************************************\

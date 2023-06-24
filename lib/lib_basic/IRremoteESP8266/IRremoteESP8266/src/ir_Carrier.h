@@ -4,6 +4,7 @@
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1127
 /// @see https://docs.google.com/spreadsheets/d/1EZy78L0cn1KDIX1aKq2biptejFqCjD5HO3tLiRvXf48/edit#gid=0
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1797
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1943
 
 // Supports:
 //   Brand: Carrier/Surrey,  Model: 42QG5A55970 remote
@@ -13,6 +14,8 @@
 //   Brand: Carrier/Surrey,  Model: 619EGX0220E0 A/C
 //   Brand: Carrier/Surrey,  Model: 53NGK009/012 Inverter
 //   Brand: Carrier,  Model: 40GKX0E2006 remote (CARRIER_AC128)
+//   Brand: Carrier,  Model: 3021203 RR03-S-Remote (CARRIER_AC84)
+//   Brand: Carrier,  Model: 342WM100CT A/C (CARRIER_AC84)
 
 #ifndef IR_CARRIER_H_
 #define IR_CARRIER_H_

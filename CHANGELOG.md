@@ -6,6 +6,121 @@ All notable changes to this project will be documented in this file.
 ## [12.5.0] 20230417
 - Release Peyton
 
+## [12.5.0.4]
+
+### Added
+- Matter ability to add or remove endpoint in bridge mode (code only)
+- Matter add controller's Vendor Name to logs and UI
+- Matter redesigned UI
+- Matter add support for Contact Sensor
+- Berry `string.format()` now automatically converts type according to format
+- Matter add friendly-name (NodeLabel) to each endpoint
+- Berry add global function `format` as a simpler syntax to `string.format`
+- Berry added f-strings as an alternative to string formatting
+
+### Breaking Changed
+
+### Changed
+- Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
+- Matter Bridge mode always on
+- ESP32 Framework (Core) from v2.0.9 to v2.0.10
+- Berry code size optimizations
+
+### Fixed
+- Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` (#18768)
+- Fixed HASPmota event when value is non-integer (fixes #18229)
+- Matter fix local Occupancy sensor
+- Zigbee fixed regression with SetOption101
+- Berry fixed parser error with upvals in closures
+- NeoPool fix NPFiltration switch result (#18871)
+
+### Removed
+
+## [12.5.0.3] 20230602
+### Added
+- Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er (#15443)
+- Command ``WifiPower 1`` to restore default wifi power
+- HASPmota `meta` attribute and improved `berry_run` (#18685)
+- Matter bridge for ESP8266 remote endpoints (experimental) (#18734)
+- Display descriptor for ST7735 128x160 display (#18741)
+- Matter support for Occupancy via Switch (experimental) (#18742)
+- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT (#18763)
+- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S` (#18774)
+
+### Breaking Changed
+- Matter relay number starts at 1 instead of 0 to match Tasmota numbering
+
+### Changed
+- InfluxDb resolves DNS name before request (#18015)
+- Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement (#18701)
+- AdafruitFingerprint library from v2.0.4 to v2.1.0
+
+### Fixed
+- ESP32 InfluxDb initial connection delays using HTTPClient (#18015)
+- Shutter bootloop using more than 4 shutters (#18673)
+- AIThinker webcam issues (#18652)
+- Berry `tasmota.wifi()` would wrongly report wifi as up
+- Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant (#18701)
+- Matter fix fabric provisioning from CASE session for iOS 16.5 (#18709)
+- ESP32 SPI initialization for MFRC522 (#18711)
+- Freeze BMP readings before deepsleep (#18720)
+- ESP32 Neopixel busy time adjustment (#18723)
+- Zigbee attributes handling in Berry mapping (#18747)
+
+## [12.5.0.2] 20230516
+### Added
+- Matter support for Shutters with Tilt
+- Matter POC for remote Relay
+- Support for Zero-Cross Dimmer on ESP32, changed calculation on EPS8266, high resolution control e.g. Solar: `ZCDimmerSet`
+- ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
+- ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
+- Berry `tcpclientasync` class for non-blocking TCP client
+- Support for GM861 1D and 2D bar code reader (#18399)
+- Berry `re` (regex) add `match2` and optional offset
+- Support for PCA9557 8-bit I/O expander (#18632)
+- Matter support for async HTTP for bridged devices (#18656)
+- Zigbee support for air sensors (#18665)
+- Command ``I2cScan0`` to scan both busses on ESP32 with one command
+
+### Breaking Changed
+- Change command ``FileUpload`` index binary data detection from >199 to >299
+
+### Changed
+- ESP32 Framework (Core) from v2.0.8 to v2.0.9
+- autoconf extract `display.ini` to file system
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
+- Energy power delta report delayed by two seconds allowing hardware to stabilize (#17751)
+
+### Fixed
+- Partition_Manager.tapp fixed
+- Berry fixed a rare condition when a GC causes a memory corruption
+- LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 (#18666)
+
+## [12.5.0.1] 20230505
+### Added
+- Matter sensors Humidity, Pressure, Illuminance; optimize memory (#18441)
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control (#18386)
+- Matter allow `Matter#Initialized` rule once the device is configured (#18451)
+- Matter UI to change endpoints configuration (#18498)
+- Matter support for Shutters (without Tilt) (#18509)
+- Support for TC74 temperature sensor by Michael Loftis (#18042)
+
+### Changed
+- ESP32 Framework (Core) from v2.0.7 to v2.0.8
+- Refactored Zero Cross Dimmer (#18481)
+- ESP32 LVGL library from v8.3.6 to v8.3.7 (no functional change)
+
+### Fixed
+- ESP8266 Energy Export Active no update regression from v12.3.1.3
+- NovaSDS GUI values (#18444)
+- Berry fix rules for string comparisons (#18464)
+- Shutter: GarageMode does not stop on console commands, `ShutterSetOpen` and `ShutterSetClose` does not reset direction (#18539)
+
+## [Released]
+
+## [12.5.0] 20230417
+- Release Peyton
+
 ## [12.4.0.5] 20230417
 ### Added
 - Matter support for Light and Relays on ESP32 by Stephan Hadinger (#18320)

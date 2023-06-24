@@ -39,15 +39,15 @@ typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32RmtNSk6812Method> neopixel_sk6812_gr
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import unishox
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
   // # Native commands
-  // # 00 : ctor         
+  // # 00 : ctor
   // # 01 : begin        void -> void
   // # 02 : show         void -> void
   // # 03 : CanShow      void -> bool
@@ -88,7 +88,7 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 2)) {
       int32_t cmd = be_toint(vm, 2);
-      
+
       if (0 == cmd) { // 00 : ctor         (leds:int, gpio:int) -> void
         if (!(argc >= 6 && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6))) {
           be_raise(vm, "value_error", "bad arguments for neopixelbus:ctor");
@@ -134,8 +134,33 @@ extern "C" {
             if (s_sk6812_grbw)      s_sk6812_grbw->Begin();
             break;
           case 2: // # 02 : show         void -> void
-            if (s_ws2812_grb)       s_ws2812_grb->Show();
-            if (s_sk6812_grbw)      s_sk6812_grbw->Show();
+            {
+            if (Settings->flag6.berry_light_scheme &&
+                (1 == TasmotaGlobal.light_driver)) {  // XLGT_01
+              // TODO: Need to add test for RMT0
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+              bool scheme_berry = ((Light.max_scheme -1) == Settings->light_scheme);
+#else
+              bool scheme_berry = (Light.max_scheme == Settings->light_scheme);
+#endif
+              if (scheme_berry) {
+                if (!Light.power) {
+                  // Skip berry Show() as WS2812 driver Show() has powered off leds
+                  break;
+                }
+              } else {
+                // Skip berry Show() but use WS2812 driver Show() instead
+                break;
+              }
+            }
+            uint32_t pixels_size;       // number of bytes to push
+            if (s_ws2812_grb)     { s_ws2812_grb->Show();   pixels_size = s_ws2812_grb->PixelsSize(); }
+            if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_ws2812_grb->PixelsSize(); }
+
+            // Wait for RMT/I2S to complete fixes distortion due to analogRead
+            // 1ms is needed for 96 bytes
+            SystemBusyDelay((pixels_size + 95) / 96);
+            }
             break;
           case 3: // # 03 : CanShow      void -> bool
             if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->CanShow());
@@ -154,7 +179,7 @@ extern "C" {
             uint8_t * pixels;
             if (s_ws2812_grb)       pixels = s_ws2812_grb->Pixels();
             if (s_sk6812_grbw)      pixels = s_sk6812_grbw->Pixels();
-            
+
             be_pushcomptr(vm, pixels);
             }
             break;
@@ -196,11 +221,11 @@ extern "C" {
 
             if (s_ws2812_grb) {
               RgbColor rgb = s_ws2812_grb->GetPixelColor(idx);
-              be_pushint(vm, (rgb.R << 16) | (rgb.G << 8) | rgb.B); 
+              be_pushint(vm, (rgb.R << 16) | (rgb.G << 8) | rgb.B);
             }
             if (s_sk6812_grbw) {
               RgbwColor rgbw = s_sk6812_grbw->GetPixelColor(idx);
-              be_pushint(vm, (rgbw.W << 24) | (rgb.R << 16) | (rgb.G << 8) | rgb.B); 
+              be_pushint(vm, (rgbw.W << 24) | (rgb.R << 16) | (rgb.G << 8) | rgb.B);
             }
             }
             break;

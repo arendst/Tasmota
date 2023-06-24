@@ -66,6 +66,56 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * RSA class
+ * 
+\*********************************************************************************************/
+extern "C" {
+  // crypto.RSA.rsassa_pkcs1_v1_5(private_key:bytes(), msg:bytes()) -> bytes()
+  // Parses RSA private key from DER binary
+  int32_t m_rsa_rsassa_pkcs1_v1_5(bvm *vm);
+  int32_t m_rsa_rsassa_pkcs1_v1_5(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 1)) {
+      size_t sk_len = 0;
+      uint8_t * sk_der = (uint8_t*) be_tobytes(vm, 1, &sk_len);
+      
+      // 1. decode the DER private key
+      br_skey_decoder_context sdc;
+      br_skey_decoder_init(&sdc);
+      br_skey_decoder_push(&sdc, sk_der, sk_len);
+      if (int ret = br_skey_decoder_last_error(&sdc)) {
+        be_raisef(vm, "value_error", "invalid private key %i", ret);
+      }
+      if (br_skey_decoder_key_type(&sdc) != BR_KEYTYPE_RSA) {
+        be_raise(vm, "value_error", "key is not RSA");
+      }
+      const br_rsa_private_key *sk = br_skey_decoder_get_rsa(&sdc);
+      
+      // 2. Hash the message with SHA
+      size_t msg_len = 0;
+      uint8_t * msg = (uint8_t*) be_tobytes(vm, 2, &msg_len);
+      uint8_t hash[32];
+      br_sha256_context ctx;
+      br_sha256_init(&ctx);
+      br_sha256_update(&ctx, msg, msg_len);
+      br_sha256_out(&ctx, hash);
+
+      // 3. sign the message
+      size_t sign_len = (sk->n_bitlen + 7) / 8;
+      uint8_t x[sign_len] = {};
+      int err = br_rsa_i15_pkcs1_sign(BR_HASH_OID_SHA256,	hash, sizeof(hash), sk, x);
+      if (err != 1) {
+        be_raisef(vm, "value_error", "signature failed %i", err);
+      }
+
+      be_pushbytes(vm, x, sign_len);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * AES_GCM class
  * 
 \*********************************************************************************************/
@@ -722,11 +772,10 @@ extern "C" {
   // 11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100
 
   // N=bytes('11015125C6780B2BCE1D4F68F362692B7D73BC7FFF7FFF7FFF7FFF0F00000040FF7FFF7F0100')
-  // import string
   // s = ''
   // while size(N) > 0
   //   var n = N.get(0, 2)
-  //   s += string.format("0x%04X, ", n)
+  //   s += format("0x%04X, ", n)
   //   N = N[2..]
   // end
   // print(s)

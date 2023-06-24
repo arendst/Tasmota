@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
@@ -25,6 +27,8 @@ class Matter_Plugin_Light1 end
 #@ solidify:Matter_Plugin_Light3,weak
 
 class Matter_Plugin_Light3 : Matter_Plugin_Light1
+  static var TYPE = "light3"                                # name of the plug-in in json
+  static var NAME = "Light 3 RGB"                           # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -40,8 +44,8 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
 
   #############################################################
   # Constructor
-  def init(device, endpoint)
-    super(self).init(device, endpoint)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
     self.shadow_hue = 0
     self.shadow_sat = 0
   end
@@ -53,25 +57,27 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     import light
     super(self).update_shadow()
     var light_status = light.get()
-    var hue = light_status.find('hue', nil)
-    var sat = light_status.find('sat', nil)
-    if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
-    if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
-    if hue != self.shadow_hue   self.attribute_updated(nil, 0x0300, 0x0000)   self.shadow_hue = hue   end
-    if sat != self.shadow_sat   self.attribute_updated(nil, 0x0300, 0x0001)   self.shadow_sat = sat   end
+    if light_status != nil
+      var hue = light_status.find('hue', nil)
+      var sat = light_status.find('sat', nil)
+      if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
+      if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
+      if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
+      if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
+    end
   end
 
   #############################################################
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
       
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
         return TLV.create_TLV(TLV.U1, self.shadow_hue)
       elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
@@ -85,7 +91,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return TLV.create_TLV(TLV.U1, 0x01)    # HS
       
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
@@ -115,6 +121,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToHue ----------
         var hue_in = val.findsubval(0)  # Hue 0..254
         var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)

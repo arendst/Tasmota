@@ -1,0 +1,64 @@
+#######################################
+# Syntax Coloring Map For DS2480B
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RTC_clock 	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init 	KEYWORD2
+set_time 	KEYWORD2
+set_date 	KEYWORD2
+set_seconds 	KEYWORD2
+set_minutes 	KEYWORD2
+set_hours 	KEYWORD2
+set_days 	KEYWORD2
+set_months 	KEYWORD2
+set_years 	KEYWORD2
+set_alarmtime 	KEYWORD2
+set_alarmdate 	KEYWORD2
+get_seconds 	KEYWORD2
+get_minutes 	KEYWORD2
+get_hours 	KEYWORD2
+get_days 	KEYWORD2
+get_day_of_week 	KEYWORD2
+get_months 	KEYWORD2
+get_years 	KEYWORD2
+attachalarm 	KEYWORD2
+disable_alarm 	KEYWORD2
+unixtime 	KEYWORD2
+get_time 	KEYWORD2
+get_date 	KEYWORD2
+summertime 	KEYWORD2
+switch_years 	KEYWORD2
+timing 	KEYWORD2
+date_already_set 	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Mean Instances (KEYWORD3)
+#######################################
+
+rtc_clock 	KEYWORD3
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+RC 	LITERAL1
+XTAL 	LITERAL1
+
+__TIME__	LITERAL1
+__DATE__	LITERAL1
+
+Germany	LITERAL1

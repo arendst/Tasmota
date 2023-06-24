@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
@@ -25,6 +27,8 @@ class Matter_Plugin_Light0 end
 #@ solidify:Matter_Plugin_Light1,weak
 
 class Matter_Plugin_Light1 : Matter_Plugin_Light0
+  static var TYPE = "light1"                                # name of the plug-in in json
+  static var NAME = "Light 1 Dimmer"                        # display name of the plug-in
   static var CLUSTERS  = {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -40,8 +44,8 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
   #############################################################
   # Constructor
-  def init(device, endpoint)
-    super(self).init(device, endpoint)
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
     self.shadow_bri = 0
   end
 
@@ -51,9 +55,16 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   def update_shadow()
     import light
     var light_status = light.get()
-    var bri = light_status.find('bri', nil)
-    if bri != nil     bri = tasmota.scale_uint(bri, 0, 255, 0, 254)   else bri = self.shadow_bri      end
-    if bri != self.shadow_bri   self.attribute_updated(nil, 0x0008, 0x0000)   self.shadow_bri = bri   end
+    if light_status != nil
+      var bri = light_status.find('bri', nil)
+      if bri != nil
+        bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
+        if bri != self.shadow_bri
+          self.attribute_updated(0x0008, 0x0000)
+          self.shadow_bri = bri
+        end
+      end
+    end
     super(self).update_shadow()     # superclass manages 'power'
   end
 
@@ -61,13 +72,13 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
         return TLV.create_TLV(TLV.U1, self.shadow_bri)
       elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
@@ -102,6 +113,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_in = val.findsubval(0)  # Hue 0..254
         var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 255)

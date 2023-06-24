@@ -209,6 +209,8 @@ enum UserSelectablePins {
   GPIO_MCP23XXX_INT, GPIO_MCP23SXX_CS,  // MCP23xxx Int and SPI Chip select
   GPIO_PCF8574_INT,                     // PCF8574 interrupt
   GPIO_LOX_O2_RX,                       // LOX-O2 RX
+  GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
+  GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -465,6 +467,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MCP23XXX_INT "|" D_SENSOR_MCP23SXX_CS "|"
   D_SENSOR_PCF8574_INT "|"
   D_SENSOR_LOX_O2_RX "|"
+  D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
+  D_GPIO_DINGTIAN_OE "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1016,6 +1020,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_AS608_TX),
   AGPIO(GPIO_AS608_RX),
 #endif
+#ifdef USE_GM861                        // xsns_107_gm861.ino
+  AGPIO(GPIO_GM861_TX),
+  AGPIO(GPIO_GM861_RX),
+#endif
 #ifdef USE_HRG15                        // xsns_90_hrg15.ino
   AGPIO(GPIO_HRG15_TX),
   AGPIO(GPIO_HRG15_RX),
@@ -1115,6 +1123,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DINGTIAN_SDI),
   AGPIO(GPIO_DINGTIAN_Q7),
   AGPIO(GPIO_DINGTIAN_PL),
+  AGPIO(GPIO_DINGTIAN_OE),
   AGPIO(GPIO_DINGTIAN_RCK),
 #endif
 

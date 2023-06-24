@@ -97,6 +97,7 @@ struct blexerreader {
     size_t len;
     void *data;
     breader readf;
+    int cursor;
 };
 
 struct blexerbuf {
@@ -123,7 +124,6 @@ typedef struct blexer {
     struct blexerreader reader;
     bmap *strtab;
     bvm *vm;
-    int cursor;
 } blexer;
 
 void be_lexer_init(blexer *lexer, bvm *vm,

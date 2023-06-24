@@ -128,6 +128,8 @@ protected:
 // some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
 // have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
 bool irhvac_stateful = true;
+bool irhvac_incremental = true;
+
 stdAc::state_t irac_prev_state; // this implementations only keeps one state so if you use a single tasmota-ir device to command more than one AC it might not work
 
 // different modes on how to handle state when sending HVAC commands. needed for ACs with a differential/toggle protocol.
@@ -221,37 +223,77 @@ void IrReceiveInit(void)
   irrecv->enableIRIn();                  // Start the receiver
 }
 
+namespace {
+  void addFloatToJson(JsonGeneratorObject& json, const char* key, float value, float noValueConstant = NAN) {
+    if (!isnan(noValueConstant) && value == noValueConstant) {
+      //The "no sensor value" may not be straightforward (e.g.-100.0), hence replacing with explicit n/a
+      json.add(key, PSTR(D_JSON_NA));
+      return;
+    }
+    char s[6];  // Range: -99.9 <> 999.9 should be fine for any sensible temperature value :)
+    ext_snprintf_P(s, sizeof(s), PSTR("%-1_f"), &value);
+    json.addStrRaw(key, s);
+  }
+
+  void addModelToJson(JsonGeneratorObject& json, const char* key, decode_type_t protocol, const int16_t model) {
+    String modelStr = irutils::modelToStr(protocol, model);
+    if (modelStr != kUnknownStr) {
+      json.add(key, modelStr);
+    } else {  // Fallback to int value
+      json.add(key, model);
+    }
+  }
+} // namespace {
+
 String sendACJsonState(const stdAc::state_t &state) {
   JsonGeneratorObject json;
   json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
-  json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
+  addModelToJson(json, PSTR(D_JSON_IRHVAC_MODEL), state.protocol, state.model);
+  json.add(PSTR(D_JSON_IRHVAC_COMMAND), IRac::commandTypeToString(state.command));
 
-  json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
-  // Home Assistant wants power to be off if mode is also off.
-  if (state.mode == stdAc::opmode_t::kOff) {
-    json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
-  } else {
-    json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
-  }
-  json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
-  if (floorf(state.degrees) == state.degrees) {
-    json.add(PSTR(D_JSON_IRHVAC_TEMP), (int32_t) floorf(state.degrees));       // integer
-  } else {
-    // TODO can do better here
-    json.addStrRaw(PSTR(D_JSON_IRHVAC_TEMP), String(state.degrees, 1).c_str());   // non-integer, limit to only 1 sub-digit
-  }
+  switch (state.command) {
+    case stdAc::ac_command_t::kSensorTempReport:
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
+      break;
+    case stdAc::ac_command_t::kConfigCommand:
+      // Note: for `kConfigCommand` the semantics of clock/sleep is abused IRremoteESP8266 lib-side for key/value pair
+      //       Ref: lib/lib_basic/IRremoteESP8266/IRremoteESP8266/src/IRac.cpp[L3062-3066]
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_KEY), state.clock);
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), state.sleep);
+      break;
+    case stdAc::ac_command_t::kTimerCommand:
+      json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(state.power));
+      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), irutils::minsToString(state.clock)); }
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      break;
+    case stdAc::ac_command_t::kControlCommand:
+    default:
+      json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
+      // Home Assistant wants power to be off if mode is also off.
+      if (state.mode == stdAc::opmode_t::kOff) {
+        json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
+      } else {
+        json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
+      }
+      json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
 
-  json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
-  json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
-  json.add(PSTR(D_JSON_IRHVAC_SWINGH), IRac::swinghToString(state.swingh));
-  json.add(PSTR(D_JSON_IRHVAC_QUIET), IRac::boolToString(state.quiet));
-  json.add(PSTR(D_JSON_IRHVAC_TURBO), IRac::boolToString(state.turbo));
-  json.add(PSTR(D_JSON_IRHVAC_ECONO), IRac::boolToString(state.econo));
-  json.add(PSTR(D_JSON_IRHVAC_LIGHT), IRac::boolToString(state.light));
-  json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
-  json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
-  json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
-  json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
+      json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
+      json.add(PSTR(D_JSON_IRHVAC_SWINGH), IRac::swinghToString(state.swingh));
+      json.add(PSTR(D_JSON_IRHVAC_QUIET), IRac::boolToString(state.quiet));
+      json.add(PSTR(D_JSON_IRHVAC_TURBO), IRac::boolToString(state.turbo));
+      json.add(PSTR(D_JSON_IRHVAC_ECONO), IRac::boolToString(state.econo));
+      json.add(PSTR(D_JSON_IRHVAC_LIGHT), IRac::boolToString(state.light));
+      json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
+      json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
+      json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), state.clock); }
+      json.add(PSTR(D_JSON_IRHVAC_IFEEL), IRac::boolToString(state.iFeel));
+      addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
+      break;
+  }
 
   String payload = json.toString(); // copy string before returning, the original is on the stack
   return payload;
@@ -393,11 +435,13 @@ StateModes strToStateMode(class JsonParserToken token, StateModes def) {
 
 // used to convert values 0-5 to fanspeed_t
 const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
-                      stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium,
+                      stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium, stdAc::fanspeed_t::kMediumHigh,
                       stdAc::fanspeed_t::kHigh, stdAc::fanspeed_t::kMax };
 
 uint32_t IrRemoteCmndIrHvacJson(void)
 {
+  // state is initialized to the IRremoteESP8266's state_t defaults anyway
+  // https://github.com/crankyoldgit/IRremoteESP8266/blob/v2.8.4/src/IRsend.h#L97-L116
   stdAc::state_t state;
 
   //AddLog(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
@@ -405,25 +449,13 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }
 
-  // from: https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/CommonAcControl/CommonAcControl.ino
-  state.protocol = decode_type_t::UNKNOWN;
-  state.model = 1;  // Some A/C's have different models. Let's try using just 1.
-  state.mode = stdAc::opmode_t::kAuto;  // Run in cool mode initially.
-  state.power = false;  // Initially start with the unit off.
-  state.celsius = true;  // Use Celsius for units of temp. False = Fahrenheit
-  state.degrees = 21.0f;  // 21 degrees.
-  state.fanspeed = stdAc::fanspeed_t::kMedium;  // Start with the fan at medium.
-  state.swingv = stdAc::swingv_t::kOff;  // Don't swing the fan up or down.
-  state.swingh = stdAc::swingh_t::kOff;  // Don't swing the fan left or right.
-  state.light = false;  // Turn off any LED/Lights/Display that we can.
-  state.beep = false;  // Turn off any beep from the A/C if we can.
-  state.econo = false;  // Turn off any economy modes if we can.
-  state.filter = false;  // Turn off any Ion/Mold/Health filters if we can.
-  state.turbo = false;  // Don't use any turbo/powerful/etc modes.
-  state.quiet = false;  // Don't use any quiet/silent/etc modes.
-  state.sleep = -1;  // Don't set any sleep time or modes.
-  state.clean = false;  // Turn off any Cleaning options if we can.
-  state.clock = -1;  // Don't set any current time if we can avoid it.
+  bool incremental = strToBool(root[PSTR(D_JSON_IRHVAC_INCREMENTAL)], false);
+
+  // TODO: add support for storing multiple states
+  if (incremental)
+  {
+    state = irac_prev_state;
+  }
 
   JsonParserToken val;
   if (val = root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(val.getStr()); }
@@ -431,18 +463,20 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (decode_type_t::UNKNOWN == state.protocol) { return IE_UNSUPPORTED_HVAC; }
   if (!IRac::isProtocolSupported(state.protocol)) { return IE_UNSUPPORTED_HVAC; }
 
-  // for fan speed, we also support 1-5 values
+  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_COMMAND)]) { state.command = IRac::strToCommandType(val.getStr()); }
+
+  // for fan speed, we also support 1-6 values
   JsonParserToken tok_fan_speed = root[PSTR(D_JSON_IRHVAC_FANSPEED)];
   if (tok_fan_speed) {
     uint32_t fan_speed = tok_fan_speed.getUInt();
-    if ((fan_speed >= 1) && (fan_speed <= 5)) {
+    if ((fan_speed >= 1) && (fan_speed <= 6)) {
       state.fanspeed = (stdAc::fanspeed_t) pgm_read_byte(&IrHvacFanSpeed[fan_speed]);
     } else {
       state.fanspeed = IRac::strToFanspeed(tok_fan_speed.getStr());
     }
   }
 
-  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
@@ -450,8 +484,8 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   // AddLog(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
-  // if and how we should handle the state for IRremote
-  StateModes stateMode = StateModes::SEND_ONLY; // default
+  StateModes stateMode = incremental ? StateModes::SEND_STORE : StateModes::SEND_ONLY;
+
   if (irhvac_stateful && (val = root[PSTR(D_JSON_IRHVAC_STATE_MODE)])) { stateMode = strToStateMode(val, stateMode); }
 
   // decode booleans
@@ -465,9 +499,18 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.quiet   = strToBool(root[PSTR(D_JSON_IRHVAC_QUIET)], state.quiet);
   state.clean   = strToBool(root[PSTR(D_JSON_IRHVAC_CLEAN)], state.clean);
 
-  // optional timer and clock
-  state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
-  //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
+  if (state.command == stdAc::ac_command_t::kConfigCommand) {
+    // Note: for `kConfigCommand` the semantics of clock/sleep is abused IRremoteESP8266 lib-side for key/value pair
+    state.clock = root.getInt(PSTR(D_JSON_IRHVAC_CONFIG_KEY), state.clock);
+    state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), state.sleep);
+  } else {
+    // optional timer and clock (Note: different json field names w/ time semantics)
+    state.clock = root.getInt(PSTR(D_JSON_IRHVAC_CLOCK), state.clock);
+    state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+  }
+
+  state.iFeel = strToBool(root[PSTR(D_JSON_IRHVAC_IFEEL)], state.iFeel);
+  state.sensorTemperature = root.getFloat(PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature);
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {

@@ -2,7 +2,7 @@
 name: Build_development
 
 on:
-  workflow_dispatch:      # Manually start a workflow
+  workflow_dispatch:      # Start a workflow
   push:
     branches: development
     paths-ignore:
@@ -15,7 +15,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  be_solidify:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install clang compiler
+        run: |
+          sudo apt-get install -f clang
+      - name: Make Berry and Tasmota Berry code
+        run: |
+          cd lib/libesp32/berry
+          make
+          cd ../berry_tasmota
+          ../berry/berry -s -g solidify_all.be
+      - name: Matter Berry Code
+        run: |
+          cd lib/libesp32/berry_matter
+          ../berry/berry -s -g solidify_all.be
+      - name: LVGL Berry Code
+        run: |
+          cd lib/libesp32_lvgl/lv_binding_berry
+          ../../libesp32/berry/berry -s -g solidify_all.be
+      - uses: jason2866/upload-artifact@v2.0.2
+        with:
+          name: '["berry_tasmota", "berry_matter", "berry_lvgl", "berry_header"]'
+          path: '["./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify", "./lib/libesp32/berry/generate"]'
+
+  push_solidified:
+    needs: be_solidify
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - uses: jason2866/download-artifact@v3
+        with:
+          name: |
+            berry_tasmota
+            berry_matter
+            berry_lvgl
+            berry_header
+          path: |
+            ./lib/libesp32/berry_tasmota/src/solidify
+            ./lib/libesp32/berry_matter/src/solidify
+            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+            ./lib/libesp32/berry/generate
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Solidified Code updated
+
   safeboot-images:
+    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
@@ -51,6 +111,7 @@ jobs:
           path: ./build_output
 
   base-images:
+    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
@@ -175,87 +236,13 @@ jobs:
           name: firmware
           path: ./build_output
 
-  Upload:
+  Start_final_copy:
     needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
-    - name: Download firmware
-      uses: actions/download-artifact@v3
-      with:
-        name: firmware
-        path: ./mv_firmware
-    - name: Downlaod safeboot firmware
-      uses: actions/download-artifact@v3
-      with:
-          name: firmware_safeboot
-          path: ./mv_firmware
-    - name: Display structure of downloaded files
-      run: ls -R
-      working-directory: ./mv_firmware
-    - name: Move firmware files in sub-folders
+    - name: Dispatch workflow in arendst/Tasmota-firmware
       run: |
-        mkdir -p ./firmware/tasmota/languages
-        mkdir -p ./firmware/tasmota32/languages
-        mkdir -p ./firmware/map
-        [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
-        [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-4M.* ] || mv ./mv_firmware/firmware/tasmota-4M.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin.gz ] || mv ./mv_firmware/firmware/tasmota-minimal.bin.gz ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-zbbrdgpro.* ] || mv ./mv_firmware/firmware/tasmota32-zbbrdgpro.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-nspanel.* ] || mv ./mv_firmware/firmware/tasmota32-nspanel.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32s2*.* ] || mv ./mv_firmware/firmware/tasmota32s2*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32s3*.* ] || mv ./mv_firmware/firmware/tasmota32s3*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-safeboot* ] || mv ./mv_firmware/firmware/tasmota32-safeboot* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-* ] || mv ./mv_firmware/firmware/tasmota32-* ./firmware/tasmota32/languages/
-        [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin ] || rm -rf ./mv_firmware/firmware/tasmota-minimal.bin
-        [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
-    - name: Display files to transfer
-      run: ls -R ./*
-    - name: Push Firmware files to tmp_copy repo
-      uses: Jason2866/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-      with:
-        source_file: 'firmware'
-        destination_repo: 'arendst/tmp_copy'
-        destination_branch: 'firmware'
-        user_email: 'github-actions@github.com'
-        user_name: 'github-actions'
-  Start_final_copy:
-    needs: Upload
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Creat trigger.txt
-      run: |
-         echo ${GITHUB_SHA}  &> trigger.txt
-         echo "$(<trigger.txt)"
-    - name: Push trigger.txt to start workflow copy in tmp repo
-      uses: Jason2866/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-      with:
-        source_file: 'trigger.txt'
-        destination_repo: 'arendst/tmp_copy'
-        destination_branch: 'action-development'
-        user_email: 'github-actions@github.com'
-        user_name: 'github-actions'
+         curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
+         -H 'Accept: application/vnd.github.everest-preview+json' \
+         -u ${{ secrets.API_TOKEN_GITHUB }} \
+         --data '{"ref": "gh_actions"}'

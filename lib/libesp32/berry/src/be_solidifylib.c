@@ -31,7 +31,7 @@ extern const bclass be_class_map;
     be_vector_count(&(vm)->gbldesc.builtin.vlist)
 
 #ifndef INST_BUF_SIZE
-#define INST_BUF_SIZE   288
+#define INST_BUF_SIZE   768
 #endif
 
 #define logfmt(...)                                     \
@@ -136,7 +136,7 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
 #if BE_INTGER_TYPE == 2
             logfmt("        { be_const_key_int(%lli, %i), ", node->key.v.i, key_next);
 #else
-            logfmt("        { be_const_key_int(%li, %i), ", node->key.v.i, key_next);
+            logfmt("        { be_const_key_int(%i, %i), ", node->key.v.i, key_next);
 #endif
             m_solidify_bvalue(vm, str_literal, &node->value, class_name, NULL, fout);
         } else {
@@ -179,14 +179,14 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
 #if BE_INTGER_TYPE == 2
         logfmt("be_const_int(%lli)", var_toint(value));
 #else
-        logfmt("be_const_int(%li)", var_toint(value));
+        logfmt("be_const_int(%i)", var_toint(value));
 #endif
         break;
     case BE_INDEX:
 #if BE_INTGER_TYPE == 2
         logfmt("be_const_var(%lli)", var_toint(value));
 #else
-        logfmt("be_const_var(%li)", var_toint(value));
+        logfmt("be_const_var(%i)", var_toint(value));
 #endif
         break;
     case BE_REAL:

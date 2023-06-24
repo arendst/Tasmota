@@ -120,3 +120,24 @@ assert(A.a == 1)
 assert(B.a == A)
 assert(B.b == 1)
 assert(B.c == A)
+
+#- static class get an implicit `_class` variable -#
+class A
+    static def f(x) return _class end
+end
+assert(A.f() == A)
+
+#- static class within a class -#
+class A
+    static class B
+        static def f() return 1 end
+        def g() return 2 end
+    end
+end
+a = A()
+b = A.B()
+assert(classname(a) == 'A')
+assert(classname(b) == 'B')
+assert(A.B.f() == 1)
+assert(b.g() == 2)
+assert(super(B) == nil)

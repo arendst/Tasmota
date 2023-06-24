@@ -74,9 +74,11 @@ extern "C" {
 
 /********************************************************************
 **  BLE - generic BLE functions
-********************************************************************/ 
+********************************************************************/
+  extern bool MI32checkBLEinitialization();
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
+  extern void MI32setBerryServerCB(void* function, uint8_t *buffer);
   extern bool MI32runBerryConnection(uint8_t operation, bbool response);
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
@@ -84,10 +86,23 @@ extern "C" {
   extern bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type);
   extern bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type);
 
+  int be_BLE_init(bvm *vm);
+  int be_BLE_init(bvm *vm) {
+    if (MI32checkBLEinitialization() == true){
+      be_return(vm);
+    }
+    be_raise(vm, "ble_error", "BLE: device not initialized");
+    be_return_nil(vm);
+  }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){    
     MI32setBerryConnCB(function,buffer);
+  }
+
+  void be_BLE_reg_server_cb(void* function, uint8_t *buffer);
+  void be_BLE_reg_server_cb(void* function, uint8_t *buffer){    
+    MI32setBerryServerCB(function,buffer);
   }
 
   void be_BLE_reg_adv_cb(void* function, uint8_t *buffer);
@@ -193,7 +208,9 @@ BLE.set_chr
 
 BLE.set_MAC
 BLE.run(op, optional: bool response)
+
 be_BLE_op:
+# client
 1 read
 2 write
 3 subscribe
@@ -205,8 +222,28 @@ be_BLE_op:
 13 subscribe once, then disconnect
 14 unsubscribe once, then disconnect - maybe later
 
+#server
+__commands
+201 add/set advertisement
+202 add/set scan response
+
+211 add/set characteristic 
+
+__response
+221 onRead
+222 onWrite
+223 unsubscribed
+224 subscribed to notifications
+225 subscribed to indications
+226 subscribed to notifications and indications
+227 onConnect
+228 onDisconnect
+229 onStatus
+
+
 BLE.conn_cb(cb,buffer)
 BLE.adv_cb(cb,buffer)
+BLE.serv_cb(cb,buffer)
 BLE.adv_watch(MAC)
 BLE.adv_block(MAC)
 

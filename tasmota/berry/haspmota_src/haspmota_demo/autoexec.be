@@ -54,5 +54,5 @@ def p5_out()
 	global.p0b11.bg_opa = 255
 end
 
-tasmota.add_rule("hasp#p5==in", p5_in)
-tasmota.add_rule("hasp#p5==out", p5_out)
+tasmota.add_rule("hasp#p5=in", p5_in)
+tasmota.add_rule("hasp#p5=out", p5_out)

@@ -108,8 +108,7 @@ class MPU6886_9250 : I2C_Driver
   #- display sensor value in the web UI -#
   def web_sensor()
     if !self.wire return nil end  #- exit if not initialized -#
-    import string
-    var msg = string.format(
+    var msg = format(
              "{s}MPU%d acc_x{m}%.3f G{e}"..
              "{s}MPU%d acc_y{m}%.3f G{e}"..
              "{s}MPU%d acc_z{m}%.3f G{e}"..
@@ -124,11 +123,10 @@ class MPU6886_9250 : I2C_Driver
   #- add sensor value to teleperiod -#
   def json_append()
     if !self.wire return nil end  #- exit if not initialized -#
-    import string
     var ax = int(self.accel[0] * 1000)
     var ay = int(self.accel[1] * 1000)
     var az = int(self.accel[2] * 1000)
-    var msg = string.format(",\"MPU%d\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
+    var msg = format(",\"MPU%d\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
               self.device, ax, ay, az, self.gyro[0], self.gyro[1], self.gyro[2])
     tasmota.response_append(msg)
   end

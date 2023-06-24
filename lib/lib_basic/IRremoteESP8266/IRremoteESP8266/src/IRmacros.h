@@ -34,7 +34,7 @@
 #if !VA_OPT_SUPPORTED
 // #pragma message("Compiler without __VA_OPT__ support")
 #define COND(cond, a, b) a
-#else
+#else  // !VA_OPT_SUPPORTED
 #define NOTHING
 #define EXPAND(...) __VA_ARGS__
 #define STUFF_P(a, ...) __VA_OPT__(a)
@@ -44,7 +44,7 @@
 #define NEGATE(a) VA_TEST(a, a)
 #define COND_P(cond, a, b) STUFF(a, cond)STUFF(b, NEGATE(cond))
 #define COND(cond, a, b) EXPAND(COND_P(cond, a, b))
-#endif
+#endif  // !VA_OPT_SUPPORTED
 /// @endcond
 /**
  * end of COND() set of macros

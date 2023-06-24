@@ -20,6 +20,9 @@
 #ifdef USE_AS608
 /*********************************************************************************************\
  * AS608 optical and R503 capacitive Fingerprint sensor
+ * - AS608 supports no color leds
+ * - R503 v1.1 supports 3 color ring (Red, Blue, Purple)
+ * - R503 v1.2 supports 7 color ring (Red, Blue, Purple, Green, Yellow, Cyan, White)
  *
  * Uses Adafruit-Fingerprint-sensor-library with TasmotaSerial
  *
@@ -31,6 +34,16 @@
 #define XSNS_79               79
 
 //#define USE_AS608_MESSAGES
+
+#ifndef AS608_DUPLICATE
+#define AS608_DUPLICATE       4    // Number of 0.25 Sec to disable detection
+#endif
+#ifndef AS608_COLOR_INIT
+#define AS608_COLOR_INIT      1    // Red = 1, Blue = 2, Purple = 3, Green = 4, Yellow = 5, Cyan = 6, White = 7
+#endif
+#ifndef AS608_COLOR_SCAN
+#define AS608_COLOR_SCAN      3    // Red = 1, Blue = 2, Purple = 3, Green = 4, Yellow = 5, Cyan = 6, White = 7
+#endif
 
 #define D_JSON_FPRINT "FPrint"
 
@@ -62,9 +75,12 @@ Adafruit_Fingerprint *As608Finger;
 TasmotaSerial *As608Serial;
 
 struct AS608 {
+  uint16_t finger_id;
+  uint16_t confidence;
   bool selected = false;
   uint8_t enroll_step = 0;
   uint8_t model_number = 0;
+  uint8_t duplicate;
 } As608;
 
 char* As608Message(char* response, uint32_t index) {
@@ -105,6 +121,8 @@ void As608Init(void) {
       As608Finger->getTemplateCount();
       AddLog(LOG_LEVEL_INFO, PSTR("AS6: Detected with %d fingerprint(s) stored"), As608Finger->templateCount);
       As608.selected = true;
+
+      As608Finger->LEDcontrol(FINGERPRINT_LED_BREATHING, 100, AS608_COLOR_INIT, 3);
     }
   }
 }
@@ -128,21 +146,27 @@ int As608ConvertFingerImage(uint8_t slot) {
 }
 
 void As608Loop(void) {
+  if (TasmotaGlobal.uptime < 6) { return; }  // Alow time for initial led breathing
   uint32_t p = 0;
 
   if (!As608.enroll_step) {
+    if (As608.duplicate) {
+      As608.duplicate--;
+    }
+    if (!As608.duplicate) {
+      As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, AS608_COLOR_SCAN);
+    }
+
     // Search for Finger
-
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_RED);
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_BLUE);
-//    As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_PURPLE);
-//    As608Finger->LEDcontrol(0);
-
     p = As608Finger->getImage();          // Take image
     if (p != FINGERPRINT_OK) { return; }
 
+    As608Finger->LEDcontrol(FINGERPRINT_LED_GRADUAL_ON, 150, AS608_COLOR_SCAN);
+
     p = As608Finger->image2Tz();          // Convert image
     if (p != FINGERPRINT_OK) { return; }
+
+//    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_BLUE);
 
 //    p = As608Finger->fingerFastSearch();  // Match found - fails on R503
     p = As608Finger->fingerSearch();      // Match found
@@ -152,7 +176,15 @@ void As608Loop(void) {
     }
 
     // Found a match
-    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"" D_JSON_ID "\":%d,\"" D_JSON_CONFIDENCE "\":%d}}"), As608Finger->fingerID, As608Finger->confidence);
+    if (As608.duplicate && (As608.finger_id == As608Finger->fingerID)) {
+      return;                             // Skip duplicate during AS608_DUPLICATE * 0.25 second
+    }
+    As608.duplicate = AS608_DUPLICATE;    // AS608_DUPLICATE * 250mS
+    As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, AS608_COLOR_SCAN);
+
+    As608.finger_id = As608Finger->fingerID;
+    As608.confidence = As608Finger->confidence;
+    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"" D_JSON_ID "\":%d,\"" D_JSON_CONFIDENCE "\":%d}}"), As608.finger_id, As608.confidence);
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_FPRINT));
     return;
   } else {
@@ -305,6 +337,11 @@ bool Xsns79(uint32_t function) {
       case FUNC_EVERY_250_MSECOND:
         As608Loop();
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        WSContentSend_PD(PSTR("{s}AS608{m}%d-%d{e}"), As608.finger_id, As608.confidence);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kAs608Commands, As608Commands);
         break;

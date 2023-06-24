@@ -109,22 +109,23 @@ void TasDiscoverMessage(void) {
 
   uint16_t Relay[MAX_RELAYS_SET] = { 0 };                      // Base array to store the relay type
   uint16_t Shutter[MAX_RELAYS_SET] = { 0 };                    // Array to store a temp list for shutters
-  for (uint32_t i = 0; i < MAX_RELAYS_SET; i++) {
-    if (i < TasmotaGlobal.devices_present) {
 
 #ifdef USE_SHUTTER
-      if (Settings->flag3.shutter_mode) {
-        for (uint32_t k = 0; k < TasmotaGlobal.shutters_present; k++) {
-          if (ShutterGetStartRelay(k) > 0) {
-            Shutter[ShutterGetStartRelay(k)-1] = Shutter[ShutterGetStartRelay(k)] = 1;
-          } else {
-            // terminate loop at first INVALID ShutterGetStartRelay(k).
-            break;
-          }
-        }
+  if (Settings->flag3.shutter_mode) {
+    for (uint32_t k = 0; k < TasmotaGlobal.shutters_present; k++) {
+      uint8_t sr = ShutterGetStartRelay(k);
+      if (sr > 0) {
+        Shutter[sr-1] = Shutter[sr] = 1;
+      } else {
+        // terminate loop at first INVALID ShutterGetStartRelay(k).
+        break;
       }
+    }
+  }
 #endif  // USE_SHUTTER
 
+  for (uint32_t i = 0; i < MAX_RELAYS_SET; i++) {
+    if (i < TasmotaGlobal.devices_present) {
       if (Shutter[i] != 0) {                                   // Check if there are shutters present
         Relay[i] = 3;                                          // Relay is a shutter
       } else {
@@ -199,9 +200,9 @@ void TasDiscoverMessage(void) {
                         light_controller_isCTRGBLinked,
                         light_subtype);
 
-  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 #ifdef USE_SHUTTER
-    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), Settings->shutter_options[i]);
+    ResponseAppend_P(PSTR("%s%d"), (i > 0 ? "," : ""), ShutterGetOptions(i));
 #else
     ResponseAppend_P(PSTR("%s0"), (i > 0 ? "," : ""));
 #endif  // USE_SHUTTER
@@ -209,7 +210,7 @@ void TasDiscoverMessage(void) {
 
   ResponseAppend_P(PSTR("],"                                   // Shutter Options (end)
                         "\"sht\":["));                         // Shutter Tilt (start)
-  for (uint32_t i = 0; i < tmax(TasmotaGlobal.shutters_present, MAX_SHUTTERS); i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 #ifdef USE_SHUTTER
     ResponseAppend_P(PSTR("%s[%d,%d,%d]"), (i > 0 ? "," : ""),
                           ShutterGetTiltConfig(0,i),

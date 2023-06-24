@@ -96,9 +96,17 @@
  * remarks for AI-THINKER
  * GPIO0 zero must be disconnected from any wire after programming because this pin drives the cam clock and does
  * not tolerate any capictive load
+ * the AITHINKER module does not have CAM_RESET - so if you get the camera into a bad state, power off restart is the only way out.
  * flash led = gpio 4
  * red led = gpio 33
  * optional rtsp url: rtsp://xxx.xxx.xxx.xxx:8554/mjpeg/1
+ * 
+ * SH 2023-05-14 - added mutex for many webcam functions - this is to prevent multi-threaded access to the camera functions, which 
+ * can case error 0x105 upon re-init.
+ * Errors 0x103 and 0xffffffff could indicate CAM_PWDN incorrect.
+ * 
+ * I2C use: if USE_I2C is enabled, you can set GPIO26 to I2c_SDA/2 and GPIO27 to I2C_SCL/2, and then use the shared I2C bus 2.
+ * Then you can use cmd i2cscan2 to check for camera presence.
  */
 
 /*********************************************************************************************/
@@ -113,6 +121,12 @@
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
+
+SemaphoreHandle_t WebcamMutex = nullptr;;
+
+// use mutex like:
+// TasAutoMutex localmutex(&WebcamMutex, "somename");
+// in any function.  Will wait for mutex to be clear, and auto-release when the function exits.
 
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
@@ -135,7 +149,7 @@ struct PICSTORE {
 #endif // ENABLE_RTSPSERVER
 
 struct {
-  uint8_t  up;
+  uint8_t  up = 0;
   uint16_t width;
   uint16_t height;
   uint8_t  stream_active;
@@ -165,6 +179,7 @@ struct {
 /*********************************************************************************************/
 
 void WcInterrupt(uint32_t state) {
+  TasAutoMutex localmutex(&WebcamMutex, "WcInterrupt");
   // Stop camera ISR if active to fix TG1WDT_SYS_RESET
   if (!Wc.up) { return; }
 
@@ -189,6 +204,9 @@ bool WcPinUsed(void) {
 //      }
 //    }
   }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: i2c_enabled_2: %d"), TasmotaGlobal.i2c_enabled_2);
+
   if (!PinUsed(GPIO_WEBCAM_XCLK) || !PinUsed(GPIO_WEBCAM_PCLK) ||
       !PinUsed(GPIO_WEBCAM_VSYNC) || !PinUsed(GPIO_WEBCAM_HREF) ||
       ((!PinUsed(GPIO_WEBCAM_SIOD) || !PinUsed(GPIO_WEBCAM_SIOC)) && !TasmotaGlobal.i2c_enabled_2)    // preferred option is to reuse and share I2Cbus 2
@@ -199,6 +217,7 @@ bool WcPinUsed(void) {
 }
 
 void WcFeature(int32_t value) {
+  TasAutoMutex localmutex(&WebcamMutex, "WcFeature");
   sensor_t * wc_s = esp_camera_sensor_get();
   if (!wc_s) { return; }
 
@@ -232,6 +251,7 @@ void WcFeature(int32_t value) {
 }
 
 void WcApplySettings() {
+  TasAutoMutex localmutex(&WebcamMutex, "WcApplySettings");
   sensor_t * wc_s = esp_camera_sensor_get();
   if (!wc_s) { return; }
 
@@ -308,13 +328,20 @@ void WcSetDefaults(uint32_t upgrade) {
 }
 
 uint32_t WcSetup(int32_t fsiz) {
+  TasAutoMutex localmutex(&WebcamMutex, "WcSetup");
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetup"));
   if (fsiz >= FRAMESIZE_FHD) { fsiz = FRAMESIZE_FHD - 1; }
 
+  int stream_active = Wc.stream_active;
   Wc.stream_active = 0;
 
   if (fsiz < 0) {
-    esp_camera_deinit();
-    Wc.up = 0;
+    if (Wc.up){    
+      esp_camera_deinit();
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit fsiz %d"), fsiz);
+      Wc.up = 0;
+    }
     return 0;
   }
 
@@ -328,6 +355,8 @@ uint32_t WcSetup(int32_t fsiz) {
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
 
   camera_config_t config;
+
+  memset(&config, 0, sizeof(config));
 
   if (WcPinUsed()) {
     config.pin_d0 = Pin(GPIO_WEBCAM_DATA);        // Y2_GPIO_NUM;
@@ -347,7 +376,7 @@ uint32_t WcSetup(int32_t fsiz) {
     if(TasmotaGlobal.i2c_enabled_2){              // configure SIOD and SIOC as SDA,2 and SCL,2
       config.sccb_i2c_port = 1;                   // reuse initialized bus 2, can be shared now
       if(config.pin_sccb_sda < 0){                // GPIO_WEBCAM_SIOD must not be set to really make it happen
-        AddLog(LOG_LEVEL_INFO, PSTR("CAM: use I2C bus 2"));
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Use I2C bus2"));
       }
     }
     config.pin_pwdn = Pin(GPIO_WEBCAM_PWDN);       // PWDN_GPIO_NUM;
@@ -408,10 +437,24 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 
-  esp_err_t err = esp_camera_init(&config);
+  esp_err_t err;
+  // cannot hurt to retry...
+  for (int i = 0; i < 3; i++){
+    err = esp_camera_init(&config);
+
+    if (err != ESP_OK) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x try %d"), err, (i+1));
+      esp_camera_deinit();
+    } else {
+      if (i){
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitOK try %d"), (i+1));
+      }
+      break;
+    }
+  }
 
   if (err != ESP_OK) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x"), err);
     return 0;
   }
 
@@ -440,6 +483,9 @@ uint32_t WcSetup(int32_t fsiz) {
   Wc.up = 1;
   if (psram) { Wc.up = 2; }
 
+  // restore stream_active if we setup ok.
+  Wc.stream_active = stream_active;
+
   return Wc.up;
 }
 
@@ -447,6 +493,8 @@ uint32_t WcSetup(int32_t fsiz) {
 
 int32_t WcSetOptions(uint32_t sel, int32_t value) {
   int32_t res = 0;
+  TasAutoMutex localmutex(&WebcamMutex, "WcSetOptions");
+
   sensor_t *s = esp_camera_sensor_get();
   if (!s) { return -99; }
 
@@ -556,6 +604,8 @@ int32_t WcSetOptions(uint32_t sel, int32_t value) {
 }
 
 uint32_t WcGetWidth(void) {
+  TasAutoMutex localmutex(&WebcamMutex, "WcGetWidth");
+  
   camera_fb_t *wc_fb = esp_camera_fb_get();
   if (!wc_fb) { return 0; }
   Wc.width = wc_fb->width;
@@ -564,6 +614,7 @@ uint32_t WcGetWidth(void) {
 }
 
 uint32_t WcGetHeight(void) {
+  TasAutoMutex localmutex(&WebcamMutex, "WcGetWidth");
   camera_fb_t *wc_fb = esp_camera_fb_get();
   if (!wc_fb) { return 0; }
   Wc.height = wc_fb->height;
@@ -595,6 +646,7 @@ uint32_t WcSetMotionDetect(int32_t value) {
 void WcDetectMotion(void) {
   camera_fb_t *wc_fb;
   uint8_t *out_buf = 0;
+  TasAutoMutex localmutex(&WebcamMutex, "WcDetectMotion");
 
   if ((millis()-wc_motion.motion_ltime) > wc_motion.motion_detect) {
     wc_motion.motion_ltime = millis();
@@ -651,6 +703,7 @@ uint32_t WcGetFrame(int32_t bnum) {
   uint8_t * _jpg_buf = NULL;
   camera_fb_t *wc_fb = 0;
   bool jpeg_converted = false;
+  TasAutoMutex localmutex(&WebcamMutex, "WcGetFrame");
 
   if (bnum < 0) {
     if (bnum < -MAX_PICSTORE) { bnum=-1; }
@@ -753,6 +806,8 @@ void HandleImage(void) {
   response += "Content-type: image/jpeg\r\n\r\n";
   Webserver->sendContent(response);
 
+  TasAutoMutex localmutex(&WebcamMutex, "HandleImage");
+
   if (!bnum) {
     size_t _jpg_buf_len = 0;
     uint8_t * _jpg_buf = NULL;
@@ -804,6 +859,7 @@ void HandleImageBasic(void) {
     }
   }
 
+  TasAutoMutex localmutex(&WebcamMutex, "HandleImage");
   camera_fb_t *wc_fb;
   wc_fb = esp_camera_fb_get();  // Acquire frame
   if (!wc_fb) {
@@ -874,6 +930,9 @@ void HandleWebcamMjpegTask(void) {
       "\r\n");
     Wc.stream_active = 2;
   }
+
+  TasAutoMutex localmutex(&WebcamMutex, "HandleWebcamMjpegTask");
+
   if (2 == Wc.stream_active) {
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) {
@@ -947,12 +1006,14 @@ void HandleWebcamRoot(void) {
 /*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
-  if (TasmotaGlobal.global_state.network_down) { return 0; }
-
-  Wc.stream_active = 0;
+  if (TasmotaGlobal.global_state.network_down) { 
+    Wc.stream_active = 0;
+    return 0; 
+  }
 
   if (flag) {
     if (!Wc.CamServer) {
+      Wc.stream_active = 0;
       Wc.CamServer = new ESP8266WebServer(81);
       Wc.CamServer->on("/", HandleWebcamRoot);
       Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
@@ -963,6 +1024,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
     }
   } else {
     if (Wc.CamServer) {
+      Wc.stream_active = 0;
       Wc.CamServer->stop();
       delete Wc.CamServer;
       Wc.CamServer = NULL;
@@ -973,15 +1035,20 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 }
 
 void WcInterruptControl() {
+  TasAutoMutex localmutex(&WebcamMutex, "WcInterruptControl");
+
   WcSetStreamserver(Settings->webcam_config.stream);
-  WcSetup(Settings->webcam_config.resolution);
+  if(Wc.up == 0) {
+    WcSetup(Settings->webcam_config.resolution);
+  }
+
 }
 
 /*********************************************************************************************/
 
 
 void WcLoop(void) {
-  if (4 == Wc.stream_active) { return; }
+  // if (4 == Wc.stream_active) { return; }
 
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
@@ -1042,11 +1109,10 @@ void WcShowStream(void) {
 //    if (!Wc.CamServer || !Wc.up) {
     if (!Wc.CamServer) {
       WcInterruptControl();
-      delay(50);   // Give the webcam webserver some time to prepare the stream
     }
-    if (Wc.CamServer && Wc.up) {
-      WSContentSend_P(PSTR("<p></p><center><img src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
-        (uint32_t)WiFi.localIP());
+    if (Wc.CamServer && Wc.up!=0) {
+      // Give the webcam webserver some time to prepare the stream - catch error in JS
+      WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
     }
   }
 }
@@ -1383,6 +1449,7 @@ void CmndWebcamClock(void){
 }
 
 void CmndWebcamInit(void) {
+  WcSetup(Settings->webcam_config.resolution);
   WcInterruptControl();
   ResponseCmndDone();
 }
@@ -1455,6 +1522,9 @@ bool Xdrv81(uint32_t function) {
       break;
     case FUNC_PRE_INIT:
       WcInit();
+      break;
+    case FUNC_INIT:
+      if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
       break;
 
   }

@@ -442,17 +442,15 @@ void RtcSecond(void) {
     last_sync = Rtc.utc_time;
   }
 
-  Rtc.local_time = Rtc.utc_time;
-  if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
+  if (Rtc.utc_time > START_VALID_TIME) {  // 2016-01-01
     Rtc.time_timezone = RtcTimeZoneOffset(Rtc.utc_time);
-    Rtc.local_time += Rtc.time_timezone;
+    Rtc.local_time = Rtc.utc_time + Rtc.time_timezone;
     Rtc.time_timezone /= 60;
-    if (!Settings->energy_kWhtotal_time) {
-      Settings->energy_kWhtotal_time = Rtc.local_time;
-    }
     if (Settings->bootcount_reset_time < START_VALID_TIME) {
       Settings->bootcount_reset_time = Rtc.local_time;
     }
+  } else {
+    Rtc.local_time = Rtc.utc_time;
   }
 
   BreakNanoTime(Rtc.local_time, Rtc.nanos, RtcTime);

@@ -17,122 +17,91 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # Matter plug-in for core behavior
 
 # dummy declaration for solidification
-class Matter_Plugin end
+class Matter_Plugin_Device end
 
 #@ solidify:Matter_Plugin_OnOff,weak
 
-class Matter_Plugin_OnOff : Matter_Plugin
+class Matter_Plugin_OnOff : Matter_Plugin_Device
+  static var TYPE = "relay"                         # name of the plug-in in json
+  static var NAME = "Relay"                         # display name of the plug-in
+  static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  static var ARG_HINT = "Enter Relay<x> number"
+  static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
-    0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
-    0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
-    0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
+    # 0x0003: inherited                             # Identify 1.2 p.16
+    # 0x0004: inherited                             # Groups 1.3 p.21
+    # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
-    # 0x0008: [0,15,17,0xFFFC,0xFFFD]                 # Level Control 1.6 p.57
   }
-  static var TYPES = { 0x010A: 2 }       # On/Off Light
+  static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   var tasmota_relay_index             # Relay number in Tasmota (zero based)
   var shadow_onoff                           # fake status for now # TODO
 
   #############################################################
   # Constructor
-  def init(device, endpoint, tasmota_relay_index)
-    super(self).init(device, endpoint)
-    self.get_onoff()                        # read actual value
-    if tasmota_relay_index == nil     tasmota_relay_index = 0   end
-    self.tasmota_relay_index = tasmota_relay_index
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
+    self.shadow_onoff = false
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, 1))
+    if self.tasmota_relay_index <= 0    self.tasmota_relay_index = 1    end
+  end
+
+  #############################################################
+  # Update shadow
+  #
+  def update_shadow()
+    var state = tasmota.get_power(self.tasmota_relay_index - 1)
+    if state != nil
+      if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
+        self.attribute_updated(0x0006, 0x0000)
+      end
+      self.shadow_onoff = state
+    end
+    super(self).update_shadow()
   end
 
   #############################################################
   # Model
   #
   def set_onoff(v)
-    tasmota.set_power(self.tasmota_relay_index, bool(v))
-    self.get_onoff()
-  end
-  #############################################################
-  # get_onoff
-  #
-  # Update shadow and signal any change
-  def get_onoff()
-    var state = tasmota.get_power(self.tasmota_relay_index)
-    if state != nil
-      if self.shadow_onoff != nil && self.shadow_onoff != bool(state)
-        self.onoff_changed()      # signal any change
-      end
-      self.shadow_onoff = state
-    end
-    if self.shadow_onoff == nil   self.shadow_onoff = false   end     # avoid any `nil` value when initializing
-    return self.shadow_onoff
+    tasmota.set_power(self.tasmota_relay_index - 1, bool(v))
+    self.update_shadow()
   end
 
   #############################################################
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
-      if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
-        return TLV.create_TLV(TLV.U2, 0)      # no identification in progress
-      elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 0)      # IdentifyType = 0x00 None
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # no features
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # "new data model format and notation"
-      end
-
-    # ====================================================================================================
-    elif cluster == 0x0004              # ========== Groups 1.3 p.21 ==========
-      if   attribute == 0x0000          #  ----------  ----------
-        return nil                      # TODO
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)#
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)# "new data model format and notation"
-      end
-
-    # ====================================================================================================
-    elif cluster == 0x0005              # ========== Scenes 1.4 p.30 - no writable ==========
-      if   attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
-      end
-
-    # ====================================================================================================
-    elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+      self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return TLV.create_TLV(TLV.BOOL, self.get_onoff())
+        return TLV.create_TLV(TLV.BOOL, self.shadow_onoff)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
-    # ====================================================================================================
-    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
-      if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0x88)
-      elif attribute == 0x000F          #  ---------- Options / map8 ----------
-        return TLV.create_TLV(TLV.U1, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0x0010          #  ---------- OnLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 1)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
-      end
-      
     else
       return super(self).read_attribute(session, ctx)
     end
@@ -149,75 +118,24 @@ class Matter_Plugin_OnOff : Matter_Plugin
     var command = ctx.command
 
     # ====================================================================================================
-    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
-
-      if   command == 0x0000            # ---------- Identify ----------
-        # ignore
-        return true
-      elif command == 0x0001            # ---------- IdentifyQuery ----------
-        # create IdentifyQueryResponse
-        # ID=1
-        #  0=Certificate (octstr)
-        var iqr = TLV.Matter_TLV_struct()
-        iqr.add_TLV(0, TLV.U2, 0)       # Timeout
-        ctx.command = 0x00              # IdentifyQueryResponse
-        return iqr
-      elif command == 0x0040            # ---------- TriggerEffect ----------
-        # ignore
-        return true
-      end
-    # ====================================================================================================
-    elif cluster == 0x0004              # ========== Groups 1.3 p.21 ==========
-      # TODO
-      return true
-    # ====================================================================================================
-    elif cluster == 0x0005              # ========== Scenes 1.4 p.30 ==========
-      # TODO
-      return true
-    # ====================================================================================================
-    elif cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
+        self.update_shadow()
         return true
       elif command == 0x0001            # ---------- On ----------
         self.set_onoff(true)
+        self.update_shadow()
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        self.set_onoff(!self.get_onoff())
-        return true
-      end
-    # ====================================================================================================
-    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
-      if   command == 0x0000            # ---------- MoveToLevel ----------
-        return true
-      elif command == 0x0001            # ---------- Move ----------
-        return true
-      elif command == 0x0002            # ---------- Step ----------
-        return true
-      elif command == 0x0003            # ---------- Stop ----------
-        return true
-      elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
-        return true
-      elif command == 0x0005            # ---------- MoveWithOnOff ----------
-        return true
-      elif command == 0x0006            # ---------- StepWithOnOff ----------
-        return true
-      elif command == 0x0007            # ---------- StopWithOnOff ----------
+        self.set_onoff(!self.shadow_onoff)
+        self.update_shadow()
         return true
       end
     end
+
   end
 
-  #############################################################
-  # Signal that onoff attribute changed
-  def onoff_changed()
-    self.attribute_updated(nil, 0x0006, 0x0000)   # send to all endpoints
-  end
-
-  #############################################################
-  # every_second
-  def every_second()
-    self.get_onoff()                    # force reading value and sending subscriptions
-  end
 end
 matter.Plugin_OnOff = Matter_Plugin_OnOff

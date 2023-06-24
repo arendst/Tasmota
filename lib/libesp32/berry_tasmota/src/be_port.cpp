@@ -98,36 +98,108 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
     // be_fwrite(stdout, buffer, length);
 }
 
-
+// provides MPATH_ constants
+#include "be_port.h"
 extern "C" {
-    int m_path_listdir(bvm *vm)
-    {
+    // this combined action is called from be_path_tasmota_lib.c
+    // by using a single function, we save >200 bytes of flash
+    // by reducing code repetition.
+    int _m_path_action(bvm *vm, int8_t action){
 #ifdef USE_UFILESYS
+        // if this changes to not -1, we push it as a bool
+        int res = -1;
+        // this tells us to return the vm, not nil
+        int returnit = 0;
+
+        // comment out if nil return is OK to save some flash
+        switch (action){
+            case MPATH_EXISTS:
+            case MPATH_REMOVE:
+                res = 0;
+                break;
+        }
+
         if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
             const char *path = be_tostring(vm, 1);
-            be_newobject(vm, "list");
-
-            File dir = ffsp->open(path, "r");
-            if (dir) {
-                dir.rewindDirectory();
-                while (1) {
-                    File entry = dir.openNextFile();
-                    if (!entry) {
+            if (path != nullptr) {
+                switch (action){
+                    case MPATH_EXISTS:
+                        res = be_isexist(path);
                         break;
-                    }
-                    const char * fn = entry.name();
-                    if (strcmp(fn, ".") && strcmp(fn, "..")) {
-                        be_pushstring(vm, fn);
-                        be_data_push(vm, -2);
-                        be_pop(vm, 1);
-                    }
+                    case MPATH_REMOVE:
+                        res = be_unlink(path);
+                        break;
+                    case MPATH_RMDIR:
+                        res = zip_ufsp.rmdir(path);
+                        break;
+                    case MPATH_MKDIR:
+                        res = zip_ufsp.mkdir(path);
+                        break;
+                    case MPATH_LISTDIR:
+                        be_newobject(vm, "list"); // add our list object and fall through
+                        returnit = 1;
+                    case MPATH_ISDIR:
+                    case MPATH_MODIFIED: {
+                        // listdir and isdir both need to open the file.
 
+                        // we use be_fopen because it pre-pends with '/'.
+                        // without this TAS fails to find stuff at boot...
+                        File *dir = (File *)be_fopen(path, "r");
+                        if (dir) {
+                            switch (action){
+                                case MPATH_LISTDIR:
+                                    // fill out the list object
+                                    dir->rewindDirectory();
+                                    while (1) {
+                                        File entry = dir->openNextFile();
+                                        if (!entry) {
+                                            break;
+                                        }
+                                        const char * fn = entry.name();
+                                        if (strcmp(fn, ".") && strcmp(fn, "..")) {
+                                            be_pushstring(vm, fn);
+                                            be_data_push(vm, -2);
+                                            be_pop(vm, 1);
+                                        }
+                                    }
+                                    break;
+                                case MPATH_ISDIR:
+                                    // push bool belowthe only one to push an int, so do it here.
+                                    res = dir->isDirectory();
+                                    break;
+                                case MPATH_MODIFIED:
+                                    // the only one to push an int, so do it here.
+                                    be_pushint(vm, dir->getLastWrite());
+                                    returnit = 1;
+                                    break;
+                            }
+                            be_fclose(dir);
+                        }
+                    } break;
                 }
-            }
-            be_pop(vm, 1);
-            be_return(vm);
 
+                // these 
+                switch (action){
+                    case MPATH_LISTDIR:
+                        // if it was list, pop always
+                        be_pop(vm, 1);
+                        break;
+                }
+            } // invalid filename -> nil return
+        } // not a string, or no arg -> nil return unless see below
+
+        // if we get here, and it was exists or remove, return false always
+        // i.e. it's false for no filename or null filename.
+
+        // if it was a boolean result
+        if (res != -1){
+            be_pushbool(vm, res);
+            returnit = 1;
         }
+        if (returnit){
+            be_return(vm);
+        }
+
 #endif // USE_UFILESYS
         be_return_nil(vm);
     }
@@ -161,6 +233,7 @@ void* be_fopen(const char *filename, const char *modes)
     return nullptr;
     // return fopen(filename, modes);
 }
+
 #endif // USE_UFILESYS
 
 

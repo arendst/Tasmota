@@ -24,6 +24,7 @@
 
 #include "be_constobj.h"
 #include "be_mapping.h"
+#include <stdio.h>
 
 // Matter logo
 static const uint8_t MATTER_LOGO[] = 
@@ -36,6 +37,46 @@ static const uint8_t MATTER_LOGO[] =
   "118.06a96.93,96.93,0,0,0-68.16,118.06l23.27-13.44a71.1,71.1,0,0,1,3.29-35.17L309.46,300l12.78-"
   "7.38V277.89l-54.39-31.4a71.13,71.13,0,0,1,28.82-20.43Z'/></svg>";
 
+// Matter stylesheet
+static const uint8_t MATTER_STYLESHEET[] = 
+  "<style>"
+  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
+  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
+  ".ztdm td:last-child{width:45px}"
+  ".ztdm .bt{margin-right:10px;}"
+  ".htrm{line-height:20px}"
+  "</style>";
+
+static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
+  "<script type='text/javascript'>"
+  "function otm(arg_name,val){"
+  "var s=eb(arg_name);"
+  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
+  "};"
+  "</script>";
+
+extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
+
+char* matter_seconds_to_dhm(int32_t seconds) {
+  static const char empty_resp[] = "<td>&nbsp;</td>";
+  static char res[64];                // static to allow returning to Berry
+  char unit;
+  uint32_t color;    // color of text
+
+  if (seconds < 0) { return empty_resp; }       // no value
+
+  uint32_t val = matter_convert_seconds_to_dhm(seconds, &unit, &color, bfalse);
+  if (val < 100) {
+    snprintf(res, sizeof(res), "<td style=\"color:#%02x%02x%02x\">&#x1F557;%02d%c</td>",
+                                  (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
+                                  val, unit);
+  } else {
+    return empty_resp;
+  }
+  return res;
+}
+BE_FUNC_CTYPE_DECLARE(matter_seconds_to_dhm, "s", "i")
+
 extern const bclass be_class_Matter_Counter;
 extern const bclass be_class_Matter_Verhoeff;
 extern const bclass be_class_Matter_QRCode;
@@ -44,6 +85,17 @@ extern const bclass be_class_Matter_QRCode;
 
 #include "../generate/be_matter_clusters.h"
 #include "../generate/be_matter_opcodes.h"
+#include "../generate/be_matter_vendors.h"
+
+const char* matter_get_vendor_name(uint16_t id) {
+  for (const matter_vendor_t * vnd = matter_Vendors; vnd->id != 0xFFFF; vnd++) {
+    if (vnd->id == id) {
+      return vnd->name;
+    }
+  }
+  return NULL;
+}
+BE_FUNC_CTYPE_DECLARE(matter_get_vendor_name, "s", "i")
 
 const char* matter_get_cluster_name(uint16_t cluster) {
   for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
@@ -133,6 +185,9 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
+#include "solidify/solidified_Matter_TCP_async.h"
+#include "solidify/solidified_Matter_HTTP_async.h"
+#include "solidify/solidified_Matter_HTTP_remote.h"
 #include "solidify/solidified_Matter_Expirable.h"
 #include "solidify/solidified_Matter_Fabric.h"
 #include "solidify/solidified_Matter_Session.h"
@@ -153,13 +208,36 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "../generate/be_matter_certs.h"
 
 #include "solidify/solidified_Matter_Plugin_Root.h"
+#include "solidify/solidified_Matter_Plugin_Aggregator.h"
 #include "solidify/solidified_Matter_Plugin_Device.h"
 #include "solidify/solidified_Matter_Plugin_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_Light0.h"
 #include "solidify/solidified_Matter_Plugin_Light1.h"
 #include "solidify/solidified_Matter_Plugin_Light2.h"
 #include "solidify/solidified_Matter_Plugin_Light3.h"
-#include "solidify/solidified_Matter_Plugin_Temp_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_Shutter.h"
+#include "solidify/solidified_Matter_Plugin_ShutterTilt.h"
+#include "solidify/solidified_Matter_Plugin_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Light0.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Light1.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Light2.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Light3.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Contact.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -187,7 +265,10 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 
 module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
+  _STYLESHEET, comptr(MATTER_STYLESHEET)
+  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
+  seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
   Verhoeff, class(be_class_Matter_Verhoeff)
   Counter, class(be_class_Matter_Counter)
@@ -195,6 +276,7 @@ module matter (scope: global, strings: weak) {
   member, closure(matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
 
+  get_vendor_name, ctype_func(matter_get_vendor_name)
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
   is_attribute_writable, ctype_func(matter_is_attribute_writable)
@@ -203,6 +285,7 @@ module matter (scope: global, strings: weak) {
   get_opcode_name, ctype_func(matter_get_opcode_name)
   TLV, class(be_class_Matter_TLV)
   sort, closure(matter_sort_closure)
+  jitter, closure(matter_jitter_closure)
   inspect, closure(matter_inspect_closure)
 
   // Status codes
@@ -278,6 +361,9 @@ module matter (scope: global, strings: weak) {
   // UDP Server
   UDPPacket_sent, class(be_class_Matter_UDPPacket_sent)
   UDPServer, class(be_class_Matter_UDPServer)
+  TCP_async, class(be_class_Matter_TCP_async)
+  HTTP_async, class(be_class_Matter_HTTP_async)
+  HTTP_remote, class(be_class_Matter_HTTP_remote)
 
   // Expirable
   Expirable, class(be_class_Matter_Expirable)
@@ -327,13 +413,36 @@ module matter (scope: global, strings: weak) {
 
   // Plugins
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
+  Plugin_Aggregator, class(be_class_Matter_Plugin_Aggregator) // Aggregator
   Plugin_Device, class(be_class_Matter_Plugin_Device)   // Generic device (abstract)
   Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
   Plugin_Light0, class(be_class_Matter_Plugin_Light0)     // OnOff Light
   Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
   Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
   Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
-  Plugin_Temp_Sensor, class(be_class_Matter_Plugin_Temp_Sensor)   // Temperature Sensor
+  Plugin_Shutter, class(be_class_Matter_Plugin_Shutter)   // Shutter
+  Plugin_ShutterTilt, class(be_class_Matter_Plugin_ShutterTilt)   // Shutter + Tilt
+  Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
+  Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
+  Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
+  Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
+  Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
+  Plugin_Sensor_Occupancy, class(be_class_Matter_Plugin_Sensor_Occupancy)           // Occupancy Sensor
+  Plugin_Sensor_OnOff, class(be_class_Matter_Plugin_Sensor_OnOff)           // Simple OnOff Sensor
+  Plugin_Sensor_Contact, class(be_class_Matter_Plugin_Sensor_Contact)           // Contact Sensor
+  Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
+  Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
+  Plugin_Bridge_Light0, class(be_class_Matter_Plugin_Bridge_Light0)   // HTTP OnOff Light
+  Plugin_Bridge_Light1, class(be_class_Matter_Plugin_Bridge_Light1)   // HTTP Dimmer Light
+  Plugin_Bridge_Light2, class(be_class_Matter_Plugin_Bridge_Light2)   // HTTP CT Light
+  Plugin_Bridge_Light3, class(be_class_Matter_Plugin_Bridge_Light3)   // HTTP RGB Light
+  Plugin_Bridge_Sensor, class(be_class_Matter_Plugin_Bridge_Sensor)   // HTTP generic sensor
+  Plugin_Bridge_Sensor_Pressure, class(be_class_Matter_Plugin_Bridge_Sensor_Pressure)   // HTTP Pressure sensor
+  Plugin_Bridge_Sensor_Temp, class(be_class_Matter_Plugin_Bridge_Sensor_Temp)   // HTTP Temperature sensor
+  Plugin_Bridge_Sensor_Illuminance, class(be_class_Matter_Plugin_Bridge_Sensor_Illuminance)   // HTTP Illuminance sensor
+  Plugin_Bridge_Sensor_Humidity, class(be_class_Matter_Plugin_Bridge_Sensor_Humidity)   // HTTP Humidity sensor
+  Plugin_Bridge_Sensor_Occupancy, class(be_class_Matter_Plugin_Bridge_Sensor_Occupancy)   // HTTP Occupancy sensor
+  Plugin_Bridge_Sensor_Contact, class(be_class_Matter_Plugin_Bridge_Sensor_Contact)   // HTTP Contact sensor
 }
 
 @const_object_info_end */

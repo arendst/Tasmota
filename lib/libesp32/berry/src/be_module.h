@@ -16,7 +16,7 @@ typedef struct bmodule {
     bcommon_header;
     bmap *table;
     union infodata {
-        const bntvmodule *native;
+        const bntvmodule_t *native;
         const char *name;
         const bstring *sname;
 #ifdef __cplusplus

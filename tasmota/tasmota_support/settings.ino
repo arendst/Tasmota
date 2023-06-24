@@ -699,12 +699,12 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (1 == settings_location) {
       TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)Settings, sizeof(TSettings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
       ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)Settings, sizeof(TSettings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings->save_flag);
     }
   }
 #endif  // ESP8266
@@ -714,7 +714,7 @@ void SettingsLoad(void) {
   if (source) {
     settings_location = 1;
     if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
     }
   }
 #endif  // ESP32
@@ -725,7 +725,7 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)Settings, sizeof(TSettings)) && (Settings->cfg_crc32 == GetSettingsCrc32())) {
       settings_location = 1;
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
@@ -806,7 +806,7 @@ void SettingsSdkErase(void) {
 /********************************************************************************************/
 
 void SettingsDefault(void) {
-  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
   SettingsDefaultSet2();
   SettingsDefaultSet3();
@@ -929,7 +929,7 @@ void SettingsDefaultSet2(void) {
   flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
-  Settings->wifi_output_power = 170;
+  Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
   Settings->dns_timeout = DNS_TIMEOUT;
   Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
   ParseIPv4(&Settings->ipv4_address[0], PSTR(WIFI_IP_ADDRESS));

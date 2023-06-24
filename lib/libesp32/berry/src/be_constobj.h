@@ -196,7 +196,7 @@ const bvector _name = {                                         \
 }
 
 #define be_define_const_native_module(_module)                  \
-const bntvmodule be_native_module(_module) = {                  \
+const bntvmodule_t be_native_module(_module) = {                  \
     .name = #_module,                                           \
     .attrs = NULL,                                              \
     .size = 0,                                                  \
@@ -422,7 +422,7 @@ const bvector _name = {                                         \
 }
 
 #define be_define_const_native_module(_module)                  \
-const bntvmodule be_native_module_##_module = {                 \
+const bntvmodule_t be_native_module_##_module = {               \
     #_module,                                                   \
     0, 0,                                                       \
     (bmodule*)&(m_lib##_module)                                 \

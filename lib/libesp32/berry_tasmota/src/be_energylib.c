@@ -19,6 +19,7 @@ extern struct ENERGY Energy;
 module energy (scope: global) {
   init, closure(energy_init_closure)
   _ptr, comptr(&Energy)
+  _deref, closure(energy__deref_closure)
 
   read, closure(energy_read_closure)
   member, closure(energy_member_closure)

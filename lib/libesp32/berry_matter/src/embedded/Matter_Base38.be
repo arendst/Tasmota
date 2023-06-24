@@ -26,7 +26,6 @@ class Matter_Base38
   static def encode(raw)
     # encodes b38 (mutates `b`)
     def b38_enc(v, l)
-      import string
       var ENCODE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-."
       var i = 0
       var ret = ""
@@ -67,5 +66,10 @@ end
 matter.Base38 = Matter_Base38
 
 #-
+
+assert(matter.Base38.encode(bytes("DEADBEEF")) == "C.R.5B6")
+assert(matter.Base38.encode(bytes("")) == "")
+assert(matter.Base38.encode(bytes("00")) == "00")
+assert(matter.Base38.encode(bytes("FFFFFFFF")) == "PLS18R6")
 
 -#

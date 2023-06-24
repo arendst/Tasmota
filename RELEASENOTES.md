@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.7**.
+This release will be supported from ESP32/Arduino library Core version **2.0.10**.
 
-Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.7 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.10 have been removed.
 
 ## Support of TLS
 
@@ -75,12 +75,12 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.5.0
+- http://ota.tasmota.com/tasmota/release-13.0.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.7**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.10**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -100,7 +100,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-12.5.0
+- https://ota.tasmota.com/tasmota32/release-13.0.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -110,50 +110,70 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.5.0 Peyton
+## Changelog v13.0.0 Qasim
 ### Added
-- Command ``SwitchMode0`` to show or set all SwitchModes
-- Support for multiple MCP23008/MCP23017/MCP23S17 as switch/button/relay if enabled with `#define USE_MCP23XXX_DRV`
-- Support for multiple PCF8574 as switch/button/relay if enabled with `#define USE_PCF8574` and `#define USE_PCF8574_MODE2`
-- Support for PMSA003I Air Quality Sensor by Jean-Pierre Deschamps [#18214](https://github.com/arendst/Tasmota/issues/18214)
-- Support for DingTian virtual switch/button/relay [#18223](https://github.com/arendst/Tasmota/issues/18223)
-- Support for GDK101 gamma radiation sensor by Petr Novacek [#18390](https://github.com/arendst/Tasmota/issues/18390)
-- NTP time request from gateway [#17984](https://github.com/arendst/Tasmota/issues/17984)
-- Extended Tariff command for forced tariff [#18080](https://github.com/arendst/Tasmota/issues/18080)
-- Display TM1650 commands like TM1637 [#18109](https://github.com/arendst/Tasmota/issues/18109)
-- VSC Pio menu bar extensions by @Jason2866 [#18233](https://github.com/arendst/Tasmota/issues/18233)
-- Zigbee send Tuya 'magic spell' to unlock devices when pairing [#18144](https://github.com/arendst/Tasmota/issues/18144)
-- ESP32 WIP support for 16 shutters using `#define USE_SHUTTER_ESP32` in addition to `USE_SHUTTER` by Stefan Bode [#18295](https://github.com/arendst/Tasmota/issues/18295)
-- Berry support for Tensorflow Lite (TFL) by Christiaan Baars [#18119](https://github.com/arendst/Tasmota/issues/18119)
-- Berry `webclient` features
-- Berry `instrospect.name()` to get names of functions, modules and classes [#18422](https://github.com/arendst/Tasmota/issues/18422)
-- Berry add `searchall()` and `matchall()` to `re` module and pre-compiled patterns [#18429](https://github.com/arendst/Tasmota/issues/18429)
-- Matter support for Light and Relays by Stephan Hadinger [#18320](https://github.com/arendst/Tasmota/issues/18320)
-- Matter automatically exposes all detected Temperature sensors [#18430](https://github.com/arendst/Tasmota/issues/18430)
+- Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
+- Command ``I2cScan0`` to scan both busses on ESP32 with one command
+- Command ``WifiPower 0`` to enable dynamic wifi power based on RSSI by @TD-er [#15443](https://github.com/arendst/Tasmota/issues/15443)
+- Command ``WifiPower 1`` to restore default wifi power
+- Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
+- Support for GM861 1D and 2D bar code reader [#18399](https://github.com/arendst/Tasmota/issues/18399)
+- Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)
+- Display descriptor for ST7735 128x160 display [#18741](https://github.com/arendst/Tasmota/issues/18741)
+- Zigbee support for air sensors [#18665](https://github.com/arendst/Tasmota/issues/18665)
+- ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
+- ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
+- Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT [#18763](https://github.com/arendst/Tasmota/issues/18763)
+- Berry `tcpclientasync` class for non-blocking TCP client
+- Berry add `set_lsb_justified(bool)` to `AudioOutputI2S` [#18774](https://github.com/arendst/Tasmota/issues/18774)
+- Berry `string.format()` now automatically converts type according to format [#18890](https://github.com/arendst/Tasmota/issues/18890)
+- Berry add global function `format` as a simpler syntax to `string.format` [#18925](https://github.com/arendst/Tasmota/issues/18925)
+- HASPmota `meta` attribute and improved `berry_run` [#18685](https://github.com/arendst/Tasmota/issues/18685)
+- Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
+- Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
+- Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
+- Matter support for Shutters with Tilt [#18509](https://github.com/arendst/Tasmota/issues/18509)
+- Matter support for async HTTP used for bridged devices and remote relays [#18656](https://github.com/arendst/Tasmota/issues/18656)
+- Matter bridge for ESP8266 remote endpoints (experimental) [#18734](https://github.com/arendst/Tasmota/issues/18734)
+- Matter support for Occupancy via Switch (experimental) [#18742](https://github.com/arendst/Tasmota/issues/18742)
+- Matter ability to add or remove endpoint in bridge mode (code only) [#18790](https://github.com/arendst/Tasmota/issues/18790)
+- Matter add controller's Vendor Name to logs and UI [#18794](https://github.com/arendst/Tasmota/issues/18794)
+- Matter redesigned UI [#18855](https://github.com/arendst/Tasmota/issues/18855)
+- Matter add support for Contact Sensor [#18882](https://github.com/arendst/Tasmota/issues/18882)
+- Matter add friendly-name (NodeLabel) to each endpoint [#18897](https://github.com/arendst/Tasmota/issues/18897)
 
 ### Breaking Changed
-- Shelly Pro 4PM using standard MCP23xxx driver and needs one time Auto-Configuration
+- Change command ``FileUpload`` index binary data detection from >199 to >299
+- Matter relay number starts at 1 instead of 0 to match Tasmota numbering
 
 ### Changed
-- ESP32 Framework (Core) from v2.0.6 to v2.0.7
-- ESP32 LVGL library from v8.3.3 to v8.3.6 (no functional change)
-- LibTeleinfo from v1.1.3 to v1.1.5 [#18050](https://github.com/arendst/Tasmota/issues/18050)
-- Increase number of (virtual)relays and (virtual)buttons to 32
-- ADC Range oversample from 2 to 32 [#17975](https://github.com/arendst/Tasmota/issues/17975)
-- Move #define OTA_URL from user_config.h to board files for better inital support [#18008](https://github.com/arendst/Tasmota/issues/18008)
-- Removed absolute url from filesystem [#18148](https://github.com/arendst/Tasmota/issues/18148)
+- AdafruitFingerprint library from v2.0.4 to v2.1.0
+- IRremoteESP8266 library from v2.8.4 to v2.8.5
+- ESP32 Framework (Core) from v2.0.7 to v2.0.10
+- InfluxDb resolves DNS name before request [#18015](https://github.com/arendst/Tasmota/issues/18015)
+- Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
+- Energy power delta report delayed by two seconds allowing hardware to stabilize [#17751](https://github.com/arendst/Tasmota/issues/17751)
+- Shutter sliders in WEBGUI automatically appear and disappear during configuration and update during movement [#18701](https://github.com/arendst/Tasmota/issues/18701)
+- Berry `webclient.url_encode()` is now a static class method, no change required to existing code [#18775](https://github.com/arendst/Tasmota/issues/18775)
 
 ### Fixed
-- TuyaMcu v1 sequence fix [#17625](https://github.com/arendst/Tasmota/issues/17625)
-- SEN5X floats and units [#17961](https://github.com/arendst/Tasmota/issues/17961)
-- Energytotals cannot be set to negative values [#17965](https://github.com/arendst/Tasmota/issues/17965)
-- SR04 driver single pin ultrasonic sensor detection [#17966](https://github.com/arendst/Tasmota/issues/17966)
-- IR panasonic protocol regression from v12.0.2.4 [#18013](https://github.com/arendst/Tasmota/issues/18013)
-- EnergyTotal divided twice during minimal upgrade step regression from v12.3.1.3 [#18024](https://github.com/arendst/Tasmota/issues/18024)
-- TuyaMcu v1 timer integer overflow [#18048](https://github.com/arendst/Tasmota/issues/18048)
-- PZEM energy monitor stabilize period on larger configs [#18103](https://github.com/arendst/Tasmota/issues/18103)
-- Rule topic comparison [#18144](https://github.com/arendst/Tasmota/issues/18144)
-- Refactor energy monitoring reducing stack usage and solve inherent exceptions and watchdogs [#18164](https://github.com/arendst/Tasmota/issues/18164)
-- ESP32 ``Upload``, ``Upgrade``, ``WebGetConfig``, ``WebQuery`` and ``WebSend`` random HTTP(S) connection timeout set to 5 sec (commit 542eca3)
-- ESP32 energy period shows kWh value instead of Wh regression from v12.3.1.5 [#15856](https://github.com/arendst/Tasmota/issues/15856)
-- ESP32 energy monitoring set StartTotalTime regression from v12.3.1.5 [#18385](https://github.com/arendst/Tasmota/issues/18385)
+- ESP8266 no update on Energy Export Active regression from v12.3.1.3
+- NovaSDS GUI values [#18444](https://github.com/arendst/Tasmota/issues/18444)
+- LED PWM ac_dimmer curve was wrongly applied instead of Gamma regression from v12.2.0.5 [#18666](https://github.com/arendst/Tasmota/issues/18666)
+- Shutter bootloop using more than 4 shutters [#18673](https://github.com/arendst/Tasmota/issues/18673)
+- Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant [#18701](https://github.com/arendst/Tasmota/issues/18701)
+- Interaction of ``SetOption92``, ``VirtualCT``, and ``RGBWWTable`` [#18768](https://github.com/arendst/Tasmota/issues/18768)
+- Freeze BMP readings before deepsleep [#18720](https://github.com/arendst/Tasmota/issues/18720)
+- NeoPool NPFiltration switch result [#18871](https://github.com/arendst/Tasmota/issues/18871)
+- ESP32 Partition_Manager.tapp
+- ESP32 InfluxDb initial connection delays using HTTPClient [#18015](https://github.com/arendst/Tasmota/issues/18015)
+- ESP32 AIThinker webcam issues [#18652](https://github.com/arendst/Tasmota/issues/18652)
+- ESP32 SPI initialization for MFRC522 [#18711](https://github.com/arendst/Tasmota/issues/18711)
+- ESP32 Neopixel busy time adjustment [#18723](https://github.com/arendst/Tasmota/issues/18723)
+- HASPmota event when value is non-integer [#18229](https://github.com/arendst/Tasmota/issues/18229)
+- Berry a rare condition when a GC causes a memory corruption
+- Berry rules for string comparisons [#18464](https://github.com/arendst/Tasmota/issues/18464)
+- Berry parser error with upvals in closures [#18902](https://github.com/arendst/Tasmota/issues/18902)
+- Zigbee attributes handling in Berry mapping [#18747](https://github.com/arendst/Tasmota/issues/18747)
+- Zigbee regression with ``SetOption101`` [#18884](https://github.com/arendst/Tasmota/issues/18884)
+- Matter fabric provisioning from CASE session for iOS 16.5 [#18709](https://github.com/arendst/Tasmota/issues/18709)

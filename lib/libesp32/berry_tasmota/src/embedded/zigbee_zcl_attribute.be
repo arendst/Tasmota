@@ -46,7 +46,7 @@ class zcl_attribute : zcl_attribute_ntv
     elif k == "key"
       return self._get_key()
     else
-      return super(self).member(k)
+      return super(self).member(k)      # natural mapping
     end
   end
 
@@ -103,7 +103,6 @@ class zcl_attribute : zcl_attribute_ntv
   end
 
   def key_tostring()
-    import string
     var s = "<undefined>"
 
     var key = self.key
@@ -113,12 +112,12 @@ class zcl_attribute : zcl_attribute_ntv
         s += str(self.key_suffix)
       end
     elif (self.cluster != nil) && (self.attr_id != nil)
-      s = string.format("%04X/%04X", self.cluster, self.attr_id)
+      s = format("%04X/%04X", self.cluster, self.attr_id)
       if self.key_suffix > 1
         s += "+" + str(self.key_suffix)
       end
     elif (self.cluster != nil) && (self.cmd != nil) && (self.direction != nil)
-      s = string.format("%04X%s%02X", self.cluster, self.direction ? "?" : "!" ,self.cmd)
+      s = format("%04X%s%02X", self.cluster, self.direction ? "?" : "!" ,self.cmd)
       if self.key_suffix > 1
         s += "+" + str(self.key_suffix)
       end
@@ -130,7 +129,6 @@ class zcl_attribute : zcl_attribute_ntv
   def tostring()
     import introspect
     import json
-    import string
 
     var s = json.dump(self.key_tostring())
     s += ":"
@@ -142,8 +140,8 @@ class zcl_attribute : zcl_attribute_ntv
 
     if (self.cluster != nil) && (self.attr_id != nil) && (self.key != nil)
       # we have an alias
-      var key_alias = string.format("(%s)", self.key_tostring())
-      s += string.format(',%s:"%04X/%04X"', json.dump(key_alias), self.cluster, self.attr_id)
+      var key_alias = format("(%s)", self.key_tostring())
+      s += format(',%s:"%04X/%04X"', json.dump(key_alias), self.cluster, self.attr_id)
     end
 
     return s
@@ -200,7 +198,6 @@ class zcl_attribute_list : zcl_attribute_list_ntv
   end
 
   def tostring()
-    import string
     import json
 
     var items = []
@@ -208,11 +205,11 @@ class zcl_attribute_list : zcl_attribute_list_ntv
 
     # shortaddr
     if self.shortaddr != nil
-      items.push(string.format('"Device":"0x%04X"', self.shortaddr))
+      items.push(format('"Device":"0x%04X"', self.shortaddr))
     end
     # groupaddr
     if self.groupaddr != nil
-      items.push(string.format('"Group":"0x%04X"', self.groupaddr))
+      items.push(format('"Group":"0x%04X"', self.groupaddr))
     end
 
     # attributes
@@ -226,18 +223,18 @@ class zcl_attribute_list : zcl_attribute_list_ntv
 
     # Endpoint
     if self.src_ep != nil
-      items.push(string.format('"Endpoint":%i', self.src_ep))
+      items.push(format('"Endpoint":%i', self.src_ep))
     end
 
     # LQI
     if self.lqi != nil
-      items.push(string.format('"LinkQuality":%i', self.lqi))
+      items.push(format('"LinkQuality":%i', self.lqi))
     end
 
     var s = "{" + items.concat(",") + "}"
     return s
 
-    # return string.format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
+    # return format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
   end
 end
 
@@ -266,7 +263,6 @@ class zcl_attributes
   end
 
   def tostring()
-    import string
     import json
 
     var items = []
@@ -274,11 +270,11 @@ class zcl_attributes
 
     # shortaddr
     if self.shortaddr != nil
-      items.push(string.format('"Device":"0x%04X"', self.shortaddr))
+      items.push(format('"Device":"0x%04X"', self.shortaddr))
     end
     # groupaddr
     if self.shortaddr != nil
-      items.push(string.format('"Group":"0x%04X"', self.groupaddr))
+      items.push(format('"Group":"0x%04X"', self.groupaddr))
     end
 
     # attributes
@@ -288,18 +284,18 @@ class zcl_attributes
 
     # Endpoint
     if self.src_ep != nil
-      items.push(string.format('"Endpoint":%i', self.src_ep))
+      items.push(format('"Endpoint":%i', self.src_ep))
     end
 
     # Endpoint
     if self.lqi != nil
-      items.push(string.format('"LinkQuality":%i', self.lqi))
+      items.push(format('"LinkQuality":%i', self.lqi))
     end
 
     var s = "{" + items.concat(",") + "}"
     return s
 
-    # return string.format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
+    # return format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
   end
 
 end

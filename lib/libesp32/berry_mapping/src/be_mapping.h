@@ -88,6 +88,7 @@ extern "C" {
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 
+extern void be_map_insert_nil(bvm *vm, const char *key);
 extern void be_map_insert_int(bvm *vm, const char *key, bint value);
 extern void be_map_insert_bool(bvm *vm, const char *key, bbool value);
 extern void be_map_insert_real(bvm *vm, const char *key, breal value);

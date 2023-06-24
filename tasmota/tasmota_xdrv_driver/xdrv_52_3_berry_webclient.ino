@@ -153,12 +153,12 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  // wc.url_encode(string) -> string
+  // wc.url_encode(string) -> string  (static method)
   int32_t wc_urlencode(struct bvm *vm);
   int32_t wc_urlencode(struct bvm *vm) {
     int32_t argc = be_top(vm);
-    if (argc >= 2 && be_isstring(vm, 2)) {
-      const char * s = be_tostring(vm, 2);
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * s = be_tostring(vm, 1);
       String url = wc_UrlEncode(String(s));
       be_pushstring(vm, url.c_str());
       be_return(vm);  /* return self */
@@ -651,6 +651,98 @@ extern "C" {
       be_return(vm);  /* return code */
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+
+// a stream which writes to the Bytes object on the top of the stack
+class StreamBeBytesWriter: public Stream
+{
+public:
+  StreamBeBytesWriter(bvm *vm_in, int increment = 1024) : vm(vm_in), offset(0), incr(increment) {};
+
+  size_t write(const uint8_t *buffer, size_t size) override {
+    // we need size, not len, so can;t just get len with be_tobytes
+    be_getmember(vm, -1, ".size");
+    int32_t signed_size = be_toint(vm, -1);
+    be_pop(vm, 1);  /* bytes() instance is at top */
+
+    // if it won't fit, make the bytes object bigger
+    if (offset + size > signed_size){
+      int newsize = offset + size + incr;
+      AddLog(LOG_LEVEL_INFO, "BE: realloc bytes in StreamBeBytesWriter newsize=%i", newsize);
+      be_getmember(vm, -1, "resize");
+      be_pushvalue(vm, -2);
+      be_pushint(vm, size);
+      be_call(vm, 2); /* call b.resize(size) */
+      be_pop(vm, 3);  /* bytes() instance is at top */      
+
+      // checkw e got it, because Berry just maxes out?
+      be_getmember(vm, -1, ".size");
+      signed_size = be_toint(vm, -1);
+      be_pop(vm, 1);  /* bytes() instance is at top */
+      if (offset + size > signed_size){
+        // what should we raise here???
+        be_raise(vm, "alloc_error", "did not get enough extra bytes");
+      }
+    }
+
+    // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
+    if (offset + size > signed_size){
+      AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer overrun");
+      return size;
+    }
+
+    char *bytebuf = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internam buffer of size 'size' */
+    if (!bytebuf){
+      AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer null??");
+      return size;
+    }
+
+    // stream in our chunk
+    memcpy(bytebuf + offset, buffer, size);
+    offset += size;
+
+    // set the len
+    be_pushint(vm, offset);
+    be_setmember(vm, -2, ".len");
+    be_pop(vm, 1);
+    return size;
+  }
+  size_t write(uint8_t data) override {
+    write(&data, 1);
+    return 1;
+  }
+
+  int available() override { return 0; }
+  int read() override { return -1; }
+  int peek() override { return -1; }
+  void flush() override { }
+
+protected:
+  bvm *vm;                // the berry VM
+  uint32_t offset;       // how many bytes have already been written
+  size_t incr;           // amount to add to size if it does not fit.
+};
+
+extern "C" {
+  int32_t wc_getbytes(struct bvm *vm);
+  int32_t wc_getbytes(struct bvm *vm) {
+    HTTPClientLight * cl = wc_getclient(vm);
+    int32_t sz = cl->getSize();
+    // abort if we exceed 32KB size, things will not go well otherwise
+    if (sz >= 32767) {
+      be_raise(vm, "value_error", "response size too big (>32KB)");
+    }
+    // default to 1K starter if contetn-length not present
+    if (sz < 0) sz = 1024;
+    // create a bytes object at top of stack.
+    // the streamwriter knows how to get it. 
+    uint8_t * buf = (uint8_t*) be_pushbytes(vm, nullptr, sz);
+    StreamBeBytesWriter memory_writer(vm);
+    int32_t written = cl->writeToStream(&memory_writer);
+    cl->end();  // free allocated memory ~16KB
+    be_return(vm);  /* return code */
   }
 }
 

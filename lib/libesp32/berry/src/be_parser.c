@@ -228,9 +228,11 @@ static void end_block(bparser *parser)
    `stdin` or the name of the current function */
 static bstring* parser_source(bparser *parser)
 {
+#if BE_DEBUG_SOURCE_FILE
     if (parser->finfo) {
         return parser->finfo->proto->source;
     }
+#endif
     return be_newstr(parser->vm, parser->lexer.fname);
 }
 
@@ -250,7 +252,9 @@ static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
     be_vector_init(vm, &finfo->pvec, sizeof(bproto*)); /* vector for subprotos */
     proto->ptab = be_vector_data(&finfo->pvec);
     proto->nproto = be_vector_capacity(&finfo->pvec);
+#if BE_DEBUG_SOURCE_FILE
     proto->source = parser_source(parser); /* keep a copy of source for function */
+#endif
     finfo->local = be_list_new(vm); /* list for local variables */
     var_setlist(vm->top, finfo->local); /* push list of local variables on the stack (avoid gc) */
     be_stackpush(vm);
@@ -964,9 +968,10 @@ static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
     bbool is_suffix = l->type == ETINDEX || l->type == ETMEMBER;   /* is suffix */
     bbool is_suffix_reg = l->v.ss.tt == ETREG || l->v.ss.tt == ETLOCAL || l->v.ss.tt == ETGLOBAL || l->v.ss.tt == ETNGLOBAL;   /* if suffix, does it need a register */
     bbool is_global = l->type == ETGLOBAL || l->type == ETNGLOBAL;
+    bbool is_upval = l->type == ETUPVAL;
     /* in the suffix expression, if the object is a temporary
      * variable (l->v.ss.tt == ETREG), it needs to be cached. */
-    if (is_global || (is_suffix && is_suffix_reg)) {
+    if (is_global || is_upval || (is_suffix && is_suffix_reg)) {
         be_code_allocregs(finfo, 1);
     }
 }

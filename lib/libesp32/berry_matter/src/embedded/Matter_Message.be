@@ -229,7 +229,6 @@ class Matter_Frame
   # Generate a Standalone Acknowledgment
   # Uses `PROTOCOL_ID_SECURE_CHANNEL` no ecnryption required
   def build_standalone_ack(reliable)
-    import string
     # send back response
     var resp = classof(self)(self.message_handler)
 
@@ -263,7 +262,6 @@ class Matter_Frame
   #
   # if 'resp' is not nil, update frame
   def build_response(opcode, reliable, resp)
-    import string
     # send back response
     if resp == nil
       resp = classof(self)(self.message_handler)
@@ -301,8 +299,8 @@ class Matter_Frame
 
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
-      if !op_name   op_name = string.format("0x%02X", resp.opcode) end
-      tasmota.log(string.format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 2)
+      if !op_name   op_name = format("0x%02X", resp.opcode) end
+      tasmota.log(format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
     end
     return resp
   end
@@ -312,7 +310,6 @@ class Matter_Frame
  #
   # if 'resp' is not nil, update frame
   static def initiate_response(message_handler, session, opcode, reliable, resp)
-    import string
     # send back response
     if resp == nil
       resp = matter.Frame(message_handler)
@@ -364,7 +361,7 @@ class Matter_Frame
       var m = self.raw[4 .. self.payload_idx-1]
       var m_clear = crypto.AES_CTR(k).decrypt(m, n, 2)
       # replace in-place
-      self.raw = self.raw[0..3] + m_clear + m[self.self.payload_idx .. ]
+      self.raw = self.raw[0..3] + m_clear + m[self.payload_idx .. ]
     end
 
     # use AES_CCM
@@ -401,7 +398,7 @@ class Matter_Frame
     # tasmota.log("MTR: ******************************", 4)
 
     if tag != mic
-      tasmota.log("MTR: rejected packet due to invalid MIC", 2)
+      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
       return nil
     end
 
@@ -465,7 +462,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
+    # tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

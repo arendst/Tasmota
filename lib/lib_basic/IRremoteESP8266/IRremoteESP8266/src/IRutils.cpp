@@ -6,6 +6,7 @@
 #endif
 
 #define __STDC_LIMIT_MACROS
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 #include <algorithm>
@@ -173,6 +174,7 @@ bool hasACState(const decode_type_t protocol) {
     case AMCOR:
     case ARGO:
     case BOSCH144:
+    case CARRIER_AC84:
     case CARRIER_AC128:
     case CORONA_AC:
     case DAIKIN:
@@ -224,6 +226,7 @@ bool hasACState(const decode_type_t protocol) {
     case TROTEC_3550:
     case VOLTAS:
     case WHIRLPOOL_AC:
+    case YORK:
       return true;
     default:
       return false;
@@ -304,7 +307,7 @@ String resultToSourceCode(const decode_results * const results) {
   if (results->decode_type != UNKNOWN) {
     if (hasState) {
 #if DECODE_AC
-      uint16_t nbytes = results->bits / 8;
+      uint16_t nbytes = ceil(static_cast<float>(results->bits) / 8.0);
       output += F("uint8_t state[");
       output += uint64ToString(nbytes);
       output += F("] = {");
@@ -695,6 +698,13 @@ namespace irutils {
           default:                                    return kUnknownStr;
         }
         break;
+      case decode_type_t::ARGO:
+        switch (model) {
+          case argo_ac_remote_model_t::SAC_WREM2: return kArgoWrem2Str;
+          case argo_ac_remote_model_t::SAC_WREM3: return kArgoWrem3Str;
+          default:                                return kUnknownStr;
+        }
+        break;
       default: return kUnknownStr;
     }
   }
@@ -722,10 +732,12 @@ namespace irutils {
   /// @param[in] celsius Is the temp Celsius or Fahrenheit.
   ///  true is C, false is F
   /// @param[in] precomma Should the output string start with ", " or not?
+  /// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
   /// @return The resulting String.
   String addTempToString(const uint16_t degrees, const bool celsius,
-                         const bool precomma) {
-    String result = addIntToString(degrees, kTempStr, precomma);
+                         const bool precomma, const bool isSensorTemp) {
+    String result = addIntToString(degrees, (isSensorTemp)?
+                                   kSensorTempStr : kTempStr, precomma);
     result += celsius ? 'C' : 'F';
     return result;
   }
@@ -736,12 +748,14 @@ namespace irutils {
   /// @param[in] celsius Is the temp Celsius or Fahrenheit.
   ///  true is C, false is F
   /// @param[in] precomma Should the output string start with ", " or not?
+  /// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
   /// @return The resulting String.
   String addTempFloatToString(const float degrees, const bool celsius,
-                              const bool precomma) {
+                              const bool precomma, const bool isSensorTemp) {
     String result = "";
-    result.reserve(14);  // Assuming ", Temp: XXX.5F" is the largest.
-    result += addIntToString(degrees, kTempStr, precomma);
+    result.reserve(21);  // Assuming ", Sensor Temp: XXX.5F" is the largest.
+    result += addIntToString(degrees, (isSensorTemp)?
+                             kSensorTempStr : kTempStr, precomma);
     // Is it a half degree?
     if (((uint16_t)(2 * degrees)) & 1) result += F(".5");
     result += celsius ? 'C' : 'F';
@@ -788,43 +802,57 @@ namespace irutils {
     result.reserve(19);  // ", Day: N (UNKNOWN)"
     result += addIntToString(day_of_week, kDayStr, precomma);
     result += kSpaceLBraceStr;
+    result += dayToString(day_of_week, offset);
+    return result + ')';
+  }
+
+  /// Create a String of the 3-letter day of the week from a numerical day of
+  /// the week. e.g. "Mon"
+  /// @param[in] day_of_week A numerical version of the sequential day of the
+  ///  week. e.g. Sunday = 1, Monday = 2, ..., Saturday = 7
+  /// @param[in] offset Days to offset by.
+  ///  e.g. For different day starting the week.
+  /// @return The resulting String.
+  String dayToString(const uint8_t day_of_week, const int8_t offset) {
     if ((uint8_t)(day_of_week + offset) < 7)
 #if UNIT_TEST
-      result += String(kThreeLetterDayOfWeekStr).substr(
-          (day_of_week + offset) * 3, 3);
+      return String(kThreeLetterDayOfWeekStr).substr(
+        (day_of_week + offset) * 3, 3);
 #else  // UNIT_TEST
-      result += String(kThreeLetterDayOfWeekStr).substring(
-          (day_of_week + offset) * 3, (day_of_week + offset) * 3 + 3);
+      return String(kThreeLetterDayOfWeekStr).substring(
+        (day_of_week + offset) * 3, (day_of_week + offset) * 3 + 3);
 #endif  // UNIT_TEST
     else
-      result += kUnknownStr;
-    return result + ')';
+      return kUnknownStr;
   }
 
   /// Create a String of human output for the given fan speed.
   /// e.g. "Fan: 0 (Auto)"
   /// @param[in] speed The numeric speed of the fan to display.
-  /// @param[in] high The numeric value for High speed.
+  /// @param[in] high The numeric value for High speed. (second highest)
   /// @param[in] low The numeric value for Low speed.
   /// @param[in] automatic The numeric value for Auto speed.
   /// @param[in] quiet The numeric value for Quiet speed.
   /// @param[in] medium The numeric value for Medium speed.
   /// @param[in] maximum The numeric value for Highest speed. (if > high)
+  /// @param[in] medium_high The numeric value for third-highest speed.
+  ///                        (if > medium)
   /// @return The resulting String.
   String addFanToString(const uint8_t speed, const uint8_t high,
                         const uint8_t low, const uint8_t automatic,
                         const uint8_t quiet, const uint8_t medium,
-                        const uint8_t maximum) {
+                        const uint8_t maximum, const uint8_t medium_high) {
     String result = "";
     result.reserve(21);  // ", Fan: NNN (UNKNOWN)"
     result += addIntToString(speed, kFanStr);
     result += kSpaceLBraceStr;
-    if (speed == high)           result += kHighStr;
-    else if (speed == low)       result += kLowStr;
-    else if (speed == automatic) result += kAutoStr;
-    else if (speed == quiet)     result += kQuietStr;
-    else if (speed == medium)    result += kMediumStr;
-    else if (speed == maximum)   result += kMaximumStr;
+    if (speed == high)              result += kHighStr;
+    else if (speed == low)          result += kLowStr;
+    else if (speed == automatic)    result += kAutoStr;
+    else if (speed == quiet)        result += kQuietStr;
+    else if (speed == medium)       result += kMediumStr;
+    else if (speed == maximum)      result += kMaximumStr;
+    else if (speed == medium_high)  result += kMedHighStr;
     else
       result += kUnknownStr;
     return result + ')';
@@ -948,6 +976,106 @@ namespace irutils {
       result += kUnknownStr;
     }
     return result + ')';
+  }
+
+  /// @brief Create a String of human output for the given timer setting.
+  ///        e.g. "Timer Mode: 2 (Schedule 1)"
+  /// @param[in] timerMode The numeric value of the timer mode to display.
+  /// @param[in] noTimer The numeric value for no timer (off)
+  /// @param[in] delayTimer The numeric value for delay (sleep) timer
+  /// @param[in] schedule1 The numeric value for schedule timer #1
+  /// @param[in] schedule2 The numeric value for schedule timer #2
+  /// @param[in] schedule3 The numeric value for schedule timer #3
+  /// @param[in] precomma Should the output string start with ", " or not?
+  /// @return String representation
+  String addTimerModeToString(const uint8_t timerMode, const uint8_t noTimer,
+                              const uint8_t delayTimer, const uint8_t schedule1,
+                              const uint8_t schedule2, const uint8_t schedule3,
+                              const bool precomma) {
+    String result = "";
+    result.reserve(28);  // ", Timer Mode: 2 (Schedule 1)"
+    result += addIntToString(timerMode, kTimerModeStr, precomma);
+    result += kSpaceLBraceStr;
+    if (timerMode == noTimer) {
+      result += kOffStr;
+    } else if (timerMode == delayTimer) {
+      result += kSleepTimerStr;
+    } else if (timerMode == schedule1) {
+      result += kScheduleStr;
+      result += '1';
+    } else if (timerMode == schedule2) {
+      result += kScheduleStr;
+      result += '2';
+    } else if (timerMode == schedule3) {
+      result += kScheduleStr;
+      result += '3';
+    } else {
+      result += kUnknownStr;
+    }
+    return result + ')';
+  }
+
+  /// @brief Create a String of human output for the given channel
+  ///        e.g. "[CH#0]"
+  /// @param channel The numeric value of the channel to display.
+  /// @return String representation
+  String channelToString(const uint8_t channel) {
+    String result = "";
+    result.reserve(6);  // "[CH#4]"
+    result += "[";
+    result += kChStr;
+    result += uint64ToString(channel);
+    result += "]";
+    return result;
+  }
+
+  /// @brief Create a String of human output for the given command type
+  ///        e.g. "IFeel Report"
+  /// @param irCommandType  The numeric value of the command type to display.
+  /// @param acControlCmd The numeric value of the "control" (default) command
+  /// @param iFeelReportCmd The numeric value of the sensor temperature command
+  /// @param timerCmd The numeric value of the timer config IR command
+  /// @param configCmd The numeric value of the config param set IR command
+  /// @return String representation
+  String irCommandTypeToString(uint8_t irCommandType, uint8_t acControlCmd,
+                               uint8_t iFeelReportCmd, uint8_t timerCmd,
+                               uint8_t configCmd) {
+    String result = "";
+    result.reserve(12);  // "IFeel Report"
+    if (irCommandType == acControlCmd) {
+      result += kCommandStr;
+    } else if (irCommandType == iFeelReportCmd) {
+      result += kIFeelReportStr;
+    } else if (irCommandType == timerCmd) {
+      result += kTimerStr;
+    } else if (irCommandType == configCmd) {
+      result += kConfigCommandStr;
+    } else {
+      result += kUnknownStr;
+    }
+    return result;
+  }
+
+  /// @brief Create a String of the 3-letter day of the week bitmap
+  //         e.g. 0b0000101 is "Sun | Tue"
+  /// @param[in] daysBitmap The bitmap representing days of week to represent
+  ///   e.g bit[0]=Sunday, bit[1]=Monday, ...
+  /// @param[in] offset Days to offset by.
+  ///  e.g. For different day starting the week.
+  /// @return String representation.
+  String daysBitmaskToString(uint8_t daysBitmap, uint8_t offset) {
+    String result = "";
+    result.reserve(27);  // Sun|Mon|Tue|Wed|Thu|Fri|Sat
+
+    for (uint8_t i = 0; i < 7; ++i) {
+      if (((daysBitmap >> i) & 0b1) == 0b1) {
+        if (result.length() > 0) {
+          result += "|";
+        }
+        result += irutils::dayToString(i, offset);
+      }
+    }
+    return result;
   }
 
   /// Escape any special HTML (unsafe) characters in a string. e.g. anti-XSS.

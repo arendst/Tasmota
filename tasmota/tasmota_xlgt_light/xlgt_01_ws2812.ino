@@ -33,15 +33,13 @@
  *  6 (11)       yes     no         no          Rainbow
  *  7 (12)       yes     no         no          Fire
  *  8 (13)       yes     no         no          Stairs
+ *  9 (14)       yes     no         no          Clear (= Berry)
+ * 10 (15)       yes     no         no          Optional DDP
 \*********************************************************************************************/
 
 #define XLGT_01             1
 
-#ifdef USE_NETWORK_LIGHT_SCHEMES
 const uint8_t WS2812_SCHEMES = 10;      // Number of WS2812 schemes
-#else
-const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
-#endif
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
@@ -172,11 +170,7 @@ WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,2
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
 WsColor kStairs[2] = { 0,0,0, 255,255,255 };
 
-#ifdef USE_NETWORK_LIGHT_SCHEMES
-ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock scheme and DDP scheme
-#else
-ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
-#endif
+ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock and clear scheme
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,
@@ -212,6 +206,16 @@ long wsmap(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+void Ws2812LibStripShow(void) {
+  strip->Show();
+
+#if defined(USE_WS2812_DMA) || defined(USE_WS2812_RMT) || defined(USE_WS2812_I2S)
+  // Wait for DMA/RMT/I2S to complete fixes distortion due to analogRead
+//  delay((Settings->light_pixels >> 6) +1);  // 256 / 64 = 4 +1 = 5
+  SystemBusyDelay( (Settings->light_pixels + 31) >> 5);  // (256 + 32) / 32 = 8
+#endif
+}
+
 void Ws2812StripShow(void)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
@@ -232,7 +236,7 @@ void Ws2812StripShow(void)
       strip->SetPixelColor(i, c);
     }
   }
-  strip->Show();
+  Ws2812LibStripShow();
 }
 
 int mod(int a, int b)
@@ -544,12 +548,12 @@ void Ws2812DDP(void)
     Ws2812StripShow();
   }
 }
-#endif
+#endif  // USE_NETWORK_LIGHT_SCHEMES
 
 void Ws2812Clear(void)
 {
   strip->ClearTo(0);
-  strip->Show();
+  Ws2812LibStripShow();
   Ws2812.show_next = 1;
 }
 
@@ -575,7 +579,7 @@ void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   }
 
   if (!Ws2812.suspend_update) {
-    strip->Show();
+    Ws2812LibStripShow();
     Ws2812.show_next = 1;
   }
 }
@@ -616,7 +620,7 @@ void Ws2812ForceSuspend (void)
 void Ws2812ForceUpdate (void)
 {
   Ws2812.suspend_update = false;
-  strip->Show();
+  Ws2812LibStripShow();
   Ws2812.show_next = 1;
 }
 
@@ -634,9 +638,9 @@ bool Ws2812SetChannels(void)
 void Ws2812ShowScheme(void)
 {
   uint32_t scheme = Settings->light_scheme - Ws2812.scheme_offset;
-  
+
 #ifdef USE_NETWORK_LIGHT_SCHEMES
-  if ((scheme != 9) && (ddp_udp_up)) {
+  if ((scheme != 10) && (ddp_udp_up)) {
     ddp_udp.stop();
     ddp_udp_up = 0;
     AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: WS2812 Scheme not DDP");
@@ -649,11 +653,16 @@ void Ws2812ShowScheme(void)
         Ws2812.show_next = 0;
       }
       break;
+    case 9:  // Clear
+      if (Settings->light_scheme != Light.last_scheme) {
+        Ws2812Clear();
+      }
+      break;
 #ifdef USE_NETWORK_LIGHT_SCHEMES
-    case 9:
+    case 10:
       Ws2812DDP();
       break;
-#endif
+#endif  // USE_NETWORK_LIGHT_SCHEMES
     default:
 			if(Settings->light_step_pixels > 0){
 				Ws2812Steps(scheme -1);
@@ -702,6 +711,10 @@ void Ws2812ModuleSelected(void)
   if (Ws2812ReinitStrip()) {
     Ws2812.scheme_offset = Light.max_scheme +1;
     Light.max_scheme += WS2812_SCHEMES;
+
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    Light.max_scheme++;
+#endif
 
 #if (USE_WS2812_CTYPE > NEO_3LED)
     TasmotaGlobal.light_type = LT_RGBW;
@@ -797,7 +810,7 @@ size_t Ws2812StripGetPixelSize(void) {
 // return true if strip was dirty and an actual refresh was triggered
 bool Ws2812StripRefresh(void) {
   if (strip->IsDirty()) {
-    strip->Show();
+    Ws2812LibStripShow();
     return true;
   } else {
     return false;

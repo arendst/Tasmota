@@ -108,7 +108,6 @@ public:
   }
 
   #ifdef ESP32
-  #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(2, 0, 5)
   bool seekDir(long position){
     return false;
     // ignore
@@ -118,7 +117,11 @@ public:
     return "";
     // ignore
   }
-  #endif
+  String getNextFileName(bool *isDir)
+  {
+    return "";
+    // ignore
+    }
   #endif // ESP32
 
   const char* name() const {

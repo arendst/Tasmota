@@ -317,6 +317,8 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 3 = 8 samples
   // factor 4 = 16 samples
   // factor 5 = 32 samples
+  SystemBusyDelayExecute();
+
   uint32_t samples = 1 << factor;
   uint32_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {

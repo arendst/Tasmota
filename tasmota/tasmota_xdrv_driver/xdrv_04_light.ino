@@ -50,7 +50,8 @@
  * 10            yes     no         no          Kwanzaa
  * 11            yes     no         no          Rainbow
  * 12            yes     no         no          Fire
- *
+ * 13            yes     no         no          Stairs
+ * 14            yes     no         no          Clear (= Berry)
 \*********************************************************************************************/
 
 /*********************************************************************************************\
@@ -235,6 +236,7 @@ struct LIGHT {
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer, used by sm16716 to drive itself RGB, and PWM for CCT (value is 0 or 3)
   uint8_t max_scheme = LS_MAX -1;
+  uint8_t last_scheme;
 
   uint32_t wakeup_start_time = 0;
 
@@ -245,7 +247,7 @@ struct LIGHT {
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
 #ifdef USE_DEVICE_GROUPS
-  uint8_t  last_scheme = 0;
+  uint8_t  last_dgr_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
 #ifdef USE_DGR_LIGHT_SEQUENCE
   uint8_t  sequence_offset = 0;            // number of channel changes this light is behind the master
@@ -1866,16 +1868,18 @@ void LightAnimate(void)
         break;
 #endif
       default:
-          XlgtCall(FUNC_SET_SCHEME);
+        XlgtCall(FUNC_SET_SCHEME);
     }
 
 #ifdef USE_DEVICE_GROUPS
-    if (Settings->light_scheme != Light.last_scheme) {
-      Light.last_scheme = Settings->light_scheme;
+    if (Settings->light_scheme != Light.last_dgr_scheme) {
+      Light.last_dgr_scheme = Settings->light_scheme;
       SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings->light_scheme);
       Light.devgrp_no_channels_out = false;
     }
 #endif  // USE_DEVICE_GROUPS
+
+    Light.last_scheme = Settings->light_scheme;
   }
 
   if ((Settings->light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
@@ -1907,19 +1911,12 @@ void LightAnimate(void)
         cur_col_10[i] = change8to10(Light.new_color[i]);
       }
 
-      bool rgbwwtable_applied_white = false;      // did we already applied RGBWWTable to white channels (ex: in white_blend_mode or virtual_ct)
       if (Light.pwm_multi_channels) {
         calcGammaMultiChannels(cur_col_10);
       } else {
         // AddLog(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs In  %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
-        rgbwwtable_applied_white = calcGammaBulbs(cur_col_10);     // true means that one PWM channel is used for CT
+        calcGammaBulbs(cur_col_10);
         // AddLog(LOG_LEVEL_INFO, PSTR(">>> calcGammaBulbs Out %03X,%03X,%03X,%03X,%03X"), cur_col_10[0], cur_col_10[1], cur_col_10[2], cur_col_10[3], cur_col_10[4]);
-      }
-
-      // Apply RGBWWTable only if not Settings->flag4.white_blend_mode
-      for (uint32_t i = 0; i < (rgbwwtable_applied_white ? 3 : Light.subtype); i++) {
-        uint32_t adjust = change8to10(Settings->rgbwwTable[i]);
-        cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
       }
 
       // final adjusments for PMW ranges, post-gamma correction
@@ -2187,15 +2184,13 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (i != channel_ct) {   // if CT don't use pwm_min and pwm_max
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
-        if (!Settings->flag4.zerocross_dimmer) {
 #ifdef ESP32
-          TasmotaGlobal.pwm_value[i] = ac_zero_cross_power(cur_col);   // mark the new expected value
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
+        TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
+        // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
 #else // ESP32
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - ac_zero_cross_power(cur_col) : ac_zero_cross_power(cur_col));
-          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+        analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+        // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
 #endif // ESP32
-        }
       }
     }
 #ifdef ESP32
@@ -2318,9 +2313,8 @@ void calcGammaBulb5Channels_8(uint8_t in8[LST_MAX], uint16_t col10[LST_MAX]) {
   calcGammaBulb5Channels(col10, nullptr, nullptr);
 }
 
-bool calcGammaBulbs(uint16_t cur_col_10[5]) {
+void calcGammaBulbs(uint16_t cur_col_10[5]) {
   bool rgbwwtable_applied_white = false;
-  bool pwm_ct = false;
   bool white_free_cw = false;         // true if White channels are uncorrelated. Happens when CW+WW>255, i.e. manually setting white channels to exceed to total power of a single channel (may harm the power supply)
   // Various values needed for accurate White calculation
   // CT value streteched to 0..1023 (from within CT range, so not necessarily from 153 to 500). 0=Cold, 1023=Warm
@@ -2338,24 +2332,7 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
     calcGammaBulbCW(cur_col_10, &white_bri10, &white_free_cw);
   }
 
-  // Now we know ct_10 and white_bri10 (gamma corrected if needed)
-
-  if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
-#ifdef ESP8266
-    if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#else
-    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
-#endif  // ESP8266
-      pwm_ct = true;
-      // Xiaomi Philips bulbs follow a different scheme:
-      // channel 0=intensity, channel1=temperature
-      cur_col_10[cw0] = white_bri10;
-      cur_col_10[cw0+1] = ct_10;
-      return false;     // avoid any interference
-    }
-  }
-
-  // Now see if we need to mix RGB and  White
+  // Now see if we need to mix RGB and White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
   if ((LST_RGBW <= Light.subtype) && (Settings->flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
     uint32_t min_rgb_10 = min3(cur_col_10[0], cur_col_10[1], cur_col_10[2]);
@@ -2419,7 +2396,28 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
       cur_col_10[cw0] = white_bri10 - cur_col_10[cw0+1];
     }
   }
-  return rgbwwtable_applied_white;
+
+  // Apply RGBWWTable (RGB: always, CW: only if white_blend_mode is not engaged)
+  for (uint32_t i = 0; i < (rgbwwtable_applied_white ? 3 : Light.subtype); i++) {
+    uint32_t adjust = change8to10(Settings->rgbwwTable[i]);
+    cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
+  }
+
+  // Implement SO92: Some lights like Xiaomi Philips bulbs follow the scheme
+  // cw0=intensity, cw0+1=temperature
+  if (ChannelCT() >= 0) {
+    // Need to compute white_bri10 and ct_10 from cur_col_10[] for compatibility with VirtualCT
+    white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
+    ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
+    if (white_bri10 > 1023) {
+      // In white_free_cw mode, the combined brightness of cw and ww may be larger than 1023.
+      // This cannot be represented in pwm_ct_mode, so we set the maximum brightness instead.
+      white_bri10 = 1023;
+    }
+
+    cur_col_10[cw0] = white_bri10;
+    cur_col_10[cw0+1] = ct_10;
+  }
 }
 
 #ifdef USE_DEVICE_GROUPS
@@ -2487,7 +2485,7 @@ void LightHandleDevGroupItem(void)
       break;
     case DGR_ITEM_LIGHT_SCHEME:
       if (Settings->light_scheme != value) {
-        Light.last_scheme = Settings->light_scheme = value;
+        Light.last_dgr_scheme = Settings->light_scheme = value;
         Light.devgrp_no_channels_out = (value != 0);
         send_state = true;
       }
@@ -2860,7 +2858,7 @@ void CmndHsbColor(void)
 
 void CmndScheme(void)
 {
-  // Scheme 0..12  - Select one of schemes 0 to 12
+  // Scheme 0..14  - Select one of schemes 0 to 14
   // Scheme 2      - Select scheme 2
   // Scheme 2,0    - Select scheme 2 with color wheel set to 0 (HSB Red)
   // Scheme +      - Select next scheme

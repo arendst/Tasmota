@@ -88,3 +88,62 @@ assert(string.replace("hellollo", "aa", "xx") == "hellollo")
 assert(string.replace("hello", "ll", "") == "heo")
 assert(string.replace("hello", "", "xx") == "hello")
 assert(string.replace("hello", "", "") == "hello")
+
+# multi-line strings
+var s = "a" "b""c"
+assert(s == 'abc')
+
+s = 'a'"b"'''c'
+assert(s == 'abc')
+
+s = "a"
+'b'
+    ""
+    "c"
+assert(s == 'abc')
+
+s = "a" #- b -# "b"  #--# "c"
+assert(s == 'abc')
+
+s = "a"#
+    # "z"
+    "b"  # zz
+    "c"
+assert(s == 'abc')
+
+# string.format with automatic conversion
+import string
+
+assert(string.format("%i", 3) == '3')
+assert(string.format("%i", "3") == '3')
+assert(string.format("%i", "03") == '3')
+assert(string.format("%i", nil) == '')
+
+class A def toint() return 42 end end
+a=A()
+class B end
+b=B()
+
+assert(string.format("%i", a) == '42')
+assert(string.format("%i", b) == '')
+
+assert(string.format("%i", nil) == '')
+assert(string.format("%i", true) == '1')
+assert(string.format("%i", false) == '0')
+
+assert(string.format("%c", a) == '*')
+
+assert(string.format("%f", 3.5) == '3.500000')
+assert(string.format("%f", 3) == '3.000000')
+assert(string.format("%.1f", 3) == '3.0')
+assert(string.format("%.1f", nil) == '')
+assert(string.format("%.1f", true) == '')
+assert(string.format("%.1f", false) == '')
+assert(string.format("%.1f", a) == '')
+
+assert(string.format("%s", a) == '<instance: A()>')
+assert(string.format("%s", 0) == '0')
+assert(string.format("%s", nil) == 'nil')
+assert(string.format("%s", true) == 'true')
+assert(string.format("%s", false) == 'false')
+

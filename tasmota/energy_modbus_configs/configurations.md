@@ -44,4 +44,6 @@ SDM230             {"Name":"SDM230 with two user registers","Baud":2400,"Config"
 SDM630             {"Name":"SDM630","Baud":9600,"Config":"8N1","Address":1,"Function":4,"Voltage":[0,2,4],"Current":[6,8,10],"Power":[12,14,16],"ApparentPower":[18,20,22],"ReactivePower":[24,26,28],"Factor":[30,32,34],"Frequency":70,"Total":342,"ExportActive":[352,354,356],"User":{"R":[346,348,350],"J":"ImportActive","G":"Import Active","U":"kWh","D":24}}
 
 WE517              {"Name":"WE517","Baud":9600,"Config":"8E1","Address":1,"Function":3,"Voltage":[0xE,0x10,0x12],"Current":[0x16,0x18,0x1A],"Power":[0x1E,0x20,0x22],"ReactivePower":[0x26,0x28,0x2A],"Factor":[0x36,0x38,0x3A],"Frequency":0x14,"Total":0x100,"ExportActive":0x110,"User":[{"J":"ImportActive","G":"Import Active","R":0x108,"U":"kWh","D":24},{"J":"TotalPower","G":"Active Power Total","R":0x1C,"U":"W","D":23}]}
+
+Growatt 12KTL-3S (v3.x)  {"Name":"Growatt","Baud":"9600","Config":"8N1","Function":4,"Address":1,"Poll":1000,"Voltage":{"R":[3,7],"T":3,"F":-1}, "Power":{"R":11,"T":4,"F":-1},"Total":{"R":28,"T":4,"F":-1}, "User": [{"J":"IntTemp","R":32,"T":3,"F":-1, "G":"Internal temperature", "U": "C", "D":26}]}
 ```

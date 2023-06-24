@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 15.04.2023
+ * Updated until v9.4.0.1 - Last update 08.05.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -104,6 +104,7 @@
 #define D_FALLBACK_TOPIC       "Topic Riserva"
 #define D_FALSE                "Falso"
 #define D_FILE                 "File"
+#define D_FILE_SYSTEM_SIZE     "Dimensione file system"
 #define D_FLOW_RATE            "Flusso dati"
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE           "Frequenza fotogrammi"
@@ -800,6 +801,8 @@
 #define D_SENSOR_OUTPUT_LO              "Uscita - Lo"
 #define D_SENSOR_AS608_TX               "AS608 - TX"
 #define D_SENSOR_AS608_RX               "AS608 - RX"
+#define D_SENSOR_GM861_TX               "GM861 - TX"
+#define D_SENSOR_GM861_RX               "GM861 - RX"
 #define D_SENSOR_DDS2382_TX             "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX             "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX             "DDSU666 - TX"
@@ -917,6 +920,7 @@
 #define D_GPIO_DINGTIAN_SDI             "Dingtian - SDI"
 #define D_GPIO_DINGTIAN_Q7              "Dingtian - Q7"
 #define D_GPIO_DINGTIAN_PL              "Dingtian - PL"
+#define D_GPIO_DINGTIAN_OE              "Dingtian - OE"
 #define D_GPIO_DINGTIAN_RCK             "Dingtian - RCK"
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
@@ -1191,6 +1195,6 @@
 
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "Dose media radiazioni"
-#define D_UNIT_US_H                       "uSv/h"
+#define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_IT_IT_H_

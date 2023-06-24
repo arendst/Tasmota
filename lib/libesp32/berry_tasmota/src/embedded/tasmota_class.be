@@ -34,7 +34,7 @@ class Tasmota
     try
       import debug
       self._debug_present = true
-    except .. 
+    except ..
     end
     # declare `UrlFetch` command
     self.add_cmd('UrlFetch', def (cmd, idx, payload, payload_json) self.urlfetch_cmd(cmd, idx, payload, payload_json) end)
@@ -131,7 +131,7 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # save initial state (for reentrance)
     if self._rules || save_cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
-      
+
       self.cmd_res = nil                  # disable sunsequent recording of results
       var ret = false
 
@@ -241,7 +241,7 @@ class Tasmota
       end
     end
   end
-  
+
   # crontab style recurring events
   def add_cron(pattern,f,id)
     self.check_not_method(f)
@@ -336,9 +336,8 @@ class Tasmota
   end
 
   def time_str(time)
-    import string
     var tm = self.time_dump(time)
-    return string.format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
+    return format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
   end
 
   def load(f)
@@ -376,8 +375,7 @@ class Tasmota
         f.close()
       except .. as e
         if f != nil     f.close() end
-        import string
-        print(string.format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
+        print(format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
       end
       return nil
     end
@@ -399,8 +397,7 @@ class Tasmota
         var compiled = compile(f_name, 'file')
         return compiled
       except .. as e, m
-        import string
-        print(string.format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
+        print(format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
     end
@@ -413,8 +410,7 @@ class Tasmota
           compiled_code()
           return true
         except .. as e, m
-          import string
-          print(string.format("BRY: failed to run compiled code '%s' - %s", e, m))
+          print(format("BRY: failed to run compiled code '%s' - %s", e, m))
         end
       end
       return false
@@ -470,7 +466,7 @@ class Tasmota
       end
       # print("f_time",f_time,"f_time_bec",f_time_bec,"suffix_bec",suffix_bec)
     end
-    
+
     # recall the working directory
     if f_archive
       self.wd = f_prefix + "#"
@@ -487,10 +483,10 @@ class Tasmota
       var bec_version = try_get_bec_version(f_name_bec)
       var version_ok = true
       if bec_version == nil
-        print(string.format('BRY: corrupt bytecode \'%s\'',f_name_bec))
+        print(format('BRY: corrupt bytecode \'%s\'',f_name_bec))
         version_ok = false
       elif bec_version != 0x04          # -- this is the currenlty supported version
-        print(string.format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
+        print(format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
         version_ok = false
       end
 
@@ -516,7 +512,7 @@ class Tasmota
       try
         self.save(f_name_bec, compiled_code)
       except .. as e
-        print(string.format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
+        print(format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
       end
     end
     # call the compiled code
@@ -566,7 +562,6 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
-    import string
     if event_type=='every_50ms'
       self.run_deferred()
     end  #- first run deferred events -#
@@ -596,7 +591,7 @@ class Tasmota
             done = f(d, cmd, idx, payload, raw) || done
             if done && !keep_going   break end
           except .. as e,m
-            print(string.format("BRY: Exception> '%s' - %s", e, m))
+            print(format("BRY: Exception> '%s' - %s", e, m))
             if self._debug_present
               import debug
               debug.traceback()
@@ -621,8 +616,10 @@ class Tasmota
       raise "value_error", "instance required"
     end
     if self._drivers
-      self._drivers.push(d)
-        else
+      if self._drivers.find(d) == nil     # add only if not already added
+        self._drivers.push(d)
+      end
+    else
       self._drivers = [d]
     end
   end
@@ -642,29 +639,22 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
 
-    var seriallog_level = tasmota.global.seriallog_level
-    var mqttlog_level   = tasmota.settings.mqttlog_level
-    var weblog_level    = tasmota.settings.weblog_level
-
+    var maxlog_level = tasmota.global.maxlog_level
     if mute                 # mute logging
-      if seriallog_level >= 2       tasmota.global.seriallog_level = 1    end
-      if mqttlog_level   >= 2       tasmota.settings.mqttlog_level = 1    end
-      if weblog_level    >= 2       tasmota.settings.weblog_level  = 1    end
+      if maxlog_level >= 2 tasmota.global.maxlog_level = 1 end
     end
 
     self._cmd(command)
-    
+
     var ret = nil
     if self.cmd_res != true       # unchanged
       ret = self.cmd_res
     end
     self.cmd_res = save_cmd_res       # restore previous state
-    
+
     # restore log_level
     if mute
-      tasmota.global.seriallog_level = seriallog_level
-      tasmota.settings.mqttlog_level = mqttlog_level
-      tasmota.settings.weblog_level = weblog_level
+      tasmota.global.maxlog_level = maxlog_level
     end
     return ret
   end
@@ -707,14 +697,14 @@ class Tasmota
     var g = 255
     # we take brightness at 100%, brightness should be set separately
     hue = hue % 360   # normalize to 0..359
-  
+
     if sat > 0
       var i = hue / 60    # quadrant 0..5
       var f = hue % 60    # 0..59
       var p = 255 - sat
       var q = tasmota.scale_uint(f, 0, 60, 255, p)    # 0..59
       var t = tasmota.scale_uint(f, 0, 60, p, 255)
-  
+
       if   i == 0
         # r = 255
         g = t
@@ -741,7 +731,7 @@ class Tasmota
         b = q
       end
     end
-  
+
     return (r << 16) | (g << 8) | b
   end
 

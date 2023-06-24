@@ -408,7 +408,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
     type[i] = '\0';
 
-    bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
+    bool binary_data = (index > 299);        // Suppose binary data on topic index > 299
     if (!binary_data) {
       bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
       if (!keep_spaces) {
@@ -883,8 +883,9 @@ void CmndStatus(void)
 
 #endif // USE_IPV6
 #endif  // USE_ETHERNET
-    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
+    float wifi_tx_power = WifiGetOutputPower();
+    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%1_f}}"),
+                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, &wifi_tx_power);
     CmndStatusResponse(5);
   }
 
@@ -1472,6 +1473,8 @@ void CmndSetoptionBase(bool indexed) {
             bitWrite(Settings->flag6.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
               case 5:                     // SetOption151 - Matter enabled
+              case 6:                     // SetOption152 - (Power) Use single pin bistable
+              case 7:                     // SetOption153 - (Berry) Disable autoexec.be on restart (1)
                 TasmotaGlobal.restart_flag = 2;
                 break;
             }
@@ -2522,16 +2525,19 @@ void CmndLedPwmMode(void) {
   }
 }
 
-void CmndWifiPower(void)
-{
+void CmndWifiPower(void) {
   if (XdrvMailbox.data_len > 0) {
     Settings->wifi_output_power = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
-    if (Settings->wifi_output_power > 205) {
-      Settings->wifi_output_power = 205;
+    if (10 == Settings->wifi_output_power) {
+      // WifiPower 1
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
+    }
+    else if (Settings->wifi_output_power > MAX_TX_PWR_DBM_11b) {
+      Settings->wifi_output_power = MAX_TX_PWR_DBM_11b;
     }
     WifiSetOutputPower();
   }
-  ResponseCmndChar(WifiGetOutputPower().c_str());
+  ResponseCmndFloat(WifiGetOutputPower(), 1);
 }
 
 void CmndWifi(void)
@@ -2566,14 +2572,20 @@ void CmndDnsTimeout(void) {
 }
 
 #ifdef USE_I2C
-void CmndI2cScan(void)
-{
-  if ((1 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled)) {
-    I2cScan();
+void CmndI2cScan(void) {
+  // I2CScan0  - Scan bus1 and bus2
+  // I2CScan   - Scan bus1
+  // I2CScan2  - Scan bus2
+  if (TasmotaGlobal.i2c_enabled) {
+    if ((0 == XdrvMailbox.index) || (1 == XdrvMailbox.index)) {
+      I2cScan();
+    }
   }
 #ifdef ESP32
-  if ((2 == XdrvMailbox.index) && (TasmotaGlobal.i2c_enabled_2)) {
-    I2cScan(1);
+  if (TasmotaGlobal.i2c_enabled_2) {
+    if ((0 == XdrvMailbox.index) || (2 == XdrvMailbox.index)) {
+      I2cScan(1);
+    }
   }
 #endif
 }

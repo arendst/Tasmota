@@ -1000,9 +1000,9 @@ void ZCLFrame::parseReadConfigAttributes(uint16_t shortaddr, Z_attribute_list& a
     }
 
     // find the multiplier
-    uint16_t multiplier = 1;
-    uint16_t divider = 1;
-    int16_t base = 0;
+    uint32_t multiplier = 1;
+    uint32_t divider = 1;
+    int32_t base = 0;
     Z_attribute_match matched_attr = Z_findAttributeMatcherById(shortaddr, cluster, attrid, false);
     if (matched_attr.found()) {
       attr_2.addAttribute(matched_attr.name, true).setBool(true);

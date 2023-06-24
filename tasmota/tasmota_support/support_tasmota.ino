@@ -309,6 +309,7 @@ void SetDevicePower(power_t rpower, uint32_t source) {
   else {
     uint32_t port = 0;
     uint32_t port_next;
+    power_t bistable = 0;
 
     ZeroCrossMomentStart();
 
@@ -316,12 +317,25 @@ void SetDevicePower(power_t rpower, uint32_t source) {
       power_t state = rpower &1;
 
       port_next = 1;                              // Select next relay
+      bool update = true;
       if (bitRead(TasmotaGlobal.rel_bistable, port)) {
-        if (!state) { port_next = 2; }            // Skip highest relay
-        port += state;                            // Relay<lowest> = Off, Relay<highest> = On
+        if (Settings->flag6.bistable_single_pin) {  // SetOption152 - (Power) Use single pin bistable
+          if (0x80000000 == TasmotaGlobal.power_latching) {
+            TasmotaGlobal.power_latching = TasmotaGlobal.power;  // Init last known state
+          }
+          update = (bitRead(TasmotaGlobal.power_latching, port) != state);
+          if (update) {
+            bitWrite(TasmotaGlobal.power_latching, port, state);
+            bitSet(bistable, port);
+          }
+
+        } else {
+          if (!state) { port_next = 2; }          // Skip highest relay
+          port += state;                          // Relay<lowest> = Off, Relay<highest> = On
+        }
         state = 1;                                // Set pulse
       }
-      if (i < MAX_RELAYS) {
+      if (update && (i < MAX_RELAYS)) {
         DigitalWrite(GPIO_REL1, port, bitRead(TasmotaGlobal.rel_inverted, port) ? !state : state);
       }
       port += port_next;                          // Select next relay
@@ -335,6 +349,11 @@ void SetDevicePower(power_t rpower, uint32_t source) {
       delay(Settings->param[P_BISTABLE_PULSE]);   // SetOption45 - Keep energized for about 5 x operation time
       for (uint32_t i = 0; i < port; i++) {       // Reset up to detected amount of ports
         if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+          if (Settings->flag6.bistable_single_pin) {  // SetOption152 - (Power) Use single pin bistable
+            if (!bitRead(bistable, i)) {
+              continue;
+            }
+          }
           DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
         }
       }
@@ -399,6 +418,7 @@ void SetPowerOnState(void)
   } else {
     power_t devices_mask = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     if (ResetReasonPowerOn()) {
+      TasmotaGlobal.power_latching = 0;   // Single pin latching relay is powered off after re-applying power
       switch (Settings->poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -1221,6 +1241,8 @@ void Every100mSeconds(void)
       }
     }
   }
+
+  WiFiSetTXpowerBasedOnRssi();
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1618,6 +1640,7 @@ void Every250mSeconds(void)
   }
 }
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
 /*********************************************************************************************\
  * Allow updating via the Arduino OTA-protocol.
@@ -1701,6 +1724,7 @@ void ArduinoOtaLoop(void)
   while (arduino_ota_triggered) { ArduinoOTA.handle(); }
 }
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 
 /********************************************************************************************/
 
@@ -2199,11 +2223,19 @@ void GpioInit(void)
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));
   if (TasmotaGlobal.i2c_enabled) {
     TasmotaGlobal.i2c_enabled = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
+#ifdef ESP32
+    if (TasmotaGlobal.i2c_enabled) {
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus1 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL), Pin(GPIO_I2C_SDA));
+    }
+#endif
   }
 #ifdef ESP32
   TasmotaGlobal.i2c_enabled_2 = (PinUsed(GPIO_I2C_SCL, 1) && PinUsed(GPIO_I2C_SDA, 1));
   if (TasmotaGlobal.i2c_enabled_2) {
     TasmotaGlobal.i2c_enabled_2 = I2c2Begin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1));
+    if (TasmotaGlobal.i2c_enabled_2) {
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus2 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1));
+    }
   }
 #endif
 #endif  // USE_I2C
@@ -2218,8 +2250,12 @@ void GpioInit(void)
         if (i &1) { TasmotaGlobal.devices_present--; }
       }
 #endif  // ESP8266
-      if (bitRead(TasmotaGlobal.rel_bistable, i)) {
-        if (bi_device &1) { TasmotaGlobal.devices_present--; }
+      if (!Settings->flag6.bistable_single_pin) {  // SetOption152 - (Power) Use single pin bistable
+        if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+          if (bi_device &1) {
+            TasmotaGlobal.devices_present--;
+          }
+        }
         bi_device++;
       }
     }

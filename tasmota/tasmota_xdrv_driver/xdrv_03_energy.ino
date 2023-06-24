@@ -99,6 +99,7 @@ typedef struct {
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy->kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
   int32_t kWhtoday[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
+  int32_t kWhtoday_export[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
   int32_t period[ENERGY_MAX_PHASES];            // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy->daily
 
   char* value;
@@ -123,6 +124,7 @@ typedef struct {
 #ifdef USE_ENERGY_MARGIN_DETECTION
   uint16_t power_history[ENERGY_MAX_PHASES][3];
   uint8_t power_steady_counter;                 // Allow for power on stabilization
+  uint8_t margin_stable;
   bool min_power_flag;
   bool max_power_flag;
   bool min_voltage_flag;
@@ -278,7 +280,12 @@ void EnergyUpdateToday(void) {
       Energy->kWhtoday_delta[i] -= (delta * 1000);
       Energy->kWhtoday[i] += delta;
       if (delta < 0) {     // Export energy
-        RtcSettings.energy_kWhexport_ph[i] += ((delta / 100) *-1);
+        Energy->kWhtoday_export[i] += (delta *-1);
+        if (Energy->kWhtoday_export[i] > 100) {
+          int32_t delta_export = Energy->kWhtoday_export[i] / 100;
+          Energy->kWhtoday_export[i] -= (delta_export * 100);
+          RtcSettings.energy_kWhexport_ph[i] += delta_export;
+        }
       }
     }
 
@@ -382,6 +389,9 @@ void Energy200ms(void) {
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+      if (!Settings->energy_kWhtotal_time) {
+        Settings->energy_kWhtotal_time = LocalTime();
+      }
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Settings->energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;
@@ -550,7 +560,8 @@ void EnergyMarginCheck(void) {
   if (jsonflg) {
     ResponseJsonEndEnd();
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-    EnergyMqttShow();
+//    EnergyMqttShow();
+    Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -675,6 +686,12 @@ void EnergyEverySecond(void) {
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
   EnergyMarginCheck();
+  if (Energy->margin_stable) {
+    Energy->margin_stable--;
+    if (!Energy->margin_stable) {
+      EnergyMqttShow();
+    }
+  }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 }
 

@@ -53,12 +53,14 @@
 #include <LList.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
   #define USE_DISCOVERY
   #endif
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 #ifdef USE_DISCOVERY
   #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
@@ -103,6 +105,7 @@
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
 struct WIFI {
+  int last_tx_pwr;
   uint32_t last_event = 0;                 // Last wifi connection event
   uint32_t downtime = 0;                   // Wifi down duration
   uint16_t link_count = 0;                 // Number of wifi re-connect
@@ -254,6 +257,7 @@ struct TasmotaGlobal_t {
   void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings->power
+  power_t power_latching;                   // Current state of single pin latching power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
   power_t rel_bistable;                     // Relay bistable bitmap
   power_t last_power;                       // Last power set state
@@ -304,9 +308,9 @@ struct TasmotaGlobal_t {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
-  bool enable_logging;                      // Enable logging
 
   uint8_t user_globals[3];                  // User set global temp/hum/press
+  uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
@@ -332,6 +336,7 @@ struct TasmotaGlobal_t {
   uint8_t serial_in_byte;                   // Received byte
   uint8_t serial_skip;                      // Skip number of received messages
   uint8_t devices_present;                  // Max number of devices supported
+  uint8_t maxlog_level;                     // Max allowed log level
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings->seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings->syslog_level
@@ -428,8 +433,9 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-  TasmotaGlobal.enable_logging = 1;
+  TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -573,6 +579,7 @@ void setup(void) {
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +2) {  // Restarted 4 times
         Settings->rule_enabled = 0;                  // Disable all rules
+        Settings->flag3.shutter_mode = 0;            // disable shutter support
         TasmotaGlobal.no_autoexec = true;
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
@@ -640,9 +647,11 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 
   XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
@@ -755,9 +764,11 @@ void Scheduler(void) {
   if (!tasconsole_serial) { TasConsoleInput(); }
 #endif  // ESP32
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 }
 
 void loop(void) {

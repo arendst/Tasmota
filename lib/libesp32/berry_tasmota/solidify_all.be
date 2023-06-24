@@ -1,8 +1,6 @@
-#! ../berry/berry -s -g
+#!/usr/bin/env -S ../berry/berry -s -g
 #
 # Berry solidify files
-#
-# `../berry/berry -s -g`
 
 import os
 import global
@@ -14,7 +12,7 @@ import sys
 sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
-var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,"
+var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,I2C_Driver,"
             "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"
             "lv_wifi_bars_icon,lv_wifi_bars,"
             "_lvgl,"
@@ -48,7 +46,7 @@ def parse_file(fname, prefix_out)
   # output solidified
   var fname_h = string.split(fname, '.be')[0] + '.h'  # take whatever is before the first '.be'
   var fout = open(prefix_out + "solidified_" + fname_h, "w")
-  fout.write(string.format("/* Solidification of %s */\n", fname_h))
+  fout.write(format("/* Solidification of %s */\n", fname_h))
   fout.write("/********************************************************************\\\n")
   fout.write("* Generated code, don't edit                                         *\n")
   fout.write("\\********************************************************************/\n")

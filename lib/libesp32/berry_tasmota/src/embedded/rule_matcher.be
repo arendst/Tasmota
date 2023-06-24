@@ -5,6 +5,7 @@
 #@ solidify:Rule_Matcher_Wildcard
 #@ solidify:Rule_Matcher_Operator
 #@ solidify:Rule_Matcher_Array
+#@ solidify:Rule_Matcher_AND_List
 #@ solidify:Rule_Matcher
 
 
@@ -17,8 +18,8 @@ tasmota.Rule_Matcher.parse("AA#BB#CC")
 tasmota.Rule_Matcher.parse("AA")
 # [<Matcher key='AA'>]
 
-tasmota.Rule_Matcher.parse("AA#BB#CC=2")
-# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '=' val='2'>]
+tasmota.Rule_Matcher.parse("AA#BB#CC==2")
+# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '==' val='2'>]
 
 tasmota.Rule_Matcher.parse("AA#BB#CC>=3.5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '>=' val='3.5'>]
@@ -26,8 +27,8 @@ tasmota.Rule_Matcher.parse("AA#BB#CC>=3.5")
 tasmota.Rule_Matcher.parse("AA#BB#CC!3.5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC!3.5'>]
 
-tasmota.Rule_Matcher.parse("AA#BB#CC==3=5")
-# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '==' val='3=5'>]
+tasmota.Rule_Matcher.parse("AA#BB#CC=3=5")
+# [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='CC'>, <Matcher op '=' val='3=5'>]
 
 tasmota.Rule_Matcher.parse("AA#BB#!CC!==3=5")
 # [<Matcher key='AA'>, <Matcher key='BB'>, <Matcher key='!CC'>, <Matcher op '!==' val='3=5'>]
@@ -39,16 +40,16 @@ tasmota.Rule_Matcher.parse("A#?#B")
 # [<Matcher key='A'>, <Matcher any>, <Matcher key='B'>]
 
 tasmota.Rule_Matcher.parse("A#?>50")
-# [<Matcher key='A'>, <Matcher any>, <Matcher op '>' val='50'>]
+# [<Matcher key='A'>, <Matcher any>, <Matcher op '>' val=50>]
 
 tasmota.Rule_Matcher.parse("A[1]")
-# [<instance: Rule_Matcher_Key()>, <Matcher [0]>]
+# [<Matcher key='A'>, <Matcher [1]>]
 
 tasmota.Rule_Matcher.parse("A[1]#B[2]>3")
-# [<instance: Rule_Matcher_Key()>, <Matcher [0]>, <instance: Rule_Matcher_Key()>, <Matcher [0]>, <Matcher op '>' val='3'>]
+# [<Matcher key='A'>, <Matcher [1]>, <Matcher key='B'>, <Matcher [2]>, <Matcher op '>' val=3>]
 
 tasmota.Rule_Matcher.parse("A#B[]>3")
-# [<instance: Rule_Matcher_Key()>, <instance: Rule_Matcher_Key()>, <Matcher [0]>, <Matcher op '>' val='3'>]
+# [<Matcher key='A'>, <Matcher key='B'>, <Matcher [0]>, <Matcher op '>' val=3>]
 
 #################################################################################
 
@@ -67,7 +68,13 @@ assert(m.match({'aa':{'bb':1}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':1}}}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
-m = tasmota.Rule_Matcher.parse("AA#?#CC==2")
+m = tasmota.Rule_Matcher.parse("AA#BB#CC=Foo")
+assert(m.match({'aa':{'bb':{'cc':1}}}) == nil)
+assert(m.match({'aa':{'bb':{'cc':'Foo'}}}) == 'Foo')
+assert(m.match({'aa':{'bb':{'cc':'foo'}}}) == 'foo')
+assert(m.match({'aa':{'bb':{'cc':'foobar'}}}) == nil)
+
+m = tasmota.Rule_Matcher.parse("AA#?#CC=2")
 assert(m.match({'aa':1}) == nil)
 assert(m.match({'aa':{'bb':{'cc':2}}}) == 2)
 
@@ -112,6 +119,9 @@ class Rule_Matcher
   #   <instance match="Payload">, <instance match_any>, <instance match="Temperature", <instance op='>' val='50'>
   #
   # Instance types:
+  #     Rule_Matcher_AND_List(key): checks that the input map matches with all contains individual conditions in the list
+  #                            returns an array of sub-value or `nil` if at least one doesn't match
+  #
   #     Rule_Matcher_Key(key): checks that the input map contains the key (case insensitive) and
   #                            returns the sub-value or `nil` if the key does not exist
   #
@@ -120,6 +130,33 @@ class Rule_Matcher
   #
   #     Rule_Matcher_Operator: checks is a simple value (numerical or string) matches the operator and the value
   #                            returns the value unchanged if match, or `nil` if no match
+
+
+  # do a logical AND of all sub-matchers
+  static class Rule_Matcher_AND_List
+    var and_list
+
+    def init(and_list)
+      self.and_list = and_list
+    end
+
+    def match(val)
+      var idx = 0
+      var ret_list = []
+      while idx < size(self.and_list)
+        var rule = self.and_list[idx]
+        var ret = rule.match(val)
+        if ret == nil     return nil  end       # abort as soon as a matcher fails
+        ret_list.push(ret)
+        idx += 1
+      end
+      return ret_list
+    end
+
+    def tostring()
+      return "<Matcher_AND_List " + str(self.and_list) + ">"
+    end
+  end
 
   static class Rule_Matcher_Key
     var name                                # literal name of what to match
@@ -198,63 +235,63 @@ class Rule_Matcher
     end
 
 
-  ###########################################################################################
-  # Functions to compare two values
-  ###########################################################################################
-  def op_parse(op, op_value)
-    self.op_str = op
+    ###########################################################################################
+    # Functions to compare two values
+    ###########################################################################################
+    def op_parse(op, op_value)
+      self.op_str = op
 
-    def op_eq_str(a,b)     return tasmota._apply_str_op(1, str(a), b) end
-    def op_neq_str(a,b)    return tasmota._apply_str_op(2, str(a), b) end
-    def op_start_str(a,b)  return tasmota._apply_str_op(3, str(a), b) end
-    def op_end_str(a,b)    return tasmota._apply_str_op(4, str(a), b) end
-    def op_sub_str(a,b)    return tasmota._apply_str_op(5, str(a), b) end
-    def op_notsub_str(a,b) return tasmota._apply_str_op(6, str(a), b) end
-    def op_eq(a,b)         return number(a) == b   end
-    def op_neq(a,b)        return number(a) != b   end
-    def op_gt(a,b)         return number(a) >  b   end
-    def op_gte(a,b)        return number(a) >= b   end
-    def op_lt(a,b)         return number(a) <  b   end
-    def op_lte(a,b)        return number(a) <= b   end
-    def op_mod(a,b)        return (int(a) % b) == 0 end
+      def op_eq_str(a,b)     return tasmota._apply_str_op(1, str(a), b) end
+      def op_neq_str(a,b)    return tasmota._apply_str_op(2, str(a), b) end
+      def op_start_str(a,b)  return tasmota._apply_str_op(3, str(a), b) end
+      def op_end_str(a,b)    return tasmota._apply_str_op(4, str(a), b) end
+      def op_sub_str(a,b)    return tasmota._apply_str_op(5, str(a), b) end
+      def op_notsub_str(a,b) return tasmota._apply_str_op(6, str(a), b) end
+      def op_eq(a,b)         return number(a) == b   end
+      def op_neq(a,b)        return number(a) != b   end
+      def op_gt(a,b)         return number(a) >  b   end
+      def op_gte(a,b)        return number(a) >= b   end
+      def op_lt(a,b)         return number(a) <  b   end
+      def op_lte(a,b)        return number(a) <= b   end
+      def op_mod(a,b)        return (int(a) % b) == 0 end
 
-    var numerical = false
-    var f
+      var numerical = false
+      var f
 
-    if   op=='='            f = op_eq_str
-    elif op=='!=='          f = op_neq_str
-    elif op=='$!'           f = op_neq_str
-    elif op=='$<'           f = op_start_str
-    elif op=='$>'           f = op_end_str
-    elif op=='$|'           f = op_sub_str
-    elif op=='$^'           f = op_notsub_str
-    else
-      numerical = true
-      if   op=='=='         f = op_eq
-      elif op=='!='         f = op_neq
-      elif op=='>'          f = op_gt
-      elif op=='>='         f = op_gte
-      elif op=='<'          f = op_lt
-      elif op=='<='         f = op_lte
-      elif op=='|'          f = op_mod
-      end
-    end
-
-    self.op_func = f
-    if numerical            # if numerical comparator, make sure that the value passed is a number
-      # to check if a number is correct, the safest method is to use a json decoder
-      import json
-      var val_num = json.load(op_value)
-      if type(val_num) != 'int' && type(val_num) != 'real'
-        raise "value_error", "value needs to be a number"
+      if   op=='='            f = op_eq_str
+      elif op=='!=='          f = op_neq_str
+      elif op=='$!'           f = op_neq_str
+      elif op=='$<'           f = op_start_str
+      elif op=='$>'           f = op_end_str
+      elif op=='$|'           f = op_sub_str
+      elif op=='$^'           f = op_notsub_str
       else
-        self.op_value = val_num
+        numerical = true
+        if   op=='=='         f = op_eq
+        elif op=='!='         f = op_neq
+        elif op=='>'          f = op_gt
+        elif op=='>='         f = op_gte
+        elif op=='<'          f = op_lt
+        elif op=='<='         f = op_lte
+        elif op=='|'          f = op_mod
+        end
       end
-    else
-      self.op_value = str(op)
-    end
 
-  end
+      self.op_func = f
+      if numerical            # if numerical comparator, make sure that the value passed is a number
+        # to check if a number is correct, the safest method is to use a json decoder
+        import json
+        var val_num = json.load(op_value)
+        if type(val_num) != 'int' && type(val_num) != 'real'
+          raise "value_error", "value needs to be a number"
+        else
+          self.op_value = val_num
+        end
+      else
+        self.op_value = str(op_value)
+      end
+
+    end
 
     def match(val)
       var t = type(val)
@@ -287,6 +324,18 @@ class Rule_Matcher
   static def parse(pattern)
     import string
     if pattern == nil     return nil end
+
+    # special case if a list of patterns, recursively make a list of matchers
+    if isinstance(pattern, list)
+      var and_list = []
+      var trigger_list = []
+      for p: pattern
+        var matcher = _class.parse(p)
+        and_list.push(matcher)
+        trigger_list.push(matcher.trigger)
+      end
+      return _class(pattern, trigger_list, [_class.Rule_Matcher_AND_List(and_list)])
+    end
     
     var matchers = []
 

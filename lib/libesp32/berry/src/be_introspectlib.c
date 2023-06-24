@@ -70,12 +70,15 @@ static int m_findmember(bvm *vm)
     if (top >= 3) {
         protected = !be_tobool(vm, 3);
     }
-    if (top >= 2) {
-        if (protected && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
-            int ret = be_execprotected(vm, &m_findmember_protected, (void*) be_tostring(vm, 2));
-            if (ret == BE_OK) {
-                be_return(vm);
+    if (top >= 2 && be_isstring(vm, 2)) {
+        if (protected) {
+            if (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) {
+                int ret = be_execprotected(vm, &m_findmember_protected, (void*) be_tostring(vm, 2));
+                if (ret == BE_OK) {
+                    be_return(vm);
+                }
             }
+            be_return_nil(vm);
         } else {
             /* run unprotected */
             if (be_getmember(vm, 1, be_tostring(vm, 2))) {
@@ -109,7 +112,7 @@ static int m_toptr(bvm *vm)
             be_pushcomptr(vm, var_toobj(v));
             be_return(vm);
         } else if (var_type(v) == BE_INT) {
-            be_pushcomptr(vm, (void*) var_toint(v));
+            be_pushcomptr(vm, (void*) (intptr_t) var_toint(v));
             be_return(vm);
         } else {
             be_raise(vm, "value_error", "unsupported for this type");
@@ -126,7 +129,7 @@ static int m_fromptr(bvm *vm)
         if (be_iscomptr(vm, 1)) {
             v = be_tocomptr(vm, 1);
         } else {
-            v = (void*) be_toint(vm, 1);
+            v = (void*) (intptr_t) be_toint(vm, 1);
         }
         if (v) {
             bgcobject *ptr = (bgcobject*)v;

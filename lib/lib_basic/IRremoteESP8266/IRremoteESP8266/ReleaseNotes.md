@@ -1,5 +1,41 @@
 # Release Notes
 
+## _v2.8.5 (20230508)_
+
+**[Bug Fixes]**
+- Fix a bug where we never detached the timer interrupt on ESP32s. (#1984 #1983)
+- Missing argument in use of midea function (#1959 #1958)
+- IRMQTTServer: Improve HA MQTT climate handling. (#1911)
+- SEND_SANYO_AC88: Fix poor cut-n-paste error (#1905 #1897)
+
+**[Features]**
+- Add support for a 40bit variant of the standard Panasonic protocol (#1977 @1976)
+- Initial support for York AC protocol (#1889)
+- IRMQTTServer: SHT-3x Temperature Sensor Support (#1951)
+- IRMQTTServer: HA multi output discovery (#1947)
+- IRMQTTServer: extended with new A/C common fields (#1940)
+- IRMQTTServer: Sync the on state to power from mode for HA (#1946)
+- Experimental basic support for Carrier 84-bit protocol. (#1945 #1943)
+- Add support the WowWee 11-Bit RoboRaptor-X protocol. (#1939 #1938)
+- Added 'sensorTemperature' and 'iFeel' to IRac (common) (#1928)
+- Added extra 'mid' option for Fan & SwingV to IRac (#1929)
+- Added "commandType" to IRAc (#1921)
+- Added support for Argo WREM-3 A/C remote protocol [part1] (#1920)
+- Added Dutch (nl-NL) translation (#1907)
+- ARGO: Improve code & add support for decoding 32bit sensor msgs. (#1906 #1859)
+- Added support for Gorenje cooker hood IR protocol (#1888 #1887)
+
+**[Misc]**
+- Add Electrolux YKR-H/531E as a supported device (#1981 #1980)
+- Update `XMP` status to Stable (#1944)
+- upgrade to a later version of `googletest` (#1936)
+- MITSUBISHI128: Added model to supported protocol (#1924)
+- Added Dutch (nl-NL) README (#1908)
+- Added GMock to UT Makefile (#1902)
+- Update HA example config for HA 2022.6+ (#1901 #1900)
+- Add a `d1_mini_noMDNS` build option to `IRMQTTServer`. (#1985)
+
+
 ## _v2.8.4 (20220918)_
 
 **[Bug Fixes]**
