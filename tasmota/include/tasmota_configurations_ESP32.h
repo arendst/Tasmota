@@ -288,6 +288,7 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
+#define USE_MATTER_DEVICE
 #undef USE_DOMOTICZ
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
@@ -556,6 +557,8 @@
 #ifndef CODE_IMAGE_STR
   #define CODE_IMAGE_STR "tasmota32"
 #endif
+
+#define USE_MATTER_DEVICE
 
 #define USE_INFLUXDB                             // Enable influxdb support (+5k code)
 
