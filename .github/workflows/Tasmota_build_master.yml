@@ -156,11 +156,6 @@ jobs:
       matrix:
         variant:
           - tasmota32
-          - tasmota32-matter
-          - tasmota32c3-matter
-          - tasmota32s3-matter
-          - tasmota32c3cdc-matter
-          - tasmota32s3cdc-matter
           - tasmota32-zbbrdgpro
           - tasmota32-webcam
           - tasmota32-bluetooth
