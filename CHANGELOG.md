@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [13.0.0] 20230628
+## [13.0.0] 20230626
 - Release Qasim
 
-## [12.5.0.4] 20230628
+## [12.5.0.4] 20230626
 ### Added
 - Matter ability to add or remove endpoint in bridge mode (code only)
 - Matter add controller's Vendor Name to logs and UI
