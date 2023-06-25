@@ -89,7 +89,9 @@ typedef enum {
     KeyTry,         /* keyword try */
     KeyExcept,      /* keyword except */
     KeyRaise,       /* keyword raise */
-    KeyStatic       /* keyword static */
+    KeyStatic,      /* keyword static */
+    /* Walrus operator */
+    OptWalrus,      /* operator, := */
 } btokentype;
 
 struct blexerreader {
