@@ -207,8 +207,8 @@ void Sgp4xUpdate(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SGP4X[] PROGMEM =
-  "{s}SGP4X TVOC " D_JSON_RAW "{m}%d " "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}SGP4X NOX " D_JSON_RAW "{m}%d " "{e}"
+  "{s}SGP4X " D_TVOC "_" D_JSON_RAW "{m}%d " "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}SGP4X " D_NOX "_" D_JSON_RAW "{m}%d " "{e}"
   "{s}SGP4X " D_TVOC "{m}%d " "{e}"
   "{s}SGP4X " D_NOX "{m}%d " "{e}";
 #endif
@@ -217,7 +217,7 @@ void Sgp4xShow(bool json)
 {
   if (sgp4x_state == STATE_SGP4X_NORMAL) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"SGP4X\":{\"VOC_" D_JSON_RAW "\":%d,\"NOX_" D_JSON_RAW "\":%d,\"" D_TVOC "\":%d,\"" D_NOX "\":%d"), srawVoc, srawNox, voc_index_sgp4x, nox_index_sgp4x);
+      ResponseAppend_P(PSTR(",\"SGP4X\":{\"" D_TVOC "_" D_JSON_RAW "\":%d,\"" D_NOX "_" D_JSON_RAW "\":%d,\"" D_TVOC "\":%d,\"" D_NOX "\":%d"), srawVoc, srawNox, voc_index_sgp4x, nox_index_sgp4x);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, srawVoc);
