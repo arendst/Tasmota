@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Matter add friendly-name (NodeLabel) to each endpoint
 - Berry add global function `format` as a simpler syntax to `string.format`
 - Berry added f-strings as an alternative to string formatting
+- Matter display the remote Device Name instead of IP address
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)

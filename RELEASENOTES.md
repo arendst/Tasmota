@@ -138,10 +138,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter bridge for ESP8266 remote endpoints (experimental) [#18734](https://github.com/arendst/Tasmota/issues/18734)
 - Matter support for Occupancy via Switch (experimental) [#18742](https://github.com/arendst/Tasmota/issues/18742)
 - Matter ability to add or remove endpoint in bridge mode (code only) [#18790](https://github.com/arendst/Tasmota/issues/18790)
-- Matter add controller's Vendor Name to logs and UI [#18794](https://github.com/arendst/Tasmota/issues/18794)
+- Matter controller's Vendor Name to logs and UI [#18794](https://github.com/arendst/Tasmota/issues/18794)
 - Matter redesigned UI [#18855](https://github.com/arendst/Tasmota/issues/18855)
-- Matter add support for Contact Sensor [#18882](https://github.com/arendst/Tasmota/issues/18882)
-- Matter add friendly-name (NodeLabel) to each endpoint [#18897](https://github.com/arendst/Tasmota/issues/18897)
+- Matter support for Contact Sensor [#18882](https://github.com/arendst/Tasmota/issues/18882)
+- Matter friendly-name (NodeLabel) to each endpoint [#18897](https://github.com/arendst/Tasmota/issues/18897)
+- Matter display the remote Device Name instead of IP address [#18961](https://github.com/arendst/Tasmota/issues/18961)
 
 ### Breaking Changed
 - Change command ``FileUpload`` index binary data detection from >199 to >299

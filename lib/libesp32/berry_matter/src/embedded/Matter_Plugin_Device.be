@@ -27,7 +27,7 @@ class Matter_Plugin end
 class Matter_Plugin_Device : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
-    0x0039: [5],                                    # Bridged Device Basic Information 9.13 p.485
+    0x0039: [3,5,0x0A,0x0F,0x11,0x12],              # Bridged Device Basic Information 9.13 p.485
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
@@ -116,9 +116,23 @@ class Matter_Plugin_Device : Matter_Plugin
 
     # ====================================================================================================
     elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+      import string
 
-      if   attribute == 0x0005          #  ---------- NodeLabel / string ----------
+      if   attribute == 0x0003          #  ---------- ProductName / string ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+      elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
         return TLV.create_TLV(TLV.UTF1, self.get_name())
+      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
+        var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
+        var version_end = string.find(version_full, '(')
+        if version_end > 0    version_full = version_full[0..version_end - 1]   end
+        return TLV.create_TLV(TLV.UTF1, version_full)
+      elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+      elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       else
         return super(self).read_attribute(session, ctx)
       end
