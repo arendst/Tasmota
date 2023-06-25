@@ -697,7 +697,9 @@ void MI32PreInit(void) {
 void MI32Init(void) {
   if (MI32.mode.init) { return; }
 
-  if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) { return; }
+  if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) {
+    if (!(WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type)) return; 
+  }
 
   if (!TasmotaGlobal.global_state.wifi_down) {
     TasmotaGlobal.wifi_stay_asleep = true;
