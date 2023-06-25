@@ -79,6 +79,16 @@ static int codeABx(bfuncinfo *finfo, bopcode op, int a, int bx)
 }
 
 /* Move value from register b to register a */
+static void code_move_nooptim(bfuncinfo *finfo, int a, int b)
+{
+    if (isK(b)) {
+        codeABx(finfo, OP_LDCONST, a, b & 0xFF);
+    } else {
+        codeABC(finfo, OP_MOVE, a, b, 0);
+    }
+}
+
+/* Move value from register b to register a */
 /* Check the previous instruction to compact both instruction as one if possible */
 /* If b is a constant, add LDCONST or add MOVE otherwise */
 static void code_move(bfuncinfo *finfo, int a, int b)
@@ -95,11 +105,7 @@ static void code_move(bfuncinfo *finfo, int a, int b)
             }
         }
     }
-    if (isK(b)) {
-        codeABx(finfo, OP_LDCONST, a, b & 0xFF);
-    } else {
-        codeABC(finfo, OP_MOVE, a, b, 0);
-    }
+    code_move_nooptim(finfo, a, b);
 }
 
 /* Free register at top (checks that it´s a register) */
@@ -684,7 +690,11 @@ int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
     switch (e1->type) {
     case ETLOCAL: /* It can't be ETREG. */
         if (e1->v.idx != src) {
-            code_move(finfo, e1->v.idx, src); /* do explicit move only if needed */
+            if (keep_reg) {
+                code_move_nooptim(finfo, e1->v.idx, src); /* always do explicit move */
+            } else {
+                code_move(finfo, e1->v.idx, src); /* do explicit move only if needed */
+            }
         }
         break;
     case ETGLOBAL: /* store to grobal R(A) -> G(Bx) by global index */
