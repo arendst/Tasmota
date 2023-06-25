@@ -266,7 +266,9 @@ static void hook_callnative(bvm *vm, int mask)
     be_stack_require(vm, BE_STACK_FREE_MIN + 2);
     info.type = mask;
     info.line = cf->lineinfo->linenumber;
+#if BE_DEBUG_SOURCE_FILE
     info.source = str(cl->proto->source);
+#endif
     info.func_name = str(cl->proto->name);
     info.data = hb->data;
     hb->hook(vm, &info);

@@ -670,14 +670,15 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 
 /* Assign expr e2 to e1 */
 /* e1 must be in a register and have a valid idx */
+/* if `keep_reg` is true, do not release registre */
 /* return 1 if assignment was possible, 0 if type is not compatible */
-int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
+int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 {
     int src = exp2reg(finfo, e2,
         e1->type == ETLOCAL ? e1->v.idx : -1); /* Convert e2 to kreg */
         /* If e1 is a local variable, use the register */
 
-    if (e1->type != ETLOCAL || e1->v.idx != src) {
+    if (!keep_reg && (e1->type != ETLOCAL || e1->v.idx != src)) {
         free_expreg(finfo, e2); /* free source (checks only ETREG) */ /* TODO e2 is at top */
     }
     switch (e1->type) {
@@ -887,7 +888,7 @@ void be_code_import(bfuncinfo *finfo, bexpdesc *m, bexpdesc *v)
         codeABC(finfo, OP_IMPORT, dst, src, 0);
         m->type = ETREG;
         m->v.idx = dst;
-        be_code_setvar(finfo, v, m);
+        be_code_setvar(finfo, v, m, bfalse);
     }
 }
 
