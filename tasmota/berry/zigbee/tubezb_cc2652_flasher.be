@@ -92,7 +92,7 @@ class tubezb_cc2652_flasher
   # low-level
   #################################################################################
   def _flash_pre()
-    print("FLH: Flashing started (takes 5 minutes during which Tasmota is unresponsive)")
+    print("FLH: Flashing started (takes 5-8 minutes during which Tasmota is unresponsive)")
     self.flasher.start()
     self.flasher.ping()
     # erase flash
