@@ -184,7 +184,7 @@ class Matter_IM
       if message
         return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
       else
-        tasmota.log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 3)      # don't show 'SUCCESS' to not overflow logs with non-information
+        tasmota.log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 4)      # don't show 'SUCCESS' to not overflow logs with non-information
       end
     else
       # error
