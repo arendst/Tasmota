@@ -3276,6 +3276,7 @@ void CmndVirtualCT(void)
     }
   }
   checkVirtualCT();
+  Light.update = true;
 
   Response_P(PSTR("{\"%s\":{"), XdrvMailbox.command);
   uint32_t pivot_len = CT_PIVOTS;
