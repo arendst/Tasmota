@@ -121,6 +121,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for PCA9557 8-bit I/O expander [#18632](https://github.com/arendst/Tasmota/issues/18632)
 - Display descriptor for ST7735 128x160 display [#18741](https://github.com/arendst/Tasmota/issues/18741)
 - Zigbee support for air sensors [#18665](https://github.com/arendst/Tasmota/issues/18665)
+- Zigbee firmware for Sonoff-ZB-Pro v20230507 [#18968](https://github.com/arendst/Tasmota/issues/18968)
 - ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
 - Berry RS256 crypto algorithm (RSASSA-MCKS1_v1-5 with SHA256) used for JWT [#18763](https://github.com/arendst/Tasmota/issues/18763)
@@ -129,6 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `string.format()` now automatically converts type according to format [#18890](https://github.com/arendst/Tasmota/issues/18890)
 - Berry global function `format` as a simpler syntax to `string.format` [#18925](https://github.com/arendst/Tasmota/issues/18925)
 - Berry f-strings as an alternative to string formatting [#18937](https://github.com/arendst/Tasmota/issues/18937)
+- Berry Walrus operator ':=' [#18963](https://github.com/arendst/Tasmota/issues/18963)
 - HASPmota `meta` attribute and improved `berry_run` [#18685](https://github.com/arendst/Tasmota/issues/18685)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
