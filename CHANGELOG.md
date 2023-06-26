@@ -3,8 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.5.0.4]
+## [13.0.0.1]
+### Added
 
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [13.0.0] 20230626
+- Release Qasim
+
+## [12.5.0.4] 20230626
 ### Added
 - Matter ability to add or remove endpoint in bridge mode (code only)
 - Matter add controller's Vendor Name to logs and UI
@@ -17,8 +33,6 @@ All notable changes to this project will be documented in this file.
 - Matter display the remote Device Name instead of IP address
 - Berry Walrus operator ':='
 - Zigbee firmware for Sonoff-ZB-Pro v20230507
-
-### Breaking Changed
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)
@@ -33,8 +47,6 @@ All notable changes to this project will be documented in this file.
 - Zigbee fixed regression with SetOption101
 - Berry fixed parser error with upvals in closures
 - NeoPool fix NPFiltration switch result (#18871)
-
-### Removed
 
 ## [12.5.0.3] 20230602
 ### Added
@@ -115,8 +127,6 @@ All notable changes to this project will be documented in this file.
 - NovaSDS GUI values (#18444)
 - Berry fix rules for string comparisons (#18464)
 - Shutter: GarageMode does not stop on console commands, `ShutterSetOpen` and `ShutterSetClose` does not reset direction (#18539)
-
-## [Released]
 
 ## [12.5.0] 20230417
 - Release Peyton
@@ -520,15 +530,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Removed whitespace from JSON values with no decimals (#16365)
 
-## [12.1.0.1] 20220825
-### Added
-- Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
-- ESP32-S3 support for internal temperature sensor
-- Command ``StatusRetain`` (#11109)
-
-### Changed
-- ESP32 NimBLE library from v1.3.6 to v1.4.0
-
 ## [12.1.1] 20220825
 - Release Patricia
 
@@ -537,6 +538,15 @@ All notable changes to this project will be documented in this file.
 - DNS lookup for .local domains (#16273)
 - Button response delay regression from v12.0.2.4 (#16319)
 - Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
+
+## [12.1.0.1] 20220825
+### Added
+- Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
+- ESP32-S3 support for internal temperature sensor
+- Command ``StatusRetain`` (#11109)
+
+### Changed
+- ESP32 NimBLE library from v1.3.6 to v1.4.0
 
 ## [12.1.0] 20220818
 - Release Patricia
@@ -574,7 +584,7 @@ All notable changes to this project will be documented in this file.
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
 - Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 (#15940)
 
-## [12.0.2.2]
+## [12.0.2.2] 20220701
 ### Added
 - Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data (#15834)
 - Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data (#15834)
