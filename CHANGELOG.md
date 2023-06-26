@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - Berry add global function `format` as a simpler syntax to `string.format`
 - Berry added f-strings as an alternative to string formatting
 - Matter display the remote Device Name instead of IP address
+- Berry Walrus operator ':='
+- Zigbee firmware for Sonoff-ZB-Pro v20230507
 
 ### Changed
 - Berry `webclient.url_encode()` is now a static class method, no change required to existing code (#18775)

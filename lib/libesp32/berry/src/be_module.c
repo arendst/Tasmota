@@ -126,9 +126,9 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
 {
     char *buffer;
     const char *split, *base;
+#if BE_DEBUG_SOURCE_FILE
     bvalue *func = vm->cf->func;
     bclosure *cl = var_toobj(func);
-#if BE_DEBUG_SOURCE_FILE
     if (var_isclosure(func)) {
         base = str(cl->proto->source); /* get the source file path */
     } else {
