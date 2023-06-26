@@ -285,7 +285,7 @@ String EthernetMacAddress(void);
 #ifndef MQTT_CLEAN_SESSION
 #define MQTT_CLEAN_SESSION          1          // 0 = No clean session, 1 = Clean session (default)
 #endif
-#ifndef MQTT_DISABLE_SSERIALRECEIVED        
+#ifndef MQTT_DISABLE_SSERIALRECEIVED
 #define MQTT_DISABLE_SSERIALRECEIVED 0         // 1 = Disable sserialreceived mqtt messages, 0 = Enable sserialreceived mqtt messages (default)
 #endif
 #ifndef MQTT_LWT_OFFLINE

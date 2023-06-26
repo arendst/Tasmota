@@ -182,8 +182,32 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
 
     # ====================================================================================================
     if   cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+      import string
 
-      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
+      if   attribute == 0x0003         #  ---------- ProductName / string ----------
+        var name = self.http_remote.get_info().find("name")
+        if name
+          return TLV.create_TLV(TLV.UTF1, name)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
+        var version_full = self.http_remote.get_info().find("version")
+        if version_full
+          var version_end = string.find(version_full, '(')
+          if version_end > 0    version_full = version_full[0..version_end - 1]   end
+          return TLV.create_TLV(TLV.UTF1, version_full)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber || UniqueID / string ----------
+        var mac = self.http_remote.get_info().find("mac")
+        if mac
+          return TLV.create_TLV(TLV.UTF1, mac)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
         # self.is_reachable_lazy_sync()   # Not needed anymore
         return TLV.create_TLV(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
       else

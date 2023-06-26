@@ -92,7 +92,7 @@ class sonoff_zb_pro_flasher
   # low-level
   #################################################################################
   def _flash_pre()
-    print("FLH: Flashing started (takes 5 minutes during which Tasmota is unresponsive)")
+    print("FLH: Flashing started (takes 5-8 minutes during which Tasmota is unresponsive)")
     self.flasher.start()
     self.flasher.ping()
     # erase flash
@@ -157,9 +157,15 @@ return sonoff_zb_pro_flasher()
 # Flash local firmware
 
 import sonoff_zb_pro_flasher as cc
+cc.load("SonoffZBPro_coord_20230507.hex")
+cc.check()
+cc.flash()
+
+import sonoff_zb_pro_flasher as cc
 cc.load("SonoffZBPro_coord_20220219.hex")
 cc.check()
 cc.flash()
+
 
 -#
 

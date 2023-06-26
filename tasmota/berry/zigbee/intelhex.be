@@ -72,6 +72,7 @@ class intelhex
 
   # internally used, verify each line
   def munch_line(parse_cb)
+    import string
     import crc
     var crc_sum = crc.sum
     var tas = tasmota
@@ -84,25 +85,35 @@ class intelhex
     var b_fromhex = b.fromhex
     var self_f = self.f
     var readline = self_f.readline
+    var defer = 10
     while true
-      yield(tas)        # tasmota.yield() -- faster version
+      defer = defer - 1
+      if defer <= 0
+        yield(tas)        # tasmota.yield() -- faster version
+        defer = 10
+      end
       var line = readline(self_f)   # self.f.readline()
+      if line[-1] == '\n'   line = line[0..-2]  end
+      if line[-1] == '\r'   line = line[0..-2]  end
+      
+      # line = string.tr(line, '\r', '')
+      # line = string.tr(line, '\n', '')
       # print(line)
       if line == ""   raise "value_error", "unexpected end of file" end
       if line[0] != ":"   continue end    # ignore empty line or not starting with ':'
-
       b = b_fromhex(b, line, 1)           # b.fromhex(line, 1)      # convert to bytes, avoid allocating a new object
       var sz = b[0]
 
       # check size
-      if size(b) != sz+5   raise "value_error", "invalid size for line: "+line  end
+      if size(b) != sz+5   raise "value_error", f"invalid size for line: {line} {size(b)=} {sz=}"  end
 
       var record_type = b[3]
       # 00: low address + data
       # 01: end of file
+      # 02: Extended Segment Address
       # 04: high address
-      if record_type != 0 && record_type != 1 && record_type != 4
-        raise "value_error", "unsupported record_type: "+str(record_type)
+      if record_type != 0 && record_type != 1 && record_type != 2 && record_type != 4
+        raise "value_error", f"unsupported record_type: {record_type} {line=}"
       end
 
       offset_low = b_get(b, 1, -2)                    # b.get(1,-2)
@@ -112,16 +123,19 @@ class intelhex
       if record_type == 1    break end    # end of file
       if record_type == 0
         # data
-        var address = offset_high << 16 | offset_low    # full address
+        var address = offset_high + offset_low    # full address
         #var data = b[4..-2]                             # actual payload
         parse_cb(address, sz, b, 4)
 
         # OK
         # do whatever needed
         # print(format("addr=0x%06X len=0x%02X", address, sz))
+      elif record_type == 2
+        if offset_low != 0      raise "value_error", "offset_low not null for cmd 02" end
+        offset_high = b_get(b, 4, -2) << 4
       elif record_type == 4
         if offset_low != 0      raise "value_error", "offset_low not null for cmd 04" end
-        offset_high = b_get(b, 4, -2)                   # b.get(4,-2)
+        offset_high = b_get(b, 4, -2) << 16
 
       end
     end

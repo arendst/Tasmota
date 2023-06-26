@@ -80,6 +80,7 @@ typedef struct {
 static void stmtlist(bparser *parser);
 static void block(bparser *parser, int type);
 static void expr(bparser *parser, bexpdesc *e);
+static void walrus_expr(bparser *parser, bexpdesc *e);
 static void sub_expr(bparser *parser, bexpdesc *e, int prio);
 
 static const bbyte binary_op_prio_tab[] = {
@@ -224,17 +225,17 @@ static void end_block(bparser *parser)
     end_block_ex(parser, -1);
 }
 
+#if BE_DEBUG_SOURCE_FILE
 /* Return the name of the source for this parser, could be `string`,
    `stdin` or the name of the current function */
 static bstring* parser_source(bparser *parser)
 {
-#if BE_DEBUG_SOURCE_FILE
     if (parser->finfo) {
         return parser->finfo->proto->source;
     }
-#endif
     return be_newstr(parser->vm, parser->lexer.fname);
 }
+#endif
 
 /* Initialize a function block and create a new `bprotoˋ */
 static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
@@ -368,7 +369,7 @@ static btokentype get_unary_op(bparser *parser)
 static btokentype get_assign_op(bparser *parser)
 {
     btokentype op = next_type(parser);
-    if (op >= OptAssign && op <= OptRsfAssign) {
+    if ((op >= OptAssign && op <= OptRsfAssign) || op == OptWalrus) {
         return op;
     }
     return OP_NOT_ASSIGN;
@@ -631,7 +632,7 @@ static bproto* funcbody(bparser *parser, bstring *name, bclass *c, int type)
         new_var(parser, parser_newstr(parser, "_class"), &e1); /* new implicit variable '_class' */
         init_exp(&e2, ETCONST, 0);
         be_code_implicit_class(parser->finfo, &e2, c);
-        be_code_setvar(parser->finfo, &e1, &e2);
+        be_code_setvar(parser->finfo, &e1, &e2, bfalse);
         finfo.proto->varg |= BE_VA_STATICMETHOD;
     }
     stmtlist(parser); /* parse statement without final `end` */
@@ -735,7 +736,7 @@ static void map_nextmember(bparser *parser, bexpdesc *l)
     match_token(parser, OptColon); /* ':' */
     expr(parser, &e); /* value in `e` */
     check_var(parser, &e);  /* check if value is correct */
-    be_code_setvar(finfo, &v, &e);  /* set suffi  INDEX value to e */
+    be_code_setvar(finfo, &v, &e, bfalse);  /* set suffi  INDEX value to e */
 }
 
 static void list_expr(bparser *parser, bexpdesc *e)
@@ -892,8 +893,7 @@ static void primary_expr(bparser *parser, bexpdesc *e)
     switch (next_type(parser)) {
     case OptLBK: /* '(' expr ')' */
         scan_next_token(parser); /* skip '(' */
-        /* sub_expr() is more efficient because there is no need to initialize e. */
-        sub_expr(parser, e, ASSIGN_OP_PRIO);
+        expr(parser, e);
         check_var(parser, e);
         match_token(parser, OptRBK); /* skip ')' */
         break;
@@ -1040,7 +1040,7 @@ static void assign_expr(bparser *parser)
         if (check_newvar(parser, &e)) { /* new variable */
             new_var(parser, e.v.s, &e);
         }
-        if (be_code_setvar(parser->finfo, &e, &e1)) {
+        if (be_code_setvar(parser->finfo, &e, &e1, bfalse)) {
             parser->lexer.linenumber = line;
             parser_error(parser,
                 "try to assign constant expressions.");
@@ -1125,13 +1125,33 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
     }
 }
 
+static void walrus_expr(bparser *parser, bexpdesc *e)
+{
+    int line = parser->lexer.linenumber;
+    sub_expr(parser, e, ASSIGN_OP_PRIO);    /* left expression */
+    btokentype op = next_type(parser);
+    if (op == OptWalrus) {
+        bexpdesc e1 = *e;           /* copy var to e1, e will get the result of expression */
+        scan_next_token(parser);    /* skip ':=' */
+        expr(parser, e);
+        if (check_newvar(parser, &e1)) { /* new variable */
+            new_var(parser, e1.v.s, e);
+        }
+        if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */ )) {
+            parser->lexer.linenumber = line;
+            parser_error(parser,
+                "try to assign constant expressions.");
+        }
+    }
+}
+
 /* Parse new expression and return value in `e` (overwritten) */
 /* Initializes an empty expdes  and parse subexpr */
 /* Always allocates a new temp register at top of freereg */
 static void expr(bparser *parser, bexpdesc *e)
 {
     init_exp(e, ETVOID, 0);
-    sub_expr(parser, e, ASSIGN_OP_PRIO);
+    walrus_expr(parser, e);
 }
 
 static void expr_stmt(bparser *parser)
@@ -1250,7 +1270,7 @@ static void for_iter(bparser *parser, bstring *var, bexpdesc *it)
     finfo->binfo->beginpc = finfo->pc;
     /* itvar = .it() */
     init_exp(&e, ETLOCAL, new_localvar(parser, var)); /* new itvar */
-    be_code_setvar(finfo, &e, it); /* code function to variable '.it' */
+    be_code_setvar(finfo, &e, it, bfalse); /* code function to variable '.it' */
     be_code_call(finfo, e.v.idx, 0); /* itvar <- call .it() */
     stmtlist(parser);
 }
@@ -1444,7 +1464,7 @@ static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *
         key.v.s = name;
 
         be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
-        be_code_setvar(parser->finfo, &e1, &e2);    /* set member */
+        be_code_setvar(parser->finfo, &e1, &e2, bfalse);    /* set member */
     }
 }
 
@@ -1568,7 +1588,7 @@ static void classstaticclass_stmt(bparser *parser, bclass *c_out, bexpdesc *e_ou
         key.v.s = name;
         /* assign the class to the static member */
         be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
-        be_code_setvar(parser->finfo, &e1, &e_class);    /* set member */
+        be_code_setvar(parser->finfo, &e1, &e_class, bfalse);    /* set member */
     } else {
         parser_error(parser, "class name error");
     }
@@ -1620,7 +1640,7 @@ static void var_field(bparser *parser)
         init_exp(&e2, ETNIL, 0);
     }
     new_var(parser, name, &e1); /* new variable */
-    be_code_setvar(parser->finfo, &e1, &e2);
+    be_code_setvar(parser->finfo, &e1, &e2, bfalse);
 }
 
 static void var_stmt(bparser *parser)

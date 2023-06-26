@@ -125,8 +125,8 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #pragma message "script 24c256 file option used"
 #else
 
-#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
-#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
+#if EEP_SCRIPT_SIZE==SPECIAL_EEPMODE_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
 #pragma message "internal special flash script buffer used"
 #else
 #pragma message "internal compressed eeprom script buffer used"
@@ -612,6 +612,7 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, T
 char *eval_sub(char *lp, TS_FLOAT *fvar, char *rstr);
 uint32_t script_ow(uint8_t sel, uint32_t val);
 int32_t script_logfile_write(char *path, char *payload, uint32_t size);
+void script_sort_array(TS_FLOAT *array, uint16_t size);
 
 void ScriptEverySecond(void) {
 
@@ -869,12 +870,18 @@ char *script;
                 
                 *vnp_p++ = vnames_p;
                 while (lp < op) {
+                  if (*lp == ' ') {
+                    // no spaces
+                    lp++;
+                  } else {
                     *vnames_p++ = *lp++;
+                  }
                 }
                 *vnames_p++ = 0;
                 // init variable
                 op++;
                 while (*op == ' ') {
+                  // skip spaces
                   op++;
                 }
                 if (*op != '"') {
@@ -4268,6 +4275,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif // USE_SCRIPT_FATFS_EXT
+#endif
+
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp_XP(lp, XPSTR("log("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
+          fvar = log(fvar);
+          goto nfuncexit;
+        }
 #endif
         break;
       case 'm':
@@ -8028,14 +8044,14 @@ bool Script_Close_Serial() {
 #endif //USE_SCRIPT_SERIAL
 
 
-void script_sort_array(float *array, uint16_t size) {
+void script_sort_array(TS_FLOAT *array, uint16_t size) {
   bool swapped;
   do {
     swapped = false;
     for (uint16_t i = 0; i < size - 1; ++i) {
       if (array[i] > array[i + 1]) {
         // swap
-        float tmp = array[i];
+        TS_FLOAT tmp = array[i];
         array[i] = array[i + 1];
         array[i + 1] = tmp;
         swapped = true;
@@ -8447,11 +8463,11 @@ void SaveScript(void) {
 #ifdef EEP_SCRIPT_SIZE
   // here we handle EEPROM modes
   if (glob_script_mem.FLAGS.eeprom == true) {
-    if (EEP_SCRIPT_SIZE < SPECIAL_EEPMODE_SIZE) {
+    if (EEP_SCRIPT_SIZE < SPECIAL_EEPMODE_SIZE && EEP_SCRIPT_SIZE != SPI_FLASH_SEC_SIZE) {
       EEP_WRITE(0, EEP_SCRIPT_SIZE, glob_script_mem.script_ram);
     } else {
-#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
-      alt_eeprom_writeBytes(0, SPI_FLASH_2SEC_SIZE, (uint8_t*)glob_script_mem.script_ram);
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
+      alt_eeprom_writeBytes(0, EEP_SCRIPT_SIZE, (uint8_t*)glob_script_mem.script_ram);
 #else
       uint8_t *ucs;
       ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
@@ -9273,7 +9289,7 @@ bool ScriptCommand(void) {
           break;
         case 8: // stop on error Off
         case 9: // On
-          bitWrite(Settings->rule_stop, index -1, XdrvMailbox.payload &1);
+          bitWrite(Settings->rule_stop, index - 1, XdrvMailbox.payload & 1);
           break;
 
 #ifdef xSCRIPT_STRIP_COMMENTS
@@ -12551,7 +12567,7 @@ bool Xdrv10(uint32_t function)
       if (EEP_INIT(EEP_SCRIPT_SIZE)) {
           // found 32kb eeprom,
           char *script;
-#if EEP_SCRIPT_SIZE<SPECIAL_EEPMODE_SIZE
+#if EEP_SCRIPT_SIZE<SPECIAL_EEPMODE_SIZE && EEP_SCRIPT_SIZE!=SPI_FLASH_SEC_SIZE
             script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
             if (!script) break;
             glob_script_mem.script_ram = script;
@@ -12563,16 +12579,16 @@ bool Xdrv10(uint32_t function)
             script[EEP_SCRIPT_SIZE - 1] = 0;
 #else
             uint8_t *ucs;
-#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE
-            ucs = (uint8_t*)calloc(SPI_FLASH_2SEC_SIZE + 4, 1);
+#if EEP_SCRIPT_SIZE==SPI_FLASH_2SEC_SIZE || EEP_SCRIPT_SIZE==SPI_FLASH_SEC_SIZE
+            ucs = (uint8_t*)calloc(EEP_SCRIPT_SIZE + 4, 1);
             if (!ucs) break;
-            alt_eeprom_readBytes(0, SPI_FLASH_2SEC_SIZE, ucs);
+            alt_eeprom_readBytes(0, EEP_SCRIPT_SIZE, ucs);
             if (*ucs == 0xff) {
-              memset(ucs, SPI_FLASH_2SEC_SIZE, 0);
+              memset(ucs, EEP_SCRIPT_SIZE, 0);
             }
-            ucs[SPI_FLASH_2SEC_SIZE- 1] = 0;
+            ucs[EEP_SCRIPT_SIZE - 1] = 0;
             glob_script_mem.script_ram = (char*)ucs;
-            glob_script_mem.script_size = SPI_FLASH_2SEC_SIZE;
+            glob_script_mem.script_size = EEP_SCRIPT_SIZE;
 
 #else
             ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
@@ -12630,9 +12646,9 @@ bool Xdrv10(uint32_t function)
 #endif //USE_BUTTON_EVENT
 
       // a valid script MUST start with >D
-      if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
+      if (glob_script_mem.script_ram[0] != '>' && glob_script_mem.script_ram[1] != 'D') {
         // clr all
-        memset(glob_script_mem.script_ram, 0 ,glob_script_mem.script_size);
+        memset(glob_script_mem.script_ram, 0, glob_script_mem.script_size);
 #ifdef PRECONFIGURED_SCRIPT
         strcpy_P(glob_script_mem.script_ram, PSTR(PRECONFIGURED_SCRIPT));
 #else

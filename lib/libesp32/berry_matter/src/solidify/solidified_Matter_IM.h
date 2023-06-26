@@ -1976,8 +1976,8 @@ be_local_closure(Matter_IM_process_status_response,   /* name */
     /* K9   */  be_nested_str_weak(MTR_X3A_X20_X3EOK_X20_X20_X20_X20_X20_X20_X20_X20_X28_X256i_X29_X20exch_X3D_X25i_X20not_X20found),
     /* K10  */  be_nested_str_weak(session),
     /* K11  */  be_nested_str_weak(local_session_id),
-    /* K12  */  be_const_int(3),
-    /* K13  */  be_nested_str_weak(MTR_X3A_X20_X3EStatus_X20_X20_X20_X20ERROR_X20_X3D_X200x_X2502X),
+    /* K12  */  be_nested_str_weak(MTR_X3A_X20_X3EStatus_X20_X20_X20_X20ERROR_X20_X3D_X200x_X2502X),
+    /* K13  */  be_const_int(3),
     /* K14  */  be_nested_str_weak(status_error_received),
     /* K15  */  be_nested_str_weak(remove_sendqueue_by_exchangeid),
     }),
@@ -2009,16 +2009,16 @@ be_local_closure(Matter_IM_process_status_response,   /* name */
       0x8824130B,  //  0016  GETMBR	R9	R9	K11
       0x88280303,  //  0017  GETMBR	R10	R1	K3
       0x7C1C0600,  //  0018  CALL	R7	3
-      0x5820000C,  //  0019  LDCONST	R8	K12
+      0x54220003,  //  0019  LDINT	R8	4
       0x7C140600,  //  001A  CALL	R5	3
       0x7002000E,  //  001B  JMP		#002B
       0xB8160E00,  //  001C  GETNGBL	R5	K7
       0x8C140B08,  //  001D  GETMET	R5	R5	K8
       0x601C0018,  //  001E  GETGBL	R7	G24
-      0x5820000D,  //  001F  LDCONST	R8	K13
+      0x5820000C,  //  001F  LDCONST	R8	K12
       0x5C240600,  //  0020  MOVE	R9	R3
       0x7C1C0400,  //  0021  CALL	R7	2
-      0x5820000C,  //  0022  LDCONST	R8	K12
+      0x5820000D,  //  0022  LDCONST	R8	K13
       0x7C140600,  //  0023  CALL	R5	3
       0x78120005,  //  0024  JMPF	R4	#002B
       0x8C14090E,  //  0025  GETMET	R5	R4	K14

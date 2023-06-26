@@ -201,12 +201,14 @@ class Matter_HTTP_async : Matter_TCP_async
             self.chunk_size = int('0x'+m[1])
             # if chunk size is zero, finished
             if self.chunk_size == 0
-              self.close()
               self.status = 2   # finished
               self.response = ''    # free space
               self.response_offset = 0
-              self.http_status = 1        # ok
-              self.event_http_finished()
+              self.close()
+              # if self.http_status == 0    # this is now handled by the close event
+              #   self.http_status = 1
+              #   self.event_http_finished()
+              # end
               return
             end
           end
