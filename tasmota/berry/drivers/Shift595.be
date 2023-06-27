@@ -18,7 +18,6 @@
 #   QH' output of first '595 to SER input of 2nd '595 and so on
 # -------------------------------------------------------------------------
 
-import string
 import gpio
 
 class Shift595

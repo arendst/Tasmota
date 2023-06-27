@@ -57,7 +57,6 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -91,9 +90,8 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(string.format("&#x26C5; %i hPa",
+    webserver.content_send(format("&#x26C5; %i hPa",
                                          int(self.shadow_value)))
   end
   

@@ -92,8 +92,7 @@ bootloader().flash('https://raw.githubusercontent.com/espressif/arduino-esp32/ma
 #bootloader().flash('https://raw.githubusercontent.com/espressif/arduino-esp32/master/tools/sdk/esp32/bin/bootloader_dout_40m.bin')
 
 #### debug only
-import string
 bl = bootloader()
-print(string.format("0x%04X", bl.get_bootloader_address()))
+print(format("0x%04X", bl.get_bootloader_address()))
 
 -#

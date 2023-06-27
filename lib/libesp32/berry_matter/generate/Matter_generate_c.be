@@ -82,7 +82,7 @@ fprint("  const matter_command_t* commands;")
 fprint("} matter_cluster_t;")
 fprint()
 for cl:cl_ids
-  fprint(string.format("const matter_attribute_t matter_Attributes_%04X[] = {", cl))
+  fprint(f"const matter_attribute_t matter_Attributes_{cl:04X}[] = {")
   var attributes = c[cl_id_name[cl]]['attributes']
   var attr_id_name = {}
   for attr:attributes
@@ -94,13 +94,13 @@ for cl:cl_ids
     var reportable = attributes[attr_id].find('reportable', false)
     var writable = attributes[attr_id].find('writable', false)
     var flags = (writable ? 0x01 : 0x00) | (reportable ? 0x02 : 0x00)
-    fprint(string.format('  { 0x%04X, %i, 0x%02X, "%s" },', attr_id, 0, flags, attributes[attr_id]['attributeName']))
+    fprint(format('  { 0x%04X, %i, 0x%02X, "%s" },', attr_id, 0, flags, attributes[attr_id]['attributeName']))
   end
   fprint('  { 0xFFFF, 0, 0x00, NULL },')
   fprint("};")
   fprint()
   # commands
-  fprint(string.format("const matter_command_t matter_Commands_%04X[] = {", cl))
+  fprint(f"const matter_command_t matter_Commands_{cl:04X}[] = {")
   var commands = c[cl_id_name[cl]]['commands']
   var cmd_id_name = {}
   for cmd:commands
@@ -109,7 +109,7 @@ for cl:cl_ids
   var cmd_ids_local = k2l(cmd_id_name)
 
   for cmd_id:cmd_ids_local
-    fprint(string.format('  { 0x%04X, "%s" },', cmd_id, commands[cmd_id]['commandName']))
+    fprint(format('  { 0x%04X, "%s" },', cmd_id, commands[cmd_id]['commandName']))
   end
   fprint('  { 0xFFFF, NULL },')
   fprint("};")
@@ -118,7 +118,7 @@ end
 
 fprint("const matter_cluster_t matterAllClusters[] = {")
 for cl:cl_ids
-  fprint(string.format('  { 0x%04X, "%s", matter_Attributes_%04X, matter_Commands_%04X },', cl, cl_id_name[cl], cl, cl))
+  fprint(format('  { 0x%04X, "%s", matter_Attributes_%04X, matter_Commands_%04X },', cl, cl_id_name[cl], cl, cl))
 end
   fprint('  { 0xFFFF, NULL, NULL },')
 fprint("};")

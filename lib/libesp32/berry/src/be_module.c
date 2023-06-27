@@ -126,6 +126,7 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
 {
     char *buffer;
     const char *split, *base;
+#if BE_DEBUG_SOURCE_FILE
     bvalue *func = vm->cf->func;
     bclosure *cl = var_toobj(func);
     if (var_isclosure(func)) {
@@ -133,6 +134,9 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
     } else {
         base = "/";
     }
+#else
+    base = "/";
+#endif
     split = be_splitpath(base);
     *size = split - base + (size_t)str_len(path) + SUFFIX_LEN;
     buffer = be_malloc(vm, *size);

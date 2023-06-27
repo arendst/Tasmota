@@ -5,11 +5,12 @@
 
 # Templates
 
-Find below the available templates as of April 2023. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of June 2023. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
 3DStar ESP-OpenTherm v1.1    {"NAME":"3DS_OpenTherm","GPIO":[0,0,0,0,0,0,0,0,4960,0,4928,0,0,0],"FLAG":0,"BASE":18}
+KinCony Ethernet IO Expansion Board  {"NAME":"KC868-AM","GPIO":[1,1,1,1,640,1,1,1,1,1,1,224,608,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,3200,1,1,3232,1,0,0,1],"FLAG":0,"BASE":1}
 WifInfo - Teleinfo Server    {"NAME":"WifInfo","GPIO":[1376,1,1,5152,640,608,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":18}
 ZiGate-Ethernet              {"NAME":"ZIGATE-ETH","GPIO":[1,1,1,1,1,1,0,0,1,0,1,1,3840,576,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0],"FLAG":0,"BASE":18,"CMND":"EthClockMode 3 | EthAddress 1"}
 ```
@@ -18,6 +19,7 @@ ZiGate-Ethernet              {"NAME":"ZIGATE-ETH","GPIO":[1,1,1,1,1,1,0,0,1,0,1,
 ```
 Alfawise                     {"NAME":"alfawise P2","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 BlitzHome AP1                {"NAME":"BH-AP1","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
+BlitzHome AP2501             {"NAME":"BH-AP2501","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Kogan 5-Stage 3S             {"NAME":"Kogan Air Purifier 3S","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 ```
 
@@ -152,6 +154,7 @@ V-Tac PAR16 4.5W 300lm 110   {"NAME":"V-TAC VT-5174","GPIO":[0,0,0,0,0,0,0,0,417
 Vestaiot BR30 800lm          {"NAME":"Vesta BR30 CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 Wipro Garnet NS9100 810lm    {"NAME":"Wipro 9W CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":48}
 Wyze A19 800lm               {"NAME":"Wyze Bulb","GPIO":[5728,0,0,0,0,0,0,0,0,416,417,0,0,0],"FLAG":0,"BASE":48}
+Wyze A19 800lm               {"NAME":"WLPA19v2","GPIO":[0,0,0,0,0,0,0,0,0,0,0,0,0,417,416,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 ```
 
 ## Camera
@@ -160,6 +163,7 @@ Ai-Thinker                   {"NAME":"AITHINKER CAM","GPIO":[4992,1,672,1,416,50
 Freenove ESP32-WROVER.DEV    {"NAME":"Freenove-WROVER-Cam","GPIO":[1,1,1,1,5088,5089,0,0,1,1,1,1,1,1,5090,5091,1,4992,5184,5152,1,5120,5024,5056,0,0,0,0,1,1,5094,5095,5092,1,1,5093],"FLAG":0,"BASE":1}
 M5Stack ESP32CAM Camera Module OV2640  {"NAME":"M5Cam","GPIO":[0,1,672,1,416,5091,1,1,1,6720,320,4960,1,1,5093,5095,0,5184,5024,5056,0,5120,5152,4992,0,0,0,0,5088,1,5090,5089,5094,0,0,5092],"FLAG":0,"BASE":2}
 M5Stack PSRAM Timer Camera (OV3660)  {"NAME":"M5STACK CAM","GPIO":[0,0,0,0,0,5091,1,0,0,0,0,4960,1,0,5093,5095,0,5184,5120,5056,0,5024,5152,4992,0,0,0,0,5088,0,5090,5089,5094,0,0,5092],"FLAG":0,"BASE":2}
+OV5640 ESP32                 {"NAME":"ESP32-OV5640-Cam","GPIO":[32,1,5088,1,8832,4960,1,1,5091,8864,5089,4992,1,1,5120,8800,0,8960,5024,5056,0,288,5184,5092,0,0,0,0,1,5093,5094,5090,5152,0,0,5095],"FLAG":0,"BASE":1}
 Wireles Tag Camera           {"NAME":"WT-ESP32-CAM","GPIO":[4992,1,1,1,1,5088,0,0,1,1,1,1,1,0,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,0,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":2}
 ```
 
@@ -228,6 +232,7 @@ QS-WIFI-C01-RF               {"NAME":"Shutter-QS-WIFI-C01","GPIO":[0,0,1,0,288,0
 ```
 Anccy                        {"NAME":"Anccy Shutter","GPIO":[544,0,289,34,226,33,0,0,32,224,290,225,288,0],"FLAG":0,"BASE":18}
 Anccy Relax                  {"NAME":"Tuya Shutter","GPIO":[544,0,290,161,225,34,0,0,32,224,289,226,288,0],"FLAG":0,"BASE":18}
+Avatto Curtain + Light       {"NAME":"Avatto Curtain + Light","GPIO":[576,0,0,34,226,35,0,0,32,224,225,227,33,0],"FLAG":0,"BASE":18}
 Avatto SYS-CS01              {"NAME":"Avatto","GPIO":[320,576,0,33,225,0,0,0,0,224,321,0,32,0],"FLAG":0,"BASE":18}
 Currydouble                  {"NAME":"Currydouble","GPIO":[260,258,576,0,0,224,0,0,0,1,5760,225,259,0],"FLAG":0,"BASE":18}
 Etersky WF-CS01              {"NAME":"Etersky","GPIO":[544,0,289,34,226,33,0,0,32,224,290,225,288,0],"FLAG":0,"BASE":18}
@@ -290,9 +295,10 @@ Adafruit QT Py ESP32 Pico    {"NAME":"QTPy ESP32 Pico","GPIO":[32,3200,0,3232,1,
 AZ-Envy Environmental Sensor  {"NAME":"AZ Envy","GPIO":[32,0,320,0,640,608,0,0,0,0,0,0,0,4704],"FLAG":0,"BASE":18}
 Coiaca Tasmota               {"NAME":"AWR01t","GPIO":[576,1,1,128,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Coiaca Tasmota Development Board AWR12  {"NAME":"AWR12t","GPIO":[320,1,1,1,1,1,0,0,1,1,1,1,1,1],"FLAG":0,"BASE":18}
-Dasduino CONNECT             {"NAME":"Dasduino CONNECTPLUS","GPIO":[32,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,640,608,1,0,1,1,1,0,0,0,0,1376,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-Dasduino CONNECTPLUS         {"NAME":"Dasduino CONNECT","GPIO":[1,1,1376,1,640,608,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":18}
+Dasduino CONNECTPLUS         {"NAME":"Dasduino CONNECTPLUS","GPIO":[32,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,640,608,1,0,1,1,1,0,0,0,0,1376,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Espoir Rev 1.0.0 PoE+        {"NAME":"Espoir","GPIO":[0,0,1,0,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,5568,5600,1,7968,1,1,1,1],"FLAG":0,"BASE":1}
+KinCony 128 Channel Controller  {"NAME":"KC868-A128","GPIO":[0,1,0,1,609,640,1,1,1,3232,3200,641,608,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,0,0,4705,4707,4706,0,0,4704],"FLAG":0,"BASE":1}
+KinCony 64 Channel Controller  {"NAME":"KC868-A64","GPIO":[0,1,0,1,609,640,1,1,1,3232,3200,641,608,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,0,0,4705,4707,4706,0,0,4704],"FLAG":0,"BASE":1}
 LC Technology MicroPython Maker  {"NAME":"LC-ESP-Python","GPIO":[1,1,544,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":18}
 LilyGO RGB LED Ring Encoder  {"NAME":"T-Encoder","GPIO":[0,0,1,0,1,0,0,0,1,1,1,1,0,0,0,480,6212,0,0,0,0,449,450,448,0,0,0,0,0,0,0,0,3296,3264,32,0],"FLAG":0,"BASE":1,"CMND":"BuzzerPwm 1"}
 LilyGO T7 Mini32 V1.5        {"NAME":"LilyGO T7 V1.5","GPIO":[1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,544,0,0,0,1,0,1,1,1,0,0,0,0,0,1,1,4704,1,0,0,1],"FLAG":0,"BASE":1}
@@ -402,6 +408,7 @@ Athom EU                     {"NAME":"Athom Dimmer Switch","GPIO":[576,2272,0,23
 CE Smart Home                {"NAME":"CE-WF500D","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 CE Smart Home CFW500D-3W 3 Way  {"NAME":"CE-WF500D-3W","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 CNSKOU Touch                 {"NAME":"CNSKOU Dimmer Switch","GPIO":[0,0,0,0,0,0,0,0,0,0,290,0,0,0],"FLAG":0,"BASE":54}
+Deta Single Gang Touch Dimmer  {"NAME":"Deta 6910HA","GPIO":[0,3200,1,3232,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Eva Logik                    {"NAME":"WF31 Dimmer","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 Eva Logik 3 Way              {"NAME":"EL WF31T","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 Feit Electric Smart          {"NAME":"Feit DIM/WIFI","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
@@ -528,10 +535,11 @@ Sonoff SC                    {"NAME":"Sonoff SC","GPIO":[32,3200,1,3232,0,0,0,0,
 ```
 Anko HEGSM40                 {"NAME":"Anko HEGSM40","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 Arlec 117cm Aurora Digital Tower  {"NAME":"ATF4601HA","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
+Arlec 130cm White 4 Blade DC Ceiling Light and  {"NAME":"Arlec DCF4002WHA","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 Arlec 45cm DC Pedestal       {"NAME":"Arlec 45cm Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 11,1 | TuyaMCU 61,2 | TuyaMCU 64,3 | TuyaMCU 99,6 | TuyaMCU 12,101"}
 Arlec Smart 45cm Smart DC Wall  {"NAME":"Arlec 45cm Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 11,1 | TuyaMCU 61,2 | TuyaMCU 64,3 | TuyaMCU 99,6 | TuyaMCU 12,101"}
 Duux Whisper Flex Battery Pack  {"NAME":"Duux DXCF12","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 61,2 | TuyaMCU 62,3 | TuyaMCU 12,4 | TuyaMCU 13,5 | TuyaMCU 64,6"}
-Duux Whisper Flex Smart      {"NAME":"Duux Fan","GPIO":[0,0,0,0,0,0,0,0,0,0,2304,0,2272,0],"FLAG":0,"BASE":54}
+Duux Whisper Flex Smart      {"NAME":"Duux Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 Geek Aire 3D Oscillating Desktop  {"NAME":"Geek Aire Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 12,4 | TuyaMCU 13,5"}
 Goldair SleepSmart GCPF315   {"NAME":"Goldair Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 Holmes 36" Oscillating Tower  {"NAME":"Generic","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":54,"CMND":"TuyaMcu 11,1 | TuyaMcu 12,5 | WebButton1 Power | WebButton2 Oscillation "}
@@ -610,7 +618,7 @@ Geeklink GK01                {"NAME":"GL IR Blaster","GPIO":[1,1,1,1,320,1088,0,
 HIPER IoT IR2                {"NAME":"hiper_HI-IR2","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 Jinvoo AC/TV Box             {"NAME":"Jinvoo IR Controller","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 JS-IR1 Universal Remote      {"NAME":"JS-IR1","GPIO":[1,1,1,1,288,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":18}
-Kincony ESP32 433MHz RF and  {"NAME":"KC868-AG","GPIO":[0,0,1056,0,480,0,0,0,0,0,1,0,1,1,1,1,0,1,1120,1152,0,7968,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1,"CMND":"BuzzerPwm 1"}
+KinCony ESP32 433MHz RF and  {"NAME":"KC868-AG","GPIO":[0,0,1056,0,480,0,0,0,0,0,1,0,1,1,1,1,0,1,1120,1152,0,7968,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1,"CMND":"BuzzerPwm 1"}
 Lenovo SE-741C               {"NAME":"Lenovo IR","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 Mirabella Genio I002577      {"NAME":"Genio IR TxRx","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 Moes Tuya Remote Control     {"NAME":"Moes IR Controller","GPIO":[1,1,1,1,1,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
@@ -786,6 +794,7 @@ Deta 18W 1900lm T8 Tube      {"NAME":"DETA Smart LED","GPIO":[0,0,0,0,0,0,0,0,0,
 electriQ MOODL Ambiance Lamp  {"NAME":"ElectriQ MOODL","GPIO":[0,4640,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Gosund Table Lamp            {"NAME":"Gosund LB3","GPIO":[0,0,0,0,0,418,0,0,417,419,0,416,0,0],"FLAG":0,"BASE":18}
 Hama Wall Light Square, 10 cm, IP 44  {"NAME":"Hama Wifi Wall Light","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,1],"FLAG":0,"BASE":18}
+HiFree Table Lamp            {"NAME":"TuyaMCU","GPIO":[108,1,107,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":18}
 Hugoai Table Lamp            {"NAME":"HG02","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 11,20 | TuyaMCU 26,21 | TuyaMCU 21,22 | TuyaMCU 23,23 | TuyaMCU 24,24 | DimmerRange 34,1000"}
 Iwoole Table Lamp            {"NAME":"GLOBELAMP","GPIO":[0,0,0,0,419,0,0,0,417,418,416,0,0,0],"FLAG":0,"BASE":18}
 Lepro Bedroom Lamp           {"NAME":"Lepro 902101-US","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 11,20 | TuyaMCU 26,21 | TuyaMCU 21,22 | TuyaMCU 23,23 | TuyaMCU 24,24 | DimmerRange 34,1000"}
@@ -800,6 +809,7 @@ Mirabella Genio 4 Black LED Garden Path  {"NAME":"GenioGardenStr","GPIO":[0,0,0,
 Mirabella Genio CCT 6 LED 30mm Stainless Steel Deck  {"NAME":"Mirabella Deck CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 MiraBella Genio Colour 6 LED 30mm Stainless Steel Deck  {"NAME":"Genio RGB Deck Lights","GPIO":[0,0,0,0,416,0,0,0,417,0,418,0,0,0],"FLAG":0,"BASE":18}
 Mirabella Genio Rechargable LED Portable Lamp  {"NAME":"MirabellaPortableLamp","GPIO":[32,0,0,0,416,419,0,0,417,0,418,0,0,0],"FLAG":0,"BASE":18}
+Moes RGBCW (8+8+15+15W)      {"NAME":"JL-TD3-4-4-2516-V1.0","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Nous CCT Desk Lamp           {"NAME":"NOUS Smart Desk Lamp S1","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 11,1 | TuyaMCU 21,3 | TuyaMCU 23,4 | DimmerRange 25,255"}
 Novostella Bloom 20W RGBCW Flood  {"NAME":"Novostella NTF36 Floodlight","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Novostella UT88835 20W Flood  {"NAME":"Novo 20W Flood","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
@@ -902,6 +912,7 @@ Atomi                        {"NAME":"AtomiSmartPlug","GPIO":[0,0,0,0,320,576,0,
 Blitzwolf 16A IP44 Dual      {"NAME":"Blitzwolf BW-SHP14","GPIO":[0,320,0,32,0,321,0,0,224,0,225,0,0,0],"FLAG":0,"BASE":18}
 BN-Link                      {"NAME":"BNC-60/U130T","GPIO":[1,0,1,0,1,320,1,1,224,32,1,0,0,1],"FLAG":0,"BASE":18}
 Brennenstuhl WA 3000         {"NAME":"WA 3000 XS02","GPIO":[0,0,0,0,224,32,0,0,576,288,0,0,0,0],"FLAG":0,"BASE":61}
+BSEED                        {"NAME":"PA-GEBA-01SWP","GPIO":[0,0,0,0,288,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 C119                         {"NAME":"Subosi C119","GPIO":[0,0,0,0,225,320,0,0,224,544,32,0,321,0],"FLAG":0,"BASE":18}
 C137 IP55                    {"NAME":"C137 Outdoor","GPIO":[0,32,0,320,2720,2656,0,0,224,2624,225,0,0,1],"FLAG":0,"BASE":18}
 C168 IP64                    {"NAME":"C188","GPIO":[320,0,321,0,33,0,0,0,224,32,544,225,0,0],"FLAG":0,"BASE":18}
@@ -1015,6 +1026,7 @@ Aquiv S1                     {"NAME":"Aquiv S1","GPIO":[0,0,544,0,320,0,0,0,224,
 Arlec 10m Smart Extension Lead  {"NAME":"Arlec Ext Cord","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 Arlec Heavy Duty 20m Extension Lead  {"NAME":"Arlec Ext Cord","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 Arlec Plug In Socket         {"NAME":"PC191HA","GPIO":[0,32,0,0,2720,2656,0,0,2624,224,288,0,0,0],"FLAG":0,"BASE":18}
+Arlec Plug In Socket         {"NAME":"PC191HAS2","GPIO":[0,0,0,32,2656,2624,0,0,224,2720,320,0,0,0],"FLAG":0,"BASE":18}
 Arlec Smart                  {"NAME":"Arlec-PC190HA","GPIO":[0,0,0,0,320,0,0,0,224,576,32,0,0,0],"FLAG":0,"BASE":18}
 Arlec Smart                  {"NAME":"PC399HA","GPIO":[0,0,0,32,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":52}
 Arlec Smart 2.1A USB Charger  {"NAME":"Arlec Single","GPIO":[0,0,0,0,321,0,0,0,224,0,64,0,0,0],"FLAG":0,"BASE":18}
@@ -1044,6 +1056,7 @@ Aukey SH-PA1                 {"NAME":"AUKEY SH-PA1","GPIO":[320,0,321,0,0,0,0,0,
 Aukey SH-PA3                 {"NAME":"Aukey SH-PA3","GPIO":[0,0,576,0,321,32,0,0,225,0,0,224,0,0],"FLAG":0,"BASE":18}
 Aunics Presa Smart           {"NAME":"AUNICS","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 Aunics Smart IT              {"NAME":"AUNICS","GPIO":[0,0,0,32,2720,2656,0,0,2624,544,224,0,0,0],"FLAG":0,"BASE":18}
+Avatar                       {"NAME":"Generic","GPIO":[0,0,320,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
 Avatar                       {"NAME":"Avatar UK 10A","GPIO":[0,0,320,0,0,2720,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":45}
 Avatar AWP01L                {"NAME":"AWP01L","GPIO":[0,0,0,0,0,320,0,0,0,32,224,0,0,0],"FLAG":0,"BASE":18}
 Avatar AWP02L-N              {"NAME":"AWP02L-N","GPIO":[576,0,0,0,320,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
@@ -1108,6 +1121,7 @@ Bytech                       {"NAME":"BYTECH B POWERED","GPIO":[0,321,0,0,320,0,
 Calex 429198                 {"NAME":"Calex Pwr Plug","GPIO":[0,0,0,0,320,0,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":1}
 Calex Powerplug UK           {"NAME":"Calex UK Plug","GPIO":[0,0,0,0,320,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":1}
 Calex UK                     {"NAME":"Calex 429202","GPIO":[0,0,320,0,0,0,0,0,0,32,0,224,0,1],"FLAG":0,"BASE":18}
+casa NOVA                    {"NAME":"casa-NOVA","GPIO":[0,0,0,0,320,576,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":1}
 CE Smart Home                {"NAME":"LITESUN LA-WF7","GPIO":[0,320,0,32,2720,2656,0,0,2624,321,224,0,0,0],"FLAG":0,"BASE":18}
 CE Smart Home LA-WF3         {"NAME":"CE LA-WF3","GPIO":[0,0,0,0,544,320,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 CloudFree EU                 {"NAME":"CloudFree P1EU","GPIO":[0,0,320,0,0,2720,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
@@ -1123,6 +1137,7 @@ Coosa SP1                    {"NAME":"COOSA SP1","GPIO":[321,1,320,1,0,2720,0,0,
 CooWoo                       {"NAME":"CooWoo AW01","GPIO":[0,0,0,0,288,160,0,0,256,0,0,0,0,0],"FLAG":0,"BASE":18}
 CozyLife HomeKit 16A         {"NAME":"CozyLife 16A","GPIO":[0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,2720,0,0,2656,576,0,224,2624,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 CrazyLynX WiFi               {"NAME":"CrazyLynX","GPIO":[0,0,0,0,321,320,0,0,224,32,0,0,0,4704],"FLAG":0,"BASE":18}
+Crest Smart Home Single Power Adaptor with 2 USB  {"NAME":"Medion","GPIO":[0,0,0,32,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":52}
 CurrySmarter 16A             {"NAME":"CurrySmarter 16A","GPIO":[0,0,0,32,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 CurrySmarter 16A Power Monitoring  {"NAME":"Currysmarter XH-TW2P","GPIO":[0,0,0,2624,32,320,0,0,224,2720,2656,0,0,0],"FLAG":0,"BASE":18}
 CYYLTF BIFANS J23            {"NAME":"CYYLTD BIFANS J23","GPIO":[0,0,0,0,288,0,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
@@ -1440,6 +1455,7 @@ QNCX                         {"NAME":"QNCX","GPIO":[0,0,0,32,2720,2656,0,0,2624,
 Qnect 16A                    {"NAME":"Qnect QN-WP01","GPIO":[0,0,0,0,0,224,0,0,288,0,32,0,0,0],"FLAG":0,"BASE":18}
 qnect 16A                    {"NAME":"QNECT QN-WP01E","GPIO":[0,0,0,32,2688,2656,0,0,2624,288,224,0,0,0],"FLAG":0,"BASE":18}
 Qualitel Mini                {"NAME":"Qualitel HG01WT","GPIO":[320,0,321,0,0,2688,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
+Refoss P11                   {"NAME":"Refoss-P11","GPIO":[0,0,0,3104,576,32,0,0,320,224,0,0,0,4736],"FLAG":0,"BASE":1}
 RenPho RF-SM004              {"NAME":"RenPho RFSM004","GPIO":[0,0,0,0,544,320,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 Robaxo                       {"NAME":"Robaxo RSP-025","GPIO":[32,0,0,0,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":18}
 RSH-WS005                    {"NAME":"RSH-WS005 Energy Monitor","GPIO":[320,0,576,0,0,2720,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
@@ -1498,6 +1514,7 @@ STITCH                       {"NAME":"Stitch 27937","GPIO":[32,0,320,0,2688,2656
 STITCH                       {"NAME":"Stitch 35511","GPIO":[320,0,321,0,0,2688,0,0,0,32,2656,224,2624,0],"FLAG":0,"BASE":18}
 STITCH 15A In-Line           {"NAME":"Stitch 39047","GPIO":[0,288,0,32,2688,2656,0,0,2624,0,224,0,0,0],"FLAG":0,"BASE":18}
 STITCH Mini 10A              {"NAME":"STITCH 41730","GPIO":[0,0,320,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
+Strong Helo EU               {"NAME":"Strong-Helo-PLUG","GPIO":[0,0,0,32,2688,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":65}
 Strong Helo Plight           {"NAME":"Strong HELO-PLIGHT-EU","GPIO":[416,0,418,0,417,2720,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
 Strong Helo PLUSB 2x USB     {"NAME":"Helo-PLUSB-EU","GPIO":[32,0,0,0,2720,2656,0,0,2624,320,224,225,8096,0],"FLAG":0,"BASE":18}
 SuperNight Dual              {"NAME":"SUPERNIGHT","GPIO":[0,32,0,224,2656,2688,0,0,225,2624,576,0,0,4833],"FLAG":0,"BASE":18}
@@ -1657,6 +1674,7 @@ Digma DiPlug Strip 40        {"NAME":"DiPlug Strip 40","GPIO":[1,320,1,32,225,22
 Digoo DG-PS01                {"NAME":"Digoo DG-PS01","GPIO":[0,320,0,32,226,225,0,0,0,227,224,0,0,4704],"FLAG":0,"BASE":18}
 Ener-J Extension Box with USB  {"NAME":"ENER-J SHA5207","GPIO":[544,0,0,321,225,322,1,1,320,224,227,226,32,1],"FLAG":0,"BASE":18}
 Forrinx 3AC 4USB             {"NAME":"SH-20","GPIO":[0,320,0,321,225,224,0,0,32,226,227,0,0,0],"FLAG":0,"BASE":18}
+Geekbes 3AC 3USB             {"NAME":"GC801U","GPIO":[291,0,0,320,256,35,0,0,258,257,0,0,227,0],"FLAG":0,"BASE":18}
 Geekbes 4AC+4USB             {"NAME":"Geekbes 4xStri","GPIO":[0,320,0,32,225,224,0,0,226,227,228,0,0,4704],"FLAG":0,"BASE":18}
 Geeni Surge + Charge 2 USB   {"NAME":"Geeni GN-SW023","GPIO":[288,0,0,0,225,224,0,0,226,227,228,0,32,0],"FLAG":0,"BASE":18}
 Geeni SURGE 6-Outlet Surge Protector  {"NAME":"Geeni 6 Strip","GPIO":[320,0,0,0,225,224,0,0,227,228,226,229,32,0],"FLAG":0,"BASE":18}
@@ -1698,7 +1716,7 @@ Meross MSS425                {"NAME":"Meross MSS425","GPIO":[260,0,0,0,320,0,0,0
 Mirabella Genio 4 Outlet Power Board with 2 USB  {"NAME":"Genio i002340","GPIO":[320,0,0,0,224,225,0,0,226,32,227,228,0,0],"FLAG":0,"BASE":18}
 Mirabella Genio Powerboard   {"NAME":"Genio Powerboa","GPIO":[224,288,0,0,226,225,0,0,228,32,229,227,0,0],"FLAG":0,"BASE":18}
 Nedis P310                   {"NAME":"Nedis WIFIP310","GPIO":[0,320,0,32,225,224,0,0,0,226,227,0,0,4704],"FLAG":0,"BASE":18}
-Nous 15A 3AC 3USB            {"NAME":"NOUS A5T","GPIO":[0,3072,544,3104,0,259,0,0,225,226,224,0,32,4704],"FLAG":0,"BASE":18}
+Nous 15A 3AC 3USB            {"NAME":"NOUS A5T","GPIO":[0,3072,544,3104,0,259,0,0,225,226,224,0,35,4704],"FLAG":1,"BASE":18}
 Nozdom 3AC+2USB              {"NAME":"NOZDOM SWB3","GPIO":[544,0,289,0,0,226,0,0,224,32,225,227,0,0],"FLAG":0,"BASE":18}
 Pearl CHA1555 3AC 4USB       {"NAME":"Pearl CHA1555","GPIO":[32,0,0,225,2720,2656,0,0,2624,227,226,224,320,0],"FLAG":0,"BASE":18}
 Powertech 4AC 2USB           {"NAME":"Ptech MS6107","GPIO":[0,288,0,32,224,225,0,0,227,228,226,0,0,0],"FLAG":0,"BASE":18}
@@ -1733,6 +1751,7 @@ Wolf Armor 4AC 4USB          {"NAME":"Wolf Armor SP26","GPIO":[0,320,0,32,227,22
 WOOX Powerstrip EU           {"NAME":"WOOX R5104","GPIO":[0,0,0,32,0,352,0,0,225,355,226,227,224,4896],"FLAG":0,"BASE":18}
 WOOX R4028                   {"NAME":"WOOX R4028","GPIO":[0,320,0,32,226,225,0,0,0,227,224,0,0,4704],"FLAG":0,"BASE":18}
 WP40                         {"NAME":"WP40","GPIO":[260,0,0,0,320,0,0,0,224,32,225,226,259,0],"FLAG":0,"BASE":18}
+Xenon                        {"NAME":"SM-SO306I1","GPIO":[0,0,0,0,256,32,0,0,258,257,259,0,228,0],"FLAG":0,"BASE":18}
 Xenon SM-S0301               {"NAME":"SM-SO301","GPIO":[288,1,1,321,256,32,0,0,258,257,259,1,228,0],"FLAG":0,"BASE":18}
 Xenon SM-S0301-U             {"NAME":"SM-SO301-U","GPIO":[288,1,1,321,256,32,0,0,258,257,259,1,228,0],"FLAG":0,"BASE":18}
 Xenon SM-SO301 v2            {"NAME":"SM-SO301","GPIO":[320,0,0,0,257,32,0,0,259,258,260,0,224,0],"FLAG":0,"BASE":18}
@@ -1743,6 +1762,7 @@ XS-A34                       {"NAME":"XS-A24","GPIO":[288,0,289,0,228,225,0,0,22
 Yagala                       {"NAME":"Yagala","GPIO":[288,1,1,321,256,32,0,0,258,257,259,1,228,0],"FLAG":0,"BASE":18}
 Yagala SWB3                  {"NAME":"YAGALA SWB3","GPIO":[544,0,289,0,0,226,0,0,224,32,225,227,0,0],"FLAG":0,"BASE":18}
 Yagala Z1                    {"NAME":"YAGALA Z1","GPIO":[0,544,0,32,225,227,0,0,226,228,224,0,0,0],"FLAG":0,"BASE":18}
+YPS11                        {"NAME":"SM-SO301","GPIO":[320,0,0,0,257,32,0,0,259,258,260,0,224,0],"FLAG":0,"BASE":18}
 Yuanguo 4AC+2USB             {"NAME":"YUANGUO","GPIO":[164,35,0,227,34,33,0,0,32,225,224,226,544,0],"FLAG":0,"BASE":1}
 Zeoota 4AC 2USB              {"NAME":"Zeoota WP30","GPIO":[0,32,0,227,0,0,0,0,0,225,224,226,0,4896],"FLAG":0,"BASE":18}
 Zeoota PS022                 {"NAME":"ZEOOTA 3x plus","GPIO":[0,321,0,320,225,224,0,0,32,226,227,0,0,4704],"FLAG":0,"BASE":18}
@@ -1866,6 +1886,7 @@ Kauf esphome 10W             {"NAME":"Kauf Bulb","GPIO":[0,0,0,0,416,419,0,0,417
 KHSUIN BR30 13W 1300lm       {"NAME":"KHSUIN 13W BR30","GPIO":[0,0,0,0,416,420,0,0,417,419,418,0,0,0],"FLAG":0,"BASE":18}
 Kogan 10W 1050lm             {"NAME":"Kogan RGB+CCT","GPIO":[1,1,1,0,416,419,1,1,417,452,418,1,1,1],"FLAG":0,"BASE":18}
 Kohree 600lm                 {"NAME":"Kohree VHP560","GPIO":[0,0,0,0,416,420,0,0,417,419,418,0,0,0],"FLAG":0,"BASE":18}
+LangPlus+ A60 7W             {"NAME":"LangPlus+ A60 7W","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Lasco 9W 700lm               {"NAME":"Lasco 7W","GPIO":[0,0,0,0,2912,416,0,0,0,0,2944,0,0,0],"FLAG":0,"BASE":1}
 Laser 10W 1000lm             {"NAME":"LSH-E27RGB10W","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Laser 5W 460lm               {"NAME":"LSH-E14RGB5W","GPIO":[0,0,0,0,419,420,0,0,417,418,416,0,0,0],"FLAG":0,"BASE":18}
@@ -1953,6 +1974,7 @@ Teckin SB50 v3 A19 800lm     {"NAME":"Teckin SB50v3","GPIO":[0,0,0,0,416,419,0,0
 Teckin SB53 1300lm           {"NAME":"Teckin SB53","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Treatlife A19 8W 650lm       {"NAME":"Treatlife RGBW","GPIO":[0,0,0,0,417,416,0,0,420,418,419,0,0,0],"FLAG":0,"BASE":18}
 V-TAC 10W 806lm              {"NAME":"V-TAC VT-5119","GPIO":[0,0,0,0,4032,0,0,0,0,0,4064,0,0,0],"FLAG":0,"BASE":18}
+V-Tac A60 10W 806lm          {"NAME":"V-Tac A60","GPIO":[0,0,0,0,416,417,0,0,418,419,420,0,0,0],"FLAG":0,"BASE":18,"CMND":"SetOption37 13"}
 V-Tac PAR16 4.5W 400lm 100   {"NAME":"V-TAC VT5164","GPIO":[0,0,0,0,0,0,0,0,4064,0,4032,0,0,0],"FLAG":0,"BASE":18}
 Vizia 5W GU10                {"NAME":"Vizia RGBWW","GPIO":[0,0,0,0,419,420,0,0,417,418,416,0,0,1],"FLAG":0,"BASE":18}
 WdtPro 8W 800lm              {"NAME":"WdtPro","GPIO":[0,0,0,0,419,420,0,0,417,418,416,0,0,0],"FLAG":0,"BASE":18}
@@ -2202,9 +2224,18 @@ Ewelink RF No Neutral 3 Channel  {"NAME":"Ewelink 3 Gang Module","GPIO":[32,0,0,
 Geekcreit 5V DIY 4 Channel Jog Inching Self-Locking  {"NAME":"Geekcreit-4ch","GPIO":[160,0,0,0,226,225,161,162,224,288,163,227,0,0],"FLAG":0,"BASE":18}
 Geekcreit Module 220V 10A    {"NAME":"DIY ESP8266 Re","GPIO":[0,0,544,0,224,32,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 HW-622 ESP8266               {"NAME":"HW-622","GPIO":[0,0,544,0,224,32,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
-Kincony 16 Channel           {"NAME":"KC868-A16 rev 1.4","GPIO":[32,1,1,1,640,608,1,1,1,1,1,1,1,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-Kincony 8 Channel            {"NAME":"KC868-A8","GPIO":[32,0,1120,0,640,608,0,0,0,1,1,1152,0,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,1],"FLAG":0,"BASE":1,"CMND":"EthClockMode 3 | EthAddress 0 | EthType 0 | I2CDriver2 1"}
-Kincony IR+RF 4 Channel      {"NAME":"KC868-A4","GPIO":[32,0,227,0,224,225,0,0,0,1312,1,226,0,0,480,1152,0,1120,1056,1088,0,1,1,1,0,0,0,0,4706,4707,4704,4705,1,0,0,1],"FLAG":0,"BASE":1}
+KinCony 16 Channel           {"NAME":"KC868-A16 rev 1.4","GPIO":[32,1,1,1,640,608,1,1,1,1,1,1,1,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+KinCony 32 Channel MOSFET    {"NAME":"KC868-A32M","GPIO":[0,1,0,1,640,608,1,1,1,3200,1152,3232,1088,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,0,0,4704,4705,4707,0,0,4706],"FLAG":0,"BASE":1}
+KinCony 6 Channel            {"NAME":"KC868-A6","GPIO":[0,1,0,1,640,768,1,1,1,1,3232,608,0,1,736,672,0,1,0,704,0,1,0,3200,0,0,0,0,1312,1184,4706,4707,4704,0,0,4705],"FLAG":0,"BASE":1}
+KinCony 8 Channel            {"NAME":"KC868-A8","GPIO":[32,0,1120,0,640,608,0,0,0,1,1,1152,0,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,1],"FLAG":0,"BASE":1,"CMND":"EthClockMode 3 | EthAddress 0 | EthType 0 | I2CDriver2 1"}
+KinCony ESP32 4G 2 Channel   {"NAME":"KC868-A2","GPIO":[0,1,225,1,640,0,1,1,1,1,1184,224,608,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,3200,1312,1,3232,160,0,0,161],"FLAG":0,"BASE":1}
+KinCony ESP32 Ethernet RS485 4G GSM  {"NAME":"KC868-A8S","GPIO":[1,1,480,1,640,608,1,1,1376,1,1312,1,1152,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,3232,3200,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+KinCony ESP32 SD Card DS3231 RTC Sensor  {"NAME":"KC868-ASR","GPIO":[32,1,1,1,0,225,1,1,1,1,1,0,0,1,480,224,0,1,289,288,0,1,640,608,0,0,0,0,1312,1184,1,0,1,0,0,1],"FLAG":0,"BASE":1}
+KinCony Ethernet 16 Channel  {"NAME":"KC868-A16S","GPIO":[0,1,0,1,640,608,1,1,1,0,0,0,1152,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,3232,3200,4705,4706,4704,0,0,4707],"FLAG":0,"BASE":1}
+KinCony Ethernet 32 Channel  {"NAME":"KC868-A32","GPIO":[0,1,0,1,641,609,1,1,1,608,3200,640,3232,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,0,0,4705,4707,4706,0,0,4704],"FLAG":0,"BASE":1}
+KinCony Ethernet CAN Bus 8 Channel  {"NAME":"KC868-A8M","GPIO":[0,1,0,1,640,608,1,1,1,3200,1312,3232,1152,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,0,0,4704,4705,4706,0,0,4707],"FLAG":0,"BASE":1}
+KinCony GSM 4 Channel        {"NAME":"KC868-A4S","GPIO":[0,1,0,1,640,1312,1,1,1,1,1184,0,608,1,5600,0,0,1,0,5568,0,1,0,0,0,0,0,0,3200,3232,1,0,4704,4705,4706,4707],"FLAG":0,"BASE":1}
+KinCony IR+RF 4 Channel      {"NAME":"KC868-A4","GPIO":[32,0,227,0,224,225,0,0,0,1312,1,226,0,0,480,1152,0,1120,1056,1088,0,1,1,1,0,0,0,0,4706,4707,4704,4705,1,0,0,1],"FLAG":0,"BASE":1}
 KRIDA 4 Channel 10A Electromagnetic  {"NAME":"4CH Relay","GPIO":[0,0,0,0,0,0,0,0,226,225,227,224,0,0],"FLAG":0,"BASE":18}
 KRIDA 8 Channel 10A Electromagnetic  {"NAME":"8CH Relay","GPIO":[230,1,231,229,1,1,1,1,226,225,227,224,228,1],"FLAG":0,"BASE":18}
 LC Technology 12V 4 Channel  {"NAME":"LC Technology 4CH Relay","GPIO":[224,0,225,0,226,227,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
@@ -2324,6 +2355,7 @@ CloudFree Light              {"NAME":"CloudFree SW1","GPIO":[32,1,0,1,0,0,0,0,22
 CloudFree Motion Light       {"NAME":"CloudFree SWM1","GPIO":[32,0,0,0,0,160,0,0,224,576,161,0,0,0],"FLAG":0,"BASE":18}
 Connect SmartHome 2 Gang Wall  {"NAME":"CSH-SWTCH2","GPIO":[0,0,288,0,0,33,0,0,225,224,0,0,32,0],"FLAG":0,"BASE":18}
 Connect SmartHome 3 Gang Wall Switch ()  {"NAME":"CSH-SWTCH3","GPIO":[0,0,288,0,34,33,0,0,225,224,226,0,32,0],"FLAG":0,"BASE":18}
+Csmart US-B2                 {"NAME":"Csmart US-B2","GPIO":[0,544,0,33,32,0,0,0,0,225,224,0,0,0],"FLAG":0,"BASE":18}
 Delock WLAN EASY-USB         {"NAME":"Delock 11828","GPIO":[0,0,0,32,0,0,0,0,0,576,224,0,0,0],"FLAG":0,"BASE":53}
 Deta 1 Gang                  {"NAME":"Deta 1G Switch","GPIO":[0,0,0,0,544,0,0,0,0,224,0,0,64,0],"FLAG":0,"BASE":18}
 Deta 2 Gang                  {"NAME":"DETA 2G Switch","GPIO":[0,0,0,0,544,0,0,0,65,224,225,0,64,0],"FLAG":0,"BASE":18}
@@ -2374,6 +2406,7 @@ Gosund Single Pole           {"NAME":"Gosund SW5","GPIO":[32,0,320,0,0,0,0,0,0,0
 Gosund SW6 3-Way             {"NAME":"Gosund SW6","GPIO":[161,0,320,0,160,0,0,0,0,226,225,224,576,0],"FLAG":0,"BASE":18}
 Hama Flush-mounted 2 Gang    {"NAME":"Hama WiFiTouch","GPIO":[544,0,0,0,0,33,0,0,32,225,0,224,0,0],"FLAG":0,"BASE":45}
 HBN Wall-Mounted Timer       {"NAME":"HBN Timer Switch","GPIO":[0,0,0,0,290,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
+Hidin US Light               {"NAME":"Hidin MFA03","GPIO":[32,0,0,0,288,0,0,0,224,544,0,0,0,0],"FLAG":0,"BASE":18}
 Innens 1 Gang 1 Way          {"NAME":"Innens 1 Gang 1 Way","GPIO":[0,0,0,32,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 Innens RF433 2 Gang 1 Way    {"NAME":"Innens Light Switch 2G","GPIO":[0,0,289,0,0,33,0,0,32,225,0,224,0,0],"FLAG":0,"BASE":18}
 Jinvoo SM-SW101-1            {"NAME":"SM-SW101-1","GPIO":[288,0,0,33,0,0,0,0,32,224,0,0,0,4704],"FLAG":0,"BASE":18}
@@ -2479,6 +2512,7 @@ Q-touch 1 Gang               {"NAME":"Qtouch","GPIO":[289,0,0,32,0,0,0,0,224,0,0
 Q-touch 433MHz 1 Gang        {"NAME":"Qtouch 1G","GPIO":[32,0,0,0,0,0,0,0,224,288,0,0,0,0],"FLAG":0,"BASE":18}
 Q-touch 433MHz 1 Gang No Neutral  {"NAME":"QWP_W1_WIFI-TOUCH","GPIO":[32,1,1,1,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":28}
 Q-touch 433MHz 2 Gang No Neutral  {"NAME":"QWP_W2_WIFI-TOUCH","GPIO":[32,1,1,1,0,225,33,0,224,320,0,0,0,0],"FLAG":0,"BASE":29}
+QNCX Smart Breaker           {"NAME":"QNCX Smart breaker","GPIO":[0,0,0,0,160,224,0,0,0,320,0,0,0,0],"FLAG":0,"BASE":18}
 Qualitel 1 Gang              {"NAME":"Qualitel 1 Gang","GPIO":[544,0,0,160,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 Qualitel 2-Gang              {"NAME":"Qualitel 2 Gang","GPIO":[544,0,289,0,0,161,0,0,160,224,0,225,288,0],"FLAG":0,"BASE":18}
 Qualitel 3 Gang              {"NAME":"Qualitel 3 Gang","GPIO":[544,0,290,161,225,162,0,0,160,224,289,226,288,0],"FLAG":0,"BASE":18}
@@ -2499,6 +2533,7 @@ Shawader 3Ch Touch Light     {"NAME":"ShawaderTuya3C","GPIO":[0,3872,0,66,64,65,
 SK-A801-01-US 1 Gang         {"NAME":"jsankou US Switch 1 Gang","GPIO":[544,0,0,0,0,0,0,0,32,256,0,0,0,0],"FLAG":0,"BASE":18}
 SK-W803-01-US 3 Gang         {"NAME":"jsankou US Switch 3 Gang","GPIO":[544,0,0,33,257,34,0,0,32,256,0,258,0,0],"FLAG":0,"BASE":18}
 Smart 3 Gang Touch           {"NAME":"ETERSKY KS601 3 Gang","GPIO":[0,0,544,0,34,33,0,0,225,224,226,0,32,0],"FLAG":0,"BASE":18}
+Smart 3 in 1 Wall            {"NAME":"SW02-03","GPIO":[320,1,1,34,226,33,0,0,32,224,321,225,322,544],"FLAG":0,"BASE":18}
 SmartGrade                   {"NAME":"SmartGrade AC 5005","GPIO":[0,0,0,32,2688,2656,0,0,2624,544,224,0,0,0],"FLAG":0,"BASE":18}
 Smartlife Opard CD302        {"NAME":"CD302","GPIO":[0,0,0,0,288,321,0,0,256,32,0,0,0,0],"FLAG":0,"BASE":18}
 SmartPlex 3 Gang             {"NAME":"Tuya 3 Channel","GPIO":[1,1,1,1,224,33,0,0,34,226,32,225,1,0],"FLAG":0,"BASE":18}
@@ -2538,6 +2573,9 @@ Sonoff TX T3 EU 2 Gang       {"NAME":"Sonoff T3 TX 2CH","GPIO":[32,1,1,1,0,225,3
 Sonoff TX T3 EU 3 Gang       {"NAME":"TX T3EU3C","GPIO":[32,1,0,1,226,225,33,34,224,576,0,0,0,0],"FLAG":0,"BASE":30}
 Sonoff TX T3 US 3 Gang       {"NAME":"TX T3US3C","GPIO":[32,1,0,1,226,225,33,34,224,576,0,0,0,0],"FLAG":0,"BASE":30}
 Sonoff TX T4 EU No Neutral 1 Gang  {"NAME":"Sonoff T4 1CH","GPIO":[32,1,1,1,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":28}
+Sonoff TX Ultimate 1 Gang    {"NAME":"TX Ultimate 1","GPIO":[0,0,7808,0,7840,3872,0,0,0,1376,0,7776,0,0,224,3232,0,480,3200,0,0,0,3840,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Pixels 27"}
+Sonoff TX Ultimate 2 Gang    {"NAME":"TX Ultimate 1","GPIO":[0,0,7808,0,7840,3872,0,0,0,1376,0,7776,0,225,224,3232,0,480,3200,0,0,0,3840,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Pixels 27"}
+Sonoff TX Ultimate 3 Gang    {"NAME":"TX Ultimate 1","GPIO":[0,0,7808,0,7840,3872,0,0,0,1376,0,7776,0,225,224,3232,0,480,3200,0,0,0,3840,226,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Pixels 27"}
 SPC Hera                     {"NAME":"SPC HERA","GPIO":[544,0,0,32,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 SRL 2 Gang                   {"NAME":"SRL 4WW Switch","GPIO":[0,0,0,0,0,33,0,0,32,224,0,225,0,0],"FLAG":0,"BASE":18}
 SRL 4 Gang                   {"NAME":"SRL 4WW Switch","GPIO":[0,0,0,34,226,33,0,0,32,224,227,225,35,0],"FLAG":0,"BASE":18}
@@ -2642,6 +2680,7 @@ LoraTap RR500W               {"NAME":"LoraTap RR500W","GPIO":[544,0,0,0,160,0,0,
 LoveAnna AC85-250V 10A       {"NAME":"2xSwitch No RF LoveAnna","GPIO":[32,0,0,0,0,225,33,0,224,320,0,0,0,0],"FLAG":0,"BASE":18}
 Luani HVIO                   {"NAME":"Luani HVIO","GPIO":[0,1,1,1,224,225,0,0,160,161,1,288,0,4704],"FLAG":0,"BASE":35}
 Luminea                      {"NAME":"Luminea NX-4651","GPIO":[0,0,0,0,288,0,0,0,160,224,0,0,0,0],"FLAG":0,"BASE":18}
+MHCOZY DC 7-32V              {"NAME":"MHCOZY RF 1CH","GPIO":[32,0,0,0,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":18}
 Milfra Smart                 {"NAME":"Milfra Smart Module TB41","GPIO":[576,0,0,225,2688,2656,0,0,2592,193,480,224,192,0],"FLAG":0,"BASE":18}
 Mini Smart Switch            {"NAME":"SmartSwitch-MK601","GPIO":[0,0,0,160,32,224,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 Moes                         {"NAME":"Moes MS-104B","GPIO":[0,0,32,0,480,0,0,0,161,160,224,225,0,0],"FLAG":0,"BASE":18}
@@ -2782,6 +2821,7 @@ Smanergy KA10                {"NAME":"KA10","GPIO":[0,320,0,32,2720,2656,0,0,262
 Sonoff IW100                 {"NAME":"Sonoff IW100","GPIO":[32,3072,0,3104,0,0,0,0,224,544,0,0,0,0],"FLAG":0,"BASE":41}
 Sonoff S55                   {"NAME":"Sonoff S55","GPIO":[32,1,0,1,1,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":1}
 Steren Dual Plug and USB Charger  {"NAME":"Steren_SHOME-118","GPIO":[0,576,0,32,33,288,0,0,224,225,289,0,0,0],"FLAG":0,"BASE":18}
+Steren Dual Plug and USB Charger Wall Outlet (SHOME-118)  {"NAME":"Steren_SHOME-118","GPIO":[576,0,0,32,320,33,0,0,225,224,321,226,0,0],"FLAG":0,"BASE":18}
 T16E Dual USB 10A            {"NAME":"T16E 10A","GPIO":[0,0,0,32,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":18}
 TCP Smart Dual               {"NAME":"TCP TAUWIS2GUK","GPIO":[33,0,0,0,0,224,32,0,225,544,0,0,0,0],"FLAG":0,"BASE":18}
 Teckin SR40                  {"NAME":"RF-SR40-US","GPIO":[576,0,0,32,320,33,0,0,225,224,321,226,0,0],"FLAG":0,"BASE":18}

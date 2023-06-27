@@ -231,7 +231,9 @@ static void mark_proto(bvm *vm, bgcobject *obj)
             mark_gray(vm, gc_object(*ptab));
         }
         gc_setdark_safe(p->name);
+#if BE_DEBUG_SOURCE_FILE
         gc_setdark_safe(p->source);
+#endif
 #if BE_DEBUG_VAR_INFO
         if (p->nvarinfo) {
             bvarinfo *vinfo = p->varinfo;

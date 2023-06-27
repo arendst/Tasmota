@@ -57,7 +57,6 @@ class Matter_Plugin_Bridge_Sensor_Humidity : Matter_Plugin_Bridge_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -91,9 +90,8 @@ class Matter_Plugin_Bridge_Sensor_Humidity : Matter_Plugin_Bridge_Sensor
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(string.format("&#x1F4A7; %2.0f%%",
+    webserver.content_send(format("&#x1F4A7; %2.0f%%",
                                          self.shadow_value != nil ? real(self.shadow_value) / 100 : nil))
   end
   

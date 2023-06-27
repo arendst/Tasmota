@@ -89,7 +89,6 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_enable()
     import webserver
-    import string
     var matter_enabled = self.matter_enabled
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter &nbsp;</b></legend>"
@@ -97,12 +96,14 @@ class Matter_UI
                            "<form action='/matterc' method='post'>")
 
     # checkbox for Matter enable
-    webserver.content_send(string.format("<p><input id='menable' type='checkbox' name='menable' %s>", self.matter_enabled() ? "checked" : ""))
+    var matter_enabled_checked = self.matter_enabled() ? 'checked' : ''
+    webserver.content_send(f"<p><input id='menable' type='checkbox' name='menable' {matter_enabled_checked}>")
     webserver.content_send("<label for='menable'><b>Matter enable</b></label></p>")
 
     if self.matter_enabled()
       # checkbox for Matter commissioning
-      webserver.content_send(string.format("<p><input id='comm' type='checkbox' name='comm' %s>", self.device.commissioning_open != nil ? "checked" : ""))
+      var commissioning_open_checked = self.device.commissioning_open != nil ? "checked" : ""
+      webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
       webserver.content_send("<label for='comm'><b>Commissioning open</b></label></p>")
     end
 
@@ -163,21 +164,20 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_commissioning_info()
     import webserver
-    import string
 
     var seconds_left = (self.device.commissioning_open - tasmota.millis()) / 1000
     if seconds_left < 0   seconds_left = 0 end
     var min_left = (seconds_left + 30) / 60
 
-    webserver.content_send(string.format("<fieldset><legend><b>&nbsp;Commissioning open for %i min&nbsp;</b></legend><p></p>", min_left))
+    webserver.content_send(f"<fieldset><legend><b>&nbsp;Commissioning open for {min_left:i} min&nbsp;</b></legend><p></p>")
 
     var pairing_code = self.device.compute_manual_pairing_code()
-    webserver.content_send(string.format("<p>Manual pairing code:<br><b>%s-%s-%s</b></p><hr>", pairing_code[0..3], pairing_code[4..6], pairing_code[7..]))
+    webserver.content_send(f"<p>Manual pairing code:<br><b>{pairing_code[0..3]}-{pairing_code[4..6]}-{pairing_code[7..]}</b></p><hr>")
 
     webserver.content_send("<div><center>")
     var qr_text = self.device.compute_qrcode_content()
     self.show_qrcode(qr_text)
-    webserver.content_send(string.format("<p> %s</p>", qr_text))
+    webserver.content_send(f"<p> {qr_text}</p>")
     webserver.content_send("</div><p></p></fieldset><p></p>")
 
   end
@@ -187,16 +187,16 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_passcode_form()
     import webserver
-    import string
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Matter Advanced Configuration&nbsp;</b></legend><p></p>")
     #
     webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>"
                            "<p>Passcode:</p>")
-    webserver.content_send(string.format("<input type='number' min='1' max='99999998' name='passcode' value='%i'>", self.device.root_passcode))
+    webserver.content_send(f"<input type='number' min='1' max='99999998' name='passcode' value='{self.device.root_passcode:i}'>")
     webserver.content_send("<p>Distinguish id:</p>")
-    webserver.content_send(string.format("<input type='number' min='0' max='4095' name='discriminator' value='%i'>", self.device.root_discriminator))
-    webserver.content_send(string.format("<p><input type='checkbox' name='ipv4'%s>IPv4 only</p>", self.device.ipv4only ? " checked" : ""))
+    webserver.content_send(f"<input type='number' min='0' max='4095' name='discriminator' value='{self.device.root_discriminator:i}'>")
+    var ipv4only_checked = self.device.ipv4only ? " checked" : ""
+    webserver.content_send(f"<p><input type='checkbox' name='ipv4'{ipv4only_checked}>IPv4 only</p>")
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>"
                            "<p></p></fieldset><p></p>")
 
@@ -207,7 +207,6 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_fabric_info()
     import webserver
-    import string
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Fabrics&nbsp;</b></legend><p></p>"
                            "<p>Associated fabrics:</p>")
@@ -224,15 +223,15 @@ class Matter_UI
         if !label   label = "<No label>"    end
         label = webserver.html_escape(label)      # protect against HTML injection
         
-        webserver.content_send(string.format("<fieldset><legend><b>&nbsp;#%i %s</b> (%s)&nbsp;</legend><p></p>", f.get_fabric_index(), label, f.get_admin_vendor_name()))
+        webserver.content_send(f"<fieldset><legend><b>&nbsp;#{f.get_fabric_index():i} {label}</b> ({f.get_admin_vendor_name()})&nbsp;</legend><p></p>")
 
         var fabric_rev = f.get_fabric_id().copy().reverse()
         var deviceid_rev = f.get_device_id().copy().reverse()
-        webserver.content_send(string.format("Fabric: %s<br>", fabric_rev.tohex()))
-        webserver.content_send(string.format("Device: %s<br>&nbsp;", deviceid_rev.tohex()))
+        webserver.content_send(f"Fabric: {fabric_rev.tohex()}<br>")
+        webserver.content_send(f"Device: {deviceid_rev.tohex()}<br>&nbsp;")
 
         webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"Are you sure?\");'>")
-        webserver.content_send(string.format("<input name='del_fabric' type='hidden' value='%i'>", f.get_fabric_index()))
+        webserver.content_send(f"<input name='del_fabric' type='hidden' value='{f.get_fabric_index():i}'>")
         webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
 
         webserver.content_send("<p></p></fieldset><p></p>")
@@ -252,8 +251,8 @@ class Matter_UI
   #   var hl = ["Enter Relay number","Not used","Enter Filter pattern","Enter Switch number"];
   def show_plugins_hints_js(*class_list)
     import webserver
-    import string
     import json
+    import string
 
     var class_types = []
     for cl: class_list
@@ -279,11 +278,11 @@ class Matter_UI
       end
     end
 
-    webserver.content_send(string.format(
+    webserver.content_send(f""
       "<script type='text/javascript'>"
-      "var hm=%s;"
-      "var hl=%s;"
-      "</script>", json.dump(hm), json.dump(hl)))
+      "var hm={json.dump(hm)};"
+      "var hl={json.dump(hl)};"
+      "</script>")
 
     webserver.content_send(matter._ADD_ENDPOINT_JS)
 
@@ -332,17 +331,17 @@ class Matter_UI
       end
 
       found = true
-      webserver.content_send(string.format("<tr><td style='font-size:smaller;'><b>%i</b></td>", ep))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s'></td>",
+      webserver.content_send(f"<tr><td style='font-size:smaller;'><b>{ep:i}</b></td>")
+      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s'></td>",
                              ep, webserver.html_escape(conf.find('name', ''))))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><b>%s</b></td>", self.plugin_name(conf.find('type', ''))))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s'></td>",
+      webserver.content_send(f"<td style='font-size:smaller;'><b>{self.plugin_name(conf.find('type', ''))}</b></td>")
+      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s'></td>",
                              ep, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
-      webserver.content_send(string.format("<td style='text-align:center;'><button name='del%i' "
-                                           "style='background:none;border:none;line-height:1;'"
-                                           " onclick=\"return confirm('Confirm removing endpoint')\""
-                                           ">"
-                                           "&#128293;</button></td></tr>", ep))
+      webserver.content_send(f"<td style='text-align:center;'><button name='del{ep:i}' "
+                              "style='background:none;border:none;line-height:1;'"
+                              " onclick=\"return confirm('Confirm removing endpoint')\""
+                              ">"
+                              "&#128293;</button></td></tr>")
       i += 1
     end
     webserver.content_send("</table>")
@@ -366,7 +365,9 @@ class Matter_UI
 
     for remote: remotes
 
-      webserver.content_send(string.format("&#x1F517; <a target='_blank' href=\"http://%s/\">%s</a>", webserver.html_escape(remote), webserver.html_escape(remote)))
+      var remote_html = webserver.html_escape(remote)
+      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(remote).find('name', remote) )
+      webserver.content_send(f"&#x1F517; <a target='_blank' title='http://{remote_html}/' href=\"http://{remote_html}/?\">{host_device_name}</a>")
       webserver.content_send("<table style='width:100%'>")
       webserver.content_send("<tr>"
                              "<td width='25'></td>"
@@ -396,18 +397,18 @@ class Matter_UI
         end
 
         found = true
-        webserver.content_send(string.format("<tr><td width='22' style='font-size:smaller;'><b>%i</b></td>", ep))
-        webserver.content_send(string.format("<td width='78' style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s' placeholder='(optional)'></td>",
+        webserver.content_send(f"<tr><td width='22' style='font-size:smaller;'><b>{ep:i}</b></td>")
+        webserver.content_send(format("<td width='78' style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s' placeholder='(optional)'></td>",
                                ep, webserver.html_escape(conf.find('name', ''))))
 
-        webserver.content_send(string.format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
-        webserver.content_send(string.format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
+        webserver.content_send(format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
+        webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
                               ep, webserver.html_escape(arg)))
-        webserver.content_send(string.format("<td width='15' style='text-align:center;'><button name='del%i' "
-                                            "style='background:none;border:none;line-height:1;'"
-                                            " onclick=\"return confirm('Confirm removing endpoint')\""
-                                            ">"
-                                            "&#128293;</button></td></tr>", ep))
+        webserver.content_send(f"<td width='15' style='text-align:center;'><button name='del{ep:i}' "
+                                "style='background:none;border:none;line-height:1;'"
+                                " onclick=\"return confirm('Confirm removing endpoint')\""
+                                ">"
+                                "&#128293;</button></td></tr>")
         i += 1
       end
       webserver.content_send("</table><p></p>")
@@ -497,7 +498,7 @@ class Matter_UI
         webserver.content_send("<option value='' disabled>--- Tasmota Remote ---</option>")
       else
         var nam = self.device.get_plugin_class_displayname(typ)
-        webserver.content_send(string.format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
+        webserver.content_send(format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
       end
       i += 1
     end
@@ -509,7 +510,6 @@ class Matter_UI
   #######################################################################
   def page_part_mgr_adv()
     import webserver
-    import string
 
     if !webserver.check_privileged_access() return nil end
 
@@ -530,7 +530,6 @@ class Matter_UI
   #######################################################################
   def page_part_mgr()
     import webserver
-    import string
 
     if !webserver.check_privileged_access() return nil end
 
@@ -615,12 +614,11 @@ class Matter_UI
   #- ---------------------------------------------------------------------- -#
   def show_remote_autoconf(url)
     import webserver
-    import string
     import json
 
     if url == ''  return end
     var timeout = matter.Plugin_Bridge_HTTP.PROBE_TIMEOUT
-    var http_remote = matter.HTTP_remote(url, timeout)
+    var http_remote = matter.HTTP_remote(nil, url, timeout)
     # Status 8
     var status8 = http_remote.call_sync('Status 8', timeout)
     if status8 != nil   status8 = json.load(status8)                end
@@ -634,7 +632,7 @@ class Matter_UI
     end
     
     if status8 != nil && status11 != nil
-      tasmota.log(string.format("MTR: probed '%s' status8=%s satus11=%s", url, str(status8), str(status11)), 3)
+      tasmota.log(format("MTR: probed '%s' status8=%s satus11=%s", url, str(status8), str(status11)), 3)
 
       var config_list = self.generate_config_from_status(status8, status11)
 
@@ -643,7 +641,8 @@ class Matter_UI
       webserver.content_send("<fieldset><legend><b>&nbsp;Matter Remote Device&nbsp;</b></legend><p></p>"
                              "<p><b>Add Remote sensor or device</b></p>")
 
-      webserver.content_send(string.format("<p>&#x1F517; <a target='_blank' href=\"http://%s/\">%s</a></p>", webserver.html_escape(url), webserver.html_escape(url)))
+      var remote_html = webserver.html_escape(url)
+      webserver.content_send(f"<p>&#x1F517; <a target='_blank' href=\"http://{remote_html}/?\">{remote_html}</a></p>")
 
       # Add new endpoint section
       webserver.content_send("<form action='/matterc' method='post'>"
@@ -654,7 +653,7 @@ class Matter_UI
                              "<td style='font-size:smaller;'>Parameter</td>"
                              "</tr>")
 
-      webserver.content_send(string.format("<input name='url' type='hidden' value='%s'>", webserver.html_escape(url)))
+      webserver.content_send(format("<input name='url' type='hidden' value='%s'>", webserver.html_escape(url)))
 
       var i = 0
       while i < size(config_list)
@@ -668,23 +667,23 @@ class Matter_UI
           arg = cl.ui_conf_to_string(cl, config)
         end
 
-        webserver.content_send(string.format("<tr><td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='' placeholder='(optional)'></td>", i))
-        webserver.content_send(string.format("<td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
+        webserver.content_send(format("<tr><td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='' placeholder='(optional)'></td>", i))
+        webserver.content_send(format("<td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
         self.plugin_option(typ, self._CLASSES_TYPES2)
         webserver.content_send("</select></td>"
                                "<td style='font-size:smaller;'>")
-        webserver.content_send(string.format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s' placeholder='%s'>",
+        webserver.content_send(format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s' placeholder='%s'>",
                                i, i, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
         webserver.content_send("</td></tr>")
         i += 1
       end
       # empty line for new endpoint
-      webserver.content_send(string.format("<tr><td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='' placeholder='(optional)'></td>", i))
-      webserver.content_send(string.format("<td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
+      webserver.content_send(format("<tr><td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='' placeholder='(optional)'></td>", i))
+      webserver.content_send(format("<td style='font-size:smaller;'><select name='pi%i' onchange='otm(\"arg%i\",this.value)'>", i, i))
       self.plugin_option('', self._CLASSES_TYPES2)
       webserver.content_send("</select></td>"
                              "<td style='font-size:smaller;'>")
-      webserver.content_send(string.format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s'>",
+      webserver.content_send(format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s'>",
                              i, i, ''))
       webserver.content_send("</td></tr>")
 
@@ -698,7 +697,7 @@ class Matter_UI
       webserver.content_send("</form></fieldset>")
 
     else
-      webserver.content_send(string.format("<p><b>Unable to connect to '%s'</b></p>", webserver.html_escape(url)))
+      webserver.content_send(format("<p><b>Unable to connect to '%s'</b></p>", webserver.html_escape(url)))
     end
 
 
@@ -709,7 +708,6 @@ class Matter_UI
   #######################################################################
   def page_part_mgr_add()
     import webserver
-    import string
 
     if !webserver.check_privileged_access() return nil end
 
@@ -742,14 +740,14 @@ class Matter_UI
 
       # debug information about parameters
       for i:0..webserver.arg_size()-1
-        tasmota.log(string.format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
+        tasmota.log(format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
       end
 
       #---------------------------------------------------------------------#
       # Change Passcode and/or Passcode
       #---------------------------------------------------------------------#
       if webserver.has_arg("passcode") || webserver.has_arg("discriminator")
-        tasmota.log(string.format("MTR: /matterc received '%s' command", 'passcode'), 3)
+        tasmota.log(format("MTR: /matterc received '%s' command", 'passcode'), 3)
         if webserver.has_arg("passcode")
           self.device.root_passcode = int(webserver.arg("passcode"))
         end
@@ -768,10 +766,10 @@ class Matter_UI
 
         if matter_enabled_requested != self.matter_enabled()
           if matter_enabled_requested
-            tasmota.log(string.format("MTR: /matterc received '%s' command", 'enable'), 3)
+            tasmota.log(format("MTR: /matterc received '%s' command", 'enable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
           else
-            tasmota.log(string.format("MTR: /matterc received '%s' command", 'disable'), 3)
+            tasmota.log(format("MTR: /matterc received '%s' command", 'disable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 0")
           end
           #- and force restart -#
@@ -793,7 +791,7 @@ class Matter_UI
       # Delete Fabric
       #---------------------------------------------------------------------#
       elif webserver.has_arg("del_fabric")
-        tasmota.log(string.format("MTR: /matterc received '%s' command", 'del_fabric'), 3)
+        tasmota.log(format("MTR: /matterc received '%s' command", 'del_fabric'), 3)
         var del_fabric = int(webserver.arg("del_fabric"))
         var idx = 0
         var fabrics = self.device.sessions.fabrics
@@ -812,7 +810,7 @@ class Matter_UI
       # Reset to default auto-configuration
       #---------------------------------------------------------------------#
       elif webserver.has_arg("auto")
-        tasmota.log(string.format("MTR: /matterc received '%s' command", 'auto'), 3)
+        tasmota.log(format("MTR: /matterc received '%s' command", 'auto'), 3)
         self.device.plugins_persist = false
         self.device.save_param()
         #- and force restart -#
@@ -822,7 +820,7 @@ class Matter_UI
       # Apply new configuration template
       #---------------------------------------------------------------------#
       elif webserver.has_arg("config")
-        tasmota.log(string.format("MTR: /matterc received '%s' command", 'config'), 3)
+        tasmota.log(format("MTR: /matterc received '%s' command", 'config'), 3)
         var needs_saving = false
         # iterate by endpoint number
         for i:0..webserver.arg_size()-1
@@ -836,25 +834,25 @@ class Matter_UI
             if conf_ep != nil     # found
               var typ_class = self.device.plugins_classes.find(conf_ep.find('type', ''))
               if typ_class != nil
-                tasmota.log(string.format("MTR: ep=%i arg=%s", arg_ep, arg), 3)
+                tasmota.log(format("MTR: ep=%i arg=%s", arg_ep, arg), 3)
                 # compute the actual value
                 var prev_arg = typ_class.ui_conf_to_string(typ_class, conf_ep)
                 var changed = (prev_arg != arg)
-                tasmota.log(string.format("MTR: ep=%i prev_arg='%s' arg='%s' %s", arg_ep, prev_arg, arg, prev_arg != arg ? "changed" : ""), 3)
+                tasmota.log(format("MTR: ep=%i prev_arg='%s' arg='%s' %s", arg_ep, prev_arg, arg, prev_arg != arg ? "changed" : ""), 3)
 
                 if changed
                   needs_saving = true
                   typ_class.ui_string_to_conf(typ_class, conf_ep, arg)
                   var pl = self.device.find_plugin_by_endpoint(arg_ep)
                   if pl
-                    tasmota.log(string.format("MTR: apply conf '%s' (%i) to %s", conf_ep, arg_ep, pl), 3)
+                    tasmota.log(format("MTR: apply conf '%s' (%i) to %s", conf_ep, arg_ep, pl), 3)
                     pl.parse_configuration(conf_ep)
                   end
                 end
 
               end
             else            
-              tasmota.log(string.format("MTR: ep=%i not found", arg_ep), 3)
+              tasmota.log(format("MTR: ep=%i not found", arg_ep), 3)
             end
           elif string.find(arg_name, "nam") == 0    # 'nam<i>' with i being the endpoint
             var nam_ep = int(arg_name[3..])         # target endpoint as int
@@ -876,7 +874,7 @@ class Matter_UI
                   else
                     conf_ep.remove('name')
                   end
-                  tasmota.log(string.format("MTR: apply name '%s' (%i) to %s", conf_ep, nam_ep, pl), 3)
+                  tasmota.log(format("MTR: apply name '%s' (%i) to %s", conf_ep, nam_ep, pl), 3)
                   pl.parse_configuration(conf_ep)
                 end
               end
@@ -884,10 +882,10 @@ class Matter_UI
           end
         end
 
-        tasmota.log(string.format("MTR: config = %s", str(self.device.plugins_config)), 3)
+        tasmota.log(format("MTR: config = %s", str(self.device.plugins_config)), 3)
 
         if error
-          tasmota.log(string.format("MTR: config error = %s", error), 3)
+          tasmota.log(format("MTR: config error = %s", error), 3)
         else
           if needs_saving || !self.device.plugins_persist
             self.device.plugins_persist = true
@@ -903,7 +901,7 @@ class Matter_UI
         var typ = webserver.arg('pi')
         var arg = webserver.arg('arg')
         var nam = webserver.arg('nam')
-        tasmota.log(string.format("MTR: add endpoint typ='%s' arg='%s'", typ, arg), 3)
+        tasmota.log(format("MTR: add endpoint typ='%s' arg='%s'", typ, arg), 3)
 
         # check if type exists
         var typ_class = self.device.plugins_classes.find(typ)
@@ -943,12 +941,12 @@ class Matter_UI
               # check if configuration is already present
               var duplicate = false
               for c: self.device.plugins_config   # iterate on values, not on keys()
-                # tasmota.log(string.format("MTR: map_compare '%s' ?= '%s' -> %s", str(c), str(config), str(self.equal_map(c,config))), 3)
+                # tasmota.log(format("MTR: map_compare '%s' ?= '%s' -> %s", str(c), str(config), str(self.equal_map(c,config))), 3)
                 if self.equal_map(c,config)   duplicate = true  break   end
               end
               # not a duplicate, add it
               if !duplicate
-                tasmota.log(string.format("MTR: remote add url='%s' type='%s' arg='%s'", url, typ, arg), 3)
+                tasmota.log(format("MTR: remote add url='%s' type='%s' arg='%s'", url, typ, arg), 3)
                 self.device.bridge_add_endpoint(typ, config)
               end
             end
@@ -983,18 +981,18 @@ class Matter_UI
       if error
         webserver.content_start("Parameter error")           #- title of the web page -#
         webserver.content_send_style()                  #- send standard Tasmota styles -#
-        webserver.content_send(string.format("<p style='width:340px;'><b>Error:</b>%s</p>", webserver.html_escape(error)))
+        webserver.content_send(format("<p style='width:340px;'><b>Error:</b>%s</p>", webserver.html_escape(error)))
         webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to configuration page -#
         webserver.content_stop()                        #- end of web page -#
       end
 
     except .. as e, m
-      tasmota.log(string.format("BRY: Exception> '%s' - %s", e, m), 2)
+      tasmota.log(format("BRY: Exception> '%s' - %s", e, m), 2)
       #- display error page -#
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-      webserver.content_send(string.format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
+      webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
 
       webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to configuration page -#
       webserver.content_stop()                        #- end of web page -#
@@ -1006,7 +1004,6 @@ class Matter_UI
   #######################################################################
   def show_bridge_status()
     import webserver
-    import string
     var bridge_plugin_by_host
     
     var idx = 0
@@ -1031,8 +1028,10 @@ class Matter_UI
     webserver.content_send("<table style='width:100%'>")
     webserver.content_send(matter._STYLESHEET)
 
-    for host: bridge_plugin_by_host.keys()
-      webserver.content_send(string.format("<tr class='ztdm htrm'><td><b>%s</b></td>", webserver.html_escape(host)))
+    for host: self.device.k2l(bridge_plugin_by_host)
+      var host_html = webserver.html_escape(host)
+      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(host).find('name', host) )
+      webserver.content_send(f"<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://{host_html}/' href=\"http://{host_html}/?\"'>{host_device_name}</a></td>")
       var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
       webserver.content_send(http_remote.web_last_seen())
 
@@ -1051,17 +1050,16 @@ class Matter_UI
   #- display sensor value in the web UI -#
   def web_sensor()
     import webserver
-    import string
 
     if self.matter_enabled()
 
       # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = self.device.sessions.count_active_fabrics()
       if fabrics_count == 0
-        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: No active association"))
+        webserver.content_send(format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: No active association"))
       else
         var plural = fabrics_count > 1
-        webserver.content_send(string.format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: " + str(fabrics_count) + " active association" + (plural ? "s" : "")))
+        webserver.content_send(format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: " + str(fabrics_count) + " active association" + (plural ? "s" : "")))
       end
 
       self.show_bridge_status()

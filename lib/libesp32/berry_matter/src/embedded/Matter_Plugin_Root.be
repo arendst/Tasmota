@@ -32,7 +32,7 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x11,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -240,6 +240,8 @@ class Matter_Plugin_Root : Matter_Plugin
         return TLV.create_TLV(TLV.UTF1, version_full)
       elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
@@ -326,7 +328,6 @@ class Matter_Plugin_Root : Matter_Plugin
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
     import crypto
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -433,7 +434,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool
-        # tasmota.log(string.format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 4)
+        # tasmota.log(format("MTR: CSRRequest CSRNonce=%s IsForUpdateNOC=%s", str(CSRNonce), str(IsForUpdateNOC)), 4)
 
         var csr = session.gen_CSR()
 
@@ -550,7 +551,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0009            # ---------- UpdateFabricLabel ----------
         var label = val.findsubval(0)     # Label string max 32
         session.set_fabric_label(label)
-        tasmota.log(string.format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
+        tasmota.log(format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
         ctx.status = matter.SUCCESS                  # OK
         return nil                      # trigger a standalone ack
 
@@ -582,7 +583,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var iterations = val.findsubval(3)          # Iterations u4
         var salt = val.findsubval(4)                # Salt octstr
 
-        tasmota.log(string.format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
+        tasmota.log(format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
                                   timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 4)
 
         # check values
@@ -630,7 +631,6 @@ class Matter_Plugin_Root : Matter_Plugin
   # write an attribute
   #
   def write_attribute(session, ctx, write_data)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

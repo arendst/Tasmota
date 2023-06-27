@@ -53,7 +53,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
-    import string
     super(self).init(device, endpoint, arguments)
 
     var addr = arguments.find(self.ARG_HTTP)
@@ -107,7 +106,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   # arg can be nil, in this case `cmd` has it all
   def call_remote_sync(cmd, arg)
     # if !self.http_remote  return nil  end
-    import string
     import json
 
     var retry = 2         # try 2 times if first failed
@@ -184,8 +182,32 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
 
     # ====================================================================================================
     if   cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+      import string
 
-      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
+      if   attribute == 0x0003         #  ---------- ProductName / string ----------
+        var name = self.http_remote.get_info().find("name")
+        if name
+          return TLV.create_TLV(TLV.UTF1, name)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
+        var version_full = self.http_remote.get_info().find("version")
+        if version_full
+          var version_end = string.find(version_full, '(')
+          if version_end > 0    version_full = version_full[0..version_end - 1]   end
+          return TLV.create_TLV(TLV.UTF1, version_full)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber || UniqueID / string ----------
+        var mac = self.http_remote.get_info().find("mac")
+        if mac
+          return TLV.create_TLV(TLV.UTF1, mac)
+        else
+          return TLV.create_TLV(TLV.NULL, nil)
+        end
+      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
         # self.is_reachable_lazy_sync()   # Not needed anymore
         return TLV.create_TLV(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
       else
@@ -213,7 +235,6 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   static var PREFIX = "| <i>%s</i> "
   def web_values()
     import webserver
-    import string
     self.web_values_prefix()
     webserver.content_send("&lt;-- (" + self.NAME + ") --&gt;")
   end
@@ -221,9 +242,8 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   # Show prefix before web value
   def web_values_prefix()
     import webserver
-    import string
     var name = self.get_name()
-    webserver.content_send(string.format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
   # Show on/off value as html
