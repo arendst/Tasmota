@@ -262,6 +262,14 @@ static int m_size(bvm *vm)
     be_return(vm);
 }
 
+static int m_tobool(bvm *vm)
+{
+    be_getmember(vm, 1, ".p");
+    list_check_data(vm, 1);
+    be_pushbool(vm, be_data_size(vm, -1) > 0);
+    be_return(vm);
+}
+
 static int m_resize(bvm *vm)
 {
     be_getmember(vm, 1, ".p");
@@ -507,6 +515,7 @@ void be_load_listlib(bvm *vm)
         { "reverse", m_reverse },
         { "copy", m_copy },
         { "keys", m_keys },
+        { "tobool", m_tobool }
         { "..", m_connect },
         { "+", m_merge },
         { "==", m_equal },
@@ -536,6 +545,7 @@ class be_class_list (scope: global, name: list) {
     reverse, func(m_reverse)
     copy, func(m_copy)
     keys, func(m_keys)
+    tobool, func(m_tobool)
     .., func(m_connect)
     +, func(m_merge)
     ==, func(m_equal)
