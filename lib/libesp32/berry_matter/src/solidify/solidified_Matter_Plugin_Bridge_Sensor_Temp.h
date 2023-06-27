@@ -18,21 +18,33 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_pre_value,   /* name */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(temp_unit),
+    /* K1   */  be_nested_str_weak(TEMP_F),
+    /* K2   */  be_const_real_hex(0x3FE66666),
+    }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0004,  //  0002  JMPF	R2	#0008
-      0x60080009,  //  0003  GETGBL	R2	G9
-      0x540E0063,  //  0004  LDINT	R3	100
-      0x080C0203,  //  0005  MUL	R3	R1	R3
-      0x7C080200,  //  0006  CALL	R2	1
-      0x70020000,  //  0007  JMP		#0009
+    ( &(const binstruction[18]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x880C0101,  //  0001  GETMBR	R3	R0	K1
+      0x1C080403,  //  0002  EQ	R2	R2	R3
+      0x780A0003,  //  0003  JMPF	R2	#0008
+      0x540A001F,  //  0004  LDINT	R2	32
+      0x04080202,  //  0005  SUB	R2	R1	R2
+      0x0C080502,  //  0006  DIV	R2	R2	K2
+      0x5C040400,  //  0007  MOVE	R1	R2
       0x4C080000,  //  0008  LDNIL	R2
-      0x80040400,  //  0009  RET	1	R2
+      0x20080202,  //  0009  NE	R2	R1	R2
+      0x780A0004,  //  000A  JMPF	R2	#0010
+      0x60080009,  //  000B  GETGBL	R2	G9
+      0x540E0063,  //  000C  LDINT	R3	100
+      0x080C0203,  //  000D  MUL	R3	R1	R3
+      0x7C080200,  //  000E  CALL	R2	1
+      0x70020000,  //  000F  JMP		#0011
+      0x4C080000,  //  0010  LDNIL	R2
+      0x80040400,  //  0011  RET	1	R2
     })
   )
 );

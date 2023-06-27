@@ -50,6 +50,9 @@ class Matter_Plugin_Bridge_Sensor_Temp : Matter_Plugin_Bridge_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
+    if self.temp_unit == self.TEMP_F          # Fahrenheit
+      val = (val - 32) / 1.8
+    end
     return val != nil ? int(val * 100) : nil
   end
 
