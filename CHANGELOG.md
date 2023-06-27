@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false`
 
 ### Changed
+- Matter support for temperature in Fahrenheit (`SetOption8 1`)
 
 ### Fixed
 - Berry various fixes for Walrus Operator
