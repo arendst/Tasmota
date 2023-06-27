@@ -7,7 +7,7 @@ from os.path import join
 def firm_metrics(source, target, env):
     if env["PIOPLATFORM"] == "espressif32":
         import tasmota_metrics
-        env.Execute("$PYTHONEXE -m tasmota_metrics " + str(tasmotapiolib.get_source_map_path(env).resolve()))
+        env.Execute("$PYTHONEXE -m tasmota_metrics \"" + str(tasmotapiolib.get_source_map_path(env).resolve()) + "\"")
     elif env["PIOPLATFORM"] == "espressif8266":
         map_file = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
         with open(map_file,'r') as f:
