@@ -1131,9 +1131,11 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
     sub_expr(parser, e, ASSIGN_OP_PRIO);    /* left expression */
     btokentype op = next_type(parser);
     if (op == OptWalrus) {
+        check_symbol(parser, e);
         bexpdesc e1 = *e;           /* copy var to e1, e will get the result of expression */
         scan_next_token(parser);    /* skip ':=' */
         expr(parser, e);
+        check_var(parser, e);
         if (check_newvar(parser, &e1)) { /* new variable */
             new_var(parser, e1.v.s, e);
         }
