@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Berry various fixes for Walrus Operator
 
 ### Removed
 
