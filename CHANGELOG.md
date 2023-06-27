@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Breaking Changed
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false`
 
 ### Changed
 

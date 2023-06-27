@@ -85,8 +85,8 @@ class Tasmota
   # Rules
   def add_rule(pat, f, id)
     self.check_not_method(f)
-    if !self._rules
-      self._rules=[]
+    if self._rules == nil
+      self._rules = []
     end
     if type(f) == 'function'
       self._rules.push(Trigger(self.Rule_Matcher.parse(pat), f, id))
@@ -186,7 +186,9 @@ class Tasmota
 
   def set_timer(delay,f,id)
     self.check_not_method(f)
-    if !self._timers self._timers=[] end
+    if self._timers == nil
+      self._timers=[]
+    end
     self._timers.push(Trigger(self.millis(delay),f,id))
   end
 
@@ -245,7 +247,9 @@ class Tasmota
   # crontab style recurring events
   def add_cron(pattern,f,id)
     self.check_not_method(f)
-    if !self._crons self._crons=[] end
+    if self._crons == nil
+      self._crons=[]
+    end
 
     var cron_obj = ccronexpr(str(pattern))    # can fail, throwing an exception
     var next_time = cron_obj.next()
@@ -285,8 +289,8 @@ class Tasmota
   # Add command to list
   def add_cmd(c,f)
     self.check_not_method(f)
-    if !self._ccmd
-      self._ccmd={}
+    if self._ccmd == nil
+      self._ccmd = {}
     end
     if type(f) == 'function'
       self._ccmd[c]=f
@@ -546,7 +550,9 @@ class Tasmota
 
   def add_fast_loop(cl)
     self.check_not_method(cl)
-    if !self._fl  self._fl = [] end
+    if self._fl == nil
+      self._fl = []
+    end
     if type(cl) != 'function' raise "value_error", "argument must be a function" end
     self.global.fast_loop_enabled = 1      # enable fast_loop at global level: `TasmotaGlobal.fast_loop_enabled = true`
     self._fl.push(cl)
