@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.0.0.1]
 ### Added
+- Command ``Delay -1`` to wait until next second (#18984)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
