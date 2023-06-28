@@ -651,9 +651,15 @@ void CmndJson(void) {
   }
 }
 
-void CmndDelay(void)
-{
-  if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
+void CmndDelay(void) {
+  // Delay -1  - Wait until next second
+  // Delay 1   - Wait default time (200ms)
+  // Delay 2   - Wait 2 x 100ms
+  // Delay 10  - Wait 10 x 100ms
+  if (XdrvMailbox.payload == -1) {
+    TasmotaGlobal.backlog_timer = millis() + (1000 - RtcMillis());  // Next second (#18984)
+  }
+  else if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
     TasmotaGlobal.backlog_timer = millis() + (100 * XdrvMailbox.payload);
   }
   uint32_t bl_delay = 0;

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.0.0.1]
 ### Added
+- Command ``Delay -1`` to wait until next second (#18984)
 - Matter add option to disable bridge mode
 
 ### Breaking Changed
