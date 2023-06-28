@@ -18,9 +18,7 @@
 */
 
 #include <string.h>
-#include "trezor-crypto/hasher.h"
-#include "trezor-crypto/base58.h"
-#include "tasmota_support/rddl.h"
+#include "rddl.h"
 
 
 
@@ -769,21 +767,7 @@ void CmndStatus(void)
     for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%d" ), stemp2, (i > 0 ? "," : ""), Settings->switchmode[i]);
     }
-
-    const char *entropy;
-
-    const char raw[] = "00112233445566778899aabbcceeff00112233445566778899aabbcceeff";
-    uint8_t raw_t[4];
-    int len = 2;
-    char strn[53];
-
-    memcpy(raw_t, fromhex2(raw), len);
-    int r;
-    r = base58_encode_check(raw_t, len, HASHER_SHA2, strn, sizeof(strn));
-
-    int verified = validateSignature();
-
-    
+   
     Response_P(PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_DEVICENAME "\":\"%s\",\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\""
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
@@ -973,19 +957,23 @@ void CmndStatus(void)
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
+    bool f_show_sensors = true;
+    if( 8 == payload )
+    {
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":"));
+      f_show_sensors = false;
+    }
+    else
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
+
+#ifdef USE_DRV_RDDL_NETWORK
     int start_position = ResponseLength();
-    MqttShowSensor(true);
-    
-    char pubkey_out[68] = {0};
-    char sig_out[130] = {0};
-    char hash_out[66] = {0};
-    int current_position  = ResponseLength();
-    const char* data_str = TasmotaGlobal.mqtt_data.c_str();
-    SignDataHash(start_position, current_position, data_str, pubkey_out, sig_out, hash_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
+    MqttShowSensor(f_show_sensors);
+    getAuthToken();
+    signRDDLNetworkMessage(start_position);
+#else
+    MqttShowSensor(f_show_sensors);
+#endif // USE_DRV_RDDL_NETWORK
 
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);

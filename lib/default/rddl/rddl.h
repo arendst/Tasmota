@@ -20,7 +20,7 @@
 const uint8_t *fromhex2(const char *str);
 void tohex2(char *hexbuf, uint8_t *str, int strlen);
 
-const char* getMnemonic( char* pMnemonic, size_t len);
+const char* getMnemonic();
 const char* setMnemonic( char* pMnemonic, size_t len );
 
 int validateSignature();

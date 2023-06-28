@@ -70,5 +70,17 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ]
+    ],
+    "cmake.configureOnOpen": false,
+    "files.associations": {
+      "be_fixed_be_class_aes_ccm.h": "c",
+      "be_crypto_lib.c": "cpp",
+      "utils.h": "c",
+      "ed25519.h": "c",
+      "json-maker.h": "c",
+      "hmac.h": "c",
+      "base64_plntmnt.h": "c",
+      "sha3.h": "c",
+      "functional": "cpp"
+    }
   }

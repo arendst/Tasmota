@@ -24,6 +24,7 @@
  * [tasmota-sensors.bin]
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
+#define USE_DRV_RDDL_NETWORK
 
 #ifdef FIRMWARE_SENSORS
 

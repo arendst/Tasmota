@@ -1136,6 +1136,7 @@ void PerformEverySecond(void)
   }
 
   MqttPublishLoggingAsync(false);
+  RDDLNetworkNotarizationScheduler();
   SyslogAsync(false);
 
   ResetGlobalValues();
