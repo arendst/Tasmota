@@ -7,13 +7,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Breaking Changed
-- Berry `bool( [] )` and `bool( {} )` now evaluate as `false`
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
 
 ### Changed
-- Matter support for temperature in Fahrenheit (`SetOption8 1`)
+- Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
 
 ### Fixed
-- Berry various fixes for Walrus Operator
+- Berry various fixes for Walrus Operator (#18982)
 
 ### Removed
 
