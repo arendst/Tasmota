@@ -114,7 +114,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 
 ### Breaking Changed
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` [#18986](https://github.com/arendst/Tasmota/issues/18986)
 
 ### Changed
+- Matter support for temperature in Fahrenheit (`SetOption8 1`) [#18987](https://github.com/arendst/Tasmota/issues/18987)
 
 ### Fixed
+- Berry various fixes for Walrus Operator [#18982](https://github.com/arendst/Tasmota/issues/18982)
