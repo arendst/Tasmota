@@ -197,6 +197,8 @@ class Matter_UI
     webserver.content_send(f"<input type='number' min='0' max='4095' name='discriminator' value='{self.device.root_discriminator:i}'>")
     var ipv4only_checked = self.device.ipv4only ? " checked" : ""
     webserver.content_send(f"<p><input type='checkbox' name='ipv4'{ipv4only_checked}>IPv4 only</p>")
+    var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
+    webserver.content_send(f"<p><input type='checkbox' name='nobridge'{disable_bridge_mode_checked}>Disable bridge mode (not recommended)</p>")
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>"
                            "<p></p></fieldset><p></p>")
 
@@ -755,6 +757,7 @@ class Matter_UI
           self.device.root_discriminator = int(webserver.arg("discriminator"))
         end
         self.device.ipv4only = webserver.arg("ipv4") == 'on'
+        self.device.disable_bridge_mode = webserver.arg("nobridge") == 'on'
         self.device.save_param()
 
         #- and force restart -#

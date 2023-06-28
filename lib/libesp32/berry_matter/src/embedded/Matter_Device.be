@@ -63,6 +63,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
@@ -92,6 +93,7 @@ class Matter_Device
     self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
+    self.disable_bridge_mode = false
     self.load_param()
 
     self.sessions = matter.Session_Store(self)
@@ -628,7 +630,7 @@ class Matter_Device
     import json
     self.update_remotes_info()    # update self.plugins_config_remotes
 
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
@@ -693,6 +695,7 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil

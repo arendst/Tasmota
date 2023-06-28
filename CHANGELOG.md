@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.0.0.1]
 ### Added
+- Matter add option to disable bridge mode
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
