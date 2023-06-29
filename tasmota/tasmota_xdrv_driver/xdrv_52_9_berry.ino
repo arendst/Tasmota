@@ -37,11 +37,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN
+  D_CMND_BR_RUN "|" D_CMND_BR_RESTART
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun,
+  CmndBrRun, CmndBrRestart
   };
 
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
@@ -307,6 +307,7 @@ void BrShowState(void) {
 void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
+    be_cb_deinit(berry.vm);   // deregister any C callback for this VM
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
   }
@@ -365,6 +366,17 @@ void BerryInit(void) {
       berry.vm = nullptr;
     }
   }
+}
+
+/*********************************************************************************************\
+ * BrRestart - restart a fresh new Berry vm, unloading everything from previous VM
+\*********************************************************************************************/
+void CmndBrRestart(void) {
+  if (berry.vm == nullptr) {
+    ResponseCmndChar_P("Berry VM not started");
+  }
+  BerryInit();
+  ResponseCmndChar_P("Berry VM restarted");
 }
 
 /*********************************************************************************************\

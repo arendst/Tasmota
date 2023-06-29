@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Delay -1`` to wait until next second (#18984)
 - Matter add option to disable bridge mode (#18992)
 - Support for SGP41 TVOC/NOx Sensor (#18880)
+- Command ``BrRestart`` to restart the Berry VM (experimental)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
