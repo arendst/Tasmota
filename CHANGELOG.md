@@ -6,12 +6,12 @@ All notable changes to this project will be documented in this file.
 ## [13.0.0.1]
 ### Added
 - Command ``Delay -1`` to wait until next second (#18984)
-- Matter add option to disable bridge mode
-- Add support for SGP41 TVOC/NOx Sensor
+- Matter add option to disable bridge mode (#18992)
+- Support for SGP41 TVOC/NOx Sensor (#18880)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
-- Berry `import strict` now detects useless expr without side effects
+- Berry `import strict` now detects useless expr without side effects (#18997)
 
 ### Changed
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - Berry various fixes for Walrus Operator (#18982)
 
 ### Removed
-
+- Support for ESP32-C3 with chip rev below 3 (old development boards)
 
 ## [Released]
 
