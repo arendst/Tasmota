@@ -31,7 +31,7 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   # static var NAME = ""                              # display name of the plug-in
   static var ARG  = "filter"                        # additional argument name (or empty if none)
   static var ARG_HTTP = "url"                       # domain name
-  static var ARG_HINT = "Enter Filter pattern"
+  static var ARG_HINT = "Filter pattern"
   static var UPDATE_TIME = 5000                     # update every 5s
   static var UPDATE_CMD = "Status 8"                # command to send for updates
   static var PROBE_TIMEOUT = 1700                   # timeout of 1700 ms for probing, which gives at least 1s for TCP recovery

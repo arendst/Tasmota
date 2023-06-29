@@ -28,7 +28,7 @@ class Matter_Plugin_Device end
 
 class Matter_Plugin_Sensor : Matter_Plugin_Device
   static var ARG  = "filter"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Enter Filter pattern"
+  static var ARG_HINT = "Filter pattern"
   static var UPDATE_TIME = 5000                     # update sensor every 5s
   var tasmota_sensor_filter                         # Rule-type filter to the value, like "ESP32#Temperature"
   var tasmota_sensor_matcher                        # Actual matcher object

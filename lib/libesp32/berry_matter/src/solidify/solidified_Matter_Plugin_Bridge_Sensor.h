@@ -282,7 +282,7 @@ be_local_class(Matter_Plugin_Bridge_Sensor,
     be_nested_map(22,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(tasmota_sensor_filter, -1), be_const_var(0) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Filter_X20pattern) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Filter_X20pattern) },
         { be_const_key_weak(shadow_value, -1), be_const_var(2) },
         { be_const_key_weak(pre_value, 10), be_const_closure(Matter_Plugin_Bridge_Sensor_pre_value_closure) },
         { be_const_key_weak(ARG_HTTP, -1), be_nested_str_weak(url) },

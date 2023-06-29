@@ -356,7 +356,7 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Occupancy,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(ARG_TYPE, 4), be_const_static_closure(Matter_Plugin_Bridge_Sensor_Occupancy__X3Clambda_X3E_closure) },
-        { be_const_key_weak(ARG_HINT, 14), be_nested_str_weak(Enter_X20Switch_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, 14), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
         { be_const_key_weak(shadow_occupancy, -1), be_const_var(1) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_init_closure) },
         { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_web_values_closure) },
