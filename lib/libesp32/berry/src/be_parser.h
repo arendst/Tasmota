@@ -53,6 +53,7 @@ typedef struct bblockinfo {
     bbyte nactlocals; /* number of active local variables */
     bbyte type;       /* block type mask */
     bbyte hasupval;   /* has upvalue mark */
+    bbyte sideeffect; /* did the last expr/statement had a side effect */ 
     int breaklist;    /* break list */
     int beginpc;      /* begin pc */
     int continuelist; /* continue list */
