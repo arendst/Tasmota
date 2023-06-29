@@ -111,7 +111,7 @@ class Persist
     import json
     if   isinstance(v, map)
       self.json_fdump_map(f, v)
-    elif isinstance(v, list)v
+    elif isinstance(v, list)
       self.json_fdump_list(f, v)
     else
       f.write(json.dump(v))

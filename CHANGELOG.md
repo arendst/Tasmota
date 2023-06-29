@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
+- Berry `import strict` now detects useless expr without side effects
 
 ### Changed
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
