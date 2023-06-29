@@ -897,8 +897,10 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_PCA9557)
     feature9 |= 0x00800000;  // xdrv_69_pca9557.ino
 #endif
+#if defined(USE_I2C) && defined(USE_SGP4X)
+    feature9 |= 0x01000000;  // xdrv_109_sgp4x.ino
+#endif
 
-//    feature9 |= 0x01000000;
 //    feature9 |= 0x02000000;
 //    feature9 |= 0x04000000;
 //    feature9 |= 0x08000000;

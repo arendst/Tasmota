@@ -117,3 +117,4 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   79  | USE_GDK101          | xsns_106 | GDK101   | 0x18 - 0x1B | Gamma Radiation Sensor
   80  | USE_TC74            | xsns_108 | TC74     | 0x48 - 0x4F | Temperature sensor
   81  | USE_PCA9557         | xdrv_69  | PCA95xx  | 0x18 - 0x1F | 8-bit I/O expander as virtual button/switch/relay
+  82  | USE_SGP4X           | xsns_109 | SGP4X    | 0x59        | Gas (TVOC/NOx index)
