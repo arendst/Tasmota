@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``Delay -1`` to wait until next second (#18984)
 - Matter add option to disable bridge mode
+- Add support for SGP41 TVOC/NOx Sensor
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
