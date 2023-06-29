@@ -241,7 +241,7 @@ be_local_class(Matter_Plugin_Sensor_OnOff,
     be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(ARG, 8), be_nested_str_weak(switch) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Switch_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(onoff) },
         { be_const_key_weak(ARG_TYPE, 1), be_const_static_closure(Matter_Plugin_Sensor_OnOff__X3Clambda_X3E_closure) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },

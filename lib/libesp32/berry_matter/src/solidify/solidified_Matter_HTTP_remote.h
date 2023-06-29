@@ -60,7 +60,7 @@ be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[27]) {     /* constants */
+    ( &(const bvalue[28]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_nested_str_weak(find),
     /* K2   */  be_nested_str_weak(DeviceName),
@@ -87,7 +87,8 @@ be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
     /* K23  */  be_nested_str_weak(Mac),
     /* K24  */  be_nested_str_weak(mac),
     /* K25  */  be_nested_str_weak(MTR_X3A_X20update_X20_X27_X25s_X27_X20mac_X3D_X27_X25s_X27),
-    /* K26  */  be_nested_str_weak(info_changed),
+    /* K26  */  be_nested_str_weak(UPDATE_CMD5),
+    /* K27  */  be_nested_str_weak(info_changed),
     }),
     be_str_weak(parse_update),
     &be_const_str_solidified,
@@ -230,11 +231,11 @@ be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
       0x7C140600,  //  0087  CALL	R5	3
       0x500C0200,  //  0088  LDBOOL	R3	1	0
       0x8C14010C,  //  0089  GETMET	R5	R0	K12
-      0x881C010D,  //  008A  GETMBR	R7	R0	K13
+      0x881C011A,  //  008A  GETMBR	R7	R0	K26
       0x8820010E,  //  008B  GETMBR	R8	R0	K14
       0x7C140600,  //  008C  CALL	R5	3
       0x780E0001,  //  008D  JMPF	R3	#0090
-      0x8C10011A,  //  008E  GETMET	R4	R0	K26
+      0x8C10011B,  //  008E  GETMET	R4	R0	K27
       0x7C100200,  //  008F  CALL	R4	1
       0x80000000,  //  0090  RET	0
     })

@@ -105,6 +105,8 @@ class Matter_UI
       var commissioning_open_checked = self.device.commissioning_open != nil ? "checked" : ""
       webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
       webserver.content_send("<label for='comm'><b>Commissioning open</b></label></p>")
+      var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
+      webserver.content_send(f"<p><input type='checkbox' name='nobridge'{disable_bridge_mode_checked}><b>Force Static endpoints</b> (non-bridge)</p>")  
     end
 
     webserver.content_send("<p></p><button name='save' class='button bgrn'>Save</button></form></p>"
@@ -197,8 +199,6 @@ class Matter_UI
     webserver.content_send(f"<input type='number' min='0' max='4095' name='discriminator' value='{self.device.root_discriminator:i}'>")
     var ipv4only_checked = self.device.ipv4only ? " checked" : ""
     webserver.content_send(f"<p><input type='checkbox' name='ipv4'{ipv4only_checked}>IPv4 only</p>")
-    var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
-    webserver.content_send(f"<p><input type='checkbox' name='nobridge'{disable_bridge_mode_checked}>Disable bridge mode (not recommended)</p>")
     webserver.content_send("<p></p><button name='passcode' class='button bgrn'>Change</button></form></p>"
                            "<p></p></fieldset><p></p>")
 
@@ -741,9 +741,9 @@ class Matter_UI
     try
 
       # debug information about parameters
-      for i:0..webserver.arg_size()-1
-        tasmota.log(format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
-      end
+      # for i:0..webserver.arg_size()-1
+      #   tasmota.log(format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
+      # end
 
       #---------------------------------------------------------------------#
       # Change Passcode and/or Passcode
@@ -757,7 +757,6 @@ class Matter_UI
           self.device.root_discriminator = int(webserver.arg("discriminator"))
         end
         self.device.ipv4only = webserver.arg("ipv4") == 'on'
-        self.device.disable_bridge_mode = webserver.arg("nobridge") == 'on'
         self.device.save_param()
 
         #- and force restart -#
@@ -766,6 +765,7 @@ class Matter_UI
       elif webserver.has_arg("save")
         var matter_enabled_requested = webserver.has_arg("menable")
         var matter_commissioning_requested = webserver.has_arg("comm")
+        self.device.disable_bridge_mode = webserver.arg("nobridge") == 'on'
 
         if matter_enabled_requested != self.matter_enabled()
           if matter_enabled_requested

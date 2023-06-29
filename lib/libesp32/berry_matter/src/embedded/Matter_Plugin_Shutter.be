@@ -31,7 +31,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var NAME = "Shutter"                       # display name of the plug-in
   static var ARG  = "shutter"                       # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Enter Relay<x> number"
+  static var ARG_HINT = "Relay<x> number"
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16

@@ -28,7 +28,7 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
   static var TYPE = "onoff"                         # name of the plug-in in json
   static var NAME = "OnOff Sensor"                  # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Enter Switch<x> number"
+  static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 250ms
   static var CLUSTERS  = {

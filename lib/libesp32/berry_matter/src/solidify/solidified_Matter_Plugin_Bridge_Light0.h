@@ -484,7 +484,7 @@ be_local_class(Matter_Plugin_Bridge_Light0,
     }))    ) } )) },
         { be_const_key_weak(read_attribute, 9), be_const_closure(Matter_Plugin_Bridge_Light0_read_attribute_closure) },
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Bridge_Light0_invoke_request_closure) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Power_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Power_X3Cx_X3E_X20number) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_light0) },
         { be_const_key_weak(shadow_onoff, -1), be_const_var(1) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {

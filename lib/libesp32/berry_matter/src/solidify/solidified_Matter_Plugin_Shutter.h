@@ -661,7 +661,7 @@ be_local_class(Matter_Plugin_Shutter,
         { be_const_key_weak(shadow_shutter_direction, -1), be_const_var(4) },
         { be_const_key_weak(shadow_shutter_target, -1), be_const_var(2) },
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Shutter_invoke_request_closure) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Relay_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {

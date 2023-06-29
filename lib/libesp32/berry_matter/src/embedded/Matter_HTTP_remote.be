@@ -177,7 +177,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
       end
 
       # reduce the update time after a read is succesful
-      self.change_schedule(self.UPDATE_CMD0, self.UPDATE_TIME2)
+      self.change_schedule(self.UPDATE_CMD5, self.UPDATE_TIME2)
     end
 
     if changed      self.info_changed()   end

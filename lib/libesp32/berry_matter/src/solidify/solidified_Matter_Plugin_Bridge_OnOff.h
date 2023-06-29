@@ -66,7 +66,7 @@ be_local_class(Matter_Plugin_Bridge_OnOff,
     }))    ) } )) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(Relay) },
         { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_OnOff_web_values_closure) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Enter_X20Relay_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
         { be_const_key_weak(TYPE, 1), be_nested_str_weak(http_relay) },
     })),
     be_str_weak(Matter_Plugin_Bridge_OnOff)

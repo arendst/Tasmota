@@ -1315,23 +1315,23 @@ class Matter_Device
     self.plugins_config.remove(ep_str)
     self.plugins_persist = true
 
-    # try saving parameters
-    self.save_param()
-    self.signal_endpoints_changed()
-
     # now remove from in-memory configuration
     var idx = 0
     while idx < size(self.plugins)
       if ep == self.plugins[idx].get_endpoint()
         self.plugins.remove(idx)
-        self.signal_endpoints_changed()
         break
       else
         idx += 1
       end
     end
+
     # clean any orphan remote
     self.clean_remotes()
+
+    # try saving parameters
+    self.save_param()
+    self.signal_endpoints_changed()
   end
 
   #############################################################
@@ -1415,13 +1415,15 @@ class Matter_Device
   def clean_remotes()
     import introspect
 
+    # print("clean_remotes", self.http_remotes)
     # init all remotes with count 0
-    if self.http_remotes
+    if self.http_remotes      # tests if `self.http_remotes` is not `nil` and not empty
       var remotes_map = {}    # key: remote object, value: count of references
   
       for http_remote: self.http_remotes
         remotes_map[http_remote] = 0
       end
+      # print("remotes_map", remotes_map)
 
       # scan all endpoints
       for pi: self.plugins
@@ -1431,16 +1433,23 @@ class Matter_Device
         end
       end
 
+      # print("remotes_map2", remotes_map)
+
       # tasmota.log("MTR: remotes references: " + str(remotes_map), 3)
 
+      var remote_to_remove = []           # we first get the list of remotes to remove, to not interfere with map iterator
       for remote:remotes_map.keys()
         if remotes_map[remote] == 0
-          # remove
-          tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
-          remote.close()
-          self.http_remotes.remove(remote)
+          remote_to_remove.push(remote)
         end
       end
+
+      for remote: remote_to_remove
+        tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
+        remote.close()
+        self.http_remotes.remove(remote.addr)
+      end
+
     end
 
   end
