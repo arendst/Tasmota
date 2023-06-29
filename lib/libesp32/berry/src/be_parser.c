@@ -1140,6 +1140,7 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
     if (op == OptWalrus) {
         check_symbol(parser, e);
         bexpdesc e1 = *e;           /* copy var to e1, e will get the result of expression */
+        parser->finfo->binfo->sideeffect = 1;   /* has side effect */
         scan_next_token(parser);    /* skip ':=' */
         expr(parser, e);
         check_var(parser, e);
