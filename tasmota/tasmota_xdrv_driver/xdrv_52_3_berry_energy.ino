@@ -88,6 +88,7 @@ extern "C" {
       { "period_2", offsetof(tEnergy, period_kWh[1]), 0, 0, ctypes_float, 0 },
       { "period_3", offsetof(tEnergy, period_kWh[2]), 0, 0, ctypes_float, 0 },
       { "phase_count", offsetof(tEnergy, phase_count), 0, 0, ctypes_u8, 0 },
+      { "phase_count_virtual", offsetof(tEnergy, phase_count_virtual), 0, 0, ctypes_u8, 0 },
       { "power_factor", offsetof(tEnergy, power_factor[0]), 0, 0, ctypes_float, 0 },
       { "power_factor_2", offsetof(tEnergy, power_factor[1]), 0, 0, ctypes_float, 0 },
       { "power_factor_3", offsetof(tEnergy, power_factor[2]), 0, 0, ctypes_float, 0 },
