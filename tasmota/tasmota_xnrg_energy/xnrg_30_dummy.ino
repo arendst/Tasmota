@@ -65,8 +65,10 @@ void NrgDummyEverySecond(void) {
       float current_calibration = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel) / 100000;
       float frequency_calibration = (float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION, channel) / 100;
 
-      Energy->voltage[channel] = voltage_calibration;      // V
-      Energy->frequency[channel] = frequency_calibration;  // Hz
+      if (voltage_calibration > 100) {
+        Energy->voltage[channel] = voltage_calibration;    // V
+      }
+      Energy->frequency[channel] = (frequency_calibration > 45) ? frequency_calibration : NAN;  // Hz
       if (bitRead(TasmotaGlobal.power, channel)) {        // Emulate power read only if device is powered on
         Energy->active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : power_calibration;   // W
         if (0 == Energy->active_power[channel]) {
