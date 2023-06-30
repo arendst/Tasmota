@@ -148,8 +148,9 @@ bool NrgDummyCommand(void) {
 }
 
 void NrgDummyDrvInit(void) {
-  if (TasmotaGlobal.gpio_optiona.dummy_energy && TasmotaGlobal.devices_present) {
-    Energy->phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
+  uint32_t phase_count = (Energy->phase_count_virtual > 0) ? Energy->phase_count_virtual : TasmotaGlobal.devices_present;
+  if (TasmotaGlobal.gpio_optiona.dummy_energy && phase_count) {
+    Energy->phase_count = (phase_count < ENERGY_MAX_PHASES) ? phase_count : ENERGY_MAX_PHASES;
 
     if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
       for (uint32_t i = 0; i < Energy->phase_count; i++) {
