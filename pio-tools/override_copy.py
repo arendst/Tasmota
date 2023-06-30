@@ -1,7 +1,12 @@
 Import('env')
 
 import os
+import pathlib
+from os.path import join
 import shutil
+
+if " " in join(pathlib.Path(env["PROJECT_DIR"])):
+    print ("\u001b[31;1m*** Whitespace(s) in project path, unexpected issues/errors can happen ***\u001b[0m")
 
 # copy tasmota/user_config_override_sample.h to tasmota/user_config_override.h
 if os.path.isfile("tasmota/user_config_override.h"):

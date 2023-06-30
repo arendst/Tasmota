@@ -112,9 +112,19 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.0.0.1
 ### Added
+- Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
+- Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
+- Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
 
 ### Breaking Changed
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` [#18986](https://github.com/arendst/Tasmota/issues/18986)
+- Berry `import strict` now detects useless expression without side effects [#18997](https://github.com/arendst/Tasmota/issues/18997)
 
 ### Changed
+- Matter support for temperature in Fahrenheit (`SetOption8 1`) [#18987](https://github.com/arendst/Tasmota/issues/18987)
 
 ### Fixed
+- Berry Walrus Operator [#18982](https://github.com/arendst/Tasmota/issues/18982)
+
+### Removed
+- Support for ESP32-C3 with chip revision below 3 (old development boards)

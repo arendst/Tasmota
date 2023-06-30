@@ -104,7 +104,7 @@ class Matter_Plugin_Device : Matter_Plugin
           d1.add_TLV(1, TLV.U2, types[dt])      # Revision
         end
         # if fabric is not Alexa
-        if self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil
+        if (self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil) && (!self.device.disable_bridge_mode)
           var d1 = dtl.add_struct()
           d1.add_TLV(0, TLV.U2, 0x0013)     # DeviceType
           d1.add_TLV(1, TLV.U2, 1)      # Revision

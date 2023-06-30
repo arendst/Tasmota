@@ -70,6 +70,7 @@ class Matter_UDPServer
   var udp_socket
   var dispatch_cb                   # callback to call when a message is received
   var packets_sent                  # list map of packets sent to be acknowledged
+  var loop_cb                       # closure to pass to fast_loop
 
   #############################################################
   # Init UDP Server listening to `addr` and `port` (opt).
@@ -80,6 +81,7 @@ class Matter_UDPServer
     self.port = port ? port : 5540
     self.listening = false
     self.packets_sent = []
+    self.loop_cb = def () self.loop() end
   end
 
   #############################################################
@@ -95,7 +97,8 @@ class Matter_UDPServer
       if !ok    raise "network_error", "could not open UDP server" end
       self.listening = true
       self.dispatch_cb = cb
-      tasmota.add_driver(self)
+      # tasmota.add_driver(self)
+      tasmota.add_fast_loop(self.loop_cb)
     end
   end
 
@@ -105,7 +108,8 @@ class Matter_UDPServer
     if self.listening
       self.udp_socket.stop()
       self.listening = false
-      tasmota.remove_driver(self)
+      # tasmota.remove_driver(self)
+      tasmota.remove_fast_loop(self.loop_cb)
     end
   end
 
@@ -115,7 +119,7 @@ class Matter_UDPServer
   # Read at most `MAX_PACKETS_READ (4) packets at each tick to
   # avoid any starvation.
   # Then resend queued outgoing packets.
-  def every_50ms()
+  def loop()
     var packet_read = 0
     if self.udp_socket == nil  return end
     var packet = self.udp_socket.read()
@@ -138,6 +142,9 @@ class Matter_UDPServer
     self._resend_packets()               # resend any packet
   end
 
+  def every_50ms()
+    self.loop()
+  end
   #############################################################
   # Send packet now.
   #

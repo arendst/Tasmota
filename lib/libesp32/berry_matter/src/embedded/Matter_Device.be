@@ -63,6 +63,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
@@ -92,6 +93,7 @@ class Matter_Device
     self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
+    self.disable_bridge_mode = false
     self.load_param()
 
     self.sessions = matter.Session_Store(self)
@@ -628,7 +630,7 @@ class Matter_Device
     import json
     self.update_remotes_info()    # update self.plugins_config_remotes
 
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
@@ -693,6 +695,7 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
@@ -1312,23 +1315,23 @@ class Matter_Device
     self.plugins_config.remove(ep_str)
     self.plugins_persist = true
 
-    # try saving parameters
-    self.save_param()
-    self.signal_endpoints_changed()
-
     # now remove from in-memory configuration
     var idx = 0
     while idx < size(self.plugins)
       if ep == self.plugins[idx].get_endpoint()
         self.plugins.remove(idx)
-        self.signal_endpoints_changed()
         break
       else
         idx += 1
       end
     end
+
     # clean any orphan remote
     self.clean_remotes()
+
+    # try saving parameters
+    self.save_param()
+    self.signal_endpoints_changed()
   end
 
   #############################################################
@@ -1412,13 +1415,15 @@ class Matter_Device
   def clean_remotes()
     import introspect
 
+    # print("clean_remotes", self.http_remotes)
     # init all remotes with count 0
-    if self.http_remotes
+    if self.http_remotes      # tests if `self.http_remotes` is not `nil` and not empty
       var remotes_map = {}    # key: remote object, value: count of references
   
       for http_remote: self.http_remotes
         remotes_map[http_remote] = 0
       end
+      # print("remotes_map", remotes_map)
 
       # scan all endpoints
       for pi: self.plugins
@@ -1428,16 +1433,23 @@ class Matter_Device
         end
       end
 
+      # print("remotes_map2", remotes_map)
+
       # tasmota.log("MTR: remotes references: " + str(remotes_map), 3)
 
+      var remote_to_remove = []           # we first get the list of remotes to remove, to not interfere with map iterator
       for remote:remotes_map.keys()
         if remotes_map[remote] == 0
-          # remove
-          tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
-          remote.close()
-          self.http_remotes.remove(remote)
+          remote_to_remove.push(remote)
         end
       end
+
+      for remote: remote_to_remove
+        tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
+        remote.close()
+        self.http_remotes.remove(remote.addr)
+      end
+
     end
 
   end

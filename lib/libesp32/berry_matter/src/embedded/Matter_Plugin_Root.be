@@ -306,8 +306,12 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
+        var disable_bridge_mode = self.device.disable_bridge_mode
         for ep: eps
-          pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
+          # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
+          if !disable_bridge_mode || ep < 0xFF00
+            pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
+          end
         end
         return pl
       else

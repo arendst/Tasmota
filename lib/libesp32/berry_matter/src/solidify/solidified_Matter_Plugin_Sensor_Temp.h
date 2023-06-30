@@ -116,28 +116,43 @@ be_local_closure(Matter_Plugin_Sensor_Temp_read_attribute,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Temp_pre_value,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    5,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(get_option),
+    /* K2   */  be_const_int(1),
+    /* K3   */  be_const_real_hex(0x3FE66666),
+    }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0004,  //  0002  JMPF	R2	#0008
-      0x60080009,  //  0003  GETGBL	R2	G9
-      0x540E0063,  //  0004  LDINT	R3	100
-      0x080C0203,  //  0005  MUL	R3	R1	R3
-      0x7C080200,  //  0006  CALL	R2	1
-      0x70020000,  //  0007  JMP		#0009
-      0x4C080000,  //  0008  LDNIL	R2
-      0x80040400,  //  0009  RET	1	R2
+    ( &(const binstruction[20]) {  /* code */
+      0xB80A0000,  //  0000  GETNGBL	R2	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x54120007,  //  0002  LDINT	R4	8
+      0x7C080400,  //  0003  CALL	R2	2
+      0x1C080502,  //  0004  EQ	R2	R2	K2
+      0x780A0003,  //  0005  JMPF	R2	#000A
+      0x540A001F,  //  0006  LDINT	R2	32
+      0x04080202,  //  0007  SUB	R2	R1	R2
+      0x0C080503,  //  0008  DIV	R2	R2	K3
+      0x5C040400,  //  0009  MOVE	R1	R2
+      0x4C080000,  //  000A  LDNIL	R2
+      0x20080202,  //  000B  NE	R2	R1	R2
+      0x780A0004,  //  000C  JMPF	R2	#0012
+      0x60080009,  //  000D  GETGBL	R2	G9
+      0x540E0063,  //  000E  LDINT	R3	100
+      0x080C0203,  //  000F  MUL	R3	R1	R3
+      0x7C080200,  //  0010  CALL	R2	1
+      0x70020000,  //  0011  JMP		#0013
+      0x4C080000,  //  0012  LDNIL	R2
+      0x80040400,  //  0013  RET	1	R2
     })
   )
 );

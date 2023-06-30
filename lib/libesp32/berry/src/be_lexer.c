@@ -41,7 +41,7 @@ static const char* const kwords_tab[] = {
     "for", "def", "end", "class", "break", "continue",
     "return", "true", "false", "nil", "var", "do",
     "import", "as", "try", "except", "raise", "static",
-    // ".f"
+    ":=",
 };
 
 void be_lexerror(blexer *lexer, const char *msg)
