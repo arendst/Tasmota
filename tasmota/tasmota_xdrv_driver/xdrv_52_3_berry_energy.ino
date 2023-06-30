@@ -39,7 +39,7 @@ extern "C" {
   };  
   extern "C" const be_ctypes_structure_t be_energy_struct = {
     sizeof(tEnergy),  /* size in bytes */
-    88,  /* number of elements */
+    89,  /* number of elements */
     be_ctypes_instance_mappings,
     (const be_ctypes_structure_item_t[88]) {
       { "active_power", offsetof(tEnergy, active_power[0]), 0, 0, ctypes_float, 0 },
