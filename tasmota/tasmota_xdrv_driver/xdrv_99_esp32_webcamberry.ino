@@ -18,7 +18,7 @@
 */
 
 #ifdef ESP32
-#ifdef USE_WEBCAM_BERRY
+#ifdef USE_WEBCAM_TASK
 
 #define WC_USE_RGB_DECODE
 
@@ -1414,11 +1414,15 @@ bool WcConvertFrame(int32_t bnum_i, int format, int scale) {
   // if jpeg decode
   bool res = false;
   if (ps->format == PIXFORMAT_JPEG && format != PIXFORMAT_JPEG) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: ConvertFrame from JPEG to %d"), format);
+
     struct PICSTORE psout = {0};
     res = convertJpegToPixels(ps->buff, ps->len, ps->width, ps->height, scale, format, &psout);
     if (res) {
       free(ps->buff);
       memcpy(ps, &psout, sizeof(*ps));
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: ConvertFrame failed %d,%d to %d at 1/%d"), ps->width, ps->height, format, (1<<scale));
     }
   } else {
     // must be jpeg encode
@@ -1426,11 +1430,16 @@ bool WcConvertFrame(int32_t bnum_i, int format, int scale) {
     if (format == PIXFORMAT_JPEG) {
       struct PICSTORE psout = {0};
       // will allocate just enough if > 16k required
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: ConvertFrame from %d to jpeg"), (int)ps->format);
       res = WcencodeToJpeg(ps->buff, ps->len, ps->width, ps->height, (int)ps->format, 80, &psout);
       if (res) {
         free(ps->buff);
         memcpy(ps, &psout, sizeof(*ps));
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: ConvertFrame jpeg encode failed %d,%d from %d"), ps->width, ps->height, (int)ps->format);
       }
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: ConvertFrame cannot convert to %d"), (int)format);
     }
   }
   return res;
@@ -3078,21 +3087,25 @@ void CmndWebcamSetOptions(void){
 }
 
 // NOTE input format is esp format + 1, and 0 -> jpeg
+// wcConvertFrame1-4 0 [0] - option arg scale 0-3 -> valid on jpeg decode only
 void CmndWebcamConvertFrame(void){
   int bnum = XdrvMailbox.index;
   // bnum is 1-4
-  if (!XdrvMailbox.data_len || (bnum < 1) || (bnum > MAX_PICSTORE)){
+  if ((bnum < 1) || (bnum > MAX_PICSTORE)){
     ResponseCmndError(); return;
   }
-  char tmp[20];
-  strncpy(tmp, XdrvMailbox.data, 10);
-  char *p = tmp;
-  char *arg = strtok(tmp, " ");
-  int format = atoi(arg);
+  int format = 0;
   int scale = 0;
-  arg = strtok(nullptr, " ");
-  if (arg){
-    scale = atoi(arg);
+
+  if(XdrvMailbox.data_len){
+    char tmp[20];
+    strncpy(tmp, XdrvMailbox.data, 10);
+    char *arg = strtok(tmp, " ");
+    format = atoi(arg);
+    arg = strtok(nullptr, " ");
+    if (arg){
+      scale = atoi(arg);
+    }
   }
 
   // NOTE input format is esp format + 1, and 0 -> jpeg
@@ -3105,7 +3118,7 @@ void CmndWebcamConvertFrame(void){
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid format %d"), format+1);
     ResponseCmndError(); return;
   }
-  struct PICSTORE *ps = &Wc.picstore[bnum];
+  struct PICSTORE *ps = &Wc.picstore[bnum-1];
   if (!ps->buff){
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: No pic at %d"), bnum);
     ResponseCmndError(); return;
@@ -3130,7 +3143,7 @@ void CmndWebcamSetPicture(void){
     ResponseCmndError();
     return;
   }
-  struct PICSTORE *p = &Wc.picstore[bnum];
+  struct PICSTORE *p = &Wc.picstore[bnum-1];
 
   char tmp[100];
   strncpy(tmp, XdrvMailbox.data, 99);
@@ -3171,6 +3184,9 @@ void CmndWebcamSetPicture(void){
     ResponseCmndError();
     return;
   }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: SetPicture addr:%u len:%d format%d [width%d height%d]"), addr, len, format, width, height);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: dest addr:%u len:%d/%d format%d [width%d height%d]"), p->buff, p->len, p->allocatedLen, p->format, p->width, p->height);
 
   // don't over copy if someone screws up height/width/size calc
   // also, our buffer MAY have more space than required...
@@ -3350,6 +3366,11 @@ void CmndWebcamGetPicStore(void) {
   if (bnum == -99){
     bnum = XdrvMailbox.index;
   }
+  if (bnum < 0 || bnum > MAX_PICSTORE) {
+    ResponseCmndError();
+    return;
+  }
+
   // if given 0, then get frame 1 first, and use frame 1 (the first frame, index 0).
   if (bnum == 0){
     bnum = 1;
@@ -3371,6 +3392,9 @@ void CmndWebcamGetPicStore(void) {
   Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, resp);
 }
 
+// wcGetMotionPixels1-n [1-n]
+// if optional second argument is given the picture is copied to that picstore.
+// so making it easy to convert/save.
 void CmndWebcamGetMotionPixels(void) {
   // NOTE: the buffers returned here are static unless the frame size or scale changes.
   // use with care
@@ -3381,37 +3405,53 @@ void CmndWebcamGetMotionPixels(void) {
   int swscaley = (1<<wc_motion.swscale);
   int scaledheight = height/swscaley;
 
+  int bnum = -1;
+  if (-99 != XdrvMailbox.payload){
+    bnum = XdrvMailbox.payload;
+    if (bnum < 1 || bnum > MAX_PICSTORE) {
+      ResponseCmndError();
+      return;
+    }
+  }
+
   uint8_t *t = nullptr;
   int len = 0;
   int format = 0;
+  struct PICSTORE *p = nullptr;
   switch (XdrvMailbox.index){
     case 1:{
-      t = wc_motion.last_motion?wc_motion.last_motion->buff: nullptr;
-      len = wc_motion.last_motion?wc_motion.last_motion->len: 0;
-      format = wc_motion.last_motion?wc_motion.last_motion->format+1: 0;
+      p = wc_motion.last_motion;
     } break;
     case 2:{ // optional diff buffer
-      t = wc_motion.diff?wc_motion.diff->buff: nullptr;
-      len = wc_motion.diff?wc_motion.diff->len: 0;
-      format = wc_motion.diff?wc_motion.diff->format+1: 0;
+      p = wc_motion.diff;
     } break;
     case 3:{ // optional mask buffer
-      t = wc_motion.mask?wc_motion.mask->buff: nullptr;
-      len = wc_motion.mask?wc_motion.mask->len: 0;
-      format = wc_motion.mask?wc_motion.mask->format+1: 0;
+      p = wc_motion.mask;
     } break;
     case 4:{ // optional background buffer
-      t = wc_motion.background?wc_motion.background->buff: nullptr;
-      len = wc_motion.background?wc_motion.background->len: 0;
-      format = wc_motion.background?wc_motion.background->format+1: 0;
+      p = wc_motion.background;
     } break;
   }
-  char resp[50] = "0";
-  snprintf_P(resp, sizeof(resp), PSTR("{\"addr\":%d,\"len\":%d,\"w\":%d,\"h\":%d, \"format\":%d}"), 
-    t, len,
-    scaledwidth, scaledheight,
-    format
-    );
+
+  if (!p){
+    ResponseCmndError();
+    return;
+  }
+
+  if (bnum > 1){
+    bool res = pic_alloc(&Wc.picstore[bnum-1], p->width, p->height, 0, p->format, WC_ALLOC_ALWAYS);
+    if (res){
+      memcpy(Wc.picstore[bnum-1].buff, p->buff, p->len);
+      p = &Wc.picstore[bnum-1];
+    } else {
+      ResponseCmndError();
+      return;
+    }
+  }
+
+  char resp[100] = "0";
+  snprintf_P(resp, sizeof(resp), PSTR("{\"buff\":%d,\"addr\":%d,\"len\":%d,\"w\":%d,\"h\":%d,\"format\":%d}"), 
+      bnum, p->buff, p->len, p->width, p->height, p->format+1);
   Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, resp);
 }
 
