@@ -2261,6 +2261,12 @@ void GpioInit(void)
     }
   }
 
+#ifdef USE_UFILESYS
+#ifdef USE_SDCARD
+  UfsCheckSDCardInit();
+#endif  // USE_SDCARD
+#endif  // USE_UFILESYS
+
   XdrvCall(FUNC_SETUP_RING1);                              // Setup RTC hardware
   XsnsXdrvCall(FUNC_SETUP_RING2);                          // Setup hardware supporting virtual switches/buttons/relays
 
