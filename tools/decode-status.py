@@ -99,7 +99,7 @@ a_setoption = [[
     "(Bistable) Pulse time in milliseconds for two coil bistable latching relays (default 40)",
     "(PowerOn) Add delay of 10 x value milliseconds at power on",
     "(PowerOn) Add delay of value seconds at power on before activating relays",
-    "(not used) Energy Tariff2 start hour",
+    "(Energy) Support energy dummy relays",
     "",
     ],[
     "(Timers) Enabled",
@@ -325,7 +325,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.5.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.0.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
