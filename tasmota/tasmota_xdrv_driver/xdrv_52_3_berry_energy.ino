@@ -33,15 +33,15 @@
 extern "C" {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
- 
+
   static const char * be_ctypes_instance_mappings[] = {
     NULL
-  };  
+  };
   extern "C" const be_ctypes_structure_t be_energy_struct = {
     sizeof(tEnergy),  /* size in bytes */
-    89,  /* number of elements */
+    88,  /* number of elements */
     be_ctypes_instance_mappings,
-    (const be_ctypes_structure_item_t[89]) {
+    (const be_ctypes_structure_item_t[88]) {
       { "active_power", offsetof(tEnergy, active_power[0]), 0, 0, ctypes_float, 0 },
       { "active_power_2", offsetof(tEnergy, active_power[1]), 0, 0, ctypes_float, 0 },
       { "active_power_3", offsetof(tEnergy, active_power[2]), 0, 0, ctypes_float, 0 },
@@ -88,7 +88,6 @@ extern "C" {
       { "period_2", offsetof(tEnergy, period_kWh[1]), 0, 0, ctypes_float, 0 },
       { "period_3", offsetof(tEnergy, period_kWh[2]), 0, 0, ctypes_float, 0 },
       { "phase_count", offsetof(tEnergy, phase_count), 0, 0, ctypes_u8, 0 },
-      { "phase_count_virtual", offsetof(tEnergy, phase_count_virtual), 0, 0, ctypes_u8, 0 },
       { "power_factor", offsetof(tEnergy, power_factor[0]), 0, 0, ctypes_float, 0 },
       { "power_factor_2", offsetof(tEnergy, power_factor[1]), 0, 0, ctypes_float, 0 },
       { "power_factor_3", offsetof(tEnergy, power_factor[2]), 0, 0, ctypes_float, 0 },
