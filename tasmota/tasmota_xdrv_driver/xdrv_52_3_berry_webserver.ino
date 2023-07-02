@@ -138,7 +138,6 @@ extern "C" {
       const char * uri = be_tostring(vm, 1);
       Webserver->sendHeader("Location", uri, true);
       Webserver->send(302, "text/plain", "");
-      // Webserver->sendHeader(F("Location"), String(F("http://")) + Webserver->client().localIP().toString(), true);
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
