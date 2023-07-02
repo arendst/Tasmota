@@ -19,6 +19,8 @@
 
 #ifdef ESP32
 #ifdef USE_WEBCAM
+#ifdef USE_WEBCAM_LEGACY
+
 /*********************************************************************************************\
  * ESP32 webcam based on example in Arduino-ESP32 library
  *
@@ -1531,5 +1533,6 @@ bool Xdrv81(uint32_t function) {
   return result;
 }
 
+#endif  // USE_WEBCAM_LEGACY
 #endif  // USE_WEBCAM
 #endif  // ESP32
