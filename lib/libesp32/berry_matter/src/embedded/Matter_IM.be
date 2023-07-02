@@ -66,7 +66,7 @@ class Matter_IM
     elif opcode == 0x07   # Write Response
       return self.process_write_response(msg, val)
     elif opcode == 0x08   # Invoke Request
-      self.send_ack_now(msg)
+      # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
       return self.process_invoke_request(msg, val)
     elif opcode == 0x09   # Invoke Response
       return self.process_invoke_response(msg, val)
@@ -97,6 +97,7 @@ class Matter_IM
   #
   # returns `true` if packet could be sent
   def send_ack_now(msg)
+    if msg == nil   return  end
     msg.session._message_handler.send_encrypted_ack(msg, false #-not reliable-#)
   end
 
@@ -355,6 +356,7 @@ class Matter_IM
     # expand a string with all attributes requested
     var attr_req = []
     var ctx = matter.Path()
+    ctx.msg = msg
     for q:query.attributes_requests
       ctx.endpoint = q.endpoint
       ctx.cluster = q.cluster
@@ -381,6 +383,7 @@ class Matter_IM
     # structure is `ReadRequestMessage` 10.6.2 p.558
     # tasmota.log("MTR: IM:invoke_request processing start", 4)
     var ctx = matter.Path()
+    ctx.msg = msg
 
     var query = matter.InvokeRequestMessage().from_TLV(val)
     if query.invoke_requests != nil

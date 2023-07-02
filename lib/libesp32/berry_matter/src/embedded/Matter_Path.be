@@ -33,6 +33,19 @@ class Matter_Path
   var command                 # command
   var status                  # status to be returned (matter.SUCCESS or matter.<ERROR>)
   var log                     # any string that needs to be logged (used to show significant parameters for commands)
+  var msg                     # reference of the original message
+
+  # clear the context, allows reuse of the same object
+  def clear()
+    var n = nil
+    self.endpoint = n
+    self.cluster = n
+    self.attribute = n
+    self.command = n
+    self.status = n
+    self.log = n
+    self.msh = n
+  end
 
   def tostring()
     try
