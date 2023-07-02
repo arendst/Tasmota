@@ -138,7 +138,7 @@ class Matter_MessageHandler
        
         # check if it's a duplicate
         if !session.counter_rcv_validate(frame.message_counter, true)
-          tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 4)
+          tasmota.log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 3)
           self.send_encrypted_ack(frame, false #-not reliable-#)
           return false
         end
