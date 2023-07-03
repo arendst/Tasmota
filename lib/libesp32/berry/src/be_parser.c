@@ -1157,6 +1157,7 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
         parser->finfo->binfo->sideeffect = 1;   /* has side effect */
         scan_next_token(parser);    /* skip ':=' */
         expr(parser, e);
+        check_var(parser, e);
         if (check_newvar(parser, &e1)) { /* new variable */
             new_var(parser, e1.v.s, e);
         }
