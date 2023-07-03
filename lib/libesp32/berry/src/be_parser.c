@@ -1135,22 +1135,34 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
 static void walrus_expr(bparser *parser, bexpdesc *e)
 {
     int line = parser->lexer.linenumber;
-    sub_expr(parser, e, ASSIGN_OP_PRIO);    /* left expression */
     btokentype op = next_type(parser);
+    if (op == KeyVar) {
+        /* 'var' ID ':=' expr */
+        scan_next_token(parser); /* skip 'var' */
+        bstring *name;
+        name = next_token(parser).u.s;
+        match_token(parser, TokenId); /* match and skip ID */
+        new_var(parser, name, e); /* new variable */         
+        op = next_type(parser);
+        if (op != OptWalrus) {
+            parser_error(parser, "'var' in expr must be followed by ':='");
+        }
+    } else {
+        sub_expr(parser, e, ASSIGN_OP_PRIO);    /* left expression */
+        op = next_type(parser);
+    }
     if (op == OptWalrus) {
         check_symbol(parser, e);
         bexpdesc e1 = *e;           /* copy var to e1, e will get the result of expression */
         parser->finfo->binfo->sideeffect = 1;   /* has side effect */
         scan_next_token(parser);    /* skip ':=' */
         expr(parser, e);
-        check_var(parser, e);
         if (check_newvar(parser, &e1)) { /* new variable */
             new_var(parser, e1.v.s, e);
         }
         if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */ )) {
             parser->lexer.linenumber = line;
-            parser_error(parser,
-                "try to assign constant expressions.");
+            parser_error(parser, "try to assign constant expressions.");
         }
     }
 }

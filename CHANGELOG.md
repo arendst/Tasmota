@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Matter add option to disable bridge mode (#18992)
 - Support for SGP41 TVOC/NOx Sensor (#18880)
 - Command ``BrRestart`` to restart the Berry VM (experimental)
+- Berry `var` allowed in with walrus operator `:=`
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
