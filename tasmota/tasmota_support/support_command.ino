@@ -1151,6 +1151,9 @@ void CmndRestart(void)
     }
     break;
 #endif  // ESP32
+  case 4:
+    ESP.deepSleep(0);  // deep sleep mode with only hardware triggered wake up
+    break;
   case -1:
     CmndCrash();    // force a crash
     break;
