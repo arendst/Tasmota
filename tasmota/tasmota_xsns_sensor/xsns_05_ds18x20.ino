@@ -50,6 +50,8 @@
 #define DS18X20_MAX_SENSORS  8
 #endif
 
+#define DS18X20_ALIAS_LEN    17
+
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
 uint8_t ds18x20_chipids[] = { 0, DS18S20_CHIPID, DS1822_CHIPID, DS18B20_CHIPID, MAX31850_CHIPID };
@@ -63,7 +65,7 @@ struct {
   uint8_t valid;
   int8_t pins_id;
 #ifdef DS18x20_USE_ID_ALIAS
-  char alias[17] = "0";
+  char *alias = (char*)calloc(DS18X20_ALIAS_LEN, 1);
 #endif  // DS18x20_USE_ID_ALIAS
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
@@ -357,6 +359,9 @@ void Ds18x20Init(void) {
         for (uint32_t j = 6; j > 0; j--) {
           ids[DS18X20Data.sensors] = ids[DS18X20Data.sensors] << 8 | ds18x20_sensor[DS18X20Data.sensors].address[j];
         }
+#ifdef DS18x20_USE_ID_ALIAS
+        ds18x20_sensor[DS18X20Data.sensors].alias[0] = '0';
+#endif
         ds18x20_sensor[DS18X20Data.sensors].pins_id = pins;
         DS18X20Data.sensors++;
       }
@@ -590,7 +595,7 @@ void CmndDSAlias(void) {
         sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);
       }
       if (!strncmp(Argument1, address, 12) && Argument2[0]) {
-        snprintf_P(ds18x20_sensor[i].alias, sizeof(ds18x20_sensor[i].alias), PSTR("%s"), Argument2);
+        snprintf_P(ds18x20_sensor[i].alias, DS18X20_ALIAS_LEN, PSTR("%s"), Argument2);
         break;
       }
     }
