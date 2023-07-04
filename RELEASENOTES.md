@@ -112,7 +112,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.0.0.1
 ### Added
+- Command ``BrRestart`` to restart the Berry VM (experimental) [#19003](https://github.com/arendst/Tasmota/issues/19003)
 - Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
+- Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset [#19024](https://github.com/arendst/Tasmota/issues/19024)
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
 - Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
 
@@ -125,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Berry Walrus Operator [#18982](https://github.com/arendst/Tasmota/issues/18982)
+- MiElHVAC power commands regression from v12.4.0.1 [#18923](https://github.com/arendst/Tasmota/issues/18923)
 
 ### Removed
 - Support for ESP32-C3 with chip revision below 3 (old development boards)

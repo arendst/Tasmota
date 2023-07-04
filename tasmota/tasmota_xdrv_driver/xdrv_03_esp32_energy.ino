@@ -173,7 +173,6 @@ typedef struct {
 
   uint8_t data_valid[ENERGY_MAX_PHASES];
   uint8_t phase_count;                          // Number of phases active
-  uint8_t phase_count_virtual;                  // Number of virtual relays
   uint8_t fifth_second;
   uint8_t command_code;
   uint8_t power_steady_counter;                 // Allow for power on stabilization

@@ -1138,11 +1138,14 @@ bool Xdrv50(uint32_t function) {
     case FUNC_LOOP:
       UfsExecuteCommandFileLoop();
       break;
+/*
+// Moved to support_tasmota.ino for earlier init to be used by scripter
 #ifdef USE_SDCARD
     case FUNC_PRE_INIT:
       UfsCheckSDCardInit();
       break;
 #endif // USE_SDCARD
+*/
     case FUNC_MQTT_INIT:
       if (!TasmotaGlobal.no_autoexec) {
         UfsExecuteCommandFile(TASM_FILE_AUTOEXEC);

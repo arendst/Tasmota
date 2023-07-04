@@ -63,6 +63,11 @@ class Matter_Plugin
     self.parse_configuration(config)
   end
 
+  # proxy for the same method in IM
+  def send_ack_now(msg)
+    self.device.message_handler.im.send_ack_now(msg)
+  end
+
   #############################################################
   # parse_configuration
   #

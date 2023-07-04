@@ -150,7 +150,7 @@ bool NrgDummyCommand(void) {
 }
 
 void NrgDummyDrvInit(void) {
-  uint32_t phase_count = (Energy->phase_count_virtual > 0) ? Energy->phase_count_virtual : TasmotaGlobal.devices_present;
+  uint32_t phase_count = (Settings->param[P_DUMMY_RELAYS] > 0) ? Settings->param[P_DUMMY_RELAYS] : TasmotaGlobal.devices_present;  // SetOption48 - (Energy) Support energy dummy relays
   if (TasmotaGlobal.gpio_optiona.dummy_energy && phase_count) {
     Energy->phase_count = (phase_count < ENERGY_MAX_PHASES) ? phase_count : ENERGY_MAX_PHASES;
 
