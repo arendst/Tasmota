@@ -2,7 +2,7 @@
   xdrv_15_pca9685.ino - Support for I2C PCA9685 12bit 16 pin hardware PWM driver on Tasmota
 
   Copyright (C) 2021  Andre Thomas and Theo Arends
-                2023  Fabrizio Amodio)
+                2023  Fabrizio Amodio
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -50,10 +50,10 @@
     DRIVER15 PWM[0-8],pin,ON          // Fully turn a specific board/pin/LED ON
     DRIVER15 PWM[0-8],pin,OFF         // Fully turn a specific board/pin/LED OFF
     
-    DRIVER15 PWMTO[0-8] seconds,pin,value[,pin,value[,pin,value...]]  // Move all the specified pin to a new location in the specified time
+    DRIVER15 PWMTO[0-8] tensecs,pin,value[,pin,value[,pin,value...]]  // Move all the specified pin to a new location in the specified time (1/10 sec resolution), if "tensecs" is zero it's equivalent to PWM command for all the pins
       
       e.g.  
-        PWMTO 4 0 327 1 550 2 187 3 200
+        PWMTO 40 0 327 1 550 2 187 3 200
           this move the PIN0 of the Board 0 from the current position to 327
                     the PIN1 of the Board 0 from the current position to 550
                     the PIN2 of the Board 0 from the current position to 187
@@ -61,9 +61,9 @@
           
           all the movements will be completed in 4 seconds, every PIN will be stepped relative to that @ 50ms step.
 
-        PWMTO1 4 0 327 1 550 2 187 3 200
+        PWMTO1 40 0 327 1 550 2 187 3 200
           same logic on the board #1
-    
+
     DRIVER15 PWMSTOP[0-8]   // stop all the moment on the relative board
 */
 
@@ -108,7 +108,7 @@ typedef struct
   uint16_t pwm;
   bool running;
   uint16_t step;
-  uint16_t every;
+  int16_t every;
   uint16_t target;
   int16_t direction; // 1 == UP , 0 == stop; -1 == down
 } tMotor;
@@ -132,7 +132,7 @@ void PCA9685_SetName(uint8_t pca)
 {
   if (pca9685.count > 1)
   {
-    pca9685.name[7] = '_';
+    pca9685.name[7] = IndexSeparator();
     pca9685.name[8] = '0' + pca;
     pca9685.name[9] = 0;
   }
@@ -274,7 +274,7 @@ void PCA9685_RunMotor()
       if (!m->running)
         continue;
 
-      if ((m->direction > 0 && m->pwm >= m->target) || (m->direction < 0 && m->pwm <= m->target))
+      if (m->every == -1 || (m->direction > 0 && m->pwm >= m->target) || (m->direction < 0 && m->pwm <= m->target))
       {
         m->running = false;
         if (m->pwm != m->target)
@@ -409,7 +409,7 @@ bool PCA9685_Command(void)
     {
       if (paramcount > (2 + paramFrom))
       {
-        uint16_t tis = atoi(ArgV(argument, 2)); // time in second to complete all the motors move
+        uint16_t tids = atoi(ArgV(argument, 2)); // time in 1/10 of second to complete all the motors move
 
         uint16_t pin = atoi(ArgV(argument, 2 + paramFrom));
         /*
@@ -417,10 +417,10 @@ bool PCA9685_Command(void)
         */
         if (pin > 15)
           pin = 15;
-        if (tis < 1)
-          tis = 1; // min 1 seconds to complete all the moves
-        if (tis > 60)
-          tis = 60; // max 60 seconds to complete all the moves
+        if (tids < 2)
+          tids = 0; // min 2/10 seconds to complete all the moves
+        if (tids > 600)
+          tids = 600; // max 60 seconds to complete all the moves
 
         tMotor *m = &pca9685.motor[dev][pin];
         m->target = atoi(ArgV(argument, 2 + paramFrom + 1));
@@ -429,33 +429,39 @@ bool PCA9685_Command(void)
           m->step = 0;
           m->direction = m->target < m->pwm ? -1 : 1;
 
-          // AddLog(LOG_LEVEL_DEBUG, "PCA9685: PWMTO dev=%u pin=%u tis=%u e=? pwm=%lu target=%lu dir=%d",
-          //        dev,
-          //        pin,
-          //        tis,
-          //        m->pwm,
-          //        m->target,
-          //        m->direction);
-
-          m->every = 0;
-          while (m->every < 1)
+          if( tids == 0 )
           {
-            uint16_t stepValue = abs((int16_t)m->pwm - (int16_t)m->target) / abs(m->direction);
-            if (stepValue < 1)
+            m->every = -1;
+            m->running = true;
+          } else {
+            // AddLog(LOG_LEVEL_DEBUG, "PCA9685: PWMTO dev=%u pin=%u tids=%u e=? pwm=%lu target=%lu dir=%d",
+            //        dev,
+            //        pin,
+            //        tids,
+            //        m->pwm,
+            //        m->target,
+            //        m->direction);
+
+            m->every = 0;
+            while (m->every < 1)
             {
-              m->direction += m->target < m->pwm ? -1 : 1;
-              continue;
+              uint16_t stepValue = abs((int16_t)m->pwm - (int16_t)m->target) / abs(m->direction);
+              if (stepValue < 1)
+              {
+                m->direction += m->target < m->pwm ? -1 : 1;
+                continue;
+              }
+
+              m->every = round((tids * 200) / stepValue);
+              if (m->every < 1)
+              {
+                m->direction += m->target < m->pwm ? -1 : 1;
+                continue;
+              }
             }
 
-            m->every = round((tis * 20) / stepValue);
-            if (m->every < 1)
-            {
-              m->direction += m->target < m->pwm ? -1 : 1;
-              continue;
-            }
+            m->running = true;
           }
-
-          m->running = true;
         }
         else
         {
