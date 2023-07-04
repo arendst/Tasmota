@@ -285,6 +285,9 @@ void AdcInit(void) {
     if (PinUsed(GPIO_ADC_MQ, i)) {
       AdcAttach(Pin(GPIO_ADC_MQ, i), ADC_MQ);
     }
+    if (PinUsed(GPIO_ADC_WIND_DIR, i)) {
+      AdcAttach(Pin(GPIO_ADC_WIND_DIR, i), ADC_WIND_DIR);
+    }
   }
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (PinUsed(GPIO_ADC_BUTTON, i)) {
@@ -704,6 +707,48 @@ void AdcShow(bool json) {
         } else {
           WSContentSend_PD(HTTP_SNS_MQ, mqnumber_chr, mq_chr);
   #endif // USE_WEBSERVER
+        }
+        break;
+      }
+      case ADC_WIND_DIR: {
+        uint16_t analog = AdcRead(Adc[idx].pin, 5);
+        float dir_val = analog * ANALOG_V33 / ANALOG_RANGE;
+        char dir_chr[FLOATSZ];
+        dtostrfd(dir_val, 2, dir_chr);
+        String wind_chr = D_ERROR;
+
+        if(dir_val > 2.50 && dir_val < 2.70 ) {
+          wind_chr = D_TX20_NORTH;
+        }
+        if(dir_val > 1.30 && dir_val < 1.70 ) {
+          wind_chr = D_TX20_NORTH D_TX20_EAST;
+        }
+        if(dir_val > 0.20 && dir_val < 0.40 ) {
+          wind_chr = D_TX20_EAST;
+        }
+        if(dir_val > 0.50 && dir_val < 0.74 ) {
+          wind_chr = D_TX20_SOUTH D_TX20_EAST;
+        }
+        if(dir_val > 0.75 && dir_val < 1.20 ) {
+          wind_chr = D_TX20_SOUTH;
+        }
+        if(dir_val > 2.00 && dir_val < 2.20 ) {
+          wind_chr = D_TX20_SOUTH D_TX20_WEST;
+        }
+        if(dir_val > 3.00 && dir_val < 3.25 ) {
+          wind_chr = D_TX20_WEST;
+        }
+        if(dir_val > 2.8 && dir_val < 2.99 ) {
+          wind_chr = D_TX20_NORTH D_TX20_WEST;
+        }
+
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"WINDDIRECTION%d\":\"%s\",\"WINDADC%d\":%s"), idx + offset, wind_chr.c_str(), idx + offset, dir_chr);
+#ifdef USE_WEBSERVER
+        } else {
+          WSContentSend_PD(HTTP_SNS_WIND_DIRECTION, "", wind_chr.c_str());
+#endif  // USE_WEBSERVER
         }
         break;
       }

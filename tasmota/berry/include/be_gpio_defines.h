@@ -18,6 +18,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ADC_PH", (int32_t) GPIO_ADC_PH },
     { "ADC_RANGE", (int32_t) GPIO_ADC_RANGE },
     { "ADC_TEMP", (int32_t) GPIO_ADC_TEMP },
+    { "ADC_WIND_DIR", (int32_t) GPIO_ADC_WIND_DIR },
     { "ADE7880_IRQ", (int32_t) GPIO_ADE7880_IRQ },
     { "ADE7953_CS", (int32_t) GPIO_ADE7953_CS },
     { "ADE7953_IRQ", (int32_t) GPIO_ADE7953_IRQ },
