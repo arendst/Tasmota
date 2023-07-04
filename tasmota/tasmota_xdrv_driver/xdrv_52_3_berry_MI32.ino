@@ -94,6 +94,10 @@ extern "C" {
     be_raise(vm, "ble_error", "BLE: device not initialized");
     be_return_nil(vm);
   }
+ 
+  bool be_BLE_wifi_probe(struct bvm *vm, const char *ssid, const char *password){
+    return WiFi.begin(ssid, password);
+  }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){    

@@ -73,6 +73,9 @@ BE_FUNC_CTYPE_DECLARE(be_BLE_adv_watch, "", "@(bytes)~[i]");
 extern void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
 BE_FUNC_CTYPE_DECLARE(be_BLE_adv_block, "", "@(bytes)~[i]");
 
+extern bbool be_BLE_wifi_probe(struct bvm *vm, const char *ssid, const char *password);
+BE_FUNC_CTYPE_DECLARE(be_BLE_wifi_probe, "b", "@ss");
+
 
 #include "be_fixed_BLE.h"
 
@@ -88,6 +91,7 @@ module BLE (scope: global) {
   adv_watch,  ctype_func(be_BLE_adv_watch)
   adv_block,  ctype_func(be_BLE_adv_block)
   serv_cb,    ctype_func(be_BLE_reg_server_cb)
+  wifi_probe, ctype_func(be_BLE_wifi_probe)
 }
 @const_object_info_end */
 
