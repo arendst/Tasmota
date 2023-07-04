@@ -87,7 +87,6 @@
 #define D_MOVING_DISTANCE "Moving Distance"
 #define D_STATIC_DISTANCE "Static Distance"
 #define D_DETECT_DISTANCE "Detect Distance"
-#define D_DIRECTION "Direction"
 #define D_DISTANCE "Απόσταση"
 #define D_DNS_SERVER "Διακομιστής DNS"
 #define D_DO "Disolved Oxygen"
