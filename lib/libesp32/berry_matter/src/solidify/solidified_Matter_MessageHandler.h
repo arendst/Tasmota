@@ -481,7 +481,7 @@ be_local_closure(Matter_MessageHandler_msg_received,   /* name */
       0x88300F2E,  //  00C2  GETMBR	R12	R7	K46
       0x7C2C0200,  //  00C3  CALL	R11	1
       0x0028140B,  //  00C4  ADD	R10	R10	R11
-      0x542E0003,  //  00C5  LDINT	R11	4
+      0x582C0020,  //  00C5  LDCONST	R11	K32
       0x7C200600,  //  00C6  CALL	R8	3
       0x8C20012F,  //  00C7  GETMET	R8	R0	K47
       0x5C280A00,  //  00C8  MOVE	R10	R5

@@ -37,11 +37,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN
+  D_CMND_BR_RUN "|" D_CMND_BR_RESTART
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun,
+  CmndBrRun, CmndBrRestart
   };
 
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
@@ -307,8 +307,13 @@ void BrShowState(void) {
 void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
+    be_cb_deinit(berry.vm);   // deregister any C callback for this VM
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
+    berry.autoexec_done = false;
+    berry.repl_active = false;
+    berry.rules_busy = false;
+    berry.timeout = 0;
   }
 
   int32_t ret_code1, ret_code2;
@@ -365,6 +370,17 @@ void BerryInit(void) {
       berry.vm = nullptr;
     }
   }
+}
+
+/*********************************************************************************************\
+ * BrRestart - restart a fresh new Berry vm, unloading everything from previous VM
+\*********************************************************************************************/
+void CmndBrRestart(void) {
+  if (berry.vm == nullptr) {
+    ResponseCmndChar_P("Berry VM not started");
+  }
+  BerryInit();
+  ResponseCmndChar_P("Berry VM restarted");
 }
 
 /*********************************************************************************************\
@@ -653,14 +669,16 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
       "Check the <a href='https://tasmota.github.io/docs/Berry/' target='_blank'>documentation</a>."
     "</div>"
   "</div>"
-  // "<textarea readonly id='t1' cols='340' wrap='off'></textarea>"
-  // "<br><br>"
   "<form method='get' id='fo' onsubmit='return l(1);'>"
   "<textarea id='c1' class='br0 bri' rows='4' cols='340' wrap='soft' autofocus required></textarea>"
-  // "<input id='c1' class='bri' type='text' rows='5' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
-  // "<input type='submit' value=\"Run code (or press 'Enter' twice)\">"
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
-  "</form>";
+  "</form>"
+#ifdef USE_BERRY_DEBUG
+  "<p><form method='post' >"
+  "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
+  "</form></p>"
+#endif // USE_BERRY_DEBUG
+  ;
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
   "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
@@ -704,6 +722,12 @@ void HandleBerryConsole(void)
   if (Webserver->hasArg(F("c2"))) {      // Console refresh requested
     HandleBerryConsoleRefresh();
     return;
+  }
+
+  if (Webserver->hasArg(F("rst"))) {      // restart VM
+    BerryInit();
+    Webserver->sendHeader("Location", "/bc", true);
+    Webserver->send(302, "text/plain", "");
   }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));

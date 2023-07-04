@@ -1151,6 +1151,11 @@ void CmndRestart(void)
     }
     break;
 #endif  // ESP32
+  case 9:
+    TasmotaGlobal.restart_flag = 2;
+    TasmotaGlobal.restart_deepsleep = true;
+    ResponseCmndChar(PSTR("Go to sleep"));
+    break;
   case -1:
     CmndCrash();    // force a crash
     break;

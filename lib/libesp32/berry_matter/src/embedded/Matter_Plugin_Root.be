@@ -368,6 +368,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return srcr
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
+        self.send_ack_now(ctx.msg)      # long operation, send Ack first
         # no data
         if session._fabric
           session._breadcrumb = 0          # clear breadcrumb
@@ -435,6 +436,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return ar
 
       elif command == 0x0004            # ---------- CSRRequest ----------
+        self.send_ack_now(ctx.msg)      # long operation, send Ack first
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool

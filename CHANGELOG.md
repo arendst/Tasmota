@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Command ``Delay -1`` to wait until next second (#18984)
 - Matter add option to disable bridge mode (#18992)
 - Support for SGP41 TVOC/NOx Sensor (#18880)
+- Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
+- Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
@@ -19,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry various fixes for Walrus Operator (#18982)
+- MiElHVAC power commands regression from v12.4.0.1 (#18923)
 
 ### Removed
 - Support for ESP32-C3 with chip rev below 3 (old development boards)
