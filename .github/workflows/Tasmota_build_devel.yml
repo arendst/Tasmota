@@ -101,7 +101,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install wheel
-          pip install -U platformio
+          pip install -U platformio==6.1.7
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
@@ -139,7 +139,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install wheel
-          pip install -U platformio
+          pip install -U platformio==6.1.7
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
@@ -182,7 +182,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install wheel
-          pip install -U platformio
+          pip install -U platformio==6.1.7
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v3
         with:
@@ -219,7 +219,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install wheel
-          pip install -U platformio
+          pip install -U platformio==6.1.7
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v3
         with:
