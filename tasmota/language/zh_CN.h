@@ -271,7 +271,7 @@
 #define D_CONFIGURATION "设置"
 #define D_INFORMATION "信息"
 #define D_FIRMWARE_UPGRADE "固件升级"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "控制台"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "确认重启"
 
@@ -492,12 +492,12 @@
 
 // xdrv_23_zigbee
 #define D_ZIGBEE_PERMITJOIN_ACTIVE "允许设备连入"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee 映射"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee 网络拓扑"
 #define D_ZIGBEE_NOT_STARTED "Zigbee 未启动"
 #define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "正在处理中 (等待 %d s.)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "无映射"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee 映射刷新"
-#define D_ZIGBEE_MAP   "Zigbee 映射"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "无拓扑"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee 拓扑结构刷新"
+#define D_ZIGBEE_MAP   "Zigbee 拓扑"
 #define D_ZIGBEE_PERMITJOIN "Zigbee 允许连入"
 #define D_ZIGBEE_GENERATE_KEY "正在生成 Zigbee 网络随机秘钥"
 #define D_ZIGBEE_UNKNOWN_DEVICE "未知设备"
