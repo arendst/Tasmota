@@ -35,7 +35,7 @@ jobs:
         run: |
           pip install wheel
           #python -m pip install --upgrade pip
-          pip install -U platformio
+          pip install -U platformio==6.1.7
           #platformio upgrade --dev
           #platformio update
       - name: Run PlatformIO
@@ -63,7 +63,7 @@ jobs:
         run: |
           pip install wheel
           #python -m pip install --upgrade pip
-          pip install -U platformio
+          pip install -U platformio==6.1.7
           #platformio upgrade --dev
           #platformio update
       - name: Run PlatformIO
@@ -122,7 +122,7 @@ jobs:
         run: |
           pip install wheel
           #python -m pip install --upgrade pip
-          pip install -U platformio
+          pip install -U platformio==6.1.7
           #platformio upgrade --dev
           #platformio update
       - name: Run PlatformIO
@@ -150,7 +150,7 @@ jobs:
         run: |
           pip install wheel
           #python -m pip install --upgrade pip
-          pip install -U platformio
+          pip install -U platformio==6.1.7
           #platformio upgrade --dev
           #platformio update
       - name: Run PlatformIO
