@@ -313,7 +313,7 @@ class Partition_wizard_UI
   #     `app0` renamed to `safeboot`
   #     `app0` changed subtype to `factory`
   #     `app1` moved to right after `factory` and resized
-  #     `app1` chaned subtype to `app0` and renamed `app0`
+  #     `app1` changed subtype to `app0` and renamed `app0`
   #
   # Returns:
   # - false if READY
@@ -413,16 +413,29 @@ class Partition_wizard_UI
 
     var step3_state = self.test_step_3(p)
     if step3_state == true return true end
-    if type(step3_state) == 'string)'   raise "internal_error", step3_state end
+    if type(step3_state) == 'string'   raise "internal_error", step3_state end
 
     var app0 = p.get_ota_slot(0)
     var app1 = p.get_ota_slot(1)
     if app0 == nil || app1 == nil       raise "internal_error", "there are no `app0` or `app1` partitions" end
     var factory_size = self.app_size_min * 1024
 
-    var firm0_size = app0.get_image_size()
-    if firm0_size <= 0              raise "internal_error", "invalid size in app0 partition" end
-    if firm0_size >= factory_size   raise "internal_error", "app0 partition is too big for factory" end
+    do    # open new scope
+      var firm0_size = app0.get_image_size()    # get the size of the partition holding safeboot and check values
+      if firm0_size <= 0              raise "internal_error", "invalid size in app0 partition" end
+      if firm0_size >= factory_size   raise "internal_error", "app0 partition is too big for factory" end
+    end
+
+    # remove any SPIFFS partition that is not at the end of the partition table
+    var idx = 1
+    while idx < size(p.slots) - 1   # skip explicitly the last partition
+      if p.slots[idx].is_spiffs()
+        p.slots.remove(idx)
+        tasmota.log("UPL: removesd unused SPIFFS partition", 2)
+      else
+        idx += 1
+      end
+    end
 
     # do the change
     app0.subtype = 0        # factory subtype
@@ -621,7 +634,7 @@ class Partition_wizard_UI
       # Resize FS to arbitrary size
       #---------------------------------------------------------------------#
       elif webserver.has_arg("resize_fs")
-        if !self.has_factory_layout(p)  raise "internal_error", "Device does not avec safeboot layout" end
+        if !self.has_factory_layout(p)  raise "internal_error", "Device does not have safeboot layout" end
 
         var fs = p.slots[-1]
         var last_app = p.slots[-2]
