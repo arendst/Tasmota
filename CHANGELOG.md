@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for SGP41 TVOC/NOx Sensor (#18880)
 - Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
+- Partition Wizard is now able to convert to safeboot from Shelly partition layout
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
