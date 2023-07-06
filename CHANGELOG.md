@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
 - Matter improve responsiveness
+- ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
 
 ### Fixed
 - Berry various fixes for Walrus Operator (#18982)
