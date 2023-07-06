@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Berry various fixes for Walrus Operator (#18982)
 - MiElHVAC power commands regression from v12.4.0.1 (#18923)
+- `BrRestart` now supports web handlers to work after Berry restart
 
 ### Removed
 - Support for ESP32-C3 with chip rev below 3 (old development boards)
