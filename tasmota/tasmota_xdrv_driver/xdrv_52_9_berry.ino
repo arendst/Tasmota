@@ -304,12 +304,17 @@ void BrShowState(void) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
+extern "C" void be_webserver_cb_deinit(bvm *vm);
 void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
     be_cb_deinit(berry.vm);   // deregister any C callback for this VM
+#ifdef USE_WEBSERVER
+    be_webserver_cb_deinit(berry.vm);   // deregister C callbacks managed by webserver
+#endif // USE_WEBSERVER
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
+    berry.web_add_handler_done = false;
     berry.autoexec_done = false;
     berry.repl_active = false;
     berry.rules_busy = false;
@@ -760,6 +765,18 @@ bool Xdrv52(uint32_t function)
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
+
+        // check if `web_add_handler` was missed, for example because of Berry VM restart
+        if (!berry.web_add_handler_done) {
+          bool network_up = WifiHasIP();
+#ifdef USE_ETHERNET
+          network_up = network_up || EthernetHasIP();
+#endif
+          if (network_up) {       // if network is already up, send a synthetic event to trigger web handlers
+            callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+            berry.web_add_handler_done = true;
+          }
+        }
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
         callBerryFastLoop();      // call `tasmota.fast_loop()` optimized for minimal performance impact
@@ -822,7 +839,10 @@ bool Xdrv52(uint32_t function)
       callBerryEventDispatcher(PSTR("web_add_config_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      if (!berry.web_add_handler_done) {
+        callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+        berry.web_add_handler_done = true;
+      }
       WebServer_on(PSTR("/bc"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER

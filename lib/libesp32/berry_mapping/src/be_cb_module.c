@@ -250,7 +250,6 @@ static int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, in
 
   bvm * vm = be_cb_hooks[num].vm;
   bvalue *f = &be_cb_hooks[num].f;
-  if (vm == NULL) { return 0; }     // function is not alive anymore, don't crash
 
   // push function (don't check type)
   bvalue *top = be_incrtop(vm);
