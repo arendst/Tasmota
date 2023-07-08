@@ -153,7 +153,6 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToHue ----------
         var hue_in = val.findsubval(0)  # Hue 0..254
         self.set_hue(hue_in)

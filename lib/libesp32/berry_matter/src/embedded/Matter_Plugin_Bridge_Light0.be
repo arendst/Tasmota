@@ -83,6 +83,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     var ret = self.call_remote_sync("Power" + str(self.tasmota_relay_index), v ? "1" : "0")
     if ret != nil
       self.parse_update(ret, 11)        # update shadow from return value
+      # self.tick = self.device.tick      # prevent an explicit Status11 for as it is not needed if the subscription update is sent in same tick
     end
   end
 
@@ -122,7 +123,6 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
 
     # ====================================================================================================
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
         return true
