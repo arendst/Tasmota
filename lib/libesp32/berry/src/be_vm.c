@@ -507,6 +507,7 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_call = 0;
     vm->counter_get = 0;
     vm->counter_set = 0;
+    vm->counter_get_global = 0;
     vm->counter_try = 0;
     vm->counter_exc = 0;
     vm->counter_gc_kept = 0;
@@ -579,6 +580,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETNGBL): {  /* get Global by name */
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get_global++;
+#endif
             bvalue *v = RA();
             bvalue *b = RKB();
             if (var_isstr(b)) {

@@ -167,6 +167,7 @@ static int m_counters(bvm *vm)
     map_insert(vm, "call", vm->counter_call);
     map_insert(vm, "get", vm->counter_get);
     map_insert(vm, "set", vm->counter_set);
+    map_insert(vm, "getgbl", vm->counter_get_global);
     map_insert(vm, "try", vm->counter_try);
     map_insert(vm, "raise", vm->counter_exc);
     map_insert(vm, "objects", vm->counter_gc_kept);
