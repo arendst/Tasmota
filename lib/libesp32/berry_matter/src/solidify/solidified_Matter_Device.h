@@ -4181,7 +4181,7 @@ be_local_closure(Matter_Device_save_param,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[31]) {     /* constants */
+    ( &(const bvalue[30]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
     /* K1   */  be_nested_str_weak(update_remotes_info),
     /* K2   */  be_nested_str_weak(_X7B_X22distinguish_X22_X3A_X25i_X2C_X22passcode_X22_X3A_X25i_X2C_X22ipv4only_X22_X3A_X25s_X2C_X22disable_bridge_mode_X22_X3A_X25s_X2C_X22nextep_X22_X3A_X25i),
@@ -4209,10 +4209,9 @@ be_local_closure(Matter_Device_save_param,   /* name */
     /* K24  */  be_nested_str_weak(MTR_X3A_X20_X3DSaved_X20_X20_X20_X20_X20parameters_X25s),
     /* K25  */  be_nested_str_weak(_X20and_X20configuration),
     /* K26  */  be_nested_str_weak(),
-    /* K27  */  be_const_int(3),
+    /* K27  */  be_const_int(2),
     /* K28  */  be_nested_str_weak(MTR_X3A_X20Session_Store_X3A_X3Asave_X20Exception_X3A),
     /* K29  */  be_nested_str_weak(_X7C),
-    /* K30  */  be_const_int(2),
     }),
     be_str_weak(save_param),
     &be_const_str_solidified,
@@ -4293,7 +4292,7 @@ be_local_closure(Matter_Device_save_param,   /* name */
       0x5C240800,  //  0049  MOVE	R9	R4
       0x7C200200,  //  004A  CALL	R8	1
       0x001C0E08,  //  004B  ADD	R7	R7	R8
-      0x5820001E,  //  004C  LDCONST	R8	K30
+      0x5820001B,  //  004C  LDCONST	R8	K27
       0x7C140600,  //  004D  CALL	R5	3
       0x80040400,  //  004E  RET	1	R2
       0x70020000,  //  004F  JMP		#0051
