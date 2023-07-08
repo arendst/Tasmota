@@ -204,6 +204,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Device.h"
+#include "solidify/solidified_Matter_Profiler.h"
 
 #include "../generate/be_matter_certs.h"
 
@@ -287,6 +288,7 @@ module matter (scope: global, strings: weak) {
   sort, closure(matter_sort_closure)
   jitter, closure(matter_jitter_closure)
   inspect, closure(matter_inspect_closure)
+  Profiler, class(be_class_Matter_Profiler)
 
   // Status codes
   SUCCESS, int(0x00)
