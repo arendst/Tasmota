@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
+- Berry added `getgbl` performance counter to `debug.counters()`
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
