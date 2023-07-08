@@ -3,16 +3,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.0.0.1]
+## [13.0.0.2]
+### Added
+- Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
+- Matter add mini-profiler
+
+### Breaking Changed
+
+### Changed
+- ESP32 shutter driver support up to 16 shutters (#18295)
+
+### Fixed
+
+### Removed
+
+## [13.0.0.1] 20230708
 ### Added
 - Command ``Delay -1`` to wait until next second (#18984)
 - Matter add option to disable bridge mode (#18992)
 - Support for SGP41 TVOC/NOx Sensor (#18880)
 - Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
-- Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
-- Berry added `getgbl` performance counter to `debug.counters()`
-- Matter add mini-profiler
+- Berry added `getgbl` performance counter to `debug.counters()` (#19070)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
@@ -20,9 +32,9 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
-- Matter improve responsiveness
+- Matter improve responsiveness (#19002)
 - ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
-- Matter improve latency for remote commands
+- Matter improve latency for remote commands (#19072)
 
 ### Fixed
 - Berry various fixes for Walrus Operator (#18982)
