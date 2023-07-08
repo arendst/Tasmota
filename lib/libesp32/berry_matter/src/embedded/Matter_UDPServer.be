@@ -120,6 +120,7 @@ class Matter_UDPServer
   # avoid any starvation.
   # Then resend queued outgoing packets.
   def loop()
+    # import debug
     var packet_read = 0
     if self.udp_socket == nil  return end
     var packet = self.udp_socket.read()
@@ -129,6 +130,7 @@ class Matter_UDPServer
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
       tasmota.log(format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
+      # tasmota.log("MTR: Perf/UDP_received = " + str(debug.counters()), 4)
       if self.dispatch_cb
         self.dispatch_cb(packet, from_addr, from_port)
       end
