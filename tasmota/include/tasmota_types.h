@@ -188,7 +188,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t bistable_single_pin : 1;      // bit 6  (v12.5.0.1) - SetOption152 - (Power) Switch between two (0) or one (1) pin bistable relay control
     uint32_t berry_no_autoexec : 1;        // bit 7  (v12.5.0.3) - SetOption153 - (Berry) Disable autoexec.be on restart (1)
     uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
-    uint32_t zcfallingedge : 1;            // bit 9  (v12.5.0.4) - SetOption155 - ZC Dimmer enable rare falling Edge dimmer instead of leading edge
+    uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
     uint32_t spare12 : 1;                  // bit 12

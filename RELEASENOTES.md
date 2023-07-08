@@ -110,12 +110,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.0.0.1
+## Changelog v13.0.0.2
 ### Added
 - Command ``BrRestart`` to restart the Berry VM (experimental) [#19003](https://github.com/arendst/Tasmota/issues/19003)
 - Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset [#19024](https://github.com/arendst/Tasmota/issues/19024)
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
+- Berry added `getgbl` performance counter to `debug.counters()` [#19070](https://github.com/arendst/Tasmota/issues/19070)
 - Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout [#19034](https://github.com/arendst/Tasmota/issues/19034)
 
@@ -124,7 +125,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `import strict` now detects useless expression without side effects [#18997](https://github.com/arendst/Tasmota/issues/18997)
 
 ### Changed
+- ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
+- ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) [#18987](https://github.com/arendst/Tasmota/issues/18987)
+- Matter improve responsiveness [#19002](https://github.com/arendst/Tasmota/issues/19002)
+- Matter improve latency for remote commands [#19072](https://github.com/arendst/Tasmota/issues/19072)
 
 ### Fixed
 - Berry Walrus Operator [#18982](https://github.com/arendst/Tasmota/issues/18982)
