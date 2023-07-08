@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.0.0.2]
 ### Added
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
+- Matter add mini-profiler
 
 ### Breaking Changed
 
