@@ -325,7 +325,7 @@ class Matter_Session_Store
       var f = open(self._FABRICS, "w")
       f.write(fabs)
       f.close()
-      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 3)
+      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
       self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)

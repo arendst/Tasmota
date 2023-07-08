@@ -1164,7 +1164,7 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[27]) {     /* constants */
+    ( &(const bvalue[26]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
     /* K1   */  be_nested_str_weak(remove_expired),
     /* K2   */  be_const_int(0),
@@ -1186,12 +1186,11 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
     /* K18  */  be_nested_str_weak(tasmota),
     /* K19  */  be_nested_str_weak(log),
     /* K20  */  be_nested_str_weak(MTR_X3A_X20_X3DSaved_X20_X20_X20_X20_X20_X25i_X20fabric_X28s_X29_X20and_X20_X25i_X20session_X28s_X29),
-    /* K21  */  be_const_int(3),
+    /* K21  */  be_const_int(2),
     /* K22  */  be_nested_str_weak(device),
     /* K23  */  be_nested_str_weak(event_fabrics_saved),
     /* K24  */  be_nested_str_weak(MTR_X3A_X20Session_Store_X3A_X3Asave_X20Exception_X3A),
     /* K25  */  be_nested_str_weak(_X7C),
-    /* K26  */  be_const_int(2),
     }),
     be_str_weak(save_fabrics),
     &be_const_str_solidified,
@@ -1277,7 +1276,7 @@ be_local_closure(Matter_Session_Store_save_fabrics,   /* name */
       0x5C200600,  //  004E  MOVE	R8	R3
       0x7C1C0200,  //  004F  CALL	R7	1
       0x00180C07,  //  0050  ADD	R6	R6	R7
-      0x581C001A,  //  0051  LDCONST	R7	K26
+      0x581C0015,  //  0051  LDCONST	R7	K21
       0x7C100600,  //  0052  CALL	R4	3
       0x70020000,  //  0053  JMP		#0055
       0xB0080000,  //  0054  RAISE	2	R0	R0
