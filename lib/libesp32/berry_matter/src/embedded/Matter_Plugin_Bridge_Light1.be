@@ -127,7 +127,6 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_in = val.findsubval(0)  # Hue 0..254
         self.set_bri(bri_in)
