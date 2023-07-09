@@ -117,8 +117,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset [#19024](https://github.com/arendst/Tasmota/issues/19024)
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
 - Berry added `getgbl` performance counter to `debug.counters()` [#19070](https://github.com/arendst/Tasmota/issues/19070)
-- Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout [#19034](https://github.com/arendst/Tasmota/issues/19034)
+- Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
+- Matter mini-profiler [#19075](https://github.com/arendst/Tasmota/issues/19075)
 
 ### Breaking Changed
 - Berry `bool( [] )` and `bool( {} )` now evaluate as `false` [#18986](https://github.com/arendst/Tasmota/issues/18986)
