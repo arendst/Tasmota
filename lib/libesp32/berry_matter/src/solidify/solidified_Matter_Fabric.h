@@ -143,7 +143,7 @@ be_local_closure(Matter_Fabric_get_device_id,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Fabric_add_session,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    8,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -177,14 +177,14 @@ be_local_closure(Matter_Fabric_add_session,   /* name */
       0x880C0102,  //  000A  GETMBR	R3	R0	K2
       0x28080403,  //  000B  GE	R2	R2	R3
       0x780A000D,  //  000C  JMPF	R2	#001B
-      0x88080100,  //  000D  GETMBR	R2	R0	K0
-      0x8C080501,  //  000E  GETMET	R2	R2	K1
-      0x8C100103,  //  000F  GETMET	R4	R0	K3
-      0x7C100200,  //  0010  CALL	R4	1
-      0x7C080400,  //  0011  CALL	R2	2
-      0x880C0100,  //  0012  GETMBR	R3	R0	K0
-      0x8C0C0704,  //  0013  GETMET	R3	R3	K4
-      0x5C140400,  //  0014  MOVE	R5	R2
+      0x8C080103,  //  000D  GETMET	R2	R0	K3
+      0x7C080200,  //  000E  CALL	R2	1
+      0x880C0100,  //  000F  GETMBR	R3	R0	K0
+      0x8C0C0704,  //  0010  GETMET	R3	R3	K4
+      0x88140100,  //  0011  GETMBR	R5	R0	K0
+      0x8C140B01,  //  0012  GETMET	R5	R5	K1
+      0x5C1C0400,  //  0013  MOVE	R7	R2
+      0x7C140400,  //  0014  CALL	R5	2
       0x7C0C0400,  //  0015  CALL	R3	2
       0x880C0105,  //  0016  GETMBR	R3	R0	K5
       0x8C0C0706,  //  0017  GETMET	R3	R3	K6
