@@ -247,7 +247,9 @@ class Matter_Fabric : Matter_Expirable
   def add_session(s)
     if self._sessions.find(s) == nil
       while size(self._sessions) >= self._MAX_CASE
-        self._sessions.remove(self._sessions.find(self.get_oldest_session()))
+        var session_deleted = self.get_oldest_session()
+        self._sessions.remove(self._sessions.find(session_deleted))
+        self._store.remove_session(session_deleted)
       end
       self._sessions.push(s)
     end
