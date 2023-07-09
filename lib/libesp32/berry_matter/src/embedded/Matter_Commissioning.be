@@ -130,7 +130,7 @@ class Matter_Commisioning_Context
     # record the initiator_session_id
     session.__future_initiator_session_id = pbkdfparamreq.initiator_session_id
     session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-    tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+    tasmota.log(format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
     # prepare response
     var pbkdfparamresp = matter.PBKDFParamResponse()
@@ -370,7 +370,7 @@ class Matter_Commisioning_Context
         session.set_mode_CASE()
         session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
         session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-        tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+        tasmota.log(format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
         # Generate and Send Sigma2_Resume
         session.shared_secret = session_resumption.shared_secret
@@ -458,7 +458,7 @@ class Matter_Commisioning_Context
   
       session.__future_initiator_session_id = sigma1.initiator_session_id    # update initiator_session_id
       session.__future_local_session_id = self.device.sessions.gen_local_session_id()
-      tasmota.log(format("MTR: New_Session(%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
+      tasmota.log(format("MTR: +Session   (%6i) from '[%s]:%i'", session.__future_local_session_id, msg.remote_ip, msg.remote_port), 3)
 
       # tasmota.log("MTR: fabric="+matter.inspect(session._fabric), 4)
       # tasmota.log("MTR: no_private_key="+session.get_pk().tohex(), 4)
