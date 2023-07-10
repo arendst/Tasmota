@@ -2236,7 +2236,7 @@ void HandleBackupConfiguration(void)
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   uint32_t config_len = SettingsConfigBackup();
-  if (!config_len) { return; }    // Unable to allocate 4k buffer
+  if (!config_len) { return; }    // Unable to allocate buffer
 
   WiFiClient myClient = Webserver->client();
   Webserver->setContentLength(config_len);
@@ -3372,10 +3372,11 @@ int WebGetConfig(char *buffer) {
       if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
         WiFiClient *stream = http.getStreamPtr();
         int len = http.getSize();
-//        if ((len <= sizeof(TSettings)) && SettingsBufferAlloc()) {
+        if (len <= sizeof(TSettings)) { 
+          len = sizeof(TSettings);
+        }
         if (SettingsBufferAlloc(len)) {
           uint8_t *buff = settings_buffer;
-          if (len == -1) { len = settings_size; }
           while (http.connected() && (len > 0)) {
             size_t size = stream->available();
             if (size) {
