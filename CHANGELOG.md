@@ -7,13 +7,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
 - Matter mini-profiler (#19075)
-- Berry `_class` can be used in `static var` initialization code
+- Berry `_class` can be used in `static var` initialization code (#19088)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 shutter driver support up to 16 shutters (#18295)
-- Configuration file save and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
+- Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
 
 ### Fixed
 
