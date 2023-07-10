@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 shutter driver support up to 16 shutters (#18295)
+- Configuration file save and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
 
 ### Fixed
 

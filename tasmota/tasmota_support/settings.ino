@@ -217,6 +217,7 @@ const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles upl
 
 uint32_t settings_location = EEPROM_LOCATION;
 uint32_t settings_crc32 = 0;
+uint32_t settings_size = 0;
 uint8_t *settings_buffer = nullptr;
 uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 
@@ -375,22 +376,6 @@ void SettingsSaveAll(void) {
  * Settings backup and restore
 \*********************************************************************************************/
 
-void SettingsBufferFree(void) {
-  if (settings_buffer != nullptr) {
-    free(settings_buffer);
-    settings_buffer = nullptr;
-  }
-}
-
-bool SettingsBufferAlloc(void) {
-  SettingsBufferFree();
-  if (!(settings_buffer = (uint8_t *)malloc(sizeof(TSettings)))) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
-    return false;
-  }
-  return true;
-}
-
 String SettingsConfigFilename(void) {
   char filename[TOPSZ];
   char hostname[sizeof(TasmotaGlobal.hostname)];
@@ -398,33 +383,117 @@ String SettingsConfigFilename(void) {
   return String(filename);
 }
 
+void SettingsBufferXor(void) {
+  if (config_xor_on_set) {
+    uint32_t xor_index = (settings_size > sizeof(TSettings)) ? 18 : 2;
+    for (uint32_t i = xor_index; i < settings_size; i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
+    }
+  }
+}
+
+void SettingsBufferFree(void) {
+  if (settings_buffer != nullptr) {
+    free(settings_buffer);
+    settings_buffer = nullptr;
+  }
+  settings_size = 0;
+}
+
+bool SettingsBufferAlloc(uint32_t upload_size = 0);
+bool SettingsBufferAlloc(uint32_t upload_size) {
+  SettingsBufferFree();
+
+  settings_size = sizeof(TSettings);
+  if (upload_size >= sizeof(TSettings)) {
+    uint32_t mem = ESP_getFreeHeap();
+    if ((mem - upload_size) < (8 * 1024)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+      return false;
+    }
+    settings_size = upload_size;
+  } else {  
+
+#ifdef USE_UFILESYS
+  char filename[14];
+  for (uint32_t i = 0; i < 129; i++) {
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);
+    uint32_t fsize = TfsFileSize(filename);
+    if (fsize) {
+      if (settings_size == sizeof(TSettings)) {
+        settings_size += 16;                     // Add tar header for total file size
+      }
+      fsize = ((fsize / 16) * 16) + 16;          // Use 16-byte boundary
+      settings_size += (16 + fsize);             // Tar header size is 16 bytes
+    }
+  }
+#endif  // USE_UFILESYS
+
+  }
+
+  if (!(settings_buffer = (uint8_t *)calloc(settings_size, 1))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    return false;
+  }
+  return true;
+}
+
 uint32_t SettingsConfigBackup(void) {
   if (!SettingsBufferAlloc()) { return 0; }
 
+  uint8_t *filebuf_ptr = settings_buffer;
+
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    snprintf_P((char*)filebuf_ptr, 14, PSTR(TASM_FILE_SETTINGS));  // /.settings
+    filebuf_ptr += 14;
+    *filebuf_ptr = settings_size;
+    filebuf_ptr++;
+    *filebuf_ptr = (settings_size >> 8);
+    filebuf_ptr++;
+  }
+#endif  // USE_UFILESYS
+
   uint32_t cfg_crc32 = Settings->cfg_crc32;
   Settings->cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
-
-  uint32_t config_len = sizeof(TSettings);
-  memcpy(settings_buffer, Settings, config_len);
-
+  memcpy(filebuf_ptr, Settings, sizeof(TSettings));
   Settings->cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 
-  if (config_xor_on_set) {
-    for (uint32_t i = 2; i < config_len; i++) {
-      settings_buffer[i] ^= (config_xor_on_set +i);
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    filebuf_ptr += sizeof(TSettings);
+    char filename[14];
+    for (uint32_t i = 0; i < 129; i++) {
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);  // /.drvset012
+      uint32_t fsize = TfsFileSize(filename);
+      if (fsize) {
+        memcpy(filebuf_ptr, filename, 14);
+        filebuf_ptr += 14;
+        *filebuf_ptr = fsize;
+        filebuf_ptr++;
+        *filebuf_ptr = (fsize >> 8);
+        filebuf_ptr++;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+        TfsLoadFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        filebuf_ptr += ((fsize / 16) * 16) + 16;
+      }
     }
   }
-  return config_len;
+#endif  // USE_UFILESYS
+
+  SettingsBufferXor();
+  return settings_size;
 }
 
 bool SettingsConfigRestore(void) {
-  uint32_t config_len = sizeof(TSettings);
+  SettingsBufferXor();
 
-  if (config_xor_on_set) {
-    for (uint32_t i = 2; i < config_len; i++) {
-      settings_buffer[i] ^= (config_xor_on_set +i);
-    }
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    settings_size -= 16;
+    memmove(settings_buffer, settings_buffer +16, settings_size);  // Skip tar header
   }
+#endif  // USE_UFILESYS
 
   bool valid_settings = false;
 
@@ -434,11 +503,11 @@ bool SettingsConfigRestore(void) {
     // uint16_t      cfg_size;                  // 002
     uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
     if (buffer_version > 0x0606000A) {
-      // uint32_t      cfg_crc32;                 // FFC
+      // uint32_t      cfg_crc32;               // FFC
       uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
       valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
     } else {
-      // uint16_t      cfg_crc;                   // 00E
+      // uint16_t      cfg_crc;                 // 00E
       uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
       valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
     }
@@ -467,12 +536,27 @@ bool SettingsConfigRestore(void) {
 
   if (valid_settings) {
     SettingsDefaultSet2();
-    memcpy((char*)Settings +16, settings_buffer +16, config_len -16);
+    memcpy((char*)Settings +16, settings_buffer +16, sizeof(TSettings) -16);
     Settings->version = buffer_version;  // Restore version and auto upgrade after restart
   }
 
-  SettingsBufferFree();
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    uint8_t *filebuf_ptr = settings_buffer + sizeof(TSettings);
+    while ((filebuf_ptr - settings_buffer) < settings_size) {
+      filebuf_ptr += 14;
+      uint32_t fsize = *filebuf_ptr;
+      filebuf_ptr++;
+      fsize += *filebuf_ptr << 8;
+      filebuf_ptr++;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+      TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+      filebuf_ptr += ((fsize / 16) * 16) + 16;
+    }
+  }
+#endif  // USE_UFILESYS
 
+  SettingsBufferFree();
   return valid_settings;
 }
 

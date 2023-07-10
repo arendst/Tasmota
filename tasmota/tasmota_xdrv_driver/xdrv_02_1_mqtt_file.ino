@@ -96,9 +96,9 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
 
     // Check buffer size
     if (UPL_SETTINGS == FMqtt.file_type) {
-      if (FMqtt.file_size > sizeof(TSettings)) {
-        return 2;                                            // Settings supports max 4k size
-      }
+//      if (FMqtt.file_size > sizeof(TSettings)) {
+//        return 2;                                            // Settings supports max 4k size
+//      }
     } else {                                                 // Check enough flash space for intermediate upload
       uint32_t head_room = (FlashWriteMaxSector() - FlashWriteStartSector()) * SPI_FLASH_SEC_SIZE;
       uint32_t rounded_size = (FMqtt.file_size + SPI_FLASH_SEC_SIZE -1) & (~(SPI_FLASH_SEC_SIZE - 1));
@@ -109,8 +109,11 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
 
     // Init file_buffer
     if (UPL_SETTINGS == FMqtt.file_type) {
-      if (SettingsConfigBackup()) {
+//      if (SettingsConfigBackup()) {
+      if (SettingsBufferAlloc(FMqtt.file_size)) {
         FMqtt.file_buffer = settings_buffer;
+      } else {
+        return 2;                                            // Settings supports max size
       }
     }
     else {
