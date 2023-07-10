@@ -95,6 +95,13 @@ static bbool code_move(bfuncinfo *finfo, int a, int b)
                 return btrue;
             }
         }
+        if (!isK(b)) {  /* OP_MOVE */
+            /* check if the previous OP_MOVE is not identical */
+            binstruction mov = ISET_OP(OP_MOVE) | ISET_RA(a) | ISET_RKB(b) | ISET_RKC(0);
+            if (mov == *i) {
+                return btrue;   /* previous instruction is the same move, remove duplicate */
+            }
+        }
     }
     if (isK(b)) {
         codeABx(finfo, OP_LDCONST, a, b & 0xFF);
