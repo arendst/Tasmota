@@ -1,11 +1,11 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it directly -#
 
-#@ solidify:Rule_Matcher_Key
-#@ solidify:Rule_Matcher_Wildcard
-#@ solidify:Rule_Matcher_Operator
-#@ solidify:Rule_Matcher_Array
-#@ solidify:Rule_Matcher_AND_List
+#@ solidify:Rule_Matcher.Rule_Matcher_Key
+#@ solidify:Rule_Matcher.Rule_Matcher_Wildcard
+#@ solidify:Rule_Matcher.Rule_Matcher_Operator
+#@ solidify:Rule_Matcher.Rule_Matcher_Array
+#@ solidify:Rule_Matcher.Rule_Matcher_AND_List
 #@ solidify:Rule_Matcher
 
 
