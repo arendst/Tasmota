@@ -544,14 +544,22 @@ bool SettingsConfigRestore(void) {
   if (settings_size > sizeof(TSettings)) {
     uint8_t *filebuf_ptr = settings_buffer + sizeof(TSettings);
     while ((filebuf_ptr - settings_buffer) < settings_size) {
-      filebuf_ptr += 14;
-      uint32_t fsize = *filebuf_ptr;
-      filebuf_ptr++;
-      fsize += *filebuf_ptr << 8;
-      filebuf_ptr++;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
-      TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
-      filebuf_ptr += ((fsize / 16) * 16) + 16;
+      uint32_t driver = atoi((const char*)filebuf_ptr +8);      // /.drvset012 = 12
+      uint32_t fsize = filebuf_ptr[15] << 8 | filebuf_ptr[14];  // Tar header settings size
+      filebuf_ptr += 16;  // Start of file settings
+      uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
+      bool valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
+      if (valid_buffer) {
+        XdrvMailbox.data = (char*)filebuf_ptr;
+        XdrvMailbox.index = fsize;
+        if (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS)) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+          TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        }
+      }
+      filebuf_ptr += ((fsize / 16) * 16) + 16;  // Next tar header or eof
     }
   }
 #endif  // USE_UFILESYS

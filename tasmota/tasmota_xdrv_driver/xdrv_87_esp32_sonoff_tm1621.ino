@@ -162,6 +162,14 @@ void Xdrv87SettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
+bool Xdrv87SettingsRestore(void) {
+#ifdef USE_UFILESYS
+  uint32_t max_size = (XdrvMailbox.index > sizeof(tXdrv87Settings)) ? sizeof(tXdrv87Settings) : XdrvMailbox.index;
+  memcpy((uint8_t*)&Xdrv87Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  return true;
+#endif  // USE_UFILESYS
+}
+
 /*********************************************************************************************/
 
 void TM1621StopSequence(void) {
@@ -584,6 +592,9 @@ bool Xdrv87(uint32_t function) {
         break;
       case FUNC_RESET_SETTINGS:
         Xdrv87SettingsLoad(1);
+        break;
+      case FUNC_RESTORE_SETTINGS:
+        result = Xdrv87SettingsRestore();
         break;
       case FUNC_SAVE_SETTINGS:
         Xdrv87SettingsSave();

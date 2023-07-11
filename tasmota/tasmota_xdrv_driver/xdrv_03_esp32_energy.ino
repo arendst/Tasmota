@@ -372,6 +372,14 @@ void EnergySettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
+bool EnergySettingsRestore(void) {
+#ifdef USE_UFILESYS
+  uint32_t max_size = (XdrvMailbox.index > sizeof(tEnergySettings)) ? sizeof(tEnergySettings) : XdrvMailbox.index;
+  memcpy((uint8_t*)&Energy->Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  return true;
+#endif  // USE_UFILESYS
+}
+
 /********************************************************************************************/
 
 const uint16_t GUISZ = 600;                 // Max number of characters in WebEnergyFmt string
@@ -1763,6 +1771,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_RESET_SETTINGS:
         EnergySettingsLoad(1);
+        break;
+      case FUNC_RESTORE_SETTINGS:
+        result = EnergySettingsRestore();
         break;
       case FUNC_SAVE_SETTINGS:
         EnergySettingsSave();

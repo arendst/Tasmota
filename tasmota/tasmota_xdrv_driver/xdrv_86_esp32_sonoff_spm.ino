@@ -373,6 +373,14 @@ void Xdrv86SettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
+bool Xdrv86SettingsRestore(void) {
+#ifdef USE_UFILESYS
+  uint32_t max_size = (XdrvMailbox.index > sizeof(tSspmSettings)) ? sizeof(tSspmSettings) : XdrvMailbox.index;
+  memcpy((uint8_t*)&Sspm->Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  return true;
+#endif  // USE_UFILESYS
+}
+
 /*********************************************************************************************/
 
 uint32_t SSMPGetModuleId(uint32_t module) {
@@ -2649,6 +2657,9 @@ bool Xdrv86(uint32_t function) {
         break;
       case FUNC_RESET_SETTINGS:
         Xdrv86SettingsLoad(1);
+        break;
+      case FUNC_RESTORE_SETTINGS:
+        result = Xdrv86SettingsRestore();
         break;
       case FUNC_SAVE_SETTINGS:
         Xdrv86SettingsSave();
