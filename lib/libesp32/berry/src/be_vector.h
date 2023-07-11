@@ -38,7 +38,6 @@ void be_vector_remove_end(bvector *vector);
 void be_vector_resize(bvm *vm, bvector *vector, int count);
 void be_vector_clear(bvector *vector);
 void* be_vector_release(bvm *vm, bvector *vector);
-void* be_vector_release_32(bvm *vm, bvector *vector);   /* specialized call for 32 bits aligned accesses */
 int be_nextsize(int value);
 
 #endif
