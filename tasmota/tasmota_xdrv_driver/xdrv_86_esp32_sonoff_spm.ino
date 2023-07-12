@@ -308,7 +308,7 @@ TSspm *Sspm = nullptr;
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_86_VERSION = 0x0104;              // Latest driver version (See settings deltas below)
+const uint16_t XDRV_86_VERSION = 0x0104;              // Latest driver version (See settings deltas below)
 
 void Xdrv86SettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
@@ -374,11 +374,9 @@ void Xdrv86SettingsSave(void) {
 }
 
 bool Xdrv86SettingsRestore(void) {
-#ifdef USE_UFILESYS
-  uint32_t max_size = (XdrvMailbox.index > sizeof(tSspmSettings)) ? sizeof(tSspmSettings) : XdrvMailbox.index;
-  memcpy((uint8_t*)&Sspm->Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  XdrvMailbox.data = (char*)&Sspm->Settings;
+  XdrvMailbox.index = sizeof(tSspmSettings);
   return true;
-#endif  // USE_UFILESYS
 }
 
 /*********************************************************************************************/

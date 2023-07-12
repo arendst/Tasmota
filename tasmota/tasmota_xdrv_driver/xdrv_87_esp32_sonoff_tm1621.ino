@@ -85,7 +85,7 @@ struct Tm1621 {
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_87_VERSION = 0x0104;          // Latest driver version (See settings deltas below)
+const uint16_t XDRV_87_VERSION = 0x0104;          // Latest driver version (See settings deltas below)
 
 typedef struct {
   uint32_t crc32;                                 // To detect file changes
@@ -163,11 +163,9 @@ void Xdrv87SettingsSave(void) {
 }
 
 bool Xdrv87SettingsRestore(void) {
-#ifdef USE_UFILESYS
-  uint32_t max_size = (XdrvMailbox.index > sizeof(tXdrv87Settings)) ? sizeof(tXdrv87Settings) : XdrvMailbox.index;
-  memcpy((uint8_t*)&Xdrv87Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  XdrvMailbox.data = (char*)&Xdrv87Settings;
+  XdrvMailbox.index = sizeof(tXdrv87Settings);
   return true;
-#endif  // USE_UFILESYS
 }
 
 /*********************************************************************************************/

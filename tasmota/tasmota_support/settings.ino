@@ -412,21 +412,21 @@ bool SettingsBufferAlloc(uint32_t upload_size) {
       return false;
     }
     settings_size = upload_size;
-  } else {  
 
 #ifdef USE_UFILESYS
-  char filename[14];
-  for (uint32_t i = 0; i < 129; i++) {
-    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);
-    uint32_t fsize = TfsFileSize(filename);
-    if (fsize) {
-      if (settings_size == sizeof(TSettings)) {
-        settings_size += 16;                     // Add tar header for total file size
+  } else {  
+    char filename[14];
+    for (uint32_t i = 0; i < 129; i++) {
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);
+      uint32_t fsize = TfsFileSize(filename);
+      if (fsize) {
+        if (settings_size == sizeof(TSettings)) {
+          settings_size += 16;                     // Add tar header for total file size
+        }
+        fsize = ((fsize / 16) * 16) + 16;          // Use 16-byte boundary
+        settings_size += (16 + fsize);             // Tar header size is 16 bytes
       }
-      fsize = ((fsize / 16) * 16) + 16;          // Use 16-byte boundary
-      settings_size += (16 + fsize);             // Tar header size is 16 bytes
     }
-  }
 #endif  // USE_UFILESYS
 
   }
@@ -445,12 +445,11 @@ uint32_t SettingsConfigBackup(void) {
 
 #ifdef USE_UFILESYS
   if (settings_size > sizeof(TSettings)) {
+    // Add tar header with total file size
     snprintf_P((char*)filebuf_ptr, 14, PSTR(TASM_FILE_SETTINGS));  // /.settings
-    filebuf_ptr += 14;
-    *filebuf_ptr = settings_size;
-    filebuf_ptr++;
-    *filebuf_ptr = (settings_size >> 8);
-    filebuf_ptr++;
+    filebuf_ptr[14] = settings_size;
+    filebuf_ptr[15] = settings_size >> 8;
+    filebuf_ptr += 16;
   }
 #endif  // USE_UFILESYS
 
@@ -467,14 +466,25 @@ uint32_t SettingsConfigBackup(void) {
       snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);  // /.drvset012
       uint32_t fsize = TfsFileSize(filename);
       if (fsize) {
+        // Add tar header with file size
         memcpy(filebuf_ptr, filename, 14);
-        filebuf_ptr += 14;
-        *filebuf_ptr = fsize;
-        filebuf_ptr++;
-        *filebuf_ptr = (fsize >> 8);
-        filebuf_ptr++;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup file %s (%d)"), (char*)filebuf_ptr -16, fsize);
-        TfsLoadFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        filebuf_ptr[14] = fsize;
+        filebuf_ptr[15] = fsize >> 8;
+        filebuf_ptr += 16;
+        if (XdrvCallDriver(i, FUNC_RESTORE_SETTINGS)) {  // Enabled driver
+          // Use most relevant config data which might not have been saved to file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup driver %d"), i);
+          memcpy(filebuf_ptr, (uint8_t*)XdrvMailbox.data, fsize);
+          cfg_crc32 = GetCfgCrc32(filebuf_ptr +4, fsize -4);  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+          filebuf_ptr[0] = cfg_crc32;
+          filebuf_ptr[1] = cfg_crc32 >> 8;
+          filebuf_ptr[2] = cfg_crc32 >> 16;
+          filebuf_ptr[3] = cfg_crc32 >> 24;
+        } else {                                         // Disabled driver
+          // As driver is not active just copy file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+          TfsLoadFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        }
         filebuf_ptr += ((fsize / 16) * 16) + 16;
       }
     }
@@ -550,12 +560,17 @@ bool SettingsConfigRestore(void) {
       uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
       bool valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
       if (valid_buffer) {
-        XdrvMailbox.data = (char*)filebuf_ptr;
-        XdrvMailbox.index = fsize;
         if (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS)) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
+          // Restore live config data which will be saved to file before restart
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
+          filebuf_ptr[1]++;     // Force invalid crc32 to enable auto upgrade after restart
+          if (fsize > XdrvMailbox.index) {
+            fsize = XdrvMailbox.index;
+          }
+          memcpy((uint8_t*)XdrvMailbox.data, filebuf_ptr, fsize);  // Restore version and auto upgrade after restart
         } else {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+          // As driver is not active just copy file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
           TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
         }
       }

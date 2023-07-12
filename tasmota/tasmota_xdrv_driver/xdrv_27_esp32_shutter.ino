@@ -53,7 +53,7 @@ const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
   "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
 
-const uint32_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
+const uint16_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
 
 typedef struct { // depreciated 2023-04-28
   int8_t pos;
@@ -253,9 +253,7 @@ void ShutterSettingsDelta(void) {
   // Fix possible setting deltas
   if (ShutterSettings.version != SHUTTER_VERSION) {      // Fix version dependent changes
 
-    if (ShutterSettings.version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update oldest version restore"));
-      
+    if (ShutterSettings.version < 0x0100) {
       for (uint8_t i=0; i < MAX_SHUTTERS_ESP32; i++){
         if (ShutterSettings.shutter_startrelay[i] == 0) continue;
         AddLog(LOG_LEVEL_INFO, PSTR("SHT:    %s SHT%d:%d"),D_CMND_SHUTTER_RELAY,i+1,ShutterSettings.shutter_startrelay[i]);
@@ -272,13 +270,7 @@ void ShutterSettingsDelta(void) {
           ShutterSettings.shutter_button[i].position[j].mqtt_broadcast = ShutterSettings.shutter_button_old[i].position[j].mqtt_broadcast;
         }
       }
-
     }
-
-    // if (ShutterSettings.version < 0x01010101) {
-    //   AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update old version restore"));
-
-    // }
 
     // Set current version and save settings
     ShutterSettings.version = SHUTTER_VERSION;
@@ -342,11 +334,9 @@ void ShutterSettingsSave(void) {
 }
 
 bool ShutterSettingsRestore(void) {
-#ifdef USE_UFILESYS
-  uint32_t max_size = (XdrvMailbox.index > sizeof(ShutterSettings)) ? sizeof(ShutterSettings) : XdrvMailbox.index;
-  memcpy((uint8_t*)&ShutterSettings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  XdrvMailbox.data = (char*)&ShutterSettings;
+  XdrvMailbox.index = sizeof(ShutterSettings);
   return true;
-#endif  // USE_UFILESYS
 }
 
 uint8_t ShutterGetRelayNoFromBitfield(power_t number) {

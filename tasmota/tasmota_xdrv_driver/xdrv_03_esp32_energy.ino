@@ -274,7 +274,7 @@ bool EnergyRtcSettingsValid(void) {
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
+const uint16_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
 
 void EnergySettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
@@ -373,11 +373,9 @@ void EnergySettingsSave(void) {
 }
 
 bool EnergySettingsRestore(void) {
-#ifdef USE_UFILESYS
-  uint32_t max_size = (XdrvMailbox.index > sizeof(tEnergySettings)) ? sizeof(tEnergySettings) : XdrvMailbox.index;
-  memcpy((uint8_t*)&Energy->Settings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  XdrvMailbox.data = (char*)&Energy->Settings;
+  XdrvMailbox.index = sizeof(tEnergySettings);
   return true;
-#endif  // USE_UFILESYS
 }
 
 /********************************************************************************************/

@@ -34,7 +34,7 @@
 
 #define DRV_DEMO_MAX_DRV_TEXT  16
 
-const uint32_t DRV_DEMO_VERSION = 0x0101;       // Latest driver version (See settings deltas below)
+const uint16_t DRV_DEMO_VERSION = 0x0101;       // Latest driver version (See settings deltas below)
 
 // Demo command line commands
 const char kDrvDemoCommands[] PROGMEM = "Drv|"  // Prefix
@@ -157,11 +157,9 @@ void DrvDemoSettingsSave(void) {
 }
 
 bool DrvDemoSettingsRestore(void) {
-#ifdef USE_UFILESYS
-  uint32_t max_size = (XdrvMailbox.index > sizeof(DrvDemoSettings)) ? sizeof(DrvDemoSettings) : XdrvMailbox.index;
-  memcpy((uint8_t*)&DrvDemoSettings, (uint8_t*)XdrvMailbox.data, max_size);  // Restore version and auto upgrade after restart
+  XdrvMailbox.data = (char*)&DrvDemoSettings;
+  XdrvMailbox.index = sizeof(DrvDemoSettings);
   return true;
-#endif  // USE_UFILESYS
 }
 
 /*********************************************************************************************\
