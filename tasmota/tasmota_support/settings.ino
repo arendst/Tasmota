@@ -454,9 +454,9 @@ uint32_t SettingsConfigBackup(void) {
 #endif  // USE_UFILESYS
 
   uint32_t cfg_crc32 = Settings->cfg_crc32;
-  Settings->cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  Settings->cfg_crc32 = GetSettingsCrc32();        // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
   memcpy(filebuf_ptr, Settings, sizeof(TSettings));
-  Settings->cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
+  Settings->cfg_crc32 = cfg_crc32;                 // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 
 #ifdef USE_UFILESYS
   if (settings_size > sizeof(TSettings)) {
@@ -474,13 +474,15 @@ uint32_t SettingsConfigBackup(void) {
         if (XdrvCallDriver(i, FUNC_RESTORE_SETTINGS)) {  // Enabled driver
           // Use most relevant config data which might not have been saved to file
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup driver %d"), i);
-          memcpy(filebuf_ptr, (uint8_t*)XdrvMailbox.data, fsize);
+          uint32_t data_size = fsize;              // Fix possible buffer overflow
+          if (data_size > XdrvMailbox.index) { data_size = XdrvMailbox.index; }
+          memcpy(filebuf_ptr, (uint8_t*)XdrvMailbox.data, data_size);
           cfg_crc32 = GetCfgCrc32(filebuf_ptr +4, fsize -4);  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
           filebuf_ptr[0] = cfg_crc32;
           filebuf_ptr[1] = cfg_crc32 >> 8;
           filebuf_ptr[2] = cfg_crc32 >> 16;
           filebuf_ptr[3] = cfg_crc32 >> 24;
-        } else {                                         // Disabled driver
+        } else {                                   // Disabled driver
           // As driver is not active just copy file
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup file %s (%d)"), (char*)filebuf_ptr -16, fsize);
           TfsLoadFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
@@ -507,17 +509,17 @@ bool SettingsConfigRestore(void) {
 
   bool valid_settings = false;
 
-  // unsigned long version;                   // 008
+  // unsigned long version;                        // 008
   unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
   if (buffer_version > 0x06000000) {
-    // uint16_t      cfg_size;                  // 002
+    // uint16_t      cfg_size;                     // 002
     uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
     if (buffer_version > 0x0606000A) {
-      // uint32_t      cfg_crc32;               // FFC
+      // uint32_t      cfg_crc32;                  // FFC
       uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
       valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
     } else {
-      // uint16_t      cfg_crc;                 // 00E
+      // uint16_t      cfg_crc;                    // 00E
       uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
       valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
     }
@@ -526,7 +528,7 @@ bool SettingsConfigRestore(void) {
   }
 
   if (valid_settings) {
-    // uint8_t       config_version;            // F36
+    // uint8_t       config_version;               // F36
 #ifdef ESP8266
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
@@ -547,7 +549,7 @@ bool SettingsConfigRestore(void) {
   if (valid_settings) {
     SettingsDefaultSet2();
     memcpy((char*)Settings +16, settings_buffer +16, sizeof(TSettings) -16);
-    Settings->version = buffer_version;  // Restore version and auto upgrade after restart
+    Settings->version = buffer_version;            // Restore version and auto upgrade after restart
   }
 
 #ifdef USE_UFILESYS
@@ -556,25 +558,24 @@ bool SettingsConfigRestore(void) {
     while ((filebuf_ptr - settings_buffer) < settings_size) {
       uint32_t driver = atoi((const char*)filebuf_ptr +8);      // /.drvset012 = 12
       uint32_t fsize = filebuf_ptr[15] << 8 | filebuf_ptr[14];  // Tar header settings size
-      filebuf_ptr += 16;  // Start of file settings
+      filebuf_ptr += 16;                           // Start of file settings
       uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
       bool valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
       if (valid_buffer) {
         if (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS)) {
           // Restore live config data which will be saved to file before restart
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
-          filebuf_ptr[1]++;     // Force invalid crc32 to enable auto upgrade after restart
-          if (fsize > XdrvMailbox.index) {
-            fsize = XdrvMailbox.index;
-          }
-          memcpy((uint8_t*)XdrvMailbox.data, filebuf_ptr, fsize);  // Restore version and auto upgrade after restart
+          filebuf_ptr[1]++;                        // Force invalid crc32 to enable auto upgrade after restart
+          uint32_t data_size = fsize;              // Fix possible buffer overflow
+          if (data_size > XdrvMailbox.index) { data_size = XdrvMailbox.index; }
+          memcpy((uint8_t*)XdrvMailbox.data, filebuf_ptr, data_size);  // Restore version and auto upgrade after restart
         } else {
           // As driver is not active just copy file
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
           TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
         }
       }
-      filebuf_ptr += ((fsize / 16) * 16) + 16;  // Next tar header or eof
+      filebuf_ptr += ((fsize / 16) * 16) + 16;     // Next tar header or eof
     }
   }
 #endif  // USE_UFILESYS
