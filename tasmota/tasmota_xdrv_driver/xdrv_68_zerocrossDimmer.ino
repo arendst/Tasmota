@@ -35,7 +35,9 @@ struct AC_ZERO_CROSS_DIMMER {
   bool     timer_iterrupt_started = false;   // verification of the interrupt running
   bool     dimmer_in_use = false;            // Check if interrupt has to be run. Is stopped if all lights off
   bool     fallingEdgeDimmer = false;        // Work as a fallwing edge dimmer
+  bool     triggered[MAX_PWMS];
   uint32_t enable_time_us[MAX_PWMS];         // Time since last ZC pulse to enable gate pin. 0 means no disable.
+  uint32_t disable_time_us[MAX_PWMS];        // 99% of cycle time 
   uint32_t lastlight[MAX_PWMS];              // Store the light value. Set 1 if controlled through ZCDimmerSet
   uint16_t detailpower[MAX_PWMS];            // replaces dimmer and light controll 0..10000. required savedata 0.
   uint32_t accurracy[MAX_PWMS];              // offset of the time to fire the triac and the real time when it fired
@@ -67,6 +69,7 @@ void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
     digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer);
     ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.lastlight[i] > 0;
+    ac_zero_cross_dimmer.triggered[i] = false;
   }
 }
 
@@ -147,11 +150,13 @@ void IRAM_ATTR ACDimmerTimer_intr() {
         time_since_zc =  micros() - ac_zero_cross_dimmer.crossed_zero_at;
       }
 #endif        
-      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]) {
+      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i] && !ac_zero_cross_dimmer.triggered[i] ) {
         digitalWrite(Pin(GPIO_PWM1, i), HIGH ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
-  #ifdef ZC_DEBUG          
-        ac_zero_cross_dimmer.accurracy[i] = time_since_zc-ac_zero_cross_dimmer.enable_time_us[i];
-  #endif          
+        ac_zero_cross_dimmer.triggered[i] = true;
+        ac_zero_cross_dimmer.accurracy[i] = tmax(ac_zero_cross_dimmer.accurracy[i],time_since_zc-ac_zero_cross_dimmer.enable_time_us[i]);
+      }   
+      if (time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
+        digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
       }    
     }
   }
@@ -166,14 +171,17 @@ void ACDimmerControllTrigger(void) {
 #endif  
   for (uint8_t i = 0; i < MAX_PWMS; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
-
+    ac_zero_cross_dimmer.disable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * 99) / 100;
     if (ac_zero_cross_dimmer.detailpower[i]){
       ac_zero_cross_dimmer.lastlight[i] = changeUIntScale(ac_zero_cross_dimmer.detailpower[i]/10, 0, 1000, 0, 1023);
     } else {
       ac_zero_cross_dimmer.lastlight[i] = Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i];
     }
     ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(ac_zero_cross_dimmer.lastlight[i]))) / 1023;
-
+    if (ac_zero_cross_dimmer.enable_time_us[i] > ac_zero_cross_dimmer.disable_time_us[i]) {
+      // do not set HIGH near to the zero cross
+      ac_zero_cross_dimmer.enable_time_us[i] = 99999;
+    }
 #ifdef ESP32
     if (ac_zero_cross_dimmer.detailpower[i]){
       float state = (float)(1 - (ac_zero_cross_dimmer.detailpower[i]/10000.0));
@@ -183,6 +191,7 @@ void ACDimmerControllTrigger(void) {
       ac_zero_cross_dimmer.enable_time_us[i] = (uint32_t)state;
     }    
 #endif  
+    
   }
   
 }
@@ -205,8 +214,9 @@ void ACDimmerLogging(void)
       );
     for (uint8_t i = 0; i < MAX_PWMS; i++){
       if (Pin(GPIO_PWM1, i) == -1) continue;
-       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
-        i+1, ac_zero_cross_dimmer.enable_time_us[i], 
+      if (ac_zero_cross_dimmer.accurracy[i]) ac_zero_cross_dimmer.accurracy[i]--;
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
+        i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], 
         Light.fade_cur_10[i], Light.fade_start_10[i], Light.fade_end_10[i], ac_zero_cross_dimmer.lastlight[i],
         ac_zero_cross_dimmer.accurracy[i]
       );
