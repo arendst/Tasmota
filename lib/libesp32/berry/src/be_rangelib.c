@@ -12,6 +12,8 @@
 static int m_init(bvm *vm)
 {
     int argc = be_top(vm);
+    if (argc < 3) { be_raise(vm, "value_error", "missing arguments"); }
+    if (!be_isint(vm, 2) || !be_isint(vm, 3)) { be_raise(vm, "value_error", "argmunets must be 'int'"); }
     be_pushvalue(vm, 2);
     be_setmember(vm, 1, "__lower__");
     be_pop(vm, 1);
@@ -19,6 +21,7 @@ static int m_init(bvm *vm)
     be_setmember(vm, 1, "__upper__");
     int incr = 1;   /* default increment is '1' */
     if (argc >= 4) {
+        if (!be_isint(vm, 4)) { be_raise(vm, "value_error", "argmunets must be 'int'"); }
         incr = be_toint(vm, 4);
         if (incr == 0) { be_raise(vm, "value_error", "increment cannot be zero"); }
     }
@@ -96,6 +99,8 @@ static int m_incr(bvm *vm)
 static int m_setrange(bvm *vm)
 {
     int argc = be_top(vm);
+    if (argc < 3) { be_raise(vm, "value_error", "missing arguments"); }
+    if (!be_isint(vm, 2) || !be_isint(vm, 3)) { be_raise(vm, "value_error", "argmunets must be 'int'"); }
     be_pushvalue(vm, 2);
     be_setmember(vm, 1, "__lower__");
     be_pop(vm, 1);
@@ -103,6 +108,7 @@ static int m_setrange(bvm *vm)
     be_setmember(vm, 1, "__upper__");
     int incr = 1;   /* default increment is '1' */
     if (argc >= 4) {
+        if (!be_isint(vm, 4)) { be_raise(vm, "value_error", "argmunets must be 'int'"); }
         incr = be_toint(vm, 4);
         if (incr == 0) { be_raise(vm, "value_error", "increment cannot be zero"); }
     }
