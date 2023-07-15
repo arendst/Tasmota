@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
 - Matter mini-profiler (#19075)
 - Berry `_class` can be used in `static var` initialization code (#19088)
+- Berry add `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
 
 ### Breaking Changed
 
