@@ -2,7 +2,7 @@
     "name": "berry",
     "displayName": "Berry Script Language",
     "description": "A small embedded script language.",
-    "version": "0.1.0",
+    "version": "1.1.0",
     "publisher": "skiars",
     "engines": {
         "vscode": "^1.15.1"
