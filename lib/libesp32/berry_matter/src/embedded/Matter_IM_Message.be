@@ -88,10 +88,12 @@ class Matter_IM_Message
   def send_im(responder)
     # tasmota.log(format("MTR: IM_Message send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
+    # import debug
     var resp = self.resp
     resp.encode_frame(self.data.to_TLV().tlv2raw())    # payload in cleartext
     resp.encrypt()
     tasmota.log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+    # tasmota.log("MTR: Perf/Send = " + str(debug.counters()), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
     self.finish = true              # by default we remove the packet after it is sent

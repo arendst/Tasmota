@@ -310,22 +310,22 @@ class Matter_Session_Store
   #############################################################
   def save_fabrics()
     import json
-    self.remove_expired()      # clean before saving
-    var sessions_saved = 0
-
-    var fabs = []
-    for f : self.fabrics.persistables()
-      for _ : f._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
-      fabs.push(f.tojson())
-    end
-    var fabs_size = size(fabs)
-    fabs = "[" + fabs.concat(",") + "]"
-
     try
+      self.remove_expired()      # clean before saving
+      var sessions_saved = 0
+
+      var fabs = []
+      for f : self.fabrics.persistables()
+        for _ : f._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
+        fabs.push(f.tojson())
+      end
+      var fabs_size = size(fabs)
+      fabs = "[" + fabs.concat(",") + "]"
+
       var f = open(self._FABRICS, "w")
       f.write(fabs)
       f.close()
-      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 3)
+      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
       self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)

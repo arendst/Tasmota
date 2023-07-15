@@ -330,6 +330,7 @@ class Matter_IM
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_read_request(msg, val)
+    self.device.profiler.log("read_request_start")
     var query = matter.ReadRequestMessage().from_TLV(val)
     if query.attributes_requests != nil
       var ret = self._inner_process_read_request(msg.session, query)
@@ -380,8 +381,10 @@ class Matter_IM
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_invoke_request(msg, val)
+    # import debug
     # structure is `ReadRequestMessage` 10.6.2 p.558
     # tasmota.log("MTR: IM:invoke_request processing start", 4)
+    self.device.profiler.log("invoke_request_start")
     var ctx = matter.Path()
     ctx.msg = msg
 
@@ -403,6 +406,7 @@ class Matter_IM
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
         tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -# )
+        # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
         ctx.log = nil
         var a1 = matter.InvokeResponseIB()
         if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok

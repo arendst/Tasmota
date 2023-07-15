@@ -765,7 +765,11 @@ class Matter_UI
       elif webserver.has_arg("save")
         var matter_enabled_requested = webserver.has_arg("menable")
         var matter_commissioning_requested = webserver.has_arg("comm")
-        self.device.disable_bridge_mode = webserver.arg("nobridge") == 'on'
+        var matter_disable_bridge_mode_requested = (webserver.arg("nobridge") == 'on')
+        if self.device.disable_bridge_mode != matter_disable_bridge_mode_requested
+          self.device.disable_bridge_mode = matter_disable_bridge_mode_requested
+          self.device.save_param()
+        end
 
         if matter_enabled_requested != self.matter_enabled()
           if matter_enabled_requested

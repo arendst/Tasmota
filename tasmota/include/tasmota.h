@@ -138,7 +138,11 @@ const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+const uint8_t MAX_ADCS = 5;                 // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+#else   // ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
+#endif  // ESP32C3
 const uint8_t MAX_SWITCHES_TXT = 28;        // Max number of switches user text
 #endif  // ESP32
 
@@ -424,7 +428,7 @@ enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT
 
 enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT,
                      FUNC_LOOP, FUNC_SLEEP_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
-                     FUNC_RESET_SETTINGS, FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART, FUNC_INTERRUPT_STOP, FUNC_INTERRUPT_START,
+                     FUNC_RESET_SETTINGS, FUNC_RESTORE_SETTINGS, FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART, FUNC_INTERRUPT_STOP, FUNC_INTERRUPT_START,
                      FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_WEB_COL_SENSOR,
                      FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT,
                      FUNC_SET_POWER, FUNC_SHOW_SENSOR, FUNC_ANY_KEY, FUNC_LED_LINK,

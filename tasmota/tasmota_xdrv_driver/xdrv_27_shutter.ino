@@ -17,22 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
-// Remove once tests complete
 #ifdef ESP8266
-#define USE_SHUTTER_ESP8266
-#endif
-
-#ifdef ESP32
-#ifndef USE_SHUTTER_ESP32
-#define USE_SHUTTER_ESP8266
-#endif  // No USE_SHUTTER_ESP32
-#endif  // ESP32
-
-#ifdef USE_SHUTTER_ESP8266
-// End **************************************************************
-
-//#ifdef ESP8266
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays

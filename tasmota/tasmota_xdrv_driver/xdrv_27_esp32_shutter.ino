@@ -17,12 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
-// Remove once tests complete
-#if defined(ESP32) && defined(USE_SHUTTER_ESP32)
-// End **************************************************************
-
-//#ifdef ESP32
+#ifdef ESP32
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -58,7 +53,7 @@ const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
   "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
 
-const uint32_t SHUTTER_VERSION = 0x01010100;  // Latest driver version (See settings deltas below)
+const uint16_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
 
 typedef struct { // depreciated 2023-04-28
   int8_t pos;
@@ -91,7 +86,8 @@ typedef struct {
 // Global structure containing shutter saved variables
 struct SHUTTERSETTINGS {
   uint32_t      crc32;                                     // To detect file changes
-  uint32_t      version;                                   // To detect driver function changes
+  uint16_t      version;                                   // To detect driver function changes
+  uint16_t      spare;
   uint8_t       shutter_accuracy;
   uint8_t       shutter_mode;
   uint16_t      shutter_motorstop;
@@ -257,9 +253,7 @@ void ShutterSettingsDelta(void) {
   // Fix possible setting deltas
   if (ShutterSettings.version != SHUTTER_VERSION) {      // Fix version dependent changes
 
-    if (ShutterSettings.version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update oldest version restore"));
-      
+    if (ShutterSettings.version < 0x0100) {
       for (uint8_t i=0; i < MAX_SHUTTERS_ESP32; i++){
         if (ShutterSettings.shutter_startrelay[i] == 0) continue;
         AddLog(LOG_LEVEL_INFO, PSTR("SHT:    %s SHT%d:%d"),D_CMND_SHUTTER_RELAY,i+1,ShutterSettings.shutter_startrelay[i]);
@@ -276,13 +270,7 @@ void ShutterSettingsDelta(void) {
           ShutterSettings.shutter_button[i].position[j].mqtt_broadcast = ShutterSettings.shutter_button_old[i].position[j].mqtt_broadcast;
         }
       }
-
     }
-
-    // if (ShutterSettings.version < 0x01010101) {
-    //   AddLog(LOG_LEVEL_INFO, PSTR("SHT: Update old version restore"));
-
-    // }
 
     // Set current version and save settings
     ShutterSettings.version = SHUTTER_VERSION;
@@ -343,6 +331,12 @@ void ShutterSettingsSave(void) {
     AddLog(LOG_LEVEL_INFO, D_ERROR_FILESYSTEM_NOT_READY);
 #endif  // USE_UFILESYS
   }
+}
+
+bool ShutterSettingsRestore(void) {
+  XdrvMailbox.data = (char*)&ShutterSettings;
+  XdrvMailbox.index = sizeof(ShutterSettings);
+  return true;
 }
 
 uint8_t ShutterGetRelayNoFromBitfield(power_t number) {
@@ -2263,9 +2257,12 @@ bool Xdrv27(uint32_t function)
     char stemp1[10];
     power_t save_powermatrix;
     switch (function) {
+      case FUNC_RESTORE_SETTINGS:
+        result = ShutterSettingsRestore();
+        break;
       case FUNC_SAVE_SETTINGS:
         ShutterSettingsSave();
-      break;
+        break;
       case FUNC_PRE_INIT:
         ShutterSettingsLoad(0);
         ShutterInit();

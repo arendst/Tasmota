@@ -66,6 +66,7 @@ class Matter_UDPServer
   static var RETRIES = 5            # 6 transmissions max (5 retries) - 1 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
   static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
   var addr, port                    # local addr and port
+  var device
   var listening                     # true if active
   var udp_socket
   var dispatch_cb                   # callback to call when a message is received
@@ -76,7 +77,8 @@ class Matter_UDPServer
   # Init UDP Server listening to `addr` and `port` (opt).
   #
   # By default, the server listens to `""` (all addresses) and port `5540`
-  def init(addr, port)
+  def init(device, addr, port)
+    self.device = device
     self.addr = addr ? addr : ""
     self.port = port ? port : 5540
     self.listening = false
@@ -120,18 +122,24 @@ class Matter_UDPServer
   # avoid any starvation.
   # Then resend queued outgoing packets.
   def loop()
+    # import debug
+    var profiler = self.device.profiler
     var packet_read = 0
     if self.udp_socket == nil  return end
     var packet = self.udp_socket.read()
     while packet != nil
       # self.packet = packet
+      profiler.start()
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
       tasmota.log(format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
+      # tasmota.log("MTR: Perf/UDP_received = " + str(debug.counters()), 4)
       if self.dispatch_cb
+        profiler.log("udp_loop_dispatch")
         self.dispatch_cb(packet, from_addr, from_port)
       end
+      profiler.dump(2)
       # are we reading new packets?
       if packet_read < self.MAX_PACKETS_READ
         packet = self.udp_socket.read()

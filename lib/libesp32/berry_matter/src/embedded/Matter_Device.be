@@ -35,6 +35,7 @@ class Matter_Device
   var plugins_config                  # map of JSON configuration for plugins
   var plugins_config_remotes          # map of information on each remote under "remotes" key, '{}' when empty
   var udp_server                      # `matter.UDPServer()` object
+  var profiler
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
@@ -80,6 +81,7 @@ class Matter_Device
       return
     end    # abort if SetOption 151 is not set
 
+    self.profiler = matter.Profiler()
     self.started = false
     self.tick = 0
     self.plugins = []
@@ -381,7 +383,7 @@ class Matter_Device
     if self.udp_server    return end        # already started
     if port == nil      port = 5540 end
     tasmota.log("MTR: Starting UDP server on port: " + str(port), 2)
-    self.udp_server = matter.UDPServer("", port)
+    self.udp_server = matter.UDPServer(self, "", port)
     self.udp_server.start(/ raw, addr, port -> self.msg_received(raw, addr, port))
   end
 
@@ -644,7 +646,7 @@ class Matter_Device
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
-      tasmota.log(format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 3)
+      tasmota.log(format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 2)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)

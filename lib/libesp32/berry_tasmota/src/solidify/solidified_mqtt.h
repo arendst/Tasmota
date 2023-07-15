@@ -445,7 +445,7 @@ be_local_class(mqtt_listener,
 ********************************************************************/
 be_local_closure(MQTT_mqtt_listener_class,   /* name */
   be_nested_proto(
-    2,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -458,10 +458,11 @@ be_local_closure(MQTT_mqtt_listener_class,   /* name */
     }),
     &be_const_str_mqtt_listener_class,
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 4]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0xB4000000,  //  0001  CLASS	K0
-      0x80040200,  //  0002  RET	1	R1
+      0x5C080200,  //  0002  MOVE	R2	R1
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
