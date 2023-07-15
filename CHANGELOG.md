@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 shutter driver support up to 16 shutters (#18295)
 - Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment
+- Berry updated syntax highlighting plugin for VSCode
 
 ### Fixed
 
