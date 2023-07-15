@@ -31,6 +31,15 @@
  *
 \*********************************************************************************************/
 extern "C" {
+
+  int32_t energy_update_total(struct bvm *vm);
+  int32_t energy_update_total(struct bvm *vm) {
+    EnergyUpdateTotal();
+    be_return_nil(vm);
+  }
+
+
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
 
