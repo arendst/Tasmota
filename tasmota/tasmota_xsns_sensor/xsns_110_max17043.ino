@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_MAX17043
 
-#define XI2C_82       83    // See I2CDEVICES.md
+#define XI2C_83       83    // See I2CDEVICES.md
 
 #define SENSOR_NAME    "MAX17043"
 
