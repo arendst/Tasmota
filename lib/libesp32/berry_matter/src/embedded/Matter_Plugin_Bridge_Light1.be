@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Light0 end
 
 class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
   static var TYPE = "http_light1"                   # name of the plug-in in json
-  static var NAME = "&#x1F517; Light 1 Dimmer"      # display name of the plug-in
+  static var NAME = "Light 1 Dimmer"      # display name of the plug-in
   # static var ARG  = "relay"                         # additional argument name (or empty if none)
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = {
@@ -39,7 +39,7 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
     # 0x0006: inherited                             # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],        # Level Control 1.6 p.57
   }
-  static var TYPES = { 0x0101: 2, 0x0013: 1 }       # Dimmable Light
+  static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
   var shadow_bri
   # var tasmota_relay_index # ingerited
@@ -79,7 +79,6 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -128,7 +127,6 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
 
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_in = val.findsubval(0)  # Hue 0..254
         self.set_bri(bri_in)
@@ -172,17 +170,16 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| Light %s %s", self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer()))
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s %s", self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer()))
   end
 
   # Show on/off value as html
   def web_value_dimmer()
-    import string
     var bri_html = ""
     if self.shadow_bri != nil
       var bri = tasmota.scale_uint(self.shadow_bri, 0, 254, 0, 100)
-      bri_html = string.format("%i%%", bri)
+      bri_html = format("%i%%", bri)
     end
     return  "&#128261; " + bri_html;
   end

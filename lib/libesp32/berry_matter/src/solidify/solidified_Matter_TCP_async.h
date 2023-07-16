@@ -46,7 +46,7 @@ be_local_closure(Matter_TCP_async_read,   /* name */
 ********************************************************************/
 be_local_closure(Matter_TCP_async_begin,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
+    7,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -54,7 +54,7 @@ be_local_closure(Matter_TCP_async_begin,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[25]) {     /* constants */
+    ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
     /* K1   */  be_nested_str_weak(tasmota),
     /* K2   */  be_nested_str_weak(wifi),
@@ -72,18 +72,16 @@ be_local_closure(Matter_TCP_async_begin,   /* name */
     /* K14  */  be_nested_str_weak(remove_fast_loop),
     /* K15  */  be_nested_str_weak(add_fast_loop),
     /* K16  */  be_nested_str_weak(add_driver),
-    /* K17  */  be_nested_str_weak(string),
-    /* K18  */  be_nested_str_weak(log),
-    /* K19  */  be_nested_str_weak(format),
-    /* K20  */  be_nested_str_weak(BRY_X3A_X20failed_X20to_X20resolve_X20_X5B_X25s_X5D_X3A_X25i),
-    /* K21  */  be_const_int(3),
-    /* K22  */  be_nested_str_weak(close),
-    /* K23  */  be_nested_str_weak(tcp_connected),
-    /* K24  */  be_nested_str_weak(event_dnsfailed),
+    /* K17  */  be_nested_str_weak(log),
+    /* K18  */  be_nested_str_weak(BRY_X3A_X20failed_X20to_X20resolve_X20_X5B_X25s_X5D_X3A_X25i),
+    /* K19  */  be_const_int(3),
+    /* K20  */  be_nested_str_weak(close),
+    /* K21  */  be_nested_str_weak(tcp_connected),
+    /* K22  */  be_nested_str_weak(event_dnsfailed),
     }),
     be_str_weak(begin),
     &be_const_str_solidified,
-    ( &(const binstruction[64]) {  /* code */
+    ( &(const binstruction[63]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x7C040200,  //  0001  CALL	R1	1
       0xB8060200,  //  0002  GETNGBL	R1	K1
@@ -126,28 +124,27 @@ be_local_closure(Matter_TCP_async_begin,   /* name */
       0x7C040400,  //  0027  CALL	R1	2
       0x50040200,  //  0028  LDBOOL	R1	1	0
       0x80040200,  //  0029  RET	1	R1
-      0x70020013,  //  002A  JMP		#003F
-      0xA4062200,  //  002B  IMPORT	R1	K17
-      0xB80A0200,  //  002C  GETNGBL	R2	K1
-      0x8C080512,  //  002D  GETMET	R2	R2	K18
-      0x8C100313,  //  002E  GETMET	R4	R1	K19
-      0x58180014,  //  002F  LDCONST	R6	K20
-      0x881C010B,  //  0030  GETMBR	R7	R0	K11
-      0x8820010C,  //  0031  GETMBR	R8	R0	K12
-      0x7C100800,  //  0032  CALL	R4	4
-      0x58140015,  //  0033  LDCONST	R5	K21
-      0x7C080600,  //  0034  CALL	R2	3
-      0x8C080116,  //  0035  GETMET	R2	R0	K22
-      0x7C080200,  //  0036  CALL	R2	1
-      0x5409FFFE,  //  0037  LDINT	R2	-1
-      0x90020E02,  //  0038  SETMBR	R0	K7	R2
-      0x50080000,  //  0039  LDBOOL	R2	0	0
-      0x90022E02,  //  003A  SETMBR	R0	K23	R2
-      0x8C080118,  //  003B  GETMET	R2	R0	K24
-      0x7C080200,  //  003C  CALL	R2	1
-      0x50080000,  //  003D  LDBOOL	R2	0	0
-      0x80040400,  //  003E  RET	1	R2
-      0x80000000,  //  003F  RET	0
+      0x70020012,  //  002A  JMP		#003E
+      0xB8060200,  //  002B  GETNGBL	R1	K1
+      0x8C040311,  //  002C  GETMET	R1	R1	K17
+      0x600C0018,  //  002D  GETGBL	R3	G24
+      0x58100012,  //  002E  LDCONST	R4	K18
+      0x8814010B,  //  002F  GETMBR	R5	R0	K11
+      0x8818010C,  //  0030  GETMBR	R6	R0	K12
+      0x7C0C0600,  //  0031  CALL	R3	3
+      0x58100013,  //  0032  LDCONST	R4	K19
+      0x7C040600,  //  0033  CALL	R1	3
+      0x8C040114,  //  0034  GETMET	R1	R0	K20
+      0x7C040200,  //  0035  CALL	R1	1
+      0x5405FFFE,  //  0036  LDINT	R1	-1
+      0x90020E01,  //  0037  SETMBR	R0	K7	R1
+      0x50040000,  //  0038  LDBOOL	R1	0	0
+      0x90022A01,  //  0039  SETMBR	R0	K21	R1
+      0x8C040116,  //  003A  GETMET	R1	R0	K22
+      0x7C040200,  //  003B  CALL	R1	1
+      0x50040000,  //  003C  LDBOOL	R1	0	0
+      0x80040200,  //  003D  RET	1	R1
+      0x80000000,  //  003E  RET	0
     })
   )
 );

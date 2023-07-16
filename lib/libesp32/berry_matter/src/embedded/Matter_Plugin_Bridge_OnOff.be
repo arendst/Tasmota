@@ -28,8 +28,9 @@ class Matter_Plugin_Bridge_Light0 end
 
 class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_Light0
   static var TYPE = "http_relay"                    # name of the plug-in in json
-  static var NAME = "&#x1F517; Relay"               # display name of the plug-in
-  static var TYPES = { 0x010A: 2, 0x0013: 1 }       # On/Off Plug-in Unit
+  static var NAME = "Relay"               # display name of the plug-in
+  static var ARG_HINT = "Relay<x> number"
+  static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   #############################################################
   # web_values
@@ -37,8 +38,8 @@ class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_Light0
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| Relay %i %s", self.tasmota_relay_index, self.web_value_onoff(self.shadow_onoff)))
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Relay %i %s", self.tasmota_relay_index, self.web_value_onoff(self.shadow_onoff)))
   end
 
 end

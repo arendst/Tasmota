@@ -71,7 +71,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -92,7 +91,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return TLV.create_TLV(TLV.U1, 0)
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return TLV.create_TLV(TLV.U1, 0x01)    # HS
       
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------

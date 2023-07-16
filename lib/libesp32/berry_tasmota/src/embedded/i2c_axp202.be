@@ -163,8 +163,7 @@ class AXP202 : I2C_Driver
 #   #- display sensor value in the web UI -#
 #   def web_sensor()
 #     if !self.wire return nil end  #- exit if not initialized -#
-#     import string
-#     var msg = string.format(
+#     var msg = format(
 #              "{s}VBus Voltage{m}%.3f V{e}"..
 #              "{s}VBus Current{m}%.1f mA{e}"..
 #              "{s}Batt Voltage{m}%.3f V{e}"..
@@ -182,11 +181,10 @@ class AXP202 : I2C_Driver
 #   #- add sensor value to teleperiod -#
 #   def json_append()
 #     if !self.wire return nil end  #- exit if not initialized -#
-#     # import string
 #     # var ax = int(self.accel[0] * 1000)
 #     # var ay = int(self.accel[1] * 1000)
 #     # var az = int(self.accel[2] * 1000)
-#     # var msg = string.format(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
+#     # var msg = format(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
 #     #           ax, ay, az, self.gyro[0], self.gyro[1], self.gyro[2])
 #     # tasmota.response_append(msg)
 #   end

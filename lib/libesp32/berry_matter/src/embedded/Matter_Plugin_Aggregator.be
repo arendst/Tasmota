@@ -38,7 +38,6 @@ class Matter_Plugin_Aggregator : Matter_Plugin
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -50,7 +49,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
         for ep: eps
-          if ep != 0xFF00
+          if ep < 0xFF00
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end

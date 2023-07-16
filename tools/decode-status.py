@@ -99,7 +99,7 @@ a_setoption = [[
     "(Bistable) Pulse time in milliseconds for two coil bistable latching relays (default 40)",
     "(PowerOn) Add delay of 10 x value milliseconds at power on",
     "(PowerOn) Add delay of value seconds at power on before activating relays",
-    "(not used) Energy Tariff2 start hour",
+    "(Energy) Support energy dummy relays",
     "",
     ],[
     "(Timers) Enabled",
@@ -209,7 +209,9 @@ a_setoption = [[
     "(Matter) Enable Matter protocol over Wifi",
     "(Power) Switch between two (0) or one (1) pin bistable relay control",
     "(Berry) Disable autoexec.be on restart (1)",
-    "","","","",
+    "(Berry) Handle berry led using RMT0 as additional WS2812 scheme",
+    "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -296,7 +298,7 @@ a_features = [[
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
     "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
-    "","","","",
+    "USE_SGP4X","","","",
     "","","",""
     ]]
 
@@ -325,7 +327,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.5.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.0.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

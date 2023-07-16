@@ -49,7 +49,6 @@ class zb_coord : zb_coord_ntv
     if self._handlers == nil   return end
 
     import introspect
-    import string
 
     var frame
     var attr_list
@@ -61,7 +60,7 @@ class zb_coord : zb_coord_ntv
       attr_list = self.zcl_attribute_list(zcl_attribute_list_ptr)
     end
     
-    #print(string.format(">ZIG: cmd=%s data_type=%s data=%s idx=%i", event_type, data_type, str(data), idx))
+    #print(format(">ZIG: cmd=%s data_type=%s data=%s idx=%i", event_type, data_type, str(data), idx))
 
     var i = 0
     while i < size(self._handlers)
@@ -71,7 +70,7 @@ class zb_coord : zb_coord_ntv
         try
           f(h, event_type, frame, attr_list, idx)
         except .. as e,m
-          print(string.format("BRY: Exception> '%s' - %s", e, m))
+          print(format("BRY: Exception> '%s' - %s", e, m))
           if tasmota._debug_present
             import debug
             debug.traceback()

@@ -28,12 +28,12 @@ class Matter_Plugin_Bridge_Sensor end
 
 class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   static var TYPE = "http_pressure"                 # name of the plug-in in json
-  static var NAME = "&#x1F517; Pressure"            # display name of the plug-in
+  static var NAME = "Pressure"            # display name of the plug-in
 
   static var CLUSTERS  = {
     0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Pressure Measurement
   }
-  static var TYPES = { 0x0305: 2, 0x0013: 1  }      # Temperature Sensor, rev 2
+  static var TYPES = { 0x0305: 2 }                  # Temperature Sensor, rev 2
 
   #############################################################
   # Called when the value changed compared to shadow value
@@ -57,7 +57,6 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -91,9 +90,8 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| %s &#x26C5; %i hPa",
-                                         self.filter_name_html(),
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x26C5; %i hPa",
                                          int(self.shadow_value)))
   end
   

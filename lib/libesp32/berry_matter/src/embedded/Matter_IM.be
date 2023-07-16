@@ -66,7 +66,7 @@ class Matter_IM
     elif opcode == 0x07   # Write Response
       return self.process_write_response(msg, val)
     elif opcode == 0x08   # Invoke Request
-      self.send_ack_now(msg)
+      # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
       return self.process_invoke_request(msg, val)
     elif opcode == 0x09   # Invoke Response
       return self.process_invoke_response(msg, val)
@@ -83,10 +83,9 @@ class Matter_IM
   #
   # return `true` if handled
   def process_incoming_ack(msg)
-    import string
     # check if there is an exchange_id interested in receiving this
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
-    tasmota.log(string.format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 3)
+    # tasmota.log(format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 4)
     if message
       return message.ack_received(msg)                # dispatch to IM_Message
     end
@@ -98,6 +97,7 @@ class Matter_IM
   #
   # returns `true` if packet could be sent
   def send_ack_now(msg)
+    if msg == nil   return  end
     msg.session._message_handler.send_encrypted_ack(msg, false #-not reliable-#)
   end
 
@@ -116,7 +116,7 @@ class Matter_IM
       end
 
       if message.finish
-        tasmota.log("MTR: remove IM message exch="+str(message.resp.exchange_id), 3)
+        tasmota.log("MTR: remove IM message exch="+str(message.resp.exchange_id), 4)
         self.send_queue.remove(idx)
       else
         idx += 1
@@ -179,18 +179,17 @@ class Matter_IM
   # or raises an exception
   # return true if we handled the response and ack, false instead
   def process_status_response(msg, val)
-    import string
     var status = val.findsubval(0, 0xFF)
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
     if status == matter.SUCCESS
       if message
         return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
       else
-        tasmota.log(string.format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 3)      # don't show 'SUCCESS' to not overflow logs with non-information
+        tasmota.log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 4)      # don't show 'SUCCESS' to not overflow logs with non-information
       end
     else
       # error
-      tasmota.log(string.format("MTR: >Status    ERROR = 0x%02X", status), 2)
+      tasmota.log(format("MTR: >Status    ERROR = 0x%02X", status), 3)
       if message
         message.status_error_received(msg)
         self.remove_sendqueue_by_exchangeid(msg.exchange_id)
@@ -204,7 +203,6 @@ class Matter_IM
   #
   # query: `ReadRequestMessage` or `SubscribeRequestMessage`
   def _inner_process_read_request(session, query, no_log)
-    import string
 
     ### Inner function to be iterated upon
     # ret is the ReportDataMessage list to send back
@@ -215,7 +213,6 @@ class Matter_IM
     #
     # should return true if answered, false if passing to next handler
     def read_single_attribute(ret, pi, ctx, direct)
-      import string
       var TLV = matter.TLV
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
@@ -239,10 +236,10 @@ class Matter_IM
         var a1_len = a1_tlv.encode_len()
         var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
         a1_raw = a1_tlv.tlv2raw(a1_bytes)
-        # tasmota.log(string.format("MTR: guessed len=%i actual=%i '%s'", a1_len, size(a1_raw), a1_raw.tohex()), 2)
+        # tasmota.log(format("MTR: guessed len=%i actual=%i '%s'", a1_len, size(a1_raw), a1_raw.tohex()), 2)
 
         if !no_log
-          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, res_str), 2)
+          tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, res_str), 3)
         end          
       elif ctx.status != nil
         if direct                           # we report an error only if a concrete direct read, not with wildcards
@@ -260,10 +257,10 @@ class Matter_IM
           var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
           a1_raw = a1_tlv.tlv2raw(a1_bytes)
 
-          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 2)
+          tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
         end
       else
-        tasmota.log(string.format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 2)
+        tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
         # ignore if content is nil and status is undefined
         found = false
       end
@@ -307,9 +304,9 @@ class Matter_IM
         # we need expansion, log first
         if ctx.cluster != nil && ctx.attribute != nil
           var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx) + (attr_name ? " (" + attr_name + ")" : "")), 2)
+          tasmota.log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx) + (attr_name ? " (" + attr_name + ")" : "")), 3)
         else
-          tasmota.log(string.format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx)), 2)
+          tasmota.log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx)), 3)
         end
         
       end
@@ -333,6 +330,7 @@ class Matter_IM
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_read_request(msg, val)
+    self.device.profiler.log("read_request_start")
     var query = matter.ReadRequestMessage().from_TLV(val)
     if query.attributes_requests != nil
       var ret = self._inner_process_read_request(msg.session, query)
@@ -346,7 +344,6 @@ class Matter_IM
   # process IM 0x03 Subscribe Request
   #
   def subscribe_request(msg, val)
-    import string
     var query = matter.SubscribeRequestMessage().from_TLV(val)
 
     if !query.keep_subscriptions
@@ -360,14 +357,15 @@ class Matter_IM
     # expand a string with all attributes requested
     var attr_req = []
     var ctx = matter.Path()
+    ctx.msg = msg
     for q:query.attributes_requests
       ctx.endpoint = q.endpoint
       ctx.cluster = q.cluster
       ctx.attribute = q.attribute
       attr_req.push(str(ctx))
     end
-    tasmota.log(string.format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i",
-                              msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id), 2)
+    tasmota.log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i",
+                              msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id), 3)
 
     var ret = self._inner_process_read_request(msg.session, query, true #-no_log-#)
     # ret is of type `Matter_ReportDataMessage`
@@ -383,10 +381,12 @@ class Matter_IM
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_invoke_request(msg, val)
-    import string
+    # import debug
     # structure is `ReadRequestMessage` 10.6.2 p.558
     # tasmota.log("MTR: IM:invoke_request processing start", 4)
+    self.device.profiler.log("invoke_request_start")
     var ctx = matter.Path()
+    ctx.msg = msg
 
     var query = matter.InvokeRequestMessage().from_TLV(val)
     if query.invoke_requests != nil
@@ -405,7 +405,8 @@ class Matter_IM
         var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
-        tasmota.log(string.format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 2)
+        tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -# )
+        # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
         ctx.log = nil
         var a1 = matter.InvokeResponseIB()
         if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
@@ -417,7 +418,7 @@ class Matter_IM
           a1.status.status = matter.StatusIB()
           a1.status.status.status = matter.SUCCESS
           ret.invoke_responses.push(a1)
-          tasmota.log(string.format("MTR: <Replied   (%6i) OK exch=%i", msg.session.local_session_id, msg.exchange_id), 2)
+          tasmota.log(format("MTR: <Replied   (%6i) OK exch=%i", msg.session.local_session_id, msg.exchange_id), 3)
         elif res != nil
           a1.command = matter.CommandDataIB()
           a1.command.command_path = matter.CommandPathIB()
@@ -428,7 +429,7 @@ class Matter_IM
           ret.invoke_responses.push(a1)
 
           cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
-          tasmota.log(string.format("MTR: <Replied   (%6i) %s %s", msg.session.local_session_id, str(ctx), cmd_name ? cmd_name : ""), 2)
+          tasmota.log(format("MTR: <Replied   (%6i) %s %s", msg.session.local_session_id, str(ctx), cmd_name ? cmd_name : ""), 3)
         elif ctx.status != nil
           a1.status = matter.CommandStatusIB()
           a1.status.command_path = matter.CommandPathIB()
@@ -438,9 +439,9 @@ class Matter_IM
           a1.status.status = matter.StatusIB()
           a1.status.status.status = ctx.status
           ret.invoke_responses.push(a1)
-          tasmota.log(string.format("MTR: <Replied   (%6i) Status=0x%02X exch=%i", msg.session.local_session_id, ctx.status, msg.exchange_id), 2)
+          tasmota.log(format("MTR: <Replied   (%6i) Status=0x%02X exch=%i", msg.session.local_session_id, ctx.status, msg.exchange_id), 3)
         else
-          tasmota.log(string.format("MTR: _Ignore    (%6i) exch=%i", msg.session.local_session_id, msg.exchange_id), 2)
+          tasmota.log(format("MTR: _Ignore    (%6i) exch=%i", msg.session.local_session_id, msg.exchange_id), 3)
           # ignore if content is nil and status is undefined
         end
       end
@@ -462,9 +463,8 @@ class Matter_IM
   # process IM 0x04 Subscribe Response
   #
   def subscribe_response(msg, val)
-    import string
     var query = matter.SubscribeResponseMessage().from_TLV(val)
-    tasmota.log("MTR: received SubscribeResponsetMessage=" + str(query), 2)
+    # tasmota.log("MTR: received SubscribeResponsetMessage=" + str(query), 4)
     return false
   end
 
@@ -472,9 +472,8 @@ class Matter_IM
   # process IM 0x05 ReportData
   #
   def report_data(msg, val)
-    import string
     var query = matter.ReportDataMessage().from_TLV(val)
-    tasmota.log("MTR: received ReportDataMessage=" + str(query), 2)
+    # tasmota.log("MTR: received ReportDataMessage=" + str(query), 4)
     return false
   end
 
@@ -482,7 +481,6 @@ class Matter_IM
   # process IM 0x06 Write Request
   #
   def process_write_request(msg, val)
-    import string
     var query = matter.WriteRequestMessage().from_TLV(val)
     # tasmota.log("MTR: received WriteRequestMessage=" + str(query), 3)
 
@@ -502,10 +500,9 @@ class Matter_IM
     #
     # should return true if answered, false if failed
     def write_single_attribute(ret, pi, ctx, write_data, direct)
-      import string
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
-      # tasmota.log(string.format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
+      # tasmota.log(format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
       # Special case to report unsupported item, if pi==nil
       ctx.status = matter.UNSUPPORTED_WRITE
       var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
@@ -521,11 +518,11 @@ class Matter_IM
           a1.status.status = ctx.status
 
           ret.write_responses.push(a1)
-          tasmota.log(string.format("MTR: Write_Attr %s%s - STATUS: 0x%02X %s", str(ctx), attr_name, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), 2)
+          tasmota.log(format("MTR: Write_Attr %s%s - STATUS: 0x%02X %s", str(ctx), attr_name, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
           return true
         end
       else
-        tasmota.log(string.format("MTR: Write_Attr %s%s - IGNORED", str(ctx), attr_name), 2)
+        tasmota.log(format("MTR: Write_Attr %s%s - IGNORED", str(ctx), attr_name), 3)
         # ignore if content is nil and status is undefined
       end
     end
@@ -561,7 +558,7 @@ class Matter_IM
         if ctx.endpoint == nil
           # we need expansion, log first
           var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-          tasmota.log("MTR: Write_Attr " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
+          tasmota.log("MTR: Write_Attr " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 3)
         end
 
         # implement concrete expansion
@@ -585,9 +582,8 @@ class Matter_IM
   # process IM 0x07 Write Response
   #
   def process_write_response(msg, val)
-    import string
     var query = matter.WriteResponseMessage().from_TLV(val)
-    tasmota.log("MTR: received WriteResponseMessage=" + str(query), 2)
+    # tasmota.log("MTR: received WriteResponseMessage=" + str(query), 4)
     return false
   end
 
@@ -595,9 +591,8 @@ class Matter_IM
   # process IM 0x09 Invoke Response
   #
   def process_invoke_response(msg, val)
-    import string
     var query = matter.InvokeResponseMessage().from_TLV(val)
-    tasmota.log("MTR: received InvokeResponseMessage=" + str(query), 2)
+    # tasmota.log("MTR: received InvokeResponseMessage=" + str(query), 4)
     return false
   end
 
@@ -605,11 +600,10 @@ class Matter_IM
   # process IM 0x0A Timed Request
   #
   def process_timed_request(msg, val)
-    import string
     var query = matter.TimedRequestMessage().from_TLV(val)
     # tasmota.log("MTR: received TimedRequestMessage=" + str(query), 3)
 
-    tasmota.log(string.format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 2)
+    tasmota.log(format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 3)
     
     # Send success status report
     self.send_status(msg, matter.SUCCESS)
@@ -621,7 +615,6 @@ class Matter_IM
   # send regular update for data subscribed
   #
   def send_subscribe_update(sub)
-    import string
     var session = sub.session
 
     # create a fake read request to feed to the ReportData
@@ -637,7 +630,7 @@ class Matter_IM
       fake_read.attributes_requests.push(p1)
     end
 
-    tasmota.log(string.format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
+    tasmota.log(format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
     sub.is_keep_alive = false             # sending an actual data update
 
     var ret = self._inner_process_read_request(session, fake_read)
@@ -653,10 +646,9 @@ class Matter_IM
   # send regular update for data subscribed
   #
   def send_subscribe_heartbeat(sub)
-    import string
     var session = sub.session
     
-    tasmota.log(string.format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 2)
+    tasmota.log(format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
     sub.is_keep_alive = true              # sending keep-alive
 
     # prepare the response

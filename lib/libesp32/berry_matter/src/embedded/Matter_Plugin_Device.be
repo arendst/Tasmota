@@ -27,23 +27,35 @@ class Matter_Plugin end
 class Matter_Plugin_Device : Matter_Plugin
   static var CLUSTERS  = {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
+    0x0039: [3,5,0x0A,0x0F,0x11,0x12],              # Bridged Device Basic Information 9.13 p.485
     0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
     0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
   }
-  static var TYPES = { 0x0000: 0 }                  # fake type
+  static var TYPES = { 0x0013: 1 }                  # fake type
+  static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
+
+  var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+
+  def set_name(n)
+    if n != self.node_label
+      self.attribute_updated(0x0039, 0x0005)
+    end
+    self.node_label = n
+  end
+  def get_name()    return self.node_label  end
 
   #############################################################
   # Constructor
-  # def init(device, endpoint, arguments)
-  #   super(self).init(device, endpoint, arguments)
-  # end
+  def init(device, endpoint, config)
+    self.node_label = config.find("name", "")
+    super(self).init(device, endpoint, config)
+  end
 
   #############################################################
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -76,6 +88,53 @@ class Matter_Plugin_Device : Matter_Plugin
         return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
         return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+
+      if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
+        # for device sub-classes, automatically add the Bridge Node type `0x0013: 1`
+        # unless the fabric doesn't support bridge mode (currently Alexa)
+        var dtl = TLV.Matter_TLV_array()
+        var types = self.TYPES
+        for dt: types.keys()
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
+          d1.add_TLV(1, TLV.U2, types[dt])      # Revision
+        end
+        # if fabric is not Alexa
+        if (self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil) && (!self.device.disable_bridge_mode)
+          var d1 = dtl.add_struct()
+          d1.add_TLV(0, TLV.U2, 0x0013)     # DeviceType
+          d1.add_TLV(1, TLV.U2, 1)      # Revision
+        end
+        return dtl
+      else
+        return super(self).read_attribute(session, ctx)
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+      import string
+
+      if   attribute == 0x0003          #  ---------- ProductName / string ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+      elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
+        return TLV.create_TLV(TLV.UTF1, self.get_name())
+      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
+        var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
+        var version_end = string.find(version_full, '(')
+        if version_end > 0    version_full = version_full[0..version_end - 1]   end
+        return TLV.create_TLV(TLV.UTF1, version_full)
+      elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      elif attribute == 0x0011          #  ---------- Reachable / bool ----------
+        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+      elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
+        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+      else
+        return super(self).read_attribute(session, ctx)
       end
 
     else

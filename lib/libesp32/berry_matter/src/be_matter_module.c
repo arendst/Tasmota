@@ -39,13 +39,21 @@ static const uint8_t MATTER_LOGO[] =
 
 // Matter stylesheet
 static const uint8_t MATTER_STYLESHEET[] = 
-    "<style>"
-    ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
-    ".ztdm td:not(:first-child){width:20px;font-size:70%}"
-    ".ztdm td:last-child{width:45px}"
-    ".ztdm .bt{margin-right:10px;}"
-    ".htrm{line-height:20px}"
-    "</style>";
+  "<style>"
+  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
+  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
+  ".ztdm td:last-child{width:45px}"
+  ".ztdm .bt{margin-right:10px;}"
+  ".htrm{line-height:20px}"
+  "</style>";
+
+static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
+  "<script type='text/javascript'>"
+  "function otm(arg_name,val){"
+  "var s=eb(arg_name);"
+  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
+  "};"
+  "</script>";
 
 extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
 
@@ -77,6 +85,17 @@ extern const bclass be_class_Matter_QRCode;
 
 #include "../generate/be_matter_clusters.h"
 #include "../generate/be_matter_opcodes.h"
+#include "../generate/be_matter_vendors.h"
+
+const char* matter_get_vendor_name(uint16_t id) {
+  for (const matter_vendor_t * vnd = matter_Vendors; vnd->id != 0xFFFF; vnd++) {
+    if (vnd->id == id) {
+      return vnd->name;
+    }
+  }
+  return NULL;
+}
+BE_FUNC_CTYPE_DECLARE(matter_get_vendor_name, "s", "i")
 
 const char* matter_get_cluster_name(uint16_t cluster) {
   for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
@@ -185,6 +204,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Device.h"
+#include "solidify/solidified_Matter_Profiler.h"
 
 #include "../generate/be_matter_certs.h"
 
@@ -204,6 +224,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Light0.h"
@@ -216,6 +238,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Contact.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -244,6 +267,7 @@ static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, 
 module matter (scope: global, strings: weak) {
   _LOGO, comptr(MATTER_LOGO)
   _STYLESHEET, comptr(MATTER_STYLESHEET)
+  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
@@ -253,6 +277,7 @@ module matter (scope: global, strings: weak) {
   member, closure(matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
 
+  get_vendor_name, ctype_func(matter_get_vendor_name)
   get_cluster_name, ctype_func(matter_get_cluster_name)
   get_attribute_name, ctype_func(matter_get_attribute_name)
   is_attribute_writable, ctype_func(matter_is_attribute_writable)
@@ -263,6 +288,7 @@ module matter (scope: global, strings: weak) {
   sort, closure(matter_sort_closure)
   jitter, closure(matter_jitter_closure)
   inspect, closure(matter_inspect_closure)
+  Profiler, class(be_class_Matter_Profiler)
 
   // Status codes
   SUCCESS, int(0x00)
@@ -404,6 +430,8 @@ module matter (scope: global, strings: weak) {
   Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
   Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
   Plugin_Sensor_Occupancy, class(be_class_Matter_Plugin_Sensor_Occupancy)           // Occupancy Sensor
+  Plugin_Sensor_OnOff, class(be_class_Matter_Plugin_Sensor_OnOff)           // Simple OnOff Sensor
+  Plugin_Sensor_Contact, class(be_class_Matter_Plugin_Sensor_Contact)           // Contact Sensor
   Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
   Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
   Plugin_Bridge_Light0, class(be_class_Matter_Plugin_Bridge_Light0)   // HTTP OnOff Light
@@ -416,6 +444,7 @@ module matter (scope: global, strings: weak) {
   Plugin_Bridge_Sensor_Illuminance, class(be_class_Matter_Plugin_Bridge_Sensor_Illuminance)   // HTTP Illuminance sensor
   Plugin_Bridge_Sensor_Humidity, class(be_class_Matter_Plugin_Bridge_Sensor_Humidity)   // HTTP Humidity sensor
   Plugin_Bridge_Sensor_Occupancy, class(be_class_Matter_Plugin_Bridge_Sensor_Occupancy)   // HTTP Occupancy sensor
+  Plugin_Bridge_Sensor_Contact, class(be_class_Matter_Plugin_Bridge_Sensor_Contact)   // HTTP Contact sensor
 }
 
 @const_object_info_end */

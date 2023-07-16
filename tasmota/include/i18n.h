@@ -562,6 +562,7 @@
     #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
     #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
+  #define D_JSON_IRHVAC_INCREMENTAL "Incremental"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
@@ -764,6 +765,7 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
+#define D_CMND_BR_RESTART "Restart"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver

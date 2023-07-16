@@ -208,7 +208,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_106_gdk101              | @Szewcson
 | xsns_107_gm861               | @arendst
 | xsns_108_tc74                | Michael Loftis
-| xsns_109_max17043            | Vincent de Groot
+| xsns_110_max17043            | Vincent de Groot
 |                              |
 | Libraries                    |
 |                              |

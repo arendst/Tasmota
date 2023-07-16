@@ -28,8 +28,9 @@ class Matter_Plugin_Bridge_HTTP end
 
 class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   static var TYPE = "http_light0"                   # name of the plug-in in json
-  static var NAME = "&#x1F517; Light 0 On"          # display name of the plug-in
+  static var NAME = "Light 0 On"          # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_HINT = "Power<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 3000                     # update every 3s
   # static var UPDATE_CMD = "Status 11"               # command to send for updates
@@ -40,7 +41,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
-  static var TYPES = { 0x0100: 2, 0x0013: 1 }       # OnOff Light, but not actually used because Relay is managed by OnOff
+  static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
 
   var tasmota_relay_index                           # Relay number in Tasmota (one based)
   var shadow_onoff                                  # fake status for now # TODO
@@ -82,6 +83,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     var ret = self.call_remote_sync("Power" + str(self.tasmota_relay_index), v ? "1" : "0")
     if ret != nil
       self.parse_update(ret, 11)        # update shadow from return value
+      # self.tick = self.device.tick      # prevent an explicit Status11 for as it is not needed if the subscription update is sent in same tick
     end
   end
 
@@ -89,7 +91,6 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -122,7 +123,6 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
 
     # ====================================================================================================
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
         return true
@@ -143,8 +143,18 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| Light %s", self.web_value_onoff(self.shadow_onoff)))
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s", self.web_value_onoff(self.shadow_onoff)))
+  end
+
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Power" + str(self.tasmota_relay_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
 
 end

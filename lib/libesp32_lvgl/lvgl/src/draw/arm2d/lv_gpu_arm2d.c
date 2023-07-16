@@ -339,7 +339,7 @@
         lv_color_t *rgb_tmp_buf = NULL;                                         \
         if(draw_dsc->recolor_opa > LV_OPA_MIN) {                                \
             rgb_tmp_buf                                                         \
-                = lv_malloc(src_w * src_h * sizeof(lv_color_t));                \
+                = lv_mem_buf_get(src_w * src_h * sizeof(lv_color_t));           \
             if (NULL == rgb_tmp_buf) {                                          \
                 LV_LOG_WARN(                                                    \
                     "Failed to allocate memory for accelerating recolour, "     \

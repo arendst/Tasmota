@@ -27,17 +27,18 @@ class Matter_Plugin_Bridge_HTTP end
 #@ solidify:Matter_Plugin_Bridge_Sensor_Occupancy,weak
 
 class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
-  static var TYPE = "http_occupancy"              # name of the plug-in in json
-  static var NAME = "&#x1F517; Occupancy"         # display name of the plug-in
-  static var ARG  = "switch"                      # additional argument name (or empty if none)
+  static var TYPE = "http_occupancy"                # name of the plug-in in json
+  static var NAME = "Occupancy"           # display name of the plug-in
+  static var ARG  = "switch"                        # additional argument name (or empty if none)
+  static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 5s
-  static var UPDATE_CMD = "Status 8"               # command to send for updates
+  static var UPDATE_CMD = "Status 8"                # command to send for updates
 
   static var CLUSTERS  = {
     0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
   }
-  static var TYPES = { 0x0107: 2, 0x0013: 1  }      # Occupancy Sensor, rev 2
+  static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_occupancy
@@ -71,7 +72,6 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -105,9 +105,18 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| Occupancy%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_occupancy)))
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Occupancy%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_occupancy)))
   end
 
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.tasmota_switch_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
 end
 matter.Plugin_Bridge_Sensor_Occupancy = Matter_Plugin_Bridge_Sensor_Occupancy

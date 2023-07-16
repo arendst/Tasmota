@@ -17,22 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Start temporarly extra tests for overriding USE_SHUTTER_ESP32 ****
-// Remove once tests complete
 #ifdef ESP8266
-#define USE_SHUTTER_ESP8266
-#endif
-
-#ifdef ESP32
-#ifndef USE_SHUTTER_ESP32
-#define USE_SHUTTER_ESP8266
-#endif  // No USE_SHUTTER_ESP32
-#endif  // ESP32
-
-#ifdef USE_SHUTTER_ESP8266
-// End **************************************************************
-
-//#ifdef ESP8266
 #ifdef USE_SHUTTER
 /*********************************************************************************************\
  * Shutter or Blind support using two consecutive relays
@@ -893,14 +878,14 @@ void ShutterRelayChanged(void)
           case SHT_COUNTER:
           case SHT_PWM_VALUE:
           case SHT_PWM_TIME:
+	     ShutterPowerOff(i);
           case SHT_TIME: {
-            ShutterPowerOff(i);
             // powerstate_local == 0 => direction=0, stop
             // powerstate_local == 1 => direction=1, target=Shutter[i].open_max
             // powerstate_local == 2 => direction=-1, target=0 // only happen on SHT_TIME
             // powerstate_local == 3 => direction=-1, target=0 // only happen if NOT SHT_TIME
             int8_t direction = (powerstate_local == 0) ? 0 : (powerstate_local == 1) ? 1 : -1;
-            int8_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
+            int32_t target =    (powerstate_local == 1) ? Shutter[i].open_max : 0;
 
             if (direction != 0) {
               ShutterStartInit(i, direction, target);
@@ -1318,11 +1303,11 @@ void CmndShutterPosition(void)
       if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
         // set len to 0 to avoid loop on close where payload is 0
         XdrvMailbox.data_len = 0;
-        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
         }
-        if ( ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
           CmndShutterClose();
           return;
         }

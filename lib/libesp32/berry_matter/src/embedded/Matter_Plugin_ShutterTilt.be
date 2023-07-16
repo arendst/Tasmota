@@ -60,7 +60,6 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # parse the output from `ShutterPosition`
   # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
   def parse_sensors(payload)
-    import string
     var k = "Shutter" + str(self.tasmota_shutter_index + 1)
     if payload.contains(k)
       var v = payload[k]
@@ -98,7 +97,6 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

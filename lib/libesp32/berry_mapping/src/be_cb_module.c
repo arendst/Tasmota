@@ -271,6 +271,26 @@ static int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, in
   return ret;
 }
 
+/*********************************************************************************************\
+ * `be_cb_deinit`:
+ *  Clean any callback for this VM, they shouldn't call the registerd function anymore
+\*********************************************************************************************/
+void be_cb_deinit(bvm *vm) {
+  // remove all cb for this vm
+  for (int32_t slot = 0; slot < BE_MAX_CB; slot++) {
+    if (be_cb_hooks[slot].vm == vm) {
+      be_cb_hooks[slot].vm = NULL;
+      be_cb_hooks[slot].f.type == BE_NIL;
+    }
+  }
+  // remove the vm gen_cb for this vm
+  for (be_callback_handler_list_t **elt_ptr = &be_callback_handler_list_head; *elt_ptr != NULL; elt_ptr = &(*elt_ptr)->next) {
+    if (((*elt_ptr)->next != NULL) && ((*elt_ptr)->next->vm == vm)) {
+      (*elt_ptr)->next = (*elt_ptr)->next->next;
+    }
+  }
+}
+
 /* @const_object_info_begin
 module cb (scope: global) {
     gen_cb, func(be_cb_gen_cb)

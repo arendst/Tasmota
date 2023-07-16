@@ -601,6 +601,7 @@
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 //  #define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
 //  #define USE_SGP40                              // [I2cDriver69] Enable SGP40 sensor (I2C address 0x59) (+1k4 code)
+//  #define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
 //  #define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
@@ -710,7 +711,7 @@
 //    #define TC74_MAX_SENSORS 8                   // Support non-default/multiple I2C addresses
 //    #define TC74_I2C_PROBE_ADDRESSES { 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F }  // Addresses to probe/support
 //    #define TC74_MAX_FAILCOUNT 8                 // Maximum failed polls before it's marked inactive until reprobing later
-//  #define USE_MAX17043                           // [I2cDriver109] Enable MAX17043 sensor (I2C addresses 0x36)
+//  #define USE_MAX17043                           // [I2cDriver110] Enable MAX17043 sensor (I2C addresses 0x36)
 
 //  #define USE_PCA9557                            // [I2cDriver81] Enable PCA9557 8-bit I/O Expander (I2C addresses 0x18 - 0x1F) (+2k5 code)
 
@@ -1292,34 +1293,6 @@
 
 #if defined(USE_MQTT_TLS) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS)
   #define USE_TLS                                // flag indicates we need to include TLS code
-#endif
-
-/*********************************************************************************************\
- * Post-process compile options for Matter
-\*********************************************************************************************/
-
-#ifdef ESP32
-#ifdef USE_MATTER_DEVICE
-  #undef  USE_DISCOVERY
-  #define USE_DISCOVERY
-
-// Enable all the crypto required by Matter
-  #undef  USE_BERRY_CRYPTO_EC_P256
-  #define USE_BERRY_CRYPTO_EC_P256
-  #undef  USE_BERRY_CRYPTO_HMAC_SHA256
-  #define USE_BERRY_CRYPTO_HMAC_SHA256
-  #undef  USE_BERRY_CRYPTO_HKDF_SHA256
-  #define USE_BERRY_CRYPTO_HKDF_SHA256
-  #undef  USE_BERRY_CRYPTO_AES_CCM
-  #define USE_BERRY_CRYPTO_AES_CCM
-  #undef  USE_BERRY_CRYPTO_AES_CTR
-  #define USE_BERRY_CRYPTO_AES_CTR
-  #undef  USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
-  #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
-  #undef  USE_BERRY_CRYPTO_SPAKE2P_MATTER
-  #define USE_BERRY_CRYPTO_SPAKE2P_MATTER
-
-#endif // USE_MATTER_DEVICE
 #endif
 
 /*********************************************************************************************\

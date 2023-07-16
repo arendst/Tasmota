@@ -275,15 +275,14 @@ class Matter_Session_Store
   #############################################################
   # find session by resumption id
   def find_session_by_resumption_id(resumption_id)
-    import string
     if !resumption_id  return nil end
     var i = 0
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
-      tasmota.log(string.format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 3)
+      tasmota.log(format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 4)
       if session.resumption_id == resumption_id && session.shared_secret != nil
-        tasmota.log(string.format("MTR: session.shared_secret=%s", str(session.shared_secret)), 3)
+        # tasmota.log(format("MTR: session.shared_secret=%s", str(session.shared_secret)), 4)
         session.update()
         return session
       end
@@ -311,24 +310,22 @@ class Matter_Session_Store
   #############################################################
   def save_fabrics()
     import json
-    self.remove_expired()      # clean before saving
-    var sessions_saved = 0
-
-    var fabs = []
-    for f : self.fabrics.persistables()
-      for _ : f._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
-      fabs.push(f.tojson())
-    end
-    var fabs_size = size(fabs)
-    fabs = "[" + fabs.concat(",") + "]"
-
     try
-      import string
+      self.remove_expired()      # clean before saving
+      var sessions_saved = 0
+
+      var fabs = []
+      for f : self.fabrics.persistables()
+        for _ : f._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
+        fabs.push(f.tojson())
+      end
+      var fabs_size = size(fabs)
+      fabs = "[" + fabs.concat(",") + "]"
 
       var f = open(self._FABRICS, "w")
       f.write(fabs)
       f.close()
-      tasmota.log(string.format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
+      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
       self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
@@ -338,7 +335,6 @@ class Matter_Session_Store
   #############################################################
   # load fabrics and associated sessions
   def load_fabrics()
-    import string
     try
       self.sessions = matter.Expirable_list()        # remove any left-over
       self.fabrics = matter.Expirable_list()         # remove any left-over
@@ -373,7 +369,7 @@ class Matter_Session_Store
         self.fabrics.push(fabric)
       end
 
-      tasmota.log(string.format("MTR: Loaded %i fabric(s)", size(self.fabrics)), 2)
+      tasmota.log(format("MTR: Loaded %i fabric(s)", size(self.fabrics)), 2)
     except .. as e, m
       if e != "io_error"
         tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)

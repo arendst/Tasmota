@@ -81,8 +81,7 @@ class Matter_TCP_async
       end
       return true
     else
-      import string
-      tasmota.log(string.format("BRY: failed to resolve [%s]:%i", self.addr, self.port), 3)
+      tasmota.log(format("BRY: failed to resolve [%s]:%i", self.addr, self.port), 3)
       self.close()
       self.status = -1
       self.tcp_connected = false

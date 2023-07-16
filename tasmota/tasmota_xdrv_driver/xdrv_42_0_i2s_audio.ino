@@ -36,6 +36,19 @@
 //#define USE_I2S_NO_DAC                         // Add support for transistor-based output without DAC
 //#define USE_I2S_WEBRADIO                       // Add support for web radio
 //#define USE_I2S_SAY_TIME                       // Add support for english speaking clock
+//#define USE_I2S_RTTTL                          // Add support for Rtttl playback
+//#define USE_LSB                                // Add support for LSBJ chips, e.g. TM8211/PT8211
+// Microphone support
+//#define USE_I2S_MIC                            // Add support for I2S microphone
+  //#define MIC_CHANNELS 1                       // 1 = mono (I2S_CHANNEL_FMT_ONLY_RIGHT), 2 = stereo (I2S_CHANNEL_FMT_RIGHT_LEFT)
+  //#define MICSRATE 32000                       // Set sample rate
+  //#define USE_INMP441                          // Add support for INMP441 MEMS microphone
+  //#define MIC_PDM                              // Set microphone as PDM (only on ESP32)
+//#define USE_SHINE                              // Use MP3 encoding (only on ESP32 with PSRAM)
+//#define MP3_MIC_STREAM                         // Add support for streaming microphone via http (only on ESP32 with PSRAM)
+  //#define MP3_STREAM_PORT 81                   // Choose MP3 stream port (default = 81)
+//#define I2S_BRIDGE                             // Add support for UDP PCM audio bridge
+  //#define I2S_BRIDGE_PORT    6970              // Set bridge port (default = 6970)
 
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioFileSourceID3.h"
@@ -251,6 +264,7 @@ int32_t I2S_Init_0(void) {
 #else
     audio_i2s.out = new AudioOutputI2S();
 #endif
+
     audio_i2s.bclk = DAC_IIS_BCK;
     audio_i2s.ws = DAC_IIS_WS;
     audio_i2s.dout = DAC_IIS_DOUT;
@@ -321,6 +335,11 @@ int32_t I2S_Init_0(void) {
   if (audio_i2s.mic_port != 0) {
     AddLog(LOG_LEVEL_INFO, PSTR("Init audio I2S mic: port=%d, bclk=%d, ws=%d, din=%d"), audio_i2s.mic_port, audio_i2s.mic_bclk, audio_i2s.mic_ws, audio_i2s.mic_din);
   }
+
+#ifdef USE_I2S_LSB
+  audio_i2s.out->SetLsbJustified(true);
+#endif // Allow supporting LSBJ chips, e.g. TM8211/PT8211
+
 #else
 
 #ifdef USE_I2S_NO_DAC

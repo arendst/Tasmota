@@ -65,8 +65,10 @@ void NrgDummyEverySecond(void) {
       float current_calibration = (float)EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel) / 100000;
       float frequency_calibration = (float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION, channel) / 100;
 
-      Energy->voltage[channel] = voltage_calibration;      // V
-      Energy->frequency[channel] = frequency_calibration;  // Hz
+      if (voltage_calibration > 100) {
+        Energy->voltage[channel] = voltage_calibration;    // V
+      }
+      Energy->frequency[channel] = (frequency_calibration > 45) ? frequency_calibration : NAN;  // Hz
       if (bitRead(TasmotaGlobal.power, channel)) {        // Emulate power read only if device is powered on
         Energy->active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : power_calibration;   // W
         if (0 == Energy->active_power[channel]) {
@@ -148,8 +150,9 @@ bool NrgDummyCommand(void) {
 }
 
 void NrgDummyDrvInit(void) {
-  if (TasmotaGlobal.gpio_optiona.dummy_energy && TasmotaGlobal.devices_present) {
-    Energy->phase_count = (TasmotaGlobal.devices_present < ENERGY_MAX_PHASES) ? TasmotaGlobal.devices_present : ENERGY_MAX_PHASES;
+  uint32_t phase_count = (Settings->param[P_DUMMY_RELAYS] > 0) ? Settings->param[P_DUMMY_RELAYS] : TasmotaGlobal.devices_present;  // SetOption48 - (Energy) Support energy dummy relays
+  if (TasmotaGlobal.gpio_optiona.dummy_energy && phase_count) {
+    Energy->phase_count = (phase_count < ENERGY_MAX_PHASES) ? phase_count : ENERGY_MAX_PHASES;
 
     if (HLW_PREF_PULSE == EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) {
       for (uint32_t i = 0; i < Energy->phase_count; i++) {

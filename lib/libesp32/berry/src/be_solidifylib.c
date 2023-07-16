@@ -31,7 +31,7 @@ extern const bclass be_class_map;
     be_vector_count(&(vm)->gbldesc.builtin.vlist)
 
 #ifndef INST_BUF_SIZE
-#define INST_BUF_SIZE   288
+#define INST_BUF_SIZE   768
 #endif
 
 #define logfmt(...)                                     \

@@ -96,12 +96,11 @@ class Matter_AttributePathIB : Matter_IM_base
 
   def tostring()
     try
-      import string
       var s = ""
-      if self.node    s += string.format("node=%s ", self.node) end
-      s += (self.endpoint != nil ? string.format("[%02X]", self.endpoint) : "[**]")
-      s += (self.cluster != nil ? string.format("%04X/", self.cluster) : "****/")
-      s += (self.attribute != nil ? string.format("%04X", self.attribute) : "****")
+      if self.node    s += format("node=%s ", self.node) end
+      s += (self.endpoint != nil ? format("[%02X]", self.endpoint) : "[**]")
+      s += (self.cluster != nil ? format("%04X/", self.cluster) : "****/")
+      s += (self.attribute != nil ? format("%04X", self.attribute) : "****")
       return s
     except .. as e, m
       return "Exception> " + str(e) + ", " + str(m)

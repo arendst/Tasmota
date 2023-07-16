@@ -30,6 +30,7 @@ class Matter_Plugin
   static var NAME = ""                      # display name of the plug-in
   static var ARG  = ""                      # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
+  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   var update_next                           # next timestamp for update
@@ -55,10 +56,33 @@ class Matter_Plugin
   # device: contains the root device object so the plugin can "call home"
   # endpoint: (int) the endpoint number (16 bits)
   # arguments: (map) the map for all complementary arguments that are plugin specific
-  def init(device, endpoint, arguments)
+  def init(device, endpoint, config)
     self.device = device
     self.endpoint = endpoint
     self.clusters = self.consolidate_clusters()
+    self.parse_configuration(config)
+  end
+
+  # proxy for the same method in IM
+  def send_ack_now(msg)
+    self.device.message_handler.im.send_ack_now(msg)
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map
+  # TO BE OVERRIDEN
+  def parse_configuration(config)
+  end
+
+  #############################################################
+  # is_local_device
+  #
+  # Returns true if it's a local device, or false for a
+  # remotely device controlled via HTTP
+  def is_local_device()
+    return true
   end
 
   #############################################################
@@ -186,6 +210,8 @@ class Matter_Plugin
 
       if   attribute == 0x0011          #  ---------- Reachable / bool ----------
         return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+      else
+        return super(self).read_attribute(session, ctx)   # rest is handled by 0x0028
       end
     else
       return nil
