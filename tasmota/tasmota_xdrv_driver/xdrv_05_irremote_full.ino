@@ -128,6 +128,8 @@ protected:
 // some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
 // have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
 bool irhvac_stateful = true;
+bool irhvac_incremental = true;
+
 stdAc::state_t irac_prev_state; // this implementations only keeps one state so if you use a single tasmota-ir device to command more than one AC it might not work
 
 // different modes on how to handle state when sending HVAC commands. needed for ACs with a differential/toggle protocol.
@@ -438,6 +440,8 @@ const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
 
 uint32_t IrRemoteCmndIrHvacJson(void)
 {
+  // state is initialized to the IRremoteESP8266's state_t defaults anyway
+  // https://github.com/crankyoldgit/IRremoteESP8266/blob/v2.8.4/src/IRsend.h#L97-L116
   stdAc::state_t state;
 
   //AddLog(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
@@ -445,28 +449,13 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }
 
-  // from: https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/CommonAcControl/CommonAcControl.ino
-  state.protocol = decode_type_t::UNKNOWN;
-  state.model = 1;  // Some A/C's have different models. Let's try using just 1.
-  state.command = stdAc::ac_command_t::kControlCommand;
-  state.mode = stdAc::opmode_t::kAuto;  // Run in cool mode initially.
-  state.power = false;  // Initially start with the unit off.
-  state.celsius = true;  // Use Celsius for units of temp. False = Fahrenheit
-  state.degrees = 21.0f;  // 21 degrees.
-  state.fanspeed = stdAc::fanspeed_t::kMedium;  // Start with the fan at medium.
-  state.swingv = stdAc::swingv_t::kOff;  // Don't swing the fan up or down.
-  state.swingh = stdAc::swingh_t::kOff;  // Don't swing the fan left or right.
-  state.light = false;  // Turn off any LED/Lights/Display that we can.
-  state.beep = false;  // Turn off any beep from the A/C if we can.
-  state.econo = false;  // Turn off any economy modes if we can.
-  state.filter = false;  // Turn off any Ion/Mold/Health filters if we can.
-  state.turbo = false;  // Don't use any turbo/powerful/etc modes.
-  state.quiet = false;  // Don't use any quiet/silent/etc modes.
-  state.sleep = -1;  // Don't set any sleep time or modes.
-  state.clean = false;  // Turn off any Cleaning options if we can.
-  state.clock = -1;  // Don't set any current time if we can avoid it.
-  state.iFeel = false;
-  state.sensorTemperature = kNoTempValue;  // Don't set any sensor (ambient) temperature if not provided
+  bool incremental = strToBool(root[PSTR(D_JSON_IRHVAC_INCREMENTAL)], false);
+
+  // TODO: add support for storing multiple states
+  if (incremental)
+  {
+    state = irac_prev_state;
+  }
 
   JsonParserToken val;
   if (val = root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(val.getStr()); }
@@ -495,8 +484,8 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   // AddLog(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
-  // if and how we should handle the state for IRremote
-  StateModes stateMode = StateModes::SEND_ONLY; // default
+  StateModes stateMode = incremental ? StateModes::SEND_STORE : StateModes::SEND_ONLY;
+
   if (irhvac_stateful && (val = root[PSTR(D_JSON_IRHVAC_STATE_MODE)])) { stateMode = strToStateMode(val, stateMode); }
 
   // decode booleans

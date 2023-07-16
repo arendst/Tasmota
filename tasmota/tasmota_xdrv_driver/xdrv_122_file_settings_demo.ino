@@ -34,7 +34,7 @@
 
 #define DRV_DEMO_MAX_DRV_TEXT  16
 
-const uint32_t DRV_DEMO_VERSION = 0x01010101;  // Latest driver version (See settings deltas below)
+const uint16_t DRV_DEMO_VERSION = 0x0101;       // Latest driver version (See settings deltas below)
 
 // Demo command line commands
 const char kDrvDemoCommands[] PROGMEM = "Drv|"  // Prefix
@@ -46,7 +46,8 @@ void (* const DrvDemoCommand[])(void) PROGMEM = {
 // Global structure containing driver saved variables
 struct {
   uint32_t  crc32;    // To detect file changes
-  uint32_t  version;  // To detect driver function changes
+  uint16_t  version;  // To detect driver function changes
+  uint16_t  spare;
   char      drv_text[DRV_DEMO_MAX_DRV_TEXT -1][10];
 } DrvDemoSettings;
 
@@ -127,7 +128,7 @@ void DrvDemoSettingsLoad(bool erase) {
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Demo use defaults as file system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo use defaults as file system not ready or file not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -155,6 +156,12 @@ void DrvDemoSettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
+bool DrvDemoSettingsRestore(void) {
+  XdrvMailbox.data = (char*)&DrvDemoSettings;
+  XdrvMailbox.index = sizeof(DrvDemoSettings);
+  return true;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -165,6 +172,9 @@ bool Xdrv122(uint32_t function) {
   switch (function) {
     case FUNC_RESET_SETTINGS:
       DrvDemoSettingsLoad(1);
+      break;
+    case FUNC_RESTORE_SETTINGS:
+      result = DrvDemoSettingsRestore();
       break;
     case FUNC_SAVE_SETTINGS:
       DrvDemoSettingsSave();

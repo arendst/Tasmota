@@ -21,7 +21,6 @@
 #ifdef ESP32
 #if ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
-
 uint32_t SpeakerMic(uint8_t spkr) {
 esp_err_t err = ESP_OK;
 
@@ -76,12 +75,26 @@ esp_err_t err = ESP_OK;
       .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
   };
 
+  if (audio_i2s.mic_channels == 1) {
+    i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
+  } else {
+    i2s_config.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
+  }
 
 #ifdef USE_I2S_MIC
-  // mic select to GND
-  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
-  i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  // Mic L/R to GND
+  #ifdef USE_INMP441
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX );
+    i2s_config.communication_format = I2S_COMM_FORMAT_I2S;
+    i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+  #elif MIC_PDM
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
+  #else
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
+    i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  #endif
 #endif
+
 
 #ifdef ESP32S3_BOX
   i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
@@ -92,11 +105,6 @@ esp_err_t err = ESP_OK;
   i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
 #endif
 
-  if (audio_i2s.mic_channels == 1) {
-    i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
-  } else {
-    i2s_config.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
-  }
 
   err += i2s_driver_install(audio_i2s.mic_port, &i2s_config, 0, NULL);
 

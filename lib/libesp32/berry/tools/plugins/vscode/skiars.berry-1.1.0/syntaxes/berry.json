@@ -44,11 +44,55 @@
             "patterns": [
                 {
                     "name": "string.quoted.double.berry",
-                    "match": "\"(\\\\.|[^\"])*\""
+                    "begin": "(\"|')",
+                    "end": "\\1",
+                    "patterns": [
+                        {
+                          "name": "constant.character.escape.berry",
+                          "match": "\\\\."
+                        }
+                    ]
                 },
                 {
-                    "name": "string.quoted.single.berry",
-                    "match": "'(\\\\.|[^'])*'"
+                    "name": "string.quoted.other.berry",
+                    "begin": "f(\"|')",
+                    "end": "\\1",
+                    "patterns": [
+                        {
+                          "name": "constant.character.escape.berry",
+                          "match": "\\\\."
+                        },
+                        {
+                            "name": "string.quoted.other.berry",
+                            "match": "\\{\\{[^\\}]*\\}\\}"
+                        },
+                        {
+                            "name": "keyword.other.unit.berry",
+                            "begin": "\\{",
+                            "end": "\\}",
+                            "patterns": [
+                                {
+                                    "include": "#keywords"
+                                },
+                                {
+                                    "include": "#numbers"
+                                },
+                                {
+                                    "include": "#identifier"
+                                },
+                                {
+                                    "include": "#operator"
+                                },
+                                {
+                                    "include": "#member"
+                                },
+                                {
+                                    "include": "#function"
+                                }
+                            ]
+                        }
+
+                    ]
                 }
             ]
         },

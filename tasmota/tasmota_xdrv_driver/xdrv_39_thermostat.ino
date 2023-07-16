@@ -2048,6 +2048,7 @@ const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
 #endif  // USE_WEBSERVER
 
 #define D_THERMOSTAT_JSON_NAME_CONTROL_METHOD "ControlMethod"
+#define D_THERMOSTAT_JSON_NAME_HYBRID_CONTROLLER_PHASE "HybridControllerPhase"
 #define D_THERMOSTAT_JSON_NAME_EMERGENCY_STATE "EmergencyState"
 
 void ThermostatShow(uint8_t ctr_output, bool json)
@@ -2058,7 +2059,8 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
-    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_CONTROL_METHOD, Thermostat[ctr_output].status.controller_mode == CTR_HYBRID ? Thermostat[ctr_output].status.phase_hybrid_ctr : Thermostat[ctr_output].status.controller_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_CONTROL_METHOD, Thermostat[ctr_output].status.controller_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_HYBRID_CONTROLLER_PHASE, Thermostat[ctr_output].status.phase_hybrid_ctr);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_THERMOSTAT_JSON_NAME_EMERGENCY_STATE, Thermostat[ctr_output].diag.state_emergency == EMERGENCY_ON);
     ResponseJsonEnd();
     return;

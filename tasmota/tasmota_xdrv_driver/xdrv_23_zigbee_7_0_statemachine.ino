@@ -737,7 +737,7 @@ ZBM(ZBS_SET_CONCENTRATOR, EZSP_setConcentrator, 0x00 /*high*/, 0x00 /*false*/, 0
 ZBM(ZBR_SET_CONCENTRATOR, EZSP_setConcentrator, 0x00 /*high*/, 0x00 /*ok*/)           // 100000
 
 // setInitialSecurityState
-#define EZ_SECURITY_MODE  EMBER_TRUST_CENTER_GLOBAL_LINK_KEY | EMBER_PRECONFIGURED_NETWORK_KEY_MODE | EMBER_HAVE_NETWORK_KEY | EMBER_HAVE_PRECONFIGURED_KEY
+#define EZ_SECURITY_MODE  EMBER_TRUST_CENTER_GLOBAL_LINK_KEY | EMBER_HAVE_PRECONFIGURED_KEY | EMBER_HAVE_NETWORK_KEY | EMBER_NO_FRAME_COUNTER_RESET | EMBER_REQUIRE_ENCRYPTED_KEY
 ZBR(ZBS_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/,
                           Z_B0(EZ_SECURITY_MODE), Z_B1(EZ_SECURITY_MODE),
                           // preConfiguredKey
@@ -748,6 +748,14 @@ ZBR(ZBS_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/,
                           0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*trustcenter*/
                           )
 ZBM(ZBR_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/, 0x00 /*status*/)
+
+#define EMBER_JOINER_GLOBAL_LINK_KEY 		0x0010
+#define EMBER_NWK_LEAVE_REQUEST_NOT_ALLOWED 0x0100
+
+#define EZ_EXT_SECURITY   EMBER_JOINER_GLOBAL_LINK_KEY | EMBER_NWK_LEAVE_REQUEST_NOT_ALLOWED
+ZBM(ZBS_SET_VALUE_EXTERNAL, EZSP_setValue, 0x00,/*high*/ EZSP_VALUE_EXTENDED_SECURITY_BITMASK, 2, Z_B0(EZ_EXT_SECURITY), Z_B1(EZ_EXT_SECURITY))
+ZBM(ZBR_SET_VALUE_EXTERNAL, EZSP_setValue, 0x00,/*high*/ 0x00/*status*/)
+
 
 // setIndividual policies
 ZBM(ZBS_SET_POLICY_00,    EZSP_setPolicy, 0x00 /*high*/, EZSP_TRUST_CENTER_POLICY,
@@ -954,6 +962,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     // set encryption keys
     ZI_SEND(ZBS_SET_SECURITY)           ZI_WAIT_RECV(2500, ZBR_SET_SECURITY)
+    ZI_SEND(ZBS_SET_VALUE_EXTERNAL)     ZI_WAIT_RECV(2500, ZBR_SET_VALUE_EXTERNAL)
     // formNetwork
     ZI_SEND(ZBS_FORM_NETWORK)           ZI_WAIT_RECV(2500, ZBR_FORM_NETWORK)
     ZI_WAIT_RECV(5000, ZBR_NETWORK_UP)    // wait for network to start

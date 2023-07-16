@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Light1 end
 
 class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   static var TYPE = "http_light2"                   # name of the plug-in in json
-  static var NAME = "&#x1F517; Light 2 CT"      # display name of the plug-in
+  static var NAME = "Light 2 CT"      # display name of the plug-in
   # static var ARG  = "relay"                         # additional argument name (or empty if none)
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = {
@@ -40,7 +40,7 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
     # 0x0008: inherited                             # Level Control 1.6 p.57
     0x0300: [7,8,0xF,0x400A,0x400B,0x400C,0xFFFC,0xFFFD],  # Color Control 3.2 p.111
   }
-  static var TYPES = { 0x010C: 2, 0x0013: 1 }       # Dimmable Light
+  static var TYPES = { 0x010C: 2 }                  # Dimmable Light
 
   var shadow_ct
   var ct_min, ct_max
@@ -96,7 +96,6 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -144,7 +143,6 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      self.update_shadow_lazy()
       if   command == 0x000A            # ---------- MoveToColorTemperature ----------
         var ct_in = val.findsubval(0)  # CT
         if ct_in < self.ct_min  ct_in = self.ct_min   end
@@ -174,19 +172,18 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   # Show values of the remote device as HTML
   def web_values()
     import webserver
-    import string
-    webserver.content_send(string.format("| Light %s %s %s",
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s %s %s",
                               self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer(),
                               self.web_value_ct()))
   end
 
   # Show on/off value as html
   def web_value_ct()
-    import string
     var ct_html = ""
     if self.shadow_ct != nil
       var ct_k = (((1000000 / self.shadow_ct) + 25) / 50) * 50      # convert in Kelvin
-      ct_html = string.format("%iK", ct_k)
+      ct_html = format("%iK", ct_k)
     end
     return  "&#9898; " + ct_html;
   end

@@ -33,15 +33,27 @@ class Matter_Path
   var command                 # command
   var status                  # status to be returned (matter.SUCCESS or matter.<ERROR>)
   var log                     # any string that needs to be logged (used to show significant parameters for commands)
+  var msg                     # reference of the original message
+
+  # clear the context, allows reuse of the same object
+  def clear()
+    var n = nil
+    self.endpoint = n
+    self.cluster = n
+    self.attribute = n
+    self.command = n
+    self.status = n
+    self.log = n
+    self.msh = n
+  end
 
   def tostring()
     try
-      import string
       var s = ""
-      s += (self.endpoint  != nil ? string.format("[%02X]", self.endpoint) : "[**]")
-      s += (self.cluster   != nil ? string.format("%04X/", self.cluster) : "****/")
-      s += (self.attribute != nil ? string.format("%04X", self.attribute) : "")
-      s += (self.command   != nil ? string.format("%04X", self.command) : "")
+      s += (self.endpoint  != nil ? format("[%02X]", self.endpoint) : "[**]")
+      s += (self.cluster   != nil ? format("%04X/", self.cluster) : "****/")
+      s += (self.attribute != nil ? format("%04X", self.attribute) : "")
+      s += (self.command   != nil ? format("%04X", self.command) : "")
       if self.attribute == nil && self.command == nil     s += "****" end
       return s
     except .. as e, m

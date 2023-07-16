@@ -274,7 +274,7 @@ bool EnergyRtcSettingsValid(void) {
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
+const uint16_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
 
 void EnergySettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
@@ -346,7 +346,7 @@ void EnergySettingsLoad(bool erase) {
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -370,6 +370,12 @@ void EnergySettingsSave(void) {
     }
   }
 #endif  // USE_UFILESYS
+}
+
+bool EnergySettingsRestore(void) {
+  XdrvMailbox.data = (char*)&Energy->Settings;
+  XdrvMailbox.index = sizeof(tEnergySettings);
+  return true;
 }
 
 /********************************************************************************************/
@@ -1763,6 +1769,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_RESET_SETTINGS:
         EnergySettingsLoad(1);
+        break;
+      case FUNC_RESTORE_SETTINGS:
+        result = EnergySettingsRestore();
         break;
       case FUNC_SAVE_SETTINGS:
         EnergySettingsSave();

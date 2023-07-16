@@ -151,16 +151,18 @@ typedef struct bproto {
     bbyte nupvals; /* upvalue count */
     bbyte argc; /* argument count */
     bbyte varg; /* variable argument position + 1 */
+    int16_t codesize; /* code size */
+    int16_t nconst; /* constants count */
+    int16_t nproto; /* proto count */
     bgcobject *gray; /* for gc gray list */
     bupvaldesc *upvals;
     bvalue *ktab; /* constants table */
     struct bproto **ptab; /* proto table */
     binstruction *code; /* instructions sequence */
     bstring *name; /* function name */
-    int codesize; /* code size */
-    int nconst; /* constants count */
-    int nproto; /* proto count */
+#if BE_DEBUG_SOURCE_FILE
     bstring *source; /* source file name */
+#endif
 #if BE_DEBUG_RUNTIME_INFO /* debug information */
     blineinfo *lineinfo;
     int nlineinfo;
@@ -195,7 +197,8 @@ typedef struct {
     bntvfunc destroy;
 } bcommomobj;
 
-typedef const char* (*breader)(void*, size_t*);
+struct blexer;
+typedef const char* (*breader)(struct blexer*, void*, size_t*);
 
 #define cast(_T, _v)            ((_T)(_v))
 #define cast_int(_v)            cast(int, _v)

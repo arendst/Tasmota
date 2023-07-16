@@ -70,14 +70,20 @@ def esp32_build_filesystem(fs_size):
         if "no_files" in file:
             continue
         if "http" and "://" in file:
-            response = requests.get(file)
+            response = requests.get(file.split(" ")[0])
             if response.ok:
                 target = join(filesystem_dir,file.split(os.path.sep)[-1])
+                if len(file.split(" ")) > 1:
+                    target = join(filesystem_dir,file.split(" ")[1])
+                    print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
                 open(target, "wb").write(response.content)
             else:
                 print("Failed to download: ",file)
             continue
-        shutil.copy(file, filesystem_dir)
+        if os.path.isdir(file):
+            shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
+        else:
+            shutil.copy(file, filesystem_dir)
     if not os.listdir(filesystem_dir):
         print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False

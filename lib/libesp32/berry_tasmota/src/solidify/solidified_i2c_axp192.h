@@ -516,7 +516,7 @@ be_local_closure(AXP192_set_ldo_voltage,   /* name */
 ********************************************************************/
 be_local_closure(AXP192_json_append,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    9,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -524,44 +524,41 @@ be_local_closure(AXP192_json_append,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
+    ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(string),
-    /* K2   */  be_nested_str(format),
-    /* K3   */  be_nested_str(_X2C_X22AXP192_X22_X3A_X7B_X22VBusVoltage_X22_X3A_X25_X2E3f_X2C_X22VBusCurrent_X22_X3A_X25_X2E1f_X2C_X22BattVoltage_X22_X3A_X25_X2E3f_X2C_X22BattCurrent_X22_X3A_X25_X2E1f_X2C_X22Temperature_X22_X3A_X25_X2E1f_X7D),
-    /* K4   */  be_nested_str(get_vbus_voltage),
-    /* K5   */  be_nested_str(get_bat_voltage),
-    /* K6   */  be_nested_str(get_bat_current),
-    /* K7   */  be_nested_str(get_temp),
-    /* K8   */  be_nested_str(tasmota),
-    /* K9   */  be_nested_str(response_append),
+    /* K1   */  be_nested_str(_X2C_X22AXP192_X22_X3A_X7B_X22VBusVoltage_X22_X3A_X25_X2E3f_X2C_X22VBusCurrent_X22_X3A_X25_X2E1f_X2C_X22BattVoltage_X22_X3A_X25_X2E3f_X2C_X22BattCurrent_X22_X3A_X25_X2E1f_X2C_X22Temperature_X22_X3A_X25_X2E1f_X7D),
+    /* K2   */  be_nested_str(get_vbus_voltage),
+    /* K3   */  be_nested_str(get_bat_voltage),
+    /* K4   */  be_nested_str(get_bat_current),
+    /* K5   */  be_nested_str(get_temp),
+    /* K6   */  be_nested_str(tasmota),
+    /* K7   */  be_nested_str(response_append),
     }),
     &be_const_str_json_append,
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
+    ( &(const binstruction[22]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
       0x4C040000,  //  0002  LDNIL	R1
       0x80040200,  //  0003  RET	1	R1
-      0xA4060200,  //  0004  IMPORT	R1	K1
-      0x8C080302,  //  0005  GETMET	R2	R1	K2
-      0x58100003,  //  0006  LDCONST	R4	K3
-      0x8C140104,  //  0007  GETMET	R5	R0	K4
-      0x7C140200,  //  0008  CALL	R5	1
-      0x8C180104,  //  0009  GETMET	R6	R0	K4
-      0x7C180200,  //  000A  CALL	R6	1
-      0x8C1C0105,  //  000B  GETMET	R7	R0	K5
-      0x7C1C0200,  //  000C  CALL	R7	1
-      0x8C200106,  //  000D  GETMET	R8	R0	K6
-      0x7C200200,  //  000E  CALL	R8	1
-      0x8C240107,  //  000F  GETMET	R9	R0	K7
-      0x7C240200,  //  0010  CALL	R9	1
-      0x7C080E00,  //  0011  CALL	R2	7
-      0xB80E1000,  //  0012  GETNGBL	R3	K8
-      0x8C0C0709,  //  0013  GETMET	R3	R3	K9
-      0x5C140400,  //  0014  MOVE	R5	R2
-      0x7C0C0400,  //  0015  CALL	R3	2
-      0x80000000,  //  0016  RET	0
+      0x60040018,  //  0004  GETGBL	R1	G24
+      0x58080001,  //  0005  LDCONST	R2	K1
+      0x8C0C0102,  //  0006  GETMET	R3	R0	K2
+      0x7C0C0200,  //  0007  CALL	R3	1
+      0x8C100102,  //  0008  GETMET	R4	R0	K2
+      0x7C100200,  //  0009  CALL	R4	1
+      0x8C140103,  //  000A  GETMET	R5	R0	K3
+      0x7C140200,  //  000B  CALL	R5	1
+      0x8C180104,  //  000C  GETMET	R6	R0	K4
+      0x7C180200,  //  000D  CALL	R6	1
+      0x8C1C0105,  //  000E  GETMET	R7	R0	K5
+      0x7C1C0200,  //  000F  CALL	R7	1
+      0x7C040C00,  //  0010  CALL	R1	6
+      0xB80A0C00,  //  0011  GETNGBL	R2	K6
+      0x8C080507,  //  0012  GETMET	R2	R2	K7
+      0x5C100200,  //  0013  MOVE	R4	R1
+      0x7C080400,  //  0014  CALL	R2	2
+      0x80000000,  //  0015  RET	0
     })
   )
 );
@@ -644,7 +641,7 @@ be_local_closure(AXP192_get_bat_current,   /* name */
 ********************************************************************/
 be_local_closure(AXP192_web_sensor,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    9,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -652,51 +649,48 @@ be_local_closure(AXP192_web_sensor,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(string),
-    /* K2   */  be_nested_str(format),
-    /* K3   */  be_nested_str(_X7Bs_X7DVBus_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
-    /* K4   */  be_nested_str(_X7Bs_X7DVBus_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
-    /* K5   */  be_nested_str(_X7Bs_X7DBatt_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
-    /* K6   */  be_nested_str(_X7Bs_X7DBatt_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
-    /* K7   */  be_nested_str(_X7Bs_X7DTemp_X20AXP_X7Bm_X7D_X25_X2E1f_X20_X26deg_X3BC_X7Be_X7D),
-    /* K8   */  be_nested_str(get_vbus_voltage),
-    /* K9   */  be_nested_str(get_bat_voltage),
-    /* K10  */  be_nested_str(get_bat_current),
-    /* K11  */  be_nested_str(get_temp),
-    /* K12  */  be_nested_str(tasmota),
-    /* K13  */  be_nested_str(web_send_decimal),
+    /* K1   */  be_nested_str(_X7Bs_X7DVBus_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
+    /* K2   */  be_nested_str(_X7Bs_X7DVBus_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
+    /* K3   */  be_nested_str(_X7Bs_X7DBatt_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
+    /* K4   */  be_nested_str(_X7Bs_X7DBatt_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
+    /* K5   */  be_nested_str(_X7Bs_X7DTemp_X20AXP_X7Bm_X7D_X25_X2E1f_X20_X26deg_X3BC_X7Be_X7D),
+    /* K6   */  be_nested_str(get_vbus_voltage),
+    /* K7   */  be_nested_str(get_bat_voltage),
+    /* K8   */  be_nested_str(get_bat_current),
+    /* K9   */  be_nested_str(get_temp),
+    /* K10  */  be_nested_str(tasmota),
+    /* K11  */  be_nested_str(web_send_decimal),
     }),
     &be_const_str_web_sensor,
     &be_const_str_solidified,
-    ( &(const binstruction[26]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
       0x4C040000,  //  0002  LDNIL	R1
       0x80040200,  //  0003  RET	1	R1
-      0xA4060200,  //  0004  IMPORT	R1	K1
-      0x8C080302,  //  0005  GETMET	R2	R1	K2
-      0x40120704,  //  0006  CONNECT	R4	K3	K4
-      0x40100905,  //  0007  CONNECT	R4	R4	K5
-      0x40100906,  //  0008  CONNECT	R4	R4	K6
-      0x40100907,  //  0009  CONNECT	R4	R4	K7
-      0x8C140108,  //  000A  GETMET	R5	R0	K8
-      0x7C140200,  //  000B  CALL	R5	1
-      0x8C180108,  //  000C  GETMET	R6	R0	K8
-      0x7C180200,  //  000D  CALL	R6	1
-      0x8C1C0109,  //  000E  GETMET	R7	R0	K9
-      0x7C1C0200,  //  000F  CALL	R7	1
-      0x8C20010A,  //  0010  GETMET	R8	R0	K10
-      0x7C200200,  //  0011  CALL	R8	1
-      0x8C24010B,  //  0012  GETMET	R9	R0	K11
-      0x7C240200,  //  0013  CALL	R9	1
-      0x7C080E00,  //  0014  CALL	R2	7
-      0xB80E1800,  //  0015  GETNGBL	R3	K12
-      0x8C0C070D,  //  0016  GETMET	R3	R3	K13
-      0x5C140400,  //  0017  MOVE	R5	R2
-      0x7C0C0400,  //  0018  CALL	R3	2
-      0x80000000,  //  0019  RET	0
+      0x60040018,  //  0004  GETGBL	R1	G24
+      0x400A0302,  //  0005  CONNECT	R2	K1	K2
+      0x40080503,  //  0006  CONNECT	R2	R2	K3
+      0x40080504,  //  0007  CONNECT	R2	R2	K4
+      0x40080505,  //  0008  CONNECT	R2	R2	K5
+      0x8C0C0106,  //  0009  GETMET	R3	R0	K6
+      0x7C0C0200,  //  000A  CALL	R3	1
+      0x8C100106,  //  000B  GETMET	R4	R0	K6
+      0x7C100200,  //  000C  CALL	R4	1
+      0x8C140107,  //  000D  GETMET	R5	R0	K7
+      0x7C140200,  //  000E  CALL	R5	1
+      0x8C180108,  //  000F  GETMET	R6	R0	K8
+      0x7C180200,  //  0010  CALL	R6	1
+      0x8C1C0109,  //  0011  GETMET	R7	R0	K9
+      0x7C1C0200,  //  0012  CALL	R7	1
+      0x7C040C00,  //  0013  CALL	R1	6
+      0xB80A1400,  //  0014  GETNGBL	R2	K10
+      0x8C08050B,  //  0015  GETMET	R2	R2	K11
+      0x5C100200,  //  0016  MOVE	R4	R1
+      0x7C080400,  //  0017  CALL	R2	2
+      0x80000000,  //  0018  RET	0
     })
   )
 );

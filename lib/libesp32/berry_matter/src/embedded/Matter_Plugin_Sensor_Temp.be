@@ -40,6 +40,9 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
+    if tasmota.get_option(8) == 1         # Fahrenheit
+      val = (val - 32) / 1.8
+    end
     return val != nil ? int(val * 100) : nil
   end
 
@@ -56,7 +59,6 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

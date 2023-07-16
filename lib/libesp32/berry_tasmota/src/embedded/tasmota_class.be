@@ -85,8 +85,8 @@ class Tasmota
   # Rules
   def add_rule(pat, f, id)
     self.check_not_method(f)
-    if !self._rules
-      self._rules=[]
+    if self._rules == nil
+      self._rules = []
     end
     if type(f) == 'function'
       self._rules.push(Trigger(self.Rule_Matcher.parse(pat), f, id))
@@ -186,7 +186,9 @@ class Tasmota
 
   def set_timer(delay,f,id)
     self.check_not_method(f)
-    if !self._timers self._timers=[] end
+    if self._timers == nil
+      self._timers=[]
+    end
     self._timers.push(Trigger(self.millis(delay),f,id))
   end
 
@@ -245,7 +247,9 @@ class Tasmota
   # crontab style recurring events
   def add_cron(pattern,f,id)
     self.check_not_method(f)
-    if !self._crons self._crons=[] end
+    if self._crons == nil
+      self._crons=[]
+    end
 
     var cron_obj = ccronexpr(str(pattern))    # can fail, throwing an exception
     var next_time = cron_obj.next()
@@ -285,8 +289,8 @@ class Tasmota
   # Add command to list
   def add_cmd(c,f)
     self.check_not_method(f)
-    if !self._ccmd
-      self._ccmd={}
+    if self._ccmd == nil
+      self._ccmd = {}
     end
     if type(f) == 'function'
       self._ccmd[c]=f
@@ -336,9 +340,8 @@ class Tasmota
   end
 
   def time_str(time)
-    import string
     var tm = self.time_dump(time)
-    return string.format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
+    return format("%04d-%02d-%02dT%02d:%02d:%02d", tm['year'], tm['month'], tm['day'], tm['hour'], tm['min'], tm['sec'])
   end
 
   def load(f)
@@ -376,8 +379,7 @@ class Tasmota
         f.close()
       except .. as e
         if f != nil     f.close() end
-        import string
-        print(string.format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
+        print(format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
       end
       return nil
     end
@@ -399,8 +401,7 @@ class Tasmota
         var compiled = compile(f_name, 'file')
         return compiled
       except .. as e, m
-        import string
-        print(string.format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
+        print(format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
     end
@@ -413,8 +414,7 @@ class Tasmota
           compiled_code()
           return true
         except .. as e, m
-          import string
-          print(string.format("BRY: failed to run compiled code '%s' - %s", e, m))
+          print(format("BRY: failed to run compiled code '%s' - %s", e, m))
         end
       end
       return false
@@ -487,10 +487,10 @@ class Tasmota
       var bec_version = try_get_bec_version(f_name_bec)
       var version_ok = true
       if bec_version == nil
-        print(string.format('BRY: corrupt bytecode \'%s\'',f_name_bec))
+        print(format('BRY: corrupt bytecode \'%s\'',f_name_bec))
         version_ok = false
       elif bec_version != 0x04          # -- this is the currenlty supported version
-        print(string.format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
+        print(format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
         version_ok = false
       end
 
@@ -516,7 +516,7 @@ class Tasmota
       try
         self.save(f_name_bec, compiled_code)
       except .. as e
-        print(string.format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
+        print(format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
       end
     end
     # call the compiled code
@@ -550,7 +550,9 @@ class Tasmota
 
   def add_fast_loop(cl)
     self.check_not_method(cl)
-    if !self._fl  self._fl = [] end
+    if self._fl == nil
+      self._fl = []
+    end
     if type(cl) != 'function' raise "value_error", "argument must be a function" end
     self.global.fast_loop_enabled = 1      # enable fast_loop at global level: `TasmotaGlobal.fast_loop_enabled = true`
     self._fl.push(cl)
@@ -566,7 +568,6 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
-    import string
     if event_type=='every_50ms'
       self.run_deferred()
     end  #- first run deferred events -#
@@ -596,7 +597,7 @@ class Tasmota
             done = f(d, cmd, idx, payload, raw) || done
             if done && !keep_going   break end
           except .. as e,m
-            print(string.format("BRY: Exception> '%s' - %s", e, m))
+            print(format("BRY: Exception> '%s' - %s", e, m))
             if self._debug_present
               import debug
               debug.traceback()

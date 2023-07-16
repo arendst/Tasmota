@@ -38,6 +38,7 @@ class Matter_HTTP_async end
 #    we only send every 2 seconds and dispatch results to all plugins.
 
 class Matter_HTTP_remote : Matter_HTTP_async
+  var device                                        # reference to matter_device
   var probe_update_time_map                         # number of milliseconds to wait for each async command (map)
   var probe_next_timestamp_map                      # timestamp for last probe (in millis()) for each `Status <x>`
                                                     # if timestamp is `0`, this should be scheduled in priority
@@ -49,16 +50,137 @@ class Matter_HTTP_remote : Matter_HTTP_async
   var reachable                                     # is the device reachable
   var reachable_utc                                 # last tick when the reachability was seen (avoids sending superfluous ping commands)
                                                   
+  # information gathered about the remote device (name, version...)
+  static var UPDATE_TIME = 5000                     # update every 5s until first response
+  static var UPDATE_TIME2 = 300000                  # then update every 5 minutes
+  static var UPDATE_CMD0 = "Status"                 # command to send for updates
+  static var UPDATE_CMD2 = "Status 2"               # command to send for updates
+  static var UPDATE_CMD5 = "Status 5"               # command to send for updates
+  var info                                          # as a map
                                                   
   #############################################################
   # init
-  def init(addr, timeout, fastloop)
+  def init(device, addr, timeout, fastloop)
+    self.device = device                            # if device is null, it's a temporary object not linked to a device
     self.probe_update_time_map    = {}
     self.probe_next_timestamp_map = {}
     self.async_cb_map = {}
     self.current_cmd = nil
     self.reachable = false                          # force a valid bool value
     super(self).init(addr, 80, timeout, fastloop)
+
+    # set up some reading information about the device
+    self.info = {}
+    if self.device
+      # we need different callbacks per command (don't create a single one for both calls)
+      self.add_schedule(self.UPDATE_CMD0, self.UPDATE_TIME, / status,payload,cmd -> self.parse_status_response(status,payload,cmd))
+      self.add_schedule(self.UPDATE_CMD2, self.UPDATE_TIME, / status,payload,cmd -> self.parse_status_response(status,payload,cmd))
+      self.add_schedule(self.UPDATE_CMD5, self.UPDATE_TIME, / status,payload,cmd -> self.parse_status_response(status,payload,cmd))
+    end
+  end
+
+  #############################################################
+  # get/set remote_info map
+  def get_info()      return self.info                    end
+  def set_info(v)     self.info = v                       end
+  def info_changed()  self.device.save_param()            end     # send a signal to global device that remote information changed
+
+  #############################################################
+  # parse response for `Status` and `Status 2`
+  def parse_status_response(status, payload, cmd)
+    if status != nil && status > 0
+      # device is known to be reachable
+      self.device_is_alive(true)
+
+      import json
+      var j = json.load(payload)
+      var code = nil                        # index of Status
+      if j
+        # filter
+        if   j.contains("Status")           # Status 0 (actually `Status` wihtout any number)
+          j = j["Status"]
+          code = 0
+        elif j.contains("StatusFWR")        # Status 2
+          j = j["StatusFWR"]
+          code = 2
+        elif j.contains("StatusNET")        # Status 5
+          j = j["StatusNET"]
+          code = 5
+        end
+        # convert to shadow values
+        self.parse_update(j, code)          # call parser
+      end
+    end
+  end
+  
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_update(data, index)
+    var changed = false
+    if index == 0                               # Status
+      var device_name = data.find("DeviceName")              # we consider 'Tasmota' as the non-information default
+      if device_name == "Tasmota"   device_name = nil   end
+
+      # did the value changed?
+      if self.info.find('name') != device_name
+        if device_name != nil
+          self.info['name'] = device_name
+        else
+          self.info.remove("name")
+        end
+        tasmota.log(f"MTR: update '{self.addr}' name='{device_name}'", 3)
+        changed = true
+      end
+
+      # reduce the update time after a read is succesful
+      self.change_schedule(self.UPDATE_CMD0, self.UPDATE_TIME2)
+    elif index == 2                             # Status 2
+      var version = data.find("Version")
+      var hardware = data.find("Hardware")
+
+      if self.info.find('version') != version
+        if version != nil
+          self.info['version'] = version
+        else
+          self.info.remove('version')
+        end
+        tasmota.log(f"MTR: update '{self.addr}' version='{version}'", 3)
+        changed = true
+      end
+
+      if self.info.find('hardware') != hardware
+        if hardware != nil
+          self.info['hardware'] = hardware
+        else
+          self.info.remove('hardware')
+        end
+        tasmota.log(f"MTR: update '{self.addr}' hardware='{hardware}'", 3)
+        changed = true
+      end
+
+      # reduce the update time after a read is succesful
+      self.change_schedule(self.UPDATE_CMD2, self.UPDATE_TIME2)
+    elif index == 5
+      var mac = data.find("Mac")
+
+      # did the value changed?
+      if self.info.find('mac') != mac
+        if mac != nil
+          self.info['mac'] = mac
+        else
+          self.info.remove("mac")
+        end
+        tasmota.log(f"MTR: update '{self.addr}' mac='{mac}'", 3)
+        changed = true
+      end
+
+      # reduce the update time after a read is succesful
+      self.change_schedule(self.UPDATE_CMD5, self.UPDATE_TIME2)
+    end
+
+    if changed      self.info_changed()   end
   end
 
   #############################################################
@@ -93,6 +215,15 @@ class Matter_HTTP_remote : Matter_HTTP_async
   end
 
   #############################################################
+  # Change schedule of current cmd
+  def change_schedule(cmd, update_time)
+    if self.probe_update_time_map.contains(cmd)
+      self.probe_update_time_map[cmd] = update_time
+      self.probe_next_timestamp_map[cmd] = matter.jitter(update_time)
+    end
+  end
+
+  #############################################################
   # Add a callback to be called for a specific `cmd` or `nil` for all commands
   def add_async_cb(cb, cmd)
     self.async_cb_map[cb] = cmd
@@ -123,7 +254,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = cmd
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(string.format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
+    tasmota.log(format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
     var ret = self.begin(cmd_url)
   end
 
@@ -142,20 +273,19 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = nil
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(string.format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 2)
+    tasmota.log(format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 3)
     var ret = super(self).begin_sync(cmd_url, timeout)
     var payload_short = (ret) ? ret : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(string.format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 2)
+    tasmota.log(format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     return ret
   end
 
   def event_http_finished()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    import string
     var payload_short = (self.payload != nil) ? self.payload : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(string.format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 2)
+    tasmota.log(format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     self.dispatch_cb(self.http_status, self.payload)
   end
   def event_http_failed()
@@ -164,9 +294,8 @@ class Matter_HTTP_remote : Matter_HTTP_async
     self.dispatch_cb(self.http_status, nil)
   end
   def event_http_timeout()
-    import string
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    tasmota.log(string.format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 2)
+    tasmota.log(format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
     self.dispatch_cb(self.http_status, nil)
   end
 
@@ -212,7 +341,6 @@ class Matter_HTTP_remote : Matter_HTTP_async
   # Show when the device was last seen
   def web_last_seen()
     import webserver
-    import string
 
     var seconds = -1                      # default if no known value
     if self.reachable_utc != nil

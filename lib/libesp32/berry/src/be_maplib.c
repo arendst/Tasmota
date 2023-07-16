@@ -150,6 +150,14 @@ static int m_size(bvm *vm)
     be_return(vm);
 }
 
+static int m_tobool(bvm *vm)
+{
+    be_getmember(vm, 1, ".p");
+    map_check_data(vm, 1);
+    be_pushbool(vm, be_data_size(vm, -1) > 0);
+    be_return(vm);
+}
+
 static int iter_closure(bvm *vm)
 {
     /* for better performance, we operate the upvalues
@@ -229,6 +237,7 @@ void be_load_maplib(bvm *vm)
         { "insert", m_insert },
         { "iter", m_iter },
         { "keys", m_keys },
+        { "tobool", m_tobool }
         { NULL, NULL }
     };
     be_regclass(vm, "map", members);
@@ -249,6 +258,7 @@ class be_class_map (scope: global, name: map) {
     insert, func(m_insert)
     iter, func(m_iter)
     keys, func(m_keys)
+    tobool, func(m_tobool)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_map.h"

@@ -30,6 +30,7 @@ extern int wc_getstring(bvm *vm);
 extern int wc_writefile(bvm *vm);
 extern int wc_writeflash(bvm *vm);
 extern int wc_getsize(bvm *vm);
+extern int wc_getbytes(bvm *vm);
 
 #include "be_fixed_be_class_webclient.h"
 
@@ -68,6 +69,7 @@ class be_class_webclient (scope: global, name: webclient) {
     write_file, func(wc_writefile)
     write_flash, func(wc_writeflash)
     get_size, func(wc_getsize)
+    get_bytes, func(wc_getbytes)
 }
 @const_object_info_end */
 

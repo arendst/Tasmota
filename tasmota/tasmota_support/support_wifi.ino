@@ -1161,7 +1161,7 @@ void EspRestart(void)
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 
-  if (TasmotaGlobal.restart_halt) {
+  if (TasmotaGlobal.restart_halt) {  // Restart 2
     while (1) {
       OsWatchLoop();          // Feed OsWatch timer to prevent restart
       SetLedLink(1);          // Wifi led on
@@ -1169,7 +1169,11 @@ void EspRestart(void)
       SetLedLink(0);          // Wifi led off
       delay(800);             // Satisfy SDK
     }
-  } else {
+  }
+  else if (TasmotaGlobal.restart_deepsleep) {  // Restart 9
+    ESP.deepSleep(0);         // Deep sleep mode with only hardware triggered wake up
+  }
+  else {
     ESP_Restart();
   }
 }
@@ -1265,7 +1269,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   if (success) {
     // Host name resolved
     if (0xFFFFFFFF != (uint32_t)aResult) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
       return true;
     }
   }

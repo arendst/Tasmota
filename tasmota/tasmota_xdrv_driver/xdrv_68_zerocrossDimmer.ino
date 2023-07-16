@@ -24,9 +24,6 @@
 
 #define XDRV_68             68
 
-static const uint8_t GATE_ENABLE_TIME = 100;
-static const uint8_t MIN_PERCENT = 5;
-static const uint8_t MAX_PERCENT = 99;
 static const uint8_t TRIGGER_PERIOD = 75;
 
 #define ZCDIMMERSET_SHOW 1
@@ -37,13 +34,13 @@ struct AC_ZERO_CROSS_DIMMER {
   uint32_t crossed_zero_at;                  // Time (in micros()) of last ZC signal
   bool     timer_iterrupt_started = false;   // verification of the interrupt running
   bool     dimmer_in_use = false;            // Check if interrupt has to be run. Is stopped if all lights off
+  bool     fallingEdgeDimmer = false;        // Work as a fallwing edge dimmer
+  bool     triggered[MAX_PWMS];
   uint32_t enable_time_us[MAX_PWMS];         // Time since last ZC pulse to enable gate pin. 0 means no disable.
-  uint32_t disable_time_us[MAX_PWMS];        // Time since last ZC pulse to disable gate pin. 0 means no disable.
-  uint8_t  current_state_in_phase[MAX_PWMS]; // 0=before fire HIGH, 1=HIGH, 2=after setting LOW, 3=before HIGH without setting LOW (POWER ON)
+  uint32_t disable_time_us[MAX_PWMS];        // 99% of cycle time 
   uint32_t lastlight[MAX_PWMS];              // Store the light value. Set 1 if controlled through ZCDimmerSet
   uint16_t detailpower[MAX_PWMS];            // replaces dimmer and light controll 0..10000. required savedata 0.
   uint32_t accurracy[MAX_PWMS];              // offset of the time to fire the triac and the real time when it fired
-  uint8_t  triggertime = GATE_ENABLE_TIME;   // copy of the Time for the gate keep open to start TRIAC
   uint32_t intr_counter = 0;                 // counter internally on interrerupt calls
   uint32_t missed_zero_cross;                // count up all missed Zero-cross events.
   uint8_t  actual_tigger_Period = TRIGGER_PERIOD; // copy of tigger period to change during runtime
@@ -70,17 +67,9 @@ void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
   ac_zero_cross_dimmer.crossed_zero_at = time;
   for (uint8_t i=0; i < MAX_PWMS; i++) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
+    digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer);
     ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.lastlight[i] > 0;
-    // Dimmer is physically off. Skip swich on
-    ac_zero_cross_dimmer.current_state_in_phase[i] = 0;
-    if (100 * ac_zero_cross_dimmer.enable_time_us[i] > MAX_PERCENT * ac_zero_cross_dimmer.cycle_time_us ) {
-      ac_zero_cross_dimmer.current_state_in_phase[i] = 1;
-      ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.cycle_time_us / 2;
-    } 
-    // If full cycle is required keep pin HIGH, skip LOW by skipping phase
-    if (100 * ac_zero_cross_dimmer.enable_time_us[i] < MIN_PERCENT * ac_zero_cross_dimmer.cycle_time_us) {
-      ac_zero_cross_dimmer.current_state_in_phase[i] = 3;
-    } 
+    ac_zero_cross_dimmer.triggered[i] = false;
   }
 }
 
@@ -88,6 +77,14 @@ uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
   //ACDimmerTimer_intr();
   ACDimmerTimer_intr();
   return ac_zero_cross_dimmer.actual_tigger_Period * 80;
+}
+
+void ACDimmerInit()
+{
+  for (uint8_t i = 0 ; i < 5; i++) {
+    ac_zero_cross_dimmer.detailpower[i] = Settings->zcdimmerset[i];
+    ac_zero_cross_dimmer.fallingEdgeDimmer = Settings->flag6.zcfallingedge;
+  }
 }
 
 void ACDimmerInterruptDisable(bool disable)
@@ -133,7 +130,6 @@ void IRAM_ATTR ACDimmerTimer_intr() {
   ac_zero_cross_dimmer.intr_counter++;
   // Check for missed Zero-Cross event. Single failure will correct
   if (time_since_zc > 10100) {
-    memset(&ac_zero_cross_dimmer.current_state_in_phase, 0x00, sizeof(ac_zero_cross_dimmer.current_state_in_phase));
     ac_zero_cross_dimmer.crossed_zero_at += ac_zero_cross_dimmer.cycle_time_us;
     ac_zero_cross_dimmer.missed_zero_cross++;
     time_since_zc += ac_zero_cross_dimmer.cycle_time_us;
@@ -142,37 +138,27 @@ void IRAM_ATTR ACDimmerTimer_intr() {
   ac_zero_cross_dimmer.actual_tigger_Period = TRIGGER_PERIOD;
   for (uint8_t i = 0 ; i < MAX_PWMS; i++ ) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
-    switch (ac_zero_cross_dimmer.current_state_in_phase[i]) {
-      case 1:
-        // Switch off does not need high accuracy. Happens at the next 75µs trigger
-        if (time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
-          digitalWrite(Pin(GPIO_PWM1, i), LOW);
-          ac_zero_cross_dimmer.current_state_in_phase[i]++;
-        }
-        break;    
-      case 0:
-      case 3:
-        if (time_since_zc + TRIGGER_PERIOD >= ac_zero_cross_dimmer.enable_time_us[i]){
-          // Very close to the fire event. Loop the last µseconds to wait.
+
+    if (time_since_zc + TRIGGER_PERIOD >= ac_zero_cross_dimmer.enable_time_us[i]){
+      // Very close to the fire event. Loop the last µseconds to wait.
 #ifdef ESP8266
-          // on ESP8266 we can change dynamically the trigger interval
-          ac_zero_cross_dimmer.actual_tigger_Period = tmin(ac_zero_cross_dimmer.actual_tigger_Period,tmax(5,ac_zero_cross_dimmer.enable_time_us[i] - time_since_zc));
+      // on ESP8266 we can change dynamically the trigger interval
+      ac_zero_cross_dimmer.actual_tigger_Period = tmin(ac_zero_cross_dimmer.actual_tigger_Period,tmax(5,ac_zero_cross_dimmer.enable_time_us[i] - time_since_zc));
 #endif 
 #ifdef ESP32         
-          while (time_since_zc < ac_zero_cross_dimmer.enable_time_us[i]) {
-            time_since_zc =  micros() - ac_zero_cross_dimmer.crossed_zero_at;
-          }
+      while (time_since_zc < ac_zero_cross_dimmer.enable_time_us[i]) {
+        time_since_zc =  micros() - ac_zero_cross_dimmer.crossed_zero_at;
+      }
 #endif        
-        }
-        if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]) {
-          digitalWrite(Pin(GPIO_PWM1, i), HIGH);
-          ac_zero_cross_dimmer.current_state_in_phase[i]++;
-#ifdef ZC_DEBUG          
-          ac_zero_cross_dimmer.accurracy[i] = time_since_zc-ac_zero_cross_dimmer.enable_time_us[i];
-#endif          
-        }    
-        break;
-    } 
+      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i] && !ac_zero_cross_dimmer.triggered[i] ) {
+        digitalWrite(Pin(GPIO_PWM1, i), HIGH ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
+        ac_zero_cross_dimmer.triggered[i] = true;
+        ac_zero_cross_dimmer.accurracy[i] = tmax(ac_zero_cross_dimmer.accurracy[i],time_since_zc-ac_zero_cross_dimmer.enable_time_us[i]);
+      }   
+      if (time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
+        digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
+      }    
+    }
   }
 }
 
@@ -185,14 +171,17 @@ void ACDimmerControllTrigger(void) {
 #endif  
   for (uint8_t i = 0; i < MAX_PWMS; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
-
+    ac_zero_cross_dimmer.disable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * 99) / 100;
     if (ac_zero_cross_dimmer.detailpower[i]){
       ac_zero_cross_dimmer.lastlight[i] = changeUIntScale(ac_zero_cross_dimmer.detailpower[i]/10, 0, 1000, 0, 1023);
     } else {
       ac_zero_cross_dimmer.lastlight[i] = Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i];
     }
     ac_zero_cross_dimmer.enable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * (1023 - ac_zero_cross_power(ac_zero_cross_dimmer.lastlight[i]))) / 1023;
-
+    if (ac_zero_cross_dimmer.enable_time_us[i] > ac_zero_cross_dimmer.disable_time_us[i]) {
+      // do not set HIGH near to the zero cross
+      ac_zero_cross_dimmer.enable_time_us[i] = 99999;
+    }
 #ifdef ESP32
     if (ac_zero_cross_dimmer.detailpower[i]){
       float state = (float)(1 - (ac_zero_cross_dimmer.detailpower[i]/10000.0));
@@ -203,7 +192,6 @@ void ACDimmerControllTrigger(void) {
     }    
 #endif  
     
-    ac_zero_cross_dimmer.disable_time_us[i] = ac_zero_cross_dimmer.enable_time_us[i] + ac_zero_cross_dimmer.triggertime;
   }
   
 }
@@ -226,9 +214,10 @@ void ACDimmerLogging(void)
       );
     for (uint8_t i = 0; i < MAX_PWMS; i++){
       if (Pin(GPIO_PWM1, i) == -1) continue;
-       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, dis: %ld µs, state %d, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
+      if (ac_zero_cross_dimmer.accurracy[i]) ac_zero_cross_dimmer.accurracy[i]--;
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
         i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], 
-        ac_zero_cross_dimmer.current_state_in_phase[i], Light.fade_cur_10[i], Light.fade_start_10[i], Light.fade_end_10[i], ac_zero_cross_dimmer.lastlight[i],
+        Light.fade_cur_10[i], Light.fade_start_10[i], Light.fade_end_10[i], ac_zero_cross_dimmer.lastlight[i],
         ac_zero_cross_dimmer.accurracy[i]
       );
     }
@@ -258,19 +247,11 @@ void CmndZCDimmerSet(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
     if (XdrvMailbox.data_len > 0) {
-      ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1] = (uint16_t)(100 * CharToFloat(XdrvMailbox.data));
+      Settings->zcdimmerset[XdrvMailbox.index-1] = ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1] = (uint16_t)(100 * CharToFloat(XdrvMailbox.data));
     }
     ResponseCmndIdxFloat((float)(ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1]) / 100, 2);
   }
 }
-
-/* void CmndZCGateEnableTime(void)
-{
-    if (XdrvMailbox.payload > 0) {
-      ac_zero_cross_dimmer.triggertime = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(ac_zero_cross_dimmer.triggertime);
-} */
 
 /*********************************************************************************************\
  * Interface
@@ -282,6 +263,7 @@ bool Xdrv68(uint32_t function)
   if (Settings->flag4.zerocross_dimmer) {
     switch (function) {
       case FUNC_INIT:
+        ACDimmerInit();
 #ifdef ESP32      
         //ACDimmerInterruptDisable(false);
 #endif      

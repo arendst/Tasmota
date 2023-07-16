@@ -119,6 +119,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MGS                   | - | - / x | - | x | - | - |
 | USE_SGP30                 | - | - / x | - | x | - | - |
 | USE_SGP40                 | - | - / x | - | x | - | - |
+| USE_SGP4X                 | - | - / x | - | - | - | - |
 | USE_SEN5X                 | - | - / x | - | x | - | - |
 | USE_SI1145                | - | - / - | - | - | - | - |
 | USE_LM75AD                | - | - / x | - | x | - | - |
@@ -276,6 +277,6 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SHELLY_PRO            |   |   / x |   |   |   |   |
 | USE_DALI                  |   |   / - |   |   |   |   |
 | USE_DINGTIAN_RELAY        |   |   / - |   |   |   |   |
-| USE_MATTER_DEVICE         |   |   / - |   |   |   |   | See SetOption151
+| USE_MATTER_DEVICE         |   |   / x |   |   |   |   | See SetOption151
 
 * USE_MQTT_TLS is enabled by default in every ESP32 variants

@@ -140,4 +140,18 @@ assert(classname(a) == 'A')
 assert(classname(b) == 'B')
 assert(A.B.f() == 1)
 assert(b.g() == 2)
-assert(super(B) == nil)
+assert(super(A.B) == nil)
+
+#- `_class` initializer can now be used in initializer code -#
+class A
+  static var a = 1
+  static var b = _class
+  static var c = [_class.a, _class.b]
+  static def f(x)
+    return _class
+  end
+end
+assert(A.a == 1)
+assert(A.b == A)
+assert(A.c == [1, A])
+assert(A.f(1) == A)

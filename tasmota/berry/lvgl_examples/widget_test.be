@@ -1,26 +1,21 @@
 #- start LVGL and init environment -#
 lv.start()
 
-import string
-
 scr = lv.scr_act()            # default screean object
 
 def ctorcb(class_p, obj)
-    import string
-    print(string.format("> ctorcb class_p=0x%08X obj=0x%08X", class_p, obj))
+    print(format("> ctorcb class_p=0x%08X obj=0x%08X", class_p, obj))
 end
 def dtorcb(class_p, obj)
-    import string
-    print(string.format("> dtorcb class_p=0x%08X obj=0x%08X", class_p, obj))
+    print(format("> dtorcb class_p=0x%08X obj=0x%08X", class_p, obj))
 end
 def eventcb(class_p, e)
-    import string
     import introspect
     var event = lv_event(e)
     var obj = introspect.fromptr(event.user_data)
     var event_code = event.code
     var target = event.target
-    print(string.format("> event class_p=0x%08X event=%s obj=%s code=%i",
+    print(format("> event class_p=0x%08X event=%s obj=%s code=%i",
             class_p, str(event), str(obj), event_code))
 end
 import cb
@@ -33,16 +28,16 @@ var cb_event = cb.gen_cb(eventcb)
 #-
 class_def = lv_obj_class(lv_obj._class).copy()
 print(class_def)
-print(string.format("base_class = 0x%08X", class_def.base_class))
-print(string.format("constructor_cb = 0x%08X", class_def.constructor_cb))
-print(string.format("destructor_cb = 0x%08X", class_def.destructor_cb))
-print(string.format("user_data = 0x%08X", class_def.user_data))
-print(string.format("event_cb = 0x%08X", class_def.event_cb))
-print(string.format("width_def = %i", class_def.width_def))
-print(string.format("height_def = %i", class_def.height_def))
-print(string.format("editable = %i", class_def.editable))
-print(string.format("group_def = %i", class_def.group_def))
-print(string.format("instance_size = %i", class_def.instance_size))
+print(format("base_class = 0x%08X", class_def.base_class))
+print(format("constructor_cb = 0x%08X", class_def.constructor_cb))
+print(format("destructor_cb = 0x%08X", class_def.destructor_cb))
+print(format("user_data = 0x%08X", class_def.user_data))
+print(format("event_cb = 0x%08X", class_def.event_cb))
+print(format("width_def = %i", class_def.width_def))
+print(format("height_def = %i", class_def.height_def))
+print(format("editable = %i", class_def.editable))
+print(format("group_def = %i", class_def.group_def))
+print(format("instance_size = %i", class_def.instance_size))
 -#
 
 import introspect

@@ -43,8 +43,8 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
 
   #############################################################
   # Constructor
-  def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
     self.shadow_onoff = false
   end
 
@@ -65,7 +65,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx)
-    import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute

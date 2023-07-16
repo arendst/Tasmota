@@ -159,8 +159,7 @@ class AXP192 : I2C_Driver
   #- display sensor value in the web UI -#
   def web_sensor()
     if !self.wire return nil end  #- exit if not initialized -#
-    import string
-    var msg = string.format(
+    var msg = format(
              "{s}VBus Voltage{m}%.3f V{e}"..
              "{s}VBus Current{m}%.1f mA{e}"..
              "{s}Batt Voltage{m}%.3f V{e}"..
@@ -178,8 +177,7 @@ class AXP192 : I2C_Driver
   #- add sensor value to teleperiod -#
   def json_append()
     if !self.wire return nil end  #- exit if not initialized -#
-    import string
-    var msg = string.format(",\"AXP192\":{\"VBusVoltage\":%.3f,\"VBusCurrent\":%.1f,\"BattVoltage\":%.3f,\"BattCurrent\":%.1f,\"Temperature\":%.1f}",
+    var msg = format(",\"AXP192\":{\"VBusVoltage\":%.3f,\"VBusCurrent\":%.1f,\"BattVoltage\":%.3f,\"BattCurrent\":%.1f,\"Temperature\":%.1f}",
               self.get_vbus_voltage(), self.get_vbus_voltage(),
               self.get_bat_voltage(), self.get_bat_current(),
               #self.get_bat_power(),

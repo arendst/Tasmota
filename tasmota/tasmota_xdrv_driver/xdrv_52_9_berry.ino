@@ -37,11 +37,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN
+  D_CMND_BR_RUN "|" D_CMND_BR_RESTART
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun,
+  CmndBrRun, CmndBrRestart
   };
 
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
@@ -304,11 +304,21 @@ void BrShowState(void) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
+extern "C" void be_webserver_cb_deinit(bvm *vm);
 void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
+    be_cb_deinit(berry.vm);   // deregister any C callback for this VM
+#ifdef USE_WEBSERVER
+    be_webserver_cb_deinit(berry.vm);   // deregister C callbacks managed by webserver
+#endif // USE_WEBSERVER
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
+    berry.web_add_handler_done = false;
+    berry.autoexec_done = false;
+    berry.repl_active = false;
+    berry.rules_busy = false;
+    berry.timeout = 0;
   }
 
   int32_t ret_code1, ret_code2;
@@ -365,6 +375,17 @@ void BerryInit(void) {
       berry.vm = nullptr;
     }
   }
+}
+
+/*********************************************************************************************\
+ * BrRestart - restart a fresh new Berry vm, unloading everything from previous VM
+\*********************************************************************************************/
+void CmndBrRestart(void) {
+  if (berry.vm == nullptr) {
+    ResponseCmndChar_P("Berry VM not started");
+  }
+  BerryInit();
+  ResponseCmndChar_P("Berry VM restarted");
 }
 
 /*********************************************************************************************\
@@ -653,14 +674,16 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
       "Check the <a href='https://tasmota.github.io/docs/Berry/' target='_blank'>documentation</a>."
     "</div>"
   "</div>"
-  // "<textarea readonly id='t1' cols='340' wrap='off'></textarea>"
-  // "<br><br>"
   "<form method='get' id='fo' onsubmit='return l(1);'>"
   "<textarea id='c1' class='br0 bri' rows='4' cols='340' wrap='soft' autofocus required></textarea>"
-  // "<input id='c1' class='bri' type='text' rows='5' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
-  // "<input type='submit' value=\"Run code (or press 'Enter' twice)\">"
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
-  "</form>";
+  "</form>"
+#ifdef USE_BERRY_DEBUG
+  "<p><form method='post' >"
+  "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
+  "</form></p>"
+#endif // USE_BERRY_DEBUG
+  ;
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
   "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
@@ -706,6 +729,12 @@ void HandleBerryConsole(void)
     return;
   }
 
+  if (Webserver->hasArg(F("rst"))) {      // restart VM
+    BerryInit();
+    Webserver->sendHeader("Location", "/bc", true);
+    Webserver->send(302, "text/plain", "");
+  }
+
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));
 
   WSContentStart_P(PSTR("Berry " D_CONSOLE));
@@ -736,6 +765,18 @@ bool Xdrv52(uint32_t function)
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
+
+        // check if `web_add_handler` was missed, for example because of Berry VM restart
+        if (!berry.web_add_handler_done) {
+          bool network_up = WifiHasIP();
+#ifdef USE_ETHERNET
+          network_up = network_up || EthernetHasIP();
+#endif
+          if (network_up) {       // if network is already up, send a synthetic event to trigger web handlers
+            callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+            berry.web_add_handler_done = true;
+          }
+        }
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
         callBerryFastLoop();      // call `tasmota.fast_loop()` optimized for minimal performance impact
@@ -798,7 +839,10 @@ bool Xdrv52(uint32_t function)
       callBerryEventDispatcher(PSTR("web_add_config_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      if (!berry.web_add_handler_done) {
+        callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+        berry.web_add_handler_done = true;
+      }
       WebServer_on(PSTR("/bc"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER
