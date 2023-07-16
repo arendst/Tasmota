@@ -49,7 +49,7 @@
                     "patterns": [
                         {
                           "name": "constant.character.escape.berry",
-                          "match": "\\\\."
+                          "match": "(\\\\x[\\h]{2})|(\\\\[0-7]{3})|(\\\\\\\\)|(\\\\\")|(\\\\')|(\\\\a)|(\\\\b)|(\\\\f)|(\\\\n)|(\\\\r)|(\\\\t)|(\\\\v)"
                         }
                     ]
                 },
@@ -60,7 +60,7 @@
                     "patterns": [
                         {
                           "name": "constant.character.escape.berry",
-                          "match": "\\\\."
+                          "match": "(\\\\x[\\h]{2})|(\\\\[0-7]{3})|(\\\\\\\\)|(\\\\\")|(\\\\')|(\\\\a)|(\\\\b)|(\\\\f)|(\\\\n)|(\\\\r)|(\\\\t)|(\\\\v)"
                         },
                         {
                             "name": "string.quoted.other.berry",
@@ -111,7 +111,7 @@
         "keywords": {
             "patterns": [{
                 "name": "keyword.berry",
-                "match": "\\b(var|static|def|class|true|false|nil|self|super|import|as)\\b"
+                "match": "\\b(var|static|def|class|true|false|nil|self|super|import|as|_class)\\b"
             }]
         },
         "identifier": {
