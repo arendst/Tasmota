@@ -134,16 +134,17 @@ void DeepSleepStart(void)
   // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - LocalTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - LocalTime();
   deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - LocalTime());
 
-  // stat/tasmota/DEEPSLEEP = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
-  Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_DEEPSLEEP));
+  // Sending Deepsleep parameters to automation for react
+  Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"" D_PRFX_DEEPSLEEP "\":%d,\"Wakeup\":%d}}"), (char*)dt.c_str(), LocalTime(), RtcSettings.nextwakeup);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_PRFX_DEEPSLEEP), true);
 
-  #define S_LWT_SLEEP "Sleep"
-
+  // Change LWT Topic to Sleep to ensure automation see different state
   GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
-  Response_P(PSTR("{\"" S_LWT_SLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Sleep\":%d,\"Wakeup\":%d}}"), (char*)dt.c_str(), LocalTime(), RtcSettings.nextwakeup);
+  Response_P(PSTR(D_PRFX_DEEPSLEEP));
   MqttPublish(stopic, true);
+
   MqttClient.disconnect(true);
+  EspClient.stop();
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
