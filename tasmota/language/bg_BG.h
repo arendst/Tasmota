@@ -150,6 +150,7 @@
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Фактор на мощността"
 #define D_POWERUSAGE "Мощност"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Активна мощност"
 #define D_POWERUSAGE_APPARENT "Пълна мощност"
 #define D_POWERUSAGE_REACTIVE "Реактивна мощност"

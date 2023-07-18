@@ -150,6 +150,7 @@
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Arbeidsfactor"
 #define D_POWERUSAGE "Vermogen"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Werkelijk vermogen"
 #define D_POWERUSAGE_APPARENT "Schijnbaar vermogen"
 #define D_POWERUSAGE_REACTIVE "Blindvermogen"

@@ -150,6 +150,7 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Puiss active"
 #define D_POWERUSAGE_APPARENT "Puiss apparente"
 #define D_POWERUSAGE_REACTIVE "Puiss réactive"

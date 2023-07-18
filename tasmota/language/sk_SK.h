@@ -150,6 +150,7 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účinník"
 #define D_POWERUSAGE "Príkon"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Činný príkon"
 #define D_POWERUSAGE_APPARENT "Zdanlivý príkon"
 #define D_POWERUSAGE_REACTIVE "Jalový príkon"

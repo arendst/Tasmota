@@ -150,6 +150,7 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Leistungsfaktor"
 #define D_POWERUSAGE "Leistung"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Gesamtwirkleistung"
 #define D_POWERUSAGE_ACTIVE "Wirkleistung"
 #define D_POWERUSAGE_APPARENT "Scheinleistung"
 #define D_POWERUSAGE_REACTIVE "Blindleistung"

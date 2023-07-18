@@ -150,6 +150,7 @@
 #define D_PORT "Cổng"
 #define D_POWER_FACTOR "Hệ số công suất"
 #define D_POWERUSAGE "Công suất"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Công suất hoạt động"
 #define D_POWERUSAGE_APPARENT "Công suất biểu kiến"
 #define D_POWERUSAGE_REACTIVE "Công suất phản kháng"

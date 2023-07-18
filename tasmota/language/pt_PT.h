@@ -150,6 +150,7 @@
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Factor de Potência"
 #define D_POWERUSAGE "Potência"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Potência Ativa"
 #define D_POWERUSAGE_APPARENT "Potência Aparente"
 #define D_POWERUSAGE_REACTIVE "Potência Reativa"

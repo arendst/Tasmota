@@ -150,6 +150,7 @@
 #define D_PORT "פורט"
 #define D_POWER_FACTOR "גורם כוח"
 #define D_POWERUSAGE "כוח"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "כוח פעיל"
 #define D_POWERUSAGE_APPARENT "כוח לכאורה"
 #define D_POWERUSAGE_REACTIVE "כוח תגובתי"

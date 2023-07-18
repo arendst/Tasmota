@@ -150,6 +150,7 @@
 #define D_PORT "Θύρα"
 #define D_POWER_FACTOR "Συντελεστής Ισχύος"
 #define D_POWERUSAGE "Ισχύς"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_ACTIVE "Ενεργός ισχύς"
 #define D_POWERUSAGE_APPARENT "Φαινόμενη ισχύς"
 #define D_POWERUSAGE_REACTIVE "Άεργη ισχύς"
