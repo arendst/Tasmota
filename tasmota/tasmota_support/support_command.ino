@@ -248,7 +248,7 @@ void CmndWifiTest(void)
 }
 
 void CmndBatteryPercent(void) {
-  if (XdrvMailbox.payload > 100) XdrvMailbox.payload = 100;
+  if (XdrvMailbox.payload > 101) XdrvMailbox.payload = 100;
   if (XdrvMailbox.payload >= 0) {
       Settings->battery_level_percent = XdrvMailbox.payload;
   }
