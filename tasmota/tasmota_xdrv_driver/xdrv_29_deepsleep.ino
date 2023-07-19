@@ -139,12 +139,12 @@ void DeepSleepStart(void)
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_PRFX_DEEPSLEEP), true);
 
   // Change LWT Topic to Sleep to ensure automation see different state
-  GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
-  Response_P(PSTR(D_PRFX_DEEPSLEEP));
-  MqttPublish(stopic, true);
+  //GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
+  //Response_P(PSTR(D_PRFX_DEEPSLEEP));
+  //MqttPublish(stopic, true);
 
-  MqttClient.disconnect(true);
-  EspClient.stop();
+  //MqttClient.disconnect(true);
+  //EspClient.stop();
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
