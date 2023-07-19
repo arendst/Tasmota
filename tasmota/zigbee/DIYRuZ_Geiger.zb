@@ -1,0 +1,12 @@
+#Z2Tv1
+# DIYRuZ_Geiger
+# https://modkam.ru/2020/06/05/indikator-radioaktivnosti-zigbee/
+:*,modkam.ru
+0400/F001%21,GeigerRadiationEventsPerMinute
+0400/F002%23,GeigerRadiationLevelPerHour
+0401/F000%21,GeigerSensitivity
+0401/F001%10,GeigerLedFeedback
+0401/F002%10,GeigerBuzzerFeedback
+0401/F003%20,GeigerSensorsCount
+0401/F004%30,GeigerSensorsType
+0401/F005%23,GeigerAlertThreshold
