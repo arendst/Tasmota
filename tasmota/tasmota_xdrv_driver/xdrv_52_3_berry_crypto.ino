@@ -296,8 +296,8 @@ extern "C" {
 
   // Finish injection of authentication data
   int32_t m_aes_ccm_encrypt_or_decryt(bvm *vm, int encrypt);
-  int32_t m_aes_ccm_encryt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 1); }
-  int32_t m_aes_ccm_decryt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 0); }
+  int32_t m_aes_ccm_encrypt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 1); }
+  int32_t m_aes_ccm_decrypt(bvm *vm) { return m_aes_ccm_encrypt_or_decryt(vm, 0); }
   int32_t m_aes_ccm_encrypt_or_decryt(bvm *vm, int encrypt) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isbytes(vm, 2)) {
@@ -344,6 +344,109 @@ extern "C" {
       be_return(vm);
       // success
     } while (0);
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // `AES_CCM.decrypt1(
+  //      secret_key:bytes(16 or 32),
+  //      iv:bytes(), iv_start:int, iv_len:int (7..13),
+  //      aad:bytes(), aad_start:int, aad_len:int,
+  //      data:bytes(), data_start:int, data_len:int,
+  //      tag:bytes(), tag_start:int, tag_len:int (4..16))
+  //      -> bool (true if tag matches)
+  //
+  // all-in-one decrypt function
+  // decryption in place
+  //
+  int32_t m_aes_ccm_decrypt1(struct bvm *vm);
+  int32_t m_aes_ccm_decrypt1(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 13 && be_isbytes(vm, 1)    // secret_key
+                   && be_isbytes(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) // iv, iv_start, iv_len
+                   && be_isbytes(vm, 5) && be_isint(vm, 6) && be_isint(vm, 7) // aad, aad_start, aad_len
+                   && be_isbytes(vm, 8) && be_isint(vm, 9) && be_isint(vm, 10) // data_start, data_len
+                   && be_isbytes(vm, 11) && be_isint(vm, 12) && be_isint(vm, 13)) { // tag, tag_start, tag_len
+
+      size_t key_len = 0;
+      const void * key = be_tobytes(vm, 1, &key_len);
+      if (key_len != 32 && key_len != 16) {
+        be_raise(vm, "value_error", "Key size must be 16 or 32 bytes");
+      }
+
+      size_t nonce_len = 0;
+      const uint8_t * nonce = (const uint8_t *) be_tobytes(vm, 2, &nonce_len);
+      int32_t n_start = be_toint(vm, 3);
+      int32_t n_len = be_toint(vm, 4);
+      if (n_start < 0 || n_len < 0 || n_start > nonce_len || n_start+n_len > nonce_len) {
+        be_raise(vm, "range_error", "out of range start/end");
+      }
+      nonce += n_start;
+      nonce_len = n_len;
+      if (nonce_len < 7 || nonce_len > 13) {
+        be_raise(vm, "value_error", "Nonce size must be 7..13");
+      }
+
+      size_t aad_len = 0;
+      const uint8_t * aad = (const uint8_t *) be_tobytes(vm, 5, &aad_len);
+      int32_t a_start = be_toint(vm, 6);
+      int32_t a_len = be_toint(vm, 7);
+      if (a_start < 0 || a_len < 0 || a_start  > aad_len || a_start+a_len > aad_len) {
+        be_raise(vm, "range_error", "out of range start/end");
+      }
+      aad += a_start;
+      aad_len = a_len;
+
+      size_t data_len = 0;
+      uint8_t * data = (uint8_t *) be_tobytes(vm, 8, &data_len);
+      int32_t d_start = be_toint(vm, 9);
+      int32_t d_len = be_toint(vm, 10);
+      if (d_start < 0 || d_len < 0 || d_start  > data_len || d_start+d_len > data_len) {
+        be_raise(vm, "range_error", "out of range start/end");
+      }
+      data += d_start;
+      data_len = d_len;
+
+      size_t tag_len = 0;
+      uint8_t * tag = (uint8_t *) be_tobytes(vm, 11, &tag_len);
+      int32_t t_start = be_toint(vm, 12);
+      int32_t t_len = be_toint(vm, 13);
+      if (t_start < 0 || t_len < 0 || t_start  > tag_len || t_start+t_len > tag_len) {
+        be_raise(vm, "range_error", "out of range start/end");
+      }
+      tag += t_start;
+      tag_len = t_len;
+      if (tag_len < 4 || tag_len > 16) {
+        be_raise(vm, "value_error", "Tag size must be 4..16");
+      }
+
+      // Initialize an AES CCM structure with the secret key
+      br_aes_small_ctrcbc_keys key_ctx;
+      br_ccm_context ccm_ctx;
+      br_aes_small_ctrcbc_init(&key_ctx, key, key_len);
+      br_ccm_init(&ccm_ctx, &key_ctx.vtable);
+      int ret = br_ccm_reset(&ccm_ctx, nonce, nonce_len, aad_len, data_len, tag_len);
+      if (ret == 0) { be_raise(vm, "value_error", "br_ccm_reset failed"); }
+
+      if (aad_len > 0) {
+        br_ccm_aad_inject(&ccm_ctx, aad, aad_len);
+      }
+      br_ccm_flip(&ccm_ctx);
+
+      br_ccm_run(&ccm_ctx, 0 /*decrypt*/, data, data_len);  // decrypt in place
+
+      // check tag
+      // create a bytes buffer of 16 bytes
+      uint8_t tag_computed[16] = {};
+      br_ccm_get_tag(&ccm_ctx, tag_computed);
+      if (memcmp(tag_computed, tag, tag_len) == 0) {
+        be_pushbool(vm, btrue);
+      } else {
+        be_pushbool(vm, bfalse);
+      }
+
+      // success
+      be_return(vm);
+    }
     be_raise(vm, kTypeError, nullptr);
   }
 }
