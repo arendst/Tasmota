@@ -512,6 +512,9 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_exc = 0;
     vm->counter_gc_kept = 0;
     vm->counter_gc_freed = 0;
+    vm->counter_mem_alloc = 0;
+    vm->counter_mem_free = 0;
+    vm->counter_mem_realloc = 0;
 #endif
     return vm;
 }
