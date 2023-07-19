@@ -21,6 +21,7 @@ extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
 extern int l_rtc(bvm *vm);
+extern int l_rtc_utc(bvm *vm);
 extern int l_time_dump(bvm *vm);
 extern int l_strftime(bvm *vm);
 extern int l_strptime(bvm *vm);
@@ -33,6 +34,7 @@ extern int l_delay(bvm *vm);
 extern int l_delay_microseconds(bvm *vm);
 extern int l_scaleuint(bvm *vm);
 extern int l_logInfo(bvm *vm);
+extern int l_loglevel(bvm *vm);
 extern int l_save(bvm *vm);
 extern int t_random_byte(bvm *vm);
 extern int l_locale(bvm *vm);
@@ -99,6 +101,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     millis, func(l_millis)
     time_reached, func(l_timereached)
     rtc, func(l_rtc)
+    rtc_utc, func(l_rtc_utc)
     time_dump, func(l_time_dump)
     strftime, func(l_strftime)
     strptime, func(l_strptime)
@@ -111,6 +114,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     delay_microseconds, func(l_delay_microseconds)
     scale_uint, func(l_scaleuint)
     log, func(l_logInfo)
+    loglevel, func(l_loglevel)
     save, func(l_save)
     locale, func(l_locale)
 
