@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Berry add `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
 - Berry add metrics for memory allocation/deallocation/reallocation
 - Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance
+- Berry add AES CCM decrypting in a single call to avoid any object allocation
 
 ### Breaking Changed
 

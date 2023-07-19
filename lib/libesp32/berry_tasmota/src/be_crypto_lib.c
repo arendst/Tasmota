@@ -14,8 +14,9 @@ extern int m_crypto_random(bvm *vm);
 extern int m_rsa_rsassa_pkcs1_v1_5(bvm *vm);
 
 extern int m_aes_ccm_init(bvm *vm);
-extern int m_aes_ccm_encryt(bvm *vm);
-extern int m_aes_ccm_decryt(bvm *vm);
+extern int m_aes_ccm_encrypt(bvm *vm);
+extern int m_aes_ccm_decrypt(bvm *vm);
+extern int m_aes_ccm_decrypt1(bvm *vm);
 extern int m_aes_ccm_tag(bvm *vm);
 
 extern int m_aes_gcm_init(bvm *vm);
@@ -134,9 +135,11 @@ class be_class_aes_ccm (scope: global, name: AES_CCM) {
     .p2, var
 
     init, func(m_aes_ccm_init)
-    encrypt, func(m_aes_ccm_encryt)
-    decrypt, func(m_aes_ccm_decryt)
+    encrypt, func(m_aes_ccm_encrypt)
+    decrypt, func(m_aes_ccm_decrypt)
     tag, func(m_aes_ccm_tag)
+
+    decrypt1, static_func(m_aes_ccm_decrypt1)
 }
 
 class be_class_aes_gcm (scope: global, name: AES_GCM) {
