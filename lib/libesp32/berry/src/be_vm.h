@@ -119,6 +119,9 @@ struct bvm {
     uint32_t counter_exc; /* counter for raised exceptions */
     uint32_t counter_gc_kept; /* counter for objects scanned by last gc */
     uint32_t counter_gc_freed; /* counter for objects freed by last gc */
+    uint32_t counter_mem_alloc; /* counter for memory allocations */
+    uint32_t counter_mem_free; /* counter for memory frees */
+    uint32_t counter_mem_realloc; /* counter for memory reallocations */
 
     uint32_t micros_gc0;
     uint32_t micros_gc1;

@@ -60,12 +60,18 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
 
     while (1) {
         /* Case 1: new allocation */
+#if BE_USE_PERF_COUNTERS
+        vm->counter_mem_alloc++;
+#endif
         if (!ptr || (old_size == 0)) {
             block = malloc_from_pool(vm, new_size);
         }
     
         /* Case 2: deallocate */
         else if (new_size == 0) {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_mem_free++;
+#endif
             if (ptr == NULL) { return NULL; }   /* safeguard */
 #if BE_USE_DEBUG_GC
             memset(ptr, 0xFF, old_size); /* fill the structure with invalid pointers */
@@ -76,6 +82,9 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
 
         /* Case 3: reallocate with a different size */
         else if (new_size && old_size) {        // TODO we already know they are not null TODO
+#if BE_USE_PERF_COUNTERS
+            vm->counter_mem_realloc++;
+#endif
             if (new_size <= POOL32_SIZE || old_size <=POOL32_SIZE) {
                 /* complex case with different pools */
                 if (new_size <= POOL16_SIZE && old_size <= POOL16_SIZE) {

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Matter mini-profiler (#19075)
 - Berry `_class` can be used in `static var` initialization code (#19088)
 - Berry add `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
+- Berry add metrics for memory allocation/deallocation/reallocation
 
 ### Breaking Changed
 
