@@ -15,6 +15,7 @@ extern int m_rsa_rsassa_pkcs1_v1_5(bvm *vm);
 
 extern int m_aes_ccm_init(bvm *vm);
 extern int m_aes_ccm_encrypt(bvm *vm);
+extern int m_aes_ccm_encrypt1(bvm *vm);
 extern int m_aes_ccm_decrypt(bvm *vm);
 extern int m_aes_ccm_decrypt1(bvm *vm);
 extern int m_aes_ccm_tag(bvm *vm);
@@ -140,6 +141,7 @@ class be_class_aes_ccm (scope: global, name: AES_CCM) {
     tag, func(m_aes_ccm_tag)
 
     decrypt1, static_func(m_aes_ccm_decrypt1)
+    encrypt1, static_func(m_aes_ccm_encrypt1)
 }
 
 class be_class_aes_gcm (scope: global, name: AES_GCM) {

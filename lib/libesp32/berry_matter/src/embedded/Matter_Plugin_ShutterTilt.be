@@ -96,7 +96,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -105,30 +105,30 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
     if   cluster == 0x0102              # ========== Window Covering 5.3 p.289 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0007          #  ---------- ConfigStatus / u8 ----------
-        return TLV.create_TLV(TLV.U1, 1 + 8 + 16)   # Operational + Lift Position Aware + Tilt Position Aware
+        return tlv_solo.set(TLV.U1, 1 + 8 + 16)   # Operational + Lift Position Aware + Tilt Position Aware
 
       elif attribute == 0x000F          #  ---------- CurrentPositionTiltPercent100ths / u8 ----------
         self.update_tilt_min_max()
         if self.tilt_min != nil && self.tilt_max != nil
           var tilt_percentage = tasmota.scale_uint(self.shadow_shutter_tilt - self.tilt_min, 0, self.tilt_max - self.tilt_min, 0, 10000)
-          return TLV.create_TLV(TLV.U2, tilt_percentage)
+          return tlv_solo.set(TLV.U2, tilt_percentage)
         else
-          return TLV.create_TLV(TLV.NULL, nil)                    # return invalid
+          return tlv_solo.set(TLV.NULL, nil)                    # return invalid
         end
       elif attribute == 0x000C          #  ---------- TargetPositionTiltPercent100ths / u16 ----------
         if self.tilt_min != nil && self.tilt_max != nil
           var tilt_percentage = tasmota.scale_uint(self.shadow_shutter_tilt - self.tilt_min, 0, self.tilt_max - self.tilt_min, 0, 10000)
-          return TLV.create_TLV(TLV.U2, tilt_percentage)
+          return tlv_solo.set(TLV.U2, tilt_percentage)
         else
-          return TLV.create_TLV(TLV.NULL, nil)                    # return invalid
+          return tlv_solo.set(TLV.NULL, nil)                    # return invalid
         end
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 3 + 4 + 16)    # Lift + Tilt + PA_LF + PA_TL
+        return tlv_solo.set(TLV.U4, 3 + 4 + 16)    # Lift + Tilt + PA_LF + PA_TL
       end
     end
     # else
-    return super(self).read_attribute(session, ctx)
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

@@ -93,7 +93,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -104,42 +104,42 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       self.update_shadow_lazy()
       self.update_inverted()
       if   attribute == 0x0000          #  ---------- Type / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
+        return tlv_solo.set(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x0005          #  ---------- NumberOfActuationsLift / u16 ----------
-        return TLV.create_TLV(TLV.U2, 0)
+        return tlv_solo.set(TLV.U2, 0)
       elif attribute == 0x0007          #  ---------- ConfigStatus / u8 ----------
-        return TLV.create_TLV(TLV.U1, 1 + 8)   # Operational + Lift Position Aware
+        return tlv_solo.set(TLV.U1, 1 + 8)   # Operational + Lift Position Aware
       elif attribute == 0x000D          #  ---------- EndProductType / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
+        return tlv_solo.set(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x000E          #  ---------- CurrentPositionLiftPercent100ths / u16 ----------
         if self.shadow_shutter_inverted == 0
           matter_position = (100 - self.shadow_shutter_pos) * 100
         else
           matter_position = self.shadow_shutter_pos * 100
         end
-        return TLV.create_TLV(TLV.U2, matter_position)
+        return tlv_solo.set(TLV.U2, matter_position)
       elif attribute == 0x000A          #  ---------- OperationalStatus / u8 ----------
         var op = self.shadow_shutter_direction == 0 ? 0 : (self.shadow_shutter_direction > 0 ? 1 : 2)
-        return TLV.create_TLV(TLV.U1, op)
+        return tlv_solo.set(TLV.U1, op)
       elif attribute == 0x000B          #  ---------- TargetPositionLiftPercent100ths / u16 ----------
         if self.shadow_shutter_inverted == 0
           matter_position = (100 - self.shadow_shutter_target) * 100
         else
           matter_position = self.shadow_shutter_target * 100
         end
-        return TLV.create_TLV(TLV.U2, matter_position)
+        return tlv_solo.set(TLV.U2, matter_position)
 
       elif attribute == 0x0017          #  ---------- Mode / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0)    # normal mode
+        return tlv_solo.set(TLV.U1, 0)    # normal mode
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 1 + 4)    # Lift + PA_LF
+        return tlv_solo.set(TLV.U4, 1 + 4)    # Lift + PA_LF
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 5)    # New data model format and notation
+        return tlv_solo.set(TLV.U4, 5)    # New data model format and notation
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

@@ -189,7 +189,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
     if alive
       # device is known to be reachable
       self.reachable = true
-      self.reachable_utc = tasmota.rtc()['utc']
+      self.reachable_utc = tasmota.rtc_utc()
     else
       self.reachable = false
     end
@@ -344,7 +344,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     var seconds = -1                      # default if no known value
     if self.reachable_utc != nil
-      seconds = tasmota.rtc()['utc'] - self.reachable_utc
+      seconds = tasmota.rtc_utc() - self.reachable_utc
     end
     return matter.seconds_to_dhm(seconds)
   end

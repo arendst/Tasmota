@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment
 - Berry updated syntax highlighting plugin for VSCode
+- Matter latency improvement for single attribute reads and single commands
 
 ### Fixed
 

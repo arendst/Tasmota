@@ -95,7 +95,7 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -105,29 +105,29 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
       self.update_shadow_lazy()
       if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
         if self.shadow_ct != nil
-          return TLV.create_TLV(TLV.U1, self.shadow_ct)
+          return tlv_solo.set(TLV.U1, self.shadow_ct)
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return TLV.create_TLV(TLV.U1, 2)# 2 = ColorTemperatureMireds
+        return tlv_solo.set(TLV.U1, 2)# 2 = ColorTemperatureMireds
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return tlv_solo.set(TLV.U1, 0)
       elif attribute == 0x400B          #  ---------- ColorTempPhysicalMinMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.ct_min)
+        return tlv_solo.set(TLV.U1, self.ct_min)
       elif attribute == 0x400C          #  ---------- ColorTempPhysicalMaxMireds / u2 ----------
-        return TLV.create_TLV(TLV.U1, self.ct_max)
+        return tlv_solo.set(TLV.U1, self.ct_max)
       
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x10)    # CT
+        return tlv_solo.set(TLV.U4, 0x10)    # CT
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x10)    # CT
+        return tlv_solo.set(TLV.U4, 0x10)    # CT
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
+        return tlv_solo.set(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
       end
       
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

@@ -851,21 +851,19 @@ be_local_closure(Matter_Session_update,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(last_used),
     /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(rtc),
-    /* K3   */  be_nested_str_weak(utc),
+    /* K2   */  be_nested_str_weak(rtc_utc),
     }),
     be_str_weak(update),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[ 5]) {  /* code */
       0xB8060200,  //  0000  GETNGBL	R1	K1
       0x8C040302,  //  0001  GETMET	R1	R1	K2
       0x7C040200,  //  0002  CALL	R1	1
-      0x94040303,  //  0003  GETIDX	R1	R1	K3
-      0x90020001,  //  0004  SETMBR	R0	K0	R1
-      0x80000000,  //  0005  RET	0
+      0x90020001,  //  0003  SETMBR	R0	K0	R1
+      0x80000000,  //  0004  RET	0
     })
   )
 );

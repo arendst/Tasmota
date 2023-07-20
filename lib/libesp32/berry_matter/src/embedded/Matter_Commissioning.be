@@ -235,7 +235,7 @@ class Matter_Commisioning_Context
     var raw = resp.encode_frame(pake2_raw)
 
     # log the fact that a new commissioning is starting
-    tasmota.log(format("MTR: New Commissioning (PASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
+    tasmota.log(format("MTR: New Commissioning (PASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port), 2)
 
     self.responder.send_response_frame(resp)
     return true
@@ -265,7 +265,7 @@ class Matter_Commisioning_Context
     end
 
     # send PakeFinished and compute session key
-    var created = tasmota.rtc()['utc']
+    var created = tasmota.rtc_utc()
     var session_keys = crypto.HKDF_SHA256().derive(session.__spake_Ke, bytes(), bytes().fromstring(self.SEKeys_Info), 48)
     var I2RKey = session_keys[0..15]
     var R2IKey = session_keys[16..31]
@@ -406,7 +406,7 @@ class Matter_Commisioning_Context
         var i2r = session_keys[0..15]
         var r2i = session_keys[16..31]
         var ac = session_keys[32..47]
-        var created = tasmota.rtc()['utc']
+        var created = tasmota.rtc_utc()
 
         # tasmota.log("MTR: ******************************", 4)
         # tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)
@@ -538,7 +538,7 @@ class Matter_Commisioning_Context
       var raw = resp.encode_frame(sigma2_raw)
   
       # log the fact that a new connection is starting
-      tasmota.log(format("MTR: New Connection (CASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port))
+      tasmota.log(format("MTR: New Connection (CASE id=%i) from [%s]:%i", session.__future_local_session_id, session._ip, session._port), 2)
       
       self.responder.send_response_frame(resp)
       return true
@@ -658,7 +658,7 @@ class Matter_Commisioning_Context
     var i2r = session_keys[0..15]
     var r2i = session_keys[16..31]
     var ac = session_keys[32..47]
-    var created = tasmota.rtc()['utc']
+    var created = tasmota.rtc_utc()
 
     # tasmota.log("MTR: ******************************", 4)
     # tasmota.log("MTR: I2RKey      =" + i2r.tohex(), 4)

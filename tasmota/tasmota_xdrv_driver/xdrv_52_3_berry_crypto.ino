@@ -358,8 +358,10 @@ extern "C" {
   // all-in-one decrypt function
   // decryption in place
   //
-  int32_t m_aes_ccm_decrypt1(struct bvm *vm);
-  int32_t m_aes_ccm_decrypt1(struct bvm *vm) {
+  int32_t m_aes_ccm_encrypt1_or_decryt1(bvm *vm, int encrypt);
+  int32_t m_aes_ccm_encrypt1(bvm *vm) { return m_aes_ccm_encrypt1_or_decryt1(vm, 1); }
+  int32_t m_aes_ccm_decrypt1(bvm *vm) { return m_aes_ccm_encrypt1_or_decryt1(vm, 0); }
+  int32_t m_aes_ccm_encrypt1_or_decryt1(bvm *vm, int encrypt) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 13 && be_isbytes(vm, 1)    // secret_key
                    && be_isbytes(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) // iv, iv_start, iv_len
@@ -432,16 +434,24 @@ extern "C" {
       }
       br_ccm_flip(&ccm_ctx);
 
-      br_ccm_run(&ccm_ctx, 0 /*decrypt*/, data, data_len);  // decrypt in place
+      br_ccm_run(&ccm_ctx, encrypt, data, data_len);  // decrypt in place
 
       // check tag
       // create a bytes buffer of 16 bytes
       uint8_t tag_computed[16] = {};
       br_ccm_get_tag(&ccm_ctx, tag_computed);
-      if (memcmp(tag_computed, tag, tag_len) == 0) {
+
+      if (encrypt) {
+        // copy the tag back
+        memcpy(tag, tag_computed, tag_len);
         be_pushbool(vm, btrue);
       } else {
-        be_pushbool(vm, bfalse);
+        // check that the tag match
+        if (memcmp(tag_computed, tag, tag_len) == 0) {
+          be_pushbool(vm, btrue);
+        } else {
+          be_pushbool(vm, bfalse);
+        }
       }
 
       // success

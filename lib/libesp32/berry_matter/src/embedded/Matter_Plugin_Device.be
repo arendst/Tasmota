@@ -55,7 +55,7 @@ class Matter_Plugin_Device : Matter_Plugin
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -63,13 +63,13 @@ class Matter_Plugin_Device : Matter_Plugin
     # ====================================================================================================
     if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
       if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
-        return TLV.create_TLV(TLV.U2, 0)      # no identification in progress
+        return tlv_solo.set(TLV.U2, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 0)      # IdentifyType = 0x00 None
+        return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # no features
+        return tlv_solo.set(TLV.U4, 0)    # no features
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # "new data model format and notation"
+        return tlv_solo.set(TLV.U4, 4)    # "new data model format and notation"
       end
 
     # ====================================================================================================
@@ -77,17 +77,17 @@ class Matter_Plugin_Device : Matter_Plugin
       if   attribute == 0x0000          #  ----------  ----------
         return nil                      # TODO
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)#
+        return tlv_solo.set(TLV.U4, 0)#
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)# "new data model format and notation"
+        return tlv_solo.set(TLV.U4, 4)# "new data model format and notation"
       end
 
     # ====================================================================================================
     elif cluster == 0x0005              # ========== Scenes 1.4 p.30 - no writable ==========
       if   attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
     # ====================================================================================================
@@ -111,7 +111,7 @@ class Matter_Plugin_Device : Matter_Plugin
         end
         return dtl
       else
-        return super(self).read_attribute(session, ctx)
+        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     # ====================================================================================================
@@ -119,26 +119,26 @@ class Matter_Plugin_Device : Matter_Plugin
       import string
 
       if   attribute == 0x0003          #  ---------- ProductName / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+        return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
-        return TLV.create_TLV(TLV.UTF1, self.get_name())
+        return tlv_solo.set(TLV.UTF1, self.get_name())
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
         var version_end = string.find(version_full, '(')
         if version_end > 0    version_full = version_full[0..version_end - 1]   end
-        return TLV.create_TLV(TLV.UTF1, version_full)
+        return tlv_solo.set(TLV.UTF1, version_full)
       elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
       else
-        return super(self).read_attribute(session, ctx)
+        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

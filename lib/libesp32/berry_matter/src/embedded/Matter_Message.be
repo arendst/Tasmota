@@ -171,8 +171,12 @@ class Matter_Frame
   #
   # Header is built from attributes
   # `payload` is a bytes() buffer for the app payload
-  def encode_frame(payload)
-    var raw = bytes()
+  #
+  # you can pass a `raw` bytes() object to be used
+  def encode_frame(payload, raw)
+    if raw == nil
+      raw = bytes(16 + (payload ? size(payload) : 0))
+    end
     # compute flags
     if self.flags == nil
       self.flags = 0x00
@@ -220,7 +224,7 @@ class Matter_Frame
       raw .. payload
     end
 
-    self.debug(raw)
+    # self.debug(raw)
     self.raw = raw
     return raw
   end
@@ -343,11 +347,15 @@ class Matter_Frame
   #############################################################
   # decrypt with I2S key
   # return cleartext or `nil` if failed
+  #
+  # frame.raw is decrypted in-place and the MIC is removed
+  # returns true if successful
   def decrypt()
     import crypto
     var session = self.session
     var raw = self.raw
-    var mic = raw[-16..]      # take last 16 bytes as signature
+    var payload_idx = self.payload_idx
+    var tag_len = 16
 
     # decrypt the message with `i2r` key
     var i2r = session.get_i2r()
@@ -357,6 +365,7 @@ class Matter_Frame
       # compute privacy key, p.71
       tasmota.log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
       var k = session.get_i2r_privacy()
+      var mic = raw[-16..]      # take last 16 bytes as signature
       var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
       var m = self.raw[4 .. self.payload_idx-1]
       var m_clear = crypto.AES_CTR(k).decrypt(m, n, 2)
@@ -364,11 +373,9 @@ class Matter_Frame
       self.raw = self.raw[0..3] + m_clear + m[self.payload_idx .. ]
     end
 
-    # use AES_CCM
-    var a = raw[0 .. self.payload_idx - 1]
-    var p = raw[self.payload_idx .. -17]
     # recompute nonce
-    var n = bytes()
+    var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
+    n.clear()
     n.add(self.flags, 1)
     n.add(self.message_counter, 4)
     if self.source_node_id
@@ -381,28 +388,26 @@ class Matter_Frame
     end
 
     # tasmota.log("MTR: ******************************", 4)
+    # tasmota.log("MTR: raw         =" + raw.tohex(), 4)
     # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    # tasmota.log("MTR: p           =" + p.tohex(), 4)
-    # tasmota.log("MTR: a           =" + a.tohex(), 4)
+    # tasmota.log("MTR: p           =" + raw[payload_idx .. -17].tohex(), 4)
+    # tasmota.log("MTR: a           =" + raw[0 .. payload_idx - 1].tohex(), 4)
     # tasmota.log("MTR: n           =" + n.tohex(), 4)
-    # tasmota.log("MTR: mic         =" + mic.tohex(), 4)
+    # tasmota.log("MTR: mic         =" + raw[-16..].tohex(), 4)
 
     # decrypt
-    var aes = crypto.AES_CCM(i2r, n, a, size(p), 16)
-    var cleartext = aes.decrypt(p)
-    var tag = aes.tag()
-
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: cleartext   =" + cleartext.tohex(), 4)
-    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    # tasmota.log("MTR: ******************************", 4)
-
-    if tag != mic
+    var ret = crypto.AES_CCM.decrypt1(i2r,                    # secret key
+                                      n, 0, size(n),          # nonce / IV
+                                      raw, 0, payload_idx,    # aad
+                                      raw, payload_idx, size(raw) - payload_idx - tag_len,  # encrypted - decrypted in-place
+                                      raw, size(raw) - tag_len, tag_len)  # MIC
+    if ret
+      # succcess
+      raw.resize(size(raw) - tag_len)   # remove MIC
+    else
       tasmota.log("MTR: rejected packet due to invalid MIC", 3)
-      return nil
     end
-
-    return cleartext
+    return ret
   end
 
   #############################################################
@@ -413,15 +418,15 @@ class Matter_Frame
     import crypto
     var raw = self.raw
     var session = self.session
+    var payload_idx = self.payload_idx
+    var tag_len = 16
 
     # encrypt the message with `i2r` key
     var r2i = session.get_r2i()
 
-    # use AES_CCM
-    var a = raw[0 .. self.payload_idx - 1]
-    var p = raw[self.payload_idx .. ]
     # recompute nonce
-    var n = bytes()
+    var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
+    n.clear()
     n.add(self.flags, 1)
     n.add(self.message_counter, 4)
     if session.is_CASE() && session.get_device_id()
@@ -429,30 +434,14 @@ class Matter_Frame
     end
     n.resize(13)        # add zeros
 
-    # tasmota.log("MTR: cleartext: " + self.raw.tohex(), 4)
+    # encrypt
+    raw.resize(size(raw) + tag_len)   # make room for MIC
+    var ret = crypto.AES_CCM.encrypt1(r2i,                    # secret key
+                                      n, 0, size(n),          # nonce / IV
+                                      raw, 0, payload_idx,    # aad
+                                      raw, payload_idx, size(raw) - payload_idx - tag_len,  # encrypted - decrypted in-place
+                                      raw, size(raw) - tag_len, tag_len)  # MIC
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: r2i         =" + r2i.tohex(), 4)
-    # tasmota.log("MTR: p           =" + p.tohex(), 4)
-    # tasmota.log("MTR: a           =" + a.tohex(), 4)
-    # tasmota.log("MTR: n           =" + n.tohex(), 4)
-
-    # decrypt
-    var aes = crypto.AES_CCM(r2i, n, a, size(p), 16)
-    var ciphertext = aes.encrypt(p)
-    var tag = aes.tag()
-
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: ciphertext  =" + ciphertext.tohex(), 4)
-    # tasmota.log("MTR: tag         =" + tag.tohex(), 4)
-    # tasmota.log("MTR: ******************************", 4)
-
-    # packet is good, put back content in raw
-    self.raw.resize(self.payload_idx)              # remove cleartext payload
-    self.raw .. ciphertext                          # add ciphertext
-    self.raw .. tag                                 # add MIC
-
-    # tasmota.log("MTR: encrypted: " + self.raw.tohex(), 4)
   end
 
   #############################################################

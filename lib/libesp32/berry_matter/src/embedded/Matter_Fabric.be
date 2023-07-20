@@ -75,7 +75,7 @@ class Matter_Fabric : Matter_Expirable
     self._store = store
     self._sessions = matter.Expirable_list()
     self.fabric_label = ""
-    self.created = tasmota.rtc()['utc']
+    self.created = tasmota.rtc_utc()
     # init group counters
     self._counter_group_data_snd_impl = matter.Counter()
     self._counter_group_ctrl_snd_impl  = matter.Counter()

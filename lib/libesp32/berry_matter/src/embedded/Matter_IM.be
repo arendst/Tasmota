@@ -28,30 +28,53 @@ class Matter_IM
   var device
   var subs_shop                        # subscriptions shop
 
-  var send_queue                  # list of IM_Message queued for sending as part of exchange-id
+  var send_queue                      # list of IM_Message queued for sending as part of exchange-id
 
+  var read_request_solo               # instance of ReadRequestMessage_solo to optimize single reads
+  var invoke_request_solo             # instance of InvokeRequestMessage_solo to optimize single reads
+  var tlv_solo                        # instance of Matter_TLV_item for simple responses
+  
   def init(device)
     self.device = device
     self.send_queue = []
     self.subs_shop = matter.IM_Subscription_Shop(self)
+    self.read_request_solo = matter.ReadRequestMessage_solo()
+    self.invoke_request_solo = matter.InvokeRequestMessage_solo()
+    self.tlv_solo = matter.TLV.Matter_TLV_item()
   end
 
   def process_incoming(msg)
-    # messages are always TLV, decode payload
-    # tasmota.log("MTR: received IM message " + matter.inspect(msg), 3)
 
+    var opcode = msg.opcode
+
+    # Fast-Track processing 
+    # first pass is optimized for simple frequent messages and avoids complete decoding of TLV
+    if   opcode == 0x02   # Read Request
+      var read_request_solo = self.read_request_solo.from_raw(msg.raw, msg.app_payload_idx)
+      if read_request_solo != nil
+        # tasmota.log(f"MTR: process_incoming {read_request_solo=}")
+        return self.process_read_request_solo(msg, read_request_solo)
+      end
+    elif opcode == 0x08   # Invoke Request
+      var invoke_request_solo = self.invoke_request_solo.from_raw(msg.raw, msg.app_payload_idx)
+      # tasmota.log(f"MTR: {invoke_request_solo=} {msg.raw[msg.app_payload_idx .. ].tohex()} {msg.app_payload_idx=} {msg.raw.tohex()}")
+      if invoke_request_solo != nil
+        return self.process_invoke_request_solo(msg, invoke_request_solo)
+      end
+    end
+
+    # tasmota.log("MTR: received IM message " + matter.inspect(msg), 3)
     var val = matter.TLV.parse(msg.raw, msg.app_payload_idx)
 
     # tasmota.log("MTR: IM TLV: " + str(val), 3)
 
-    var InteractionModelRevision = val.findsubval(0xFF)
+    # var InteractionModelRevision = val.findsubval(0xFF)
     # tasmota.log("MTR: InteractionModelRevision=" + (InteractionModelRevision != nil ? str(InteractionModelRevision) : "nil"), 4)
 
-    var opcode = msg.opcode
     if   opcode == 0x01   # Status Response
       return self.process_status_response(msg, val)
     elif opcode == 0x02   # Read Request
-      self.send_ack_now(msg)
+      # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
       return self.process_read_request(msg, val)
     elif opcode == 0x03   # Subscribe Request
       self.send_ack_now(msg)
@@ -216,48 +239,30 @@ class Matter_IM
       var TLV = matter.TLV
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
+
       # Special case to report unsupported item, if pi==nil
-      var res = (pi != nil) ? pi.read_attribute(session, ctx) : nil
+      var res = (pi != nil) ? pi.read_attribute(session, ctx, self.tlv_solo) : nil
       var found = true                # stop expansion since we have a value
       var a1_raw                      # this is the bytes() block we need to add to response (or nil)
       if res != nil
-        var res_str = str(res)        # get the value with anonymous tag before it is tagged, for logging
+        var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
 
-        var a1 = matter.AttributeReportIB()
-        a1.attribute_data = matter.AttributeDataIB()
-        a1.attribute_data.data_version = 1
-        a1.attribute_data.path = matter.AttributePathIB()
-        a1.attribute_data.path.endpoint = ctx.endpoint
-        a1.attribute_data.path.cluster = ctx.cluster
-        a1.attribute_data.path.attribute = ctx.attribute
-        a1.attribute_data.data = res
-
-        var a1_tlv = a1.to_TLV()
-        var a1_len = a1_tlv.encode_len()
-        var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
-        a1_raw = a1_tlv.tlv2raw(a1_bytes)
-        # tasmota.log(format("MTR: guessed len=%i actual=%i '%s'", a1_len, size(a1_raw), a1_raw.tohex()), 2)
+        # encode directly raw bytes()
+        a1_raw = bytes(48)      # pre-reserve 48 bytes
+        self.attributedata2raw(a1_raw, ctx, res)
 
         if !no_log
           tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - %s", session.local_session_id, str(ctx), attr_name, res_str), 3)
         end          
       elif ctx.status != nil
         if direct                           # we report an error only if a concrete direct read, not with wildcards
-          var a1 = matter.AttributeReportIB()
-          a1.attribute_status = matter.AttributeStatusIB()
-          a1.attribute_status.path = matter.AttributePathIB()
-          a1.attribute_status.status = matter.StatusIB()
-          a1.attribute_status.path.endpoint = ctx.endpoint
-          a1.attribute_status.path.cluster = ctx.cluster
-          a1.attribute_status.path.attribute = ctx.attribute
-          a1.attribute_status.status.status = ctx.status
+          # encode directly raw bytes()
+          a1_raw = bytes(48)      # pre-reserve 48 bytes
+          self.attributestatus2raw(a1_raw, ctx, ctx.status)
 
-          var a1_tlv = a1.to_TLV()
-          var a1_len = a1_tlv.encode_len()
-          var a1_bytes = bytes(a1_len)        # pre-size bytes() to the actual size
-          a1_raw = a1_tlv.tlv2raw(a1_bytes)
-
-          tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
+          if tasmota.loglevel(3)
+            tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
+          end
         end
       else
         tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
@@ -324,19 +329,422 @@ class Matter_IM
   end
 
   #############################################################
+  # path2raw
+  #
+  # Encodes endpoint/cluster/attribute as `AttributePathIB` elements
+  # Takes sub-tag
+  #
+  #   1 = AttributePathIB
+  #     0 = EnableTagCompression bool opt
+  #     1 = Node
+  #     2 = Endpoint
+  #     3 = Cluste
+  #     4 = Attribute
+  #     5 = ListIndex (opt)
+  #
+  #     3701 		1 = LIST
+  #       2402 01    	2 = 1U (U1)
+  #       2403 39 	3 = 0x39U (U1)
+  #       2404 11 	4 = 0x11U (U1)
+  #     18
+  def path2raw(raw, ctx, sub_tag)
+    # open struct
+    raw.add(0x37, 1)              # add 37
+    raw.add(sub_tag, 1)           # add sub_tag
+    # add endpoint
+    if ctx.endpoint <= 0xFF       # endpoint is 16 bits max
+      raw.add(0x2402, -2)         # add 2402
+      raw.add(ctx.endpoint, 1)
+    else
+      raw.add(0x2502, -2)         # add 2502
+      raw.add(ctx.endpoint, 2)
+    end
+    # add cluster
+    if ctx.cluster <= 0xFF        # cluster is 32 bits max
+      raw.add(0x2403, -2)         # add 2403
+      raw.add(ctx.cluster, 1)
+    elif ctx.cluster <= 0xFFFF
+      raw.add(0x2503, -2)         # add 2503
+      raw.add(ctx.cluster, 2)
+    else
+      raw.add(0x2603, -2)         # add 2603
+      raw.add(ctx.cluster, 4)
+    end
+    # add attribute
+    if ctx.attribute <= 0xFF       # cluster is 32 bits max
+      raw.add(0x2404, -2)          # add 2404
+      raw.add(ctx.attribute, 1)
+    elif ctx.attribute <= 0xFFFF
+      raw.add(0x2504, -2)          # add 2504
+      raw.add(ctx.attribute, 2)
+    else
+      raw.add(0x2604, -2)          # add 2604
+      raw.add(ctx.attribute, 4)
+    end
+    raw.add(0x18, 1)               # add 18
+  end
+
+  #############################################################
+  # attributedata2raw
+  #
+  # generate a raw version of AttributeDataIB
+  #
+  # Typical answer
+  #
+  # AttributeReportIB
+  # 0 = AttributeStatusIB
+  # 1 = AttributeDataIB
+  #   0 = DataVersion U1
+  #   1 = AttributePathIB
+  #     0 = EnableTagCompression bool opt
+  #     1 = Node
+  #     2 = Endpoint
+  #     3 = Cluste
+  #     4 = Attribute
+  #     5 = ListIndex (opt)
+  #   2 = Data
+  #
+  # 153601.15350124000137012402012403392404111829021818.1824FF0118
+  # 15350124000137012402012403392404111829021818
+  # 1535012400013701
+  #   240201240339240411
+  # 1829021818
+  #
+  # 15
+  #   3501  	1 = {}
+  #     2400 01 	0 = 1U  (U1)
+  #     3701 		1 = LIST
+  #       2402 01    	2 = 1U (U1)
+  #       2403 39 	3 = 0x39U (U1)
+  #       2404 11 	4 = 0x11U (U1)
+  #     18
+  #     2902		2 = True
+  #   18
+  # 18
+  def attributedata2raw(raw, ctx, val)
+    raw.add(0x15350124, -4)             # add 15350124
+    raw.add(0x0001, -2)                 # add 0001
+
+    self.path2raw(raw, ctx, 0x01)
+    
+    # add value with tag 2
+    val.tag_sub = 2
+    val.tlv2raw(raw)
+    # close 2 structs
+    raw.add(0x1818, -2)
+  end
+
+  #############################################################
+  # attributedata2raw
+  #
+  # generate a raw version of AttributeStatusIB
+  #
+  #
+  # Typical answer
+  #
+  # AttributeReportIB
+  # 0 = AttributeStatusIB
+  #   0 = AttributePathIB
+  #     0 = EnableTagCompression bool opt
+  #     1 = Node
+  #     2 = Endpoint
+  #     3 = Cluste
+  #     4 = Attribute
+  #     5 = ListIndex (opt)
+  #   1 = StatusIB
+  #     0 = Status (u1)
+  #     1 = ClusterStatus (u1)
+  # 1 = AttributeDataIB
+  #
+  # 15360115350037002402012403022404031835012400041818181824FF0118
+  # 153601 1535003700 - 2402012403022404031835012400041818181824FF0118
+  # 
+  # 15
+  #   3601
+  #
+  #     15
+  #       3500 0 = struct
+  #         3700 0 = list
+  #           240201 2 = 1U endpoint
+  #           240302 3 = 2U cluster
+  #           240403 4 = 3U attribute
+  #         18
+  #         3501 1 = struct
+  #           240004 0 = 4U status
+  #         18
+  #       18
+  #     18
+  #
+  #   18
+  #   24FF01
+  # 18
+  def attributestatus2raw(raw, ctx, status)
+    raw.add(0x15, 1)                    # add 15
+    raw.add(0x3500, -2)                 # add 3500
+
+    self.path2raw(raw, ctx, 0x00)
+    
+    raw.add(0x3501, -2)            # add 3501 for status
+    # status
+    if ctx.status <= 255
+      raw.add(0x2400, -2)          # add 2400
+      raw.add(ctx.status, 1)
+    else
+      raw.add(0x2500, -2)          # add 2500
+      raw.add(ctx.status, 2)
+    end
+    # close
+    raw.add(0x1818, -2)            # add 1818
+    raw.add(0x18, 1)               # add 18
+  end
+
+  #############################################################
+  # attributedata2raw
+  #
+  # generate a raw version of InvokeResponseIB()
+  # Typical answer
+  #
+  # 1535013700240011240122240244183501240000181818
+  #
+  # 0 = CommandDataIB
+  #   0 = CommandPathIB
+  #     0 = endpoint u2
+  #     1 = cluster u4
+  #     2 = command u4
+  #   1 = <fields>
+  # 1 = CommandStatusIB
+  #   0 = CommandPathIB
+  #     0 = endpoint u2
+  #     1 = cluster u4
+  #     2 = command u4
+  #   1 = StatusIB
+  #     0 = status u1
+  #     1 = ClusterStatus u1
+  #
+  # 1535013700240011240122240244183501240000181818
+  # 15
+  #   3501 1 = struct
+  #     3700 0 = list
+  #       240011 0 = endpoint
+  #       240122 1 = cluster
+  #       240244 2 = command
+  #     18
+  #     3501 1 = struct
+  #       240000 0 = 0 (status)
+  #     18
+  #   18
+  # 18
+  #
+  # 1535003700240011240122240244182401031818
+  # 15
+  #   3500 0 = struct
+  #     3700 0 = list
+  #       240011 0 = endpoint
+  #       240122 1 = cluster
+  #       240244 2 = command
+  #     18
+  #     240103 1 = <field>
+  #   18
+  # 18
+  def invokeresponse2raw(raw, ctx, val)
+    raw.add(0x15, 1)                    # add 15
+    if val == nil
+      raw.add(0x3501, -2)                 # add 3500
+    else
+      raw.add(0x3500, -2)                 # add 3500
+    end
+    raw.add(0x3700, -2)                 # add 3700
+    # add endpoint
+    if ctx.endpoint <= 0xFF       # endpoint is 16 bits max
+      raw.add(0x2400, -2)         # add 2400
+      raw.add(ctx.endpoint, 1)
+    else
+      raw.add(0x2500, -2)         # add 2500
+      raw.add(ctx.endpoint, 2)
+    end
+    # add cluster
+    if ctx.cluster <= 0xFF        # cluster is 32 bits max
+      raw.add(0x2401, -2)         # add 2401
+      raw.add(ctx.cluster, 1)
+    elif ctx.cluster <= 0xFFFF
+      raw.add(0x2501, -2)         # add 2501
+      raw.add(ctx.cluster, 2)
+    else
+      raw.add(0x2601, -2)         # add 2601
+      raw.add(ctx.cluster, 4)
+    end
+    # add attribute
+    if ctx.command <= 0xFF       # cluster is 32 bits max
+      raw.add(0x2402, -2)          # add 2402
+      raw.add(ctx.command, 1)
+    elif ctx.command <= 0xFFFF
+      raw.add(0x2502, -2)          # add 2502
+      raw.add(ctx.command, 2)
+    else
+      raw.add(0x2602, -2)          # add 2602
+      raw.add(ctx.command, 4)
+    end
+    raw.add(0x18, 1)               # add 18
+
+    # either value or statuc
+    if val == nil
+      var status = ctx.status
+      if status == nil  status = matter.SUCCESS end
+      raw.add(0x3501, -2)         # add 3501
+      raw.add(0x2400, -2)         # add 2400
+      raw.add(ctx.status, 1)      # add status:1
+      raw.add(0x18, 1)            # add 18
+    else
+      val.tag_sub = 1             # set sub_tag for reponse
+      val.tlv2raw(raw)
+    end
+    # close
+    raw.add(0x1818, -2)           # add 1818
+  end
+
+  #############################################################
   # process IM 0x02 Read Request
   #
   # val is the TLV structure
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_read_request(msg, val)
-    self.device.profiler.log("read_request_start")
+    matter.profiler.log("read_request_start")
+    # matter.profiler.log(str(val))
     var query = matter.ReadRequestMessage().from_TLV(val)
+    # matter.profiler.log(str(query))
     if query.attributes_requests != nil
       var ret = self._inner_process_read_request(msg.session, query)
       self.send_report_data(msg, ret)
     end
 
+    return true
+  end
+
+  #############################################################
+  # process IM 0x02 Read Request
+  #
+  # val is the TLV structure
+  # returns `true` if processed, `false` if silently ignored,
+  # or raises an exception
+  def process_read_request_solo(msg, ctx)
+    # matter.profiler.log("read_request_solo start")
+    # matter.profiler.log(str(val))
+    # var query = matter.ReadRequestMessage().from_TLV(val)
+    # matter.profiler.log("read_request_start-TLV")
+    
+    # prepare fallback error
+    ctx.status = matter.INVALID_ACTION
+
+    # TODO
+    # find pi for this endpoint/cluster/attribute
+    var pi = self.device.process_attribute_read_solo(ctx)
+    var res = nil
+    # matter.profiler.log("read_request_solo pi ok")
+    # tasmota.log(f"MTR: process_read_request_solo {pi=}")
+
+    var raw                      # this is the bytes() block we need to add to response (or nil)
+    if pi != nil
+      ctx.status = matter.UNSUPPORTED_ATTRIBUTE    # new fallback error
+      res = pi.read_attribute(msg.session, ctx, self.tlv_solo)
+    end
+    matter.profiler.log("read_request_solo read done")
+
+    if res != nil
+
+      # encode directly raw bytes()
+      raw = bytes(48)      # pre-reserve 48 bytes
+
+      raw.add(0x15, 1)                    # add 15
+      raw.add(0x3601, -2)                 # add 3601
+
+      self.attributedata2raw(raw, ctx, res)
+
+      # add suffix 1824FF0118
+      raw.add(0x1824FF01, -4)        # add 1824FF01
+      raw.add(0x18, 1)               # add 18
+
+      # matter.profiler.log("read_request_solo raw done")
+
+    elif ctx.status != nil
+      
+      # encode directly raw bytes()
+      raw = bytes(48)      # pre-reserve 48 bytes
+
+      raw.add(0x15, 1)                    # add 15
+      raw.add(0x3601, -2)                 # add 3601
+
+      self.attributestatus2raw(raw, ctx, ctx.status)
+      
+      # add suffix 1824FF0118
+      raw.add(0x1824FF01, -4)        # add 1824FF01
+      raw.add(0x18, 1)               # add 18
+
+    else
+      tasmota.log(f"MTR: >Read_Attr ({msg.session.local_session_id:6i}) {ctx} - IGNORED", 3)
+      return false
+    end
+
+    # matter.profiler.log("read_request_solo res ready")
+    # tasmota.log(f"MTR: process_read_request_solo {raw=}")
+
+    # send packet
+    # self.send_report_data_solo(msg, ret)
+    # var report_solo = matter.IM_ReportData_solo(msg, ret)
+    var resp = msg.build_response(0x05 #-Report Data-#, true)
+
+    # super(self).reset(msg, 0x05 #-Report Data-#, true)
+    # matter.profiler.log("read_request_solo report_solo")
+
+    # send_im()
+    # report_solo.send_im(self.device.message_handler)
+    var responder = self.device.message_handler
+    # matter.profiler.log("read_request_solo send_im-1")
+    # if tasmota.loglevel(3)    # TODO remove before flight
+    #   tasmota.log(f">>>: data_raw={raw.tohex()}", 3)
+    # end
+    # matter.profiler.log("read_request_solo send_im-2")
+    var msg_raw = msg.raw
+    msg_raw.clear()
+    resp.encode_frame(raw, msg_raw)    # payload in cleartext
+    # matter.profiler.log("read_request_solo send_im-3")
+    resp.encrypt()
+    # matter.profiler.log("read_request_solo send_im-encrypted")
+    if tasmota.loglevel(4)
+      tasmota.log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+    end
+
+    responder.send_response_frame(resp)
+
+    # postpone lengthy operations after sending back response
+    matter.profiler.log("RESPONSE SENT")
+
+    var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
+    attr_name = attr_name ? " (" + attr_name + ")" : ""
+
+    if res != nil
+      var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
+      end
+      # if matter.profiler.active && tasmota.loglevel(3)
+      #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight
+      # end
+    elif ctx.status != nil
+      var unsupported_attribute = (ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : "")
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - STATUS: 0x{ctx.status:02X} {unsupported_attribute}", 3)
+      end
+      # if matter.profiler.active && tasmota.loglevel(3)
+      #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight
+      # end
+    else
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - IGNORED", 3)
+      end
+    end
+
+    # matter.profiler.log("read_request_solo end")
     return true
   end
 
@@ -384,7 +792,7 @@ class Matter_IM
     # import debug
     # structure is `ReadRequestMessage` 10.6.2 p.558
     # tasmota.log("MTR: IM:invoke_request processing start", 4)
-    self.device.profiler.log("invoke_request_start")
+    matter.profiler.log("invoke_request_start")
     var ctx = matter.Path()
     ctx.msg = msg
 
@@ -404,44 +812,39 @@ class Matter_IM
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
         var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
+        matter.profiler.log("COMMAND DONE")
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
         tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -# )
         # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
         ctx.log = nil
-        var a1 = matter.InvokeResponseIB()
+        var raw = bytes(32)
+        # var a1 = matter.InvokeResponseIB()
         if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
-          a1.status = matter.CommandStatusIB()
-          a1.status.command_path = matter.CommandPathIB()
-          a1.status.command_path.endpoint = ctx.endpoint
-          a1.status.command_path.cluster = ctx.cluster
-          a1.status.command_path.command = ctx.command
-          a1.status.status = matter.StatusIB()
-          a1.status.status.status = matter.SUCCESS
-          ret.invoke_responses.push(a1)
-          tasmota.log(format("MTR: <Replied   (%6i) OK exch=%i", msg.session.local_session_id, msg.exchange_id), 3)
+          ctx.status = matter.SUCCESS
+          self.invokeresponse2raw(raw, ctx, nil)
+          ret.invoke_responses.push(raw)
+          if tasmota.loglevel(3)
+            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
+          end
         elif res != nil
-          a1.command = matter.CommandDataIB()
-          a1.command.command_path = matter.CommandPathIB()
-          a1.command.command_path.endpoint = ctx.endpoint
-          a1.command.command_path.cluster = ctx.cluster
-          a1.command.command_path.command = ctx.command
-          a1.command.command_fields = res
-          ret.invoke_responses.push(a1)
+          self.invokeresponse2raw(raw, ctx, res)
+          ret.invoke_responses.push(raw)
 
           cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
-          tasmota.log(format("MTR: <Replied   (%6i) %s %s", msg.session.local_session_id, str(ctx), cmd_name ? cmd_name : ""), 3)
+          if !cmd_name  cmd_name = "" end
+          if tasmota.loglevel(3)
+            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
+          end
         elif ctx.status != nil
-          a1.status = matter.CommandStatusIB()
-          a1.status.command_path = matter.CommandPathIB()
-          a1.status.command_path.endpoint = ctx.endpoint
-          a1.status.command_path.cluster = ctx.cluster
-          a1.status.command_path.command = ctx.command
-          a1.status.status = matter.StatusIB()
-          a1.status.status.status = ctx.status
-          ret.invoke_responses.push(a1)
-          tasmota.log(format("MTR: <Replied   (%6i) Status=0x%02X exch=%i", msg.session.local_session_id, ctx.status, msg.exchange_id), 3)
+          self.invokeresponse2raw(raw, ctx, nil)
+          ret.invoke_responses.push(raw)
+          if tasmota.loglevel(3)
+            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
+          end
         else
-          tasmota.log(format("MTR: _Ignore    (%6i) exch=%i", msg.session.local_session_id, msg.exchange_id), 3)
+          if tasmota.loglevel(3)
+            tasmota.log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
+          end
           # ignore if content is nil and status is undefined
         end
       end
@@ -457,6 +860,78 @@ class Matter_IM
       end
       return true
     end
+  end
+
+  #############################################################
+  # process IM 0x08 Invoke Request
+  #
+  # val is the TLV structure
+  # returns `true` if processed, `false` if silently ignored,
+  # or raises an exception
+  def process_invoke_request_solo(msg, ctx)
+    # import debug
+    matter.profiler.log("invoke_request_solo_start")
+    ctx.msg = msg
+    ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
+
+    var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
+    var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
+    var res = self.device.invoke_request(msg.session, ctx.command_fields, ctx)
+    matter.profiler.log("COMMAND DONE")
+    var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
+    var cmd_log_level = ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -#
+    if tasmota.loglevel(cmd_log_level)
+      tasmota.log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), cmd_log_level)
+    end
+    # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
+    ctx.log = nil
+    var raw = bytes(48)
+
+    # prefix 1528003601
+    raw.add(0x15280036, -4)       # add 15280036
+    raw.add(0x01, 1)              # add 01
+    if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
+      ctx.status = matter.SUCCESS
+      self.invokeresponse2raw(raw, ctx, nil)
+
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
+      end
+    elif res != nil
+      self.invokeresponse2raw(raw, ctx, res)
+
+      if !cmd_name  cmd_name = "" end
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
+      end
+    elif ctx.status != nil
+      self.invokeresponse2raw(raw, ctx, nil)
+
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
+      end
+    else
+      if tasmota.loglevel(3)
+        tasmota.log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
+      end
+      # ignore if content is nil and status is undefined
+      return false
+    end
+    # add suffix 1824FF0118
+    raw.add(0x1824FF01, -4)       # add 1824FF01
+    raw.add(0x18, 1)              # add 18
+
+    # tasmota.log(f"MTR: raw={raw.tohex()}", 3)
+    var resp = msg.build_response(0x09 #-Invoke Response-#, true)
+    var responder = self.device.message_handler
+    var msg_raw = msg.raw
+    msg_raw.clear()
+    resp.encode_frame(raw, msg_raw)    # payload in cleartext
+    resp.encrypt()
+    responder.send_response_frame(resp)
+    matter.profiler.log("RESPONSE SENT")
+
+    return true
   end
 
   #############################################################

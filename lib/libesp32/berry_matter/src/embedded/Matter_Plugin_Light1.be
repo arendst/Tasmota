@@ -71,7 +71,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -80,23 +80,23 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, self.shadow_bri)
+        return tlv_solo.set(TLV.U1, self.shadow_bri)
       elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 0)
+        return tlv_solo.set(TLV.U1, 0)
       elif attribute == 0x0003          #  ---------- MaxLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, 254)
+        return tlv_solo.set(TLV.U1, 254)
       elif attribute == 0x000F          #  ---------- Options / map8 ----------
-        return TLV.create_TLV(TLV.U1, 0)    #
+        return tlv_solo.set(TLV.U1, 0)    #
       elif attribute == 0x0011          #  ---------- OnLevel / u1 ----------
-        return TLV.create_TLV(TLV.U1, self.shadow_bri)
+        return tlv_solo.set(TLV.U1, self.shadow_bri)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0X01)    # OnOff
+        return tlv_solo.set(TLV.U4, 0X01)    # OnOff
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 5)    # "new data model format and notation"
+        return tlv_solo.set(TLV.U4, 5)    # "new data model format and notation"
       end
       
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 
