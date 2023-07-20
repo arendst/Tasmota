@@ -1,7 +1,7 @@
 /*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
-  Copyright (C) 2022  Stefan Bode
+  Copyright (C) 2023  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -89,8 +89,9 @@ void DeepSleepReInit(void)
   RtcSettings.ultradeepsleep = 0;
 }
 
-void DeepSleepPrepare(void)
+void DeepSleepStart(void)
 {
+  char stopic[TOPSZ];
   // Deepsleep_slip is ideally 10.000 == 100%
   // Typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
   // Therefore all values >110% or <90% will be resetted to 100% to avoid crazy sleep times.
@@ -133,16 +134,17 @@ void DeepSleepPrepare(void)
   // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - LocalTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - LocalTime();
   deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - LocalTime());
 
-  // stat/tasmota/DEEPSLEEP = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
-  Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_DEEPSLEEP));
+  // Sending Deepsleep parameters to automation for react
+  Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"" D_PRFX_DEEPSLEEP "\":%d,\"Wakeup\":%d}}"), (char*)dt.c_str(), LocalTime(), RtcSettings.nextwakeup);
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_PRFX_DEEPSLEEP), true);
 
-//  Response_P(S_LWT_OFFLINE);
-//  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
-}
+  // Change LWT Topic to Sleep to ensure automation see different state
+  //GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
+  //Response_P(PSTR(D_PRFX_DEEPSLEEP));
+  //MqttPublish(stopic, true);
 
-void DeepSleepStart(void)
-{
+  //MqttClient.disconnect(true);
+  //EspClient.stop();
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
@@ -155,7 +157,9 @@ void DeepSleepStart(void)
   esp_deep_sleep_start();
 #endif  // ESP32
   yield();
+
 }
+
 
 void DeepSleepEverySecond(void)
 {
@@ -168,12 +172,8 @@ void DeepSleepEverySecond(void)
   if (!deepsleep_flag) { return; }
 
   if (DeepSleepEnabled()) {
-    if (DEEPSLEEP_START_COUNTDOWN == deepsleep_flag) {  // Allow 4 seconds to update web console before deepsleep
+    if (DEEPSLEEP_START_COUNTDOWN == deepsleep_flag) {  
       SettingsSaveAll();
-      DeepSleepPrepare();
-    }
-    deepsleep_flag--;
-    if (deepsleep_flag <= 0) {
       DeepSleepStart();
     }
   } else {
@@ -197,6 +197,7 @@ void CmndDeepsleepTime(void)
         Settings->tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
       }
     }
+    TasDiscovery();
   }
   ResponseCmndNumber(Settings->deepsleep);
 }

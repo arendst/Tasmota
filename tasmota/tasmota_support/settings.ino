@@ -980,6 +980,7 @@ void SettingsDefaultSet2(void) {
   if (Settings->sleep < 50) {
     Settings->sleep = 50;                // Default to 50 for sleep, for now
   }
+  Settings->battery_level_percent = 101;
 
   // Module
   flag.interlock |= APP_INTERLOCK_MODE;
