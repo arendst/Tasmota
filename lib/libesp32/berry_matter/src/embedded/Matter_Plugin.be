@@ -147,15 +147,31 @@ class Matter_Plugin
   def get_endpoint()
     return self.endpoint
   end
-  def get_cluster_list(ep)
+  def get_cluster_list()
     var ret = []
     for k: self.clusters.keys()
       ret.push(k)
     end
     return ret
   end
-  def get_attribute_list(ep, cluster)
+  def contains_cluster(cluster)
+    return self.clusters.contains(cluster)
+  end
+  def get_attribute_list(cluster)
     return self.clusters.find(cluster, [])
+  end
+  def contains_attribute(cluster, attribute)
+    var attr_list = self.clusters.find(cluster)
+    if attr_list != nil
+      var idx = 0
+      while idx < size(attr_list)
+        if attr_list[idx] == attribute
+          return true
+        end
+        idx += 1
+      end
+    end
+    return false
   end
 
   #############################################################
@@ -171,7 +187,10 @@ class Matter_Plugin
   #############################################################
   #############################################################
   # read attribute
-  def read_attribute(session, ctx)
+  #
+  # Arg:
+  #   `tlv_solo` contains an instance of `Matter_TLV_item` to avoid allocating a new object with TLV.create_TLV
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -200,18 +219,18 @@ class Matter_Plugin
         var pl = TLV.Matter_TLV_array()
         return pl
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    #
+        return tlv_solo.set(TLV.U4, 0)    #
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 1)    # "Initial Release"
+        return tlv_solo.set(TLV.U4, 1)    # "Initial Release"
       end
 
     # ====================================================================================================
     elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
 
       if   attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
       else
-        return super(self).read_attribute(session, ctx)   # rest is handled by 0x0028
+        return super(self).read_attribute(session, ctx, tlv_solo)   # rest is handled by 0x0028
       end
     else
       return nil

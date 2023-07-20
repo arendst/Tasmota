@@ -71,7 +71,7 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -80,22 +80,22 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
         if self.shadow_occupancy != nil
-          return TLV.create_TLV(TLV.U1, self.shadow_occupancy)
+          return tlv_solo.set(TLV.U1, self.shadow_occupancy)
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return TLV.create_TLV(TLV.U1, 3)  # physical contact
+        return tlv_solo.set(TLV.U1, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return TLV.create_TLV(TLV.U1, 0)  # unknown
+        return tlv_solo.set(TLV.U1, 0)  # unknown
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)
+        return tlv_solo.set(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 4 = New data model format and notation
+        return tlv_solo.set(TLV.U4, 3)    # 4 = New data model format and notation
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

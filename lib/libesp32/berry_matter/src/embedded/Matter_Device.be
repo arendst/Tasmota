@@ -81,7 +81,7 @@ class Matter_Device
       return
     end    # abort if SetOption 151 is not set
 
-    self.profiler = matter.Profiler()
+    matter.profiler = matter.Profiler()
     self.started = false
     self.tick = 0
     self.plugins = []
@@ -514,18 +514,15 @@ class Matter_Device
     end
   
     var endpoint = ctx.endpoint
-    # var endpoint_mono = [ endpoint ]
-    var endpoint_found = false                # did any endpoint match
     var cluster = ctx.cluster
-    # var cluster_mono = [ cluster ]
-    var cluster_found = false
     var attribute = ctx.attribute
-    # var attribute_mono = [ attribute ]
+    var endpoint_found = false                # did any endpoint match
+    var cluster_found = false
     var attribute_found = false
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    # tasmota.log(format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+    # tasmota.log(f"MTR: process_attribute_expansion {str(ctx))}", 4)
 
     # build the list of candidates
 
@@ -541,7 +538,7 @@ class Matter_Device
       endpoint_found = true
 
       # now explore the cluster list for 'ep'
-      var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+      var cluster_list = pi.get_cluster_list()                        # cluster_list is the actual list of candidate cluster for this pluging and endpoint
       # tasmota.log(format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
       for cl: cluster_list
         if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
@@ -550,7 +547,7 @@ class Matter_Device
         cluster_found = true
 
         # now filter on attributes
-        var attr_list = pi.get_attribute_list(ep, cl)
+        var attr_list = pi.get_attribute_list(cl)
         # tasmota.log(format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
         for at: attr_list
           if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
@@ -593,6 +590,44 @@ class Matter_Device
       end
       cb(nil, ctx, true)
     end
+  end
+
+  #############################################################
+  # Optimized version for a single endpoint/cluster/attribute
+  #
+  # Retrieve the plugin for a read
+  def process_attribute_read_solo(ctx)
+    var endpoint = ctx.endpoint
+    # var endpoint_found = false                # did any endpoint match
+    var cluster = ctx.cluster
+    # var cluster_found = false
+    var attribute = ctx.attribute
+    # var attribute_found = false
+
+    # all 3 elements must be non-nil
+    if endpoint == nil || cluster == nil || attribute == nil      return nil    end
+
+    # look for plugin
+    var pi = self.find_plugin_by_endpoint(endpoint)
+    if pi == nil                                # endpoint not found
+      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      return nil
+    end
+
+    # check cluster
+    if !pi.contains_cluster(cluster)
+      ctx.status = matter.UNSUPPORTED_CLUSTER
+      return nil
+    end
+
+    # attribute list
+    if !pi.contains_attribute(cluster, attribute)
+      ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+      return nil
+    end
+
+    # all good
+    return pi
   end
 
   #############################################################

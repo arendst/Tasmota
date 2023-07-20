@@ -71,7 +71,7 @@ class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -80,18 +80,18 @@ class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
         if self.shadow_contact != nil
-          return TLV.create_TLV(TLV.BOOL, self.shadow_contact)
+          return tlv_solo.set(TLV.BOOL, self.shadow_contact)
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)
+        return tlv_solo.set(TLV.U4, 0)
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 1)    # 1 = Initial release
+        return tlv_solo.set(TLV.U4, 1)    # 1 = Initial release
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

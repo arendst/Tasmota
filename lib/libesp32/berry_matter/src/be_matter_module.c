@@ -338,6 +338,7 @@ module matter (scope: global, strings: weak) {
   StatusIB, class(be_class_Matter_StatusIB)
   StatusResponseMessage, class(be_class_Matter_StatusResponseMessage)
   ReadRequestMessage, class(be_class_Matter_ReadRequestMessage)
+  ReadRequestMessage_solo, class(be_class_Matter_ReadRequestMessage_solo)
   ReportDataMessage, class(be_class_Matter_ReportDataMessage)
   SubscribeRequestMessage, class(be_class_Matter_SubscribeRequestMessage)
   SubscribeResponseMessage, class(be_class_Matter_SubscribeResponseMessage)
@@ -345,6 +346,7 @@ module matter (scope: global, strings: weak) {
   WriteResponseMessage, class(be_class_Matter_WriteResponseMessage)
   TimedRequestMessage, class(be_class_Matter_TimedRequestMessage)
   InvokeRequestMessage, class(be_class_Matter_InvokeRequestMessage)
+  InvokeRequestMessage_solo, class(be_class_Matter_InvokeRequestMessage_solo)
   InvokeResponseMessage, class(be_class_Matter_InvokeResponseMessage)
 
   // Matter Commisioning messages

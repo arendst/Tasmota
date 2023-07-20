@@ -31,13 +31,21 @@ class Matter_Profiler
   var millis
   var names
   var active
+  var allocs
+  var reallocs
+  var len       # number of entries
 
   def init()
     self.active = false
     self.millis = list()
-    self.millis.resize(self.PREALLOCATED)
+    self.millis.resize(self.PREALLOCATED)     # we force zero allocation when using profiler
     self.names = list()
     self.names.resize(self.PREALLOCATED)
+    self.allocs = list()
+    self.allocs.resize(self.PREALLOCATED)
+    self.reallocs = list()
+    self.reallocs.resize(self.PREALLOCATED)
+    self.len = 0
   end
 
   def set_active(v)
@@ -46,15 +54,27 @@ class Matter_Profiler
 
   def start()
     if !self.active  return end
-    self.millis.resize(0)
-    self.names.resize(0)
+    var idx = 0
+    while idx < self.PREALLOCATED
+      self.millis[idx] = nil
+      self.names[idx] = nil
+      idx += 1
+    end
+    self.len = 0
+    tasmota.gc()              # To get deterministic values, we force a full GC before profiler
     self.log("start")
   end
 
   def log(name)
     if !self.active  return end
-    self.millis.push(tasmota.millis())
-    self.names.push(name)
+    import debug
+    var len = self.len
+    if len >= self.PREALLOCATED    return end    # size overflow
+    self.millis[len] = tasmota.millis()
+    self.names[len] = name
+    self.allocs[len] = debug.allocs()
+    self.reallocs[len] = debug.reallocs()
+    self.len += 1
   end
 
   def dump(loglevel)
@@ -62,9 +82,12 @@ class Matter_Profiler
     self.log("<--end-->")
     tasmota.log("MTR: Profiler dump:", loglevel)
     var origin = self.millis[0]
+    var allocs0 = self.allocs[0]
+    var reallocs0 = self.reallocs[0]
     var idx = 1
-    while idx < size(self.millis)
-      tasmota.log(f"MTR:   {self.millis[idx] - origin:4i} '{self.names[idx]}'", loglevel)
+    while idx < self.len
+      # tasmota.log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}|{self.reallocs[idx] - reallocs0:4i}]'{self.names[idx]}'", loglevel)
+      tasmota.log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}]'{self.names[idx]}'", loglevel)
       idx += 1
     end
   end

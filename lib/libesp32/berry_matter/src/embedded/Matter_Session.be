@@ -165,7 +165,7 @@ class Matter_Session : Matter_Expirable
   #############################################################
   # Update the timestamp or any other information
   def update()
-    self.last_used = tasmota.rtc()['utc']
+    self.last_used = tasmota.rtc_utc()
   end
 
   def set_mode_PASE()   self.set_mode(self._PASE)   end

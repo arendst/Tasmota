@@ -40,6 +40,7 @@ import matter
 #@ solidify:matter.StatusIB,weak
 #@ solidify:matter.StatusResponseMessage,weak
 #@ solidify:matter.ReadRequestMessage,weak
+#@ solidify:matter.ReadRequestMessage_solo,weak
 #@ solidify:matter.ReportDataMessage,weak
 #@ solidify:matter.SubscribeRequestMessage,weak
 #@ solidify:matter.SubscribeResponseMessage,weak
@@ -47,6 +48,7 @@ import matter
 #@ solidify:matter.WriteResponseMessage,weak
 #@ solidify:matter.TimedRequestMessage,weak
 #@ solidify:matter.InvokeRequestMessage,weak
+#@ solidify:matter.InvokeRequestMessage_solo,weak
 #@ solidify:matter.InvokeResponseMessage,weak
 
 #################################################################################
@@ -626,6 +628,238 @@ class Matter_ReadRequestMessage : Matter_IM_Message_base
   end
 end
 matter.ReadRequestMessage = Matter_ReadRequestMessage
+
+
+#################################################################################
+# ReadRequestMessage class optimized for a simple solo argument
+#################################################################################
+class Matter_Path end             # for compilation
+class Matter_ReadRequestMessage_solo : Matter_Path
+  # var endpoint                    # int
+  # var cluster                     # int
+  # var attribute                   # int
+  # var fabric_filtered             # bool or nil
+
+  def from_raw(raw, idx)
+    self.reset()
+    # must start with 15360017
+    var sz = size(raw)
+    var val
+    if raw.get(idx, -4) != 0x15360017     return nil  end
+    idx += 4
+    while idx < sz
+      # expect 24 xx yy or 25 xx yyyy (little endian)
+      var tag = raw.get(idx+1, 1)
+      var b0 = raw.get(idx, 1)
+      if   b0 == 0x24       # u1
+        val = raw.get(idx+2, 1)
+        idx += 3
+      elif b0 == 0x25       # u2
+        val = raw.get(idx+2, 2)
+        idx += 4
+      else
+        break
+      end
+      if   tag == 2
+        self.endpoint = val
+      elif tag == 3
+        self.cluster = val
+      elif tag == 4
+        self.attribute = val
+      else
+        return nil            # unsupported tag
+      end
+    end
+    # expect 18 18
+    val = raw.get(idx, -2)
+    if val != 0x1818      return nil  end
+    idx += 2
+    # fabric_filtered: 2803 or 2903
+    val = raw.get(idx, -2)
+    if   val == 0x2803
+      self.fabric_filtered = false
+      idx += 2
+    elif val == 0x2903
+      self.fabric_filtered = true
+      idx += 2
+    end
+    # skip 24FFxx
+    val = raw.get(idx, -2)
+    if val == 0x24FF    idx += 3    end
+    # expect 18
+    if raw.get(idx, 1) != 0x18   return nil  end
+    idx += 1
+    # sanity check
+    if self.endpoint == nil ||
+       self.cluster == nil ||
+       self.attribute == nil ||
+       self.fabric_filtered == nil
+          return nil
+    end
+    # all good
+    return self
+  end
+
+  # Example: read_attr Reachable
+  # 153600172402012403392404111818290324FF0118
+  # 15 structure
+  #   3600 tag 00 array
+  #     17 list
+  #       2402 tag 02 u1 "endpoint"
+  #         01
+  #       2403 tag 03 u1 "cluster"
+  #         39 57U
+  #       2404 tag 04 u1 "attribute"
+  #         11 17U
+  #       18
+  #     18
+  #   2903 tag 03 booltrue
+  #   24FF tag FF u1
+  #     01 1U
+  # 18
+  # {0 = [[[2 = 1U, 3 = 57U, 4 = 17U]]], 3 = true, 255 = 1U}
+
+end
+matter.ReadRequestMessage_solo = Matter_ReadRequestMessage_solo
+# test
+# b = bytes('0000153600172402012403392404111818290324FF0118')
+# m = matter.ReadRequestMessage_solo()
+# mm = m.from_raw(b, 2)
+# print(m)
+
+
+#################################################################################
+# InvokeRequestMessage class optimized for a simple solo argument
+#################################################################################
+class Matter_Path end             # for compilation
+class Matter_InvokeRequestMessage_solo : Matter_Path
+  var SuppressResponse
+  var TimedRequest
+  var command_fields
+  # var endpoint                    # int
+  # var cluster                     # int
+  # var attribute                   # int
+  # var fabric_filtered             # bool or nil
+
+  def reset()
+    var n = nil
+    super(self).reset()
+    self.SuppressResponse = n
+    self.TimedRequest = n
+    self.command_fields = n
+  end
+
+  def from_raw(raw, idx)
+    self.reset()
+    # must start with 15360017
+    var sz = size(raw)
+    var val
+
+    if raw.get(idx, 1) != 0x15            return nil  end
+    idx += 1
+    # check SuppressResponse (optional)
+    val = raw.get(idx, -2)
+    if   val == 0x2800 || val == 0x2900
+      self.SuppressResponse = (val == 0x2900)
+      idx += 2
+    end
+    # check TimedRequest (optional)
+    val = raw.get(idx, -2)
+    if   val == 0x2801 || val == 0x2901
+      self.SuppressResponse = (val == 0x2901)
+      idx += 2
+    end
+    # start of CommandDataIB
+    if raw.get(idx, -2) != 0x3602   return nil end
+    idx += 2
+    if raw.get(idx, 1)  != 0x15     return nil end
+    idx += 1
+    if raw.get(idx, -2) != 0x3700   return nil end
+    idx += 2
+    #
+    while idx < sz
+      # expect 24 xx yy or 25 xx yyyy (little endian)
+      var tag = raw.get(idx+1, 1)
+      var b0 = raw.get(idx, 1)
+      if   b0 == 0x24       # u1
+        val = raw.get(idx+2, 1)
+        idx += 3
+      elif b0 == 0x25       # u2
+        val = raw.get(idx+2, 2)
+        idx += 4
+      else
+        break
+      end
+      if   tag == 0
+        self.endpoint = val
+      elif tag == 1
+        self.cluster = val
+      elif tag == 2
+        self.command = val
+      else
+        return nil            # unsupported tag
+      end
+    end
+    if raw.get(idx, 1)  != 0x18     return nil end
+    idx += 1
+    # command_fields
+    if raw.get(idx, -2) != 0x3501   return nil end
+    self.command_fields = matter.TLV.parse(raw, idx)
+    idx = self.command_fields.next_idx     # skip structure
+
+    # close
+    if raw.get(idx, -2) != 0x1818     return nil end
+    idx += 2
+    if raw.get(idx, -4) != 0x24FF0118 return nil end
+
+    # all good
+    return self
+  end
+
+  # Example: command OnOff
+  # {0 = false, 1 = false, 2 = [{0 = [[0 = 1U, 1 = 6U, 2 = 0U]], 1 = {}}], 255 = 1U}
+  # 1528002801360215370024000124010624020018350118181824FF0118
+  # 
+  # 15
+  #   2800 0 = false SuppressResponse
+  #   2801 1 = false TimedRequest
+  #   3602 2 = list of CommandDataIB
+  #     15
+  #       3700 0 = CommandPathIB
+  #         240001 0 = 1U endpoint
+  #         240106 1 = 6U cluster
+  #         240200 2 = 0U command
+  #       18
+  #       3501 1 = struct
+  #       18
+  #     18
+  #   18
+  #   24FF01 FF = 1U
+  # 18
+
+
+
+
+
+  # 15 structure
+  #   3600 tag 00 array
+  #     17 list
+  #       2402 tag 02 u1 "endpoint"
+  #         01
+  #       2403 tag 03 u1 "cluster"
+  #         39 57U
+  #       2404 tag 04 u1 "attribute"
+  #         11 17U
+  #       18
+  #     18
+  #   2903 tag 03 booltrue
+  #   24FF tag FF u1
+  #     01 1U
+  # 18
+  # {0 = [[[2 = 1U, 3 = 57U, 4 = 17U]]], 3 = true, 255 = 1U}
+
+end
+matter.InvokeRequestMessage_solo = Matter_InvokeRequestMessage_solo
 
 #################################################################################
 # ReportDataMessage class

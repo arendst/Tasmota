@@ -44,11 +44,16 @@ class Matter_IM_Message
 
   # build a response message stub
   def init(msg, opcode, reliable)
+    self.reset(msg, opcode, reliable)
+  end
+
+  def reset(msg, opcode, reliable)
     self.resp = msg.build_response(opcode, reliable)
     self.ready = true                # by default send immediately
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     self.last_counter = 0            # avoid `nil` value
     self.finish = false
+    self.data = nil
   end
 
   # the message is being removed due to expiration
@@ -90,9 +95,15 @@ class Matter_IM_Message
     if !self.ready   return false  end
     # import debug
     var resp = self.resp
-    resp.encode_frame(self.data.to_TLV().tlv2raw())    # payload in cleartext
+    var data_tlv = self.data.to_TLV()
+    # matter.profiler.log(str(data_tlv))
+    var data_raw = data_tlv.tlv2raw()    # payload in cleartext
+    # matter.profiler.log(data_raw.tohex())
+    resp.encode_frame(data_raw)    # payload in cleartext
     resp.encrypt()
-    tasmota.log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+    if tasmota.loglevel(4)
+      tasmota.log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+    end
     # tasmota.log("MTR: Perf/Send = " + str(debug.counters()), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
@@ -297,7 +308,9 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
         var resp = self.resp.build_standalone_ack(false)
         resp.encode_frame()
         resp.encrypt()
-        tasmota.log(format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
+        if tasmota.loglevel(4)
+          tasmota.log(format("MTR: <Ack       (%6i) ack=%i id=%i", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter), 4)
+        end
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
         self.finish = true
@@ -422,7 +435,9 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
   def status_ok_received(msg)
     # tasmota.log(format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
     # once we receive ack, open flow for subscriptions
-    tasmota.log(format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 3)
+    if tasmota.loglevel(3)
+      tasmota.log(format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 3)
+    end
     return super(self).status_ok_received(msg)
   end
     

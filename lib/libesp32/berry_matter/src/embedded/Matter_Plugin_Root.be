@@ -57,7 +57,7 @@ class Matter_Plugin_Root : Matter_Plugin
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     import string
     var TLV = matter.TLV
     var cluster = ctx.cluster
@@ -66,18 +66,18 @@ class Matter_Plugin_Root : Matter_Plugin
     if   cluster == 0x0030              # ========== GeneralCommissioning cluster 11.9 p.627 ==========
 
       if   attribute == 0x0000          # ---------- Breadcrumb ----------
-        return TLV.create_TLV(TLV.U8, session._breadcrumb)
+        return tlv_solo.set(TLV.U8, session._breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
         bci.add_TLV(0, TLV.U2, 60)      # FailSafeExpiryLengthSeconds
         bci.add_TLV(1, TLV.U2, 900)     # MaxCumulativeFailsafeSeconds
         return bci
       elif attribute == 0x0002          # ---------- RegulatoryConfig / RegulatoryLocationType ----------
-        return TLV.create_TLV(TLV.U1, 2)    # 2 = IndoorOutdoor | esp-matter = 0
+        return tlv_solo.set(TLV.U1, 2)    # 2 = IndoorOutdoor | esp-matter = 0
       elif attribute == 0x0003          # ---------- LocationCapability / RegulatoryLocationType----------
-        return TLV.create_TLV(TLV.U1, 2)    # 2 = IndoorOutdoor
+        return tlv_solo.set(TLV.U1, 2)    # 2 = IndoorOutdoor
       elif attribute == 0x0004          # ---------- SupportsConcurrentConnection / bool ----------
-        return TLV.create_TLV(TLV.BOOL, false)    # false - maybe can set to true
+        return tlv_solo.set(TLV.BOOL, false)    # false - maybe can set to true
       end
     # ====================================================================================================
     elif cluster == 0x0032              # ========== Diagnostic Logs Cluster 11.10 p.637 ==========
@@ -124,12 +124,12 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
-        return TLV.create_TLV(TLV.U2, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
+        return tlv_solo.set(TLV.U2, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
       elif attribute == 0x0002          #  ---------- UpTime u16 ----------
-        return TLV.create_TLV(TLV.U4, tasmota.cmd("Status 11", true)['StatusSTS']['UptimeSec'])
+        return tlv_solo.set(TLV.U4, tasmota.cmd("Status 11", true)['StatusSTS']['UptimeSec'])
       # TODO add later other attributes
       elif attribute == 0x0008          #  ---------- TestEventTriggersEnabled bool ----------
-        return TLV.create_TLV(TLV.BOOL, false)    # false - maybe can set to true
+        return tlv_solo.set(TLV.BOOL, false)    # false - maybe can set to true
       end
         
     # ====================================================================================================
@@ -139,18 +139,19 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0038              # ========== Time Synchronization 11.16 p.689 ==========
       if   attribute == 0x0000          #  ---------- UTCTime / epoch_us ----------
-        var epoch_us = int64(tasmota.rtc()['utc']) * int64(1000000)
-        return TLV.create_TLV(TLV.U8, epoch_us)     # TODO test the conversion of int64()
+        var epoch_us = int64(tasmota.rtc_utc()) * int64(1000000)
+        return tlv_solo.set(TLV.U8, epoch_us)     # TODO test the conversion of int64()
       elif attribute == 0x0001          #  ---------- Granularity / enum ----------
-        return TLV.create_TLV(TLV.U1, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
+        return tlv_solo.set(TLV.U1, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
       # TODO add some missing args
       elif attribute == 0x0007          #  ---------- LocalTime / epoch_us ----------
         var epoch_us = int64(tasmota.rtc()['local']) * int64(1000000)
-        return TLV.create_TLV(TLV.U8, epoch_us)     # TODO test the conversion of int64()
+        return tlv_solo.set(TLV.U8, epoch_us)     # TODO test the conversion of int64()
       end
 
     # ====================================================================================================
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
+      self.send_ack_now(ctx.msg)      # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
@@ -175,16 +176,16 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
-        return TLV.create_TLV(TLV.U1, matter.Fabric._MAX_CASE)     # Max 5 fabrics
+        return tlv_solo.set(TLV.U1, matter.Fabric._MAX_CASE)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
         var fabric_actice = self.device.sessions.count_active_fabrics()
-        return TLV.create_TLV(TLV.U1, fabric_actice)  # number of active fabrics
+        return tlv_solo.set(TLV.U1, fabric_actice)  # number of active fabrics
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
         var fab_index = session._fabric.get_fabric_index()
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
-        return TLV.create_TLV(TLV.U1, fab_index)      # number of active sessions
+        return tlv_solo.set(TLV.U1, fab_index)      # number of active sessions
       end
 
     # ====================================================================================================
@@ -193,57 +194,58 @@ class Matter_Plugin_Root : Matter_Plugin
         var commissioning_open = self.device.is_commissioning_open()
         var basic_commissioning = self.device.is_root_commissioning_open()
         var val = commissioning_open ? (basic_commissioning ? 2 #-BasicWindowOpen-# : 1 #-EnhancedWindowOpen-#) : 0 #-WindowNotOpen-#
-        return TLV.create_TLV(TLV.U1, val)
+        return tlv_solo.set(TLV.U1, val)
       elif attribute == 0x0001          #  ---------- AdminFabricIndex / u16 ----------
         var admin_fabric = self.device.commissioning_admin_fabric
         if admin_fabric != nil
-          return TLV.create_TLV(TLV.U2, admin_fabric.get_fabric_index())
+          return tlv_solo.set(TLV.U2, admin_fabric.get_fabric_index())
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0002          #  ---------- AdminVendorId / u16 ----------
         var admin_fabric = self.device.commissioning_admin_fabric
         if admin_fabric != nil
-          return TLV.create_TLV(TLV.U2, admin_fabric.get_admin_vendor())
+          return tlv_solo.set(TLV.U2, admin_fabric.get_admin_vendor())
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       end
         
     # ====================================================================================================
     elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
+      self.send_ack_now(ctx.msg)      # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
-        return TLV.create_TLV(TLV.U2, 1)
+        return tlv_solo.set(TLV.U2, 1)
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
-        return TLV.create_TLV(TLV.UTF1, "Tasmota")
+        return tlv_solo.set(TLV.UTF1, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
-        return TLV.create_TLV(TLV.U2, self.device.vendorid)    # Vendor ID reserved for development
+        return tlv_solo.set(TLV.U2, self.device.vendorid)    # Vendor ID reserved for development
       elif attribute == 0x0003          #  ---------- ProductName / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+        return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
       elif attribute == 0x0004          #  ---------- ProductID / u16 (opt) ----------
-        return TLV.create_TLV(TLV.U2, 32768)    # taken from esp-matter example
+        return tlv_solo.set(TLV.U2, 32768)    # taken from esp-matter example
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("FriendlyName", true)['FriendlyName1'])
+        return tlv_solo.set(TLV.UTF1, tasmota.cmd("FriendlyName", true)['FriendlyName1'])
       elif attribute == 0x0006          #  ---------- Location / string ----------
-        return TLV.create_TLV(TLV.UTF1, "XX")   # no location
+        return tlv_solo.set(TLV.UTF1, "XX")   # no location
       elif attribute == 0x0007          #  ---------- HardwareVersion / u16 ----------
-        return TLV.create_TLV(TLV.U2, 0)
+        return tlv_solo.set(TLV.U2, 0)
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Hardware'])
+        return tlv_solo.set(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
-        return TLV.create_TLV(TLV.U2, 1)
+        return tlv_solo.set(TLV.U2, 1)
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
         var version_end = string.find(version_full, '(')
         if version_end > 0    version_full = version_full[0..version_end - 1]   end
-        return TLV.create_TLV(TLV.UTF1, version_full)
+        return tlv_solo.set(TLV.UTF1, version_full)
       elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return TLV.create_TLV(TLV.BOOL, 1)     # by default we are reachable
+        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
         var cps = TLV.Matter_TLV_struct()
         cps.add_TLV(0, TLV.U2, 3)       # CaseSessionsPerFabric = 3
@@ -261,18 +263,18 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0000          #  ---------- DefaultOTAProviders / list[ProviderLocationStruct] ----------
         return TLV.Matter_TLV_array()   # empty list for now TODO
       elif attribute == 0x0001          #  ---------- UpdatePossible / bool ----------
-        return TLV.create_TLV(TLV.BOOL, 0)  # we claim that update is not possible, would require to go to Tasmota UI
+        return tlv_solo.set(TLV.BOOL, 0)  # we claim that update is not possible, would require to go to Tasmota UI
       elif attribute == 0x0002          #  ---------- UpdateState / UpdateStateEnum ----------
-        return TLV.create_TLV(TLV.U1, 1)  # Idle
+        return tlv_solo.set(TLV.U1, 1)  # Idle
       elif attribute == 0x0003          #  ---------- UpdateStateProgress / uint8 ----------
-        return TLV.create_TLV(TLV.NULL, nil)  # null, nothing in process
+        return tlv_solo.set(TLV.NULL, nil)  # null, nothing in process
       end
 
     # ====================================================================================================
     elif cluster == 0x002B              # ========== Localization Configuration Cluster 11.3 p.580 ==========
 
       if   attribute == 0x0000          #  ---------- ActiveLocale / string ----------
-        return TLV.create_TLV(TLV.UTF1, tasmota.locale())
+        return tlv_solo.set(TLV.UTF1, tasmota.locale())
       elif attribute == 0x0001          #  ---------- SupportedLocales / list[string] ----------
         var locl = TLV.Matter_TLV_array()
         locl.add_TLV(nil, TLV.UTF1, tasmota.locale())
@@ -283,9 +285,9 @@ class Matter_Plugin_Root : Matter_Plugin
     elif cluster == 0x002C              # ========== Time Format Localization Cluster 11.4 p.581 ==========
 
       if   attribute == 0x0000          #  ---------- HourFormat / HourFormat ----------
-        return TLV.create_TLV(TLV.U1, 1)  # 1 = 24hr
+        return tlv_solo.set(TLV.U1, 1)  # 1 = 24hr
       elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
-        return TLV.create_TLV(TLV.U1, 4)  # 4 = Gregorian
+        return tlv_solo.set(TLV.U1, 4)  # 4 = Gregorian
       elif attribute == 0x0002          #  ---------- SupportedCalendarTypes / list[CalendarType] ----------
         var callist = TLV.Matter_TLV_array()
         callist.add_TLV(nil, TLV.create_TLV(TLV.U1, 4))
@@ -295,9 +297,9 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0031              # ========== Network Commissioning Cluster cluster 11.8 p.606 ==========
       if   attribute == 0x0003          #  ---------- ConnectMaxTimeSeconds / uint8 ----------
-        return TLV.create_TLV(TLV.U1, 30)    # 30 - value taking from example in esp-matter
+        return tlv_solo.set(TLV.U1, 30)    # 30 - value taking from example in esp-matter
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0x04)  # Put Eth for now which should work for any on-network
+        return tlv_solo.set(TLV.U4, 0x04)  # Put Eth for now which should work for any on-network
       end
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
@@ -315,11 +317,11 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         return pl
       else
-        return super(self).read_attribute(session, ctx)
+        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
 
     end
     # no match found, return that the attribute is unsupported
@@ -417,7 +419,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var att_elts = TLV.Matter_TLV_struct()
         att_elts.add_TLV(1, TLV.B2, matter.CD_FFF1_8000())    # certification_declaration
         att_elts.add_TLV(2, TLV.B1, AttestationNonce)         # attestation_nonce
-        att_elts.add_TLV(3, TLV.U4, tasmota.rtc()['utc'])     # timestamp in epoch-s
+        att_elts.add_TLV(3, TLV.U4, tasmota.rtc_utc())     # timestamp in epoch-s
         var attestation_message = att_elts.tlv2raw()
 
         var ac = session.get_ac()

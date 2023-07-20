@@ -389,7 +389,7 @@ be_local_closure(Matter_Fabric_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[18]) {     /* constants */
+    ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
     /* K1   */  be_nested_str_weak(_store),
     /* K2   */  be_nested_str_weak(_sessions),
@@ -399,19 +399,18 @@ be_local_closure(Matter_Fabric_init,   /* name */
     /* K6   */  be_nested_str_weak(),
     /* K7   */  be_nested_str_weak(created),
     /* K8   */  be_nested_str_weak(tasmota),
-    /* K9   */  be_nested_str_weak(rtc),
-    /* K10  */  be_nested_str_weak(utc),
-    /* K11  */  be_nested_str_weak(_counter_group_data_snd_impl),
-    /* K12  */  be_nested_str_weak(Counter),
-    /* K13  */  be_nested_str_weak(_counter_group_ctrl_snd_impl),
-    /* K14  */  be_nested_str_weak(counter_group_data_snd),
-    /* K15  */  be_nested_str_weak(next),
-    /* K16  */  be_nested_str_weak(_GROUP_SND_INCR),
-    /* K17  */  be_nested_str_weak(counter_group_ctrl_snd),
+    /* K9   */  be_nested_str_weak(rtc_utc),
+    /* K10  */  be_nested_str_weak(_counter_group_data_snd_impl),
+    /* K11  */  be_nested_str_weak(Counter),
+    /* K12  */  be_nested_str_weak(_counter_group_ctrl_snd_impl),
+    /* K13  */  be_nested_str_weak(counter_group_data_snd),
+    /* K14  */  be_nested_str_weak(next),
+    /* K15  */  be_nested_str_weak(_GROUP_SND_INCR),
+    /* K16  */  be_nested_str_weak(counter_group_ctrl_snd),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[33]) {  /* code */
+    ( &(const binstruction[32]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0x90020201,  //  0001  SETMBR	R0	K1	R1
       0xB80E0600,  //  0002  GETNGBL	R3	K3
@@ -422,29 +421,28 @@ be_local_closure(Matter_Fabric_init,   /* name */
       0xB80E1000,  //  0007  GETNGBL	R3	K8
       0x8C0C0709,  //  0008  GETMET	R3	R3	K9
       0x7C0C0200,  //  0009  CALL	R3	1
-      0x940C070A,  //  000A  GETIDX	R3	R3	K10
-      0x90020E03,  //  000B  SETMBR	R0	K7	R3
-      0xB80E0600,  //  000C  GETNGBL	R3	K3
-      0x8C0C070C,  //  000D  GETMET	R3	R3	K12
-      0x7C0C0200,  //  000E  CALL	R3	1
-      0x90021603,  //  000F  SETMBR	R0	K11	R3
-      0xB80E0600,  //  0010  GETNGBL	R3	K3
-      0x8C0C070C,  //  0011  GETMET	R3	R3	K12
-      0x7C0C0200,  //  0012  CALL	R3	1
-      0x90021A03,  //  0013  SETMBR	R0	K13	R3
-      0x880C010B,  //  0014  GETMBR	R3	R0	K11
-      0x8C0C070F,  //  0015  GETMET	R3	R3	K15
-      0x7C0C0200,  //  0016  CALL	R3	1
-      0x88100110,  //  0017  GETMBR	R4	R0	K16
-      0x000C0604,  //  0018  ADD	R3	R3	R4
-      0x90021C03,  //  0019  SETMBR	R0	K14	R3
-      0x880C010B,  //  001A  GETMBR	R3	R0	K11
-      0x8C0C070F,  //  001B  GETMET	R3	R3	K15
-      0x7C0C0200,  //  001C  CALL	R3	1
-      0x88100110,  //  001D  GETMBR	R4	R0	K16
-      0x000C0604,  //  001E  ADD	R3	R3	R4
-      0x90022203,  //  001F  SETMBR	R0	K17	R3
-      0x80000000,  //  0020  RET	0
+      0x90020E03,  //  000A  SETMBR	R0	K7	R3
+      0xB80E0600,  //  000B  GETNGBL	R3	K3
+      0x8C0C070B,  //  000C  GETMET	R3	R3	K11
+      0x7C0C0200,  //  000D  CALL	R3	1
+      0x90021403,  //  000E  SETMBR	R0	K10	R3
+      0xB80E0600,  //  000F  GETNGBL	R3	K3
+      0x8C0C070B,  //  0010  GETMET	R3	R3	K11
+      0x7C0C0200,  //  0011  CALL	R3	1
+      0x90021803,  //  0012  SETMBR	R0	K12	R3
+      0x880C010A,  //  0013  GETMBR	R3	R0	K10
+      0x8C0C070E,  //  0014  GETMET	R3	R3	K14
+      0x7C0C0200,  //  0015  CALL	R3	1
+      0x8810010F,  //  0016  GETMBR	R4	R0	K15
+      0x000C0604,  //  0017  ADD	R3	R3	R4
+      0x90021A03,  //  0018  SETMBR	R0	K13	R3
+      0x880C010A,  //  0019  GETMBR	R3	R0	K10
+      0x8C0C070E,  //  001A  GETMET	R3	R3	K14
+      0x7C0C0200,  //  001B  CALL	R3	1
+      0x8810010F,  //  001C  GETMBR	R4	R0	K15
+      0x000C0604,  //  001D  ADD	R3	R3	R4
+      0x90022003,  //  001E  SETMBR	R0	K16	R3
+      0x80000000,  //  001F  RET	0
     })
   )
 );

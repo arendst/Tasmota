@@ -37,7 +37,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -55,11 +55,11 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         end
         return pl
       else
-        return super(self).read_attribute(session, ctx)
+        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
 
     end
     # no match found, return that the attribute is unsupported
