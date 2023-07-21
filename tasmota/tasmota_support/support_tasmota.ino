@@ -831,7 +831,7 @@ void MqttShowState(void)
 
 
 // Battery Level expliciet for deepsleep devices
-if (Settings->battery_level_percent != 101) {
+if (Settings->battery_level_percent < 101) {
   ResponseAppend_P(PSTR(",\"" D_CMND_ZIGBEE_BATTPERCENT "\":%d"), Settings->battery_level_percent);
 }
 
