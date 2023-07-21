@@ -116,12 +116,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset [#19024](https://github.com/arendst/Tasmota/issues/19024)
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
+- Support for DeepSleep battery level percentage [#19134](https://github.com/arendst/Tasmota/issues/19134)
 - Berry `getgbl` performance counter to `debug.counters()` [#19070](https://github.com/arendst/Tasmota/issues/19070)
 - Berry `_class` can be used in `static var` initialization code [#19088](https://github.com/arendst/Tasmota/issues/19088)
-- Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
-- Berry metrics for memory allocation/deallocation/reallocation
-- Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance
-- Berry AES CCM decrypting in a single call to avoid any object allocation
+- Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver [#19117](https://github.com/arendst/Tasmota/issues/19117)
+- Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance [#19152](https://github.com/arendst/Tasmota/issues/19152)
+- Berry metrics for memory allocation/deallocation/reallocation [#19150](https://github.com/arendst/Tasmota/issues/19150)
+- Berry AES CCM decrypting in a single call to avoid any object allocation [#19153](https://github.com/arendst/Tasmota/issues/19153)
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout [#19034](https://github.com/arendst/Tasmota/issues/19034)
 - Matter option to disable bridge mode [#18992](https://github.com/arendst/Tasmota/issues/18992)
 - Matter mini-profiler [#19075](https://github.com/arendst/Tasmota/issues/19075)
@@ -132,14 +133,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
+- Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% [#19138](https://github.com/arendst/Tasmota/issues/19138)
 - Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
-- Berry extend `range(lower, upper, incr)` to arbitrary increment
-- Berry updated syntax highlighting plugin for VSCode
+- Berry extend `range(lower, upper, incr)` to arbitrary increment [#19120](https://github.com/arendst/Tasmota/issues/19120)
+- Berry updated syntax highlighting plugin for VSCode [#19123](https://github.com/arendst/Tasmota/issues/19123)
 - Matter support for temperature in Fahrenheit (`SetOption8 1`) [#18987](https://github.com/arendst/Tasmota/issues/18987)
 - Matter improve responsiveness [#19002](https://github.com/arendst/Tasmota/issues/19002)
 - Matter improve latency for remote commands [#19072](https://github.com/arendst/Tasmota/issues/19072)
-- Matter improve latency for single attribute reads and single commands [#19158](https://github.com/arendst/Tasmota/issues/19072)
+- Matter improve latency for single attribute reads and single commands [#19158](https://github.com/arendst/Tasmota/issues/19158)
 
 
 ### Fixed
