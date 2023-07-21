@@ -201,8 +201,8 @@ void TasDiscoverMessage(void) {
                         Settings->flag5.fade_fixed_duration,
                         light_controller_isCTRGBLinked,
                         light_subtype,
-                        Settings->battery_level_percent==101?0:1,
-                        Settings->deepsleep==0?0:1
+                        (Settings->battery_level_percent == 101) ? 0 : 1,
+                        (Settings->deepsleep == 0) ? 0 : 1
                         );
 
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {

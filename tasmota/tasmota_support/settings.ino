@@ -1741,6 +1741,9 @@ void SettingsDelta(void) {
       RtcSettings.energy_usage.last_usage_kWhtotal /= 100;
 #endif
     }
+    if (Settings->version < 0x0D000003) {  // 13.0.0.3
+      Settings->battery_level_percent = 101;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

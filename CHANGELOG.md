@@ -3,28 +3,34 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.0.0.2]
+## [13.0.0.3]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+- Initial battery level percentage (#19160)
+
+### Removed
+
+## [13.0.0.2] 20230721
 ### Added
 - Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
 - Matter mini-profiler (#19075)
 - Berry `_class` can be used in `static var` initialization code (#19088)
-- Berry add `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
-- Berry add metrics for memory allocation/deallocation/reallocation
+- Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver
+- Berry metrics for memory allocation/deallocation/reallocation
 - Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance
-- Berry add AES CCM decrypting in a single call to avoid any object allocation
-
-### Breaking Changed
+- Berry AES CCM decrypting in a single call to avoid any object allocation
 
 ### Changed
 - ESP32 shutter driver support up to 16 shutters (#18295)
 - Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment
 - Berry updated syntax highlighting plugin for VSCode
-- Matter latency improvement for single attribute reads and single commands
-
-### Fixed
-
-### Removed
+- Matter latency improvement for single attribute reads and single commands (#19158)
 
 ## [13.0.0.1] 20230708
 ### Added
