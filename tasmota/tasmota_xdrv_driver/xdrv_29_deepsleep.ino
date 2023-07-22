@@ -197,7 +197,7 @@ void CmndDeepsleepTime(void)
         Settings->tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
       }
     }
-    TasDiscovery();
+    TasmotaGlobal.discovery_counter = 1; // force TasDiscovery()
   }
   ResponseCmndNumber(Settings->deepsleep);
 }
