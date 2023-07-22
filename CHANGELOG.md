@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.0.0.3]
 ### Added
+- Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
 
 ### Breaking Changed
 

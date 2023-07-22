@@ -115,6 +115,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``BrRestart`` to restart the Berry VM (experimental) [#19003](https://github.com/arendst/Tasmota/issues/19003)
 - Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
 - Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset [#19024](https://github.com/arendst/Tasmota/issues/19024)
+- Support for MAX17043 fuel-gauge systems Lipo batteries [#18788](https://github.com/arendst/Tasmota/issues/18788)
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
 - Support for DeepSleep battery level percentage [#19134](https://github.com/arendst/Tasmota/issues/19134)
 - Berry `getgbl` performance counter to `debug.counters()` [#19070](https://github.com/arendst/Tasmota/issues/19070)
