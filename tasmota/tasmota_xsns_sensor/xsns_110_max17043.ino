@@ -57,7 +57,7 @@ DFRobot_MAX17043     gauge; // Class to read from MAX17043
 struct MAX17043 
 {
   float voltage = 0.0;      // Battery voltage in Volt
-  float percentage = 0.0;   // Battery remaining capacity in percent
+  float percentage = 0.0;   // Battery remaining charge in percent
 } *max17043 = nullptr;
 
  /*********************************************************************************************/
@@ -107,10 +107,11 @@ void Max17043Show(void) {
 bool Xsns109(uint32_t function) {
 if (!I2cEnabled(MAX17043_ADDRESS)) { return false; } 
 
-  switch (function) {
-    case FUNC_INIT:
-      Max17043Init(); 
-      break;
+  if (FUNC_INIT == function) {
+    Max17043Init();
+  }
+  else if (max17043 != nullptr) {
+    switch (function) {
     case FUNC_EVERY_SECOND:
       Max17043Read();
       break;
@@ -122,6 +123,7 @@ if (!I2cEnabled(MAX17043_ADDRESS)) { return false; }
         Max17043Show();
         break;
     #endif // USE_WEBSERVER
+    }
   }
   return false;
 }
