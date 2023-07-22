@@ -155,7 +155,7 @@ extern "C" {
             }
             uint32_t pixels_size;       // number of bytes to push
             if (s_ws2812_grb)     { s_ws2812_grb->Show();   pixels_size = s_ws2812_grb->PixelsSize(); }
-            if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_ws2812_grb->PixelsSize(); }
+            if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_sk6812_grbw->PixelsSize(); }
 
             // Wait for RMT/I2S to complete fixes distortion due to analogRead
             // 1ms is needed for 96 bytes

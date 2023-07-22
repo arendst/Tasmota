@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Initial battery level percentage (#19160)
+- Berry SK6812_GRBW crash
 
 ### Removed
 
