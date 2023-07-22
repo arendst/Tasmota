@@ -58,6 +58,7 @@
 #define D_AS "като"
 #define D_AUTO "АВТОМАТИЧНО"
 #define D_BATT "Бат."                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Мигане вкл."
 #define D_BLINKOFF "Мигане изкл."
 #define D_BOOT_COUNT "Брой стартирания"

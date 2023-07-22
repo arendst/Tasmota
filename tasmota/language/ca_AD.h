@@ -58,6 +58,7 @@
 #define D_AS "com"
 #define D_AUTO "AUTO"
 #define D_BATT "Bat"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Espurna"
 #define D_BLINKOFF "Espurna Fora"
 #define D_BOOT_COUNT "Compte Arrencs"

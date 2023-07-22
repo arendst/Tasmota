@@ -58,6 +58,7 @@
 #define D_AS "como"
 #define D_AUTO "Auto"
 #define D_BATT "Bat"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Piscar"
 #define D_BLINKOFF "Piscar desligado"
 #define D_BOOT_COUNT "Contagem de inicialização"
