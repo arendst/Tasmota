@@ -3807,6 +3807,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
+          char delimc = 0;
+          if (*lp != ')') {
+            // get delimiter
+            delimc = *lp;
+            lp++;
+          }
+
           char rstring[SCRIPT_MAXSSIZE];
           rstring[0] = 0;
           int8_t index = fvar;
@@ -3855,6 +3862,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                       // fail or last string
                       strlcpy(rstring, lwd, glob_script_mem.max_ssize);
                       break;
+                    }
+                  }
+                  if (delimc) {
+                    char *xp = strchr(rstring, delimc);
+                     if (xp) {
+                      *xp = 0;              
                     }
                   }
                   free(mqd);
@@ -6803,6 +6816,11 @@ startline:
         }
         // skip empty line
         SCRIPT_SKIP_EOL
+
+        while (*lp == '\t' || *lp == ' ') {
+          lp++;
+        }
+        
         // skip comment
         if (*lp == ';') goto next_line;
         if (!*lp) break;
