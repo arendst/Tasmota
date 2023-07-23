@@ -1,5 +1,5 @@
 /*
-  xsns_109_max17043.ino - Support for MAX17043 fuel-gauge systems Lipo batteries for Tasmota
+  xsns_110_max17043.ino - Support for MAX17043 fuel-gauge systems Lipo batteries for Tasmota
 
   Copyright (C) 2023  Vincent de Groot
 
@@ -48,7 +48,7 @@
  * 
  \*********************************************************************************************/
 
-#define XSNS_109        109
+#define XSNS_110        110
 
 const char *mqttId = "MAX17043";
 
@@ -104,7 +104,7 @@ void Max17043Show(void) {
  *  Interface
 \*********************************************************************************************/
 
-bool Xsns109(uint32_t function) {
+bool Xsns110(uint32_t function) {
 if (!I2cEnabled(MAX17043_ADDRESS)) { return false; } 
 
   if (FUNC_INIT == function) {
