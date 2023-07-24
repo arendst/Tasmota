@@ -167,8 +167,8 @@ void ResponseAppendFeatures(void)
 #ifdef USE_MP3_PLAYER
     feature2 |= 0x00002000;  // xdrv_14_mp3.ino
 #endif
-#if defined(USE_I2C) && defined(USE_PCA9685)
-    feature2 |= 0x00004000;  // xdrv_15_pca9685.ino
+#if defined(USE_I2C) && (defined(USE_PCA9685) || defined(USE_PCA9685_V2))
+    feature2 |= 0x00004000;  // xdrv_15_pca9685.ino or xdrv_15_pca9685_v2.ino
 #endif
 #if defined(USE_LIGHT) && defined(USE_TUYA_MCU)
     feature2 |= 0x00008000;  // xdrv_16_tuyadimmer.ino
@@ -331,8 +331,8 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_MPR121)
     feature4 |= 0x00000002;  // xsns_30_mpr121.ino
 #endif
-#if defined(USE_I2C) && defined(USE_CCS811)
-    feature4 |= 0x00000004;  // xsns_31_ccs811.ino
+#if defined(USE_I2C) && (defined(USE_CCS811) || defined(USE_CCS811_V2))
+    feature4 |= 0x00000004;  // xsns_31_ccs811.ino or xsns_31_ccs811_v2.ino
 #endif
 #if defined(USE_I2C) && defined(USE_MPU6050)
     feature4 |= 0x00000008;  // xsns_32_mpu6050.ino

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.0.0.3]
 ### Added
 - Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
+- Support for multiple PCA9685 with extended functionality (#18805)
 
 ### Breaking Changed
 
@@ -14,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Initial battery level percentage (#19160)
-- Berry SK6812_GRBW crash
+- Berry SK6812_GRBW crash (#19166)
 
 ### Removed
 

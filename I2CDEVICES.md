@@ -9,6 +9,7 @@ The following table lists the supported I2C devices
 Index | Define              | Driver   | Device   | Address(es) | Description
 ------|---------------------|----------|----------|-------------|-----------------------------------------------
    1  | USE_PCA9685         | xdrv_15  | PCA9685  | 0x40 - 0x47 | 16-channel 12-bit pwm driver
+   1  | USE_PCA9685_V2      | xdrv_15  | PCA9685  | 0x40 - 0x47 | 16-channel 12-bit pwm driver
    2  | USE_PCF8574         | xdrv_28  | PCF8574  | 0x20 - 0x26 | 8-bit I/O expander (address range overridable)
    2  | USE_PCF8574         | xdrv_28  | PCF8574A | 0x39 - 0x3F | 8-bit I/O expander (address range overridable)
    3  | USE_DISPLAY_LCD     | xdsp_01  |          | 0x27, 0x3F  | LCD display

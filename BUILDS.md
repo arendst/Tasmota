@@ -128,6 +128,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MCP23XXX_DRV          | - | - / - | - | - | - | - |
 | USE_PCA9632               | - | - / - | - | - | - | - |
 | USE_PCA9685               | - | - / - | - | - | - | - |
+| USE_PCA9685_V2            | - | - / - | - | - | - | - |
 | USE_MPR121                | - | - / - | - | - | - | - |
 | USE_CCS811                | - | - / - | - | x | - | - |
 | USE_CCS811_V2             | - | - / x | - | - | - | - |
