@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.10**.
+This release will be supported from ESP32/Arduino library Core version **2.0.11**.
 
-Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.10 have been removed.
+Support of ESP8266 Core versions before 2.7.4.9 and ESP32 Core versions before 2.0.11 have been removed.
 
 ## Support of TLS
 
@@ -80,7 +80,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.10**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.11**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -134,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `import strict` now detects useless expression without side effects [#18997](https://github.com/arendst/Tasmota/issues/18997)
 
 ### Changed
+- ESP32 Framework (Core) from v2.0.10 to v2.0.11
 - ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% [#19138](https://github.com/arendst/Tasmota/issues/19138)
 - Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% (#19138)
+- ESP32 Framework (Core) from v2.0.10 to v2.0.11
 
 ### Fixed
 - Initial battery level percentage (#19160)
