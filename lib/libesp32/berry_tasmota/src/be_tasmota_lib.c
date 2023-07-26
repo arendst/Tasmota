@@ -112,7 +112,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     yield, func(l_yield)
     delay, func(l_delay)
     delay_microseconds, func(l_delay_microseconds)
-    scale_uint, func(l_scaleuint)
+    scale_uint, static_func(l_scaleuint)
     log, func(l_logInfo)
     loglevel, func(l_loglevel)
     save, func(l_save)
