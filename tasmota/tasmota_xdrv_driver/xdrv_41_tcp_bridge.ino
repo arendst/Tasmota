@@ -35,6 +35,7 @@ WiFiServer   *server_tcp = nullptr;
 WiFiClient   client_tcp[TCP_BRIDGE_CONNECTIONS];
 uint8_t      client_next = 0;
 uint8_t     *tcp_buf = nullptr;     // data transfer buffer
+bool         ip_filter_enabled = false;
 IPAddress    ip_filter;
 
 #include <TasmotaSerial.h>
@@ -65,7 +66,7 @@ void TCPLoop(void)
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s"), new_client.remoteIP().toString().c_str());
     // Check for IP filtering if it's enabled.
-    if (ip_filter) {
+    if (ip_filter_enabled) {
       if (ip_filter != new_client.remoteIP()) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Rejected due to filtering"));
         new_client.stop();
@@ -173,9 +174,10 @@ void CmndTCPStart(void) {
   if (ArgC() == 2) {
     char sub_string[XdrvMailbox.data_len];
     ip_filter.fromString(ArgV(sub_string, 2));
+    ip_filter_enabled = true;
   } else {
     // Disable whitelist if previously set
-    ip_filter = (uint32_t)0;
+    ip_filter_enabled = false;
   }
 
   if (server_tcp) {
@@ -191,7 +193,7 @@ void CmndTCPStart(void) {
   }
   if (tcp_port > 0) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Starting TCP server on port %d"), tcp_port);
-    if (ip_filter) {
+    if (ip_filter_enabled) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Filtering %s"), ip_filter.toString().c_str());
     }
     server_tcp = new WiFiServer(tcp_port);
