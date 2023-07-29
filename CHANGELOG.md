@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
 - Support for multiple PCA9685 with extended functionality (#18805)
+- Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature
 
 ### Breaking Changed
 
