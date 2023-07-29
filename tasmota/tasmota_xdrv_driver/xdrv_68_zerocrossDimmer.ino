@@ -139,21 +139,21 @@ void IRAM_ATTR ACDimmerTimer_intr() {
   for (uint8_t i = 0 ; i < MAX_PWMS; i++ ) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
 
-    if (time_since_zc + TRIGGER_PERIOD >= ac_zero_cross_dimmer.enable_time_us[i]){
+    if (time_since_zc + TRIGGER_PERIOD + 30 >= ac_zero_cross_dimmer.enable_time_us[i]){
       // Very close to the fire event. Loop the last µseconds to wait.
 #ifdef ESP8266
-      // on ESP8266 we can change dynamically the trigger interval
-      ac_zero_cross_dimmer.actual_tigger_Period = tmin(ac_zero_cross_dimmer.actual_tigger_Period,tmax(5,ac_zero_cross_dimmer.enable_time_us[i] - time_since_zc));
+      // on ESP8266 we can change dynamically the trigger interval.
+      ac_zero_cross_dimmer.actual_tigger_Period = tmin(ac_zero_cross_dimmer.actual_tigger_Period*2,ac_zero_cross_dimmer.enable_time_us[i] - time_since_zc);
 #endif 
 #ifdef ESP32         
       while (time_since_zc < ac_zero_cross_dimmer.enable_time_us[i]) {
         time_since_zc =  micros() - ac_zero_cross_dimmer.crossed_zero_at;
       }
 #endif        
-      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i] && !ac_zero_cross_dimmer.triggered[i] ) {
+      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]-5 && !ac_zero_cross_dimmer.triggered[i] ) {
         digitalWrite(Pin(GPIO_PWM1, i), HIGH ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
         ac_zero_cross_dimmer.triggered[i] = true;
-        ac_zero_cross_dimmer.accurracy[i] = tmax(ac_zero_cross_dimmer.accurracy[i],time_since_zc-ac_zero_cross_dimmer.enable_time_us[i]);
+        ac_zero_cross_dimmer.accurracy[i] = time_since_zc-ac_zero_cross_dimmer.enable_time_us[i];
       }   
       if (time_since_zc >= ac_zero_cross_dimmer.disable_time_us[i]) {
         digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
@@ -214,12 +214,13 @@ void ACDimmerLogging(void)
       );
     for (uint8_t i = 0; i < MAX_PWMS; i++){
       if (Pin(GPIO_PWM1, i) == -1) continue;
-      if (ac_zero_cross_dimmer.accurracy[i]) ac_zero_cross_dimmer.accurracy[i]--;
+      
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
         i+1, ac_zero_cross_dimmer.enable_time_us[i], ac_zero_cross_dimmer.disable_time_us[i], 
         Light.fade_cur_10[i], Light.fade_start_10[i], Light.fade_end_10[i], ac_zero_cross_dimmer.lastlight[i],
         ac_zero_cross_dimmer.accurracy[i]
       );
+      if (ac_zero_cross_dimmer.accurracy[i]) ac_zero_cross_dimmer.accurracy[i]=0;
     }
 } 
 
