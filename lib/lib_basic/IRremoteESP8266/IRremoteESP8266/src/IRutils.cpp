@@ -145,16 +145,12 @@ String typeToString(const decode_type_t protocol, const bool isRepeat) {
     result = kUnknownStr;
   } else {
     auto *ptr = reinterpret_cast<const char*>(kAllProtocolNamesStr);
-    if (protocol > kLastDecodeType || protocol == decode_type_t::UNKNOWN) {
-      result = kUnknownStr;
-    } else {
-      for (uint16_t i = 0; i <= protocol && STRLEN(ptr); i++) {
-        if (i == protocol) {
-          result = FPSTR(ptr);
-          break;
-        }
-        ptr += STRLEN(ptr) + 1;
+    for (uint16_t i = 0; i <= protocol && STRLEN(ptr); i++) {
+      if (i == protocol) {
+        result = FPSTR(ptr);
+        break;
       }
+      ptr += STRLEN(ptr) + 1;
     }
   }
   if (isRepeat) {

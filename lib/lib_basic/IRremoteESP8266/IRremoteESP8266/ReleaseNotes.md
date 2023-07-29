@@ -1,5 +1,23 @@
 # Release Notes
 
+## _v2.8.6 (20230727)_
+
+**[Bug Fixes]**
+- Ensure `IRCoolixAC::toCommon()` returns `kNoTempValue` when no sensor temp is detected. (#2015 #2012)
+- Fix compilation dependency of LG on Samsung send protocol (#2011 #2010)
+- Fix missing parameter in call to `IRac::gree()` (#2008 #2007)
+
+**[Features]**
+- IRac: Ensure the `sleep` parameter is used for the `FUJITSU_AC` protocol. (#1992 #1991)
+
+**[Misc]**
+- Allow the BlynkIRRemote.ino code to compile again. (#2016)
+- do not list WHIRLPOOL_AC unconditionally as supported protocol (#2003)
+- IRUtils:typeToString() — simplify (#2002)
+- Fix brand Green -> Gree (#1994)
+- Fix undefined `std::round` compilation error (#1989)
+
+
 ## _v2.8.5 (20230508)_
 
 **[Bug Fixes]**

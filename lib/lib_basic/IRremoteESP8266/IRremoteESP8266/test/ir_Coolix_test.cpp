@@ -492,6 +492,9 @@ TEST(TestCoolixACClass, SetGetClearSensorTempAndZoneFollow) {
   EXPECT_EQ(
       "Power: On, Mode: 3 (Heat), Fan: 6 (Zone Follow), Temp: 24C, "
       "Zone Follow: On, Sensor Temp: 19C", ac.toString());
+  // For #Issue2012
+  EXPECT_EQ(19, ac.getSensorTemp());
+  EXPECT_EQ(19, ac.toCommon().sensorTemperature);
 }
 
 TEST(TestCoolixACClass, SpecialModesAndReset) {
@@ -1067,4 +1070,37 @@ TEST(TestDecodeCoolix48, SyntheticSelfDecode) {
       "m552s552m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656"
       "m552s5244",
       irsend.outputStr());
+}
+
+// Test for issue https://github.com/crankyoldgit/IRremoteESP8266/issues/2012#issuecomment-1650098971
+TEST(TestCoolixACClass, Issue2012) {
+  IRrecv irrecv(kGpioUnused);
+  IRCoolixAC ac(kGpioUnused);
+
+  ac.stateReset();
+  ac.setRaw(0xB21FD8);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 26C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+
+  ac.setRaw(0xB21F98);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 27C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+
+  ac.setRaw(0xB21F88);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 28C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+  ac.setRaw(0xB27BE0);
+  EXPECT_EQ(
+      "Power: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
 }
