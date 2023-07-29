@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Core) from v2.0.10 to v2.0.11
 - Berry `mqtt.publish` now distinguishes between `string` and `bytes`
 - IRremoteESP8266 library from v2.8.5 to v2.8.6
+- Reduced log level for TeleInfo
 
 ### Fixed
 - Initial battery level percentage (#19160)
