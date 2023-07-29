@@ -406,7 +406,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld  HP:%ld  Total:%ld"), hc, hp, total_wh);
                 }
 
-                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
+                AddLog (LOG_LEVEL_DEBUG_MORE, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
                 if (total_wh>0) {
                     Energy->total[0] = (float) total_wh / 1000.0f;
                     Energy->import_active[0] = Energy->total[0];
@@ -422,17 +422,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 total_wh = atol(me->value);
                 Energy->total[0] = (float) total_wh / 1000.0f;
                 Energy->import_active[0] = Energy->total[0];
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total_wh);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: Total:%ldWh"), total_wh);
             }
 
             // Wh indexes (standard)
             else if ( ilabel == LABEL_EASF01)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld"), atol(me->value));
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: HC:%ld"), atol(me->value));
             }
             else if ( ilabel == LABEL_EASF02)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%ld"), atol(me->value));
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: HP:%ld"), atol(me->value));
             }
 
             // Contract subscribed (legacy)
@@ -468,7 +468,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             else if (ilabel == LABEL_ISOUSC)
             {
                 isousc = atoi( me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
             // Contract subscribed (Power in KVA)
@@ -477,20 +477,20 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Convert KVA to A
                 isousc  = atoi( me->value) * 5  ;
 
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
             // Serial Number of device
             else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
             {
                 strcpy(serialNumber, me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: %s set to %s"), me->name, serialNumber);
             }
             // Status
             else if (ilabel == LABEL_STGE)
             {
                 status_register = strtol(me->value, nullptr, 16);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("Status Resister : %s set to %08X"), me->name, status_register);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Status Resister : %s set to %08X"), me->name, status_register);
             }
             
         }
@@ -786,7 +786,7 @@ bool TInfoCmd(void) {
     // At least "EnergyConfig"
     if (CMND_ENERGYCONFIG == Energy->command_code) {
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
 
         // Just "EnergyConfig" no more parameter
         // Show Teleinfo configuration
@@ -838,7 +838,7 @@ bool TInfoCmd(void) {
 
             int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
 
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
 
             switch (command_code) {
                 case CMND_TELEINFO_STANDARD:
@@ -1002,7 +1002,7 @@ void TInfoProcess(void)
     // if needed, update energy total every hour
     if (tick_update++ > 3600 * 4) {
         EnergyUpdateTotal();
-        AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %lu Wh"), total_wh);
+        AddLog (LOG_LEVEL_DEBUG, PSTR ("TIC: Total counter updated to %lu Wh"), total_wh);
         tick_update = 0;
     }
 
