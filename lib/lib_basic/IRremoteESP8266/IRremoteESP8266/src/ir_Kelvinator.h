@@ -13,7 +13,7 @@
 //   Brand: Kelvinator,  Model: KSV70CRC A/C
 //   Brand: Kelvinator,  Model: KSV70HRC A/C
 //   Brand: Kelvinator,  Model: KSV80HRC A/C
-//   Brand: Green,  Model: YAPOF3 remote
+//   Brand: Gree,  Model: YAPOF3 remote
 //   Brand: Gree,  Model: YAP0F8 remote
 //   Brand: Sharp,  Model: YB1FA remote
 //   Brand: Sharp,  Model: A5VEY A/C

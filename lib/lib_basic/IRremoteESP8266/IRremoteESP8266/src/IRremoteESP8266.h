@@ -58,7 +58,7 @@
 // Minor version number (x.X.x)
 #define _IRREMOTEESP8266_VERSION_MINOR 8
 // Patch version number (x.x.X)
-#define _IRREMOTEESP8266_VERSION_PATCH 5
+#define _IRREMOTEESP8266_VERSION_PATCH 6
 // Macro to convert version info into an integer
 #define _IRREMOTEESP8266_VERSION_VAL(major, minor, patch) \
                                     (((major) << 16) | ((minor) << 8) | (patch))

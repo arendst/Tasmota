@@ -549,6 +549,9 @@ stdAc::state_t IRCoolixAC::toCommon(const stdAc::state_t *prev) const {
   result.mode = toCommonMode(getMode());
   result.degrees = getTemp();
   result.sensorTemperature = getSensorTemp();
+  if (result.sensorTemperature == kCoolixSensorTempIgnoreCode) {
+    result.sensorTemperature = kNoTempValue;
+  }
   result.iFeel = getZoneFollow();
   result.fanspeed = toCommonFanSpeed(getFan());
   return result;
