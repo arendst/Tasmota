@@ -27,6 +27,7 @@
 static const uint8_t TRIGGER_PERIOD = 75;
 
 #define ZCDIMMERSET_SHOW 1
+//#define ZCDIMMERSET_DISABLE_PERSIST 1     // Do not store and restore ZCDimmerSet-Value
 //#define ZC_DEBUG 1
 
 struct AC_ZERO_CROSS_DIMMER {
@@ -82,7 +83,9 @@ uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
 void ACDimmerInit()
 {
   for (uint8_t i = 0 ; i < 5; i++) {
+#ifndef ZCDIMMERSET_DISABLE_PERSIST
     ac_zero_cross_dimmer.detailpower[i] = Settings->zcdimmerset[i];
+#endif  
     ac_zero_cross_dimmer.fallingEdgeDimmer = Settings->flag6.zcfallingedge;
   }
 }
@@ -248,7 +251,11 @@ void CmndZCDimmerSet(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
     if (XdrvMailbox.data_len > 0) {
+#ifdef ZCDIMMERSET_DISABLE_PERSIST
+      ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1] = (uint16_t)(100 * CharToFloat(XdrvMailbox.data));
+#else
       Settings->zcdimmerset[XdrvMailbox.index-1] = ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1] = (uint16_t)(100 * CharToFloat(XdrvMailbox.data));
+#endif
     }
     ResponseCmndIdxFloat((float)(ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1]) / 100, 2);
   }
