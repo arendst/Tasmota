@@ -27,10 +27,6 @@
  * The alert flag and alert threshold are not required for MQTT, the alert pin is not used 
  * by this sensor driver.
  * 
- * Wiring and other information:
- * 
- * \lib\lib_i2c\DFRobot_MAX17043\resources
- * 
  * Tested module(s):
  * 
  * https://www.dfrobot.com/product-1734.html
@@ -45,16 +41,6 @@
 #define XI2C_83            83      // See I2CDEVICES.md
 
 #define MAX17043_ADDRESS   0x36
-
-//#define MAX17043_USE_LIB
-
-#ifdef MAX17043_USE_LIB
-
-#include "DFRobot_MAX17043.h"
-DFRobot_MAX17043 max17043_gauge;   // Class to read from MAX17043
-
-#else
-
 #define MAX17043_VCELL     0x02
 #define MAX17043_SOC       0x04
 #define MAX17043_MODE      0x06
@@ -62,30 +48,18 @@ DFRobot_MAX17043 max17043_gauge;   // Class to read from MAX17043
 #define MAX17043_CONFIG    0x0c
 #define MAX17043_COMMAND   0xfe
 
-#endif  // MAX17043_USE_LIB
-
 bool max17043 = false;
 
 /*********************************************************************************************/
 
 void Max17043Init(void) {
   if (I2cSetDevice(MAX17043_ADDRESS)) { 
-
-#ifdef MAX17043_USE_LIB
-
-    if (max17043_gauge.begin() == 0) {
-
-#else
-
     I2cWrite16(MAX17043_ADDRESS, MAX17043_COMMAND, 0x5400);        // Power on reset
     delay(10);
     if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == 0x971c) {  // Default 0x971c
       I2cWrite16(MAX17043_ADDRESS, MAX17043_MODE, 0x4000);         // Quick start
       I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, 0x9700);
       delay(10);
-
-#endif  // MAX17043_USE_LIB
-
       max17043 = true;
       I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
     }
@@ -93,19 +67,9 @@ void Max17043Init(void) {
 }
 
 void Max17043Show(bool json) {
-
-#ifdef MAX17043_USE_LIB
-
-  float voltage = max17043_gauge.readVoltage() / 1000.0;  // Battery voltage in Volt
-  float percentage = max17043_gauge.readPercentage();     // Battery remaining charge in percent
-
-#else
-
   float voltage = (1.25f * (float)(I2cRead16(MAX17043_ADDRESS, MAX17043_VCELL) >> 4)) / 1000.0;  // Battery voltage in Volt
   uint16_t per = I2cRead16(MAX17043_ADDRESS, MAX17043_SOC);
   float percentage = (float)((per >> 8) + 0.003906f * (per & 0x00ff));  // Battery remaining charge in percent
-
-#endif  // MAX17043_USE_LIB
 
   // During charging the percentage might be (slightly) above 100%. To avoid strange numbers
   // in the statistics the percentage provided by this driver will not go above 100%
