@@ -150,7 +150,7 @@ void IRAM_ATTR ACDimmerTimer_intr() {
         time_since_zc =  micros() - ac_zero_cross_dimmer.crossed_zero_at;
       }
 #endif        
-      if (time_since_zc >= ac_zero_cross_dimmer.enable_time_us[i]-5 && !ac_zero_cross_dimmer.triggered[i] ) {
+      if (time_since_zc+5 >= ac_zero_cross_dimmer.enable_time_us[i] && !ac_zero_cross_dimmer.triggered[i] ) {
         digitalWrite(Pin(GPIO_PWM1, i), HIGH ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
         ac_zero_cross_dimmer.triggered[i] = true;
         ac_zero_cross_dimmer.accurracy[i] = time_since_zc-ac_zero_cross_dimmer.enable_time_us[i];
