@@ -877,7 +877,7 @@ static int m_get(bvm *vm, bbool sign)
                         if (sign & (ret & 0x800000)) { ret = ret | 0xFF000000; }
                         break;
             case -4:    ret = buf_get4_be(&attr, idx);    break;
-            default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
+            default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
         if (vsize != 0) {
@@ -956,7 +956,7 @@ static int m_set(bvm *vm)
             case -2:    buf_set2_be(&attr, idx, value);   break;
             case -3:    buf_set3_be(&attr, idx, value);   break;
             case -4:    buf_set4_be(&attr, idx, value);   break;
-            default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
+            default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
         m_write_attributes(vm, 1, &attr);  /* update attributes */
