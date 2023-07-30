@@ -313,19 +313,24 @@ class Matter_Session_Store
     try
       self.remove_expired()      # clean before saving
       var sessions_saved = 0
-
-      var fabs = []
-      for f : self.fabrics.persistables()
-        for _ : f._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
-        fabs.push(f.tojson())
-      end
-      var fabs_size = size(fabs)
-      fabs = "[" + fabs.concat(",") + "]"
+      var fabrics_saved = 0
 
       var f = open(self._FABRICS, "w")
-      f.write(fabs)
+
+      f.write("[")
+      for fab : self.fabrics.persistables()
+        for _ : fab._sessions.persistables()    sessions_saved += 1   end   # count persitable sessions
+        if fabrics_saved > 0
+          f.write(",")
+        end
+        var f_json = fab.tojson()
+        f.write(f_json)
+        fabrics_saved += 1
+      end
+      f.write("]")
+
       f.close()
-      tasmota.log(format("MTR: =Saved     %i fabric(s) and %i session(s)", fabs_size, sessions_saved), 2)
+      tasmota.log(f"MTR: =Saved     {fabrics_saved} fabric(s) and {sessions_saved} session(s)", 2)
       self.device.event_fabrics_saved()     # signal event
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
