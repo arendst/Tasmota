@@ -74,10 +74,11 @@ def patch_partitions_bin(size_string):
 def esp32_detect_flashsize():
     if not "upload" in COMMAND_LINE_TARGETS:
         return "4MB",False
-    try:
-        return env.get("TASMOTA_flash_size"),True
-    except:
+    size = env.get("TASMOTA_flash_size")
+    if size == None:
         return "4MB",False
+    else:
+        return size,True
 
 def esp32_create_chip_string(chip):
     tasmota_platform = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
