@@ -155,7 +155,9 @@ class Matter_Plugin_Root : Matter_Plugin
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
-        for loc_fabric: self.device.sessions.active_fabrics()
+        var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
+        for loc_fabric: fabs
+          if loc_fabric == nil    continue  end
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
@@ -164,7 +166,9 @@ class Matter_Plugin_Root : Matter_Plugin
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
         var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
-        for loc_fabric: self.device.sessions.active_fabrics()
+        var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
+        for loc_fabric: fabs
+          if loc_fabric == nil    continue  end
           var root_ca_tlv = TLV.parse(loc_fabric.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey

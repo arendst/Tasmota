@@ -289,18 +289,22 @@ class Matter_Commisioning_Context
     import crypto
     # Validate Sigma1 Destination ID, p.162
     # traverse all existing fabrics
-    tasmota.log("MTR: SEARCHING: destinationId=" + destinationId.tohex(), 4)
+    if tasmota.loglevel(4)
+      tasmota.log("MTR: SEARCHING: destinationId=" + destinationId.tohex(), 4)
+    end
     for fabric : self.device.sessions.fabrics
       if fabric.noc == nil || fabric.fabric_id == nil || fabric.device_id == nil     continue end
       # compute candidateDestinationId, Section 4.13.2.4.1, “Destination Identifier”
       var destinationMessage = initiatorRandom + fabric.get_ca_pub() + fabric.fabric_id + fabric.device_id
       var key = fabric.get_ipk_group_key()
-      tasmota.log("MTR: SIGMA1: destinationMessage=" + destinationMessage.tohex(), 4)
+      # tasmota.log("MTR: SIGMA1: destinationMessage=" + destinationMessage.tohex(), 4)
       # tasmota.log("MTR: SIGMA1: key_ipk=" + key.tohex(), 4)
       var h = crypto.HMAC_SHA256(key)
       h.update(destinationMessage)
       var candidateDestinationId = h.out()
-      tasmota.log("MTR: SIGMA1: candidateDestinationId=" + candidateDestinationId.tohex(), 4)
+      if tasmota.loglevel(4)
+        tasmota.log("MTR: SIGMA1: candidateDestinationId=" + candidateDestinationId.tohex(), 4)
+      end
       if candidateDestinationId == destinationId
         return fabric
       end
