@@ -82,6 +82,18 @@
       "base64_plntmnt.h": "c",
       "sha3.h": "c",
       "functional": "cpp",
+<<<<<<< HEAD
+      "planetmint.h": "c",
+      "*.tcc": "cpp",
+      "array": "cpp",
+      "string": "cpp",
+      "string_view": "cpp",
+      "system_error": "cpp"
+    },
+    "platformio-ide.pioHomeServerHttpPort": 45001,
+    "platformio-ide.disablePIOHomeStartup": true,
+=======
       "planetmint.h": "c"
     }
+>>>>>>> development
   }

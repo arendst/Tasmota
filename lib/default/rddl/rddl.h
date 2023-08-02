@@ -33,5 +33,6 @@ bool getSeedFromMnemonic( const char* pMnemonic, size_t len, uint8_t* seedbuffer
 
 int validateSignature();
 
-bool SignDataHash(int json_data_start, int current_length, const char* data_str, char* pubkey_out, char* sig_out, char* hash_out);
+bool getKeyFromSeed( const uint8_t* seed, uint8_t* priv_key, uint8_t* pub_key, const char* curve_name);
 
+bool SignDataHash(const char* data_str, size_t data_length, char* pubkey_out, char* sig_out, char* hash_out);

@@ -972,8 +972,10 @@ void CmndStatus(void)
 #ifdef USE_DRV_RDDL_NETWORK
     int start_position = ResponseLength();
     MqttShowSensor(f_show_sensors);
-    getAuthToken();
-    signRDDLNetworkMessage(start_position);
+    int current_position  = ResponseLength();
+    size_t data_length = (size_t)(current_position - start_position);
+    const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+    runRDDLNotarizationWorkflow(data_str, data_length);
 #else
     MqttShowSensor(f_show_sensors);
 #endif // USE_DRV_RDDL_NETWORK

@@ -26,12 +26,7 @@
  * - *********** in  platform_override.ini
 \*********************************************************************************************/
 
-#include "rddl.h"
 #include "esp_random.h"
-
-#ifdef USE_WEBCLIENT_HTTPS
-#warning **** USE_WEBCLIENT_HTTPS is enabled ****
-#endif
 
 #define XDRV_129               129
 
@@ -39,9 +34,10 @@
 //#define RDDL_NETWORK_15_MINUTES_IN_MS  (15*60*1000)
 #define RDDL_NETWORK_NOTARIZATION_TIMER_IN_SECONDS (30)
 
-//#include <HT#TPClientLight.h>
+
 #include "planetmint.h"
 #include "rddl.h"
+#include "rddl_cid.h"
 #include "bip39.h"
 #include "bip32.h"
 #include "curves.h"
@@ -108,23 +104,29 @@ void getNotarizationMessage(){
   MqttShowSensor(false);
 }
 
-void storeKeyValuePair( char* key, char* value)
+
+void storeKeyValuePair( const char* key, const char* value, size_t length)
 {
+  
+  if( 0 == length )
+    length = strlen(value);
+  length = length * 2;
+  char* hexstring = (char*)malloc(length);
+  toHexString( (char*)hexstring, (uint8_t*)value, length);
   BrREPLRun((char*)"import persist");
   String key_string = key;
-  String value_string = value;
+  String value_string = hexstring;
   String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
-  //printf("store seed result: %s",  (char*)cmd.c_str());
   BrREPLRun((char*)cmd.c_str());
   BrREPLRun((char*)"persist.save()");
-  //printf("store seed result: %s",  seed_message);
+  free(hexstring);
 }
 
 void storeSeed()
 {
-  uint8_t seed_message[SEED_SIZE*2] = {0};
-  toHexString( (char*)seed_message, secret_seed, SEED_SIZE*2);
-  storeKeyValuePair( (char*)"seed", (char*) seed_message);
+  //uint8_t seed_message[SEED_SIZE*2] = {0};
+  //toHexString( (char*)seed_message, secret_seed, SEED_SIZE*2);
+  storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
 }
 
 bool hasKey(const char * key){
@@ -147,6 +149,8 @@ char* getValueForKey( const char* key, char* buffer )
   String cmd = String("persist.find(\"") + key_string + String("\")");
   BrREPLRun((char*)"import persist");
   BrREPLRunRDDL((char*)cmd.c_str(), buffer );
+  const uint8_t * storageString = fromHexString(buffer);
+  strcpy(buffer, (const char*) storageString );
   ResponseAppend_P(PSTR("HAS Key: %s\n"), buffer);
   return buffer;
 }
@@ -161,32 +165,33 @@ uint8_t* readSeed()
   if( ret == NULL )
     return NULL;
 
-  const uint8_t * seed = fromHexString(buffer);
-  memset( secret_seed, 0, SEED_SIZE );
-  memcpy( secret_seed, seed, SEED_SIZE);
+  //const uint8_t * seed = fromHexString(buffer);
+  //memset( secret_seed, 0, SEED_SIZE );
+  memcpy( secret_seed, (const void *)buffer, SEED_SIZE);
   g_readSeed = true;
 
   return secret_seed;
 }
 
-void signRDDLNetworkMessage(int start_position){
-    char pubkey_out[68] = {0};
-    char sig_out[130] = {0};
-    char hash_out[66] = {0};
-    int current_position  = ResponseLength();
-    const char* data_str = TasmotaGlobal.mqtt_data.c_str();
-    if( readSeed() != NULL )
-      SignDataHash(start_position, current_position, data_str, pubkey_out, sig_out, hash_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
-    ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
+String signRDDLNetworkMessageContent( const char* data_str, size_t data_length){
+  char pubkey_out[68] = {0};
+  char sig_out[130] = {0};
+  char hash_out[66] = {0};
+  if( readSeed() != NULL )
+  {
+    SignDataHash( data_str, data_length,  pubkey_out, sig_out, hash_out);
+  }
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "EnergyHash", hash_out);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "EnergySig", sig_out);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "PublicKey", pubkey_out);
+  return String(sig_out);
 }
 
 void getCIDString( char* cidbuffer, size_t buffersize, const char* message ){
 
 }
 
-String getEdDSAChallenge( const char* public_key ){
+String getEdDSAChallengeCall( const char* public_key ){
   String challenge;
   HTTPClientLight http;
 
@@ -219,7 +224,7 @@ String getEdDSAChallenge( const char* public_key ){
   return challenge;
 }
 
-String getJWTToken( const char* public_key, const unsigned char* signature){
+String getJWTTokenCall( const char* public_key, const unsigned char* signature){
   String jwt_token;
   HTTPClientLight http;
   //char hexed_signature[200]={0};
@@ -257,7 +262,7 @@ String getJWTToken( const char* public_key, const unsigned char* signature){
   return jwt_token;
 }
 
-String registerCID( const char* jwt_token, const char* url, const char* cid){
+String registerCID_call( const char* jwt_token, const char* url, const char* cid){
   String result;
   HTTPClientLight http;
 
@@ -295,10 +300,9 @@ String registerCID( const char* jwt_token, const char* url, const char* cid){
   return result;
 }
 
-void getAuthToken(){
+String registerCID(const char* cid){
   char* public_key = NULL;
   size_t b58_size = 80;
-  //uint8_t seed[SEED_SIZE] = {0};
   uint8_t priv_key[33] = {0};
   uint8_t pub_key[34] = {0};
   uint8_t b58_pub_key[b58_size] = {0};
@@ -306,15 +310,7 @@ void getAuthToken(){
   
 
   readSeed();
-  ////getKeyFromSeed((const uint8_t*)seed, priv_key, pub_key);
-  HDNode node;
-  if( !hdnode_from_seed( secret_seed, SEED_SIZE, ED25519_NAME, &node))
-    return;
-  hdnode_private_ckd_prime(&node, 0);
-  hdnode_private_ckd_prime(&node, 1);
-  hdnode_fill_public_key(&node);
-  memcpy(priv_key, node.private_key, 32);
-  memcpy(pub_key, node.public_key, 33);
+  getKeyFromSeed((const uint8_t*)secret_seed, priv_key, pub_key, ED25519_NAME);
   char* planetmint_key = (char*) pub_key +1;
   
   bool ret = b58enc((char*)b58_pub_key, &b58_size, planetmint_key, 32);
@@ -323,10 +319,7 @@ void getAuthToken(){
   else
     ResponseAppend_P(PSTR("B58 encoding: failed\n"));
 
-
-
-  String challenge = getEdDSAChallenge((const char *)b58_pub_key);
-
+  String challenge = getEdDSAChallengeCall((const char *)b58_pub_key);
 
   SHA256_CTX ctx;
   uint8_t hash[SHA256_DIGEST_LENGTH+1] = {0};
@@ -337,53 +330,61 @@ void getAuthToken(){
   char hexbuf[68]={0};
   toHexString( hexbuf,(uint8_t*)hash, 66 );
   ResponseAppend_P(PSTR("HASH: %s\n"), hexbuf);
-  //printf("hash in hex: %s\n", (char*)hexbuf );
 
   //sign EdDSA challenge
   ed25519_sign( (const unsigned char*)hash, SHA256_DIGEST_LENGTH, (const unsigned char*)priv_key,(const unsigned char*)planetmint_key, signature);
   size_t sig_size = 200;
   char b58sig[sig_size] = {0};
   b58enc( b58sig, &sig_size, signature, 64);
+
   //send signed challenge to  server, get JWT
-  String jwt_token = getJWTToken( (const char *)b58_pub_key, (const unsigned char*)b58sig);
-
-  //compute CID
-
+  String jwt_token = getJWTTokenCall( (const char *)b58_pub_key, (const unsigned char*)b58sig);
+  
   //register CID
-  const char * cid = "bafkreiet4caacbr7ii5vw1b4gdb7twdndpc2duwuevgfrkosnk3cxbqndu";
   char uri[300]={0};
   snprintf( uri, 300, "xmpp:%s.%s@m2m.rddl.io", cid, planetmint_key);
-  registerCID( jwt_token.c_str(), (const char*) uri, cid);
+  registerCID_call( jwt_token.c_str(), (const char*) uri, cid);
 
-  //notarize CID
+  return jwt_token;
 }
 
 void sendNotarizationMessage(){
 
 }
 
-#define CID_BUFFER_SIZE 256
+void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
+  String signature = signRDDLNetworkMessageContent(data_str, data_length);
+
+  //compute CID
+  const char* cid_str = (const char*) create_cid_v1_from_string( data_str );
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Data ", data_str);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "CID ", cid_str);
+  
+  // store cid
+  storeKeyValuePair( cid_str, data_str,0 );
+
+  // register CID
+  registerCID( cid_str );
+ 
+  // notarize message vi planetmint
+  sendNotarizationMessage();
+
+  ResponseJsonEnd();
+  free( (char*)cid_str );
+}
 
 void RDDLNotarize(){
-  //char cidbuffer[CID_BUFFER_SIZE] = {0};
-
   // create notarization message
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "RDDLNotarize CALL ", "insane");
+  return;
   Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":"));
   int start_position = ResponseLength();
   getNotarizationMessage();
-  signRDDLNetworkMessage(start_position);
-  ResponseJsonEnd();
-  //getAuthToken();
-  // compute CID of the message
-  //getCIDString( cidbuffer, CID_BUFFER_SIZE, TasmotaGlobal.mqtt_data.c_str() );
-  
-  // upload message to cid-resolver
-  // auth to cid-resolver
-  // send notarize message to cid-resolver
+  int current_position  = ResponseLength();
+  size_t data_length = (size_t)(current_position - start_position);
+  const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
 
-  // notarize message vi planetmint
-    
-  sendNotarizationMessage();
+  runRDDLNotarizationWorkflow(data_str, data_length);
 }
 
 void RDDLNetworkNotarizationScheduler(){
