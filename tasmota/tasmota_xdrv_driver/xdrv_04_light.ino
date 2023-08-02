@@ -2080,7 +2080,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       Light.fade_duration = LightGetSpeedSetting() * 500;
       Light.speed_once_enabled = false; // The once off speed value has been read, reset it
       if (!Settings->flag5.fade_fixed_duration) {
-        Light.fade_duration = (distance * Light.fade_duration) / 1023;    // time is proportional to distance, except with SO117
+        Light.fade_duration = (distance * Light.fade_duration) / 1023 + 1 /* make sure value is not zero */;    // time is proportional to distance, except with SO117
       }
       if (Settings->save_data) {
         // Also postpone the save_data for the duration of the Fade (in seconds)
