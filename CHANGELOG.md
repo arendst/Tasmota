@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Initial battery level percentage (#19160)
 - Berry SK6812_GRBW crash (#19166)
+- Fade would fail when the difference between start and target would be too small
 
 ### Removed
 
