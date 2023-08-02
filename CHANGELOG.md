@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry `mqtt.publish` now distinguishes between `string` and `bytes`
 - IRremoteESP8266 library from v2.8.5 to v2.8.6
 - Reduced log level for TeleInfo
+- Matter increased polling frequency for local switches/occupancy
 
 ### Fixed
 - Initial battery level percentage (#19160)
