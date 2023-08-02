@@ -1,0 +1,56 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+SensirionShdlcCommunication	KEYWORD1
+SensirionShdlcRxFrame	KEYWORD1
+SensirionShdlcTxFrame	KEYWORD1
+SensirionI2CTxFrame	KEYWORD1
+SensirionI2CRxFrame	KEYWORD1
+SensirionI2CCommunication	KEYWORD1
+
+# SensirionErrors.h
+HighLevelError	KEYWORD1
+LowLevelError	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+sendFrame	KEYWORD2
+receiveFrame	KEYWORD2
+sendAndReceiveFrame	KEYWORD2
+addUInt32	KEYWORD2
+addInt32	KEYWORD2
+addUInt16	KEYWORD2
+addInt16	KEYWORD2
+addUInt8	KEYWORD2
+addInt8	KEYWORD2
+addFloat	KEYWORD2
+addBytes	KEYWORD2
+addBool	KEYWORD2
+addCommand	KEYWORD2
+begin	KEYWORD2
+finish	KEYWORD2
+reset	KEYWORD2
+getUInt32	KEYWORD2
+getInt32	KEYWORD2
+getUInt16	KEYWORD2
+getInt16	KEYWORD2
+getUInt8	KEYWORD2
+getInt8	KEYWORD2
+getFloat	KEYWORD2
+getBytes	KEYWORD2
+getCommand	KEYWORD2
+getAddress	KEYWORD2
+getDataLength	KEYWORD2
+getState	KEYWORD2
+
+# SensirionErrors.h
+errorToString	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

@@ -1,5 +1,141 @@
 # Release Notes
 
+## _v2.8.6 (20230727)_
+
+**[Bug Fixes]**
+- Ensure `IRCoolixAC::toCommon()` returns `kNoTempValue` when no sensor temp is detected. (#2015 #2012)
+- Fix compilation dependency of LG on Samsung send protocol (#2011 #2010)
+- Fix missing parameter in call to `IRac::gree()` (#2008 #2007)
+
+**[Features]**
+- IRac: Ensure the `sleep` parameter is used for the `FUJITSU_AC` protocol. (#1992 #1991)
+
+**[Misc]**
+- Allow the BlynkIRRemote.ino code to compile again. (#2016)
+- do not list WHIRLPOOL_AC unconditionally as supported protocol (#2003)
+- IRUtils:typeToString() — simplify (#2002)
+- Fix brand Green -> Gree (#1994)
+- Fix undefined `std::round` compilation error (#1989)
+
+
+## _v2.8.5 (20230508)_
+
+**[Bug Fixes]**
+- Fix a bug where we never detached the timer interrupt on ESP32s. (#1984 #1983)
+- Missing argument in use of midea function (#1959 #1958)
+- IRMQTTServer: Improve HA MQTT climate handling. (#1911)
+- SEND_SANYO_AC88: Fix poor cut-n-paste error (#1905 #1897)
+
+**[Features]**
+- Add support for a 40bit variant of the standard Panasonic protocol (#1977 @1976)
+- Initial support for York AC protocol (#1889)
+- IRMQTTServer: SHT-3x Temperature Sensor Support (#1951)
+- IRMQTTServer: HA multi output discovery (#1947)
+- IRMQTTServer: extended with new A/C common fields (#1940)
+- IRMQTTServer: Sync the on state to power from mode for HA (#1946)
+- Experimental basic support for Carrier 84-bit protocol. (#1945 #1943)
+- Add support the WowWee 11-Bit RoboRaptor-X protocol. (#1939 #1938)
+- Added 'sensorTemperature' and 'iFeel' to IRac (common) (#1928)
+- Added extra 'mid' option for Fan & SwingV to IRac (#1929)
+- Added "commandType" to IRAc (#1921)
+- Added support for Argo WREM-3 A/C remote protocol [part1] (#1920)
+- Added Dutch (nl-NL) translation (#1907)
+- ARGO: Improve code & add support for decoding 32bit sensor msgs. (#1906 #1859)
+- Added support for Gorenje cooker hood IR protocol (#1888 #1887)
+
+**[Misc]**
+- Add Electrolux YKR-H/531E as a supported device (#1981 #1980)
+- Update `XMP` status to Stable (#1944)
+- upgrade to a later version of `googletest` (#1936)
+- MITSUBISHI128: Added model to supported protocol (#1924)
+- Added Dutch (nl-NL) README (#1908)
+- Added GMock to UT Makefile (#1902)
+- Update HA example config for HA 2022.6+ (#1901 #1900)
+- Add a `d1_mini_noMDNS` build option to `IRMQTTServer`. (#1985)
+
+
+## _v2.8.4 (20220918)_
+
+**[Bug Fixes]**
+ - [Bugfix] Handle gcc unsupported __VA_OPT___ macro (#1880 #1881)
+
+
+## _v2.8.3 (20220915)_
+
+**[Bug Fixes]**
+- Fix `#if` for DECODE_COOLIX48 (#1796)
+- Add missing `prev`s to `decodeToState()` (#1783)
+
+**[Features]**
+- Add `pause()` function to ESP32 when receiving. (#1871)
+- ARGO: Argo add `sendSensorTemp()` (#1858 #1859)
+- HAIER_AC160: Experimental detail support. (#1852 #1804)
+- BOSCH144: Add IRac class support (#1841)
+- Mitsubishi_AC: update left vane in `IRac` class (#1837)
+- Basic support for Daikin 312bit/39byte A/C protocol. (#1836 #1829)
+- Experimental basic support for Sanyo AC 152 bit protocol. (#1828 #1826)
+- GREE: Add model support for `YX1FSF`/Soleus Air Windown A/C (#1823 #1821)
+- Experimental basic support for Bosch 144bit protocol. (#1822 #1787)
+- Experimental basic support for TCL AC 96 bit protocol. (#1820 #1810)
+- Add basic support for clima-butler (52bit) RCS-SD43UWI (#1815 #1812)
+- TOTO: An experimental _(s)wipe_ at support for Toto Toilets. (#1811 #1806)
+- CARRIER_AC128: Experimental Basic support for Carrier AC 128bit protocol. (#1798 #1797)
+- HAIER_AC160: Add basic support for Haier 160bit protocol. (#1805 #1804)
+- DAIKIN: Add basic support for 200-bit Daikin protocol. (#1803 #1802)
+- FUJITSU: Improve handling of 10C Heat mode. (#1788 #1780)
+- FUJITSU: Improve handling of short (command only) messages. (#1784 #1780)
+
+**[Misc]**
+- Improve the `_IRREMOTEESP8266_VERSION_VAL` macro (#1875 #1870)
+- SONY: Update supported devices. (#1872)
+- SAMSUNG: Update supported devices (#1873)
+- NEC: Update supported devices (#1874)
+- Give IRmacros.h smaller scope to avoid impacting projects using IRremoteESP8266 (#1857 #1853 #1851)
+- Inhibit protocol names for not-included protocols (#1853 #1851)
+- Test out codeql static analysis (#1842)
+- Remove pylint disable=no-self-use (#1817)
+- Fujitsu General: update supported devices (#1813)
+- DAIKIN: Update supported devices (#1808 #1807)
+- Fujitsu: Update supported remote info. (#1801 #1794)
+- DAIKIN128: Update supported devices (#1754)
+- Voltas: Add link to manual for 122LZF A/C. (#1800 #1799 #1238)
+- Daikin128: Additional unit test. (#1795 #1754)
+- MIDEA: Update supported devices (#1791 #1790)
+
+
+## _v2.8.2 (20220314)_
+
+**[Bug Fixes]**
+- ESP32-C3: Fix reboot/crashes on ESP32-C3s when receiving. (#1768 #1751)
+
+**[Features]**
+- HITACHI_AC296: Add `IRac` class support & tests. (#1776 #1758 #1757)
+- Support for Hitachi RAS-70YHA3 (remote RAR-3U3) (#1758 #1757)
+- LG: Add Swing Toggle support for Model `LG6711A20083V` (#1771 #1770)
+- IRMQTTServer: add `MQTT_SERVER_AUTODETECT_ENABLE` via mqtt mDNS (#1769)
+- Experimental basic support for Kelon 168 bit / 21 byte protocol. (#1747 #1745 #1744)
+- MitsubishiAC: Tweak repeat gap timing. (#1760 #1759)
+- Gree YAP0F8 (Detected as Kelvinator) vertical position set support (#1756)
+- Make KELON (48 bit) protocol decoding stricter. (#1746 #1744)
+- IRMQTTServer V1.6.1 (#1740 #1739 #1729)
+- HITACHI_AC264: Add minimal detailed support. (#1735 #1729)
+- LG2: Improve Light toggle msg handling. (#1738 #1737)
+- MIDEA: Add support for Quiet, Clean & Freeze Protect controls. (#1734 #1733)
+- Add basic support for HITACHI_AC264 264bit protocol. (#1730 #1729)
+- ESP32-C3: Work around for some C3 specific compiler issues again. (#1732 #1695)
+
+**[Misc]**
+- MIDEA: Update supported devices (#1774 #1773 #1716)
+- Update devices supported by ELECTRA_AC (#1766 #1765)
+- Improve documentation for `encodePioneer()` (#1761 #1749)
+- Update (un)supported DAIKIN128 devices. (#1752)
+- Refactor `decodeCOOLIX()` code & add another test case. (#1750 #1748)
+- Simplify code based on state_t being initialised by default. (#1736 #1699)
+- Add comments to help Teknopoint users. (#1731 #1728)
+- Fix library version string calculation. (#1727 #1725)
+- Confirm we can reproduce `TurnOnFujitsuAC.ino` via IRac/IRMQTTServer. (#1726 #1701)
+
+
 ## _v2.8.1 (20220101)_
 
 **[Bug Fixes]**

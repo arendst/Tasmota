@@ -141,6 +141,7 @@ typedef struct _lv_indev_proc_t {
         struct {
             /*Pointer and button data*/
             lv_point_t act_point; /**< Current point of input device.*/
+            lv_point_t indev_point;
             lv_point_t last_point; /**< Last point of input device.*/
             lv_point_t last_raw_point; /**< Last point read from read_cb. */
             lv_point_t vect; /**< Difference between `act_point` and `last_point`.*/
@@ -206,6 +207,12 @@ lv_indev_t * lv_indev_drv_register(struct _lv_indev_drv_t * driver);
  * @param new_drv pointer to the new driver
  */
 void lv_indev_drv_update(lv_indev_t * indev, struct _lv_indev_drv_t * new_drv);
+
+/**
+* Remove the provided input device. Make sure not to use the provided input device afterwards anymore.
+* @param indev pointer to delete
+*/
+void lv_indev_delete(lv_indev_t * indev);
 
 /**
  * Get the next input device.

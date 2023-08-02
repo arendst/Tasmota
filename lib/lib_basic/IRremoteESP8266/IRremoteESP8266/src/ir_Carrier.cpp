@@ -1,8 +1,9 @@
-// Copyright 2018, 2020 David Conran
+// Copyright 2018-2022 David Conran
 /// @file
 /// @brief Carrier protocols.
 /// @see CarrierAc https://github.com/crankyoldgit/IRremoteESP8266/issues/385
 /// @see CarrierAc64 https://github.com/crankyoldgit/IRremoteESP8266/issues/1127
+/// @see CarrierAc128 https://github.com/crankyoldgit/IRremoteESP8266/issues/1797
 
 #include "ir_Carrier.h"
 #include <algorithm>
@@ -45,6 +46,25 @@ const uint16_t kCarrierAc64OneSpace = 1736;
 const uint16_t kCarrierAc64ZeroSpace = 615;
 const uint32_t kCarrierAc64Gap = kDefaultMessageGap;  // A guess.
 
+//< @see: https://github.com/crankyoldgit/IRremoteESP8266/issues/1943#issue-1519570772
+const uint16_t kCarrierAc84HdrMark = 5850;
+const uint16_t kCarrierAc84Zero = 1175;
+const uint16_t kCarrierAc84One = 430;
+const uint16_t kCarrierAc84HdrSpace = kCarrierAc84Zero;
+const uint32_t kCarrierAc84Gap = kDefaultMessageGap;  // A guess.
+const uint8_t  kCarrierAc84ExtraBits = 4;
+const uint8_t  kCarrierAc84ExtraTolerance = 5;
+
+const uint16_t kCarrierAc128HdrMark = 4600;
+const uint16_t kCarrierAc128HdrSpace = 2600;
+const uint16_t kCarrierAc128Hdr2Mark = 9300;
+const uint16_t kCarrierAc128Hdr2Space = 5000;
+const uint16_t kCarrierAc128BitMark = 340;
+const uint16_t kCarrierAc128OneSpace = 1000;
+const uint16_t kCarrierAc128ZeroSpace = 400;
+const uint16_t kCarrierAc128SectionGap = 20600;
+const uint16_t kCarrierAc128InterSpace = 6700;
+const uint16_t kCarrierAc128SectionBits = kCarrierAc128Bits / 2;
 
 #if SEND_CARRIER_AC
 /// Send a Carrier HVAC formatted message.
@@ -511,7 +531,7 @@ String IRCarrierAc64::toString(void) const {
 /// Convert the A/C state to it's common stdAc::state_t equivalent.
 /// @return A stdAc::state_t state.
 stdAc::state_t IRCarrierAc64::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::CARRIER_AC64;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -533,3 +553,195 @@ stdAc::state_t IRCarrierAc64::toCommon(void) const {
   result.clock = -1;
   return result;
 }
+
+#if SEND_CARRIER_AC128
+/// Send a Carrier 128bit HVAC formatted message.
+/// Status: BETA / Seems to work with tests. Needs testing agaisnt real devices.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The byte size of the message being sent.
+/// @param[in] repeat The number of times the message is to be repeated.
+void IRsend::sendCarrierAC128(const uint8_t data[], const uint16_t nbytes,
+                              const uint16_t repeat) {
+  // Min length check.
+  if (nbytes <= kCarrierAc128StateLength / 2) return;
+
+  enableIROut(kCarrierAcFreq);
+  // Handle repeats.
+  for (uint16_t r = 0; r <= repeat; r++) {
+    // First part of the message.
+    // Headers + Data + SectionGap
+    sendGeneric(kCarrierAc128HdrMark, kCarrierAc128HdrSpace,
+                kCarrierAc128BitMark, kCarrierAc128OneSpace,
+                kCarrierAc128BitMark, kCarrierAc128ZeroSpace,
+                kCarrierAc128BitMark, kCarrierAc128SectionGap,
+                data, nbytes / 2, kCarrierAcFreq, false, 0, kDutyDefault);
+    // Inter-message markers
+    mark(kCarrierAc128HdrMark);
+    space(kCarrierAc128InterSpace);
+    // Second part of the message
+    // Headers + Data + SectionGap
+    sendGeneric(kCarrierAc128Hdr2Mark, kCarrierAc128Hdr2Space,
+                kCarrierAc128BitMark, kCarrierAc128OneSpace,
+                kCarrierAc128BitMark, kCarrierAc128ZeroSpace,
+                kCarrierAc128BitMark, kCarrierAc128SectionGap,
+                data + (nbytes / 2), nbytes / 2, kCarrierAcFreq,
+                false, 0, kDutyDefault);
+    // Footer
+    mark(kCarrierAc128HdrMark);
+    space(kDefaultMessageGap);
+  }
+}
+#endif  // SEND_CARRIER_AC128
+
+#if DECODE_CARRIER_AC128
+/// Decode the supplied Carrier 128-bit HVAC message.
+/// Status: STABLE / Expected to work.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+bool IRrecv::decodeCarrierAC128(decode_results *results, uint16_t offset,
+                                const uint16_t nbits, const bool strict) {
+  if (results->rawlen < 2 * (nbits + 2 * kHeader + kFooter) - 1 + offset)
+    return false;  // Can't possibly be a valid Carrier message.
+  if (strict && nbits != kCarrierAc128Bits)
+    return false;  // We expect Carrier to be 128 bits of message.
+
+  uint16_t used;
+  uint16_t pos = 0;
+  const uint16_t sectionbits = nbits / 2;
+  // Match the first section.
+  used = matchGeneric(results->rawbuf + offset, results->state,
+                      results->rawlen - offset, sectionbits,
+                      kCarrierAc128HdrMark, kCarrierAc128HdrSpace,
+                      kCarrierAc128BitMark, kCarrierAc128OneSpace,
+                      kCarrierAc128BitMark, kCarrierAc128ZeroSpace,
+                      kCarrierAc128BitMark, kCarrierAc128SectionGap, true,
+                      kUseDefTol, kMarkExcess, false);
+  if (used == 0) return false;  // No match.
+  offset += used;
+  pos += sectionbits / 8;
+  // Look for the inter-message markers.
+  if (!matchMark(results->rawbuf[offset++], kCarrierAc128HdrMark))
+    return false;
+  if (!matchSpace(results->rawbuf[offset++], kCarrierAc128InterSpace))
+    return false;
+  // Now look for the second section.
+  used = matchGeneric(results->rawbuf + offset, results->state + pos,
+                      results->rawlen - offset, sectionbits,
+                      kCarrierAc128Hdr2Mark, kCarrierAc128Hdr2Space,
+                      kCarrierAc128BitMark, kCarrierAc128OneSpace,
+                      kCarrierAc128BitMark, kCarrierAc128ZeroSpace,
+                      kCarrierAc128BitMark, kCarrierAc128SectionGap, true,
+                      kUseDefTol, kMarkExcess, false);
+  if (used == 0) return false;  // No match.
+  offset += used;
+  // Now check for the Footer.
+  if (!matchMark(results->rawbuf[offset++], kCarrierAc128HdrMark)) return false;
+  if (offset < results->rawlen &&
+      !matchAtLeast(results->rawbuf[offset], kDefaultMessageGap)) return false;
+
+
+  // Compliance
+  // if (strict && !IRCarrierAc128::validChecksum(results->value)) return false;
+
+  // Success
+  results->bits = nbits;
+  results->decode_type = CARRIER_AC128;
+  return true;
+}
+#endif  // DECODE_CARRIER_AC128
+
+#if SEND_CARRIER_AC84
+/// Send a Carroer A/C 84 Bit formatted message.
+/// Status: BETA / Untested but probably works.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The byte size of the message being sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+void IRsend::sendCarrierAC84(const uint8_t data[], const uint16_t nbytes,
+                             const uint16_t repeat) {
+  // Protocol uses a constant bit time encoding.
+  for (uint16_t r = 0; r <= repeat; r++) {
+    if (nbytes) {
+      // The least significant `kCarrierAc84ExtraBits` bits of the first byte
+      sendGeneric(kCarrierAc84HdrMark, kCarrierAc84HdrSpace,  // Header
+                  kCarrierAc84Zero, kCarrierAc84One,  // Data
+                  kCarrierAc84One, kCarrierAc84Zero,
+                  0, 0,  // No footer
+                  GETBITS64(data[0], 0, kCarrierAc84ExtraBits),
+                  kCarrierAc84ExtraBits,
+                  38000, false, 0, 33);
+      // The rest of the data.
+      sendGeneric(0, 0,  // No Header
+                  kCarrierAc84Zero, kCarrierAc84One,  // Data
+                  kCarrierAc84One, kCarrierAc84Zero,
+                  kCarrierAc84Zero, kDefaultMessageGap,  // Footer
+                  data + 1, nbytes - 1, 38000, false, 0, 33);
+    }
+  }
+}
+#endif  // SEND_CARRIER_AC84
+
+#if DECODE_CARRIER_AC84
+/// Decode the supplied Carroer A/C 84 Bit formatted message.
+/// Status: STABLE / Confirmed Working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+bool IRrecv::decodeCarrierAC84(decode_results *results, uint16_t offset,
+                                const uint16_t nbits, const bool strict) {
+  // Check if we have enough data to even possibly match.
+  if (results->rawlen < 2 * nbits + kHeader + kFooter - 1 + offset)
+    return false;  // Can't possibly be a valid Carrier message.
+  // Compliance check.
+  if (strict && nbits != kCarrierAc84Bits) return false;
+
+  // This decoder expects to decode an unusual number of bits. Check before we
+  // start.
+  if (nbits % 8 != kCarrierAc84ExtraBits) return false;
+
+  uint64_t data = 0;
+  uint16_t used = 0;
+
+  // Header + Data (kCarrierAc84ExtraBits only)
+  used = matchGenericConstBitTime(results->rawbuf + offset, &data,
+                                  results->rawlen - offset,
+                                  kCarrierAc84ExtraBits,
+                                  // Header (None)
+                                  kCarrierAc84HdrMark, kCarrierAc84HdrSpace,
+                                  // Data
+                                  kCarrierAc84Zero, kCarrierAc84One,
+                                  // No Footer
+                                  0, 0,
+                                  false,
+                                  _tolerance + kCarrierAc84ExtraTolerance,
+                                  kMarkExcess, false);
+  if (!used) return false;
+  // Stuff the captured data so far into the first byte of the state.
+  *results->state = data;
+  offset += used;
+  // Capture the rest of the data as normal as we should be on a byte boundary.
+  // Data + Footer
+  if (!matchGeneric(results->rawbuf + offset, results->state + 1,
+                    results->rawlen - offset, nbits - kCarrierAc84ExtraBits,
+                    0, 0,  // No Header expected.
+                    kCarrierAc84Zero, kCarrierAc84One,  // Data
+                    kCarrierAc84One, kCarrierAc84Zero,
+                    kCarrierAc84Zero, kDefaultMessageGap, true,
+                    _tolerance + kCarrierAc84ExtraTolerance,
+                    kMarkExcess, false)) return false;
+
+  // Success
+  results->decode_type = decode_type_t::CARRIER_AC84;
+  results->bits = nbits;
+  results->repeat = false;
+  return true;
+}
+#endif  // DECODE_CARRIER_AC84

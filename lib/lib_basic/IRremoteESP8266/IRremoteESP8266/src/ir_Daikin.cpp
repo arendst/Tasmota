@@ -1,6 +1,6 @@
 // Copyright 2016 sillyfrog
 // Copyright 2017 sillyfrog, crankyoldgit
-// Copyright 2018-2021 crankyoldgit
+// Copyright 2018-2022 crankyoldgit
 // Copyright 2019 pasna (IRDaikin160 class / Daikin176 class)
 
 /// @file
@@ -21,6 +21,7 @@
 /// @see Daikin216 https://github.com/crankyoldgit/IRremoteESP8266/issues/689
 /// @see Daikin216 https://github.com/danny-source/Arduino_DY_IRDaikin
 /// @see Daikin64 https://github.com/crankyoldgit/IRremoteESP8266/issues/1064
+/// @see Daikin200 https://github.com/crankyoldgit/IRremoteESP8266/issues/1802
 
 #include "ir_Daikin.h"
 #include <algorithm>
@@ -529,7 +530,7 @@ stdAc::fanspeed_t IRDaikinESP::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikinESP::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -1199,7 +1200,7 @@ stdAc::swingh_t IRDaikin2::toCommonSwingH(const uint8_t setting) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin2::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN2;
   result.model = -1;  // No models used.
   result.power = getPower();
@@ -1621,7 +1622,7 @@ bool IRDaikin216::getPowerful(void) const { return _.Powerful; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin216::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN216;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -1971,7 +1972,7 @@ stdAc::swingv_t IRDaikin160::toCommonSwingV(const uint8_t setting) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin160::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN160;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -2362,7 +2363,7 @@ stdAc::fanspeed_t IRDaikin176::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin176::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN176;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -2883,7 +2884,7 @@ String IRDaikin128::toString(void) const {
 /// @param[in] prev Ptr to a previous state.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin128::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::DAIKIN128;
   result.model = -1;  // No models used.
@@ -3285,7 +3286,7 @@ bool IRDaikin152::getComfort(void) const { return _.Comfort; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin152::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN152;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -3710,7 +3711,7 @@ String IRDaikin64::toString(void) const {
 /// @param[in] prev Ptr to a previous state.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin64::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::DAIKIN64;
   result.model = -1;  // No models used.
@@ -3733,3 +3734,193 @@ stdAc::state_t IRDaikin64::toCommon(const stdAc::state_t *prev) const {
   result.light = false;
   return result;
 }
+
+#if SEND_DAIKIN200
+/// Send a Daikin200 (200-bit) A/C formatted message.
+/// Status: BETA / Untested on a real device.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The number of bytes of message to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1802
+void IRsend::sendDaikin200(const unsigned char data[], const uint16_t nbytes,
+                           const uint16_t repeat) {
+  if (nbytes < kDaikin200Section1Length)
+    return;  // Not enough bytes to send a partial message.
+
+  for (uint16_t r = 0; r <= repeat; r++) {
+    // Section #1
+    sendGeneric(kDaikin200HdrMark, kDaikin200HdrSpace, kDaikin200BitMark,
+                kDaikin200OneSpace, kDaikin200BitMark, kDaikin200ZeroSpace,
+                kDaikin200BitMark, kDaikin200Gap, data,
+                kDaikin200Section1Length,
+                kDaikin200Freq, false, 0, kDutyDefault);
+    // Section #2
+    sendGeneric(kDaikin200HdrMark, kDaikin200HdrSpace, kDaikin200BitMark,
+                kDaikin200OneSpace, kDaikin200BitMark, kDaikin200ZeroSpace,
+                kDaikin200BitMark, kDaikin200Gap,
+                data + kDaikin200Section1Length,
+                nbytes - kDaikin200Section1Length,
+                kDaikin200Freq, false, 0, kDutyDefault);
+  }
+}
+#endif  // SEND_DAIKIN200
+
+#if DECODE_DAIKIN200
+/// Decode the supplied Daikin 200-bit message. (DAIKIN200)
+/// Status: STABLE / Known to be working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1802
+bool IRrecv::decodeDaikin200(decode_results *results, uint16_t offset,
+                             const uint16_t nbits, const bool strict) {
+  if (results->rawlen < 2 * (nbits + kHeader + kFooter) - 1 + offset)
+    return false;
+
+  // Compliance
+  if (strict && nbits != kDaikin200Bits) return false;
+
+  const uint8_t ksectionSize[kDaikin200Sections] = {kDaikin200Section1Length,
+                                                    kDaikin200Section2Length};
+  // Sections
+  uint16_t pos = 0;
+  for (uint8_t section = 0; section < kDaikin200Sections; section++) {
+    uint16_t used;
+    // Section Header + Section Data + Section Footer
+    used = matchGeneric(results->rawbuf + offset, results->state + pos,
+                        results->rawlen - offset, ksectionSize[section] * 8,
+                        kDaikin200HdrMark, kDaikin200HdrSpace,
+                        kDaikin200BitMark, kDaikin200OneSpace,
+                        kDaikin200BitMark, kDaikin200ZeroSpace,
+                        kDaikin200BitMark, kDaikin200Gap,
+                        section >= kDaikin200Sections - 1,
+                        kDaikinTolerance, 0, false);
+    if (used == 0) return false;
+    offset += used;
+    pos += ksectionSize[section];
+  }
+  // Compliance
+  if (strict) {
+    if (pos * 8 != kDaikin200Bits) return false;
+    // Validate the checksum.
+    if (!IRDaikin176::validChecksum(results->state, pos)) return false;
+  }
+
+  // Success
+  results->decode_type = decode_type_t::DAIKIN200;
+  results->bits = nbits;
+  // No need to record the state as we stored it as we decoded it.
+  // As we use result->state, we don't record value, address, or command as it
+  // is a union data type.
+  return true;
+}
+#endif  // DECODE_DAIKIN200
+
+#if SEND_DAIKIN312
+/// Send a Daikin312 (312-bit / 39 byte) A/C formatted message.
+/// Status: BETA / Untested on a real device.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The number of bytes of message to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1829
+void IRsend::sendDaikin312(const unsigned char data[], const uint16_t nbytes,
+                           const uint16_t repeat) {
+  if (nbytes < kDaikin312Section1Length)
+    return;  // Not enough bytes to send a partial message.
+
+  for (uint16_t r = 0; r <= repeat; r++) {
+    // Send the header, 0b00000
+    sendGeneric(0, 0,  // No header for the header
+                kDaikin312BitMark, kDaikin312OneSpace,
+                kDaikin312BitMark, kDaikin312ZeroSpace,
+                kDaikin312BitMark, kDaikin312HdrGap,
+                (uint64_t)0b00000, kDaikinHeaderLength,
+                kDaikin2Freq, false, 0, kDutyDefault);
+    // Section #1
+    sendGeneric(kDaikin312HdrMark, kDaikin312HdrSpace, kDaikin312BitMark,
+                kDaikin312OneSpace, kDaikin312BitMark, kDaikin312ZeroSpace,
+                kDaikin312BitMark, kDaikin312SectionGap, data,
+                kDaikin312Section1Length,
+                kDaikin2Freq, false, 0, kDutyDefault);
+    // Section #2
+    sendGeneric(kDaikin312HdrMark, kDaikin312HdrSpace, kDaikin312BitMark,
+                kDaikin312OneSpace, kDaikin312BitMark, kDaikin312ZeroSpace,
+                kDaikin312BitMark, kDaikin312SectionGap,
+                data + kDaikin312Section1Length,
+                nbytes - kDaikin312Section1Length,
+                kDaikin2Freq, false, 0, kDutyDefault);
+  }
+}
+#endif  // SEND_DAIKIN312
+
+#if DECODE_DAIKIN312
+/// Decode the supplied Daikin 312-bit / 39-byte message. (DAIKIN312)
+/// Status: STABLE / Confirmed working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1829
+bool IRrecv::decodeDaikin312(decode_results *results, uint16_t offset,
+                             const uint16_t nbits, const bool strict) {
+  // Is there enough data to match successfully?
+  if (results->rawlen < 2 * (nbits + kDaikinHeaderLength + kHeader + kFooter) +
+                        kFooter - 1 + offset)
+    return false;
+
+  // Compliance
+  if (strict && nbits != kDaikin312Bits) return false;
+
+  const uint8_t ksectionSize[kDaikin312Sections] = {kDaikin312Section1Length,
+                                                    kDaikin312Section2Length};
+  // Header/Leader Section
+  uint64_t leaderdata = 0;
+  uint16_t used = matchGeneric(results->rawbuf + offset, &leaderdata,
+                      results->rawlen - offset, kDaikinHeaderLength,
+                      0, 0,  // No Header Mark or Space for the "header"
+                      kDaikin312BitMark, kDaikin312OneSpace,
+                      kDaikin312BitMark, kDaikin312ZeroSpace,
+                      kDaikin312BitMark, kDaikin312HdrGap,
+                      false, kDaikinTolerance, 0, false);
+  if (!used) return false;  // Failed to match.
+  if (leaderdata) return false;  // The header bits should all be zero.
+
+  offset += used;
+
+  // Data Sections
+  uint16_t pos = 0;
+  for (uint8_t section = 0; section < kDaikin312Sections; section++) {
+    // Section Header + Section Data + Section Footer
+    used = matchGeneric(results->rawbuf + offset, results->state + pos,
+                        results->rawlen - offset, ksectionSize[section] * 8,
+                        kDaikin312HdrMark, kDaikin312HdrSpace,
+                        kDaikin312BitMark, kDaikin312OneSpace,
+                        kDaikin312BitMark, kDaikin312ZeroSpace,
+                        kDaikin312BitMark, kDaikin312SectionGap,
+                        section >= kDaikin312Sections - 1,
+                        kDaikinTolerance, 0, false);
+    if (used == 0) return false;
+    offset += used;
+    pos += ksectionSize[section];
+  }
+  // Compliance
+  if (strict) {
+    if (pos * 8 != kDaikin312Bits) return false;
+  }
+
+  // Success
+  results->decode_type = decode_type_t::DAIKIN312;
+  results->bits = nbits;
+  // No need to record the state as we stored it as we decoded it.
+  // As we use result->state, we don't record value, address, or command as it
+  // is a union data type.
+  return true;
+}
+#endif  // DECODE_DAIKIN312

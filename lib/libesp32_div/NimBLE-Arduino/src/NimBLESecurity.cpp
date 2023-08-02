@@ -12,7 +12,7 @@
  *      Author: chegewara
  */
 
-#include "sdkconfig.h"
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLESecurity.h"
@@ -61,8 +61,8 @@ void NimBLESecurity::setCapability(esp_ble_io_cap_t iocap) {
 
 
 /**
- * @brief Sets the keys we will distibute during encryption.
- * @param [in] init_key A bitmask of the keys we will distibute.\n
+ * @brief Sets the keys we will distribute during encryption.
+ * @param [in] init_key A bitmask of the keys we will distribute.\n
  * Can be one or more of:
  * * ESP_BLE_ENC_KEY_MASK    (1 << 0)
  * * ESP_BLE_ID_KEY_MASK     (1 << 1)

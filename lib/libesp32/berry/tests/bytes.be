@@ -183,3 +183,77 @@ assert(b[5..10] == bytes("5566778899AA"))
 assert(b[-10..-5] == bytes("66778899AABB"))
 assert(b[5..-10] == bytes("5566"))
 assert(b[7..-12] == bytes())
+
+#- float -#
+b = bytes("00000000")
+b.setfloat(0, 0.33)
+assert(b == bytes('C3F5A83E'))
+b = bytes("0000C03F")
+assert(b.getfloat(0) == 1.5)
+
+#- fromhex -#
+b = bytes("112233")
+b.fromhex("FFFEAABBCC")
+assert(b == bytes("FFFEAABBCC"))
+b.fromhex("")
+assert(b == bytes())
+
+#- tohex -#
+b = bytes("FFFEAABBCC")
+assert(b.tohex() == "FFFEAABBCC")
+assert(bytes().tohex() == "")
+
+# assign buffer to bytes
+var a0 = bytes("112233445566778899")
+b = bytes("aabbccddeeff")
+
+a = a0.copy()
+a.setbytes(0, b)            # assign from start
+assert(a == bytes('AABBCCDDEEFF778899'))
+a = a0.copy()
+a.setbytes(0, b, 0, 0)      # zero len
+assert(a == a0)
+a = a0.copy()
+a.setbytes(100, b)          # index out of range
+assert(a == a0)
+a = a0.copy()
+a.setbytes(6, b)          # entire buffer not fitting
+assert(a == bytes('112233445566AABBCC'))
+a = a0.copy()
+a.setbytes(6, b, 2, 2)
+assert(a == bytes('112233445566CCDD99'))
+a = b.copy()
+a.setbytes(0, a0)
+assert(a == bytes('112233445566'))
+
+# reverse
+assert(bytes().reverse() == bytes())
+assert(bytes("AA").reverse() == bytes("AA"))
+assert(bytes("1122334455").reverse() == bytes("5544332211"))
+assert(bytes("11223344").reverse() == bytes("44332211"))
+
+assert(bytes("0011223344").reverse(1) == bytes("0044332211"))
+assert(bytes("0011223344").reverse(3) == bytes("0011224433"))
+assert(bytes("0011223344").reverse(4) == bytes("0011223344"))
+assert(bytes("0011223344").reverse(5) == bytes("0011223344"))
+assert(bytes("0011223344").reverse(15) == bytes("0011223344"))
+assert(bytes("0011223344").reverse(-2) == bytes("4433221100"))
+
+assert(bytes("0011223344").reverse(1,3) == bytes("0033221144"))
+assert(bytes("0011223344").reverse(1,0) == bytes("0011223344"))
+assert(bytes("0011223344").reverse(2,2) == bytes("0011332244"))
+assert(bytes("0011223344").reverse(0,2) == bytes("1100223344"))
+assert(bytes("0011223344").reverse(nil,2) == bytes("1100223344"))
+assert(bytes("0011223344").reverse(1, nil) == bytes("0044332211"))
+
+assert(bytes("0011223344").reverse(nil, nil, 2) == bytes("2233001144"))
+assert(bytes("001122334455").reverse(nil, nil, 3) == bytes("334455001122"))
+
+# tobool returns `true` is bytes() is not null, `false` if empty
+assert(bool(bytes()) == false)
+assert(bytes().tobool() == false)
+assert(!bytes())
+
+assert(bool(bytes("00")) == true)
+assert(bytes("01").tobool() == true)
+assert(bytes("02"))

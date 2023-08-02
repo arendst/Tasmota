@@ -46,10 +46,14 @@ typedef struct {
     int status;
 } bcallframe;
 
+struct gc16_t;           /* memory pool for 0-16 bytes or less objects */
+struct gc32_t;           /* memory pool for 17-32 bytes */
 struct bgc {
     bgcobject *list; /* the GC-object list */
     bgcobject *gray; /* the gray object list */
     bgcobject *fixed; /* the fixed objecct list  */
+    struct gc16_t* pool16;
+    struct gc32_t* pool32;
     size_t usage; /* the count of bytes currently allocated */
     size_t threshold; /* he threshold of allocation for the next GC */
     bbyte steprate; /* the rate of increase in the distribution between two GCs (percentage) */
@@ -98,21 +102,44 @@ struct bvm {
     struct bstringtable strtab; /* short string table */
     bstack tracestack; /* call state trace-stack */
     bmap *ntvclass; /* native class table */
-    blist *registry; /* registry list */
     struct bgc gc;
     bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */
+    int32_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
     bobshook obshook;
+    bmicrosfnct microsfnct; /* fucntion to get time as a microsecond resolution */
 #if BE_USE_PERF_COUNTERS
     uint32_t counter_ins; /* instructions counter */
     uint32_t counter_enter; /* counter for times the VM was entered */
     uint32_t counter_call; /* counter for calls, VM or native */
     uint32_t counter_get; /* counter for GETMBR or GETMET */
     uint32_t counter_set; /* counter for SETMBR */
+    uint32_t counter_get_global; /* counter for GETNBGL */
     uint32_t counter_try; /* counter for `try` statement */
     uint32_t counter_exc; /* counter for raised exceptions */
     uint32_t counter_gc_kept; /* counter for objects scanned by last gc */
     uint32_t counter_gc_freed; /* counter for objects freed by last gc */
+    uint32_t counter_mem_alloc; /* counter for memory allocations */
+    uint32_t counter_mem_free; /* counter for memory frees */
+    uint32_t counter_mem_realloc; /* counter for memory reallocations */
+
+    uint32_t micros_gc0;
+    uint32_t micros_gc1;
+    uint32_t micros_gc2;
+    uint32_t micros_gc3;
+    uint32_t micros_gc4;
+    uint32_t micros_gc5;
+
+    uint32_t gc_mark_string;
+    uint32_t gc_mark_class;
+    uint32_t gc_mark_proto;
+    uint32_t gc_mark_instance;
+    uint32_t gc_mark_map;
+    uint32_t gc_mark_list;
+    uint32_t gc_mark_closure;
+    uint32_t gc_mark_ntvclos;
+    uint32_t gc_mark_module;
+    uint32_t gc_mark_comobj;
 #endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;
@@ -124,6 +151,7 @@ struct bvm {
 #define BASE_FRAME          (1 << 0)
 #define PRIM_FUNC           (1 << 1)
 
+int be_default_init_native_function(bvm *vm);
 void be_dofunc(bvm *vm, bvalue *v, int argc);
 bbool be_value2bool(bvm *vm, bvalue *v);
 bbool be_vm_iseq(bvm *vm, bvalue *a, bvalue *b);

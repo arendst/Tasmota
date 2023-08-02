@@ -275,7 +275,7 @@ float AXP20X_Class::getTemp()
 {
     if (!_init)
         return AXP_NOT_INIT;
-    return _getRegistResult(AXP202_INTERNAL_TEMP_H8, AXP202_INTERNAL_TEMP_L4) * AXP202_INTERNAL_TEMP_STEP;
+    return (_getRegistResult(AXP202_INTERNAL_TEMP_H8, AXP202_INTERNAL_TEMP_L4) - 1447) * AXP202_INTERNAL_TEMP_STEP;
 }
 
 float AXP20X_Class::getTSTemp()

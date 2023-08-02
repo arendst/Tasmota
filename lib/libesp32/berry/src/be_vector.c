@@ -114,32 +114,6 @@ void* be_vector_release(bvm *vm, bvector *vector)
     return vector->data;
 }
 
-/* free not used */
-void* be_vector_release_32(bvm *vm, bvector *vector)
-{
-    size_t size = vector->size;
-    int count = be_vector_count(vector);
-    if (count == 0) {
-        be_free(vm, vector->data, vector->capacity * size);
-        vector->capacity = 0;
-        vector->data = NULL;
-        vector->end = NULL;
-    } else if (count < vector->capacity) {
-        vector->data = be_realloc(vm,
-            vector->data, vector->capacity * size, count * size);       // TODO - can we skip that step?
-        void* iram = berry_malloc32(count * size);
-        if (iram) {
-            memcpy(iram, vector->data, count * size);
-            free(vector->data);
-            vector->data = iram;
-        }
-        // vm->gc.usage = vm->gc.usage + count * size - vector->capacity * size; /* update allocated count */
-        vector->end = (char*)vector->data + ((size_t)count - 1) * size;
-        vector->capacity = count;
-    }
-    return vector->data;
-}
-
 /* use binary search to find the vector capacity between 0-1024 */
 static int binary_search(int value)
 {

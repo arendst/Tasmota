@@ -45,13 +45,8 @@
 /* of data as per HID Class standard */
 
 /* Main items */
-#ifdef ARDUINO_ARCH_ESP32
-#define HIDINPUT(size)             (0x80 | size)
-#define HIDOUTPUT(size)            (0x90 | size)
-#else
-#define INPUT(size)             (0x80 | size)
-#define OUTPUT(size)            (0x90 | size)
-#endif
+#define HIDINPUT(size)          (0x80 | size)
+#define HIDOUTPUT(size)         (0x90 | size)
 #define FEATURE(size)           (0xb0 | size)
 #define COLLECTION(size)        (0xa0 | size)
 #define END_COLLECTION(size)    (0xc0 | size)

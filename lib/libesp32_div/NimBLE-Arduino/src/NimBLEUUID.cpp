@@ -11,7 +11,8 @@
  *  Created on: Jun 21, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
+
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEUtils.h"
@@ -234,8 +235,8 @@ const ble_uuid_any_t* NimBLEUUID::getNative() const {
 
 /**
  * @brief Convert a UUID to its 128 bit representation.
- * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.  This method
- * will convert 16 or 32 bit representations to the full 128bit.
+ * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.
+ * This method will convert 16 or 32bit representations to the full 128bit.
  * @return The NimBLEUUID converted to 128bit.
  */
 const NimBLEUUID &NimBLEUUID::to128() {
@@ -257,6 +258,29 @@ const NimBLEUUID &NimBLEUUID::to128() {
 
 
 /**
+ * @brief Convert 128 bit UUID to its 16 bit representation.
+ * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.
+ * This method will convert a 128bit uuid to 16bit if it contains the ble base uuid.
+ * @return The NimBLEUUID converted to 16bit if successful, otherwise the original uuid.
+ */
+const NimBLEUUID& NimBLEUUID::to16() {
+    if (!m_valueSet || m_uuid.u.type == BLE_UUID_TYPE_16) {
+        return *this;
+    }
+
+    if (m_uuid.u.type == BLE_UUID_TYPE_128) {
+        uint8_t base128[] = {0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00,
+                             0x00, 0x80, 0x00, 0x10, 0x00, 0x00};
+        if (memcmp(m_uuid.u128.value, base128, sizeof(base128)) == 0 ) {
+            *this = NimBLEUUID(*(uint16_t*)(m_uuid.u128.value + 12));
+        }
+    }
+
+    return *this;
+}
+
+
+/**
  * @brief Get a string representation of the UUID.
  * @details
  * The format of a string is:
@@ -273,7 +297,7 @@ std::string NimBLEUUID::toString() const {
 
 
 /**
- * @brief Convienience operator to check if this UUID is equal to another.
+ * @brief Convenience operator to check if this UUID is equal to another.
  */
 bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
     if(m_valueSet && rhs.m_valueSet) {
@@ -312,7 +336,7 @@ bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
 
 
 /**
- * @brief Convienience operator to check if this UUID is not equal to another.
+ * @brief Convenience operator to check if this UUID is not equal to another.
  */
 bool NimBLEUUID::operator !=(const NimBLEUUID & rhs) const {
     return !this->operator==(rhs);
@@ -320,7 +344,7 @@ bool NimBLEUUID::operator !=(const NimBLEUUID & rhs) const {
 
 
 /**
- * @brief Convienience operator to convert this UUID to string representation.
+ * @brief Convenience operator to convert this UUID to string representation.
  * @details This allows passing NimBLEUUID to functions
  * that accept std::string and/or or it's methods as a parameter.
  */

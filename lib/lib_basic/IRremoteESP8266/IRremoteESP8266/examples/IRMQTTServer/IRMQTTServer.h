@@ -132,6 +132,8 @@ const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 #define MQTT_CLIMATE "ac"  // Sub-topic for the climate topics.
 #define MQTT_CLIMATE_CMND "cmnd"  // Sub-topic for the climate command topics.
 #define MQTT_CLIMATE_STAT "stat"  // Sub-topic for the climate stat topics.
+// Sub-topic for the temperature/humidity sensor stat topics.
+#define MQTT_SENSOR_STAT "sensor"
 // Enable sending/receiving climate via JSON. `true` cost ~5k of program space.
 #define MQTT_CLIMATE_JSON false
 
@@ -169,6 +171,11 @@ const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 // In theory, you shouldn't need this as you can always clean up by hand, hence
 // it is disabled by default. Note: `false` saves ~1.2k.
 #define MQTT_CLEAR_ENABLE false
+
+#ifndef MQTT_SERVER_AUTODETECT_ENABLE
+// Whether or not MQTT Server IP is detected through mDNS
+#define MQTT_SERVER_AUTODETECT_ENABLE true
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
 #endif  // MQTT_ENABLE
 
 // ------------------------ IR Capture Settings --------------------------------
@@ -216,6 +223,25 @@ const uint16_t kMinUnknownSize = 2 * 10;
 //      actual a/c unit.
 #define REPLAY_DECODED_AC_MESSAGE false
 
+// ------------------------ SHT-3x Support -------------------------------------
+// To enable SHT-3x sensor support (such as the Lolin SHT30 Shield), connected
+// to GPIOs 4 and 5 (D2 and D1), do the following:
+//  - uncomment the line in platformio.ini to enable the SHT-3x library
+//  - uncomment the following #define line
+// #define SHT3X_SUPPORT true
+
+// Default address for SHT-3x sensor.
+#define SHT3X_I2C_ADDRESS 0x44
+// Requires MQTT_DISCOVERY_ENABLE to be true as well.
+// If set, will send HA MQTT Discovery messages for the SHT-3x sensor.
+#define SHT3X_MQTT_DISCOVERY_ENABLE true
+// I2C SDA pin for SHT-3x sensor (D2).
+#define SHT3X_I2C_SDA 4
+// I2C SCL pin for SHT-3x sensor (D1).
+#define SHT3X_I2C_SCL 5
+// Check frequency for SHT-3x sensor (in seconds).
+#define SHT3X_CHECK_FREQ 60
+
 // ------------------------ Advanced Usage Only --------------------------------
 
 // Reports the input voltage to the ESP chip. **NOT** the input voltage
@@ -233,6 +259,7 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_POWER "power"
 #define KEY_MODE "mode"
 #define KEY_TEMP "temp"
+#define KEY_HUMIDITY "humidity"
 #define KEY_FANSPEED "fanspeed"
 #define KEY_SWINGV "swingv"
 #define KEY_SWINGH "swingh"
@@ -248,6 +275,9 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_JSON "json"
 #define KEY_RESEND "resend"
 #define KEY_VCC "vcc"
+#define KEY_COMMAND "command"
+#define KEY_SENSORTEMP "sensortemp"
+#define KEY_IFEEL "ifeel"
 
 // HTML arguments we will parse for IR code information.
 #define KEY_TYPE "type"  // KEY_PROTOCOL is also checked too.
@@ -255,10 +285,16 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_BITS "bits"
 #define KEY_REPEAT "repeats"
 #define KEY_CHANNEL "channel"  // Which IR TX channel to send on.
+#define KEY_SENSORTEMP_DISABLED "sensortemp_disabled"  // For HTML form only,
+                                                       // not sent via MQTT
+                                                       // nor JSON
 
 // GPIO html/config keys
 #define KEY_TX_GPIO "tx"
 #define KEY_RX_GPIO "rx"
+
+// Miscellaneous constants
+#define TOGGLE_JS_FN_NAME "ToggleInputBasedOnCheckbox"
 
 // Text for Last Will & Testament status messages.
 const char* const kLwtOnline = "Online";
@@ -285,7 +321,7 @@ const uint16_t kJsonAcStateMaxSize = 1024;  // Bytes
 // ----------------- End of User Configuration Section -------------------------
 
 // Constants
-#define _MY_VERSION_ "v1.6.0"
+#define _MY_VERSION_ "v1.8.2"
 
 const uint8_t kRebootTime = 15;  // Seconds
 const uint8_t kQuickDisplayTime = 2;  // Seconds
@@ -353,7 +389,8 @@ static const char kClimateTopics[] PROGMEM =
     "(" KEY_PROTOCOL "|" KEY_MODEL "|" KEY_POWER "|" KEY_MODE "|" KEY_TEMP "|"
     KEY_FANSPEED "|" KEY_SWINGV "|" KEY_SWINGH "|" KEY_QUIET "|"
     KEY_TURBO "|" KEY_LIGHT "|" KEY_BEEP "|" KEY_ECONO "|" KEY_SLEEP "|"
-    KEY_FILTER "|" KEY_CLEAN "|" KEY_CELSIUS "|" KEY_RESEND
+    KEY_FILTER "|" KEY_CLEAN "|" KEY_CELSIUS "|" KEY_RESEND "|" KEY_COMMAND "|"
+    "|" KEY_SENSORTEMP "|" KEY_IFEEL
 #if MQTT_CLIMATE_JSON
     "|" KEY_JSON
 #endif  // MQTT_CLIMATE_JSON
@@ -362,6 +399,7 @@ static const char* const kMqttTopics[] = {
     KEY_PROTOCOL, KEY_MODEL, KEY_POWER, KEY_MODE, KEY_TEMP, KEY_FANSPEED,
     KEY_SWINGV, KEY_SWINGH, KEY_QUIET, KEY_TURBO, KEY_LIGHT, KEY_BEEP,
     KEY_ECONO, KEY_SLEEP, KEY_FILTER, KEY_CLEAN, KEY_CELSIUS, KEY_RESEND,
+    KEY_COMMAND, KEY_SENSORTEMP, KEY_IFEEL
     KEY_JSON};  // KEY_JSON needs to be the last one.
 
 
@@ -405,7 +443,8 @@ int8_t getDefaultTxGpio(void);
 String genStatTopic(const uint16_t channel = 0);
 String listOfTxGpios(void);
 bool hasUnsafeHTMLChars(String input);
-String htmlHeader(const String title, const String h1_text = "");
+String htmlHeader(const String title, const String h1_text = "",
+                  const String headScriptsJS = "");
 String htmlEnd(void);
 String htmlButton(const String url, const String button,
                   const String text = "");
@@ -413,9 +452,13 @@ String htmlMenu(void);
 void handleRoot(void);
 String addJsReloadUrl(const String url, const uint16_t timeout_s,
                       const bool notify);
+String getJsToggleCheckbox(const String functionName = TOGGLE_JS_FN_NAME);
 void handleExamples(void);
 String htmlOptionItem(const String value, const String text, bool selected);
 String htmlSelectBool(const String name, const bool def);
+String htmlDisableCheckbox(const String name, const String targetControlId,
+                           const bool checked,
+                           const String toggleJsFnName = TOGGLE_JS_FN_NAME);
 String htmlSelectClimateProtocol(const String name, const decode_type_t def);
 String htmlSelectAcStateProtocol(const String name, const decode_type_t def,
                                  const bool simple);
@@ -444,6 +487,9 @@ bool parseStringAndSendPronto(IRsend *irsend, const String str,
 #if SEND_RAW
 bool parseStringAndSendRaw(IRsend *irsend, const String str);
 #endif  // SEND_RAW
+#if SHT3X_SUPPORT
+void sendMQTTDiscoverySensor(const char *topic, String type);
+#endif  // SH3X_SUPPORT
 void handleIr(void);
 void handleNotFound(void);
 void setup_wifi(void);

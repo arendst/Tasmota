@@ -34,6 +34,7 @@ static void lv_spinbox_updatevalue(lv_obj_t * obj);
 const lv_obj_class_t lv_spinbox_class = {
     .constructor_cb = lv_spinbox_constructor,
     .event_cb = lv_spinbox_event,
+    .width_def = LV_DPI_DEF,
     .instance_size = sizeof(lv_spinbox_t),
     .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .base_class = &lv_textarea_class
@@ -60,7 +61,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * parent)
 
 /**
  * Set spinbox value
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  * @param i value to be set
  */
 void lv_spinbox_set_value(lv_obj_t * obj, int32_t i)
@@ -104,7 +105,6 @@ void lv_spinbox_set_digit_format(lv_obj_t * obj, uint8_t digit_count, uint8_t se
     if(digit_count > LV_SPINBOX_MAX_DIGIT_COUNT) digit_count = LV_SPINBOX_MAX_DIGIT_COUNT;
 
     if(separator_position >= digit_count) separator_position = 0;
-    if(separator_position > LV_SPINBOX_MAX_DIGIT_COUNT) separator_position = LV_SPINBOX_MAX_DIGIT_COUNT;
 
     if(digit_count < LV_SPINBOX_MAX_DIGIT_COUNT) {
         int64_t max_val = lv_pow(10, digit_count);
@@ -157,7 +157,7 @@ void lv_spinbox_set_range(lv_obj_t * obj, int32_t range_min, int32_t range_max)
  * @param spinbox pointer to spinbox
  * @param pos selected position in spinbox
  */
-void lv_spinbox_set_pos(lv_obj_t * obj, uint8_t pos)
+void lv_spinbox_set_cursor_pos(lv_obj_t * obj, uint8_t pos)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_spinbox_t * spinbox = (lv_spinbox_t *)obj;
@@ -175,7 +175,7 @@ void lv_spinbox_set_pos(lv_obj_t * obj, uint8_t pos)
  * @param spinbox pointer to spinbox
  * @param direction the direction (LV_DIR_RIGHT or LV_DIR_LEFT)
  */
-void lv_spinbox_set_digit_step_direction(lv_obj_t *obj, lv_dir_t direction)
+void lv_spinbox_set_digit_step_direction(lv_obj_t * obj, lv_dir_t direction)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_spinbox_t * spinbox = (lv_spinbox_t *)obj;
@@ -189,7 +189,7 @@ void lv_spinbox_set_digit_step_direction(lv_obj_t *obj, lv_dir_t direction)
 
 /**
  * Get the spinbox numeral value (user has to convert to float according to its digit format)
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  * @return value integer value of the spinbox
  */
 int32_t lv_spinbox_get_value(lv_obj_t * obj)
@@ -201,7 +201,7 @@ int32_t lv_spinbox_get_value(lv_obj_t * obj)
 }
 /**
  * Get the spinbox step value (user has to convert to float according to its digit format)
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  * @return value integer step value of the spinbox
  */
 int32_t lv_spinbox_get_step(lv_obj_t * obj)
@@ -218,7 +218,7 @@ int32_t lv_spinbox_get_step(lv_obj_t * obj)
 
 /**
  * Select next lower digit for edition
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  */
 void lv_spinbox_step_next(lv_obj_t * obj)
 {
@@ -236,7 +236,7 @@ void lv_spinbox_step_next(lv_obj_t * obj)
 
 /**
  * Select next higher digit for edition
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  */
 void lv_spinbox_step_prev(lv_obj_t * obj)
 {
@@ -252,7 +252,7 @@ void lv_spinbox_step_prev(lv_obj_t * obj)
 
 /**
  * Get spinbox rollover function status
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  */
 bool lv_spinbox_get_rollover(lv_obj_t * obj)
 {
@@ -264,7 +264,7 @@ bool lv_spinbox_get_rollover(lv_obj_t * obj)
 
 /**
  * Increment spinbox value by one step
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  */
 void lv_spinbox_increment(lv_obj_t * obj)
 {
@@ -290,7 +290,7 @@ void lv_spinbox_increment(lv_obj_t * obj)
 
 /**
  * Decrement spinbox value by one step
- * @param spinbox pointer to spinbox
+ * @param obj pointer to spinbox
  */
 void lv_spinbox_decrement(lv_obj_t * obj)
 {
@@ -336,7 +336,6 @@ static void lv_spinbox_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
 
     lv_textarea_set_one_line(obj, true);
     lv_textarea_set_cursor_click_pos(obj, true);
-    lv_obj_set_width(obj, LV_DPI_DEF);
 
     lv_spinbox_updatevalue(obj);
 
@@ -360,10 +359,10 @@ static void lv_spinbox_event(const lv_obj_class_t * class_p, lv_event_t * e)
         lv_indev_t * indev = lv_indev_get_act();
         if(lv_indev_get_type(indev) == LV_INDEV_TYPE_ENCODER) {
             if(lv_group_get_editing(lv_obj_get_group(obj))) {
-                if (spinbox->digit_count > 1) {
-                    if (spinbox->digit_step_dir == LV_DIR_RIGHT) {
+                if(spinbox->digit_count > 1) {
+                    if(spinbox->digit_step_dir == LV_DIR_RIGHT) {
                         if(spinbox->step > 1) {
-                           lv_spinbox_step_next(obj);
+                            lv_spinbox_step_next(obj);
                         }
                         else {
                             /*Restart from the MSB*/
@@ -434,9 +433,6 @@ static void lv_spinbox_event(const lv_obj_class_t * class_p, lv_event_t * e)
         }
         else if(c == LV_KEY_DOWN) {
             lv_spinbox_decrement(obj);
-        }
-        else {
-            lv_textarea_add_char(obj, c);
         }
     }
 }

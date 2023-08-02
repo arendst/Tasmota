@@ -1,10 +1,10 @@
 /**
  * Library to use Arduino MFRC522 module.
- * 
+ *
  * @authors Dr.Leong, Miguel Balboa, Søren Thing Andersen, Tom Clement, many more! See GitLog.
- * 
+ *
  * For more information read the README.
- * 
+ *
  * Please read this file for an overview and then MFRC522.cpp for comments on the specific functions.
  */
 #ifndef MFRC522_h
@@ -92,7 +92,7 @@ public:
 		DivIEnReg				= 0x03 << 1,	// enable and disable interrupt request control bits
 		ComIrqReg				= 0x04 << 1,	// interrupt request bits
 		DivIrqReg				= 0x05 << 1,	// interrupt request bits
-		ErrorReg				= 0x06 << 1,	// error bits showing the error status of the last command executed 
+		ErrorReg				= 0x06 << 1,	// error bits showing the error status of the last command executed
 		Status1Reg				= 0x07 << 1,	// communication status bits
 		Status2Reg				= 0x08 << 1,	// receiver and transmitter status bits
 		FIFODataReg				= 0x09 << 1,	// input and output of 64 byte FIFO buffer
@@ -102,10 +102,10 @@ public:
 		BitFramingReg			= 0x0D << 1,	// adjustments for bit-oriented frames
 		CollReg					= 0x0E << 1,	// bit position of the first bit-collision detected on the RF interface
 		//						  0x0F			// reserved for future use
-		
+
 		// Page 1: Command
 		// 						  0x10			// reserved for future use
-		ModeReg					= 0x11 << 1,	// defines general modes for transmitting and receiving 
+		ModeReg					= 0x11 << 1,	// defines general modes for transmitting and receiving
 		TxModeReg				= 0x12 << 1,	// defines transmission data rate and framing
 		RxModeReg				= 0x13 << 1,	// defines reception data rate and framing
 		TxControlReg			= 0x14 << 1,	// controls the logical behavior of the antenna driver pins TX1 and TX2
@@ -120,7 +120,7 @@ public:
 		MfRxReg					= 0x1D << 1,	// controls some MIFARE communication receive parameters
 		// 						  0x1E			// reserved for future use
 		SerialSpeedReg			= 0x1F << 1,	// selects the speed of the serial UART interface
-		
+
 		// Page 2: Configuration
 		// 						  0x20			// reserved for future use
 		CRCResultRegH			= 0x21 << 1,	// shows the MSB and LSB values of the CRC calculation
@@ -129,7 +129,7 @@ public:
 		ModWidthReg				= 0x24 << 1,	// controls the ModWidth setting?
 		// 						  0x25			// reserved for future use
 		RFCfgReg				= 0x26 << 1,	// configures the receiver gain
-		GsNReg					= 0x27 << 1,	// selects the conductance of the antenna driver pins TX1 and TX2 for modulation 
+		GsNReg					= 0x27 << 1,	// selects the conductance of the antenna driver pins TX1 and TX2 for modulation
 		CWGsPReg				= 0x28 << 1,	// defines the conductance of the p-driver output during periods of no modulation
 		ModGsPReg				= 0x29 << 1,	// defines the conductance of the p-driver output during periods of modulation
 		TModeReg				= 0x2A << 1,	// defines settings for the internal timer
@@ -138,7 +138,7 @@ public:
 		TReloadRegL				= 0x2D << 1,
 		TCounterValueRegH		= 0x2E << 1,	// shows the 16-bit timer value
 		TCounterValueRegL		= 0x2F << 1,
-		
+
 		// Page 3: Test Registers
 		// 						  0x30			// reserved for future use
 		TestSel1Reg				= 0x31 << 1,	// general test signal configuration
@@ -157,7 +157,7 @@ public:
 		// 						  0x3E			// reserved for production tests
 		// 						  0x3F			// reserved for production tests
 	};
-	
+
 	// MFRC522 commands. Described in chapter 10 of the datasheet.
 	enum PCD_Command : byte {
 		PCD_Idle				= 0x00,		// no action, cancels current command execution
@@ -171,7 +171,7 @@ public:
 		PCD_MFAuthent 			= 0x0E,		// performs the MIFARE standard authentication as a reader
 		PCD_SoftReset			= 0x0F		// resets the MFRC522
 	};
-	
+
 	// MFRC522 RxGain[2:0] masks, defines the receiver's signal voltage gain factor (on the PCD).
 	// Described in 9.3.3.6 / table 98 of the datasheet at http://www.nxp.com/documents/data_sheet/MFRC522.pdf
 	enum PCD_RxGain : byte {
@@ -187,7 +187,7 @@ public:
 		RxGain_avg				= 0x04 << 4,	// 100b - 33 dB, average, convenience for RxGain_33dB
 		RxGain_max				= 0x07 << 4		// 111b - 48 dB, maximum, convenience for RxGain_48dB
 	};
-	
+
 	// Commands sent to the PICC.
 	enum PICC_Command : byte {
 		// The commands used by the PCD to manage communication with several PICCs (ISO 14443-3, Type A, section 6.4)
@@ -214,18 +214,18 @@ public:
 		// The PICC_CMD_MF_READ and PICC_CMD_MF_WRITE can also be used for MIFARE Ultralight.
 		PICC_CMD_UL_WRITE		= 0xA2		// Writes one 4 byte page to the PICC.
 	};
-	
+
 	// MIFARE constants that does not fit anywhere else
 	enum MIFARE_Misc {
 		MF_ACK					= 0xA,		// The MIFARE Classic uses a 4 bit ACK/NAK. Any other value than 0xA is NAK.
 		MF_KEY_SIZE				= 6			// A Mifare Crypto1 key is 6 bytes.
 	};
-	
+
 	// PICC types we can detect. Remember to update PICC_GetTypeName() if you add more.
 	// last value set to 0xff, then compiler uses less ram, it seems some optimisations are triggered
 	enum PICC_Type : byte {
 		PICC_TYPE_UNKNOWN		,
-		PICC_TYPE_ISO_14443_4	,	// PICC compliant with ISO/IEC 14443-4 
+		PICC_TYPE_ISO_14443_4	,	// PICC compliant with ISO/IEC 14443-4
 		PICC_TYPE_ISO_18092		, 	// PICC compliant with ISO/IEC 18092 (NFC)
 		PICC_TYPE_MIFARE_MINI	,	// MIFARE Classic protocol, 320 bytes
 		PICC_TYPE_MIFARE_1K		,	// MIFARE Classic protocol, 1KB
@@ -236,7 +236,7 @@ public:
 		PICC_TYPE_TNP3XXX		,	// Only mentioned in NXP AN 10833 MIFARE Type Identification Procedure
 		PICC_TYPE_NOT_COMPLETE	= 0xff	// SAK indicates UID is not complete.
 	};
-	
+
 	// Return codes from the functions in this class. Remember to update GetStatusCodeName() if you add more.
 	// last value set to 0xff, then compiler uses less ram, it seems some optimisations are triggered
 	enum StatusCode : byte {
@@ -250,7 +250,7 @@ public:
 		STATUS_CRC_WRONG		,	// The CRC_A does not match
 		STATUS_MIFARE_NACK		= 0xff	// A MIFARE PICC responded with NAK.
 	};
-	
+
 	// A struct used for passing the UID of a PICC.
 	typedef struct {
 		byte		size;			// Number of bytes in the UID. 4, 7 or 10.
@@ -262,17 +262,17 @@ public:
 	typedef struct {
 		byte		keyByte[MF_KEY_SIZE];
 	} MIFARE_Key;
-	
+
 	// Member variables
 	Uid uid;								// Used by PICC_ReadCardSerial().
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for setting up the Arduino
 	/////////////////////////////////////////////////////////////////////////////////////
 	MFRC522();
 	MFRC522(byte resetPowerDownPin);
 	MFRC522(byte chipSelectPin, byte resetPowerDownPin);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Basic interface functions for communicating with the MFRC522
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +283,7 @@ public:
 	void PCD_SetRegisterBitMask(PCD_Register reg, byte mask);
 	void PCD_ClearRegisterBitMask(PCD_Register reg, byte mask);
 	StatusCode PCD_CalculateCRC(byte *data, byte length, byte *result);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for manipulating the MFRC522
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -296,13 +296,13 @@ public:
 	byte PCD_GetAntennaGain();
 	void PCD_SetAntennaGain(byte mask);
 	bool PCD_PerformSelfTest();
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Power control functions
 	/////////////////////////////////////////////////////////////////////////////////////
 	void PCD_SoftPowerDown();
 	void PCD_SoftPowerUp();
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for communicating with PICCs
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -329,19 +329,21 @@ public:
 	StatusCode MIFARE_GetValue(byte blockAddr, int32_t *value);
 	StatusCode MIFARE_SetValue(byte blockAddr, int32_t value);
 	StatusCode PCD_NTAG216_AUTH(byte *passWord, byte pACK[]);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Support functions
 	/////////////////////////////////////////////////////////////////////////////////////
 	StatusCode PCD_MIFARE_Transceive(byte *sendData, byte sendLen, bool acceptTimeout = false);
 	// old function used too much memory, now name moved to flash; if you need char, copy from flash to memory
 	//const char *GetStatusCodeName(byte code);
-	static const __FlashStringHelper *GetStatusCodeName(StatusCode code);
+//	static const __FlashStringHelper *GetStatusCodeName(StatusCode code);
+	String GetStatusCodeName(StatusCode code);
 	static PICC_Type PICC_GetType(byte sak);
 	// old function used too much memory, now name moved to flash; if you need char, copy from flash to memory
 	//const char *PICC_GetTypeName(byte type);
-	static const __FlashStringHelper *PICC_GetTypeName(PICC_Type type);
-	
+//	static const __FlashStringHelper *PICC_GetTypeName(PICC_Type type);
+	String PICC_GetTypeName(PICC_Type type);
+
 	// Support functions for debuging
 	void PCD_DumpVersionToSerial();
 	void PICC_DumpToSerial(Uid *uid);
@@ -349,19 +351,19 @@ public:
 	void PICC_DumpMifareClassicToSerial(Uid *uid, PICC_Type piccType, MIFARE_Key *key);
 	void PICC_DumpMifareClassicSectorToSerial(Uid *uid, MIFARE_Key *key, byte sector);
 	void PICC_DumpMifareUltralightToSerial();
-	
+
 	// Advanced functions for MIFARE
 	void MIFARE_SetAccessBits(byte *accessBitBuffer, byte g0, byte g1, byte g2, byte g3);
 	bool MIFARE_OpenUidBackdoor(bool logErrors);
 	bool MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors);
 	bool MIFARE_UnbrickUidSector(bool logErrors);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Convenience functions - does not add extra functionality
 	/////////////////////////////////////////////////////////////////////////////////////
 	virtual bool PICC_IsNewCardPresent();
 	virtual bool PICC_ReadCardSerial();
-	
+
 protected:
 	byte _chipSelectPin;		// Arduino pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 	byte _resetPowerDownPin;	// Arduino pin connected to MFRC522's reset and power down input (Pin 6, NRSTPD, active low)

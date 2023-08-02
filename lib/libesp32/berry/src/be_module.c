@@ -36,14 +36,14 @@
   #endif
 #endif
 
-extern BERRY_LOCAL const bntvmodule* const be_module_table[];
+extern BERRY_LOCAL const bntvmodule_t* const be_module_table[];
 
-static bmodule* native_module(bvm *vm, const bntvmodule *nm, bvalue *dst);
+static bmodule* native_module(bvm *vm, const bntvmodule_t *nm, bvalue *dst);
 
-static const bntvmodule* find_native(bstring *path)
+static const bntvmodule_t* find_native(bstring *path)
 {
-    const bntvmodule *module;
-    const bntvmodule* const *node = be_module_table;
+    const bntvmodule_t *module;
+    const bntvmodule_t* const *node = be_module_table;
     for (; (module = *node) != NULL; ++node) {
         if (!strcmp(module->name, str(path))) {
             return module;
@@ -52,11 +52,11 @@ static const bntvmodule* find_native(bstring *path)
     return NULL;
 }
 
-static void insert_attrs(bvm *vm, bmap *table, const bntvmodule *nm)
+static void insert_attrs(bvm *vm, bmap *table, const bntvmodule_t *nm)
 {
     size_t i;
     for (i = 0; i < nm->size; ++i) {
-        const bntvmodobj *node = nm->attrs + i;
+        const bntvmodobj_t *node = nm->attrs + i;
         bstring *name = be_newstr(vm, node->name);
         bvalue *v = be_map_insertstr(vm, table, name, NULL);
         be_assert(node->type <= BE_CMODULE);
@@ -88,7 +88,7 @@ static void insert_attrs(bvm *vm, bmap *table, const bntvmodule *nm)
     }
 }
 
-static bmodule* new_module(bvm *vm, const bntvmodule *nm)
+static bmodule* new_module(bvm *vm, const bntvmodule_t *nm)
 {
     bgcobject *gco = be_gcnew(vm, BE_MODULE, bmodule);
     bmodule *obj = cast_module(gco);
@@ -105,7 +105,7 @@ static bmodule* new_module(bvm *vm, const bntvmodule *nm)
     return obj;
 }
 
-static bmodule* native_module(bvm *vm, const bntvmodule *nm, bvalue *dst)
+static bmodule* native_module(bvm *vm, const bntvmodule_t *nm, bvalue *dst)
 {
     if (nm) {
         bmodule *obj;
@@ -126,10 +126,17 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
 {
     char *buffer;
     const char *split, *base;
+#if BE_DEBUG_SOURCE_FILE
     bvalue *func = vm->cf->func;
     bclosure *cl = var_toobj(func);
-    be_assert(var_isclosure(func));
-    base = str(cl->proto->source); /* get the source file path */
+    if (var_isclosure(func)) {
+        base = str(cl->proto->source); /* get the source file path */
+    } else {
+        base = "/";
+    }
+#else
+    base = "/";
+#endif
     split = be_splitpath(base);
     *size = split - base + (size_t)str_len(path) + SUFFIX_LEN;
     buffer = be_malloc(vm, *size);
@@ -218,7 +225,7 @@ static int load_package(bvm *vm, bstring *path)
 
 static int load_native(bvm *vm, bstring *path)
 {
-    const bntvmodule *nm = find_native(path);
+    const bntvmodule_t *nm = find_native(path);
     bmodule *mod = native_module(vm, nm, NULL);
     if (mod != NULL) {
         /* the pointer vm->top may be changed */
@@ -242,7 +249,7 @@ static bvalue* load_cached(bvm *vm, bstring *path)
     return v;
 }
 
-static void cache_module(bvm *vm, bstring *name)
+void be_cache_module(bvm *vm, bstring *name)
 {
     bvalue *v;
     if (vm->module.loaded == NULL) {
@@ -252,7 +259,7 @@ static void cache_module(bvm *vm, bstring *name)
     *v = vm->top[-1];
 }
 
-/* Try to run '()' function of module. Module is already loaded. */
+/* Try to run 'init(m)' function of module. Module is already loaded. */
 static void module_init(bvm *vm) {
     if (be_ismodule(vm, -1)) {
         if (be_getmember(vm, -1, "init")) {
@@ -279,7 +286,7 @@ int be_module_load(bvm *vm, bstring *path)
         if (res == BE_OK) {
             /* on first load of the module, try running the '()' function */
             module_init(vm);
-            cache_module(vm, path);
+            be_cache_module(vm, path);
         }
     }
     return res;
@@ -315,6 +322,11 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
 {
     bvalue *member = be_map_findstr(vm, module->table, attr);
     if (!member) {  /* try the 'member' function */
+        /* if 'init' does not exist, don't call member() */
+        if (strcmp(str(attr), "init") == 0) {
+            var_setntvfunc(dst, be_default_init_native_function);
+            return var_primetype(dst);
+        }
         member = be_map_findstr(vm, module->table, str_literal(vm, "member"));
         if (member && var_basetype(member) == BE_FUNCTION) {
             bvalue *top = vm->top;
@@ -324,15 +336,21 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
             be_dofunc(vm, top, 1); /* call method 'method' */
             vm->top -= 2;
             *dst = *vm->top;   /* copy result to R(A) */
-            if (var_basetype(dst) != BE_NIL) {
-                return var_type(dst);
+            
+            int type = var_type(dst);
+            if (type == BE_MODULE) {
+                /* check if the module is named `undefined` */
+                bmodule *mod = var_toobj(dst);
+                if (strcmp(be_module_name(mod), "undefined") == 0) {
+                    return BE_NONE;     /* if the return value is module `undefined`, consider it is an error */
             }
+            }
+            return type;
         }
         return BE_NONE;
-    } else {
-        *dst = *member;
-        return var_type(dst);
     }
+    *dst = *member;
+    return var_type(dst);
 }
 
 bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
@@ -359,6 +377,19 @@ bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
             vm->top += 3;   /* prevent collection results */
             be_dofunc(vm, top, 2); /* call method 'setmember' */
             vm->top -= 3;
+            int type = var_type(vm->top);
+            if (type == BE_BOOL) {
+                bbool ret = var_tobool(vm->top);
+                if (!ret) {
+                    return bfalse;
+                }
+            } else if (type == BE_MODULE) {
+                /* check if the module is named `undefined` */
+                bmodule *mod = var_toobj(vm->top);
+                if (strcmp(be_module_name(mod), "undefined") == 0) {
+                    return bfalse;     /* if the return value is module `undefined`, consider it is an error */
+                }
+            }
             return btrue;
         }
     }

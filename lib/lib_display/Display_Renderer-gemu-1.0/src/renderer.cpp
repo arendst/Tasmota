@@ -59,10 +59,10 @@ uint16_t Renderer::GetColorFromIndex(uint8_t index) {
 
 void Renderer::dim(uint8_t contrast) {
   uint8_t contrast8 = ((uint32_t)contrast * 255) / 15;
-  dim8(contrast8, contrast8);
+  dim10(contrast8, contrast8 * 4);
 }
 
-void Renderer::dim8(uint8_t contrast, uint8_t contrast_gamma) {
+void Renderer::dim10(uint8_t contrast, uint16_t contrast_gamma) {
 
 }
 
@@ -86,6 +86,10 @@ void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
 
 }
 
+void Renderer::Sleep(void) {
+
+}
+
 void Renderer::Updateframe() {
 
 }
@@ -104,7 +108,7 @@ uint8_t *Renderer::allocate_framebuffer(uint32_t size) {
 
 void Renderer::setTextSize(uint8_t sf) {
   if (sf < 1) sf = 1;
-  if (sf > 4) sf = 4;
+  if (sf > 16) sf = 16;
   tsize = sf;
   Adafruit_GFX::setTextSize(sf);
 }
@@ -639,6 +643,9 @@ void Renderer::ep_update_mode(uint8_t mode) {
 void Renderer::ep_update_area(uint16_t xp, uint16_t yp, uint16_t width, uint16_t height, uint8_t mode) {
 }
 
+uint32_t Renderer::get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym) {
+  return 0;
+}
 
 // #ifndef USE_DISPLAY_LVGL_ONLY
 

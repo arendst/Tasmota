@@ -26,3 +26,19 @@ assert(introspect.get(a, 'a') == nil)
 
 introspect.set(a, 'a', 3)
 assert(a.a == 3)
+
+#- load module dynamically -#
+import introspect
+m = introspect.module("math") # load module `math`, assign to `m` and don't create a global variable
+assert(type(m.pi) == 'real')
+
+#- name -#
+import string
+assert(introspect.name(string) == 'string')
+assert(introspect.name(print) == nil)       # native C function don't have a registered name
+assert(introspect.name("foo") == nil)
+class A def a() end static def b() end static var c end
+assert(introspect.name(A) == 'A')
+assert(introspect.name(A.a) == 'a')
+assert(introspect.name(A.b) == 'b')
+assert(introspect.name(A.c) == nil)

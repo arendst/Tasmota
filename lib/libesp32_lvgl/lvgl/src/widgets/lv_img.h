@@ -17,6 +17,11 @@ extern "C" {
 
 #if LV_USE_IMG != 0
 
+/*Testing of dependencies*/
+#if LV_USE_LABEL == 0
+#error "lv_img: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL 1)"
+#endif
+
 #include "../core/lv_obj.h"
 #include "../misc/lv_fs.h"
 #include "../draw/lv_draw.h"
@@ -60,7 +65,7 @@ enum {
 
     /** If the object size is set to SIZE_CONTENT, then object size equals zoomed image size.
      *  It causes layout recalculation.
-     *  If the object size is set explicitly the the image will be cropped if zoomed in.*/
+     *  If the object size is set explicitly, the image will be cropped when zoomed in.*/
     LV_IMG_SIZE_MODE_REAL,
 };
 
@@ -71,7 +76,7 @@ typedef uint8_t lv_img_size_mode_t;
  **********************/
 
 /**
- * Create a image objects
+ * Create an image object
  * @param parent pointer to an object, it will be the parent of the new image
  * @return pointer to the created image
  */
@@ -82,7 +87,7 @@ lv_obj_t * lv_img_create(lv_obj_t * parent);
  *====================*/
 
 /**
- * Set the image data to display on the the object
+ * Set the image data to display on the object
  * @param obj       pointer to an image object
  * @param src_img   1) pointer to an ::lv_img_dsc_t descriptor (converted by LVGL's image converter) (e.g. &my_img) or
  *                  2) path to an image file (e.g. "S:/dir/img.bin")or
@@ -109,6 +114,7 @@ void lv_img_set_offset_y(lv_obj_t * obj, lv_coord_t y);
 /**
  * Set the rotation angle of the image.
  * The image will be rotated around the set pivot set by `lv_img_set_pivot()`
+ * Note that indexed and alpha only images can't be transformed.
  * @param obj       pointer to an image object
  * @param angle     rotation angle in degree with 0.1 degree resolution (0..3600: clock wise)
  */
@@ -116,7 +122,7 @@ void lv_img_set_angle(lv_obj_t * obj, int16_t angle);
 
 /**
  * Set the rotation center of the image.
- * The image will be rotated around this point
+ * The image will be rotated around this point.
  * @param obj       pointer to an image object
  * @param x         rotation center x of the image
  * @param y         rotation center y of the image
@@ -126,6 +132,7 @@ void lv_img_set_pivot(lv_obj_t * obj, lv_coord_t x, lv_coord_t y);
 
 /**
  * Set the zoom factor of the image.
+ * Note that indexed and alpha only images can't be transformed.
  * @param img       pointer to an image object
  * @param zoom      the zoom factor.
  * @example 256 or LV_ZOOM_IMG_NONE for no zoom

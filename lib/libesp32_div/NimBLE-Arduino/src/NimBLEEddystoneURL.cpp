@@ -11,7 +11,7 @@
  *  Created on: Mar 12, 2018
  *      Author: pcbreflux
  */
-#include "sdkconfig.h"
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEEddystoneURL.h"
@@ -152,7 +152,7 @@ std::string NimBLEEddystoneURL::getDecodedURL() {
 
 
 /**
- * @brief Set the raw data for the beacon advertisment.
+ * @brief Set the raw data for the beacon advertisement.
  * @param [in] data The raw data to advertise.
  */
 void NimBLEEddystoneURL::setData(const std::string &data) {

@@ -50,6 +50,7 @@ typedef struct {
 /** Data of label*/
 typedef struct {
     lv_obj_t obj;
+    int32_t lines;
     lv_coord_t indent;      /* first line indent */
     lv_coord_t cache_w;     /* the cache automatically calculates the width */
     lv_coord_t cache_h;     /* similar cache_w */
@@ -66,7 +67,7 @@ extern const lv_obj_class_t lv_spangroup_class;
  **********************/
 
 /**
- * Create a spangroup objects
+ * Create a spangroup object
  * @param par pointer to an object, it will be the parent of the new spangroup
  * @return pointer to the created spangroup
  */
@@ -133,6 +134,13 @@ void lv_spangroup_set_indent(lv_obj_t * obj, lv_coord_t indent);
  */
 void lv_spangroup_set_mode(lv_obj_t * obj, lv_span_mode_t mode);
 
+/**
+ * Set lines of the spangroup.
+ * @param obj pointer to a spangroup object.
+ * @param lines max lines that can be displayed in LV_SPAN_MODE_BREAK mode. < 0 means no limit.
+ */
+void lv_spangroup_set_lines(lv_obj_t * obj, int32_t lines);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -186,19 +194,29 @@ lv_coord_t lv_spangroup_get_indent(lv_obj_t * obj);
 lv_span_mode_t lv_spangroup_get_mode(lv_obj_t * obj);
 
 /**
+ * get lines of the spangroup.
+ * @param obj pointer to a spangroup object.
+ * @return the lines value.
+ */
+int32_t lv_spangroup_get_lines(lv_obj_t * obj);
+
+/**
  * get max line height of all span in the spangroup.
  * @param obj pointer to a spangroup object.
  */
 lv_coord_t lv_spangroup_get_max_line_h(lv_obj_t * obj);
 
 /**
- * get the width when all span of spangroup on a line. include spangroup pad.
+ * get the text content width when all span of spangroup on a line.
  * @param obj pointer to a spangroup object.
+ * @param max_width if text content width >= max_width, return max_width
+ * to reduce computation, if max_width == 0, returns the text content width.
+ * @return text content width or max_width.
  */
-lv_coord_t lv_spangroup_get_expand_width(lv_obj_t * obj);
+uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width);
 
 /**
- * get the height with width fixed. the height include spangroup pad.
+ * get the text content height with width fixed.
  * @param obj pointer to a spangroup object.
  */
 lv_coord_t lv_spangroup_get_expand_height(lv_obj_t * obj, lv_coord_t width);

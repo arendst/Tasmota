@@ -16,7 +16,7 @@ typedef struct bmodule {
     bcommon_header;
     bmap *table;
     union infodata {
-        const bntvmodule *native;
+        const bntvmodule_t *native;
         const char *name;
         const bstring *sname;
 #ifdef __cplusplus
@@ -34,6 +34,7 @@ typedef struct bmodule {
 bmodule* be_module_new(bvm *vm);
 void be_module_delete(bvm *vm, bmodule *module);
 int be_module_load(bvm *vm, bstring *path);
+void be_cache_module(bvm *vm, bstring *name);
 int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst);
 bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src);
 const char* be_module_name(bmodule *module);

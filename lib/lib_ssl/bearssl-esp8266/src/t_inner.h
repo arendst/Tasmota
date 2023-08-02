@@ -325,9 +325,20 @@
  * values are documented on:
  *    https://sourceforge.net/p/predef/wiki/OperatingSystems/
  *
- * TODO: enrich the list of detected system. Also add detection for
- * alternate system calls like getentropy(), which are usually
- * preferable when available.
+ * Win32's CryptGenRandom() should be available on Windows systems.
+ *
+ * /dev/urandom should work on all Unix-like systems (including macOS X).
+ *
+ * getentropy() is present on Linux (Glibc 2.25+), FreeBSD (12.0+) and
+ * OpenBSD (5.6+). For OpenBSD, there does not seem to be easy to use
+ * macros to test the minimum version, so we just assume that it is
+ * recent enough (last version without getentropy() has gone out of
+ * support in May 2015).
+ *
+ * Ideally we should use getentropy() on macOS (10.12+) too, but I don't
+ * know how to test the exact OS version with preprocessor macros.
+ *
+ * TODO: enrich the list of detected system.
  */
 
 #ifndef BR_USE_URANDOM
@@ -341,6 +352,15 @@
 	|| (defined __sun && (defined __SVR4 || defined __svr4__)) \
 	|| (defined __APPLE__ && defined __MACH__)
 #define BR_USE_URANDOM   1
+#endif
+#endif
+
+#ifndef BR_USE_GETENTROPY
+#if (defined __linux__ \
+	&& (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))) \
+	|| (defined __FreeBSD__ && __FreeBSD__ >= 12) \
+	|| defined __OpenBSD__
+#define BR_USE_GETENTROPY   1
 #endif
 #endif
 
@@ -2577,7 +2597,11 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
   #endif
 
   #define _debugBearSSL (0)
-  extern void optimistic_yield(uint32_t);
+  #ifdef ESP8266
+    extern void optimistic_yield(uint32_t);
+  #else
+    #define optimistic_yield(ignored)
+  #endif
   #ifdef __cplusplus
   }
   #endif

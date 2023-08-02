@@ -34,8 +34,8 @@ typedef struct LVGL_PARAMS {
     struct {
       uint8_t use_dma : 1;
       uint8_t swap_color : 1;
-      uint8_t resvd_0 : 1;
-      uint8_t resvd_1 : 1;
+      uint8_t async_dma : 1;   // force DMA completion before returning, avoid conflict with other devices on same bus. If set you should make sure the display is the only device on the bus
+      uint8_t busy_invert : 1;
       uint8_t resvd_2 : 1;
       uint8_t resvd_3 : 1;
       uint8_t resvd_4 : 1;
@@ -72,7 +72,7 @@ public:
   virtual void Begin(int16_t p1,int16_t p2,int16_t p3);
   virtual void Updateframe();
   virtual void dim(uint8_t contrast);   // input has range 0..15
-  virtual void dim8(uint8_t contrast, uint8_t contrast_gamma);  // input has range 0..255, second arg has gamma correction for PWM
+  virtual void dim10(uint8_t contrast, uint16_t contrast_gamma);  // input has range 0..255, second arg has gamma correction for PWM with 10 bits resolution
   virtual void pushColors(uint16_t *data, uint16_t len, boolean first);
   virtual void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   virtual void invertDisplay(boolean i);
@@ -86,10 +86,12 @@ public:
   virtual uint16_t bgcol(void);
   virtual int8_t color_type(void);
   virtual void Splash(void);
+  virtual void Sleep(void);
   virtual char *devname(void);
   virtual LVGL_PARAMS *lvgl_pars(void);
   virtual void ep_update_mode(uint8_t mode);
   virtual void ep_update_area(uint16_t xp, uint16_t yp, uint16_t width, uint16_t height, uint8_t mode);
+  virtual uint32_t get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym);
 
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;

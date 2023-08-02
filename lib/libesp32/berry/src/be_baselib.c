@@ -14,11 +14,12 @@
 #include "be_vector.h"
 #include "be_string.h"
 #include "be_map.h"
+#include "be_strlib.h"
 #include <string.h>
 
 #define READLINE_STEP       100
 
-static int l_assert(bvm *vm)
+int be_baselib_assert(bvm *vm)
 {
     int argc = be_top(vm);
     /* assertion fails when there is no argument
@@ -33,7 +34,7 @@ static int l_assert(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_print(bvm *vm)
+int be_baselib_print(bvm *vm)
 {
     int i, argc = be_top(vm);
     for (i = 1; i <= argc; ++i) {
@@ -68,7 +69,7 @@ static int m_readline(bvm *vm)
     be_return(vm);
 }
 
-static int l_input(bvm *vm)
+int be_baselib_input(bvm *vm)
 {
     if (be_top(vm) && be_isstring(vm, 1)) { /* echo prompt */
         be_writestring(be_tostring(vm, 1));
@@ -85,7 +86,7 @@ static bclass *find_class_closure(bclass *cl, bclosure *needle)
         if (members) {  /* only iterate if there are members */
             bmapiter iter = be_map_iter();
             while ((node = be_map_next(members, &iter)) != NULL) {
-                if (var_type(&node->value) == BE_CLOSURE) {  /* only native functions are considered */
+                if (var_primetype(&node->value) == BE_CLOSURE) {  /* only native functions are considered */
                     bclosure *clos_iter = var_toobj(&node->value);  /* retrieve the method's closure */
                     if (clos_iter == needle) {
                         /* we found the closure, we now know its class */
@@ -99,7 +100,26 @@ static bclass *find_class_closure(bclass *cl, bclosure *needle)
     return NULL;  /* not found */
 }
 
-static int l_super(bvm *vm)
+static bbool obj2int(bvm *vm, bvalue *var, bint *val)
+{
+    binstance *obj = var_toobj(var);
+    bstring *toint = str_literal(vm, "toint");
+    /* get operator method */
+    // TODO what if `tobool` is static
+    int type = be_instance_member(vm, obj, toint, vm->top);
+    if (type != BE_NONE && type != BE_NIL) {
+        vm->top[1] = *var; /* move self to argv[0] */
+        be_dofunc(vm, vm->top, 1); /* call method 'tobool' */
+        /* check the return value */
+        if (var_isint(vm->top)) {
+            *val = var_toint(vm->top);
+            return btrue;
+        }
+    }
+    return bfalse;
+}
+
+int be_baselib_super(bvm *vm)
 {
     int argc = be_top(vm);
 
@@ -140,7 +160,7 @@ static int l_super(bvm *vm)
             if (size >= 2) {  /* need at least 2 stackframes: current (for super() native) and caller (the one we are interested in) */
                 bcallframe *caller = be_vector_at(&vm->callstack, size - 2);  /* get the callframe of caller */
                 bvalue *func = caller->func;  /* function object of caller */
-                if (var_type(func) == BE_CLOSURE) {  /* only useful if the caller is a Berry closure (i.e. not native) */
+                if (var_primetype(func) == BE_CLOSURE) {  /* only useful if the caller is a Berry closure (i.e. not native) */
                     bclosure *clos_ctx = var_toobj(func);  /* this is the closure we look for in the class chain */
                     base_class = find_class_closure(o->_class, clos_ctx);  /* iterate on current and super classes to find where the closure belongs */
                 }
@@ -178,7 +198,7 @@ static int l_super(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_type(bvm *vm)
+int be_baselib_type(bvm *vm)
 {
     if (be_top(vm)) {
         be_pushstring(vm, be_typename(vm, 1));
@@ -187,7 +207,7 @@ static int l_type(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_classname(bvm *vm)
+int be_baselib_classname(bvm *vm)
 {
     if (be_top(vm)) {
         const char *t = be_classname(vm, 1);
@@ -199,7 +219,7 @@ static int l_classname(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_classof(bvm *vm)
+int be_baselib_classof(bvm *vm)
 {
     if (be_top(vm) && be_classof(vm, 1)) {
         be_return(vm);
@@ -207,7 +227,7 @@ static int l_classof(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_number(bvm *vm)
+int be_baselib_number(bvm *vm)
 {
     if (be_top(vm)) {
         if (be_isstring(vm, 1)) {
@@ -221,7 +241,7 @@ static int l_number(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_int(bvm *vm)
+int be_baselib_int(bvm *vm)
 {
     if (be_top(vm)) {
         if (be_isstring(vm, 1)) {
@@ -236,6 +256,15 @@ static int l_int(bvm *vm)
         } else if (be_iscomptr(vm, 1)) {
             intptr_t p = (intptr_t) be_tocomptr(vm, 1);
             be_pushint(vm, (int) p);
+        } else if (be_isinstance(vm, 1)) {
+            /* try to call `toint` method */
+            bvalue *v = be_indexof(vm, 1);
+            bint val;
+            if (obj2int(vm, v, &val)) {
+                be_pushint(vm, val);
+            } else {
+                be_return_nil(vm);
+            }
         } else {
             be_return_nil(vm);
         }
@@ -244,7 +273,7 @@ static int l_int(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_real(bvm *vm)
+int be_baselib_real(bvm *vm)
 {
     if (be_top(vm)) {
         if (be_isstring(vm, 1)) {
@@ -268,7 +297,7 @@ static int check_method(bvm *vm, const char *attr)
         be_isinstance(vm, 1) && be_getmethod(vm, 1, attr);
 }
 
-static int l_iterator(bvm *vm)
+int be_baselib_iterator(bvm *vm)
 {
     if (be_top(vm) && be_isfunction(vm, 1)) {
         be_return(vm); /* return the argument[0]::function */
@@ -305,7 +334,6 @@ static int l_call(bvm *vm)
                 be_moveto(vm, top + 1, top + 1 + list_size);
                 be_moveto(vm, top, top + list_size);
 
-                be_refpush(vm, -2);
                 be_pushiter(vm, -1);
                 while (be_iter_hasnext(vm, -2)) {
                     be_iter_next(vm, -2);
@@ -314,7 +342,6 @@ static int l_call(bvm *vm)
                     be_pop(vm, 1);
                 }
                 be_pop(vm, 1);  /* remove iterator */
-                be_refpop(vm);
             }
             be_pop(vm, 2);
             arg_count = arg_count - 1 + list_size;
@@ -331,7 +358,7 @@ static int l_call(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_str(bvm *vm)
+int be_baselib_str(bvm *vm)
 {
     if (be_top(vm)) {
         be_tostring(vm, 1);
@@ -352,7 +379,7 @@ static int l_bool(bvm *vm)
 }
 
 
-static int l_size(bvm *vm)
+int be_baselib_size(bvm *vm)
 {
     if (be_top(vm) && be_isstring(vm, 1)) {
         be_pushint(vm, be_strlen(vm, 1));
@@ -367,7 +394,7 @@ static int l_size(bvm *vm)
     be_return_nil(vm);
 }
 
-static int l_module(bvm *vm)
+int be_baselib_module(bvm *vm)
 {
     int argc = be_top(vm);
     be_newmodule(vm);
@@ -410,7 +437,7 @@ static int m_compile_file(bvm *vm)
 }
 #endif
 
-static int l_compile(bvm *vm)
+int be_baselib_compile(bvm *vm)
 {
 #if BE_USE_SCRIPT_COMPILER
     if (be_top(vm) && be_isstring(vm, 1)) {
@@ -441,12 +468,12 @@ static int _issubv(bvm *vm, bbool (*filter)(bvm*, int))
     be_return(vm);
 }
 
-static int l_issubclass(bvm *vm)
+int be_baselib_issubclass(bvm *vm)
 {
     return _issubv(vm, be_isclass);
 }
 
-static int l_isinstance(bvm *vm)
+int be_baselib_isinstance(bvm *vm)
 {
     return _issubv(vm, be_isinstance);
 }
@@ -454,23 +481,23 @@ static int l_isinstance(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
 void be_load_baselib(bvm *vm)
 {
-    be_regfunc(vm, "assert", l_assert);
-    be_regfunc(vm, "print", l_print);
-    be_regfunc(vm, "input", l_input);
-    be_regfunc(vm, "super", l_super);
-    be_regfunc(vm, "type", l_type);
-    be_regfunc(vm, "classname", l_classname);
-    be_regfunc(vm, "classof", l_classof);
-    be_regfunc(vm, "number", l_number);
-    be_regfunc(vm, "str", l_str);
-    be_regfunc(vm, "int", l_int);
-    be_regfunc(vm, "real", l_real);
-    be_regfunc(vm, "module", l_module);
-    be_regfunc(vm, "size", l_size);
-    be_regfunc(vm, "compile", l_compile);
-    be_regfunc(vm, "issubclass", l_issubclass);
-    be_regfunc(vm, "isinstance", l_isinstance);
-    be_regfunc(vm, "__iterator__", l_iterator);
+    be_regfunc(vm, "assert", be_baselib_assert);
+    be_regfunc(vm, "print", be_baselib_print);
+    be_regfunc(vm, "input", be_baselib_input);
+    be_regfunc(vm, "super", be_baselib_super);
+    be_regfunc(vm, "type", be_baselib_type);
+    be_regfunc(vm, "classname", be_baselib_classname);
+    be_regfunc(vm, "classof", be_baselib_classof);
+    be_regfunc(vm, "number", be_baselib_number);
+    be_regfunc(vm, "str", be_baselib_str);
+    be_regfunc(vm, "int", be_baselib_int);
+    be_regfunc(vm, "real", be_baselib_real);
+    be_regfunc(vm, "module", be_baselib_module);
+    be_regfunc(vm, "size", be_baselib_size);
+    be_regfunc(vm, "compile", be_baselib_compile);
+    be_regfunc(vm, "issubclass", be_baselib_issubclass);
+    be_regfunc(vm, "isinstance", be_baselib_isinstance);
+    be_regfunc(vm, "__iterator__", be_baselib_iterator);
 }
 
 /* call must be added later to respect order of builtins */
@@ -478,6 +505,7 @@ void be_load_baselib_next(bvm *vm)
 {
     be_regfunc(vm, "call", l_call);
     be_regfunc(vm, "bool", l_bool);
+    be_regfunc(vm, "format", be_str_format);
 }
 #else
 extern const bclass be_class_list;
@@ -487,23 +515,23 @@ extern const bclass be_class_bytes;
 extern int be_nfunc_open(bvm *vm);
 /* @const_object_info_begin
 vartab m_builtin (scope: local) {
-    assert, func(l_assert)
-    print, func(l_print)
-    input, func(l_input)
-    super, func(l_super)
-    type, func(l_type)
-    classname, func(l_classname)
-    classof, func(l_classof)
-    number, func(l_number)
-    str, func(l_str)
-    int, func(l_int)
-    real, func(l_real)
-    module, func(l_module)
-    size, func(l_size)
-    compile, func(l_compile)
-    issubclass, func(l_issubclass)
-    isinstance, func(l_isinstance)
-    __iterator__, func(l_iterator)
+    assert, func(be_baselib_assert)
+    print, func(be_baselib_print)
+    input, func(be_baselib_input)
+    super, func(be_baselib_super)
+    type, func(be_baselib_type)
+    classname, func(be_baselib_classname)
+    classof, func(be_baselib_classof)
+    number, func(be_baselib_number)
+    str, func(be_baselib_str)
+    int, func(be_baselib_int)
+    real, func(be_baselib_real)
+    module, func(be_baselib_module)
+    size, func(be_baselib_size)
+    compile, func(be_baselib_compile)
+    issubclass, func(be_baselib_issubclass)
+    isinstance, func(be_baselib_isinstance)
+    __iterator__, func(be_baselib_iterator)
     open, func(be_nfunc_open)
     list, class(be_class_list)
     map, class(be_class_map)
@@ -511,6 +539,7 @@ vartab m_builtin (scope: local) {
     bytes, class(be_class_bytes)
     call, func(l_call)
     bool, func(l_bool)
+    format, func(be_str_format)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_m_builtin.h"

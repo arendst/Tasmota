@@ -104,6 +104,8 @@
 
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
+#define BLYNK_TEMPLATE_ID      "TMPL••••••••"  // Made up values. Please Change.
+#define BLYNK_TEMPLATE_NAME    "My First Device"  // Please Change.
 
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>

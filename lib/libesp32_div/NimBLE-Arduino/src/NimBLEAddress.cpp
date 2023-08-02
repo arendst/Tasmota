@@ -11,7 +11,7 @@
  *  Created on: Jul 2, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include <algorithm>
@@ -156,7 +156,7 @@ std::string NimBLEAddress::toString() const {
 
 
 /**
- * @brief Convienience operator to check if this address is equal to another.
+ * @brief Convenience operator to check if this address is equal to another.
  */
 bool NimBLEAddress::operator ==(const NimBLEAddress & rhs) const {
     return memcmp(rhs.m_address, m_address, sizeof m_address) == 0;
@@ -164,7 +164,7 @@ bool NimBLEAddress::operator ==(const NimBLEAddress & rhs) const {
 
 
 /**
- * @brief Convienience operator to check if this address is not equal to another.
+ * @brief Convenience operator to check if this address is not equal to another.
  */
 bool NimBLEAddress::operator !=(const NimBLEAddress & rhs) const {
     return !this->operator==(rhs);
@@ -186,7 +186,7 @@ NimBLEAddress::operator std::string() const {
 
 
 /**
- * @brief Convienience operator to convert the native address representation to uint_64.
+ * @brief Convenience operator to convert the native address representation to uint_64.
  */
 NimBLEAddress::operator uint64_t() const {
     uint64_t address = 0;

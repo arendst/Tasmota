@@ -454,7 +454,7 @@ void IRVoltas::setOffTime(const uint16_t nr_of_mins) {
 /// @param[in] prev Ptr to the previous state if available.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRVoltas::toCommon(const stdAc::state_t *prev) {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) {
     result = *prev;

@@ -46,35 +46,39 @@ int32_t be_audio_opus_decoder_deinit(struct bvm *vm) {
 // decode(payload:bytes) -> pcm:bytes()
 int32_t be_audio_opus_decoder_decode(struct bvm *vm) {
   int32_t argc = be_top(vm);
-  be_call_c_func(vm, NULL, NULL, ".(bytes)");
+  be_call_c_func(vm, NULL, NULL, ".(bytes)[ii]");
 
   OpusDecoder* st = (OpusDecoder*) be_convert_single_elt(vm, 1, NULL, NULL);    // get value of '.p'
-  size_t frames_len;
-  const uint8_t * opus_frame = be_tobytes(vm, 2, &frames_len);
+  size_t bytes_len;
+  const uint8_t * opus_frame = be_tobytes(vm, 2, &bytes_len);
+  int32_t frame_start = 0;
+  int32_t frame_len = bytes_len;
+  if (argc >= 3) { frame_start = be_toint(vm, 3); if (frame_start < 0) frame_start = 0; }
+  if (argc >= 4) { frame_len = be_toint(vm, 4); }
 
-  int samples = opus_decoder_get_nb_samples(st, opus_frame, frames_len);
+  if (frame_start >= bytes_len) { frame_len = 0; }              // send empty packet
+  else if (frame_len < 0) { frame_len = bytes_len - frame_start; }    // send all packet, adjust len
+  else if (frame_start + frame_len > bytes_len) { frame_len = bytes_len - frame_start; }    // len is too long, adjust
+  // adjust start
+  opus_frame = opus_frame + frame_start;
+
+  int samples = opus_decoder_get_nb_samples(st, opus_frame, frame_len);
   // tasmota_log_C(LOG_LEVEL_DEBUG, "AUD: frame contains %i samples", samples);
 
   // allocate a buffer for the content
   void * pcm = be_pushbytes(vm, NULL, samples * 2);
 
-  int ret = opus_decode(st, opus_frame, frames_len, pcm, samples, 0);
+  int ret = opus_decode(st, opus_frame, frame_len, pcm, samples, 0);
   if (ret != samples) { be_raisef(vm, "internal_error", "wrong number of frames %i (supposed to be %i", ret, samples); }
 
   be_return(vm);
 }
 
-#include "be_fixed_be_class_audio_opus_decoder.h"
-
-void be_load_driver_audio_opus_decoder(bvm *vm) {
-  be_pushntvclass(vm, &be_class_audio_opus_decoder);
-  be_setglobal(vm, "OpusDecoder");
-  be_pop(vm, 1);
-}
+#include "be_fixed_be_class_AudioOpusDecoder.h"
 
 /* @const_object_info_begin
 
-class be_class_audio_opus_decoder (scope: global, name: OpusDecoder) {
+class be_class_AudioOpusDecoder (scope: global, name: AudioOpusDecoder, strings: weak) {
   .p, var
   init, func(be_audio_opus_decoder_init)
   deinit, func(be_audio_opus_decoder_deinit)

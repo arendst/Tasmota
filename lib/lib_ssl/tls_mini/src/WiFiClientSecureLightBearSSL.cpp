@@ -43,8 +43,8 @@
 #include "lwip/netif.h"
 #ifdef ESP8266
   #include <include/ClientContext.h>
+  #include "c_types.h"
 #endif
-#include "c_types.h"
 
 #include <core_version.h>
 #undef DEBUG_TLS
@@ -299,7 +299,7 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port, int32_t timeout
     setLastError(ERR_TCP_CONNECT);
     return 0;
   }
-  return _connectSSL(nullptr);
+  return _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
 }
 #else // ESP32
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
@@ -309,7 +309,7 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
     setLastError(ERR_TCP_CONNECT);
     return 0;
   }
-  return _connectSSL(nullptr);
+  return _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
 }
 #endif
 

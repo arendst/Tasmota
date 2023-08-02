@@ -9,11 +9,9 @@
  *  Created on: Jun 22, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLECharacteristic.h"
 #include "NimBLE2904.h"
@@ -32,27 +30,29 @@ static const char* LOG_TAG = "NimBLECharacteristic";
  * @brief Construct a characteristic
  * @param [in] uuid - UUID (const char*) for the characteristic.
  * @param [in] properties - Properties for the characteristic.
+ * @param [in] max_len - The maximum length in bytes that the characteristic value can hold. (Default: 512 bytes for esp32, 20 for all others).
  * @param [in] pService - pointer to the service instance this characteristic belongs to.
  */
-NimBLECharacteristic::NimBLECharacteristic(const char* uuid, uint16_t properties, NimBLEService* pService)
-: NimBLECharacteristic(NimBLEUUID(uuid), properties, pService) {
+NimBLECharacteristic::NimBLECharacteristic(const char* uuid, uint16_t properties,
+                                           uint16_t max_len, NimBLEService* pService)
+: NimBLECharacteristic(NimBLEUUID(uuid), properties, max_len, pService) {
 }
 
 /**
  * @brief Construct a characteristic
  * @param [in] uuid - UUID for the characteristic.
  * @param [in] properties - Properties for the characteristic.
+ * @param [in] max_len - The maximum length in bytes that the characteristic value can hold. (Default: 512 bytes for esp32, 20 for all others).
  * @param [in] pService - pointer to the service instance this characteristic belongs to.
  */
-NimBLECharacteristic::NimBLECharacteristic(const NimBLEUUID &uuid, uint16_t properties, NimBLEService* pService) {
+NimBLECharacteristic::NimBLECharacteristic(const NimBLEUUID &uuid, uint16_t properties,
+                                           uint16_t max_len, NimBLEService* pService)
+:   m_value(std::min(CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH , (int)max_len), max_len) {
     m_uuid        = uuid;
     m_handle      = NULL_HANDLE;
     m_properties  = properties;
     m_pCallbacks  = &defaultCallback;
     m_pService    = pService;
-    m_value       = "";
-    m_valMux      = portMUX_INITIALIZER_UNLOCKED;
-    m_timestamp   = 0;
     m_removed     = 0;
 } // NimBLECharacteristic
 
@@ -126,8 +126,8 @@ void NimBLECharacteristic::addDescriptor(NimBLEDescriptor *pDescriptor) {
 
 
 /**
- * @brief Remove a descriptor from the characterisitc.
- * @param[in] pDescriptor A pointer to the descriptor instance to remove from the characterisitc.
+ * @brief Remove a descriptor from the characteristic.
+ * @param[in] pDescriptor A pointer to the descriptor instance to remove from the characteristic.
  * @param[in] deleteDsc If true it will delete the descriptor instance and free it's resources.
  */
 void NimBLECharacteristic::removeDescriptor(NimBLEDescriptor *pDescriptor, bool deleteDsc) {
@@ -234,17 +234,14 @@ NimBLEUUID NimBLECharacteristic::getUUID() {
 
 /**
  * @brief Retrieve the current value of the characteristic.
- * @return A std::string containing the current characteristic value.
+ * @return The NimBLEAttValue containing the current characteristic value.
  */
-std::string NimBLECharacteristic::getValue(time_t *timestamp) {
-    portENTER_CRITICAL(&m_valMux);
-    std::string retVal = m_value;
+NimBLEAttValue NimBLECharacteristic::getValue(time_t *timestamp) {
     if(timestamp != nullptr) {
-        *timestamp = m_timestamp;
+        m_value.getValue(timestamp);
     }
-    portEXIT_CRITICAL(&m_valMux);
 
-    return retVal;
+    return m_value;
 } // getValue
 
 
@@ -253,11 +250,7 @@ std::string NimBLECharacteristic::getValue(time_t *timestamp) {
  * @return The length of the current characteristic data.
  */
 size_t NimBLECharacteristic::getDataLength() {
-    portENTER_CRITICAL(&m_valMux);
-    size_t len = m_value.length();
-    portEXIT_CRITICAL(&m_valMux);
-
-    return len;
+    return m_value.size();
 }
 
 
@@ -280,36 +273,38 @@ int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_han
     if(ble_uuid_cmp(uuid, &pCharacteristic->getUUID().getNative()->u) == 0){
         switch(ctxt->op) {
             case BLE_GATT_ACCESS_OP_READ_CHR: {
-                // If the packet header is only 8 bytes this is a follow up of a long read
-                // so we don't want to call the onRead() callback again.
-                if(ctxt->om->om_pkthdr_len > 8) {
-                    rc = ble_gap_conn_find(conn_handle, &desc);
-                    assert(rc == 0);
+                rc = ble_gap_conn_find(conn_handle, &desc);
+                assert(rc == 0);
+
+                 // If the packet header is only 8 bytes this is a follow up of a long read
+                 // so we don't want to call the onRead() callback again.
+                if(ctxt->om->om_pkthdr_len > 8 ||
+                   pCharacteristic->m_value.size() <= (ble_att_mtu(desc.conn_handle) - 3)) {
                     pCharacteristic->m_pCallbacks->onRead(pCharacteristic);
                     pCharacteristic->m_pCallbacks->onRead(pCharacteristic, &desc);
                 }
 
-                portENTER_CRITICAL(&pCharacteristic->m_valMux);
-                rc = os_mbuf_append(ctxt->om, (uint8_t*)pCharacteristic->m_value.data(),
-                                    pCharacteristic->m_value.length());
-                portEXIT_CRITICAL(&pCharacteristic->m_valMux);
-
+                ble_npl_hw_enter_critical();
+                rc = os_mbuf_append(ctxt->om, pCharacteristic->m_value.data(), pCharacteristic->m_value.size());
+                ble_npl_hw_exit_critical(0);
                 return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
             }
 
             case BLE_GATT_ACCESS_OP_WRITE_CHR: {
-                if (ctxt->om->om_len > BLE_ATT_ATTR_MAX_LEN) {
+                uint16_t att_max_len = pCharacteristic->m_value.max_size();
+
+                if (ctxt->om->om_len > att_max_len) {
                     return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
                 }
 
-                uint8_t buf[BLE_ATT_ATTR_MAX_LEN];
+                uint8_t buf[att_max_len];
                 size_t len = ctxt->om->om_len;
                 memcpy(buf, ctxt->om->om_data,len);
 
                 os_mbuf *next;
                 next = SLIST_NEXT(ctxt->om, om_next);
                 while(next != NULL){
-                    if((len + next->om_len) > BLE_ATT_ATTR_MAX_LEN) {
+                    if((len + next->om_len) > att_max_len) {
                         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
                     }
                     memcpy(&buf[len], next->om_data, next->om_len);
@@ -389,31 +384,65 @@ void NimBLECharacteristic::setSubscribe(struct ble_gap_event *event) {
 
 
 /**
- * @brief Send an indication.\n
- * An indication is a transmission of up to the first 20 bytes of the characteristic value.\n
- * An indication will block waiting for a positive confirmation from the client.
+ * @brief Send an indication.
  */
 void NimBLECharacteristic::indicate() {
-    NIMBLE_LOGD(LOG_TAG, ">> indicate: length: %d", getDataLength());
     notify(false);
-    NIMBLE_LOGD(LOG_TAG, "<< indicate");
 } // indicate
 
+
 /**
- * @brief Send a notification.\n
- * A notification is a transmission of up to the first 20 bytes of the characteristic value.\n
- * A notification will not block; it is a fire and forget.
+ * @brief Send an indication.
+ * @param[in] value A pointer to the data to send.
+ * @param[in] length The length of the data to send.
+ */
+void NimBLECharacteristic::indicate(const uint8_t* value, size_t length) {
+    notify(value, length, false);
+} // indicate
+
+
+/**
+ * @brief Send an indication.
+ * @param[in] value A std::vector<uint8_t> containing the value to send as the notification value.
+ */
+void NimBLECharacteristic::indicate(const std::vector<uint8_t>& value) {
+    notify(value.data(), value.size(), false);
+} // indicate
+
+
+/**
+ * @brief Send a notification or indication.
  * @param[in] is_notification if true sends a notification, false sends an indication.
  */
 void NimBLECharacteristic::notify(bool is_notification) {
-    NIMBLE_LOGD(LOG_TAG, ">> notify: length: %d", getDataLength());
+    notify(m_value.data(), m_value.length(), is_notification);
+} // notify
 
+
+/**
+ * @brief Send a notification or indication.
+ * @param[in] value A std::vector<uint8_t> containing the value to send as the notification value.
+ * @param[in] is_notification if true sends a notification, false sends an indication.
+ */
+void NimBLECharacteristic::notify(const std::vector<uint8_t>& value, bool is_notification) {
+    notify(value.data(), value.size(), is_notification);
+} // notify
+
+
+/**
+ * @brief Send a notification or indication.
+ * @param[in] value A pointer to the data to send.
+ * @param[in] length The length of the data to send.
+ * @param[in] is_notification if true sends a notification, false sends an indication.
+ */
+void NimBLECharacteristic::notify(const uint8_t* value, size_t length, bool is_notification) {
+    NIMBLE_LOGD(LOG_TAG, ">> notify: length: %d", length);
 
     if(!(m_properties & NIMBLE_PROPERTY::NOTIFY) &&
        !(m_properties & NIMBLE_PROPERTY::INDICATE))
     {
         NIMBLE_LOGE(LOG_TAG,
-                    "<< notify-Error; Notify/indicate not enabled for characterisitc: %s",
+                    "<< notify-Error; Notify/indicate not enabled for characteristic: %s",
                     std::string(getUUID()).c_str());
     }
 
@@ -424,15 +453,13 @@ void NimBLECharacteristic::notify(bool is_notification) {
 
     m_pCallbacks->onNotify(this);
 
-    std::string value = getValue();
-    size_t length = value.length();
     bool reqSec = (m_properties & BLE_GATT_CHR_F_READ_AUTHEN) ||
                   (m_properties & BLE_GATT_CHR_F_READ_AUTHOR) ||
                   (m_properties & BLE_GATT_CHR_F_READ_ENC);
     int rc = 0;
 
     for (auto &it : m_subscribedVec) {
-        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.first);
+        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.first) - 3;
 
         // check if connected and subscribed
         if(_mtu == 0 || it.second == 0) {
@@ -448,8 +475,8 @@ void NimBLECharacteristic::notify(bool is_notification) {
             }
         }
 
-        if (length > _mtu - 3) {
-            NIMBLE_LOGW(LOG_TAG, "- Truncating to %d bytes (maximum notify size)", _mtu - 3);
+        if (length > _mtu) {
+            NIMBLE_LOGW(LOG_TAG, "- Truncating to %d bytes (maximum notify size)", _mtu);
         }
 
         if(is_notification && (!(it.second & NIMBLE_SUB_NOTIFY))) {
@@ -467,7 +494,7 @@ void NimBLECharacteristic::notify(bool is_notification) {
         // don't create the m_buf until we are sure to send the data or else
         // we could be allocating a buffer that doesn't get released.
         // We also must create it in each loop iteration because it is consumed with each host call.
-        os_mbuf *om = ble_hs_mbuf_from_flat((uint8_t*)value.data(), length);
+        os_mbuf *om = ble_hs_mbuf_from_flat(value, length);
 
         if(!is_notification && (m_properties & NIMBLE_PROPERTY::INDICATE)) {
             if(!NimBLEDevice::getServer()->setIndicateWait(it.first)) {
@@ -511,40 +538,30 @@ NimBLECharacteristicCallbacks* NimBLECharacteristic::getCallbacks() {
 
 
 /**
- * @brief Set the value of the characteristic.
- * @param [in] data The data to set for the characteristic.
- * @param [in] length The length of the data in bytes.
+ * @brief Set the value of the characteristic from a data buffer .
+ * @param [in] data The data buffer to set for the characteristic.
+ * @param [in] length The number of bytes in the data buffer.
  */
 void NimBLECharacteristic::setValue(const uint8_t* data, size_t length) {
-#if CONFIG_NIMBLE_CPP_DEBUG_LEVEL >= 4
+#if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 4
     char* pHex = NimBLEUtils::buildHexData(nullptr, data, length);
-    NIMBLE_LOGD(LOG_TAG, ">> setValue: length=%d, data=%s, characteristic UUID=%s", length, pHex, getUUID().toString().c_str());
+    NIMBLE_LOGD(LOG_TAG, ">> setValue: length=%d, data=%s, characteristic UUID=%s",
+                length, pHex, getUUID().toString().c_str());
     free(pHex);
 #endif
 
-    if (length > BLE_ATT_ATTR_MAX_LEN) {
-        NIMBLE_LOGE(LOG_TAG, "Size %d too large, must be no bigger than %d", length, BLE_ATT_ATTR_MAX_LEN);
-        return;
-    }
-
-    time_t t = time(nullptr);
-    portENTER_CRITICAL(&m_valMux);
-    m_value = std::string((char*)data, length);
-    m_timestamp = t;
-    portEXIT_CRITICAL(&m_valMux);
-
+    m_value.setValue(data, length);
     NIMBLE_LOGD(LOG_TAG, "<< setValue");
 } // setValue
 
 
 /**
- * @brief Set the value of the characteristic from string data.\n
- * We set the value of the characteristic from the bytes contained in the string.
- * @param [in] value the std::string value of the characteristic.
+ * @brief Set the value of the characteristic from a `std::vector<uint8_t>`.\n
+ * @param [in] vec The std::vector<uint8_t> reference to set the characteristic value from.
  */
-void NimBLECharacteristic::setValue(const std::string &value) {
-    setValue((uint8_t*)(value.data()), value.length());
-} // setValue
+void NimBLECharacteristic::setValue(const std::vector<uint8_t>& vec) {
+    return setValue((uint8_t*)&vec[0], vec.size());
+}// setValue
 
 
 /**
@@ -641,6 +658,4 @@ void NimBLECharacteristicCallbacks::onSubscribe(NimBLECharacteristic* pCharacter
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onSubscribe: default");
 }
 
-
-#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

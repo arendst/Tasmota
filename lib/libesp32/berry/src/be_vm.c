@@ -83,13 +83,15 @@
 
 #define equal_rule(op, iseq) \
     bbool res; \
+    be_assert(!var_isstatic(a)); \
+    be_assert(!var_isstatic(b)); \
     if (var_isint(a) && var_isint(b)) { \
         res = ibinop(op, a, b); \
     } else if (var_isnumber(a) && var_isnumber(b)) { \
         res = var2real(a) op var2real(b); \
     } else if (var_isinstance(a) && !var_isnil(b)) { \
         res = object_eqop(vm, #op, iseq, a, b); \
-    } else if (var_type(a) == var_type(b)) { /* same types */ \
+    } else if (var_primetype(a) == var_primetype(b)) { /* same types */ \
         if (var_isnil(a)) { /* nil op nil */ \
             res = 1 op 1; \
         } else if (var_isbool(a)) { /* bool op bool */ \
@@ -107,25 +109,54 @@
     } \
     return res
 
-#define relop_rule(op) \
-    bbool res; \
-    if (var_isint(a) && var_isint(b)) { \
-        res = ibinop(op, a, b); \
-    } else if (var_isnumber(a) && var_isnumber(b)) { \
-        res = var2real(a) op var2real(b); \
-    } else if (var_isstr(a) && var_isstr(b)) { \
-        bstring *s1 = var_tostr(a), *s2 = var_tostr(b); \
-        res = be_strcmp(s1, s2) op 0; \
-    } else if (var_isinstance(a)) { \
-        binstance *obj = var_toobj(a); \
-        object_binop(vm, #op, *a, *b); \
-        check_bool(vm, obj, #op); \
-        res = var_tobool(vm->top); \
-    } else { \
-        binop_error(vm, #op, a, b); \
-        res = bfalse; /* will not be executed */ \
-    } \
-    return res
+/* when running on ESP32 in IRAM, there is a bug in early chip revision */
+#ifdef ESP32
+    #define relop_rule(op) \
+        bbool res; \
+        if (var_isint(a) && var_isint(b)) { \
+            res = ibinop(op, a, b); \
+        } else if (var_isnumber(a) && var_isnumber(b)) { \
+            /* res = var2real(a) op var2real(b); */ \
+            union bvaldata x, y;        /* TASMOTA workaround for ESP32 rev0 bug */ \
+            x.i = a->v.i;\
+            if (var_isint(a)) { x.r = (breal) x.i; }\
+            y.i = b->v.i;\
+            if (var_isint(b)) { y.r = (breal) y.i; }\
+            res = x.r op y.r; \
+        } else if (var_isstr(a) && var_isstr(b)) { \
+            bstring *s1 = var_tostr(a), *s2 = var_tostr(b); \
+            res = be_strcmp(s1, s2) op 0; \
+        } else if (var_isinstance(a)) { \
+            binstance *obj = var_toobj(a); \
+            object_binop(vm, #op, *a, *b); \
+            check_bool(vm, obj, #op); \
+            res = var_tobool(vm->top); \
+        } else { \
+            binop_error(vm, #op, a, b); \
+            res = bfalse; /* will not be executed */ \
+        } \
+        return res
+#else  // ESP32
+    #define relop_rule(op) \
+        bbool res; \
+        if (var_isint(a) && var_isint(b)) { \
+            res = ibinop(op, a, b); \
+        } else if (var_isnumber(a) && var_isnumber(b)) { \
+            res = var2real(a) op var2real(b); \
+        } else if (var_isstr(a) && var_isstr(b)) { \
+            bstring *s1 = var_tostr(a), *s2 = var_tostr(b); \
+            res = be_strcmp(s1, s2) op 0; \
+        } else if (var_isinstance(a)) { \
+            binstance *obj = var_toobj(a); \
+            object_binop(vm, #op, *a, *b); \
+            check_bool(vm, obj, #op); \
+            res = var_tobool(vm->top); \
+        } else { \
+            binop_error(vm, #op, a, b); \
+            res = bfalse; /* will not be executed */ \
+        } \
+        return res
+#endif // ESP32
 
 #define bitwise_block(op) \
     bvalue *dst = RA(), *a = RKB(), *b = RKC(); \
@@ -278,6 +309,12 @@ bbool be_value2bool(bvm *vm, bvalue *v)
         return val2bool(v->v.i);
     case BE_REAL:
         return val2bool(v->v.r);
+    case BE_STRING:
+        return str_len(var_tostr(v)) != 0;
+    case BE_COMPTR:
+        return var_toobj(v) != NULL;
+    case BE_COMOBJ:
+        return ((bcommomobj*)var_toobj(v))->data != NULL;
     case BE_INSTANCE:
         return obj2bool(vm, v);
     default:
@@ -461,6 +498,7 @@ BERRY_API bvm* be_vm_new(void)
     be_gc_setpause(vm, 1);
     be_loadlibs(vm);
     vm->compopt = 0;
+    vm->bytesmaxsize = BE_BYTES_MAX_SIZE;
     vm->obshook = NULL;
     vm->ctypefunc = NULL;
 #if BE_USE_PERF_COUNTERS
@@ -469,10 +507,14 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_call = 0;
     vm->counter_get = 0;
     vm->counter_set = 0;
+    vm->counter_get_global = 0;
     vm->counter_try = 0;
     vm->counter_exc = 0;
     vm->counter_gc_kept = 0;
     vm->counter_gc_freed = 0;
+    vm->counter_mem_alloc = 0;
+    vm->counter_mem_free = 0;
+    vm->counter_mem_realloc = 0;
 #endif
     return vm;
 }
@@ -487,6 +529,7 @@ BERRY_API void be_vm_delete(bvm *vm)
     be_stack_delete(vm, &vm->tracestack);
     be_free(vm, vm->stack, (vm->stacktop - vm->stack) * sizeof(bvalue));
     be_globalvar_deinit(vm);
+    be_gc_free_memory_pools(vm);
 #if BE_USE_DEBUG_HOOK
     /* free native hook */
     if (var_istype(&vm->hook, BE_COMPTR))
@@ -540,6 +583,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETNGBL): {  /* get Global by name */
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get_global++;
+#endif
             bvalue *v = RA();
             bvalue *b = RKB();
             if (var_isstr(b)) {
@@ -597,13 +643,17 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(+, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#ifdef ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
                 union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
                 x.i = a->v.i;
                 if (var_isint(a)) { x.r = (breal) x.i; }
                 y.i = b->v.i;
                 if (var_isint(b)) { y.r = (breal) y.i; }
-                // breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x.r + y.r);
+#else  // ESP32
+                breal x = var2real(a), y = var2real(b);
+                var_setreal(dst, x + y);
+#endif // ESP32
             } else if (var_isstr(a) && var_isstr(b)) { /* strcat */
                 bstring *s = be_strcat(vm, var_tostr(a), var_tostr(b));
                 reg = vm->reg;
@@ -826,41 +876,41 @@ newframe: /* a new call frame */
 #if BE_USE_PERF_COUNTERS
             vm->counter_get++;
 #endif
-            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue result;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                obj_attribute(vm, b, var_tostr(c), &a_temp);
+                obj_attribute(vm, b, var_tostr(c), &result);
                 reg = vm->reg;
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, &a_temp);
+                class_attribute(vm, b, c, &result);
                 reg = vm->reg;
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a_temp);
+                module_attribute(vm, b, c, &result);
                 reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
-                a_temp = *RA();     /* avoid gcc warning for uninitialized variable a_temp, this code is never reached */
+                result = *RA();     /* avoid gcc warning for uninitialized variable result, this code is never reached */
             }
             bvalue *a = RA();
-            *a = a_temp;    /* assign the resul to the specified register on the updated stack */
+            *a = result;    /* assign the resul to the specified register on the updated stack */
             dispatch();
         }
         opcase(GETMET): {
 #if BE_USE_PERF_COUNTERS
             vm->counter_get++;
 #endif
-            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue result;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
                 binstance *obj = var_toobj(b);
-                int type = obj_attribute(vm, b, var_tostr(c), &a_temp);
+                int type = obj_attribute(vm, b, var_tostr(c), &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                *a = a_temp;
+                *a = result;
                 if (var_basetype(a) == BE_FUNCTION) {
-                    if (func_isstatic(a) || (type == BE_INDEX)) {    /* if instance variable then we consider it's non-method */
-                       /* static method, don't bother with the instance */
-                        a[1] = a_temp;
+                    if ((type & BE_STATIC) || (type == BE_INDEX)) {    /* if instance variable then we consider it's non-method */
+                        /* static method, don't bother with the instance */
+                        a[1] = result;
                         var_settype(a, NOT_METHOD);
                     } else {
                         /* this is a real method (i.e. non-static) */
@@ -870,22 +920,27 @@ newframe: /* a new call frame */
                         }
                         var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                     }
+                } else if (var_isclass(a)) {
+                    /* in this case we have a class in a static or non-static member */
+                    /* it's always treated like a statif function */
+                    a[1] = result;
+                    var_settype(a, NOT_METHOD);
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, &a_temp);
+                class_attribute(vm, b, c, &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                a[1] = a_temp;
+                a[1] = result;
                 var_settype(a, NOT_METHOD);
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a_temp);
+                module_attribute(vm, b, c, &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                a[1] = a_temp;
+                a[1] = result;
                 var_settype(a, NOT_METHOD);
             } else {
                 attribute_error(vm, "method", b, c);
@@ -900,7 +955,11 @@ newframe: /* a new call frame */
             if (var_isinstance(a) && var_isstr(b)) {
                 binstance *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_instance_setmember(vm, obj, attr, c)) {
+                bvalue result = *c;
+                if (var_isfunction(&result)) {
+                    var_markstatic(&result);
+                }
+                if (!be_instance_setmember(vm, obj, attr, &result)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to attribute '%s'",
@@ -913,11 +972,11 @@ newframe: /* a new call frame */
                 /* if value is a function, we mark it as a static to distinguish from methods */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                bvalue c_static = *c;
-                if (var_isfunction(&c_static)) {
-                    c_static.type = func_setstatic(&c_static);
+                bvalue result = *c;
+                if (var_isfunction(&result)) {
+                    var_markstatic(&result);
                 }
-                if (!be_class_setmember(vm, obj, attr, &c_static)) {
+                if (!be_class_setmember(vm, obj, attr, &result)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
@@ -1193,11 +1252,12 @@ static void prep_closure(bvm *vm, int pos, int argc, int mode)
     for (v = vm->reg + argc; v <= end; ++v) {
         var_setnil(v);
     }
+    int v_offset = v - vm->stack;   /* offset from stack base, stack may be reallocated */
     if (proto->varg & BE_VA_VARARG) {  /* there are vararg at the last argument, build the list */
         /* code below uses mostly low-level calls for performance */
-        be_stack_require(vm, argc + 2);   /* make sure we don't overflow the stack */
-        bvalue *top_save = vm->top;  /* save original stack, we need fresh slots to create the 'list' instance */
-        vm->top = v;  /* move top of stack right after last argument */
+        be_stack_require(vm, argc + 4);   /* make sure we don't overflow the stack */
+        int top_save_offset = vm->top - vm->stack;  /* save original stack, we need fresh slots to create the 'list' instance */
+        vm->top = vm->stack + v_offset;  /* move top of stack right after last argument */
         be_newobject(vm, "list");  /* this creates 2 objects on stack: list instance, BE_LIST object */
         blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
         v = vm->reg + proto->argc - 1;  /* last argument */
@@ -1205,7 +1265,7 @@ static void prep_closure(bvm *vm, int pos, int argc, int mode)
             be_list_push(vm, list, v); /* push all varargs into list */       
         }
         *(vm->reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
-        vm->top = top_save;  /* restore top of stack pointer */
+        vm->top = vm->stack + top_save_offset;  /* restore top of stack pointer */
     }
 }
 
@@ -1239,6 +1299,18 @@ static void do_ntvfunc(bvm *vm, int pos, int argc)
     ret_native(vm);
 }
 
+static void do_cfunc(bvm *vm, int pos, int argc)
+{
+    if (vm->ctypefunc) {
+        const void* args = var_toobj(vm->reg + pos);
+        push_native(vm, vm->reg + pos, argc, 0);
+        vm->ctypefunc(vm, args);
+        ret_native(vm);
+    } else {
+        vm_error(vm, "internal_error", "missing ctype_func handler");
+    }
+}
+
 static void do_class(bvm *vm, int pos, int argc)
 {
     if (be_class_newobj(vm, var_toobj(vm->reg + pos), pos, ++argc, 0)) {
@@ -1253,13 +1325,27 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
     be_assert(vm->reg <= v && v < vm->stacktop);
     be_assert(vm->stack <= vm->reg && vm->reg < vm->stacktop);
     int pos = v - vm->reg;
+    be_assert(!var_isstatic(v));
     switch (var_type(v)) {
     case BE_CLASS: do_class(vm, pos, argc); break;
     case BE_CLOSURE: do_closure(vm, pos, argc); break;
     case BE_NTVCLOS: do_ntvclos(vm, pos, argc); break;
     case BE_NTVFUNC: do_ntvfunc(vm, pos, argc); break;
+    case BE_CTYPE_FUNC: do_cfunc(vm, pos, argc); break;
     default: call_error(vm, v);
     }
+}
+
+/* Default empty constructor */
+int be_default_init_native_function(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 1) {
+        be_pushvalue(vm, 1);
+    } else {
+        be_pushnil(vm);
+    }
+    be_return(vm);
 }
 
 BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook)
@@ -1268,6 +1354,11 @@ BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook)
     (void)hook;     /* avoid comiler warning */
 
     vm->obshook = hook;
+}
+
+BERRY_API void be_set_obs_micros(bvm *vm, bmicrosfnct micros)
+{
+    vm->microsfnct = micros;
 }
 
 BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler)

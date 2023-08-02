@@ -133,26 +133,32 @@ lv_style_value_t lv_obj_get_style_prop(const struct _lv_obj_t * obj, lv_part_t p
 /**
  * Set local style property on an object's part and state.
  * @param obj       pointer to an object
- * @param part      a part to which the property should be added
- * @param state     a state to which the property should be added
  * @param prop      the property
  * @param value     value of the property. The correct element should be set according to the type of the property
+ * @param selector  OR-ed value of parts and state for which the style should be set
  */
 void lv_obj_set_local_style_prop(struct _lv_obj_t * obj, lv_style_prop_t prop, lv_style_value_t value,
                                  lv_style_selector_t selector);
 
-lv_res_t lv_obj_get_local_style_prop(struct _lv_obj_t * obj, lv_style_prop_t prop, lv_style_value_t * value,
-                                     lv_style_selector_t selector);
+void lv_obj_set_local_style_prop_meta(struct _lv_obj_t * obj, lv_style_prop_t prop, uint16_t meta,
+                                      lv_style_selector_t selector);
+
+lv_style_res_t lv_obj_get_local_style_prop(struct _lv_obj_t * obj, lv_style_prop_t prop, lv_style_value_t * value,
+                                           lv_style_selector_t selector);
 
 /**
  * Remove a local style property from a part of an object with a given state.
  * @param obj       pointer to an object
- * @param part      the part of the object which style property should be removed.
- * @param state     the state from which the property should be removed.
  * @param prop      a style property to remove.
+ * @param selector  OR-ed value of parts and state for which the style should be removed
  * @return true     the property was found and removed; false: the property was not found
  */
 bool lv_obj_remove_local_style_prop(struct _lv_obj_t * obj, lv_style_prop_t prop, lv_style_selector_t selector);
+
+/**
+ * Used internally for color filtering
+ */
+lv_style_value_t _lv_obj_style_apply_color_filter(const struct _lv_obj_t * obj, uint32_t part, lv_style_value_t v);
 
 /**
  * Used internally to create a style transition
@@ -216,13 +222,13 @@ static inline void lv_obj_set_style_pad_ver(struct _lv_obj_t * obj, lv_coord_t v
     lv_obj_set_style_pad_bottom(obj, value, selector);
 }
 
-static inline void lv_obj_set_style_pad_gap(struct _lv_obj_t * obj,  lv_coord_t value, lv_style_selector_t selector)
+static inline void lv_obj_set_style_pad_gap(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 {
     lv_obj_set_style_pad_row(obj, value, selector);
     lv_obj_set_style_pad_column(obj, value, selector);
 }
 
-static inline void lv_obj_set_style_size(struct _lv_obj_t * obj,  lv_coord_t value, lv_style_selector_t selector)
+static inline void lv_obj_set_style_size(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 {
     lv_obj_set_style_width(obj, value, selector);
     lv_obj_set_style_height(obj, value, selector);
@@ -230,15 +236,6 @@ static inline void lv_obj_set_style_size(struct _lv_obj_t * obj,  lv_coord_t val
 
 lv_text_align_t lv_obj_calculate_style_text_align(const struct _lv_obj_t * obj, lv_part_t part, const char * txt);
 
-static inline lv_coord_t lv_obj_get_x_aligned(const struct _lv_obj_t * obj)
-{
-    return lv_obj_get_style_x(obj, LV_PART_MAIN);
-}
-
-static inline lv_coord_t lv_obj_get_y_aligned(const struct _lv_obj_t * obj)
-{
-    return lv_obj_get_style_y(obj, LV_PART_MAIN);
-}
 
 /**********************
  *      MACROS
@@ -248,4 +245,4 @@ static inline lv_coord_t lv_obj_get_y_aligned(const struct _lv_obj_t * obj)
 } /*extern "C"*/
 #endif
 
-#endif /*LV_TEMPL_H*/
+#endif /*LV_OBJ_STYLE_H*/

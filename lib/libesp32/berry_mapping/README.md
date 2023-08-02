@@ -111,6 +111,7 @@ Argument type|Berry type expected
 `c`|`comptr` (native pointer)
 `.`|**any** - no type checking for this argument
 `-`|**skip** - skip this argument (handy to discard the `self` implicit argument for methods)
+`@`|**Berry VM** (virtual attribute) - adds a pointer to the Berry VM - works only as first argument
 `~`|send the length of the previous bytes() buffer (or raise an exception if no length known)
 `(<class>)`|`instance` deriving from `<class>` (i.e. of this class or any subclass
 `^<callback_type>^`|`function` which is converted to a `C` callback by calling `cb.make_cb()`. The optional `callback_type` string is passed as second argument to `cb.make_cb()` and Berrt `arg #1` (typically `self`) is passed as 3rd argument<br>See below for callbacks

@@ -80,3 +80,92 @@ assert(string.tr("qwerty", "qwe", "_") == '_rty')
 # the following should not crash
 var s1 = 'A string of more than 128 bytes 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'
 var s2 = string.format("%i, %s", 1, s1)
+
+# replace
+assert(string.replace("hello", "ll", "xx") == "hexxo")
+assert(string.replace("hellollo", "ll", "xx") == "hexxoxxo")
+assert(string.replace("hellollo", "aa", "xx") == "hellollo")
+assert(string.replace("hello", "ll", "") == "heo")
+assert(string.replace("hello", "", "xx") == "hello")
+assert(string.replace("hello", "", "") == "hello")
+
+# multi-line strings
+var s = "a" "b""c"
+assert(s == 'abc')
+
+s = 'a'"b"'''c'
+assert(s == 'abc')
+
+s = "a"
+'b'
+    ""
+    "c"
+assert(s == 'abc')
+
+s = "a" #- b -# "b"  #--# "c"
+assert(s == 'abc')
+
+s = "a"#
+    # "z"
+    "b"  # zz
+    "c"
+assert(s == 'abc')
+
+# string.format with automatic conversion
+import string
+
+assert(string.format("%i", 3) == '3')
+assert(string.format("%i", "3") == '3')
+assert(string.format("%i", "03") == '3')
+assert(string.format("%i", nil) == '')
+
+class A def toint() return 42 end end
+a=A()
+class B end
+b=B()
+
+assert(string.format("%i", a) == '42')
+assert(string.format("%i", b) == '')
+
+assert(string.format("%i", nil) == '')
+assert(string.format("%i", true) == '1')
+assert(string.format("%i", false) == '0')
+
+assert(string.format("%c", a) == '*')
+
+assert(string.format("%f", 3.5) == '3.500000')
+assert(string.format("%f", 3) == '3.000000')
+assert(string.format("%.1f", 3) == '3.0')
+assert(string.format("%.1f", nil) == '')
+assert(string.format("%.1f", true) == '')
+assert(string.format("%.1f", false) == '')
+assert(string.format("%.1f", a) == '')
+
+assert(string.format("%s", a) == '<instance: A()>')
+assert(string.format("%s", 0) == '0')
+assert(string.format("%s", nil) == 'nil')
+assert(string.format("%s", true) == 'true')
+assert(string.format("%s", false) == 'false')
+
+# format is now synonym to string.format
+assert(format == string.format)
+assert(format("%.1f", 3) == '3.0')
+
+# f-strings
+assert(f"" == '')
+assert(f'' == '')
+assert(f"abc\n\r\t" == 'abc\n\r\t')
+assert(f'{{a}}' == '{a}')
+assert(f'\\\\' == '\\\\')
+
+assert(f"A = {1+1}" == 'A = 2')
+assert(f"A = {1+1:s}" == 'A = 2')
+assert(f"A = {1+1:i}" == 'A = 2')
+assert(f"A = {1+1:04i}" == 'A = 0002')
+
+assert(f"P = {3.1415:.2f}" == 'P = 3.14')
+
+var a = 'foobar{0}'
+assert(f"S = {a}" == 'S = foobar{0}')
+assert(f"S = {a:i}" == 'S = 0')
+assert(f"{a=}" == 'a=foobar{0}')

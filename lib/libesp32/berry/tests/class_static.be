@@ -8,11 +8,11 @@ def assert_attribute_error(f)
 end
 
 class A
-    static a
+    static a    #- deprecated syntax -#
     def init() self.b = 2 end
     def f() end 
     var b 
-    static c, s, r
+    static var c, s, r  #- preferred syntax -#
 end
 
 assert(A.a == nil)
@@ -120,3 +120,38 @@ assert(A.a == 1)
 assert(B.a == A)
 assert(B.b == 1)
 assert(B.c == A)
+
+#- static class get an implicit `_class` variable -#
+class A
+    static def f(x) return _class end
+end
+assert(A.f() == A)
+
+#- static class within a class -#
+class A
+    static class B
+        static def f() return 1 end
+        def g() return 2 end
+    end
+end
+a = A()
+b = A.B()
+assert(classname(a) == 'A')
+assert(classname(b) == 'B')
+assert(A.B.f() == 1)
+assert(b.g() == 2)
+assert(super(A.B) == nil)
+
+#- `_class` initializer can now be used in initializer code -#
+class A
+  static var a = 1
+  static var b = _class
+  static var c = [_class.a, _class.b]
+  static def f(x)
+    return _class
+  end
+end
+assert(A.a == 1)
+assert(A.b == A)
+assert(A.c == [1, A])
+assert(A.f(1) == A)

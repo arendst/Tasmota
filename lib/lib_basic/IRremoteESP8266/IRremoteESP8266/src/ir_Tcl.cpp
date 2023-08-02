@@ -1,4 +1,4 @@
-// Copyright 2019, 2021 David Conran
+// Copyright 2019, 2021, 2022 David Conran
 
 /// @file
 /// @brief Support for TCL protocols.
@@ -14,9 +14,18 @@
 #include "IRutils.h"
 
 // Constants
-
 const uint8_t kTcl112AcTimerResolution = 20;  // Minutes
 const uint16_t kTcl112AcTimerMax = 720;  // Minutes (12 hrs)
+
+const uint16_t kTcl96AcHdrMark = 1056;  // uSeconds.
+const uint16_t kTcl96AcHdrSpace = 550;  // uSeconds.
+const uint16_t kTcl96AcBitMark = 600;   // uSeconds.
+const uint32_t kTcl96AcGap = kDefaultMessageGap;  // Just a guess.
+const uint8_t  kTcl96AcSpaceCount = 4;
+const uint16_t kTcl96AcBitSpaces[kTcl96AcSpaceCount] = {360,    // 0b00
+                                                        838,    // 0b01
+                                                        2182,   // 0b10
+                                                        1444};  // 0b11
 
 using irutils::addBoolToString;
 using irutils::addFanToString;
@@ -444,7 +453,7 @@ stdAc::swingv_t IRTcl112Ac::toCommonSwingV(const uint8_t setting) {
 /// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRTcl112Ac::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::TCL112AC;
@@ -527,3 +536,81 @@ String IRTcl112Ac::toString(void) const {
 ///   It's the same as `decodeMitsubishi112()`. A shared routine is used.
 ///   You can find it in: ir_Mitsubishi.cpp
 #endif  // DECODE_TCL112AC
+
+#if SEND_TCL96AC
+/// Send a TCL 96-bit A/C message.
+/// Status: BETA / Untested on a real device working.
+/// @param[in] data The message to be sent.
+/// @param[in] nbytes The number of bytes of message to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+void IRsend::sendTcl96Ac(const unsigned char data[], const uint16_t nbytes,
+                         const uint16_t repeat) {
+  enableIROut(38);
+  for (uint16_t r = 0; r <= repeat; r++) {
+    // Header
+    mark(kTcl96AcHdrMark);
+    space(kTcl96AcHdrSpace);
+    // Data
+    for (uint16_t pos = 0; pos < nbytes; pos++) {
+      uint8_t databyte = data[pos];
+      for (uint8_t bits = 0; bits < 8; bits += 2) {
+        mark(kTcl96AcBitMark);
+        space(kTcl96AcBitSpaces[GETBITS8(databyte, 8 - 2, 2)]);
+        databyte <<= 2;
+      }
+    }
+    // Footer
+    mark(kTcl96AcBitMark);
+    space(kTcl96AcGap);
+  }
+}
+#endif  // SEND_TCL96AC
+
+#if DECODE_TCL96AC
+/// Decode the supplied Tcl96Ac message.
+/// Status: ALPHA / Experimental.
+/// @param[in,out] results Ptr to the data to decode & where to store the result
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return True if it can decode it, false if it can't.
+bool IRrecv::decodeTcl96Ac(decode_results* results, uint16_t offset,
+                           const uint16_t nbits, const bool strict) {
+  if (results->rawlen < nbits + kHeader + kFooter - 1 + offset)
+    return false;  // Message is smaller than we expected.
+  if (strict && nbits != kTcl96AcBits)
+    return false;  // Not strictly a TCL96AC message.
+  uint8_t data = 0;
+  // Header.
+  if (!matchMark(results->rawbuf[offset++], kTcl96AcHdrMark)) return false;
+  if (!matchSpace(results->rawbuf[offset++], kTcl96AcHdrSpace)) return false;
+  // Data (2 bits at a time)
+  for (uint16_t bits_so_far = 0; bits_so_far < nbits; bits_so_far += 2) {
+    if (bits_so_far % 8)
+      data <<= 2;  // Make space for the new data bits.
+    else
+      data = 0;
+    if (!matchMark(results->rawbuf[offset++], kTcl96AcBitMark)) return false;
+    uint8_t value = 0;
+    while (value < kTcl96AcSpaceCount) {
+      if (matchSpace(results->rawbuf[offset], kTcl96AcBitSpaces[value])) {
+        data += value;
+        break;
+      }
+      value++;
+    }
+    if (value >= kTcl96AcSpaceCount) return false;  // No matches.
+    offset++;
+    *(results->state + bits_so_far / 8) = data;
+  }
+  // Footer
+  if (!matchMark(results->rawbuf[offset++], kTcl96AcBitMark)) return false;
+  if (offset < results->rawlen &&
+    !matchAtLeast(results->rawbuf[offset], kTcl96AcGap)) return false;
+  // Success
+  results->decode_type = TCL96AC;
+  results->bits = nbits;
+  return true;
+}
+#endif  // DECODE_TCL96AC

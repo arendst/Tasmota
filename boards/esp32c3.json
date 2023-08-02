@@ -1,35 +1,44 @@
 {
-  "build": {
-    "arduino":{
-      "ldscript": "esp32c3_out.ld"
+    "build": {
+      "arduino":{
+        "ldscript": "esp32c3_out.ld"
+      },
+      "core": "esp32",
+      "extra_flags": "-DESP32_4M -DESP32C3",
+      "f_cpu": "160000000L",
+      "f_flash": "80000000L",
+      "flash_mode": "dio",
+      "mcu": "esp32c3",
+      "variant": "esp32c3",
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
     },
-    "core": "esp32",
-    "extra_flags": "-DARDUINO_USB_CDC_ON_BOOT=0 -DESP32_4M -DESP32C3",
-    "f_cpu": "160000000L",
-    "f_flash": "80000000L",
-    "flash_mode": "dout",
-    "mcu": "esp32c3",
-    "variant": "esp32c3",
-    "partitions": "esp32_partition_app1856k_spiffs320k.csv"
-  },
-  "connectivity": [
-    "wifi"
-  ],
-  "debug": {
-    "openocd_target": "esp32c3.cfg"
-  },
-  "frameworks": [
-    "arduino",
-    "espidf"
-  ],
-  "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
-  "upload": {
-    "flash_size": "4MB",
-    "maximum_ram_size": 327680,
-    "maximum_size": 4194304,
-    "require_upload_port": true,
-    "speed": 460800
-  },
-  "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/hw-reference/esp32c3/user-guide-devkitm-1.html",
-  "vendor": "Espressif"
-}
+    "connectivity": [
+      "wifi",
+      "bluetooth"
+    ],
+    "debug": {
+      "openocd_target": "esp32c3.cfg"
+    },
+    "frameworks": [
+      "arduino",
+      "espidf"
+    ],
+    "name": "Espressif Generic ESP32-C3 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+    "upload": {
+      "arduino": {
+        "flash_extra_images": [
+          [
+            "0x10000",
+            "variants/tasmota/tasmota32c3-safeboot.bin"
+          ]
+        ]
+      },
+      "flash_size": "4MB",
+      "maximum_ram_size": 327680,
+      "maximum_size": 4194304,
+      "require_upload_port": true,
+      "speed": 460800
+    },
+    "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/hw-reference/esp32c3/user-guide-devkitm-1.html",
+    "vendor": "Espressif"
+  }

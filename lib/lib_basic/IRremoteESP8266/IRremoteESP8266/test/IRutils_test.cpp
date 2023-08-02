@@ -780,3 +780,17 @@ TEST(TestUtils, InvertedBytePairs) {
 TEST(TestUtils, lowLevelSanityCheck) {
   ASSERT_EQ(0, irutils::lowLevelSanityCheck());
 }
+
+TEST(TestUtils, VersionDefines) {
+  // String
+  String version_str = uint64ToString(_IRREMOTEESP8266_VERSION_MAJOR) + '.' +
+      uint64ToString(_IRREMOTEESP8266_VERSION_MINOR) + '.' +
+      uint64ToString(_IRREMOTEESP8266_VERSION_PATCH);  // e.g. "2.8.1"
+  ASSERT_EQ(_IRREMOTEESP8266_VERSION_STR, version_str);
+  ASSERT_EQ(_IRREMOTEESP8266_VERSION_, version_str);
+  // Integer
+  uint64_t version_int = (_IRREMOTEESP8266_VERSION_MAJOR << 16) +
+                         (_IRREMOTEESP8266_VERSION_MINOR << 8) +
+                         _IRREMOTEESP8266_VERSION_PATCH;
+  ASSERT_EQ(_IRREMOTEESP8266_VERSION, version_int);
+}

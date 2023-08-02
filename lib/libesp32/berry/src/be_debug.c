@@ -15,6 +15,7 @@
 #include "be_strlib.h"
 #include "be_exec.h"
 #include "be_mem.h"
+#include "be_sys.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -46,13 +47,17 @@ static const char* opc2str(bopcode op)
     return op < array_count(opc_tab) ? opc_tab[op] : "ERROP";
 }
 
-void be_print_inst(binstruction ins, int pc)
+void be_print_inst(binstruction ins, int pc, void* fout)
 {
-    char __lbuf[INST_BUF_SIZE];
+    char __lbuf[INST_BUF_SIZE + 1], __lbuf_tmp[INST_BUF_SIZE];
     bopcode op = IGET_OP(ins);
 
     logbuf("  %.4X  ", pc);
-    be_writestring(__lbuf);
+    if (fout) {
+        be_fwrite(fout, __lbuf, strlen(__lbuf));
+    } else {
+        be_writestring(__lbuf);
+    }                            
     switch (op) {
     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
     case OP_MOD: case OP_LT: case OP_LE: case OP_EQ:
@@ -132,8 +137,13 @@ void be_print_inst(binstruction ins, int pc)
         logbuf("%s", opc2str(op));
         break;
     }
-    be_writestring(__lbuf);
-    be_writenewline();
+    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf) + 1);
+    logbuf("%s\n", __lbuf_tmp);
+    if (fout) {
+        be_fwrite(fout, __lbuf, strlen(__lbuf));
+    } else {
+        be_writestring(__lbuf);
+    }                   
 }
 #endif
 
@@ -146,7 +156,9 @@ void be_dumpclosure(bclosure *cl)
 #if BE_DEBUG_RUNTIME_INFO
     blineinfo *lineinfo = proto->lineinfo;
 #endif
+#if BE_DEBUG_SOURCE_FILE
     logfmt("source '%s', ", str(proto->source));
+#endif
     logfmt("function '%s':\n", str(proto->name));
 #if BE_DEBUG_RUNTIME_INFO
     if (lineinfo) { /* first line */
@@ -159,7 +171,7 @@ void be_dumpclosure(bclosure *cl)
             logfmt("; line %d\n", (++lineinfo)->linenumber);
         }
 #endif
-        be_print_inst(*code++, pc);
+        be_print_inst(*code++, pc, NULL);
     }
 }
 #endif
@@ -174,8 +186,10 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         blineinfo *end = it + proto->nlineinfo;
         int pc = cast_int(ip - proto->code - 1); /* now vm->ip has been increased */
         for (; it < end && pc > it->endpc; ++it);
-        sprintf(buf, ":%d:", it->linenumber);
+        snprintf(buf, sizeof(buf), ":%d:", it->linenumber);
+#if BE_DEBUG_SOURCE_FILE
         be_writestring(str(proto->source));
+#endif
         be_writestring(buf);
     } else {
         be_writestring("<unknown source>:");
@@ -244,7 +258,7 @@ void be_tracestack(bvm *vm)
 
 static void hook_callnative(bvm *vm, int mask)
 {
-    bhookinfo info;
+    bhookinfo_t info;
     int top = be_top(vm);
     bcallframe *cf = vm->cf;
     bclosure *cl = var_toobj(cf->func);
@@ -252,7 +266,9 @@ static void hook_callnative(bvm *vm, int mask)
     be_stack_require(vm, BE_STACK_FREE_MIN + 2);
     info.type = mask;
     info.line = cf->lineinfo->linenumber;
+#if BE_DEBUG_SOURCE_FILE
     info.source = str(cl->proto->source);
+#endif
     info.func_name = str(cl->proto->name);
     info.data = hb->data;
     hb->hook(vm, &info);

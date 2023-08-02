@@ -158,7 +158,7 @@ while Run_flag:
             # Message length used by Tasmota (FileTransferHeaderSize)
             client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
          else:
-            client.publish(mypublish+"201", chunk)
+            client.publish(mypublish+"301", chunk)
          file_pos = file_pos + file_chunk_size
          if file_pos % 102400 < file_chunk_size:
             progress = round((file_pos / 10240)) * 10

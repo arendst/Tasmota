@@ -10,14 +10,23 @@
 
 #ifdef __cplusplus
   #define be_const_ctype_func(_f) {                               \
-      bvaldata((const void*) &ctype_func_def##_f),                      \
+      bvaldata((const void*) &ctype_func_def##_f),                \
       BE_CTYPE_FUNC                                               \
+  }
+  #define be_const_static_ctype_func(_f) {                        \
+      bvaldata((const void*) &ctype_func_def##_f),                \
+      BE_CTYPE_FUNC | BE_STATIC                                   \
   }
 #else // __cplusplus
 typedef const void* be_constptr;
   #define be_const_ctype_func(_f) {                               \
       .v.nf = (const void*) &ctype_func_def##_f,                  \
       .type = BE_CTYPE_FUNC                                       \
+  }
+typedef const void* be_constptr;
+  #define be_const_static_ctype_func(_f) {                        \
+      .v.nf = (const void*) &ctype_func_def##_f,                  \
+      .type = BE_CTYPE_FUNC | BE_STATIC                           \
   }
 #endif // __cplusplus
 
@@ -79,6 +88,7 @@ extern "C" {
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 
+extern void be_map_insert_nil(bvm *vm, const char *key);
 extern void be_map_insert_int(bvm *vm, const char *key, bint value);
 extern void be_map_insert_bool(bvm *vm, const char *key, bbool value);
 extern void be_map_insert_real(bvm *vm, const char *key, breal value);
@@ -91,11 +101,15 @@ extern void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr
 extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
 extern bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern void be_const_module_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len);  /* raise an exception if not found */
 extern bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern void be_const_class_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len);  /* raise an exception if not found */
 extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
 extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);
 extern int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type);
 extern int be_call_ctype_func(bvm *vm, const void *definition);     /* handler for Berry vm */
+
+extern void be_cb_deinit(bvm *vm);   /* remove all callbacks from the VM (just before shutdown of VM) */
 
 #ifdef __cplusplus
 }

@@ -113,7 +113,7 @@ static void free_sstring(bvm *vm, bstring *str)
 static uint32_t str_hash(const char *str, size_t len)
 {
     uint32_t hash = 2166136261u;
-    be_assert(str || len);
+    be_assert(str || !len);
     while (len--) {
         hash = (hash ^ (unsigned char)*str++) * 16777619u;
     }
@@ -167,6 +167,12 @@ static bstring* find_conststr(const char *str, size_t len)
     uint32_t hash = str_hash(str, len);
     bcstring *s = (bcstring*)tab->table[hash % tab->size];
     for (; s != NULL; s = next(s)) {
+        if (len == 0 && s->slen == 0) {
+            /* special case for the empty string,
+               since we don't want to compare it using strncmp, 
+               because str might be NULL */
+            return (bstring*)s;
+        }
         if (len == s->slen && !strncmp(str, s->s, len)) {
             return (bstring*)s;
         }
@@ -189,6 +195,9 @@ static bstring* newshortstr(bvm *vm, const char *str, size_t len)
     }
     s = createstrobj(vm, len, 0);
     if (s) {
+        /* recompute size and list that may have changed due to a GC */
+        size = vm->strtab.size;
+        list = vm->strtab.table + (hash & (size - 1));
         memcpy(cast(char *, sstr(s)), str, len);
         s->extra = 0;
         s->next = cast(void*, *list);
@@ -259,9 +268,13 @@ void be_gcstrtab(bvm *vm)
             }
         }
     }
+#if BE_USE_DEBUG_GC == 0
     if (tab->count < size >> 2 && size > 8) {
         resize(vm, size >> 1);
     }
+#else
+    resize(vm, tab->count + 4);
+#endif
 }
 
 uint32_t be_strhash(const bstring *s)

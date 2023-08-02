@@ -65,7 +65,7 @@ a_setoption = [[
     "(Settings) Switch between dynamic (0) or fixed (1) slot flash save location",
     "(Button) Support only single press (1) to speed up button press recognition",
     "(Interlock) Power interlock mode",
-    "(Light) Switch between commands PWM (1) or COLOR/DIMMER/CT/CHANNEL (0)",
+    "(Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)",
     "(WS2812) Switch between clockwise (0) or counter-clockwise (1)",
     "(Light) Switch between decimal (1) or hexadecimal (0) output",
     "(Light) Pair light signal (1) with CO2 sensor",
@@ -83,23 +83,23 @@ a_setoption = [[
     "(HAss) enforce autodiscovery as light (1)",
     "(Wifi, MQTT) Control link led blinking (1)"
     ],[
-    "(Button) Key hold time (ms)",
-    "(Pow) Sonoff POW Max_Power_Retry",
-    "(Backlog) Delay (ms)",
+    "(Button/Switch) Key hold time detection in decaseconds (default 40)",
+    "(Energy) Maximum number of retries before deciding power limit overflow (default 5)",
+    "(Backlog) Minimal delay in milliseconds between executing backlog commands (default 200)",
     "(not used) mDNS delayed start (Sec)",
-    "(Boot loop) Retry offset (0 = disable)",
-    "(Light) RGBWW remap",
-    "(IR) Unknown threshold",
-    "(CSE7766) invalid power margin",
-    "(Button) Ignore hold time (s)",
-    "(Wifi) Gratuitous ARP repeat time",
-    "(Temperature) Over temperature threshold (celsius)",
-    "(Rotary) Max allowed steps",
-    "(not used) Tuya MCU voltage Id",
-    "(not used) Tuya MCU current Id",
-    "(not used) Tuya MCU power Id",
-    "(not used) Energy Tariff1 start hour",
-    "(not used) Energy Tariff2 start hour",
+    "(Restart) Number of restarts to start detecting boot loop (default 1)",
+    "(Light) RGB and White channel separation (default 0)",
+    "(IR) Set the smallest sized UNKNOWN message packets we actually care about (default 6, max 255)",
+    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurments (default 128)",
+    "(Button/Shutter) Ignore button change in seconds (default 0)",
+    "(Wifi) Interval in seconds between gratuitous ARP requests (default 60)",
+    "(Energy) Turn all power off at or above this temperature (default 90C)",
+    "(Rotary) Rotary step boundary (default 10)",
+    "(IR) Base tolerance percentage for matching incoming IR messages (default 25, max 100)",
+    "(Bistable) Pulse time in milliseconds for two coil bistable latching relays (default 40)",
+    "(PowerOn) Add delay of 10 x value milliseconds at power on",
+    "(PowerOn) Add delay of value seconds at power on before activating relays",
+    "(Energy) Support energy dummy relays",
     "",
     ],[
     "(Timers) Enabled",
@@ -188,6 +188,32 @@ a_setoption = [[
     "(Tuya) Allow save dimmer = 0 receved by MCU",
     "(TLS) Use fingerprint validation instead of CA based",
     "(Shift595) Invert outputs of 74x595 shift registers",
+    "(PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)",
+    "(Display & LVGL) force disabling default splash screen",
+    "(TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)",
+    "(Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active",
+    "(GUI) Align (energy) table values left (0) or right (1)",
+    "(Pressure) Switch between mmHg (0) or inHg (1) when SO24 1",
+    "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
+    "(GUI) Disable display of GUI module name (1)",
+    "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
+    "(Zigbee) Disable Battery auto-probe and using auto-binding",
+    "(Zigbee) Include time in `ZbReceived` messages like other sensors",
+    "(MQTT) Retain on Status"
+    ],[
+    "(ESP32) Show ESP32 internal temperature sensor",
+    "(MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead",
+    "(Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up",
+    "(Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`",
+    "(Energy) Force no voltage/frequency common",
+    "(Matter) Enable Matter protocol over Wifi",
+    "(Power) Switch between two (0) or one (1) pin bistable relay control",
+    "(Berry) Disable autoexec.be on restart (1)",
+    "(Berry) Handle berry led using RMT0 as additional WS2812 scheme",
+    "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
+    "","",
+    "","","","",
+    "","","","",
     "","","","",
     "","","","",
     "","","",""
@@ -197,7 +223,7 @@ a_features = [[
     "USE_ENERGY_MARGIN_DETECTION","USE_LIGHT","USE_I2C","USE_SPI",
     "USE_DISCOVERY","USE_ARDUINO_OTA","USE_MQTT_TLS","USE_WEBSERVER",
     "WEBSERVER_ADVERTISE","USE_EMULATION_HUE","MQTT_PUBSUBCLIENT","MQTT_TASMOTAMQTT",
-    "MQTT_ESPMQTTARDUINO","MQTT_HOST_DISCOVERY","USE_ARILUX_RF","USE_WS2812",
+    "USE_MODBUS_BRIDGE","MQTT_HOST_DISCOVERY","USE_ARILUX_RF","USE_WS2812",
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
@@ -262,8 +288,17 @@ a_features = [[
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
-    "USE_SDM230","","","",
-    "","","","",
+    "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
+    "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
+    "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
+    ],[
+    "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
+    "USE_MODBUS_ENERGY","USE_SHELLY_PRO","USE_DALI","USE_BP1658CJ",
+    "USE_DINGTIAN_RELAY","USE_HMC5883L","USE_LD2410","USE_ME007",
+    "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
+    "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
+    "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
+    "USE_SGP4X","USE_MAX17043","","",
     "","","",""
     ]]
 
@@ -292,7 +327,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20220115 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.0.0.3 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -328,12 +363,17 @@ def StartDecode():
                             options.append(str("{0:3d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3, 4):                 #registers 1 and 4 hold binary values
+                if r in (0, 2, 3, 4, 5):              # register 1 holds binary values
                     for opt_idx, option in enumerate(opt_group):
+                        if len(option) == 0:
+                            continue                  # Skip empty line
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
                         options.append(str("{0:3d} ({1}) {2}".format(i, a_on_off[state], option)))
                         i += 1
+
+                if r >= len(obj["StatusLOG"]["SetOption"]) -1:
+                    break                             # Versions before 11.1.0.3 hold SO until 145
 
             print("\nOptions")
             for o in options:

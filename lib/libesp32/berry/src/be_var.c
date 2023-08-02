@@ -11,9 +11,13 @@
 #include "be_string.h"
 #include "be_map.h"
 #include "be_gc.h"
+#include "be_class.h"
+#include <string.h>
 
 #define global(vm)      ((vm)->gbldesc.global)
 #define builtin(vm)     ((vm)->gbldesc.builtin)
+
+extern BERRY_LOCAL bclass_array be_class_table;
 
 void be_globalvar_init(bvm *vm)
 {
@@ -37,6 +41,28 @@ void be_globalvar_deinit(bvm *vm)
 #endif
 }
 
+/* This function is called when the global was not found */
+/* If the name looked for matches a static class, a global with the class name is created lazily */
+/* Pre: no global exists with name `name`*/
+/* Returns: idx of newly created global, or -1 if not found */
+static int global_native_class_find(bvm *vm, bstring *name)
+{
+    const char* cl_name = str(name);
+    bclass_ptr* class_p = &be_class_table[0];
+    for (; *class_p; class_p++) {
+        const bclass* cl = *class_p;
+
+        if (!strcmp(str(cl->name), cl_name)) {
+            /* class name matches */
+            int idx = be_global_new(vm, name);
+            bvalue *v = be_global_var(vm, idx);
+            var_setclass(v, (void*) cl);
+            return idx;
+        }
+    }
+    return -1;
+}
+
 static int global_find(bvm *vm, bstring *name)
 {
     bvalue *res = be_map_findstr(vm, global(vm).vtab, name);
@@ -49,7 +75,13 @@ static int global_find(bvm *vm, bstring *name)
 int be_global_find(bvm *vm, bstring *name)
 {
     int res = global_find(vm, name);
-    return res != -1 ? res : be_builtin_find(vm, name);
+    if (res < 0) {
+        res = be_builtin_find(vm, name);
+    }
+    if (res < 0) {
+        res = global_native_class_find(vm, name);
+    }
+    return res;
 }
 
 static int global_new_anonymous(bvm *vm)

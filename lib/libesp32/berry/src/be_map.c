@@ -112,6 +112,7 @@ static int eqnode(bvm *vm, bmapnode *node, bvalue *key, uint32_t hash)
 #endif
         if(keytype(k) == key->type && hashcode(k) == hash) {
             switch (key->type) {
+            case BE_BOOL: return var_tobool(key) == var_tobool(k);
             case BE_INT: return var_toint(key) == var_toint(k);
             case BE_REAL: return var_toreal(key) == var_toreal(k);
             case BE_STRING: return be_eqstr(var_tostr(key), var_tostr(k));

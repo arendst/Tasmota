@@ -18,6 +18,7 @@ const uint16_t ST7789_colors[]={ST7789_BLACK,ST7789_WHITE,ST7789_RED,ST7789_GREE
 ST7789_LIGHTGREY,ST7789_DARKGREY,ST7789_ORANGE,ST7789_GREENYELLOW,ST7789_PINK};
 
 #ifdef ESP32
+#include "esp8266toEsp32.h"
 #define ST7789_DIMMER
 #endif
 
@@ -258,11 +259,9 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
   }
 
   if (_bp>=0) {
-#define ESP32_PWM_CHANNEL 1
+// #define ESP32_PWM_CHANNEL 1
 #ifdef ST7789_DIMMER
-    ledcSetup(ESP32_PWM_CHANNEL,4000,8);
-    ledcAttachPin(_bp,ESP32_PWM_CHANNEL);
-    ledcWrite(ESP32_PWM_CHANNEL,128);
+    analogWrite(_bp, 128);
 #else
     pinMode(_bp, OUTPUT);
 #endif
@@ -575,7 +574,8 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
     writecommand(ST7789_DISPON);    //Display on
     if (_bp>=0) {
 #ifdef ST7789_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+      analogWrite(_bp, dimmer);
+      // ledcWrite(ESP32_PWM_CHANNEL,dimmer);
 #else
       digitalWrite(_bp,HIGH);
 #endif
@@ -584,7 +584,8 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
     writecommand(ST7789_DISPOFF);
     if (_bp>=0) {
 #ifdef ST7789_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,0);
+      analogWrite(_bp, 0);
+      // ledcWrite(ESP32_PWM_CHANNEL,0);
 #else
       digitalWrite(_bp,LOW);
 #endif
@@ -598,7 +599,8 @@ void Arduino_ST7789::dim(uint8_t dim) {
   if (dimmer>15) dimmer=15;
   dimmer=((float)dimmer/15.0)*255.0;
 #ifdef ESP32
-  ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+  analogWrite(_bp, dimmer);
+  // ledcWrite(ESP32_PWM_CHANNEL,dimmer);
 #endif
 }
 

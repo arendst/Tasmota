@@ -19,9 +19,6 @@
 */
 
 #include "AudioFileSourceFS.h"
-#ifdef ESP32
-#include "SPIFFS.h"
-#endif
 
 AudioFileSourceFS::AudioFileSourceFS(FS &fs, const char *filename)
 {

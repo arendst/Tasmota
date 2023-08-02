@@ -45,3 +45,16 @@ assert(c2.C1 == C)
 c3 = m.C2(m.C())
 assert(type(c3.C1) == 'instance')
 assert(classname(c3.C1) == 'C')
+
+#- an instance member can be a class and called directly -#
+class Test_class
+    var c
+    def init()
+        self.c = map
+    end
+end
+c4 = Test_class()
+assert(type(c4.c) == 'class')
+c5 = c4.c()
+assert(type(c5) == 'instance')
+assert(classname(c5) == 'map')

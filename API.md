@@ -1,4 +1,7 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./tools/logo/TASMOTA_FullLogo_Vector_White.svg">
+  <img alt="Logo" src="./tools/logo/TASMOTA_FullLogo_Vector.svg" align="right" height="76">
+</picture>
 
 # Basic API information
 
@@ -14,20 +17,24 @@ Callback Id                 | Bool | xdrv | xsns | xnrg | xlgt | Description
 ----------------------------|------|------|------|------|------|----------------------------------
 FUNC_SETTINGS_OVERRIDE      |      |  x   |      |      |      | Override start-up settings
 FUNC_PIN_STATE              |  x   |  1   |  2   |      |      | At GPIO configuration
+FUNC_I2C_INIT               |      |  x   |      |      |      | Immediatly after I2C init
 FUNC_MODULE_INIT            |  x   |  3   |  1   |      |  2   | Init module specific parameters
 FUNC_PRE_INIT               |      |  1   |  3   |  2   |      | Once GPIO have been established
 FUNC_INIT                   |      |  1   |  3   |  2   |      | At end of initialisation
 FUNC_LOOP                   |      |  1   |  2   |      |      | In main loop
-FUNC_EVERY_50_MSECOND       |      |  1   |  2   |      |      |
-FUNC_EVERY_100_MSECOND      |      |  1   |  2   |      |      |
-FUNC_EVERY_200_MSECOND      |      |      |      |  x   |      |
-FUNC_EVERY_250_MSECOND      |      |  1   |  3   |  2   |      |
-FUNC_EVERY_SECOND           |      |  1   |  2   |      |      |
+FUNC_SLEEP_LOOP             |      |  1   |  2   |      |      | In main loop during sleep
+FUNC_EVERY_50_MSECOND       |      |  1   |  2   |      |      | In main loop
+FUNC_EVERY_100_MSECOND      |      |  1   |  2   |      |      | In main loop
+FUNC_EVERY_200_MSECOND      |      |      |      |  x   |      | In main loop
+FUNC_EVERY_250_MSECOND      |      |  1   |  3   |  2   |      | In main loop
+FUNC_EVERY_SECOND           |      |  1   |  2   |      |      | In main loop
+FUNC_SAVE_SETTINGS          |      |  2   |  1   |      |      | Just before saving settings
 FUNC_SAVE_AT_MIDNIGHT       |      |      |  x   |      |      | At midnight
 FUNC_SAVE_BEFORE_RESTART    |      |  2   |  1   |      |      | Just before a planned restart
 FUNC_AFTER_TELEPERIOD       |      |  2   |  1   |      |      | At end of teleperiod
 FUNC_JSON_APPEND            |      |  2   |  1   |  3   |      | Extend teleperiod JSON text
 FUNC_WEB_SENSOR             |      |  2   |  1   |  3   |      | Add sensor data to web GUI
+FUNC_WEB_COL_SENSOR         |      |  2   |  1   |  3   |      | Add sensor data to web GUI using columns
 FUNC_COMMAND                |  x   |  1   |  2   |  3   |  4   | When a command is not recognized
 FUNC_COMMAND_DRIVER         |  x   |  x   |      |      |      | When command Driver\<id\> is executed
 FUNC_COMMAND_SENSOR         |  x   |      |  x   |      |      | When command Sensor\<id\> is executed
@@ -38,19 +45,28 @@ FUNC_SET_POWER              |      |  1   |  2   |      |      | Before setting 
 FUNC_SET_DEVICE_POWER       |  x   |  x   |      |      |      | Set relay
 FUNC_SHOW_SENSOR            |      |  x   |      |      |      | When FUNC_JSON_APPEND completes
 FUNC_ANY_KEY                |      |  x   |      |      |      |
+FUNC_LED_LINK               |      |  x   |      |      |      | SetLedLink (On ESP32 only). XdrvMailbox.index holds state
 FUNC_ENERGY_EVERY_SECOND    |      |      |      |  x   |      |
 FUNC_ENERGY_RESET           |      |      |      |  x   |      |
 FUNC_RULES_PROCESS          |  x   |  x   |      |      |      | Process specific rule
+FUNC_TELEPERIOD_RULES_PROCESS | x  |  x   |      |      |      | Process specific rule as teleperiod
 FUNC_SERIAL                 |  x   |  1   |      |  2   |  3   | Process serial data
 FUNC_FREE_MEM               |      |  x   |      |      |      | Show free memory for debugging
 FUNC_BUTTON_PRESSED         |  x   |  x   |      |      |      | When a button is pressed
+FUNC_BUTTON_MULTI_PRESSED   |  x   |  x   |      |      |      | When a button is pressed multiple times
 FUNC_WEB_ADD_BUTTON         |      |  1   |  2   |      |      | Add a Configuration Button to GUI
 FUNC_WEB_ADD_MAIN_BUTTON    |      |  1   |  2   |      |      | Add a main button to GUI
+FUNC_WEB_ADD_CONSOLE_BUTTON |      |  1   |  2   |      |      | Add a Consoles Button to GUI
+FUNC_WEB_ADD_MANAGEMENT_BUTTON |   |  x   |      |      |      | Add a Management Button to GUI
 FUNC_WEB_ADD_HANDLER        |      |  1   |  2   |      |      | Add a webserver handler
+FUNC_WEB_GET_ARG            |      |  2   |  1   |      |  3   | Get webserver setting arguments
 FUNC_SET_CHANNELS           |      |  2   |      |      |  1   |
 FUNC_SET_SCHEME             |      |      |      |      |  x   |
 FUNC_HOTPLUG_SCAN           |      |      |  x   |      |      |
+FUNC_TIME_SYNCED            |      |  x   |      |      |      | Report time is synced
 FUNC_DEVICE_GROUP_ITEM      |      |  x   |      |      |      |
+FUNC_NETWORK_UP             |      |  1   |  2   |  3   |  4   | Wifi or ETH network just went up (received even if webserver is not enabled)
+FUNC_NETWORK_DOWN           |      |  1   |  2   |  3   |  4   | Wifi or ETH network just went down (received even if webserver is not enabled)
 
 The numbers represent the sequence of execution
 

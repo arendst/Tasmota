@@ -837,7 +837,7 @@ stdAc::swingv_t IRSharpAc::toCommonSwingV(const uint8_t pos,
 /// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSharpAc::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::SHARP_AC;

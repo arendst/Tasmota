@@ -137,9 +137,13 @@
 #include "t_bearssl_x509.h"
 #include "t_bearssl_pem.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** \brief Type for a configuration option.
  *
- * A "t_configuration option" is a value that is selected when the BearSSL
+ * A "configuration option" is a value that is selected when the BearSSL
  * library itself is compiled. Most options are boolean; their value is
  * then either 1 (option is enabled) or 0 (option is disabled). Some
  * values have other integer values. Option names correspond to macro
@@ -166,5 +170,14 @@ typedef struct {
  * \return  the configuration report.
  */
 const br_config_option *br_get_config(void);
+
+/* ======================================================================= */
+
+/** \brief Version feature: support for time callback. */
+#define BR_FEATURE_X509_TIME_CALLBACK   1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

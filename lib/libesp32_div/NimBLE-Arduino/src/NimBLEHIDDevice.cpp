@@ -11,11 +11,9 @@
  *  Created on: Jan 03, 2018
  *      Author: chegewara
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLEHIDDevice.h"
 #include "NimBLE2904.h"
@@ -29,7 +27,7 @@ NimBLEHIDDevice::NimBLEHIDDevice(NimBLEServer* server) {
 	 * Here we create mandatory services described in bluetooth specification
 	 */
 	m_deviceInfoService = server->createService(NimBLEUUID((uint16_t) 0x180a));
-	m_hidService = server->createService(NimBLEUUID((uint16_t) 0x1812), 40);
+	m_hidService = server->createService(NimBLEUUID((uint16_t) 0x1812));
 	m_batteryService = server->createService(NimBLEUUID((uint16_t) 0x180f));
 
 	/*
@@ -101,7 +99,7 @@ void NimBLEHIDDevice::manufacturer(std::string name) {
 }
 
 /**
- * @brief Sets the Plug n Play characterisc value.
+ * @brief Sets the Plug n Play characteristic value.
  * @param [in] sig The vendor ID source number.
  * @param [in] vid The vendor ID number.
  * @param [in] pid The product ID number.
@@ -205,12 +203,12 @@ void NimBLEHIDDevice::setBatteryLevel(uint8_t level) {
 /*
  * @brief Returns battery level characteristic
  * @ return battery level characteristic
- *//*
-BLECharacteristic* BLEHIDDevice::batteryLevel() {
+ */
+NimBLECharacteristic* NimBLEHIDDevice::batteryLevel() {
 	return m_batteryLevelCharacteristic;
 }
 
-
+/*
 
 BLECharacteristic*	 BLEHIDDevice::reportMap() {
 	return m_reportMapCharacteristic;
@@ -247,5 +245,4 @@ NimBLEService* NimBLEHIDDevice::batteryService() {
 	return m_batteryService;
 }
 
-#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-#endif // #if defined(CONFIG_BT_ENABLED)
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

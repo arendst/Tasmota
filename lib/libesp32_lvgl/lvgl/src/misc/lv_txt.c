@@ -1,5 +1,5 @@
 /**
- * @file lv_text.c
+ * @file lv_txt.c
  *
  */
 
@@ -105,7 +105,7 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
 
     /*Calc. the height and longest line*/
     while(text[line_start] != '\0') {
-        new_line_start += _lv_txt_get_next_line(&text[line_start], font, letter_space, max_width, flag);
+        new_line_start += _lv_txt_get_next_line(&text[line_start], font, letter_space, max_width, NULL, flag);
 
         if((unsigned long)size_res->y + (unsigned long)letter_height + (unsigned long)line_space > LV_MAX_OF(lv_coord_t)) {
             LV_LOG_WARN("lv_txt_get_size: integer overflow while calculating text height");
@@ -161,9 +161,10 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
  * @param txt a '\0' terminated string
  * @param font pointer to a font
  * @param letter_space letter space
- * @param max_width max with of the text (break the lines to fit this size) Set CORD_MAX to avoid line breaks
+ * @param max_width max width of the text (break the lines to fit this size). Set COORD_MAX to avoid line breaks
  * @param flags settings for the text from 'txt_flag_type' enum
  * @param[out] word_w_ptr width (in pixels) of the parsed word. May be NULL.
+ * @param cmd_state pointer to a txt_cmd_state_t variable which stores the current state of command processing
  * @param force Force return the fraction of the word that can fit in the provided space.
  * @return the index of the first char of the next word (in byte index not letter index. With UTF-8 they are different)
  */
@@ -276,11 +277,16 @@ static uint32_t lv_txt_get_next_word(const char * txt, const lv_font_t * font,
 }
 
 uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font,
-                               lv_coord_t letter_space, lv_coord_t max_width, lv_text_flag_t flag)
+                               lv_coord_t letter_space, lv_coord_t max_width,
+                               lv_coord_t * used_width, lv_text_flag_t flag)
 {
+    if(used_width) *used_width = 0;
+
     if(txt == NULL) return 0;
     if(txt[0] == '\0') return 0;
     if(font == NULL) return 0;
+
+    lv_coord_t line_w = 0;
 
     /*If max_width doesn't mater simply find the new line character
      *without thinking about word wrapping*/
@@ -290,6 +296,7 @@ uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font,
             /*Just find the new line chars or string ends by incrementing `i`*/
         }
         if(txt[i] != '\0') i++;    /*To go beyond `\n`*/
+        if(used_width) *used_width = -1;
         return i;
     }
 
@@ -301,9 +308,9 @@ uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font,
         uint32_t word_w = 0;
         uint32_t advance = lv_txt_get_next_word(&txt[i], font, letter_space, max_width, flag, &word_w, &cmd_state, i == 0);
         max_width -= word_w;
+        line_w += word_w;
 
         if(advance == 0) {
-            if(i == 0) _lv_txt_encoded_next(txt, &i); // prevent inf loops
             break;
         }
 
@@ -320,7 +327,14 @@ uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font,
 
     /*Always step at least one to avoid infinite loops*/
     if(i == 0) {
-        _lv_txt_encoded_next(txt, &i);
+        uint32_t letter = _lv_txt_encoded_next(txt, &i);
+        if(used_width != NULL) {
+            line_w = lv_font_get_glyph_width(font, letter, '\0');
+        }
+    }
+
+    if(used_width != NULL) {
+        *used_width = line_w;
     }
 
     return i;
@@ -506,8 +520,8 @@ static uint8_t lv_txt_utf8_size(const char * str)
 }
 
 /**
- * Convert an Unicode letter to UTF-8.
- * @param letter_uni an Unicode letter
+ * Convert a Unicode letter to UTF-8.
+ * @param letter_uni a Unicode letter
  * @return UTF-8 coded character in Little Endian to be compatible with C chars (e.g. 'Á', 'Ű')
  */
 static uint32_t lv_txt_unicode_to_utf8(uint32_t letter_uni)
@@ -532,6 +546,9 @@ static uint32_t lv_txt_unicode_to_utf8(uint32_t letter_uni)
         bytes[1] = ((letter_uni >> 12) & 0x3F) | 0x80;
         bytes[2] = ((letter_uni >> 6) & 0x3F) | 0x80;
         bytes[3] = ((letter_uni >> 0) & 0x3F) | 0x80;
+    }
+    else {
+        return 0;
     }
 
     uint32_t * res_p = (uint32_t *)bytes;
@@ -733,7 +750,7 @@ static uint32_t lv_txt_utf8_get_length(const char * txt)
 
 #elif LV_TXT_ENC == LV_TXT_ENC_ASCII
 /*******************************
- *  ASCII ENCODER/DECOER
+ *  ASCII ENCODER/DECODER
  ******************************/
 
 /**
@@ -748,8 +765,8 @@ static uint8_t lv_txt_iso8859_1_size(const char * str)
 }
 
 /**
- * Convert an Unicode letter to ISO8859-1.
- * @param letter_uni an Unicode letter
+ * Convert a Unicode letter to ISO8859-1.
+ * @param letter_uni a Unicode letter
  * @return ISO8859-1 coded character in Little Endian to be compatible with C chars (e.g. 'Á', 'Ű')
  */
 static uint32_t lv_txt_unicode_to_iso8859_1(uint32_t letter_uni)
@@ -781,7 +798,7 @@ static uint32_t lv_txt_iso8859_1_conv_wc(uint32_t c)
  */
 static uint32_t lv_txt_iso8859_1_next(const char * txt, uint32_t * i)
 {
-    if(i == NULL) return txt[1]; /*Get the next char*/
+    if(i == NULL) return txt[0]; /*Get the next char*/
 
     uint8_t letter = txt[*i];
     (*i)++;

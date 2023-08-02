@@ -12,6 +12,10 @@
 #include "be_vm.h"
 #include "be_mem.h"
 
+// Tasmota Logging
+extern void tasmota_log_C(uint32_t loglevel, const char * berry_buf, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
 /*********************************************************************************************\
  * Callback structures
  * 
@@ -153,7 +157,6 @@ static int32_t be_cb_make_cb(bvm *vm) {
   int32_t argc = be_top(vm);
   if (argc >= 1 && be_isfunction(vm, 1)) {
 
-    bvalue *v = be_indexof(vm, 1);
     for (be_callback_handler_list_t *elt = be_callback_handler_list_head; elt != NULL; elt = elt->next) {
       if (elt->vm == vm || elt->vm == NULL) {   // if elt->vm is NULL then we accept any VM
         // call the handler and check result
@@ -186,6 +189,7 @@ static int32_t be_cb_make_cb(bvm *vm) {
 \*********************************************************************************************/
 static int32_t be_cb_gen_cb(bvm *vm) {
   int32_t top = be_top(vm);
+  // tasmota_log_C(LOG_LEVEL_DEBUG, "BRY: gen_cb() called");
   if (top >= 1 && be_isfunction(vm, 1)) {
     // find first available slot
     int32_t slot;
@@ -215,7 +219,6 @@ static int32_t be_cb_gen_cb(bvm *vm) {
 \*********************************************************************************************/
 static int32_t be_cb_get_cb_list(bvm *vm) {
   be_newobject(vm, "list");
-  int32_t i;
   for (uint32_t i=0; i < BE_MAX_CB; i++) {
     if (be_cb_hooks[i].vm) {
       if (vm == be_cb_hooks[i].vm) {  // make sure it corresponds to this vm
@@ -266,6 +269,26 @@ static int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, in
   ret = be_toint(vm, -5);
   be_pop(vm, 5);    // remove result
   return ret;
+}
+
+/*********************************************************************************************\
+ * `be_cb_deinit`:
+ *  Clean any callback for this VM, they shouldn't call the registerd function anymore
+\*********************************************************************************************/
+void be_cb_deinit(bvm *vm) {
+  // remove all cb for this vm
+  for (int32_t slot = 0; slot < BE_MAX_CB; slot++) {
+    if (be_cb_hooks[slot].vm == vm) {
+      be_cb_hooks[slot].vm = NULL;
+      be_cb_hooks[slot].f.type == BE_NIL;
+    }
+  }
+  // remove the vm gen_cb for this vm
+  for (be_callback_handler_list_t **elt_ptr = &be_callback_handler_list_head; *elt_ptr != NULL; elt_ptr = &(*elt_ptr)->next) {
+    if (((*elt_ptr)->next != NULL) && ((*elt_ptr)->next->vm == vm)) {
+      (*elt_ptr)->next = (*elt_ptr)->next->next;
+    }
+  }
 }
 
 /* @const_object_info_begin

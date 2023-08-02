@@ -126,6 +126,10 @@ class WiFiClientSecure_light : public WiFiClient {
 
     void setInsecure();
 
+    void setDomainName(const char * domain) {
+      _domain = domain;
+    }
+
   private:
     void _clear();
     bool _ctx_present;
@@ -171,6 +175,9 @@ class WiFiClientSecure_light : public WiFiClient {
 
     // record the maximum use of ThunkStack for monitoring
     size_t _max_thunkstack_use;
+
+    // domain name (string) that will be used with SNI when the address provided is already resolved
+    String _domain;
 
     // ALPN
     const char ** _alpn_names;

@@ -18,7 +18,6 @@
 #   QH' output of first '595 to SER input of 2nd '595 and so on
 # -------------------------------------------------------------------------
 
-import string
 import gpio
 
 class Shift595
@@ -77,4 +76,4 @@ class Shift595
 
 end
 
-return Shift595 # allow using 'import' instead of 'load()'
+return Shift595() # allow using 'import' instead of 'load()'

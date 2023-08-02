@@ -77,6 +77,14 @@ const uint32_t kSanyoAc88Gap = 3675;       ///< uSeconds
 const uint16_t kSanyoAc88Freq = 38000;     ///< Hz. (Guess only)
 const uint8_t  kSanyoAc88ExtraTolerance = 5;  /// (%) Extra tolerance to use.
 
+const uint16_t kSanyoAc152HdrMark = 3300;   ///< uSeconds
+const uint16_t kSanyoAc152BitMark = 440;    ///< uSeconds
+const uint16_t kSanyoAc152HdrSpace = 1725;  ///< uSeconds
+const uint16_t kSanyoAc152OneSpace = 1290;  ///< uSeconds
+const uint16_t kSanyoAc152ZeroSpace = 405;  ///< uSeconds
+const uint16_t kSanyoAc152Freq = 38000;     ///< Hz. (Guess only)
+const uint8_t  kSanyoAc152ExtraTolerance = 13;  /// (%) Extra tolerance to use.
+
 #if SEND_SANYO
 /// Construct a Sanyo LC7461 message.
 /// @param[in] address The 13 bit value of the address(Custom) portion of the
@@ -607,17 +615,19 @@ void IRSanyoAc::setOffTimer(const uint16_t mins) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSanyoAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::SANYO_AC;
   result.model = -1;  // Not supported.
   result.power = getPower();
   result.mode = toCommonMode(_.Mode);
   result.celsius = true;
   result.degrees = getTemp();
+  result.sensorTemperature = getSensorTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
   result.sleep = _.Sleep ? 0 : -1;
   result.swingv = toCommonSwingV(_.SwingV);
   result.beep = _.Beep;
+  result.iFeel = !getSensor();
   // Not supported.
   result.swingh = stdAc::swingh_t::kOff;
   result.turbo = false;
@@ -687,7 +697,7 @@ void IRsend::sendSanyoAc88(const uint8_t data[], const uint16_t nbytes,
 #endif  // SEND_SANYO_AC88
 
 #if DECODE_SANYO_AC88
-/// Decode the supplied SanyoAc message.
+/// Decode the supplied SanyoAc88 message.
 /// Status: ALPHA / Untested.
 /// @param[in,out] results Ptr to the data to decode & where to store the decode
 /// @warning data's bit order may change. It is not yet confirmed.
@@ -754,13 +764,13 @@ void IRSanyoAc88::stateReset(void) {
 /// Set up hardware to be able to send a message.
 void IRSanyoAc88::begin(void) { _irsend.begin(); }
 
-#if SEND_SANYO_AC
+#if SEND_SANYO_AC88
 /// Send the current internal state as IR messages.
 /// @param[in] repeat Nr. of times the message will be repeated.
 void IRSanyoAc88::send(const uint16_t repeat) {
   _irsend.sendSanyoAc88(getRaw(), kSanyoAc88StateLength, repeat);
 }
-#endif  // SEND_SANYO_AC
+#endif  // SEND_SANYO_AC88
 
 /// Get a PTR to the internal state/code for this protocol with all integrity
 ///   checks passing.
@@ -935,7 +945,7 @@ bool IRSanyoAc88::getSleep(void) const { return _.Sleep; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSanyoAc88::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::SANYO_AC88;
   result.model = -1;  // Not supported.
   result.power = getPower();
@@ -976,3 +986,61 @@ String IRSanyoAc88::toString(void) const {
   result += addLabeledString(minsToString(getClock()), kClockStr);
   return result;
 }
+
+#if SEND_SANYO_AC152
+/// Send a SanyoAc152 formatted message.
+/// Status: BETA / Probably works.
+/// @param[in] data An array of bytes containing the IR command.
+/// @warning data's bit order may change. It is not yet confirmed.
+/// @param[in] nbytes Nr. of bytes of data in the array.
+/// @param[in] repeat Nr. of times the message is to be repeated.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1826
+void IRsend::sendSanyoAc152(const uint8_t data[], const uint16_t nbytes,
+                           const uint16_t repeat) {
+  // (Header + Data + Footer) per repeat
+  sendGeneric(kSanyoAc152HdrMark, kSanyoAc152HdrSpace,
+              kSanyoAc152BitMark, kSanyoAc152OneSpace,
+              kSanyoAc152BitMark, kSanyoAc152ZeroSpace,
+              kSanyoAc152BitMark, kDefaultMessageGap,
+              data, nbytes, kSanyoAc152Freq, false, repeat, kDutyDefault);
+  space(kDefaultMessageGap);  // Make a guess at a post message gap.
+}
+#endif  // SEND_SANYO_AC152
+
+#if DECODE_SANYO_AC152
+/// Decode the supplied SanyoAc152 message.
+/// Status: BETA / Probably works.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+/// @warning data's bit order may change. It is not yet confirmed.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1503
+bool IRrecv::decodeSanyoAc152(decode_results *results, uint16_t offset,
+                              const uint16_t nbits, const bool strict) {
+  if (strict && nbits != kSanyoAc152Bits)
+    return false;
+
+  // Header + Data + Footer
+  if (!matchGeneric(results->rawbuf + offset, results->state,
+                    results->rawlen - offset, nbits,
+                    kSanyoAc152HdrMark, kSanyoAc152HdrSpace,
+                    kSanyoAc152BitMark, kSanyoAc152OneSpace,
+                    kSanyoAc152BitMark, kSanyoAc152ZeroSpace,
+                    kSanyoAc152BitMark,
+                    kDefaultMessageGap,  // Just a guess.
+                    false, _tolerance + kSanyoAc152ExtraTolerance,
+                    kMarkExcess, false))
+    return false;  // No match!
+
+  // Success
+  results->decode_type = decode_type_t::SANYO_AC152;
+  results->bits = nbits;
+  // No need to record the state as we stored it as we decoded it.
+  // As we use result->state, we don't record value, address, or command as it
+  // is a union data type.
+  return true;
+}
+#endif  // DECODE_SANYO_AC152

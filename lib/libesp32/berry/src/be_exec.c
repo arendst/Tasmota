@@ -15,6 +15,7 @@
 #include "be_bytecode.h"
 #include "be_decoder.h"
 #include <stdlib.h>
+#include <string.h>
 
 #if !BE_USE_SCRIPT_COMPILER && !BE_USE_BYTECODE_LOADER
   #error no compiler or bytecode loader enabled.
@@ -60,6 +61,7 @@ struct pcall {
 
 struct vmstate {
     int top, reg, depth;
+    int refcount;
 };
 
 struct strbuf {
@@ -124,6 +126,7 @@ static void vm_state_save(bvm *vm, struct vmstate *state)
     state->depth = be_stack_count(&vm->callstack);
     state->top = cast_int(vm->top - vm->stack);
     state->reg = cast_int(vm->reg - vm->stack);
+    state->refcount = vm->refstack.count;
 }
 
 static void copy_exception(bvm *vm, int res, int dstindex)
@@ -142,6 +145,7 @@ static void copy_exception(bvm *vm, int res, int dstindex)
 static void vm_state_restore(bvm *vm, const struct vmstate *state, int res)
 {
     vm->reg = vm->stack + state->reg;
+    be_vector_resize(vm, &vm->refstack, state->refcount);
     /* copy exception information to top */
     copy_exception(vm, res, state->top);
     be_assert(be_stack_count(&vm->callstack) >= state->depth);
@@ -179,8 +183,9 @@ int be_protectedparser(bvm *vm,
     return res;
 }
 
-static const char* _sgets(void *data, size_t *size)
+static const char* _sgets(struct blexer* lexer, void *data, size_t *size)
 {
+    (void)lexer;
     struct strbuf *sb = data;
     *size = sb->len;
     if (sb->len) {
@@ -190,8 +195,9 @@ static const char* _sgets(void *data, size_t *size)
     return NULL;
 }
 
-static const char* _fgets(void *data, size_t *size)
+static const char* _fgets(struct blexer* lexer, void *data, size_t *size)
 {
+    (void)lexer;
     struct filebuf *fb = data;
     *size = be_fread(fb->fp, fb->buf, sizeof(fb->buf));
     if (*size) {
@@ -258,7 +264,7 @@ BERRY_API int be_loadmode(bvm *vm, const char *name, bbool islocal)
 {
     int res = load_bytecode(vm, name);
 #if BE_USE_SCRIPT_COMPILER
-    if (res && res != BE_IO_ERROR) {
+    if (res && res != BE_IO_ERROR && res != BE_EXCEPTION) {
         res = fileparser(vm, name, islocal);
     }
 #else
@@ -335,11 +341,15 @@ void be_stackpush(bvm *vm)
 }
 
 /* check that the stack is able to store `count` items, and increase stack if needed */
-void be_stack_require(bvm *vm, int count)
+BERRY_API void be_stack_require(bvm *vm, int count)
 {
+#if BE_USE_DEBUG_STACK == 0
     if (vm->top + count >= vm->stacktop) {
         be_stack_expansion(vm, count);
     }
+#else
+    be_stack_expansion(vm, vm->top - vm->stacktop + count);     /* force exact resize each time */
+#endif
 }
 
 /* Scan the entire callstack and adjust all pointer by `offset` */
@@ -372,7 +382,16 @@ static void stack_resize(bvm *vm, size_t size)
     intptr_t offset;
     bvalue *old = vm->stack;  /* save original pointer of stack before resize */
     size_t os = (vm->stacktop - old) * sizeof(bvalue);  /* size of current stack allocated in bytes */
+#if BE_USE_DEBUG_STACK == 0
     vm->stack = be_realloc(vm, old, os, sizeof(bvalue) * size);  /* reallocate with the new size */
+#else   /* force a reallocation */
+    size_t ns = sizeof(bvalue) * size;
+    vm->stack = be_malloc(vm, ns);
+    size_t transf = (os < ns) ? os : ns;        /* min size */
+    memmove(vm->stack, old, transf);            /* copy to new location */
+    memset(old, 0xFF, os);                      /* fill the structure with invalid pointers */
+    be_free(vm, old, os);
+#endif
     vm->stacktop = vm->stack + size;  /* compute new stacktop */
     offset = ptr_offset(vm->stack, old);  /* compute the address difference between old and ne stack addresses */
     /* update callframes */
@@ -386,7 +405,7 @@ static void stack_resize(bvm *vm, size_t size)
 /* Check if we are above the max allowed stack */
 void be_stack_expansion(bvm *vm, int n)
 {
-    size_t size = vm->stacktop - vm->stack;
+    int size = vm->stacktop - vm->stack;    /* with debug enabled, stack increase may be negative */
     /* check new stack size */
     if (size + n > BE_STACK_TOTAL_MAX) {
         /* ensure the stack is enough when generating error messages. */
@@ -430,6 +449,7 @@ void be_except_block_setup(bvm *vm)
     /* set longjmp() jump point */
     frame->errjmp.status = 0;
     frame->errjmp.prev = vm->errjmp; /* save long jump list */
+    frame->refcount = vm->refstack.count; /* save reference pointer */
     vm->errjmp = &frame->errjmp;
     fixup_exceptstack(vm, lbase);
 }
@@ -441,6 +461,7 @@ void be_except_block_resume(bvm *vm)
     struct bexecptframe *frame = be_stack_top(&vm->exceptstack);
     if (errorcode == BE_EXCEPTION) {
         vm->errjmp = vm->errjmp->prev;
+        be_vector_resize(vm, &vm->refstack, frame->refcount);
         /* jump to except instruction */
         vm->ip = frame->ip + IGET_sBx(frame->ip[-1]);
         if (be_stack_count(&vm->callstack) > frame->depth) {

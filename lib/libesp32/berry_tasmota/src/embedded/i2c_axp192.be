@@ -1,9 +1,17 @@
 #-------------------------------------------------------------
  - Generic driver for AXP192 - solidified
  -------------------------------------------------------------#
+class I2C_Driver end    # for solidification
+
+#@ solidify:AXP192
 class AXP192 : I2C_Driver
   def init()
     super(self, I2C_Driver).init("AXP192", 0x34)
+  end
+
+  # power off the entire device from AXP192 - this is different from deepsleep
+  def power_off()
+    self.write_bit(0x32, 7, 1)
   end
 
   # Return True = Battery Exist
@@ -67,6 +75,11 @@ class AXP192 : I2C_Driver
     end
   end
 
+  # set EXTEN which enables external power on M5Stack, powering Hat with 5V
+  def set_exten(state)
+    self.write_bit(0x12, 6, state)
+  end
+
   # set DCDC enable, 1/2/3
   def set_dcdc_enable(dcdc, state)
     if dcdc == 1  self.write_bit(0x12, 0, state) end
@@ -91,7 +104,7 @@ class AXP192 : I2C_Driver
 
   # Set voltage on DC-DC1/2/3
   #   dcdc: 1/2/3 (warning some C libs start at 0)
-  #   voltage: 
+  #   voltage:
   def set_dc_voltage(dcdc, voltage)
     if dcdc < 1 || dcdc > 3 return end
     var v
@@ -146,8 +159,7 @@ class AXP192 : I2C_Driver
   #- display sensor value in the web UI -#
   def web_sensor()
     if !self.wire return nil end  #- exit if not initialized -#
-    import string
-    var msg = string.format(
+    var msg = format(
              "{s}VBus Voltage{m}%.3f V{e}"..
              "{s}VBus Current{m}%.1f mA{e}"..
              "{s}Batt Voltage{m}%.3f V{e}"..
@@ -165,12 +177,13 @@ class AXP192 : I2C_Driver
   #- add sensor value to teleperiod -#
   def json_append()
     if !self.wire return nil end  #- exit if not initialized -#
-    # import string
-    # var ax = int(self.accel[0] * 1000)
-    # var ay = int(self.accel[1] * 1000)
-    # var az = int(self.accel[2] * 1000)
-    # var msg = string.format(",\"MPU6886\":{\"AX\":%i,\"AY\":%i,\"AZ\":%i,\"GX\":%i,\"GY\":%i,\"GZ\":%i}",
-    #           ax, ay, az, self.gyro[0], self.gyro[1], self.gyro[2])
-    # tasmota.response_append(msg)
+    var msg = format(",\"AXP192\":{\"VBusVoltage\":%.3f,\"VBusCurrent\":%.1f,\"BattVoltage\":%.3f,\"BattCurrent\":%.1f,\"Temperature\":%.1f}",
+              self.get_vbus_voltage(), self.get_vbus_voltage(),
+              self.get_bat_voltage(), self.get_bat_current(),
+              #self.get_bat_power(),
+              self.get_temp()
+              )
+
+    tasmota.response_append(msg)
   end
 end

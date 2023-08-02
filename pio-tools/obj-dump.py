@@ -14,6 +14,8 @@ def obj_dump_after_elf(source, target, env):
         env.Execute("xtensa-esp32-elf-objdump "+ "-D -C " + str(target[0]) + " > "+ "$BUILD_DIR/${PROGNAME}.asm")
     if mcu == "esp32s2":
         env.Execute("xtensa-esp32s2-elf-objdump "+ "-D -C " + str(target[0]) + " > "+ "$BUILD_DIR/${PROGNAME}.asm")
+    if mcu == "esp32s3":
+        env.Execute("xtensa-esp32s3-elf-objdump "+ "-D -C " + str(target[0]) + " > "+ "$BUILD_DIR/${PROGNAME}.asm")
     if mcu == "esp32c3":
         env.Execute("riscv32-esp-elf-objdump "+ "-D -C " + str(target[0]) + " > "+ "$BUILD_DIR/${PROGNAME}.asm")
 

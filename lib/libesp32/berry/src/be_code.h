@@ -16,7 +16,7 @@ int be_code_allocregs(bfuncinfo *finfo, int count);
 void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e);
 void be_code_binop(bfuncinfo *finfo, int op, bexpdesc *e1, bexpdesc *e2, int dst);
 int be_code_unop(bfuncinfo *finfo, int op, bexpdesc *e);
-int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2);
+int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg);
 int be_code_nextreg(bfuncinfo *finfo, bexpdesc *e);
 int be_code_jump(bfuncinfo *finfo);
 void be_code_jumpto(bfuncinfo *finfo, int dst);
@@ -39,5 +39,6 @@ void be_code_import(bfuncinfo *finfo, bexpdesc *m, bexpdesc *v);
 int be_code_exblk(bfuncinfo *finfo, int depth);
 void be_code_catch(bfuncinfo *finfo, int base, int ecnt, int vcnt, int *jmp);
 void be_code_raise(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2);
+void be_code_implicit_class(bfuncinfo *finfo, bexpdesc *e, bclass *c);
 
 #endif

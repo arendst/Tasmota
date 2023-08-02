@@ -14,6 +14,8 @@
 
 #if LV_USE_CANVAS != 0
 
+#include "../draw/sw/lv_draw_sw.h"
+
 /*********************
  *      DEFINES
  *********************/
@@ -28,6 +30,8 @@
  **********************/
 static void lv_canvas_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void init_fake_disp(lv_obj_t * canvas, lv_disp_t * disp, lv_disp_drv_t * drv, lv_area_t * clip_area);
+static void deinit_fake_disp(lv_obj_t * canvas, lv_disp_t * disp);
 
 /**********************
  *  STATIC VARIABLES
@@ -72,6 +76,7 @@ void lv_canvas_set_buffer(lv_obj_t * obj, void * buf, lv_coord_t w, lv_coord_t h
     canvas->dsc.data      = buf;
 
     lv_img_set_src(obj, &canvas->dsc);
+    lv_img_cache_invalidate_src(&canvas->dsc);
 }
 
 void lv_canvas_set_px_color(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_color_t c)
@@ -137,7 +142,7 @@ void lv_canvas_copy_buf(lv_obj_t * obj, const void * to_copy, lv_coord_t x, lv_c
 
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
 
-    if(x + w >= (lv_coord_t)canvas->dsc.header.w || y + h >= (lv_coord_t)canvas->dsc.header.h) {
+    if(x + w - 1 >= (lv_coord_t)canvas->dsc.header.w || y + h - 1 >= (lv_coord_t)canvas->dsc.header.h) {
         LV_LOG_WARN("lv_canvas_copy_buf: x or y out of the canvas");
         return;
     }
@@ -153,98 +158,60 @@ void lv_canvas_copy_buf(lv_obj_t * obj, const void * to_copy, lv_coord_t x, lv_c
     }
 }
 
-void lv_canvas_transform(lv_obj_t * obj, lv_img_dsc_t * img, int16_t angle, uint16_t zoom, lv_coord_t offset_x,
+void lv_canvas_transform(lv_obj_t * obj, lv_img_dsc_t * src_img, int16_t angle, uint16_t zoom, lv_coord_t offset_x,
                          lv_coord_t offset_y,
                          int32_t pivot_x, int32_t pivot_y, bool antialias)
 {
 #if LV_DRAW_COMPLEX
     LV_ASSERT_OBJ(obj, MY_CLASS);
-    LV_ASSERT_NULL(img);
+    LV_ASSERT_NULL(src_img);
 
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
-    lv_color_t color = lv_obj_get_style_img_recolor(obj, LV_PART_MAIN);
-
-    int32_t dest_width  = canvas->dsc.header.w;
-    int32_t dest_height = canvas->dsc.header.h;
+    lv_img_dsc_t * dest_img = &canvas->dsc;
 
     int32_t x;
     int32_t y;
-    bool ret;
 
-    lv_img_transform_dsc_t dsc;
-    dsc.cfg.angle = angle;
-    dsc.cfg.zoom = zoom;
-    dsc.cfg.src = img->data;
-    dsc.cfg.src_w = img->header.w;
-    dsc.cfg.src_h = img->header.h;
-    dsc.cfg.cf = img->header.cf;
-    dsc.cfg.pivot_x = pivot_x;
-    dsc.cfg.pivot_y = pivot_y;
-    dsc.cfg.color = color;
-    dsc.cfg.antialias = antialias;
-    _lv_img_buf_transform_init(&dsc);
+    lv_draw_img_dsc_t draw_dsc;
+    lv_draw_img_dsc_init(&draw_dsc);
+    draw_dsc.angle = angle;
+    draw_dsc.zoom = zoom;
+    draw_dsc.pivot.x = pivot_x;
+    draw_dsc.pivot.y = pivot_y;
+    draw_dsc.antialias = antialias;
 
-    for(y = -offset_y; y < dest_height - offset_y; y++) {
-        for(x = -offset_x; x < dest_width - offset_x; x++) {
+    lv_area_t dest_area;
+    dest_area.x1 = -offset_x;
+    dest_area.x2 = dest_area.x1 + dest_img->header.w - 1;
+    dest_area.y1 = -offset_y;
+    dest_area.y2 = -offset_y;
 
-            ret = _lv_img_buf_transform(&dsc, x, y);
+    lv_color_t * cbuf = lv_mem_alloc(dest_img->header.w * sizeof(lv_color_t));
+    lv_opa_t * abuf = lv_mem_alloc(dest_img->header.w * sizeof(lv_opa_t));
+    for(y = 0; y < dest_img->header.h; y++) {
+        if(y + offset_y >= 0) {
+            lv_draw_sw_transform(NULL, &dest_area, src_img->data, src_img->header.w, src_img->header.h, src_img->header.w,
+                                 &draw_dsc, canvas->dsc.header.cf, cbuf, abuf);
 
-            if(ret == false) continue;
-
-            if(x + offset_x >= 0 && x + offset_x < dest_width && y + offset_y >= 0 && y + offset_y < dest_height) {
-                /*If the image has no alpha channel just simple set the result color on the canvas*/
-                if(lv_img_cf_has_alpha(img->header.cf) == false) {
-                    lv_img_buf_set_px_color(&canvas->dsc, x + offset_x, y + offset_y, dsc.res.color);
-                }
-                else {
-                    lv_color_t bg_color = lv_img_buf_get_px_color(&canvas->dsc, x + offset_x, y + offset_y, dsc.cfg.color);
-
-                    /*If the canvas has no alpha but the image has mix the image's color with
-                     * canvas*/
-                    if(lv_img_cf_has_alpha(canvas->dsc.header.cf) == false) {
-                        if(dsc.res.opa < LV_OPA_MAX) dsc.res.color = lv_color_mix(dsc.res.color, bg_color, dsc.res.opa);
-                        lv_img_buf_set_px_color(&canvas->dsc, x + offset_x, y + offset_y, dsc.res.color);
-                    }
-                    /*Both the image and canvas has alpha channel. Some extra calculation is
-                       required*/
-                    else {
-                        lv_opa_t bg_opa = lv_img_buf_get_px_alpha(&canvas->dsc, x + offset_x, y + offset_y);
-                        /*Pick the foreground if it's fully opaque or the Background is fully
-                         *transparent*/
-                        if(dsc.res.opa >= LV_OPA_MAX || bg_opa <= LV_OPA_MIN) {
-                            lv_img_buf_set_px_color(&canvas->dsc, x + offset_x, y + offset_y, dsc.res.color);
-                            lv_img_buf_set_px_alpha(&canvas->dsc, x + offset_x, y + offset_y, dsc.res.opa);
-                        }
-                        /*Opaque background: use simple mix*/
-                        else if(bg_opa >= LV_OPA_MAX) {
-                            lv_img_buf_set_px_color(&canvas->dsc, x + offset_x, y + offset_y,
-                                                    lv_color_mix(dsc.res.color, bg_color, dsc.res.opa));
-                        }
-                        /*Both colors have alpha. Expensive calculation need to be applied*/
-                        else {
-
-                            /*Info:
-                             * https://en.wikipedia.org/wiki/Alpha_compositing#Analytical_derivation_of_the_over_operator*/
-                            lv_opa_t opa_res_2 = 255 - ((uint16_t)((uint16_t)(255 - dsc.res.opa) * (255 - bg_opa)) >> 8);
-                            if(opa_res_2 == 0) {
-                                opa_res_2 = 1; /*never happens, just to be sure*/
-                            }
-                            lv_opa_t ratio = (uint16_t)((uint16_t)dsc.res.opa * 255) / opa_res_2;
-
-                            lv_img_buf_set_px_color(&canvas->dsc, x + offset_x, y + offset_y,
-                                                    lv_color_mix(dsc.res.color, bg_color, ratio));
-                            lv_img_buf_set_px_alpha(&canvas->dsc, x + offset_x, y + offset_y, opa_res_2);
-                        }
-                    }
+            for(x = 0; x < dest_img->header.w; x++) {
+                if(abuf[x]) {
+                    lv_img_buf_set_px_color(dest_img, x, y, cbuf[x]);
+                    lv_img_buf_set_px_alpha(dest_img, x, y, abuf[x]);
                 }
             }
+
+            dest_area.y1++;
+            dest_area.y2++;
         }
     }
+    lv_mem_free(cbuf);
+    lv_mem_free(abuf);
 
     lv_obj_invalidate(obj);
+
 #else
     LV_UNUSED(obj);
-    LV_UNUSED(img);
+    LV_UNUSED(src_img);
     LV_UNUSED(angle);
     LV_UNUSED(zoom);
     LV_UNUSED(offset_x);
@@ -560,11 +527,20 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
 
     /*Create a dummy display to fool the lv_draw function.
      *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
+    lv_disp_t fake_disp;
+    lv_disp_drv_t driver;
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
+
+    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
+    _lv_refr_set_disp_refreshing(&fake_disp);
+
+    /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
+    lv_color_t ctransp = LV_COLOR_CHROMA_KEY;
+    if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
+       draw_dsc->bg_color.full == ctransp.full) {
+        fake_disp.driver->antialiasing = 0;
+    }
 
     lv_area_t coords;
     coords.x1 = x;
@@ -572,37 +548,11 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     coords.x2 = x + w - 1;
     coords.y2 = y + h - 1;
 
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
-    lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
-
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
-
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
-
-    /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
-    lv_color_t ctransp = LV_COLOR_CHROMA_KEY;
-    if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
-       draw_dsc->bg_color.full == ctransp.full) {
-        disp.driver->antialiasing = 0;
-    }
-
-    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
-
-    lv_draw_rect(&coords, &mask, draw_dsc);
+    lv_draw_rect(driver.draw_ctx, draw_dsc, &coords);
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 }
@@ -621,42 +571,24 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
 
     /*Create a dummy display to fool the lv_draw function.
      *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
+    lv_disp_t fake_disp;
+    lv_disp_drv_t driver;
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
+
+    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
+    _lv_refr_set_disp_refreshing(&fake_disp);
 
     lv_area_t coords;
     coords.x1 = x;
     coords.y1 = y;
     coords.x2 = x + max_w - 1;
     coords.y2 = dsc->header.h - 1;
-
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
-    lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
-
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
-
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
-
-    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
-
-    lv_draw_label(&coords, &mask, draw_dsc, txt, NULL);
+    lv_draw_label(driver.draw_ctx, draw_dsc, &coords, txt, NULL);
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 }
@@ -673,20 +605,21 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
         return;
     }
 
-    /*Create a dummy display to fool the lv_draw function.
-     *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
-
     lv_img_header_t header;
     lv_res_t res = lv_img_decoder_get_info(src, &header);
     if(res != LV_RES_OK) {
         LV_LOG_WARN("lv_canvas_draw_img: Couldn't get the image data.");
         return;
     }
+    /*Create a dummy display to fool the lv_draw function.
+     *It will think it draws to real screen.*/
+    lv_disp_t fake_disp;
+    lv_disp_drv_t driver;
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
+
+    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
+    _lv_refr_set_disp_refreshing(&fake_disp);
 
     lv_area_t coords;
     coords.x1 = x;
@@ -694,30 +627,11 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
     coords.x2 = x + header.w - 1;
     coords.y2 = y + header.h - 1;
 
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
-    lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
-
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
-
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
-
-    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
-
-    lv_draw_img(&coords, &mask, src, draw_dsc);
+    lv_draw_img(driver.draw_ctx, draw_dsc, &coords, src);
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 }
@@ -733,48 +647,33 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t 
         LV_LOG_WARN("lv_canvas_draw_line: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
+
     /*Create a dummy display to fool the lv_draw function.
      *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
-
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
+    lv_disp_t fake_disp;
     lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
 
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
+    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
+    _lv_refr_set_disp_refreshing(&fake_disp);
 
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
 
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_CHROMA_KEY;
     if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
        draw_dsc->color.full == ctransp.full) {
-        disp.driver->antialiasing = 0;
+        fake_disp.driver->antialiasing = 0;
     }
-
-    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
 
     uint32_t i;
     for(i = 0; i < point_cnt - 1; i++) {
-        lv_draw_line(&points[i], &points[i + 1], &mask, draw_dsc);
+        lv_draw_line(driver.draw_ctx, draw_dsc, &points[i], &points[i + 1]);
     }
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 }
@@ -793,43 +692,26 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32
 
     /*Create a dummy display to fool the lv_draw function.
      *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
-
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
+    lv_disp_t fake_disp;
     lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
 
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
-
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
+    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
+    _lv_refr_set_disp_refreshing(&fake_disp);
 
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_CHROMA_KEY;
     if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
        draw_dsc->bg_color.full == ctransp.full) {
-        disp.driver->antialiasing = 0;
+        fake_disp.driver->antialiasing = 0;
     }
 
-    lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
-
-    lv_draw_polygon(points, point_cnt, &mask, draw_dsc);
+    lv_draw_polygon(driver.draw_ctx, draw_dsc, points, point_cnt);
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 }
@@ -849,43 +731,20 @@ void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_
 
     /*Create a dummy display to fool the lv_draw function.
      *It will think it draws to real screen.*/
-    lv_area_t mask;
-    mask.x1 = 0;
-    mask.x2 = dsc->header.w - 1;
-    mask.y1 = 0;
-    mask.y2 = dsc->header.h - 1;
-
-    lv_disp_t disp;
-    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
+    lv_disp_t fake_disp;
     lv_disp_drv_t driver;
-    lv_memset_00(&disp, sizeof(lv_disp_t));
-    disp.driver = &driver;
-
-    lv_disp_draw_buf_t draw_buf;
-    lv_disp_draw_buf_init(&draw_buf, (void *)dsc->data, NULL, dsc->header.w * dsc->header.h);
-    lv_area_copy(&draw_buf.area, &mask);
-
-    lv_disp_drv_init(disp.driver);
-
-    disp.driver->draw_buf = &draw_buf;
-    disp.driver->hor_res = dsc->header.w;
-    disp.driver->ver_res = dsc->header.h;
-
-    lv_disp_drv_use_generic_set_px_cb(disp.driver, dsc->header.cf);
-
-    /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
-    lv_color_t ctransp = LV_COLOR_CHROMA_KEY;
-    if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
-       draw_dsc->color.full == ctransp.full) {
-        disp.driver->antialiasing = 0;
-    }
+    lv_area_t clip_area;
+    init_fake_disp(canvas, &fake_disp, &driver, &clip_area);
 
     lv_disp_t * refr_ori = _lv_refr_get_disp_refreshing();
-    _lv_refr_set_disp_refreshing(&disp);
+    _lv_refr_set_disp_refreshing(&fake_disp);
 
-    lv_draw_arc(x, y, r,  start_angle, end_angle, &mask, draw_dsc);
+    lv_point_t p = {x, y};
+    lv_draw_arc(driver.draw_ctx, draw_dsc, &p, r,  start_angle, end_angle);
 
     _lv_refr_set_disp_refreshing(refr_ori);
+
+    deinit_fake_disp(canvas, &fake_disp);
 
     lv_obj_invalidate(canvas);
 #else
@@ -931,5 +790,47 @@ static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
     lv_img_cache_invalidate_src(&canvas->dsc);
 }
+
+
+static void init_fake_disp(lv_obj_t * canvas, lv_disp_t * disp, lv_disp_drv_t * drv, lv_area_t * clip_area)
+{
+    lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
+
+    clip_area->x1 = 0;
+    clip_area->x2 = dsc->header.w - 1;
+    clip_area->y1 = 0;
+    clip_area->y2 = dsc->header.h - 1;
+
+    /*Allocate the fake driver on the stack as the entire display doesn't outlive this function*/
+    lv_memset_00(disp, sizeof(lv_disp_t));
+    disp->driver = drv;
+
+    lv_disp_drv_init(disp->driver);
+    disp->driver->hor_res = dsc->header.w;
+    disp->driver->ver_res = dsc->header.h;
+
+    lv_draw_ctx_t * draw_ctx = lv_mem_alloc(sizeof(lv_draw_sw_ctx_t));
+    LV_ASSERT_MALLOC(draw_ctx);
+    if(draw_ctx == NULL)  return;
+    lv_draw_sw_init_ctx(drv, draw_ctx);
+    disp->driver->draw_ctx = draw_ctx;
+    draw_ctx->clip_area = clip_area;
+    draw_ctx->buf_area = clip_area;
+    draw_ctx->buf = (void *)dsc->data;
+
+    lv_disp_drv_use_generic_set_px_cb(disp->driver, dsc->header.cf);
+    if(LV_COLOR_SCREEN_TRANSP && dsc->header.cf != LV_IMG_CF_TRUE_COLOR_ALPHA) {
+        drv->screen_transp = 0;
+    }
+}
+
+static void deinit_fake_disp(lv_obj_t * canvas, lv_disp_t * disp)
+{
+    LV_UNUSED(canvas);
+    lv_draw_sw_deinit_ctx(disp->driver, disp->driver->draw_ctx);
+    lv_mem_free(disp->driver->draw_ctx);
+}
+
+
 
 #endif

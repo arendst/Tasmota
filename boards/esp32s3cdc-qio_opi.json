@@ -1,0 +1,57 @@
+{
+  "build": {
+    "arduino":{
+      "ldscript": "esp32s3_out.ld",
+      "memory_type": "qio_opi"
+    },
+    "core": "esp32",
+    "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
+    "f_cpu": "240000000L",
+    "f_flash": "80000000L",
+    "flash_mode": "qio",
+    "hwids": [
+      [
+        "0x303A",
+        "0x1001"
+      ]
+    ],
+    "mcu": "esp32s3",
+    "variant": "esp32s3",
+    "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "ethernet"
+  ],
+  "debug": {
+    "default_tool": "esp-builtin",
+    "onboard_tools": [
+      "esp-builtin"
+    ],
+    "openocd_target": "esp32s3.cfg"
+  },
+  "frameworks": [
+    "espidf",
+    "arduino"
+  ],
+  "name": "Espressif Generic ESP32-S3 >= 4M Flash OPI PSRAM, Tasmota 2880k Code/OTA, 320k FS",
+  "upload": {
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "variants/tasmota/tasmota32s3cdc-safeboot.bin"
+        ]
+      ]
+    },
+    "flash_size": "4MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 4194304,
+    "require_upload_port": true,
+    "before_reset": "usb_reset",
+    "speed": 460800
+  },
+  "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/",
+  "vendor": "Espressif"
+}

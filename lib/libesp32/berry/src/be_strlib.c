@@ -12,6 +12,7 @@
 #include "be_module.h"
 #include "be_exec.h"
 #include "be_mem.h"
+#include "be_baselib.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -51,22 +52,22 @@ bstring* be_num2str(bvm *vm, bvalue *v)
 {
     char buf[25];
     if (var_isint(v)) {
-        sprintf(buf, BE_INT_FORMAT, var_toint(v));
+        snprintf(buf, sizeof(buf),BE_INT_FORMAT, var_toint(v));
     } else if (var_isreal(v)) {
-        sprintf(buf, "%g", var_toreal(v));
+        snprintf(buf, sizeof(buf), "%g", var_toreal(v));
     } else {
-        sprintf(buf, "(nan)");
+        snprintf(buf, sizeof(buf), "(nan)");
     }
     return be_newstr(vm, buf);
 }
 
-static void module2str(char *buf, bvalue *v)
+static void module2str(char *buf, size_t buf_len, bvalue *v)
 {
     const char *name = be_module_name(cast(bmodule*, var_toobj(v)));
     if (name) {
-        sprintf(buf, "<module: %s>", name);
+        snprintf(buf, buf_len, "<module: %s>", name);
     } else {
-        sprintf(buf, "<module: %p>", var_toobj(v));
+        snprintf(buf, buf_len, "<module: %p>", var_toobj(v));
     }
 }
 
@@ -82,26 +83,26 @@ static bstring* sim2str(bvm *vm, bvalue *v)
         break;
     case BE_INDEX:
     case BE_INT:
-        sprintf(sbuf, BE_INT_FORMAT, var_toint(v));
+        snprintf(sbuf, sizeof(sbuf), BE_INT_FORMAT, var_toint(v));
         break;
     case BE_REAL:
-        sprintf(sbuf, "%g", var_toreal(v));
+        snprintf(sbuf, sizeof(sbuf), "%g", var_toreal(v));
         break;
     case BE_CLOSURE: case BE_NTVCLOS: case BE_NTVFUNC: case BE_CTYPE_FUNC:
-        sprintf(sbuf, "<function: %p>", var_toobj(v));
+        snprintf(sbuf, sizeof(sbuf), "<function: %p>", var_toobj(v));
         break;
     case BE_CLASS:
-        sprintf(sbuf, "<class: %s>",
+        snprintf(sbuf, sizeof(sbuf), "<class: %s>",
             str(be_class_name(cast(bclass*, var_toobj(v)))));
         break;
     case BE_MODULE:
-        module2str(sbuf, v);
+        module2str(sbuf, sizeof(sbuf), v);
         break;
     case BE_COMPTR:
-        sprintf(sbuf, "<ptr: %p>", var_toobj(v));
+        snprintf(sbuf, sizeof(sbuf), "<ptr: %p>", var_toobj(v));
         break;
     default:
-        strcpy(sbuf, "(unknown value)");
+        strncpy(sbuf, "(unknown value)", sizeof(sbuf));
         break;
     }
     return be_newstr(vm, sbuf);
@@ -116,8 +117,10 @@ static bstring* ins2str(bvm *vm, int idx)
     be_incrtop(vm); /* push the obj::tostring to stack */
     if (basetype(type) != BE_FUNCTION) {
         bstring *name = be_class_name(be_instance_class(obj));
-        char *sbuf = be_malloc(vm, (size_t)str_len(name) + 16);
-        sprintf(sbuf, "<instance: %s()>", str(name));
+        size_t buf_len = (size_t) str_len(name) + 16;
+        char *sbuf = be_malloc(vm, buf_len);
+        /* TODO what if sbuf cannot be allocated */
+        snprintf(sbuf, buf_len, "<instance: %s()>", str(name));
         be_stackpop(vm, 1); /* pop the obj::tostring */
         s = be_newstr(vm, sbuf);
         be_free(vm, sbuf, (size_t)str_len(name) + 16);
@@ -216,7 +219,7 @@ const char* be_pushvfstr(bvm *vm, const char *format, va_list arg)
         }
         case 'p': {
             char buf[2 * sizeof(void*) + 4];
-            sprintf(buf, "%p", va_arg(arg, void*));
+            snprintf(buf, sizeof(buf), "%p", va_arg(arg, void*));
             pushstr(vm, buf, strlen(buf));
             break;
         }
@@ -231,29 +234,57 @@ const char* be_pushvfstr(bvm *vm, const char *format, va_list arg)
     return concat2(vm);
 }
 
+int be_char2hex(int c)
+{
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 0x0A;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 0x0A;
+    }
+    return -1;
+}
+
 /*******************************************************************
  * the function be_str2int():
- * >>-+------------+--+-----+----digits----><
- *    '-whitespace-'  +- + -+
- *                    '- - -'
+ * >>-+------------+--+--+-----+----digits-------+----------------><
+ *    '-whitespace-'  |  +- + -+                 |
+ *                    |  '- - -'                 |
+ *                    |                          |
+ *                    +- 0x or 0X ---hex_digits--+
+ * 
  *******************************************************************/
 BERRY_API bint be_str2int(const char *str, const char **endstr)
 {
     int c, sign;
     bint sum = 0;
     skip_space(str);
-    sign = c = *str++;
-    if (c == '+' || c == '-') {
-        c = *str++;
+    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+        /* hex literal */
+        str += 2;       /* skip 0x or 0X */
+        while ((c = be_char2hex(*str++)) >= 0) {
+            sum = sum * 16 + c;
+        }
+        if (endstr) {
+            *endstr = str - 1;
+        }
+        return sum;
+    } else {
+        /* decimal literal */
+        sign = c = *str++;
+        if (c == '+' || c == '-') {
+            c = *str++;
+        }
+        while (is_digit(c)) {
+            sum = sum * 10 + c - '0';
+            c = *str++;
+        }
+        if (endstr) {
+            *endstr = str - 1;
+        }
+        return sign == '-' ? -sum : sum;
     }
-    while (is_digit(c)) {
-        sum = sum * 10 + c - '0';
-        c = *str++;
-    }
-    if (endstr) {
-        *endstr = str - 1;
-    }
-    return sign == '-' ? -sum : sum;
 }
 
 /*******************************************************************
@@ -528,7 +559,49 @@ static void mode_fixlen(char *mode, const char *lenmode)
     mode[l + lm] = '\0';
 }
 
-static int str_format(bvm *vm)
+static bbool convert_to_int(bvm *vm, int index, bint *val)
+{
+    bbool converted = bfalse;
+    if (val == NULL) { return bfalse; }
+    if (be_isint(vm, index)) {
+        *val = be_toint(vm, index);
+        converted = btrue;
+    } else {
+        be_pushntvfunction(vm, be_baselib_int);
+        be_pushvalue(vm, index);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        if (be_isint(vm, -1)) {
+            *val = be_toint(vm, -1);
+            converted = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return converted;
+}
+
+static bbool convert_to_real(bvm *vm, int index, breal *val)
+{
+    bbool converted = bfalse;
+    if (val == NULL) { return bfalse; }
+    if (be_isnumber(vm, index)) {
+        *val = be_toreal(vm, index);
+        converted = btrue;
+    } else {
+        be_pushntvfunction(vm, be_baselib_real);
+        be_pushvalue(vm, index);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        if (be_isnumber(vm, -1)) {
+            *val = be_toreal(vm, -1);
+            converted = btrue;
+        }
+        be_pop(vm, 1);
+    }
+    return converted;
+}
+
+int be_str_format(bvm *vm)
 {
     int top = be_top(vm);
     if (top > 0 && be_isstring(vm, 1)) {
@@ -557,32 +630,41 @@ static int str_format(bvm *vm)
                 break;
             case 'd': case 'i': case 'o':
             case 'u': case 'x': case 'X':
-                if (be_isint(vm, index)) {
+            {
+                bint val;
+                if (convert_to_int(vm, index, &val)) {
                     mode_fixlen(mode, BE_INT_FMTLEN);
-                    sprintf(buf, mode, be_toint(vm, index));
+                    snprintf(buf, sizeof(buf), mode, val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 'e': case 'E':
             case 'f': case 'g': case 'G':
-                if (be_isnumber(vm, index)) {
-                    sprintf(buf, mode, be_toreal(vm, index));
+            {
+                breal val;
+                if (convert_to_real(vm, index, &val)) {
+                    snprintf(buf, sizeof(buf), mode, val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 'c':
-                if (be_isint(vm, index)) {
-                    sprintf(buf, "%c", (int)be_toint(vm, index));
+            {
+                bint val;
+                if (convert_to_int(vm, index, &val)) {
+                    snprintf(buf, sizeof(buf), "%c", (int)val);
                 }
                 be_pushstring(vm, buf);
                 break;
+            }
             case 's': {
                 const char *s = be_tostring(vm, index);
                 int len = be_strlen(vm, index);
                 if (len > 100 && strlen(mode) == 2) {
                     be_pushvalue(vm, index);
                 } else {
-                    sprintf(buf, mode, s);
+                    snprintf(buf, sizeof(buf), mode, s);
                     be_pushstring(vm, buf);
                 }
                 break;
@@ -730,10 +812,10 @@ static int str_i2hex(bvm *vm)
         if (top >= 2 && be_isint(vm, 2)) {
             bint num = be_toint(vm, 2);
             if (num > 0 && num <= 16) {
-                sprintf(fmt, "%%.%d" BE_INT_FMTLEN "X", (int)num);
+                snprintf(fmt, sizeof(fmt), "%%.%d" BE_INT_FMTLEN "X", (int)num);
             }
         }
-        sprintf(buf, fmt, value);
+        snprintf(buf, sizeof(buf), fmt, value);
         be_pushstring(vm, buf);
         be_return(vm);
     }
@@ -820,6 +902,26 @@ static int str_tr(bvm *vm)
     be_return_nil(vm);
 }
 
+static int str_replace(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 3 && be_isstring(vm, 1) && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+        be_pushntvfunction(vm, &str_split);
+        be_pushvalue(vm, 1);
+        be_pushvalue(vm, 2);
+        be_call(vm, 2);
+        be_pop(vm, 2);
+
+        be_getmember(vm, -1, "concat");     /* get `concat` method of list */
+        be_pushvalue(vm, -2);               /* get list instance as first arg */
+        be_pushvalue(vm, 3);
+        be_call(vm, 2);
+        be_pop(vm, 2);
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
 static int str_escape(bvm *vm)
 {
     int top = be_top(vm);
@@ -840,7 +942,7 @@ static int str_escape(bvm *vm)
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(string) {
-    be_native_module_function("format", str_format),
+    be_native_module_function("format", be_str_format),
     be_native_module_function("count", str_count),
     be_native_module_function("split", str_split),
     be_native_module_function("find", str_find),
@@ -851,13 +953,14 @@ be_native_module_attr_table(string) {
     be_native_module_function("toupper", str_toupper),
     be_native_module_function("tr", str_tr),
     be_native_module_function("escape", str_escape),
+    be_native_module_function("replace", str_replace),
 };
 
 be_define_native_module(string, NULL);
 #else
 /* @const_object_info_begin
 module string (scope: global, depend: BE_USE_STRING_MODULE) {
-    format, func(str_format)
+    format, func(be_str_format)
     count, func(str_count)
     split, func(str_split)
     find, func(str_find)
@@ -868,6 +971,7 @@ module string (scope: global, depend: BE_USE_STRING_MODULE) {
     toupper, func(str_toupper)
     tr, func(str_tr)
     escape, func(str_escape)
+    replace, func(str_replace)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_string.h"

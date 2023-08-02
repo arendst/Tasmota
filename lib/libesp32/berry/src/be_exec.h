@@ -45,6 +45,7 @@ struct bexecptframe {
     struct blongjmp errjmp; /* long jump information */
     int depth; /* function call stack depth */
     binstruction *ip; /* instruction pointer */
+    int refcount; /* save object reference stack */
 };
 
 void be_throw(bvm *vm, int errorcode);

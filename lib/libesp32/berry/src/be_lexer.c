@@ -12,14 +12,16 @@
 #include "be_exec.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_strlib.h"
+#include <string.h>
 
 #define SHORT_STR_LEN       32
 #define EOS                 '\0' /* end of source */
 
 #define type_count()        (int)array_count(kwords_tab)
 #define lexbuf(lex)         ((lex)->buf.s)
-#define isvalid(lex)        ((lex)->cursor < (lex)->endbuf)
-#define lgetc(lex)          ((lex)->cursor)
+#define isvalid(lex)        ((lex)->reader.cursor < (lex)->endbuf)
+#define lgetc(lex)          ((lex)->reader.cursor)
 #define setstr(lex, v)      ((lex)->token.u.s = (v))
 #define setint(lex, v)      ((lex)->token.u.i = (v))
 #define setreal(lex, v)     ((lex)->token.u.r = (v))
@@ -38,7 +40,8 @@ static const char* const kwords_tab[] = {
     ":", "?", "->", "if", "elif", "else", "while",
     "for", "def", "end", "class", "break", "continue",
     "return", "true", "false", "nil", "var", "do",
-    "import", "as", "try", "except", "raise", "static"
+    "import", "as", "try", "except", "raise", "static",
+    ":=",
 };
 
 void be_lexerror(blexer *lexer, const char *msg)
@@ -101,12 +104,12 @@ static int next(blexer *lexer)
     struct blexerreader *lr = &lexer->reader;
     if (!(lr->len--)) {
         static const char eos = EOS;
-        const char *s = lr->readf(lr->data, &lr->len);
+        const char *s = lr->readf(lexer, lr->data, &lr->len);
         lr->s = s ? s : &eos;
         --lr->len;
     }
-    lexer->cursor = *lr->s++;
-    return lexer->cursor;
+    lexer->reader.cursor = *lr->s++;
+    return lexer->reader.cursor;
 }
 
 static void clear_buf(blexer *lexer)
@@ -114,10 +117,7 @@ static void clear_buf(blexer *lexer)
     lexer->buf.len = 0;
 }
 
-/* save and next */
-static int save(blexer *lexer)
-{
-    int ch = lgetc(lexer);
+static void save_char(blexer *lexer, int ch) {
     struct blexerbuf *buf = &lexer->buf;
     if (buf->len >= buf->size) {
         size_t size = buf->size << 1;
@@ -125,6 +125,13 @@ static int save(blexer *lexer)
         buf->size = size;
     }
     buf->s[buf->len++] = (char)ch;
+}
+
+/* save and next */
+static int save(blexer *lexer)
+{
+    int ch = lgetc(lexer);
+    save_char(lexer, ch);
     return next(lexer);
 }
 
@@ -168,21 +175,9 @@ static int check_next(blexer *lexer, int c)
     return 0;
 }
 
-static int char2hex(int c)
-{
-    if (c >= '0' && c <= '9') {
-        return c - '0';
-    } else if (c >= 'a' && c <= 'f') {
-        return c - 'a' + 0x0A;
-    } else if (c >= 'A' && c <= 'F') {
-        return c - 'A' + 0x0A;
-    }
-    return -1;
-}
-
 static int check2hex(blexer *lexer, int c)
 {
-    c = char2hex(c);
+    c = be_char2hex(c);
     if (c < 0) {
         be_lexerror(lexer, "invalid hexadecimal number");
     }
@@ -258,7 +253,7 @@ static int skip_newline(blexer *lexer)
         next(lexer); /* skip "\n\r" or "\r\n" */
     }
     lexer->linenumber++;
-    return lexer->cursor;
+    return lexer->reader.cursor;
 }
 
 static void skip_comment(blexer *lexer)
@@ -333,7 +328,7 @@ static bint scan_hexadecimal(blexer *lexer)
 {
     bint res = 0;
     int dig, num = 0;
-    while ((dig = char2hex(lgetc(lexer))) >= 0) {
+    while ((dig = be_char2hex(lgetc(lexer))) >= 0) {
         res = ((bint)res << 4) + dig;
         next(lexer);
         ++num;
@@ -348,7 +343,11 @@ static btokentype scan_decimal(blexer *lexer)
 {
     btokentype type = TokenInteger;
     match(lexer, is_digit);
-    if (decimal_dots(lexer) | scan_realexp(lexer)) {
+    /* decimal_dots() and scan_realexp() have side effect, so we call each explicitly */
+    /* to prevent binary shortcut if the first is true */
+    bbool has_decimal_dots = decimal_dots(lexer);
+    bbool is_realexp = scan_realexp(lexer);
+    if (has_decimal_dots || is_realexp) {
         type = TokenReal;
     }
     lexer->buf.s[lexer->buf.len] = '\0';
@@ -380,12 +379,225 @@ static btokentype scan_numeral(blexer *lexer)
     return type;
 }
 
+/* structure for a temporary reader used by transpiler, with attributes for an allocated buffer and size */
+struct blexerreader_save {
+    struct blexerreader reader;    
+    char* s;    
+    size_t size;
+    char cursor;
+};
+
+/* buf reader for transpiled code from f-strings */
+/* it restores the original reader when the transpiler buffer is empty */
+/* the first pass returns a single byte buffer with the saved cursor */
+/* the second pass restores the original reader */
+static const char* _bufgets(struct blexer* lexer, void *data, size_t *size)
+{
+    /* this is called once the temporaty transpiler buffer is empty */
+    struct blexerreader *reader = &lexer->reader;       /* current reader which is temporary only for the transpiler */
+    struct blexerreader_save *reader_save = data;          /* original reader that needs to be restored once the buffer is empty */
+
+    /* first case, we saved the cursor (fist char), we server it now */
+    if (reader_save->reader.cursor >= 0) {                        /* serve the previously saved cursor */
+        /* copy cursor to a 'char' type */
+        reader_save->cursor = reader_save->reader.cursor;
+        reader_save->reader.cursor = -1;                          /* no more cursor saved */
+        *size = 1;
+        return &reader_save->cursor;
+    }
+
+    /* second case, the saved cursor was returned, now restore the normal flow of the original reader */
+    /* restore the original reader */
+    *reader = reader_save->reader;
+
+    /* free the memory from the structure */
+    be_free(lexer->vm, reader_save->s, reader_save->size);                  /* free the buffer */
+    be_free(lexer->vm, reader_save, sizeof(struct blexerreader_save));      /* free the structure */
+
+    if (!reader->len) {     /* just in case the original buffer was also */
+        return reader->readf(lexer, reader->data, size);
+    }
+    /* the following is not necessary, but safer */
+    *size = reader->len;
+    return reader->s;
+}
+
+static btokentype scan_string(blexer *lexer);   /* forward declaration */
+
+/* scan f-string and transpile it to `format(...)` syntax then feeding the normal lexer and parser */
+static void scan_f_string(blexer *lexer)
+{
+    char ch;
+    clear_buf(lexer);
+    scan_string(lexer);         /* first scan the entire string in lexer->buf */
+
+    /* save original reader until the transpiled is processed */
+    /* reader will be restored by the reader function once the transpiled buffer is empty */
+    struct blexerreader_save *reader_save = (struct blexerreader_save *) be_malloc(lexer->vm, sizeof(struct blexerreader_save));           /* temporary reader */
+    reader_save->reader = lexer->reader;
+
+    /* save blexerbuf which contains the unparsed_fstring */
+    struct blexerbuf buf_unparsed_fstr = lexer->buf;
+
+    /* prepare and allocated a temporary buffer to save parsed f_string */
+    lexer->buf.size = lexer->buf.size + 20;
+    lexer->buf.s = be_malloc(lexer->vm, lexer->buf.size);
+    lexer->buf.len = 0;
+
+    /* parse f_string */
+    /* First pass, check syntax and extract string literals, and format */
+    save_char(lexer, '(');
+    save_char(lexer, '"');
+    for (size_t i = 0; i < buf_unparsed_fstr.len; i++) {
+        ch = buf_unparsed_fstr.s[i];
+        switch (ch) {
+            case '%':       /* % needs to be encoded as %% */
+                save_char(lexer, '%');
+                save_char(lexer, '%');
+                break;
+            case '\\':       /* \ needs to be encoded as \\ */
+                save_char(lexer, '\\');
+                save_char(lexer, '\\');
+                break;
+            case '"':       /* " needs to be encoded as \" */
+                save_char(lexer, '\\');
+                save_char(lexer, '"');
+                break;
+            case '}':       /* }} is converted as } yet we tolerate a single } */
+                if ((i+1 < buf_unparsed_fstr.len) && (buf_unparsed_fstr.s[i+1] == '}')) { i++; }      /* if '}}' replace with '}' */
+                save_char(lexer, '}');
+                break;
+            case '\n':
+                save_char(lexer, '\\');
+                save_char(lexer, 'n');
+                break;
+            case '\r':
+                save_char(lexer, '\\');
+                save_char(lexer, 'r');
+                break;
+            default:        /* copy any other character */
+                save_char(lexer, ch);
+                break;
+            case '{':       /* special case for { */
+                i++;        /* in all cases skip to next char */
+                if ((i < buf_unparsed_fstr.len) && (buf_unparsed_fstr.s[i] == '{')) {
+                    save_char(lexer, '{');      /* {{ is simply encoded as { and continue parsing */
+                } else {
+                    /* we still don't know if '=' is present, so we copy the expression each time, and rollback if we find out the '=' is not present */
+                    size_t rollback = lexer->buf.len;       /* mark the end of string for later rollback if '=' is not present */
+                    /* parse inner part */
+                    /* skip everything until either ':' or '}' or '=' */
+                    /* if end of string is reached before '}' raise en error */
+                    for (; i < buf_unparsed_fstr.len; i++) {
+                        ch = buf_unparsed_fstr.s[i];
+                        if (ch == ':' || ch == '}') { break; }
+                        save_char(lexer, ch);       /* copy any character unless it's ':' or '}' */
+                        if (ch == '=') { break; }   /* '=' is copied but breaks parsing as well */
+                    }
+                    /* safe check if we reached the end of the string */
+                    if (i >= buf_unparsed_fstr.len) { be_raise(lexer->vm, "syntax_error", "'}' expected"); }
+                    /* if '=' detected then do some additional checks */
+                    if (ch == '=') {
+                        i++;        /* skip '=' and check we haven't reached the end */
+                        if (i >= buf_unparsed_fstr.len) { be_raise(lexer->vm, "syntax_error", "'}' expected"); }
+                        ch = buf_unparsed_fstr.s[i];
+                        if ((ch != ':') && (ch != '}')) {   /* '=' must be immediately followed by ':' or '}' */
+                            be_raise(lexer->vm, "syntax_error", "':' or '}' expected after '='");
+                        }
+                    } else {
+                        /* no '=' present, rollback the text of the expression */
+                        lexer->buf.len = rollback;
+                    }
+                    save_char(lexer, '%');       /* start format encoding */
+                    if (ch == ':') {
+                        /* copy format */
+                        i++;
+                        if ((i < buf_unparsed_fstr.len) && (buf_unparsed_fstr.s[i] == '%')) { i++; }      /* skip '%' following ':' */
+                        for (; i < buf_unparsed_fstr.len; i++) {
+                            ch = buf_unparsed_fstr.s[i];
+                            if (ch == '}') { break; }
+                            save_char(lexer, ch);
+                        }
+                        if (i >= buf_unparsed_fstr.len) { be_raise(lexer->vm, "syntax_error", "'}' expected"); }
+                    } else {
+                        /* if no formatting, output '%s' */
+                        save_char(lexer, 's');
+                    }
+                }
+                break;
+        }
+    }
+    save_char(lexer, '"');      /* finish format string */
+
+    /* Second pass - add arguments if any */
+    for (size_t i = 0; i < buf_unparsed_fstr.len; i++) {
+        /* skip any character that is not '{' followed by '{' */
+        if (buf_unparsed_fstr.s[i] == '{') {
+            i++;        /* in all cases skip to next char */
+            if ((i < buf_unparsed_fstr.len) && (buf_unparsed_fstr.s[i] == '{')) { continue; }
+            /* extract argument */
+            save_char(lexer, ',');       /* add ',' to start next argument to `format()` */
+            for (; i < buf_unparsed_fstr.len; i++) {
+                ch = buf_unparsed_fstr.s[i];
+                if (ch == '=' || ch == ':' || ch == '}') { break; }
+                save_char(lexer, ch);   /* copy expression until we reach ':', '=' or '}' */
+            }
+            /* no need to check for end of string here, it was done already in first pass */
+            if (ch == ':' || ch == '=') {       /* if '=' or ':', skip everyting until '}' */
+                i++;
+                for (; i < buf_unparsed_fstr.len; i++) {
+                    ch = buf_unparsed_fstr.s[i];
+                    if (ch == '}') { break; }
+                }
+            }
+        }
+    }
+    save_char(lexer, ')');      /* add final ')' */
+
+    /* Situation now: */
+    /* `buf_unparsed_fstr` contains the buffer of the input unparsed f-string, ex: "age: {age:2i}" */
+    /* `lexer->buf` contains the buffer of the transpiled f-string without call to format(), ex: '("age: %2i", age)' */
+    /* `reader_save` contains the original reader to continue parsing after f-string */
+    /* `lexer->reader` will contain a temporary reader from the parsed f-string */
+
+    /* extract the parsed f-string from the temporary buffer (needs later deallocation) */
+    char * parsed_fstr_s = lexer->buf.s;        /* needs later deallocation with parsed_fstr_size */
+    size_t parsed_fstr_len = lexer->buf.len;
+    size_t parsed_fstr_size = lexer->buf.size;
+
+    /* restore buf to lexer */
+    lexer->buf = buf_unparsed_fstr;
+
+    /* change the temporary reader to the parsed f-string */
+    lexer->reader.len = parsed_fstr_len;
+    lexer->reader.data = (void*) reader_save;      /* link to the saved context */
+    lexer->reader.s = parsed_fstr_s;     /* reader is responisble to deallocate later this buffer */
+    lexer->reader.readf = _bufgets;
+
+    /* add information needed for `_bufgets` to later deallocate the buffer */
+    reader_save->size = parsed_fstr_size;
+    reader_save->s = parsed_fstr_s;
+
+    /* start parsing the parsed f-string, which is btw always '(' */
+    next(lexer);
+
+    /* remember that we are still in `scan_identifier()`, we replace the 'f' identifier to 'format' which is the global function to call */
+    static const char FORMAT[] = "format";
+    lexer->buf.len = sizeof(FORMAT) - 1;        /* we now that buf size is at least SHORT_STR_LEN (32) */
+    memmove(lexer->buf.s, FORMAT, lexer->buf.len);
+}
+
 static btokentype scan_identifier(blexer *lexer)
 {
     int type;
     bstring *s;
     save(lexer);
     match(lexer, is_word);
+    /* check if the form is f"aaaa" or f'aaa' */
+    char ch = lgetc(lexer);
+    if ((lexer->buf.len == 1) && (lexer->buf.s[0] == 'f') && (ch == '"' || ch == '\'')) {
+        scan_f_string(lexer);
+    }
     s = buf_tostr(lexer);
     type = str_extra(s);
     if (type >= KeyIf && type < type_count()) {
@@ -396,19 +608,49 @@ static btokentype scan_identifier(blexer *lexer)
     return TokenId;
 }
 
+/* munch any delimeter and return 1 if any found */
+static int skip_delimiter(blexer *lexer) {
+    int c = lgetc(lexer);
+    int delimeter_present = 0;
+    while (1) {
+        if (c == '#') {
+            skip_comment(lexer);
+        } else if (c == '\r' || c == '\n') {
+            skip_newline(lexer);
+        } else if (c == ' ' || c == '\t' || c == '\f' || c ==  '\v') {
+            next(lexer);
+        } else {
+            break;
+        }
+        c = lgetc(lexer);
+        delimeter_present = 1;
+    }
+    return delimeter_present;
+}
+
 static btokentype scan_string(blexer *lexer)
 {
-    int c, end = lgetc(lexer);
-    next(lexer); /* skip '"' or '\'' */
-    while ((c = lgetc(lexer)) != EOS && (c != end)) {
-        save(lexer);
-        if (c == '\\') {
-            save(lexer); /* skip '\\.' */
+    while (1) {     /* handle multiple string literals in a row */
+        int c;
+        int end = lgetc(lexer);     /* string delimiter, either '"' or '\'' */
+        next(lexer); /* skip '"' or '\'' */
+        while ((c = lgetc(lexer)) != EOS && (c != end)) {
+            save(lexer);
+            if (c == '\\') {
+                save(lexer); /* skip '\\.' */
+            }
         }
+        if (c == EOS) {
+            be_lexerror(lexer, "unfinished string");
+        }
+        c = next(lexer); /* skip '"' or '\'' */
+        /* check if there's an additional string literal right after */
+        skip_delimiter(lexer);
+        c = lgetc(lexer);
+        if (c != '"' && c != '\'') { break; }
     }
     tr_string(lexer);
     setstr(lexer, buf_tostr(lexer));
-    next(lexer); /* skip '"' or '\'' */
     return TokenString;
 }
 
@@ -510,7 +752,9 @@ static btokentype lexer_next(blexer *lexer)
         case '}': next(lexer); return OptRBR;
         case ',': next(lexer); return OptComma;
         case ';': next(lexer); return OptSemic;
-        case ':': next(lexer); return OptColon;
+        case ':':
+            next(lexer);
+            return check_next(lexer, '=') ? OptWalrus : OptColon;
         case '?': next(lexer); return OptQuestion;
         case '^': return scan_assign(lexer, OptXorAssign, OptBitXor);
         case '~': next(lexer); return OptFlip;

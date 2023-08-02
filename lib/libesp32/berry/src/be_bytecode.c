@@ -23,7 +23,7 @@
 #define MAGIC_NUMBER1       0xBE
 #define MAGIC_NUMBER2       0xCD
 #define MAGIC_NUMBER3       0xFE
-#define BYTECODE_VERSION    3
+#define BYTECODE_VERSION    4
 
 #define USE_64BIT_INT       (BE_INTGER_TYPE == 2 \
     || BE_INTGER_TYPE == 1 && LONG_MAX == 9223372036854775807L)
@@ -114,6 +114,8 @@ static void save_string(void *fp, bstring *s)
         const char *data = str(s);
         save_word(fp, length);
         be_fwrite(fp, data, length);
+    } else {
+        save_word(fp, 0);
     }
 }
 
@@ -160,24 +162,26 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
 static void save_class(bvm *vm, void *fp, bclass *c)
 {
     bstring **vars;
-    int i, count = be_map_count(c->members);
+    int i, count = c->members ? be_map_count(c->members) : 0;
     int nvar = c->nvar - be_class_closure_count(c);
     save_string(fp, c->name);
     save_long(fp, nvar); /* member variables count */
     save_long(fp, count - nvar); /* method count */
-    vars = save_members(vm, fp, c, nvar);
-    if (vars != NULL) {
-        for (i = 0; i < nvar; ++i) {
-            save_string(fp, vars[i]);
+    if (count > 0) {
+        vars = save_members(vm, fp, c, nvar);
+        if (vars != NULL) {
+            for (i = 0; i < nvar; ++i) {
+                save_string(fp, vars[i]);
+            }
+            be_free(vm, vars, sizeof(bstring *) * nvar);
         }
-        be_free(vm, vars, sizeof(bstring *) * nvar);
     }
 }
 
 static void save_value(bvm *vm, void *fp, bvalue *v)
 {
-    save_byte(fp, (uint8_t)var_type(v)); /* type */
-    switch (var_type(v)) {
+    save_byte(fp, (uint8_t)var_primetype(v)); /* type */
+    switch (var_primetype(v)) {
     case BE_INT: save_int(fp, var_toint(v)); break;
     case BE_REAL: save_real(fp, var_toreal(v)); break;
     case BE_STRING: save_string(fp, var_tostr(v)); break;
@@ -206,7 +210,15 @@ static void save_constants(bvm *vm, void *fp, bproto *proto)
     bvalue *v = proto->ktab, *end;
     save_long(fp, proto->nconst); /* constants count */
     for (end = v + proto->nconst; v < end; ++v) {
-        save_value(vm, fp, v);
+        if ((v == proto->ktab) && (proto->varg & BE_VA_STATICMETHOD) && (v->type == BE_CLASS)) {
+            /* implicit `_class` parameter, output nil */
+            bvalue v_nil;
+            v_nil.v.i = 0;
+            v_nil.type = BE_NIL;
+            save_value(vm, fp, &v_nil);
+        } else {
+            save_value(vm, fp, v);
+        }
     }
 }
 
@@ -214,8 +226,10 @@ static void save_proto_table(bvm *vm, void *fp, bproto *proto)
 {
     bproto **p = proto->ptab, **end;
     save_long(fp, proto->nproto); /* proto count */
-    for (end = p + proto->nproto; p < end; ++p) {
-        save_proto(vm, fp, *p);
+    if (p) {
+        for (end = p + proto->nproto; p < end; ++p) {
+            save_proto(vm, fp, *p);
+        }
     }
 }
 
@@ -223,9 +237,11 @@ static void save_upvals(void *fp, bproto *proto)
 {
     bupvaldesc *uv = proto->upvals, *end;
     save_byte(fp, proto->nupvals); /* upvals count */
-    for (end = uv + proto->nupvals; uv < end; ++uv) {
-        save_byte(fp, uv->instack);
-        save_byte(fp, uv->idx);
+    if (uv) {
+        for (end = uv + proto->nupvals; uv < end; ++uv) {
+            save_byte(fp, uv->instack);
+            save_byte(fp, uv->idx);
+        }
     }
 }
 
@@ -233,7 +249,11 @@ static void save_proto(bvm *vm, void *fp, bproto *proto)
 {
     if (proto) {
         save_string(fp, proto->name); /* name */
+#if BE_DEBUG_SOURCE_FILE
         save_string(fp, proto->source); /* source */
+#else
+        save_string(fp, NULL); /* source */
+#endif
         save_byte(fp, proto->argc); /* argc */
         save_byte(fp, proto->nstack); /* nstack */
         save_byte(fp, proto->varg); /* varg */
@@ -333,7 +353,6 @@ static int load_head(void *fp)
     res = buffer[0] == MAGIC_NUMBER1 &&
           buffer[1] == MAGIC_NUMBER2 &&
           buffer[2] == MAGIC_NUMBER3 &&
-          buffer[3] <= BYTECODE_VERSION &&
           buffer[4] == vm_sizeinfo();
     if (res) {
         return buffer[3];
@@ -425,16 +444,25 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
         be_incrtop(vm);
         if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
             /* actual method */
-            be_method_bind(vm, c, name, var_toobj(value), bfalse);
+            bproto *proto = (bproto*)var_toobj(value);
+            bbool is_method = proto->varg & BE_VA_METHOD;
+            if (!is_method) {
+                if ((proto->nconst > 0) && (proto->ktab->type == BE_NIL)) {
+                    /* The first argument is nil so we replace with the class as implicit '_class' */
+                    proto->ktab->type = BE_CLASS;
+                    proto->ktab->v.p = c;
+                }
+            }
+            be_class_method_bind(vm, c, name, var_toobj(value), !is_method);
         } else {
             /* no proto, static member set to nil */
-            be_member_bind(vm, c, name, bfalse);
+            be_class_member_bind(vm, c, name, bfalse);
         }
         be_stackpop(vm, 2); /* pop the cached string and proto */
     }
     for (count = 0; count < nvar; ++count) { /* load member-variable table */
         bstring *name = cache_string(vm, fp);
-        be_member_bind(vm, c, name, btrue);
+        be_class_member_bind(vm, c, name, btrue);
         be_stackpop(vm, 1); /* pop the cached string */
     }
 }
@@ -492,7 +520,7 @@ static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
     }
 }
 
-static void load_proto_table(bvm *vm, void *fp, bproto *proto, int version)
+static void load_proto_table(bvm *vm, void *fp, bproto *proto, int info, int version)
 {
     int size = (int)load_long(fp); /* proto count */
     if (size) {
@@ -501,7 +529,7 @@ static void load_proto_table(bvm *vm, void *fp, bproto *proto, int version)
         proto->ptab = p;
         proto->nproto = size;
         while (size--) {
-            load_proto(vm, fp, p++, -1, version);
+            load_proto(vm, fp, p++, info, version);
         }
     }
 }
@@ -529,7 +557,11 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
     if (str_len(name)) {
         *proto = be_newproto(vm);
         (*proto)->name = name;
+#if BE_DEBUG_SOURCE_FILE
         (*proto)->source = load_string(vm, fp);
+#else
+        load_string(vm, fp);    /* discard name */
+#endif
         (*proto)->argc = load_byte(fp);
         (*proto)->nstack = load_byte(fp);
         if (version > 1) {
@@ -538,7 +570,7 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
         }
         load_bytecode(vm, fp, *proto, info);
         load_constant(vm, fp, *proto, version);
-        load_proto_table(vm, fp, *proto, version);
+        load_proto_table(vm, fp, *proto, info, version);
         load_upvals(vm, fp, *proto);
         return btrue;
     }
@@ -572,7 +604,7 @@ bclosure* be_bytecode_load(bvm *vm, const char *filename)
             "can not open file '%s'.", filename));
     } else {
         int version = load_head(fp);
-        if (version) {
+        if (version == BYTECODE_VERSION) {
             bclosure *cl = be_newclosure(vm, 0);
             var_setclosure(vm->top, cl);
             be_stackpush(vm);
@@ -582,6 +614,8 @@ bclosure* be_bytecode_load(bvm *vm, const char *filename)
             be_fclose(fp);
             return cl;
         }
+        bytecode_error(vm, be_pushfstring(vm,
+            "invalid bytecode version '%s'.", filename));
     }
     bytecode_error(vm, be_pushfstring(vm,
         "invalid bytecode file '%s'.", filename));

@@ -890,7 +890,10 @@ void br_x509_minimal_init_full(br_x509_minimal_context *ctx,
  *   - Seconds are counted since midnight, from 0 to 86400 (a count of
  *     86400 is possible only if a leap second happened).
  *
- * The validation date and time is understood in the UTC time zone.
+ * The validation date and time is understood in the UTC time zone. The
+ * "Unix Epoch" (January 1st, 1970, 00:00 UTC) corresponds to days=719528
+ * and seconds=0; the "Windows Epoch" (January 1st, 1601, 00:00 UTC) is
+ * days=584754, seconds=0.
  *
  * If the validation date and time are not explicitly set, but BearSSL
  * was compiled with support for the system clock on the underlying

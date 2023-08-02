@@ -492,6 +492,9 @@ TEST(TestCoolixACClass, SetGetClearSensorTempAndZoneFollow) {
   EXPECT_EQ(
       "Power: On, Mode: 3 (Heat), Fan: 6 (Zone Follow), Temp: 24C, "
       "Zone Follow: On, Sensor Temp: 19C", ac.toString());
+  // For #Issue2012
+  EXPECT_EQ(19, ac.getSensorTemp());
+  EXPECT_EQ(19, ac.toCommon().sensorTemperature);
 }
 
 TEST(TestCoolixACClass, SpecialModesAndReset) {
@@ -600,6 +603,41 @@ TEST(TestDecodeCoolix, RealCaptureExample) {
   EXPECT_EQ(0x0, irsend.capture.command);
 }
 
+TEST(TestDecodeCoolix, Issue1748Example) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1748#issuecomment-1024907551
+  const uint16_t powerOffRawData[199] = {
+      4642, 4502, 514, 1706, 516, 624, 488, 1704, 514, 1702, 516, 624, 488, 624,
+      488, 1702, 514, 626, 488, 620, 488, 1702, 490, 620, 512, 620, 488, 1728,
+      488, 1704, 514, 624, 488, 1704, 514, 620, 488, 1702, 490, 1722, 488, 1724,
+      514, 1728, 488, 600, 512, 1728, 490, 1706, 512, 1698, 488, 646, 486, 622,
+      462, 646, 488, 624, 488, 1704, 514, 626, 488, 628, 460, 1724, 514, 1702,
+      514, 1724, 462, 646, 488, 624, 488, 624, 488, 626, 486, 602, 488, 646,
+      460, 648, 486, 626, 488, 1704, 486, 1724, 488, 1748, 488, 1704, 514, 1708,
+      488, 5312, 4648, 4494, 488, 1704, 486, 646, 486, 1698, 512, 1700, 488,
+      646, 462, 646, 486, 1728, 462, 648, 484, 622, 462, 1724, 510, 622, 488,
+      626, 488, 1702, 514, 1728, 490, 626, 488, 1730, 462, 646, 488, 1704, 512,
+      1724, 486, 1698, 514, 1728, 488, 626, 488, 1728, 488, 1704, 514, 1700,
+      512, 620, 486, 620, 488, 620, 486, 626, 490, 1728, 488, 626, 488, 628,
+      460, 1750, 488, 1728, 488, 1704, 488, 646, 488, 620, 488, 624, 488, 626,
+      488, 626, 462, 646, 462, 644, 488, 626, 488, 1728, 490, 1704, 486, 1724,
+      514, 1724, 488, 1728, 488};  // COOLIX48 B24D7B84E01F
+
+  irsend.begin();
+
+  irsend.reset();
+
+  irsend.sendRaw(powerOffRawData, 199, 38000);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(COOLIX, irsend.capture.decode_type);
+  EXPECT_EQ(kCoolixBits, irsend.capture.bits);
+  EXPECT_EQ(kCoolixOff, irsend.capture.value);
+  EXPECT_EQ(0x0, irsend.capture.address);
+  EXPECT_EQ(0x0, irsend.capture.command);
+}
 
 // Tests to debug/fix:
 //   https://github.com/crankyoldgit/IRremoteESP8266/issues/624
@@ -1032,4 +1070,37 @@ TEST(TestDecodeCoolix48, SyntheticSelfDecode) {
       "m552s552m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656"
       "m552s5244",
       irsend.outputStr());
+}
+
+// Test for issue https://github.com/crankyoldgit/IRremoteESP8266/issues/2012#issuecomment-1650098971
+TEST(TestCoolixACClass, Issue2012) {
+  IRrecv irrecv(kGpioUnused);
+  IRCoolixAC ac(kGpioUnused);
+
+  ac.stateReset();
+  ac.setRaw(0xB21FD8);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 26C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+
+  ac.setRaw(0xB21F98);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 27C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+
+  ac.setRaw(0xB21F88);
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Fan: 0 (Auto0), Temp: 28C, "
+      "Zone Follow: Off, Sensor Temp: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+  ac.setRaw(0xB27BE0);
+  EXPECT_EQ(
+      "Power: Off",
+      ac.toString());
+  EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
 }

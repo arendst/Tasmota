@@ -5,7 +5,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "clearTimeout(ft);clearTimeout(lt);"
     "if(x!=null){x.abort()}"             // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
+    "x.onreadystatechange=()=>{"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\")"
                             ".replace(/{s}/g,\"<tr><th>\")"
@@ -19,5 +19,5 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "};"
     "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
     "x.send();"
-    "ft=setTimeout(la,20000);"               // 20s failure timeout
+    "ft=setTimeout(la,2e4);"              // 20s failure timeout
   "}";

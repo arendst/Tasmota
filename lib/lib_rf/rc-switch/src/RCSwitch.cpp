@@ -57,21 +57,21 @@
 /* Protocol description format
  *
  * {
- *    Pulse length, 
- * 
+ *    Pulse length,
+ *
  *    PreambleFactor,
  *    Preamble {high,low},
- * 
+ *
  *    HeaderFactor,
  *    Header {high,low},
- * 
+ *
  *    "0" bit {high,low},
  *    "1" bit {high,low},
- * 
+ *
  *    Inverted Signal,
  *    Guard time
  * }
- * 
+ *
  * Pulse length: pulse duration (Te) in microseconds,
  *               for example 350
  * PreambleFactor: Number of high and low states to send
@@ -80,7 +80,7 @@
  * Preamble: Pulse shape which defines a preamble bit.
  *           Sent ceil(PreambleFactor/2) times.
  *           For example, {1, 2} with factor 3 would send
- *      _    _   
+ *      _    _
  *     | |__| |__         (each horizontal bar has a duration of Te,
  *                         vertical bars are ignored)
  * HeaderFactor: Number of times to send the header pulse.
@@ -88,22 +88,22 @@
  *           {1, 31} means one pulse of duration 1 Te high and 31 Te low
  *      _
  *     | |_______________________________ (don't count the vertical bars)
- * 
+ *
  * "0" bit: pulse shape defining a data bit, which is a logical "0"
  *          {1, 3} means 1 pulse duration Te high level and 3 low
  *      _
  *     | |___
- * 
+ *
  * "1" bit: pulse shape that defines the data bit, which is a logical "1"
  *          {3, 1} means 3 pulses with a duration of Te high level and 1 low
  *      ___
  *     |   |_
  *
  * (note: to form the state bit Z (Tri-State bit), two codes are combined)
- * 
+ *
  * Inverted Signal: Signal inversion - if true the signal is inverted
  *                  replacing high to low in a transmitted / received packet
- * Guard time: Separation time between two retries. It will be followed by the 
+ * Guard time: Separation time between two retries. It will be followed by the
  *             next preamble of the next packet. In number of Te.
  *             e.g. 39 pulses of duration Te low level
  */
@@ -149,8 +149,10 @@ static const RCSwitch::Protocol PROGMEM proto[] = {
   { 400,  0, { 0, 0 }, 1, {   1,  1 }, { 1,  2 }, { 2, 1 }, false, 43 },  // 31 (Mertik Maxitrol G6R-H4T1)
   { 365,  0, { 0, 0 }, 1, {  18,  1 }, { 3,  1 }, { 1, 3 }, true,   0 },  // 32 (1ByOne Doorbell) from @Fatbeard https://github.com/sui77/rc-switch/pull/277
   { 340,  0, { 0, 0 }, 1, {  14,  4 }, { 1,  2 }, { 2, 1 }, false,  0 },  // 33 (Dooya Control DC2708L)
-  { 120,  0, { 0, 0 }, 1, {   1, 28 }, { 1,  3 }, { 3, 1 }, false,  0 },   // 34 DIGOO SD10 - so as to use this protocol RCSWITCH_SEPARATION_LIMIT must be set to 2600
-  { 20,   0, { 0, 0 }, 1, { 239, 78 }, {20, 35 }, {35, 20}, false, 10000 } // 35 Dooya 5-Channel blinds remote DC1603
+  { 120,  0, { 0, 0 }, 1, {   1, 28 }, { 1,  3 }, { 3, 1 }, false,  0 },  // 34 DIGOO SD10 - so as to use this protocol RCSWITCH_SEPARATION_LIMIT must be set to 2600
+  { 20,   0, { 0, 0 }, 1, { 239, 78 }, {20, 35 }, {35, 20}, false, 10000},// 35 Dooya 5-Channel blinds remote DC1603
+  { 250,  0, { 0, 0 }, 1, {  18,  6 }, { 1,  3 }, { 3, 1 }, false,  0 },   // 36 Dooya remote DC2700AC for Dooya DT82TV curtains motor
+  { 200,  0, { 0, 0 }, 0, {   0,  0 }, { 1,  3 }, { 3, 1} , false, 20}	  // 37 DEWENWILS Power Strip
 };
 
 enum {
@@ -756,7 +758,7 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     unsigned int sdelay = 0;
     if (syncLengthInPulses > 0) {
       sdelay = RCSwitch::timings[FirstTiming] / syncLengthInPulses;
-    } else {
+    } else if (pro.PreambleFactor > 0) {
       sdelay = RCSwitch::timings[FirstTiming-2] / pro.PreambleFactor;
     }
     const unsigned int delay = sdelay;

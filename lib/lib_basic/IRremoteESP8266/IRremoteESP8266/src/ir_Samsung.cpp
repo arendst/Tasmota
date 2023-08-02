@@ -82,7 +82,8 @@ using irutils::addTempToString;
 using irutils::addToggleToString;
 using irutils::minsToString;
 
-#if SEND_SAMSUNG
+// This sending protocol is used by some other protocols. e.g. LG.
+#if (SEND_SAMSUNG || SEND_LG)
 /// Send a 32-bit Samsung formatted message.
 /// Status: STABLE / Should be working.
 /// @param[in] data The message to be sent.
@@ -112,7 +113,7 @@ uint32_t IRsend::encodeSAMSUNG(const uint8_t customer, const uint8_t command) {
   return ((revcommand ^ 0xFF) | (revcommand << 8) | (revcustomer << 16) |
           (revcustomer << 24));
 }
-#endif
+#endif  // (SEND_SAMSUNG || SEND_LG)
 
 #if DECODE_SAMSUNG
 /// Decode the supplied Samsung 32-bit message.
@@ -866,7 +867,7 @@ stdAc::fanspeed_t IRSamsungAc::toCommonFanSpeed(const uint8_t spd) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSamsungAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::SAMSUNG_AC;
   result.model = -1;  // Not supported.
   result.power = getPower();

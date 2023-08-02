@@ -3,6 +3,7 @@
 
 var tapp_module = module("tapp")
 
+#@ solidify:tapp_module
 tapp_module.init = def (m)
 
   class Tapp
@@ -19,7 +20,7 @@ tapp_module.init = def (m)
 
       for d: dir
         if string.find(d, ".tapp") > 0
-          tasmota.log(string.format("TAP: Loaded Tasmota App '%s'", d), 2)
+          tasmota.log(format("TAP: Loaded Tasmota App '%s'", d), 2)
           tasmota.load(d + "#autoexec.be")
         end
       end

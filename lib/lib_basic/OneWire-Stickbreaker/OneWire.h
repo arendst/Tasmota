@@ -210,28 +210,12 @@ void directModeInput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
-#elif ESP_IDF_VERSION_MAJOR > 3  // ESP32-S2 needs IDF 4.2 or later
-        int8_t rtc_io = esp32_gpioMux[pin].rtc;
-        uint32_t rtc_reg = (rtc_io != -1)?rtc_io_desc[rtc_io].reg:0;
-        if ( rtc_reg ) // RTC pins PULL settings
-        {
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtc_io].mux);
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtc_io].pullup | rtc_io_desc[rtc_io].pulldown);
-        }
 #endif
         // Input
         if ( pin < 32 )
             GPIO.enable_w1tc = ((uint32_t)1 << pin);
         else
             GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
-
-        uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
-        pinFunction |= FUN_IE; // input enable but required for output as well?
-        pinFunction |= ((uint32_t)PIN_FUNC_GPIO << MCU_SEL_S);
-
-        ESP_REG(DR_REG_IO_MUX_BASE + esp32_gpioMux[pin].reg) = pinFunction;
-
-        GPIO.pin[pin].val = 0;
     }
 #endif
 }
@@ -252,28 +236,12 @@ void directModeOutput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
-#elif ESP_IDF_VERSION_MAJOR > 3  // ESP32-S2 needs IDF 4.2 or later
-        int8_t rtc_io = esp32_gpioMux[pin].rtc;
-        uint32_t rtc_reg = (rtc_io != -1)?rtc_io_desc[rtc_io].reg:0;
-        if ( rtc_reg ) // RTC pins PULL settings
-        {
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtc_io].mux);
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtc_io].pullup | rtc_io_desc[rtc_io].pulldown);
-        }
 #endif
         // Output
         if ( pin < 32 )
             GPIO.enable_w1ts = ((uint32_t)1 << pin);
         else // already validated to pins <= 33
             GPIO.enable1_w1ts.val = ((uint32_t)1 << (pin - 32));
-
-        uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
-        pinFunction |= FUN_IE; // input enable but required for output as well?
-        pinFunction |= ((uint32_t)PIN_FUNC_GPIO << MCU_SEL_S);
-
-        ESP_REG(DR_REG_IO_MUX_BASE + esp32_gpioMux[pin].reg) = pinFunction;
-
-        GPIO.pin[pin].val = 0;
     }
 #endif
 }

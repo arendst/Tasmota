@@ -1,6 +1,5 @@
 tasks:
-  - before: platformio upgrade
-  - command: platformio run -e tasmota
+  - command: pip3 install -U platformio && platformio run -e tasmota
 
 image:
   file: .gitpod.Dockerfile
@@ -8,6 +7,5 @@ image:
 vscode:
   extensions:
     - Atishay-Jain.All-Autocomplete
-    - CoenraadS.bracket-pair-colorizer
     - esbenp.prettier-vscode
     - shardulm94.trailing-spaces

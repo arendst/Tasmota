@@ -733,13 +733,14 @@ stdAc::swingv_t IRMirageAc::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRMirageAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::MIRAGE;
   result.model = _model;
   result.power = getPower();
   result.mode = toCommonMode(_.Mode);
   result.celsius = true;
   result.degrees = getTemp();
+  result.sensorTemperature = getSensorTemp();
   result.fanspeed = toCommonFanSpeed(getFan(), _model);
   result.swingv = toCommonSwingV(getSwingV());
   result.swingh = getSwingH() ? stdAc::swingh_t::kAuto : stdAc::swingh_t::kOff;
@@ -750,6 +751,7 @@ stdAc::state_t IRMirageAc::toCommon(void) const {
   result.sleep = getSleep() ? 0 : -1;
   result.quiet = getQuiet();
   result.clock = getClock() / 60;
+  result.iFeel = getIFeel();
   // Not supported.
   result.econo = false;
   result.beep = false;
@@ -775,10 +777,14 @@ void IRMirageAc::fromCommon(const stdAc::state_t state) {
   setFilter(state.filter);
   // setClock() expects seconds, not minutes.
   setClock((state.clock > 0) ? state.clock * 60 : 0);
+  setIFeel(state.iFeel);
+  if (state.sensorTemperature != kNoTempValue) {
+    setSensorTemp(state.celsius ? state.sensorTemperature
+                                : fahrenheitToCelsius(state.sensorTemperature));
+  }
   // Non-common settings.
   setOnTimer(0);
   setOffTimer(0);
-  setIFeel(false);
 }
 
 /// Convert the internal state into a human readable string.

@@ -26,7 +26,7 @@ class Partition_info
   var type
   var subtype
   var start
-  var size
+  var sz
   var label
   var flags
 
@@ -46,7 +46,7 @@ class Partition_info
       self.type = 0
       self.subtype = 0
       self.start = 0
-      self.size = 0
+      self.sz = 0
       self.label = ''
       self.flags = 0
       return
@@ -59,14 +59,13 @@ class Partition_info
       self.type = raw.get(2,1)
       self.subtype = raw.get(3,1)
       self.start = raw.get(4,4)
-      self.size = raw.get(8,4)
+      self.sz = raw.get(8,4)
       self.label = self.remove_trailing_zeroes(raw[12..27]).asstring()
       self.flags = raw.get(28,4)
 
     elif magic == 0xEBEB  #- MD5 -#
     else
-      import string
-      raise  "internal_error", string.format("invalid magic number %02X", magic)
+      raise  "internal_error", format("invalid magic number %02X", magic)
     end
     
   end
@@ -102,17 +101,17 @@ class Partition_info
       var seg_offset = addr + 0x20 # sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) = 24 + 8
 
       for seg_num:0..seg_count-1
-        # print(string.format("Reading 0x%08X", seg_offset))
+        # print(format("Reading 0x%08X", seg_offset))
         var segment_header = flash.read(seg_offset - 8, 8)
         var seg_start_addr = segment_header.get(0, 4)
         var seg_size = segment_header.get(4,4)
-        # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X size=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
+        # print(format("Segment %i: flash_offset=0x%08X start_addr=0x%08X size=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
 
         seg_offset += seg_size + 8    # add segment_length + sizeof(esp_image_segment_header_t)
       end
       var total_size = seg_offset - addr + 1 # add 1KB for safety
 
-      # print(string.format("Total size = %i KB", total_size/1024))
+      # print(format("Total size = %i KB", total_size/1024))
 
       return total_size
     except .. as e, m
@@ -122,7 +121,6 @@ class Partition_info
   end
 
   def tostring()
-    import string
     var type_s = ""
     var subtype_s = ""
     if   self.type == 0  type_s = "app"
@@ -146,10 +144,10 @@ class Partition_info
     #- reformat strings -#
     if type_s != ""    type_s = " (" + type_s + ")" end
     if subtype_s != "" subtype_s = " (" + subtype_s + ")" end
-    return string.format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
+    return format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
                           self.type, type_s,
                           self.subtype, subtype_s,
-                          self.start, self.size,
+                          self.start, self.sz,
                           self.label, self.flags)
   end
 
@@ -160,7 +158,7 @@ class Partition_info
     b.add(self.type, 1)
     b.add(self.subtype, 1)
     b.add(self.start, 4)
-    b.add(self.size, 4)
+    b.add(self.sz, 4)
     var label = bytes().fromstring(self.label)
     label.resize(16)
     b = b + label
@@ -351,8 +349,7 @@ class Partition_otadata
 
   # Produce a human-readable representation of the object with relevant information
   def tostring()
-    import string
-    return string.format("<instance: Partition_otadata(ota_active:%d, ota_seq=[%d,%d], ota_max=%d)>",
+    return format("<instance: Partition_otadata(ota_active:%d, ota_seq=[%d,%d], ota_max=%d)>",
                           self.active_otadata, self.seq0, self.seq1, self.maxota)
   end
 end
@@ -488,7 +485,7 @@ class Partition
     import flash
     #- we expect the SPIFFS partition to be the last one -#
     var spiffs = self.slots[-1]
-    if !spiffs.is_spiffs() raise 'value_error', 'No SPIFFS partition found' end
+    if !spiffs.is_spiffs() raise 'value_error', 'No FS partition found' end
 
     var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
     flash.write(spiffs.start         , b)    #- block #0 -#
@@ -503,53 +500,54 @@ partition.Partition = Partition
 # WebUI for the partition manager
 #################################################################################
 class Partition_manager_UI
-  static app_size_max = 1984   # Max OTA size (4096 - 64) / 2 rounded to lowest 64KB
   static app_size_min = 896    # Min OTA size - let's set it at a safe 896KB for minimal Tasmota32 with TLS
+  static app_size_max = 3072   # Max OTA size - (4096 - 896 - 128)
 
   # create a method for adding a button to the main menu
   # the button 'Partition Manager' redirects to '/part_mgr?'
   def web_add_button()
     import webserver
     webserver.content_send(
-      "<form id=but_part_mgr style='display: block;' action='part_mgr' method='get'><button>Partition Manager</button></form>")
+      "<form id=but_part_mgr style='display: block;' action='part_mgr' method='get'><button>Partition Manager</button></form><p></p>")
   end
 
   #- ---------------------------------------------------------------------- -#
   #  Show a single OTA Partition
   #- ---------------------------------------------------------------------- -#
-  def page_show_partition(slot, active, ota_num)
+  def page_show_partition(slot, active, ota_num, maxota)
     import webserver
-    import string
     #- define `bdis` style for gray disabled buttons -#
     webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
-    webserver.content_send(string.format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s</b></legend>",
+    webserver.content_send(format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s&nbsp;</b></legend>",
                                          slot.start / 0x1000, slot.label, active ? " (active)" : ""))
 
-    webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.size / 1024))
+    webserver.content_send(format("<p><b>Partition size: </b>%i KB</p>", slot.sz / 1024))
     var used = slot.get_image_size()
-    if used > slot.size   slot.used = -1 end         # we may have a leftover of a previous firmware but the slot shrank - in this case the slot is inknown
+    if used > slot.sz   slot.used = -1 end         # we may have a leftover of a previous firmware but the slot shrank - in this case the slot is inknown
     if used >= 0
-      webserver.content_send(string.format("<p><b>Used: </b>%i KB</p>", used / 1024))
-      webserver.content_send(string.format("<p><b>Free: </b>%i KB</p>", (slot.size - used) / 1024))
+      webserver.content_send(format("<p><b>Used: </b>%i KB</p>", used / 1024))
+      webserver.content_send(format("<p><b>Free: </b>%i KB</p>", (slot.sz - used) / 1024))
     else
-      webserver.content_send("<p><b>Used</b>: unknwon</p>")
-      webserver.content_send("<p><b>Free</b>: unknwon</p>")
+      webserver.content_send("<p><b>Used</b>: unknown</p>")
+      webserver.content_send("<p><b>Free</b>: unknown</p>")
     end
-    if !active && used > 0
-      webserver.content_send("<p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")
-      webserver.content_send("onsubmit='return confirm(\"This will change the active partition and cause a restart.\");'>")
-      webserver.content_send("<button name='setactive' class='button bgrn'>Switch To This Partition</button>")
-      webserver.content_send(string.format("<input name='ota' type='hidden' value='%d'>", ota_num))
-      webserver.content_send("</form></p>")
-    else
-      # put a fake disabled button
-      webserver.content_send("<p><form style='display: block;'>")
-      if used >= 0
-        webserver.content_send("<button name='setactive' class='button bdis' disabled title=\"No need to click, it's already the active partition\">Current Active Partition</button>")
+    if maxota != nil && maxota > 0
+      if !active && used > 0
+        webserver.content_send("<p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")
+        webserver.content_send("onsubmit='return confirm(\"This will change the active partition and cause a restart.\");'>")
+        webserver.content_send("<button name='setactive' class='button bgrn'>Switch To This Partition</button>")
+        webserver.content_send(format("<input name='ota' type='hidden' value='%d'>", ota_num))
+        webserver.content_send("</form></p>")
       else
-        webserver.content_send("<button name='setactive' class='button bdis' disabled>Empty Partition</button>")
+        # put a fake disabled button
+        webserver.content_send("<p><form style='display: block;'>")
+        if used >= 0
+          webserver.content_send("<button name='setactive' class='button bdis' disabled title=\"No need to click, it's already the active partition\">Current Active Partition</button>")
+        else
+          webserver.content_send("<button name='setactive' class='button bdis' disabled>Empty Partition</button>")
+        end
+        webserver.content_send("</form></p>")
       end
-      webserver.content_send("</form></p>")
     end
     
     webserver.content_send("<p></p></fieldset><p></p>")
@@ -561,23 +559,22 @@ class Partition_manager_UI
   #- ---------------------------------------------------------------------- -#
   def page_show_spiffs(slot, free_mem)
     import webserver
-    import string
-    webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;%s</b></legend>",
-                                         slot.start / 0x1000, slot.label))
+    webserver.content_send(format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;filesystem&nbsp;</b></legend>",
+                                         slot.start / 0x1000))
 
-    webserver.content_send(string.format("<p><b>Partition size:</b> %i KB</p>", slot.size / 1024))
+    webserver.content_send(format("<p><b>Partition size:</b> %i KB</p>", slot.sz / 1024))
     
     if free_mem != nil
-      webserver.content_send(string.format("<p><b>Max size: </b>%i KB</p>", (slot.size + free_mem) / 1024))
-      webserver.content_send(string.format("<p><b>Unallocated: </b>%i KB</p>", free_mem / 1024))
+      webserver.content_send(format("<p><b>Max size: </b>%i KB</p>", (slot.sz + free_mem) / 1024))
+      webserver.content_send(format("<p><b>Unallocated: </b>%i KB</p>", free_mem / 1024))
     end
 
     #- display Resize button -#
     webserver.content_send("<hr><p><b>New size:</b> (multiple of 16 KB)</p>")
     webserver.content_send("<form action='/part_mgr' method='post' ")
     webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
-    webserver.content_send(string.format("<input type='number' min='0' max='%d' step='16' name='spiffs_size' value='%i'>", (slot.size + free_mem) / 1024, ((slot.size + free_mem) / 1024 / 16)*16))
-    webserver.content_send("<p></p><button name='resize' class='button bred'>Resize SPIFFS</button></form></p>")
+    webserver.content_send(format("<input type='number' min='0' max='%d' step='16' name='fs_size' value='%i'>", (slot.sz + free_mem) / 1024, ((slot.sz + free_mem) / 1024 / 16)*16))
+    webserver.content_send("<p></p><button name='resize' class='button bred'>Resize filesystem</button></form></p>")
     webserver.content_send("<p></p></fieldset><p></p>")
   end
 
@@ -591,10 +588,12 @@ class Partition_manager_UI
       var ota_num = slot.is_ota()
       if ota_num != nil
         # we have an OTA partition
-        self.page_show_partition(slot, ota_num == p.otadata.active_otadata, ota_num)
+        self.page_show_partition(slot, ota_num == p.otadata.active_otadata, ota_num, p.otadata.maxota)
+      elif slot.is_factory()
+        self.page_show_partition(slot, false, nil, nil)
       elif slot.is_spiffs()
         var flash_size = tasmota.memory()['flash'] * 1024
-        var used_size = (slot.start + slot.size)
+        var used_size = (slot.start + slot.sz)
         self.page_show_spiffs(slot, slot == p.slots[-1] ? flash_size - used_size : nil)
       end
     end
@@ -605,37 +604,36 @@ class Partition_manager_UI
   #- ---------------------------------------------------------------------- -#
   def page_show_repartition_asym(p)
     import webserver
-    import string
     if p.get_active() != 0
       webserver.content_send("<p style='width:320px;'>Re-partition can be done only if 'app0' is active.</p>")
     else
       # we can proceed
       var app0 = p.get_ota_slot(0)
-      var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+      var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
       var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
 
       var app1 = p.get_ota_slot(1)
-      var app1_size_kb = ((app1.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+      var app1_size_kb = ((app1.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
       # var app1_used_kb = (((app1.get_image_size()) / 1024 / 64) + 1) * 64   # we don't actually need it
 
       var flash_size_kb = tasmota.memory()['flash']
 
-      webserver.content_send("<p><b>Resize app Partitions.</b><br>It is highly recommended to set<br>both partition with the same size.<br>SPIFFS is adjusted accordinlgy.</p>")
+      webserver.content_send("<p><b>Resize app Partitions.</b><br>It is highly recommended to set<br>both partition with the same size.<br>Filesystem is adjusted accordinlgy.</p>")
 
       webserver.content_send("<form action='/part_mgr' method='post' ")
       webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
 
       webserver.content_send("<hr><p><b>app0:</b></p>")
-      webserver.content_send(string.format("<p><b>Min:</b> %i KB</p>", app0_used_kb))
-      webserver.content_send(string.format("<p><b>Max:</b> %i KB</p>", self.app_size_max))
+      webserver.content_send(format("<p><b>Min:</b> %i KB</p>", app0_used_kb))
+      webserver.content_send(format("<p><b>Max:</b> %i KB</p>", self.app_size_max))
       webserver.content_send("<p><b>New:</b> (multiple of 64 KB)</p>")
-      webserver.content_send(string.format("<input type='number' min='%d' max='%d' step='64' name='app0' value='%i'>", app0_used_kb, self.app_size_max, app0_size_kb))
+      webserver.content_send(format("<input type='number' min='%d' max='%d' step='64' name='app0' value='%i'>", app0_used_kb, self.app_size_max, app0_size_kb))
 
       webserver.content_send("<hr><p><b>app1:</b></p>")
-      webserver.content_send(string.format("<p><b>Min:</b> %i KB</p>", self.app_size_min))
-      webserver.content_send(string.format("<p><b>Max:</b> %i KB</p>", self.app_size_max))
+      webserver.content_send(format("<p><b>Min:</b> %i KB</p>", self.app_size_min))
+      webserver.content_send(format("<p><b>Max:</b> %i KB</p>", self.app_size_max))
       webserver.content_send("<p><b>New:</b> (multiple of 64 KB)</p>")
-      webserver.content_send(string.format("<input type='number' min='%d' max='%d' step='64' name='app1' value='%i'>", self.app_size_min, self.app_size_max, app1_size_kb))
+      webserver.content_send(format("<input type='number' min='%d' max='%d' step='64' name='app1' value='%i'>", self.app_size_min, self.app_size_max, app1_size_kb))
 
       webserver.content_send("<p></p><button name='resize' class='button bred'>Resize Partitions</button></form></p>")
   
@@ -646,22 +644,24 @@ class Partition_manager_UI
   #######################################################################
   def page_part_mgr()
     import webserver
-    import string
+    import partition_core
     if !webserver.check_privileged_access() return nil end
-    var p = partition.Partition()
+    var p = partition_core.Partition()
 
     webserver.content_start("Partition Manager")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     # webserver.content_send("<p style='width:340px;'><b style='color:#f56'>Warning:</b> This can brick your device. Don't use unless you know what you are doing.</p>")
-    webserver.content_send("<fieldset><legend><b>&nbsp;Partition Manager</b></legend><p></p>")
+    webserver.content_send("<fieldset><legend><b>&nbsp;Partition Manager&nbsp;</b></legend><p></p>")
     webserver.content_send("<p style='width:320px;'><b style='color:#f56'>Warning:</b> This can brick your device.</p>")
     self.page_show_partitions(p)
     webserver.content_send("<p></p></fieldset><p></p>")
 
-    webserver.content_send("<fieldset><legend><b>&nbsp;Re-partition</b></legend><p></p>")
-    self.page_show_repartition_asym(p)
-    webserver.content_send("<p></p></fieldset><p></p>")
+    if p.otadata.maxota > 0
+      webserver.content_send("<fieldset><legend><b>&nbsp;Re-partition&nbsp;</b></legend><p></p>")
+      self.page_show_repartition_asym(p)
+      webserver.content_send("<p></p></fieldset><p></p>")
+    end
 
     webserver.content_button(webserver.BUTTON_MANAGEMENT) #- button back to management page -#
     webserver.content_stop()                        #- end of web page -#
@@ -672,11 +672,11 @@ class Partition_manager_UI
   #######################################################################
   def page_part_ctl()
     import webserver
-    import string
+    import partition_core
     if !webserver.check_privileged_access() return nil end
 
     #- check that the partition is valid -#
-    var p = partition.Partition()
+    var p = partition_core.Partition()
 
     try
       #---------------------------------------------------------------------#
@@ -685,14 +685,14 @@ class Partition_manager_UI
       if webserver.has_arg("ota")
         #- OTA switch partition -#
         var ota_target = int(webserver.arg("ota"))
-        if ota_target < 0 || ota_target > p.ota_max() raise "value_error", string.format("Invalid partition #%d", ota_target) end
+        if ota_target < 0 || ota_target > p.ota_max() raise "value_error", format("Invalid partition #%d", ota_target) end
         var ota_slot = p.get_ota_slot(ota_target)
 
         if ota_slot == nil || ota_slot.get_image_size() < 0
-          raise "value_error", string.format("Invalid OTA slot #%d", ota_target)
+          raise "value_error", format("Invalid OTA slot #%d", ota_target)
         end
 
-        print(string.format("Trying to change active partition to %d", ota_target))
+        print(format("Trying to change active partition to %d", ota_target))
         #- do the change -#
         p.set_active(ota_target)
         p.otadata.save()   #- write to disk -#
@@ -703,22 +703,22 @@ class Partition_manager_UI
       #---------------------------------------------------------------------#
       # Resize the SPIFFS partition, generally to extend it to full free size
       #---------------------------------------------------------------------#
-      elif webserver.has_arg("spiffs_size")
+      elif webserver.has_arg("fs_size")
         #- SPIFFS size change -#
-        var spiffs_size_kb = int(webserver.arg("spiffs_size"))
+        var spiffs_size_kb = int(webserver.arg("fs_size"))
         var spiffs_slot = p.slots[-1]   # last slot
 
         var spiffs_max_size = ((tasmota.memory()['flash'] - (spiffs_slot.start / 1024)) / 16) * 16
         
-        if spiffs_slot == nil || !spiffs_slot.is_spiffs() raise "value_error", "Last slot is not SPIFFS type" end
+        if spiffs_slot == nil || !spiffs_slot.is_spiffs() raise "value_error", "Last slot is not FS type" end
         var flash_size_kb = tasmota.memory()['flash']
         if spiffs_size_kb < 0 || spiffs_size_kb > spiffs_max_size
-          raise "value_error", string.format("Invalid spiffs_size %i, should be between 0 and %i", spiffs_size_kb, spiffs_max_size)
+          raise "value_error", format("Invalid fs_size %i, should be between 0 and %i", spiffs_size_kb, spiffs_max_size)
         end
-        if spiffs_size_kb == spiffs_slot.size/1024 raise "value_error", "SPIFFS size unchanged, abort" end
+        if spiffs_size_kb == spiffs_slot.sz/1024 raise "value_error", "FS size unchanged, abort" end
 
         #- write the new SPIFFS partition size -#
-        spiffs_slot.size = spiffs_size_kb * 1024
+        spiffs_slot.sz = spiffs_size_kb * 1024
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
 
@@ -735,32 +735,32 @@ class Partition_manager_UI
         var app1 = p.get_ota_slot(1)
         var spiffs = p.slots[-1]
 
-        if !spiffs.is_spiffs() raise 'internal_error', 'No SPIFFS partition found' end
+        if !spiffs.is_spiffs() raise 'internal_error', 'No FS partition found' end
         if app0 == nil || app1 == nil
           raise "internal_error", "Unable to find partitions app0 and app1"
         end
         if p.ota_max() != 1
           raise "internal_error", "There are more than 2 OTA partition, abort"
         end
-        var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
         var flash_size_kb = tasmota.memory()['flash']
 
         var part_size_kb = int(webserver.arg("repartition"))
         if part_size_kb < app0_used_kb || part_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size %i KB, should be between %i and %i", part_size_kb, app0_used_kb, self.app_size_max)
+          raise "value_error", format("Invalid partition size %i KB, should be between %i and %i", part_size_kb, app0_used_kb, self.app_size_max)
         end
         if part_size_kb == app0_size_kb raise "value_error", "No change to partition size, abort" end
 
         #- all good, proceed -#
         # resize app0
-        app0.size = part_size_kb * 1024
+        app0.sz = part_size_kb * 1024
         # change app1
-        app1.start = app0.start + app0.size
-        app1.size = part_size_kb * 1024
+        app1.start = app0.start + app0.sz
+        app1.sz = part_size_kb * 1024
         # change spiffs
-        spiffs.start = app1.start + app1.size
-        spiffs.size = flash_size_kb * 1024 - spiffs.start
+        spiffs.start = app1.start + app1.sz
+        spiffs.sz = flash_size_kb * 1024 - spiffs.start
 
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
@@ -777,37 +777,37 @@ class Partition_manager_UI
         var app1 = p.get_ota_slot(1)
         var spiffs = p.slots[-1]
 
-        if !spiffs.is_spiffs() raise 'internal_error', 'No SPIFFS partition found' end
+        if !spiffs.is_spiffs() raise 'internal_error', 'No FS partition found' end
         if app0 == nil || app1 == nil
           raise "internal_error", "Unable to find partitions app0 and app1"
         end
         if p.ota_max() != 1
           raise "internal_error", "There are more than 2 OTA partition, abort"
         end
-        var app0_size_kb = ((app0.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app0_size_kb = ((app0.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var app0_used_kb = (((app0.get_image_size()) / 1024 / 64) + 1) * 64
-        var app1_size_kb = ((app1.size / 1024 + 63) / 64) * 64 # rounded to upper 64kb
+        var app1_size_kb = ((app1.sz / 1024 + 63) / 64) * 64 # rounded to upper 64kb
         var flash_size_kb = tasmota.memory()['flash']
 
         var part0_size_kb = int(webserver.arg("app0"))
         if part0_size_kb < app0_used_kb || part0_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size app%i %i KB, should be between %i and %i", 0, part0_size_kb, app0_used_kb, self.app_size_max)
+          raise "value_error", format("Invalid partition size app%i %i KB, should be between %i and %i", 0, part0_size_kb, app0_used_kb, self.app_size_max)
         end
         var part1_size_kb = int(webserver.arg("app1"))
         if part1_size_kb < self.app_size_min || part1_size_kb > self.app_size_max
-          raise "value_error", string.printf("Invalid partition size app%i %i KB, should be between %i and %i", 1, part1_size_kb, self.app_size_min, self.app_size_max)
+          raise "value_error", format("Invalid partition size app%i %i KB, should be between %i and %i", 1, part1_size_kb, self.app_size_min, self.app_size_max)
         end
         if part0_size_kb == app0_size_kb && part1_size_kb == app1_size_kb raise "value_error", "No change to partition sizes, abort" end
 
         #- all good, proceed -#
         # resize app0
-        app0.size = part0_size_kb * 1024
+        app0.sz = part0_size_kb * 1024
         # change app1
-        app1.start = app0.start + app0.size
-        app1.size = part1_size_kb * 1024
+        app1.start = app0.start + app0.sz
+        app1.sz = part1_size_kb * 1024
         # change spiffs
-        spiffs.start = app1.start + app1.size
-        spiffs.size = flash_size_kb * 1024 - spiffs.start
+        spiffs.start = app1.start + app1.sz
+        spiffs.sz = flash_size_kb * 1024 - spiffs.start
 
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
@@ -818,12 +818,12 @@ class Partition_manager_UI
         raise "value_error", "Unknown command"
       end
     except .. as e, m
-      print(string.format("BRY: Exception> '%s' - %s", e, m))
+      print(format("BRY: Exception> '%s' - %s", e, m))
       #- display error page -#
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-      webserver.content_send(string.format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
+      webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
       # webserver.content_send("<p></p></fieldset><p></p>")
 
       webserver.content_button(webserver.BUTTON_MANAGEMENT) #- button back to management page -#
@@ -847,6 +847,7 @@ partition.Partition_manager_UI = Partition_manager_UI
 
 #- create and register driver in Tasmota -#
 if tasmota
+  import partition_core
   var partition_manager_ui = partition.Partition_manager_UI()
   tasmota.add_driver(partition_manager_ui)
   ## can be removed if put in 'autoexec.bat'

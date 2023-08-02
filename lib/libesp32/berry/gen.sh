@@ -1,2 +1,8 @@
 #!/bin/bash
-python3 tools/pycoc/main.py -o generate src default ../berry_tasmota/src ../berry_mapping/src ../../libesp32_lvgl/lv_berry/src ../../libesp32_lvgl/lv_berry/generate -c default/berry_conf.h
+#
+# generate all precompiled Berry structures from multiple modules
+#
+# Included in the Platformio build process with `pio-tools/gen-berry-structures.py
+#
+rm -Rf ./generate/be_*.h
+python3 tools/coc/coc -o generate src default ../berry_tasmota/src ../berry_mapping/src ../berry_int64/src ../../libesp32_lvgl/lv_binding_berry/src ../berry_matter/src/solidify ../berry_matter/src ../../libesp32_lvgl/lv_binding_berry/src/solidify ../../libesp32_lvgl/lv_binding_berry/generate -c default/berry_conf.h

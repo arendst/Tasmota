@@ -11,7 +11,7 @@
  *  Created on: Jan 4, 2018
  *      Author: kolban
  */
-#include "sdkconfig.h"
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include <string.h>
@@ -130,7 +130,7 @@ void NimBLEBeacon::setManufacturerId(uint16_t manufacturerId) {
  */
 void NimBLEBeacon::setMinor(uint16_t minor) {
     m_beaconData.minor = ENDIAN_CHANGE_U16(minor);
-} // setMinior
+} // setMinor
 
 
 /**

@@ -266,7 +266,7 @@ stdAc::fanspeed_t IRTrotecESP::toCommonFanSpeed(const uint8_t spd) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRTrotecESP::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::TROTEC;
   result.power = _.Power;
   result.mode = toCommonMode(_.Mode);
@@ -601,7 +601,7 @@ stdAc::fanspeed_t IRTrotec3550::toCommonFanSpeed(const uint8_t spd) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRTrotec3550::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::TROTEC_3550;
   result.power = _.Power;
   result.mode = toCommonMode(_.Mode);

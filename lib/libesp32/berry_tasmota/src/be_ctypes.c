@@ -144,8 +144,6 @@ int be_ctypes_init(bvm *vm) {
 // copy ctypes_bytes, with same class and same content
 //
 int be_ctypes_copy(bvm *vm) {
-    size_t len;
-    const void * src = be_tobytes(vm, 1, &len);
     be_classof(vm, 1);
     // stack: 1/self + class_object
     be_call(vm, 0);     // call empty constructor to build empty resizable copy
@@ -184,7 +182,6 @@ int be_ctypes_copy(bvm *vm) {
 // arg2: name of the argument
 // The class has a `_def` static class attribute with the C low-level mapping definition
 int be_ctypes_member(bvm *vm) {
-    int argc = be_top(vm);
     be_getmember(vm, 1, "_def");
     const be_ctypes_structure_t *definitions;
     definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
@@ -267,8 +264,8 @@ int be_ctypes_member(bvm *vm) {
         }
         be_return(vm);
     }
-
-    be_return_nil(vm);
+    be_module_load(vm, be_newstr(vm, "undefined"));
+    be_return(vm);
 }
 
 // setmember takes 3 arguments:
@@ -276,8 +273,6 @@ int be_ctypes_member(bvm *vm) {
 // 2: name of member
 // 3: value
 int be_ctypes_setmember(bvm *vm) {
-    int argc = be_top(vm);
-
     // If the value is an instance, we call 'toint()' and replace the value
     if (be_isinstance(vm, 3)) {
 
@@ -294,8 +289,13 @@ int be_ctypes_setmember(bvm *vm) {
     }
 
     // If the value is a pointer, replace with an int of same value (works only on 32 bits CPU)
-    if (be_iscomptr(vm, 3)) {
-        void * v = be_tocomptr(vm, 3);
+    if (be_iscomptr(vm, 3) || be_isstring(vm, 3)) {
+        void* v;
+        if (be_iscomptr(vm, 3)) {
+            v = be_tocomptr(vm, 3);
+        } else {
+            v = be_tostring(vm, 3);
+        }         
         be_pushint(vm, (int32_t) v);
         be_moveto(vm, -1, 3);
         be_pop(vm, 1);
@@ -462,20 +462,11 @@ int be_ctypes_dyn_init(bvm *vm) {
 
 BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 
-#include "be_fixed_be_class_ctypes.h"
-#include "be_fixed_be_class_ctypes_dyn.h"
-
-void be_load_ctypes_lib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_ctypes);
-    be_setglobal(vm, "ctypes_bytes");
-    be_pop(vm, 1);
-    be_pushntvclass(vm, &be_class_ctypes_dyn);
-    be_setglobal(vm, "ctypes_bytes_dyn");
-    be_pop(vm, 1);
-}
+#include "be_fixed_be_class_ctypes_bytes.h"
+#include "be_fixed_be_class_ctypes_bytes_dyn.h"
 
 /* @const_object_info_begin
-class be_class_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes) {
+class be_class_ctypes_bytes (scope: global, name: ctypes_bytes, super: be_class_bytes) {
     _def, nil()
     copy, func(be_ctypes_copy)
     init, func(be_ctypes_init)
@@ -487,7 +478,7 @@ class be_class_ctypes (scope: global, name: ctypes_bytes, super: be_class_bytes)
 @const_object_info_end */
 
 /* @const_object_info_begin
-class be_class_ctypes_dyn (scope: global, name: ctypes_bytes_dyn, super: be_class_ctypes) {
+class be_class_ctypes_bytes_dyn (scope: global, name: ctypes_bytes_dyn, super: be_class_ctypes_bytes) {
     _def, var
     init, func(be_ctypes_dyn_init)
 }

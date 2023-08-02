@@ -1,4 +1,7 @@
 # TouchScreen calibration
+#
+# rm DisplayCalibrate.tapp; zip -j -0 DisplayCalibrate.tapp ts_calibrate/*
+#
 var ts_calibrate = module("ts_calibrate")
 
 ts_calibrate.init = def (m)
@@ -104,8 +107,8 @@ ts_calibrate.init = def (m)
     end
 
     # draw cross
-    def draw_cross(x, y, size)
-      var sz2 = size / 2
+    def draw_cross(x, y, sz)
+      var sz2 = sz / 2
       self.p1.x = x - sz2
       self.p1.y = y
       self.p2.x = x + sz2
@@ -162,7 +165,6 @@ ts_calibrate.init = def (m)
     # All values are computed and correct, log results and store to 'display.ini'
     def finish()
       # calibration is finished, do the housekeeping
-      import string
       var p0x = real(self.raw_pts[0].x)
       var p0y = real(self.raw_pts[0].y)
       var p1x = real(self.raw_pts[1].x)
@@ -171,7 +173,7 @@ ts_calibrate.init = def (m)
       var p2y = real(self.raw_pts[2].y)
       var p3x = real(self.raw_pts[3].x)
       var p3y = real(self.raw_pts[3].y)
-      tasmota.log(string.format("TS : Calibration (%i,%i) - (%i,%i) - (%i,%i) - (%i,%i)",
+      tasmota.log(format("TS : Calibration (%i,%i) - (%i,%i) - (%i,%i) - (%i,%i)",
                                 int(p0x), int(p0y), int(p1x), int(p1y), int(p2x), int(p2y), int(p3x), int(p3y))
                                 , 2)
       var m_line = self.calc_geometry(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, self.hres, self.vres, 20)
@@ -251,9 +253,8 @@ ts_calibrate.init = def (m)
 
     def calc_geometry(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, hres, vres, padding)
       import math
-      import string
 
-      tasmota.log(string.format("TS : Geometry (%i,%i) (%i,%i) (%i,%i) (%i,%i) - %ix%i pad %i",
+      tasmota.log(format("TS : Geometry (%i,%i) (%i,%i) (%i,%i) (%i,%i) - %ix%i pad %i",
                                   int(p0x), int(p0y),
                                   int(p1x), int(p1y),
                                   int(p2x), int(p2y),
@@ -311,8 +312,8 @@ ts_calibrate.init = def (m)
       ymax += extend_y
       tasmota.log("final xmin=" + str(xmin) + " xmax=" + str(xmax) + " ymin=" + str(ymin) + " ymax=" + str(ymax), 4)
 
-      var M_string = string.format(":M,%i,%i,%i,%i", int(xmin), int(xmax), int(ymin), int(ymax))
-      tasmota.log(string.format("TS : Add this to display.ini '%s'", M_string))
+      var M_string = format(":M,%i,%i,%i,%i", int(xmin), int(xmax), int(ymin), int(ymax))
+      tasmota.log(format("TS : Add this to display.ini '%s'", M_string))
       return M_string
     end
   end

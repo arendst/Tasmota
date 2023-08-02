@@ -69,6 +69,7 @@ typedef enum {
 
 typedef struct _lv_fs_drv_t {
     char letter;
+    uint16_t cache_size;
     bool (*ready_cb)(struct _lv_fs_drv_t * drv);
 
     void * (*open_cb)(struct _lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode);
@@ -88,8 +89,16 @@ typedef struct _lv_fs_drv_t {
 } lv_fs_drv_t;
 
 typedef struct {
+    uint32_t start;
+    uint32_t end;
+    uint32_t file_position;
+    void * buffer;
+} lv_fs_file_cache_t;
+
+typedef struct {
     void * file_d;
     lv_fs_drv_t * drv;
+    lv_fs_file_cache_t * cache;
 } lv_fs_file_t;
 
 typedef struct {
@@ -167,8 +176,8 @@ lv_fs_res_t lv_fs_read(lv_fs_file_t * file_p, void * buf, uint32_t btr, uint32_t
  * Write into a file
  * @param file_p    pointer to a lv_fs_file_t variable
  * @param buf       pointer to a buffer with the bytes to write
- * @param btr       Bytes To Write
- * @param br        the number of real written bytes (Bytes Written). NULL if unused.
+ * @param btw       Bytes To Write
+ * @param bw        the number of real written bytes (Bytes Written). NULL if unused.
  * @return          LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
 lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, uint32_t * bw);

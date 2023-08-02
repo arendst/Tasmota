@@ -252,7 +252,6 @@ int32_t Unishox::unishox_compress(const char *p_in, size_t p_len, char *p_out, s
   out = p_out;
   len_out = p_len_out;
 
-  char *ptr;
   byte bits;
 
   int ll;

@@ -6,6 +6,24 @@ Sets the number of simultaneous connections (esp controller max is 9)
 - Default value is 3  
 <br/>
 
+`CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED`
+
+Enable/disable storing the timestamp when an attribute value is updated  
+This allows for checking the last update time using getTimeStamp() or getValue(time_t*)  
+If disabled, the timestamp returned from these functions will be 0.  
+Disabling timestamps will reduce the memory used for each value.  
+1 = Enabled, 0 = Disabled; Default = Disabled  
+<br/>
+
+`CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH`
+
+Set the default allocation size (bytes) for each attribute.  
+If not specified when the constructor is called. This is also the size used when a remote  
+characteristic or descriptor is constructed before a value is read/notifed.  
+Increasing this will reduce reallocations but increase memory footprint.  
+Default value is 20. Range: 1 : 512 (BLE_ATT_ATTR_MAX_LEN)  
+ <br/>
+ 
 `CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU`  
 
 Sets the default MTU size.  
@@ -22,6 +40,13 @@ Set the default device name
 
 If defined, enables debug log messages from the NimBLE host  
 - Uses approx. 32kB of flash memory.  
+<br/>
+
+`CONFIG_NIMBLE_CPP_LOG_LEVEL`   
+
+Define to set the debug log message level from the NimBLE CPP Wrapper.  
+If not defined it will use the same value as the Arduino core debug level.  
+Values: 0 = NONE, 1 = ERROR, 2 = WARNING, 3 = INFO, 4+ = DEBUG  
 <br/>
 
 `CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT`  
@@ -115,3 +140,41 @@ Set the task stack size for the NimBLE core.
 - Default is 4096  
 <br/>
 
+`CONFIG_NIMBLE_STACK_USE_MEM_POOLS`
+
+ Enable the use of memory pools for stack operations. This will use slightly more RAM but may provide more stability.
+ 
+- Options: 0 or 1, default is disabled (0)  
+<br/>
+
+### Extended advertising settings, For use with ESP32C3, ESP32S3, ESP32H2 ONLY!
+ 
+`CONFIG_BT_NIMBLE_EXT_ADV`
+
+Set to 1 to enable extended advertising features.
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_EXT_ADV_INSTANCES`
+
+Sets the max number of extended advertising instances 
+- Range: 0 - 4
+- Default is 1
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_EXT_ADV_DATA_LEN`
+
+Set the max extended advertising data size,
+- Range: 31 - 1650
+- Default is 255
+<br/>
+
+`CONFIG_BT_NIMBLE_ENABLE_PERIODIC_ADV`
+
+Set to 1 to enable periodic advertising.
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_PERIODIC_SYNCS`
+
+Set the maximum number of periodically synced devices.
+- Range: 1 - 8
+- Default is 1

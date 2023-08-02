@@ -17,6 +17,11 @@ extern "C" {
 
 #if LV_USE_ROLLER != 0
 
+/*Testing of dependencies*/
+#if LV_USE_LABEL == 0
+#error "lv_roller: lv_label is required. Enable it in lv_conf.h (LV_USE_ROLLER 1)"
+#endif
+
 #include "../core/lv_obj.h"
 #include "lv_label.h"
 
@@ -53,7 +58,7 @@ extern const lv_obj_class_t lv_roller_class;
  **********************/
 
 /**
- * Create a roller objects
+ * Create a roller object
  * @param parent    pointer to an object, it will be the parent of the new roller.
  * @return          pointer to the created roller
  */

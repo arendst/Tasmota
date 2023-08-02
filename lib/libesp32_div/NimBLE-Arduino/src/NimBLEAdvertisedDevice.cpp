@@ -11,16 +11,16 @@
  *  Created on: Jul 3, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
 #include "NimBLEDevice.h"
 #include "NimBLEAdvertisedDevice.h"
 #include "NimBLEUtils.h"
 #include "NimBLELog.h"
+
+#include <climits>
 
 static const char* LOG_TAG = "NimBLEAdvertisedDevice";
 
@@ -52,9 +52,9 @@ NimBLEAddress NimBLEAdvertisedDevice::getAddress() {
  * @brief Get the advertisement type.
  * @return The advertising type the device is reporting:
  * * BLE_HCI_ADV_TYPE_ADV_IND            (0) - indirect advertising
- * * BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD  (1) - direct advertisng - high duty cycle
+ * * BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD  (1) - direct advertising - high duty cycle
  * * BLE_HCI_ADV_TYPE_ADV_SCAN_IND       (2) - indirect scan response
- * * BLE_HCI_ADV_TYPE_ADV_NONCONN_IND    (3) - indirect advertisng - not connectable
+ * * BLE_HCI_ADV_TYPE_ADV_NONCONN_IND    (3) - indirect advertising - not connectable
  * * BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD  (4) - direct advertising - low duty cycle
  */
 uint8_t NimBLEAdvertisedDevice::getAdvType() {
@@ -66,12 +66,12 @@ uint8_t NimBLEAdvertisedDevice::getAdvType() {
  * @brief Get the appearance.
  *
  * A %BLE device can declare its own appearance.  The appearance is how it would like to be shown to an end user
- * typcially in the form of an icon.
+ * typically in the form of an icon.
  *
  * @return The appearance of the advertised device.
  */
 uint16_t NimBLEAdvertisedDevice::getAppearance() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_APPEARANCE, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -89,7 +89,7 @@ uint16_t NimBLEAdvertisedDevice::getAppearance() {
  * @return The advertisement interval in 0.625ms units.
  */
 uint16_t NimBLEAdvertisedDevice::getAdvInterval() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_ADV_ITVL, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -107,7 +107,7 @@ uint16_t NimBLEAdvertisedDevice::getAdvInterval() {
  * @return The preferred min connection interval in 1.25ms units.
  */
 uint16_t NimBLEAdvertisedDevice::getMinInterval() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_SLAVE_ITVL_RANGE, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -125,7 +125,7 @@ uint16_t NimBLEAdvertisedDevice::getMinInterval() {
  * @return The preferred max connection interval in 1.25ms units.
  */
 uint16_t NimBLEAdvertisedDevice::getMaxInterval() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_SLAVE_ITVL_RANGE, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -143,7 +143,7 @@ uint16_t NimBLEAdvertisedDevice::getMaxInterval() {
  * @return The manufacturer data of the advertised device.
  */
 std::string NimBLEAdvertisedDevice::getManufacturerData() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_MFG_DATA, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -161,7 +161,7 @@ std::string NimBLEAdvertisedDevice::getManufacturerData() {
  * @return The URI data.
  */
 std::string NimBLEAdvertisedDevice::getURI() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_URI, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -179,7 +179,7 @@ std::string NimBLEAdvertisedDevice::getURI() {
  * @return The name of the advertised device.
  */
 std::string NimBLEAdvertisedDevice::getName() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_COMP_NAME, 0, &data_loc) > 0 ||
        findAdvField(BLE_HS_ADV_TYPE_INCOMP_NAME, 0, &data_loc) > 0)
@@ -216,7 +216,7 @@ NimBLEScan* NimBLEAdvertisedDevice::getScan() {
  * @brief Get the number of target addresses.
  * @return The number of addresses.
  */
-size_t NimBLEAdvertisedDevice::getTargetAddressCount() {
+uint8_t NimBLEAdvertisedDevice::getTargetAddressCount() {
     uint8_t count = 0;
 
     count = findAdvField(BLE_HS_ADV_TYPE_PUBLIC_TGT_ADDR);
@@ -234,7 +234,7 @@ size_t NimBLEAdvertisedDevice::getTargetAddressCount() {
 NimBLEAddress NimBLEAdvertisedDevice::getTargetAddress(uint8_t index) {
     ble_hs_adv_field *field = nullptr;
     uint8_t count = 0;
-    uint8_t data_loc = 0xFF;
+    size_t data_loc = ULONG_MAX;
 
     index++;
     count = findAdvField(BLE_HS_ADV_TYPE_PUBLIC_TGT_ADDR, index, &data_loc);
@@ -244,7 +244,7 @@ NimBLEAddress NimBLEAdvertisedDevice::getTargetAddress(uint8_t index) {
         count = findAdvField(BLE_HS_ADV_TYPE_RANDOM_TGT_ADDR, index, &data_loc);
     }
 
-    if(count > 0 && data_loc != 0xFF) {
+    if(count > 0 && data_loc != ULONG_MAX) {
         field = (ble_hs_adv_field *)&m_payload[data_loc];
         if(field->length < index *  BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN) {
             index -= count - field->length / BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN;
@@ -266,9 +266,9 @@ NimBLEAddress NimBLEAdvertisedDevice::getTargetAddress(uint8_t index) {
 std::string NimBLEAdvertisedDevice::getServiceData(uint8_t index) {
     ble_hs_adv_field *field = nullptr;
     uint8_t bytes;
-    uint8_t data_loc = findServiceData(index, &bytes);
+    size_t data_loc = findServiceData(index, &bytes);
 
-    if(data_loc != 0xFF) {
+    if(data_loc != ULONG_MAX) {
         field = (ble_hs_adv_field *)&m_payload[data_loc];
         if(field->length > bytes) {
             return std::string((char*)(field->value + bytes), field->length - bytes - 1);
@@ -288,9 +288,9 @@ std::string NimBLEAdvertisedDevice::getServiceData(const NimBLEUUID &uuid) {
     ble_hs_adv_field *field = nullptr;
     uint8_t bytes;
     uint8_t index = 0;
-    uint8_t data_loc = findServiceData(index, &bytes);
+    size_t  data_loc = findServiceData(index, &bytes);
+    size_t  plSize = m_payload.size() - 2;
     uint8_t uuidBytes = uuid.bitSize() / 8;
-    uint8_t plSize = m_payload.size() - 2;
 
     while(data_loc < plSize) {
         field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -308,16 +308,16 @@ std::string NimBLEAdvertisedDevice::getServiceData(const NimBLEUUID &uuid) {
 
 
 /**
- * @brief Get the UUID of the serice data at the index.
+ * @brief Get the UUID of the service data at the index.
  * @param [in] index The index of the service data UUID requested.
  * @return The advertised service data UUID or an empty UUID if not found.
  */
 NimBLEUUID NimBLEAdvertisedDevice::getServiceDataUUID(uint8_t index) {
     ble_hs_adv_field *field = nullptr;
     uint8_t bytes;
-    uint8_t data_loc = findServiceData(index, &bytes);
+    size_t data_loc = findServiceData(index, &bytes);
 
-    if(data_loc != 0xFF) {
+    if(data_loc != ULONG_MAX) {
         field = (ble_hs_adv_field *)&m_payload[data_loc];
         if(field->length >= bytes) {
             return NimBLEUUID(field->value, bytes, false);
@@ -332,10 +332,10 @@ NimBLEUUID NimBLEAdvertisedDevice::getServiceDataUUID(uint8_t index) {
  * @brief Find the service data at the index.
  * @param [in] index The index of the service data to find.
  * @param [in] bytes A pointer to storage for the number of the bytes in the UUID.
- * @return The index in the vector where the data is located, 0xFF if not found.
+ * @return The index in the vector where the data is located, ULONG_MAX if not found.
  */
-uint8_t NimBLEAdvertisedDevice::findServiceData(uint8_t index, uint8_t *bytes) {
-    uint8_t data_loc = 0;
+size_t NimBLEAdvertisedDevice::findServiceData(uint8_t index, uint8_t *bytes) {
+    size_t data_loc = 0;
     uint8_t found = 0;
 
     *bytes = 0;
@@ -360,7 +360,7 @@ uint8_t NimBLEAdvertisedDevice::findServiceData(uint8_t index, uint8_t *bytes) {
         return data_loc;
     }
 
-    return 0xFF;
+    return ULONG_MAX;
 }
 
 
@@ -368,7 +368,7 @@ uint8_t NimBLEAdvertisedDevice::findServiceData(uint8_t index, uint8_t *bytes) {
  * @brief Get the count of advertised service data UUIDS
  * @return The number of service data UUIDS in the vector.
  */
-size_t NimBLEAdvertisedDevice::getServiceDataCount() {
+uint8_t NimBLEAdvertisedDevice::getServiceDataCount() {
     uint8_t count = 0;
 
     count += findAdvField(BLE_HS_ADV_TYPE_SVC_DATA_UUID16);
@@ -386,7 +386,7 @@ size_t NimBLEAdvertisedDevice::getServiceDataCount() {
  */
 NimBLEUUID NimBLEAdvertisedDevice::getServiceUUID(uint8_t index) {
     uint8_t count = 0;
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
     uint8_t uuidBytes = 0;
     uint8_t type = BLE_HS_ADV_TYPE_INCOMP_UUIDS16;
     ble_hs_adv_field *field = nullptr;
@@ -433,7 +433,7 @@ NimBLEUUID NimBLEAdvertisedDevice::getServiceUUID(uint8_t index) {
  * @brief Get the number of services advertised
  * @return The count of services in the advertising packet.
  */
-size_t NimBLEAdvertisedDevice::getServiceUUIDCount() {
+uint8_t NimBLEAdvertisedDevice::getServiceUUIDCount() {
     uint8_t count = 0;
 
     count += findAdvField(BLE_HS_ADV_TYPE_INCOMP_UUIDS16);
@@ -448,7 +448,7 @@ size_t NimBLEAdvertisedDevice::getServiceUUIDCount() {
 
 
 /**
- * @brief Check advertised services for existance of the required UUID
+ * @brief Check advertised services for existence of the required UUID
  * @param [in] uuid The service uuid to look for in the advertisement.
  * @return Return true if service is advertised
  */
@@ -469,7 +469,7 @@ bool NimBLEAdvertisedDevice::isAdvertisingService(const NimBLEUUID &uuid) {
  * @return The TX Power of the advertised device.
  */
 int8_t NimBLEAdvertisedDevice::getTXPower() {
-    uint8_t data_loc = 0;
+    size_t data_loc = 0;
 
     if(findAdvField(BLE_HS_ADV_TYPE_TX_PWR_LVL, 0, &data_loc) > 0) {
         ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
@@ -583,17 +583,60 @@ bool NimBLEAdvertisedDevice::haveTXPower() {
 } // haveTXPower
 
 
-uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, uint8_t *data_loc) {
-    ble_hs_adv_field *field = nullptr;
-    uint8_t data = 0;
-    uint8_t length = m_payload.size();
-    uint8_t count = 0;
+#if CONFIG_BT_NIMBLE_EXT_ADV
+/**
+ * @brief Get the set ID of the extended advertisement.
+ * @return The set ID.
+ */
+uint8_t NimBLEAdvertisedDevice::getSetId() {
+    return m_sid;
+} // getSetId
 
-    if(length < 2) {
+
+/**
+ * @brief Get the primary PHY used by this advertisement.
+ * @return The PHY type, one of:
+ *  * BLE_HCI_LE_PHY_1M
+ *  * BLE_HCI_LE_PHY_CODED
+ */
+uint8_t NimBLEAdvertisedDevice::getPrimaryPhy() {
+    return m_primPhy;
+} // getPrimaryPhy
+
+
+/**
+ * @brief Get the primary PHY used by this advertisement.
+ * @return The PHY type, one of:
+ *  * BLE_HCI_LE_PHY_1M
+ *  * BLE_HCI_LE_PHY_2M
+ *  * BLE_HCI_LE_PHY_CODED
+ */
+uint8_t NimBLEAdvertisedDevice::getSecondaryPhy() {
+    return m_secPhy;
+} // getSecondaryPhy
+
+
+/**
+ * @brief Get the periodic interval of the advertisement.
+ * @return The periodic advertising interval, 0 if not periodic advertising.
+ */
+uint16_t NimBLEAdvertisedDevice::getPeriodicInterval() {
+    return m_periodicItvl;
+} // getPeriodicInterval
+#endif
+
+
+uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, size_t * data_loc) {
+    ble_hs_adv_field *field = nullptr;
+    size_t  length = m_payload.size();
+    size_t  data   = 0;
+    uint8_t count  = 0;
+
+    if (length < 3) {
         return count;
     }
 
-    while (length > 1) {
+    while (length > 2) {
         field = (ble_hs_adv_field*)&m_payload[data];
 
         if (field->length >= length) {
@@ -601,7 +644,7 @@ uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, uint8_
         }
 
         if (field->type == type) {
-            switch(type) {
+            switch (type) {
                 case BLE_HS_ADV_TYPE_INCOMP_UUIDS16:
                 case BLE_HS_ADV_TYPE_COMP_UUIDS16:
                     count += field->length / 2;
@@ -627,8 +670,8 @@ uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, uint8_
                     break;
             }
 
-            if(data_loc != nullptr) {
-                if(index == 0 || count >= index) {
+            if (data_loc != nullptr) {
+                if (index == 0 || count >= index) {
                     break;
                 }
             }
@@ -638,7 +681,7 @@ uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, uint8_
         data += 1 + field->length;
     }
 
-    if(data_loc != nullptr && field != nullptr) {
+    if (data_loc != nullptr && field != nullptr) {
         *data_loc = data;
     }
 
@@ -659,8 +702,13 @@ void NimBLEAdvertisedDevice::setAddress(NimBLEAddress address) {
  * @brief Set the adFlag for this device.
  * @param [in] advType The advertisement flag data from the advertisement.
  */
-void NimBLEAdvertisedDevice::setAdvType(uint8_t advType) {
+void NimBLEAdvertisedDevice::setAdvType(uint8_t advType, bool isLegacyAdv) {
     m_advType = advType;
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    m_isLegacyAdv = isLegacyAdv;
+#else
+    (void)isLegacyAdv;
+#endif
 } // setAdvType
 
 
@@ -705,10 +753,10 @@ std::string NimBLEAdvertisedDevice::toString() {
         res += val;
     }
 
-    if(haveServiceData()) {
-        size_t count = getServiceDataCount();
+    if (haveServiceData()) {
+        uint8_t count = getServiceDataCount();
         res += "\nService Data:";
-        for(size_t i = 0; i < count; i++) {
+        for(uint8_t i = 0; i < count; i++) {
             res += "\nUUID: " + std::string(getServiceDataUUID(i));
             res += ", Data: " + getServiceData(i);
         }
@@ -746,7 +794,7 @@ void NimBLEAdvertisedDevice::setPayload(const uint8_t *payload, uint8_t length, 
 
 /**
  * @brief Get the length of the advertisement data in the payload.
- * @return The number of bytes in the payload that is from the advertisment.
+ * @return The number of bytes in the payload that is from the advertisement.
  */
 uint8_t NimBLEAdvertisedDevice::getAdvLength() {
     return m_advLength;
@@ -784,6 +832,33 @@ size_t NimBLEAdvertisedDevice::getPayloadLength() {
 } // getPayloadLength
 
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+/**
+ * @brief Check if this device is advertising as connectable.
+ * @return True if the device is connectable.
+ */
+bool NimBLEAdvertisedDevice::isConnectable() {
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    if (m_isLegacyAdv) {
+        return m_advType == BLE_HCI_ADV_RPT_EVTYPE_ADV_IND ||
+               m_advType == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND;
+    }
+#endif
+    return (m_advType & BLE_HCI_ADV_CONN_MASK) ||
+           (m_advType & BLE_HCI_ADV_DIRECT_MASK);
+} // isConnectable
+
+
+/**
+ * @brief Check if this advertisement is a legacy or extended type
+ * @return True if legacy (Bluetooth 4.x), false if extended (bluetooth 5.x).
+ */
+bool NimBLEAdvertisedDevice::isLegacyAdvertisement() {
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    return m_isLegacyAdv;
+# else
+    return true;
+#endif
+} // isLegacyAdvertisement
+
+#endif /* CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 

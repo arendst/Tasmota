@@ -162,6 +162,7 @@ void IRGreeAC::setRaw(const uint8_t new_code[]) {
     else
       _model = gree_ac_remote_model_t::YBOFB;
   }
+  if (_.Mode == kGreeEcono) _model = gree_ac_remote_model_t::YX1FSF;
 }
 
 /// Calculate and set the checksum values for the internal state.
@@ -186,7 +187,8 @@ bool IRGreeAC::validChecksum(const uint8_t state[], const uint16_t length) {
 void IRGreeAC::setModel(const gree_ac_remote_model_t model) {
   switch (model) {
     case gree_ac_remote_model_t::YAW1F:
-    case gree_ac_remote_model_t::YBOFB: _model = model; break;
+    case gree_ac_remote_model_t::YBOFB:
+    case gree_ac_remote_model_t::YX1FSF: _model = model; break;
     default: _model = gree_ac_remote_model_t::YAW1F;
   }
 }
@@ -291,6 +293,7 @@ void IRGreeAC::setMode(const uint8_t new_mode) {
     case kGreeDry: setFan(1); break;
     case kGreeCool:
     case kGreeFan:
+    case kGreeEcono:
     case kGreeHeat: break;
     // If we get an unexpected mode, default to AUTO.
     default: mode = kGreeAuto;
@@ -352,11 +355,17 @@ bool IRGreeAC::getTurbo(void) const { return _.Turbo; }
 
 /// Set the Econo setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRGreeAC::setEcono(const bool on) { _.Econo = on; }
+void IRGreeAC::setEcono(const bool on) {
+  _.Econo = on;
+  if (on && getModel() == gree_ac_remote_model_t::YX1FSF)
+    setMode(kGreeEcono);
+}
 
 /// Get the Econo setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRGreeAC::getEcono(void) const { return _.Econo; }
+bool IRGreeAC::getEcono(void) const {
+  return _.Econo || getMode() == kGreeEcono;
+}
 
 /// Set the Vertical Swing mode of the A/C.
 /// @param[in] automatic Do we use the automatic setting?
@@ -575,13 +584,15 @@ stdAc::swingh_t IRGreeAC::toCommonSwingH(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRGreeAC::toCommon(void) {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::GREE;
   result.model = _model;
   result.power = _.Power;
   result.mode = toCommonMode(_.Mode);
   result.celsius = !_.UseFahrenheit;
   result.degrees = getTemp();
+  // no support for Sensor temp.
+  result.iFeel = getIFeel();
   result.fanspeed = toCommonFanSpeed(_.Fan);
   if (_.SwingAuto)
     result.swingv = stdAc::swingv_t::kAuto;
@@ -589,7 +600,7 @@ stdAc::state_t IRGreeAC::toCommon(void) {
     result.swingv = toCommonSwingV(_.SwingV);
   result.swingh = toCommonSwingH(_.SwingH);
   result.turbo = _.Turbo;
-  result.econo = _.Econo;
+  result.econo = getEcono();
   result.light = _.Light;
   result.clean = _.Xfan;
   result.sleep = _.Sleep ? 0 : -1;
@@ -608,8 +619,15 @@ String IRGreeAC::toString(void) {
   result.reserve(220);  // Reserve some heap for the string to reduce fragging.
   result += addModelToString(decode_type_t::GREE, _model, false);
   result += addBoolToString(_.Power, kPowerStr);
-  result += addModeToString(_.Mode, kGreeAuto, kGreeCool, kGreeHeat,
-                            kGreeDry, kGreeFan);
+  if (_model == gree_ac_remote_model_t::YX1FSF && _.Mode == kGreeEcono) {
+    result += addIntToString(_.Mode, kModeStr);
+    result += kSpaceLBraceStr;
+    result += kEconoStr;
+    result += ')';
+  } else {
+    result += addModeToString(_.Mode, kGreeAuto, kGreeCool, kGreeHeat,
+                              kGreeDry, kGreeFan);
+  }
   result += addTempToString(getTemp(), !_.UseFahrenheit);
   result += addFanToString(_.Fan, kGreeFanMax, kGreeFanMin, kGreeFanAuto,
                            kGreeFanAuto, kGreeFanMed);

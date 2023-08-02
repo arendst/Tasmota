@@ -21,16 +21,23 @@
 #ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #endif // ESP32_STAGE
-#include "tasmota_compat.h"
-#include "tasmota_version.h"                // Tasmota version information
-#include "tasmota.h"                        // Enumeration used in my_user_config.h
+#include "include/tasmota_compat.h"
+#include "include/tasmota_version.h"        // Tasmota version information
+#include "include/tasmota.h"                // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
 #ifdef USE_TLS
   #include <t_bearssl.h>                    // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
 #endif // USE_TLS
-#include "tasmota_globals.h"                // Function prototypes and global configuration
-#include "i18n.h"                           // Language support configured by my_user_config.h
-#include "tasmota_template.h"               // Hardware configuration
+#include "include/tasmota_globals.h"        // Function prototypes and global configuration
+#include "include/i18n.h"                   // Language support configured by my_user_config.h
+#include "include/tasmota_template.h"       // Hardware configuration
+
+// ------------------------------------------------------------------------------------------
+// If IPv6 is not support by the underlying esp-idf, disable it
+// ------------------------------------------------------------------------------------------
+#if !LWIP_IPV6
+  #undef USE_IPV6
+#endif
 
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
@@ -46,12 +53,14 @@
 #include <LList.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
   #define USE_DISCOVERY
   #endif
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 #ifdef USE_DISCOVERY
   #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
@@ -75,6 +84,7 @@
 #include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
+#include <SD_MMC.h>
 #endif  // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
@@ -82,7 +92,7 @@
 #endif  // USE_UFILESYS
 
 // Structs
-#include "settings.h"
+#include "include/tasmota_types.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "soc/efuse_reg.h"
@@ -94,7 +104,141 @@
 
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
+struct WIFI {
+  int last_tx_pwr;
+  uint32_t last_event = 0;                 // Last wifi connection event
+  uint32_t downtime = 0;                   // Wifi down duration
+  uint16_t link_count = 0;                 // Number of wifi re-connect
+  uint8_t counter;
+  uint8_t retry_init;
+  uint8_t retry;
+  uint8_t max_retry;
+  uint8_t status;
+  uint8_t config_type = 0;
+  uint8_t config_counter = 0;
+  uint8_t scan_state;
+  uint8_t bssid[6];
+  int8_t best_network_db;
+  uint8_t wifiTest = WIFI_NOT_TESTING;
+  uint8_t wifi_test_counter = 0;
+  uint16_t save_data_counter = 0;
+  uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  uint8_t phy_mode = 0;
+  bool wifi_test_AP_TIMEOUT = false;
+  bool wifi_Test_Restart = false;
+  bool wifi_Test_Save_SSID2 = false;
+  // IPv6 support, not guarded with #if LWIP_IPV6 to avoid bloating code with ifdefs
+  bool ipv6_local_link_called = false;           // did we already enable IPv6 Local-Link address, needs to be redone at each reconnect
+} Wifi;
+
+typedef struct {
+  uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
+  uint8_t       fast_reboot_count;         // 282
+  uint8_t       free_003[1];               // 283
+} TRtcReboot;
+TRtcReboot RtcReboot;
+#ifdef ESP32
+static RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+#endif  // ESP32
+
+typedef struct {
+  uint16_t      valid;                     // 290  (RTC memory offset 100)
+  uint8_t       oswatch_blocked_loop;      // 292
+  uint8_t       ota_loader;                // 293
+  uint32_t      ex_energy_kWhtoday;        // 294
+  uint32_t      ex_energy_kWhtotal;        // 298
+  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
+  power_t       power;                     // 2AC
+  EnergyUsage   energy_usage;              // 2B0
+  uint32_t      nextwakeup;                // 2C8
+  uint32_t      baudrate;                  // 2CC
+  uint32_t      ultradeepsleep;            // 2D0
+  uint16_t      deepsleep_slip;            // 2D4
+  uint8_t       improv_state;              // 2D6
+
+  uint8_t       free_2d7[1];               // 2D7
+
+  int32_t       energy_kWhtoday_ph[3];     // 2D8
+  int32_t       energy_kWhtotal_ph[3];     // 2E4
+  int32_t       energy_kWhexport_ph[3];    // 2F0
+  uint32_t      utc_time;                  // 2FC
+} TRtcSettings;
+TRtcSettings RtcSettings;
+#ifdef ESP32
+static RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+#endif  // ESP32
+
+struct TIME_T {
+  uint32_t      nanos;
+  uint8_t       second;
+  uint8_t       minute;
+  uint8_t       hour;
+  uint8_t       day_of_week;               // sunday is day 1
+  uint8_t       day_of_month;
+  uint8_t       month;
+  char          name_of_month[4];
+  uint16_t      day_of_year;
+  uint16_t      year;
+  uint32_t      days;
+  uint32_t      valid;
+} RtcTime;
+
+struct XDRVMAILBOX {
+  bool          grpflg;
+  bool          usridx;
+  uint16_t      command_code;
+  uint32_t      index;
+  uint32_t      data_len;
+  int32_t       payload;
+  char         *topic;
+  char         *data;
+  char         *command;
+} XdrvMailbox;
+
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
+
+#ifdef ESP32
+/*
+#if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
+    CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
+*/
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
+//#warning **** TasConsole use USB ****
+
+#if ARDUINO_USB_MODE
+//#warning **** TasConsole ARDUINO_USB_MODE ****
+HWCDC TasConsole;                           // ESP32C3/S3 embedded USB using JTAG interface
+bool tasconsole_serial = false;
+//#warning **** TasConsole uses HWCDC ****
+#else   // No ARDUINO_USB_MODE
+#include "USB.h"
+#include "USBCDC.h"
+USBCDC TasConsole;                          // ESP32Sx embedded USB interface
+bool tasconsole_serial = false;
+//#warning **** TasConsole uses USBCDC ****
+#endif  // ARDUINO_USB_MODE
+
+#else   // No USE_USB_CDC_CONSOLE
+HardwareSerial TasConsole = Serial;         // Fallback serial interface for ESP32C3, S2 and S3 if no USB_SERIAL defined
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // USE_USB_CDC_CONSOLE
+
+#else   // No ESP32C3, S2 or S3
+HardwareSerial TasConsole = Serial;         // Fallback serial interface for non ESP32C3, S2 and S3
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // ESP32C3, S2 or S3
+
+#else   // No ESP32
+HardwareSerial TasConsole = Serial;         // Only serial interface
+#endif  // ESP32
+
+char EmptyStr[1] = { 0 };                   // Provide a pointer destination to an empty char string
 
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
@@ -113,11 +257,14 @@ struct TasmotaGlobal_t {
   void *log_buffer_mutex;                   // Control access to log buffer
 
   power_t power;                            // Current copy of Settings->power
+  power_t power_latching;                   // Current state of single pin latching power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
+  power_t rel_bistable;                     // Relay bistable bitmap
   power_t last_power;                       // Last power set state
   power_t blink_power;                      // Blink power state
   power_t blink_powersave;                  // Blink start power save state
   power_t blink_mask;                       // Blink relay active mask
+  power_t power_on_delay_state;
 
   int serial_in_byte_counter;               // Index in receive buffer
 
@@ -134,6 +281,15 @@ struct TasmotaGlobal_t {
   int16_t save_data_counter;                // Counter and flag for config save to Flash
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
+  StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint16_t pwm_inverted;                    // PWM inverted flag (1 = inverted) - extended to 16 bits for ESP32
+#ifdef ESP32
+  int16_t pwm_cur_value[MAX_PWMS];          // Current effective values of PWMs as applied to GPIOs
+  int16_t pwm_cur_phase[MAX_PWMS];          // Current phase values of PWMs as applied to GPIOs
+  int16_t pwm_value[MAX_PWMS];              // Wanted values of PWMs after update - -1 means no change
+  int16_t pwm_phase[MAX_PWMS];              // Wanted phase of PWMs after update - -1 means no change
+#endif // ESP32
+
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
@@ -144,16 +300,18 @@ struct TasmotaGlobal_t {
   bool i2c_enabled;                         // I2C configured
 #ifdef ESP32
   bool i2c_enabled_2;                       // I2C configured, second controller on ESP32, Wire1
+  bool ota_factory;                         // Select safeboot binary
 #endif
   bool ntp_force_sync;                      // Force NTP sync
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
+  bool restart_deepsleep;                   // Do not restart but do deepsleep
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
-  bool enable_logging;                      // Enable logging
 
-  StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t user_globals[3];                  // User set global temp/hum/press
+  uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
@@ -172,12 +330,14 @@ struct TasmotaGlobal_t {
   uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
   uint8_t led_power;                        // LED power state
   uint8_t ledlnk_inverted;                  // Link LED inverted flag (1 = (0 = On, 1 = Off))
-  uint8_t pwm_inverted;                     // PWM inverted flag (1 = inverted)
+  // uint8_t pwm_inverted;                     // PWM inverted flag (1 = inverted) -- TODO
   uint8_t energy_driver;                    // Energy monitor configured
   uint8_t light_driver;                     // Light module configured
   uint8_t light_type;                       // Light types
   uint8_t serial_in_byte;                   // Received byte
+  uint8_t serial_skip;                      // Skip number of received messages
   uint8_t devices_present;                  // Max number of devices supported
+  uint8_t maxlog_level;                     // Max allowed log level
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings->seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings->syslog_level
@@ -185,10 +345,13 @@ struct TasmotaGlobal_t {
   uint8_t module_type;                      // Current copy of Settings->module or user template type
   uint8_t emulated_module_type;             // Emulated module type as requested by ESP32
   uint8_t last_source;                      // Last command source
+  uint8_t last_command_source;              // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
+  uint8_t power_on_delay;                   // Delay relay power on to reduce power surge (SetOption47)
 #ifdef USE_PWM_DIMMER
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
+  uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
 
 #ifndef SUPPORT_IF_STATEMENT
@@ -271,7 +434,9 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-  TasmotaGlobal.enable_logging = 1;
+  TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
+  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -292,11 +457,8 @@ void setup(void) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
     if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
   }
-  Serial.begin(TasmotaGlobal.baudrate);
-  Serial.println();
-//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
-  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+  // Init settings and logging preparing for AddLog use
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
   Settings = (TSettings*)malloc(sizeof(TSettings));             // Allocate in "new" 16k heap space
@@ -313,11 +475,38 @@ void setup(void) {
     Settings = (TSettings*)malloc(sizeof(TSettings));
   }
 
+  // Init command console (either serial or USB) preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_CDC_CONSOLE
+  TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
+//  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
+  TasConsole.begin(115200);    // Will always be 115200 bps
+#if !ARDUINO_USB_MODE
+  USB.begin();                 // This needs a serial console with DTR/DSR support
+#endif  // No ARDUINO_USB_MODE
+  TasConsole.println();
+  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
+#else   // No USE_USB_CDC_CONSOLE
+  TasConsole = Serial;
+#endif  // USE_USB_CDC_CONSOLE
+#else   // No ESP32C3, S2 or S3
+  TasConsole = Serial;
+#endif  // ESP32C3, S2 or S3
+#else   // No ESP32
+  TasConsole = Serial;
+#endif  // ESP32
+
+  // Ready for AddLog use
+
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
 #ifdef ESP32
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
-  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
+  // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
   if (FoundPSRAM() && !CanUsePSRAM()) {
     AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));
@@ -344,7 +533,7 @@ void setup(void) {
     Settings->baudrate = APP_BAUDRATE / 300;
     Settings->serial_config = TS_SERIAL_8N1;
   }
-  SetSerialBaudrate(Settings->baudrate * 300);  // Reset serial interface if current baudrate is different from requested baudrate
+  SetSerialInitBegin();                        // Reset serial interface if current baudrate and/or config is different from requested settings
 
   if (1 == RtcReboot.fast_reboot_count) {      // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
@@ -375,7 +564,7 @@ void setup(void) {
 #endif
 #endif  // USE_EMULATION
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&TasmotaGlobal, sizeof(TasmotaGlobal));
+//  AddLog(LOG_LEVEL_INFO, PSTR("DBG: TasmotaGlobal size %d, data %100_H"), sizeof(TasmotaGlobal), (uint8_t*)&TasmotaGlobal);
 
   if (Settings->param[P_BOOT_LOOP_OFFSET]) {         // SetOption36
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
@@ -387,9 +576,11 @@ void setup(void) {
             bitWrite(Settings->rule_enabled, i, 0);  // Disable rules causing boot loop
           }
         }
+        Settings->flag4.network_wifi = 1;            // Enable wifi if disabled
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +2) {  // Restarted 4 times
         Settings->rule_enabled = 0;                  // Disable all rules
+        Settings->flag3.shutter_mode = 0;            // disable shutter support
         TasmotaGlobal.no_autoexec = true;
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
@@ -407,8 +598,8 @@ void setup(void) {
 
   memcpy_P(TasmotaGlobal.version, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d%d.%02d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 2022.01
-  if (VERSION & 0xff) {  // Development or patched version 2022.01.10
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
+  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
     snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
   }
 
@@ -432,22 +623,23 @@ void setup(void) {
   snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
-  GpioInit();
-  ButtonInit();
-  SwitchInit();
+  GpioInit();                    // FUNC_SETUP_RING1 -> FUNC_SETUP_RING2 -> FUNC_MODULE_INIT -> FUNC_LED_LINK
+  ButtonInit();                  // FUNC_ADD_BUTTON
+  SwitchInit();                  // FUNC_ADD_SWITCH
 #ifdef ROTARY_V1
   RotaryInit();
 #endif  // ROTARY_V1
 #ifdef USE_BERRY
-  BerryInit();
+  if (!TasmotaGlobal.no_autoexec) {
+    BerryInit();                 // Load preinit.be
+  }
 #endif // USE_BERRY
 
-  XdrvCall(FUNC_PRE_INIT);
-  XsnsCall(FUNC_PRE_INIT);
+  XdrvXsnsCall(FUNC_PRE_INIT);   // FUNC_PRE_INIT
 
   TasmotaGlobal.init_state = INIT_GPIOS;
 
-  SetPowerOnState();
+  SetPowerOnState();             // FUNC_SET_POWER -> FUNC_SET_DEVICE_POWER
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
@@ -456,12 +648,13 @@ void setup(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 
-  XdrvCall(FUNC_INIT);
-  XsnsCall(FUNC_INIT);
+  XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
 #ifdef USE_SCRIPT
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
@@ -506,6 +699,7 @@ void SleepDelay(uint32_t mseconds) {
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+      XdrvXsnsCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
       delay(1);
     }
   } else {
@@ -514,8 +708,7 @@ void SleepDelay(uint32_t mseconds) {
 }
 
 void Scheduler(void) {
-  XdrvCall(FUNC_LOOP);
-  XsnsCall(FUNC_LOOP);
+  XdrvXsnsCall(FUNC_LOOP);
 
 // check LEAmDNS.h
 // MDNS.update() needs to be called in main loop
@@ -543,39 +736,40 @@ void Scheduler(void) {
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
-    XdrvCall(FUNC_EVERY_50_MSECOND);
-    XsnsCall(FUNC_EVERY_50_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_50_MSECOND);
   }
 
   static uint32_t state_100msecond = 0;            // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
-    XdrvCall(FUNC_EVERY_100_MSECOND);
-    XsnsCall(FUNC_EVERY_100_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_100_MSECOND);
   }
 
   static uint32_t state_250msecond = 0;            // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
-    XdrvCall(FUNC_EVERY_250_MSECOND);
-    XsnsCall(FUNC_EVERY_250_MSECOND);
+    XdrvXsnsCall(FUNC_EVERY_250_MSECOND);
   }
 
   static uint32_t state_second = 0;                // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
-    XdrvCall(FUNC_EVERY_SECOND);
-    XsnsCall(FUNC_EVERY_SECOND);
+    XdrvXsnsCall(FUNC_EVERY_SECOND);
   }
 
   if (!TasmotaGlobal.serial_local) { SerialInput(); }
+#ifdef ESP32
+  if (!tasconsole_serial) { TasConsoleInput(); }
+#endif  // ESP32
 
+#ifdef ESP8266
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
+#endif  // ESP8266
 }
 
 void loop(void) {
@@ -585,7 +779,7 @@ void loop(void) {
 
   uint32_t my_activity = millis() - my_sleep;
 
-  if (Settings->flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
+  if (Settings->flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
     SleepDelay(TasmotaGlobal.sleep);               // https://github.com/esp8266/Arduino/issues/2021
   } else {

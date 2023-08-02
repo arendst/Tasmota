@@ -23,10 +23,6 @@ extern "C" {
 #error "LV_COLOR_DEPTH 24 is deprecated. Use LV_COLOR_DEPTH 32 instead (lv_conf.h)"
 #endif
 
-#if LV_COLOR_DEPTH != 32 && LV_COLOR_SCREEN_TRANSP != 0
-#error "LV_COLOR_SCREEN_TRANSP requires LV_COLOR_DEPTH == 32. Set it in lv_conf.h"
-#endif
-
 #if LV_COLOR_DEPTH != 16 && LV_COLOR_16_SWAP != 0
 #error "LV_COLOR_16_SWAP requires LV_COLOR_DEPTH == 16. Set it in lv_conf.h"
 #endif
@@ -444,14 +440,21 @@ LV_ATTRIBUTE_FAST_MEM static inline lv_color_t lv_color_mix(lv_color_t c1, lv_co
 {
     lv_color_t ret;
 
-#if LV_COLOR_DEPTH == 16 && LV_COLOR_16_SWAP == 0
+#if LV_COLOR_DEPTH == 16 && LV_COLOR_MIX_ROUND_OFS == 0
+#if LV_COLOR_16_SWAP == 1
+    c1.full = c1.full << 8 | c1.full >> 8;
+    c2.full = c2.full << 8 | c2.full >> 8;
+#endif
     /*Source: https://stackoverflow.com/a/50012418/1999969*/
-    mix = (mix + 4) >> 3;
+    mix = (uint32_t)((uint32_t)mix + 4) >> 3;
     uint32_t bg = (uint32_t)((uint32_t)c2.full | ((uint32_t)c2.full << 16)) &
                   0x7E0F81F; /*0b00000111111000001111100000011111*/
     uint32_t fg = (uint32_t)((uint32_t)c1.full | ((uint32_t)c1.full << 16)) & 0x7E0F81F;
     uint32_t result = ((((fg - bg) * mix) >> 5) + bg) & 0x7E0F81F;
     ret.full = (uint16_t)((result >> 16) | result);
+#if LV_COLOR_16_SWAP == 1
+    ret.full = ret.full << 8 | ret.full >> 8;
+#endif
 #elif LV_COLOR_DEPTH != 1
     /*LV_COLOR_DEPTH == 8, 16 or 32*/
     LV_COLOR_SET_R(ret, LV_UDIV255((uint16_t)LV_COLOR_GET_R(c1) * mix + LV_COLOR_GET_R(c2) *
@@ -596,7 +599,36 @@ static inline lv_color_t lv_color_make(uint8_t r, uint8_t g, uint8_t b)
 
 static inline lv_color_t lv_color_hex(uint32_t c)
 {
+#if LV_COLOR_DEPTH == 16
+    lv_color_t r;
+#if LV_COLOR_16_SWAP == 0
+    /* Convert a 4 bytes per pixel in format ARGB32 to R5G6B5 format
+        naive way (by calling lv_color_make with components):
+                    r = ((c & 0xFF0000) >> 19)
+                    g = ((c & 0xFF00) >> 10)
+                    b = ((c & 0xFF) >> 3)
+                    rgb565 = (r << 11) | (g << 5) | b
+        That's 3 mask, 5 bitshift and 2 or operations
+
+        A bit better:
+                    r = ((c & 0xF80000) >> 8)
+                    g = ((c & 0xFC00) >> 5)
+                    b = ((c & 0xFF) >> 3)
+                    rgb565 = r | g | b
+        That's 3 mask, 3 bitshifts and 2 or operations */
+    r.full = (uint16_t)(((c & 0xF80000) >> 8) | ((c & 0xFC00) >> 5) | ((c & 0xFF) >> 3));
+#else
+    /* We want: rrrr rrrr GGGg gggg bbbb bbbb => gggb bbbb rrrr rGGG */
+    r.full = (uint16_t)(((c & 0xF80000) >> 16) | ((c & 0xFC00) >> 13) | ((c & 0x1C00) << 3) | ((c & 0xF8) << 5));
+#endif
+    return r;
+#elif LV_COLOR_DEPTH == 32
+    lv_color_t r;
+    r.full = c | 0xFF000000;
+    return r;
+#else /*LV_COLOR_DEPTH == 8*/
     return lv_color_make((uint8_t)((c >> 16) & 0xFF), (uint8_t)((c >> 8) & 0xFF), (uint8_t)(c & 0xFF));
+#endif
 }
 
 static inline lv_color_t lv_color_hex3(uint32_t c)
@@ -647,7 +679,7 @@ lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8);
 lv_color_hsv_t lv_color_to_hsv(lv_color_t color);
 
 /**
- * Just a wrapper around LV_COLOR_CHROMA_KEY because it might be more convenient to use a function is some cases
+ * Just a wrapper around LV_COLOR_CHROMA_KEY because it might be more convenient to use a function in some cases
  * @return LV_COLOR_CHROMA_KEY
  */
 static inline lv_color_t lv_color_chroma_key(void)

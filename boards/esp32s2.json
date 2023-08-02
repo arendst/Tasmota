@@ -7,10 +7,10 @@
     "extra_flags": "-DBOARD_HAS_PSRAM -DESP32_4M -DESP32S2",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
-    "flash_mode": "dout",
+    "flash_mode": "dio",
     "mcu": "esp32s2",
     "variant": "esp32s2",
-    "partitions": "esp32_partition_app1856k_spiffs320k.csv"
+    "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
   },
   "connectivity": [
     "wifi"
@@ -22,8 +22,16 @@
     "espidf",
     "arduino"
   ],
-  "name": "Espressif Generic ESP32-S2 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
+  "name": "Espressif Generic ESP32-S2 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "variants/tasmota/tasmota32s2-safeboot.bin"
+        ]
+      ]
+    },
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
     "maximum_size": 4194304,

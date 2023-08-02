@@ -178,11 +178,20 @@ static const char* parser_string(bvm *vm, const char *json)
                     }
                     default: be_free(vm, buf, len); return NULL; /* error */
                     }
+                } else if(ch >= 0 && ch <= 0x1f) {
+                    /* control characters must be escaped
+                       as per https://www.rfc-editor.org/rfc/rfc7159#section-7 */
+                    be_free(vm, buf, len);
+                    return NULL;
                 } else {
                     *dst++ = (char)ch;
                 }
             }
             be_assert(ch == '"');
+            /* require the stack to have some free space for the string, 
+               since parsing deeply nested objects might
+               crash the VM due to insufficient stack space. */
+            be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
             be_pushnstring(vm, buf, cast_int(dst - buf));
             be_free(vm, buf, len);
             return json + 1; /* skip '"' */
@@ -193,6 +202,7 @@ static const char* parser_string(bvm *vm, const char *json)
 
 static const char* parser_field(bvm *vm, const char *json)
 {
+    be_stack_require(vm, 2 + BE_STACK_FREE_MIN);
     if (json && *json == '"') {
         json = parser_string(vm, json);
         if (json) {
@@ -269,10 +279,101 @@ static const char* parser_array(bvm *vm, const char *json)
     return json;
 }
 
+static const char* parser_number(bvm *vm, const char *json)
+{
+    char c = *json++;
+    bbool is_neg = c == '-';
+    if(is_neg) {
+        c = *json++;
+        if(!is_digit(c)) {
+            /* minus must be followed by digit */
+            return NULL;
+        }
+    }
+    bint intv = 0;
+    if(c != '0') {
+        /* parse integer part */
+        while(is_digit(c)) {
+            intv = intv * 10 + c - '0';
+            c = *json++;
+        }
+
+    } else {
+        /* 
+            Number starts with zero, this is only allowed  
+            if the number is just '0' or 
+            it has a fractional part or exponent.
+        */
+       c = *json++;
+
+    }
+    if(c != '.' && c != 'e' && c != 'E') {
+        /* 
+           No fractional part or exponent follows, this is an integer.
+           If digits follow after it (for example due to a leading zero) 
+           this will cause an error in the calling function.
+        */
+        be_pushint(vm, intv * (is_neg ? -1 : 1));
+        json--;
+        return json;
+    }
+    breal realval = (breal) intv;
+    if(c == '.') {
+
+        breal deci = 0.0, point = 0.1;
+        /* fractional part */
+        c = *json++;
+        if(!is_digit(c)) {
+            /* decimal point must be followed by digit */
+            return NULL;
+        }
+        while (is_digit(c)) {
+            deci = deci + ((breal)c - '0') * point;
+            point *= (breal)0.1;
+            c = *json++;
+        }
+
+        realval += deci;
+    }
+    if(c == 'e' || c == 'E') {
+        c = *json++;
+        /* exponent part */
+        breal ratio = c == '-' ? (breal)0.1 : 10;
+        if (c == '+' || c == '-') {
+            c = *json++;
+            if(!is_digit(c)) {
+                return NULL;
+            }
+        }
+        if(!is_digit(c)) {
+            /* e and sign must be followed by digit */
+            return NULL;
+        }
+        unsigned int e = 0;
+        while (is_digit(c)) {
+            e = e * 10 + c - '0';
+            c = *json++;
+        }
+        /* e > 0 must be here to prevent infinite loops when e overflows */
+        while (e--) {
+            realval *= ratio;
+        }
+   }
+
+   be_pushreal(vm, realval * (is_neg ? -1.0 : 1.0));
+   json--;
+   return json;
+}
+
 /* parser json value */
 static const char* parser_value(bvm *vm, const char *json)
 {
     json = skip_space(json);
+    /*
+      Each value will push at least one thig to the stack, so we must ensure it's big enough.
+      We need to take special care to extend the stack in values which have variable length (arrays and objects)
+    */
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
     switch (*json) {
     case '{': /* object */
         return parser_object(vm, json);
@@ -288,11 +389,7 @@ static const char* parser_value(bvm *vm, const char *json)
         return parser_null(vm, json);
     default: /* number */
         if (*json == '-' || is_digit(*json)) {
-            /* check invalid JSON syntax: 0\d+ */
-            if (json[0] == '0' && is_digit(json[1])) {
-                return NULL;
-            }
-            return be_str2num(vm, json);
+           return parser_number(vm, json);
         }
     }
     return NULL;
@@ -313,6 +410,7 @@ static int m_json_load(bvm *vm)
 static void make_indent(bvm *vm, int stridx, int indent)
 {
     if (indent) {
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         char buf[MAX_INDENT * INDENT_WIDTH + 1];
         indent = (indent < MAX_INDENT ? indent : MAX_INDENT) * INDENT_WIDTH;
         memset(buf, INDENT_CHAR, indent);
@@ -326,6 +424,7 @@ static void make_indent(bvm *vm, int stridx, int indent)
 
 void string_dump(bvm *vm, int index)
 {
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
     be_tostring(vm, index); /* convert value to string */
     be_toescape(vm, index, 'u');
     be_pushvalue(vm, index);
@@ -333,11 +432,14 @@ void string_dump(bvm *vm, int index)
 
 static void object_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+
+    be_stack_require(vm, 3 + BE_STACK_FREE_MIN); /* 3 pushes outside the loop */
     be_getmember(vm, idx, ".p");
     be_pushstring(vm, fmt ? "{\n" : "{");
     be_pushiter(vm, -2); /* map iterator use 1 register */
     *indent += fmt;
     while (be_iter_hasnext(vm, -3)) {
+        be_stack_require(vm, 3 + BE_STACK_FREE_MIN); /* 3 pushes inside the loop */
         make_indent(vm, -2, fmt ? *indent : 0);
         be_iter_next(vm, -3);
         /* key.tostring() */
@@ -372,6 +474,7 @@ static void object_dump(bvm *vm, int *indent, int idx, int fmt)
 
 static void array_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+    be_stack_require(vm, 3 + BE_STACK_FREE_MIN); 
     be_getmember(vm, idx, ".p");
     be_pushstring(vm, fmt ? "[\n" : "[");
     be_pushiter(vm, -2);
@@ -382,6 +485,7 @@ static void array_dump(bvm *vm, int *indent, int idx, int fmt)
         value_dump(vm, indent, -1, fmt);
         be_strconcat(vm, -4);
         be_pop(vm, 2);
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         if (be_iter_hasnext(vm, -3)) {
             be_pushstring(vm, fmt ? ",\n" : ",");
             be_strconcat(vm, -3);
@@ -403,13 +507,16 @@ static void array_dump(bvm *vm, int *indent, int idx, int fmt)
 
 static void value_dump(bvm *vm, int *indent, int idx, int fmt)
 {
+    // be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
     if (is_object(vm, "map", idx)) { /* convert to json object */
         object_dump(vm, indent, idx, fmt);
     } else if (is_object(vm, "list", idx)) { /* convert to json array */
         array_dump(vm, indent, idx, fmt);
     } else if (be_isnil(vm, idx)) { /* convert to json null */
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_pushstring(vm, "null");
     } else if (be_isnumber(vm, idx) || be_isbool(vm, idx)) { /* convert to json number and boolean */
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_tostring(vm, idx);
         be_pushvalue(vm, idx); /* push to top */
     } else { /* convert to string */

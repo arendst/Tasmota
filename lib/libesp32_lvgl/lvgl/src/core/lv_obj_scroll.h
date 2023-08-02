@@ -15,6 +15,7 @@ extern "C" {
  *********************/
 #include "../misc/lv_area.h"
 #include "../misc/lv_anim.h"
+#include "../misc/lv_types.h"
 
 /*********************
  *      DEFINES
@@ -183,16 +184,26 @@ void lv_obj_get_scroll_end(struct _lv_obj_t  * obj, lv_point_t * end);
  *====================*/
 
 /**
- *
  * Scroll by a given amount of pixels
  * @param obj       pointer to an object to scroll
- * @param x         pixels to scroll horizontally
- * @param y         pixels to scroll vertically
+ * @param dx         pixels to scroll horizontally
+ * @param dy         pixels to scroll vertically
  * @param anim_en   LV_ANIM_ON: scroll with animation; LV_ANIM_OFF: scroll immediately
  * @note            > 0 value means scroll right/bottom (show the more content on the right/bottom)
- * @note
+ * @note            e.g. dy = -20 means scroll down 20 px
  */
 void lv_obj_scroll_by(struct _lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en);
+
+/**
+ * Scroll by a given amount of pixels.
+ * `dx` and `dy` will be limited internally to allow scrolling only on the content area.
+ * @param obj       pointer to an object to scroll
+ * @param dx        pixels to scroll horizontally
+ * @param dy        pixels to scroll vertically
+ * @param anim_en   LV_ANIM_ON: scroll with animation; LV_ANIM_OFF: scroll immediately
+ * @note            e.g. dy = -20 means scroll down 20 px
+ */
+void lv_obj_scroll_by_bounded(struct _lv_obj_t * obj, lv_coord_t dx, lv_coord_t dy, lv_anim_enable_t anim_en);
 
 /**
  * Scroll to a given coordinate on an object.
@@ -237,6 +248,18 @@ void lv_obj_scroll_to_view(struct _lv_obj_t * obj, lv_anim_enable_t anim_en);
  * @param anim_en   LV_ANIM_ON: scroll with animation; LV_ANIM_OFF: scroll immediately
  */
 void lv_obj_scroll_to_view_recursive(struct _lv_obj_t * obj, lv_anim_enable_t anim_en);
+
+
+/**
+ * Low level function to scroll by given x and y coordinates.
+ * `LV_EVENT_SCROLL` is sent.
+ * @param obj       pointer to an object to scroll
+ * @param x         pixels to scroll horizontally
+ * @param y         pixels to scroll vertically
+ * @return          `LV_RES_INV`: to object was deleted in `LV_EVENT_SCROLL`;
+ *                  `LV_RES_OK`: if the object is still valid
+ */
+lv_res_t _lv_obj_scroll_by_raw(struct _lv_obj_t * obj, lv_coord_t x, lv_coord_t y);
 
 /**
  * Tell whether an object is being scrolled or not at this moment

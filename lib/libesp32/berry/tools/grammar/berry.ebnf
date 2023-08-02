@@ -5,9 +5,10 @@ block = {statement};
 (* statement define *)
 statement = class_stmt | func_stmt | var_stmt | if_stmt | while_stmt |
          for_stmt | break_stmt | return_stmt | expr_stmt | import_stmt |
-         try_stmt | throw_stmt | ';';
+         try_stmt | throw_stmt | do_stmt | ';';
 if_stmt = 'if' expr block {'elif' expr block} ['else' block] 'end';
 while_stmt = 'while' expr block 'end';
+do_stmt = 'do' block 'end';
 for_stmt = 'for' ID ':' expr block 'end';
 break_stmt = 'break' | 'continue';
 return_stmt = 'return' [expr];
@@ -17,7 +18,7 @@ func_body = '(' [arg_field {',' arg_field}] ')' block 'end';
 arg_field = ['*'] ID;
 (* class define statement *)
 class_stmt = 'class' ID [':' ID] class_block 'end';
-class_block = {'var' ID {',' ID} | 'static' ID ['=' expr] {',' ID ['=' expr] } | 'static' func_stmt | func_stmt};
+class_block = {'var' ID {',' ID} | 'static' ['var'] ID ['=' expr] {',' ID ['=' expr] } | 'static' func_stmt | func_stmt};
 import_stmt = 'import' (ID (['as' ID] | {',' ID}) | STRING 'as' ID);
 (* exceptional handling statement *)
 try_stmt = 'try' block except_block {except_block} 'end';
@@ -28,16 +29,19 @@ throw_stmt = 'raise' expr [',' expr];
 var_stmt = 'var' ID ['=' expr] {',' ID ['=' expr]};
 (* expression define *)
 expr_stmt = expr [assign_op expr];
-expr = suffix_expr | unop expr | expr binop expr | cond_expr;
+expr = suffix_expr | unop expr | expr binop expr | range_expr | cond_expr | walrus_expr;
 cond_expr = expr '?' expr ':' expr; (* conditional expression *)
 assign_op = '=' | '+=' | '-=' | '*=' | '/=' |
             '%=' | '&=' | '|=' | '^=' | '<<=' | '>>=';
-binop = '..' | '<' | '<=' | '==' | '!=' | '>' | '>=' | '||' | '&&' |
+binop = '<' | '<=' | '==' | '!=' | '>' | '>=' | '||' | '&&' |
         '<<' | '>>' | '&' | '|' | '^' | '+' | '-' | '*' | '/' | '%';
+range_expr = expr '..' [expr]
 unop = '-' | '!' | '~';
+walrus_expr = expr ':=' expr
 suffix_expr = primary_expr {call_expr | ('.' ID) | '[' expr ']'};
 primary_expr = '(' expr ')' | simple_expr | list_expr | map_expr | anon_func | lambda_expr;
-simple_expr =  INTEGER | REAL | STRING | ID | 'true' | 'false' | 'nil';
+simple_expr =  INTEGER | REAL | STRING | ID | 'true' | 'false' | 'nil' | f_string;
+f_string = 'f' STRING
 call_expr = '(' [expr {',' expr}] ')';
 list_expr = '[' {expr ','} [expr] ']';
 map_expr = '{' {expr ':' expr ','} [expr ':' expr] '}';

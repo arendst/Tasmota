@@ -493,7 +493,7 @@ stdAc::fanspeed_t IRWhirlpoolAc::toCommonFanSpeed(const uint8_t speed) {
 /// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRWhirlpoolAc::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) {
     result = *prev;

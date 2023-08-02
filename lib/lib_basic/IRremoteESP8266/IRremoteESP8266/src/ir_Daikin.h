@@ -1,6 +1,6 @@
 // Copyright 2016 sillyfrog
 // Copyright 2017 sillyfrog, crankyoldgit
-// Copyright 2018-2021 crankyoldgit
+// Copyright 2018-2022 crankyoldgit
 // Copyright 2019 pasna (IRDaikin160 class / Daikin176 class)
 
 /// @file
@@ -21,6 +21,8 @@
 /// @see Daikin216 https://github.com/crankyoldgit/IRremoteESP8266/issues/689
 /// @see Daikin216 https://github.com/danny-source/Arduino_DY_IRDaikin
 /// @see Daikin64 https://github.com/crankyoldgit/IRremoteESP8266/issues/1064
+/// @see Daikin200 https://github.com/crankyoldgit/IRremoteESP8266/issues/1802
+/// @see Daikin312 https://github.com/crankyoldgit/IRremoteESP8266/issues/1829
 
 // Supports:
 //   Brand: Daikin,  Model: ARC433** remote (DAIKIN)
@@ -34,19 +36,23 @@
 //   Brand: Daikin,  Model: BRC4C153 remote (DAIKIN176)
 //   Brand: Daikin,  Model: FFQ35B8V1B A/C (DAIKIN176)
 //   Brand: Daikin,  Model: BRC4C151 remote (DAIKIN176)
-//   Brand: Daikin,  Model: 17 Series A/C (DAIKIN128)
-//   Brand: Daikin,  Model: FTXB12AXVJU A/C (DAIKIN128)
-//   Brand: Daikin,  Model: FTXB09AXVJU A/C (DAIKIN128)
+//   Brand: Daikin,  Model: 17 Series FTXB09AXVJU A/C (DAIKIN128)
+//   Brand: Daikin,  Model: 17 Series FTXB12AXVJU A/C (DAIKIN128)
+//   Brand: Daikin,  Model: 17 Series FTXB24AXVJU A/C (DAIKIN128)
 //   Brand: Daikin,  Model: BRC52B63 remote (DAIKIN128)
 //   Brand: Daikin,  Model: ARC480A5 remote (DAIKIN152)
 //   Brand: Daikin,  Model: FFN-C/FCN-F Series A/C (DAIKIN64)
 //   Brand: Daikin,  Model: DGS01 remote (DAIKIN64)
 //   Brand: Daikin,  Model: M Series A/C (DAIKIN)
 //   Brand: Daikin,  Model: FTXM-M A/C (DAIKIN)
+//   Brand: Daikin,  Model: ARC466A12 remote (DAIKIN)
 //   Brand: Daikin,  Model: ARC466A33 remote (DAIKIN)
 //   Brand: Daikin,  Model: FTWX35AXV1 A/C (DAIKIN64)
 //   Brand: Daikin,  Model: ARC484A4 remote (DAIKIN216)
 //   Brand: Daikin,  Model: FTQ60TV16U2 A/C (DAIKIN216)
+//   Brand: Daikin,  Model: BRC4M150W16 remote (DAIKIN200)
+//   Brand: Daikin,  Model: FTXM20R5V1B A/C (DAIKIN312)
+//   Brand: Daikin,  Model: ARC466A67 remote (DAIKIN312)
 
 #ifndef IR_DAIKIN_H_
 #define IR_DAIKIN_H_
@@ -675,6 +681,30 @@ const uint8_t kDaikin64MinTemp = 16;  // Celsius
 const uint8_t kDaikin64MaxTemp = 30;  // Celsius
 const uint8_t kDaikin64ChecksumOffset = 60;
 const uint8_t kDaikin64ChecksumSize = 4;  // Mask 0b1111 << 59
+
+const uint16_t kDaikin200Freq = 38000;  // Modulation Frequency in Hz.
+const uint16_t kDaikin200HdrMark = 4920;
+const uint16_t kDaikin200HdrSpace = 2230;
+const uint16_t kDaikin200BitMark = 290;
+const uint16_t kDaikin200OneSpace = 1850;
+const uint16_t kDaikin200ZeroSpace = 780;
+const uint16_t kDaikin200Gap = 29400;
+const uint16_t kDaikin200Sections = 2;
+const uint16_t kDaikin200Section1Length = 7;
+const uint16_t kDaikin200Section2Length = kDaikin200StateLength -
+                                          kDaikin200Section1Length;
+
+const uint16_t kDaikin312HdrMark = 3518;
+const uint16_t kDaikin312HdrSpace = 1688;
+const uint16_t kDaikin312BitMark = 453;
+const uint16_t kDaikin312ZeroSpace = 414;
+const uint16_t kDaikin312OneSpace = 1275;
+const uint16_t kDaikin312HdrGap = 25100;
+const uint16_t kDaikin312SectionGap = 35512;
+const uint16_t kDaikin312Sections = 2;
+const uint16_t kDaikin312Section1Length = 20;
+const uint16_t kDaikin312Section2Length = kDaikin312StateLength -
+                                          kDaikin312Section1Length;
 
 // Legacy defines.
 #define DAIKIN_COOL kDaikinCool

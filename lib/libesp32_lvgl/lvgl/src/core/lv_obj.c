@@ -27,16 +27,19 @@
 #include <string.h>
 
 #if LV_USE_GPU_STM32_DMA2D
-    #include "../gpu/lv_gpu_stm32_dma2d.h"
+    #include "../draw/stm32_dma2d/lv_gpu_stm32_dma2d.h"
+#endif
+
+#if LV_USE_GPU_RA6M3_G2D
+    #include "../draw/renesas/lv_gpu_d2_ra6m3.h"
+#endif
+
+#if LV_USE_GPU_SWM341_DMA2D
+    #include "../draw/swm341_dma2d/lv_gpu_swm341_dma2d.h"
 #endif
 
 #if LV_USE_GPU_NXP_PXP && LV_USE_GPU_NXP_PXP_AUTO_INIT
-    #include "../gpu/lv_gpu_nxp_pxp.h"
-    #include "../gpu/lv_gpu_nxp_pxp_osa.h"
-#endif
-
-#if LV_USE_GPU_SDL
-    #include "../gpu/lv_gpu_sdl.h"
+    #include "../draw/nxp/pxp/lv_gpu_nxp_pxp.h"
 #endif
 
 /*********************
@@ -45,7 +48,6 @@
 #define MY_CLASS &lv_obj_class
 #define LV_OBJ_DEF_WIDTH    (LV_DPX(100))
 #define LV_OBJ_DEF_HEIGHT   (LV_DPX(50))
-#define GRID_DEBUG          0   /*Draw rectangles on grid cells*/
 #define STYLE_TRANSITION_MAX 32
 
 /**********************
@@ -59,7 +61,7 @@ static void lv_obj_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_obj_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_obj_draw(lv_event_t * e);
 static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_scrollbar(lv_obj_t * obj, const lv_area_t * clip_area);
+static void draw_scrollbar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
 static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc);
 static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
 static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state);
@@ -114,19 +116,25 @@ void lv_init(void)
 
     _lv_group_init();
 
+    lv_draw_init();
+
 #if LV_USE_GPU_STM32_DMA2D
     /*Initialize DMA2D GPU*/
-    lv_gpu_stm32_dma2d_init();
+    lv_draw_stm32_dma2d_init();
+#endif
+
+#if LV_USE_GPU_RA6M3_G2D
+    /*Initialize G2D GPU*/
+    lv_draw_ra6m3_g2d_init();
+#endif
+
+#if LV_USE_GPU_SWM341_DMA2D
+    /*Initialize DMA2D GPU*/
+    lv_draw_swm341_dma2d_init();
 #endif
 
 #if LV_USE_GPU_NXP_PXP && LV_USE_GPU_NXP_PXP_AUTO_INIT
-    if(lv_gpu_nxp_pxp_init(&pxp_default_cfg) != LV_RES_OK) {
-        LV_LOG_ERROR("PXP init error. STOP.\n");
-        for(; ;) ;
-    }
-#endif
-#if LV_USE_GPU_SDL
-    lv_gpu_sdl_init();
+    PXP_COND_STOP(!lv_gpu_nxp_pxp_init(), "PXP init failed.");
 #endif
 
     _lv_obj_style_init();
@@ -145,7 +153,7 @@ void lv_init(void)
 
     uint8_t * txt_u8 = (uint8_t *)txt;
     if(txt_u8[0] != 0xc3 || txt_u8[1] != 0x81 || txt_u8[2] != 0x00) {
-        LV_LOG_WARN("The strings has no UTF-8 encoding. Non-ASCII characters won't be displayed.");
+        LV_LOG_WARN("The strings have no UTF-8 encoding. Non-ASCII characters won't be displayed.");
     }
 
     uint32_t endianess_test = 0x11223344;
@@ -174,7 +182,7 @@ void lv_init(void)
 #endif
 
 #if LV_LOG_LEVEL == LV_LOG_LEVEL_TRACE
-    LV_LOG_WARN("Log level is set the Trace which makes LVGL much slower");
+    LV_LOG_WARN("Log level is set to 'Trace' which makes LVGL much slower");
 #endif
 
     lv_extra_init();
@@ -184,13 +192,10 @@ void lv_init(void)
     LV_LOG_TRACE("finished");
 }
 
-#if LV_ENABLE_GC || !LV_MEM_CUSTOM || LV_USE_GPU_SDL
+#if LV_ENABLE_GC || !LV_MEM_CUSTOM
 
 void lv_deinit(void)
 {
-#if LV_USE_GPU_SDL
-    lv_gpu_sdl_deinit();
-#endif
     _lv_gc_clear_roots();
 
     lv_disp_set_default(NULL);
@@ -237,6 +242,7 @@ void lv_obj_add_flag(lv_obj_t * obj, lv_obj_flag_t f)
 
     if((was_on_layout != lv_obj_is_layout_positioned(obj)) || (f & (LV_OBJ_FLAG_LAYOUT_1 |  LV_OBJ_FLAG_LAYOUT_2))) {
         lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
+        lv_obj_mark_layout_as_dirty(obj);
     }
 
     if(f & LV_OBJ_FLAG_SCROLLABLE) {
@@ -265,12 +271,14 @@ void lv_obj_clear_flag(lv_obj_t * obj, lv_obj_flag_t f)
         lv_obj_invalidate(obj);
         if(lv_obj_is_layout_positioned(obj)) {
             lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
+            lv_obj_mark_layout_as_dirty(obj);
         }
     }
 
     if((was_on_layout != lv_obj_is_layout_positioned(obj)) || (f & (LV_OBJ_FLAG_LAYOUT_1 |  LV_OBJ_FLAG_LAYOUT_2))) {
         lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
     }
+
 }
 
 void lv_obj_add_state(lv_obj_t * obj, lv_state_t state)
@@ -423,6 +431,7 @@ static void lv_obj_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     obj->flags |= LV_OBJ_FLAG_SCROLLABLE;
     obj->flags |= LV_OBJ_FLAG_SCROLL_ELASTIC;
     obj->flags |= LV_OBJ_FLAG_SCROLL_MOMENTUM;
+    obj->flags |= LV_OBJ_FLAG_SCROLL_WITH_ARROW;
     if(parent) obj->flags |= LV_OBJ_FLAG_GESTURE_BUBBLE;
 
     LV_TRACE_OBJ_CREATE("finished");
@@ -494,22 +503,11 @@ static void lv_obj_draw(lv_event_t * e)
             return;
         }
 
-#if LV_DRAW_COMPLEX
-        if(lv_obj_get_style_blend_mode(obj, LV_PART_MAIN) != LV_BLEND_MODE_NORMAL) {
-            info->res = LV_COVER_RES_NOT_COVER;
-            return;
-        }
-#endif
-        if(lv_obj_get_style_opa(obj, LV_PART_MAIN) < LV_OPA_MAX) {
-            info->res = LV_COVER_RES_NOT_COVER;
-            return;
-        }
-
         info->res = LV_COVER_RES_COVER;
 
     }
     else if(code == LV_EVENT_DRAW_MAIN) {
-        const lv_area_t * clip_area = lv_event_get_param(e);
+        lv_draw_ctx_t * draw_ctx = lv_event_get_draw_ctx(e);
         lv_draw_rect_dsc_t draw_dsc;
         lv_draw_rect_dsc_init(&draw_dsc);
         /*If the border is drawn later disable loading its properties*/
@@ -518,7 +516,6 @@ static void lv_obj_draw(lv_event_t * e)
         }
 
         lv_obj_init_draw_rect_dsc(obj, LV_PART_MAIN, &draw_dsc);
-
         lv_coord_t w = lv_obj_get_style_transform_width(obj, LV_PART_MAIN);
         lv_coord_t h = lv_obj_get_style_transform_height(obj, LV_PART_MAIN);
         lv_area_t coords;
@@ -529,7 +526,7 @@ static void lv_obj_draw(lv_event_t * e)
         coords.y2 += h;
 
         lv_obj_draw_part_dsc_t part_dsc;
-        lv_obj_draw_dsc_init(&part_dsc, clip_area);
+        lv_obj_draw_dsc_init(&part_dsc, draw_ctx);
         part_dsc.class_p = MY_CLASS;
         part_dsc.type = LV_OBJ_DRAW_PART_RECTANGLE;
         part_dsc.rect_dsc = &draw_dsc;
@@ -537,26 +534,41 @@ static void lv_obj_draw(lv_event_t * e)
         part_dsc.part = LV_PART_MAIN;
         lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_dsc);
 
-        lv_draw_rect(&coords, clip_area, &draw_dsc);
-
-        lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_dsc);
-
 #if LV_DRAW_COMPLEX
-        if(lv_obj_get_style_clip_corner(obj, LV_PART_MAIN)) {
-            /*If the radius is 0 the parent's coordinates will clip anyway*/
-            lv_coord_t r = lv_obj_get_style_radius(obj, LV_PART_MAIN);
-            if(r != 0) {
-                lv_draw_mask_radius_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_radius_param_t));
-                lv_draw_mask_radius_init(mp, &obj->coords, r, false);
-                /*Add the mask and use `obj+8` as custom id. Don't use `obj` directly because it might be used by the user*/
-                lv_draw_mask_add(mp, obj + 8);
-            }
+        /*With clip corner enabled draw the bg img separately to make it clipped*/
+        bool clip_corner = (lv_obj_get_style_clip_corner(obj, LV_PART_MAIN) && draw_dsc.radius != 0) ? true : false;
+        const void * bg_img_src = draw_dsc.bg_img_src;
+        if(clip_corner) {
+            draw_dsc.bg_img_src = NULL;
         }
 #endif
+
+        lv_draw_rect(draw_ctx, &draw_dsc, &coords);
+
+
+#if LV_DRAW_COMPLEX
+        if(clip_corner) {
+            lv_draw_mask_radius_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_radius_param_t));
+            lv_draw_mask_radius_init(mp, &obj->coords, draw_dsc.radius, false);
+            /*Add the mask and use `obj+8` as custom id. Don't use `obj` directly because it might be used by the user*/
+            lv_draw_mask_add(mp, obj + 8);
+
+            if(bg_img_src) {
+                draw_dsc.bg_opa = LV_OPA_TRANSP;
+                draw_dsc.border_opa = LV_OPA_TRANSP;
+                draw_dsc.outline_opa = LV_OPA_TRANSP;
+                draw_dsc.shadow_opa = LV_OPA_TRANSP;
+                draw_dsc.bg_img_src = bg_img_src;
+                lv_draw_rect(draw_ctx, &draw_dsc, &coords);
+            }
+
+        }
+#endif
+        lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_dsc);
     }
     else if(code == LV_EVENT_DRAW_POST) {
-        const lv_area_t * clip_area = lv_event_get_param(e);
-        draw_scrollbar(obj, clip_area);
+        lv_draw_ctx_t * draw_ctx = lv_event_get_draw_ctx(e);
+        draw_scrollbar(obj, draw_ctx);
 
 #if LV_DRAW_COMPLEX
         if(lv_obj_get_style_clip_corner(obj, LV_PART_MAIN)) {
@@ -573,9 +585,9 @@ static void lv_obj_draw(lv_event_t * e)
             lv_draw_rect_dsc_t draw_dsc;
             lv_draw_rect_dsc_init(&draw_dsc);
             draw_dsc.bg_opa = LV_OPA_TRANSP;
+            draw_dsc.bg_img_opa = LV_OPA_TRANSP;
             draw_dsc.outline_opa = LV_OPA_TRANSP;
             draw_dsc.shadow_opa = LV_OPA_TRANSP;
-            draw_dsc.bg_img_opa = LV_OPA_TRANSP;
             lv_obj_init_draw_rect_dsc(obj, LV_PART_MAIN, &draw_dsc);
 
             lv_coord_t w = lv_obj_get_style_transform_width(obj, LV_PART_MAIN);
@@ -588,7 +600,7 @@ static void lv_obj_draw(lv_event_t * e)
             coords.y2 += h;
 
             lv_obj_draw_part_dsc_t part_dsc;
-            lv_obj_draw_dsc_init(&part_dsc, clip_area);
+            lv_obj_draw_dsc_init(&part_dsc, draw_ctx);
             part_dsc.class_p = MY_CLASS;
             part_dsc.type = LV_OBJ_DRAW_PART_BORDER_POST;
             part_dsc.rect_dsc = &draw_dsc;
@@ -596,13 +608,13 @@ static void lv_obj_draw(lv_event_t * e)
             part_dsc.part = LV_PART_MAIN;
             lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_dsc);
 
-            lv_draw_rect(&coords, clip_area, &draw_dsc);
+            lv_draw_rect(draw_ctx, &draw_dsc, &coords);
             lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_dsc);
         }
     }
 }
 
-static void draw_scrollbar(lv_obj_t * obj, const lv_area_t * clip_area)
+static void draw_scrollbar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx)
 {
 
     lv_area_t hor_area;
@@ -616,7 +628,7 @@ static void draw_scrollbar(lv_obj_t * obj, const lv_area_t * clip_area)
     if(sb_res != LV_RES_OK) return;
 
     lv_obj_draw_part_dsc_t part_dsc;
-    lv_obj_draw_dsc_init(&part_dsc, clip_area);
+    lv_obj_draw_dsc_init(&part_dsc, draw_ctx);
     part_dsc.class_p = MY_CLASS;
     part_dsc.type = LV_OBJ_DRAW_PART_SCROLLBAR;
     part_dsc.rect_dsc = &draw_dsc;
@@ -625,13 +637,14 @@ static void draw_scrollbar(lv_obj_t * obj, const lv_area_t * clip_area)
     if(lv_area_get_size(&hor_area) > 0) {
         part_dsc.draw_area = &hor_area;
         lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_dsc);
-        lv_draw_rect(&hor_area, clip_area, &draw_dsc);
+        lv_draw_rect(draw_ctx, &draw_dsc, &hor_area);
         lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_dsc);
     }
     if(lv_area_get_size(&ver_area) > 0) {
         part_dsc.draw_area = &ver_area;
         lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_dsc);
-        lv_draw_rect(&ver_area, clip_area, &draw_dsc);
+        part_dsc.draw_area = &ver_area;
+        lv_draw_rect(draw_ctx, &draw_dsc, &ver_area);
         lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_dsc);
     }
 }
@@ -699,7 +712,7 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
     LV_UNUSED(class_p);
 
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * obj = lv_event_get_target(e);
+    lv_obj_t * obj = lv_event_get_current_target(e);
     if(code == LV_EVENT_PRESSED) {
         lv_obj_add_state(obj, LV_STATE_PRESSED);
     }
@@ -741,7 +754,7 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
                 if(res != LV_RES_OK) return;
             }
         }
-        else if(lv_obj_has_flag(obj, LV_OBJ_FLAG_SCROLLABLE) && !lv_obj_is_editable(obj)) {
+        else if(lv_obj_has_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_WITH_ARROW) && !lv_obj_is_editable(obj)) {
             /*scroll by keypad or encoder*/
             lv_anim_enable_t anim_enable = LV_ANIM_OFF;
             lv_coord_t sl = lv_obj_get_scroll_left(obj);
@@ -835,9 +848,8 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         }
     }
     else if(code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
-        lv_coord_t * s = lv_event_get_param(e);
         lv_coord_t d = lv_obj_calculate_ext_draw_size(obj, LV_PART_MAIN);
-        *s = LV_MAX(*s, d);
+        lv_event_set_ext_draw_size(e, d);
     }
     else if(code == LV_EVENT_DRAW_MAIN || code == LV_EVENT_DRAW_POST || code == LV_EVENT_COVER_CHECK) {
         lv_obj_draw(e);
@@ -875,7 +887,7 @@ static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
         if(obj_style->is_trans) continue;
 
         lv_style_value_t v;
-        if(lv_style_get_prop_inlined(obj_style->style, LV_STYLE_TRANSITION, &v) == false) continue;
+        if(lv_style_get_prop_inlined(obj_style->style, LV_STYLE_TRANSITION, &v) != LV_STYLE_RES_FOUND) continue;
         const lv_style_transition_dsc_t * tr = v.ptr;
 
         /*Add the props to the set if not added yet or added but with smaller weight*/

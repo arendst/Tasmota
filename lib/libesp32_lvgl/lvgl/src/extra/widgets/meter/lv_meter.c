@@ -26,9 +26,9 @@
 static void lv_meter_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_meter_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_meter_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_arcs(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area);
-static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area);
-static void draw_needles(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area);
+static void draw_arcs(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
+static void draw_ticks_and_labels(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
+static void draw_needles(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
 static void inv_arc(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t old_value, int32_t new_value);
 static void inv_line(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value);
 
@@ -296,13 +296,13 @@ static void lv_meter_event(const lv_obj_class_t * class_p, lv_event_t * e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
     if(code == LV_EVENT_DRAW_MAIN) {
-        const lv_area_t * clip_area = lv_event_get_param(e);
+        lv_draw_ctx_t * draw_ctx = lv_event_get_draw_ctx(e);
         lv_area_t scale_area;
         lv_obj_get_content_coords(obj, &scale_area);
 
-        draw_arcs(obj, clip_area, &scale_area);
-        draw_ticks_and_labels(obj, clip_area, &scale_area);
-        draw_needles(obj, clip_area, &scale_area);
+        draw_arcs(obj, draw_ctx, &scale_area);
+        draw_ticks_and_labels(obj, draw_ctx, &scale_area);
+        draw_needles(obj, draw_ctx, &scale_area);
 
         lv_coord_t r_edge = lv_area_get_width(&scale_area) / 2;
         lv_point_t scale_center;
@@ -319,11 +319,11 @@ static void lv_meter_event(const lv_obj_class_t * class_p, lv_event_t * e)
         nm_cord.y1 = scale_center.y - h;
         nm_cord.x2 = scale_center.x + w;
         nm_cord.y2 = scale_center.y + h;
-        lv_draw_rect(&nm_cord, clip_area, &mid_dsc);
+        lv_draw_rect(draw_ctx, &mid_dsc, &nm_cord);
     }
 }
 
-static void draw_arcs(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area)
+static void draw_arcs(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area)
 {
     lv_meter_t * meter = (lv_meter_t *)obj;
 
@@ -340,7 +340,7 @@ static void draw_arcs(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area
     lv_meter_indicator_t * indic;
 
     lv_obj_draw_part_dsc_t part_draw_dsc;
-    lv_obj_draw_dsc_init(&part_draw_dsc, clip_area);
+    lv_obj_draw_dsc_init(&part_draw_dsc, draw_ctx);
     part_draw_dsc.arc_dsc = &arc_dsc;
     part_draw_dsc.part = LV_PART_INDICATOR;
     part_draw_dsc.class_p = MY_CLASS;
@@ -365,12 +365,12 @@ static void draw_arcs(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area
         part_draw_dsc.p1 = &scale_center;
 
         lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_draw_dsc);
-        lv_draw_arc(scale_center.x, scale_center.y, part_draw_dsc.radius, start_angle, end_angle, clip_area, &arc_dsc);
+        lv_draw_arc(draw_ctx, &arc_dsc, &scale_center, part_draw_dsc.radius, start_angle, end_angle);
         lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_draw_dsc);
     }
 }
 
-static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area)
+static void draw_ticks_and_labels(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area)
 {
     lv_meter_t * meter    = (lv_meter_t *)obj;
 
@@ -378,8 +378,6 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
     lv_coord_t r_edge = LV_MIN(lv_area_get_width(scale_area) / 2, lv_area_get_height(scale_area) / 2);
     p_center.x = scale_area->x1 + r_edge;
     p_center.y = scale_area->y1 + r_edge;
-
-    uint8_t i;
 
     lv_draw_line_dsc_t line_dsc;
     lv_draw_line_dsc_init(&line_dsc);
@@ -397,7 +395,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
     lv_draw_mask_radius_param_t outer_mask;
 
     lv_obj_draw_part_dsc_t part_draw_dsc;
-    lv_obj_draw_dsc_init(&part_draw_dsc, clip_area);
+    lv_obj_draw_dsc_init(&part_draw_dsc, draw_ctx);
     part_draw_dsc.class_p = MY_CLASS;
     part_draw_dsc.part = LV_PART_TICKS;
     part_draw_dsc.type = LV_METER_DRAW_PART_TICK;
@@ -406,7 +404,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
     _LV_LL_READ_BACK(&meter->scale_ll, scale) {
         part_draw_dsc.sub_part_ptr = scale;
 
-        lv_coord_t r_out = r_edge + scale->r_mod;
+        lv_coord_t r_out = r_edge;
         lv_coord_t r_in_minor = r_out - scale->tick_length;
         lv_coord_t r_in_major = r_out - scale->tick_major_length;
 
@@ -435,6 +433,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
         int16_t inner_act_mask_id = LV_MASK_ID_INV; /*Will be added later*/
 
         uint32_t minor_cnt = scale->tick_major_nth ? scale->tick_major_nth - 1 : 0xFFFF;
+        uint16_t i;
         for(i = 0; i < scale->tick_cnt; i++) {
             minor_cnt++;
             bool major = false;
@@ -474,32 +473,20 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
                 }
             }
 
-            /*`* 256` for extra precision*/
-            int32_t angle_upscale = ((i * scale->angle_range) << 8) / (scale->tick_cnt - 1);
-
-            int32_t angle_low = (angle_upscale >> 8);
-            int32_t angle_high = angle_low + 1;
-            int32_t angle_rem = angle_upscale & 0xFF;
-
-            /*Interpolate sine and cos*/
-            int32_t sin_low = lv_trigo_sin(angle_low + scale->rotation);
-            int32_t sin_high = lv_trigo_sin(angle_high + scale->rotation);
-            int32_t sin_mid = (sin_low * (256 - angle_rem) + sin_high * angle_rem) >> 8;
-
-            int32_t cos_low = lv_trigo_cos(angle_low + scale->rotation);
-            int32_t cos_high = lv_trigo_cos(angle_high + scale->rotation);
-            int32_t cos_mid = (cos_low * (256 - angle_rem) + cos_high * angle_rem) >> 8;
+            int32_t angle_upscale = ((i * scale->angle_range) * 10) / (scale->tick_cnt - 1) +  + scale->rotation * 10;
 
             line_dsc.color = line_color;
             line_dsc.width = line_width;
-            /*Use the interpolated angle to get the outer x and y coordinates.
-             *Draw a little bit longer lines to be sure the mask will clip them correctly*/
-            lv_point_t p_outer;
-            p_outer.x = (int32_t)(((int32_t)cos_mid * (r_out + line_width) + 127) >> (LV_TRIGO_SHIFT)) + p_center.x;
-            p_outer.y = (int32_t)(((int32_t)sin_mid * (r_out + line_width) + 127) >> (LV_TRIGO_SHIFT)) + p_center.y;
 
-            part_draw_dsc.p1 = &p_outer;
+            /*Draw a little bit longer lines to be sure the mask will clip them correctly
+             *and to get a better precision*/
+            lv_point_t p_outer;
+            p_outer.x = p_center.x + r_out + LV_MAX(LV_DPI_DEF, r_out);
+            p_outer.y = p_center.y;
+            lv_point_transform(&p_outer, angle_upscale, 256, &p_center);
+
             part_draw_dsc.p1 = &p_center;
+            part_draw_dsc.p2 = &p_outer;
             part_draw_dsc.id = i;
             part_draw_dsc.label_dsc = &label_dsc;
 
@@ -508,8 +495,9 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
                 lv_draw_mask_remove_id(outer_mask_id);
                 uint32_t r_text = r_in_major - scale->label_gap;
                 lv_point_t p;
-                p.x = (int32_t)((int32_t)((int32_t)cos_mid * r_text + 127) >> LV_TRIGO_SHIFT) + p_center.x;
-                p.y = (int32_t)((int32_t)((int32_t)sin_mid * r_text + 127) >> LV_TRIGO_SHIFT) + p_center.y;
+                p.x = p_center.x + r_text;
+                p.y = p_center.y;
+                lv_point_transform(&p, angle_upscale, 256, &p_center);
 
                 lv_draw_label_dsc_t label_dsc_tmp;
                 lv_memcpy(&label_dsc_tmp, &label_dsc, sizeof(label_dsc_tmp));
@@ -532,7 +520,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
                 label_cord.x2 = label_cord.x1 + label_size.x;
                 label_cord.y2 = label_cord.y1 + label_size.y;
 
-                lv_draw_label(&label_cord, clip_area, &label_dsc, part_draw_dsc.text, NULL);
+                lv_draw_label(draw_ctx, part_draw_dsc.label_dsc, &label_cord, part_draw_dsc.text, NULL);
 
                 outer_mask_id = lv_draw_mask_add(&outer_mask, NULL);
             }
@@ -543,7 +531,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
             }
 
             inner_act_mask_id = lv_draw_mask_add(major ? &inner_major_mask : &inner_minor_mask, NULL);
-            lv_draw_line(&p_outer, &p_center, clip_area, &line_dsc);
+            lv_draw_line(draw_ctx, &line_dsc, &p_outer, &p_center);
             lv_draw_mask_remove_id(inner_act_mask_id);
             lv_event_send(obj, LV_EVENT_DRAW_MAIN_END, &part_draw_dsc);
 
@@ -559,7 +547,7 @@ static void draw_ticks_and_labels(lv_obj_t * obj, const lv_area_t * clip_area, c
 }
 
 
-static void draw_needles(lv_obj_t * obj, const lv_area_t * clip_area, const lv_area_t * scale_area)
+static void draw_needles(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area)
 {
     lv_meter_t * meter = (lv_meter_t *)obj;
 
@@ -578,7 +566,7 @@ static void draw_needles(lv_obj_t * obj, const lv_area_t * clip_area, const lv_a
     lv_opa_t opa_main = lv_obj_get_style_opa(obj, LV_PART_MAIN);
 
     lv_obj_draw_part_dsc_t part_draw_dsc;
-    lv_obj_draw_dsc_init(&part_draw_dsc, clip_area);
+    lv_obj_draw_dsc_init(&part_draw_dsc, draw_ctx);
     part_draw_dsc.class_p = MY_CLASS;
     part_draw_dsc.p1 = &scale_center;
 
@@ -602,7 +590,7 @@ static void draw_needles(lv_obj_t * obj, const lv_area_t * clip_area, const lv_a
             part_draw_dsc.p2 = &p_end;
 
             lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_draw_dsc);
-            lv_draw_line(&scale_center, &p_end, clip_area, &line_dsc);
+            lv_draw_line(draw_ctx, &line_dsc, &scale_center, &p_end);
             lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_draw_dsc);
         }
         else if(indic->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
@@ -624,10 +612,11 @@ static void draw_needles(lv_obj_t * obj, const lv_area_t * clip_area, const lv_a
             if(angle > 3600) angle -= 3600;
             img_dsc.angle = angle;
 
+            part_draw_dsc.id = LV_METER_DRAW_PART_NEEDLE_IMG;
             part_draw_dsc.img_dsc = &img_dsc;
 
             lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &part_draw_dsc);
-            lv_draw_img(&a, clip_area, indic->type_data.needle_img.src, &img_dsc);
+            lv_draw_img(draw_ctx, &img_dsc, &a, indic->type_data.needle_img.src);
             lv_event_send(obj, LV_EVENT_DRAW_PART_END, &part_draw_dsc);
         }
     }

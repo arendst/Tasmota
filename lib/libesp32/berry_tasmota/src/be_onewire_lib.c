@@ -24,17 +24,11 @@ extern int b_onewire_reset_search(bvm *vm);
 extern int b_onewire_target_search(bvm *vm);
 extern int b_onewire_search(bvm *vm);
 
-#include "be_fixed_be_class_tasmota_onewire.h"
-
-void be_load_onewirelib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_tasmota_onewire);
-    be_setglobal(vm, "OneWire");
-    be_pop(vm, 1);
-}
+#include "be_fixed_be_class_OneWire.h"
 
 /* @const_object_info_begin
 
-class be_class_tasmota_onewire (scope: global, name: OneWire) {
+class be_class_OneWire (scope: global, name: OneWire, strings: weak) {
     .p, var
 
     init, func(b_onewire_init)

@@ -9,8 +9,11 @@ extern void berry_log_C(const char * berry_buf, ...);
 void
 re1_5_fatal(const char *msg)
 {
+#ifdef TASMOTA
 	berry_log_C("BRY: regex fatal error: %s", msg);
-	// fprintf(stderr, "fatal error: %s\n", msg);
+#else
+	fprintf(stderr, "fatal error: %s\n", msg);
+#endif
 	exit(2);
 }
 

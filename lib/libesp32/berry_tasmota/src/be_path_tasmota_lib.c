@@ -18,44 +18,44 @@
 #include "be_sys.h"
 #include <time.h>
 
-extern int m_path_listdir(bvm *vm);
+// provides MPATH_ constants
+#include "be_port.h"
 
-static int m_path_exists(bvm *vm)
-{
-    const char *path = NULL;
-    if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
-        path = be_tostring(vm, 1);
-        be_pushbool(vm, be_isexist(path));
-    } else {
-        be_pushbool(vm, bfalse);
-    }
-    be_return(vm);
+// from be_port.cpp, becasue it uses c++
+extern int _m_path_action(bvm *vm, int8_t action);
+
+static int m_path_listdir(bvm *vm){
+    return _m_path_action(vm, MPATH_LISTDIR);
 }
-extern time_t be_last_modified(void *hfile);
+static int m_path_isdir(bvm *vm){
+    return _m_path_action(vm, MPATH_ISDIR);
+}
+static int m_path_mkdir(bvm *vm) {
+    return _m_path_action(vm, MPATH_MKDIR);
+}
+static int m_path_rmdir(bvm *vm) {
+    return _m_path_action(vm, MPATH_RMDIR);
+}
+static int m_path_exists(bvm *vm) {
+    return _m_path_action(vm, MPATH_EXISTS);
+}
+static int m_path_last_modified(bvm *vm){
+    return _m_path_action(vm, MPATH_MODIFIED);
+}
+static int m_path_remove(bvm *vm){
+    return _m_path_action(vm, MPATH_REMOVE);
+}
 
-static int m_path_last_modified(bvm *vm)
+extern int be_format_fs(void);
+static int m_path_format(bvm *vm)
 {
-    if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
-        const char *path = be_tostring(vm, 1);
-        void * f = be_fopen(path, "r");
-        if (f) {
-            be_pushint(vm, be_last_modified(f));
-            be_fclose(f);
+    if (be_top(vm) >= 1 && be_isbool(vm, 1)) {
+        if (be_tobool(vm, 1)) {
+            be_pushbool(vm, be_format_fs());
             be_return(vm);
         }
     }
-    be_return_nil(vm);
-}
-
-static int m_path_remove(bvm *vm)
-{
-    const char *path = NULL;
-    if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
-        path = be_tostring(vm, 1);
-        be_pushbool(vm, be_unlink(path));
-    } else {
-        be_pushbool(vm, bfalse);
-    }
+    be_pushbool(vm, bfalse);
     be_return(vm);
 }
 
@@ -64,7 +64,11 @@ module path (scope: global, file: tasmota_path) {
     exists, func(m_path_exists)
     last_modified, func(m_path_last_modified)
     listdir, func(m_path_listdir)
+    isdir, func(m_path_isdir)
     remove, func(m_path_remove)
+    format, func(m_path_format)
+    mkdir, func(m_path_mkdir)
+    rmdir, func(m_path_rmdir)
 }
 @const_object_info_end */
 #include "be_fixed_tasmota_path.h"

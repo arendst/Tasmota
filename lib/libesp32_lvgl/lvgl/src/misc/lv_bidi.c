@@ -339,7 +339,7 @@ static uint32_t lv_bidi_get_next_paragraph(const char * txt)
 
 /**
  * Get the direction of a character
- * @param letter an Unicode character
+ * @param letter a Unicode character
  * @return `LV_BASE_DIR_RTL/LTR/WEAK/NEUTRAL`
  */
 static lv_base_dir_t lv_bidi_get_letter_dir(uint32_t letter)
@@ -352,7 +352,7 @@ static lv_base_dir_t lv_bidi_get_letter_dir(uint32_t letter)
 }
 /**
  * Tell whether a character is weak or not
- * @param letter an Unicode character
+ * @param letter a Unicode character
  * @return true/false
  */
 static bool lv_bidi_letter_is_weak(uint32_t letter)
@@ -371,12 +371,11 @@ static bool lv_bidi_letter_is_weak(uint32_t letter)
 }
 /**
  * Tell whether a character is RTL or not
- * @param letter an Unicode character
+ * @param letter a Unicode character
  * @return true/false
  */
 static bool lv_bidi_letter_is_rtl(uint32_t letter)
 {
-    if(letter >= 0x5d0 && letter <= 0x5ea) return true;
     if(letter == 0x202E) return true;               /*Unicode of LV_BIDI_RLO*/
 
     /*Check for Persian and Arabic characters [https://en.wikipedia.org/wiki/Arabic_script_in_Unicode]*/
@@ -384,12 +383,16 @@ static bool lv_bidi_letter_is_rtl(uint32_t letter)
     if(letter >= 0xFB50 && letter <= 0xFDFF) return true;
     if(letter >= 0xFE70 && letter <= 0xFEFF) return true;
 
+    /*Check for Hebrew characters [https://en.wikipedia.org/wiki/Unicode_and_HTML_for_the_Hebrew_alphabet]*/
+    if(letter >= 0x590 && letter <= 0x5FF) return true;
+    if(letter >= 0xFB1D && letter <= 0xFB4F) return true;
+
     return false;
 }
 
 /**
  * Tell whether a character is neutral or not
- * @param letter an Unicode character
+ * @param letter a Unicode character
  * @return true/false
  */
 static bool lv_bidi_letter_is_neutral(uint32_t letter)
@@ -440,13 +443,13 @@ static lv_base_dir_t get_next_run(const char * txt, lv_base_dir_t base_dir, uint
     /*Find the first strong char. Skip the neutrals*/
     while(dir == LV_BASE_DIR_NEUTRAL || dir == LV_BASE_DIR_WEAK) {
         letter = _lv_txt_encoded_next(txt, &i);
-        
+
         pos_conv_i++;
         dir = lv_bidi_get_letter_dir(letter);
         if(dir == LV_BASE_DIR_NEUTRAL)  dir = bracket_process(txt, i, max_len, letter, base_dir);
- 
-        if(dir==LV_BASE_DIR_LTR || dir==LV_BASE_DIR_RTL)  break;
-         
+
+        if(dir == LV_BASE_DIR_LTR || dir == LV_BASE_DIR_RTL)  break;
+
         if(i >= max_len || txt[i] == '\0' || txt[i] == '\n' || txt[i] == '\r') {
             *len = i;
             *pos_conv_len = pos_conv_i;
@@ -468,14 +471,14 @@ static lv_base_dir_t get_next_run(const char * txt, lv_base_dir_t base_dir, uint
         pos_conv_i++;
         next_dir  = lv_bidi_get_letter_dir(letter);
         if(next_dir == LV_BASE_DIR_NEUTRAL)  next_dir = bracket_process(txt, i, max_len, letter, base_dir);
-   
-        if(next_dir == LV_BASE_DIR_WEAK){
-             if(run_dir == LV_BASE_DIR_RTL){
-                 if(base_dir == LV_BASE_DIR_RTL){
-                     next_dir = LV_BASE_DIR_LTR;
-                 }
-             }
-         }
+
+        if(next_dir == LV_BASE_DIR_WEAK) {
+            if(run_dir == LV_BASE_DIR_RTL) {
+                if(base_dir == LV_BASE_DIR_RTL) {
+                    next_dir = LV_BASE_DIR_LTR;
+                }
+            }
+        }
 
         /*New dir found?*/
         if((next_dir == LV_BASE_DIR_RTL || next_dir == LV_BASE_DIR_LTR) && next_dir != run_dir) {

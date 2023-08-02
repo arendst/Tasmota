@@ -25,8 +25,10 @@ import pathlib
 import os
 
 # === AVAILABLE OVERRIDES ===
-# if set to 1, will not gzip esp8266 bin files
+# if set to 1, will not gzip bin files at all
 DISABLE_BIN_GZ = "disable_bin_gz"
+# if set to 1, will gzip esp32 bin files
+ENABLE_ESP32_GZ = "enable_esp32_gz"
 # if set, an alternative ptah to put generated .bin files, relative to project directory
 BIN_DIR = "bin_dir"
 # if set to 1, will not gzip generated .map files
@@ -79,7 +81,11 @@ def get_source_map_path(env) -> pathlib.Path:
     proj_dir = pathlib.Path(env["PROJECT_DIR"])
     map_name = proj_dir.parts[-1] + ".map"
     fwmap_path = proj_build_dir / get_variant(env) / map_name
+    if fwmap_path.is_file():
+        return fwmap_path
 
+    map_name = "firmware.map"
+    fwmap_path = proj_build_dir / get_variant(env) / map_name
     if fwmap_path.is_file():
         return fwmap_path
 

@@ -12,7 +12,7 @@
 
 #ifdef COMPILE_BERRY_LIB
   #include "my_user_config.h"
-  #include "tasmota_configurations.h"
+  #include "include/tasmota_configurations.h"
 #endif
 
 /* Macro: BE_DEBUG
@@ -30,7 +30,11 @@
  * type when the value is 2.
  * Default: 2
  */
+#ifdef TASMOTA
 #define BE_INTGER_TYPE                  1           // use long int = uint32_t
+#else
+#define BE_INTGER_TYPE                  0
+#endif
 
 /* Macro: BE_USE_SINGLE_FLOAT
  * Select floating point precision.
@@ -41,12 +45,28 @@
  **/
 #define BE_USE_SINGLE_FLOAT             1           // use `float` not `double`
 
+/* Macro: BE_BYTES_MAX_SIZE
+ * Maximum size in bytes of a `bytes()` object.
+ * Putting too much pressure on the memory allocator can do
+ * harm, so we limit the maximum size.
+ * Default: 32kb
+ **/
+#define BE_BYTES_MAX_SIZE               (32*1024)   /* 32 kb default value */
+
 /* Macro: BE_USE_PRECOMPILED_OBJECT
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
  **/
 #define BE_USE_PRECOMPILED_OBJECT       1
+
+/* Macro: BE_DEBUG_SOURCE_FILE
+ * Indicate if each function remembers its source file name
+ * 0: do not keep the file name (saves 4 bytes per function)
+ * 1: keep the source file name
+ * Default: 1
+ **/
+#define BE_DEBUG_SOURCE_FILE            0
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
  * Set runtime error debugging information.
@@ -123,7 +143,11 @@
  * will not be used.
  * Default: 0
  **/
+#ifdef TASMOTA
 #define BE_USE_FILE_SYSTEM              0
+#else
+#define BE_USE_FILE_SYSTEM              1
+#endif
 
 /* Macro: BE_USE_SCRIPT_COMPILER
  * Enable compiler when BE_USE_SCRIPT_COMPILER is not 0, otherwise
@@ -175,26 +199,62 @@
  **/
 #define BE_USE_DEBUG_GC                  0
 
+/* Macro: BE_USE_DEBUG_STACK
+ * Enable Stack Resize debug mode. At each function call
+ * the stack is reallocated at a different memory location
+ * and the previous location is cleared with toxic data.
+ * Default: 0
+ **/
+#define BE_USE_DEBUG_STACK               0
+
+/* Macro: BE_USE_MEM_ALIGNED
+ * Some embedded processors have special memory areas
+ * with read/write constraints of being aligned to 32 bits boundaries.
+ * This options tries to move such memory areas to this region.
+ * Default: 0
+ **/
+#ifdef TASMOTA
+#define BE_USE_MEM_ALIGNED               1
+#else
+#define BE_USE_MEM_ALIGNED               0
+#endif
+
 /* Macro: BE_USE_XXX_MODULE
  * These macros control whether the related module is compiled.
  * When they are true, they will enable related modules. At this
  * point you can use the import statement to import the module.
  * They will not compile related modules when they are false.
  **/
-#define BE_USE_STRING_MODULE            1
-#define BE_USE_JSON_MODULE              1
-#define BE_USE_MATH_MODULE              1
-#define BE_USE_TIME_MODULE              0
-#define BE_USE_OS_MODULE                0
-#define BE_USE_GLOBAL_MODULE            1
-#define BE_USE_SYS_MODULE               1
-#define BE_USE_DEBUG_MODULE             0
-#define BE_USE_GC_MODULE                1
-#define BE_USE_SOLIDIFY_MODULE          0
-#define BE_USE_INTROSPECT_MODULE        1
-#define BE_USE_STRICT_MODULE            1
 
-#ifdef USE_BERRY_DEBUG
+#ifdef TASMOTA
+  #define BE_USE_STRING_MODULE            1
+  #define BE_USE_JSON_MODULE              1
+  #define BE_USE_MATH_MODULE              1
+  #define BE_USE_TIME_MODULE              0
+  #define BE_USE_OS_MODULE                0
+  #define BE_USE_GLOBAL_MODULE            1
+  #define BE_USE_SYS_MODULE               1
+  #define BE_USE_DEBUG_MODULE             0
+  #define BE_USE_GC_MODULE                1
+  #define BE_USE_SOLIDIFY_MODULE          0
+  #define BE_USE_INTROSPECT_MODULE        1
+  #define BE_USE_STRICT_MODULE            1
+#else
+  #define BE_USE_STRING_MODULE            1
+  #define BE_USE_JSON_MODULE              1
+  #define BE_USE_MATH_MODULE              1
+  #define BE_USE_TIME_MODULE              1
+  #define BE_USE_OS_MODULE                1
+  #define BE_USE_GLOBAL_MODULE            1
+  #define BE_USE_SYS_MODULE               1
+  #define BE_USE_DEBUG_MODULE             1
+  #define BE_USE_GC_MODULE                1
+  #define BE_USE_SOLIDIFY_MODULE          1
+  #define BE_USE_INTROSPECT_MODULE        1
+  #define BE_USE_STRICT_MODULE            1
+#endif
+
+#if defined(USE_BERRY_DEBUG) || !defined(TASMOTA)
   #undef BE_USE_DEBUG_MODULE
   #undef BE_USE_SOLIDIFY_MODULE
   #define BE_USE_DEBUG_MODULE             1
@@ -207,7 +267,6 @@
  * are not required.
  * The default is to use the functions in the standard library.
  **/
-#ifdef USE_BERRY_PSRAM
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -215,11 +274,10 @@ extern "C" {
   extern void  berry_free(void *ptr);
   extern void *berry_realloc(void *ptr, size_t size);
   extern void *berry_malloc32(size_t size);
-  extern void  berry_free32(void *ptr);
-  extern void *berry_realloc32(void *ptr, size_t size);
 #ifdef __cplusplus
 }
 #endif
+#ifdef USE_BERRY_PSRAM
   #define BE_EXPLICIT_MALLOC              berry_malloc
   #define BE_EXPLICIT_FREE                berry_free
   #define BE_EXPLICIT_REALLOC             berry_realloc
@@ -245,6 +303,21 @@ extern "C" {
 #ifdef USE_BERRY_DEBUG
   #undef BE_DEBUG_RUNTIME_INFO
   #define BE_DEBUG_RUNTIME_INFO 1 /* record line information in 32 bits to be places in IRAM */
+  #undef BE_DEBUG
+  #define BE_DEBUG 1
+  #undef be_assert
+  #define be_assert(expr)                                                        \
+      ((expr)                                                                \
+      ? (0)                                                \
+      : serial_debug("BRY: ASSERT '%s', %s - %i\n", #expr, __FILE__, __LINE__))
+  #ifdef USE_LVGL
+    #undef BE_STACK_START
+    #define BE_STACK_START                  200
+  #endif // USE_LVGL
+  #ifdef USE_MATTER_DEVICE
+    #undef BE_STACK_START
+    #define BE_STACK_START                  256
+  #endif // USE_MATTER_DEVICE
 #endif // USE_BERRY_DEBUG
 
 #endif
