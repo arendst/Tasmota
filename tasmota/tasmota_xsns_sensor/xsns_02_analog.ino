@@ -465,11 +465,13 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
   // factor 3 = 8 samples
   // factor 4 = 16 samples
   // factor 5 = 32 samples
+  // factor 6 = 64 samples
   uint8_t samples = 1 << factor;
   uint16_t analog = 0;
   uint16_t analog_min = ANALOG_RANGE;
   uint16_t analog_max = 0;
-
+  
+  uint16_t samples_value[samples];
   if (0 == Adc[idx].param1) {
     unsigned long tstart=millis();
     while (millis()-tstart < 35) {
@@ -480,6 +482,20 @@ void AdcGetCurrentPower(uint8_t idx, uint8_t factor) {
       if (analog > analog_max) {
         analog_max = analog;
       }
+      samples_value[i]=analog;
+      delay(1);
+    }
+    float avg = 0;
+    for (uint32_t i = 0; i < samples; i++)
+      avg+=samples_value[i];
+    avg = avg/samples;
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Avrage: %2_f, pin: %d"), &avg, Adc[idx].pin);
+    float standardDeviation = 0;
+    for (uint32_t i = 0; i < samples; i++)
+      standardDeviation+=(samples_value[i]-avg)*(samples_value[i]-avg);
+    standardDeviation=sqrt(standardDeviation/samples);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Standard Deviation: %2_f, pin: %d"), &standardDeviation, Adc[idx].pin);
+    Adc[idx].current = (float)(standardDeviation) * ((float)(Adc[idx].param2) / 100000);
     }
     //AddLog(0, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
     Adc[idx].current = (float)(analog_max-analog_min) * ((float)(Adc[idx].param2) / 100000);
@@ -529,7 +545,7 @@ void AdcEverySecond(void) {
       Adc[idx].temperature = ConvertTemp(TO_CELSIUS(T));
     }
     else if (ADC_CT_POWER == Adc[idx].type) {
-      AdcGetCurrentPower(idx, 5);
+      AdcGetCurrentPower(idx, 6);
     }
     else if (ADC_MQ == Adc[idx].type) {
       AddSampleMq(idx);
@@ -630,7 +646,7 @@ void AdcShow(bool json) {
         break;
       }
       case ADC_CT_POWER: {
-        AdcGetCurrentPower(idx, 5);
+        AdcGetCurrentPower(idx, 6);
 
         float voltage = (float)(Adc[idx].param3) / 10;
         char voltage_chr[FLOATSZ];
