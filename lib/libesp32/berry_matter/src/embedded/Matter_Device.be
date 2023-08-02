@@ -431,7 +431,7 @@ class Matter_Device
     var fabric = session.get_fabric()
     var fabric_id = fabric.get_fabric_id().copy().reverse().tohex()
     var vendor_name = fabric.get_admin_vendor_name()
-    tasmota.log(format("MTR: --- Commissioning complete for Fabric '%s' (Vendor %s) ---", fabric_id, vendor_name), 2)
+    tasmota.log(f"MTR: --- Commissioning complete for Fabric '{fabric_id}' (Vendor {vendor_name}) ---", 2)
     self.stop_basic_commissioning()     # by default close commissioning when it's complete
   end
 

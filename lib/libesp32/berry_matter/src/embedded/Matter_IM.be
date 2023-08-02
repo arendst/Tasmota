@@ -302,6 +302,7 @@ class Matter_IM
       ctx.endpoint = q.endpoint
       ctx.cluster = q.cluster
       ctx.attribute = q.attribute
+      ctx.fabric_filtered = query.fabric_filtered
       ctx.status = matter.UNSUPPORTED_ATTRIBUTE   #default error if returned `nil`
       
       # expand endpoint
@@ -772,8 +773,11 @@ class Matter_IM
       ctx.attribute = q.attribute
       attr_req.push(str(ctx))
     end
-    tasmota.log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i",
-                              msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id), 3)
+    tasmota.log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s",
+                              msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id, query.fabric_filtered), 3)
+    if query.event_requests != nil && size(query.event_requests) > 0
+      tasmota.log(f"MTR: >Subscribe (%6i) event_requests_size={size(query.event_requests)}", 3)
+    end
 
     var ret = self._inner_process_read_request(msg.session, query, true #-no_log-#)
     # ret is of type `Matter_ReportDataMessage`
