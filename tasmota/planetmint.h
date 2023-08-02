@@ -1,21 +1,7 @@
 #ifndef _BIGCHAIN_TX_H_
 #define _BIGCHAIN_TX_H_
 #define BDB_VERSION "3.0"
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "base58.h"
-#include "base64_plntmnt.h"
-#include "hmac.h"
-#include "json-maker.h"
 #include "tiny-json.h"
-#include "sha3.h"
-#include "ed25519-donna/ed25519.h"
-
 #define ASSET_MAX_SIZE 1024
 #define METADATA_MAX_SIZE 1024
 
@@ -222,5 +208,8 @@ void fulfill_tx(BIGCHAIN_TX *tx, uint8_t *priv_key, uint8_t *pub_key, uint8_t *j
   * @param input_index A uint8_t indicating which input to fulfill.
   */
 void partial_fulfill_tx(BIGCHAIN_TX *tx, uint8_t *priv_key, uint8_t *pub_key, uint8_t *json, uint16_t maxlen, uint8_t input_index);
+
+bool getKeyFromSeed( const uint8_t* seed, uint8_t* priv_key, uint8_t* pub_key);
+
 
 #endif // _BIGCHAIN_TX_H_

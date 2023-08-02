@@ -39,10 +39,10 @@
 #include "curves.h"
 #include "secp256k1.h"
 #include "nist256p1.h"
-#include "ed25519-donna/ed25519.h"
-#include "ed25519-donna/ed25519-sha3.h"
+#include "ed25519.h"
+#include "ed25519-sha3.h"
 #if USE_KECCAK
-#include "ed25519-donna/ed25519-keccak.h"
+#include "ed25519-keccak.h"
 #endif
 #if USE_NEM
 #include "nem.h"
@@ -411,7 +411,7 @@ void hdnode_fill_public_key(HDNode *node)
 		return;
 	if (node->curve->params) {
 		ecdsa_get_public_key33(node->curve->params, node->private_key, node->public_key);
-	} /*else {
+	} else {
 		node->public_key[0] = 1;
 		if (node->curve == &ed25519_info) {
 			ed25519_publickey(node->private_key, node->public_key + 1);
@@ -424,7 +424,7 @@ void hdnode_fill_public_key(HDNode *node)
 		} else if (node->curve == &curve25519_info) {
 			curve25519_scalarmult_basepoint(node->public_key + 1, node->private_key);
 		}
-	} */
+	} 
 }
 
 #if USE_ETHEREUM

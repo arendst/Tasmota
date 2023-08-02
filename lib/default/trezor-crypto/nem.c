@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "base32.h"
-#include "ed25519-donna/ed25519-keccak.h"
+#include "ed25519-keccak.h"
 #include "macros.h"
 #include "ripemd160.h"
 #include "sha3.h"

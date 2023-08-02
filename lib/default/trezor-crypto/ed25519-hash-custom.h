@@ -12,7 +12,7 @@
 #ifndef ED25519_HASH_CUSTOM
 #define ED25519_HASH_CUSTOM
 
-#include "../sha2.h"
+#include "sha2.h"
 
 #define ed25519_hash_context SHA512_CTX
 #define ed25519_hash_init(ctx) sha512_Init(ctx)

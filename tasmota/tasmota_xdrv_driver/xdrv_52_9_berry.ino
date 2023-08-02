@@ -452,7 +452,7 @@ void CmndBrRun(void) {
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
 
-void BrREPLRun(char * cmd) {
+void BrREPLRunRDDL(char * cmd, char * pResult) {
   if (berry.vm == nullptr) { return; }
 
   size_t cmd_len = strlen(cmd);
@@ -479,6 +479,10 @@ void BrREPLRun(char * cmd) {
         if (!be_isnil(berry.vm, 1)) {
           const char * ret_val = be_tostring(berry.vm, 1);
           berry.log.addString(ret_val, nullptr, "\n");
+          if( pResult )
+          {
+            strcpy( pResult, ret_val );
+          }
           // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), ret_val);
         }
         be_pop(berry.vm, 1);
@@ -495,7 +499,9 @@ void BrREPLRun(char * cmd) {
   }
   checkBeTop();
 }
-
+void BrREPLRun(char * cmd) {
+  BrREPLRunRDDL( cmd, NULL);
+}
 const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
   "var sn=0,id=0,ft,ltm=%d;"                      // Scroll position, Get most of weblog initially
   // Console command history

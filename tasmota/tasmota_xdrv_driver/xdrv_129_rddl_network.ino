@@ -27,6 +27,7 @@
 \*********************************************************************************************/
 
 #include "rddl.h"
+#include "esp_random.h"
 
 #ifdef USE_WEBCLIENT_HTTPS
 #warning **** USE_WEBCLIENT_HTTPS is enabled ****
@@ -39,6 +40,13 @@
 #define RDDL_NETWORK_NOTARIZATION_TIMER_IN_SECONDS (30)
 
 //#include <HT#TPClientLight.h>
+#include "planetmint.h"
+#include "rddl.h"
+#include "bip39.h"
+#include "bip32.h"
+#include "curves.h"
+#include "ed25519.h"
+#include "base58.h"
 
 
 uint32_t counted_seconds = 0;
@@ -100,13 +108,75 @@ void getNotarizationMessage(){
   MqttShowSensor(false);
 }
 
+void storeKeyValuePair( char* key, char* value)
+{
+  BrREPLRun((char*)"import persist");
+  String key_string = key;
+  String value_string = value;
+  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
+  //printf("store seed result: %s",  (char*)cmd.c_str());
+  BrREPLRun((char*)cmd.c_str());
+  BrREPLRun((char*)"persist.save()");
+  //printf("store seed result: %s",  seed_message);
+}
+
+void storeSeed()
+{
+  uint8_t seed_message[SEED_SIZE*2] = {0};
+  toHexString( (char*)seed_message, secret_seed, SEED_SIZE*2);
+  storeKeyValuePair( (char*)"seed", (char*) seed_message);
+}
+
+bool hasKey(const char * key){
+  char result [300]= {0};
+  BrREPLRun((char*)"import persist");
+  String cmd = String("persist.has(\"") + String(key) + String("\")");
+  BrREPLRunRDDL((char*)cmd.c_str(), result );
+  if( strcmp( result,"true") == 0)
+    return true;
+  else 
+    return false;
+}
+bool g_readSeed = false;
+
+char* getValueForKey( const char* key, char* buffer )
+{
+  if( ! hasKey(key) )
+    return NULL;
+  String key_string = key;
+  String cmd = String("persist.find(\"") + key_string + String("\")");
+  BrREPLRun((char*)"import persist");
+  BrREPLRunRDDL((char*)cmd.c_str(), buffer );
+  ResponseAppend_P(PSTR("HAS Key: %s\n"), buffer);
+  return buffer;
+}
+
+uint8_t* readSeed()
+{
+  if( g_readSeed )
+    return secret_seed;
+
+  char buffer[300] = {0};
+  char* ret = getValueForKey( "seed", buffer);
+  if( ret == NULL )
+    return NULL;
+
+  const uint8_t * seed = fromHexString(buffer);
+  memset( secret_seed, 0, SEED_SIZE );
+  memcpy( secret_seed, seed, SEED_SIZE);
+  g_readSeed = true;
+
+  return secret_seed;
+}
+
 void signRDDLNetworkMessage(int start_position){
     char pubkey_out[68] = {0};
     char sig_out[130] = {0};
     char hash_out[66] = {0};
     int current_position  = ResponseLength();
     const char* data_str = TasmotaGlobal.mqtt_data.c_str();
-    SignDataHash(start_position, current_position, data_str, pubkey_out, sig_out, hash_out);
+    if( readSeed() != NULL )
+      SignDataHash(start_position, current_position, data_str, pubkey_out, sig_out, hash_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergyHash", hash_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "EnergySig", sig_out);
     ResponseAppend_P(PSTR(",\"%s\":\"%s\""), "PublicKey", pubkey_out);
@@ -120,8 +190,9 @@ String getEdDSAChallenge( const char* public_key ){
   String challenge;
   HTTPClientLight http;
 
-  http.begin("https://cid-resolver.rddl.io/auth/?public_key=asdkfj%C3%B6alskdjf%C3%B6aldskjf");
-  //http.begin("http://node1-rddl-testnet.twilightparadox.com:9984/");
+  String uri = "https://cid-resolver.rddl.io/auth/?public_key=";
+  uri = uri + public_key;
+  http.begin(uri);
   http.addHeader("Content-Type", "application/json");
 
   int httpResponseCode = http.GET();
@@ -136,24 +207,155 @@ String getEdDSAChallenge( const char* public_key ){
     //start +14 to skip  {"challenge":"
     //end -2 to skip "}
     challenge = payload.substring(start+14, end-2);
-    ResponseAppend_P(PSTR("Payload received %s}"), challenge.c_str());
+    ResponseAppend_P(PSTR("Payload received %s\n"), challenge.c_str());
 
   }
   else {
-    Serial.println("Error on HTTP request");
-    ResponseAppend_P(PSTR("Error on HTTPS request"));
+    Serial.println("Error on HTTP request\n");
+    ResponseAppend_P(PSTR("Error on HTTPS request\n"));
   }
 
   http.end();
   return challenge;
 }
+
+String getJWTToken( const char* public_key, const unsigned char* signature){
+  String jwt_token;
+  HTTPClientLight http;
+  //char hexed_signature[200]={0};
+
+  //toHexString( hexed_signature, (unsigned char*)signature, 68 );
+  ResponseAppend_P(PSTR("b58 signature: %s\n"), signature);
+  String uri = "https://cid-resolver.rddl.io/auth/?public_key=";
+  uri = uri + public_key + "&signature=" + (char *)signature;
+  ResponseAppend_P(PSTR("JWT URI: %s\n"), uri.c_str());
+  http.begin(uri);
+  http.addHeader("accept", "application/json");
+
+  int httpResponseCode = http.POST((uint8_t*)"",0);
+
+  if (httpResponseCode > 0) {
+    String payload = http.getString();
+    Serial.println(httpResponseCode);
+    Serial.println(payload);
+    
+    int start = payload.indexOf("{");
+    int end = payload.indexOf("}");
+    //start +14 to skip  {"challenge":"
+    //start +17 to skip  {"access_token":"
+    //end -2 to skip "}
+    jwt_token = payload.substring(start+17, end-1);
+    ResponseAppend_P(PSTR("Payload received JWT: %s\n"), jwt_token.c_str());
+
+  }
+  else {
+    Serial.println("Error on HTTP request");
+    ResponseAppend_P(PSTR("Error on HTTPS request\n"));
+  }
+
+  http.end();
+  return jwt_token;
+}
+
+String registerCID( const char* jwt_token, const char* url, const char* cid){
+  String result;
+  HTTPClientLight http;
+
+  String token = "Bearer ";
+  token = token + jwt_token;
+
+
+  String uri = "https://cid-resolver.rddl.io/entry/?cid=";
+  uri = uri + cid + "&url=" + url;
+  http.begin(uri);
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("Authorization", token);
+
+  int httpResponseCode = http.POST((uint8_t*)"",0);
+
+  if (httpResponseCode > 0) {
+    String payload = http.getString();
+    Serial.println(httpResponseCode);
+    Serial.println(payload);
+    
+    int start = payload.indexOf("{");
+    int end = payload.indexOf("}");
+    //start +14 to skip  {"challenge":"
+    //end -2 to skip "}
+    result = payload.substring(start, end);
+    ResponseAppend_P(PSTR("Payload received CID registration: %s\n"), result.c_str());
+
+  }
+  else {
+    Serial.println("Error on HTTP request\n");
+    ResponseAppend_P(PSTR("Error on HTTPS request\n"));
+  }
+
+  http.end();
+  return result;
+}
+
 void getAuthToken(){
   char* public_key = NULL;
-  // get public key
-  String challenge = getEdDSAChallenge(public_key);
-  //sign EdDSA challenge
-  //send signed challenge to  server, get JWT
+  size_t b58_size = 80;
+  //uint8_t seed[SEED_SIZE] = {0};
+  uint8_t priv_key[33] = {0};
+  uint8_t pub_key[34] = {0};
+  uint8_t b58_pub_key[b58_size] = {0};
+  unsigned char signature[65] = {0};
+  
 
+  readSeed();
+  ////getKeyFromSeed((const uint8_t*)seed, priv_key, pub_key);
+  HDNode node;
+  if( !hdnode_from_seed( secret_seed, SEED_SIZE, ED25519_NAME, &node))
+    return;
+  hdnode_private_ckd_prime(&node, 0);
+  hdnode_private_ckd_prime(&node, 1);
+  hdnode_fill_public_key(&node);
+  memcpy(priv_key, node.private_key, 32);
+  memcpy(pub_key, node.public_key, 33);
+  char* planetmint_key = (char*) pub_key +1;
+  
+  bool ret = b58enc((char*)b58_pub_key, &b58_size, planetmint_key, 32);
+  if( ret == true )
+    ResponseAppend_P(PSTR("B58 encoding: %u - %s\n"), b58_size, b58_pub_key);
+  else
+    ResponseAppend_P(PSTR("B58 encoding: failed\n"));
+
+
+
+  String challenge = getEdDSAChallenge((const char *)b58_pub_key);
+
+
+  SHA256_CTX ctx;
+  uint8_t hash[SHA256_DIGEST_LENGTH+1] = {0};
+  sha256_Init(&ctx);
+  sha256_Update(&ctx, (const uint8_t*)challenge.c_str(), challenge.length());
+  sha256_Final(&ctx, hash);
+
+  char hexbuf[68]={0};
+  toHexString( hexbuf,(uint8_t*)hash, 66 );
+  ResponseAppend_P(PSTR("HASH: %s\n"), hexbuf);
+  //printf("hash in hex: %s\n", (char*)hexbuf );
+
+  //sign EdDSA challenge
+  ed25519_sign( (const unsigned char*)hash, SHA256_DIGEST_LENGTH, (const unsigned char*)priv_key,(const unsigned char*)planetmint_key, signature);
+  size_t sig_size = 200;
+  char b58sig[sig_size] = {0};
+  b58enc( b58sig, &sig_size, signature, 64);
+  //send signed challenge to  server, get JWT
+  String jwt_token = getJWTToken( (const char *)b58_pub_key, (const unsigned char*)b58sig);
+
+  //compute CID
+
+  //register CID
+  const char * cid = "bafkreiet4caacbr7ii5vw1b4gdb7twdndpc2duwuevgfrkosnk3cxbqndu";
+  char uri[300]={0};
+  snprintf( uri, 300, "xmpp:%s.%s@m2m.rddl.io", cid, planetmint_key);
+  registerCID( jwt_token.c_str(), (const char*) uri, cid);
+
+  //notarize CID
 }
 
 void sendNotarizationMessage(){

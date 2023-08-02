@@ -33,7 +33,7 @@ extern "C"
 #include <stdint.h>
 
 #include "bip32.h"
-#include "ed25519-donna/ed25519.h"
+#include "ed25519.h"
 
 #define NEM_LEVY_PERCENTILE_DIVISOR 4
 #define NEM_MAX_DIVISIBILITY        6

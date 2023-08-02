@@ -12,7 +12,7 @@
 #ifndef ED25519_HASH_CUSTOM
 #define ED25519_HASH_CUSTOM
 
-#include "../sha3.h"
+#include "sha3.h"
 
 #define ed25519_hash_context SHA3_CTX
 #define ed25519_hash_init(ctx) keccak_512_Init(ctx)

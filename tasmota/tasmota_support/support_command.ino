@@ -717,7 +717,7 @@ void CmndStatusResponse(uint32_t index) {
 void CmndMemonic(void)
 {
   int32_t payload = XdrvMailbox.payload;
-  const char* mnemonic = NULL;
+  char* mnemonic = NULL;
   if (0 == XdrvMailbox.index) { payload = 0; }  // All status messages in one MQTT message (status0)
 
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
@@ -727,13 +727,16 @@ void CmndMemonic(void)
   if (!Settings->flag3.shutter_mode && (13 == payload)) { return; }
   if( XdrvMailbox.data_len )
   {
-    mnemonic = setMnemonic( XdrvMailbox.data, XdrvMailbox.data_len );
+    mnemonic = (char*)setSeed( XdrvMailbox.data, XdrvMailbox.data_len );
   }
   else
   {
-    mnemonic = getMnemonic();
+    mnemonic = (char*)getMnemonic();
+    mnemonic = (char*)setSeed( mnemonic, strlen(mnemonic) );
   }
+  storeSeed();
   Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC,mnemonic );
+
   CmndStatusResponse(0);
   ResponseClear();
 

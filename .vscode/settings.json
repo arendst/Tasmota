@@ -81,6 +81,7 @@
       "hmac.h": "c",
       "base64_plntmnt.h": "c",
       "sha3.h": "c",
-      "functional": "cpp"
+      "functional": "cpp",
+      "planetmint.h": "c"
     }
   }

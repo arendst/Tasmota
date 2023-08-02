@@ -14,10 +14,10 @@
 #include "blake2s.h"
 #include "curves.h"
 #include "ecdsa.h"
-#include "ed25519-donna/ed25519-donna.h"
-#include "ed25519-donna/curve25519-donna-scalarmult-base.h"
-#include "ed25519-donna/ed25519-keccak.h"
-#include "ed25519-donna/ed25519.h"
+#include "ed25519-donna.h"
+#include "curve25519-donna-scalarmult-base.h"
+#include "ed25519-keccak.h"
+#include "ed25519.h"
 #include "hmac.h"
 #include "memzero.h"
 #include "nist256p1.h"
@@ -31,12 +31,11 @@
 #include "sha3.h"
 
 #include "rddl.h"
+#include "esp_random.h"
 
-char* g_mnemonic = NULL;
+uint8_t secret_seed[SEED_SIZE] = {0};
 
-static bool bIsDynamicallyAllocated = false;
-
-const uint8_t *fromhex2(const char *str) {
+const uint8_t *fromHexString(const char *str) {
   static uint8_t buf[FROMHEX_MAXLEN];
   size_t len = strlen(str) / 2;
   if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
@@ -54,8 +53,8 @@ const uint8_t *fromhex2(const char *str) {
   return buf;
 }
 
-
-void tohex2(char *hexbuf, uint8_t *str, int strlen){
+// convert byte array  hexadeciaml values of length strlen into string represetning the hexv values (thus doubling the size)
+void toHexString(char *hexbuf, uint8_t *str, int strlen){
    // char hexbuf[strlen];
     for (int i = 0 ; i < strlen/2 ; i++) {
         sprintf(&hexbuf[2*i], "%02X", str[i]);
@@ -65,39 +64,38 @@ void tohex2(char *hexbuf, uint8_t *str, int strlen){
 
 const char* getMnemonic()
 {
-  // Generate a random master seed
-  uint8_t master_seed[32];
-  for( int i = 0; i< 32; ++i )
-    master_seed[i]= random();
 
+  esp_fill_random( secret_seed, SEED_SIZE_MNEMONIC_TO_SEED);
   // Generate a 12-word mnemonic phrase from the master seed
-  const char * mnemonic_phrase = mnemonic_from_data(master_seed, 32);
-
-  printf("%s\n", mnemonic_phrase);
-  g_mnemonic = (char*) mnemonic_phrase;
+  const char * mnemonic_phrase = mnemonic_from_data(secret_seed, SEED_SIZE_MNEMONIC_TO_SEED);
   return mnemonic_phrase;
 }
 
-const char* setMnemonic( char* pMnemonic, size_t len )
+const char* setSeed( char* pMnemonic, size_t len )
 {
-  uint8_t seed[64] = {0};
-
-  if( mnemonic_check( pMnemonic ) )
-  {
-    mnemonic_to_seed(pMnemonic, "TREZOR", seed, 0);
-    if( g_mnemonic && bIsDynamicallyAllocated )
-    {
-      delete g_mnemonic;
-    }
-    g_mnemonic= new char[len+1];
-    memset( g_mnemonic,0, len+1 );
-    memcpy_P(g_mnemonic,pMnemonic, len);
-    bIsDynamicallyAllocated = true;
-
-    return (const char*)g_mnemonic;
-  }
-  else
+  if( !mnemonic_check( pMnemonic ) )
     return "";
+
+  mnemonic_to_seed(pMnemonic, "TREZOR", secret_seed, 0);
+  return (const char*)pMnemonic;
+}
+
+const char* getMnemonicFromSeed( const uint8_t* seed, size_t length )
+{
+  // Generate a 12-word mnemonic phrase from the master seed
+  const char * mnemonic_phrase = mnemonic_from_data(seed, length);
+
+  printf("%s\n", mnemonic_phrase);
+  return mnemonic_phrase;
+}
+
+bool getSeedFromMnemonic( const char* pMnemonic, size_t len, uint8_t* seedbuffer )
+{
+  if( !mnemonic_check( pMnemonic ) )
+    return false;
+  
+  mnemonic_to_seed(pMnemonic, "TREZOR", seedbuffer, NULL);
+  return true;  
 }
 
 int validateSignature() {
@@ -111,9 +109,9 @@ int validateSignature() {
   const char sig_str[] = "F551CDF6156FD2A8CC29428B61FDB9F5224928D5A5937E38F36D2D566C11B1DF13CD12E3BA2DAE6A33F091C549A5ADE537A5F07121AA1F4D4286B51260B228DE";
 
 
-  memcpy(pub_key, fromhex2(pub_key_str), 33);
-  memcpy(hash, fromhex2(hash_str), 32);
-  memcpy(computed_sig, fromhex2(sig_str), 64);
+  memcpy(pub_key, fromHexString(pub_key_str), 33);
+  memcpy(hash, fromHexString(hash_str), 32);
+  memcpy(computed_sig, fromHexString(sig_str), 64);
 
   int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash);
   return verified;
@@ -121,7 +119,7 @@ int validateSignature() {
 
 bool SignDataHash(int json_data_start, int current_length, const char* data_str, char* pubkey_out, char* sig_out, char* hash_out)
 {
-  uint8_t seed[64] = {0};
+  //uint8_t seed[64] = {0};
   uint8_t hash[32] = {0};
   uint8_t priv_key[32] = {0};
   uint8_t pub_key[33] = {0};
@@ -129,13 +127,8 @@ bool SignDataHash(int json_data_start, int current_length, const char* data_str,
   HDNode node2;
   SHA256_CTX ctx;
   const ecdsa_curve *curve = &secp256k1;
-  
-  if( !g_mnemonic ){
-    return false;
-  }
-  mnemonic_to_seed(g_mnemonic, "TREZOR", seed, 0);
 
-  hdnode_from_seed( seed, 64, SECP256K1_NAME, &node2);
+  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node2);
   hdnode_fill_public_key(&node2);
   memcpy(priv_key, node2.private_key, 32);
   memcpy(pub_key, node2.public_key, 33);
@@ -154,9 +147,9 @@ bool SignDataHash(int json_data_start, int current_length, const char* data_str,
   int verified = ecdsa_verify_digest(curve, pub_key, signature, hash);
 
   // prepare and convert outputs to hex-strings
-  tohex2( pubkey_out, pub_key, 68);
-  tohex2( sig_out, signature, 130);
-  tohex2( hash_out, hash, 66);
+  toHexString( pubkey_out, pub_key, 68);
+  toHexString( sig_out, signature, 130);
+  toHexString( hash_out, hash, 66);
 
   return verified;
 }
