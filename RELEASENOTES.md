@@ -160,6 +160,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiElHVAC power commands regression from v12.4.0.1 [#18923](https://github.com/arendst/Tasmota/issues/18923)
 - Zero cross dimmer minimum interrupt time [#19211](https://github.com/arendst/Tasmota/issues/19211)
 - Fade would fail when the difference between start and target would be too small [#19248](https://github.com/arendst/Tasmota/issues/19248)
+- Inverted shutter [#19243](https://github.com/arendst/Tasmota/issues/19243)
 - ESP8266 SPI initialization for scripter, filesystem and MFRC522 [#19209](https://github.com/arendst/Tasmota/issues/19209)
 
 ### Removed

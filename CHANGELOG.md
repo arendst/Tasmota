@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 SPI initialization for scripter, filesystem and MFRC522 (#19209)
 - Zero cross dimmer minimum interrupt time (#19211)
 - Fade would fail when the difference between start and target would be too small (#19248)
+- Inverted shutter (#19243)
 
 ### Removed
 
