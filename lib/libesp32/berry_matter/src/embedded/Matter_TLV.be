@@ -94,6 +94,9 @@ class Matter_TLV
   static class Matter_TLV_item
     # we keep a shortcut reference to the Matter_TLV class
     static var TLV = Matter_TLV
+    static var is_list = false
+    static var is_array = false
+    static var is_struct = false
     # parent tag to inherit vendor/profile/tag
     var parent
     var next_idx              # next idx in buffer (when parsing)
@@ -607,7 +610,10 @@ class Matter_TLV
 # class Matter_TLV_struct var _ end
 
   static class Matter_TLV_list : Matter_TLV_item
-    static var is_struct = false
+    # inherited
+    static var is_list = true
+    # static var is_array = false
+    # static var is_struct = false
 
     #################################################################################
     def init(parent)
@@ -825,6 +831,8 @@ class Matter_TLV
   # Matter_TLV_struct class
   #################################################################################
   static class Matter_TLV_struct : Matter_TLV_list
+    static var is_list = false
+  # static var is_array = false
     static var is_struct = true
 
     def init(parent)
@@ -843,6 +851,10 @@ class Matter_TLV
   # Matter_TLV_array class
   #################################################################################
   static class Matter_TLV_array : Matter_TLV_list
+    static var is_list = false
+    static var is_array = true
+  # static var is_struct = false
+
     def init(parent)
       super(self).init(parent)
       self.typ = self.TLV.ARRAY

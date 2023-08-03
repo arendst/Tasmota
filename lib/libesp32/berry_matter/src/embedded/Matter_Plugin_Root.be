@@ -151,7 +151,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
     # ====================================================================================================
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
-      self.send_ack_now(ctx.msg)      # long operation, send Ack first
+      self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
@@ -217,7 +217,7 @@ class Matter_Plugin_Root : Matter_Plugin
         
     # ====================================================================================================
     elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
-      self.send_ack_now(ctx.msg)      # long operation, send Ack first
+      self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
         return tlv_solo.set(TLV.U2, 1)
@@ -374,7 +374,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return srcr
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
-        self.send_ack_now(ctx.msg)      # long operation, send Ack first
+        self.ack_request(ctx)           # long operation, send Ack first
         # no data
         if session._fabric
           session._breadcrumb = 0          # clear breadcrumb
@@ -442,7 +442,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return ar
 
       elif command == 0x0004            # ---------- CSRRequest ----------
-        self.send_ack_now(ctx.msg)      # long operation, send Ack first
+        self.ack_request(ctx)           # long operation, send Ack first
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool
