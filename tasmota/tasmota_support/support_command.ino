@@ -200,13 +200,15 @@ void CmndWifiTest(void)
         if (0 == XdrvMailbox.index) { Wifi.wifi_Test_Restart = true; }      // If WifiTest is successful, save data on SSID1 and restart
         if (2 == XdrvMailbox.index) { Wifi.wifi_Test_Save_SSID2 = true; }   // If WifiTest is successful, save data on SSID2
 
-        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1, ssid_test);
-        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1, pswd_test);
+        if (3 != XdrvMailbox.index) {                                       // WifiTest3 never ever makes anything persistent, thus works without webserver
+          SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1, ssid_test);
+          SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1, pswd_test);
+        }
 
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
-          SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), TasmotaGlobal.hostname);
+          ssid_test, TasmotaGlobal.hostname);
 
-        WiFi.begin(SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1));
+        WiFi.begin(ssid_test,pswd_test);
       }
     } else {
       ResponseCmndChar(D_JSON_BUSY);
