@@ -1,9 +1,0 @@
-DFRobot_MAX17043	KEYWORD1
-
-begin	KEYWORD2
-readVoltage	KEYWORD2
-readPercentage	KEYWORD2
-setInterrupt	KEYWORD2
-clearInterrupt	KEYWORD2
-setSleep	KEYWORD2
-setWakeUp	KEYWORD2
