@@ -7,24 +7,27 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
 - Support for multiple PCA9685 with extended functionality (#18805)
-- Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature
-- Berry bytes `get` and `set` work for 3 bytes values
-- Matter support for fabric_filtered request (for Google compatibility)
+- Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature (#19210)
+- Berry bytes `get` and `set` work for 3 bytes values (#19225)
+- Matter support for fabric_filtered request (for Google compatibility) (#19249)
 
 ### Breaking Changed
 
 ### Changed
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% (#19138)
 - ESP32 Framework (Core) from v2.0.10 to v2.0.11
-- Berry `mqtt.publish` now distinguishes between `string` and `bytes`
+- Berry `mqtt.publish` now distinguishes between `string` and `bytes` (#19196)
 - IRremoteESP8266 library from v2.8.5 to v2.8.6
-- Reduced log level for TeleInfo
-- Matter increased polling frequency for local switches/occupancy
+- ESP32 autodetect flashsize and adjust filesystem (#19215)
+- Reduced log level for TeleInfo (#19216)
+- Matter increased polling frequency for local switches/occupancy (#19242)
 
 ### Fixed
 - Initial battery level percentage (#19160)
 - Berry SK6812_GRBW crash (#19166)
-- Fade would fail when the difference between start and target would be too small
+- ESP8266 SPI initialization for scripter, filesystem and MFRC522 (#19209)
+- Zero cross dimmer minimum interrupt time (#19211)
+- Fade would fail when the difference between start and target would be too small (#19248)
 
 ### Removed
 
