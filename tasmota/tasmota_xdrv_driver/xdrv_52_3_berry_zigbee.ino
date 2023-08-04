@@ -264,9 +264,10 @@ extern "C" {
       { "_cmd_general", offsetof(Z_attribute, attr_id) + 1, 1, 1, ctypes_u8, 0 },       // bit #1 of byte+1
       { "_direction", offsetof(Z_attribute, attr_id) + 1, 0, 1, ctypes_u8, 0 },         // bit #0 of byte+1
       { "_iscmd", offsetof(Z_attribute, key_is_cmd), 0, 0, ctypes_u8, 0 },
-      { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_u32, 0 },
+      { "attr_base", offsetof(Z_attribute, attr_base), 0, 0, ctypes_u32, 0 },
       { "attr_divider", offsetof(Z_attribute, attr_divider), 0, 0, ctypes_u32, 0 },
-      { "attr_type", offsetof(Z_attribute, attr_type), 0, 0, ctypes_i32, 0 },
+      { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_u32, 0 },
+      { "attr_type", offsetof(Z_attribute, attr_type), 0, 0, ctypes_u8, 0 },
       // { "key", offsetof(Z_attribute, key), 0, 0, ctypes_ptr32, 0 },
       // { "key_is_pmem", offsetof(Z_attribute, key_is_pmem), 0, 0, ctypes_u8, 0 },
       // { "key_is_str", offsetof(Z_attribute, key_is_str), 0, 0, ctypes_u8, 0 },
