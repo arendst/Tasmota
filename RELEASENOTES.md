@@ -141,7 +141,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Framework (Core) from v2.0.10 to v2.0.11
 - ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% [#19138](https://github.com/arendst/Tasmota/issues/19138)
-- Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)
+- Configuration backup and restore now supports ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - Reduced log level for TeleInfo [#19216](https://github.com/arendst/Tasmota/issues/19216)
 - ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - ESP32 autodetect flashsize and adjust filesystem [#19215](https://github.com/arendst/Tasmota/issues/19215)
@@ -162,6 +162,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Fade would fail when the difference between start and target would be too small [#19248](https://github.com/arendst/Tasmota/issues/19248)
 - Inverted shutter [#19243](https://github.com/arendst/Tasmota/issues/19243)
 - ESP8266 SPI initialization for scripter, filesystem and MFRC522 [#19209](https://github.com/arendst/Tasmota/issues/19209)
+- Matter support for large atribute responses [#19252](https://github.com/arendst/Tasmota/issues/19252)
+- Matter auto-configuration Relay indices [#19255](https://github.com/arendst/Tasmota/issues/19255)
 
 ### Removed
 - Support for ESP32-C3 with chip revision below 3 (old development boards)

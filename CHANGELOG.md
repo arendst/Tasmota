@@ -29,8 +29,8 @@ All notable changes to this project will be documented in this file.
 - Zero cross dimmer minimum interrupt time (#19211)
 - Fade would fail when the difference between start and target would be too small (#19248)
 - Inverted shutter (#19243)
-- Matter support for large atribute responses
-- Matter fix auto-configuration Relay indices
+- Matter support for large atribute responses (#19252)
+- Matter auto-configuration Relay indices (#19255)
 
 ### Removed
 
