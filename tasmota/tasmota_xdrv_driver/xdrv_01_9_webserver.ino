@@ -375,8 +375,8 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
 
 #ifdef USE_CONSOLE_CSS_FLEX
 const char HTTP_CMND_STYLE[] PROGMEM =  // Overrule CSS for flex console
-  "html,body{margin:5;height:99%%;}"
-  "body{display:flex;flex-direction:column;}"
+  "html,body{height:99%%;}"
+  "body{display:flex;flex-flow:column;}"
   "textarea{resize:none;flex:auto;}";
 
 const char HTTP_FORM_CMND[] PROGMEM =
