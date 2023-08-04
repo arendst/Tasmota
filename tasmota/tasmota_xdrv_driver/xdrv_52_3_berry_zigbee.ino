@@ -257,7 +257,7 @@ extern "C" {
     sizeof(Z_attribute),  /* size in bytes */
     11,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[11]) {
+    (const be_ctypes_structure_item_t[12]) {
       { "_attr_id", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u16, 0 },
       { "_cluster", offsetof(Z_attribute, cluster), 0, 0, ctypes_u16, 0 },
       { "_cmd", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u8, 0 },       // low 8 bits of attr_id
