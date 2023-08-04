@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - Fade would fail when the difference between start and target would be too small (#19248)
 - Inverted shutter (#19243)
 - Matter support for large atribute responses
+- Matter fix auto-configuration Relay indices
 
 ### Removed
 
