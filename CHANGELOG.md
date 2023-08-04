@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 autodetect flashsize and adjust filesystem (#19215)
 - Reduced log level for TeleInfo (#19216)
 - Matter increased polling frequency for local switches/occupancy (#19242)
+- Change console height from default 318 pixels to viewport (#19241)
 
 ### Fixed
 - Initial battery level percentage (#19160)

@@ -30,6 +30,8 @@
 // Enable below demo feature only if defines USE_UNISHOX_COMPRESSION and USE_SCRIPT_WEB_DISPLAY are disabled
 //#define USE_WEB_SSE
 
+#define USE_CONSOLE_CSS_FLEX
+
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                      1      // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -371,12 +373,28 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
+#ifdef USE_CONSOLE_CSS_FLEX
+const char HTTP_CMND_STYLE[] PROGMEM =  // Overrule CSS for flex console
+  "html,body{margin:5;height:99%%;}"
+  "body{display:flex;flex-direction:column;}"
+  "textarea{resize:none;flex:auto;}";
+
+const char HTTP_FORM_CMND[] PROGMEM =
+  "</div>"                     // Close HTTP_HEAD_STYLE3 <div>
+  "<textarea readonly id='t1' wrap='off'></textarea><br>"
+  "<form method='get' onsubmit='return l(1);'>"
+  "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
+  //  "<br><button type='submit'>Send command</button>"
+  "</form>"
+  "<div style='padding:0;'>";  // Add dummy <div> replacing HTTP_HEAD_STYLE3 closed <div>
+#else
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br><textarea readonly id='t1' cols='340' wrap='off'></textarea><br><br>"
   "<form method='get' onsubmit='return l(1);'>"
   "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
   //  "<br><button type='submit'>Send command</button>"
   "</form>";
+#endif  // USE_CONSOLE_CSS_FLEX
 
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%%'>";
@@ -3117,7 +3135,11 @@ void HandleConsole(void)
 
   WSContentStart_P(PSTR(D_CONSOLE));
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings->web_refresh);
+#ifdef USE_CONSOLE_CSS_FLEX
+  WSContentSendStyle_P(HTTP_CMND_STYLE);
+#else
   WSContentSendStyle();
+#endif  // USE_CONSOLE_CSS_FLEX
   WSContentSend_P(HTTP_FORM_CMND);
   WSContentSpaceButton((WebUseManagementSubmenu()) ? BUTTON_MANAGEMENT : BUTTON_MAIN);
   WSContentStop();

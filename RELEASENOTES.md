@@ -143,6 +143,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% [#19138](https://github.com/arendst/Tasmota/issues/19138)
 - Configuration backup and restore now supports ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - Reduced log level for TeleInfo [#19216](https://github.com/arendst/Tasmota/issues/19216)
+- Change console height from default 318 pixels to viewport [#19241](https://github.com/arendst/Tasmota/issues/19241)
 - ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - ESP32 autodetect flashsize and adjust filesystem [#19215](https://github.com/arendst/Tasmota/issues/19215)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment [#19120](https://github.com/arendst/Tasmota/issues/19120)
