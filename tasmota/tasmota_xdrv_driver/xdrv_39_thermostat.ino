@@ -597,11 +597,9 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
   // then switch output to ON
   if ((command == IFACE_ON)
     && (Thermostat[ctr_output].status.status_output == IFACE_OFF)) {
-//#ifndef DEBUG_THERMOSTAT
     if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
       ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_ON, SRC_THERMOSTAT);
     }
-//#endif // DEBUG_THERMOSTAT
     Thermostat[ctr_output].status.status_output = IFACE_ON;
 #ifdef DEBUG_THERMOSTAT
     ThermostatVirtualSwitch(ctr_output);
@@ -611,11 +609,9 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
   // AND current output status is ON
   // then switch output to OFF
   else if ((command == IFACE_OFF) && (Thermostat[ctr_output].status.status_output == IFACE_ON)) {
-//#ifndef DEBUG_THERMOSTAT
     if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
       ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
     }
-//#endif // DEBUG_THERMOSTAT
     Thermostat[ctr_output].timestamp_output_off = TasmotaGlobal.uptime;
     Thermostat[ctr_output].status.status_output = IFACE_OFF;
 #ifdef DEBUG_THERMOSTAT
@@ -1277,6 +1273,7 @@ void ThermostatVirtualSwitchCtrState(uint8_t ctr_output)
   Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Thermostat[0].status.phase_hybrid_ctr) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
 }
+#endif // DEBUG_THERMOSTAT
 
 void ThermostatDebug(uint8_t ctr_output)
 {
@@ -1334,7 +1331,6 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
   AddLog(LOG_LEVEL_DEBUG, PSTR(""));
 }
-#endif // DEBUG_THERMOSTAT
 
 uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
 {
@@ -2167,9 +2163,7 @@ bool Xdrv39(uint32_t function)
           ThermostatSignalPreProcessingSlow(ctr_output);
           ThermostatController(ctr_output);
           ThermostatSignalPostProcessingSlow(ctr_output);
-#ifdef DEBUG_THERMOSTAT
           ThermostatDebug(ctr_output);
-#endif // DEBUG_THERMOSTAT
         }
       }
       break;
