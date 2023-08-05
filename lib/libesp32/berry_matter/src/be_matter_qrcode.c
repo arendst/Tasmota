@@ -32,7 +32,7 @@
 
 // `matter.QRCode.encode_str(content:string) -> map`
 //
-int32_t qr_encode_str(bvm *vm) {
+int qr_encode_str(bvm *vm) {
   int32_t argc = be_top(vm);
   if (argc >= 1 && be_isstring(vm, 1)) {
     const char * data_str = be_tostring(vm, 1);

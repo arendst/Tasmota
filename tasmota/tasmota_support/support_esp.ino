@@ -214,7 +214,6 @@ String GetCodeCores(void) {
 
 #ifdef ESP32
 
-#include "bootloader_flash.h"
 #include "soc/soc.h"
 #include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
@@ -254,6 +253,10 @@ String GetCodeCores(void) {
   #endif
 #else // ESP32 Before IDF 4.0
   #include "rom/rtc.h"
+#endif
+
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "esp_chip_info.h"
 #endif
 
 // Set the Stacksize for Arduino core. Default is 8192, some builds may need a bigger one
@@ -724,7 +727,12 @@ uint8_t* FlashDirectAccess(void) {
 }
 
 extern "C" {
-  bool esp_spiram_is_initialized(void);
+  #if ESP_IDF_VERSION_MAJOR >= 5
+    // bool IRAM_ATTR __attribute__((pure)) esp_psram_is_initialized(void)
+    bool esp_psram_is_initialized(void);
+  #else
+    bool esp_spiram_is_initialized(void);
+  #endif
 }
 
 // this function is a replacement for `psramFound()`.
@@ -734,7 +742,11 @@ bool FoundPSRAM(void) {
 #if CONFIG_IDF_TARGET_ESP32C3
   return psramFound();
 #else
-  return psramFound() && esp_spiram_is_initialized();
+  #if ESP_IDF_VERSION_MAJOR >= 5
+    return psramFound() && esp_psram_is_initialized();
+  #else
+    return psramFound() && esp_spiram_is_initialized();
+  #endif
 #endif
 }
 

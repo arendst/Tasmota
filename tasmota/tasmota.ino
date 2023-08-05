@@ -406,6 +406,7 @@ void setup(void) {
 
 #ifdef CONFIG_IDF_TARGET_ESP32
   // restore GPIO16/17 if no PSRAM is found
+  #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
@@ -415,6 +416,7 @@ void setup(void) {
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
+  #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
