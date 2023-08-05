@@ -56,6 +56,7 @@ class Matter_Path
       s += (self.cluster   != nil ? format("%04X/", self.cluster) : "****/")
       s += (self.attribute != nil ? format("%04X", self.attribute) : "")
       s += (self.command   != nil ? format("%04X", self.command) : "")
+      if self.fabric_filtered   s += "!"    end
       if self.attribute == nil && self.command == nil     s += "****" end
       return s
     except .. as e, m

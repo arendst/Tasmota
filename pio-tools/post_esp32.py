@@ -1,6 +1,8 @@
 # From: https://github.com/letscontrolit/ESPEasy/blob/mega/tools/pio/post_esp32.py
 # Thanks TD-er :)
 
+# Thanks @staars for safeboot and auto resizing LittleFS code and enhancements
+
 # Combines separate bin files with their respective offsets into a single file
 # This single file must then be flashed to an ESP32 node with 0 offset.
 #
@@ -29,6 +31,8 @@ import csv
 import requests
 import shutil
 import subprocess
+import codecs
+from SCons.Script import COMMAND_LINE_TARGETS
 
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
@@ -51,6 +55,30 @@ else:
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduinoespressif32/variants/tasmota")
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
+
+def patch_partitions_bin(size_string):
+    partition_bin_path = join(env.subst("$BUILD_DIR"),"partitions.bin")
+    with open(partition_bin_path, 'r+b') as file:
+        binary_data = file.read(0xb0)
+        import hashlib
+        bin_list = list(binary_data)
+        size = codecs.decode(size_string[2:], 'hex_codec') # 0xc50000 -> [c5,00,00]
+        bin_list[0x8a] = size[0]
+        bin_list[0x8b] = size[1]
+        result = hashlib.md5(bytes(bin_list[0:0xa0]))
+        partition_data = bytes(bin_list) + result.digest()
+        file.seek(0)
+        file.write(partition_data)
+        print("New partition hash:",result.digest().hex())
+
+def esp32_detect_flashsize():
+    if not "upload" in COMMAND_LINE_TARGETS:
+        return "4MB",False
+    size = env.get("TASMOTA_flash_size")
+    if size == None:
+        return "4MB",False
+    else:
+        return size,True
 
 def esp32_create_chip_string(chip):
     tasmota_platform = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
@@ -120,6 +148,8 @@ def esp32_create_combined_bin(source, target, env):
     # factory_offset = -1      # error code value - currently unused
     app_offset = 0x10000     # default value for "old" scheme
     fs_offset = -1           # error code value
+    flash_size_from_esp, flash_size_was_overridden = esp32_detect_flashsize()
+
     with open(env.BoardConfig().get("build.partitions")) as csv_file:
         print("Read partitions from ",env.BoardConfig().get("build.partitions"))
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -136,7 +166,13 @@ def esp32_create_combined_bin(source, target, env):
                 # elif(row[0] == 'factory'):
                 #     factory_offset = int(row[3],base=16)
                 elif(row[0] == 'spiffs'):
-                    if esp32_build_filesystem(row[4]):
+                    partition_size = row[4]
+                    if flash_size_was_overridden:
+                        print(f"Will override fixed FS partition size from {env.BoardConfig().get('build.partitions')}: {partition_size} ...")
+                        partition_size =  hex(int(flash_size_from_esp.split("MB")[0]) * 0x100000 - int(row[3],base=16))
+                        print(f"... with computed maximum size from connected {env.get('BOARD_MCU')}: {partition_size}")
+                        patch_partitions_bin(partition_size)
+                    if esp32_build_filesystem(partition_size):
                         fs_offset = int(row[3],base=16)
 
 
@@ -147,16 +183,19 @@ def esp32_create_combined_bin(source, target, env):
     tasmota_platform = esp32_create_chip_string(chip)
 
     if "-DUSE_USB_CDC_CONSOLE" in env.BoardConfig().get("build.extra_flags") and "cdc" not in tasmota_platform:
-        tasmota_platform += "cdc" 
+        tasmota_platform += "cdc"
         print("WARNING: board definition uses CDC configuration, but environment name does not -> changing tasmota safeboot binary to:", tasmota_platform + "-safeboot.bin")
- 
+
     if not os.path.exists(variants_dir):
         os.makedirs(variants_dir)
     if("safeboot" in firmware_name):
         esp32_copy_new_safeboot_bin(tasmota_platform,firmware_name)
     else:
         esp32_fetch_safeboot_bin(tasmota_platform)
+
     flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
+    if flash_size_was_overridden:
+        flash_size = flash_size_from_esp
     flash_freq = env.BoardConfig().get("build.f_flash", "40000000L")
     flash_freq = str(flash_freq).replace("L", "")
     flash_freq = str(int(int(flash_freq) / 1000000)) + "m"

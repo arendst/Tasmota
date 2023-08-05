@@ -53,7 +53,7 @@ uint8_t ledcReadResolution(uint8_t chan);
 // was not yet attached.
 //
 // Returns: hardware channel number, or -1 if it failed
-int analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+int32_t analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
 
 // change both freq and range
 // `0`: set to global value

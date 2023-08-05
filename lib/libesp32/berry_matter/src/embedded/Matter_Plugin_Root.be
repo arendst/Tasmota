@@ -151,11 +151,13 @@ class Matter_Plugin_Root : Matter_Plugin
 
     # ====================================================================================================
     elif cluster == 0x003E              # ========== Node Operational Credentials Cluster 11.17 p.704 ==========
-      self.send_ack_now(ctx.msg)      # long operation, send Ack first
+      self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- NOCs / list[NOCStruct] ----------
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
-        for loc_fabric: self.device.sessions.active_fabrics()
+        var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
+        for loc_fabric: fabs
+          if loc_fabric == nil    continue  end
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
@@ -164,7 +166,9 @@ class Matter_Plugin_Root : Matter_Plugin
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
         var fabrics = TLV.Matter_TLV_array() # Fabrics, p.711
-        for loc_fabric: self.device.sessions.active_fabrics()
+        var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
+        for loc_fabric: fabs
+          if loc_fabric == nil    continue  end
           var root_ca_tlv = TLV.parse(loc_fabric.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
@@ -213,7 +217,7 @@ class Matter_Plugin_Root : Matter_Plugin
         
     # ====================================================================================================
     elif cluster == 0x0028              # ========== Basic Information Cluster cluster 11.1 p.565 ==========
-      self.send_ack_now(ctx.msg)      # long operation, send Ack first
+      self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision / CommissioningWindowStatus ----------
         return tlv_solo.set(TLV.U2, 1)
@@ -370,7 +374,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return srcr
 
       elif command == 0x0004            # ---------- CommissioningComplete p.636 ----------
-        self.send_ack_now(ctx.msg)      # long operation, send Ack first
+        self.ack_request(ctx)           # long operation, send Ack first
         # no data
         if session._fabric
           session._breadcrumb = 0          # clear breadcrumb
@@ -438,7 +442,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return ar
 
       elif command == 0x0004            # ---------- CSRRequest ----------
-        self.send_ack_now(ctx.msg)      # long operation, send Ack first
+        self.ack_request(ctx)           # long operation, send Ack first
         var CSRNonce = val.findsubval(0)     # octstr 32
         if size(CSRNonce) != 32   return nil end    # check size on nonce
         var IsForUpdateNOC = val.findsubval(1, false)     # bool

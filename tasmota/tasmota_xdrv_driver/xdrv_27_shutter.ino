@@ -252,8 +252,6 @@ void ShutterRtc50mS(void)
 
 int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
 {
-  // if inverted recalculate the percentposition
-  percent = (Settings->shutter_options[index] & 1) ? 100 - percent : percent;
 	if (Settings->shutter_set50percent[index] != 50) {
     return (percent <= 5) ? Settings->shuttercoeff[2][index] * percent*10 : (Settings->shuttercoeff[1][index] * percent + (Settings->shuttercoeff[0][index]*10))*10;
 	} else {
@@ -315,9 +313,8 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
       }
     }
   }
-   realpercent = realpercent < 0 ? 0 : realpercent;
-  // if inverted recalculate the percentposition
-  return (Settings->shutter_options[index] & 1) ? 100 - realpercent : realpercent;
+  realpercent = realpercent < 0 ? 0 : realpercent;
+  return realpercent;
 }
 
 void ShutterInit(void)
@@ -950,7 +947,11 @@ bool ShutterButtonHandler(void)
 
   if (NOT_PRESSED == button) {
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
-    if (Shutter[shutter_index].direction && (Button.hold_timer[button_index] > 0 && (!Settings->flag.button_single || Button.hold_timer[button_index] > 20))) {
+    if (Shutter[shutter_index].direction 
+        && (Button.hold_timer[button_index] > 0 
+            && (!Settings->flag.button_single 
+                || Button.hold_timer[button_index] > 20))
+        && !(Settings->shutter_button[button_index] & (0x01<<29))) {
       XdrvMailbox.index = shutter_index +1;
       XdrvMailbox.payload = XdrvMailbox.index;
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
@@ -1144,7 +1145,7 @@ void ShutterToggle(bool dir)
 
 void ShutterShow(){
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, ShutterRealToPercentPosition(-9999, i), i+1);
+    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, (Settings->shutter_options[i] & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
   }
 }
 
@@ -1338,8 +1339,10 @@ void CmndShutterPosition(void)
       }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
-      // webgui still send also on inverted shutter the native position.
-      target_pos_percent = ((Settings->shutter_options[index] & 1) && (SRC_WEBGUI != TasmotaGlobal.last_source)) ? 100 - target_pos_percent : target_pos_percent;
+      target_pos_percent = ((Settings->shutter_options[index] & 1) && ((SRC_MQTT       != TasmotaGlobal.last_source)
+                                                                    || (SRC_SERIAL     != TasmotaGlobal.last_source)
+                                                                    || (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
+                                                                       )) ? 100 - target_pos_percent : target_pos_percent;
       if (XdrvMailbox.payload != -99) {
         //target_pos_percent = (Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
         Shutter[index].target_position = ShutterPercentToRealPosition(target_pos_percent, index);

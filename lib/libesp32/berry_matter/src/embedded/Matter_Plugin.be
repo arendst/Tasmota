@@ -64,8 +64,12 @@ class Matter_Plugin
   end
 
   # proxy for the same method in IM
-  def send_ack_now(msg)
-    self.device.message_handler.im.send_ack_now(msg)
+  def ack_request(ctx)
+    var msg = ctx.msg
+    if msg != nil
+      self.device.message_handler.im.send_ack_now(msg)
+    end
+    ctx.msg = nil
   end
 
   #############################################################

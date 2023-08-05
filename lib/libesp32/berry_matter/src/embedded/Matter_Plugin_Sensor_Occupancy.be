@@ -32,7 +32,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 5000                     # update every 250ms
+  static var UPDATE_TIME = 750                      # update every 750ms
   static var CLUSTERS  = {
     0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
   }

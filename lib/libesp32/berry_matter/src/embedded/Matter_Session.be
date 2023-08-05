@@ -254,7 +254,8 @@ class Matter_Session : Matter_Expirable
   def get_icac()              return self._fabric.icac              end
   def get_ipk_epoch_key()     return self._fabric.ipk_epoch_key     end
   def get_fabric_id()         return self._fabric.fabric_id         end
-  def get_device_id()         return self._fabric.device_id         end
+  def get_fabric_index()      return self._fabric ? self._fabric.fabric_index  : nil    end
+  def get_device_id()         return self._fabric ? self._fabric.device_id : nil        end
   def get_fabric_compressed() return self._fabric.fabric_compressed end
   def get_fabric_label()      return self._fabric.fabric_label      end
   def get_admin_subject()     return self._fabric.admin_subject     end

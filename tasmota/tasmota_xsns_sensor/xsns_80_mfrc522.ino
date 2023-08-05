@@ -100,9 +100,9 @@ void RC522ScanForTag(void) {
 void RC522Init(void) {
   if (PinUsed(GPIO_RC522_CS) && PinUsed(GPIO_RC522_RST) && (SPI_MOSI_MISO == TasmotaGlobal.spi_enabled)) {
     Mfrc522 = new MFRC522(Pin(GPIO_RC522_CS), Pin(GPIO_RC522_RST));
-#ifdef EPS8266
+#ifdef ESP8266
     SPI.begin();
-#endif // EPS8266
+#endif // ESP8266
 #ifdef ESP32
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 #endif // ESP32
