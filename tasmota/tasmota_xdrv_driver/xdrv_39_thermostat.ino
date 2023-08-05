@@ -1302,7 +1302,7 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.sensor_alive: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_cycle_active, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_cycle_active: %s"), result_chr);
-  dtostrfd((float)Thermostat[ctr_output].temp_pi_error/10, 1, result_chr);
+  dtostrfd((float)Thermostat[ctr_output].temp_pi_error/100, 2, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_error: %s degrees"), result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_pi_accum_error/100, 2, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_accum_error: %s degrees"), result_chr);
