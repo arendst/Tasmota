@@ -381,9 +381,10 @@ const char HTTP_CMND_STYLE[] PROGMEM =  // Overrule CSS for flex console
 
 const char HTTP_FORM_CMND[] PROGMEM =
   "</div>"                     // Close HTTP_HEAD_STYLE3 <div>
-  "<textarea readonly id='t1' wrap='off'></textarea><br>"
+  "<textarea readonly id='t1' wrap='off'></textarea>"
   "<form method='get' onsubmit='return l(1);'>"
-  "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
+  "<br>"                       // <br> here fixes Firefox layout
+  "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus>"
   //  "<br><button type='submit'>Send command</button>"
   "</form>"
   "<div style='padding:0;'>";  // Add dummy <div> replacing HTTP_HEAD_STYLE3 closed <div>
