@@ -297,7 +297,9 @@ void AdcInit(void) {
 
   if (Adcs.present) {
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR < 5
     analogSetClockDiv(1);               // Default 1
+#endif
 #if CONFIG_IDF_TARGET_ESP32
     analogSetWidth(ANALOG_RESOLUTION);  // Default 12 bits (0 - 4095)
 #endif  // CONFIG_IDF_TARGET_ESP32
