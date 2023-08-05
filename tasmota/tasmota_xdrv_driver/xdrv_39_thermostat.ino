@@ -371,6 +371,12 @@ void ThermostatSignalPreProcessingSlow(uint8_t ctr_output)
     Thermostat[ctr_output].status.sensor_alive = IFACE_OFF;
     Thermostat[ctr_output].temp_measured_gradient = 0;
     Thermostat[ctr_output].temp_measured = 0;
+
+    char result_chr[FLOATSZ];
+
+    dtostrfd((TasmotaGlobal.uptime - Thermostat[ctr_output].timestamp_temp_measured_update), 0, result_chr);
+    AddLog(LOG_LEVEL_ERROR, PSTR("Thermostat sensor has not been seen for %s seconds"), result_chr);
+
   }
 }
 
@@ -1277,53 +1283,55 @@ void ThermostatVirtualSwitchCtrState(uint8_t ctr_output)
 
 void ThermostatDebug(uint8_t ctr_output)
 {
+  char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
+  dtostrfd(ctr_output, 0, ctr_output_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR(""));
   AddLog(LOG_LEVEL_DEBUG, PSTR("------ Thermostat Start ------"));
   dtostrfd(Thermostat[ctr_output].status.counter_seconds, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.counter_seconds: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.counter_seconds: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.thermostat_mode, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.thermostat_mode: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.thermostat_mode: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].diag.state_emergency, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.state_emergency: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].diag.state_emergency: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].diag.output_inconsist_ctr, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].diag.output_inconsist_ctr: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].diag.output_inconsist_ctr: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.controller_mode, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.controller_mode: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.controller_mode: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.command_output, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.command_output: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.command_output: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_output, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_output: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.status_output: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_input, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_input: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.status_input: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.phase_hybrid_ctr, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.phase_hybrid_ctr: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.phase_hybrid_ctr: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.sensor_alive, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.sensor_alive: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.sensor_alive: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.status_cycle_active, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].status.status_cycle_active: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].status.status_cycle_active: %s"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_pi_error/100, 2, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_error: %s degrees"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].temp_pi_error: %s degrees"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_pi_accum_error/100, 2, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_pi_accum_error: %s degrees"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].temp_pi_accum_error: %s degrees"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_proportional_pi, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_proportional_pi: %s seconds"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_proportional_pi: %s seconds"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_integral_pi, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_integral_pi: %s seconds"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_integral_pi: %s seconds"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_total_pi, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_total_pi: %s seconds"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_total_pi: %s seconds"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_measured_gradient/1000, 3, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_measured_gradient: %s degrees/hour"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].temp_measured_gradient: %s degrees/hour"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_rampup_deadtime, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_rampup_deadtime: %s seconds"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_rampup_deadtime: %s seconds"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_rampup_meas_gradient/1000, 3, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_meas_gradient: %s degrees/hour"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].temp_rampup_meas_gradient: %s degrees/hour"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_ctr_changepoint, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_changepoint: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_ctr_changepoint: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].temp_rampup_output_off, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_output_off: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].temp_rampup_output_off: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_ctr_checkpoint, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_checkpoint: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Thermostat[%s].time_ctr_checkpoint: %s"), ctr_output_chr, result_chr);
   dtostrfd(TasmotaGlobal.uptime, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
   dtostrfd(TasmotaGlobal.power, 0, result_chr);
@@ -1334,31 +1342,33 @@ void ThermostatDebug(uint8_t ctr_output)
 
 void DebugControllerParameters(uint8_t ctr_output)
 {
+  char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
+  dtostrfd(ctr_output, 0, ctr_output_chr);
   dtostrfd(Thermostat[ctr_output].status.controller_mode, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].CONTROLLERMODESET: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].CONTROLLERMODESET: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_pi_cycle, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMEPICYCLESET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMEPICYCLESET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_min_action, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMEMINACTIONSET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMEMINACTIONSET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_max_action, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMEMAXACTIONSET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMEMAXACTIONSET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_allow_rampup, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMEALLOWRAMPUPSET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMEALLOWRAMPUPSET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_rampup_cycle, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMERAMPUPCYCLESET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMERAMPUPCYCLESET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_rampup_max, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMERAMPUPMAXSET: %s minutes"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMERAMPUPMAXSET: %s minutes"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_reset, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TIMERESETSET: %s seconds"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TIMERESETSET: %s seconds"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].val_prop_band, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].PROPBANDSET: %s"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].PROPBANDSET: %s"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_reset_anti_windup/10, 1, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TEMPANTIWINDUPRESETSET: %s degrees"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TEMPANTIWINDUPRESETSET: %s degrees"), ctr_output_chr, result_chr);
   dtostrfd((float)Thermostat[ctr_output].temp_hysteresis/10, 1, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TEMPHYSTSET: %s degrees"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TEMPHYSTSET: %s degrees"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].temp_rampup_delta_in, 0, result_chr);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[ctr_output].TEMPRUPDELTINSET: %s degrees"), result_chr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Thermostat[%s].TEMPRUPDELTINSET: %s degrees"), ctr_output_chr, result_chr);
  }
 
 uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
