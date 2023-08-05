@@ -3,26 +3,36 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.0.0.3]
+## [13.0.0.4]
+### Added
+- ESP32 prepare for Arduino Core v3 and esp-idf v5 (#19264)
+
+### Breaking Changed
+
+### Changed
+- Console height from default 318 pixels to viewport (#19241)
+- Shutter button hold behaviour with grouptopic (#19263)
+
+### Fixed
+
+### Removed
+
+## [13.0.0.3] 20230805
 ### Added
 - Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
 - Support for multiple PCA9685 with extended functionality (#18805)
 - Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature (#19210)
 - Berry bytes `get` and `set` work for 3 bytes values (#19225)
 - Matter support for fabric_filtered request (for Google compatibility) (#19249)
-- Prepare for Arduino v3 / esp-idf v5
-
-### Breaking Changed
 
 ### Changed
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% (#19138)
-- ESP32 Framework (Core) from v2.0.10 to v2.0.11
+- ESP32 Framework (Arduino Core) from v2.0.10 to v2.0.11
 - Berry `mqtt.publish` now distinguishes between `string` and `bytes` (#19196)
 - IRremoteESP8266 library from v2.8.5 to v2.8.6
 - ESP32 autodetect flashsize and adjust filesystem (#19215)
 - Reduced log level for TeleInfo (#19216)
 - Matter increased polling frequency for local switches/occupancy (#19242)
-- Change console height from default 318 pixels to viewport (#19241)
 
 ### Fixed
 - Initial battery level percentage (#19160)
@@ -33,8 +43,6 @@ All notable changes to this project will be documented in this file.
 - Inverted shutter (#19243)
 - Matter support for large atribute responses (#19252)
 - Matter auto-configuration Relay indices (#19255)
-
-### Removed
 
 ## [13.0.0.2] 20230721
 ### Added
