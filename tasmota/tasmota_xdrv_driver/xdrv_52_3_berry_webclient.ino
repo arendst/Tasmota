@@ -582,6 +582,7 @@ public:
   size_t write(const uint8_t *buffer, size_t size) override {
     // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
     if (size > 0) {
+#if ESP_IDF_VERSION_MAJOR < 5     // TODO later
       esp_err_t ret = spi_flash_write(addr_start + offset, buffer, size);
       if (ret != ESP_OK)  { return 0; }  // error
       offset += size;
@@ -590,6 +591,7 @@ public:
       if (((offset - size) / STREAM_FLASH_PROGRESS_THRESHOLD) != (offset / STREAM_FLASH_PROGRESS_THRESHOLD)) {
         AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "Progress %d kB", offset / 1024);
       }
+#endif
     }
     return size;
   }
@@ -611,6 +613,7 @@ protected:
 extern "C" {
   int32_t wc_writeflash(struct bvm *vm);
   int32_t wc_writeflash(struct bvm *vm) {
+#if ESP_IDF_VERSION_MAJOR < 5
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isint(vm, 2)) {
       HTTPClientLight * cl = wc_getclient(vm);
@@ -650,6 +653,7 @@ extern "C" {
       be_pushint(vm, written);
       be_return(vm);  /* return code */
     }
+#endif
     be_raise(vm, kTypeError, nullptr);
   }
 }

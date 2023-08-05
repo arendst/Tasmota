@@ -21,9 +21,17 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
-#include "esp_spi_flash.h"
+
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // esp_spi_flash.h is deprecated, please use spi_flash_mmap.h instead
+  #include "spi_flash_mmap.h"
+#else
+  #include "esp_spi_flash.h"
+#endif
 
 size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t size) {
+#if ESP_IDF_VERSION_MAJOR < 5
     uint32_t addr = address_start;
     size_t size_left = size;
     size_t current_offset = 0;
@@ -59,6 +67,9 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
     }
 
     return current_offset;
+#else
+    // TODO ESPIDF 5
+#endif
 }
 
 /*********************************************************************************************\
@@ -73,6 +84,7 @@ extern "C" {
   // If length is not specified, it is full block 4KB
   int32_t p_flash_read(struct bvm *vm);
   int32_t p_flash_read(struct bvm *vm) {
+#if ESP_IDF_VERSION_MAJOR < 5
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isint(vm, 1) &&
         (argc < 2 || be_isint(vm, 2)) ) {    // optional second argument must be int
@@ -91,6 +103,7 @@ extern "C" {
       be_pushbytes(vm, buf.get(), length);
       be_return(vm);
     }
+#endif
     be_raise(vm, kTypeError, nullptr);
   }
 
@@ -98,6 +111,7 @@ extern "C" {
   // if `no_erase` is true, just call spi_flash_write
   int32_t p_flash_write(struct bvm *vm);
   int32_t p_flash_write(struct bvm *vm) {
+#if ESP_IDF_VERSION_MAJOR < 5
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 1) && be_isinstance(vm, 2)) {
       be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
@@ -126,6 +140,7 @@ extern "C" {
         }
       }
     }
+#endif
     be_raise(vm, kTypeError, nullptr);
   }
 
@@ -134,6 +149,7 @@ extern "C" {
   // Address and length must be 4KB aligned
   int32_t p_flash_erase(struct bvm *vm);
   int32_t p_flash_erase(struct bvm *vm) {
+#if ESP_IDF_VERSION_MAJOR < 5
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
       int32_t address = be_toint(vm, 1);
@@ -147,6 +163,7 @@ extern "C" {
       esp_err_t ret = spi_flash_erase_range(address, length);
       be_return_nil(vm);
     }
+#endif
     be_raise(vm, kTypeError, nullptr);
   }
 

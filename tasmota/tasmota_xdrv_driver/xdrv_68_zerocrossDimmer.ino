@@ -24,6 +24,9 @@
 
 #define XDRV_68             68
 
+
+#if !defined(ESP32) || (ESP_IDF_VERSION_MAJOR < 5)      // temporarily disable for IDF 5.0
+
 static const uint8_t TRIGGER_PERIOD = 75;
 
 #define ZCDIMMERSET_SHOW 1
@@ -298,4 +301,7 @@ bool Xdrv68(uint32_t function)
   }
   return result;
 }
+
+#endif // !enabled(ESP32) || (ESP_IDF_VERSION_MAJOR < 5)
+
 #endif  // USE_AC_ZERO_CROSS_DIMMER
