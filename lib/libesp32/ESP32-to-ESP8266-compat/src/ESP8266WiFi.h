@@ -76,8 +76,8 @@ public:
 
     void scrubDNS(void);
 protected:
-    ip_addr_t dns_save4[DNS_MAX_SERVERS] = {};      // IPv4 DNS servers
 #ifdef USE_IPV6
+    ip_addr_t dns_save4[DNS_MAX_SERVERS] = {};      // IPv4 DNS servers
     ip_addr_t dns_save6[DNS_MAX_SERVERS] = {};      // IPv6 DNS servers
 #endif // USE_IPV6
 };
