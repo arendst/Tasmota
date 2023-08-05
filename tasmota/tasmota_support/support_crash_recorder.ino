@@ -30,7 +30,7 @@ void CmndWDT(void)
 {
   volatile uint32_t dummy = 0;
   while (1) {
-    dummy++;
+    dummy = dummy + 1;
   }
 }
 

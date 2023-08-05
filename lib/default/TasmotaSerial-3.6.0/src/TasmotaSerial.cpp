@@ -39,6 +39,8 @@ TasmotaSerial *tms_obj_list[16];
 #ifdef ESP32
 
 #include "driver/uart.h"
+#include "driver/gpio.h"
+#include "esp_rom_gpio.h"
 
 static uint32_t tasmota_serial_uart_bitmap = 0;      // Assigned UARTs
 
@@ -466,6 +468,7 @@ size_t TasmotaSerial::write(uint8_t b) {
   return size;
 }
 
+#ifdef ESP8266
 void IRAM_ATTR TasmotaSerial::rxRead(void) {
   if (!m_nwmode) {
     uint32_t start = ESP.getCycleCount();
@@ -586,3 +589,4 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
     }
   }
 }
+#endif // ESP8266
