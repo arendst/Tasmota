@@ -111,18 +111,6 @@ void WiFiClass32::scrubDNS(void) {
     } else {
       dns_setserver(i, IP4_ADDR_ANY);
     }
-#else // USE_IPV6
-    uint32_t ip_dns = ip_addr_get_ip4_u32(dns_getserver(i));
-    // Step 1. save valid values from DNS
-    if (has_v4 && (uint32_t)ip_dns != 0) {
-      ip_addr_set_ip4_u32_val(dns_save4[i], ip_dns);
-    }
-    // Step 2. scrub addresses not supported
-    if (!has_v4) {
-      ip_addr_set_ip4_u32_val(dns_save4[i], 0L);
-    }
-    // Step 3. restore saved value
-    dns_setserver(i, &dns_save4[i]);
 #endif // USE_IPV6
   }
   // AddLog(LOG_LEVEL_DEBUG, "IP>: DNS: from(%s %s) to (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString().c_str(), has_v4, has_v6);

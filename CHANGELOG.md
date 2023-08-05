@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature (#19210)
 - Berry bytes `get` and `set` work for 3 bytes values (#19225)
 - Matter support for fabric_filtered request (for Google compatibility) (#19249)
+- Prepare for Arduino v3 / esp-idf v5
 
 ### Breaking Changed
 

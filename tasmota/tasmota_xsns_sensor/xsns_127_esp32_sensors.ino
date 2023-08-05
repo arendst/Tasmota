@@ -33,7 +33,7 @@
 
 #define XSNS_127                 127
 
-#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
 
 #define HALLEFFECT_SAMPLE_COUNT  32   // 32 takes about 12 mS at 80MHz CPU frequency
 
@@ -51,7 +51,7 @@ void Esp32SensorInit(void) {
   }
 }
 
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
 
 void Esp32SensorShow(bool json) {
   bool json_end = false;
@@ -84,7 +84,7 @@ void Esp32SensorShow(bool json) {
     }
   }
 
-#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
   if (HEData.present) {
     int value = 0;
     for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
@@ -115,7 +115,7 @@ void Esp32SensorShow(bool json) {
 #endif  // USE_WEBSERVER
     }
   }
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
 
   if (json_end) {
     ResponseJsonEnd();
@@ -138,11 +138,11 @@ bool Xsns127(uint32_t function) {
       Esp32SensorShow(0);
       break;
 #endif  // USE_WEBSERVER
-#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
     case FUNC_INIT:
       Esp32SensorInit();
       break;
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
   }
   return result;
 }
