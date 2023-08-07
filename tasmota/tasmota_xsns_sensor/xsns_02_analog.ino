@@ -150,6 +150,16 @@
 // lenght of filter
 #define ANALOG_MQ_SAMPLES                         60
 
+const char Wind_ADC_Directions[8][3] = {
+    {D_TX20_NORTH},
+    {D_TX20_NORTH_EAST},
+    {D_TX20_EAST},
+    {D_TX20_SOUTH_EAST},
+    {D_TX20_SOUTH},
+    {D_TX20_SOUTH_WEST},
+    {D_TX20_WEST}
+    {D_TX20_NORTH_WEST}};
+
 struct {
   uint8_t present = 0;
   uint8_t type = 0;
@@ -715,36 +725,38 @@ void AdcShow(bool json) {
         float dir_val = analog * ANALOG_V33 / ANALOG_RANGE;
         char dir_chr[FLOATSZ];
         dtostrfd(dir_val, 2, dir_chr);
-        String wind_chr = D_ERROR;
-
-        if(dir_val > 2.50 && dir_val < 2.70 ) {
-          wind_chr = D_TX20_NORTH;
+        uint8_t dir_idx = 0;
+        uint16_t dir_degrees = 0;
+        if(dir_val > 3.00 ) {
+          dir_idx = 6;
+          dir_degrees = 270;
+        } else if(dir_val > 2.8 ) {
+          dir_idx = 7;
+          dir_degrees = 315;
+        } else if(dir_val > 2.50 ) {
+          dir_idx = 0;
+          dir_degrees = 0;
+        } else if(dir_val > 2.00 ) {
+          dir_idx = 5;
+          dir_degrees = 225;
+        } else if(dir_val > 1.30 ) {
+          dir_idx = 1;
+          dir_degrees = 45;
+        } else if(dir_val > 0.75 && dir_val < 1.20 ) {
+          dir_idx = 4;
+          dir_degrees = 180;
+        } else if(dir_val > 0.50 && dir_val < 0.74 ) {
+          dir_idx = 3;
+          dir_degrees = 135;
+        } else if(dir_val > 0.20 && dir_val < 0.40 ) {
+          dir_idx = 2;
+          dir_degrees = 90;
         }
-        if(dir_val > 1.30 && dir_val < 1.70 ) {
-          wind_chr = D_TX20_NORTH D_TX20_EAST;
-        }
-        if(dir_val > 0.20 && dir_val < 0.40 ) {
-          wind_chr = D_TX20_EAST;
-        }
-        if(dir_val > 0.50 && dir_val < 0.74 ) {
-          wind_chr = D_TX20_SOUTH D_TX20_EAST;
-        }
-        if(dir_val > 0.75 && dir_val < 1.20 ) {
-          wind_chr = D_TX20_SOUTH;
-        }
-        if(dir_val > 2.00 && dir_val < 2.20 ) {
-          wind_chr = D_TX20_SOUTH D_TX20_WEST;
-        }
-        if(dir_val > 3.00 && dir_val < 3.25 ) {
-          wind_chr = D_TX20_WEST;
-        }
-        if(dir_val > 2.8 && dir_val < 2.99 ) {
-          wind_chr = D_TX20_NORTH D_TX20_WEST;
-        }
-
+        String wind_chr = Wind_ADC_Directions[dir_idx];
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"WINDDIRECTION%d\":\"%s\",\"WINDADC%d\":%s"), idx + offset, wind_chr.c_str(), idx + offset, dir_chr);
+          ResponseAppend_P(PSTR("\"WINDDIRECTION%d\":\"%s\",\"WINDDEGREES%d\":%d,\"WINDADC%d\":%s"), 
+           idx + offset, wind_chr.c_str(), idx + offset, dir_degrees, idx + offset, dir_chr);
 #ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_WIND_DIRECTION, "", wind_chr.c_str());

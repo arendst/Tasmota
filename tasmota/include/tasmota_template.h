@@ -181,7 +181,6 @@ enum UserSelectablePins {
   GPIO_OPTION_E,                       // Emulated module
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
-  GPIO_ADC_WIND_DIR,                         // Analog Wind Direction
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
@@ -212,6 +211,7 @@ enum UserSelectablePins {
   GPIO_LOX_O2_RX,                       // LOX-O2 RX
   GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
   GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
+  GPIO_ADC_WIND_DIR,                    // Analog Wind Direction
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -435,7 +435,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_OPTION " E|"
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
   D_SENSOR_ADC_MQ "|"
-  D_SENSOR_ADC_WIND_DIR  "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
   D_SENSOR_ADE7880_IRQ "|"
@@ -471,6 +470,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LOX_O2_RX "|"
   D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
   D_GPIO_DINGTIAN_OE "|"
+  D_SENSOR_ADC_WIND_DIR  "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
