@@ -56,6 +56,8 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
   const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
   const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+  const uint8_t MAX_PWMS = 6;             // ESP32C6: 6 ledc PWM channels in total
 #else
   const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
 #endif
