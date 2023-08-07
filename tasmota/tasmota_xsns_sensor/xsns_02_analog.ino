@@ -157,7 +157,7 @@ const char Wind_ADC_Directions[8][3] = {
     {D_TX20_SOUTH_EAST},
     {D_TX20_SOUTH},
     {D_TX20_SOUTH_WEST},
-    {D_TX20_WEST}
+    {D_TX20_WEST},
     {D_TX20_NORTH_WEST}};
 
 struct {
