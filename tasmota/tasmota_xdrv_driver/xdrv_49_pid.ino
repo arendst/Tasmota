@@ -417,6 +417,38 @@ void PIDShowValues(void) {
   ResponseAppend_P(PSTR("}"));
 }
 
+void PIDShowValuesWeb(void) {
+
+#define D_PID_DISPLAY_NAME     "PID Controller"
+#define D_PID_CONTROL_MODE     "Controller"
+#define D_PID_SET_POINT        "Set Point"
+#define D_PID_PRESENT_VALUE    "Current Value"
+#define D_PID_POWER            "Power"
+#define D_PID_MODE             "Controller Mode"
+#define D_PID_MODE_AUTO        "Auto"
+#define D_PID_MODE_MANUAL      "Manual"
+#define D_PID_MODE_OFF         "Off"
+
+  const char HTTP_PID_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
+  const char HTTP_PID_INFO[] PROGMEM = "{s}" D_PID_DISPLAY_NAME "{m}%s{e}";
+  const char HTTP_PID_SP_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
+  const char HTTP_PID_PV_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
+  const char HTTP_PID_POWER_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f " D_UNIT_PERCENT;
+
+  float f_buf;
+
+  WSContentSend_P(HTTP_PID_HL);
+  WSContentSend_P(HTTP_PID_INFO, (Pid.pid.getAuto()==1) ? D_PID_MODE_AUTO : Pid.pid.tick(Pid.current_time_secs)>0.0f ? D_PID_MODE_MANUAL : D_PID_MODE_OFF);
+
+  if (Pid.pid.tick(Pid.current_time_secs)>0.0f) {
+    WSContentSend_PD(HTTP_PID_SP_FORMAT, D_PID_SET_POINT, 1, &f_buf);
+    f_buf = (float)Pid.pid.getPv();
+    WSContentSend_PD(HTTP_PID_PV_FORMAT, D_PID_PRESENT_VALUE, 1, &f_buf);
+    f_buf = Pid.pid.tick(Pid.current_time_secs)*100.0f;
+    WSContentSend_PD(HTTP_PID_POWER_FORMAT, D_PID_POWER, 0, &f_buf);
+  }
+}
+
 void PIDRun(void) {
   double power = Pid.pid.tick(Pid.current_time_secs);
 #ifdef PID_DONT_USE_PID_TOPIC
@@ -467,6 +499,9 @@ bool Xdrv49(uint32_t function) {
       break;
     case FUNC_JSON_APPEND:
       PIDShowValues();
+      break;
+    case FUNC_WEB_SENSOR:
+      PIDShowValuesWeb();
       break;
   }
   return result;
