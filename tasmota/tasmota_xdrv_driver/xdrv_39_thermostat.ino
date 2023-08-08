@@ -192,7 +192,7 @@ void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndEnableOutputSet };
 
 struct THERMOSTAT {
-  ThermostatStateBitfield status;                                             // Bittfield including states as well as several flags
+  ThermostatStateBitfield status;                                             // Bitfield including states as well as several flags
   uint32_t timestamp_temp_measured_update = 0;                                // Timestamp of latest measurement update
   uint32_t timestamp_temp_meas_change_update = 0;                             // Timestamp of latest measurement value change (> or < to previous)
   uint32_t timestamp_output_off = 0;                                          // Timestamp of latest thermostat output Off state
@@ -215,8 +215,8 @@ struct THERMOSTAT {
   uint32_t time_rampup_deadtime = 0;                                          // Time constant of the thermostat system (step response time)
   uint32_t time_rampup_nextcycle = 0;                                         // Time where the ramp-up controller shall start the next cycle
   int16_t temp_measured = 0;                                                  // Temperature measurement received from sensor in tenths of degrees celsius
-  int16_t temp_rampup_output_off = 0;                                         // Temperature to swith off relay output within the ramp-up controller in tenths of degrees celsius
-  uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (f.i. valve open/closed)
+  int16_t temp_rampup_output_off = 0;                                         // Temperature to switch off relay output within the ramp-up controller in tenths of degrees celsius
+  uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (eg. valve open/closed)
   uint8_t counter_rampup_cycles = 0;                                          // Counter of ramp-up cycles
   uint8_t temp_rampup_pi_acc_error = THERMOSTAT_TEMP_PI_RAMPUP_ACC_E;         // Accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
   uint8_t temp_rampup_delta_out = THERMOSTAT_TEMP_RAMPUP_DELTA_OUT;           // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
@@ -227,17 +227,17 @@ struct THERMOSTAT {
   uint16_t time_rampup_max = THERMOSTAT_TIME_RAMPUP_MAX;                      // Time maximum ramp-up controller duration in minutes
   uint16_t time_rampup_cycle = THERMOSTAT_TIME_RAMPUP_CYCLE;                  // Time ramp-up cycle in minutes
   uint16_t time_allow_rampup = THERMOSTAT_TIME_ALLOW_RAMPUP;                  // Time in minutes after last target update to allow ramp-up controller phase
-  uint16_t time_sens_lost = THERMOSTAT_TIME_SENS_LOST;                        // Maximum time w/o sensor update to set it as lost in minutes
+  uint16_t time_sens_lost = THERMOSTAT_TIME_SENS_LOST;                        // Maximum time without sensor update to set it as lost in minutes
   uint16_t time_manual_to_auto = THERMOSTAT_TIME_MANUAL_TO_AUTO;              // Time without input switch active to change from manual to automatic in minutes
   uint32_t time_reset = THERMOSTAT_TIME_RESET;                                // Reset time of the PI controller in seconds
   uint16_t time_pi_cycle = THERMOSTAT_TIME_PI_CYCLE;                          // Cycle time for the thermostat controller in minutes
   uint16_t time_max_action = THERMOSTAT_TIME_MAX_ACTION;                      // Maximum thermostat time per cycle in minutes
   uint16_t time_min_action = THERMOSTAT_TIME_MIN_ACTION;                      // Minimum thermostat time per cycle in minutes
-  uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will stay on
+  uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below which the thermostat will stay on
   int16_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   uint8_t temp_reset_anti_windup = THERMOSTAT_TEMP_RESET_ANTI_WINDUP;         // Range where reset antiwindup is disabled, in tenths of degrees celsius
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
-  ThermostatDiagBitfield diag;                                                // Bittfield including diagnostic flags
+  ThermostatDiagBitfield diag;                                                // Bitfield including diagnostic flags
 #ifdef USE_PI_AUTOTUNING
   uint8_t dutycycle_step_autotune = THERMOSTAT_DUTYCYCLE_AUTOTUNE;            // Duty cycle for the step response of the autotune PI function in %
   uint8_t peak_ctr = 0;                                                       // Peak counter for the autotuning function
@@ -249,8 +249,8 @@ struct THERMOSTAT {
   uint16_t kP_pi_atune = 0;                                                   // kP value calculated by the autotune PI function multiplied by 100 (to avoid floating point operations)
   uint16_t kI_pi_atune = 0;                                                   // kI value calulated by the autotune PI function multiplied by 100 (to avoid floating point operations)
   int16_t temp_peaks_atune[THERMOSTAT_PEAKNUMBER_AUTOTUNE];                   // Array to store temperature peaks to be used by the autotune PI function
-  int16_t temp_abs_max_atune;                                                 // Max temperature reached within autotune
-  int16_t temp_abs_min_atune;                                                 // Min temperature reached within autotune
+  int16_t temp_abs_max_atune;                                                 // Maximum temperature reached within autotune
+  int16_t temp_abs_min_atune;                                                 // Minimum temperature reached within autotune
   uint16_t time_peak_timestamps_atune[THERMOSTAT_PEAKNUMBER_AUTOTUNE];        // Array to store timestamps in minutes of the temperature peaks to be used by the autotune PI function
   uint16_t time_std_dev_peak_det_ok = THERMOSTAT_TIME_STD_DEV_PEAK_DET_OK;    // Standard deviation in minutes of the oscillation periods within the peak detection is successful
 #endif // USE_PI_AUTOTUNING
@@ -684,14 +684,14 @@ void ThermostatCalculatePI(uint8_t ctr_output)
     Thermostat[ctr_output].temp_pi_accum_error = 0;
   }
   // Normal use of integrator
-  // result will be calculated with the cummulated previous error anterior
-  // and current error will be cummulated to the previous one
+  // result will be calculated with the accumulated previous error anterior
+  // and current error will be accumulated to the previous one
   else {
     // Hysteresis limiter
     // If error is less than or equal than hysteresis, limit output to 0, when temperature
-    // is rising, never when falling. Limit cummulated error. If this is not done,
+    // is rising, never when falling. Limit accumulated error. If this is not done,
     // there will be very strong control actions from the integral part due to a
-    // very high cummulated error when beingin hysteresis. This triggers high
+    // very high accumulated error when beingin hysteresis. This triggers high
     // integral actions
 
     // Update accumulated error
@@ -741,7 +741,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
-    // to the cycle time and error will not be cummulated
+    // to the cycle time and error will not be accumulated
     if (Thermostat[ctr_output].time_integral_pi > ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60)) {
       Thermostat[ctr_output].time_integral_pi = ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60);
     }
@@ -752,7 +752,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
   // Antiwindup of the output
   // If result is bigger than cycle time, the result will be adjusted
-  // to the cylce time minus safety time and error will not be cummulated
+  // to the cylce time minus safety time and error will not be accumulated
   if (Thermostat[ctr_output].time_total_pi >= ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60)) {
     // Limit to cycle time //at least switch down a minimum time
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60);
