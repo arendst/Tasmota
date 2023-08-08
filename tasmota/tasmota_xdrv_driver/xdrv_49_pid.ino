@@ -258,15 +258,6 @@ void PIDShowSensor() {
   }
 }
 
-/* struct XDRVMAILBOX { */
-/*   uint16_t      valid; */
-/*   uint16_t      index; */
-/*   uint16_t      data_len; */
-/*   int16_t       payload; */
-/*   char         *topic; */
-/*   char         *data; */
-/* } XdrvMailbox; */
-
 void CmndSetPv(void) {
   Pid.last_pv_update_secs = Pid.current_time_secs;
   if (XdrvMailbox.data_len > 0) {
@@ -343,10 +334,6 @@ void CmndSetMaxInterval(void) {
   ResponseCmndNumber(Pid.pid.getMaxInterval());
 }
 
-// case CMND_PID_SETUPDATE_SECS:
-//   Pid.update_secs = atoi(XdrvMailbox.data) ;
-//   if (Pid.update_secs < 0)
-//     Pid.update_secs = 0;
 void CmndSetUpdateSecs(void) {
   if (XdrvMailbox.payload >= 0) {
     Pid.update_secs = (XdrvMailbox.payload);
@@ -364,48 +351,36 @@ void PIDShowValues(void) {
   double d_buf;
   ResponseAppend_P(PSTR(",\"PID\":{"));
 
-// #define D_CMND_PID_SETPV "Pv"
   d_buf = Pid.pid.getPv();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidPv\":%s,"), str_buf);
-// #define D_CMND_PID_SETSETPOINT "Sp"
   d_buf = Pid.pid.getSp();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidSp\":%s,"), str_buf);
 
 #if PID_REPORT_MORE_SETTINGS
-// #define D_CMND_PID_SETPROPBAND "Pb"
   d_buf = Pid.pid.getPb();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidPb\":%s,"), str_buf);
-// #define D_CMND_PID_SETINTEGRAL_TIME "Ti"
   d_buf = Pid.pid.getTi();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidTi\":%s,"), str_buf);
-// #define D_CMND_PID_SETDERIVATIVE_TIME "Td"
   d_buf = Pid.pid.getTd();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidTd\":%s,"), str_buf);
-// #define D_CMND_PID_SETINITIAL_INT "Initint"
   d_buf = Pid.pid.getInitialInt();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidInitialInt\":%s,"), str_buf);
-// #define D_CMND_PID_SETDERIV_SMOOTH_FACTOR "DSmooth"
   d_buf = Pid.pid.getDSmooth();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidDSmooth\":%s,"), str_buf);
-// #define D_CMND_PID_SETAUTO "Auto"
   chr_buf = Pid.pid.getAuto();
   ResponseAppend_P(PSTR("\"PidAuto\":%d,"), chr_buf);
-// #define D_CMND_PID_SETMANUAL_POWER "ManualPower"
   d_buf = Pid.pid.getManualPower();
   dtostrfd(d_buf, 2, str_buf);
   ResponseAppend_P(PSTR("\"PidManualPower\":%s,"), str_buf);
-// #define D_CMND_PID_SETMAX_INTERVAL "MaxInterval"
   i_buf = Pid.pid.getMaxInterval();
   ResponseAppend_P(PSTR("\"PidMaxInterval\":%d,"), i_buf);
-
-// #define D_CMND_PID_SETUPDATE_SECS "UpdateSecs"
   ResponseAppend_P(PSTR("\"PidUpdateSecs\":%d,"), Pid.update_secs);
 #endif // PID_REPORT_MORE_SETTINGS
 
