@@ -1265,7 +1265,8 @@ bool ShutterButtonHandler(void)
   // handle on button release: start shutter on shortpress and stop running shutter after longpress.
   if (NOT_PRESSED == button
       && Shutter[shutter_index].direction != 0  // only act on shutters activly moving
-      && Button.hold_timer[button_index] > 0)   // kick in on first release of botton. do not check for multipress
+      && Button.hold_timer[button_index] > 0   // kick in on first release of botton. do not check for multipress
+      && !ShutterSettings.shutter_button[button_index].position[3].mqtt_broadcast ) // do not stop on hold release if broadcast
   {
     XdrvMailbox.index = shutter_index +1;
     XdrvMailbox.payload = -99;  // reset any payload to invalid

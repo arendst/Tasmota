@@ -110,7 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.0.0.3
+## Changelog v13.0.0.4
 ### Added
 - Command ``BrRestart`` to restart the Berry VM (experimental) [#19003](https://github.com/arendst/Tasmota/issues/19003)
 - Command ``Delay -1`` to wait until next second [#18984](https://github.com/arendst/Tasmota/issues/18984)
@@ -120,6 +120,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for SGP41 TVOC/NOx Sensor [#18880](https://github.com/arendst/Tasmota/issues/18880)
 - Support for DeepSleep battery level percentage [#19134](https://github.com/arendst/Tasmota/issues/19134)
 - Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature [#19210](https://github.com/arendst/Tasmota/issues/19210)
+- ESP32 prepare for Arduino Core v3 and esp-idf v5 [#19264](https://github.com/arendst/Tasmota/issues/19264)
 - Berry `getgbl` performance counter to `debug.counters()` [#19070](https://github.com/arendst/Tasmota/issues/19070)
 - Berry `_class` can be used in `static var` initialization code [#19088](https://github.com/arendst/Tasmota/issues/19088)
 - Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver [#19117](https://github.com/arendst/Tasmota/issues/19117)
@@ -138,12 +139,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - IRremoteESP8266 library from v2.8.5 to v2.8.6
-- ESP32 Framework (Core) from v2.0.10 to v2.0.11
+- ESP32 Framework (Arduino Core) from v2.0.10 to v2.0.11
 - ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
 - Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% [#19138](https://github.com/arendst/Tasmota/issues/19138)
 - Configuration backup and restore now supports ``.xdrvsetXXX`` files too [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - Reduced log level for TeleInfo [#19216](https://github.com/arendst/Tasmota/issues/19216)
-- Change console height from default 318 pixels to viewport [#19241](https://github.com/arendst/Tasmota/issues/19241)
+- Console height from default 318 pixels to viewport [#19241](https://github.com/arendst/Tasmota/issues/19241)
+- Shutter button hold behaviour with grouptopic [#19263](https://github.com/arendst/Tasmota/issues/19263)
 - ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - ESP32 autodetect flashsize and adjust filesystem [#19215](https://github.com/arendst/Tasmota/issues/19215)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment [#19120](https://github.com/arendst/Tasmota/issues/19120)
@@ -154,7 +156,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter improve latency for remote commands [#19072](https://github.com/arendst/Tasmota/issues/19072)
 - Matter improve latency for single attribute reads and single commands [#19158](https://github.com/arendst/Tasmota/issues/19158)
 - Matter increased polling frequency for local switches/occupancy [#19242](https://github.com/arendst/Tasmota/issues/19242)
-
 
 ### Fixed
 - Berry Walrus Operator [#18982](https://github.com/arendst/Tasmota/issues/18982)

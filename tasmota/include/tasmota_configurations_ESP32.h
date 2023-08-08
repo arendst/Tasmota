@@ -190,6 +190,81 @@
 #endif  // FIRMWARE_SAFEBOOT
 
 /*********************************************************************************************\
+ * FIRMWARE_ARDUINO30
+ * Provide an image which compiles with WiP Arduino 3.0.x
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_ARDUINO30
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "arduino30"
+#endif
+
+
+#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_WEBCAM
+#undef FIRMWARE_BLUETOOTH
+#undef FIRMWARE_LVGL
+#undef FIRMWARE_TASMOTA32
+
+#undef USE_EMULATION                             // Disable Wemo or Hue emulation
+#undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
+#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+
+
+// -- Optional modules ----------------------------
+#undef ROTARY_V1                                 // Disable support for MI Desk Lamp
+#undef USE_SONOFF_RF                             // Disable support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                            // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_SONOFF_SC                             // Disable support for Sonoff Sc (+1k1 code)
+#undef USE_TUYA_MCU                              // Disable support for Tuya Serial MCU
+#undef USE_ARMTRONIX_DIMMERS                     // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                              // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef USE_SONOFF_IFAN                           // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                                // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
+#undef USE_HOTPLUG                               // Disable support for HotPlug
+#undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
+#undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
+
+#undef USE_LIGHT                                 // Disable support for lights
+#undef USE_WS2812
+
+#undef USE_DS18x20                               // Disable DS18x20 sensor
+
+#undef USE_I2C                                   // Disable all I2C sensors and devices
+
+#undef USE_ENERGY_SENSOR                         // Disable energy sensors
+
+#undef USE_IR_REMOTE                             // Disable IR driver
+
+#undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
+#undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
+
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
+
+#define USE_TLS
+#define USE_WEBSERVER
+#define USE_WEBCLIENT
+#define USE_WEBCLIENT_HTTPS
+#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
+#define USE_ETHERNET
+
+#endif  // FIRMWARE_ARDUINO30
+
+
+/*********************************************************************************************\
  * [tasmota32-webcam.bin]
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/

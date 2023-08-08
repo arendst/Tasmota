@@ -64,10 +64,10 @@ void checkBeTop(void) {
  * Use PSRAM if available
 \*********************************************************************************************/
 extern "C" {
-  void *berry_malloc(uint32_t size);
+  void *berry_malloc(size_t size);
   void *berry_realloc(void *ptr, size_t size);
 #ifdef USE_BERRY_PSRAM
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return special_malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -77,7 +77,7 @@ extern "C" {
     return special_calloc(num, size);
   }
 #else
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -89,7 +89,7 @@ extern "C" {
 #endif // USE_BERRY_PSRAM
 
 
-  void *berry_malloc32(uint32_t size) {
+  void *berry_malloc32(size_t size) {
   #ifdef USE_BERRY_IRAM
     return special_malloc32(size);
   #else

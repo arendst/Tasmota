@@ -947,7 +947,11 @@ bool ShutterButtonHandler(void)
 
   if (NOT_PRESSED == button) {
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
-    if (Shutter[shutter_index].direction && (Button.hold_timer[button_index] > 0 && (!Settings->flag.button_single || Button.hold_timer[button_index] > 20))) {
+    if (Shutter[shutter_index].direction 
+        && (Button.hold_timer[button_index] > 0 
+            && (!Settings->flag.button_single 
+                || Button.hold_timer[button_index] > 20))
+        && !(Settings->shutter_button[button_index] & (0x01<<29))) {
       XdrvMailbox.index = shutter_index +1;
       XdrvMailbox.payload = XdrvMailbox.index;
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
