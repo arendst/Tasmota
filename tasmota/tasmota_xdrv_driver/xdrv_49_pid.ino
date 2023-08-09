@@ -113,6 +113,15 @@
                                                  // If not using the sensor then you can supply process values via MQTT using
                                                  // cmnd PidPv
 
+    #define PID_LOCAL_SENSOR_NAME         "DS18B20"           // local sensor name when PID_USE_LOCAL_SENSOR is defined above
+                                                              // the JSON payload is parsed for this sensor to find the present value
+                                                              // eg "ESP32":{"Temperature":31.4},"DS18B20":{"Temperature":12.6}
+
+    #define PID_LOCAL_SENSOR_TYPE         D_JSON_TEMPERATURE  // Choose one of D_JSON_TEMPERATURE D_JSON_HUMIDITY D_JSON_PRESSURE
+                                                              // or any string as the sensor type. The JSON payload is parsed for the
+                                                              // value in this field
+                                                              // eg "HDC1080":{"Temperature":24.8,"Humidity":79.2}
+
    #define PID_SHUTTER                   1       // if using the PID to control a 3-way valve, create Tasmota Shutter and define the
                                                  // number of the shutter here. Otherwise leave this commented out
 
@@ -159,7 +168,11 @@
 #ifndef PID_USE_TIMPROP
 #define PID_USE_TIMPROP               1       // To disable this feature define as false in user_config_override
 #endif
-//#define PID_USE_LOCAL_SENSOR                  // [PidPv] If defined then the local sensor will be used for pv.
+
+// #define PID_USE_LOCAL_SENSOR                          // If defined then the local sensor will be used for pv.
+#define PID_LOCAL_SENSOR_NAME         "DS18B20"          // local sensor name when PID_USE_LOCAL_SENSOR is defined
+#define PID_LOCAL_SENSOR_TYPE         D_JSON_TEMPERATURE // local sensor type
+
 //#define PID_SHUTTER                   1       // Number of the shutter here. Otherwise leave this commented out
 #ifndef PID_REPORT_MORE_SETTINGS
 #define PID_REPORT_MORE_SETTINGS     true     // Override to false if less details are required in SENSOR JSON
@@ -242,19 +255,38 @@ void PIDShowSensor() {
   // Called each time new sensor data available, data in mqtt data in same format
   // as published in tele/SENSOR
   // Update period is specified in TELE_PERIOD
-  if (!isnan(TasmotaGlobal.temperature_celsius)) {
-    const float temperature = TasmotaGlobal.temperature_celsius;
+
+  float sensor_reading = NAN;
+
+#if defined PID_USE_LOCAL_SENSOR
+  // copy the string into a new buffer that will be modified and
+  // parsed to find the local sensor reading if it's there
+  String buf = ResponseData();
+  JsonParser parser((char*)buf.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    JsonParserToken value_token = root[PID_LOCAL_SENSOR_NAME].getObject()[PSTR(PID_LOCAL_SENSOR_TYPE)];
+    if (value_token.isNum()) {
+      sensor_reading = value_token.getFloat();
+    }
+  }
+#endif // PID_USE_LOCAL_SENSOR
+
+  if (!isnan(sensor_reading)) {
 
     // pass the value to the pid alogorithm to use as current pv
     Pid.last_pv_update_secs = Pid.current_time_secs;
-    Pid.pid.setPv(temperature, Pid.last_pv_update_secs);
+    Pid.pid.setPv(sensor_reading, Pid.last_pv_update_secs);
     // also trigger running the pid algorithm if we have been told to run it each pv sample
     if (Pid.update_secs == 0) {
       // this runs it at the next second
       Pid.run_pid_now = true;
     }
   } else {
-    AddLog(LOG_LEVEL_ERROR, PSTR("PID: No local temperature sensor found"));
+    // limit sensor not seen message to every 60 seconds to avoid flooding the logs
+    if ((Pid.current_time_secs - Pid.last_pv_update_secs) > Pid.max_interval && ((Pid.current_time_secs - Pid.last_pv_update_secs)%60)==0) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("PID: Local temperature sensor missing for longer than PID_MAX_INTERVAL"));
+    }
   }
 }
 
@@ -330,6 +362,7 @@ void CmndSetManualPower(void) {
 void CmndSetMaxInterval(void) {
   if (XdrvMailbox.payload >= 0) {
     Pid.pid.setMaxInterval(XdrvMailbox.payload);
+    Pid.max_interval=XdrvMailbox.payload;
   }
   ResponseCmndNumber(Pid.pid.getMaxInterval());
 }
@@ -381,9 +414,13 @@ void PIDShowValues(void) {
   ResponseAppend_P(PSTR("\"PidManualPower\":%s,"), str_buf);
   i_buf = Pid.pid.getMaxInterval();
   ResponseAppend_P(PSTR("\"PidMaxInterval\":%d,"), i_buf);
+  i_buf = Pid.current_time_secs - Pid.last_pv_update_secs;
+  ResponseAppend_P(PSTR("\"PidInterval\":%d,"), i_buf);
   ResponseAppend_P(PSTR("\"PidUpdateSecs\":%d,"), Pid.update_secs);
 #endif // PID_REPORT_MORE_SETTINGS
 
+  i_buf = (Pid.current_time_secs - Pid.last_pv_update_secs) > Pid.pid.getMaxInterval();
+  ResponseAppend_P(PSTR("\"PidSensorLost\":%d,"), i_buf);
 // The actual power value
   d_buf = Pid.pid.tick(Pid.current_time_secs);
   dtostrfd(d_buf, 2, str_buf);
@@ -395,7 +432,6 @@ void PIDShowValues(void) {
 void PIDShowValuesWeb(void) {
 
 #define D_PID_DISPLAY_NAME     "PID Controller"
-#define D_PID_CONTROL_MODE     "Controller"
 #define D_PID_SET_POINT        "Set Point"
 #define D_PID_PRESENT_VALUE    "Current Value"
 #define D_PID_POWER            "Power"
@@ -415,7 +451,8 @@ void PIDShowValuesWeb(void) {
   WSContentSend_P(HTTP_PID_HL);
   WSContentSend_P(HTTP_PID_INFO, (Pid.pid.getAuto()==1) ? D_PID_MODE_AUTO : Pid.pid.tick(Pid.current_time_secs)>0.0f ? D_PID_MODE_MANUAL : D_PID_MODE_OFF);
 
-  if (Pid.pid.tick(Pid.current_time_secs)>0.0f) {
+  if (Pid.pid.getAuto()==1 || Pid.pid.tick(Pid.current_time_secs)>0.0f) {
+    f_buf = (float)Pid.pid.getSp();
     WSContentSend_PD(HTTP_PID_SP_FORMAT, D_PID_SET_POINT, 1, &f_buf);
     f_buf = (float)Pid.pid.getPv();
     WSContentSend_PD(HTTP_PID_PV_FORMAT, D_PID_PRESENT_VALUE, 1, &f_buf);
