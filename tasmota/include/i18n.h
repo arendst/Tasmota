@@ -257,6 +257,8 @@
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"
 #define D_CMND_MNEMONIC "Mnemonic"
+#define D_CMND_PUBLICKEYS "PublicKeys"
+#define D_CMND_ACCOUNTID "AccountID"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"
