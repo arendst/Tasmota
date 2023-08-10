@@ -169,9 +169,13 @@
 #define PID_USE_TIMPROP               1       // To disable this feature define as false in user_config_override
 #endif
 
-// #define PID_USE_LOCAL_SENSOR                          // If defined then the local sensor will be used for pv.
-#define PID_LOCAL_SENSOR_NAME         "DS18B20"          // local sensor name when PID_USE_LOCAL_SENSOR is defined
+// #define PID_USE_LOCAL_SENSOR                 // If defined then the local sensor will be used for pv.
+#ifndef PID_LOCAL_SENSOR_NAME
+#define PID_LOCAL_SENSOR_NAME         "DS18B20" // local sensor name when PID_USE_LOCAL_SENSOR is defined
+#endif
+#ifndef PID_LOCAL_SENSOR_TYPE
 #define PID_LOCAL_SENSOR_TYPE         D_JSON_TEMPERATURE // local sensor type
+#endif
 
 //#define PID_SHUTTER                   1       // Number of the shutter here. Otherwise leave this commented out
 #ifndef PID_REPORT_MORE_SETTINGS
