@@ -1258,7 +1258,7 @@ typedef struct MYTMPLT8266 {
 
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C2_TODO
+#if defined(CONFIG_IDF_TARGET_ESP32C2_TODO)
 
 /* ****************************************
  * ESP32C2
@@ -1271,7 +1271,7 @@ typedef struct MYTMPLT8266 {
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
 const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
 
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
 
 /* ****************************************
  * ESP32C3
@@ -2851,7 +2851,7 @@ const mytmplt kModules[] PROGMEM = {
  Known templates
 \*********************************************************************************************/
 
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C3
 /********************************************************************************************\
  * ESP32-C3 Module templates
 \********************************************************************************************/
