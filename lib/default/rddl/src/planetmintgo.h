@@ -36,10 +36,6 @@ void prepareTx( Google__Protobuf__Any* anyMsg,
         uint64_t sequence, const char *chain_id, uint64_t account_id,
         uint8_t** tx_bytes, size_t* tx_size);
 
-void attestMachine(uint8_t *priv_key, uint8_t *pub_key, 
-        char *public_address, uint8_t* signature,
-        uint8_t** tx_bytes, size_t* tx_size);
-
 #ifdef __cplusplus
 }
 #endif

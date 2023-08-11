@@ -44,6 +44,7 @@
 #include "ed25519.h"
 #include "base58.h"
 
+#include "rddl_types.h"
 #include "planetmintgo.h"
 #include "planetmintgo/machine/machine.pb-c.h"
 #include "cosmos/tx/v1beta1/tx.pb-c.h"
@@ -499,8 +500,8 @@ int registerMachine(){
     metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"AdnT2uyt\"}";
 
     Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
-    machine.name = "machine";
-    machine.ticker = "machine_ticker";
+    machine.name = (char*)g_address;
+    machine.ticker = NULL;
     machine.domain = "lab.r3c.network";
     machine.reissue = false;
     machine.amount = 1;
@@ -509,6 +510,7 @@ int registerMachine(){
     machine.issuerliquid = g_ext_pub_key_liquid;
     machine.machineid = hexpubkey;
     machine.metadata = &metadata;
+    machine.type = RDDL_MACHINE_POWER_SWITCH;
 
     Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
     machineMsg.creator = (char*)g_address;
