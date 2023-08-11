@@ -229,6 +229,8 @@ String GetCodeCores(void) {
   #define ESP32_ARCH              "esp32s3"
 #elif CONFIG_IDF_TARGET_ESP32C3
   #define ESP32_ARCH              "esp32c3"
+#elif CONFIG_IDF_TARGET_ESP32C2
+  #define ESP32_ARCH              "esp32c2"
 #elif CONFIG_IDF_TARGET_ESP32C6
   #define ESP32_ARCH              "esp32c6"
 #else
@@ -250,6 +252,8 @@ String GetCodeCores(void) {
     #include "esp32s3/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
     #include "esp32c3/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C3
+    #include "esp32c2/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
     #include "esp32c6/rom/rtc.h"
   #else
@@ -428,6 +432,9 @@ extern "C" {
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
+  #elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
+    #include "esp32c2/rom/spi_flash.h"
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
     #include "esp32c6/rom/spi_flash.h"
