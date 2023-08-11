@@ -38,7 +38,7 @@
 uint8_t secret_seed[SEED_SIZE] = {0};
 
 const uint8_t *fromHexString(const char *str) {
-  static uint8_t buf[FROMHEX_MAXLEN];
+  static uint8_t buf[FROMHEX_MAXLEN] = {0};
   size_t len = strlen(str) / 2;
   if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
   for (size_t i = 0; i < len; i++) {

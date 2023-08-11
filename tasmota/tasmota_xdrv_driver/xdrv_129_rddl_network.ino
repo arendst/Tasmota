@@ -53,7 +53,6 @@
 #include "google/protobuf/any.pb-c.h"
 
 
-#define PLANETMINT_API_URI "http://192.168.0.136:1317"
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
@@ -87,6 +86,7 @@ struct {
 struct {
   uint32_t any_value;
 } DrvDemoGlobal;
+
 
 void CmndDrvText(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= DRV_DEMO_MAX_DRV_TEXT)) {
@@ -397,10 +397,11 @@ String registerCID(const char* cid){
 }
 
 int broadcast_TX( const char* tx_bytes ){
-  
+  char planetmintapi[100] = {0};
+  getValueForKey( "planetmintapi", planetmintapi);
   HTTPClientLight http;
   String uri = "/cosmos/tx/v1beta1/txs";
-  uri = PLANETMINT_API_URI + uri;
+  uri = planetmintapi + uri;
   http.begin(uri);
   http.addHeader("accept", "application/json");
   http.addHeader("Content-Type", "application/json");
@@ -420,7 +421,9 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
   // get account info from planetmint-go
   HTTPClientLight http;
   String uri = "/cosmos/auth/v1beta1/account_info/";
-  uri = PLANETMINT_API_URI + uri;
+  char planetmintapi[100] = {0};
+  getValueForKey( "planetmintapi", planetmintapi);
+  uri = planetmintapi + uri;
   uri = uri + g_address;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
