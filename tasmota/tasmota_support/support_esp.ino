@@ -651,7 +651,7 @@ uint32_t ESP_getChipId(void) {
 uint32_t ESP_getFlashChipMagicSize(void)
 {
     esp_image_header_t fhdr;
-    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr.magic, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
         return 0;
     }
     return ESP_magicFlashChipSize(fhdr.spi_size);
