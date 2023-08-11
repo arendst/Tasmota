@@ -1258,6 +1258,19 @@ typedef struct MYTMPLT8266 {
 
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C2_TODO
+
+/* ****************************************
+ * ESP32C2
+ * ****************************************/
+#define MAX_GPIO_PIN       14   // Number of supported GPIO
+#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration
+#define MAX_USER_PINS      14   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
+const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
+
 #ifdef CONFIG_IDF_TARGET_ESP32C3
 
 /* ****************************************
@@ -2791,6 +2804,53 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #endif  // ESP8266
 
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C2_TODO
+/********************************************************************************************\
+ * ESP32-C2 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32C2 {
+  WEMOS,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32C2|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32C3 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C3 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0,
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1,
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, 
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, 
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, 
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, 
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6,
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, 
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10
+    0,                           // 11      IO                  GPIO11,
+    0,                           // 12      IO                  GPIO12, 
+    0,                           // 13      IO                  GPIO13, 
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+
 #ifdef CONFIG_IDF_TARGET_ESP32C3
 /********************************************************************************************\
  * ESP32-C3 Module templates
