@@ -1616,7 +1616,7 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09040006) {
       Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
     }
-#if  defined(CONFIG_IDF_TARGET_ESP32C3) // || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)
+#if  defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)
     if (Settings->version < 0x09050002) {
       if (Settings->cfg_size != sizeof(TSettings)) {
         // Fix onetime Settings layout due to changed ESP32-C3 myio and mytmplt types sizes
