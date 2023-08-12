@@ -2964,7 +2964,7 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 11      IO                  not led out to any chip pins
     AGPIO(GPIO_USER),            // 12      IO                  GPIO12, USB-JTAG
     AGPIO(GPIO_USER),            // 13      IO                  GPIO13, USB-JTAG
-    0,                           // 14      IO                  not led out to any chip pins
+    AGPIO(GPIO_USER),            // 14      IO                  GPIO13, may be not led out
     AGPIO(GPIO_USER),            // 15      IO                  GPIO15, SPICLK
     AGPIO(GPIO_USER),            // 16      IO                  GPIO16, SPID
     AGPIO(GPIO_USER),            // 17      IO                  GPIO17, SPIQ
