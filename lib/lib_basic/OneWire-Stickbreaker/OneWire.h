@@ -159,19 +159,17 @@
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2
     return (GPIO.in.val >> pin) & 0x1;
 #else // plain ESP32
     if ( pin < 32 )
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
         return (GPIO.in.val >> pin) & 0x1;
 #else
         return (GPIO.in >> pin) & 0x1;
 #endif //ESP_IDF_VERSION_MAJOR
-#if (!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3)) // we do not have that many pins
     else if ( pin < 46 )
         return (GPIO.in1.val >> (pin - 32)) & 0x1;
-#endif //(!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3))
 #endif
 
     return 0;
@@ -180,45 +178,41 @@ IO_REG_TYPE directRead(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteLow(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2
     GPIO.out_w1tc.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
         GPIO.out_w1tc.val = ((uint32_t)1 << pin);
 #else
         GPIO.out_w1tc = ((uint32_t)1 << pin);
-#if (!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3)) // we do not have that many pins
     else if ( pin < 46 )
         GPIO.out1_w1tc.val = ((uint32_t)1 << (pin - 32));
-#endif // (!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3))
-#endif // ESP_IDF_VERSION_MAJOR >= 5
+#endif // ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
 #endif
 }
 
 static inline __attribute__((always_inline))
 void directWriteHigh(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2
     GPIO.out_w1ts.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
         GPIO.out_w1ts.val = ((uint32_t)1 << pin);
 #else
         GPIO.out_w1ts = ((uint32_t)1 << pin);
-#endif // ESP_IDF_VERSION_MAJOR >= 5
-#if (!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3)) // we do not have that many pins
+#endif // ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
     else if ( pin < 46 )
         GPIO.out1_w1ts.val = ((uint32_t)1 << (pin - 32));
-#endif //(!defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3))
 #endif
 }
 
 static inline __attribute__((always_inline))
 void directModeInput(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2
     GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
 #else
     if ( digitalPinIsValid(pin) )
@@ -234,15 +228,13 @@ void directModeInput(IO_REG_TYPE pin)
 #endif
         // Input
         if ( pin < 32 )
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
             GPIO.enable_w1tc.val = ((uint32_t)1 << pin);
 #else
             GPIO.enable_w1tc = ((uint32_t)1 << pin);
 #endif
-#if !defined(CONFIG_IDF_TARGET_ESP32C2)
         else
             GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
-#endif // !defined(CONFIG_IDF_TARGET_ESP32C2)
     }
 #endif
 }
@@ -266,7 +258,7 @@ void directModeOutput(IO_REG_TYPE pin)
 #endif
         // Output
         if ( pin < 32 )
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if ESP_IDF_VERSION_MAJOR >= 5 && CONFIG_IDF_TARGET_ESP32C6
             GPIO.enable_w1ts.val = ((uint32_t)1 << pin);
 #else
             GPIO.enable_w1ts = ((uint32_t)1 << pin);
