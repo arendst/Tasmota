@@ -147,6 +147,9 @@
 
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <driver/rtc_io.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "soc/gpio_periph.h"
+#endif //ESP_IDF_VERSION_MAJOR
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
 #define IO_REG_TYPE uint32_t
@@ -160,9 +163,9 @@ IO_REG_TYPE directRead(IO_REG_TYPE pin)
     return (GPIO.in.val >> pin) & 0x1;
 #else // plain ESP32
     if ( pin < 32 )
-        return (GPIO.in >> pin) & 0x1;
+        return (GPIO.in.val >> pin) & 0x1;
     else if ( pin < 46 )
-        return (GPIO.in1.val >> (pin - 32)) & 0x1;
+        return ((uint32_t)GPIO.in1.val >> (pin - 32)) & 0x1;
 #endif
 
     return 0;
@@ -175,7 +178,7 @@ void directWriteLow(IO_REG_TYPE pin)
     GPIO.out_w1tc.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
-        GPIO.out_w1tc = ((uint32_t)1 << pin);
+        GPIO.out_w1tc.val = ((uint32_t)1 << pin);
     else if ( pin < 46 )
         GPIO.out1_w1tc.val = ((uint32_t)1 << (pin - 32));
 #endif
@@ -188,7 +191,7 @@ void directWriteHigh(IO_REG_TYPE pin)
     GPIO.out_w1ts.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
-        GPIO.out_w1ts = ((uint32_t)1 << pin);
+        GPIO.out_w1ts.val = ((uint32_t)1 << pin);
     else if ( pin < 46 )
         GPIO.out1_w1ts.val = ((uint32_t)1 << (pin - 32));
 #endif
@@ -213,7 +216,7 @@ void directModeInput(IO_REG_TYPE pin)
 #endif
         // Input
         if ( pin < 32 )
-            GPIO.enable_w1tc = ((uint32_t)1 << pin);
+            GPIO.enable_w1tc.val = ((uint32_t)1 << pin);
         else
             GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
     }
@@ -239,7 +242,7 @@ void directModeOutput(IO_REG_TYPE pin)
 #endif
         // Output
         if ( pin < 32 )
-            GPIO.enable_w1ts = ((uint32_t)1 << pin);
+            GPIO.enable_w1ts.val = ((uint32_t)1 << pin);
         else // already validated to pins <= 33
             GPIO.enable1_w1ts.val = ((uint32_t)1 << (pin - 32));
     }
