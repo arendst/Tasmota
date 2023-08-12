@@ -608,7 +608,7 @@ typedef struct {
   uint8_t       free_esp8266_3D2[42];      // 3D2
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2)
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
 #endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
@@ -620,6 +620,9 @@ typedef struct {
 #ifdef CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
 #endif  // CONFIG_IDF_TARGET_ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c3_42A[29];      // 42A  - Due to smaller mytmplt
+#endif  // CONFIG_IDF_TARGET_ESP32C2
 
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447

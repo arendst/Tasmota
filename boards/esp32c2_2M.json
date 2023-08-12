@@ -7,7 +7,7 @@
       "extra_flags": "-DESP32_2M -DESP32C2",
       "f_cpu": "120000000L",
       "f_flash": "60000000L",
-      "flash_mode": "qio",
+      "flash_mode": "dio",
       "mcu": "esp32c2",
       "variant": "esp32c2",
       "partitions": "partitions/esp32_partition_app1245k_fs64k.csv"
@@ -23,7 +23,7 @@
       "arduino",
       "espidf"
     ],
-    "name": "Espressif Generic ESP32-C2 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+    "name": "Espressif Generic ESP32-C2 = 2M Flash, Tasmota 1245kB Code/OTA, 64k FS",
     "upload": {
       "arduino": {
         "flash_extra_images": [
@@ -33,8 +33,8 @@
           ]
         ]
       },
-      "flash_size": "4MB",
-      "maximum_ram_size": 272000,
+      "flash_size": "2MB",
+      "maximum_ram_size": 278528,
       "maximum_size": 2097152,
       "require_upload_port": true,
       "speed": 460800

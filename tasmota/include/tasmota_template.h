@@ -1258,7 +1258,7 @@ typedef struct MYTMPLT8266 {
 
 #endif  // ESP8266
 #ifdef ESP32
-#if defined(CONFIG_IDF_TARGET_ESP32C2_TODO)
+#if defined(CONFIG_IDF_TARGET_ESP32C2)
 
 /* ****************************************
  * ESP32C2
@@ -1269,7 +1269,7 @@ typedef struct MYTMPLT8266 {
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 91011121314151617181920
-const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIOIO";
+const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIORXTX";
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 
@@ -2804,7 +2804,7 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #endif  // ESP8266
 
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C2_TODO
+#ifdef CONFIG_IDF_TARGET_ESP32C2
 /********************************************************************************************\
  * ESP32-C2 Module templates
 \********************************************************************************************/
@@ -2813,7 +2813,7 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 
 // Supported hardware modules
 enum SupportedModulesESP32C2 {
-  WEMOS,
+  WEMOS, // not really correct, a placeholder for now
   MAXMODULE };
 
 // Default module settings
@@ -2826,9 +2826,9 @@ const char kModuleNames[] PROGMEM =
   "ESP32C2|"
   ;
 
-// !!! Update this list in the same order as SupportedModulesESP32C3 !!!
+// !!! Update this list in the same order as SupportedModulesESP32C2 !!!
 const mytmplt kModules[] PROGMEM = {
-  {                              // Generic ESP32C3 device
+  {                              // Generic ESP32C2 device
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0,  RTC
     AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1,  RTC
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2,  RTC
@@ -2848,8 +2848,8 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 16      IO                  GPIO16, SPID
     0,                           // 17      IO                  GPIO17, SPIQ
     AGPIO(GPIO_USER),            // 18      IO                  GPIO18,
-    AGPIO(GPIO_USER),            // 19      IO                  GPIO19,
-    AGPIO(GPIO_USER),            // 20      IO                  GPIO20,
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, U0RXD
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20, U0TXD
     0                            // Flag
   },
 };
