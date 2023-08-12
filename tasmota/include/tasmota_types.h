@@ -626,9 +626,6 @@ typedef struct {
 #ifdef CONFIG_IDF_TARGET_ESP32C2
   uint8_t       free_esp32c3_42A[29];      // 42A  - Due to smaller mytmplt
 #endif  // CONFIG_IDF_TARGET_ESP32C2
-#ifdef CONFIG_IDF_TARGET_ESP32C2
-  uint8_t       free_esp32c3_42A[29];      // 42A  - Due to smaller mytmplt
-#endif  // CONFIG_IDF_TARGET_ESP32C2
 #ifdef CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c3_42A[0];      // 42A  - Due to smaller mytmplt
 #endif  // CONFIG_IDF_TARGET_ESP32C6
