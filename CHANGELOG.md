@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Console height from default 318 pixels to viewport (#19241)
 - Shutter button hold behaviour with grouptopic (#19263)
+- Thermostat improvements (#19279)
+- PID controller improvements (#19285)
 
 ### Fixed
 

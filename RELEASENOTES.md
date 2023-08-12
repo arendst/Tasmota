@@ -146,6 +146,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Reduced log level for TeleInfo [#19216](https://github.com/arendst/Tasmota/issues/19216)
 - Console height from default 318 pixels to viewport [#19241](https://github.com/arendst/Tasmota/issues/19241)
 - Shutter button hold behaviour with grouptopic [#19263](https://github.com/arendst/Tasmota/issues/19263)
+- Thermostat improvements [#19279](https://github.com/arendst/Tasmota/issues/19279)
+- PID controller improvements [#19285](https://github.com/arendst/Tasmota/issues/19285)
 - ESP32 shutter driver support up to 16 shutters [#18295](https://github.com/arendst/Tasmota/issues/18295)
 - ESP32 autodetect flashsize and adjust filesystem [#19215](https://github.com/arendst/Tasmota/issues/19215)
 - Berry extend `range(lower, upper, incr)` to arbitrary increment [#19120](https://github.com/arendst/Tasmota/issues/19120)
