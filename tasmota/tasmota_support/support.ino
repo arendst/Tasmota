@@ -1672,7 +1672,7 @@ return (pin>23); // ESP32C6 flash pins 24-30
 
 bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in template console
 {
-#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
   return (12==pin)||(13==pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return false;     // no red pin on ESP32S3
