@@ -1263,13 +1263,13 @@ typedef struct MYTMPLT8266 {
 /* ****************************************
  * ESP32C2
  * ****************************************/
-#define MAX_GPIO_PIN       14   // Number of supported GPIO
+#define MAX_GPIO_PIN       21   // Number of supported GPIO
 #define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration
-#define MAX_USER_PINS      14   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define MAX_USER_PINS      21   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define WEMOS_MODULE       0    // Wemos module
 
-//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
-const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
+//                                  0 1 2 3 4 5 6 7 8 91011121314151617181920
+const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIOIO";
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 
@@ -2829,20 +2829,27 @@ const char kModuleNames[] PROGMEM =
 // !!! Update this list in the same order as SupportedModulesESP32C3 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // Generic ESP32C3 device
-    AGPIO(GPIO_USER),            // 0       IO                  GPIO0,
-    AGPIO(GPIO_USER),            // 1       IO                  GPIO1,
-    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, 
-    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, 
-    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, 
-    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, 
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0,  RTC
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1,  RTC
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2,  RTC
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3,  RTC 
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4,  RTC 
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, RTC 
     AGPIO(GPIO_USER),            // 6       IO                  GPIO6,
     AGPIO(GPIO_USER),            // 7       IO                  GPIO7, 
-    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
-    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8, Strapping
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Strapping
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10
-    0,                           // 11      IO                  GPIO11,
-    0,                           // 12      IO                  GPIO12, 
-    0,                           // 13      IO                  GPIO13, 
+    0,                           // 11      IO                  GPIO11, output power supply for flash
+    0,                           // 12      IO                  GPIO12, SPIHD
+    0,                           // 13      IO                  GPIO13, SPIWP
+    0,                           // 14      IO                  GPIO14, SPICS0
+    0,                           // 15      IO                  GPIO15, SPICLK
+    0,                           // 16      IO                  GPIO16, SPID
+    0,                           // 17      IO                  GPIO17, SPIQ
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18,
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19,
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20,
     0                            // Flag
   },
 };
