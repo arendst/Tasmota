@@ -1660,7 +1660,7 @@ bool FlashPin(uint32_t pin)
 #if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
   return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3/C2 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-return (pin>23); // ESP32C6 flash pins 24-30
+return (pin>23)||((pin>9)||(pin<12) ); // ESP32C6 flash pins 24-30
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #elif defined(CONFIG_IDF_TARGET_ESP32)
