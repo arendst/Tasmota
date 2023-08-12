@@ -1588,8 +1588,12 @@ void TemplateGpios(myio *gp)
   // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
-#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
     dest[i] = src[i];
+#elif  defined(CONFIG_IDF_TARGET_ESP32C6)
+    if (10 == i) { j = 12; }    // skip 10-11
+    dest[j] = src[i];
+    j++;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     dest[j] = src[i];
@@ -1674,8 +1678,8 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
 {
 #if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
   return (12==pin)||(13==pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-  return false;     // no red pin on ESP32S3
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)  || defined(CONFIG_IDF_TARGET_ESP32C6)
+  return false;     // no red pin on ESP32S3 or C6
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
   return (33<=pin) && (37>=pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
