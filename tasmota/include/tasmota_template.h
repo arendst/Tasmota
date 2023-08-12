@@ -1284,6 +1284,18 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOIOIOIOIOIOIOFLFLFLFLFLFLFLIORXTX";
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
 const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+
+/* ****************************************
+ * ESP32C3
+ * ****************************************/
+#define MAX_GPIO_PIN       31   // Number of supported GPIO
+#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO11 to 17)
+#define MAX_USER_PINS      31   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 910111213141516171819202122232425262728293031
+const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOAOIOIOIO----IOIO--IOIOIOIOIOIOIOIOIOFLFLFLFLFLFLFLFL";
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 
 /* ****************************************
@@ -2905,6 +2917,70 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
     AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
     AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+
+#elif CONFIG_IDF_TARGET_ESP32C6
+/********************************************************************************************\
+ * ESP32-C6 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32C6 {
+  WEMOS, // not really correct, a placeholder for now
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32C6|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32C2 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C2 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, LP_GPIO0
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, LP_GPIO1
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, LP_GPIO2
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3, LP_GPIO3 
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, LP_GPIO4 , Strapping
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC1_CH5, LP_GPIO5 , Strapping
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, ADC1_CH6, LP_GPIO6
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7,           LP_GPIO7
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8, Strapping
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Strapping
+    0,                           // 10      IO                  not led out to any chip pins
+    0,                           // 11      IO                  not led out to any chip pins
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12, USB-JTAG
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, USB-JTAG
+    0,                           // 14      IO                  not led out to any chip pins
+    AGPIO(GPIO_USER),            // 15      IO                  GPIO15, SPICLK
+    AGPIO(GPIO_USER),            // 16      IO                  GPIO16, SPID
+    AGPIO(GPIO_USER),            // 17      IO                  GPIO17, SPIQ
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18,
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, U0RXD
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20, U0TXD
+    AGPIO(GPIO_USER),            // 21      IO                  GPIO18,
+    AGPIO(GPIO_USER),            // 22      IO                  GPIO19, U0RXD
+    AGPIO(GPIO_USER),            // 23      IO                  GPIO20, U0TXD
+    0,                           // 24      IO                  GPIO18, SPI-FLASH
+    0,                           // 25      IO                  GPIO19, SPI-FLASH
+    0,                           // 26      IO                  GPIO20, SPI-FLASH
+    0,                           // 27      IO                  GPIO20, SPI-FLASH
+    0,                           // 28      IO                  GPIO18, SPI-FLASH
+    0,                           // 29      IO                  GPIO19, SPI-FLASH
+    0,                           // 30      IO                  GPIO20, SPI-FLASH
     0                            // Flag
   },
 };
