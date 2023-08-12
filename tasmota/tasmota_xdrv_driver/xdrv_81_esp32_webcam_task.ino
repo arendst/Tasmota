@@ -872,9 +872,10 @@ void WcCamOff() {
   WcSetup(-1);
   // kill any existing clients
   WcEndStream();
+#ifdef ENABLE_RTSPSERVER
   // kill any existing rtsp clients
   WcEndRTSP();
-
+#endif
   gpio_num_t pin_pwdn;
   if (PinUsed(GPIO_WEBCAM_PWDN)){
     pin_pwdn = (gpio_num_t)Pin(GPIO_WEBCAM_PWDN);
@@ -1050,7 +1051,7 @@ uint32_t WcSetup(int32_t fsiz) {
     if (err != ESP_OK) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x try %d"), err, (i+1));
       esp_camera_deinit();
-      if (err == 0x105){
+      if (err == 0x105 && config.pin_pwdn){
         // try a longer power off... and retry
         // power off for 500ms
         gpio_set_level((gpio_num_t)config.pin_pwdn, 1);
@@ -2823,6 +2824,8 @@ void WcLoop(void) {
 #endif // ENABLE_RTSPSERVER
 }
 
+#ifdef ENABLE_RTSPSERVER
+
 // kill all rtsp clients
 void WcEndRTSP(){
   // we should use a mutext here, in case we are currently sending
@@ -2843,6 +2846,7 @@ void WcEndRTSP(){
   Wc.rtspclient = nullptr;
   WcStats.rtspclientcount = 0;
 }
+#endif
 
 // kill all http streaming clients
 void WcEndStream(){
@@ -3818,7 +3822,9 @@ void CmndWebcamStats(void) {
     D_WEBCAM_STATS_AVGPROC "\":%d,\""
     D_WEBCAM_STATS_FRAMELEN "\":%d,\""
     D_WEBCAM_STATS_WEBCLIENTS "\":%d,\""
+#ifdef ENABLE_RTSPSERVER
     D_WEBCAM_STATS_RTSPCLIENTS "\":%d,\""
+#endif    
     D_WEBCAM_STATS_LASTCAMINTERVAL "\":%d,\""
     D_WEBCAM_STATS_CAMFRAMETIME "\":%d"
   "}}"),
@@ -3826,7 +3832,9 @@ void CmndWebcamStats(void) {
   WcStats.avgFPS, WcStats.avgFrameMS, WcStats.avgProcessingPerFrameMS,
   Wc.last_frame_len,
   WcStats.webclientcount,
+#ifdef ENABLE_RTSPSERVER
   WcStats.rtspclientcount,
+#endif  
   Wc.camtimediff,
   Wc.frameIntervalsus
   );
