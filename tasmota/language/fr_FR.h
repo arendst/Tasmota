@@ -58,6 +58,7 @@
 #define D_AS "comme"
 #define D_AUTO "AUTO"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"    // Battery charge in %
 #define D_BLINK "Blink"              // Not better in french
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Nb. de boot"

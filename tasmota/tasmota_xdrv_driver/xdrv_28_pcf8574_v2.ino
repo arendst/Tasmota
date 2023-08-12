@@ -65,7 +65,7 @@
  *
  * Prepare a template to be loaded either by:
  * - a rule like: rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
- * - a script like: -y{"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ * - a script like: >y{"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}#
  * - file called pcf8574.dat with contents: {"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  *
  * Inverted relays and buttons               Ri8 Ri7 Ri6 Ri5 Ri4 Ri3 Ri2 Ri1 B1 B2 B3 B4 B5 B6 B7 B8

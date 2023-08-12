@@ -58,6 +58,7 @@
 #define D_AS "名稱:"
 #define D_AUTO "自動"
 #define D_BATT "電池"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"  // Battery charge in % 
 #define D_BLINK "閃爍"
 #define D_BLINKOFF "閃爍關"
 #define D_BOOT_COUNT "啟動計數"

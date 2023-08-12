@@ -300,8 +300,8 @@ class Partition_otadata
   #- load otadata from SPI Flash -#
   def load()
     import flash
-    var otadata0 = flash.read(0xE000, 32)
-    var otadata1 = flash.read(0xF000, 32)
+    var otadata0 = flash.read(self.offset, 32)
+    var otadata1 = flash.read(self.offset + 0x1000, 32)
     self.seq0 = otadata0.get(0, 4)   #- ota_seq for block 1 -#
     self.seq1 = otadata1.get(0, 4)   #- ota_seq for block 2 -#
     var valid0 = otadata0.get(28, 4) == self.crc32_ota_seq(self.seq0) #- is CRC32 valid? -#

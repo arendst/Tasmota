@@ -58,6 +58,7 @@
 #define D_AS "-כ"
 #define D_AUTO "אוטומטי"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "מהבהב"
 #define D_BLINKOFF "כיבוי היבהוב"
 #define D_BOOT_COUNT "מונה הפעלה מחדש"

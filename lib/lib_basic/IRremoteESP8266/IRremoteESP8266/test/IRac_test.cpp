@@ -669,7 +669,8 @@ TEST(TestIRac, Fujitsu) {
                false,                       // Turbo (Powerful)
                false,                       // Econo
                true,                        // Filter
-               true);                       // Clean
+               true,                        // Clean
+               -1);                         // Sleep
   ASSERT_EQ(ardb1_expected, ac.toString());
   ac._irsend.makeDecodeResult();
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));
@@ -719,7 +720,8 @@ TEST(TestIRac, Fujitsu) {
                false,                       // Turbo (Powerful)
                false,                       // Econo
                true,                        // Filter
-               true);                       // Clean
+               true,                        // Clean
+               -1);                         // Sleep
   ASSERT_EQ(arry4_expected, ac.toString());
   ac._irsend.makeDecodeResult();
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));
@@ -742,8 +744,9 @@ TEST(TestIRac, Fujitsu) {
                false,                       // Quiet
                false,                       // Turbo (Powerful)
                false,                       // Econo
-               false,                        // Filter
-               false);                       // Clean
+               false,                       // Filter
+               false,                       // Clean
+               -1);                         // Sleep
   ASSERT_EQ(arrew4e_expected, ac.toString());
   ac._irsend.makeDecodeResult();
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));

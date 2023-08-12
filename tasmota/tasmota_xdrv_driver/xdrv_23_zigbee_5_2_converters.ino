@@ -1214,6 +1214,8 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
         attr_list.addAttribute(0x0001, 0x0020).setFloat(batteryvoltage);
         uint8_t batterypercentage = toPercentageCR2032(uval32);
         attr_list.addAttribute(0x0001, 0x0021).setUInt(batterypercentage * 2);
+      } else if (0x03 == attrid) {
+        attr_list.addAttributePMEM("AqaraTemperature").copyVal(attr);   // Temperature
       } else if ((nullptr != modelId) && ((0 == getManufCode()) || (0x115F == getManufCode()))) {
         translated = true;
         if (modelId.startsWith(F("lumi.sensor_magnet"))) {   // door / window sensor

@@ -75,7 +75,7 @@ class Matter_Fabric : Matter_Expirable
     self._store = store
     self._sessions = matter.Expirable_list()
     self.fabric_label = ""
-    self.created = tasmota.rtc()['utc']
+    self.created = tasmota.rtc_utc()
     # init group counters
     self._counter_group_data_snd_impl = matter.Counter()
     self._counter_group_ctrl_snd_impl  = matter.Counter()
@@ -247,7 +247,9 @@ class Matter_Fabric : Matter_Expirable
   def add_session(s)
     if self._sessions.find(s) == nil
       while size(self._sessions) >= self._MAX_CASE
-        self._sessions.remove(self._sessions.find(self.get_oldest_session()))
+        var session_deleted = self.get_oldest_session()
+        self._sessions.remove(self._sessions.find(session_deleted))
+        self._store.remove_session(session_deleted)
       end
       self._sessions.push(s)
     end

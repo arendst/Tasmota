@@ -9,6 +9,7 @@ The following table lists the supported I2C devices
 Index | Define              | Driver   | Device   | Address(es) | Description
 ------|---------------------|----------|----------|-------------|-----------------------------------------------
    1  | USE_PCA9685         | xdrv_15  | PCA9685  | 0x40 - 0x47 | 16-channel 12-bit pwm driver
+   1  | USE_PCA9685_V2      | xdrv_15  | PCA9685  | 0x40 - 0x47 | 16-channel 12-bit pwm driver
    2  | USE_PCF8574         | xdrv_28  | PCF8574  | 0x20 - 0x26 | 8-bit I/O expander (address range overridable)
    2  | USE_PCF8574         | xdrv_28  | PCF8574A | 0x39 - 0x3F | 8-bit I/O expander (address range overridable)
    3  | USE_DISPLAY_LCD     | xdsp_01  |          | 0x27, 0x3F  | LCD display
@@ -117,3 +118,5 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   79  | USE_GDK101          | xsns_106 | GDK101   | 0x18 - 0x1B | Gamma Radiation Sensor
   80  | USE_TC74            | xsns_108 | TC74     | 0x48 - 0x4F | Temperature sensor
   81  | USE_PCA9557         | xdrv_69  | PCA95xx  | 0x18 - 0x1F | 8-bit I/O expander as virtual button/switch/relay
+  82  | USE_SGP4X           | xsns_109 | SGP4X    | 0x59        | Gas (TVOC/NOx index)
+  83  | USE_MAX17043        | xsns_110 | MAX17043 | 0x36        | Fuel-gauge for 3.7 Volt Lipo battery

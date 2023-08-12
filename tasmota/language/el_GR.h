@@ -58,6 +58,7 @@
 #define D_AS "ως"
 #define D_AUTO "ΑΥΤΟΜΑΤΟ"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Καταμέτρηση εκκινήσεων"

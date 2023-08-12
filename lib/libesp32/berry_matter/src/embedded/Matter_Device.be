@@ -35,6 +35,7 @@ class Matter_Device
   var plugins_config                  # map of JSON configuration for plugins
   var plugins_config_remotes          # map of information on each remote under "remotes" key, '{}' when empty
   var udp_server                      # `matter.UDPServer()` object
+  var profiler
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
@@ -63,6 +64,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
+  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
@@ -79,6 +81,7 @@ class Matter_Device
       return
     end    # abort if SetOption 151 is not set
 
+    matter.profiler = matter.Profiler()
     self.started = false
     self.tick = 0
     self.plugins = []
@@ -92,6 +95,7 @@ class Matter_Device
     self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
     self.root_salt = crypto.random(16)
     self.ipv4only = false
+    self.disable_bridge_mode = false
     self.load_param()
 
     self.sessions = matter.Session_Store(self)
@@ -172,18 +176,24 @@ class Matter_Device
 
   #####################################################################
   # Remove a fabric and clean all corresponding values and mDNS entries
-  def remove_fabric(fabric_parent)
-    var sub_fabrics = self.sessions.find_children_fabrics(fabric_parent.get_fabric_index())
-    if sub_fabrics == nil return end
-    for fabric_index : sub_fabrics
-      var fabric = self.sessions.find_fabric_by_index(fabric_index)
-      if fabric != nil
-        tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
-        self.message_handler.im.subs_shop.remove_by_fabric(fabric)
-        self.mdns_remove_op_discovery(fabric)
-        self.sessions.remove_fabric(fabric)
-      end
+  def remove_fabric(fabric)
+    if fabric != nil
+      tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
+      self.message_handler.im.subs_shop.remove_by_fabric(fabric)
+      self.mdns_remove_op_discovery(fabric)
+      self.sessions.remove_fabric(fabric)
     end
+    # var sub_fabrics = self.sessions.find_children_fabrics(fabric_parent.get_fabric_index())
+    # if sub_fabrics == nil return end
+    # for fabric_index : sub_fabrics
+    #   var fabric = self.sessions.find_fabric_by_index(fabric_index)
+    #   if fabric != nil
+    #     tasmota.log("MTR: removing fabric " + fabric.get_fabric_id().copy().reverse().tohex(), 2)
+    #     self.message_handler.im.subs_shop.remove_by_fabric(fabric)
+    #     self.mdns_remove_op_discovery(fabric)
+    #     self.sessions.remove_fabric(fabric)
+    #   end
+    # end
     self.sessions.save_fabrics()
   end
 
@@ -379,7 +389,7 @@ class Matter_Device
     if self.udp_server    return end        # already started
     if port == nil      port = 5540 end
     tasmota.log("MTR: Starting UDP server on port: " + str(port), 2)
-    self.udp_server = matter.UDPServer("", port)
+    self.udp_server = matter.UDPServer(self, "", port)
     self.udp_server.start(/ raw, addr, port -> self.msg_received(raw, addr, port))
   end
 
@@ -427,7 +437,7 @@ class Matter_Device
     var fabric = session.get_fabric()
     var fabric_id = fabric.get_fabric_id().copy().reverse().tohex()
     var vendor_name = fabric.get_admin_vendor_name()
-    tasmota.log(format("MTR: --- Commissioning complete for Fabric '%s' (Vendor %s) ---", fabric_id, vendor_name), 2)
+    tasmota.log(f"MTR: --- Commissioning complete for Fabric '{fabric_id}' (Vendor {vendor_name}) ---", 2)
     self.stop_basic_commissioning()     # by default close commissioning when it's complete
   end
 
@@ -510,18 +520,15 @@ class Matter_Device
     end
   
     var endpoint = ctx.endpoint
-    # var endpoint_mono = [ endpoint ]
-    var endpoint_found = false                # did any endpoint match
     var cluster = ctx.cluster
-    # var cluster_mono = [ cluster ]
-    var cluster_found = false
     var attribute = ctx.attribute
-    # var attribute_mono = [ attribute ]
+    var endpoint_found = false                # did any endpoint match
+    var cluster_found = false
     var attribute_found = false
 
     var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
 
-    # tasmota.log(format("MTR: process_attribute_expansion %s", str(ctx)), 4)
+    # tasmota.log(f"MTR: process_attribute_expansion {str(ctx))}", 4)
 
     # build the list of candidates
 
@@ -537,7 +544,7 @@ class Matter_Device
       endpoint_found = true
 
       # now explore the cluster list for 'ep'
-      var cluster_list = pi.get_cluster_list(ep)                      # cluster_list is the actual list of candidate cluster for this pluging and endpoint
+      var cluster_list = pi.get_cluster_list()                        # cluster_list is the actual list of candidate cluster for this pluging and endpoint
       # tasmota.log(format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
       for cl: cluster_list
         if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
@@ -546,7 +553,7 @@ class Matter_Device
         cluster_found = true
 
         # now filter on attributes
-        var attr_list = pi.get_attribute_list(ep, cl)
+        var attr_list = pi.get_attribute_list(cl)
         # tasmota.log(format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
         for at: attr_list
           if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
@@ -592,6 +599,44 @@ class Matter_Device
   end
 
   #############################################################
+  # Optimized version for a single endpoint/cluster/attribute
+  #
+  # Retrieve the plugin for a read
+  def process_attribute_read_solo(ctx)
+    var endpoint = ctx.endpoint
+    # var endpoint_found = false                # did any endpoint match
+    var cluster = ctx.cluster
+    # var cluster_found = false
+    var attribute = ctx.attribute
+    # var attribute_found = false
+
+    # all 3 elements must be non-nil
+    if endpoint == nil || cluster == nil || attribute == nil      return nil    end
+
+    # look for plugin
+    var pi = self.find_plugin_by_endpoint(endpoint)
+    if pi == nil                                # endpoint not found
+      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      return nil
+    end
+
+    # check cluster
+    if !pi.contains_cluster(cluster)
+      ctx.status = matter.UNSUPPORTED_CLUSTER
+      return nil
+    end
+
+    # attribute list
+    if !pi.contains_attribute(cluster, attribute)
+      ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+      return nil
+    end
+
+    # all good
+    return pi
+  end
+
+  #############################################################
   # Return the list of endpoints from all plugins (distinct), exclud endpoint zero if `exclude_zero` is `true`
   def get_active_endpoints(exclude_zero)
     var ret = []
@@ -628,7 +673,7 @@ class Matter_Device
     import json
     self.update_remotes_info()    # update self.plugins_config_remotes
 
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
     if self.plugins_persist
       j += ',"config":'
       j += json.dump(self.plugins_config)
@@ -642,7 +687,7 @@ class Matter_Device
       var f = open(self.FILENAME, "w")
       f.write(j)
       f.close()
-      tasmota.log(format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 3)
+      tasmota.log(format("MTR: =Saved     parameters%s", self.plugins_persist ? " and configuration" : ""), 2)
       return j
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
@@ -693,6 +738,7 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
+      self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
@@ -1106,13 +1152,13 @@ class Matter_Device
         if !r_st13.contains(k)   break     end           # no more SHTxxx
         var d = r_st13[k]
         tasmota.log(format("MTR: '%s' = %s", k, str(d)), 3)
-        var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
-        var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
+        var relay1 = d.find('Relay1', -1)           # relay base 1 or -1 if none
+        var relay2 = d.find('Relay2', -1)           # relay base 1 or -1 if none
 
-        if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
-        if relay2 >= 0    relays_reserved.push(relay2)    end
+        if relay1 > 0    relays_reserved.push(relay1 - 1)    end   # mark relay1/2 as non-relays
+        if relay2 > 0    relays_reserved.push(relay2 - 1)    end
 
-        tasmota.log(format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        tasmota.log(f"MTR: {relay1=} {relay2=}", 3)
         # is there tilt support
         var tilt_array = d.find('TiltConfig')
         var tilt_config = tilt_array && (tilt_array[2] > 0)
@@ -1131,7 +1177,7 @@ class Matter_Device
 
     while relay_index < relay_count
       if relays_reserved.find(relay_index) == nil   # if relay is actual relay
-        m[str(endpoint)] = {'type':'relay','relay':relay_index}
+        m[str(endpoint)] = {'type':'relay','relay':relay_index + 1}     # Relay index start with 1
         endpoint += 1
       end
       relay_index += 1
@@ -1312,23 +1358,23 @@ class Matter_Device
     self.plugins_config.remove(ep_str)
     self.plugins_persist = true
 
-    # try saving parameters
-    self.save_param()
-    self.signal_endpoints_changed()
-
     # now remove from in-memory configuration
     var idx = 0
     while idx < size(self.plugins)
       if ep == self.plugins[idx].get_endpoint()
         self.plugins.remove(idx)
-        self.signal_endpoints_changed()
         break
       else
         idx += 1
       end
     end
+
     # clean any orphan remote
     self.clean_remotes()
+
+    # try saving parameters
+    self.save_param()
+    self.signal_endpoints_changed()
   end
 
   #############################################################
@@ -1412,13 +1458,15 @@ class Matter_Device
   def clean_remotes()
     import introspect
 
+    # print("clean_remotes", self.http_remotes)
     # init all remotes with count 0
-    if self.http_remotes
+    if self.http_remotes      # tests if `self.http_remotes` is not `nil` and not empty
       var remotes_map = {}    # key: remote object, value: count of references
   
       for http_remote: self.http_remotes
         remotes_map[http_remote] = 0
       end
+      # print("remotes_map", remotes_map)
 
       # scan all endpoints
       for pi: self.plugins
@@ -1428,16 +1476,23 @@ class Matter_Device
         end
       end
 
+      # print("remotes_map2", remotes_map)
+
       # tasmota.log("MTR: remotes references: " + str(remotes_map), 3)
 
+      var remote_to_remove = []           # we first get the list of remotes to remove, to not interfere with map iterator
       for remote:remotes_map.keys()
         if remotes_map[remote] == 0
-          # remove
-          tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
-          remote.close()
-          self.http_remotes.remove(remote)
+          remote_to_remove.push(remote)
         end
       end
+
+      for remote: remote_to_remove
+        tasmota.log("MTR: remove unused remote: " + remote.addr, 3)
+        remote.close()
+        self.http_remotes.remove(remote.addr)
+      end
+
     end
 
   end

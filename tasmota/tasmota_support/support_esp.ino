@@ -214,7 +214,6 @@ String GetCodeCores(void) {
 
 #ifdef ESP32
 
-#include "bootloader_flash.h"
 #include "soc/soc.h"
 #include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
@@ -240,6 +239,7 @@ String GetCodeCores(void) {
 
 // See libraries\ESP32\examples\ResetReason.ino
 #if ESP_IDF_VERSION_MAJOR > 3      // IDF 4+
+  #include "esp_chip_info.h"
   #if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
     #include "esp32/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
@@ -253,6 +253,10 @@ String GetCodeCores(void) {
   #endif
 #else // ESP32 Before IDF 4.0
   #include "rom/rtc.h"
+#endif
+
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "esp_chip_info.h"
 #endif
 
 // Set the Stacksize for Arduino core. Default is 8192, some builds may need a bigger one
@@ -393,7 +397,12 @@ void NvsInfo(void) {
 
 // See Esp.cpp
 #include "Esp.h"
-#include "esp_spi_flash.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // esp_spi_flash.h is deprecated, please use spi_flash_mmap.h instead
+  #include "spi_flash_mmap.h"
+#else
+  #include "esp_spi_flash.h"
+#endif
 #include <memory>
 #include <soc/soc.h>
 #include <soc/efuse_reg.h>
@@ -422,6 +431,9 @@ extern "C" {
 #else // ESP32 Before IDF 4.0
   #include "rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x1000
+#endif
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "bootloader_common.h"
 #endif
 
 uint32_t EspProgramSize(const char *label) {
@@ -715,7 +727,12 @@ uint8_t* FlashDirectAccess(void) {
 }
 
 extern "C" {
-  bool esp_spiram_is_initialized(void);
+  #if ESP_IDF_VERSION_MAJOR >= 5
+    // bool IRAM_ATTR __attribute__((pure)) esp_psram_is_initialized(void)
+    bool esp_psram_is_initialized(void);
+  #else
+    bool esp_spiram_is_initialized(void);
+  #endif
 }
 
 // this function is a replacement for `psramFound()`.
@@ -725,7 +742,11 @@ bool FoundPSRAM(void) {
 #if CONFIG_IDF_TARGET_ESP32C3
   return psramFound();
 #else
-  return psramFound() && esp_spiram_is_initialized();
+  #if ESP_IDF_VERSION_MAJOR >= 5
+    return psramFound() && esp_psram_is_initialized();
+  #else
+    return psramFound() && esp_spiram_is_initialized();
+  #endif
 #endif
 }
 
@@ -874,8 +895,12 @@ typedef struct {
         pkg_version += ((word3 >> 2) & 0x1) << 3
         return pkg_version
 */
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+    uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
+#else
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_version = chip_ver & 0x7;
+#endif
 
 //    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
@@ -1145,25 +1170,6 @@ float ESP_getFreeHeap1024(void) {
   return ((float)ESP_getFreeHeap()) / 1024;
 }
 */
-
-const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT|Fast|Slow";
-/*
-typedef enum {
-    FM_QIO = 0x00,
-    FM_QOUT = 0x01,
-    FM_DIO = 0x02,
-    FM_DOUT = 0x03,
-    FM_FAST_READ = 0x04,
-    FM_SLOW_READ = 0x05,
-    FM_UNKNOWN = 0xff
-} FlashMode_t;
-*/
-String ESP_getFlashChipMode(void) {
-  uint32_t flash_mode = ESP.getFlashChipMode();
-  if (flash_mode > 5) { flash_mode = 3; }
-  char stemp[6];
-  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
-}
 
 /*********************************************************************************************\
  * High entropy hardware random generator

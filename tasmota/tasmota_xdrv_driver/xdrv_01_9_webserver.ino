@@ -30,6 +30,8 @@
 // Enable below demo feature only if defines USE_UNISHOX_COMPRESSION and USE_SCRIPT_WEB_DISPLAY are disabled
 //#define USE_WEB_SSE
 
+#define USE_CONSOLE_CSS_FLEX
+
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                      1      // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -371,12 +373,29 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
+#ifdef USE_CONSOLE_CSS_FLEX
+const char HTTP_CMND_STYLE[] PROGMEM =  // Overrule CSS for flex console
+  "html,body{height:99%%;}"
+  "body{display:flex;flex-flow:column;}"
+  "textarea{resize:none;flex:auto;min-height:99px}";
+
+const char HTTP_FORM_CMND[] PROGMEM =
+  "</div>"                     // Close HTTP_HEAD_STYLE3 <div>
+  "<textarea readonly id='t1' wrap='off'></textarea>"
+  "<form method='get' onsubmit='return l(1);'>"
+  "<br>"                       // <br> here fixes Firefox layout
+  "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus>"
+  //  "<br><button type='submit'>Send command</button>"
+  "</form>"
+  "<div style='padding:0;'>";  // Add dummy <div> replacing HTTP_HEAD_STYLE3 closed <div>
+#else
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br><textarea readonly id='t1' cols='340' wrap='off'></textarea><br><br>"
   "<form method='get' onsubmit='return l(1);'>"
   "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
   //  "<br><button type='submit'>Send command</button>"
   "</form>";
+#endif  // USE_CONSOLE_CSS_FLEX
 
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%%'>";
@@ -2236,7 +2255,7 @@ void HandleBackupConfiguration(void)
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   uint32_t config_len = SettingsConfigBackup();
-  if (!config_len) { return; }
+  if (!config_len) { return; }    // Unable to allocate buffer
 
   WiFiClient myClient = Webserver->client();
   Webserver->setContentLength(config_len);
@@ -2446,7 +2465,7 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (%s)"), ESP_getFlashChipId(), ESP_getFlashChipMode().c_str());
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (" D_TASMOTA_FLASHMODE ")"), ESP_getFlashChipId());
 #ifdef ESP32
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP_getFlashChipMagicSize() / 1024);
@@ -2731,14 +2750,8 @@ void HandleUploadLoop(void) {
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
 
-    if (UPL_SETTINGS == Web.upload_file_type) {
-      if (!SettingsBufferAlloc()) {
-        Web.upload_error = 2;  // Not enough space
-        return;
-      }
-    }
 #ifdef USE_UFILESYS
-    else if (UPL_UFSFILE == Web.upload_file_type) {
+    if (UPL_UFSFILE == Web.upload_file_type) {
       if (!UfsUploadFileOpen(upload.filename.c_str())) {
         Web.upload_error = 2;
         return;
@@ -2751,6 +2764,16 @@ void HandleUploadLoop(void) {
   else if (UPLOAD_FILE_WRITE == upload.status) {
     if (0 == upload.totalSize) {  // First block received
       if (UPL_SETTINGS == Web.upload_file_type) {
+        uint32_t set_size = sizeof(TSettings);
+#ifdef USE_UFILESYS
+        if (('s' == upload.buf[2]) && ('e' == upload.buf[3])) {  // /.settings
+          set_size = upload.buf[14] + (upload.buf[15] << 8);
+        }
+#endif  // USE_UFILESYS
+        if (!SettingsBufferAlloc(set_size)) {
+          Web.upload_error = 2;  // Not enough space
+          return;
+        }
         Web.config_block_count = 0;
       }
 #ifdef USE_WEB_FW_UPGRADE
@@ -2820,7 +2843,7 @@ void HandleUploadLoop(void) {
     }  // First block received
 
     if (UPL_SETTINGS == Web.upload_file_type) {
-      if (upload.currentSize > (sizeof(TSettings) - (Web.config_block_count * HTTP_UPLOAD_BUFLEN))) {
+      if (upload.currentSize > (settings_size - (Web.config_block_count * HTTP_UPLOAD_BUFLEN))) {
         Web.upload_error = 9;  // File too large
         return;
       }
@@ -3113,7 +3136,11 @@ void HandleConsole(void)
 
   WSContentStart_P(PSTR(D_CONSOLE));
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings->web_refresh);
+#ifdef USE_CONSOLE_CSS_FLEX
+  WSContentSendStyle_P(HTTP_CMND_STYLE);
+#else
   WSContentSendStyle();
+#endif  // USE_CONSOLE_CSS_FLEX
   WSContentSend_P(HTTP_FORM_CMND);
   WSContentSpaceButton((WebUseManagementSubmenu()) ? BUTTON_MANAGEMENT : BUTTON_MAIN);
   WSContentStop();
@@ -3368,9 +3395,11 @@ int WebGetConfig(char *buffer) {
       if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
         WiFiClient *stream = http.getStreamPtr();
         int len = http.getSize();
-        if ((len <= sizeof(TSettings)) && SettingsBufferAlloc()) {
+        if (len <= sizeof(TSettings)) { 
+          len = sizeof(TSettings);
+        }
+        if (SettingsBufferAlloc(len)) {
           uint8_t *buff = settings_buffer;
-          if (len == -1) { len = sizeof(TSettings); }
           while (http.connected() && (len > 0)) {
             size_t size = stream->available();
             if (size) {

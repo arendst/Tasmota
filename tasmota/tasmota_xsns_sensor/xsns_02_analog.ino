@@ -24,6 +24,12 @@
 
 #define XSNS_02                       2
 
+#ifdef ESP32
+  #if ESP_IDF_VERSION_MAJOR >= 5
+    #include "esp32-hal-adc.h"
+  #endif
+#endif
+
 #ifdef ESP8266
 #define ANALOG_RESOLUTION             10               // 12 = 4095, 11 = 2047, 10 = 1023
 #define ANALOG_RANGE                  1023             // 4095 = 12, 2047 = 11, 1023 = 10
@@ -176,6 +182,11 @@ bool adcAttachPin(uint8_t pin) {
   return (ADC0_PIN == pin);
 }
 #endif
+#if defined(ESP32) && (ESP_IDF_VERSION_MAJOR >= 5)
+  bool adcAttachPin(uint8_t pin) {
+    return true;                        // TODO - no more needed?
+  }
+#endif
 
 void AdcSaveSettings(uint32_t idx) {
   char parameters[32];
@@ -297,7 +308,9 @@ void AdcInit(void) {
 
   if (Adcs.present) {
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR < 5
     analogSetClockDiv(1);               // Default 1
+#endif
 #if CONFIG_IDF_TARGET_ESP32
     analogSetWidth(ANALOG_RESOLUTION);  // Default 12 bits (0 - 4095)
 #endif  // CONFIG_IDF_TARGET_ESP32

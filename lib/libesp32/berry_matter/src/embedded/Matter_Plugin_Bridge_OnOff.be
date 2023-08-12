@@ -29,7 +29,7 @@ class Matter_Plugin_Bridge_Light0 end
 class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_Light0
   static var TYPE = "http_relay"                    # name of the plug-in in json
   static var NAME = "Relay"               # display name of the plug-in
-  static var ARG_HINT = "Enter Relay<x> number"
+  static var ARG_HINT = "Relay<x> number"
   static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   #############################################################

@@ -188,7 +188,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t bistable_single_pin : 1;      // bit 6  (v12.5.0.1) - SetOption152 - (Power) Switch between two (0) or one (1) pin bistable relay control
     uint32_t berry_no_autoexec : 1;        // bit 7  (v12.5.0.3) - SetOption153 - (Berry) Disable autoexec.be on restart (1)
     uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
-    uint32_t spare09 : 1;                  // bit 9
+    uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
     uint32_t spare12 : 1;                  // bit 12
@@ -733,8 +733,8 @@ typedef struct {
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
   uint16_t      shutter_motorstop;         // 738
-
-  uint8_t       free_73A[3];               // 73A
+  uint8_t       battery_level_percent;     // 73A
+  uint8_t       free_73B[2];               // 73B
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -778,8 +778,9 @@ typedef struct {
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
+  uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_ea6[32];              // EA6
+  uint8_t       free_eb0[22];              // EB0  22 bytes
 
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7

@@ -140,27 +140,25 @@ extern "C" {
                         returnit = 1;
                     case MPATH_ISDIR:
                     case MPATH_MODIFIED: {
-                        // listdir and isdir both need to open the file.
+                        //isdir needs to open the file, listdir does not
 
                         // we use be_fopen because it pre-pends with '/'.
                         // without this TAS fails to find stuff at boot...
                         File *dir = (File *)be_fopen(path, "r");
                         if (dir) {
+                            String fpath;
+                            String fname;
                             switch (action){
                                 case MPATH_LISTDIR:
-                                    // fill out the list object
-                                    dir->rewindDirectory();
-                                    while (1) {
-                                        File entry = dir->openNextFile();
-                                        if (!entry) {
-                                            break;
-                                        }
-                                        const char * fn = entry.name();
-                                        if (strcmp(fn, ".") && strcmp(fn, "..")) {
-                                            be_pushstring(vm, fn);
-                                            be_data_push(vm, -2);
-                                            be_pop(vm, 1);
-                                        }
+                                    dir->seekDir(0);
+                                    fpath = dir->getNextFileName();
+                                    while (fpath.length() != 0) {
+                                        fname = fpath.substring(fpath.lastIndexOf("/") + 1);
+                                        const char * fn = fname.c_str();
+                                        be_pushstring(vm, fn);
+                                        be_data_push(vm, -2);
+                                        be_pop(vm, 1);
+                                        fpath = dir->getNextFileName();
                                     }
                                     break;
                                 case MPATH_ISDIR:

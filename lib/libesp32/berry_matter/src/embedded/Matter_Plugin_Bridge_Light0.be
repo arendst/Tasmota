@@ -30,7 +30,7 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
   static var TYPE = "http_light0"                   # name of the plug-in in json
   static var NAME = "Light 0 On"          # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
-  static var ARG_HINT = "Enter Power<x> number"
+  static var ARG_HINT = "Power<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 3000                     # update every 3s
   # static var UPDATE_CMD = "Status 11"               # command to send for updates
@@ -83,13 +83,14 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     var ret = self.call_remote_sync("Power" + str(self.tasmota_relay_index), v ? "1" : "0")
     if ret != nil
       self.parse_update(ret, 11)        # update shadow from return value
+      # self.tick = self.device.tick      # prevent an explicit Status11 for as it is not needed if the subscription update is sent in same tick
     end
   end
 
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -98,15 +99,15 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return TLV.create_TLV(TLV.BOOL, self.shadow_onoff)
+        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 
@@ -122,7 +123,6 @@ class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Bridge_HTTP
 
     # ====================================================================================================
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
         return true

@@ -68,6 +68,7 @@ public:
       state = AsyncTCPState::INPROGRESS;    // reset state
     }
 
+#ifdef USE_IPV6
     if (ip.type() == IPv6) {
         struct sockaddr_in6 *tmpaddr = (struct sockaddr_in6 *)&serveraddr;
         sockfd = socket(AF_INET6, SOCK_STREAM, 0);
@@ -75,12 +76,15 @@ public:
         memcpy(tmpaddr->sin6_addr.un.u8_addr, &ip[0], 16);
         tmpaddr->sin6_port = htons(port);
     } else {
+#endif
         struct sockaddr_in *tmpaddr = (struct sockaddr_in *)&serveraddr;
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         tmpaddr->sin_family = AF_INET;
         tmpaddr->sin_addr.s_addr = ip;
         tmpaddr->sin_port = htons(port);
+#ifdef USE_IPV6
     }
+#endif
     if (sockfd < 0) {
         AddLog(LOG_LEVEL_DEBUG, "BRY: Error: socket: %d", errno);
         return 0;
@@ -312,7 +316,7 @@ public:
           local_addr = IPAddress((uint32_t)(s->sin_addr.s_addr));
           // return IPAddress((uint32_t)(s->sin_addr.s_addr));
       }
-
+#ifdef USE_IPV6
       // IPv6, but it might be IPv4 mapped address
       if (((struct sockaddr*)&local_address)->sa_family == AF_INET6) {
           struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&local_address;
@@ -325,6 +329,7 @@ public:
               // return IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
           }
       }
+#endif // USE_IPV6
     }
   }
 

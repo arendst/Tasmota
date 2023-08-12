@@ -55,7 +55,7 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -64,22 +64,22 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     if   cluster == 0x0403              # ========== Pressure Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
         if self.shadow_value != nil
-          return TLV.create_TLV(TLV.I2, int(self.shadow_value))
+          return tlv_solo.set(TLV.I2, int(self.shadow_value))
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return TLV.create_TLV(TLV.I2, 500)  # 500 hPA
+        return tlv_solo.set(TLV.I2, 500)  # 500 hPA
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return TLV.create_TLV(TLV.I2, 1500)  # 1500 hPA
+        return tlv_solo.set(TLV.I2, 1500)  # 1500 hPA
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Extended Range
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 3 = New data model format and notation
+        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

@@ -31,12 +31,21 @@
  *
 \*********************************************************************************************/
 extern "C" {
+
+  int32_t energy_update_total(struct bvm *vm);
+  int32_t energy_update_total(struct bvm *vm) {
+    EnergyUpdateTotal();
+    be_return_nil(vm);
+  }
+
+
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
- 
+
   static const char * be_ctypes_instance_mappings[] = {
     NULL
-  };  
+  };
   extern "C" const be_ctypes_structure_t be_energy_struct = {
     sizeof(tEnergy),  /* size in bytes */
     88,  /* number of elements */

@@ -1,7 +1,92 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Released]
+## [Released] - Development
+
+## [13.1.0] 20230815
+- Release Quentin
+
+## [13.0.0.4] 20230815
+### Added
+- ESP32 prepare for Arduino Core v3 and esp-idf v5 (#19264)
+
+### Changed
+- Console height from default 318 pixels to viewport (#19241)
+- Shutter button hold behaviour with grouptopic (#19263)
+- Thermostat improvements (#19279)
+- PID controller improvements (#19285)
+
+## [13.0.0.3] 20230805
+### Added
+- Support for MAX17043 fuel-gauge systems Lipo batteries (#18788)
+- Support for multiple PCA9685 with extended functionality (#18805)
+- Zigbee decode Aqara 0000/FF01 attribute 03 as Temperature (#19210)
+- Berry bytes `get` and `set` work for 3 bytes values (#19225)
+- Matter support for fabric_filtered request (for Google compatibility) (#19249)
+
+### Changed
+- Initial ``DisplayMode`` from 1 to 0 and ``DisplayDimmmer`` from 10% to 50% (#19138)
+- ESP32 Framework (Arduino Core) from v2.0.10 to v2.0.11
+- Berry `mqtt.publish` now distinguishes between `string` and `bytes` (#19196)
+- IRremoteESP8266 library from v2.8.5 to v2.8.6
+- ESP32 autodetect flashsize and adjust filesystem (#19215)
+- Reduced log level for TeleInfo (#19216)
+- Matter increased polling frequency for local switches/occupancy (#19242)
+
+### Fixed
+- Initial battery level percentage (#19160)
+- Berry SK6812_GRBW crash (#19166)
+- ESP8266 SPI initialization for scripter, filesystem and MFRC522 (#19209)
+- Zero cross dimmer minimum interrupt time (#19211)
+- Fade would fail when the difference between start and target would be too small (#19248)
+- Inverted shutter (#19243)
+- Matter support for large atribute responses (#19252)
+- Matter auto-configuration Relay indices (#19255)
+
+## [13.0.0.2] 20230721
+### Added
+- Partition Wizard is now able to convert to safeboot from Shelly partition layout (#19034)
+- Matter mini-profiler (#19075)
+- Berry `_class` can be used in `static var` initialization code (#19088)
+- Berry `energy.update_total()` to call `EnergyUpdateTotal()` from energy driver (#19117)
+- Support for DeepSleep battery level percentage (#19134)
+- Berry metrics for memory allocation/deallocation/reallocation (#19150)
+- Berry `tasmota.loglevel()` and `tasmota.rtc_utc()` for faster performance (#19152)
+- Berry AES CCM decrypting in a single call to avoid any object allocation (#19153)
+
+### Changed
+- ESP32 shutter driver support up to 16 shutters (#18295)
+- Configuration backup and restore now backup and restore ``.xdrvsetXXX`` files too (#18295)
+- Berry extend `range(lower, upper, incr)` to arbitrary increment (#19120)
+- Berry updated syntax highlighting plugin for VSCode (#19123)
+- Matter latency improvement for single attribute reads and single commands (#19158)
+
+## [13.0.0.1] 20230708
+### Added
+- Command ``Delay -1`` to wait until next second (#18984)
+- Matter add option to disable bridge mode (#18992)
+- Support for SGP41 TVOC/NOx Sensor (#18880)
+- Command ``BrRestart`` to restart the Berry VM (experimental) (#19003)
+- Command ``Restart 9`` to save all changes and go into deepsleep waiting for a reset (#19024)
+- Berry added `getgbl` performance counter to `debug.counters()` (#19070)
+
+### Breaking Changed
+- Berry `bool( [] )` and `bool( {} )` now evaluate as `false` (#18986)
+- Berry `import strict` now detects useless expr without side effects (#18997)
+
+### Changed
+- Matter support for temperature in Fahrenheit (`SetOption8 1`) (#18987)
+- Matter improve responsiveness (#19002)
+- ESP32 LVGL library from v8.3.7 to v8.3.8 (no functional change)
+- Matter improve latency for remote commands (#19072)
+
+### Fixed
+- Berry various fixes for Walrus Operator (#18982)
+- MiElHVAC power commands regression from v12.4.0.1 (#18923)
+- `BrRestart` now supports web handlers to work after Berry restart
+
+### Removed
+- Support for ESP32-C3 with chip rev below 3 (old development boards)
 
 ## [13.0.0] 20230626
 - Release Qasim
@@ -69,7 +154,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Matter support for Shutters with Tilt
 - Matter POC for remote Relay
-- Support for Zero-Cross Dimmer on ESP32, changed calculation on EPS8266, high resolution control e.g. Solar: `ZCDimmerSet`
+- Support for Zero-Cross Dimmer on ESP32, changed calculation on ESP8266, high resolution control e.g. Solar: `ZCDimmerSet`
 - ESP32 Enhanced Shutterbuttons functionality to control tilt position, additionally incr/decr possible to position and tilt.
 - ESP32 command ``Shuttersetup`` for "Shelly 2.5 pro" automatic calibration and setup (experimental)
 - Berry `tcpclientasync` class for non-blocking TCP client

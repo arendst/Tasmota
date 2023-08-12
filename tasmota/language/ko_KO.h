@@ -58,6 +58,7 @@
 #define D_AS "as"
 #define D_AUTO "자동"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "깜박임"
 #define D_BLINKOFF "깜박임 끄기"
 #define D_BOOT_COUNT "부팅 횟수"

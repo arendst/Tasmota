@@ -80,7 +80,16 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_66_tm1638               | @arendst
 | xdrv_67_mcp23xxx             | @arendst
 | xdrv_68_zerocrossDimmer.ino  | @stefanbode
-|                              |
+| xdrv_69_pca9557              | @cctweaker
+| xdrv_70                      |
+| xdrv_71                      |
+| xdrv_72                      |
+| xdrv_73                      |
+| xdrv_74                      |
+| xdrv_75                      |
+| xdrv_76                      |
+| xdrv_77                      |
+| xdrv_78                      |
 | xdrv_79_esp32_ble            | @staars, @btsimonh
 | xdrv_81_esp32_webcam         | @gemu, @philrich
 | xdrv_82_esp32_ethernet       | @arendst
@@ -208,6 +217,8 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_106_gdk101              | @Szewcson
 | xsns_107_gm861               | @arendst
 | xsns_108_tc74                | Michael Loftis
+| xsns_109_sgp4x               | Andrew Klaus
+| xsns_110_max17043            | Vincent de Groot
 |                              |
 | Libraries                    |
 |                              |

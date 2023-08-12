@@ -204,6 +204,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Device.h"
+#include "solidify/solidified_Matter_Profiler.h"
 
 #include "../generate/be_matter_certs.h"
 
@@ -287,6 +288,7 @@ module matter (scope: global, strings: weak) {
   sort, closure(matter_sort_closure)
   jitter, closure(matter_jitter_closure)
   inspect, closure(matter_inspect_closure)
+  Profiler, class(be_class_Matter_Profiler)
 
   // Status codes
   SUCCESS, int(0x00)
@@ -336,6 +338,7 @@ module matter (scope: global, strings: weak) {
   StatusIB, class(be_class_Matter_StatusIB)
   StatusResponseMessage, class(be_class_Matter_StatusResponseMessage)
   ReadRequestMessage, class(be_class_Matter_ReadRequestMessage)
+  ReadRequestMessage_solo, class(be_class_Matter_ReadRequestMessage_solo)
   ReportDataMessage, class(be_class_Matter_ReportDataMessage)
   SubscribeRequestMessage, class(be_class_Matter_SubscribeRequestMessage)
   SubscribeResponseMessage, class(be_class_Matter_SubscribeResponseMessage)
@@ -343,6 +346,7 @@ module matter (scope: global, strings: weak) {
   WriteResponseMessage, class(be_class_Matter_WriteResponseMessage)
   TimedRequestMessage, class(be_class_Matter_TimedRequestMessage)
   InvokeRequestMessage, class(be_class_Matter_InvokeRequestMessage)
+  InvokeRequestMessage_solo, class(be_class_Matter_InvokeRequestMessage_solo)
   InvokeResponseMessage, class(be_class_Matter_InvokeResponseMessage)
 
   // Matter Commisioning messages

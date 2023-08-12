@@ -55,7 +55,7 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -64,22 +64,22 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
     if   cluster == 0x0405              # ========== Humidity Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- Humidity / u16 ----------
         if self.shadow_value != nil
-          return TLV.create_TLV(TLV.U2, int(self.shadow_value))
+          return tlv_solo.set(TLV.U2, int(self.shadow_value))
         else
-          return TLV.create_TLV(TLV.NULL, nil)
+          return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / u16 ----------
-        return TLV.create_TLV(TLV.U2, 500)  # 0%
+        return tlv_solo.set(TLV.U2, 500)  # 0%
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / u16 ----------
-        return TLV.create_TLV(TLV.U2, 10000)  # 100%
+        return tlv_solo.set(TLV.U2, 10000)  # 100%
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Extended Range
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 3)    # 3 = New data model format and notation
+        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

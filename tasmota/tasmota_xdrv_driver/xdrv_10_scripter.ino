@@ -444,7 +444,7 @@ struct SCRIPT_SPI {
 #include <OneWire.h>
 #include <DS2480B.h>
 
-#ifndef MAX_DS_SENSORS             
+#ifndef MAX_DS_SENSORS
 #define MAX_DS_SENSORS 20
 #endif
 
@@ -721,8 +721,8 @@ char *script;
       maxsvars = 1;
     }
     uint16_t maxvars = maxsvars + maxnvars;
-    //AddLog(LOG_LEVEL_INFO, PSTR("Script: svar = %d, nvars = %d"), maxsvars, maxnvars);
-    
+    //AddLog(LOG_LEVEL_INFO, PSTR("SCR: svar = %d, nvars = %d"), maxsvars, maxnvars);
+
     // scan lines for >DEF
     uint16_t lines = 0;
     uint16_t nvars = 0;
@@ -867,7 +867,7 @@ char *script;
                 } else {
                     vtypes[vars].bits.is_filter = 0;
                 }
-                
+
                 *vnp_p++ = vnames_p;
                 while (lp < op) {
                   if (*lp == ' ') {
@@ -1090,7 +1090,7 @@ char *script;
     }
 
     // variables usage info
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -1239,12 +1239,12 @@ void Script_Init_UDP() {
 
 
 #ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCR: UDP started"));
 #endif
     glob_script_mem.udp_flags.udp_connected = 1;
   } else {
 #ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCR: UDP failed"));
 #endif
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
@@ -1287,12 +1287,12 @@ void Script_PollUdp(void) {
           uint32_t res = match_vars(vnam, &fp, &sp, &index);
           if (res == NUM_RES) {
 #ifdef SCRIPT_DEBUG_UDP
-            AddLog(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: num var found - %s - %d - %d"), vnam, res, index);
 #endif
             *fp=CharToFloat(cp + 1);
           } else if (res == STR_RES) {
 #ifdef SCRIPT_DEBUG_UDP
-            AddLog(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"), vnam, res, index);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: string var found - %s - %d - %d"), vnam, res, index);
 #endif
             strlcpy(sp, cp + 1, SCRIPT_MAXSSIZE);
           } else {
@@ -1330,12 +1330,12 @@ void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp) {
     dtostrfd(*fp, 8, flstr);
     strcat(sbuf, flstr);
 #ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: num var updated - %s"), sbuf);
 #endif
   } else {
     strcat(sbuf, sp);
 #ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"), sbuf);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: string var updated - %s"), sbuf);
 #endif
   }
   glob_script_mem.Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
@@ -2177,7 +2177,7 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
           strcpy(jpg_task.boundary,cp + 1);
         }
       } else {
-        AddLog(LOG_LEVEL_INFO,PSTR("HTTP error %d = %s"), httpCode, jpg_task.http.errorToString(httpCode).c_str());
+        AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, jpg_task.http.errorToString(httpCode).c_str());
       }
       return httpCode;
       break;
@@ -3243,7 +3243,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             if (!glob_script_mem.file_flags[cnt].is_open) {
               if (mode == 0) {
 #ifdef DEBUG_FS
-                AddLog(LOG_LEVEL_INFO, PSTR("open file for read %d"), cnt);
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for read %d"), cnt);
 #endif
                 glob_script_mem.files[cnt] = ufsp->open(str, FS_FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
@@ -3257,12 +3257,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                 if (mode == 1) {
                   glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_WRITE);
 #ifdef DEBUG_FS
-                  AddLog(LOG_LEVEL_INFO, PSTR("open file for write %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for write %d"), cnt);
 #endif
                 } else {
                   glob_script_mem.files[cnt] = ufsp->open(str,FS_FILE_APPEND);
 #ifdef DEBUG_FS
-                  AddLog(LOG_LEVEL_INFO, PSTR("open file for append %d"), cnt);
+                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for append %d"), cnt);
 #endif
                 }
               }
@@ -3270,7 +3270,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                 fvar = cnt;
                 glob_script_mem.file_flags[cnt].is_open = 1;
               } else {
-                AddLog(LOG_LEVEL_INFO, PSTR("file open failed"));
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: file open failed"));
               }
               break;
             }
@@ -3283,7 +3283,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             uint8_t ind = fvar;
             if (ind >= SFS_MAX) ind = SFS_MAX - 1;
 #ifdef DEBUG_FS
-            AddLog(LOG_LEVEL_INFO, PSTR("closing file %d"), ind);
+            AddLog(LOG_LEVEL_INFO, PSTR("SCR: closing file %d"), ind);
 #endif
             glob_script_mem.files[ind].close();
             glob_script_mem.file_flags[ind].is_open = 0;
@@ -3807,6 +3807,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
+          char delimc = 0;
+          if (*lp != ')') {
+            // get delimiter
+            delimc = *lp;
+            lp++;
+          }
+
           char rstring[SCRIPT_MAXSSIZE];
           rstring[0] = 0;
           int8_t index = fvar;
@@ -3855,6 +3862,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                       // fail or last string
                       strlcpy(rstring, lwd, glob_script_mem.max_ssize);
                       break;
+                    }
+                  }
+                  if (delimc) {
+                    char *xp = strchr(rstring, delimc);
+                     if (xp) {
+                      *xp = 0;              
                     }
                   }
                   free(mqd);
@@ -4447,7 +4460,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
         break;
-#endif // USE_SCRIPT_ONEWIRE   
+#endif // USE_SCRIPT_ONEWIRE
 
       case 'p':
         if (!strncmp_XP(lp, XPSTR("pin["), 4)) {
@@ -4973,7 +4986,7 @@ extern char *SML_GetSVal(uint32_t index);
             fvar == -1;
           } else {
             if (Is_gpio_used(rxpin) || Is_gpio_used(txpin)) {
-              AddLog(LOG_LEVEL_INFO, PSTR("warning: pins already used"));
+              AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
             }
 
             glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, 1, 0, rxbsiz);
@@ -4985,10 +4998,10 @@ extern char *SML_GetSVal(uint32_t index);
 
               Settings->serial_config = sconfig;
               uint8_t uart = 0;
-#ifdef ESP32              
+#ifdef ESP32
               uart = glob_script_mem.sp->getUart();
 #endif
-              AddLog(LOG_LEVEL_INFO, PSTR("Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d uart=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz, uart);
+              AddLog(LOG_LEVEL_INFO, PSTR("SCR: Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d uart=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz, uart);
               Settings->serial_config = savc;
               if (rxpin == 3 and txpin == 1) ClaimSerial();
 
@@ -5328,7 +5341,7 @@ extern char *SML_GetSVal(uint32_t index);
             char cbuff[32];
             sprintf(cbuff," - %02x%02x",modbus_response[mb_index],modbus_response[mb_index+1]);
             strcat(hexbuff,cbuff);
-            AddLog(LOG_LEVEL_INFO,PSTR(">> %s"),hexbuff);
+            AddLog(LOG_LEVEL_INFO,PSTR("SCR: >> %s"),hexbuff);
 #endif
           }
           lp++;
@@ -5366,10 +5379,10 @@ extern char *SML_GetSVal(uint32_t index);
                 glob_script_mem.spi.settings = SPISettings(fvar, MSBFIRST, SPI_MODE0);
 
                 if (TasmotaGlobal.spi_enabled) {
-#ifdef EPS8266
+#ifdef ESP8266
                   SPI.begin();
                   glob_script_mem.spi.spip = &SPI;
-#endif // EPS8266
+#endif // ESP8266
 
 #ifdef ESP32
                   if (glob_script_mem.spi.sclk == -1) {
@@ -5382,7 +5395,7 @@ extern char *SML_GetSVal(uint32_t index);
 
 #endif // ESP32
                 } else {
-                  AddLog(LOG_LEVEL_INFO, PSTR("error: spi pins not defined"));
+                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: error, spi pins not defined"));
                 }
                 break;
               }
@@ -5404,7 +5417,7 @@ extern char *SML_GetSVal(uint32_t index);
 
               if (Is_gpio_used(glob_script_mem.spi.mosi) || Is_gpio_used(glob_script_mem.spi.miso)
                   || Is_gpio_used(glob_script_mem.spi.sclk) ) {
-                AddLog(LOG_LEVEL_INFO, PSTR("warning: pins already used"));
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
               }
               break;
 
@@ -5418,7 +5431,7 @@ extern char *SML_GetSVal(uint32_t index);
               pinMode(glob_script_mem.spi.cs[index] , OUTPUT);
               digitalWrite(glob_script_mem.spi.cs[index] , 1);
               if (Is_gpio_used(glob_script_mem.spi.cs[index])) {
-                AddLog(LOG_LEVEL_INFO, PSTR("warning: pins already used"));
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
               }
               break;
 
@@ -5554,7 +5567,7 @@ extern char *SML_GetSVal(uint32_t index);
           uint32_t cycles;
           uint64_t accu = 0;
           char sbuffer[32];
-          
+
           GT911_Touch_Init(&Wire1, -1, -1, 960, 540);
 
           /*
@@ -5965,12 +5978,12 @@ char *getop(char *lp, uint8_t *operand) {
 #ifdef USE_SCRIPT_FATFS_EXT
 #ifdef USE_UFILESYS
 int32_t script_logfile_write(char *path, char *payload, uint32_t size) {
-  
+
       File rfd = ufsp->open(path, FS_FILE_APPEND);
       if (rfd == 0) {
         return -1;
       }
-      
+
       uint32_t fsize = rfd.size();
       // append string
       rfd.write((uint8_t*)payload, strlen(payload));
@@ -5994,7 +6007,7 @@ int32_t script_logfile_write(char *path, char *payload, uint32_t size) {
       wfd.close();
       ufsp->remove(path);
       ufsp->rename("/ltmp", path);
-      
+
   return fsize;
 }
 #endif // USE_UFILESYS
@@ -6803,6 +6816,11 @@ startline:
         }
         // skip empty line
         SCRIPT_SKIP_EOL
+
+        while (*lp == '\t' || *lp == ' ') {
+          lp++;
+        }
+        
         // skip comment
         if (*lp == ';') goto next_line;
         if (!*lp) break;
@@ -7103,7 +7121,7 @@ getnext:
               lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, 0);
               int8_t pinnr = fvar;
               if (Is_gpio_used(pinnr)) {
-                AddLog(LOG_LEVEL_INFO, PSTR("warning: pins already used"));
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
               }
               SCRIPT_SKIP_SPACES
               uint8_t mode = 0;
@@ -7297,7 +7315,7 @@ getnext:
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ = 1;
-                      AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
+                      AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("SCR: performs \"%s\""), tmp);
                     } else if (sflag == 2) {
                       // allow recursive call
                     } else {
@@ -7447,7 +7465,7 @@ getnext:
                           default:
                               // error
                               break;
-                        } 
+                        }
                       } else {
                         switch (lastop) {
                           case OPER_EQU:
@@ -7492,7 +7510,7 @@ getnext:
                               break;
                         }
                       }
-                      
+
                       // var was changed
                       if (globvindex >= 0) SetChanged(globvindex);
 #ifdef USE_SCRIPT_GLOBVARS
@@ -7763,7 +7781,7 @@ ScriptOneWire *ow = &glob_script_mem.ow;
 
           ow->ts->begin(9600);
 
-#ifdef ESP8266          
+#ifdef ESP8266
           if (ow->ts->hardwareSerial()) {
             ClaimSerial();
 #ifdef ALLOW_OW_INVERT
@@ -7783,7 +7801,7 @@ ScriptOneWire *ow = &glob_script_mem.ow;
           }
 #endif
 #endif // ESP32
- 
+
           ow->dsh = new DS2480B(ow->ts);
           ow->dsh->begin();
         }
@@ -7878,7 +7896,7 @@ ScriptOneWire *ow = &glob_script_mem.ow;
       if (val < 1 || val > MAX_DS_SENSORS) {
         val = 1;
       }
-     
+
       if (ow->ds) {
         uint8_t data[9];
         ow->ds->reset();
@@ -8329,13 +8347,13 @@ uint8_t DownloadFile(char *file) {
   WiFiClient download_Client;
 
     if (!ufsp->exists(file)) {
-      AddLog(LOG_LEVEL_INFO,PSTR("file not found"));
+      AddLog(LOG_LEVEL_INFO,PSTR("SCR: file not found"));
       return 0;
     }
 
     download_file = ufsp->open(file, FS_FILE_READ);
     if (!download_file) {
-      AddLog(LOG_LEVEL_INFO,PSTR("could not open file"));
+      AddLog(LOG_LEVEL_INFO,PSTR("SCR: could not open file"));
       return 0;
     }
 
@@ -8507,14 +8525,14 @@ void ScriptSaveSettings(void) {
     strlcpy(glob_script_mem.script_ram, str.c_str(), glob_script_mem.script_size);
 
     if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
-      AddLog(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SCR: error, must start with >D"));
       bitWrite(Settings->rule_enabled, 0, 0);
     }
 
     SaveScript();
 
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("script memory error"));
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: memory error"));
   }
 
   SaveScriptEnd();
@@ -8528,10 +8546,10 @@ uint32_t script_compress(char *dest, uint32_t size) {
   yield();
   if (len_compressed > 0) {
     dest[len_compressed] = 0;
-    AddLog(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
+    AddLog(LOG_LEVEL_INFO,PSTR("SCR: compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
     return 0;
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: compress error %d"), len_compressed);
     return 1;
   }
 }
@@ -8552,14 +8570,14 @@ void SaveScriptEnd(void) {
     glob_script_mem.script_mem_size = 0;
  #ifdef USE_SCRIPT_SERIAL
     Script_Close_Serial();
-#endif   
+#endif
   }
 
   if (bitRead(Settings->rule_enabled, 0)) {
 
     int16_t res = Init_Scripter();
     if (res) {
-      AddLog(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
+      AddLog(LOG_LEVEL_INFO, PSTR("SCR: init error %d"), res);
       return;
     }
 
@@ -8917,7 +8935,7 @@ void Script_Check_Hue(String *response) {
       }
       // append response
 #ifdef SCRIPT_HUE_DEBUG
-      AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),hue_script[hue_devs].name, hue_devs);
+      AddLog(LOG_LEVEL_INFO, PSTR("HUE: %s - %d "),hue_script[hue_devs].name, hue_devs);
 #endif
       if (response) {
         if (TasmotaGlobal.devices_present) {
@@ -8930,7 +8948,7 @@ void Script_Check_Hue(String *response) {
         *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
 #ifdef SCRIPT_HUE_DEBUG
-        AddLog(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
+        AddLog(LOG_LEVEL_INFO, PSTR("HUE: %s - %d "),response->c_str(), hue_devs);
 #endif
       }
       hue_devs++;
@@ -8945,7 +8963,7 @@ void Script_Check_Hue(String *response) {
   }
 #ifdef SCRIPT_HUE_DEBUG
   if (response) {
-    AddLog(LOG_LEVEL_INFO, PSTR("Hue: %d"), hue_devs);
+    AddLog(LOG_LEVEL_INFO, PSTR("HUE: %d"), hue_devs);
     toLog(">>>>");
     toLog(response->c_str());
     toLog(response->c_str()+700);   // Was MAX_LOGSZ
@@ -8987,8 +9005,8 @@ void Script_Handle_Hue(String path) {
 #endif
 
 #ifdef SCRIPT_HUE_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("Hue 0: %s - %d "),path.c_str(), device);
-  AddLog(LOG_LEVEL_INFO, PSTR("Hue 1: %d, %s"), args, json);
+  AddLog(LOG_LEVEL_INFO, PSTR("HUE: 0 %s - %d "),path.c_str(), device);
+  AddLog(LOG_LEVEL_INFO, PSTR("HUE: 1 %d, %s"), args, json);
 #endif
   if (Webserver->args()) {
     response = "[";
@@ -9424,7 +9442,7 @@ bool ScriptMqttData(void) {
   String buData = XdrvMailbox.data;
 
 #ifdef DEBUG_MQTT_EVENT
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
 #endif
 
   MQTT_Subscription event_item;
@@ -9436,7 +9454,7 @@ bool ScriptMqttData(void) {
     String sData = buData;
 
 #ifdef DEBUG_MQTT_EVENT
-    AddLog(LOG_LEVEL_INFO, PSTR("Script: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: Match MQTT message Topic %s with subscription topic %s and key %s"), sTopic.c_str(), event_item.Topic.c_str(),event_item.Key.c_str());
 #endif
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
@@ -9494,7 +9512,7 @@ bool ScriptMqttData(void) {
           snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
         }
 #ifdef DEBUG_MQTT_EVENT
-        AddLog(LOG_LEVEL_INFO, PSTR("Script: setting script var %s"), sbuffer);
+        AddLog(LOG_LEVEL_INFO, PSTR("SCR: setting script var %s"), sbuffer);
 #endif
         //toLog(sbuffer);
         execute_script(sbuffer);
@@ -9657,7 +9675,7 @@ void ScriptServeFile82(void) {
       if (ufsp->exists(cp)) {
 #endif
         if (download82_busy == true) {
-          AddLog(LOG_LEVEL_INFO, PSTR("UFS 82: Download is busy"));
+          AddLog(LOG_LEVEL_INFO, PSTR("UFS: 82 Download is busy"));
           return;
         }
         download82_busy = true;
@@ -9705,9 +9723,9 @@ void WebServer82Init(void) {
     http82_Server->on("/", HTTP_GET, Handle82Root);
     http82_Server->onNotFound(Handle82NotFound);
     http82_Server->begin();
-    AddLog(LOG_LEVEL_INFO, PSTR("HTTP DL Server started on port: %d "), SCRIPT_DLPORT);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP DL Server started on port: %d "), SCRIPT_DLPORT);
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("HTTP DL Server failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP DL Server failed"));
   }
 }
 
@@ -10573,7 +10591,7 @@ int32_t web_send_file(char mc, char *fname) {
     free(lbuff);
     return 0;
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("WEB file %s not found"), path);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: WEB file %s not found"), path);
   }
   free(lbuff);
 #endif
@@ -10605,7 +10623,7 @@ const char *gc_str;
   }
 
   bool dogui = ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN));
-  
+
   if ((dogui && !(specopt & WSO_FORCEGUI)) || (!dogui && (specopt & WSO_FORCEGUI))) {
   //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN)) || (specopt & WSO_FORCEGUI)) {
     // normal web section
@@ -10784,7 +10802,7 @@ const char *gc_str;
       } else {
         WSContentSend_P(SCRIPT_MSG_RADIOa, center, tsiz, pulabel);
       }
-      
+
       // get pu labels
       uint8_t index = 1;
       while (*lp) {
@@ -11767,7 +11785,7 @@ int32_t url2file(uint8_t fref, char *url) {
     }
   }
   if (httpCode < 0) {
-    AddLog(LOG_LEVEL_INFO,PSTR("HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
+    AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
   }
   if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
     WiFiClient *stream = http.getStreamPtr();
@@ -11783,7 +11801,7 @@ int32_t url2file(uint8_t fref, char *url) {
         uint32_t read = stream->readBytes(buff, size);
         glob_script_mem.files[fref].write(buff, read);
         len -= read;
-        AddLog(LOG_LEVEL_DEBUG,PSTR("HTTP read %d"), len);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("SCR: HTTP read %d"), len);
       }
       delayMicroseconds(1);
     }
@@ -11809,7 +11827,7 @@ int32_t http_req(char *host, char *request) {
   }
 
 #ifdef HTTP_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("HTTP heap %d"), ESP_getFreeHeap());
+  AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP heap %d"), ESP_getFreeHeap());
 #endif
 
   if (!mode) {
@@ -11827,7 +11845,7 @@ int32_t http_req(char *host, char *request) {
   }
 
 #ifdef HTTP_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("HTTP RESULT %s"), http.getString().c_str());
+  AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP RESULT %s"), http.getString().c_str());
 #endif
 
 #ifdef USE_WEBSEND_RESPONSE
@@ -11838,7 +11856,7 @@ int32_t http_req(char *host, char *request) {
 #endif
 
 #ifdef HTTP_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("HTTP MQTT BUFFER %s"), ResponseData());
+  AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP MQTT BUFFER %s"), ResponseData());
 #endif
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("JSON %s"), wd_jstr);
@@ -11872,7 +11890,7 @@ int32_t call2pwl(const char *url) {
   if (*url == 'N') {
     url++;
     cookie = "";
-  } 
+  }
   String result = powerwall.GetRequest(String(url), cookie);
   //AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
 
@@ -11964,7 +11982,7 @@ uint32_t call2https(const char *host, const char *path) {
   if (retry == 10) {
     return 2;
   }
-  AddLog(LOG_LEVEL_DEBUG,PSTR("connected"));
+  AddLog(LOG_LEVEL_DEBUG,PSTR("SCR: connected"));
 
   String request;
 
@@ -12510,7 +12528,8 @@ bool Xdrv10(uint32_t function)
 
   switch (function) {
     //case FUNC_PRE_INIT:
-    case FUNC_INIT:
+    //case FUNC_INIT:
+    case FUNC_SETUP_RING1:  // We need to setup SCRIPT before call to ScriptLoadSection()
 
       //bitWrite(Settings->rule_enabled, 0, 0); // >>>>>>>>>>>
 #ifndef NO_SCRIPT_STOP_ON_ERROR
@@ -12529,7 +12548,7 @@ bool Xdrv10(uint32_t function)
 #ifdef USE_UFILESYS
       if (ufs_type) {
         // we have a file system
-        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM OK!"));
+        AddLog(LOG_LEVEL_INFO,PSTR("SCR: ufilesystem found"));
         char *script;
         script = (char*)special_malloc(UFSYS_SIZE + 4);
         if (!script) break;
@@ -12549,7 +12568,7 @@ bool Xdrv10(uint32_t function)
         // indicates scripter use no compression
         bitWrite(Settings->rule_once, 6, 0);
       } else {
-        AddLog(LOG_LEVEL_INFO,PSTR("UFILESYSTEM fail, using compression!"));
+        AddLog(LOG_LEVEL_INFO,PSTR("SCR: No ufilesystem, using compression"));
         int32_t len_decompressed;
         sprt = (char*)calloc(UNISHOXRSIZE + 8,1);
         if (!sprt) { break; }
@@ -12671,8 +12690,8 @@ bool Xdrv10(uint32_t function)
 
       if (bitRead(Settings->rule_enabled, 0)) Init_Scripter();
 
-    //  break;
-    //case FUNC_INIT:
+      break;
+    case FUNC_INIT:
       if (bitRead(Settings->rule_enabled, 0)) {
         set_callbacks();
         Run_Scripter1(">B\n", 3, 0);

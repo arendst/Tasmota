@@ -28,9 +28,9 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
   static var TYPE = "onoff"                         # name of the plug-in in json
   static var NAME = "OnOff Sensor"                  # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Enter Switch<x> number"
+  static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 5000                     # update every 250ms
+  static var UPDATE_TIME = 750                      # update every 750ms
   static var CLUSTERS  = {
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   }
@@ -70,7 +70,7 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx)
+  def read_attribute(session, ctx, tlv_solo)
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -79,15 +79,15 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return TLV.create_TLV(TLV.BOOL, self.shadow_onoff)
+        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return TLV.create_TLV(TLV.U4, 0)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return TLV.create_TLV(TLV.U4, 4)    # 0 = no Level Control for Lighting
+        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
     else
-      return super(self).read_attribute(session, ctx)
+      return super(self).read_attribute(session, ctx, tlv_solo)
     end
   end
 

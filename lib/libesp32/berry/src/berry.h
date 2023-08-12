@@ -478,15 +478,18 @@ typedef bclass_ptr bclass_array[];
 #endif
 
 /**
- * @def PROTO_RUNTIME_BLOCK
+ * @def BE_DEBUG_SOURCE_FILE
  * @brief conditional block in bproto depending on compilation options
  *
  */
-#if BE_SOURCE_FILE
+#if BE_DEBUG_SOURCE_FILE
   #define PROTO_SOURCE_FILE(n)   \
-    ((bstring*) _source),                                       /**< source */
+    ((bstring*) n),                                         /**< source */
+  #define PROTO_SOURCE_FILE_STR(n)  \
+    be_local_const_str(n##_str_source),                     /**< source */
 #else
   #define PROTO_SOURCE_FILE(n)
+  #define PROTO_SOURCE_FILE_STR(n)
 #endif
 
 /**
@@ -496,8 +499,8 @@ typedef bclass_ptr bclass_array[];
  */
 #if BE_DEBUG_RUNTIME_INFO
   #define PROTO_RUNTIME_BLOCK   \
-    NULL,     /**< varinfo */ \
-    0,        /**< nvarinfo */
+    NULL,     /**< lineinfo */ \
+    0,        /**< nlineinfo */
 #else
   #define PROTO_RUNTIME_BLOCK
 #endif
@@ -538,7 +541,7 @@ typedef bclass_ptr bclass_array[];
     BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),    /**< bproto **ptab */        \
     (binstruction*) &_name##_code,                                    /**< code */                 \
     be_local_const_str(_name##_str_name),                             /**< name */                 \
-    be_local_const_str(_name##_str_source),                           /**< source */               \
+    PROTO_SOURCE_FILE_STR(_name)                                      /**< source */               \
     PROTO_RUNTIME_BLOCK                                               /**< */                      \
     PROTO_VAR_INFO_BLOCK                                              /**< */                      \
   }
@@ -2062,7 +2065,9 @@ BERRY_API void be_exit(bvm *vm, int status);
  * @param except
  * @param msg
  */
+#ifdef __GNUC__
 __attribute__((noreturn))
+#endif
 BERRY_API void be_raise(bvm *vm, const char *except, const char *msg);
 
 /**

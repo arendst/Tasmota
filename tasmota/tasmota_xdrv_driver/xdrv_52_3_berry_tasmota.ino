@@ -183,6 +183,14 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: tasmota.rtc_utc() -> int
+  //
+  int32_t l_rtc_utc(struct bvm *vm);
+  int32_t l_rtc_utc(struct bvm *vm) {
+    be_pushint(vm, Rtc.utc_time);
+    be_return(vm);
+  }
+
   // Berry: tasmota.memory() -> map
   //
   int32_t l_memory(struct bvm *vm);
@@ -387,7 +395,18 @@ extern "C" {
   //
   int32_t l_scaleuint(struct bvm *vm);
   int32_t l_scaleuint(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &changeUIntScale, "i", "-iiiii");
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 5 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5)) {
+      int32_t val = be_toint(vm, 1);
+      int32_t from_min = be_toint(vm, 2);
+      int32_t from_max = be_toint(vm, 3);
+      int32_t to_min = be_toint(vm, 4);
+      int32_t to_max = be_toint(vm, 5);
+      int32_t scaled = changeUIntScale(val, from_min, from_max, to_min, to_max);
+      be_pushint(vm, scaled);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t l_respCmnd(bvm *vm);
@@ -790,6 +809,23 @@ extern "C" {
  *
 \*********************************************************************************************/
 extern "C" {
+  // Berry: `loglevel() -> int`
+  // or
+  // Berry: `loglevel(int) -> bool`
+  // return the highest log level currently in place
+  int32_t l_loglevel(struct bvm *vm);
+  int32_t l_loglevel(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    uint32_t highest_loglevel = HighestLogLevel();
+    if (top >= 2 && be_isint(vm, 2)) {
+      int32_t log_level = be_toint(vm, 2);
+      be_pushbool(vm, log_level <= highest_loglevel);
+    } else {
+      be_pushint(vm, HighestLogLevel());
+    }
+    be_return(vm);
+  }
+
   // Berry: `log(msg:string [,log_level:int]) ->nil`
   // Logs the string at LOG_LEVEL_INFO (loglevel=2)
   // We allow this function to be called as a method or a direct function
