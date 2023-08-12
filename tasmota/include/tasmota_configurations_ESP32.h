@@ -241,7 +241,7 @@
 #undef USE_LIGHT                                 // Disable support for lights
 #undef USE_WS2812
 
-#undef USE_DS18x20                               // Disable DS18x20 sensor
+#define USE_DS18x20                              // Enable DS18x20 sensor
 
 #undef USE_I2C                                   // Disable all I2C sensors and devices
 
