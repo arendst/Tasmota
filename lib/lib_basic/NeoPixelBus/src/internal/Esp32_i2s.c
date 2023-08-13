@@ -20,7 +20,7 @@
 #include "sdkconfig.h" // this sets useful config symbols, like CONFIG_IDF_TARGET_ESP32C3
 
 // ESP32C3/S3 I2S is not supported yet due to significant changes to interface
-#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 #include <string.h>
 #include <stdio.h>
@@ -41,13 +41,19 @@
 #include "soc/gpio_reg.h"
 #include "soc/gpio_sig_map.h"
 #include "soc/io_mux_reg.h"
+#if ESP_IDF_VERSION_MAJOR>=5
+#include "soc/rtc_cntl_periph.h"
+#else
 #include "soc/rtc_cntl_reg.h"
+#include "soc/sens_reg.h"
+#endif
+
 #include "soc/i2s_struct.h"
 #if defined(CONFIG_IDF_TARGET_ESP32)
 /* included here for ESP-IDF v4.x compatibility */
 #include "soc/dport_reg.h"
 #endif
-#include "soc/sens_reg.h"
+
 #include "driver/gpio.h"
 #include "driver/i2s.h"
 #include "driver/dac.h"
