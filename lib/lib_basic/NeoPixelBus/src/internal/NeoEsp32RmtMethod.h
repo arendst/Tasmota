@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 
 #pragma once
 
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2)
 
 /*  General Reference documentation for the APIs used in this implementation
 LOW LEVEL:  (what is actually used)
@@ -47,8 +47,128 @@ Esp32-hal-rmt.c
 
 extern "C"
 {
-#include <driver/rmt.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
 #include <rom/gpio.h>
+#include "driver/rmt_tx.h"
+#include "driver/rmt_encoder.h"
+
+typedef struct {
+    uint32_t resolution; /*!< Encoder resolution, in Hz */
+} led_strip_encoder_config_t;
+
+typedef struct {
+    rmt_encoder_t base;
+    rmt_encoder_t *bytes_encoder;
+    rmt_encoder_t *copy_encoder;
+    int state;
+    rmt_symbol_word_t reset_code;
+} rmt_led_strip_encoder_t;
+
+static size_t rmt_encode_led_strip(rmt_encoder_t *encoder, rmt_channel_handle_t channel, const void *primary_data, size_t data_size, rmt_encode_state_t *ret_state)
+{
+    rmt_led_strip_encoder_t *led_encoder = __containerof(encoder, rmt_led_strip_encoder_t, base);
+    rmt_encoder_handle_t bytes_encoder = led_encoder->bytes_encoder;
+    rmt_encoder_handle_t copy_encoder = led_encoder->copy_encoder;
+    rmt_encode_state_t session_state = RMT_ENCODING_RESET;
+    rmt_encode_state_t state = RMT_ENCODING_RESET;
+    size_t encoded_symbols = 0;
+    switch (led_encoder->state) {
+    case 0: // send RGB data
+        encoded_symbols += bytes_encoder->encode(bytes_encoder, channel, primary_data, data_size, &session_state);
+        if (session_state & RMT_ENCODING_COMPLETE) {
+            led_encoder->state = 1; // switch to next state when current encoding session finished
+        }
+        if (session_state & RMT_ENCODING_MEM_FULL) {
+            // static_cast<AnimalFlags>(static_cast<int>(a) | static_cast<int>(b));
+            state = static_cast<rmt_encode_state_t>(static_cast<uint8_t>(state) | static_cast<uint8_t>(RMT_ENCODING_MEM_FULL));
+            goto out; // yield if there's no free space for encoding artifacts
+        }
+    // fall-through
+    case 1: // send reset code
+        encoded_symbols += copy_encoder->encode(copy_encoder, channel, &led_encoder->reset_code,
+                                                sizeof(led_encoder->reset_code), &session_state);
+        if (session_state & RMT_ENCODING_COMPLETE) {
+            led_encoder->state = RMT_ENCODING_RESET; // back to the initial encoding session
+            state = static_cast<rmt_encode_state_t>(static_cast<uint8_t>(state) | static_cast<uint8_t>(RMT_ENCODING_COMPLETE));
+        }
+        if (session_state & RMT_ENCODING_MEM_FULL) {
+            state = static_cast<rmt_encode_state_t>(static_cast<uint8_t>(state) | static_cast<uint8_t>(RMT_ENCODING_MEM_FULL));
+            goto out; // yield if there's no free space for encoding artifacts
+        }
+    }
+out:
+    *ret_state = state;
+    return encoded_symbols;
+}
+
+static esp_err_t rmt_del_led_strip_encoder(rmt_encoder_t *encoder)
+{
+    rmt_led_strip_encoder_t *led_encoder = __containerof(encoder, rmt_led_strip_encoder_t, base);
+    rmt_del_encoder(led_encoder->bytes_encoder);
+    rmt_del_encoder(led_encoder->copy_encoder);
+    delete led_encoder;
+    return ESP_OK;
+}
+
+static esp_err_t rmt_led_strip_encoder_reset(rmt_encoder_t *encoder)
+{
+    rmt_led_strip_encoder_t *led_encoder = __containerof(encoder, rmt_led_strip_encoder_t, base);
+    rmt_encoder_reset(led_encoder->bytes_encoder);
+    rmt_encoder_reset(led_encoder->copy_encoder);
+    led_encoder->state = RMT_ENCODING_RESET;
+    return ESP_OK;
+}
+
+esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder)
+{
+    esp_err_t ret = ESP_OK;
+    rmt_led_strip_encoder_t *led_encoder = new rmt_led_strip_encoder_t;
+    // ESP_GOTO_ON_FALSE(config && ret_encoder, ESP_ERR_INVALID_ARG, err, TAG, "invalid argument");
+    // led_encoder = (rmt_led_strip_encoder_t*)calloc(1, sizeof(rmt_led_strip_encoder_t));
+    // ESP_GOTO_ON_FALSE(led_encoder, ESP_ERR_NO_MEM, err, TAG, "no mem for led strip encoder");
+    led_encoder->base.encode = rmt_encode_led_strip;
+    led_encoder->base.del = rmt_del_led_strip_encoder;
+    led_encoder->base.reset = rmt_led_strip_encoder_reset;
+    // different led strip might have its own timing requirements, following parameter is for WS2812
+    rmt_bytes_encoder_config_t bytes_encoder_config = {};
+    bytes_encoder_config.bit0.level0 = 1;
+    bytes_encoder_config.bit0.duration0 = 0.3 * config->resolution / 1000000; // T0H=0.3us
+    bytes_encoder_config.bit0.level1 = 0;
+    bytes_encoder_config.bit0.duration1 = 0.9 * config->resolution / 1000000; // T0L=0.9us
+    bytes_encoder_config.bit1.level0 = 1;
+    bytes_encoder_config.bit1.duration0 = 0.3 * config->resolution / 1000000; // T0H=0.3us
+    bytes_encoder_config.bit1.level1 = 0;
+    bytes_encoder_config.bit1.duration1 = 0.9 * config->resolution / 1000000; // T0L=0.9us
+    bytes_encoder_config.flags.msb_first = 1; // WS2812 transfer bit order: G7...G0R7...R0B7...B0
+
+    // ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
+    rmt_copy_encoder_config_t copy_encoder_config = {};
+    // ESP_GOTO_ON_ERROR(rmt_new_copy_encoder(&copy_encoder_config, &led_encoder->copy_encoder), err, TAG, "create copy encoder failed");
+
+    uint32_t reset_ticks = config->resolution / 1000000 * 50 / 2; // reset code duration defaults to 50us
+    rmt_symbol_word_t reset_code_config = {};
+    reset_code_config.level0 = 0;
+    reset_code_config.duration0 = reset_ticks;
+    reset_code_config.level1 = 0;
+    reset_code_config.duration1 = reset_ticks;
+    led_encoder->reset_code = reset_code_config;
+    *ret_encoder = &led_encoder->base;
+    return ESP_OK;
+err:
+    if (led_encoder) {
+        if (led_encoder->bytes_encoder) {
+            rmt_del_encoder(led_encoder->bytes_encoder);
+        }
+        if (led_encoder->copy_encoder) {
+            rmt_del_encoder(led_encoder->copy_encoder);
+        }
+        free(led_encoder);
+    }
+    return ret;
+}
+#else
+#include <driver/rmt.h>
+#endif
 }
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 3, 0)
@@ -77,7 +197,11 @@ protected:
     const static uint32_t NsPerRmtTick = (NsPerSecond / RmtTicksPerSecond); // about 25 
 
     static void IRAM_ATTR _translate(const void* src,
-        rmt_item32_t* dest,
+#if ESP_IDF_VERSION_MAJOR >= 5
+        rmt_symbol_word_t* dest,
+#else
+        rmt_symbol_word_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -91,27 +215,29 @@ protected:
 class NeoEsp32RmtSpeedBase : public NeoEsp32RmtSpeed
 {
 public:
-    // this is used rather than the rmt_item32_t as you can't correctly initialize
+    // this is used rather than the rmt_symbol_word_t as you can't correctly initialize
     // it as a static constexpr within the template
     inline constexpr static uint32_t Item32Val(uint16_t nsHigh, uint16_t nsLow)
     {
         return (FromNs(nsLow) << 16) | (1 << 15) | (FromNs(nsHigh));
     }
-
+#if ESP_IDF_VERSION_MAJOR < 5
     const static rmt_idle_level_t IdleLevel = RMT_IDLE_LEVEL_LOW;
+#endif
 };
 
 class NeoEsp32RmtInvertedSpeedBase : public NeoEsp32RmtSpeed
 {
 public:
-    // this is used rather than the rmt_item32_t as you can't correctly initialize
+    // this is used rather than the rmt_symbol_word_t as you can't correctly initialize
     // it as a static constexpr within the template
     inline constexpr static uint32_t Item32Val(uint16_t nsHigh, uint16_t nsLow)
     {
         return (FromNs(nsLow) << 16) | (1 << 31) | (FromNs(nsHigh));
     }
-
+#if ESP_IDF_VERSION_MAJOR < 5
     const static rmt_idle_level_t IdleLevel = RMT_IDLE_LEVEL_HIGH;
+#endif
 };
 
 class NeoEsp32RmtSpeedWs2811 : public NeoEsp32RmtSpeedBase
@@ -122,7 +248,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -137,7 +263,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -152,7 +278,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -168,7 +294,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -184,7 +310,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -200,7 +326,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -215,7 +341,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -230,7 +356,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -245,7 +371,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -260,7 +386,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -275,7 +401,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -290,7 +416,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -305,7 +431,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -321,7 +447,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -337,7 +463,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -353,7 +479,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -368,7 +494,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -383,7 +509,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -398,7 +524,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -413,7 +539,7 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
-        rmt_item32_t* dest,
+        rmt_symbol_word_t* dest,
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -424,8 +550,11 @@ class NeoEsp32RmtChannel0
 {
 public:
     NeoEsp32RmtChannel0() {};
-
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_0;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 class NeoEsp32RmtChannel1
@@ -433,15 +562,24 @@ class NeoEsp32RmtChannel1
 public:
     NeoEsp32RmtChannel1() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_1;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
+#if !defined(CONFIG_IDF_TARGET_ESP32C6) // C6 only 2 RMT channels
 class NeoEsp32RmtChannel2
 {
 public:
     NeoEsp32RmtChannel2() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_2;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 class NeoEsp32RmtChannel3
@@ -449,9 +587,14 @@ class NeoEsp32RmtChannel3
 public:
     NeoEsp32RmtChannel3() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+protected:
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_3;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
-
+#endif // !defined(CONFIG_IDF_TARGET_ESP32C6)
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) &&  !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 class NeoEsp32RmtChannel4
@@ -459,7 +602,11 @@ class NeoEsp32RmtChannel4
 public:
     NeoEsp32RmtChannel4() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_4;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 class NeoEsp32RmtChannel5
@@ -467,7 +614,11 @@ class NeoEsp32RmtChannel5
 public:
     NeoEsp32RmtChannel5() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_5;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 class NeoEsp32RmtChannel6
@@ -475,7 +626,11 @@ class NeoEsp32RmtChannel6
 public:
     NeoEsp32RmtChannel6() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_6;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 class NeoEsp32RmtChannel7
@@ -483,7 +638,11 @@ class NeoEsp32RmtChannel7
 public:
     NeoEsp32RmtChannel7() {};
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_7;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 #endif
@@ -492,13 +651,22 @@ public:
 class NeoEsp32RmtChannelN
 {
 public:
+#if ESP_IDF_VERSION_MAJOR >= 5
+    NeoEsp32RmtChannelN(NeoBusChannel channel) :
+        RmtChannelNumber(RmtChannelNumber)
+    {
+        RmtChannelNumber = NULL;
+    };
+    NeoEsp32RmtChannelN() = delete; // no default constructor
+    rmt_channel_handle_t RmtChannelNumber = NULL;
+#else
     NeoEsp32RmtChannelN(NeoBusChannel channel) :
         RmtChannelNumber(static_cast<rmt_channel_t>(channel))
     {
     }
     NeoEsp32RmtChannelN() = delete; // no default constructor
-
     const rmt_channel_t RmtChannelNumber;
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
 template<typename T_SPEED, typename T_CHANNEL> class NeoEsp32RmtMethodBase
@@ -512,7 +680,7 @@ public:
     {
         construct();
     }
-
+#if ESP_IDF_VERSION_MAJOR >= 5
     NeoEsp32RmtMethodBase(uint8_t pin, uint16_t pixelCount, size_t elementSize, size_t settingsSize, NeoBusChannel channel) :
         _sizeData(pixelCount* elementSize + settingsSize),
         _pin(pin),
@@ -520,15 +688,23 @@ public:
     {
         construct();
     }
+#else
+    NeoEsp32RmtMethodBase(uint8_t pin, uint16_t pixelCount, size_t elementSize, size_t settingsSize, NeoBusChannel channel) :
+        _sizeData(pixelCount* elementSize + settingsSize),
+        _pin(pin),
+        _channel(channel)
+    {
+        construct();
+    }
+#endif
 
     ~NeoEsp32RmtMethodBase()
     {
         // wait until the last send finishes before destructing everything
         // arbitrary time out of 10 seconds
-        ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_wait_tx_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_tx_wait_all_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS));
 
-        ESP_ERROR_CHECK(rmt_driver_uninstall(_channel.RmtChannelNumber));
-
+        ESP_ERROR_CHECK( rmt_del_channel(_channel.RmtChannelNumber));
         gpio_matrix_out(_pin, 0x100, false, false);
         pinMode(_pin, INPUT);
 
@@ -539,13 +715,17 @@ public:
 
     bool IsReadyToUpdate() const
     {
+#if ESP_IDF_VERSION_MAJOR <= 5
+        return (ESP_OK == rmt_tx_wait_all_done(_channel.RmtChannelNumber, 0));
+#else
         return (ESP_OK == rmt_wait_tx_done(_channel.RmtChannelNumber, 0));
+#endif
     }
 
     void Initialize()
     {
+#if ESP_IDF_VERSION_MAJOR < 5
         rmt_config_t config = {};
-
         config.rmt_mode = RMT_MODE_TX;
         config.channel = _channel.RmtChannelNumber;
         config.gpio_num = static_cast<gpio_num_t>(_pin);
@@ -563,6 +743,28 @@ public:
         ESP_ERROR_CHECK(rmt_config(&config));
         ESP_ERROR_CHECK(rmt_driver_install(_channel.RmtChannelNumber, 0, NEOPIXELBUS_RMT_INT_FLAGS));
         ESP_ERROR_CHECK(rmt_translator_init(_channel.RmtChannelNumber, T_SPEED::Translate));
+#else
+        // rmt_channel_handle_t tx_chan = NULL;
+        rmt_tx_channel_config_t config = {};
+        config.clk_src = RMT_CLK_SRC_DEFAULT;
+        config.gpio_num = static_cast<gpio_num_t>(_pin);
+        config.mem_block_symbols = 64;          // memory block size, 64 * 4 = 256 Bytes
+        config.resolution_hz = 1 * 1000 * 1000; // 1 MHz tick resolution, i.e., 1 tick = 1 µs
+        config.trans_queue_depth = 4;           // set the number of transactions that can pend in the background
+        config.flags.invert_out = false;        // do not invert output signal
+        config.flags.with_dma = false;          // do not need DMA backend
+
+        ESP_ERROR_CHECK(rmt_new_tx_channel(&config,&_channel.RmtChannelNumber));
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
+        led_strip_encoder_config_t encoder_config = {};
+        encoder_config.resolution = RMT_LED_STRIP_RESOLUTION_HZ;
+
+        ESP_ERROR_CHECK(rmt_new_led_strip_encoder(&encoder_config, &_led_encoder));
+
+        // ESP_LOGI(TAG, "Enable RMT TX channel");
+        ESP_ERROR_CHECK(rmt_enable(_channel.RmtChannelNumber));
+
+#endif //ESP_IDF_VERSION_MAJOR < 5
     }
 
     void Update(bool maintainBufferConsistency)
@@ -570,10 +772,18 @@ public:
         // wait for not actively sending data
         // this will time out at 10 seconds, an arbitrarily long period of time
         // and do nothing if this happens
+#if ESP_IDF_VERSION_MAJOR >= 5 
+        if (ESP_OK == ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_tx_wait_all_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS)))
+#else  
         if (ESP_OK == ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_wait_tx_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS)))
+#endif
         {
             // now start the RMT transmit with the editing buffer before we swap
+#if ESP_IDF_VERSION_MAJOR >= 5
+            ESP_ERROR_CHECK(rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, _sizeData, &_tx_config));
+#else
             ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_write_sample(_channel.RmtChannelNumber, _dataEditing, _sizeData, false));
+#endif
 
             if (maintainBufferConsistency)
             {
@@ -605,7 +815,12 @@ public:
 private:
     const size_t  _sizeData;      // Size of '_data*' buffers 
     const uint8_t _pin;            // output pin number
-    const T_CHANNEL _channel; // holds instance for multi channel support
+#if ESP_IDF_VERSION_MAJOR >= 5 
+    rmt_transmit_config_t _tx_config = {};
+    rmt_encoder_handle_t _led_encoder = NULL;
+#endif
+    T_CHANNEL _channel; // holds instance for multi channel support
+
 
     // Holds data stream which include LED color values and other settings as needed
     uint8_t*  _dataEditing;   // exposed for get and set
