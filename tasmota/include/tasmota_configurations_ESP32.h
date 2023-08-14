@@ -244,14 +244,12 @@
 
 #undef USE_I2C                                   // Disable all I2C sensors and devices
 
+#define USE_COUNTER
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 
 #undef USE_IR_REMOTE                             // Disable IR driver
 
-#undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
-#undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
-
-#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
+#undef USE_AC_ZERO_CROSS_DIMMER                  // API for timers has changed with IDF 5.x
 
 #define USE_TLS
 #define USE_WEBSERVER
