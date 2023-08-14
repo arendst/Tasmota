@@ -32,7 +32,7 @@ License along with NeoPixel.  If not, see
 #include "NeoBusChannel.h"
 #include "NeoEsp32RmtMethod.h"
 
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2)
 
 // translate NeoPixelBuffer into RMT buffer
 // this is done on the fly so we don't require a send buffer in raw RMT format
@@ -46,7 +46,7 @@ License along with NeoPixel.  If not, see
 //  due to this method will not get inlined this way
 //
 void NeoEsp32RmtSpeed::_translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -65,7 +65,7 @@ void NeoEsp32RmtSpeed::_translate(const void* src,
     size_t size = 0;
     size_t num = 0;
     const uint8_t* psrc = static_cast<const uint8_t*>(src);
-    rmt_item32_t* pdest = dest;
+    rmt_symbol_word_t* pdest = dest;
 
     for (;;)
     {
@@ -109,7 +109,7 @@ void NeoEsp32RmtSpeed::_translate(const void* src,
 // https://stackoverflow.com/questions/19532826/what-does-a-dangerous-relocation-error-mean
 //
 void NeoEsp32RmtSpeedWs2811::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -120,7 +120,7 @@ void NeoEsp32RmtSpeedWs2811::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedWs2812x::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -131,7 +131,7 @@ void NeoEsp32RmtSpeedWs2812x::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedSk6812::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -142,7 +142,7 @@ void NeoEsp32RmtSpeedSk6812::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedTm1814::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -153,7 +153,7 @@ void NeoEsp32RmtSpeedTm1814::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedTm1829::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -164,7 +164,7 @@ void NeoEsp32RmtSpeedTm1829::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedTm1914::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -175,7 +175,7 @@ void NeoEsp32RmtSpeedTm1914::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeed800Kbps::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -186,7 +186,7 @@ void NeoEsp32RmtSpeed800Kbps::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeed400Kbps::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -197,7 +197,7 @@ void NeoEsp32RmtSpeed400Kbps::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedApa106::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -208,7 +208,7 @@ void NeoEsp32RmtSpeedApa106::Translate(const void* src,
 }
 
 void NeoEsp32RmtSpeedTx1812::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -219,7 +219,7 @@ void NeoEsp32RmtSpeedTx1812::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedWs2811::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -230,7 +230,7 @@ void NeoEsp32RmtInvertedSpeedWs2811::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedWs2812x::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -241,7 +241,7 @@ void NeoEsp32RmtInvertedSpeedWs2812x::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedSk6812::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -252,7 +252,7 @@ void NeoEsp32RmtInvertedSpeedSk6812::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedTm1814::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -263,7 +263,7 @@ void NeoEsp32RmtInvertedSpeedTm1814::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedTm1829::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -274,7 +274,7 @@ void NeoEsp32RmtInvertedSpeedTm1829::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedTm1914::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -285,7 +285,7 @@ void NeoEsp32RmtInvertedSpeedTm1914::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeed800Kbps::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -296,7 +296,7 @@ void NeoEsp32RmtInvertedSpeed800Kbps::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeed400Kbps::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -307,7 +307,7 @@ void NeoEsp32RmtInvertedSpeed400Kbps::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedApa106::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -318,7 +318,7 @@ void NeoEsp32RmtInvertedSpeedApa106::Translate(const void* src,
 }
 
 void NeoEsp32RmtInvertedSpeedTx1812::Translate(const void* src,
-    rmt_item32_t* dest,
+    rmt_symbol_word_t* dest,
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
