@@ -110,7 +110,7 @@
 #define TIMEPROP_RELAYS               1       // which relay to control 1:8
 #endif
 #ifndef TIMEPROP_REPORT_SETTINGS
-#define TIMEPROP_REPORT_SETTINGS      false    // include timeprop settings in json output
+#define TIMEPROP_REPORT_SETTINGS      false    // set to true to include timeprop settings in json output
 #endif
 
 static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
@@ -173,10 +173,15 @@ void TimepropInit(void) {
 }
 
 void CmndSetPower(void) {
-  float newPower=CharToFloat(XdrvMailbox.data);
-  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS && newPower>=0.0 && newPower<=1.0) {
-    timeprops[XdrvMailbox.index].setPower(newPower, Tprop.current_time_secs );
-    Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_SETPOWER "%d\":\"%.2f\"}"), XdrvMailbox.index, newPower);
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
+    if(XdrvMailbox.data_len) {
+      float newPower=CharToFloat(XdrvMailbox.data);
+      timeprops[XdrvMailbox.index].setPower(newPower, Tprop.current_time_secs );
+      ResponseCmndFloat(newPower, 2);
+    }
+    else {
+      ResponseCmndError();
+    }
   }
 }
 
@@ -197,10 +202,14 @@ void CmndSetCycleTime(void) {
       if(newCycleTime>0) {
         cycleTimes[XdrvMailbox.index] = newCycleTime;
         Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
-        Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_SETCYCLETIME "%d\":\"%d\"}"), XdrvMailbox.index, newCycleTime);
+        ResponseCmndNumber(newCycleTime);
       }
-    } else {
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_SETCYCLETIME "%d\":\"%d\"}"), XdrvMailbox.index, cycleTimes[XdrvMailbox.index]);
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndNumber(cycleTimes[XdrvMailbox.index]);
     }
   }
 }
@@ -212,10 +221,14 @@ void CmndSetDeadTime(void) {
       if(newDeadTime>0) {
         deadTimes[XdrvMailbox.index] = newDeadTime;
         Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
-        Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_DEADTIME "%d\":\"%d\"}"), XdrvMailbox.index, newDeadTime);
+        ResponseCmndNumber(newDeadTime);
       }
-    } else {
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_DEADTIME "%d\":\"%d\"}"), XdrvMailbox.index, deadTimes[XdrvMailbox.index]);
+      else {
+        ResponseCmndError();
+      }
+    } 
+    else {
+      ResponseCmndNumber(deadTimes[XdrvMailbox.index]);
     }
   }
 }
@@ -226,9 +239,10 @@ void CmndSetOutputInvert(void) {
       unsigned char newInvert=TextToInt(XdrvMailbox.data);
       opInverts[XdrvMailbox.index] = newInvert;
       Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_OPINVERT "%d\":\"%d\"}"), XdrvMailbox.index, newInvert);
-    } else {
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_OPINVERT "%d\":\"%d\"}"), XdrvMailbox.index, opInverts[XdrvMailbox.index]);
+      ResponseCmndNumber(newInvert);
+    }
+    else {
+      ResponseCmndNumber(opInverts[XdrvMailbox.index]);
     }
   }
 }
@@ -240,10 +254,14 @@ void CmndSetFallbackPower(void) {
       if(newPower>=0.0 && newPower<=1.0) {
         fallbacks[XdrvMailbox.index] = newPower;
         Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
-        Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_FALLBACK_POWER "%d\":\"%.2f\"}"), XdrvMailbox.index, newPower);
+        ResponseCmndFloat(newPower, 2);
       }
-    } else {
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_FALLBACK_POWER "%d\":\"%.2f\"}"), XdrvMailbox.index, fallbacks[XdrvMailbox.index]);
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndFloat(fallbacks[XdrvMailbox.index], 2);
     }
   }
 }
@@ -255,10 +273,14 @@ void CmndSetMaxUpdateInterval(void) {
       if(newInterval>0) {
         maxIntervals[XdrvMailbox.index] = newInterval;
         Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
-        Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_MAX_UPDATE_INTERVAL "%d\":\"%d\"}"), XdrvMailbox.index, newInterval);
+        ResponseCmndNumber(newInterval);
       }
-    } else {
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP_PREFIX D_CMND_TIMEPROP_MAX_UPDATE_INTERVAL "%d\":\"%d\"}"), XdrvMailbox.index, maxIntervals[XdrvMailbox.index]);
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndNumber(maxIntervals[XdrvMailbox.index]);
     }
   }
 }
