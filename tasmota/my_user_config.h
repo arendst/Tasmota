@@ -1062,7 +1062,7 @@
   #define THERMOSTAT_TIME_STD_DEV_PEAK_DET_OK   10        // Default standard deviation in minutes of the oscillation periods within the peak detection is successful
 
 // -- PID and Timeprop ------------------------------ // Both together will add +12k1 code
-// #define use TIMEPROP                            // Add support for the timeprop feature (+9k1 code)
+// #define USE_TIMEPROP                            // Add support for the timeprop feature (+9k1 code)
                                                    // For details on the configuration please see the header of tasmota/xdrv_48_timeprop.ino
 // #define USE_PID                                 // Add suport for the PID  feature (+11k2 code)
                                                    // For details on the configuration please see the header of tasmota/xdrv_49_pid.ino
