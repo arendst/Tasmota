@@ -33,6 +33,7 @@ extern "C"
 {
 #include <Arduino.h>
 #include "Esp32_i2s.h"
+#include "rom/gpio.h"
 }
 
 const uint16_t c_dmaBytesPerPixelBytes = 4;
