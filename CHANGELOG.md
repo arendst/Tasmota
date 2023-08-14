@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 - Shutter button hold behaviour with grouptopic (#19263)
 - Thermostat improvements (#19279)
 - PID controller improvements (#19285)
+- HDC1080 detect device offline (#19298)
+- ADE7953 lowered no load threshold (#19302)
 
 ## [13.0.0.3] 20230805
 ### Added
