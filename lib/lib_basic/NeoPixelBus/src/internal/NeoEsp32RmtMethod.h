@@ -200,7 +200,7 @@ protected:
 #if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
 #else
-        rmt_symbol_word_t* dest,
+        rmt_item32_t* dest,
 #endif
         size_t src_size,
         size_t wanted_num,
@@ -248,7 +248,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -263,7 +267,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -278,7 +286,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -294,7 +306,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -310,7 +326,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -326,7 +346,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -341,7 +365,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -356,7 +384,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -371,7 +403,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -386,7 +422,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -401,7 +441,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -416,7 +460,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -431,7 +479,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -447,7 +499,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -463,7 +519,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -479,7 +539,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(200000); // 200us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -494,7 +558,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -509,7 +577,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -524,7 +596,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(50000); // 50us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -539,7 +615,11 @@ public:
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(80000); // 80us
 
     static void IRAM_ATTR Translate(const void* src,
+#if ESP_IDF_VERSION_MAJOR >= 5
         rmt_symbol_word_t* dest,
+#else
+        rmt_item32_t* dest,
+#endif
         size_t src_size,
         size_t wanted_num,
         size_t* translated_size,
@@ -569,7 +649,7 @@ public:
 #endif //ESP_IDF_VERSION_MAJOR >= 5
 };
 
-#if !defined(CONFIG_IDF_TARGET_ESP32C6) // C6 only 2 RMT channels
+#if !defined(CONFIG_IDF_TARGET_ESP32C6) // C6 only 2 RMT channels ??
 class NeoEsp32RmtChannel2
 {
 public:
