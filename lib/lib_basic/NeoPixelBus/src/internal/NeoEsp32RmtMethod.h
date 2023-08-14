@@ -782,9 +782,13 @@ public:
     {
         // wait until the last send finishes before destructing everything
         // arbitrary time out of 10 seconds
+#if ESP_IDF_VERSION_MAJOR >= 5
         ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_tx_wait_all_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS));
-
         ESP_ERROR_CHECK( rmt_del_channel(_channel.RmtChannelNumber));
+#else
+        ESP_ERROR_CHECK (ESP_OK == rmt_wait_tx_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS));
+        ESP_ERROR_CHECK( rmt_driver_uninstall(_channel.RmtChannelNumber));
+#endif
         gpio_matrix_out(_pin, 0x100, false, false);
         pinMode(_pin, INPUT);
 
@@ -795,7 +799,7 @@ public:
 
     bool IsReadyToUpdate() const
     {
-#if ESP_IDF_VERSION_MAJOR <= 5
+#if ESP_IDF_VERSION_MAJOR >= 5
         return (ESP_OK == rmt_tx_wait_all_done(_channel.RmtChannelNumber, 0));
 #else
         return (ESP_OK == rmt_wait_tx_done(_channel.RmtChannelNumber, 0));
