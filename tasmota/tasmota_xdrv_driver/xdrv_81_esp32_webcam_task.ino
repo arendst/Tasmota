@@ -50,7 +50,11 @@
  13 = FRAMESIZE_UXGA,     // 1600x1200 (12.5fps, ~5fps)
  // 3MP Sensors above this no yet supported with this driver
  14 = FRAMESIZE_FHD,      // 1920x1080
+ 15 = CAMERA DISABLED (from wcresolution -1)
+
+ // not accessible
  15 = FRAMESIZE_P_HD,     //  720x1280
+ // our resolution variable is 4 bit, so we can;t use these.
  16 = FRAMESIZE_P_3MP,    //  864x1536
  17 = FRAMESIZE_QXGA,     // 2048x1536
  // 5MP Sensors
@@ -876,20 +880,23 @@ void WcCamOff() {
   // kill any existing rtsp clients
   WcEndRTSP();
 #endif
-  gpio_num_t pin_pwdn;
+  int pin_pwdn = -1;
   if (PinUsed(GPIO_WEBCAM_PWDN)){
-    pin_pwdn = (gpio_num_t)Pin(GPIO_WEBCAM_PWDN);
-  } else {
-    pin_pwdn = (gpio_num_t)Pin(PWDN_GPIO_NUM);
+    pin_pwdn = Pin(GPIO_WEBCAM_PWDN);
   }
-  gpio_config_t conf = { 0 };
-  conf.pin_bit_mask = 1LL << pin_pwdn;
-  conf.mode = GPIO_MODE_OUTPUT;
-  gpio_config(&conf);
+/*   else {
+    pin_pwdn = (gpio_num_t)Pin(PWDN_GPIO_NUM);
+  }*/
+  if (pin_pwdn >= 0){
+    gpio_config_t conf = { 0 };
+    conf.pin_bit_mask = 1LL << pin_pwdn;
+    conf.mode = GPIO_MODE_OUTPUT;
+    gpio_config(&conf);
 
-  // carefull, logic is inverted compared to reset pin
-  gpio_set_level(pin_pwdn, 1);
-  vTaskDelay(10 / portTICK_PERIOD_MS);
+    // careful, logic is inverted compared to reset pin
+    gpio_set_level((gpio_num_t)pin_pwdn, 1);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
   Wc.lastCamError = 0x3;
 }
 
@@ -900,7 +907,8 @@ uint32_t WcSetup(int32_t fsiz) {
   TasAutoMutex localmutex(&WebcamMutex, "WcSetup", 200);
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetup"));
-  if (fsiz >= FRAMESIZE_FHD) { fsiz = FRAMESIZE_FHD - 1; }
+  // if 15, make it -1, so disableing
+  if (fsiz >= FRAMESIZE_FHD) { fsiz = -1; }
 
   if (fsiz < 0) {
     if (Wc.up){    
@@ -976,7 +984,8 @@ uint32_t WcSetup(int32_t fsiz) {
 
   // always power cycle the camera
   // this adds 400ms to start delay, but is worth it to solve random 0x105
-  if (config.pin_pwdn){
+  if (config.pin_pwdn >= 0){
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: pwdn pin %d"), config.pin_pwdn);
     // this is only done in driver first init
     // so first run, we should configure as they do.
     gpio_config_t conf = { 0 };
@@ -1000,6 +1009,8 @@ uint32_t WcSetup(int32_t fsiz) {
       vTaskDelay(power_delay / portTICK_PERIOD_MS);
     }
   }
+
+  AddLog(LOG_LEVEL_DEBUG, "CAM: get ledc channel");
 
   int32_t ledc_channel = analogAttach(config.pin_xclk);
   if (ledc_channel < 0) {
@@ -1029,6 +1040,8 @@ uint32_t WcSetup(int32_t fsiz) {
   // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
   //                      for larger pre-allocated frame buffer.
 
+  AddLog(LOG_LEVEL_DEBUG, "CAM: get psram");
+
   Wc.psram = UsePSRAM();
   if (Wc.psram) {
     config.frame_size = FRAMESIZE_UXGA;
@@ -1051,7 +1064,7 @@ uint32_t WcSetup(int32_t fsiz) {
     if (err != ESP_OK) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x try %d"), err, (i+1));
       esp_camera_deinit();
-      if (err == 0x105 && config.pin_pwdn){
+      if (err == 0x105 && (config.pin_pwdn >= 0)){
         // try a longer power off... and retry
         // power off for 500ms
         gpio_set_level((gpio_num_t)config.pin_pwdn, 1);
@@ -3573,9 +3586,18 @@ void CmndWebcamStream(void) {
 }
 
 void CmndWebcamResolution(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < FRAMESIZE_FHD)) {
+  if ((XdrvMailbox.payload >= -1) && (XdrvMailbox.payload < FRAMESIZE_FHD)) {
+    int reinit = 0;
+    // if changinf from or to disabled, then force re-init.
+    if (Settings->webcam_config.resolution == 15 || XdrvMailbox.payload == -1){
+      reinit = 1;  
+    }
     Settings->webcam_config.resolution = XdrvMailbox.payload;
-    WcSetOptions(0, Settings->webcam_config.resolution);
+    if (reinit) {
+      WcSetup(Settings->webcam_config.resolution);
+    } else {
+      WcSetOptions(0, Settings->webcam_config.resolution);
+    }
   }
   ResponseCmndNumber(Settings->webcam_config.resolution);
 }
