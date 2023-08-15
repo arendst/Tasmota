@@ -23,7 +23,7 @@
 
 uint32_t SpeakerMic(uint8_t spkr) {
 esp_err_t err = ESP_OK;
-
+// #undef USE_I2S_COMMON_IO
 #ifndef USE_I2S_COMMON_IO
 
   if (audio_i2s.mode == spkr) {
@@ -87,7 +87,7 @@ esp_err_t err = ESP_OK;
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX );
     i2s_config.communication_format = I2S_COMM_FORMAT_I2S;
     i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
-  #elif MIC_PDM
+  #elif defined(MIC_PDM)
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
   #else
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);

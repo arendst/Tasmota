@@ -70,5 +70,6 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ]
+    ],
+    "cmake.sourceDirectory": "/workspace/Tasmota/.platformio/packages/framework-arduinoespressif32"
   }

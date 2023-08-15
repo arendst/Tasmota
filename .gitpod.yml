@@ -1,5 +1,5 @@
 tasks:
-  - command: pip3 install -U platformio && platformio run -e tasmota
+  - command: pip3 install -U platformio
 
 image:
   file: .gitpod.Dockerfile

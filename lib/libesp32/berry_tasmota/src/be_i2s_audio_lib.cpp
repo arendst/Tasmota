@@ -146,7 +146,7 @@ extern "C" {
 #include "be_fixed_be_class_AudioFileSourceFS.h"
 
 }
-/* @const_object_info_begin
+ @const_object_info_begin
 
 class be_class_AudioOutput (scope: global, name: AudioOutput, strings: weak) {
     .p, var
@@ -209,7 +209,7 @@ class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super:
     deinit, func(i2s_file_source_fs_deinit)
 }
 
-@const_object_info_end */
+@const_object_info_end
 
 #endif // USE_I2S_AUDIO_BERRY
 #endif // USE_I2S

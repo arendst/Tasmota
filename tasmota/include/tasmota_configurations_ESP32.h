@@ -295,7 +295,7 @@
 
 #define USE_WEBCLIENT_HTTPS
 
-#define USE_I2S
+// #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
 #define USE_LVGL_HASPMOTA
