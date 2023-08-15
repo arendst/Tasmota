@@ -201,7 +201,8 @@ void ZeroCrossMomentEnd(void) {
 #endif
 }
 
-void IRAM_ATTR ZeroCrossIsr(void) {
+void IRAM_ATTR ZeroCrossIsr(void);
+void ZeroCrossIsr(void) {
   uint32_t time = micros();
   TasmotaGlobal.zc_interval = ((int32_t) (time - TasmotaGlobal.zc_time));
   TasmotaGlobal.zc_time = time;

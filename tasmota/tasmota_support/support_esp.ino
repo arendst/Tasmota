@@ -229,6 +229,8 @@ String GetCodeCores(void) {
   #define ESP32_ARCH              "esp32s3"
 #elif CONFIG_IDF_TARGET_ESP32C3
   #define ESP32_ARCH              "esp32c3"
+#elif CONFIG_IDF_TARGET_ESP32C2
+  #define ESP32_ARCH              "esp32c2"
 #elif CONFIG_IDF_TARGET_ESP32C6
   #define ESP32_ARCH              "esp32c6"
 #else
@@ -250,6 +252,8 @@ String GetCodeCores(void) {
     #include "esp32s3/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
     #include "esp32c3/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C3
+    #include "esp32c2/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
     #include "esp32c6/rom/rtc.h"
   #else
@@ -428,6 +432,9 @@ extern "C" {
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
+  #elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
+    #include "esp32c2/rom/spi_flash.h"
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
     #include "esp32c6/rom/spi_flash.h"
@@ -644,7 +651,7 @@ uint32_t ESP_getChipId(void) {
 uint32_t ESP_getFlashChipMagicSize(void)
 {
     esp_image_header_t fhdr;
-    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr.magic, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
         return 0;
     }
     return ESP_magicFlashChipSize(fhdr.spi_size);
@@ -1180,25 +1187,6 @@ float ESP_getFreeHeap1024(void) {
   return ((float)ESP_getFreeHeap()) / 1024;
 }
 */
-
-const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT|Fast|Slow";
-/*
-typedef enum {
-    FM_QIO = 0x00,
-    FM_QOUT = 0x01,
-    FM_DIO = 0x02,
-    FM_DOUT = 0x03,
-    FM_FAST_READ = 0x04,
-    FM_SLOW_READ = 0x05,
-    FM_UNKNOWN = 0xff
-} FlashMode_t;
-*/
-String ESP_getFlashChipMode(void) {
-  uint32_t flash_mode = ESP.getFlashChipMode();
-  if (flash_mode > 5) { flash_mode = 3; }
-  char stemp[6];
-  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
-}
 
 /*********************************************************************************************\
  * High entropy hardware random generator

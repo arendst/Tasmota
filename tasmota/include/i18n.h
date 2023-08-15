@@ -824,6 +824,8 @@
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language
 #define D_LOG_LVGL "LVG: "         // LVGL graphics engine
+#define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
+#define D_LOG_SENSOR "SNS: "       // Sensor driver
 
 /********************************************************************************************/
 

@@ -147,6 +147,9 @@
 
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <driver/rtc_io.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "soc/gpio_periph.h"
+#endif // ESP_IDF_VERSION_MAJOR >= 5
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
 #define IO_REG_TYPE uint32_t
@@ -156,7 +159,7 @@
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6 // max. usable Pins are 23 for C6 (below flash pins)
     return (GPIO.in.val >> pin) & 0x1;
 #else // plain ESP32
     if ( pin < 32 )
@@ -171,7 +174,7 @@ IO_REG_TYPE directRead(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteLow(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6
     GPIO.out_w1tc.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
@@ -184,7 +187,7 @@ void directWriteLow(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteHigh(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6
     GPIO.out_w1ts.val = ((uint32_t)1 << pin);
 #else // plain ESP32
     if ( pin < 32 )
@@ -197,7 +200,7 @@ void directWriteHigh(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directModeInput(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6
     GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
 #else
     if ( digitalPinIsValid(pin) )
@@ -223,7 +226,7 @@ void directModeInput(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directModeOutput(IO_REG_TYPE pin)
 {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6
     GPIO.enable_w1ts.val = ((uint32_t)1 << (pin));
 #else
     if ( digitalPinIsValid(pin) && pin <= 33 ) // pins above 33 can be only inputs

@@ -139,7 +139,7 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
 #endif
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
       "sk(g[i],i);"                       // Set GPIO
@@ -1617,8 +1617,8 @@ void HandleTemplateConfiguration(void) {
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
     for (uint32_t i = 0; i < nitems(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-      // ESP32C3 we always send all GPIOs, Flash are just hidden
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
+      // ESP32C3/C2/C6 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
       if (!FlashPin(i)) {
@@ -1669,8 +1669,8 @@ void HandleTemplateConfiguration(void) {
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-    // ESP32C3 all gpios are in the template, flash are hidden
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
+    // ESP32C3/C2/C6 all gpios are in the template, flash are hidden
     bool hidden = FlashPin(i);
     WSContentSend_P(PSTR("<tr%s><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
       hidden ? PSTR(" hidden") : "",
@@ -1720,7 +1720,7 @@ void TemplateSaveSettings(void) {
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6))
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
@@ -2465,7 +2465,7 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (%s)"), ESP_getFlashChipId(), ESP_getFlashChipMode().c_str());
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (" D_TASMOTA_FLASHMODE ")"), ESP_getFlashChipId());
 #ifdef ESP32
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP_getFlashChipMagicSize() / 1024);
