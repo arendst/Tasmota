@@ -19,6 +19,15 @@
 
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
+
+#ifdef ESP32
+  #include "soc/soc_caps.h"
+#else
+  #define SOC_RMT_SUPPORTED
+#endif
+
+#if SOC_RMT_SUPPORTED
+
 /*********************************************************************************************\
  * WS2812 RGB / RGBW Leds using NeopixelBus library
  *
@@ -849,5 +858,6 @@ bool Xlgt01(uint32_t function)
   return result;
 }
 
+#endif  // SOC_RMT_SUPPORTED
 #endif  // USE_WS2812
 #endif  // USE_LIGHT

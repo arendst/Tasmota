@@ -1588,8 +1588,12 @@ void TemplateGpios(myio *gp)
   // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
     dest[i] = src[i];
+#elif  defined(CONFIG_IDF_TARGET_ESP32C6)
+    if (10 == i) { j = 12; }    // skip 10-11
+    dest[j] = src[i];
+    j++;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     dest[j] = src[i];
@@ -1657,8 +1661,10 @@ void SetModuleType(void)
 
 bool FlashPin(uint32_t pin)
 {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-  return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
+  return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3/C2 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+return (pin>23)||((pin>9)&&(pin<12) ); // ESP32C6 flash pins 24-30
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #elif defined(CONFIG_IDF_TARGET_ESP32)
@@ -1670,10 +1676,10 @@ bool FlashPin(uint32_t pin)
 
 bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in template console
 {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+#if defined(ESP32) && (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2))
   return (12==pin)||(13==pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-  return false;     // no red pin on ESP32S3
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)  || defined(CONFIG_IDF_TARGET_ESP32C6)
+  return false;     // no red pin on ESP32S3 or C6
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
   return (33<=pin) && (37>=pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
@@ -1689,7 +1695,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio, uint8_t isTuya = false) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)
 // ignore
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 // ignore
@@ -2067,11 +2073,11 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   return;              // USB console does not use serial
 #endif  // USE_USB_CDC_CONSOLE
-#endif  // ESP32C3, S2 or S3
+#endif  // ESP32C3, C6, S2 or S3
 #endif  // ESP32
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));

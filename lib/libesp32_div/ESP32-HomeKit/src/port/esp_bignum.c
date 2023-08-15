@@ -79,7 +79,7 @@ static inline size_t bits_to_words(size_t bits)
 /* Return the number of words actually used to represent an mpi
    number.
 */
-#if defined(MBEDTLS_MPI_EXP_MOD_ALT) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(MBEDTLS_MPI_EXP_MOD_ALT) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32S3)
 static size_t mpi_words(const mbedtls_mpi *mpi)
 {
     for (size_t i = mpi->n; i > 0; i--) {
@@ -369,7 +369,7 @@ cleanup:
 
 #endif /* MBEDTLS_MPI_EXP_MOD_ALT */
 
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
 int esp_mpi_exp_mod( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, mbedtls_mpi *_Rinv )
 {
     int ret = 0;
