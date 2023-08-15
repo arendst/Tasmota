@@ -4,4 +4,4 @@ Import("env")
 env.Append(CFLAGS=["-Wno-discarded-qualifiers", "-Wno-implicit-function-declaration"])
 
 # General options that are passed to the C++ compiler
-env.Append(CXXFLAGS=["-Wno-volatile"])
+env.Append(CXXFLAGS=["-Wno-volatile", "-Wno-deprecated-enum-enum-conversion"])

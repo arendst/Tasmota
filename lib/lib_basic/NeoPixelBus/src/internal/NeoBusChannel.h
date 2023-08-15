@@ -12,7 +12,7 @@ enum NeoBusChannel
     NeoBusChannel_0,
     NeoBusChannel_1,
 
-#if !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
     NeoBusChannel_2,
 
@@ -35,7 +35,7 @@ enum NeoBusChannel
     NeoBusChannel_7,
 #endif // !defined(CONFIG_IDF_TARGET_ESP32S2)
 
-#endif // !defined(CONFIG_IDF_TARGET_ESP32C3)
+#endif // !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 #endif // ARDUINO_ARCH_ESP32
 

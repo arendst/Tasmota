@@ -200,7 +200,6 @@
   #define CODE_IMAGE_STR "arduino30"
 #endif
 
-
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
@@ -238,21 +237,23 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
-#undef USE_LIGHT                                 // Disable support for lights
-#undef USE_WS2812
+#define USE_LIGHT                                 // Disable support for lights
+#define USE_WS2812
 
-#undef USE_DS18x20                               // Disable DS18x20 sensor
+#ifndef SOC_RMT_SUPPORTED
+#undef USE_WS2812
+#endif
+
+#define USE_DS18x20                              // Enable DS18x20 sensor
 
 #undef USE_I2C                                   // Disable all I2C sensors and devices
 
+#define USE_COUNTER
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 
 #undef USE_IR_REMOTE                             // Disable IR driver
 
-#undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
-#undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
-
-#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
+#undef USE_AC_ZERO_CROSS_DIMMER                  // API for timers has changed with IDF 5.x
 
 #define USE_TLS
 #define USE_WEBSERVER
