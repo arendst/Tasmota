@@ -393,6 +393,9 @@ typedef struct tag_wc_client {
 } wc_client;
 
 struct {
+  uint32_t loopcounter;
+  uint32_t loopspersec;
+
   // status variables
   uint8_t  up = 0;
   uint8_t  psram = 0; // indicates if we found psram or not. Suspect always true for esp32cam modules
@@ -410,6 +413,7 @@ struct {
   // control variables
   volatile int8_t  disable_cam; // set to 1 when TAS is busy doning something and has turned the camera off
   volatile int8_t  taskRunning; // 0 = not started, 1 = running, 2 = request stop
+  TaskHandle_t taskHandle; // the task handle
   volatile int8_t  taskGetFrame; // set to n to trigger capture of n frames to picstore
   volatile int8_t  taskTakePic; // set to n to trigger capture of n frames to picstore
   uint8_t  berryFrames;
@@ -2317,6 +2321,8 @@ void WcDetectMotionFn(uint8_t *_jpg_buf, int _jpg_buf_len){
 
 /*********************************************************************************************/
 
+#define WEBCAM_CORE 0
+
 static void WCOperationTask(void *pvParameters);
 static void WCStartOperationTask(){
   if (Wc.taskRunning == 0){
@@ -2327,14 +2333,14 @@ static void WCStartOperationTask(){
     xTaskCreatePinnedToCore(
       WCOperationTask,    /* Function to implement the task */
       "WCOperationTask",  /* Name of the task */
-      4096,             /* Stack size in bytes */
+      8192,             /* Stack size in bytes */
       NULL,             /* Task input parameter */
       0,                /* Priority of the task */
-      NULL,             /* Task handle. */
+      &Wc.taskHandle,   /* Task handle. */
 #ifdef CONFIG_FREERTOS_UNICORE
       0);               /* Core where the task should run */
 #else
-      1);               /* Core where the task should run */
+      WEBCAM_CORE);               /* Core where the task should run */
 #endif
     // wait for task to start
     int loops = 10;
@@ -2692,11 +2698,15 @@ static void WCOperationTask(void *pvParameters){
       }
     }
   }
-  // wait 1/10 second
-  vTaskDelay(100/ portTICK_PERIOD_MS);
-  AddLog(LOG_LEVEL_DEBUG,PSTR("CAM: WCOperationTask: Left task"));
 
+  // this log sometimes causes guru mediation error. Maybe because 
+  // temp storage is removed before it is serviced?
+  AddLog(LOG_LEVEL_DEBUG,PSTR("CAM: WCOperationTask: Left task"));
   Wc.taskRunning = 0;
+
+  // wait 1/2 second for log to be done?
+  vTaskDelay(500/ portTICK_PERIOD_MS);
+
   vTaskDelete( NULL );
 }
 
@@ -2722,7 +2732,7 @@ void WcRemoveDeadCients(){
 
 
 void WcLoop(void) {
-
+  Wc.loopcounter++;
   { // closure for automutex
     // we don't need one here
     //TasAutoMutex localmutex(&WebcamMutex, "WcLoop", 200);
@@ -3221,11 +3231,21 @@ void CmndWebcamStartTask(void) {
   }
   ResponseCmndDone();
 }
-void CmndWebcamStopTask(void) {
+
+void WcStopTask(void){
   if (Wc.taskRunning == 1){
     // set to 2, and wait until cleared
     WcWaitZero(&Wc.taskRunning, 2, 20000);
+    if (Wc.taskHandle){
+      // why does this cause a problem?
+      //vTaskDelete(Wc.taskHandle);
+      Wc.taskHandle = nullptr;
+    }
   }
+}
+
+void CmndWebcamStopTask(void) {
+  WcStopTask();
   ResponseCmndDone();
 }
 
@@ -3835,6 +3855,7 @@ void CmndWebcamSetDefaults(void) {
 #define D_WEBCAM_STATS_RTSPCLIENTS "RTSPClients"
 #define D_WEBCAM_STATS_LASTCAMINTERVAL "CamInterval"
 #define D_WEBCAM_STATS_CAMFRAMETIME "CamFrameTime"
+#define D_WEBCAM_STATS_LOOPSPERSEC "LoopsPerSec"
 
 void CmndWebcamStats(void) {
   Response_P(PSTR("{\"" D_PRFX_WEBCAM D_CMND_WC_STATS "\":{\"" D_WEBCAM_STATS_FPS "\":%d,\""
@@ -3848,7 +3869,8 @@ void CmndWebcamStats(void) {
     D_WEBCAM_STATS_RTSPCLIENTS "\":%d,\""
 #endif    
     D_WEBCAM_STATS_LASTCAMINTERVAL "\":%d,\""
-    D_WEBCAM_STATS_CAMFRAMETIME "\":%d"
+    D_WEBCAM_STATS_CAMFRAMETIME "\":%d,\""
+    D_WEBCAM_STATS_LOOPSPERSEC "\":%d"
   "}}"),
   WcStats.camfps, WcStats.camfail, WcStats.jpegfail, WcStats.clientfail,
   WcStats.avgFPS, WcStats.avgFrameMS, WcStats.avgProcessingPerFrameMS,
@@ -3858,7 +3880,8 @@ void CmndWebcamStats(void) {
   WcStats.rtspclientcount,
 #endif  
   Wc.camtimediff,
-  Wc.frameIntervalsus
+  Wc.frameIntervalsus,
+  Wc.loopspersec
   );
 }
 
@@ -3879,6 +3902,10 @@ void CmndWebRtsp(void) {
 void WcUpdateStats(void) {
   WcStats.camfps = WcStats.camcnt;
   WcStats.camcnt = 0;
+
+  // relies on us getting here each second !!!
+  Wc.loopspersec = Wc.loopcounter;
+  Wc.loopcounter = 0;
 }
 
 #ifndef D_WEBCAM_STATE
@@ -3932,6 +3959,8 @@ bool Xdrv99(uint32_t function) {
       result = DecodeCommand(kWCCommands, WCCommand);
       break;
     case FUNC_PRE_INIT:
+      memset(&Wc, 0, sizeof(Wc));
+      //Wc.loopcounter = 0;
       memset(&wc_motion, 0, sizeof(wc_motion));
       WcSetMotionDefaults();
       WcInit();
@@ -3945,18 +3974,21 @@ bool Xdrv99(uint32_t function) {
     case FUNC_SAVE_BEFORE_RESTART: {
       // stop cam clock
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART"));
-      // turn off camera
-      CmndWebcamStopTask();
+      // stop our task.  This seems to cause core mediation at this point.  why?
+      WcStopTask();
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: task stopped"));
       // this stops the camera clock, and sets
       // a boolean which prevents us starting it
       WcInterrupt(0);
 
       if (Wc.up){
         // kill the camera driver, and power off camera
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: killing camera"));
         WcCamOff();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit Restart"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Killed camera"));
       }
       WcSetStreamserver(0);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: stream serevr stopped"));
       // give it a moment for any tasks to finish
       vTaskDelay(100 / portTICK_PERIOD_MS);
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART after delay"));
