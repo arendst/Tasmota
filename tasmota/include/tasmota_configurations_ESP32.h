@@ -238,7 +238,10 @@
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
 #define USE_LIGHT                                 // Disable support for lights
-#define USE_WS2812
+
+#ifndef SOC_RMT_SUPPORTED
+#undef USE_WS2812
+#endif
 
 #define USE_DS18x20                              // Enable DS18x20 sensor
 

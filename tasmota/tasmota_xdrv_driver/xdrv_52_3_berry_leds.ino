@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <soc/soc_caps.h>
-#ifdef SOC_RMT_SUPPORTED
-
 #ifdef USE_BERRY
 
 #include <berry.h>
@@ -244,4 +241,3 @@ extern "C" {
 
 #endif // USE_WS2812
 #endif  // USE_BERRY
-#endif  // SOC_RMT_SUPPORTED
