@@ -281,7 +281,9 @@ void IRAM_ATTR TX2xStartRead(void)
 
   // Must clear this bit in the interrupt register,
   // it gets set even when interrupts are disabled
+  #if defined(ESP8266) // ToDo: check with ESP32 MCUs
   GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << Pin(GPIO_TX2X_TXD_BLACK));
+  #endif // ESP8266
 }
 
 bool Tx2xAvailable(void)
