@@ -42,7 +42,7 @@ static uint16_t readByte(uint8_t& data, Stream& serial, unsigned long startTime,
                          unsigned long timeoutMicros) {
     do {
         if (micros() - startTime > timeoutMicros) {
-            return ReadError | TimeoutError;
+            return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(TimeoutError);
         }
     } while (!serial.available());
     data = serial.read();
@@ -70,7 +70,7 @@ uint16_t SensirionShdlcCommunication::sendFrame(SensirionShdlcTxFrame& frame,
                                                 Stream& serial) {
     size_t writtenBytes = serial.write(&frame._buffer[0], frame._index);
     if (writtenBytes != frame._index) {
-        return WriteError | SerialWriteError;
+        return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(SerialWriteError);
     }
     return NoError;
 }
@@ -83,7 +83,7 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
     uint8_t current = 0;
 
     if (frame._numBytes) {
-        return ReadError | NonemptyFrameError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(NonemptyFrameError);
     }
 
     // Wait for start byte and ignore all other bytes in case a partial frame
@@ -121,7 +121,7 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         frame._address + frame._command + frame._state + dataLength;
 
     if (dataLength > frame._bufferSize) {
-        return RxFrameError | BufferSizeError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(BufferSizeError);
     }
 
     size_t i = 0;
@@ -142,7 +142,7 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         return error;
     }
     if (expectedChecksum != actualChecksum) {
-        return ReadError | ChecksumError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(ChecksumError);
     }
 
     uint8_t stop;
@@ -151,10 +151,10 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         return error;
     }
     if (stop != 0x7e) {
-        return ReadError | StopByteError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(StopByteError);
     }
     if (frame._state & 0x7F) {
-        return ExecutionError | frame._state;
+        return static_cast<uint16_t>(ExecutionError) | frame._state;
     }
     frame._dataLength = dataLength;
     frame._numBytes = dataLength;
@@ -175,10 +175,10 @@ uint16_t SensirionShdlcCommunication::sendAndReceiveFrame(
         return error;
     }
     if (rxFrame.getCommand() != txFrame.getCommand()) {
-        return RxFrameError | RxCommandError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(RxCommandError);
     }
     if (rxFrame.getAddress() != txFrame.getAddress()) {
-        return RxFrameError | RxAddressError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(RxAddressError);
     }
     return NoError;
 }
