@@ -1188,25 +1188,6 @@ float ESP_getFreeHeap1024(void) {
 }
 */
 
-const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT|Fast|Slow";
-/*
-typedef enum {
-    FM_QIO = 0x00,
-    FM_QOUT = 0x01,
-    FM_DIO = 0x02,
-    FM_DOUT = 0x03,
-    FM_FAST_READ = 0x04,
-    FM_SLOW_READ = 0x05,
-    FM_UNKNOWN = 0xff
-} FlashMode_t;
-*/
-String ESP_getFlashChipMode(void) {
-  uint32_t flash_mode = ESP.getFlashChipMode();
-  if (flash_mode > 5) { flash_mode = 3; }
-  char stemp[6];
-  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
-}
-
 /*********************************************************************************************\
  * High entropy hardware random generator
  * Thanks to DigitalAlchemist

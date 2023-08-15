@@ -69,6 +69,23 @@ String EthernetMacAddress(void);
 
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
 
+/*-------------------------------------------------------------------------------------------*\
+ * ESP8266 and ESP32 build time definitions
+\*-------------------------------------------------------------------------------------------*/
+
+// created in pio-tools/pre_source_dir.py
+#if defined(CONFIG_TASMOTA_FLASHMODE_QIO)
+  #define D_TASMOTA_FLASHMODE "QIO"
+#elif defined(CONFIG_TASMOTA_FLASHMODE_QOUT)
+   #define D_TASMOTA_FLASHMODE "QOUT"
+#elif defined(CONFIG_TASMOTA_FLASHMODE_DIO)
+  #define D_TASMOTA_FLASHMODE "DIO"
+#elif defined(CONFIG_TASMOTA_FLASHMODE_DOUT)
+  #define D_TASMOTA_FLASHMODE "DOUT"
+#else
+#error "Please add missing flashmode definition in the lines above!" // could be upcoming octal modes
+#endif // value check of CONFIG_TASMOTA_FLASHMODE
+
 /*********************************************************************************************\
  * ESP8266 specific parameters
 \*********************************************************************************************/
@@ -118,6 +135,7 @@ String EthernetMacAddress(void);
 /*-------------------------------------------------------------------------------------------*\
  * End ESP32 specific parameters
 \*-------------------------------------------------------------------------------------------*/
+
 /*-------------------------------------------------------------------------------------------*\
  * Start ESP32-C32 specific parameters - disable features not present in ESP32-C3
 \*-------------------------------------------------------------------------------------------*/
