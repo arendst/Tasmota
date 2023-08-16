@@ -545,7 +545,7 @@ void Ade7880Service0(void) {
   Ade7880.irq0_state = 0;
 }
 
-void IRAM_ATTR Ade7880Isr0(void) {
+static void IRAM_ATTR Ade7880Isr0(void) {
   // Poll sequence
   if (!Ade7880.irq0_state) {
     Ade7880.irq0_state = 1;

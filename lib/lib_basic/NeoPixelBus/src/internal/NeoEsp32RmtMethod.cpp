@@ -45,12 +45,10 @@ License along with NeoPixel.  If not, see
 //  which will need to be removed when the latest GitHub branchis released
 //  due to this method will not get inlined this way
 //
+
+#if ESP_IDF_VERSION_MAJOR < 5
 void NeoEsp32RmtSpeed::_translate(const void* src,
-#if ESP_IDF_VERSION_MAJOR >= 5
-    rmt_symbol_word_t* dest,
-#else
     rmt_item32_t* dest,
-#endif // ESP_IDF_VERSION_MAJOR >= 5
     size_t src_size,
     size_t wanted_num,
     size_t* translated_size,
@@ -69,11 +67,7 @@ void NeoEsp32RmtSpeed::_translate(const void* src,
     size_t size = 0;
     size_t num = 0;
     const uint8_t* psrc = static_cast<const uint8_t*>(src);
-#if ESP_IDF_VERSION_MAJOR >= 5
-    rmt_symbol_word_t* pdest = dest;
-#else
     rmt_item32_t* pdest = dest;
-#endif
 
     for (;;)
     {
@@ -110,7 +104,7 @@ void NeoEsp32RmtSpeed::_translate(const void* src,
     *translated_size = size;
     *item_num = num;
 }
-
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 
 // these are required due to the linker error with ISRs
 // dangerous relocation: l32r: literal placed after use
@@ -127,8 +121,10 @@ void NeoEsp32RmtSpeedWs2811::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedWs2812x::Translate(const void* src,
@@ -142,8 +138,10 @@ void NeoEsp32RmtSpeedWs2812x::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedSk6812::Translate(const void* src,
@@ -157,8 +155,10 @@ void NeoEsp32RmtSpeedSk6812::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedTm1814::Translate(const void* src,
@@ -172,8 +172,10 @@ void NeoEsp32RmtSpeedTm1814::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedTm1829::Translate(const void* src,
@@ -187,8 +189,10 @@ void NeoEsp32RmtSpeedTm1829::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedTm1914::Translate(const void* src,
@@ -202,8 +206,10 @@ void NeoEsp32RmtSpeedTm1914::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeed800Kbps::Translate(const void* src,
@@ -217,8 +223,10 @@ void NeoEsp32RmtSpeed800Kbps::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeed400Kbps::Translate(const void* src,
@@ -232,8 +240,10 @@ void NeoEsp32RmtSpeed400Kbps::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedApa106::Translate(const void* src,
@@ -247,8 +257,10 @@ void NeoEsp32RmtSpeedApa106::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtSpeedTx1812::Translate(const void* src,
@@ -262,8 +274,10 @@ void NeoEsp32RmtSpeedTx1812::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedWs2811::Translate(const void* src,
@@ -277,8 +291,10 @@ void NeoEsp32RmtInvertedSpeedWs2811::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedWs2812x::Translate(const void* src,
@@ -292,8 +308,10 @@ void NeoEsp32RmtInvertedSpeedWs2812x::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedSk6812::Translate(const void* src,
@@ -307,8 +325,10 @@ void NeoEsp32RmtInvertedSpeedSk6812::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedTm1814::Translate(const void* src,
@@ -322,8 +342,10 @@ void NeoEsp32RmtInvertedSpeedTm1814::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedTm1829::Translate(const void* src,
@@ -337,8 +359,10 @@ void NeoEsp32RmtInvertedSpeedTm1829::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedTm1914::Translate(const void* src,
@@ -352,8 +376,10 @@ void NeoEsp32RmtInvertedSpeedTm1914::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeed800Kbps::Translate(const void* src,
@@ -367,8 +393,10 @@ void NeoEsp32RmtInvertedSpeed800Kbps::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeed400Kbps::Translate(const void* src,
@@ -382,8 +410,10 @@ void NeoEsp32RmtInvertedSpeed400Kbps::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedApa106::Translate(const void* src,
@@ -397,8 +427,10 @@ void NeoEsp32RmtInvertedSpeedApa106::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 
 void NeoEsp32RmtInvertedSpeedTx1812::Translate(const void* src,
@@ -412,7 +444,9 @@ void NeoEsp32RmtInvertedSpeedTx1812::Translate(const void* src,
     size_t* translated_size,
     size_t* item_num)
 {
+#if ESP_IDF_VERSION_MAJOR < 5
     _translate(src, dest, src_size, wanted_num, translated_size, item_num,
         RmtBit0, RmtBit1, RmtDurationReset);
+#endif
 }
 #endif
