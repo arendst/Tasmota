@@ -38,7 +38,10 @@
 #include <sys/lock.h>
 #if CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/dport_access.h"
-#endif 
+#endif
+#if CONFIG_IDF_TARGET_ESP32C6
+#include "esp32c6/dport_access.h"
+#endif
 #if CONFIG_IDF_TARGET_ESP32S3
 #include "esp32s3/dport_access.h"
 #endif

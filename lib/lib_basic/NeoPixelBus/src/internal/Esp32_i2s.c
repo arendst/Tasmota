@@ -20,7 +20,7 @@
 #include "sdkconfig.h" // this sets useful config symbols, like CONFIG_IDF_TARGET_ESP32C3
 
 // ESP32C3/S3 I2S is not supported yet due to significant changes to interface
-#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 #include <string.h>
 #include <stdio.h>
@@ -41,20 +41,27 @@
 #include "soc/gpio_reg.h"
 #include "soc/gpio_sig_map.h"
 #include "soc/io_mux_reg.h"
+#if ESP_IDF_VERSION_MAJOR>=5
+#include "soc/rtc_cntl_periph.h"
+#include "soc/periph_defs.h"
+#else
 #include "soc/rtc_cntl_reg.h"
+#include "soc/sens_reg.h"
+#endif
+
 #include "soc/i2s_struct.h"
 #if defined(CONFIG_IDF_TARGET_ESP32)
 /* included here for ESP-IDF v4.x compatibility */
 #include "soc/dport_reg.h"
 #endif
-#include "soc/sens_reg.h"
+
 #include "driver/gpio.h"
 #include "driver/i2s.h"
 #include "driver/dac.h"
 #include "Esp32_i2s.h"
 #include "esp32-hal.h"
 
-#if ESP_IDF_VERSION_MAJOR<=4
+#if ESP_IDF_VERSION_MAJOR<=4 || ESP_IDF_VERSION_MAJOR>=5
 #define I2S_BASE_CLK (160000000L)
 #endif
 
@@ -93,7 +100,11 @@ typedef struct {
         int8_t  in;
         uint32_t rate;
         intr_handle_t isr_handle;
+#if ESP_IDF_VERSION_MAJOR >= 5
+        QueueHandle_t tx_queue;
+#else
         xQueueHandle tx_queue;
+#endif
 
         uint8_t* silence_buf;
         size_t silence_len;
@@ -110,6 +121,10 @@ typedef struct {
 #define I2s_Is_Pending 1
 #define I2s_Is_Sending 2
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#define I2S_NUM_MAX I2S_NUM_AUTO // not 100% correct
+#endif 
+
 static uint8_t i2s_silence_buf[I2S_DMA_SILENCE_SIZE] = { 0 };
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -124,7 +139,7 @@ static i2s_bus_t I2S[I2S_NUM_MAX] = {
 };
 #endif
 
-void IRAM_ATTR i2sDmaISR(void* arg);
+void i2sDmaISR(void* arg);
 
 bool i2sInitDmaItems(uint8_t bus_num) {
     if (bus_num >= I2S_NUM_MAX) {
