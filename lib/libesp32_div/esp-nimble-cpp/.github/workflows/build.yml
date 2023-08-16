@@ -1,6 +1,9 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:      # Start a workflow
+  pull_request:
+  push:
 
 jobs:
   build-esp-idf-component:
@@ -13,7 +16,7 @@ jobs:
         # https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-docker-image.html
         # for details.
         idf_ver: ["release-v4.4", "release-v5.1"]
-        idf_target: ["esp32", "esp32s3", "esp32c3", "esp32c6"]
+        idf_target: ["esp32", "esp32s3", "esp32c2", "esp32c3", "esp32c6"]
         example:
           - Advanced/NimBLE_Client
           - Advanced/NimBLE_Server
@@ -33,7 +36,9 @@ jobs:
           - idf_target: "esp32"
             example: Bluetooth_5/NimBLE_multi_advertiser
           - idf_ver: release-v4.4
-            idf_target: esp32c6
+            idf_target: "esp32c2"
+          - idf_ver: release-v4.4
+            idf_target: "esp32c6"
 
     container: espressif/idf:${{ matrix.idf_ver }}
     steps:
