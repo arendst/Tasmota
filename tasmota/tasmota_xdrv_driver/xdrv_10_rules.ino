@@ -823,6 +823,15 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%ZBENDPOINT%"), String(Z_GetLastEndpoint()));
 #endif
 
+      for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%POWER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(bitRead(TasmotaGlobal.power, i)));
+      }
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%SWITCH%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(SwitchState(i)));
+      }
+
       char command[commands.length() +1];
       strlcpy(command, commands.c_str(), sizeof(command));
 
