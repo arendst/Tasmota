@@ -139,7 +139,7 @@ static i2s_bus_t I2S[I2S_NUM_MAX] = {
 };
 #endif
 
-void IRAM_ATTR i2sDmaISR(void* arg);
+void i2sDmaISR(void* arg);
 
 bool i2sInitDmaItems(uint8_t bus_num) {
     if (bus_num >= I2S_NUM_MAX) {
