@@ -42,7 +42,7 @@ void LMT01_Init(void) {
 
 volatile int lmt01_pulseCount = 0;
 
-void IRAM_ATTR LMT01_countPulse(void) {
+static void IRAM_ATTR LMT01_countPulse(void) {
   lmt01_pulseCount++;
 }
 
