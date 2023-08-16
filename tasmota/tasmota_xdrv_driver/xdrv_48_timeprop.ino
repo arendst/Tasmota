@@ -64,7 +64,7 @@
    #define TIMEPROP_CYCLETIMES           60      // cycle time seconds
    #define TIMEPROP_DEADTIMES            0       // actuator action time seconds
    #define TIMEPROP_OPINVERTS            false   // whether to invert the output
-   #define TIMEPROP_FALLBACK_POWERS      0       // falls back to this if too long betwen power updates
+   #define TIMEPROP_FALLBACK_POWERS      0.0       // falls back to this if too long betwen power updates
    #define TIMEPROP_MAX_UPDATE_INTERVALS 120     // max no secs that are allowed between power updates (0 to disable)
    #define TIMEPROP_RELAYS               1       // which relay to control 1:8
 
@@ -75,7 +75,7 @@
    #define TIMEPROP_CYCLETIMES           60,     10      // cycle time seconds
    #define TIMEPROP_DEADTIMES            0,      0       // actuator action time seconds
    #define TIMEPROP_OPINVERTS            false,  false   // whether to invert the output
-   #define TIMEPROP_FALLBACK_POWERS      0,      0       // falls back to this if too long betwen power updates
+   #define TIMEPROP_FALLBACK_POWERS      0.0,      0.0       // falls back to this if too long betwen power updates
    #define TIMEPROP_MAX_UPDATE_INTERVALS 120,    120     // max no secs that are allowed between power updates (0 to disable)
    #define TIMEPROP_RELAYS               1,      2       // which relay to control 1:8
 
@@ -85,13 +85,8 @@
 
 
 
-#define D_CMND_TIMEPROP "timeprop_"
-#define D_CMND_TIMEPROP_SETPOWER "setpower_"    // add index no on end (0:8) and data is power 0:1
-
 #include "Timeprop.h"
 
-enum TimepropCommands { CMND_TIMEPROP_SETPOWER };
-const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
 
 #ifndef TIMEPROP_NUM_OUTPUTS
 #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
@@ -106,13 +101,16 @@ const char kTimepropCommands[] PROGMEM = D_CMND_TIMEPROP_SETPOWER;
 #define TIMEPROP_OPINVERTS            false   // whether to invert the output
 #endif
 #ifndef TIMEPROP_FALLBACK_POWERS
-#define TIMEPROP_FALLBACK_POWERS      0       // falls back to this if too long betwen power updates
+#define TIMEPROP_FALLBACK_POWERS      0       // falls back to this if too long between power updates
 #endif
 #ifndef TIMEPROP_MAX_UPDATE_INTERVALS
 #define TIMEPROP_MAX_UPDATE_INTERVALS 120     // max no secs that are allowed between power updates (0 to disable)
 #endif
 #ifndef TIMEPROP_RELAYS
 #define TIMEPROP_RELAYS               1       // which relay to control 1:8
+#endif
+#ifndef TIMEPROP_REPORT_SETTINGS
+#define TIMEPROP_REPORT_SETTINGS      false    // set to true to include timeprop settings in json output
 #endif
 
 static Timeprop timeprops[TIMEPROP_NUM_OUTPUTS];
@@ -126,6 +124,39 @@ struct {
   long current_time_secs = 0;  // a counter that counts seconds since initialisation
 } Tprop;
 
+#define D_CMND_TIMEPROP_PREFIX "Timeprop"
+#define D_CMND_TIMEPROP_SETPOWER "_SetPower_"   // underscores left in for backwards compatibility
+#define D_CMND_TIMEPROP_SETCYCLETIME "SetCycleTime"
+#define D_CMND_TIMEPROP_DEADTIME "SetDeadTime"
+#define D_CMND_TIMEPROP_OPINVERT "SetOutputInvert"
+#define D_CMND_TIMEPROP_FALLBACK_POWER "SetFallbackPower"
+#define D_CMND_TIMEPROP_MAX_UPDATE_INTERVAL "SetMaxUpdateInterval"
+
+int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
+int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
+unsigned char opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
+float fallbacks[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_FALLBACK_POWERS};
+int maxIntervals[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_MAX_UPDATE_INTERVALS};
+
+enum TimepropCommands { CMND_TIMEPROP_SETPOWER };
+
+const char kCommands[] PROGMEM = D_CMND_TIMEPROP_PREFIX "|"
+  D_CMND_TIMEPROP_SETPOWER "|"
+  D_CMND_TIMEPROP_SETCYCLETIME "|"
+  D_CMND_TIMEPROP_DEADTIME "|"
+  D_CMND_TIMEPROP_OPINVERT "|"
+  D_CMND_TIMEPROP_FALLBACK_POWER "|"
+  D_CMND_TIMEPROP_MAX_UPDATE_INTERVAL ;
+
+void (* const Command[])(void) PROGMEM = {
+  &CmndSetPower,
+  &CmndSetCycleTime,
+  &CmndSetDeadTime,
+  &CmndSetOutputInvert,
+  &CmndSetFallbackPower,
+  &CmndSetMaxUpdateInterval,
+};
+
 /* call this from elsewhere if required to set the power value for one of the timeprop instances */
 /* index specifies which one, 0 up */
 void TimepropSetPower(int index, float power) {
@@ -135,16 +166,122 @@ void TimepropSetPower(int index, float power) {
 }
 
 void TimepropInit(void) {
-  // AddLog(LOG_LEVEL_INFO, PSTR("TPR: Timeprop Init"));
-  int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
-  int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
-  int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
-  int fallbacks[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_FALLBACK_POWERS};
-  int maxIntervals[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_MAX_UPDATE_INTERVALS};
-
   for (int i = 0; i < TIMEPROP_NUM_OUTPUTS; i++) {
     Tprop.timeprops[i].initialise(cycleTimes[i], deadTimes[i], opInverts[i], fallbacks[i],
       maxIntervals[i], Tprop.current_time_secs);
+  }
+}
+
+void CmndSetPower(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
+    if(XdrvMailbox.data_len) {
+      float newPower=CharToFloat(XdrvMailbox.data);
+      timeprops[XdrvMailbox.index].setPower(newPower, Tprop.current_time_secs );
+      ResponseCmndFloat(newPower, 2);
+    }
+    else {
+      ResponseCmndError();
+    }
+  }
+}
+
+// commands for settings all take the same form
+// prefix commands with 'timeprop'
+// then append the command string eg. 'SetCycleTime'
+// then append the output number (0 for a single output)
+// then append the value to set set, or
+// leave blank to retrieve the current value
+// eg.
+// 'TimepropSetCycleTime0 120' will set the value of cycle time for output 0 to 120
+// 'TimepropSetCycleTime0' will retrieve the value of cycle time for output 0
+
+void CmndSetCycleTime(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS ) {
+    if(XdrvMailbox.data_len) {
+      int newCycleTime=TextToInt(XdrvMailbox.data);
+      if(newCycleTime>0) {
+        cycleTimes[XdrvMailbox.index] = newCycleTime;
+        Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
+        ResponseCmndNumber(newCycleTime);
+      }
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndNumber(cycleTimes[XdrvMailbox.index]);
+    }
+  }
+}
+
+void CmndSetDeadTime(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS ) {
+    if(XdrvMailbox.data_len) {
+      int newDeadTime=TextToInt(XdrvMailbox.data);
+      if(newDeadTime>0) {
+        deadTimes[XdrvMailbox.index] = newDeadTime;
+        Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
+        ResponseCmndNumber(newDeadTime);
+      }
+      else {
+        ResponseCmndError();
+      }
+    } 
+    else {
+      ResponseCmndNumber(deadTimes[XdrvMailbox.index]);
+    }
+  }
+}
+
+void CmndSetOutputInvert(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS ) {
+    if(XdrvMailbox.data_len) {
+      unsigned char newInvert=TextToInt(XdrvMailbox.data);
+      opInverts[XdrvMailbox.index] = newInvert;
+      Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
+      ResponseCmndNumber(newInvert);
+    }
+    else {
+      ResponseCmndNumber(opInverts[XdrvMailbox.index]);
+    }
+  }
+}
+
+void CmndSetFallbackPower(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS ) {
+    if(XdrvMailbox.data_len) {
+      float newPower=CharToFloat(XdrvMailbox.data);
+      if(newPower>=0.0 && newPower<=1.0) {
+        fallbacks[XdrvMailbox.index] = newPower;
+        Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
+        ResponseCmndFloat(newPower, 2);
+      }
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndFloat(fallbacks[XdrvMailbox.index], 2);
+    }
+  }
+}
+
+void CmndSetMaxUpdateInterval(void) {
+  if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS ) {
+    if(XdrvMailbox.data_len) {
+      int newInterval=TextToInt(XdrvMailbox.data);
+      if(newInterval>0) {
+        maxIntervals[XdrvMailbox.index] = newInterval;
+        Tprop.timeprops[XdrvMailbox.index].initialise(cycleTimes[XdrvMailbox.index], deadTimes[XdrvMailbox.index], opInverts[XdrvMailbox.index], fallbacks[XdrvMailbox.index], maxIntervals[XdrvMailbox.index], Tprop.current_time_secs);
+        ResponseCmndNumber(newInterval);
+      }
+      else {
+        ResponseCmndError();
+      }
+    }
+    else {
+      ResponseCmndNumber(maxIntervals[XdrvMailbox.index]);
+    }
   }
 }
 
@@ -167,55 +304,20 @@ void TimepropXdrvPower(void) {
   Tprop.current_relay_states = XdrvMailbox.index;
 }
 
-/* struct XDRVMAILBOX { */
-/*   uint16_t      valid; */
-/*   uint16_t      index; */
-/*   uint16_t      data_len; */
-/*   int16_t       payload; */
-/*   char         *topic; */
-/*   char         *data; */
-/* } XdrvMailbox; */
-
-// To get here post with topic cmnd/timeprop_setpower_n where n is index into timeprops 0:7
-bool TimepropCommand()
-{
-  char command [CMDSZ];
-  bool serviced = true;
-  uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
-  /*
-  AddLog(LOG_LEVEL_INFO, PSTR("Command called: "
-    "index: %d data_len: %d payload: %d topic: %s data: %s"),
-    XdrvMailbox.index,
-    XdrvMailbox.data_len,
-    XdrvMailbox.payload,
-    (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
-    (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-  */
-  if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_TIMEPROP), ua_prefix_len)) {
-    // command starts with timeprop_
-    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + ua_prefix_len, kTimepropCommands);
-    if (CMND_TIMEPROP_SETPOWER == command_code) {
-      /*
-      AddLog(LOG_LEVEL_INFO, PSTR("Timeprop command timeprop_setpower: "
-        "index: %d data_len: %d payload: %d topic: %s data: %s"),
-	      XdrvMailbox.index,
-	      XdrvMailbox.data_len,
-	      XdrvMailbox.payload,
-	      (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
-	      (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-      */
-      if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
-        timeprops[XdrvMailbox.index].setPower( CharToFloat(XdrvMailbox.data), Tprop.current_time_secs );
-      }
-      Response_P(PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"), XdrvMailbox.index, XdrvMailbox.data);
-    }
-    else {
-      serviced = false;
-    }
-  } else {
-    serviced = false;
+void ShowValues(void) {
+#if TIMEPROP_REPORT_SETTINGS
+  ResponseAppend_P(PSTR(",\"Timeprop\":{"));
+  for (int i=0; i<TIMEPROP_NUM_OUTPUTS; i++) {
+    ResponseAppend_P(PSTR("\"Output%d\":{"),i);
+    ResponseAppend_P(PSTR("\"CycleTime\":%d,"),cycleTimes[i]);
+    ResponseAppend_P(PSTR("\"DeadTime\":%d,"),deadTimes[i]);
+    ResponseAppend_P(PSTR("\"OutputInvert\":%d,"),opInverts[i]);
+    ResponseAppend_P(PSTR("\"FallbackPower\":%.2f,"),fallbacks[i]);
+    ResponseAppend_P(PSTR("\"MaxUpdateInterval\":%d"),maxIntervals[i]);
+    ResponseAppend_P(i<TIMEPROP_NUM_OUTPUTS-1 ? PSTR("},") : PSTR("}"));
   }
-  return serviced;
+  ResponseAppend_P(PSTR("}"));
+#endif // TIMEPROP_REPORT_SETTINGS
 }
 
 /*********************************************************************************************\
@@ -235,10 +337,13 @@ bool Xdrv48(uint32_t function) {
       TimepropEverySecond();
       break;
     case FUNC_COMMAND:
-      result = TimepropCommand();
+      result = DecodeCommand(kCommands, Command);
       break;
     case FUNC_SET_POWER:
       TimepropXdrvPower();
+      break;
+    case FUNC_JSON_APPEND:
+      ShowValues();
       break;
   }
   return result;
