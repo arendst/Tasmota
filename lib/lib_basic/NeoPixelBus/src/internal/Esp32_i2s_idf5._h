@@ -20,8 +20,7 @@
 #include "sdkconfig.h" // this sets useful config symbols, like CONFIG_IDF_TARGET_ESP32C3
 
 // ESP32C3/S3 I2S is not supported yet due to significant changes to interface
-#ifndef CONFIG_SOC_RMT_TX_CANDIDATES_PER_GROUP
-#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 #include <string.h>
 #include <stdio.h>
@@ -33,29 +32,33 @@
 #include "freertos/queue.h"
 
 
-#if ESP_IDF_VERSION_MAJOR>=4
 #include "esp_intr_alloc.h"
-#else
-#include "esp_intr.h"
-#endif
 
 #include "soc/gpio_reg.h"
 #include "soc/gpio_sig_map.h"
 #include "soc/io_mux_reg.h"
+#if ESP_IDF_VERSION_MAJOR>=5
+#include "soc/rtc_cntl_periph.h"
+#include "soc/periph_defs.h"
+#include "driver/i2s_std.h"
+#include "driver/dac.h"
+#else
+#include "driver/i2s.h"
 #include "soc/rtc_cntl_reg.h"
+#include "soc/sens_reg.h"
+#endif
+
 #include "soc/i2s_struct.h"
 #if defined(CONFIG_IDF_TARGET_ESP32)
 /* included here for ESP-IDF v4.x compatibility */
 #include "soc/dport_reg.h"
 #endif
-#include "soc/sens_reg.h"
+
 #include "driver/gpio.h"
-#include "driver/i2s.h"
-#include "driver/dac.h"
 #include "Esp32_i2s.h"
 #include "esp32-hal.h"
 
-#if ESP_IDF_VERSION_MAJOR<=4
+#if ESP_IDF_VERSION_MAJOR<=4 || ESP_IDF_VERSION_MAJOR>=5
 #define I2S_BASE_CLK (160000000L)
 #endif
 
@@ -94,7 +97,11 @@ typedef struct {
         int8_t  in;
         uint32_t rate;
         intr_handle_t isr_handle;
+#if ESP_IDF_VERSION_MAJOR >= 5
+        QueueHandle_t tx_queue;
+#else
         xQueueHandle tx_queue;
+#endif
 
         uint8_t* silence_buf;
         size_t silence_len;
@@ -111,30 +118,37 @@ typedef struct {
 #define I2s_Is_Pending 1
 #define I2s_Is_Sending 2
 
+
 static uint8_t i2s_silence_buf[I2S_DMA_SILENCE_SIZE] = { 0 };
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
-// (I2S_NUM_MAX == 2)
+#if ESP_IDF_VERSION_MAJOR >= 5
+static i2s_bus_t I2S[I2S_NUM_AUTO] = {
+    {&I2S0, -1, -1, -1, -1, 0, NULL, NULL, i2s_silence_buf, I2S_DMA_SILENCE_SIZE, NULL, I2S_DMA_BLOCK_COUNT_DEFAULT, 0, 0, I2s_Is_Idle}
+};
+#else
 static i2s_bus_t I2S[I2S_NUM_MAX] = {
     {&I2S0, -1, -1, -1, -1, 0, NULL, NULL, i2s_silence_buf, I2S_DMA_SILENCE_SIZE, NULL, I2S_DMA_BLOCK_COUNT_DEFAULT, 0, 0, I2s_Is_Idle},
     {&I2S1, -1, -1, -1, -1, 0, NULL, NULL, i2s_silence_buf, I2S_DMA_SILENCE_SIZE, NULL, I2S_DMA_BLOCK_COUNT_DEFAULT, 0, 0, I2s_Is_Idle}
 };
-#else
+#endif //ESP_IDF_VERSION_MAJOR >= 5
+#else 
 static i2s_bus_t I2S[I2S_NUM_MAX] = {
     {&I2S0, -1, -1, -1, -1, 0, NULL, NULL, i2s_silence_buf, I2S_DMA_SILENCE_SIZE, NULL, I2S_DMA_BLOCK_COUNT_DEFAULT, 0, 0, I2s_Is_Idle}
 };
-#endif
+#endif //!defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 
-void IRAM_ATTR i2sDmaISR(void* arg);
+void i2sDmaISR(void* arg);
 
 bool i2sInitDmaItems(uint8_t bus_num) {
+#if ESP_IDF_VERSION_MAJOR < 5
     if (bus_num >= I2S_NUM_MAX) {
         return false;
     }
     if (I2S[bus_num].tx_queue) {// already set
         return true;
     }
-
+#endif
     size_t dmaCount = I2S[bus_num].dma_count;
 
     if (I2S[bus_num].dma_items == NULL) {
@@ -179,9 +193,20 @@ bool i2sInitDmaItems(uint8_t bus_num) {
 }
 
 esp_err_t i2sSetClock(uint8_t bus_num, uint8_t div_num, uint8_t div_b, uint8_t div_a, uint8_t bck, uint8_t bits) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+    // i2s_dev_t* i2s = I2S[bus_num].bus;
+
+    // typeof(i2s->tx_clkm_conf) clkm_conf;
+    // clkm_conf.val = 0;
+    // clkm_conf.tx_clk_sel = 2;
+    // clkm_conf.tx_clkm_div_num = div_num;
+    // i2s->tx_clkm_conf.val = clkm_conf.val;
+
+#else
     if (bus_num >= I2S_NUM_MAX || div_a > 63 || div_b > 63 || bck > 63) {
         return ESP_FAIL;
     }
+
     i2s_dev_t* i2s = I2S[bus_num].bus;
 
     typeof(i2s->clkm_conf) clkm_conf;
@@ -205,10 +230,13 @@ esp_err_t i2sSetClock(uint8_t bus_num, uint8_t div_num, uint8_t div_b, uint8_t d
     sample_rate_conf.tx_bits_mod = bits;
     sample_rate_conf.rx_bits_mod = bits;
     i2s->sample_rate_conf.val = sample_rate_conf.val;
+#endif
     return ESP_OK;
 }
 
 void i2sSetPins(uint8_t bus_num, int8_t out, bool invert) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+#else
     if (bus_num >= I2S_NUM_MAX) {
         return;
     }
@@ -239,14 +267,16 @@ void i2sSetPins(uint8_t bus_num, int8_t out, bool invert) {
         gpio_matrix_out(I2S[bus_num].out, 0x100, invert, false);
         I2S[bus_num].out = -1;
     }
-
+#endif
 }
 
 bool i2sWriteDone(uint8_t bus_num) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+#else
     if (bus_num >= I2S_NUM_MAX) {
         return false;
     }
-
+#endif
     return (I2S[bus_num].is_sending_data == I2s_Is_Idle);
 }
 
@@ -257,6 +287,8 @@ void i2sInit(uint8_t bus_num,
         i2s_tx_fifo_mod_t fifo_mod, 
         size_t dma_count, 
         size_t dma_len) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+#else
     if (bus_num >= I2S_NUM_MAX) {
         return;
     }
@@ -375,9 +407,12 @@ void i2sInit(uint8_t bus_num,
     i2s->conf.tx_start = 1;// Start I2s module
 
     esp_intr_enable(I2S[bus_num].isr_handle);
+#endif
 }
 
 esp_err_t i2sSetSampleRate(uint8_t bus_num, uint32_t rate, uint8_t bits) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+#else
     if (bus_num >= I2S_NUM_MAX) {
         return ESP_FAIL;
     }
@@ -421,7 +456,7 @@ esp_err_t i2sSetSampleRate(uint8_t bus_num, uint32_t rate, uint8_t bits) {
     }
 
     i2sSetClock(bus_num, clkmInteger, clkmDecimals, 63, bck, bits);
-
+#endif
     return ESP_OK;
 }
 
@@ -452,6 +487,8 @@ void IRAM_ATTR i2sDmaISR(void* arg)
 }
 
 size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free_when_sent) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+#else
     if (bus_num >= I2S_NUM_MAX || !I2S[bus_num].tx_queue) {
         return 0;
     }
@@ -491,11 +528,10 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
 
     xQueueReset(I2S[bus_num].tx_queue);
     xQueueSend(I2S[bus_num].tx_queue, (void*)&I2S[bus_num].dma_items[0], 10);
-
+#endif
     return len;
 }
 
 #endif // !defined(CONFIG_IDF_TARGET_ESP32C3)
-#endif //ESP_IDF_VERSION_MAJOR < 5
 #endif // defined(ARDUINO_ARCH_ESP32) 
 

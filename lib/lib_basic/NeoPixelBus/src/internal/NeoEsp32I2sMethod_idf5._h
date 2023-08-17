@@ -26,17 +26,14 @@ License along with NeoPixel.  If not, see
 
 #pragma once
 
-#if ESP_IDF_VERSION_MAJOR <= 4
 // ESP32C3 I2S is not supported yet due to significant changes to interface
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 extern "C"
 {
 #include <Arduino.h>
-#if ESP_IDF_VERSION_MAJOR >= 5
-#include <rom/gpio.h>
-#endif
 #include "Esp32_i2s.h"
+#include "rom/gpio.h"
 }
 
 const uint16_t c_dmaBytesPerPixelBytes = 4;
@@ -305,7 +302,7 @@ typedef NeoEsp32I2sMethodBase<NeoEsp32I2sSpeed800Kbps, NeoEsp32I2sBusZero, NeoEs
 typedef NeoEsp32I2sMethodBase<NeoEsp32I2sSpeed400Kbps, NeoEsp32I2sBusZero, NeoEsp32I2sInverted> NeoEsp32I2s0400KbpsInvertedMethod;
 typedef NeoEsp32I2sMethodBase<NeoEsp32I2sSpeedApa106, NeoEsp32I2sBusZero, NeoEsp32I2sInverted> NeoEsp32I2s0Apa106InvertedMethod;
 
-#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 // (I2S_NUM_MAX == 2)
 
 typedef NeoEsp32I2sMethodBase<NeoEsp32I2sSpeedWs2812x, NeoEsp32I2sBusOne, NeoEsp32I2sNotInverted> NeoEsp32I2s1Ws2812xMethod;
@@ -347,7 +344,7 @@ typedef NeoEsp32I2sMethodBase<NeoEsp32I2sSpeedApa106, NeoEsp32I2sBusN, NeoEsp32I
 
 #endif
 
-#if !defined(NEOPIXEL_ESP32_RMT_DEFAULT) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !defined(NEOPIXEL_ESP32_RMT_DEFAULT) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 // I2s Bus 1 method is the default method for Esp32
 // Esp32S2 & Esp32C3 will use RMT as the default allways
@@ -379,6 +376,6 @@ typedef NeoEsp32I2s1Apa106InvertedMethod NeoApa106InvertedMethod;
 typedef NeoEsp32I2s1Ws2812xInvertedMethod Neo800KbpsInvertedMethod;
 typedef NeoEsp32I2s1400KbpsInvertedMethod Neo400KbpsInvertedMethod;
 
-#endif // !defined(NEOPIXEL_ESP32_RMT_DEFAULT) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#endif // !defined(NEOPIXEL_ESP32_RMT_DEFAULT) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+
 #endif
-#endif // ESP_IDF_VERSION_MAJOR < 5
