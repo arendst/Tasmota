@@ -382,8 +382,8 @@ void start_lvgl(const char * uconfig) {
   // By default set the display color to black and opacity to 100%
   lv_disp_set_bg_color(NULL, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
   lv_disp_set_bg_opa(NULL, LV_OPA_COVER);
-  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_from_uint32(USE_LVGL_BG_DEFAULT), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_from_uint32(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+  lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
