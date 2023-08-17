@@ -238,7 +238,7 @@
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
 #define USE_LIGHT                                 // Disable support for lights
-#define USE_WS2812
+#undef USE_WS2812
 
 #ifndef SOC_RMT_SUPPORTED
 #undef USE_WS2812
@@ -301,6 +301,28 @@
 #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 #define USE_DS1624
 */
+
+
+#define USE_I2S
+#define USE_SPI
+#define USE_LVGL
+#define USE_LVGL_HASPMOTA
+#define USE_LVGL_FREETYPE
+  #undef SET_ESP32_STACK_SIZE
+  #define SET_ESP32_STACK_SIZE (24 * 1024)
+#define USE_LVGL_PNG_DECODER
+#define USE_DISPLAY
+#define SHOW_SPLASH
+#define USE_XPT2046
+#define USE_FT5206
+#define USE_GT911
+#define USE_MPU_ACCEL
+#define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
+  #define USE_BM8563
+#define USE_MLX90614
+#define USE_UNIVERSAL_DISPLAY
+#define USE_DISPLAY_LVGL_ONLY
+
 
 #define USE_COUNTER
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
