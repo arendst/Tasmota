@@ -793,6 +793,16 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
         snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
         RulesVarReplace(commands, stemp, SettingsText(SET_MEM1 +i));
       }
+      for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%POWER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(bitRead(TasmotaGlobal.power, i)));
+      }
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        if (SwitchUsed(i)) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%%SWITCH%d%%"), i +1);
+          RulesVarReplace(commands, stemp, String(SwitchState(i)));
+        }
+      }
       RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
       RulesVarReplace(commands, F("%UTCTIME%"), String(UtcTime()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
