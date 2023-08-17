@@ -20,7 +20,7 @@
 #include "sdkconfig.h" // this sets useful config symbols, like CONFIG_IDF_TARGET_ESP32C3
 
 // ESP32C3/S3 I2S is not supported yet due to significant changes to interface
-#ifndef CONFIG_SOC_RMT_TX_CANDIDATES_PER_GROUP
+#ifndef CONFIG_SOC_RMT_TX_CANDIDATES_PER_GROUP // turn this off with something new from idf5.1
 #if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
 
 #include <string.h>
