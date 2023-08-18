@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Display invert setting after tasmota start in uDisplay driver (#19337)
 
 ### Fixed
 - Shutter invert (#19341)
