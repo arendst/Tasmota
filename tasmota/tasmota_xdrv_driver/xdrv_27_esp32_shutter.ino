@@ -1515,8 +1515,9 @@ void CmndShutterPosition(void)
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       target_pos_percent = ((Settings->shutter_options[index] & 1) && ((SRC_MQTT       != TasmotaGlobal.last_source)
-                                                                    || (SRC_SERIAL     != TasmotaGlobal.last_source)
-                                                                    || (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
+                                                                    && (SRC_SERIAL     != TasmotaGlobal.last_source)
+                                                                    && (SRC_WEBGUI     != TasmotaGlobal.last_source)
+                                                                    && (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
                                                                        )) ? 100 - target_pos_percent : target_pos_percent;
 
       if (XdrvMailbox.payload != -99) {
