@@ -1,0 +1,44 @@
+{
+    "build": {
+      "arduino":{
+        "ldscript": "esp32c2_out.ld"
+      },
+      "core": "esp32",
+      "extra_flags": "-DESP32_4M -DESP32C2",
+      "f_cpu": "120000000L",
+      "f_flash": "60000000L",
+      "flash_mode": "dio",
+      "mcu": "esp32c2",
+      "variant": "esp32c2",
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+    },
+    "connectivity": [
+      "wifi",
+      "bluetooth"
+    ],
+    "debug": {
+      "openocd_target": "esp32c2.cfg"
+    },
+    "frameworks": [
+      "arduino",
+      "espidf"
+    ],
+    "name": "Espressif Generic ESP32-C2 = 4M Flash",
+    "upload": {
+      "arduino": {
+        "flash_extra_images": [
+          [
+            "0x10000",
+            "variants/tasmota/tasmota32c2-safeboot.bin"
+          ]
+        ]
+      },
+      "flash_size": "4MB",
+      "maximum_ram_size": 278528,
+      "maximum_size": 4194304,
+      "require_upload_port": true,
+      "speed": 460800
+    },
+    "url": "https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html",
+    "vendor": "Espressif"
+  }

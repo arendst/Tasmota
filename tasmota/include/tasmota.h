@@ -68,8 +68,8 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
     const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
   #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     const uint8_t MAX_PWMS = 8;             // ESP32S3: 8 ledc PWM channels in total
-  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    const uint8_t MAX_PWMS = 6;             // ESP32C2/C3/C6: 6 ledc PWM channels in total
   #else
     const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
   #endif
@@ -109,6 +109,8 @@ const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32
 const uint8_t MAX_RMT = 1;                  // Max number or RMT channels (ESP32S3 only)
 #elif CONFIG_IDF_TARGET_ESP32C3
 const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
+#elif CONFIG_IDF_TARGET_ESP32C6
+const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C6 only)
 #else
 const uint8_t MAX_RMT = 0;                  // Max number or RMT channels (0 if unknown)
 #endif
@@ -138,8 +140,10 @@ const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-const uint8_t MAX_ADCS = 5;                 // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2)
+const uint8_t MAX_ADCS = 5;                 // Max number of ESP32-C2/C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+#elif CONFIG_IDF_TARGET_ESP32C6
+const uint8_t MAX_ADCS = 7;                 // Max number of ESP32-C6 ADC pins (ADC2 pins are unusable with Wifi enabled)
 #else   // ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 #endif  // ESP32C3
@@ -319,7 +323,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
     #define WIFI_SENSITIVITY_11b  -880
     #define WIFI_SENSITIVITY_54g  -760
     #define WIFI_SENSITIVITY_n    -720
-  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2)
     #define MAX_TX_PWR_DBM_11b    210
     #define MAX_TX_PWR_DBM_54g    190
     #define MAX_TX_PWR_DBM_n      185
