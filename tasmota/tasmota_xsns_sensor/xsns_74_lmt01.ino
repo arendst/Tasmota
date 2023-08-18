@@ -32,6 +32,8 @@
 bool lmt01_initialized = false;
 float lmt01_temperature = NAN;
 
+static void LMT01_countPulse(void);
+
 void LMT01_Init(void) {
   if (PinUsed(GPIO_LMT01)) {
     pinMode(Pin(GPIO_LMT01), INPUT);
