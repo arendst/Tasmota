@@ -326,6 +326,9 @@
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
+#if CONFIG_IDF_TARGET_ESP32S3                   // needs more investigation under 5.1
+#undef USE_UNIVERSAL_DISPLAY
+#endif
 
 #define USE_COUNTER
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
