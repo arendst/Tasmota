@@ -120,5 +120,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341)
 
 ### Removed
