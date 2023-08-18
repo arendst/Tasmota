@@ -172,6 +172,7 @@ err:
 class NeoEsp32RmtSpeed
 {
 public:
+// next section is probably not needed anymore for IDF 5.1
     // ClkDiv of 2 provides for good resolution and plenty of reset resolution; but
     // a ClkDiv of 1 will provide enough space for the longest reset and does show
     // little better pulse accuracy
@@ -187,6 +188,7 @@ protected:
     const static uint32_t NsPerSecond = 1000000000L;
     const static uint32_t RmtTicksPerSecond = (RmtCpu / RmtClockDivider);
     const static uint32_t NsPerRmtTick = (NsPerSecond / RmtTicksPerSecond); // about 25 
+// end of deprecated section
 
 };
 
