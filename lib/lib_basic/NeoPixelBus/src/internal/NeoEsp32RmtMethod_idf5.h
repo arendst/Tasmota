@@ -550,15 +550,15 @@ public:
         }
     }
 
-    // uint8_t* getData() const
-    // {
-    //     return _dataEditing;
-    // };
+    uint8_t* getData() const
+    {
+        return _dataEditing;
+    };
 
-    // size_t getDataSize() const
-    // {
-    //     return _sizeData;
-    // }
+    size_t getDataSize() const
+    {
+        return _sizeData;
+    }
 
     void applySettings(const SettingsObject& settings)
     {
