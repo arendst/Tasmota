@@ -135,9 +135,9 @@ esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rm
     bytes_encoder_config.bit0.level1 = 0;
     bytes_encoder_config.bit0.duration1 = 0.9 * config->resolution / 1000000; // T0L=0.9us
     bytes_encoder_config.bit1.level0 = 1;
-    bytes_encoder_config.bit1.duration0 = 0.3 * config->resolution / 1000000; // T0H=0.3us
+    bytes_encoder_config.bit1.duration0 = 0.9 * config->resolution / 1000000; // T0H=0.3us
     bytes_encoder_config.bit1.level1 = 0;
-    bytes_encoder_config.bit1.duration1 = 0.9 * config->resolution / 1000000; // T0L=0.9us
+    bytes_encoder_config.bit1.duration1 = 0.3 * config->resolution / 1000000; // T0L=0.9us
     bytes_encoder_config.flags.msb_first = 1; // WS2812 transfer bit order: G7...G0R7...R0B7...B0
 
     // ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
