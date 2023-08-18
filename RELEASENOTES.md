@@ -112,11 +112,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.1.0.1
 ### Added
+- Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)
+- Variables ``%power<1..28>%`` and  ``%switch<1..28>%`` to rules [#19331](https://github.com/arendst/Tasmota/issues/19331)
 
 ### Breaking Changed
 
 ### Changed
+- Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 
 ### Fixed
+- Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341)
 
 ### Removed

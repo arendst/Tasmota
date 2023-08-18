@@ -237,8 +237,9 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
-#define USE_LIGHT                                 // Disable support for lights
-#define USE_WS2812
+#ifdef NO_NEOPIXEL
+#undef USE_WS2812
+#endif
 
 #ifndef SOC_RMT_SUPPORTED
 #undef USE_WS2812
@@ -323,7 +324,7 @@
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
-#if CONFIG_IDF_TARGET_ESP32S3 // needs more investigation under 5.1
+#if CONFIG_IDF_TARGET_ESP32S3                    // needs more investigation under 5.1
 #undef USE_UNIVERSAL_DISPLAY
 #endif
 
@@ -340,6 +341,15 @@
 #define USE_WEBCLIENT_HTTPS
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
 #define USE_ETHERNET
+
+#ifdef USE_WT32_ETH01
+  #undef ETH_TYPE
+  #undef ETH_ADDRESS
+  #undef ETH_CLKMODE
+  #define ETH_TYPE          0       // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
+  #define ETH_ADDRESS       1       // [EthAddress] 0 = PHY0 .. 31 = PHY31
+  #define ETH_CLKMODE       0       // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+#endif // USE_WT32_ETH01
 
 #endif  // FIRMWARE_ARDUINO30
 
