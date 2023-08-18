@@ -45,11 +45,15 @@ Esp32-hal-rmt.c
 
 #include <Arduino.h>
 
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+
 extern "C"
 {
 #include <rom/gpio.h>
 #include "driver/rmt_tx.h"
 #include "driver/rmt_encoder.h"
+#include "esp_check.h"
+}
 
 typedef struct {
     uint32_t resolution; /*!< Encoder resolution, in Hz */
@@ -120,16 +124,22 @@ static esp_err_t rmt_led_strip_encoder_reset(rmt_encoder_t *encoder)
 
 esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder)
 {
+    const char* TAG = "TEST_RMT";
     esp_err_t ret = ESP_OK;
-    rmt_led_strip_encoder_t *led_encoder = new rmt_led_strip_encoder_t;
-    // ESP_GOTO_ON_FALSE(config && ret_encoder, ESP_ERR_INVALID_ARG, err, TAG, "invalid argument");
-    // led_encoder = (rmt_led_strip_encoder_t*)calloc(1, sizeof(rmt_led_strip_encoder_t));
-    // ESP_GOTO_ON_FALSE(led_encoder, ESP_ERR_NO_MEM, err, TAG, "no mem for led strip encoder");
+    rmt_led_strip_encoder_t *led_encoder = NULL;
+    uint32_t reset_ticks = config->resolution / 1000000 * 50 / 2; // reset code duration defaults to 50us
+    rmt_bytes_encoder_config_t bytes_encoder_config;
+    rmt_copy_encoder_config_t copy_encoder_config = {};
+    rmt_symbol_word_t reset_code_config;
+
+
+    ESP_GOTO_ON_FALSE(config && ret_encoder, ESP_ERR_INVALID_ARG, err, TAG, "invalid argument");
+    led_encoder = new rmt_led_strip_encoder_t();
+    ESP_GOTO_ON_FALSE(led_encoder, ESP_ERR_NO_MEM, err, TAG, "no mem for led strip encoder");
     led_encoder->base.encode = rmt_encode_led_strip;
     led_encoder->base.del = rmt_del_led_strip_encoder;
     led_encoder->base.reset = rmt_led_strip_encoder_reset;
     // different led strip might have its own timing requirements, following parameter is for WS2812
-    rmt_bytes_encoder_config_t bytes_encoder_config = {};
     bytes_encoder_config.bit0.level0 = 1;
     bytes_encoder_config.bit0.duration0 = 0.3 * config->resolution / 1000000; // T0H=0.3us
     bytes_encoder_config.bit0.level1 = 0;
@@ -140,20 +150,18 @@ esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rm
     bytes_encoder_config.bit1.duration1 = 0.3 * config->resolution / 1000000; // T0L=0.9us
     bytes_encoder_config.flags.msb_first = 1; // WS2812 transfer bit order: G7...G0R7...R0B7...B0
 
-    // ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
-    rmt_copy_encoder_config_t copy_encoder_config = {};
-    // ESP_GOTO_ON_ERROR(rmt_new_copy_encoder(&copy_encoder_config, &led_encoder->copy_encoder), err, TAG, "create copy encoder failed");
+    ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
+    ESP_GOTO_ON_ERROR(rmt_new_copy_encoder(&copy_encoder_config, &led_encoder->copy_encoder), err, TAG, "create copy encoder failed");
 
-    uint32_t reset_ticks = config->resolution / 1000000 * 50 / 2; // reset code duration defaults to 50us
-    rmt_symbol_word_t reset_code_config = {};
     reset_code_config.level0 = 0;
     reset_code_config.duration0 = reset_ticks;
     reset_code_config.level1 = 0;
     reset_code_config.duration1 = reset_ticks;
     led_encoder->reset_code = reset_code_config;
     *ret_encoder = &led_encoder->base;
-    return ESP_OK;
+    return ret;
 err:
+    AddLog(2,"RMT:could not init led decoder");
     if (led_encoder) {
         if (led_encoder->bytes_encoder) {
             rmt_del_encoder(led_encoder->bytes_encoder);
@@ -161,10 +169,9 @@ err:
         if (led_encoder->copy_encoder) {
             rmt_del_encoder(led_encoder->copy_encoder);
         }
-        free(led_encoder);
+        delete led_encoder;
     }
     return ret;
-}
 }
 
 #define NEOPIXELBUS_RMT_INT_FLAGS (ESP_INTR_FLAG_LOWMED)
@@ -506,7 +513,7 @@ public:
     void Initialize()
     {
 #define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
-
+        esp_err_t ret = ESP_OK;
         // rmt_channel_handle_t tx_chan = NULL;
         rmt_tx_channel_config_t config = {};
         config.clk_src = RMT_CLK_SRC_DEFAULT;
@@ -517,28 +524,34 @@ public:
         config.flags.invert_out = false;        // do not invert output signal
         config.flags.with_dma = false;          // do not need DMA backend
 
-        rmt_new_tx_channel(&config,&_channel.RmtChannelNumber);
+        ret += rmt_new_tx_channel(&config,&_channel.RmtChannelNumber);
         led_strip_encoder_config_t encoder_config = {};
         encoder_config.resolution = RMT_LED_STRIP_RESOLUTION_HZ;
 
-        _tx_config.loop_count = 0; // no transfer loop
+        _tx_config.loop_count = 0; //no loop
 
-        ESP_ERROR_CHECK(rmt_new_led_strip_encoder(&encoder_config, &_led_encoder));
+        ret += rmt_new_led_strip_encoder(&encoder_config, &_led_encoder);
 
         // ESP_LOGI(TAG, "Enable RMT TX channel");
-        ESP_ERROR_CHECK(rmt_enable(_channel.RmtChannelNumber));
+        ret += rmt_enable(_channel.RmtChannelNumber);
+        AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
     }
 
     void Update(bool maintainBufferConsistency)
     {
+        AddLog(2,"..");
         // wait for not actively sending data
         // this will time out at 10 seconds, an arbitrarily long period of time
         // and do nothing if this happens
 
         if (ESP_OK == ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_tx_wait_all_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS)))
         {
+            AddLog(2,"__ %u", _sizeData);
             // now start the RMT transmit with the editing buffer before we swap
-            ESP_ERROR_CHECK(rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, _sizeData, &_tx_config));
+            // const uint8_t pixels[3] = {100,100,100};
+           esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, 3, &_tx_config); // 3 for _sizeData
+            // esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, pixels, 3, &_tx_config);
+            AddLog(2,"rmt_transmit: %u", ret);
             if (maintainBufferConsistency)
             {
                 // copy editing to sending,
@@ -571,7 +584,7 @@ private:
     const uint8_t _pin;            // output pin number
 
     rmt_transmit_config_t _tx_config = {};
-    rmt_encoder_handle_t _led_encoder = NULL;
+    rmt_encoder_handle_t _led_encoder = nullptr;
 
     T_CHANNEL _channel; // holds instance for multi channel support
 
@@ -583,6 +596,7 @@ private:
 
     void construct()
     {
+        AddLog(2,"RMT:construct");
         _dataEditing = static_cast<uint8_t*>(malloc(_sizeData));
         // data cleared later in Begin()
 
