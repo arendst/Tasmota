@@ -496,10 +496,10 @@ public:
     }
 
 
-    // bool IsReadyToUpdate() const
-    // {
-    //     return (ESP_OK == rmt_tx_wait_all_done(_channel.RmtChannelNumber, 0));
-    // }
+    bool IsReadyToUpdate() const
+    {
+        return (ESP_OK == rmt_tx_wait_all_done(_channel.RmtChannelNumber, 0));
+    }
 
     void Initialize()
     {
