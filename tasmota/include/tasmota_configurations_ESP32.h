@@ -237,6 +237,8 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
+#define USE_LIGHT                                 // Disable support for lights
+
 #ifdef NO_NEOPIXEL
 #undef USE_WS2812
 #endif
@@ -324,7 +326,7 @@
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
-#if CONFIG_IDF_TARGET_ESP32S3                    // needs more investigation under 5.1
+#if CONFIG_IDF_TARGET_ESP32S3                   // needs more investigation under 5.1
 #undef USE_UNIVERSAL_DISPLAY
 #endif
 
