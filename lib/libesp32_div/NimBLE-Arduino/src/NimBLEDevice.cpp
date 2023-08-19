@@ -867,7 +867,7 @@ void NimBLEDevice::init(const std::string &deviceName) {
         esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
         esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-#if  defined (CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#if  defined (CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32S3)
         bt_cfg.bluetooth_mode = ESP_BT_MODE_BLE;
 #else
         bt_cfg.mode = ESP_BT_MODE_BLE;

@@ -50,7 +50,7 @@
 */
 #ifndef USE_BLE_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3 || defined CONFIG_IDF_TARGET_ESP32S3
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3 || defined CONFIG_IDF_TARGET_ESP32C2 || defined CONFIG_IDF_TARGET_ESP32C6 || defined CONFIG_IDF_TARGET_ESP32S3
 
 #ifdef USE_MI_ESP32
 
@@ -119,7 +119,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
   }
 };
 
-class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class MI32AdvCallbacks: public NimBLEScanCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     static bool _mutex = false;
     if(_mutex) return;
@@ -210,7 +210,7 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
     /** The status returned in status is defined in NimBLECharacteristic.h.
      *  The value returned in code is the NimBLE host return code.
      */
-    void onStatus(NimBLECharacteristic* pCharacteristic, Status status, int code) {
+    void onStatus(NimBLECharacteristic* pCharacteristic, int code) {
         BLEqueueBuffer_t q;
         q.length = 0;
         q.type = BLE_OP_ON_STATUS;
@@ -721,8 +721,8 @@ void MI32Init(void) {
   }
 
   if (!MI32.mode.init) {
-    NimBLEDevice::setScanFilterMode(CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE);
-    NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
+    // NimBLEDevice::setScanFilterMode(1); //CONFIG_BTDM_SCAN_DUPL_TYPE_DATA
+    // NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
     const std::string name(TasmotaGlobal.hostname);
     NimBLEDevice::init(name);
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device: %s"),TasmotaGlobal.hostname);
@@ -868,10 +868,10 @@ extern "C" {
       bool _runningScan = MI32Scan->stop();
       if(NimBLEDevice::whiteListAdd(_newAddress)){
         MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL);
-        if(_runningScan) MI32Scan->start(0, MI32scanEndedCB, false);
+        if(_runningScan) MI32Scan->start(0, false);
       }
       else {
-        if(_runningScan) MI32Scan->start(0, MI32scanEndedCB, false);
+        if(_runningScan) MI32Scan->start(0, false);
         return false;
       }
     }
@@ -1202,7 +1202,7 @@ void MI32ScanTask(void *pvParameters){
 
   MI32Scan = NimBLEDevice::getScan();
 
-  MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,false);
+  MI32Scan->setScanCallbacks(&MI32ScanCallbacks,false);
   if(NimBLEDevice::getWhiteListCount()>0){
     MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL);
   }
@@ -1212,7 +1212,7 @@ void MI32ScanTask(void *pvParameters){
 
   MI32Scan->setActiveScan(MI32.option.activeScan == 1);
   MI32Scan->setMaxResults(0);
-  MI32Scan->start(0, MI32scanEndedCB, false); // never stop scanning, will pause automatically while connecting
+  MI32Scan->start(0, false); // never stop scanning, will pause automatically while connecting
   MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
 
   uint32_t timer = 0;
@@ -1294,7 +1294,7 @@ bool MI32StartConnectionTask(){
 }
 
 void MI32ConnectionTask(void *pvParameters){
-#if !defined(CONFIG_IDF_TARGET_ESP32C3) //needs more testing ...
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) || !defined(CONFIG_IDF_TARGET_ESP32C6) //needs more testing ...
     // NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
     // NimBLEDevice::setSecurityAuth(true, true, true);
 #endif //CONFIG_IDF_TARGET_ESP32C3

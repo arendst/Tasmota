@@ -360,7 +360,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
       }
     }
     // berry_log_C(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, &buf_len);
+    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, (int*)&buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;
 
