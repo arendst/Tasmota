@@ -55,6 +55,8 @@ extern "C"
 #include "esp_check.h"
 }
 
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
+
 typedef struct {
     uint32_t resolution; /*!< Encoder resolution, in Hz */
 } led_strip_encoder_config_t;
@@ -122,7 +124,7 @@ static esp_err_t rmt_led_strip_encoder_reset(rmt_encoder_t *encoder)
     return ESP_OK;
 }
 
-esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder)
+esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder/*, uint32_t bit0,  uint32_t bit1*/)
 {
     const char* TAG = "TEST_RMT";
     esp_err_t ret = ESP_OK;
@@ -232,8 +234,8 @@ public:
 class NeoEsp32RmtSpeedWs2812x : public NeoEsp32RmtSpeedBase
 {
 public:
-    const static DRAM_ATTR uint32_t RmtBit0 = Item32Val(400, 850);
-    const static DRAM_ATTR uint32_t RmtBit1 = Item32Val(800, 450);
+    const uint32_t RmtBit0 = Item32Val(400, 850);
+    const uint32_t RmtBit1 = Item32Val(800, 450);
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 };
 
@@ -512,9 +514,7 @@ public:
 
     void Initialize()
     {
-#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
         esp_err_t ret = ESP_OK;
-        // rmt_channel_handle_t tx_chan = NULL;
         rmt_tx_channel_config_t config = {};
         config.clk_src = RMT_CLK_SRC_DEFAULT;
         config.gpio_num = static_cast<gpio_num_t>(_pin);
@@ -549,7 +549,7 @@ public:
             AddLog(2,"__ %u", _sizeData);
             // now start the RMT transmit with the editing buffer before we swap
             // const uint8_t pixels[3] = {100,100,100};
-           esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, 3, &_tx_config); // 3 for _sizeData
+           esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, _sizeData, &_tx_config); // 3 for _sizeData
             // esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, pixels, 3, &_tx_config);
             AddLog(2,"rmt_transmit: %u", ret);
             if (maintainBufferConsistency)
