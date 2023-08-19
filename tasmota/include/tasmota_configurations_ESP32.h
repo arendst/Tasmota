@@ -327,7 +327,16 @@
 #define USE_DISPLAY_LVGL_ONLY
 
 #if CONFIG_IDF_TARGET_ESP32S3                   // needs more investigation under 5.1
+#undef USE_DISPLAY
 #undef USE_UNIVERSAL_DISPLAY
+#undef USE_LVGL
+#undef USE_LVGL_TOUCHSCREEN
+#undef USE_FT5206
+#undef USE_XPT2046
+#undef USE_GT911
+#undef USE_LILYGO47
+#undef USE_TOUCH_BUTTONS
+#undef SIMPLE_RES_TOUCH
 #endif
 
 #define USE_COUNTER
