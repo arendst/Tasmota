@@ -45,7 +45,7 @@ Esp32-hal-rmt.c
 
 #include <Arduino.h>
 
-extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+// extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 
 extern "C"
 {
@@ -163,7 +163,7 @@ esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rm
     *ret_encoder = &led_encoder->base;
     return ret;
 err:
-    AddLog(2,"RMT:could not init led decoder");
+    // AddLog(2,"RMT:could not init led decoder");
     if (led_encoder) {
         if (led_encoder->bytes_encoder) {
             rmt_del_encoder(led_encoder->bytes_encoder);
@@ -534,24 +534,24 @@ public:
 
         // ESP_LOGI(TAG, "Enable RMT TX channel");
         ret += rmt_enable(_channel.RmtChannelNumber);
-        AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
+        // AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
     }
 
     void Update(bool maintainBufferConsistency)
     {
-        AddLog(2,"..");
+        // AddLog(2,"..");
         // wait for not actively sending data
         // this will time out at 10 seconds, an arbitrarily long period of time
         // and do nothing if this happens
 
         if (ESP_OK == ESP_ERROR_CHECK_WITHOUT_ABORT(rmt_tx_wait_all_done(_channel.RmtChannelNumber, 10000 / portTICK_PERIOD_MS)))
         {
-            AddLog(2,"__ %u", _sizeData);
+            // AddLog(2,"__ %u", _sizeData);
             // now start the RMT transmit with the editing buffer before we swap
             // const uint8_t pixels[3] = {100,100,100};
            esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, _sizeData, &_tx_config); // 3 for _sizeData
             // esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, pixels, 3, &_tx_config);
-            AddLog(2,"rmt_transmit: %u", ret);
+            // AddLog(2,"rmt_transmit: %u", ret);
             if (maintainBufferConsistency)
             {
                 // copy editing to sending,
@@ -596,7 +596,7 @@ private:
 
     void construct()
     {
-        AddLog(2,"RMT:construct");
+        // AddLog(2,"RMT:construct");
         _dataEditing = static_cast<uint8_t*>(malloc(_sizeData));
         // data cleared later in Begin()
 
