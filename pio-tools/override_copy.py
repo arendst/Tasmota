@@ -25,3 +25,9 @@ if os.path.isfile("platformio_tasmota_cenv.ini"):
     print ("*** use provided platformio_tasmota_cenv.ini as planned ***")
 else:
     shutil.copy("platformio_tasmota_cenv_sample.ini", "platformio_tasmota_cenv.ini")
+
+# copy platformio_tasmota_core3_env_sample.ini to platformio_tasmota_core3_env.ini
+if os.path.isfile("platformio_tasmota_core3_env.ini"):
+    print ("*** use provided platformio_tasmota_core3_env.ini as planned ***")
+else:
+    shutil.copy("platformio_tasmota_core3_env_sample.ini", "platformio_tasmota_core3_env.ini")
