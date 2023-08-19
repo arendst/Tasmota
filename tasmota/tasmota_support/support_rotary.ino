@@ -106,7 +106,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
-void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+static void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h

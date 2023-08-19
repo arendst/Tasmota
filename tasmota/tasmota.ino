@@ -200,10 +200,11 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 #ifdef ESP32
 /*
 #if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -211,7 +212,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #if ARDUINO_USB_MODE
 //#warning **** TasConsole ARDUINO_USB_MODE ****
-HWCDC TasConsole;                           // ESP32C3/S3 embedded USB using JTAG interface
+HWCDC TasConsole;                           // ESP32C3/C6/S3 embedded USB using JTAG interface
 bool tasconsole_serial = false;
 //#warning **** TasConsole uses HWCDC ****
 #else   // No ARDUINO_USB_MODE
@@ -482,7 +483,7 @@ void setup(void) {
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
 //  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);

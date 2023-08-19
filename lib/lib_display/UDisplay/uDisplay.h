@@ -5,6 +5,9 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "soc/gpio_periph.h"
+#endif //ESP_IDF_VERSION_MAJOR >= 5
 
 
 #ifdef ESP32
@@ -89,7 +92,7 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #undef GPIO_CLR
 #undef GPIO_SET_SLOW
 #undef GPIO_CLR_SLOW
-#if CONFIG_IDF_TARGET_ESP32C3
+#if defined(__riscv)
 #define GPIO_CLR(A) GPIO.out_w1tc.val = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts.val = (1 << A)
 #else // plain ESP32

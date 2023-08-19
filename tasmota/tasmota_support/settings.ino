@@ -543,6 +543,10 @@ bool SettingsConfigRestore(void) {
     valid_settings = (3 == settings_buffer[0xF36]);  // Settings->config_version ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
     valid_settings = (4 == settings_buffer[0xF36]);  // Settings->config_version ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+    valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+    valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -962,6 +966,10 @@ void SettingsDefaultSet2(void) {
   Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
   Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+  Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+  Settings->config_version = 6;  // ESP32C6
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1526,6 +1534,10 @@ void SettingsDelta(void) {
       Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
       Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+      Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+      Settings->config_version = 6;  // ESP32C6
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1604,7 +1616,7 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09040006) {
       Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
     }
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#if  defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)
     if (Settings->version < 0x09050002) {
       if (Settings->cfg_size != sizeof(TSettings)) {
         // Fix onetime Settings layout due to changed ESP32-C3 myio and mytmplt types sizes

@@ -608,9 +608,12 @@ typedef struct {
   uint8_t       free_esp8266_3D2[42];      // 3D2
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2)
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
 #endif  // CONFIG_IDF_TARGET_ESP32C3
+#if defined(CONFIG_IDF_TARGET_ESP32C6) // TODO: Very unsure, that this is okay!!
+  uint8_t       free_esp32c3_3D8[28];      // 3D8  - Due to smaller myio
+#endif  // CONFIG_IDF_TARGET_ESP32C6
 #endif  // ESP32
   mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
@@ -620,7 +623,12 @@ typedef struct {
 #ifdef CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
 #endif  // CONFIG_IDF_TARGET_ESP32C3
-
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c3_42A[29];      // 42A  - Due to smaller mytmplt
+#endif  // CONFIG_IDF_TARGET_ESP32C2
+#ifdef CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c3_42A[0];      // 42A  - Due to smaller mytmplt
+#endif  // CONFIG_IDF_TARGET_ESP32C6
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 

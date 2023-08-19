@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  workflow_dispatch:      # Start a workflow
+  pull_request:
+  push:
+
+jobs:
+  build-esp-idf-component:
+    name: Build with ESP-IDF ${{ matrix.idf_ver }} for ${{ matrix.idf_target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The version names here correspond to the versions of espressif/idf Docker image.
+        # See https://hub.docker.com/r/espressif/idf/tags and
+        # https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-docker-image.html
+        # for details.
+        idf_ver: ["release-v4.4", "release-v5.1"]
+        idf_target: ["esp32", "esp32s3", "esp32c2", "esp32c3", "esp32c6"]
+        example:
+          - Advanced/NimBLE_Client
+          - Advanced/NimBLE_Server
+          - basic/BLE_client
+          - basic/BLE_notify
+          - basic/BLE_scan
+          - basic/BLE_server
+          - basic/BLE_uart
+          - Bluetooth_5/NimBLE_extended_client
+          - Bluetooth_5/NimBLE_extended_server
+          - Bluetooth_5/NimBLE_multi_advertiser
+        exclude:
+          - idf_target: "esp32"
+            example: Bluetooth_5/NimBLE_extended_client
+          - idf_target: "esp32"
+            example: Bluetooth_5/NimBLE_extended_server
+          - idf_target: "esp32"
+            example: Bluetooth_5/NimBLE_multi_advertiser
+          - idf_ver: release-v4.4
+            idf_target: "esp32c2"
+          - idf_ver: release-v4.4
+            idf_target: "esp32c6"
+
+    container: espressif/idf:${{ matrix.idf_ver }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: components/esp-nimble-cpp
+      - name: Build examples
+        env:
+          IDF_TARGET: ${{ matrix.idf_target }}
+        shell: bash
+        run: |
+          . ${IDF_PATH}/export.sh
+          cp -r components/esp-nimble-cpp/examples/* .
+          idf.py -C ${{ matrix.example }} -DEXTRA_COMPONENT_DIRS=$PWD/components build
+
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Doxygen Action
+        uses: mattnotmitt/doxygen-action@v1.9.5
+        with:
+          working-directory: 'docs/'
