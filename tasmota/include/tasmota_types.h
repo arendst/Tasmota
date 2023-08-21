@@ -602,32 +602,40 @@ typedef struct {
   // End of remapping, next is all other CPUs
   // ----------------------------------------
 #else
-  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x22 bytes (ESP32-C3) / 2x47 bytes (ESP32-S2)
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 #endif  // ESP32
-  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
   uint8_t       free_esp8266_41A[55];      // 41A
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c3_43C[10];      // 43C  - Due to smaller mytmplt
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
   uint8_t       free_esp32_448[4];         // 448
-#ifdef CONFIG_IDF_TARGET_ESP32S2
+  #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
-#endif
+  #endif
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450

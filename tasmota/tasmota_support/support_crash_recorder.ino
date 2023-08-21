@@ -256,7 +256,7 @@ void CrashDump(void)
   }
   ResponseJsonEnd();
 }
-#elif CONFIG_IDF_TARGET_ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
 
 extern "C" {
   // esp-idf 3.x
