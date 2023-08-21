@@ -4,7 +4,7 @@
         "ldscript": "esp32c6_out.ld"
       },
       "core": "esp32",
-      "extra_flags": "-DESP32_4M -DESP32C6",
+      "extra_flags": "-DARDUINO_USB_MODE=1 -DESP32_4M -DESP32C6 -DUSE_USB_CDC_CONSOLE",
       "f_cpu": "160000000L",
       "f_flash": "80000000L",
       "flash_mode": "qio",
@@ -29,7 +29,7 @@
         "flash_extra_images": [
           [
             "0x10000",
-            "variants/tasmota/tasmota32c6-safeboot.bin"
+            "variants/tasmota/tasmota32c6cdc-safeboot.bin"
           ]
         ]
       },
@@ -37,6 +37,7 @@
       "maximum_ram_size": 327680,
       "maximum_size": 4194304,
       "require_upload_port": true,
+      "before_reset": "usb_reset",
       "speed": 460800
     },
     "url": "https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html",
