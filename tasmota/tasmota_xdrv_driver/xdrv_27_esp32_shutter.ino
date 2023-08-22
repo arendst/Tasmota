@@ -698,9 +698,12 @@ void ShutterReportPosition(bool always, uint32_t index)
       ShutterLogPos(i);
       shutter_running++;
     }
-    if (i && index == MAX_SHUTTERS_ESP32) { ResponseAppend_P(PSTR(",")); }
-    ResponseAppend_P(JSON_SHUTTER_POS, i+1,  ShutterRealToPercentPosition(Shutter[i].real_position, i), Shutter[i].direction, ShutterRealToPercentPosition(Shutter[i].target_position, i), Shutter[i].tilt_real_pos );
-  }
+    if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
+    uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+    uint32_t target = ShutterRealToPercentPosition(Shutter[i].target_position, i);
+    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (ShutterSettings.shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
+    //ResponseAppend_P(JSON_SHUTTER_POS, i+1,  position, Shutter[i].direction, target, Shutter[i].tilt_real_pos );
+   }
   ResponseJsonEnd();
   if (always || shutter_running) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
@@ -1319,7 +1322,7 @@ void ShutterToggle(bool dir)
 
 void ShutterShow(){
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, (Settings->shutter_options[i] & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
+    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (ShutterGetOptions(i) & 1) ? D_OPEN : D_CLOSE,(ShutterGetOptions(i) & 1) ? D_CLOSE : D_OPEN, (ShutterGetOptions(i) & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
   }
 }
 /*********************************************************************************************\
@@ -1515,9 +1518,8 @@ void CmndShutterPosition(void)
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);
       target_pos_percent = ((Settings->shutter_options[index] & 1) && ((SRC_MQTT       != TasmotaGlobal.last_source)
-                                                                    && (SRC_SERIAL     != TasmotaGlobal.last_source)
-                                                                    && (SRC_WEBGUI     != TasmotaGlobal.last_source)
-                                                                    && (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
+                                                                    || (SRC_SERIAL     != TasmotaGlobal.last_source)
+                                                                    || (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
                                                                        )) ? 100 - target_pos_percent : target_pos_percent;
 
       if (XdrvMailbox.payload != -99) {
@@ -1875,14 +1877,16 @@ void CmndShutterButton(void)
                   ShutterSettings.shutter_button[i].position[j] = {-1,-128,0};
           } else {
             setting.enabled = true;
-            setting.shutter_number == XdrvMailbox.index-1;
+            setting.shutter_number = XdrvMailbox.index-1;
             ShutterSettings.shutter_button[button_index-1] = setting;
+            //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: ENABLE SHT:%d -> %d"),XdrvMailbox.index-1,ShutterSettings.shutter_button[button_index-1]);
           }
         }
       }
       char setting_chr[30*MAX_SHUTTER_KEYS] = "-", *setting_chr_ptr = setting_chr;
       for (uint32_t i=0 ; i < MAX_SHUTTERS_ESP32*2 ; i++) {
         setting = ShutterSettings.shutter_button[i];
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Setting: SHT on BTN:%d, index:%d"),ShutterSettings.shutter_button[i].shutter_number,XdrvMailbox.index-1);
         if ((setting.enabled) && (ShutterSettings.shutter_button[i].shutter_number == XdrvMailbox.index-1)) {
           if (*setting_chr_ptr == 0)
             setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR("|"));
