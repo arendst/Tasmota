@@ -19,6 +19,9 @@
 
 #ifdef ESP32
 #ifdef USE_WEBCAM
+// defining USE_WEBCAM_V2 will use xdrv_81_esp32_webcam_task.ino instead.
+#ifndef USE_WEBCAM_V2
+
 /*********************************************************************************************\
  * ESP32 webcam based on example in Arduino-ESP32 library
  *
@@ -1531,5 +1534,6 @@ bool Xdrv81(uint32_t function) {
   return result;
 }
 
+#endif  // USE_WEBCAM_LEGACY
 #endif  // USE_WEBCAM
 #endif  // ESP32
