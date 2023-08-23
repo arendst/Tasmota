@@ -420,6 +420,7 @@ extern "C" {
 #include "esp_image_format.h"
 }
 #include "esp_system.h"
+#include "esp_flash.h"
 #if ESP_IDF_VERSION_MAJOR > 3       // IDF 4+
   #if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
     #include "esp32/rom/spi_flash.h"
@@ -647,11 +648,13 @@ uint32_t ESP_getChipId(void) {
   return id;
 }
 
-uint32_t ESP_getFlashChipMagicSize(void)
-{
+uint32_t ESP_getFlashChipMagicSize(void) {
     esp_image_header_t fhdr;
-    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
-        return 0;
+//    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr.magic, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+//      return 0;
+//    }
+    if (esp_flash_read(esp_flash_default_chip, (void*)&fhdr, ESP_FLASH_IMAGE_BASE, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+      return 0;
     }
     return ESP_magicFlashChipSize(fhdr.spi_size);
 }
