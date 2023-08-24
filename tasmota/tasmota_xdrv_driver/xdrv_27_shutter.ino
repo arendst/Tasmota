@@ -1328,10 +1328,6 @@ void CmndShutterPosition(void)
         }
       }
 
-      // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
-      if (XdrvMailbox.payload ==   0 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  > 0  ) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
-      if (XdrvMailbox.payload == 100 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  < 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
-      
       // manual override of tiltposition
       if (Shutter[index].tilt_target_pos_override != -128) {
         Shutter[index].tilt_target_pos = tmin(tmax( Shutter[index].tilt_config[0],Shutter[index].tilt_target_pos_override ), Shutter[index].tilt_config[1]);
@@ -1344,6 +1340,11 @@ void CmndShutterPosition(void)
                                                                     && (SRC_WEBGUI     != TasmotaGlobal.last_source)
                                                                     && (SRC_WEBCOMMAND != TasmotaGlobal.last_source)
                                                                        )) ? 100 - target_pos_percent : target_pos_percent;
+	    
+      // if position is either 0 or 100 reset the tilt to avoid tilt moving at the end
+      if (target_pos_percent ==   0 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  > 0  ) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[4];}
+      if (target_pos_percent == 100 && ShutterRealToPercentPosition(Shutter[index].real_position, index)  < 100) {Shutter[index].tilt_target_pos = Shutter[index].tilt_config[3];}
+  	    
       if (XdrvMailbox.payload != -99) {
         //target_pos_percent = (Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
         Shutter[index].target_position = ShutterPercentToRealPosition(target_pos_percent, index);
