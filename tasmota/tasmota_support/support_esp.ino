@@ -855,15 +855,17 @@ String GetDeviceHardware(void) {
   // https://www.espressif.com/en/products/socs
 
 /*
-Source: esp-idf esp_system.h and esptool
+Source: esp-idf esp_system.h or arduino core esp_chip_info.h and esptool
 
 typedef enum {
     CHIP_ESP32  = 1, //!< ESP32
     CHIP_ESP32S2 = 2, //!< ESP32-S2
     CHIP_ESP32S3 = 9, //!< ESP32-S3
     CHIP_ESP32C3 = 5, //!< ESP32-C3
-    CHIP_ESP32H2 = 6, //!< ESP32-H2
     CHIP_ESP32C2 = 12, //!< ESP32-C2
+    CHIP_ESP32C6 = 13, //!< ESP32-C6
+    CHIP_ESP32H2 = 16, //!< ESP32-H2
+    CHIP_POSIX_LINUX = 999, //!< The code is running on POSIX/Linux simulator
 } esp_chip_model_t;
 
 // Chip feature flags, used in esp_chip_info_t
@@ -874,13 +876,12 @@ typedef enum {
 #define CHIP_FEATURE_IEEE802154     BIT(6)      //!< Chip has IEEE 802.15.4
 #define CHIP_FEATURE_EMB_PSRAM      BIT(7)      //!< Chip has embedded psram
 
-
 // The structure represents information about the chip
 typedef struct {
     esp_chip_model_t model;  //!< chip model, one of esp_chip_model_t
     uint32_t features;       //!< bit mask of CHIP_FEATURE_x feature flags
+    uint16_t revision;       //!< chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
     uint8_t cores;           //!< number of CPU cores
-    uint8_t revision;        //!< chip revision number
 } esp_chip_info_t;
 
 */
@@ -1005,20 +1006,8 @@ typedef struct {
     - Rich set of peripheral interfaces and GPIOs, ideal for various scenarios and complex applications
     */
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
     uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
     switch (pkg_version) {
       case 0:              return F("ESP32-C3");           // Max 160MHz, Single core, QFN 5*5, ESP32-C3-WROOM-02, ESP32-C3-DevKitC-02
       case 1:              return F("ESP32-C3FH4");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-C3-MINI-1, ESP32-C3-DevKitM-1
@@ -1030,25 +1019,6 @@ typedef struct {
     return F("ESP32-S3");
   }
   else if (7 == chip_model) {  // ESP32-C6(beta)
-#ifdef CONFIG_IDF_TARGET_ESP32C6
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-C6");
-    }
-#endif  // CONFIG_IDF_TARGET_ESP32C6
     return F("ESP32-C6");
   }
   else if (9 == chip_model) {  // ESP32-S3
@@ -1062,30 +1032,16 @@ typedef struct {
     - Reliable security features ensured by RSA-based secure boot, AES-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, “World Controller”
     */
 #ifdef CONFIG_IDF_TARGET_ESP32S3
-    // no variants for now
+    // chip-debug-report.cpp
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+    switch (pkg_version) {
+      case 0:              return F("ESP32-S3");
+    }
 #endif  // CONFIG_IDF_TARGET_ESP32S3
     return F("ESP32-S3");                                  // Max 240MHz, Dual core, QFN 7*7, ESP32-S3-WROOM-1, ESP32-S3-DevKitC-1
   }
   else if (10 == chip_model) {  // ESP32-H2(beta1)
-#ifdef CONFIG_IDF_TARGET_ESP32H2
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-H2");
-    }
-#endif  // CONFIG_IDF_TARGET_ESP32H2
     return F("ESP32-H2");
   }
   else if (12 == chip_model) {  // ESP32-C2 = ESP8684
@@ -1097,7 +1053,15 @@ typedef struct {
     - 576 KB ROM, 272 KB SRAM (16 KB for cache) on the chip
     - 14 programmable GPIOs: SPI, UART, I2C, LED PWM controller, General DMA controller (GDMA), SAR ADC, Temperature sensor
     */
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+    // chip-debug-report.cpp
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_BLK2_DATA1_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
 
+    switch (pkg_version) {
+      case 0:              return F("ESP32-C2");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32C2
     return F("ESP32-C2");
   }
   else if (13 == chip_model) {  // ESP32-C6
@@ -1109,10 +1073,28 @@ typedef struct {
     - 320 KB ROM, 512 KB SRAM, 16 KB Low-power SRAM on the chip, and works with external flash
     - 30 (QFN40) or 22 (QFN32) programmable GPIOs, with support for SPI, UART, I2C, I2S, RMT, TWAI and PWM
     */
-
+#ifdef CONFIG_IDF_TARGET_ESP32C6
+    // chip-debug-report.cpp
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+    switch (pkg_version) {
+      case 0:              return F("ESP32-C6");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32C6
     return F("ESP32-C6");
   }
   else if (14 == chip_model) {  // ESP32-H2(beta2)
+    return F("ESP32-H2");
+  }
+  else if (16 == chip_model) {  // ESP32-H2
+#ifdef CONFIG_IDF_TARGET_ESP32H2
+    // chip-debug-report.cpp
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SYS_4_REG, EFUSE_PKG_VERSION);
+    uint32_t pkg_version = chip_ver & 0x7;
+    switch (pkg_version) {
+      case 0:              return F("ESP32-H2");
+    }
+#endif  // CONFIG_IDF_TARGET_ESP32H2
     return F("ESP32-H2");
   }
   return F("ESP32");
@@ -1127,11 +1109,16 @@ String GetDeviceHardwareRevision(void) {
 
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-  char revision[10] = { 0 };
+  char revision[16] = { 0 };
   if (chip_info.revision) {
-    snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
+    // idf5 efuse_hal_chip_revision(void)
+    if(chip_info.revision >= 100){
+      snprintf_P(revision, sizeof(revision), PSTR(" rev %d.%d"), chip_info.revision / 100, chip_info.revision % 100);
+    } else {
+      snprintf_P(revision, sizeof(revision), PSTR(" rev %d"), chip_info.revision);
+    }
   }
-  result += revision;                    // ESP32-C3 rev.3
+  result += revision;                    // ESP32-C3 rev 3
 
   return result;
 }
