@@ -375,4 +375,4 @@ bool AudioOutputI2S::stop()
   i2sOn = false;
   return true;
 }
-#endif  // ARDUINO_ESP8266_MAJOR > 4
+#endif  // TODO Arduino 3.0 Port I2S
