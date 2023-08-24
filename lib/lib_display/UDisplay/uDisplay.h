@@ -13,6 +13,7 @@
 #include "driver/spi_master.h"
 #if ESP_IDF_VERSION_MAJOR >= 5
 #include "soc/gpio_periph.h"
+#include <rom/gpio.h>
 #endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif
 
@@ -36,6 +37,9 @@ static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin
 #include "esp_lcd_panel_ops.h"
 #include <hal/dma_types.h>
 #include <rom/cache.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "esp_rom_lldesc.h"
+#endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif // USE_ESP32_S3
 
 #define _UDSP_I2C 1
@@ -145,7 +149,9 @@ struct esp_rgb_panel_t
   size_t resolution_hz;                                        // Peripheral clock resolution
   esp_lcd_rgb_timing_t timings;                                // RGB timing parameters (e.g. pclk, sync pulse, porch width)
   gdma_channel_handle_t dma_chan;                              // DMA channel handle
+#if ESP_IDF_VERSION_MAJOR < 5
   esp_lcd_rgb_panel_frame_trans_done_cb_t on_frame_trans_done; // Callback, invoked after frame trans done
+#endif // ESP_IDF_VERSION_MAJOR < 5
   void *user_ctx;                                              // Reserved user's data of callback functions
   int x_gap;                                                   // Extra gap in x coordinate, it's used when calculate the flush window
   int y_gap;                                                   // Extra gap in y coordinate, it's used when calculate the flush window
