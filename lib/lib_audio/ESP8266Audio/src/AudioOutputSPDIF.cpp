@@ -37,9 +37,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #if defined(ESP32) || defined(ESP8266)
 
 #include <Arduino.h>
+#if ESP_IDF_VERSION_MAJOR < 5   // TODO Arduino 3.0 Port I2S
 #if defined(ESP32)
   #include "driver/i2s.h"
   #include "soc/rtc.h"
@@ -293,3 +295,4 @@ bool AudioOutputSPDIF::stop()
 }
 
 #endif
+#endif  // ESP_IDF_VERSION_MAJOR < 5   // TODO Arduino 3.0 Port I2S
