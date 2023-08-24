@@ -45,7 +45,7 @@ Esp32-hal-rmt.c
 
 #include <Arduino.h>
 
-// extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 
 extern "C"
 {
@@ -55,7 +55,7 @@ extern "C"
 #include "esp_check.h"
 }
 
-#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
+#define RMT_LED_STRIP_RESOLUTION_HZ 40000000 // 40MHz resolution - setting of the "old" driver
 
 typedef struct {
     uint32_t resolution; /*!< Encoder resolution, in Hz */
@@ -124,9 +124,9 @@ static esp_err_t rmt_led_strip_encoder_reset(rmt_encoder_t *encoder)
     return ESP_OK;
 }
 
-esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder/*, uint32_t bit0,  uint32_t bit1*/)
+esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder, uint32_t bit0,  uint32_t bit1)
 {
-    const char* TAG = "TEST_RMT";
+    const char* TAG = "TEST_RMT"; //TODO: Remove later
     esp_err_t ret = ESP_OK;
     rmt_led_strip_encoder_t *led_encoder = NULL;
     uint32_t reset_ticks = config->resolution / 1000000 * 50 / 2; // reset code duration defaults to 50us
@@ -141,16 +141,11 @@ esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rm
     led_encoder->base.encode = rmt_encode_led_strip;
     led_encoder->base.del = rmt_del_led_strip_encoder;
     led_encoder->base.reset = rmt_led_strip_encoder_reset;
-    // different led strip might have its own timing requirements, following parameter is for WS2812
-    bytes_encoder_config.bit0.level0 = 1;
-    bytes_encoder_config.bit0.duration0 = 0.3 * config->resolution / 1000000; // T0H=0.3us
-    bytes_encoder_config.bit0.level1 = 0;
-    bytes_encoder_config.bit0.duration1 = 0.9 * config->resolution / 1000000; // T0L=0.9us
-    bytes_encoder_config.bit1.level0 = 1;
-    bytes_encoder_config.bit1.duration0 = 0.9 * config->resolution / 1000000; // T0H=0.3us
-    bytes_encoder_config.bit1.level1 = 0;
-    bytes_encoder_config.bit1.duration1 = 0.3 * config->resolution / 1000000; // T0L=0.9us
-    bytes_encoder_config.flags.msb_first = 1; // WS2812 transfer bit order: G7...G0R7...R0B7...B0
+
+    bytes_encoder_config.bit0.val = bit0;
+    bytes_encoder_config.bit1.val = bit1;
+
+    bytes_encoder_config.flags.msb_first = 1; // WS2812 transfer bit order: G7...G0R7...R0B7...B0 - TODO: more checks
 
     ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
     ESP_GOTO_ON_ERROR(rmt_new_copy_encoder(&copy_encoder_config, &led_encoder->copy_encoder), err, TAG, "create copy encoder failed");
@@ -226,7 +221,7 @@ public:
 class NeoEsp32RmtSpeedWs2811 : public NeoEsp32RmtSpeedBase
 {
 public:
-    const static DRAM_ATTR uint32_t RmtBit0 = Item32Val(300, 950); 
+    const static DRAM_ATTR uint32_t RmtBit0 = Item32Val(300, 950);  // TODO: DRAM_ATTR debatable everywhere
     const static DRAM_ATTR uint32_t RmtBit1 = Item32Val(900, 350); 
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 };
@@ -234,8 +229,8 @@ public:
 class NeoEsp32RmtSpeedWs2812x : public NeoEsp32RmtSpeedBase
 {
 public:
-    const uint32_t RmtBit0 = Item32Val(400, 850);
-    const uint32_t RmtBit1 = Item32Val(800, 450);
+    const static DRAM_ATTR uint32_t RmtBit0 = Item32Val(400, 850);
+    const static DRAM_ATTR uint32_t RmtBit1 = Item32Val(800, 450);
     const static DRAM_ATTR uint16_t RmtDurationReset = FromNs(300000); // 300us
 };
 
@@ -530,11 +525,11 @@ public:
 
         _tx_config.loop_count = 0; //no loop
 
-        ret += rmt_new_led_strip_encoder(&encoder_config, &_led_encoder);
+        ret += rmt_new_led_strip_encoder(&encoder_config, &_led_encoder, T_SPEED::RmtBit0, T_SPEED::RmtBit1);
 
         // ESP_LOGI(TAG, "Enable RMT TX channel");
         ret += rmt_enable(_channel.RmtChannelNumber);
-        // AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
+        AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
     }
 
     void Update(bool maintainBufferConsistency)
@@ -548,9 +543,7 @@ public:
         {
             // AddLog(2,"__ %u", _sizeData);
             // now start the RMT transmit with the editing buffer before we swap
-            // const uint8_t pixels[3] = {100,100,100};
            esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, _dataEditing, _sizeData, &_tx_config); // 3 for _sizeData
-            // esp_err_t ret = rmt_transmit(_channel.RmtChannelNumber, _led_encoder, pixels, 3, &_tx_config);
             // AddLog(2,"rmt_transmit: %u", ret);
             if (maintainBufferConsistency)
             {
