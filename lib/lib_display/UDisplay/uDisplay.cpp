@@ -945,7 +945,11 @@ Renderer *uDisplay::Init(void) {
     _panel_config->disp_gpio_num = GPIO_NUM_NC;
 
     _panel_config->flags.disp_active_low = 0;
+#if ESP_IDF_VERSION_MAJOR >= 5
+    _panel_config->flags.refresh_on_demand = 0;
+#else
     _panel_config->flags.relax_on_idle = 0;
+#endif // ESP_IDF_VERSION_MAJOR >= 5
     _panel_config->flags.fb_in_psram = 1;             // allocate frame buffer in PSRAM
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(_panel_config, &_panel_handle));
@@ -1037,7 +1041,7 @@ Renderer *uDisplay::Init(void) {
     uint32_t div_a, div_b, div_n, clkcnt;
     calcClockDiv(&div_a, &div_b, &div_n, &clkcnt, 240*1000*1000, spi_speed*1000000);
     lcd_cam_lcd_clock_reg_t lcd_clock;
-    lcd_clock.lcd_clkcnt_n = std::max(1u, clkcnt - 1);
+    lcd_clock.lcd_clkcnt_n = std::max((uint32_t)1u, clkcnt - 1); // ESP_IDF_VERSION_MAJOR >= 5
     lcd_clock.lcd_clk_equ_sysclk = (clkcnt == 1);
     lcd_clock.lcd_ck_idle_edge = true;
     lcd_clock.lcd_ck_out_edge = false;
