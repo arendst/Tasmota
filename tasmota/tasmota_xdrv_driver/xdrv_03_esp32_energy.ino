@@ -26,6 +26,10 @@
 #define XDRV_03                   3
 #define XSNS_03                   3
 
+#ifndef MQTT_TELE_RETAIN
+#define MQTT_TELE_RETAIN          0
+#endif
+
 #define ENERGY_NONE               0
 #define ENERGY_WATCHDOG           4        // Allow up to 4 seconds before deciding no valid data present
 
