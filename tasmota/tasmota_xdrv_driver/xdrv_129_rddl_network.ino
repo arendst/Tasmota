@@ -156,25 +156,36 @@ void storeSeed()
 #define ADDRESS_TAIL 20
 
 void getPlntmntKeys(){
-  HDNode node;
   readSeed();
-  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node);
-  hdnode_private_ckd_prime(&node, 44);
-  hdnode_private_ckd_prime(&node, 8680);
-  hdnode_private_ckd_prime(&node, 0);
-  hdnode_private_ckd(&node, 0);
-  hdnode_private_ckd(&node, 0);
-  hdnode_fill_public_key(&node);
-  memcpy(g_priv_key, node.private_key, 32);
-  memcpy(g_pub_key, node.public_key, PUB_KEY_SIZE);
+  HDNode node_planetmint;
+  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_planetmint);
+  hdnode_private_ckd_prime(&node_planetmint, 44);
+  hdnode_private_ckd_prime(&node_planetmint, 8680);
+  hdnode_private_ckd_prime(&node_planetmint, 0);
+  hdnode_private_ckd(&node_planetmint, 0);
+  hdnode_private_ckd(&node_planetmint, 0);
+  hdnode_fill_public_key(&node_planetmint);
+  memcpy(g_priv_key, node_planetmint.private_key, 32);
+  memcpy(g_pub_key, node_planetmint.public_key, PUB_KEY_SIZE);
+
+  HDNode node_rddl;
+  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_rddl);
+  hdnode_private_ckd_prime(&node_rddl, 44);
+  hdnode_private_ckd_prime(&node_rddl, 1776);
+  hdnode_private_ckd_prime(&node_rddl, 0);
+  hdnode_private_ckd(&node_rddl, 0);
+  hdnode_private_ckd(&node_rddl, 0);
+  hdnode_fill_public_key(&node_rddl);
+  memcpy(g_priv_key, node_rddl.private_key, 32);
+  memcpy(g_pub_key, node_rddl.public_key, PUB_KEY_SIZE);
 
   
   uint8_t address_bytes[ADDRESS_TAIL] = {0};
   pubkey2address( g_pub_key, PUB_KEY_SIZE, address_bytes );
   getAddressString( address_bytes, g_address);
   uint32_t fingerprint = hdnode_fingerprint(&node);
-  int ret = hdnode_serialize_public( &node, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
-  int ret2 = hdnode_serialize_public( &node, fingerprint, VERSION_PUBLIC, g_ext_pub_key_liquid, EXT_PUB_KEY_SIZE);
+  int ret = hdnode_serialize_public( &node_planetmint, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
+  int ret2 = hdnode_serialize_public( &node_rddl, fingerprint, VERSION_PUBLIC, g_ext_pub_key_liquid, EXT_PUB_KEY_SIZE);
 }
 
 bool hasKey(const char * key){
