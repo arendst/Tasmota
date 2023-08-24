@@ -238,8 +238,8 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
-#undef USE_LIGHT                                 // Disable support for lights
-#undef USE_WS2812
+// #undef USE_LIGHT                                 // Disable support for lights
+// #undef USE_WS2812
 
 #undef USE_DS18x20                               // Disable DS18x20 sensor
 

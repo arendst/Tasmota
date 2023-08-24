@@ -4,7 +4,7 @@
 
 #ifndef CONFIG_SOC_RMT_TX_CANDIDATES_PER_GROUP // turn this off with something new from idf5.1
 // ESP32C3 I2S is not supported yet due to significant changes to interface
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2)
 
 #ifdef __cplusplus
 extern "C" {
