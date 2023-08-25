@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.1.0.1
 ### Added
+- Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3.0 
 - Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)
 - Variables ``%power<1..28>%`` and  ``%switch<1..28>%`` to rules [#19331](https://github.com/arendst/Tasmota/issues/19331)
 
@@ -121,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 
 ### Fixed
-- Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341)
+- Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341) and [#19374](https://github.com/arendst/Tasmota/issues/19374)
+- Teleinfo power [#19381](https://github.com/arendst/Tasmota/issues/19381)
 
 ### Removed

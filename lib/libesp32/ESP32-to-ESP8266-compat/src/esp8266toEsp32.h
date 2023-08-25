@@ -126,7 +126,12 @@ uint32_t analogGetTimerFrequency(uint8_t timer);
 
 #define ESPhttpUpdate httpUpdate
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "rom/ets_sys.h"
+#else
 #define os_delay_us ets_delay_us
+#endif
+
 // Serial minimal type to hold the config
 typedef int SerConfu8;
 //typedef int SerialConfig;  // Will be replaced enum in esp32_hal-uart.h (#7926)

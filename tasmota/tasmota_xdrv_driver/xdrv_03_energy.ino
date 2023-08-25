@@ -29,6 +29,10 @@
 //#define USE_ENERGY_MARGIN_DETECTION
 //  #define USE_ENERGY_POWER_LIMIT
 
+#ifndef MQTT_TELE_RETAIN
+#define MQTT_TELE_RETAIN       0
+#endif
+
 #define ENERGY_NONE            0
 #define ENERGY_WATCHDOG        4        // Allow up to 4 seconds before deciding no valid data present
 

@@ -124,7 +124,8 @@ static void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   encoder->state = (state >> 2);
 }
 
-void IRAM_ATTR RotaryIsrArg(void *arg) {
+void IRAM_ATTR RotaryIsrArg(void *arg);
+void RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // Theo Arends
