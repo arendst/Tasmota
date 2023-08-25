@@ -83,24 +83,25 @@ void sen5x_Init(void) {
   else {
     sen5x->begin(Wire);
   }
-  int error_stop = sen5x->deviceReset();
-  if (error_stop != 0) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to reset device (I2C Bus %d)"), usingI2cBus);
-    return;
-  }
-  // Wait 1 second for sensors to start recording + 100ms for reset command
-  delay(1100);
-  int error_start = sen5x->startMeasurement();
-  if (error_start != 0) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to start measurement (I2C Bus %d)"), usingI2cBus);
-    return;
+  
+  if (!Settings->flag6.sen5x_passive_mode) {
+    int error_stop = sen5x->deviceReset();
+    if (error_stop != 0) {
+      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to reset device (I2C Bus %d)"), usingI2cBus);
+      return;
+    }
+    // Wait 1 second for sensors to start recording + 100ms for reset command
+    delay(1100);
+    int error_start = sen5x->startMeasurement();
+    if (error_start != 0) {
+      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to start measurement (I2C Bus %d)"), usingI2cBus);
+      return;
+    }
   }
 
   SEN5XDATA = (SEN5XDATA_s *)calloc(1, sizeof(struct SEN5XDATA_s));
   I2cSetActiveFound(SEN5X_ADDRESS, "SEN5X", usingI2cBus);
 }
-
-#define SAVE_PERIOD 30
 
 void SEN5XUpdate(void) {  // Perform every second to ensure proper operation of the baseline compensation algorithm
   uint16_t error;
@@ -209,13 +210,23 @@ bool Xsns103(uint32_t function) {
 
   bool result = false;
 
+  static int updateCount = 0;
+
   if (FUNC_INIT == function) {
     sen5x_Init();
   }
   else if (SEN5XDATA != nullptr) {
     switch (function) {
     case FUNC_EVERY_SECOND:
-      SEN5XUpdate();
+      if (Settings->flag6.sen5x_passive_mode) {
+        ++updateCount;
+        if (updateCount % 10 == 0) {
+          SEN5XUpdate();
+        }
+      }
+      else {
+        SEN5XUpdate();
+      }
       break;
     case FUNC_JSON_APPEND:
       SEN5XShow(1);
