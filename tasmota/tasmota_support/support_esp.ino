@@ -916,13 +916,6 @@ typedef struct {
       - Peripherals include capacitive touch sensors, Hall sensor, SD card interface, Ethernet, high-speed SPI, UART, I2S and I2C
       */
 #ifdef CONFIG_IDF_TARGET_ESP32
-/* esptool:
-    def get_pkg_version(self):
-        word3 = self.read_efuse(3)
-        pkg_version = (word3 >> 9) & 0x07
-        pkg_version += ((word3 >> 2) & 0x1) << 3
-        return pkg_version
-*/
 #if (ESP_IDF_VERSION_MAJOR < 5)
       pkg_version = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG) & 0x7;
 #endif
@@ -965,21 +958,6 @@ typedef struct {
       - Availability of common cloud connectivity agents and common product features shortens the time to market
       */
 #ifdef CONFIG_IDF_TARGET_ESP32S2
-/* esptool:
-    def get_flash_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-
-    def get_psram_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 28) & 0x0F
-        return pkg_version
-*/
 #if (ESP_IDF_VERSION_MAJOR < 5)
       pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_FLASH_VERSION) & 0xF;
 #endif
@@ -1037,11 +1015,9 @@ typedef struct {
       */
 #ifdef CONFIG_IDF_TARGET_ESP32S3
 #if (ESP_IDF_VERSION_MAJOR >= 5)
-      // chip-debug-report.cpp
-//      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION) & 0x7;
       switch (pkg_version) {
-        case 0:              return F("ESP32-S3");          // QFN56
-        case 1:              return F("ESP32-S3-PICO-1");   // LGA56
+        case 0:              return F("ESP32-S3");           // QFN56
+        case 1:              return F("ESP32-S3-PICO-1");    // LGA56
       }
 #endif
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1057,8 +1033,6 @@ typedef struct {
       - 14 programmable GPIOs: SPI, UART, I2C, LED PWM controller, General DMA controller (GDMA), SAR ADC, Temperature sensor
       */
 #ifdef CONFIG_IDF_TARGET_ESP32C2
-      // chip-debug-report.cpp
-//      pkg_version = REG_GET_FIELD(EFUSE_RD_BLK2_DATA1_REG, EFUSE_PKG_VERSION) & 0x7;
       switch (pkg_version) {
         case 0:              return F("ESP32-C2");
         case 1:              return F("ESP32-C2");
@@ -1077,8 +1051,6 @@ typedef struct {
       - 30 (QFN40) or 22 (QFN32) programmable GPIOs, with support for SPI, UART, I2C, I2S, RMT, TWAI and PWM
       */
 #ifdef CONFIG_IDF_TARGET_ESP32C6
-      // chip-debug-report.cpp
-//      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION) & 0x7;
       switch (pkg_version) {
         case 0:              return F("ESP32-C6");
         case 1:              return F("ESP32-C6FH4");
@@ -1090,13 +1062,19 @@ typedef struct {
     case 14:    // ESP32-H2(beta2)
     case 16: {  // ESP32-H2
 #ifdef CONFIG_IDF_TARGET_ESP32H2
-      // chip-debug-report.cpp
-//      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SYS_4_REG, EFUSE_PKG_VERSION) & 0x7;
       switch (pkg_version) {
         case 0:              return F("ESP32-H2");
       }
 #endif  // CONFIG_IDF_TARGET_ESP32H2
       return F("ESP32-H2");
+    }
+    case 18: {  // ESP32-P4
+#ifdef CONFIG_IDF_TARGET_ESP32P4
+      switch (pkg_version) {
+        case 0:              return F("ESP32-P4");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32P4
+      return F("ESP32-P4");
     }
   }
   return F("ESP32");
