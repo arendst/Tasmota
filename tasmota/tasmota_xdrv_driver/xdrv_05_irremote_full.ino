@@ -227,7 +227,7 @@ namespace {
   void addFloatToJson(JsonGeneratorObject& json, const char* key, float value, float noValueConstant = NAN) {
     if (!isnan(noValueConstant) && value == noValueConstant) {
       //The "no sensor value" may not be straightforward (e.g.-100.0), hence replacing with explicit n/a
-      json.add(key, PSTR(D_JSON_NA));
+      json.addStrRaw(key, PSTR(D_JSON_NULL));
       return;
     }
     char s[6];  // Range: -99.9 <> 999.9 should be fine for any sensible temperature value :)
