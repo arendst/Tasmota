@@ -123,7 +123,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
-#define D_JSON_NA "n/a"
+#define D_JSON_NULL "null"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
