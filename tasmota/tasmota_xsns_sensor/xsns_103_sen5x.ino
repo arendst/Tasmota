@@ -32,6 +32,7 @@
 #define XI2C_76 76 // See I2CDEVICES.md
 
 #define SEN5X_ADDRESS 0x69
+#define SEN5X_PASSIVE_MODE_INTERVAL 10
 
 #include <SensirionI2CSen5x.h>
 #include <Wire.h>
@@ -210,8 +211,6 @@ bool Xsns103(uint32_t function) {
 
   bool result = false;
 
-  static int updateCount = 0;
-
   if (FUNC_INIT == function) {
     sen5x_Init();
   }
@@ -219,8 +218,7 @@ bool Xsns103(uint32_t function) {
     switch (function) {
     case FUNC_EVERY_SECOND:
       if (Settings->flag6.sen5x_passive_mode) {
-        ++updateCount;
-        if (updateCount % 10 == 0) {
+        if (TasmotaGlobal.uptime % SEN5X_PASSIVE_MODE_INTERVAL == 0) {
           SEN5XUpdate();
         }
       }
