@@ -211,7 +211,8 @@ a_setoption = [[
     "(Berry) Disable autoexec.be on restart (1)",
     "(Berry) Handle berry led using RMT0 as additional WS2812 scheme",
     "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
-    "","",
+    "(Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval",
+    "",
     "","","","",
     "","","","",
     "","","","",
@@ -327,7 +328,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.0.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
