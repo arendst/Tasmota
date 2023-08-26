@@ -124,5 +124,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341) and [#19374](https://github.com/arendst/Tasmota/issues/19374)
 - Teleinfo power [#19381](https://github.com/arendst/Tasmota/issues/19381)
+- Exception 3 in IRHVAC [#19389](https://github.com/arendst/Tasmota/issues/19389)
 
 ### Removed

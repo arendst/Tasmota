@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Shutter invert (#19341, #19374)
 - Teleinfo power (#19381)
-- Fix crash in IRHVAC
+- Exception 3 in IRHVAC (#19389)
 
 ### Removed
 
