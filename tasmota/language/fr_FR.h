@@ -188,6 +188,9 @@
 #define D_TRANSMIT "Transmettre"
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"				         // not used ???
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "la mise à jour" 	 // "Lancer la mise à jour"
 #define D_UPLOAD "Upload"            // Not better in french
 #define D_UPTIME "Durée d'activité"
