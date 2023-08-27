@@ -564,7 +564,7 @@ void EnergyMarginCheck(void) {
   if (jsonflg) {
     ResponseJsonEndEnd();
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-//    EnergyMqttShow();
+    EnergyMqttShow();
     Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
