@@ -831,6 +831,7 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_DAC           "DAC"
 
 // Units
 #define D_UNIT_AMPERE "A"

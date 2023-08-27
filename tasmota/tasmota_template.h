@@ -102,6 +102,9 @@ enum UserSelectablePins {
   GPIO_ADC_RANGE,                      // Analog Range
   GPIO_ADC_CT_POWER,                   // ANalog Current
 #ifdef ESP32
+  GPIO_DAC1,                          // DAC
+#endif
+#ifdef ESP32
   GPIO_WEBCAM_PWDN, GPIO_WEBCAM_RESET, GPIO_WEBCAM_XCLK,  // Webcam
   GPIO_WEBCAM_SIOD, GPIO_WEBCAM_SIOC,  // Webcam I2C
   GPIO_WEBCAM_DATA,
@@ -292,6 +295,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
   D_SENSOR_ADC_RANGE "|"
   D_SENSOR_ADC_CT_POWER "|"
+#ifdef ESP32
+  D_SENSOR_DAC "|"
+#endif
 #ifdef ESP32
   D_GPIO_WEBCAM_PWDN "|" D_GPIO_WEBCAM_RESET "|" D_GPIO_WEBCAM_XCLK "|"
   D_GPIO_WEBCAM_SIOD "|" D_GPIO_WEBCAM_SIOC "|"
@@ -896,6 +902,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
+  AGPIO(GPIO_DAC1) + MAX_DACS,             // DAC   
 #endif  // ESP32
 };
 

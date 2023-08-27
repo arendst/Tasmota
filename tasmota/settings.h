@@ -540,6 +540,7 @@ struct {
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
+  uint8_t       dac_value[MAX_DACS];
 #endif  // ESP32
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452

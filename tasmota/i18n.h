@@ -359,6 +359,7 @@
 #define D_CMND_TOUCH_THRES "TouchThres"
 #define D_CMND_TOUCH_NUM "TouchNum"
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
+#define D_CMND_DAC "DAC"
 #endif  // ESP32
 
 // Commands xdrv_02_mqtt.ino

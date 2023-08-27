@@ -723,6 +723,19 @@ void MqttShowPWMState(void)
   ResponseJsonEnd();
 }
 
+void MqttShowDACState(void)
+{
+  ResponseAppend_P(PSTR("\"" D_CMND_DAC "\":{"));
+  bool first = true;
+  for (uint32_t i = 0; i < MAX_DACS; i++) {
+    if (PinUsed(GPIO_DAC1, i)) {
+      ResponseAppend_P(PSTR("%s\"" D_CMND_DAC "%d\":%d"), first ? "" : ",", i+1, Settings.dac_value[i]);
+      first = false;
+    }
+  }
+  ResponseJsonEnd();
+}
+
 void MqttShowState(void)
 {
   char stemp1[TOPSZ];
@@ -763,6 +776,11 @@ void MqttShowState(void)
   if (TasmotaGlobal.pwm_present) {
     ResponseAppend_P(PSTR(","));
     MqttShowPWMState();
+  }
+
+  if (TasmotaGlobal.dac_enabled) {
+    ResponseAppend_P(PSTR(","));
+    MqttShowDACState();
   }
 
   if (!TasmotaGlobal.global_state.wifi_down) {
@@ -1886,7 +1904,15 @@ void GpioInit(void)
       }
     }
   }
-
+  
+#ifdef ESP32
+  for (uint32_t i = 0; i< MAX_DACS; i++) {
+    if (PinUsed(GPIO_DAC1, i)) {
+      TasmotaGlobal.dac_enabled = true; 
+      dacWrite(Pin(GPIO_DAC1, i), Settings.dac_value[i]);
+    }
+  }
+#endif  // ESP32
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
       TasmotaGlobal.devices_present++;

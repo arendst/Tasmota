@@ -112,6 +112,7 @@ const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #ifdef ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 const uint8_t MAX_SWITCHES_TXT = 28;        // Max number of switches user text
+const uint8_t MAX_DACS = 2;                 // Max number of ESP8266 DAC pins 
 #endif  // ESP32
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
