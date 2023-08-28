@@ -183,7 +183,7 @@ void getPlntmntKeys(){
   uint8_t address_bytes[ADDRESS_TAIL] = {0};
   pubkey2address( g_pub_key, PUB_KEY_SIZE, address_bytes );
   getAddressString( address_bytes, g_address);
-  uint32_t fingerprint = hdnode_fingerprint(&node);
+  uint32_t fingerprint = hdnode_fingerprint(&node_planetmint);
   int ret = hdnode_serialize_public( &node_planetmint, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
   int ret2 = hdnode_serialize_public( &node_rddl, fingerprint, VERSION_PUBLIC, g_ext_pub_key_liquid, EXT_PUB_KEY_SIZE);
 }
