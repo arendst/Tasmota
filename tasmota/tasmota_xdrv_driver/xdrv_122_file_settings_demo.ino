@@ -48,7 +48,7 @@ struct {
   uint32_t  crc32;    // To detect file changes
   uint16_t  version;  // To detect driver function changes
   uint16_t  spare;
-  char      drv_text[DRV_DEMO_MAX_DRV_TEXT -1][10];
+  char      drv_text[DRV_DEMO_MAX_DRV_TEXT][10];
 } DrvDemoSettings;
 
 // Global structure containing driver non-saved variables
