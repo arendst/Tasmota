@@ -782,6 +782,18 @@ void CmndAccountID(void)
   ResponseClear();
 }
 
+void CmndChallengeResponse(uint8_t digest[32]) {
+  char digest_hex[32];
+  char liquidSigHash[65];
+  char planetmintSigHash[65];
+
+
+  Response_P("{ \""D_CMND_CHALLENGERESPONSE"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+    "Address", getRDDLAddress(), "LiquidSig", liquidSigHash, "PlanetmintSig", planetmintSigHash );
+  CmndStatusResponse(0);
+  ResponseClear();
+}
+
 void CmndStatus(void)
 {
   int32_t payload = XdrvMailbox.payload;
