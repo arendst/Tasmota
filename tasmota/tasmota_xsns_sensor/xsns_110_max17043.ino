@@ -1,7 +1,8 @@
 /*
   xsns_110_max17043.ino - Support for MAX17043 fuel-gauge systems Lipo batteries for Tasmota
 
-  Copyright (C) 2023  Vincent de Groot
+  Copyright (c) 2023  Vincent de Groot
+  Copyright (c) 2023  Paul Blacknell
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -48,23 +49,48 @@
 #define MAX17043_CONFIG    0x0c
 #define MAX17043_COMMAND   0xfe
 
+#define MAX17043_MODE_COMMAND_POWERONRESET  0x5400
+#define MAX17043_MODE_COMMAND_QUICKSTART    0x4000
+#define MAX17043_CONFIG_POWER_UP_DEFAULT    0x971c
+#define MAX17043_CONFIG_NO_COMPENSATION     0x9700
+
 bool max17043 = false;
 
 /*********************************************************************************************/
 
 void Max17043Init(void) {
   if (I2cSetDevice(MAX17043_ADDRESS)) { 
-    I2cWrite16(MAX17043_ADDRESS, MAX17043_COMMAND, 0x5400);        // Power on reset
-    delay(10);
-    if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == 0x971c) {  // Default 0x971c
-      I2cWrite16(MAX17043_ADDRESS, MAX17043_MODE, 0x4000);         // Quick start
-      I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, 0x9700);
+    if (REASON_DEEP_SLEEP_AWAKE == ESP_ResetInfoReason()) {
+      // if waking from deep sleep we assume the hardware design maintained power to the MAX17043
+      // retaining its model of the internal dynamics the battery
+      // if the hardware design doesn't (to conserve battery) then we lose some of
+      // the benefits of the device anyway as it'll be re-learning from scratch every DeepSleepTime seconds.
+ 
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
+      // to confirm this is a MAX17043 - check for both the default (if the MAX17043 did lose it's power)
+      // or our setting if power was maintained
+      if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_NO_COMPENSATION
+          || I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_POWER_UP_DEFAULT) {
+        max17043 = true;
+        I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+      }
+    } else {
+      // otherwise perform a full Power on Reset (which is the same as disconnecting power)
+      // and a Quick Start which essentially does the same but handles a noisy power up sequence
+
+      I2cWrite16(MAX17043_ADDRESS, MAX17043_COMMAND, MAX17043_MODE_COMMAND_POWERONRESET);
       delay(10);
-      max17043 = true;
-      I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+      if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_POWER_UP_DEFAULT) {  // Read the default to confirm this is a MAX17043
+        I2cWrite16(MAX17043_ADDRESS, MAX17043_MODE, MAX17043_MODE_COMMAND_QUICKSTART);    
+        I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, MAX17043_CONFIG_NO_COMPENSATION);
+        delay(10);
+        max17043 = true;
+        I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+      }
     }
   }
 }
+
 
 void Max17043Show(bool json) {
   float voltage = (1.25f * (float)(I2cRead16(MAX17043_ADDRESS, MAX17043_VCELL) >> 4)) / 1000.0;  // Battery voltage in Volt
@@ -78,9 +104,8 @@ void Max17043Show(bool json) {
     ResponseAppend_P(PSTR(",\"MAX17043\":{\"" D_JSON_VOLTAGE "\":%3_f,\"" D_JSON_BATTPERCENT "\":%2_f}"), &voltage, &percentage );
 #ifdef USE_WEBSERVER
   } else {
-//    WSContentSend_Voltage("MAX17043", voltage);
     WSContentSend_PD(PSTR("{s}MAX17043 " D_VOLTAGE "{m}%1_f" D_UNIT_VOLT "{e}"), &voltage);
-    WSContentSend_PD(PSTR("{s}MAX17043 " D_BATTERY_CHARGE "{m}%1_f %% {e}"), &percentage);
+    WSContentSend_PD(PSTR("{s}MAX17043 " D_BATTERY_CHARGE "{m}%1_f " D_UNIT_PERCENT " {e}"), &percentage);
 #endif
   }
 }
