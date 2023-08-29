@@ -67,6 +67,8 @@ char g_ext_pub_key_liquid[EXT_PUB_KEY_SIZE+1] = {0};
 const char* getRDDLAddress() { return (const char*) g_address; }
 const char* getExtPubKeyLiquid() { return (const char*)g_ext_pub_key_liquid; }
 const char* getExtPubKeyPlanetmint() { return (const char*)g_ext_pub_key_planetmint; }
+const uint8_t* getPriKeyLiquid() { return (const uint8_t*)g_priv_key_liquid; }
+const uint8_t* getPriKeyPlanetmint() { return (const uint8_t*)g_priv_key_planetmint; }
 
 bool g_readSeed = false;
 

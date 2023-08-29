@@ -782,10 +782,14 @@ void CmndAccountID(void)
   ResponseClear();
 }
 
-void CmndChallengeResponse(uint8_t digest[32]) {
-  char digest_hex[32];
+void CmndChallengeResponse(void) {
+  const char digest_hex[XdrvMailbox.data_len + 1] = XdrvMailbox.data;
   char liquidSigHash[65];
   char planetmintSigHash[65];
+
+
+  int res1 = SignDataHashWithPrivKey(digest, getPriKeyLiquid(), liquidSigHash );
+  int res2 = SignDataHashWithPrivKey(digest, getPriKeyPlanetmint(), planetmintSigHash );
 
 
   Response_P("{ \""D_CMND_CHALLENGERESPONSE"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
