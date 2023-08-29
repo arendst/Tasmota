@@ -64,7 +64,7 @@ int8_t timer_window[MAX_TIMERS] = { 0 };
  *         Rewrite for Arduino by 'jurs' for German Arduino forum
 \*********************************************************************************************/
 
-const char kTwilight[] PROGMEM = "| " D_TWILIGHT_CIVIL "| " D_TWILIGHT_NAUTICAL "| " D_TWILIGHT_ASTRONOMICAL;
+const char kTwilight[] PROGMEM = "|, " D_TWILIGHT_CIVIL "|, " D_TWILIGHT_NAUTICAL "|, " D_TWILIGHT_ASTRONOMICAL;
 
 const float pi2 = TWO_PI;
 const float pi = PI;
