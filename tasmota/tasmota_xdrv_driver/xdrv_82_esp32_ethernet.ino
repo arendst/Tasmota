@@ -215,7 +215,11 @@ void EthernetInit(void) {
 //  }
 //  delay(1);
 //#endif // CONFIG_IDF_TARGET_ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+  if (!ETH.begin( (eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode)) {
+#else
   if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
+#endif
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
     return;
   };
