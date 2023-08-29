@@ -238,20 +238,8 @@
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
-// #undef USE_LIGHT                                 // Disable support for lights
-// #undef USE_WS2812
-
-#undef USE_DS18x20                               // Disable DS18x20 sensor
-
-#undef USE_I2C                                   // Disable all I2C sensors and devices
-
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
-
 #undef USE_IR_REMOTE                             // Disable IR driver
-
-#undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
-#undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
-
 #undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
 
 #define USE_TLS
