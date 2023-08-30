@@ -66,11 +66,11 @@ void Max17043Init(void) {
       // if the hardware design doesn't (to conserve battery) then we lose some of
       // the benefits of the device anyway as it'll be re-learning from scratch every DeepSleepTime seconds.
  
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
       // to confirm this is a MAX17043 - check for both the default (if the MAX17043 did lose it's power)
       // or our setting if power was maintained
       if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_NO_COMPENSATION
           || I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_POWER_UP_DEFAULT) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
         max17043 = true;
         I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
       }
