@@ -1085,18 +1085,19 @@ String GetDeviceHardwareRevision(void) {
   // ESP32-D0WDQ6 v1.0
   // ESP32-C3 v2.0
   // ESP32-C3 v3.0
+  // ESP32-C6FH4 v0.0
   String result = GetDeviceHardware();   // ESP32-C3
 
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-  if (chip_info.revision) {              // Only show >rev 0.0
+//  if (chip_info.revision) {              // Only show >rev 0.0
     // idf5 efuse_hal_chip_revision(void)
     uint32_t chip_revision = chip_info.revision;
     if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
     char revision[16];
     snprintf_P(revision, sizeof(revision), PSTR(" v%d.%d"), chip_revision / 100, chip_revision % 100);
     result += revision;                  // ESP32-C3 v3.0
-  }
+//  }
 
   return result;
 }
