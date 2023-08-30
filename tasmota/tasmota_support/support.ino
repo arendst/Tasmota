@@ -1682,26 +1682,28 @@ bool FlashPin(uint32_t pin) {
 #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
   return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
 #elif CONFIG_IDF_TARGET_ESP32C6
-  return (pin > 23);                      // ESP32C6 flash pins 24-30
+  return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-  return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
+  return (pin > 21) && (pin < 33);     // ESP32S2 skip 22-32
 #else
-  return (pin >= 28) && (pin <= 31);      // ESP32 skip 28-31
+  return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
 #endif  // ESP32C2/C3/C6 and S2/S3
 #endif  // ESP32
 }
 
-bool RedPin(uint32_t pin) {  // Pin may be dangerous to change, display in RED in template console
+bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, display in RED in template console
 #ifdef ESP8266
   return (9 == pin) || (10 == pin);
 #endif  // ESP8266
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
-  return (12 == pin) || (13 == pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
-#elif CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2
-  return false;                       // No red pin on ESP32C6 and ESP32S3
+  return (12 == pin) || (13 == pin);   // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32C6
+  return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32S2
+  return false;                        // No red pin on ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S3
-  return (33 <= pin) && (37 >= pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
+  return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
   // PICO can also have 16/17/18/23 not available
   return ((6 <= pin) && (11 >= pin)) || (16 == pin) || (17 == pin);  // TODO adapt depending on the exact type of ESP32

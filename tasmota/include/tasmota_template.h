@@ -2855,8 +2855,8 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Strapping
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10
     0,                           // 11      IO                  GPIO11, output power supply for flash
-    0,                           // 12      IO                  GPIO12, SPIHD
-    0,                           // 13      IO                  GPIO13, SPIWP
+    0,                           // 12      IO                  GPIO12, SPIHD - Free if flash DIO/DOUT
+    0,                           // 13      IO                  GPIO13, SPIWP - Free if flash DIO/DOUT
     0,                           // 14      IO                  GPIO14, SPICS0
     0,                           // 15      IO                  GPIO15, SPICLK
     0,                           // 16      IO                  GPIO16, SPID
@@ -2909,8 +2909,8 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 9       IO                  GPIO9
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10
     0,                           // 11      IO                  GPIO11, output power supply for flash
-    0,                           // 12      IO                  GPIO12, SPIHD
-    0,                           // 13      IO                  GPIO13, SPIWP
+    0,                           // 12      IO                  GPIO12, SPIHD - Free if flash DIO/DOUT
+    0,                           // 13      IO                  GPIO13, SPIWP - Free if flash DIO/DOUT
     0,                           // 14      IO                  GPIO14, SPICS0
     0,                           // 15      IO                  GPIO15, SPICLK
     0,                           // 16      IO                  GPIO16, SPID
@@ -2978,9 +2978,9 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 23      IO                  GPIO23, SDIO_DATA3
     0,                           // 24      IO                  GPIO24, SPICS1, PSRAM
     0,                           // 25      IO                  GPIO25, SPIQ
-    0,                           // 26      IO                  GPIO26, SPIWP
+    0,                           // 26      IO                  GPIO26, SPIWP - Free if flash DIO/DOUT
     0,                           // 27      IO                  GPIO27, SPIVDD
-    0,                           // 28      IO                  GPIO28, SPIHD
+    0,                           // 28      IO                  GPIO28, SPIHD - Free if flash DIO/DOUT
     0,                           // 29      IO                  GPIO29, SPICLK
     0,                           // 30      IO                  GPIO30, SPID
     0                            // Flag
