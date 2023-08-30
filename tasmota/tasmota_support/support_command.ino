@@ -782,17 +782,25 @@ void CmndAccountID(void)
   ResponseClear();
 }
 
+#include <string.h>
+
 void CmndChallengeResponse(void) {
-  const char digest_hex[XdrvMailbox.data_len + 1] = XdrvMailbox.data;
+  char digest_hex[32];
+  int digest_len = 0;
   char liquidSigHash[65];
   char planetmintSigHash[65];
 
+  if( XdrvMailbox.data_len )
+  {
+    memcpy(digest_hex, XdrvMailbox.data, XdrvMailbox.data_len);
+    digest_len = XdrvMailbox.data_len;
+  }
 
-  int res1 = SignDataHashWithPrivKey(digest, getPriKeyLiquid(), liquidSigHash );
-  int res2 = SignDataHashWithPrivKey(digest, getPriKeyPlanetmint(), planetmintSigHash );
+  int res1 = SignDataHashWithPrivKey(digest_hex, getPriKeyLiquid(), liquidSigHash );
+  int res2 = SignDataHashWithPrivKey(digest_hex, getPriKeyPlanetmint(), planetmintSigHash );
 
 
-  Response_P("{ \""D_CMND_CHALLENGERESPONSE"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+  Response_P("{ \"" D_CMND_CHALLENGERESPONSE "\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
     "Address", getRDDLAddress(), "LiquidSig", liquidSigHash, "PlanetmintSig", planetmintSigHash );
   CmndStatusResponse(0);
   ResponseClear();
