@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
