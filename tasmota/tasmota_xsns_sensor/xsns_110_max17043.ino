@@ -70,9 +70,9 @@ void Max17043Init(void) {
       // or our setting if power was maintained
       if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_NO_COMPENSATION
           || I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_POWER_UP_DEFAULT) {
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
         max17043 = true;
         I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
       }
     } else {
       // otherwise perform a full Power on Reset (which is the same as disconnecting power)
