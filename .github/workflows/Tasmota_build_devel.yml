@@ -90,6 +90,9 @@ jobs:
           - tasmota32s2cdc-safeboot
           - tasmota32s3-safeboot
           - tasmota32s3cdc-safeboot
+          - tasmota32c2-safeboot
+          - tasmota32c6-safeboot
+          - tasmota32c6cdc-safeboot
     steps:
       - uses: actions/checkout@v3
         with:
@@ -102,6 +105,7 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
