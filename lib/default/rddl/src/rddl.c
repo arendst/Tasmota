@@ -163,3 +163,31 @@ bool SignDataHash(const char* data_str, size_t data_length, char* pubkey_out, ch
 
   return verified;
 }
+
+int SignDataHashWithPrivKey(const uint8_t* digest, const uint8_t* priv_key, char* sig_out)
+{
+  uint8_t signature[64] = {0};
+  const ecdsa_curve *curve = &secp256k1;
+
+  int res = ecdsa_sign_digest(curve, priv_key, digest, signature, NULL, NULL);
+
+  // prepare and convert outputs to hex-strings
+  toHexString( sig_out, signature, 128);
+
+  return res;
+}
+
+bool verifyDataHash(const char* sig_str, const char* pub_key_str, const char* hash_str)
+{
+  uint8_t hash[32] = {0};
+  uint8_t signature[64] = {0};
+  uint8_t pub_key[33] = {0};
+  const ecdsa_curve *curve = &secp256k1;
+
+  memcpy(signature, fromHexString(sig_str), 64);
+  memcpy(pub_key, fromHexString(pub_key_str), 33);
+  memcpy(hash, fromHexString(hash_str), 32);
+
+  int verified = ecdsa_verify_digest(curve, pub_key, signature, hash);
+  return verified;
+}
