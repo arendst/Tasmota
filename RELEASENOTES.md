@@ -110,7 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.1.0.1
+## Changelog v13.1.0.2
 ### Added
 - Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3.0 
 - Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)
@@ -125,5 +125,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341) and [#19374](https://github.com/arendst/Tasmota/issues/19374)
 - Teleinfo power [#19381](https://github.com/arendst/Tasmota/issues/19381)
 - Exception 3 in IRHVAC [#19389](https://github.com/arendst/Tasmota/issues/19389)
+- PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 [#19408](https://github.com/arendst/Tasmota/issues/19408)
 
 ### Removed
