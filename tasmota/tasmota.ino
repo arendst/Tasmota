@@ -310,6 +310,7 @@ struct TasmotaGlobal_t {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
+  volatile bool signal_exit_sleep;          // If set to true, exit sleep and execute one fast iteration (like if Sleep 0) - typically called from an ISR
 
   uint8_t user_globals[3];                  // User set global temp/hum/press
   uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
@@ -326,7 +327,7 @@ struct TasmotaGlobal_t {
   uint8_t state_250mS;                      // State 250msecond per second flag
   uint8_t latching_relay_pulse;             // Latching relay pulse timer
   uint8_t active_device;                    // Active device in ExecuteCommandPower
-  uint8_t sleep;                            // Current copy of Settings->sleep
+  uint8_t sleep;                   // Current copy of Settings->sleep
   uint8_t leds_present;                     // Max number of LED supported
   uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
   uint8_t led_power;                        // LED power state
@@ -699,15 +700,16 @@ void BacklogLoop(void) {
 }
 
 void SleepDelay(uint32_t mseconds) {
-  if (!TasmotaGlobal.backlog_nodelay && mseconds) {
+  if (!TasmotaGlobal.backlog_nodelay && mseconds && !TasmotaGlobal.signal_exit_sleep) {
     uint32_t wait = millis() + mseconds;
-    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    while (!TimeReached(wait) && !Serial.available() && !TasmotaGlobal.signal_exit_sleep) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       XdrvXsnsCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
       delay(1);
     }
   } else {
     delay(0);
   }
+  TasmotaGlobal.signal_exit_sleep = false;      // reset exit_sleep, a driver must explicitly rearm at each iteration
 }
 
 void Scheduler(void) {

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.1.0.2]
 ### Added
+- internal signal to exit sleep mode usable from ISR
 
 ### Breaking Changed
 
