@@ -327,7 +327,7 @@ struct TasmotaGlobal_t {
   uint8_t state_250mS;                      // State 250msecond per second flag
   uint8_t latching_relay_pulse;             // Latching relay pulse timer
   uint8_t active_device;                    // Active device in ExecuteCommandPower
-  uint8_t sleep;                   // Current copy of Settings->sleep
+  uint8_t sleep;                            // Current copy of Settings->sleep
   uint8_t leds_present;                     // Max number of LED supported
   uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
   uint8_t led_power;                        // LED power state
