@@ -771,6 +771,13 @@
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver
 #define D_CMND_SHIFT595_DEVICE_COUNT "Shift595DeviceCount"
 
+// Commands xdrv_70_hdmi_cec.ino
+#define D_PRFX_HDMI "Hdmi"
+#define D_CMND_HDMI_SEND "Send"
+#define D_CMND_HDMI_SEND_RAW "SendRaw"
+#define D_CMND_HDMI_TYPE "Type"
+#define D_CMND_HDMI_ADDR "Addr"
+
 // Commands xdrv_89_dali.ino
 #define D_CMND_DALI_POWER                 "power"
 #define D_CMND_DALI_DIMMER                "dim"

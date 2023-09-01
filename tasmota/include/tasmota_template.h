@@ -211,6 +211,7 @@ enum UserSelectablePins {
   GPIO_LOX_O2_RX,                       // LOX-O2 RX
   GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
   GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
+  GPIO_HDMI_CEC,                        // Support for HDMI CEC
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -469,6 +470,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LOX_O2_RX "|"
   D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
   D_GPIO_DINGTIAN_OE "|"
+  D_SENSOR_HDMI_CEC "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -695,6 +697,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef USE_MCP23XXX_DRV
   AGPIO(GPIO_MCP23XXX_INT) + MAX_MCP23XXX,
+#endif
+
+#ifdef USE_HDMI_CEC
+  AGPIO(GPIO_HDMI_CEC),                 // HDMI CEC bus
 #endif
 
   AGPIO(GPIO_TXD),                      // Serial interface
