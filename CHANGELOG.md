@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.1.0.2]
 ### Added
+- Support for HDMI CEC protocol
 
 ### Breaking Changed
 

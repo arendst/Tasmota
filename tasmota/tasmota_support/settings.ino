@@ -1731,7 +1731,7 @@ void SettingsDelta(void) {
       Settings->energy_current_calibration2 = Settings->energy_current_calibration;
     }
     if (Settings->version < 0x0C020005) {  // 12.2.0.5
-      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->modbus_sbaudrate = Settings->hdmi_cec_device_type;  // was ex_modbus_sbaudrate
       Settings->param[P_SERIAL_SKIP] = 0;
     }
     if (Settings->version < 0x0C030102) {  // 12.3.1.2

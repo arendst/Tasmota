@@ -742,7 +742,7 @@ typedef struct {
   uint16_t      modbus_sbaudrate;          // 736
   uint16_t      shutter_motorstop;         // 738
   uint8_t       battery_level_percent;     // 73A
-  uint8_t       free_73B[2];               // 73B
+  uint8_t       hdmi_addr[2];              // 73B  HDMI CEC physical address - warning this is a non-aligned uint16
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -845,7 +845,7 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       ex_modbus_sbaudrate;       // F61  - v12.2.0.5
+  uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
 
   uint8_t       modbus_sconfig;            // F62
 
