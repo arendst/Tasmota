@@ -39,7 +39,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
-  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
+  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -79,7 +79,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
-  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse,
+  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -776,6 +776,23 @@ void CmndAccountID(void)
     char buffer[10] = {0};
     char* paccountid = getValueForKey("accountid", buffer);
     Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
+  }
+  
+  CmndStatusResponse(0);
+  ResponseClear();
+}
+
+void CmdMachineCid(void) {
+  if( XdrvMailbox.data_len )
+  {
+    storeKeyValuePairRaw( "machinecid", (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
+    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MACHINECID, XdrvMailbox.data );
+  }
+  else
+  {
+    char buffer[58] = {0};
+    char* machinecid = getValueForKeyRaw("machinecid", buffer);
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, machinecid );
   }
   
   CmndStatusResponse(0);
