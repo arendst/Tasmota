@@ -197,6 +197,13 @@ struct RULES {
   char event_data[RULE_MAX_EVENTSZ];
 } Rules;
 
+#ifdef USE_RULES_EXTENDED
+struct {
+  uint32_t crc32;
+  char rules[MAX_RULE_SETS-MAX_RULE_SETS_SETTINGS][MAX_RULE_SIZE] = {{0,0},};
+} RulesExt;
+#endif
+
 char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 
 #if (MAX_RULE_VARS>16)
@@ -204,6 +211,24 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 #endif
 #if (MAX_RULE_MEMS>16)
 #error MAX_RULE_MEMS is bigger than 16
+#endif
+
+/*******************************************************************************************/
+/*
+ * RulePtr(idx)
+ *
+ * When extended rules are used, manage accessing the rule between Settings->rules and Rules->rules_ext
+ *
+ *******************************************************************************************/
+
+#ifdef USE_RULES_EXTENDED
+inline char *RulePtr(uint8_t idx) {
+  if (idx > 2)
+    return RulesExt.rules[(idx)-3];
+  return Settings->rules[(idx)];
+}
+#else
+#define RulePtr(idx)      Settings->rules[(idx)]
 #endif
 
 
@@ -237,14 +262,18 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 
 #ifdef USE_UNISHOX_COMPRESSION
 // Statically allocate one String per rule
+#ifdef USE_RULES_EXTENDED
+String k_rules[MAX_RULE_SETS] = { String(), String(), String(), String(), String(), String(), String(), String() };   // Strings are created empty
+#else
 String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings are created empty
+#endif
 // Unishox compressor;   // singleton
 #endif // USE_UNISHOX_COMPRESSION
 
 // Returns whether the rule is uncompressed, which means the first byte is not NULL
 inline bool IsRuleUncompressed(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  return Settings->rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
+  return RulePtr(idx)[0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
 #else
   return true;
 #endif
@@ -253,9 +282,9 @@ inline bool IsRuleUncompressed(uint32_t idx) {
 // Returns whether the rule is empty, which requires two consecutive NULL
 inline bool IsRuleEmpty(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  return (Settings->rules[idx][0] == 0) && (Settings->rules[idx][1] == 0) ? true : false;
+  return (RulePtr(idx)[0] == 0) && (RulePtr(idx)[1] == 0) ? true : false;
 #else
-  return (Settings->rules[idx][0] == 0) ? true : false;
+  return (RulePtr(idx)[0] == 0) ? true : false;
 #endif
 }
 
@@ -263,22 +292,22 @@ inline bool IsRuleEmpty(uint32_t idx) {
 size_t GetRuleLen(uint32_t idx) {
   // no need to use #ifdef USE_UNISHOX_COMPRESSION, the compiler will optimize since first test is always true
   if (IsRuleUncompressed(idx)) {
-    return strlen(Settings->rules[idx]);
+    return strlen(RulePtr(idx));
   } else {                        // either empty or compressed
-    return Settings->rules[idx][1] * 8;   // cheap calculation, but not byte accurate (may overshoot by 7)
+    return RulePtr(idx)[1] * 8;   // cheap calculation, but not byte accurate (may overshoot by 7)
   }
 }
 
 // Returns the actual Flash storage for the Rule, including trailing NULL
 size_t GetRuleLenStorage(uint32_t idx) {
 #ifdef USE_UNISHOX_COMPRESSION
-  if (Settings->rules[idx][0] || !Settings->rules[idx][1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
-    return 1 + strlen(Settings->rules[idx]);   // uncompressed or empty
+  if (RulePtr(idx)[0] || !RulePtr(idx)[1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
+    return 1 + strlen(RulePtr(idx));   // uncompressed or empty
   } else {
-    return 2 + strlen(&Settings->rules[idx][1]); // skip first byte and get len of the compressed rule
+    return 2 + strlen(&RulePtr(idx)[1]); // skip first byte and get len of the compressed rule
   }
 #else
-  return 1 + strlen(Settings->rules[idx]);
+  return 1 + strlen(RulePtr(idx));
 #endif
 }
 
@@ -298,16 +327,16 @@ void GetRule_decompress(String &rule, const char *rule_head) {
 // Returns: String() object containing a copy of the rule (rule processing is destructive and will change the String)
 String GetRule(uint32_t idx) {
   if (IsRuleUncompressed(idx)) {
-    return String(Settings->rules[idx]);
+    return String(RulePtr(idx));
   } else {
 #ifdef USE_UNISHOX_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
 
     String rule("");
-    if (Settings->rules[idx][1] == 0) { return rule; }     // the rule is empty
+    if (RulePtr(idx)[1] == 0) { return rule; }     // the rule is empty
 
     // If the cache is empty, we need to decompress from Settings
     if (0 == k_rules[idx].length() ) {
-      GetRule_decompress(rule, &Settings->rules[idx][1]);
+      GetRule_decompress(rule, &RulePtr(idx)[1]);
       if (!Settings->flag4.compress_rules_cpu) {
         k_rules[idx] = rule;        // keep a copy for next time
       }
@@ -354,7 +383,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
   if (append) {
     if (IsRuleUncompressed(idx) || IsRuleEmpty(idx)) {  // if already uncompressed (so below 512) and append mode, check if it still fits uncompressed
-      offset = strlen(Settings->rules[idx]);
+      offset = strlen(RulePtr(idx));
       if (len_in + offset >= MAX_RULE_SIZE) {
         needsCompress = true;
       }
@@ -364,10 +393,10 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
 
   if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
-//    strlcpy(Settings->rules[idx] + offset, content, sizeof(Settings->rules[idx]));
-    strlcpy(Settings->rules[idx] + offset, content, sizeof(Settings->rules[idx]) - offset);
-    if (0 == Settings->rules[idx][0]) {
-      Settings->rules[idx][1] = 0;
+//    strlcpy(RulePtr(idx) + offset, content, MAX_RULE_SIZE);
+    strlcpy(RulePtr(idx) + offset, content, MAX_RULE_SIZE - offset);
+    if (0 == RulePtr(idx)[0]) {
+      RulePtr(idx)[1] = 0;
     }
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -375,8 +404,8 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       // do a dry-run compression to display how much it would be compressed
       int32_t len_compressed, len_uncompressed;
 
-      len_uncompressed = strlen(Settings->rules[idx]);
-      len_compressed = compressor.unishox_compress(Settings->rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
+      len_uncompressed = strlen(RulePtr(idx));
+      len_compressed = compressor.unishox_compress(RulePtr(idx), len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
 
@@ -402,12 +431,12 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
     if ((len_compressed >= 0) && (len_compressed < MAX_RULE_SIZE - 2)) {
       // size is ok, copy to Settings
-      Settings->rules[idx][0] = 0;     // clear first byte to mark as compressed
-      Settings->rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
-      memcpy(&Settings->rules[idx][2], buf_out, len_compressed);
-      Settings->rules[idx][len_compressed + 2] = 0;  // add NULL termination
+      RulePtr(idx)[0] = 0;     // clear first byte to mark as compressed
+      RulePtr(idx)[1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
+      memcpy(&RulePtr(idx)[2], buf_out, len_compressed);
+      RulePtr(idx)[len_compressed + 2] = 0;  // add NULL termination
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
-      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings->rules[idx][0], Settings->rules[idx][1], Settings->rules[idx][2], Settings->rules[idx][3]);
+      // AddLog(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), RulePtr(idx)[0], RulePtr(idx)[1], RulePtr(idx)[2], RulePtr(idx)[3]);
       // AddLog(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
     } else {
       len_compressed = -1;    // failed
@@ -730,7 +759,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
   delay(0);                                               // Prohibit possible loop software watchdog
 
 #ifdef DEBUG_RULES
-  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings->rules[rule_set]);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), RulePtr(rule_set));
 #endif
 
   String rules = GetRule(rule_set);
@@ -936,10 +965,14 @@ bool RulesProcess(void) {
 
 void RulesInit(void)
 {
-  // indicates scripter not enabled
-  bitWrite(Settings->rule_once, 7, 0);
-  // and indicates scripter do not use compress
-  bitWrite(Settings->rule_once, 6, 0);
+  #ifdef USE_RULES_EXTENDED
+    RulesLoadExtendedRules();
+  #else
+    // indicates scripter not enabled
+    bitWrite(Settings->rule_once, 7, 0);
+    // and indicates scripter do not use compress
+    bitWrite(Settings->rule_once, 6, 0);
+  #endif
 
   TasmotaGlobal.rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
@@ -950,6 +983,54 @@ void RulesInit(void)
   }
   Rules.teleperiod = false;
 }
+
+#ifdef USE_RULES_EXTENDED
+void RulesLoadExtendedRules(void) {
+  bool erase = false;
+  #ifdef USE_UFILESYS
+    char filename[20];
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_10);
+    if (TfsLoadFile(filename, (uint8_t*)&RulesExt, sizeof(RulesExt))) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Extended rules loaded from %s"), filename);
+      uint32_t crc32 = GetCfgCrc32((uint8_t*)RulesExt.rules, sizeof(RulesExt.rules));
+      if (RulesExt.crc32 != crc32) {
+        erase = true;
+        AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Bad CRC, erasing"));
+      }
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Failed to load extended rules from %s"), filename);
+      erase = true;
+    }
+  #else // #ifdef USE_UFILESYS
+    AddLog(LOG_LEVEL_INFO, PSTR("RUL: Extended rules requires USE_UFILESYS"));
+    erase = true;
+  #endif // else of #ifdef USE_UFILESYS
+  if (erase) {
+    memset(&RulesExt, 0, sizeof(RulesExt));
+    RulesExt.crc32 = 1; // force save at next second
+    Settings->rule_enabled &= 0x07;
+  }
+}
+
+void RulesSaveExtendedRules(void)
+{
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)RulesExt.rules, sizeof(RulesExt.rules));
+  if (RulesExt.crc32 != crc32) {
+    RulesExt.crc32 = crc32;
+#ifdef USE_UFILESYS
+    char filename[20];
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_10);
+    if (TfsSaveFile(filename, (uint8_t*)&RulesExt, sizeof(RulesExt))) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Extended rules saved to %s"), filename);
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Failed to save extended rules to %s"), filename);
+    }
+#else // #ifdef USE_UFILESYS
+    AddLog(LOG_LEVEL_INFO, PSTR("RUL: Extended rules requires USE_UFILESYS"));
+#endif // else of #ifdef USE_UFILESYS
+  }
+}
+#endif // #ifdef USE_RULES_EXTENDED
 
 void RulesEvery50ms(void)
 {
@@ -2501,6 +2582,11 @@ bool Xdrv10(uint32_t function)
       result = RulesMqttData();
       break;
 #endif  // SUPPORT_MQTT_EVENT
+#ifdef USE_RULES_EXTENDED
+    case FUNC_SAVE_SETTINGS:
+      RulesSaveExtendedRules();
+      break;
+#endif
     case FUNC_PRE_INIT:
       RulesInit();
       break;

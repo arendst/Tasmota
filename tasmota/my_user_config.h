@@ -499,6 +499,10 @@
 //  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed
+//  USE_RULES_EXTENDED                                Allows up to 8 rules, requieres filesystem and specific compile settings
+//                                                    Flash: +460 bytes, not counting the mandatory file system
+//                                                    RAM : +2648 bytes
+//                                                    IMPORTANT: IT CAN'T BE ENABLED HERE NOR IN USER_CONFIG_OVERRIDE.H - READ THE DOC
 
 //#define USE_SCRIPT                               // Add support for script (+17k code)
 //  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support

@@ -761,7 +761,7 @@ typedef struct {
   uint32_t      energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          script_pram[5][10];        // 7CE
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800  Uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  char          rules[MAX_RULE_SETS_SETTINGS][MAX_RULE_SIZE];  // 800  Uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00  32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
