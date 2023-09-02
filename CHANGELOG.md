@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Berry fast_loop is now called every 5ms whatever the Sleep value
 
 ### Fixed
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 (#19408)
