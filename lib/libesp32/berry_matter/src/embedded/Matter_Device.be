@@ -886,7 +886,7 @@ class Matter_Device
         # Add Hostname (based on MAC) with IPv4/IPv6 addresses
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !eth.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
           mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
         else
@@ -896,11 +896,11 @@ class Matter_Device
       else
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !wifi.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
         else
-          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, wifi.find('ip','')), 3)
+          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_wifi, wifi.find('ip','')), 3)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
         end
       end

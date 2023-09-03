@@ -1,10 +1,26 @@
-/********************************************************************
- * UDP lib
- *
- * To use: `d = udp()`
- *
- *******************************************************************/
-#include "be_constobj.h"
+/*
+  xdrv_52_3_berry_udp.ino - Berry scripting language, UDP client
+
+  Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// also includes tcp_client
+
+#ifdef USE_BERRY
+
 
 #ifdef USE_WEBCLIENT
 
@@ -17,19 +33,19 @@
 #include <WiFiUdp.h>
 #include "be_mapping.h"
 
-// Tasmota Logging
-extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
-enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
-
 extern bool WifiHostByName(const char* aHostname, IPAddress & aResult);
 
 extern "C" {
 
   // init()
   WiFiUDP *be_udp_init_ntv(void) {
-    return new WiFiUDP();
+AddLog(LOG_LEVEL_INFO, "be_udp_init_ntv start");
+    WiFiUDP *udp = new WiFiUDP();
+AddLog(LOG_LEVEL_INFO, "be_udp_init_ntv udp=%p", udp);
+    return udp;
   }
   int32_t be_udp_init(struct bvm *vm) {
+AddLog(LOG_LEVEL_INFO, "be_udp_init start");
     return be_call_c_func(vm, (void*) &be_udp_init_ntv, "+.p", "");
   }
 
@@ -149,32 +165,7 @@ extern "C" {
       be_return_nil(vm);
     }
   }
-
-  #include "be_fixed_be_class_udp.h"
-
-  void be_load_udp_lib(bvm *vm) {
-      be_pushntvclass(vm, &be_class_udp);
-      be_setglobal(vm, "udp");
-      be_pop(vm, 1);
-  }
 }
-/* @const_object_info_begin
-
-class be_class_udp (scope: global, name: udp) {
-    .p, var
-    remote_ip, var
-    remote_port, var
-    init, func(be_udp_init)
-    deinit, func(be_udp_deinit)
-
-    send, func(be_udp_send)
-    send_multicast, func(be_udp_send_mcast)
-
-    begin, func(be_udp_begin)
-    begin_multicast, func(be_udp_begin_mcast)
-    read, func(be_udp_read)
-    close, func(be_udp_stop)
-}
-@const_object_info_end */
 
 #endif // USE_WEBCLIENT
+#endif  // USE_BERRY
