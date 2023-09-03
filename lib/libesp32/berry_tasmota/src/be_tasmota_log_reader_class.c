@@ -10,11 +10,6 @@ extern char* tlr_get_log(uint32_t* idx, int32_t log_level); BE_FUNC_CTYPE_DECLAR
 
 #include "be_fixed_be_class_tasmota_log_reader.h"
 
-extern "C" void be_load_tasmota_log_reader_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_tasmota_log_reader);
-    be_setglobal(vm, "tasmota_log_reader");
-    be_pop(vm, 1);
-}
 /* @const_object_info_begin
 
 class be_class_tasmota_log_reader (scope: global, name: tasmota_log_reader) {
