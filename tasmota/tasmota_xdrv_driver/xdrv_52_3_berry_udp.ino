@@ -39,23 +39,14 @@ extern "C" {
 
   // init()
   WiFiUDP *be_udp_init_ntv(void) {
-AddLog(LOG_LEVEL_INFO, "be_udp_init_ntv start");
     WiFiUDP *udp = new WiFiUDP();
-AddLog(LOG_LEVEL_INFO, "be_udp_init_ntv udp=%p", udp);
     return udp;
-  }
-  int32_t be_udp_init(struct bvm *vm) {
-AddLog(LOG_LEVEL_INFO, "be_udp_init start");
-    return be_call_c_func(vm, (void*) &be_udp_init_ntv, "+.p", "");
   }
 
   // deinit()
   void *be_udp_deinit_ntv(WiFiUDP *udp) {
     if (udp != nullptr) { delete udp; }
     return nullptr;
-  }
-  int32_t be_udp_deinit(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_deinit_ntv, "=.p", "");
   }
 
   // udp.begin(interface:string, port:int) -> bool
@@ -67,16 +58,10 @@ AddLog(LOG_LEVEL_INFO, "be_udp_init start");
     }
     return udp->begin(addr, port);
   }
-  int32_t be_udp_begin(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_begin_ntv, "b", ".si");
-  }
 
   // udp.stop() -> nil
   void be_udp_stop_ntv(WiFiUDP *udp) {
     udp->stop();
-  }
-  int32_t be_udp_stop(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_stop_ntv, "b", ".");
   }
 
   // udp.begin_multicast(address:string, port:int) -> nil
@@ -86,9 +71,6 @@ AddLog(LOG_LEVEL_INFO, "be_udp_init start");
         return 0;
     }
     return udp->WiFiUDP::beginMulticast(addr, port);
-  }
-  int32_t be_udp_begin_mcast(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_begin_mcast_ntv, "b", ".si");
   }
 
   // udp.send(address:string, port:int, payload:bytes) -> bool
@@ -104,9 +86,6 @@ AddLog(LOG_LEVEL_INFO, "be_udp_init start");
     if (!udp->endPacket()) { return 0; }
     return btrue;
   }
-  int32_t be_udp_send(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_send_ntv, "b", ".si(bytes)~");
-  }
 
   // udp.send_multicast(payload:bytes) -> bool
   int32_t be_udp_send_mcast_ntv(WiFiUDP *udp, const uint8_t* buf, int32_t len) {
@@ -115,9 +94,6 @@ AddLog(LOG_LEVEL_INFO, "be_udp_init start");
     if (!bw) { return 0; }
     if (!udp->endPacket()) { return 0; }
     return btrue;
-  }
-  int32_t be_udp_send_mcast(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &be_udp_send_mcast_ntv, "b", ".(bytes)~");
   }
 
   // udp.read() -> bytes or nil
