@@ -906,24 +906,25 @@ extern "C" {
  * Tasmota Log Reader
  *
 \*********************************************************************************************/
-
-uint32_t* tlr_init(void) {
-  uint32_t* idx = new uint32_t();
-  *idx = 0;
-  return idx;
-}
-char* tlr_get_log(uint32_t* idx, int32_t log_level) {
-  // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
-  if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
-  char* line;
-  size_t len;
-  if (GetLog(log_level, idx, &line, &len) && len > 0) {
-    char* s = (char*) malloc(len+1);
-    memmove(s, line, len);
-    s[len] = 0;
-    return s;   // caller will free()
-  } else {
-    return NULL;
+extern "C" {
+  uint32_t* tlr_init(void) {
+    uint32_t* idx = new uint32_t();
+    *idx = 0;
+    return idx;
+  }
+  char* tlr_get_log(uint32_t* idx, int32_t log_level) {
+    // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+    if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
+    char* line;
+    size_t len;
+    if (GetLog(log_level, idx, &line, &len) && len > 0) {
+      char* s = (char*) malloc(len+1);
+      memmove(s, line, len);
+      s[len] = 0;
+      return s;   // caller will free()
+    } else {
+      return NULL;
+    }
   }
 }
 
