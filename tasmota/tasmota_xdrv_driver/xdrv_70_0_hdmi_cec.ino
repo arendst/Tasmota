@@ -39,7 +39,6 @@
 #endif
 
 volatile uint32_t cec_isr_count = 0;
-volatile uint32_t cec_isr_rcv_count = 0;
 
 /*********************************************************************************************\
  * Ring buffer class that allows the ISR to publish logs and messages to the main event loop
@@ -91,31 +90,35 @@ public:
   // returns true if ok, false if full
   bool IRAM_ATTR push(const volatile uint8_t *buf, uint8_t len, CEC_MSG_TYPE type, bool ack) {
     // AddLog(LOG_LEVEL_INFO, ">>>: push len=%i type=%i ack=%i", len, type, ack);
-    if (_msg[_cur_idx].type != MSG_EMPTY) {
+    uint32_t cur_idx = _cur_idx;      // read only once the volatile value
+    CEC_msg_t *msg = &_msg[cur_idx];
+    if (msg->type != MSG_EMPTY) {
       return false;
     }
-    memmove(_msg[_cur_idx].buf, (uint8_t*) buf, CEC_BUF_SIZE);
-    _msg[_cur_idx].ack = ack;
-    _msg[_cur_idx].len = len;
-    _msg[_cur_idx].type = type;
-    _cur_idx = (_cur_idx + 1) % CEC_RING_SIZE;
+    memmove(&msg->buf, (uint8_t*) buf, CEC_BUF_SIZE);
+    msg->ack = ack;
+    msg->len = len;
+    msg->type = type;
+    _cur_idx = (cur_idx + 1) % CEC_RING_SIZE;
     return true;
   }
 
   // returns true if ok, false if full
   bool IRAM_ATTR log(uint32_t timing_expected_low, uint32_t timing_expected_high, uint32_t timing, uint16_t code, uint8_t state, bool line) {
 #ifdef HDMI_DEBUG
-    if (_msg[_cur_idx].type != MSG_EMPTY) {
+    uint32_t cur_idx = _cur_idx;      // read only once the volatile value
+    CEC_msg_t *msg = &_msg[cur_idx];
+    if (msg->type != MSG_EMPTY) {
       return false;
     }
-    _msg[_cur_idx].type = MSG_LOG;
-    _msg[_cur_idx].timing_expected_low = timing_expected_low;
-    _msg[_cur_idx].timing_expected_high = timing_expected_high;
-    _msg[_cur_idx].timing = timing;
-    _msg[_cur_idx].code = code;
-    _msg[_cur_idx].state = state;
-    _msg[_cur_idx].line = line;
-    _cur_idx = (_cur_idx + 1) % CEC_RING_SIZE;
+    msg->type = MSG_LOG;
+    msg->timing_expected_low = timing_expected_low;
+    msg->timing_expected_high = timing_expected_high;
+    msg->timing = timing;
+    msg->code = code;
+    msg->state = state;
+    msg->line = line;
+    _cur_idx = (cur_idx + 1) % CEC_RING_SIZE;
 #endif
     return true;
   }
@@ -248,7 +251,7 @@ public:
   void checkMessages();      // check regularly for mailbox
   // signal to Tasmota to exit the normal sleep and trigger a new tick event in the next millisecond
   void enableISR(void);
-  void IRAM_ATTR serviceGpioISR(void);    // handle the ISR on the CEC GPIO
+  inline void IRAM_ATTR serviceGpioISR(void) { runReceiveISR(); };    // handle the ISR on the CEC GPIO
   bool transmitRaw(const unsigned char* buffer, unsigned int count);
 
   // Getters
@@ -474,7 +477,7 @@ void CEC_Device::start(void) {
 ///
 /// The state machine works in blocking mode
 ///
-void IRAM_ATTR CEC_Device::runTransmit() {
+void CEC_Device::runTransmit() {
   if (!_xmit_wait_ms) {
     // we haven't waited for the signal to stabilize yet
     // compute the number of milliseconds to wait for in fast loop
@@ -716,7 +719,6 @@ void IRAM_ATTR CEC_Device::runTransmit() {
 void IRAM_ATTR CEC_Device::runReceiveISR() {
   if (isTransmitting()) { return; }         // ignore any interrupt caused or during active transmission
 
-  cec_isr_rcv_count += 1;
   // update timing information for new iteration
   uint32_t now = micros();
   if (!now) { now = 1; }    // avoid now == 0 which has a special meaning
@@ -1053,12 +1055,6 @@ void CEC_Device::enableISR(void) {
   if (_gpio >= 0) {
     attachInterruptArg(_gpio, CEC_Run, this, CHANGE);
   }
-}
-
-// Service gpio ISR
-void IRAM_ATTR CEC_Device::serviceGpioISR(void) {
-  cec_isr_count += 1;
-  runReceiveISR();
 }
 
 /*********************************************************************************************\
