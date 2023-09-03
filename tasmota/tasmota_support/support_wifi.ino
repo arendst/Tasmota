@@ -42,6 +42,7 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
+#include "esp_netif.h"
 
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;

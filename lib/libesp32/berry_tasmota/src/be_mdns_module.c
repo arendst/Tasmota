@@ -20,11 +20,11 @@ BE_FUNC_CTYPE_DECLARE(m_mdns_stop, "", "")
 extern void m_mdns_set_hostname(struct bvm *vm, const char * hostname);
 BE_FUNC_CTYPE_DECLARE(m_mdns_set_hostname, "", "@s")
 
-extern int32_t m_mdns_add_service(struct bvm *vm);
-extern int32_t m_mdns_remove_service(struct bvm *vm);
-extern int32_t m_dns_add_subtype(struct bvm *vm);
-extern int32_t m_dns_add_hostname(struct bvm *vm);
-extern int32_t m_dns_find_service(struct bvm *vm);
+extern int m_mdns_add_service(struct bvm *vm);
+extern int m_mdns_remove_service(struct bvm *vm);
+extern int m_dns_add_subtype(struct bvm *vm);
+extern int m_dns_add_hostname(struct bvm *vm);
+extern int m_dns_find_service(struct bvm *vm);
 
 /* @const_object_info_begin
 module mdns (scope: global) {
