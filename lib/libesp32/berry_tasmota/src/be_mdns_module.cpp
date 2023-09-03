@@ -213,7 +213,6 @@ static int32_t m_dns_add_hostname(struct bvm *vm) {
 
     const char* hostname = be_tostring(vm, 1);
     const char* ip_text = nullptr;
-    ip_addr_t a;
     for (uint16_t i = 2; i <= top; i++) {
       const char* ip_text = be_tostring(vm, i);
       if (ip_text == nullptr || ip_text[0] == 0) { continue; }    // ignore empty string
@@ -226,6 +225,7 @@ static int32_t m_dns_add_hostname(struct bvm *vm) {
       new_head->next = head;
       head = new_head;
 
+#ifdef USE_IPV6
       // 
       ip_addr_t *ip_addr = (ip_addr_t*) ip;
       head->addr.type = ip_addr->type;
@@ -234,6 +234,9 @@ static int32_t m_dns_add_hostname(struct bvm *vm) {
       } else {
         head->addr.u_addr.ip4.addr = ip_addr->u_addr.ip4.addr;
       }
+#else
+      head->addr.u_addr.ip4.addr = (uint32_t) ip;
+#endif
     } while (0);
 
     if (err == ESP_OK && head != nullptr) {
@@ -308,6 +311,7 @@ static int32_t m_dns_find_service(struct bvm *vm) {
       be_newobject(vm, "list");
       //
       for (a = r->addr; a != NULL; a = a->next) {
+#ifdef USE_IPV6
         ip_addr_t ip_addr;
         if (a->addr.type == IPADDR_TYPE_V6) {
           ip_addr_copy_from_ip6(ip_addr, a->addr.u_addr.ip6);
@@ -316,6 +320,9 @@ static int32_t m_dns_find_service(struct bvm *vm) {
         } else {
           continue;
         }
+#else
+        uint32_t ip_addr = a->addr.u_addr.ip4.addr;
+#endif
         be_pushstring(vm, IPAddress(ip_addr).toString().c_str());
         be_data_push(vm, -2);
         be_pop(vm, 1);

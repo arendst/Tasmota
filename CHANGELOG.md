@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 (#19408)
+- Berry make mdns compatible with non-IPv6 builds
 
 ### Removed
 
