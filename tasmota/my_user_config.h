@@ -784,7 +784,7 @@
 #endif  // USE_SPI
 
 // -- One wire sensors ----------------------------
-// #define USE_HDMI_CEC                              // Add support for HDMI CEC bus (+7k code)
+// #define USE_HDMI_CEC                              // Add support for HDMI CEC bus (+7k code, 1456 bytes IRAM)
 
 // -- Serial sensors ------------------------------
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
