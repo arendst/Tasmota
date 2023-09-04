@@ -4,14 +4,14 @@
 #if __ARM_ARCH >= 6
 #define mul(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ("smmul %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
     result ;\
 })
 #else
 #define mul(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ("smull r3, %0, %2, %1" : "=r" (result) : "r" (x), "r" (y) : "r3"); \
     result ; \
 })
@@ -20,7 +20,7 @@
 /* Fractional multiply with single bit left shift. */
 #define muls(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
         "smull r3, %0, %2, %1\n\t" \
         "movs r3, r3, lsl #1\n\t" \
@@ -34,7 +34,7 @@
 #if __ARM_ARCH >= 6
 #define mulr(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
         "smmulr %0, %2, %1" : "=r" (result) : "r" (x), "r" (y) \
     ); \
@@ -43,7 +43,7 @@
 #else
 #define mulr(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
         "smull r3, %0, %2, %1\n\t" \
         "adds r3, r3, #0x80000000\n\t" \
@@ -56,7 +56,7 @@
 
 #define mulsr(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
         "smull r3, %0, %1, %2\n\t" \
         "movs r3, r3, lsl #1\n\t" \
@@ -81,7 +81,7 @@
 
 #define cmuls(dre, dim, are, aim, bre, bim) \
 do { \
-    register int32_t tre, tim; \
+    register int tre, tim; \
     asm ( \
         "smull r3, %0, %2, %4\n\t" \
         "smlal r3, %0, %3, %5\n\t" \

@@ -1,11 +1,11 @@
 #include <stdint.h>
 
 #ifndef asm_mul
-//#define              /// mul(a,b)   (int32_t)  ( ( ((int64_t) a) * ((int64_t) b) ) >>32 )
+//#define              /// mul(a,b)   (int)  ( ( ((int64_t) a) * ((int64_t) b) ) >>32 )
 
 #define asm_mul(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
     result ;\
 })
@@ -15,7 +15,7 @@
 #ifndef asm_muls     //Not sure about this
 #define asm_muls(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
     	"mulsh %0, %2, %1\n\t" \
     	"add %0, %0, %0" \
@@ -25,24 +25,24 @@
 
 
 
-//#define muls(a,b)  (int32_t)  ( ( ((int64_t) a) * ((int64_t) b) ) >>31 )
+//#define muls(a,b)  (int)  ( ( ((int64_t) a) * ((int64_t) b) ) >>31 )
 #endif
 
 #ifndef asm_mulr    //no rounding shortcut
 #define asm_mulr(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
     result ;\
 })
 
-//#define mulr(a,b)  (int32_t)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x80000000LL ) >>32 )
+//#define mulr(a,b)  (int)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x80000000LL ) >>32 )
 #endif
 
 #ifndef asm_mulsr   //no rounding shortcut
 #define asm_mulsr(x,y) \
 ({ \
-    register int32_t result; \
+    register int result; \
     asm ( \
         "mulsh %0, %2, %1\n\t" \
         "add %0, %0, %0" \
@@ -50,7 +50,7 @@
     result ;\
 })
 
-//#define mulsr(a,b) (int32_t)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x40000000LL ) >>31 )
+//#define mulsr(a,b) (int)  ( ( ( ((int64_t) a) * ((int64_t) b)) + 0x40000000LL ) >>31 )
 #endif
 
 #ifndef asm_mul0
@@ -84,7 +84,7 @@
 /*
  #define cmuls(dre, dim, are, aim, bre, bim) \
 do { \
-    register int32_t tre, tim; \
+    register int tre, tim; \
     asm ( \
         "mull %0, %2, %4\n\t" \  //mulsh
         "mulsh r3, %2, %4\n\t" \  //mulsh
@@ -111,9 +111,9 @@ do { \
 
 #define asm_cmuls(dre, dim, are, aim, bre, bim) \
 do { \
-	int32_t tre; \
-	(tre) = (int32_t) (((int64_t) (are) * (int64_t) (bre) - (int64_t) (aim) * (int64_t) (bim)) >> 31); \
-	(dim) = (int32_t) (((int64_t) (are) * (int64_t) (bim) + (int64_t) (aim) * (int64_t) (bre)) >> 31); \
+	int tre; \
+	(tre) = (int) (((int64_t) (are) * (int64_t) (bre) - (int64_t) (aim) * (int64_t) (bim)) >> 31); \
+	(dim) = (int) (((int64_t) (are) * (int64_t) (bim) + (int64_t) (aim) * (int64_t) (bre)) >> 31); \
 	(dre) = tre; \
 } while (0)
 #endif
