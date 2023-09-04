@@ -1048,7 +1048,7 @@ void br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
  * \param data   certificate data chunk.
  * \param len    certificate data chunk length (in bytes).
  */
-void br_x509_decoder_push(br_x509_decoder_context *ctx,
+void br_x509_decoder_push_tasmota(br_x509_decoder_context *ctx,
 	const void *data, size_t len);
 
 /**
