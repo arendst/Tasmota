@@ -312,7 +312,7 @@ void ShutterSettingsLoad(bool erase) {
 void ShutterSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
   uint32_t crc32 = GetCfgCrc32((uint8_t*)&ShutterSettings +4, sizeof(ShutterSettings) -4);  // Skip crc32
-  if (crc32 != ShutterSettings.crc32) {
+  if (crc32 != ShutterSettings.crc32 && ShutterSettings.version > 0) {
     // Try to save file /.drvset027
     ShutterSettings.crc32 = crc32;
 
