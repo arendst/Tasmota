@@ -62,7 +62,7 @@ t0_parse7E_signed(const unsigned char **p)
 /* static const unsigned char t0_datablock[]; */
 
 
-void br_x509_decoder_init_main_libmail(void *t0ctx);
+void br_x509_decoder_init_main(void *t0ctx);
 
 void br_x509_decoder_run(void *t0ctx);
 
@@ -99,7 +99,7 @@ br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
 	ctx->append_in_ctx = append_in_ctx;
 	ctx->cpu.dp = &ctx->dp_stack[0];
 	ctx->cpu.rp = &ctx->rp_stack[0];
-	br_x509_decoder_init_main_libmail(&ctx->cpu);
+	br_x509_decoder_init_main(&ctx->cpu);
 	br_x509_decoder_run(&ctx->cpu);
 }
 
@@ -381,7 +381,7 @@ name(void *ctx) \
 	T0_ENTER(t0ctx->ip, t0ctx->rp, slot); \
 }
 
-T0_DEFENTRY(br_x509_decoder_init_main_libmail, 93)
+T0_DEFENTRY(br_x509_decoder_init_main, 93)
 
 #define T0_NEXT(t0ipp)   (pgm_read_byte((*t0ipp)++))
 
