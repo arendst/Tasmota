@@ -81,7 +81,7 @@ void br_x509_decoder_run(void *t0ctx);
 
 /* see bearssl_x509.h */
 void
-br_x509_decoder_init(br_x509_decoder_context *ctx,
+br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
 	void (*append_dn)(void *ctx, const void *buf, size_t len),
 	void *append_dn_ctx,
 	void (*append_in)(void *ctx, const void *buf, size_t len),

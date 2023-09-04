@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Berry fast_loop is now called every 5ms whatever the Sleep value
 - Reduce IRAM consumption of HDMI CEC to 1453 bytes
+- `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS
 
 ### Fixed
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 (#19408)
