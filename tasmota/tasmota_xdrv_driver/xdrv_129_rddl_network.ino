@@ -43,6 +43,7 @@
 #include "curves.h"
 #include "ed25519.h"
 #include "base58.h"
+#include "math.h"
 
 #include "rddl_types.h"
 #include "planetmintgo.h"
@@ -430,12 +431,26 @@ String registerCID(const char* cid){
   return jwt_token;
 }
 
+char planetmintapi[100] = {0};
+
+void setPlanetmintAPI( const char* api, size_t len)
+{
+  storeKeyValuePair( "planetmintapi", api, len);
+  memset((void*)planetmintapi,0, 100);
+}
+char* getPlanetmintAPI()
+{
+  if( strlen( planetmintapi) == 0 )
+    getValueForKey( "planetmintapi", planetmintapi);
+  return planetmintapi;
+}
+  
+  
+
 int broadcast_TX( const char* tx_bytes ){
-  char planetmintapi[100] = {0};
-  getValueForKey( "planetmintapi", planetmintapi);
   HTTPClientLight http;
   String uri = "/cosmos/tx/v1beta1/txs";
-  uri = planetmintapi + uri;
+  uri = getPlanetmintAPI() + uri;
   http.begin(uri);
   http.addHeader("accept", "application/json");
   http.addHeader("Content-Type", "application/json");
@@ -444,7 +459,7 @@ int broadcast_TX( const char* tx_bytes ){
 
   int ret = http.POST( payload );
   ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), "respose code", ret);
-  //ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), "respose code", ret);
+
   return ret;
 }
 
@@ -455,9 +470,8 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
   // get account info from planetmint-go
   HTTPClientLight http;
   String uri = "/cosmos/auth/v1beta1/account_info/";
-  char planetmintapi[100] = {0};
-  getValueForKey( "planetmintapi", planetmintapi);
-  uri = planetmintapi + uri;
+
+  uri = getPlanetmintAPI() + uri;
   uri = uri + g_address;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
@@ -488,7 +502,6 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
 
 int create_broadcast_tx( void* anyMsg, char* tokenAmount, bool first_tx )
 {
-
  Google__Protobuf__Any* local_msg = (Google__Protobuf__Any*) anyMsg;
   
   // get address 
@@ -514,52 +527,86 @@ int create_broadcast_tx( void* anyMsg, char* tokenAmount, bool first_tx )
   uint8_t* txbytes = NULL;
   size_t tx_size = 0;
   char* chain_id = "planetmintgo";
-  prepareTx( local_msg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
-  //free(anyMsg->value.data);
-
-  char* tx_bytes_b64 = (char*) malloc( 1000 );
+  prepareTx( local_msg, &coin, g_priv_key, g_pub_key, sequence, chain_id, account_id, &txbytes, &tx_size);
+  size_t allocationsize = ceil( ((tx_size+3-1)/3)*4)+2;
+  char* tx_bytes_b64 = (char*) malloc( allocationsize);
+  memset( (void*)tx_bytes_b64, 0, allocationsize );
   char * p = bintob64( tx_bytes_b64, txbytes, tx_size);
+  free( txbytes );
 
   int broadcast_return = broadcast_TX( tx_bytes_b64 );
+  
   free(tx_bytes_b64);
 
   return broadcast_return;
 }
 
+bool getGPSstring( char** gps_data ){
+  HTTPClientLight http;
+  bool status = false;
+  String uri = "https://us-central1-rddl-io-8680.cloudfunctions.net/geolocation-888954d";
+  http.begin(uri);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.GET();
+
+  if (httpResponseCode > 0) {
+    String payload = http.getString();
+    Serial.println(httpResponseCode);
+    Serial.println(payload);
+    *gps_data = (char*)malloc( 200);
+    memset( *gps_data, 0, 200);
+    strcpy(*gps_data, payload.c_str());
+    status = removeIPAddr( *gps_data );
+  }
+  else {
+    Serial.println("Error on HTTP request\n");
+  }
+
+  http.end();
+  return status;
+}
+
 int registerMachine(){
-    char hexpubkey[66+1] = {0};
-    toHexString( hexpubkey, g_pub_key_planetmint, 66);
+  
+  char buffer[58+1] = {0};
+  char hexpubkey[66+1] = {0};
+  char* gps_str = NULL;
 
-    char buffer[58] = {0};
-    char* machinecid = getValueForKeyRaw("machinecid", buffer);
+  getGPSstring( &gps_str );
+  toHexString( hexpubkey, g_pub_key_planetmint, 66);
+  char* machinecid = getValueForKeyRaw("machinecid", buffer);
 
-    Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-    metadata.additionaldatacid = machinecid;
-    metadata.gps = "{\"Latitude\":\"-48.876667\",\"Longitude\":\"-123.393333\"}";
-    metadata.assetdefinition = "{\"Version\": \"0.1\"}";
-    metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"AdnT2uyt\"}";
+  Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
+  metadata.additionaldatacid = machinecid;
+  metadata.gps = gps_str;
+  metadata.assetdefinition = "{\"Version\": \"0.1\"}";
+  metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
 
-    Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
-    machine.name = (char*)g_address;
-    machine.ticker = NULL;
-    machine.domain = "lab.r3c.network";
-    machine.reissue = false;
-    machine.amount = 1;
-    machine.precision = 8;
-    machine.issuerplanetmint = g_ext_pub_key_planetmint;
-    machine.issuerliquid = g_ext_pub_key_liquid;
-    machine.machineid = hexpubkey;
-    machine.metadata = &metadata;
-    machine.type = RDDL_MACHINE_POWER_SWITCH;
+  Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
+  machine.name = (char*)g_address;
+  machine.ticker = NULL;
+  machine.domain = "lab.r3c.network";
+  machine.reissue = false;
+  machine.amount = 1;
+  machine.precision = 8;
+  machine.issuerplanetmint = g_ext_pub_key_planetmint;
+  machine.issuerliquid = g_ext_pub_key_liquid;
+  machine.machineid = hexpubkey;
+  machine.metadata = &metadata;
+  machine.type = RDDL_MACHINE_POWER_SWITCH;
 
-    Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
-    machineMsg.creator = (char*)g_address;
-    machineMsg.machine = &machine;
-    Google__Protobuf__Any msg = GOOGLE__PROTOBUF__ANY__INIT;
-    generateAnyAttestMachineMsg( &msg, &machineMsg);
-    int ret = create_broadcast_tx( &msg, "2", true);
-    free( msg.value.data );
-    return ret;
+  Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
+  machineMsg.creator = (char*)g_address;
+  machineMsg.machine = &machine;
+  Google__Protobuf__Any msg = GOOGLE__PROTOBUF__ANY__INIT;
+  generateAnyAttestMachineMsg( &msg, &machineMsg);
+  int ret = create_broadcast_tx( &msg, "2", true);
+
+  free( msg.value.data );
+  free(gps_str);
+  
+  return ret;
 }
 
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){

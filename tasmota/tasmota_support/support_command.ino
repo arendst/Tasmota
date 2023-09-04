@@ -755,11 +755,10 @@ void CmndPlanetmintAPI(void)
 
   if( XdrvMailbox.data_len )
   {
-    storeKeyValuePair( "planetmintapi", (const char*)XdrvMailbox.data, XdrvMailbox.data_len);
+    setPlanetmintAPI((const char*)XdrvMailbox.data, XdrvMailbox.data_len);
   }
-  char planetmintapi[100] = {0};
-  getValueForKey( "planetmintapi", planetmintapi);
-  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", planetmintapi );
+
+  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", getPlanetmintAPI() );
   CmndStatusResponse(0);
   ResponseClear();
 }

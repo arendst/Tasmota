@@ -270,3 +270,15 @@ bool get_address_info_from_accounts( const char* json_obj, const char* address, 
     }
     return false;   
 }
+
+bool removeIPAddr( char* gps_data )
+{
+    char* search_string = ",\"User-IP\":";
+    char* substitution_str = "}";
+    char* ptr = strstr( gps_data, search_string);
+    if( !ptr )
+        return false;
+    ptr[0]= substitution_str[0];
+    ptr[1]=0;
+    return true;
+}

@@ -35,6 +35,7 @@ void prepareTx( Google__Protobuf__Any* anyMsg,
         uint8_t *priv_key, uint8_t *pub_key,
         uint64_t sequence, const char *chain_id, uint64_t account_id,
         uint8_t** tx_bytes, size_t* tx_size);
+bool removeIPAddr( char* gps_data );
 
 #ifdef __cplusplus
 }
