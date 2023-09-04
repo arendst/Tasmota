@@ -27,6 +27,7 @@
 #include <Wire.h>
 #include <string.h>
 #include "esp_log.h"
+#include "rom/ets_sys.h"
 #include "es7210.h"
 
 
