@@ -731,7 +731,7 @@ extern "C" {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
     // Don't process anything but the first certificate in the chain
     if (!xc->done_cert) {
-      br_x509_decoder_init(&xc->ctx, nullptr, nullptr, nullptr, nullptr);
+      br_x509_decoder_init_esp8266(&xc->ctx, nullptr, nullptr, nullptr, nullptr);
     }
     (void)server_name; // ignore server name
   }
@@ -748,7 +748,7 @@ extern "C" {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
     // Don't process anything but the first certificate in the chain
     if (!xc->done_cert) {
-      br_x509_decoder_push(&xc->ctx, (const void*)buf, len);
+      br_x509_decoder_push_tasmota(&xc->ctx, (const void*)buf, len);
     }
   }
 

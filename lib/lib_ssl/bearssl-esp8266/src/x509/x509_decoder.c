@@ -62,9 +62,9 @@ t0_parse7E_signed(const unsigned char **p)
 /* static const unsigned char t0_datablock[]; */
 
 
-void br_x509_decoder_init_main(void *t0ctx);
+void br_x509_decoder_init_main_tasmota(void *t0ctx);
 
-void br_x509_decoder_run(void *t0ctx);
+void br_x509_decoder_run_tasmota(void *t0ctx);
 
 
 
@@ -81,7 +81,7 @@ void br_x509_decoder_run(void *t0ctx);
 
 /* see bearssl_x509.h */
 void
-br_x509_decoder_init(br_x509_decoder_context *ctx,
+br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
 	void (*append_dn)(void *ctx, const void *buf, size_t len),
 	void *append_dn_ctx,
 	void (*append_in)(void *ctx, const void *buf, size_t len),
@@ -99,18 +99,18 @@ br_x509_decoder_init(br_x509_decoder_context *ctx,
 	ctx->append_in_ctx = append_in_ctx;
 	ctx->cpu.dp = &ctx->dp_stack[0];
 	ctx->cpu.rp = &ctx->rp_stack[0];
-	br_x509_decoder_init_main(&ctx->cpu);
-	br_x509_decoder_run(&ctx->cpu);
+	br_x509_decoder_init_main_tasmota(&ctx->cpu);
+	br_x509_decoder_run_tasmota(&ctx->cpu);
 }
 
 /* see bearssl_x509.h */
 void
-br_x509_decoder_push(br_x509_decoder_context *ctx,
+br_x509_decoder_push_tasmota(br_x509_decoder_context *ctx,
 	const void *data, size_t len)
 {
 	ctx->hbuf = data;
 	ctx->hlen = len;
-	br_x509_decoder_run(&ctx->cpu);
+	br_x509_decoder_run_tasmota(&ctx->cpu);
 }
 
 
@@ -381,12 +381,12 @@ name(void *ctx) \
 	T0_ENTER(t0ctx->ip, t0ctx->rp, slot); \
 }
 
-T0_DEFENTRY(br_x509_decoder_init_main, 93)
+T0_DEFENTRY(br_x509_decoder_init_main_tasmota, 93)
 
 #define T0_NEXT(t0ipp)   (pgm_read_byte((*t0ipp)++))
 
 void
-br_x509_decoder_run(void *t0ctx)
+br_x509_decoder_run_tasmota(void *t0ctx)
 {
 	uint32_t *dp, *rp;
 	const unsigned char *ip;
