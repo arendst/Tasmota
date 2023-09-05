@@ -106,12 +106,12 @@ shine_global_config *shine_initialise(shine_config_t *pub_config) {
   for (x = 0; x < MAX_CHANNELS; x++) {
       for (y = 0; y < MAX_GRANULES; y++) {
         // 2 * 2 * 576 each
-        config->l3_enc[x][y] = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //Significant performance hit in IRAM
+        config->l3_enc[x][y] = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //Significant performance hit in IRAM
         if (!config->l3_enc[x][y]) {
           // error should never occur because of spiram size
           //config->l3_enc[x][y] = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE,MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT);
         }
-        config->mdct_freq[x][y] = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 1%
+        config->mdct_freq[x][y] = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 1%
         if (!config->mdct_freq[x][y]) {
           // error
           //config->mdct_freq[x][y] = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT);
@@ -123,15 +123,15 @@ shine_global_config *shine_initialise(shine_config_t *pub_config) {
 #endif
   config->l3loop = (l3loop_t*)heap_caps_malloc(sizeof(l3loop_t), MALLOC_CAP_SPIRAM);
 #ifdef  SHINE_DEBUG
-  printf("xrsq & xrabs each: %d\n", sizeof(int32_t)*GRANULE_SIZE);
+  printf("xrsq & xrabs each: %d\n", sizeof(int)*GRANULE_SIZE);
 #endif
-  config->l3loop->xrsq = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
+  config->l3loop->xrsq = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   if (!config->l3loop->xrsq) {
     // error
     //config->l3loop->xrsq = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   }
 
-  config->l3loop->xrabs = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
+  config->l3loop->xrabs = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   if (!config->l3loop->xrabs) {
     //config->l3loop->xrabs = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   }
