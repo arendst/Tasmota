@@ -459,6 +459,8 @@ int broadcast_TX( const char* tx_bytes ){
 
   int ret = http.POST( payload );
   ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), "respose code", ret);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "respose string", http.getString().c_str());
+
 
   return ret;
 }
@@ -527,7 +529,7 @@ int create_broadcast_tx( void* anyMsg, char* tokenAmount, bool first_tx )
   uint8_t* txbytes = NULL;
   size_t tx_size = 0;
   char* chain_id = "planetmintgo";
-  prepareTx( local_msg, &coin, g_priv_key, g_pub_key, sequence, chain_id, account_id, &txbytes, &tx_size);
+  prepareTx( local_msg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
   size_t allocationsize = ceil( ((tx_size+3-1)/3)*4)+2;
   char* tx_bytes_b64 = (char*) malloc( allocationsize);
   memset( (void*)tx_bytes_b64, 0, allocationsize );
@@ -578,7 +580,7 @@ int registerMachine(){
   char* machinecid = getValueForKeyRaw("machinecid", buffer);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-  metadata.additionaldatacid = machinecid;
+  metadata.additionaldatacid = buffer;
   metadata.gps = gps_str;
   metadata.assetdefinition = "{\"Version\": \"0.1\"}";
   metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
@@ -636,11 +638,13 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   if( ret == -2 )
   {
     Serial.println("Register: Machine\n");
+    ResponseAppend_P("Register: Machine\n");
     registerMachine();
   }
   else
   {
     Serial.println("Notarize: CID Asset\n");
+    ResponseAppend_P("Notarize: CID Asset\n");
   }
   
 }

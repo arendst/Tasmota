@@ -774,7 +774,7 @@ void CmndAccountID(void)
   {
     char buffer[10] = {0};
     char* paccountid = getValueForKey("accountid", buffer);
-    Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
+    Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", buffer );
   }
   
   CmndStatusResponse(0);
@@ -789,9 +789,9 @@ void CmdMachineCid(void) {
   }
   else
   {
-    char buffer[58] = {0};
+    char buffer[58+1] = {0};
     char* machinecid = getValueForKeyRaw("machinecid", buffer);
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, machinecid );
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, buffer );
   }
   
   CmndStatusResponse(0);
