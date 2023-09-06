@@ -181,6 +181,7 @@ struct SHUTTER {
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
+  uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
@@ -205,7 +206,7 @@ struct SHUTTERGLOBAL {
 void ShutterSettingsDefault(void) {
   // Init default values in case file is not found
 
-  AddLog(LOG_LEVEL_INFO, PSTR("Shutter: " D_USE_DEFAULTS));
+  AddLog(LOG_LEVEL_INFO, PSTR("SHT: " D_USE_DEFAULTS));
 
   memset(&ShutterSettings, 0x00, sizeof(ShutterSettings));
   ShutterSettings.version = SHUTTER_VERSION;
@@ -1170,81 +1171,90 @@ bool ShutterButtonHandlerMulti(void)
   uint8_t  button               = XdrvMailbox.payload;
   uint32_t button_index         = XdrvMailbox.index;
   uint8_t  shutter_index        = ShutterSettings.shutter_button[button_index].shutter_number;
-  uint8_t  button_press_counter = Button.press_counter[button_index] ;
+  uint8_t  button_press_counter = Button.press_counter[button_index];
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MULTI: SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d, last state %d, press counter %d, window %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MULTI: SHT: Shtr%d, Btn %d, hold %d, dir %d, idx %d, payload %d, last state %d, press cnt %d, window %d, simu_press %d"),
     shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload,
-    Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index]);
+    Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index], Shutter[shutter_index].button_simu_pressed);
 
   // multipress event handle back to main procedure
   if (Button.press_counter[button_index]>4) return false;
 
-  uint8_t pos_press_index = Button.press_counter[button_index]-1;
+  if (!Shutter[shutter_index].button_simu_pressed) {
+    uint8_t pos_press_index = Button.press_counter[button_index]-1;
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
-  XdrvMailbox.index = shutter_index +1;
-  TasmotaGlobal.last_source = SRC_BUTTON;
-  XdrvMailbox.data_len = 0;
-  char databuf[1] = "";
-  XdrvMailbox.data = databuf;
-  XdrvMailbox.command = NULL;
-  int8_t position = ShutterSettings.shutter_button[button_index].position[pos_press_index].pos;
-  if (position == -1) {
-    position = tmin(100,tmax(0,ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1)
-               + ShutterSettings.shutter_button[button_index].position[pos_press_index].pos_incrdecr));
-  }
-  XdrvMailbox.payload = position;
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> %d"), shutter_index+1, position);
-  if (102 == position) {
-    XdrvMailbox.payload = XdrvMailbox.index;
-    CmndShutterToggle();
-  } else {
-    if (position == ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1) ) {
-      Shutter[XdrvMailbox.index -1].tilt_target_pos = position==0? Shutter[XdrvMailbox.index -1].tilt_config[0]:(position==100?Shutter[XdrvMailbox.index -1].tilt_config[1]:Shutter[XdrvMailbox.index -1].tilt_target_pos);
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> Endpoint movement detected at %d. Set Tilt: %d"), shutter_index+1, position, Shutter[XdrvMailbox.index -1].tilt_target_pos);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
+    XdrvMailbox.index = shutter_index +1;
+    TasmotaGlobal.last_source = SRC_BUTTON;
+    XdrvMailbox.data_len = 0;
+    char databuf[1] = "";
+    XdrvMailbox.data = databuf;
+    XdrvMailbox.command = NULL;
+    int8_t position = ShutterSettings.shutter_button[button_index].position[pos_press_index].pos;
+    if (position == -1) {
+      position = tmin(100,tmax(0,ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1)
+                + ShutterSettings.shutter_button[button_index].position[pos_press_index].pos_incrdecr));
     }
-    // set the tilt
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt, button_index+1);
-    switch (ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt) {
-      // No change in tilt defined
-      case -128:
-      break;
-      // tilt change defined on position or (127) incr/decr
-      case 127:
-        Shutter[shutter_index].tilt_target_pos_override = Shutter[shutter_index].tilt_real_pos + ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt_incrdecr;
-      break;
-      default:
-        Shutter[shutter_index].tilt_target_pos_override = ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt;
-    }
-
-    // set the tilt
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), Shutter[shutter_index].tilt_target_pos_override, button_index+1);
-
-    // reset button to default
-    Button.press_counter[button_index] = 0;
-      
-    CmndShutterPosition();
-  }
-
-  if (ShutterSettings.shutter_button[button_index].position[pos_press_index].mqtt_broadcast) {
-    // MQTT broadcast to grouptopic
-    char scommand[CMDSZ];
-    char stopic[TOPSZ];
-    for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-      if ((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all)) {
-        snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
-        GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
-        Response_P("%d", position);
-        MqttPublish(stopic, false);
+    XdrvMailbox.payload = position;
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> %d"), shutter_index+1, position);
+    if (102 == position) {
+      XdrvMailbox.payload = XdrvMailbox.index;
+      CmndShutterToggle();
+    } else {
+      if (position == ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1) ) {
+        Shutter[XdrvMailbox.index -1].tilt_target_pos = position==0? Shutter[XdrvMailbox.index -1].tilt_config[0]:(position==100?Shutter[XdrvMailbox.index -1].tilt_config[1]:Shutter[XdrvMailbox.index -1].tilt_target_pos);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> Endpoint movement detected at %d. Set Tilt: %d"), shutter_index+1, position, Shutter[XdrvMailbox.index -1].tilt_target_pos);
       }
-    } // for (uint32_t)
-  } // ShutterSettings.shutter_button[button_index].positionmatrix & ((0x01<<26)<<pos_press_index
-  // reset counter is served by shutter driver
+      // set the tilt
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt, button_index+1);
+      switch (ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt) {
+        // No change in tilt defined
+        case -128:
+        break;
+        // tilt change defined on position or (127) incr/decr
+        case 127:
+          Shutter[shutter_index].tilt_target_pos_override = Shutter[shutter_index].tilt_real_pos + ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt_incrdecr;
+        break;
+        default:
+          Shutter[shutter_index].tilt_target_pos_override = ShutterSettings.shutter_button[button_index].position[pos_press_index].tilt;
+      }
+
+      // set the tilt
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Target tilt %d for button %d"), Shutter[shutter_index].tilt_target_pos_override, button_index+1);
+
+      // reset button to default
+      Button.press_counter[button_index] = 0;
+        
+      CmndShutterPosition();
+    }
+
+    if (ShutterSettings.shutter_button[button_index].position[pos_press_index].mqtt_broadcast) {
+      // MQTT broadcast to grouptopic
+      char scommand[CMDSZ];
+      char stopic[TOPSZ];
+      for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
+        if ((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all)) {
+          snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
+          GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
+          Response_P("%d", position);
+          MqttPublish(stopic, false);
+        }
+      } // for (uint32_t)
+    } // ShutterSettings.shutter_button[button_index].positionmatrix & ((0x01<<26)<<pos_press_index
+    // reset counter is served by shutter driver
+  }
 
   Response_P(PSTR("{"));
-  ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, button_index+1 , button_press_counter);
+  ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, Shutter[shutter_index].button_simu_pressed ? 0 : button_index+1, button_press_counter);
   ResponseJsonEnd();
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
+  Shutter[shutter_index].button_simu_pressed = 0;
+  // reset all buttons on this shutter to prevent further actions with the second button comming in
+  for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32*2 ; i++) {
+    if ((ShutterSettings.shutter_button[i].enabled) && (ShutterSettings.shutter_button[i].shutter_number == shutter_index) ) {
+      Button.press_counter[i] = 0;
+    }    
+  }
 
   return true;
 }
@@ -1259,7 +1269,8 @@ bool ShutterButtonHandler(void)
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d, last state %d, press counter %d, window %d"),
       shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload,
       Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index]);
-
+      
+      Shutter[shutter_index].button_simu_pressed |= ShutterButtonIsSimultaneousHold( button_index, shutter_index);
       if (Button.hold_timer[button_index] > 100 ) {
         Button.hold_timer[button_index] = 1;         // Reset button hold counter to stay below hold trigger
       }
@@ -1280,6 +1291,22 @@ bool ShutterButtonHandler(void)
     return true;
   }
 
+  // simulatanous press. Stop 
+  if (PRESSED == button
+      && Shutter[shutter_index].button_simu_pressed
+      && Button.window_timer[button_index] == 0 
+      && Button.press_counter[button_index] > 0
+      )
+  {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Simu Hold detected"));
+    Button.press_counter[button_index] = 0;
+    
+    if ( button_index % 2 ) {
+      ShutterButtonHandlerMulti();
+    }
+      
+    return false;
+  }
   //long press detected. Start moving shutter into direction
   if (PRESSED == button
       && Shutter[shutter_index].direction == 0   //shutter in STOP Position
