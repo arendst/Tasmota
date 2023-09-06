@@ -203,7 +203,7 @@ void gnerateAnyCIDAttestMsgGeneric( Google__Protobuf__Any* anyMsg, const char* c
 
     const ecdsa_curve *curve = &secp256k1;
     //ed25519_sign((const unsigned char *)digest, SHA256_DIGEST_LENGTH, (const unsigned char *)priv_key, (const unsigned char *)pub_key + 1, signature);
-    uint8_t signature[64+1]= {0};
+    uint8_t signature[64]= {0};
     char signature_hex[64*2+1] = {0};
     int res = ecdsa_sign_digest(curve, (const unsigned char *)priv_key, (const unsigned char *)digest, signature, NULL, NULL);
     toHexString(signature_hex, signature, 64);

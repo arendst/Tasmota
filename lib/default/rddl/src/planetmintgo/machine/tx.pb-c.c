@@ -97,6 +97,96 @@ void   planetmintgo__machine__msg_attest_machine_response__free_unpacked
   assert(message->base.descriptor == &planetmintgo__machine__msg_attest_machine_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   planetmintgo__machine__msg_register_trust_anchor__init
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchor         *message)
+{
+  static const Planetmintgo__Machine__MsgRegisterTrustAnchor init_value = PLANETMINTGO__MACHINE__MSG_REGISTER_TRUST_ANCHOR__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__machine__msg_register_trust_anchor__get_packed_size
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor *message)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__machine__msg_register_trust_anchor__pack
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__machine__msg_register_trust_anchor__pack_to_buffer
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Machine__MsgRegisterTrustAnchor *
+       planetmintgo__machine__msg_register_trust_anchor__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Machine__MsgRegisterTrustAnchor *)
+     protobuf_c_message_unpack (&planetmintgo__machine__msg_register_trust_anchor__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__machine__msg_register_trust_anchor__free_unpacked
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchor *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   planetmintgo__machine__msg_register_trust_anchor_response__init
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchorResponse         *message)
+{
+  static const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse init_value = PLANETMINTGO__MACHINE__MSG_REGISTER_TRUST_ANCHOR_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__machine__msg_register_trust_anchor_response__get_packed_size
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__machine__msg_register_trust_anchor_response__pack
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__machine__msg_register_trust_anchor_response__pack_to_buffer
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *
+       planetmintgo__machine__msg_register_trust_anchor_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *)
+     protobuf_c_message_unpack (&planetmintgo__machine__msg_register_trust_anchor_response__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__machine__msg_register_trust_anchor_response__free_unpacked
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__machine__msg_register_trust_anchor_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 static const ProtobufCFieldDescriptor planetmintgo__machine__msg_attest_machine__field_descriptors[2] =
 {
   {
@@ -166,12 +256,83 @@ const ProtobufCMessageDescriptor planetmintgo__machine__msg_attest_machine_respo
   (ProtobufCMessageInit) planetmintgo__machine__msg_attest_machine_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCMethodDescriptor planetmintgo__machine__msg__method_descriptors[1] =
+static const ProtobufCFieldDescriptor planetmintgo__machine__msg_register_trust_anchor__field_descriptors[2] =
+{
+  {
+    "creator",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Machine__MsgRegisterTrustAnchor, creator),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "trustAnchor",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Machine__MsgRegisterTrustAnchor, trustanchor),
+    &planetmintgo__machine__trust_anchor__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned planetmintgo__machine__msg_register_trust_anchor__field_indices_by_name[] = {
+  0,   /* field[0] = creator */
+  1,   /* field[1] = trustAnchor */
+};
+static const ProtobufCIntRange planetmintgo__machine__msg_register_trust_anchor__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor planetmintgo__machine__msg_register_trust_anchor__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.machine.MsgRegisterTrustAnchor",
+  "MsgRegisterTrustAnchor",
+  "Planetmintgo__Machine__MsgRegisterTrustAnchor",
+  "planetmintgo.machine",
+  sizeof(Planetmintgo__Machine__MsgRegisterTrustAnchor),
+  2,
+  planetmintgo__machine__msg_register_trust_anchor__field_descriptors,
+  planetmintgo__machine__msg_register_trust_anchor__field_indices_by_name,
+  1,  planetmintgo__machine__msg_register_trust_anchor__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__machine__msg_register_trust_anchor__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+#define planetmintgo__machine__msg_register_trust_anchor_response__field_descriptors NULL
+#define planetmintgo__machine__msg_register_trust_anchor_response__field_indices_by_name NULL
+#define planetmintgo__machine__msg_register_trust_anchor_response__number_ranges NULL
+const ProtobufCMessageDescriptor planetmintgo__machine__msg_register_trust_anchor_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.machine.MsgRegisterTrustAnchorResponse",
+  "MsgRegisterTrustAnchorResponse",
+  "Planetmintgo__Machine__MsgRegisterTrustAnchorResponse",
+  "planetmintgo.machine",
+  sizeof(Planetmintgo__Machine__MsgRegisterTrustAnchorResponse),
+  0,
+  planetmintgo__machine__msg_register_trust_anchor_response__field_descriptors,
+  planetmintgo__machine__msg_register_trust_anchor_response__field_indices_by_name,
+  0,  planetmintgo__machine__msg_register_trust_anchor_response__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__machine__msg_register_trust_anchor_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCMethodDescriptor planetmintgo__machine__msg__method_descriptors[2] =
 {
   { "AttestMachine", &planetmintgo__machine__msg_attest_machine__descriptor, &planetmintgo__machine__msg_attest_machine_response__descriptor },
+  { "RegisterTrustAnchor", &planetmintgo__machine__msg_register_trust_anchor__descriptor, &planetmintgo__machine__msg_register_trust_anchor_response__descriptor },
 };
 const unsigned planetmintgo__machine__msg__method_indices_by_name[] = {
-  0         /* AttestMachine */
+  0,        /* AttestMachine */
+  1         /* RegisterTrustAnchor */
 };
 const ProtobufCServiceDescriptor planetmintgo__machine__msg__descriptor =
 {
@@ -180,7 +341,7 @@ const ProtobufCServiceDescriptor planetmintgo__machine__msg__descriptor =
   "Msg",
   "Planetmintgo__Machine__Msg",
   "planetmintgo.machine",
-  1,
+  2,
   planetmintgo__machine__msg__method_descriptors,
   planetmintgo__machine__msg__method_indices_by_name
 };
@@ -191,6 +352,14 @@ void planetmintgo__machine__msg__attest_machine(ProtobufCService *service,
 {
   assert(service->descriptor == &planetmintgo__machine__msg__descriptor);
   service->invoke(service, 0, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
+}
+void planetmintgo__machine__msg__register_trust_anchor(ProtobufCService *service,
+                                                       const Planetmintgo__Machine__MsgRegisterTrustAnchor *input,
+                                                       Planetmintgo__Machine__MsgRegisterTrustAnchorResponse_Closure closure,
+                                                       void *closure_data)
+{
+  assert(service->descriptor == &planetmintgo__machine__msg__descriptor);
+  service->invoke(service, 1, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
 }
 void planetmintgo__machine__msg__init (Planetmintgo__Machine__Msg_Service *service,
                                        Planetmintgo__Machine__Msg_ServiceDestroy destroy)

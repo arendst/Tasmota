@@ -39,10 +39,11 @@ struct  Planetmintgo__Machine__Machine
   char *machineid;
   Planetmintgo__Machine__Metadata *metadata;
   uint32_t type;
+  char *machineidsignature;
 };
 #define PLANETMINTGO__MACHINE__MACHINE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__machine__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL, 0 }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL, 0, (char *)protobuf_c_empty_string }
 
 
 struct  Planetmintgo__Machine__Metadata

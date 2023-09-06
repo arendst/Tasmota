@@ -15,9 +15,12 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 #include "planetmintgo/machine/machine.pb-c.h"
+#include "planetmintgo/machine/trust_anchor.pb-c.h"
 
 typedef struct Planetmintgo__Machine__MsgAttestMachine Planetmintgo__Machine__MsgAttestMachine;
 typedef struct Planetmintgo__Machine__MsgAttestMachineResponse Planetmintgo__Machine__MsgAttestMachineResponse;
+typedef struct Planetmintgo__Machine__MsgRegisterTrustAnchor Planetmintgo__Machine__MsgRegisterTrustAnchor;
+typedef struct Planetmintgo__Machine__MsgRegisterTrustAnchorResponse Planetmintgo__Machine__MsgRegisterTrustAnchorResponse;
 
 
 /* --- enums --- */
@@ -42,6 +45,26 @@ struct  Planetmintgo__Machine__MsgAttestMachineResponse
 };
 #define PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__msg_attest_machine_response__descriptor) \
+     }
+
+
+struct  Planetmintgo__Machine__MsgRegisterTrustAnchor
+{
+  ProtobufCMessage base;
+  char *creator;
+  Planetmintgo__Machine__TrustAnchor *trustanchor;
+};
+#define PLANETMINTGO__MACHINE__MSG_REGISTER_TRUST_ANCHOR__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__msg_register_trust_anchor__descriptor) \
+    , (char *)protobuf_c_empty_string, NULL }
+
+
+struct  Planetmintgo__Machine__MsgRegisterTrustAnchorResponse
+{
+  ProtobufCMessage base;
+};
+#define PLANETMINTGO__MACHINE__MSG_REGISTER_TRUST_ANCHOR_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__msg_register_trust_anchor_response__descriptor) \
      }
 
 
@@ -83,6 +106,44 @@ Planetmintgo__Machine__MsgAttestMachineResponse *
 void   planetmintgo__machine__msg_attest_machine_response__free_unpacked
                      (Planetmintgo__Machine__MsgAttestMachineResponse *message,
                       ProtobufCAllocator *allocator);
+/* Planetmintgo__Machine__MsgRegisterTrustAnchor methods */
+void   planetmintgo__machine__msg_register_trust_anchor__init
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchor         *message);
+size_t planetmintgo__machine__msg_register_trust_anchor__get_packed_size
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor   *message);
+size_t planetmintgo__machine__msg_register_trust_anchor__pack
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor   *message,
+                      uint8_t             *out);
+size_t planetmintgo__machine__msg_register_trust_anchor__pack_to_buffer
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchor   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Machine__MsgRegisterTrustAnchor *
+       planetmintgo__machine__msg_register_trust_anchor__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__machine__msg_register_trust_anchor__free_unpacked
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchor *message,
+                      ProtobufCAllocator *allocator);
+/* Planetmintgo__Machine__MsgRegisterTrustAnchorResponse methods */
+void   planetmintgo__machine__msg_register_trust_anchor_response__init
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchorResponse         *message);
+size_t planetmintgo__machine__msg_register_trust_anchor_response__get_packed_size
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse   *message);
+size_t planetmintgo__machine__msg_register_trust_anchor_response__pack
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse   *message,
+                      uint8_t             *out);
+size_t planetmintgo__machine__msg_register_trust_anchor_response__pack_to_buffer
+                     (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *
+       planetmintgo__machine__msg_register_trust_anchor_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__machine__msg_register_trust_anchor_response__free_unpacked
+                     (Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message,
+                      ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*Planetmintgo__Machine__MsgAttestMachine_Closure)
@@ -90,6 +151,12 @@ typedef void (*Planetmintgo__Machine__MsgAttestMachine_Closure)
                   void *closure_data);
 typedef void (*Planetmintgo__Machine__MsgAttestMachineResponse_Closure)
                  (const Planetmintgo__Machine__MsgAttestMachineResponse *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Machine__MsgRegisterTrustAnchor_Closure)
+                 (const Planetmintgo__Machine__MsgRegisterTrustAnchor *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Machine__MsgRegisterTrustAnchorResponse_Closure)
+                 (const Planetmintgo__Machine__MsgRegisterTrustAnchorResponse *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -102,6 +169,10 @@ struct Planetmintgo__Machine__Msg_Service
                          const Planetmintgo__Machine__MsgAttestMachine *input,
                          Planetmintgo__Machine__MsgAttestMachineResponse_Closure closure,
                          void *closure_data);
+  void (*register_trust_anchor)(Planetmintgo__Machine__Msg_Service *service,
+                                const Planetmintgo__Machine__MsgRegisterTrustAnchor *input,
+                                Planetmintgo__Machine__MsgRegisterTrustAnchorResponse_Closure closure,
+                                void *closure_data);
 };
 typedef void (*Planetmintgo__Machine__Msg_ServiceDestroy)(Planetmintgo__Machine__Msg_Service *);
 void planetmintgo__machine__msg__init (Planetmintgo__Machine__Msg_Service *service,
@@ -110,16 +181,23 @@ void planetmintgo__machine__msg__init (Planetmintgo__Machine__Msg_Service *servi
     { &planetmintgo__machine__msg__descriptor, protobuf_c_service_invoke_internal, NULL }
 #define PLANETMINTGO__MACHINE__MSG__INIT(function_prefix__) \
     { PLANETMINTGO__MACHINE__MSG__BASE_INIT,\
-      function_prefix__ ## attest_machine  }
+      function_prefix__ ## attest_machine,\
+      function_prefix__ ## register_trust_anchor  }
 void planetmintgo__machine__msg__attest_machine(ProtobufCService *service,
                                                 const Planetmintgo__Machine__MsgAttestMachine *input,
                                                 Planetmintgo__Machine__MsgAttestMachineResponse_Closure closure,
                                                 void *closure_data);
+void planetmintgo__machine__msg__register_trust_anchor(ProtobufCService *service,
+                                                       const Planetmintgo__Machine__MsgRegisterTrustAnchor *input,
+                                                       Planetmintgo__Machine__MsgRegisterTrustAnchorResponse_Closure closure,
+                                                       void *closure_data);
 
 /* --- descriptors --- */
 
 extern const ProtobufCMessageDescriptor planetmintgo__machine__msg_attest_machine__descriptor;
 extern const ProtobufCMessageDescriptor planetmintgo__machine__msg_attest_machine_response__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__machine__msg_register_trust_anchor__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__machine__msg_register_trust_anchor_response__descriptor;
 extern const ProtobufCServiceDescriptor planetmintgo__machine__msg__descriptor;
 
 PROTOBUF_C__END_DECLS

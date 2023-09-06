@@ -142,7 +142,7 @@ void   planetmintgo__machine__machine_index__free_unpacked
   assert(message->base.descriptor == &planetmintgo__machine__machine_index__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_descriptors[11] =
+static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_descriptors[12] =
 {
   {
     "name",
@@ -276,6 +276,18 @@ static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_desc
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "machineIdSignature",
+    12,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Machine__Machine, machineidsignature),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned planetmintgo__machine__machine__field_indices_by_name[] = {
   4,   /* field[4] = amount */
@@ -283,6 +295,7 @@ static const unsigned planetmintgo__machine__machine__field_indices_by_name[] = 
   7,   /* field[7] = issuerLiquid */
   6,   /* field[6] = issuerPlanetmint */
   8,   /* field[8] = machineId */
+  11,   /* field[11] = machineIdSignature */
   9,   /* field[9] = metadata */
   0,   /* field[0] = name */
   5,   /* field[5] = precision */
@@ -293,7 +306,7 @@ static const unsigned planetmintgo__machine__machine__field_indices_by_name[] = 
 static const ProtobufCIntRange planetmintgo__machine__machine__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 11 }
+  { 0, 12 }
 };
 const ProtobufCMessageDescriptor planetmintgo__machine__machine__descriptor =
 {
@@ -303,7 +316,7 @@ const ProtobufCMessageDescriptor planetmintgo__machine__machine__descriptor =
   "Planetmintgo__Machine__Machine",
   "planetmintgo.machine",
   sizeof(Planetmintgo__Machine__Machine),
-  11,
+  12,
   planetmintgo__machine__machine__field_descriptors,
   planetmintgo__machine__machine__field_indices_by_name,
   1,  planetmintgo__machine__machine__number_ranges,
