@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Berry make mdns compatible with non-IPv6 builds
 - ESP32 Shutter migration (#19454)
 - ESP32 Shutter multi press button events (#19465)
+- Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 
 ### Removed
 
