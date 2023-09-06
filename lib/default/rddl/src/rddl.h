@@ -27,6 +27,7 @@ extern "C" {
 #define SEED_SIZE 64
 #define SEED_SIZE_MNEMONIC_TO_SEED 16
 
+extern char * private_key_machine_id;
 extern uint8_t secret_seed[SEED_SIZE];
 
 const uint8_t *fromHexString(const char *str);

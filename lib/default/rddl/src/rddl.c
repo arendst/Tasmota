@@ -36,8 +36,10 @@
 #endif
 
 uint8_t secret_seed[SEED_SIZE] = {0};
+char* private_key_machine_id = "THISISTHEPRIVATEKEYOFTHEMACHINE2";
 
 const uint8_t *fromHexString(const char *str) {
+  private_key_machine_id[2]="I";
   static uint8_t buf[FROMHEX_MAXLEN] = {0};
   size_t len = strlen(str) / 2;
   if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
