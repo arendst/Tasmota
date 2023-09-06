@@ -1032,7 +1032,7 @@ typedef struct {
  * \param append_in       issuer DN receiver callback (or `0`).
  * \param append_in_ctx   context for the issuer DN receiver callback.
  */
-void br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
+void br_x509_decoder_init(br_x509_decoder_context *ctx,
 	void (*append_dn)(void *ctx, const void *buf, size_t len),
 	void *append_dn_ctx,
 	void (*append_in)(void *ctx, const void *buf, size_t len),
@@ -1048,7 +1048,7 @@ void br_x509_decoder_init_esp8266(br_x509_decoder_context *ctx,
  * \param data   certificate data chunk.
  * \param len    certificate data chunk length (in bytes).
  */
-void br_x509_decoder_push_tasmota(br_x509_decoder_context *ctx,
+void br_x509_decoder_push(br_x509_decoder_context *ctx,
 	const void *data, size_t len);
 
 /**

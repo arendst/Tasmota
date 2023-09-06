@@ -134,7 +134,7 @@ namespace key_bssl
     // Clear everything in the Trust Anchor
     memset(ta, 0, sizeof(*ta));
 
-    br_x509_decoder_init(dc.get(), byte_vector_append, (void *)&vdn);
+    br_x509_decoder_init_libmail(dc.get(), byte_vector_append, (void *)&vdn);
     br_x509_decoder_push_libmail(dc.get(), xc->data, xc->data_len);
     pk = br_x509_decoder_get_pkey(dc.get());
     if (pk == nullptr)

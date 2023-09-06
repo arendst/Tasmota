@@ -376,9 +376,9 @@ namespace bssl
         {
             br_x509_insecure_context *xc = (br_x509_insecure_context *)ctx;
 #if defined(USE_EMBED_SSL_ENGINE)
-            br_x509_decoder_init(&xc->ctx, insecure_subject_dn_append, xc, insecure_issuer_dn_append, xc);
+            br_x509_decoder_init_libmail(&xc->ctx, insecure_subject_dn_append, xc, insecure_issuer_dn_append, xc);
 #elif defined(ESP32) || defined(USE_LIB_SSL_ENGINE)
-            br_x509_decoder_init(&xc->ctx, insecure_subject_dn_append, xc);
+            br_x509_decoder_init_libmail(&xc->ctx, insecure_subject_dn_append, xc);
 #endif
             xc->done_cert = false;
             br_sha1_init(&xc->sha1_cert);

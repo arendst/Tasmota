@@ -79,7 +79,7 @@ namespace bssl
     }
 
     br_sha256_init(sha256);
-    br_x509_decoder_init(ctx, dn_append, sha256);
+    br_x509_decoder_init_libmail(ctx, dn_append, sha256);
     br_x509_decoder_push_libmail(ctx, (const void *)raw, length);
 
     // Copy result to structure
