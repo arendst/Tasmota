@@ -79,7 +79,7 @@ extern "C" {
     if (!WifiHostByName(host, addr)){
         return 0;
     }
-    // AddLog(LOG_LEVEL_DEBUG, "BRY: udp.begin got host '%s'", addr.toString().c_str());
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: be_udp_send_ntv host '%s'", addr.toString().c_str());
     if (!udp->beginPacket(addr, port)) { return 0; }
     int bw = udp->write(buf, len);
     if (!bw) { return 0; }
