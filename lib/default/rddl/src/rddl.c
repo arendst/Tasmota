@@ -203,7 +203,7 @@ bool verifyDataHash(const char* sig_str, const char* pub_key_str, const char* ha
 bool getMachineIDSignature(  uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature, uint8_t* hash)
 {
   const ecdsa_curve *curve = &secp256k1;
-  
+
   SHA256_CTX ctx;
   sha256_Init(&ctx);
   // Hash the string
@@ -217,3 +217,14 @@ bool getMachineIDSignature(  uint8_t* priv_key,  uint8_t* pub_key, uint8_t* sign
   else
     return false;
 }
+
+bool getMachineIDSignaturePublicKey( uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature)
+{
+  ecdsa_get_public_key33(&secp256k1, priv_key, pub_key);
+
+  uint8_t hash[32]={0};
+  bool ret = getMachineIDSignature(  priv_key,  pub_key, signature, hash);
+  return ret;
+}
+
+

@@ -44,6 +44,7 @@
 #include "ed25519.h"
 #include "base58.h"
 #include "math.h"
+#include "secp256k1.h"
 
 #include "rddl_types.h"
 #include "planetmintgo.h"
@@ -571,16 +572,28 @@ bool getGPSstring( char** gps_data ){
 
 int registerMachine(){
   
-  char buffer[58+1] = {0};
-  char hexpubkey[66+1] = {0};
+  char machinecid_buffer[58+1] = {0};
+  char machineid_public_key_hex[33*2+1] = {0};
   char* gps_str = NULL;
 
+  //char machineid_public_key_hex[33*2+1] = {0};
+  //uint8_t machineid_public_key[33]={0};
+  // uint8_t signature[64]={0};
+  char signature_hex[64*2+1]={0};
+  // uint8_t hash[32];
+
+  // ecdsa_get_public_key33(&secp256k1, private_key_machine_id, machineid_public_key);
+  // bool ret_bool = getMachineIDSignature(  private_key_machine_id,  machineid_public_key, signature, hash);
+  // if( ! ret_bool )
+  //   return -1;
+  //toHexString( signature_hex, signature, 64*2);
+
   getGPSstring( &gps_str );
-  toHexString( hexpubkey, g_pub_key_planetmint, 66);
-  char* machinecid = getValueForKeyRaw("machinecid", buffer);
+  toHexString( machineid_public_key_hex, g_pub_key_planetmint, 33*2);
+  char* machinecid = getValueForKeyRaw("machinecid", machinecid_buffer);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-  metadata.additionaldatacid = buffer;
+  metadata.additionaldatacid = machinecid_buffer;
   metadata.gps = gps_str;
   metadata.assetdefinition = "{\"Version\": \"0.1\"}";
   metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
@@ -594,9 +607,10 @@ int registerMachine(){
   machine.precision = 8;
   machine.issuerplanetmint = g_ext_pub_key_planetmint;
   machine.issuerliquid = g_ext_pub_key_liquid;
-  machine.machineid = hexpubkey;
+  machine.machineid = machineid_public_key_hex;
   machine.metadata = &metadata;
   machine.type = RDDL_MACHINE_POWER_SWITCH;
+  machine.machineidsignature = signature_hex;
 
   Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
   machineMsg.creator = (char*)g_address;

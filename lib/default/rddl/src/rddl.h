@@ -51,6 +51,8 @@ bool verifyDataHash(const char* sig_str, const char* pub_key_str, const char* ha
 
 bool getMachineIDSignature(  uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature, uint8_t* hash);
 
+bool getMachineIDSignaturePublicKey( uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature);
+
 #ifdef __cplusplus
 }
 #endif
