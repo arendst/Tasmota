@@ -29,7 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_111             111
-#define XI2C_111             111  // See I2CDEVICES.md d
+#define XI2C_84             84  // See I2CDEVICES.md
 
 #define EVERYNSECONDS 5
 
@@ -191,7 +191,7 @@ void ens16xShow(bool json)
 
 bool Xsns111(uint32_t function)
 {
-  if (!I2cEnabled(XI2C_111)) { return false; }
+  if (!I2cEnabled(XI2C_84)) { return false; }
 
   bool result = false;
 
