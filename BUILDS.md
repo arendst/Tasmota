@@ -132,8 +132,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MPR121                | - | - / - | - | - | - | - |
 | USE_CCS811                | - | - / - | - | x | - | - |
 | USE_CCS811_V2             | - | - / x | - | - | - | - |
-| USE_ENS16x                | - | - / x | - | x | - | - |
-| USE_ENS210                | - | - / x | - | x | - | - |
+| USE_ENS16x                | - | - / - | - | - | - | - |
+| USE_ENS210                | - | - / - | - | - | - | - |
 | USE_MPU6050               | - | - / - | - | - | - | - |
 | USE_DS3231                | - | - / - | - | - | - | - |
 | USE_MGC3130               | - | - / - | - | - | - | - |
