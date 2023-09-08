@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_ENS16X
+#ifdef USE_ENS16x
 
 /*********************************************************************************************\
  * ENS16x - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
@@ -126,7 +126,7 @@ void ens16xUpdate(void)  // Perform every n second
 		if (ENS16xdataB.tcnt >= EVERYNSECONDS) {
 			ENS16xdataB.tcnt = 0;
 			ENS16xdataB.ready = 0;
-			if (ENS16xb.available()) {
+			if (ens16xb.available()) {
 				ens16xb.measure();
 				ENS16xdataB.TVOC = ens16xb.getTVOC();
 				ENS16xdataB.eCO2 = ens16xb.geteCO2();
@@ -151,7 +151,7 @@ void ens16xUpdate(void)  // Perform every n second
 }
 
 const char HTTP_SNS_ENS16x[] PROGMEM =
-  "{s}ENS16x " D_AQSI "{m}%d {e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}ENS16x AQI{m}%d {e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}ENS16x " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"
   "{s}ENS16x " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
@@ -196,19 +196,19 @@ bool Xsns111(uint32_t function)
   bool result = false;
 
   if (FUNC_INIT == function) {
-    ENS16xDetect();
+    ens16xDetect();
   }
   else {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        ENS16xUpdate();
+        ens16xUpdate();
         break;
       case FUNC_JSON_APPEND:
-        ENS16xShow(1);
+        ens16xShow(1);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        ENS16xShow(0);
+        ens16xShow(0);
         break;
 #endif  // USE_WEBSERVER
     }
