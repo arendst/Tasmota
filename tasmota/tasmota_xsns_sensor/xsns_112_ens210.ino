@@ -29,7 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_112             112
-#define XI2C_112             112  // See I2CDEVICES.md
+#define XI2C_85             85  // See I2CDEVICES.md
 
 #define ENS210_I2CADDR_0      0x43
 #define ENS210_I2CADDR_1      0x44
@@ -171,7 +171,7 @@ void ens210Show(bool json)
 
 bool Xsns112(uint32_t function) 
 {
-  if (!I2cEnabled(XI2C_112)) { return false; }
+  if (!I2cEnabled(XI2C_85)) { return false; }
 
   bool result = false;
 
