@@ -903,8 +903,12 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_MAX17043)
     feature9 |= 0x02000000;
 #endif
-//    feature9 |= 0x04000000;
-//    feature9 |= 0x08000000;
+#if defined(USE_I2C) && defined(USE_ENS16x)
+    feature9 |= 0x04000000;   //xsns_111_ens16x.ino
+#endif
+#if defined(USE_I2C) && defined(USE_ENS210)
+    feature9 |= 0x08000000;    //xsns_112_ens210.ino
+#endif
 
 //    feature9 |= 0x10000000;
 //    feature9 |= 0x20000000;
