@@ -23,6 +23,7 @@ ScioSense_ENS16x::ScioSense_ENS16x(uint8_t slaveaddr) {
 	this->_nCS = 0;
 }
 
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 ScioSense_ENS16x::ScioSense_ENS16x(uint8_t ADDR, uint8_t nCS, uint8_t nINT) {
 	this->_slaveaddr = ENS16x_I2CADDR_0;
 
@@ -44,10 +45,12 @@ void ScioSense_ENS16x::setI2C(uint8_t sda, uint8_t scl) {
 	this->_sdaPin = sda;
 	this->_sclPin = scl;	
 }	
+#endif
 
 // Init I2C communication, resets ENS16x and checks its PART_ID. Returns false on I2C problems or wrong PART_ID.
 bool ScioSense_ENS16x::begin(bool debug) 
 {
+#ifndef ENS16x_DISABLE_DEBUG
 	debugENS16x = debug;
 
 	//Set pin levels
@@ -60,12 +63,15 @@ bool ScioSense_ENS16x::begin(bool debug)
 		pinMode(this->_nCS, OUTPUT);
 		digitalWrite(this->_nCS, HIGH);
 	}
-  
+#endif
+
 	//init I2C
 	_i2c_init();
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.println("begin() - I2C init done");
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
   
 	this->_available = false;
@@ -78,9 +84,11 @@ bool ScioSense_ENS16x::begin(bool debug)
 		this->_available = this->clearCommand();
 		this->_available = this->getFirmware();
 	}
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.println("ENS16x in idle mode");	
 	}
+#endif
 	return this->_available;
 }
 
@@ -89,10 +97,12 @@ bool ScioSense_ENS16x::reset(void)
 {
 	uint8_t result = this->write8(_slaveaddr, ENS16x_REG_OPMODE, ENS16x_OPMODE_RESET);
 
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("reset() result: ");
 		Serial.println(result == 0 ? "ok" : "nok");
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 
 	return result == 0;
@@ -107,12 +117,14 @@ bool ScioSense_ENS16x::checkPartID(void) {
 	this->read(_slaveaddr, ENS16x_REG_PART_ID, i2cbuf, 2);
 	part_id = i2cbuf[0] | ((uint16_t)i2cbuf[1] << 8);
 	
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("checkPartID() result: ");
 		if (part_id == ENS160_PARTID) Serial.println("ENS160 ok");
 		else if (part_id == ENS161_PARTID) Serial.println("ENS161 ok");
 		else Serial.println("nok");
 	}	
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 
 	if (part_id == ENS160_PARTID) { this->_revENS16x = 0; result = true; }
@@ -128,17 +140,21 @@ bool ScioSense_ENS16x::clearCommand(void) {
 	
 	result = this->write8(_slaveaddr, ENS16x_REG_COMMAND, ENS16x_COMMAND_NOP);
 	result = this->write8(_slaveaddr, ENS16x_REG_COMMAND, ENS16x_COMMAND_CLRGPR);
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("clearCommand() result: ");
 		Serial.println(result == 0 ? "ok" : "nok");
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 	
 	status = this->read8(_slaveaddr, ENS16x_REG_DATA_STATUS);
+#ifndef ENS16x_DISABLE_DEBUG
  	if (debugENS16x) {
 		Serial.print("clearCommand() status: 0x");
 		Serial.println(status, HEX);
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 		
 	return result == 0;
@@ -163,6 +179,7 @@ bool ScioSense_ENS16x::getFirmware() {
 	if (this->_fw_ver_major > 6) this->_revENS16x = 1;
 	else this->_revENS16x = 0;
 
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.println(this->_fw_ver_major);
 		Serial.println(this->_fw_ver_minor);
@@ -170,6 +187,7 @@ bool ScioSense_ENS16x::getFirmware() {
 		Serial.print("getFirmware() result: ");
 		Serial.println(result == 0 ? "ok" : "nok");
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 	
 	return result == 0;
@@ -183,16 +201,18 @@ bool ScioSense_ENS16x::setMode(uint8_t mode) {
 	if ((mode == ENS161_OPMODE_LP) and (_revENS16x == 0)) result = 1;
 	else result = this->write8(_slaveaddr, ENS16x_REG_OPMODE, mode);
 
+#ifndef ENS16x_DISABLE_DEBUG
 	//if (debugENS16x) {
 		Serial.print("setMode() activate result: ");
 		Serial.println(result == 0 ? "ok" : "nok");
 	//}
-
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 	
 	return result == 0;
 }
 
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 // Initialize definition of custom mode with <n> steps
 bool ScioSense_ENS16x::initCustomMode(uint16_t stepNum) {
 	uint8_t result;
@@ -211,16 +231,20 @@ bool ScioSense_ENS16x::initCustomMode(uint16_t stepNum) {
 	
 	return result == 0;
 }
+#endif
 
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 // Add a step to custom measurement profile with definition of duration, enabled data acquisition and temperature for each hotplate
 bool ScioSense_ENS16x::addCustomStep(uint16_t time, bool measureHP0, bool measureHP1, bool measureHP2, bool measureHP3, uint16_t tempHP0, uint16_t tempHP1, uint16_t tempHP2, uint16_t tempHP3) {
 	uint8_t seq_ack;
 	uint8_t temp;
 
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("setCustomMode() write step ");
 		Serial.println(this->_stepCount);
 	}
+#endif
 	delay(ENS16x_BOOTING);                   // Wait to boot after reset
 
 	temp = (uint8_t)(((time / 24)-1) << 6); 
@@ -258,6 +282,7 @@ bool ScioSense_ENS16x::addCustomStep(uint16_t time, bool measureHP0, bool measur
 	}
 	
 }
+#endif
 
 // Perform prediction measurement and stores result in internal variables
 bool ScioSense_ENS16x::measure(bool waitForNew) {
@@ -266,18 +291,21 @@ bool ScioSense_ENS16x::measure(bool waitForNew) {
 	bool newData = false;
 
 	// Set default status for early bail out
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) Serial.println("Start measurement");
-	
+#endif
+
 	if (waitForNew) {
 		do {
 			delay(10);
 			status = this->read8(_slaveaddr, ENS16x_REG_DATA_STATUS);
 			
+#ifndef ENS16x_DISABLE_DEBUG
 			if (debugENS16x) {
 				Serial.print("Status: ");
 				Serial.println(status);
 			}
-			
+#endif			
 		} while (!IS_NEWDAT(status));
 	} else {
 		status = this->read8(_slaveaddr, ENS16x_REG_DATA_STATUS);	
@@ -297,6 +325,7 @@ bool ScioSense_ENS16x::measure(bool waitForNew) {
 	return newData;
 }
 
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 // Perfrom raw measurement and stores result in internal variables
 bool ScioSense_ENS16x::measureRaw(bool waitForNew) {
 	uint8_t i2cbuf[8];
@@ -304,17 +333,21 @@ bool ScioSense_ENS16x::measureRaw(bool waitForNew) {
 	bool newData = false;
 
 	// Set default status for early bail out
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) Serial.println("Start measurement");
-	
+#endif
+
 	if (waitForNew) {
 		do {
 			delay(10);
 			status = this->read8(_slaveaddr, ENS16x_REG_DATA_STATUS);
 			
+#ifndef ENS16x_DISABLE_DEBUG
 			if (debugENS16x) {
 				Serial.print("Status: ");
 				Serial.println(status);
 			}
+#endif
 		} while (!IS_NEWGPR(status));
 	} else {
 		status = this->read8(_slaveaddr, ENS16x_REG_DATA_STATUS);	
@@ -344,7 +377,6 @@ bool ScioSense_ENS16x::measureRaw(bool waitForNew) {
 	return newData;
 }
 
-
 // Writes t (degC) and h (%rh) to ENV_DATA. Returns false on I2C problems.
 bool ScioSense_ENS16x::set_envdata(float t, float h) {
 	
@@ -372,12 +404,17 @@ bool ScioSense_ENS16x::set_envdata210(uint16_t t, uint16_t h) {
 	
 	return result;
 }
+#endif
 
 /**************************************************************************/
 
 void ScioSense_ENS16x::_i2c_init() {
-	if (this->_sdaPin != this->_sclPin) Wire.begin(this->_sdaPin, this->_sclPin);
-	else Wire.begin();
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
+	if (this->_sdaPin != this->_sclPin) 
+		Wire.begin(this->_sdaPin, this->_sclPin);
+	else 
+#endif
+		Wire.begin();
 }
 
 /**************************************************************************/
@@ -393,12 +430,14 @@ uint8_t ScioSense_ENS16x::read(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t 
 	uint8_t pos = 0;
 	uint8_t result = 0;
 	
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("I2C read address: 0x");
 		Serial.print(addr, HEX);
 		Serial.print(" - register: 0x");
 		Serial.println(reg, HEX);
 	}
+#endif
 	
 	//on arduino we need to read in 32 byte chunks
 	while(pos < num){
@@ -426,6 +465,7 @@ uint8_t ScioSense_ENS16x::write8(uint8_t addr, byte reg, byte value) {
 }
 
 uint8_t ScioSense_ENS16x::write(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t num) {
+#ifndef ENS16x_DISABLE_DEBUG
 	if (debugENS16x) {
 		Serial.print("I2C write address: 0x");
 		Serial.print(addr, HEX);
@@ -438,6 +478,7 @@ uint8_t ScioSense_ENS16x::write(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t
 		}
 		Serial.println();
 	}
+#endif
 	
 	Wire.beginTransmission((uint8_t)addr);
 	Wire.write((uint8_t)reg);

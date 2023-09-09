@@ -37,23 +37,29 @@ ScioSense_ENS210::ScioSense_ENS210(uint8_t slaveaddr) {
 	this->_slaveaddress = slaveaddr;
 }
 
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 void ScioSense_ENS210::setI2C(uint8_t sda, uint8_t scl) {
 	this->_sdaPin = sda;
 	this->_sclPin = scl;	
 }	
+#endif
 
 // Init I2C communication, resets ENS210 and checks its PART_ID. Returns false on I2C problems or wrong PART_ID.
 // Stores solder correction.
 bool ScioSense_ENS210::begin(bool debug) {
 	bool result;
 
+#ifndef ENS210_DISABLE_DEBUG
 	debugENS210 = debug;
+#endif
 	
 	//init I2C
 	_i2c_init();
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.println("ens210 debug - I2C init done");
 	}
+#endif
   
 	// Record solder correction
 	this->_soldercorrection= 0;
@@ -73,6 +79,7 @@ bool ScioSense_ENS210::begin(bool debug) {
 	return result;
 }
 
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 	uint8_t i2cbuf[2];
 	
@@ -80,12 +87,15 @@ void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 	
 	//Disable low power mode --> always on
 	uint8_t result = this->write8(oldAddr, 0x10, 0x00);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Low Power off result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 
 	// read status register
 	result = this->read(oldAddr, 0x11, i2cbuf, 1);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Read status result: 0x");
 	Serial.println(result,HEX);
 	for (uint8_t i=0; i<1; i++) {
@@ -93,16 +103,20 @@ void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 		Serial.print(i2cbuf[i],HEX);
 	}
 	Serial.println();
+#endif
 	delay(100);
 	
 	// enable low level access. PASSWORD_WRITE_ENABLE
 	result = this->write8(oldAddr, 0x10, 0x30);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("PASSWORD_WRITE_ENABLE result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 
 	// read status register
 	result = this->read(oldAddr, 0x11, i2cbuf, 1);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Read status result: 0x");
 	Serial.println(result,HEX);
 	for (uint8_t i=0; i<1; i++) {
@@ -110,17 +124,21 @@ void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 		Serial.print(i2cbuf[i],HEX);
 	}
 	Serial.println();
+#endif
 	delay(100);
 
 	// low level access password. Password is 00 00 00 00
 	uint8_t passwdCmd[4] = {0x00, 0x00, 0x00, 0x00};
 	result = this->write(oldAddr, 0x48, passwdCmd, 5);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Write password result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 	
 	// read low-level mode sensor output data
 	result = this->read(oldAddr, 0x46, i2cbuf, 2);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Read low level result: 0x");
 	Serial.println(result,HEX);
 	for (uint8_t i=0; i<2; i++) {
@@ -128,24 +146,30 @@ void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 		Serial.print(i2cbuf[i],HEX);
 	}
 	Serial.println();
+#endif
 	delay(100);
 	
 	// write values to parameter field and data1&2 field
 	uint8_t newAddrCmd[5] = {0x00,0x00,0x22,0x00,0x41};
 	newAddrCmd[4] = newAddr;
 	result = this->write(oldAddr, 0x41, newAddrCmd, 5);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Write parameters result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 
 	// write SEN_CMD to execute low-level command specified, 0xCE means “APB_WRITE”
 	result = this->write8(oldAddr, 0x40, 0xCE);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Execute result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 	
 	// Read low-level mode sensor output data to check if programming succeeded. Expected response: 0x00 0xAC
 	result = this->read(oldAddr, 0x46, i2cbuf, 2);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Read back result: 0x");
 	Serial.println(result,HEX);
 	for (uint8_t i=0; i<2; i++) {
@@ -153,35 +177,44 @@ void ScioSense_ENS210::changeAddr(uint8_t oldAddr,  uint8_t newAddr) {
 		Serial.print(i2cbuf[i],HEX);
 	}
 	Serial.println();
+#endif
 	delay(100);
 	
 	// reset ENS210
 	result = this->write8(oldAddr, 0x10, 0xFF);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Reset result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 
 	// reset ENS210
 	result = this->write8(oldAddr, 0x10, 0xFF);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Reset result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 
 	// reset ENS210
 	result = this->write8(newAddr, 0x10, 0xFF);
+#ifndef ENS210_DISABLE_DEBUG
 	Serial.print("Reset result: 0x");
 	Serial.println(result,HEX);
+#endif
 	delay(100);
 }
-
+#endif //#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 
 // Sends a reset to the ENS210. Returns false on I2C problems.
 bool ScioSense_ENS210::reset(void) {
 	uint8_t result = this->write8(_slaveaddress, ENS210_REG_SYS_CTRL, 0x80);
+#ifndef ENS210_DISABLE_DEBUG
  	if (debugENS210) {
 		Serial.print("ens210 debug - reset: 0x");
 		Serial.println(result,HEX);
 	}
+#endif
 	delay(ENS210_BOOTING);                   // Wait to boot after reset
 	return result==0;
 }
@@ -191,10 +224,12 @@ bool ScioSense_ENS210::reset(void) {
 bool ScioSense_ENS210::lowpower(bool enable) {
 	uint8_t power = enable ? 0x01: 0x00;
 	uint8_t result = this->write8(this->_slaveaddress, ENS210_REG_SYS_CTRL, power);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - lowpower: 0x");
 		Serial.println(result,HEX);
 	}
+#endif
  	delay(ENS210_BOOTING);                   // Wait boot-time after power switch
 	return result==0;
 }
@@ -211,48 +246,60 @@ bool ScioSense_ENS210::getversion() {
 
 	// Read the PART_ID
 	result = this->read(this->_slaveaddress, ENS210_REG_PART_ID, i2cbuf, 2);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - PART_ID I2C result: 0x");
 		Serial.println(result, HEX);
 	}
+#endif
 	//this->_partID = (uint16_t)(i2cbuf[1]*256U + i2cbuf[0]*1U);
 	this->_partID = (uint16_t)(((uint16_t)i2cbuf[1] << 8) | ((uint16_t)i2cbuf[0]));
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("PART_ID: 0x");
 		Serial.println(this->_partID,HEX);
 	}
+#endif
 
 	// Read the REV
 	result = this->read(this->_slaveaddress, ENS210_REG_REV, i2cbuf, 2);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - REV I2C result: 0x");
 		Serial.println(result, HEX);
 	}
+#endif
 	this->_rev = (uint16_t)(((uint16_t)i2cbuf[1] << 8) | ((uint16_t)i2cbuf[0]));
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("REV: 0x");
 		Serial.println(this->_rev,HEX);
 	}
+#endif
 
 	// Read the UID
 	result = this->read(_slaveaddress, ENS210_REG_UID,i2cbuf,8); 
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - UID 0x");
 		Serial.println(result,HEX);
 	}
+#endif
 	this->_uID = (uint64_t)((uint64_t)i2cbuf[7]<<56 | (uint64_t)i2cbuf[6]<<48 | (uint64_t)i2cbuf[5]<<40 | (uint64_t)i2cbuf[4]<<32 | (uint64_t)i2cbuf[3]<<24 | (uint64_t)i2cbuf[2]<<16 | (uint64_t)i2cbuf[1]<<8 | (uint64_t)i2cbuf[0]);
 	
 	//for( int i=0; i<8; i++) ((uint8_t*)this->_uID)[i]=i2cbuf[i]; //((uint8_t*)this->_uID)[i]=i2cbuf[i];
 	this->_uIDhi = (uint32_t)(this->_uID >> 32);
 	this->_uIDlo = (uint32_t)(this->_uID & 0xFFFFFFFF);
 	
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("UID hi 0x");
 		Serial.print(this->_uIDhi,HEX);
 		Serial.print(" - 0x");
 		Serial.println(this->_uIDlo,HEX);
 	}
-	
+#endif
+
 	// Go back to default power mode (low power enabled)
 	ok= lowpower(true); if(!ok) goto errorexit;
 
@@ -274,12 +321,14 @@ bool ScioSense_ENS210::setSingleMode(bool enable)
 	this->_singleMode = enable;
 	uint8_t mode = enable ? 0x00: 0x03;
 	uint8_t result = this->write8(_slaveaddress, ENS210_REG_SENS_RUN, mode);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - start mode 0x");
 		Serial.print(mode,HEX);
 		Serial.print(" - result 0x");
 		Serial.println(result,HEX);
 	}
+#endif
 	return result==0;
 }
 
@@ -288,7 +337,9 @@ void ScioSense_ENS210::measure() //int * t_data, int * t_status, int * h_data, i
 {
 	bool ok;
 	// Set default status for early bail out
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) Serial.println("Start measurement");
+#endif
 	this->_t_status = ENS210_STATUS_I2CERROR;
 	this->_h_status = ENS210_STATUS_I2CERROR;
 
@@ -296,27 +347,35 @@ void ScioSense_ENS210::measure() //int * t_data, int * t_status, int * h_data, i
 	if (this->_singleMode) 
 	{
 		uint8_t result = this->write8(_slaveaddress, ENS210_REG_SENS_RUN, 0x00);
+#ifndef ENS210_DISABLE_DEBUG
 		if (debugENS210) {
 			Serial.print("ens210 debug - start single 0x");
 			Serial.println(result,HEX);
 		}
+#endif
 	}
 	
 	//Trigger measurement
 	uint8_t result = this->write8(_slaveaddress, ENS210_REG_SENS_START, 0x03);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - trigger measurement 0x");
 		Serial.println(result,HEX);
 	}
-	
+#endif
+
 	// Wait for measurement to complete
 	if (this->_singleMode) delay(ENS210_THCONV_SINGLE_MS);
 	else delay(ENS210_THCONV_CONT_MS);
 	
 	// Get the measurement data
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) Serial.println("Start measurement");
+#endif
 	ok = readValue(); if(!ok) return;
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) Serial.println("Measurement ok");
+#endif
 }
 
 // Reads measurement data from the ENS210. Returns false on I2C problems.
@@ -330,6 +389,7 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 	
 	// Read T_VAL and H_VAL
 	uint8_t result = this->read(_slaveaddress, ENS210_REG_T_VAL, i2cbuf, 6);
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("ens210 debug - readValue:");
 		Serial.println(result);
@@ -340,6 +400,7 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 		Serial.print(i2cbuf[4],HEX); Serial.print("\t");
 		Serial.print(i2cbuf[5],HEX); Serial.println("\t");
 	}
+#endif
 	// Retrieve and pack bytes into t_val and h_val
 	uint32_t t_val= (uint32_t)((uint32_t)i2cbuf[2]<<16 | (uint32_t)i2cbuf[1]<<8 | (uint32_t)i2cbuf[0]);
 	this->_t_data = (t_val>>0) & 0xffff;
@@ -350,6 +411,7 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 	if( !crc_ok ) this->_t_status = ENS210_STATUS_CRCERROR;
 	else if( !valid ) this->_t_status = ENS210_STATUS_INVALID;
 	else this->_t_status = ENS210_STATUS_OK;
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("_t_data 0x");
 		Serial.print(t_val,HEX);
@@ -360,6 +422,7 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 		Serial.print(" Status: ");
 		Serial.println(this->_t_status);
 	}	
+#endif
 	
 	uint32_t h_val= (uint32_t)((uint32_t)i2cbuf[5]<<16 | (uint32_t)i2cbuf[4]<<8 | (uint32_t)i2cbuf[3]);
 	this->_h_data = (h_val>>0) & 0xffff;
@@ -371,6 +434,7 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 	if( !crc_ok ) this->_h_status= ENS210_STATUS_CRCERROR;
 	else if( !valid ) this->_h_status= ENS210_STATUS_INVALID;
 	else this->_h_status= ENS210_STATUS_OK;
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("_h_data 0x");
 		Serial.print(h_val,HEX);
@@ -381,12 +445,14 @@ bool ScioSense_ENS210::readValue()	//uint32_t *t_val, uint32_t *h_val)
 		Serial.print(" Status: ");
 		Serial.println(this->_h_status);
 	}	
+#endif
 	
 	// Success
 	return true;
 }
 
 
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 // Converts a status (ENS210_STATUS_XXX) to a human readable string.
 const char * ScioSense_ENS210::status_str( int status ) 
 {
@@ -398,8 +464,9 @@ const char * ScioSense_ENS210::status_str( int status )
 		default                     : return "unknown-status";
 	}
 }
+#endif
 
-
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 // Convert raw `t_data` temperature to Kelvin (also applies the solder correction).
 // The output value is in Kelvin multiplied by parameter `multiplier`.
 float ScioSense_ENS210::getTempKelvin() 
@@ -413,6 +480,7 @@ float ScioSense_ENS210::getTempKelvin()
 	// Uses K=t/64.
 	return t/64; //IDIV(t,64);
 }
+#endif
 
 // Convert raw `t_data` temperature to Celsius (also applies the solder correction).
 // The output value is in Celsius multiplied by parameter `multiplier`.
@@ -429,7 +497,7 @@ float ScioSense_ENS210::getTempCelsius()
 	return t/64 - 27315L/100; //IDIV(t,64) - IDIV(27315L,100);
 }
 
-
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 // Convert raw `t_data` temperature to Fahrenheit (also applies the solder correction).
 float ScioSense_ENS210::getTempFahrenheit() 
 {
@@ -443,7 +511,7 @@ float ScioSense_ENS210::getTempFahrenheit()
 	// The first multiplication stays below 32 bits (t:16, multiplier:11, 9:4)
 	// The second multiplication stays below 32 bits (multiplier:10, 45967:16)
 }
-
+#endif
 
 // Convert raw `h_data` relative humidity to %RH.
 float ScioSense_ENS210::getHumidityPercent() 
@@ -460,6 +528,7 @@ float ScioSense_ENS210::getHumidityPercent()
 #define MOLAR_MASS_OF_WATER     18.01534
 #define UNIVERSAL_GAS_CONSTANT  8.21447215
 
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 float ScioSense_ENS210::getAbsoluteHumidityPercent() 
 {
 	//taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
@@ -470,14 +539,16 @@ float ScioSense_ENS210::getAbsoluteHumidityPercent()
 
 	return (6.1121 * pow(2.718281828,(17.67* this->getTempCelsius())/(this->getTempCelsius() + 243.5))* this->getHumidityPercent() *MOLAR_MASS_OF_WATER)/((273.15+ this->getTempCelsius() )*UNIVERSAL_GAS_CONSTANT);
 }
+#endif
 
-
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 // Sets the solder correction (default is 50mK) - only used by the `toXxx` functions.
 void ScioSense_ENS210::correction_set(int correction) 
 {
 	assert( -1*64<correction && correction<+1*64 ); // A correction of more than 1 Kelvin does not make sense (but the 1K is arbitrary)
 	this->_soldercorrection = correction;
 }
+#endif
 
 
 /****************************************************************************/
@@ -485,8 +556,11 @@ void ScioSense_ENS210::correction_set(int correction)
 /****************************************************************************/
 
 void ScioSense_ENS210::_i2c_init() {
-	//if (this->_sdaPin != this->_sclPin) Wire.begin(this->_sdaPin, this->_sclPin);
-	//else 
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
+	if (this->_sdaPin != this->_sclPin)
+		Wire.begin(this->_sdaPin, this->_sclPin);
+	else 
+#endif
 		Wire.begin();
 }
 /**************************************************************************/
@@ -504,13 +578,15 @@ uint8_t ScioSense_ENS210::read(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t 
 	uint8_t pos = 0;
 	uint8_t result = 0;
 	
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("I2C read address: 0x");
 		Serial.print(addr, HEX);
 		Serial.print(" - register: 0x");
 		Serial.println(reg, HEX);
 	}
-	
+#endif
+
 	//on arduino we need to read in 32 byte chunks
 	while(pos < num){
 		
@@ -524,12 +600,14 @@ uint8_t ScioSense_ENS210::read(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t 
 		//for(int i=0; i<read_now; i++){
 		for(int i=0; i<num; i++){
 			buf[pos] = Wire.read();
+#ifndef ENS210_DISABLE_DEBUG
 			if (debugENS210) {
 				Serial.print("Pos: ");
 				Serial.print(pos);
 				Serial.print(" - Value: 0x");
 				Serial.println(buf[pos], HEX);
 			}
+#endif
 			pos++;
 		}
 	}
@@ -546,6 +624,7 @@ uint8_t ScioSense_ENS210::write8(uint8_t addr, byte reg, byte value)
 
 uint8_t ScioSense_ENS210::write(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t num)
 {
+#ifndef ENS210_DISABLE_DEBUG
 	if (debugENS210) {
 		Serial.print("I2C write address: 0x");
 		Serial.print(addr, HEX);
@@ -558,7 +637,8 @@ uint8_t ScioSense_ENS210::write(uint8_t addr, uint8_t reg, uint8_t *buf, uint8_t
 		}
 		Serial.println();
 	}
-	
+#endif
+
 	Wire.beginTransmission((uint8_t)addr);
 	Wire.write((uint8_t)reg);
 	Wire.write((uint8_t *)buf, num);

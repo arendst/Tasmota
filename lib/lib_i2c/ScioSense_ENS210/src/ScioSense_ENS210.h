@@ -8,6 +8,9 @@
 #ifndef __SCIOSENSE_ENS210_H_
 #define __SCIOSENSE_ENS210_H_
 
+#define ENS210_DISABLE_DEBUG
+#define ENS210_DISABLE_ENHANCED_FEATURES
+
 #if (ARDUINO >= 100)
  #include "Arduino.h"
 #else
@@ -66,9 +69,11 @@ class ScioSense_ENS210 {
 	public:
 		ScioSense_ENS210(uint8_t slaveaddr = ENS210_I2CADDR);
 		
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 		void 				setI2C(uint8_t sda, uint8_t scl);
 		void				changeAddr(uint8_t oldAddr,  uint8_t newAddr);
-		
+#endif
+
 		bool 				begin(bool debug=false);				// init i2c interface, get partID und uID. Returns false on I2C problems or wrong PART_ID.
 		bool 				setSingleMode(bool enable);				// false for continuous mode / true for single shot measurement. Returns false on I2C problems.
 		
@@ -77,25 +82,35 @@ class ScioSense_ENS210 {
 		uint16_t 			getRev() { return this->_rev; }
 		uint32_t 			getHighUID(bool high) { uint32_t result  = high ? this->_uIDhi : this->_uIDlo; return result; }
 		void 				measure(); 									// perfrom measurement and stores result in internal variables
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 		float 				getTempKelvin     ();    					// Converts and returns data (from `measure`) in Kelvin
-		float 				getTempCelsius    ();    					// Converts and returns data (from `measure`) in Celsius
 		float 				getTempFahrenheit ();    					// Converts and returns data (from `measure`) in  Fahrenheit
+#endif
+		float 				getTempCelsius    ();    					// Converts and returns data (from `measure`) in Celsius
 		float 				getHumidityPercent();    					// Converts and returns data (from `measure`) in %RH
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 		float 				getAbsoluteHumidityPercent();    			// Converts and returns data (from `measure`) in %aH
+#endif
 		char  				getStatusT() { return this->_t_status; }    // Converts a status (ENS210_STATUS_XXX) to a human readable string.
 		uint32_t  			getDataT() { return this->_t_data; }    		
 		char  				getStatusH() { return this->_h_status; }	// Converts a status (ENS210_STATUS_XXX) to a human readable string.
 		uint32_t			getDataH() { return this->_h_data; }		
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 		static const char * status_str( int status );          			// Converts a status (ENS210_STATUS_XXX) to a human readable string.
-		
+#endif
+
 		// Optionally set a solder `correction` (units: 1/64K, default from `begin` is 0).
 		// See "Effect of Soldering on Temperature Readout" in "Design-Guidelines" from
 		// https://download.ams.com/ENVIRONMENTAL-SENSORS/ENS210/Documentation
+#ifndef ENS210_DISABLE_ENHANCED_FEATURES
 		void correction_set(int correction=50*64/1000);       			// Sets the solder correction (default is 50mK) - only used by the `toXxx()` functions.
 		int  correction_get() {return this->_soldercorrection;}			// Gets the solder correction.
+#endif
 
 	private:
+#ifndef ENS210_DISABLE_DEBUG
 		bool				debugENS210 = false;
+#endif
 		bool 				reset(void);                                // Sends a reset to the ENS210. Returns false on I2C problems.
 		bool 				lowpower(bool enable);                      // Sets ENS210 to low (true) or high (false) power. Returns false on I2C problems.
 		bool 				getversion();								// Reads PART_ID and UID of ENS210. Returns false on I2C problems.
