@@ -43,6 +43,7 @@ class Matter_Plugin
   var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   var tick                                  # tick value when it was last updated
+  var node_label                            # name of the endpoint, used only in bridge mode, "" if none
 
   #############################################################
   # MVC Model
@@ -61,6 +62,7 @@ class Matter_Plugin
     self.endpoint = endpoint
     self.clusters = self.consolidate_clusters()
     self.parse_configuration(config)
+    self.node_label = config.find("name", "")
   end
 
   # proxy for the same method in IM
@@ -147,6 +149,22 @@ class Matter_Plugin
   end
 
   #############################################################
+  # Publish to MQTT a command received from controller
+  #
+  # we limit to 3 commands (to we need more?)
+  def publish_command(key1, value1, key2, value2, key3, value3)
+    import json
+    var payload = f"{json.dump(key1)}:{json.dump(value1)}"
+    if key2 != nil
+      payload = f"{payload},{json.dump(key2)}:{json.dump(value2)}"
+    end
+    if key3 != nil
+      payload = f"{payload},{json.dump(key3)}:{json.dump(value3)}"
+    end
+    matter.publish_command('MtrReceived', self.endpoint, self.node_label, payload)
+  end
+
+  #############################################################
   # Which endpoints does it handle (list of numbers)
   def get_endpoint()
     return self.endpoint
@@ -183,6 +201,14 @@ class Matter_Plugin
   def has(cluster, endpoint)
     return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
   end
+
+  def set_name(n)
+    if n != self.node_label
+      self.attribute_updated(0x0039, 0x0005)
+    end
+    self.node_label = n
+  end
+  def get_name()    return self.node_label  end
 
   #############################################################
   # MVC Model

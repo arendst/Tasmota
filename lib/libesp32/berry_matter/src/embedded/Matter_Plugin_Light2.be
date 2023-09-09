@@ -40,15 +40,24 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   }
   static var TYPES = { 0x010C: 2 }                  # Color Temperature Light
 
-  var shadow_ct
-  var ct_min, ct_max
+  # Inherited
+  # var device                                        # reference to the `device` global object
+  # var endpoint                                      # current endpoint
+  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
+  # var tick                                          # tick value when it was last updated
+  # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
+  # var shadow_onoff                                  # (bool) status of the light power on/off
+  # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  var shadow_ct                                     # (int 153..500, default 325) Color Temperatur in mireds
+  var ct_min, ct_max                                # min and max value allowed for CT, Alexa emulation requires to have a narrower range 200..380
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
     self.shadow_ct = 325
-    self.update_ct_minmax()
+    self.update_ct_minmax()                         # read SetOption to adjust ct min/max
   end
 
   #############################################################
@@ -62,17 +71,40 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     if light_status != nil
       var ct = light_status.find('ct', nil)
       if ct  == nil     ct = self.shadow_ct      end
-      if ct  != self.shadow_ct    self.attribute_updated(0x0300, 0x0007)   self.shadow_ct = ct   end
+      if ct  != self.shadow_ct
+        self.attribute_updated(0x0300, 0x0007)
+        self.shadow_ct = ct
+      end
     end
   end
 
   #############################################################
   # Update ct_min/max
   #
+  # Standard range is 153..500 but Alexa emulation reduces range to 200..380
+  # Depending on `SetOption82`
   def update_ct_minmax()
     var ct_alexa_mode = tasmota.get_option(82)      # if set, range is 200..380 instead of 153...500
     self.ct_min = ct_alexa_mode ? 200 : 153
     self.ct_max = ct_alexa_mode ? 380 : 500
+  end
+
+  #############################################################
+  # set_ct
+  #
+  def set_ct(ct)
+    if ct < self.ct_min  ct = self.ct_min   end
+    if ct > self.ct_max  ct = self.ct_max   end
+    if !self.virtual
+      import light
+      light.set({'ct': ct})
+      self.update_shadow()
+    else
+      if ct  != self.shadow_ct
+        self.attribute_updated(0x0300, 0x0007)
+        self.shadow_ct = ct
+      end
+    end
   end
 
   #############################################################
@@ -124,11 +156,9 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
       self.update_shadow_lazy()
       if   command == 0x000A            # ---------- MoveToColorTemperature ----------
         var ct_in = val.findsubval(0)  # CT
-        if ct_in < self.ct_min  ct_in = self.ct_min   end
-        if ct_in > self.ct_max  ct_in = self.ct_max   end
-        light.set({'ct': ct_in})
-        self.update_shadow()
+        self.set_ct(ct_in)
         ctx.log = "ct:"+str(ct_in)
+        self.publish_command('CT', ct_in)
         return true
       elif command == 0x0047            # ---------- StopMoveStep ----------
         # TODO, we don't really support it

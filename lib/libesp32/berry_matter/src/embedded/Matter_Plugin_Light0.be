@@ -39,7 +39,14 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   }
   static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
 
-  var shadow_onoff
+  # Inherited
+  # var device                                        # reference to the `device` global object
+  # var endpoint                                      # current endpoint
+  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
+  # var tick                                          # tick value when it was last updated
+  # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
+  var shadow_onoff                                  # (bool) status of the light power on/off
 
   #############################################################
   # Constructor
@@ -52,13 +59,31 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    import light
-    var light_status = light.get()
-    if light_status != nil
-      var pow = light_status.find('power', nil)
-      if pow != self.shadow_onoff self.attribute_updated(0x0006, 0x0000)   self.shadow_onoff = pow end
+    if !self.virtual
+      import light
+      var light_status = light.get()
+      if light_status != nil
+        var pow = light_status.find('power', nil)
+        if pow != self.shadow_onoff
+          self.attribute_updated(0x0006, 0x0000)
+          self.shadow_onoff = pow
+        end
+      end
     end
     super(self).update_shadow()
+  end
+
+  def set_onoff(pow)
+    if !self.virtual
+      import light
+      light.set({'power':pow})
+      self.update_shadow()
+    else
+      if pow != self.shadow_onoff
+        self.attribute_updated(0x0006, 0x0000)
+        self.shadow_onoff = pow
+      end
+    end
   end
 
   #############################################################
@@ -100,16 +125,16 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- Off ----------
-        light.set({'power':false})
-        self.update_shadow()
+        self.set_onoff(false)
+        self.publish_command('Power', 0)
         return true
       elif command == 0x0001            # ---------- On ----------
-        light.set({'power':true})
-        self.update_shadow()
+        self.set_onoff(true)
+        self.publish_command('Power', 1)
         return true
       elif command == 0x0002            # ---------- Toggle ----------
-        light.set({'power':!self.shadow_onoff})
-        self.update_shadow()
+        self.set_onoff(!self.shadow_onoff)
+        self.publish_command('Power', self.shadow_onoff ? 1 : 0)
         return true
       end
     end

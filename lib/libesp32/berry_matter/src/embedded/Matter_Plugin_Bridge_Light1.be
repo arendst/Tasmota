@@ -131,6 +131,8 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
         var bri_in = val.findsubval(0)  # Hue 0..254
         self.set_bri(bri_in)
         ctx.log = "bri:"+str(bri_in)
+        self.publish_command('Bri', tasmota.scale_uint(bri_in, 0, 254, 0, 255),
+                             'Dimmer', tasmota.scale_uint(bri_in, 0, 254, 0, 100))
         return true
       elif command == 0x0001            # ---------- Move ----------
         # TODO, we don't really support it
@@ -147,6 +149,9 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
         var onoff = bri_in > 0
         self.set_onoff(onoff)
         ctx.log = "bri:"+str(bri_in)
+        self.publish_command('Bri', tasmota.scale_uint(bri_in, 0, 254, 0, 255),
+                             'Dimmer', tasmota.scale_uint(bri_in, 0, 254, 0, 100),
+                             'Power', onoff ? 1 : 0)
         return true
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
         # TODO, we don't really support it
