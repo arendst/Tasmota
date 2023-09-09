@@ -177,6 +177,7 @@ BE_FUNC_CTYPE_DECLARE(matter_get_command_name, "s", "ii")
 extern const void* matter_get_ip_bytes(const char* ip_str, size_t* ret_len);
 BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
 
+extern int matter_publish_command(bvm *vm);
 
 #include "solidify/solidified_Matter_inspect.h"
 
@@ -276,6 +277,7 @@ module matter (scope: global, strings: weak) {
   setmember, closure(matter_setmember_closure)
   member, closure(matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
+  publish_command, func(matter_publish_command)
 
   get_vendor_name, ctype_func(matter_get_vendor_name)
   get_cluster_name, ctype_func(matter_get_cluster_name)

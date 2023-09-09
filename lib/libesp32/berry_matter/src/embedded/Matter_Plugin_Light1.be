@@ -39,8 +39,15 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   }
   static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
-  var shadow_bri
-  # var shadow_onoff  # inherited
+  # Inherited
+  # var device                                        # reference to the `device` global object
+  # var endpoint                                      # current endpoint
+  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
+  # var tick                                          # tick value when it was last updated
+  # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
+  # var shadow_onoff                                  # (bool) status of the light power on/off
+  var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
 
   #############################################################
   # Constructor
@@ -53,19 +60,50 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # Update shadow
   #
   def update_shadow()
-    import light
-    var light_status = light.get()
-    if light_status != nil
-      var bri = light_status.find('bri', nil)
-      if bri != nil
-        bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
-        if bri != self.shadow_bri
-          self.attribute_updated(0x0008, 0x0000)
-          self.shadow_bri = bri
+    if !self.virtual
+      import light
+      var light_status = light.get()
+      if light_status != nil
+        var bri = light_status.find('bri', nil)
+        if bri != nil
+          bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
+          if bri != self.shadow_bri
+            self.attribute_updated(0x0008, 0x0000)
+            self.shadow_bri = bri
+          end
         end
       end
     end
     super(self).update_shadow()     # superclass manages 'power'
+  end
+
+  #############################################################
+  # Set Bri
+  #
+  # `bri` is in range 0.255 and not 0..254 like in Matter
+  # `pow` can be bool on `nil` if no change
+  def set_bri(bri_254, pow)
+    if (bri_254 < 0)    bri_254 = 0     end
+    if (bri_254 > 254)  bri_254 = 254   end
+    if !self.virtual
+      import light
+      var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
+      if pow == nil
+        light.set({'bri': bri_255})
+      else
+        light.set({'bri': bri_255, 'power': pow})
+      end
+      self.update_shadow()
+    else
+      if (pow != nil) && (pow != self.shadow_onoff)
+        self.attribute_updated(0x0006, 0x0000)
+        self.shadow_onoff = pow
+      end
+      if bri_254 != self.shadow_bri
+        self.attribute_updated(0x0008, 0x0000)
+        self.shadow_bri = bri_254
+      end
+    end
   end
 
   #############################################################
@@ -115,11 +153,10 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
-        var bri_in = val.findsubval(0)  # Hue 0..254
-        var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 255)
-        light.set({'bri': bri})
-        self.update_shadow()
-        ctx.log = "bri:"+str(bri_in)
+        var bri_254 = val.findsubval(0)  # Hue 0..254
+        self.set_bri(bri_254)
+        ctx.log = "bri:"+str(bri_254)
+        self.publish_command('Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
         return true
       elif command == 0x0001            # ---------- Move ----------
         # TODO, we don't really support it
@@ -131,12 +168,11 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
         # TODO, we don't really support it
         return true
       elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
-        var bri_in = val.findsubval(0)  # Hue 0..254
-        var bri = tasmota.scale_uint(bri_in, 0, 254, 0, 255)
-        var onoff = bri > 0
-        light.set({'bri': bri, 'power': onoff})
-        self.update_shadow()
-        ctx.log = "bri:"+str(bri_in)
+        var bri_254 = val.findsubval(0)  # Hue 0..254
+        var onoff = bri_254 > 0
+        self.set_bri(bri_254, onoff)
+        ctx.log = "bri:"+str(bri_254)
+        self.publish_command('Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100), 'Power', onoff ? 1 : 0)
         return true
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
         # TODO, we don't really support it

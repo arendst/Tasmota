@@ -149,6 +149,7 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
         if ct_in > self.ct_max  ct_in = self.ct_max   end
         self.set_ct(ct_in)
         ctx.log = "ct:"+str(ct_in)
+        self.publish_command('CT', ct_in)
         return true
       elif command == 0x0047            # ---------- StopMoveStep ----------
         # TODO, we don't really support it

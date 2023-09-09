@@ -157,6 +157,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
         var hue_in = val.findsubval(0)  # Hue 0..254
         self.set_hue(hue_in)
         ctx.log = "hue:"+str(hue_in)
+        self.publish_command('Hue', hue_in)
         return true
       elif command == 0x0001            # ---------- MoveHue ----------
         # TODO, we don't really support it
@@ -168,6 +169,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
         var sat_in = val.findsubval(0)  # Sat 0..254
         self.set_sat(sat_in)
         ctx.log = "sat:"+str(sat_in)
+        self.publish_command('Sat', sat_in)
         return true
       elif command == 0x0004            # ---------- MoveSaturation ----------
         # TODO, we don't really support it
@@ -181,6 +183,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
         self.set_hue(hue_in)
         self.set_sat(sat_in)
         ctx.log = "hue:"+str(hue_in)+" sat:"+str(sat_in)
+        self.publish_command('Hue', hue_in, 'Sat', sat_in)
         return true
       elif command == 0x0047            # ---------- StopMoveStep ----------
         # TODO, we don't really support it

@@ -866,7 +866,7 @@ class Matter_IM
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         matter.profiler.log("COMMAND DONE")
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
-        tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -# )
+        tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
         # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
         ctx.log = nil
         var raw = bytes(32)
@@ -927,9 +927,8 @@ class Matter_IM
     var res = self.device.invoke_request(msg.session, ctx.command_fields, ctx)
     matter.profiler.log("COMMAND DONE")
     var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
-    var cmd_log_level = ctx.endpoint != 0 ? 2 : 3 #- don't log for endpoint 0 -#
-    if tasmota.loglevel(cmd_log_level)
-      tasmota.log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), cmd_log_level)
+    if tasmota.loglevel(3)
+      tasmota.log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
     end
     # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
     ctx.log = nil

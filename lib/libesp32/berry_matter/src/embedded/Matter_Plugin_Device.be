@@ -34,21 +34,18 @@ class Matter_Plugin_Device : Matter_Plugin
   }
   static var TYPES = { 0x0013: 1 }                  # fake type
   static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
-
-  var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-
-  def set_name(n)
-    if n != self.node_label
-      self.attribute_updated(0x0039, 0x0005)
-    end
-    self.node_label = n
-  end
-  def get_name()    return self.node_label  end
+  # Inherited
+  # var device                                        # reference to the `device` global object
+  # var endpoint                                      # current endpoint
+  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
+  # var tick                                          # tick value when it was last updated
+  # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
 
   #############################################################
   # Constructor
   def init(device, endpoint, config)
-    self.node_label = config.find("name", "")
+    self.virtual = config.find("virtual", false)
     super(self).init(device, endpoint, config)
   end
 

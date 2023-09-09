@@ -40,7 +40,17 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   }
   static var TYPES = { 0x010D: 2 }                  # Extended Color Light
 
-  var shadow_hue, shadow_sat
+  # Inherited
+  # var device                                        # reference to the `device` global object
+  # var endpoint                                      # current endpoint
+  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
+  # var tick                                          # tick value when it was last updated
+  # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
+  # var shadow_onoff                                  # (bool) status of the light power on/off
+  # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  var shadow_hue                                    # (int 0..254) hue of color, may need to be extended to 0..360 for value in degrees
+  var shadow_sat                                    # (int 0..254) saturation of color
 
   #############################################################
   # Constructor
@@ -54,16 +64,56 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # Update shadow
   #
   def update_shadow()
-    import light
     super(self).update_shadow()
-    var light_status = light.get()
-    if light_status != nil
-      var hue = light_status.find('hue', nil)
-      var sat = light_status.find('sat', nil)
-      if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
-      if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
-      if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
-      if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
+    if !self.virtual
+      import light
+      var light_status = light.get()
+      if light_status != nil
+        var hue = light_status.find('hue', nil)
+        var sat = light_status.find('sat', nil)
+        if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
+        if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
+        if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
+        if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
+      end
+    end
+  end
+
+  #############################################################
+  # set_hue_sat
+  #
+  # `hue` 0..254 or `nil`
+  # `sat` 0..255 or `nil`
+  def set_hue_sat(hue_254, sat_254)
+    # sanity checks on values
+    if hue_254 != nil
+      if hue_254 < 0      hue_254 = 0     end
+      if hue_254 > 254    hue_254 = 254   end
+    end
+    if sat_254 != nil
+      if sat_254 < 0      sat_254 = 0     end
+      if sat_254 > 254    sat_254 = 254   end
+    end
+
+    if !self.virtual
+      var hue_360 = (hue_254 != nil) ? tasmota.scale_uint(hue_254, 0, 254, 0, 360) : nil
+      var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
+
+      if (hue_360 != nil) && (sat_255 != nil)
+        light.set({'hue': hue_360, 'sat': sat_255})
+      elif (hue_360 != nil)
+        light.set({'hue': hue_360})
+      else
+        light.set({'sat': sat_255})
+      end
+      self.update_shadow()
+    else
+      if hue_254 != nil
+        if hue_254 != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue_254   end
+      end
+      if sat_254 != nil
+        if sat_254 != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat_254   end
+      end
     end
   end
 
@@ -124,10 +174,9 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToHue ----------
         var hue_in = val.findsubval(0)  # Hue 0..254
-        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
-        light.set({'hue': hue})
-        self.update_shadow()
+        self.set_hue_sat(hue_in, nil)
         ctx.log = "hue:"+str(hue_in)
+        self.publish_command('Hue', hue_in)
         return true
       elif command == 0x0001            # ---------- MoveHue ----------
         # TODO, we don't really support it
@@ -137,10 +186,9 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         return true
       elif command == 0x0003            # ---------- MoveToSaturation ----------
         var sat_in = val.findsubval(0)  # Sat 0..254
-        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
-        light.set({'sat': sat})
-        self.update_shadow()
+        self.set_hue_sat(nil, sat_in)
         ctx.log = "sat:"+str(sat_in)
+        self.publish_command('Sat', sat_in)
         return true
       elif command == 0x0004            # ---------- MoveSaturation ----------
         # TODO, we don't really support it
@@ -150,12 +198,10 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         return true
       elif command == 0x0006            # ---------- MoveToHueAndSaturation ----------
         var hue_in = val.findsubval(0)  # Hue 0..254
-        var hue = tasmota.scale_uint(hue_in, 0, 254, 0, 360)
         var sat_in = val.findsubval(1)  # Sat 0..254
-        var sat = tasmota.scale_uint(sat_in, 0, 254, 0, 255)
-        light.set({'hue': hue, 'sat': sat})
-        self.update_shadow()
+        self.set_hue_sat(hue_in, sat_in)
         ctx.log = "hue:"+str(hue_in)+" sat:"+str(sat_in)
+        self.publish_command('Hue', hue_in, 'Sat', sat_in)
         return true
       elif command == 0x0047            # ---------- StopMoveStep ----------
         # TODO, we don't really support it

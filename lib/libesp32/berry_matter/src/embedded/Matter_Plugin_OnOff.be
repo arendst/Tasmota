@@ -123,14 +123,17 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
         self.update_shadow()
+        self.publish_command('Power', 0)
         return true
       elif command == 0x0001            # ---------- On ----------
         self.set_onoff(true)
         self.update_shadow()
+        self.publish_command('Power', 1)
         return true
       elif command == 0x0002            # ---------- Toggle ----------
         self.set_onoff(!self.shadow_onoff)
         self.update_shadow()
+        self.publish_command('Power', self.shadow_onoff ? 1 : 0)
         return true
       end
     end
