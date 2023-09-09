@@ -41,6 +41,8 @@
 #define XSNS_110           110
 #define XI2C_83            83      // See I2CDEVICES.md
 
+#define MAX17043_NAME      "MAX17043"
+
 #define MAX17043_ADDRESS   0x36
 #define MAX17043_VCELL     0x02
 #define MAX17043_SOC       0x04
@@ -55,6 +57,7 @@
 #define MAX17043_CONFIG_NO_COMPENSATION     0x9700
 
 bool max17043 = false;
+int battery_latest = 101;
 
 /*********************************************************************************************/
 
@@ -71,8 +74,8 @@ void Max17043Init(void) {
       if (I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_NO_COMPENSATION
           || I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) == MAX17043_CONFIG_POWER_UP_DEFAULT) {
         max17043 = true;
-        I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping MAX17043 Power on Reset & Quick Start"));
+        I2cSetActiveFound(MAX17043_ADDRESS, MAX17043_NAME);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping " MAX17043_NAME " Power on Reset & Quick Start"));
       }
     } else {
       // otherwise perform a full Power on Reset (which is the same as disconnecting power)
@@ -85,7 +88,7 @@ void Max17043Init(void) {
         I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, MAX17043_CONFIG_NO_COMPENSATION);
         delay(10);
         max17043 = true;
-        I2cSetActiveFound(MAX17043_ADDRESS, "MAX17043");
+        I2cSetActiveFound(MAX17043_ADDRESS, MAX17043_NAME);
       }
     }
   }
@@ -96,16 +99,26 @@ void Max17043Show(bool json) {
   float voltage = (1.25f * (float)(I2cRead16(MAX17043_ADDRESS, MAX17043_VCELL) >> 4)) / 1000.0;  // Battery voltage in Volt
   uint16_t per = I2cRead16(MAX17043_ADDRESS, MAX17043_SOC);
   float percentage = (float)((per >> 8) + 0.003906f * (per & 0x00ff));  // Battery remaining charge in percent
+  int battery_current;
 
   // During charging the percentage might be (slightly) above 100%. To avoid strange numbers
   // in the statistics the percentage provided by this driver will not go above 100%
   if (percentage > 100.0) { percentage = 100.0; }
+
+  // only update the system percentage if it's changed
+  battery_current = int(round(percentage));
+  if (battery_latest != battery_current) {
+    char cmnd[30];
+    sprintf(cmnd, "%s %d", D_CMND_ZIGBEE_BATTPERCENT, battery_current);
+    ExecuteCommand(cmnd, SRC_SENSOR);
+    battery_latest = battery_current;
+  }
   if (json) {
-    ResponseAppend_P(PSTR(",\"MAX17043\":{\"" D_JSON_VOLTAGE "\":%3_f,\"" D_JSON_BATTPERCENT "\":%2_f}"), &voltage, &percentage );
+    ResponseAppend_P(PSTR(",\"" MAX17043_NAME "\":{\"" D_JSON_VOLTAGE "\":%3_f,\"" D_JSON_BATTPERCENT "\":%2_f}"), &voltage, &percentage );
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(PSTR("{s}MAX17043 " D_VOLTAGE "{m}%1_f" D_UNIT_VOLT "{e}"), &voltage);
-    WSContentSend_PD(PSTR("{s}MAX17043 " D_BATTERY_CHARGE "{m}%1_f " D_UNIT_PERCENT " {e}"), &percentage);
+    WSContentSend_PD(PSTR("{s}" MAX17043_NAME " " D_VOLTAGE "{m}%1_f" D_UNIT_VOLT "{e}"), &voltage);
+    WSContentSend_PD(PSTR("{s}" MAX17043_NAME " " D_BATTERY_CHARGE "{m}%1_f " D_UNIT_PERCENT " {e}"), &percentage);
 #endif
   }
 }
