@@ -31,156 +31,115 @@
 #define XSNS_111             111
 #define XI2C_84             84  // See I2CDEVICES.md
 
-#define EVERYNSECONDS 5
+#define ENS16x_EVERYNSECONDS	5
+#define ENS16x_DEVICE_NAME		"EN16X"
+#define ENS16x_LOG						"E16"
+#define ENS16x_MAX_COUNT			2
 
 #include "ScioSense_ENS16x.h"
 
-ScioSense_ENS16x      ens16xa(ENS16x_I2CADDR_0);
-struct  {
+typedef struct ENS16xData_s {
+  ScioSense_ENS16x      *ens16x;
   uint16_t  TVOC;
   uint16_t  eCO2;
   uint16_t  AQIS;
 
-  uint8_t ready = 0;
-  uint8_t type = 0;;
-  uint8_t tcnt = 0;
-  uint8_t ecnt = 0;
-} ENS16xdataA;
+  uint8_t ready;
+  uint8_t type;
+  uint8_t tcnt;
+  uint8_t ecnt;
+} ENS16xDATA_t;
 
-ScioSense_ENS16x      ens16xb(ENS16x_I2CADDR_1);
-struct  {
-  uint16_t  TVOC;
-  uint16_t  eCO2;
-  uint16_t  AQIS;
-
-  uint8_t ready = 0;
-  uint8_t type = 0;;
-  uint8_t tcnt = 0;
-  uint8_t ecnt = 0;
-} ENS16xdataB;
-
+ENS16xDATA_t *ENS16xData[ENS16x_MAX_COUNT] = {nullptr, };
 uint8_t ENS16xCount = 0;
 
 /********************************************************************************************/
 
 void ens16xDetect(void)
 {
-	ENS16xCount = 0;
-	if (!I2cActive(ENS16x_I2CADDR_0)) { 
-		if (ens16xa.begin()) {
-			if (ens16xa.available()) {
-				if (ens16xa.setMode(ENS16x_OPMODE_STD) ) {
-					ENS16xdataA.type = 1;
-					I2cSetActiveFound(ENS16x_I2CADDR_0, "ENS16xa");
-					ENS16xCount++;
-				}
-			}
-		}
-	}
-	if (!I2cActive(ENS16x_I2CADDR_1)) { 
-		if (ens16xb.begin()) {
-			if (ens16xb.available()) {
-				if (ens16xb.setMode(ENS16x_OPMODE_STD) ) {
-					ENS16xdataB.type = 1;
-					I2cSetActiveFound(ENS16x_I2CADDR_1, "ENS16xb");
-					ENS16xCount++;
-				}
-			}
-		}
-	}
+  ENS16xCount = 0;
+  ENS16xDATA_t *pENS16X;
+  uint8_t i2caddr = ENS16x_I2CADDR_0;
+  for (uint8_t i = 0 ; i < ENS16x_MAX_COUNT; i++, i2caddr++) {
+    if (!I2cActive(i2caddr)) {
+      pENS16X = (ENS16xDATA_t*)calloc(1, sizeof(ENS16xDATA_t));
+      if (!pENS16X) {
+        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@0x02%X Memory error!"), i2caddr);
+        return;
+      }
+      pENS16X->ens16x = new ScioSense_ENS16x(i2caddr);
+      if (!pENS16X->ens16x) {
+        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@0x02%X Memory error 2!"), i2caddr);
+        free(pENS16X);
+        return;
+      }
+      ENS16xData[i] = pENS16X;
+      if (pENS16X->ens16x->begin()) {
+        if (pENS16X->ens16x->available()) {
+          if (pENS16X->ens16x->setMode(ENS16x_OPMODE_STD) ) {
+            pENS16X->type = 1;
+            I2cSetActiveFound(ENS16x_I2CADDR_0, "ENS16xa");
+            ENS16xCount++;
+          }
+        }
+      }
+    }
+  }
 }
 
 void ens16xUpdate(void)  // Perform every n second
 {
-//First sensor
-	if (ENS16xdataA.type) {
-		ENS16xdataA.tcnt++;
-		if (ENS16xdataA.tcnt >= EVERYNSECONDS) {
-			ENS16xdataA.tcnt = 0;
-			ENS16xdataA.ready = 0;
-			if (ens16xa.available()) {
-				ens16xa.measure();
-				ENS16xdataA.TVOC = ens16xa.getTVOC();
-				ENS16xdataA.eCO2 = ens16xa.geteCO2();
-				if (ens16xa.revENS16x() > 0) ENS16xdataA.AQIS = ens16xa.getAQIS();
-				else ENS16xdataA.AQIS = ens16xa.getAQI();
+  for (uint8_t i = 0 ; i < ENS16xCount; i++) {
+    ENS16xDATA_t *pENS16X = ENS16xData[i];
+    if (pENS16X->type) {
+      pENS16X->tcnt++;
+      if (pENS16X->tcnt >= ENS16x_EVERYNSECONDS) {
+        pENS16X->tcnt = 0;
+        pENS16X->ready = 0;
+        if (pENS16X->ens16x->available()) {
+          pENS16X->ens16x->measure();
+          pENS16X->TVOC = pENS16X->ens16x->getTVOC();
+          pENS16X->eCO2 = pENS16X->ens16x->geteCO2();
+          if (pENS16X->ens16x->revENS16x() > 0) pENS16X->AQIS = pENS16X->ens16x->getAQIS();
+          else pENS16X->AQIS = pENS16X->ens16x->getAQI();
 
-				ENS16xdataA.ready = 1;
-				ENS16xdataA.ecnt = 0;
-			}
-		} else {
-			// failed, count up
-			ENS16xdataA.ecnt++;
-			if (ENS16xdataA.ecnt > 6) {
-				// after 30 seconds, restart
-				ens16xa.begin();
-				if (ens16xa.available()) {
-					ens16xa.setMode(ENS16x_OPMODE_STD);
-				}
-			}
-		}
-	}
-//Second sensor
-	if (ENS16xdataB.type) {
-		ENS16xdataB.tcnt++;
-		if (ENS16xdataB.tcnt >= EVERYNSECONDS) {
-			ENS16xdataB.tcnt = 0;
-			ENS16xdataB.ready = 0;
-			if (ens16xb.available()) {
-				ens16xb.measure();
-				ENS16xdataB.TVOC = ens16xb.getTVOC();
-				ENS16xdataB.eCO2 = ens16xb.geteCO2();
-				if (ens16xb.revENS16x() > 0) ENS16xdataB.AQIS = ens16xb.getAQIS();
-				else ENS16xdataB.AQIS = ens16xb.getAQI();
-
-				ENS16xdataB.ready = 1;
-				ENS16xdataB.ecnt = 0;
-			}
-		} else {
-			// failed, count up
-			ENS16xdataB.ecnt++;
-			if (ENS16xdataB.ecnt > 6) {
-				// after 30 seconds, restart
-				ens16xb.begin();
-				if (ens16xb.available()) {
-					ens16xb.setMode(ENS16x_OPMODE_STD);
-				}
-			}
-		}
-	}
+          pENS16X->ready = 1;
+          pENS16X->ecnt = 0;
+        }
+      } else {
+        // failed, count up
+        pENS16X->ecnt++;
+        if (pENS16X->ecnt > 6) {
+          // after 30 seconds, restart
+          pENS16X->ens16x->begin();
+          if (pENS16X->ens16x->available()) {
+            pENS16X->ens16x->setMode(ENS16x_OPMODE_STD);
+          }
+        }
+      }
+    }
+  }
 }
 
 const char HTTP_SNS_ENS16x[] PROGMEM =
-  "{s}ENS16x AQI{m}%d {e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}ENS16x " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"
-  "{s}ENS16x " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
+  "{s}%s AQI{m}%d {e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"
+  "{s}%s " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
 void ens16xShow(bool json)
 {
-  if (ENS16xdataA.ready) {
-    if (json) {
-		if (ENS16xCount == 1)
-			ResponseAppend_P(PSTR(",\"ENS16x\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), ENS16xdataA.AQIS, ENS16xdataA.eCO2, ENS16xdataA.TVOC);
-		else {
-			ResponseAppend_P(PSTR(",\"ENS16xa\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), ENS16xdataA.AQIS, ENS16xdataA.eCO2, ENS16xdataA.TVOC);
-		}
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_ENS16x, ENS16xdataA.AQIS, ENS16xdataA.eCO2, ENS16xdataA.TVOC);
-#endif
-    }
-  }
-  if (ENS16xdataB.ready) {
-    if (json) {
-		if (ENS16xCount == 1)
-			ResponseAppend_P(PSTR(",\"ENS16x\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), ENS16xdataB.AQIS, ENS16xdataB.eCO2, ENS16xdataB.TVOC);
-		else {
-			ResponseAppend_P(PSTR(",\"ENS16xb\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), ENS16xdataB.AQIS, ENS16xdataB.eCO2, ENS16xdataB.TVOC);
-		}
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_ENS16x, ENS16xdataB.AQIS, ENS16xdataB.eCO2, ENS16xdataB.TVOC);
-#endif
+  char name[20];
+  for (uint8_t i = 0 ; i < ENS16xCount; i++) {
+    ENS16xDATA_t *pENS16X = ENS16xData[i];
+    if (pENS16X->ready) {
+      snprintf_P(name, sizeof(name), (ENS16xCount > 1) ? PSTR("%s%c%d") : PSTR("%s"), ENS16x_DEVICE_NAME, IndexSeparator(), i +1);
+      if (json) {
+        ResponseAppend_P(PSTR(",\"%s\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
+  #ifdef USE_WEBSERVER
+      } else {
+        WSContentSend_PD(HTTP_SNS_ENS16x, name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
+  #endif
+      }
     }
   }
 }

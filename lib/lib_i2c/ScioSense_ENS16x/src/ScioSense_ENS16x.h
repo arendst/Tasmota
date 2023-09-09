@@ -15,6 +15,9 @@
 #ifndef __SCIOSENSE_ENS16x_H_
 #define __SCIOSENSE_ENS16x_H_
 
+#define ENS16x_DISABLE_DEBUG
+#define ENS16x_DISABLE_ENHANCED_FEATURES
+
 #if (ARDUINO >= 100)
 	#include "Arduino.h"
 #else
@@ -103,8 +106,10 @@ class ScioSense_ENS16x {
 		
 	public:
 	    ScioSense_ENS16x(uint8_t slaveaddr = ENS16x_I2CADDR_0);               				// Constructor using slave address (5A or 5B)
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 		ScioSense_ENS16x(uint8_t ADDR, uint8_t nCS, uint8_t nINT);       				// Constructor with pin definition
 		ScioSense_ENS16x(uint8_t slaveaddr, uint8_t ADDR, uint8_t nCS, uint8_t nINT);  			// Constructor with slave address and pin definition
+#endif
 
 		void 				setI2C(uint8_t sda, uint8_t scl);				// Function to redefine I2C pins
 		
@@ -113,14 +118,18 @@ class ScioSense_ENS16x {
 		uint8_t				revENS16x() 	{ return this->_revENS16x; }			// Report version of sensor (0: ENS16x, 1: ENS161)
 		bool 				setMode(uint8_t mode);						// Set operation mode of sensor
 
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 		bool 				initCustomMode(uint16_t stepNum);				// Initialize definition of custom mode with <n> steps
 		bool 				addCustomStep(uint16_t time, bool measureHP0, bool measureHP1, bool measureHP2, bool measureHP3, uint16_t tempHP0, uint16_t tempHP1, uint16_t tempHP2, uint16_t tempHP3);
 																							// Add a step to custom measurement profile with definition of duration, enabled data acquisition and temperature for each hotplate
-																							
+#endif
+
 		bool 				measure(bool waitForNew = true); 				// Perform measurement and stores result in internal variables
+#ifndef ENS16x_DISABLE_ENHANCED_FEATURES
 		bool 				measureRaw(bool waitForNew = true); 				// Perform raw measurement and stores result in internal variables
 		bool 				set_envdata(float t, float h);					// Writes t (degC) and h (%rh) to ENV_DATA. Returns "0" if I2C transmission is successful
 		bool 				set_envdata210(uint16_t t, uint16_t h);				// Writes t and h (in ENS210 format) to ENV_DATA. Returns "0" if I2C transmission is successful
+#endif
 		uint8_t				getMajorRev() 	{ return this->_fw_ver_major; }			// Get major revision number of used firmware
 		uint8_t				getMinorRev() 	{ return this->_fw_ver_minor; }			// Get minor revision number of used firmware
 		uint8_t				getBuild() 		{ return this->_fw_ver_build; }		// Get build revision number of used firmware
@@ -146,7 +155,9 @@ class ScioSense_ENS16x {
 		uint8_t				_sdaPin = 0;
 		uint8_t				_sclPin = 0;	
 				
+#ifndef ENS16x_DISABLE_DEBUG
 		bool 				debugENS16x = false;
+#endif
 		
 		bool 				reset(); 		                               		// Sends a reset to the ENS16x. Returns false on I2C problems.
 		bool 				checkPartID();							// Reads the part ID and confirms valid sensor
