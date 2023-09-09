@@ -465,7 +465,9 @@ bool MqttIsConnected(void) {
 }
 
 void MqttDisconnect(void) {
-  MqttClient.disconnect();
+  if (MqttClient.connected()) {
+    MqttClient.disconnect();
+  }
 }
 
 void MqttSubscribeLib(const char *topic) {
@@ -1060,8 +1062,7 @@ void MqttReconnect(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_ATTEMPTING_CONNECTION));
 
-  if (MqttClient.connected()) { MqttClient.disconnect(); }
-
+  MqttDisconnect();
   MqttSetClientTimeout();
 
   MqttClient.setCallback(MqttDataHandler);
