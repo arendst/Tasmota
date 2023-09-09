@@ -109,11 +109,39 @@ bool Rg15Process(char* buffer) {
   // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
   // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
-  if (buffer[0] == 'A' && buffer[1] == 'c' && buffer[2] == 'c') {
-    Rg15Parse(buffer, "Acc", &Rg15.acc);
-    Rg15Parse(buffer, "EventAcc", &Rg15.event);
-    Rg15Parse(buffer, "TotalAcc", &Rg15.total);
-    Rg15Parse(buffer, "RInt", &Rg15.rate);
+  // but also handle partials such as
+  // cc  0.00 mm, TotalAcc  1.68 mm, RInt  0.00 mmph
+  // mm, EventA
+  // m, TotalAc
+
+  if (strstr(buffer, "Acc") != nullptr || strstr(buffer, "EventAcc") != nullptr || strstr(buffer, "TotalAcc") != nullptr || strstr(buffer, "RInt") != nullptr) {
+    Rg15.acc = FP_NAN;
+    Rg15.event = FP_NAN;
+    Rg15.total = FP_NAN;
+    Rg15.rate = FP_NAN;
+
+    float tmp;
+
+    if (Rg15Parse(buffer, "Acc", &tmp)) {
+      Rg15.acc=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'Acc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "EventAcc", &tmp)) {
+      Rg15.event=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'EventAcc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "TotalAcc", &tmp)) {
+      Rg15.total=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'TotalAcc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "RInt", &tmp)) {
+      Rg15.rate=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'RInt' from accumulation data"));
+    }
 
     if (Rg15.acc > 0.0f) {
       Rg15.time = RG15_EVENT_TIMEOUT;        // We have some data, so the rain event is on-going
@@ -183,8 +211,14 @@ void Rg15Poll(void) {
 
 void Rg15Show(bool json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f,\"" D_JSON_EVENT "\":%2_f,\"" D_JSON_TOTAL "\":%2_f,\"" D_JSON_FLOWRATE "\":%2_f}"),
-      &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+    if( isfinite(Rg15.acc) || isfinite(Rg15.event) || isfinite(Rg15.total) || isfinite(Rg15.rate) ) {
+        ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+        if(isfinite(Rg15.acc)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_ACTIVE, &Rg15.acc); }
+        if(isfinite(Rg15.event)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_EVENT, &Rg15.event); }
+        if(isfinite(Rg15.total)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_TOTAL, &Rg15.total); }
+        if(isfinite(Rg15.rate)) { ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate); }
+        ResponseAppend_P(PSTR("}"));
+    }
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
@@ -227,6 +261,9 @@ bool Xsns90(uint32_t function) {
   else if (HydreonSerial) {
     switch (function) {
       case FUNC_EVERY_SECOND:
+        if((TasmotaGlobal.uptime % 60) == 0) {  // every minute
+          ExecuteCommand("Sensor90 R", SRC_SENSOR);
+        }
         Rg15Poll();
         break;
       case FUNC_COMMAND_SENSOR:
