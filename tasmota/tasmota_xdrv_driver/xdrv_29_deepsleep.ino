@@ -130,6 +130,9 @@ void DeepSleepStart(void)
   }
 
   String dt = GetDT(RtcSettings.nextwakeup);  // 2017-03-07T11:08:02
+  if (Settings->flag3.time_append_timezone) {  // SetOption52 - Append timezone to JSON time
+    dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
+  }
   // Limit sleeptime to DEEPSLEEP_MAX_CYCLE
   // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - LocalTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - LocalTime();
   deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - LocalTime());
@@ -138,13 +141,6 @@ void DeepSleepStart(void)
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"" D_PRFX_DEEPSLEEP "\":%d,\"Wakeup\":%d}}"), (char*)dt.c_str(), LocalTime(), RtcSettings.nextwakeup);
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_PRFX_DEEPSLEEP), true);
 
-  // Change LWT Topic to Sleep to ensure automation see different state
-  //GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
-  //Response_P(PSTR(D_PRFX_DEEPSLEEP));
-  //MqttPublish(stopic, true);
-
-  //MqttClient.disconnect(true);
-  //EspClient.stop();
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
