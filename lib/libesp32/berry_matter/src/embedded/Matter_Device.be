@@ -665,6 +665,23 @@ class Matter_Device
   end
 
   #############################################################
+  # Find plugin by endpoint
+  def find_plugin_by_friendly_name(name)
+    if (name == nil) || (size(name) == 0)   return nil      end     # invalid name
+
+    var idx = 0
+    while idx < size(self.plugins)
+      var pl = self.plugins[idx]
+      var pl_name = pl.get_name()
+      if (pl_name != nil) && (size(pl_name) > 0) && (pl_name == name)
+        return pl
+      end
+      idx += 1
+    end
+    return nil
+  end
+
+  #############################################################
   # Persistance of Matter Device parameters
   #
   #############################################################
@@ -1514,6 +1531,7 @@ class Matter_Device
   #
   def register_commands()
     tasmota.add_cmd("MtrJoin", /cmd_found, idx, payload, payload_json -> self.MtrJoin(cmd_found, idx, payload, payload_json))
+    tasmota.add_cmd("MtrUpdate", /cmd_found, idx, payload, payload_json -> self.MtrUpdate(cmd_found, idx, payload, payload_json))
   end
 
   #####################################################################
@@ -1531,7 +1549,51 @@ class Matter_Device
     tasmota.resp_cmnd_done()
   end
 
+  #####################################################################
+  # `MtrUpdate`
+  #
+  # MtrUpdate {"ep":1, "Power":1}
+  # MtrUpdate {"Name":"ep1", "Power":1}
+  # MtrUpdate {"Name":"My_virtual_light", "Power":1}
+  #
+  def MtrUpdate(cmd_found, idx, payload, payload_json)
+    if payload_json == nil    return tasmota.resp_cmnd("Invalid JSON")    end
 
+    var key_i
+    if (key_i := tasmota.find_key_i(payload_json, 'Device')) != nil
+      var pl = self.find_plugin_by_name_or_ep(payload[key_i])
+      if (pl == nil)          return tasmota.resp_cmnd("Invalid Device")    end
+      if (!pl.virtual)        return tasmota.resp_cmnd("Device is not virtual")    end
+      # find endpoint (plugin) by name
+      # can be:
+      #  - integer: endpoint number
+      #  - "ep<n>": endpoint number
+      #  - "<name>": friendly name for endpoint
+    end
+
+    tasmota.resp_cmnd_done()
+  end
+
+  #####################################################################
+  # find_plugin_by_name_or_ep
+  #
+  # `name`can be:
+  #  - integer: endpoint number
+  #  - "ep<n>": endpoint number
+  #  - "<name>": friendly name for endpoint
+  def find_plugin_by_name_or_ep(name)
+    if type(name) == 'int'
+      if (name > 0)     return self.find_plugin_by_endpoint(name)     end
+    elif type(name) == 'string'
+      if name[0..1] == "ep"
+        var ep_num = int(name[2..])
+        if ep_num > 0   return self.find_plugin_by_endpoint(ep_num)   end
+      else
+        return self.find_plugin_by_friendly_name(name)
+      end
+    end
+    return nil              # invalid type
+  end
 end
 matter.Device = Matter_Device
 
