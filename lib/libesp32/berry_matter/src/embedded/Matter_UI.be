@@ -496,8 +496,8 @@ class Matter_UI
       var typ = class_types[i]
       if typ == ''
         webserver.content_send("<option value=''></option>")
-      elif typ == '-http'
-        webserver.content_send("<option value='' disabled>--- Tasmota Remote ---</option>")
+      elif typ == '-virtual'
+        webserver.content_send("<option value='' disabled>--- Virtual Devices ---</option>")
       else
         var nam = self.device.get_plugin_class_displayname(typ)
         webserver.content_send(format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
