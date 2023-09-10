@@ -51,10 +51,10 @@ const char HTTP_RG15[] PROGMEM =
 TasmotaSerial *HydreonSerial = nullptr;
 
 struct RG15 {
-  float acc;
-  float event;
-  float total;
-  float rate;
+  float acc = NAN;
+  float event = NAN;
+  float total = NAN;
+  float rate = NAN;
   uint16_t time = RG15_EVENT_TIMEOUT;
   uint8_t init_step;
 } Rg15;
@@ -109,16 +109,14 @@ bool Rg15Process(char* buffer) {
   // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
   // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
-  // but also handle partials such as
-  // cc  0.00 mm, TotalAcc  1.68 mm, RInt  0.00 mmph
-  // mm, EventA
-  // m, TotalAc
 
-  if (strstr(buffer, "Acc") != nullptr || strstr(buffer, "EventAcc") != nullptr || strstr(buffer, "TotalAcc") != nullptr || strstr(buffer, "RInt") != nullptr) {
-    Rg15.acc = FP_NAN;
-    Rg15.event = FP_NAN;
-    Rg15.total = FP_NAN;
-    Rg15.rate = FP_NAN;
+  // check for the expected data elements
+  // Acc should be a position 0 but note if missing we don't want to mistake it for EventAcc
+  if (strstr(buffer, "Acc")==buffer && strstr(buffer, "EventAcc") != nullptr && strstr(buffer, "TotalAcc") != nullptr && strstr(buffer, "RInt") != nullptr) {
+    Rg15.acc = NAN;
+    Rg15.event = NAN;
+    Rg15.total = NAN;
+    Rg15.rate = NAN;
 
     float tmp;
 
@@ -174,6 +172,7 @@ void Rg15Poll(void) {
     if (Rg15.time) {                         // Check if the rain event has timed out, reset rate to 0
       Rg15.time--;
       if (!Rg15.time) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - rain event has timed out, reset acc & rate to 0 "));
         Rg15.acc = 0;
         Rg15.rate = 0;
         publish = true;
@@ -211,13 +210,14 @@ void Rg15Poll(void) {
 
 void Rg15Show(bool json) {
   if (json) {
-    if( isfinite(Rg15.acc) || isfinite(Rg15.event) || isfinite(Rg15.total) || isfinite(Rg15.rate) ) {
-        ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-        if(isfinite(Rg15.acc)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_ACTIVE, &Rg15.acc); }
-        if(isfinite(Rg15.event)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_EVENT, &Rg15.event); }
-        if(isfinite(Rg15.total)) { ResponseAppend_P(PSTR("\"%s\":%2_f, "), D_JSON_TOTAL, &Rg15.total); }
-        if(isfinite(Rg15.rate)) { ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate); }
-        ResponseAppend_P(PSTR("}"));
+    // if the parsing wasn't completely successful then skip the update
+    if( isfinite(Rg15.acc) && isfinite(Rg15.event) && isfinite(Rg15.total) && isfinite(Rg15.rate) ) {
+      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_ACTIVE, Rg15.acc);
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_EVENT, Rg15.event);
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_TOTAL, Rg15.total);
+      ResponseAppend_P(PSTR("\"%s\":%.2f"), D_JSON_FLOWRATE, Rg15.rate);
+      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
   } else {
