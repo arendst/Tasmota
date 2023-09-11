@@ -262,6 +262,7 @@
 #define D_CMND_ACCOUNTID "AccountID"
 #define D_CMND_CHALLENGERESPONSE "ChallengeResponse"
 #define D_CMND_MACHINECID "MachineCID"
+#define D_CMND_RESOLVEID "ResolveCID"
 #define D_CMND_BALANCE "Balance"
 #define D_CMND_GETACCOUNTID "GetAccountID"
 #define D_CMND_STATUS "Status"
