@@ -249,18 +249,6 @@ void CmndWifiTest(void)
 #endif //USE_WEBSERVER
 }
 
-void UpdateBatteryPercent(int batt_percentage) {
-  if (batt_percentage > 101) { batt_percentage = 100; }
-  if (batt_percentage >= 0) {
-    Settings->battery_level_percent = batt_percentage;
-  }
-}
-
-void CmndBatteryPercent(void) {
-  UpdateBatteryPercent(XdrvMailbox.payload);
-  ResponseCmndNumber(Settings->battery_level_percent);
-}
-
 #endif  // not defined FIRMWARE_MINIMAL_ONLY
 
 void ResponseCmndNumber(int value) {
@@ -2604,6 +2592,18 @@ void CmndDnsTimeout(void) {
     Settings->dns_timeout = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->dns_timeout);
+}
+
+void UpdateBatteryPercent(int batt_percentage) {
+  if (batt_percentage > 101) { batt_percentage = 100; }
+  if (batt_percentage >= 0) {
+    Settings->battery_level_percent = batt_percentage;
+  }
+}
+
+void CmndBatteryPercent(void) {
+  UpdateBatteryPercent(XdrvMailbox.payload);
+  ResponseCmndNumber(Settings->battery_level_percent);
 }
 
 #ifdef USE_I2C
