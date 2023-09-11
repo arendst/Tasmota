@@ -108,9 +108,7 @@ void Max17043Show(bool json) {
   // only update the system percentage if it's changed
   battery_current = int(round(percentage));
   if (battery_latest != battery_current) {
-    char cmnd[30];
-    sprintf(cmnd, "%s %d", D_CMND_ZIGBEE_BATTPERCENT, battery_current);
-    ExecuteCommand(cmnd, SRC_SENSOR);
+    UpdateBatteryPercent(battery_current);
     battery_latest = battery_current;
   }
   if (json) {
