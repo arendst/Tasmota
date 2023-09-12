@@ -517,7 +517,8 @@ bool hasMachineBeenAttested()
 {
   HTTPClientLight http;
 
-  String uri = "https://cid-resolver.rddl.io/planetmint-go/machine/get_machine_by_public_key/";
+  String uri = "/planetmint-go/machine/get_machine_by_public_key/";
+  uri = getPlanetmintAPI() + uri;
   uri = uri + g_ext_pub_key_planetmint;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
