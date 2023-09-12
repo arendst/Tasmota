@@ -49,6 +49,7 @@ int SignDataHashWithPrivKey(const uint8_t* digest, const uint8_t* priv_key, char
 
 bool verifyDataHash(const char* sig_str, const char* pub_key_str, const char* hash_str);
 
+
 bool getMachineIDSignature(  uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature, uint8_t* hash);
 
 bool getMachineIDSignaturePublicKey( uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature);

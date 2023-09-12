@@ -668,7 +668,7 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
     Serial.println("Notarize: CID Asset\n");
     ResponseAppend_P("Notarize: CID Asset\n");
 
-    gnerateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address );
+    generateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
   }
   else{
     Serial.println("Register: Machine\n");

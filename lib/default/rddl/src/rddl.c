@@ -171,7 +171,6 @@ bool SignDataHash(const char* data_str, size_t data_length, char* pubkey_out, ch
   return verified;
 }
 
-
 int SignDataHashWithPrivKey(const uint8_t* digest, const uint8_t* priv_key, char* sig_out)
 {
   uint8_t signature[64] = {0};
@@ -226,5 +225,3 @@ bool getMachineIDSignaturePublicKey( uint8_t* priv_key,  uint8_t* pub_key, uint8
   bool ret = getMachineIDSignature(  priv_key,  pub_key, signature, hash);
   return ret;
 }
-
-

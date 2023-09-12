@@ -36,7 +36,7 @@ void pubkey2address(const uint8_t *pubkey, size_t key_length, uint8_t *address)
 
 int getAddressString(const uint8_t *address, char *stringbuffer)
 {
-    const char *hrp = "cosmos";
+    const char *hrp = "plmnt";
     size_t data_len = 32;
     uint8_t paddingbuffer[32] = {0};
     uint8_t base32_enc[100] = {0};
@@ -205,7 +205,7 @@ int generateAnyAttestMachineMsg(Google__Protobuf__Any* anyMsg, Planetmintgo__Mac
 }
 
 
-int gnerateAnyCIDAttestMsg( Google__Protobuf__Any* anyMsg, char *public_address )
+int generateAnyCIDAttestMsg( Google__Protobuf__Any* anyMsg, char *public_address )
 {
     Planetmintgo__Asset__MsgNotarizeAsset msg = PLANETMINTGO__ASSET__MSG_NOTARIZE_ASSET__INIT;
     msg.creator = public_address;
@@ -222,28 +222,25 @@ int gnerateAnyCIDAttestMsg( Google__Protobuf__Any* anyMsg, char *public_address 
     return 0;
 }
 
-int gnerateAnyCIDAttestMsgGeneric( Google__Protobuf__Any* anyMsg, const char* cid, uint8_t* priv_key, uint8_t* pub_key, char *public_address )
+int generateAnyCIDAttestMsgGeneric( Google__Protobuf__Any* anyMsg, const char* cid, uint8_t* priv_key, uint8_t* pub_key, char* public_address, const char* ext_pub_key)
 {
 
     Planetmintgo__Asset__MsgNotarizeAsset msg = PLANETMINTGO__ASSET__MSG_NOTARIZE_ASSET__INIT;
-
-    char hex_pub_key[66+1] = {0};
-    toHexString(hex_pub_key, pub_key, 33);
 
     uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
     sha256(cid, strlen(cid), digest);
 
     const ecdsa_curve *curve = &secp256k1;
-    //ed25519_sign((const unsigned char *)digest, SHA256_DIGEST_LENGTH, (const unsigned char *)priv_key, (const unsigned char *)pub_key + 1, signature);
+
     uint8_t signature[64]= {0};
     char signature_hex[64*2+1] = {0};
     int res = ecdsa_sign_digest(curve, (const unsigned char *)priv_key, (const unsigned char *)digest, signature, NULL, NULL);
-    toHexString(signature_hex, signature, 64);
+    toHexString(signature_hex, signature, 128);
 
     msg.creator = public_address;
     msg.hash = (char*)cid;
     msg.signature =  signature_hex;
-    msg.pubkey = hex_pub_key;
+    msg.pubkey = ext_pub_key;
 
     anyMsg->type_url = "/planetmintgo.asset.MsgNotarizeAsset";
     anyMsg->value.len = planetmintgo__asset__msg_notarize_asset__get_packed_size(&msg);
@@ -256,6 +253,7 @@ int gnerateAnyCIDAttestMsgGeneric( Google__Protobuf__Any* anyMsg, const char* ci
 
 bool get_account_info( const char* json_obj, int* account_id, int* sequence)
 {
+
     char* end_str = "\"";
     char* search_string = "\"account_number\":\"";
 
@@ -282,32 +280,6 @@ bool get_account_info( const char* json_obj, int* account_id, int* sequence)
     *sequence = atoi( sequence_memory );
     return true;
 }
-//     char* end_str = "\"";
-//     char* search_string = "\"account_number\":\"";
-
-//     char account_memory[10]= {0};
-//     char sequence_memory[10]= {0};
-
-//     char* ptr = strstr( json_obj, search_string);
-//     if( !ptr )
-//         return false;
-//     size_t len = strlen(search_string);
-//     char* endptr = strstr( ptr+ len, end_str );
-//     memcpy( (void*)account_memory, ptr+ len,endptr-(ptr+len) );
-
-
-//     search_string = "\"sequence\":\"";
-//     ptr = strstr( json_obj, search_string);
-//     if( !ptr )
-//         return false;
-//     len = strlen(search_string);
-//     endptr = strstr( ptr+ len, end_str );
-//     memcpy( (void*)sequence_memory, ptr+ len,endptr-(ptr+len) );
-
-//     *account_id = atoi( account_memory );
-//     *sequence = atoi( sequence_memory );
-//     return true;
-// }
 
 bool get_address_info_from_accounts( const char* json_obj, const char* address, int* account_id, int* sequence)
 {
