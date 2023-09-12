@@ -211,7 +211,7 @@ void Rg15Poll(void) {
 void Rg15Show(bool json) {
   if (json) {
     // if the parsing wasn't completely successful then skip the update
-    if( isfinite(Rg15.acc) && isfinite(Rg15.event) && isfinite(Rg15.total) && isfinite(Rg15.rate) ) {
+    if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
       ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_ACTIVE, Rg15.acc);
       ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_EVENT, Rg15.event);
