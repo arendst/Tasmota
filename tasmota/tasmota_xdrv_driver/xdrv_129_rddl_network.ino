@@ -432,40 +432,48 @@ String registerCID(const char* cid){
   return jwt_token;
 }
 
-char planetmintapi[100] = {0};
+char g_planetmintapi[100] = {0};
+char g_accountid[20] = {0};
 
 void setPlanetmintAPI( const char* api, size_t len)
 {
   storeKeyValuePair( "planetmintapi", api, len);
-  memset((void*)planetmintapi,0, 100);
+  memset((void*)g_planetmintapi,0, 100);
 }
 char* getPlanetmintAPI()
 {
-  if( strlen( planetmintapi) == 0 )
-    getValueForKey( "planetmintapi", planetmintapi);
-  return planetmintapi;
+  if( strlen( g_planetmintapi) == 0 )
+    getValueForKey( "planetmintapi", g_planetmintapi);
+  return g_planetmintapi;
+}
+
+void setAccountID( const char* account, size_t len)
+{
+  storeKeyValuePair( "accountid", account, len);
+  memset((void*)g_accountid,0, 20);
+}
+char* getAccountID()
+{
+  if( strlen( g_accountid) == 0 )
+    getValueForKey( "accountid", g_accountid);
+  return g_accountid;
 }
   
   
-
-int broadcast_TX( const char* tx_bytes ){
+int broadcast_transaction( char* tx_payload ){
   HTTPClientLight http;
   String uri = "/cosmos/tx/v1beta1/txs";
   uri = getPlanetmintAPI() + uri;
   http.begin(uri);
   http.addHeader("accept", "application/json");
   http.addHeader("Content-Type", "application/json");
-  String payload = "{ \"tx_bytes\": \"";
-  payload = payload + tx_bytes + "\", \"mode\": \"BROADCAST_MODE_SYNC\" }";
-
-  int ret = http.POST( payload );
+  
+  int ret = 0;
+  ret = http.POST( (uint8_t*)tx_payload, strlen(tx_payload) );
   ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), "respose code", ret);
   ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "respose string", http.getString().c_str());
-
-
   return ret;
 }
-
 
 
 bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t* sequence )
@@ -482,45 +490,45 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
   int httpResponseCode = http.GET();
   int _account_id = 0;
   int _sequence = 0;
+  //ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Account parsing", );
+
   bool ret = get_account_info( http.getString().c_str() ,&_account_id, &_sequence );
-  if( !ret )
-    return false;
-  // {
+  if( ret )
+  {
+    *account_id = (uint64_t) _account_id;
+    *sequence = (uint64_t) _sequence;
+  }
+  else
+    ResponseAppend_P("Account parsing issue\n");
 
-  //   uri = "/cosmos/auth/v1beta1/accounts";
-  //   uri = PLANETMINT_API_URI + uri;
-  //   http.begin(uri);
-  //   http.addHeader("Content-Type", "application/json");
-
-  //   int httpResponseCode = http.GET();
-  //   ret = get_address_info_from_accounts( http.getString().c_str(), account_address, &_account_id, &_sequence );
-  //   if( !ret )
-  //     return false;
-  // }
-  *account_id = (uint64_t) _account_id;
-  *sequence = (uint64_t) _sequence;
-  return true;
+  return ret;
 }
 
-
-int create_broadcast_tx( void* anyMsg, char* tokenAmount, bool first_tx )
+bool hasMachineBeenAttested()
 {
- Google__Protobuf__Any* local_msg = (Google__Protobuf__Any*) anyMsg;
-  
-  // get address 
-  getPlntmntKeys();
+  HTTPClientLight http;
 
+  String uri = "https://cid-resolver.rddl.io/planetmint-go/machine/get_machine_by_public_key/";
+  uri = uri + g_ext_pub_key_planetmint;
+  http.begin(uri);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.GET();
+
+  if (httpResponseCode == 404)
+    return false;
+  else
+    return true;
+}
+
+char* create_transaction( void* anyMsg, char* tokenAmount )
+{
   uint64_t account_id = 0;
   uint64_t sequence = 0;
-  bool ret = getAccountInfo( g_address, &account_id, &sequence );
-  if( !ret )
+  bool gotAccountID = getAccountInfo( g_address, &account_id, &sequence );
+  if( !gotAccountID )
   {
-    if( !first_tx )
-      return -2;
-
-    char buffer[10] = {0};
-    char* paccountid = getValueForKey("accountid", buffer);
-    account_id = (uint64_t) atoi( (const char*) buffer);
+    account_id = (uint64_t) atoi( (const char*) getAccountID());
   }
 
   Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
@@ -530,18 +538,23 @@ int create_broadcast_tx( void* anyMsg, char* tokenAmount, bool first_tx )
   uint8_t* txbytes = NULL;
   size_t tx_size = 0;
   char* chain_id = "planetmintgo";
-  prepareTx( local_msg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
-  size_t allocationsize = ceil( ((tx_size+3-1)/3)*4)+2;
-  char* tx_bytes_b64 = (char*) malloc( allocationsize);
-  memset( (void*)tx_bytes_b64, 0, allocationsize );
-  char * p = bintob64( tx_bytes_b64, txbytes, tx_size);
-  free( txbytes );
+  int ret = prepareTx( (Google__Protobuf__Any*)anyMsg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
+  if( ret < 0 )
+    return NULL;
 
-  int broadcast_return = broadcast_TX( tx_bytes_b64 );
-  
-  free(tx_bytes_b64);
+  size_t allocation_size = ceil( ((tx_size+3-1)/3)*4)+2 + 150;
+  char* payload = (char*) getStack( allocation_size );
+  if( payload )
+  {
+    memset( payload, 0, allocation_size );
+    strcpy(payload, "{ \"tx_bytes\": \"" );
+    char * p = bintob64( payload+ strlen( payload ), txbytes, tx_size);
+    strcpy( payload+ strlen( payload ), "\", \"mode\": \"BROADCAST_MODE_SYNC\" }");
+  }
+  else
+    ResponseAppend_P("note engouth memory:\n");
 
-  return broadcast_return;
+  return payload;
 }
 
 bool getGPSstring( char** gps_data ){
@@ -570,31 +583,35 @@ bool getGPSstring( char** gps_data ){
   return status;
 }
 
-int registerMachine(){
+int registerMachine(void* anyMsg){
   
   char machinecid_buffer[58+1] = {0};
   char machineid_public_key_hex[33*2+1] = {0};
-  char* gps_str = NULL;
+  //char* gps_str = NULL;
 
   //char machineid_public_key_hex[33*2+1] = {0};
-  //uint8_t machineid_public_key[33]={0};
-  // uint8_t signature[64]={0};
+  uint8_t machineid_public_key[33]={0};
+  uint8_t signature[64]={0};
   char signature_hex[64*2+1]={0};
-  // uint8_t hash[32];
+  uint8_t hash[32];
 
-  // ecdsa_get_public_key33(&secp256k1, private_key_machine_id, machineid_public_key);
-  // bool ret_bool = getMachineIDSignature(  private_key_machine_id,  machineid_public_key, signature, hash);
-  // if( ! ret_bool )
-  //   return -1;
-  //toHexString( signature_hex, signature, 64*2);
+   ecdsa_get_public_key33(&secp256k1, private_key_machine_id, machineid_public_key);
+  bool ret_bool = getMachineIDSignature(  private_key_machine_id,  machineid_public_key, signature, hash);
+  if( ! ret_bool )
+  {
+    ResponseAppend_P("No machine signature\n");
+    return -1;
+  }
+  
+  toHexString( signature_hex, signature, 64*2);
 
-  getGPSstring( &gps_str );
+  //getGPSstring( &gps_str );
   toHexString( machineid_public_key_hex, g_pub_key_planetmint, 33*2);
   char* machinecid = getValueForKeyRaw("machinecid", machinecid_buffer);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
   metadata.additionaldatacid = machinecid_buffer;
-  metadata.gps = gps_str;
+  metadata.gps = "";// gps_str;
   metadata.assetdefinition = "{\"Version\": \"0.1\"}";
   metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
 
@@ -611,68 +628,92 @@ int registerMachine(){
   machine.metadata = &metadata;
   machine.type = RDDL_MACHINE_POWER_SWITCH;
   machine.machineidsignature = signature_hex;
-
+ 
   Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
   machineMsg.creator = (char*)g_address;
   machineMsg.machine = &machine;
-  Google__Protobuf__Any msg = GOOGLE__PROTOBUF__ANY__INIT;
-  generateAnyAttestMachineMsg( &msg, &machineMsg);
-  int ret = create_broadcast_tx( &msg, "2", true);
+  int ret = generateAnyAttestMachineMsg((Google__Protobuf__Any*)anyMsg, &machineMsg);
+  if( ret<0 )
+  {
+    ResponseAppend_P("No Attestation message\n");
+    return -1;
+  }
 
-  free( msg.value.data );
-  free(gps_str);
-  
-  return ret;
+  return 0;
 }
 
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
-
-  String signature = signRDDLNetworkMessageContent(data_str, data_length);
-
-  //compute CID
-  const char* cid_str = (const char*) create_cid_v1_from_string( data_str );
-
-  // store cid
-  storeKeyValuePair( cid_str, data_str,0 );
-
-  // register CID
-  registerCID( cid_str );
- 
-  // notarize message vi planetmint
-  getPlntmntKeys();
-
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
-  gnerateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address );
-  int ret = create_broadcast_tx(&anyMsg, "2", false);
-  free( anyMsg.value.data);
-
-  ResponseJsonEnd();
-  free( (char*)cid_str );
-
-  if( ret == -2 )
+  clearStack();
+  getPlntmntKeys();
+  int status = 0;
+  if( hasMachineBeenAttested() )
   {
-    Serial.println("Register: Machine\n");
-    ResponseAppend_P("Register: Machine\n");
-    registerMachine();
-  }
-  else
-  {
+    String signature = signRDDLNetworkMessageContent(data_str, data_length);
+
+    //compute CID
+    const char* cid_str = (const char*) create_cid_v1_from_string( data_str );
+
+    // store cid
+    storeKeyValuePair( cid_str, data_str,0 );
+
+    // register CID
+    registerCID( cid_str );
+  
     Serial.println("Notarize: CID Asset\n");
     ResponseAppend_P("Notarize: CID Asset\n");
+
+    gnerateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address );
   }
-  
+  else{
+    Serial.println("Register: Machine\n");
+    ResponseAppend_P("Register: Machine\n");
+    status = registerMachine(&anyMsg);
+  }
+  if (status >= 0) {
+    ResponseAppend_P("TX processing:\n");
+    char* tx_payload = create_transaction(&anyMsg, "2");
+
+    if(!tx_payload)
+      return;
+    ResponseAppend_P("TX broadcast:\n");
+    int broadcast_return = broadcast_transaction( tx_payload );
+  }
+  ResponseJsonEnd();
+}
+
+bool g_mutex_running_notarization = false;
+
+bool claimNotarizationMutex()
+{
+  if ( !g_mutex_running_notarization )
+  {
+    g_mutex_running_notarization = true;
+    return true;
+  }
+  else
+    return false;
+}
+
+void releaseNotarizationMutex()
+{
+  g_mutex_running_notarization = false;
 }
 
 void RDDLNotarize(){
-  // create notarization message
-  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":"));
-  int start_position = ResponseLength();
-  getNotarizationMessage();
-  int current_position  = ResponseLength();
-  size_t data_length = (size_t)(current_position - start_position);
-  const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+  if( claimNotarizationMutex() )
+  {
+    // create notarization message
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":"));
+    int start_position = ResponseLength();
+    getNotarizationMessage();
+    int current_position  = ResponseLength();
+    size_t data_length = (size_t)(current_position - start_position);
+    const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
 
-  runRDDLNotarizationWorkflow(data_str, data_length);
+    runRDDLNotarizationWorkflow(data_str, data_length);
+    releaseNotarizationMutex();
+  }
 }
 
 void RDDLNetworkNotarizationScheduler(){
