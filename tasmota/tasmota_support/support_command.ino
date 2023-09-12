@@ -742,8 +742,8 @@ void CmndPublicKeys(void)
   char* mnemonic = NULL;
   getPlntmntKeys();
 
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint() );
+  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }\n",
+    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
   
   CmndStatusResponse(0);
   ResponseClear();

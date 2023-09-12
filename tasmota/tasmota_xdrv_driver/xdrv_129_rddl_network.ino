@@ -62,15 +62,21 @@ uint8_t g_priv_key_planetmint[32+1] = {0};
 uint8_t g_priv_key_liquid[32+1] = {0};
 uint8_t g_pub_key_planetmint[33+1] = {0};
 uint8_t g_pub_key_liquid[33+1] = {0};
+uint8_t g_machineid_public_key[33+1]={0};
+
+
 char g_address[64] = {0};
 char g_ext_pub_key_planetmint[EXT_PUB_KEY_SIZE+1] = {0};
 char g_ext_pub_key_liquid[EXT_PUB_KEY_SIZE+1] = {0};
+char g_machineid_public_key_hex[33*2+1] = {0};
+  
 
 const char* getRDDLAddress() { return (const char*) g_address; }
 const char* getExtPubKeyLiquid() { return (const char*)g_ext_pub_key_liquid; }
 const char* getExtPubKeyPlanetmint() { return (const char*)g_ext_pub_key_planetmint; }
 const uint8_t* getPrivKeyLiquid() { return (const uint8_t*)g_priv_key_liquid; }
 const uint8_t* getPrivKeyPlanetmint() { return (const uint8_t*)g_priv_key_planetmint; }
+const char* getMachinePublicKey() { return (const char*) g_machineid_public_key_hex; }
 
 bool g_readSeed = false;
 
@@ -202,6 +208,9 @@ void getPlntmntKeys(){
   uint32_t fingerprint = hdnode_fingerprint(&node_planetmint);
   int ret = hdnode_serialize_public( &node_planetmint, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
   int ret2 = hdnode_serialize_public( &node_rddl, fingerprint, VERSION_PUBLIC, g_ext_pub_key_liquid, EXT_PUB_KEY_SIZE);
+
+  ecdsa_get_public_key33(&secp256k1, private_key_machine_id, g_machineid_public_key);
+  toHexString( g_machineid_public_key_hex, g_machineid_public_key, 33*2);
 }
 
 bool hasKey(const char * key){
@@ -586,17 +595,13 @@ bool getGPSstring( char** gps_data ){
 int registerMachine(void* anyMsg){
   
   char machinecid_buffer[58+1] = {0};
-  char machineid_public_key_hex[33*2+1] = {0};
   //char* gps_str = NULL;
 
-  //char machineid_public_key_hex[33*2+1] = {0};
-  uint8_t machineid_public_key[33]={0};
   uint8_t signature[64]={0};
   char signature_hex[64*2+1]={0};
   uint8_t hash[32];
 
-   ecdsa_get_public_key33(&secp256k1, private_key_machine_id, machineid_public_key);
-  bool ret_bool = getMachineIDSignature(  private_key_machine_id,  machineid_public_key, signature, hash);
+  bool ret_bool = getMachineIDSignature(  private_key_machine_id,  g_machineid_public_key, signature, hash);
   if( ! ret_bool )
   {
     ResponseAppend_P("No machine signature\n");
@@ -606,7 +611,6 @@ int registerMachine(void* anyMsg){
   toHexString( signature_hex, signature, 64*2);
 
   //getGPSstring( &gps_str );
-  toHexString( machineid_public_key_hex, g_pub_key_planetmint, 33*2);
   char* machinecid = getValueForKeyRaw("machinecid", machinecid_buffer);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
@@ -624,7 +628,7 @@ int registerMachine(void* anyMsg){
   machine.precision = 8;
   machine.issuerplanetmint = g_ext_pub_key_planetmint;
   machine.issuerliquid = g_ext_pub_key_liquid;
-  machine.machineid = machineid_public_key_hex;
+  machine.machineid = g_machineid_public_key_hex;
   machine.metadata = &metadata;
   machine.type = RDDL_MACHINE_POWER_SWITCH;
   machine.machineidsignature = signature_hex;
