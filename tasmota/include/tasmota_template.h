@@ -488,6 +488,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DSB          4
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
+#define MAX_BL0942_RX    4              // Baudrates 1 (4800), 2 (9600), 3 (19200), 4 (38400)
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -906,7 +907,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_BL0940) || defined(USE_BL09XX)
   AGPIO(GPIO_BL0939_RX),                // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),                // BL0940 Serial interface
-  AGPIO(GPIO_BL0942_RX),                // BL0940 Serial interface
+  AGPIO(GPIO_BL0942_RX) + MAX_BL0942_RX,  // BL0942 Serial interface
 #endif
 #ifdef USE_IEM3000
   AGPIO(GPIO_IEM3000_TX),               // IEM3000 Serial interface

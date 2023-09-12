@@ -89,6 +89,7 @@ struct BL09XX {
   int32_t power[2] = { 0, };
   float temperature;
   uint16_t tps1 = 0;
+  uint16_t baudrate;
   uint8_t *rx_buffer = nullptr;
   uint8_t buffer_size = 0;
   uint8_t byte_counter = 0;
@@ -285,7 +286,7 @@ void Bl09XXEverySecond(void) {
 void Bl09XXInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   Bl09XXSerial = new TasmotaSerial(Bl09XX.rx_pin, Pin(GPIO_TXD), 1);
-  if (Bl09XXSerial->begin(4800)) {
+  if (Bl09XXSerial->begin(Bl09XX.baudrate)) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
@@ -328,6 +329,7 @@ void Bl09XXInit(void) {
 void Bl09XXPreInit(void) {
   if (PinUsed(GPIO_TXD)) {
     Bl09XX.model = BL09XX_MODEL;
+    Bl09XX.baudrate = 4800;
     if (PinUsed(GPIO_BL0939_RX)) {
       Bl09XX.model = BL0939_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0939_RX);
@@ -338,7 +340,9 @@ void Bl09XXPreInit(void) {
     }
     else if (PinUsed(GPIO_BL0942_RX)) {
       Bl09XX.model = BL0942_MODEL;
-      Bl09XX.rx_pin = Pin(GPIO_BL0942_RX);
+      Bl09XX.rx_pin = Pin(GPIO_BL0942_RX, GPIO_ANY);
+      uint32_t baudrate = GetPin(Bl09XX.rx_pin) - AGPIO(GPIO_BL0942_RX);  // 0 .. 3
+      Bl09XX.baudrate <<= baudrate;                  // Support 1 (4800), 2 (9600), 3 (19200), 4 (38400)
     }
     if (Bl09XX.model != BL09XX_MODEL) {
       Bl09XX.address = bl09xx_address[Bl09XX.model];
