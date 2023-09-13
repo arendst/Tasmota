@@ -86,7 +86,7 @@ headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
 # headers_names = [ '../../lib/libesp32_lvgl/LVGL/src/lv_api_map.h' ]
 
 output_filename = "../mapping/lv_funcs.h"
-sys.stdout = open(output_filename, 'w')
+sys.stdout = open(output_filename, 'w', encoding='utf-8')
 
 print("""
 // Automatically generated from LVGL source with `python3 preprocessor.py`
@@ -121,7 +121,7 @@ lv_coord_t lv_get_ver_res(void);
 """)
 
 for header_name in headers_names:
-  with open(header_name) as f:
+  with open(header_name, encoding='utf-8') as f:
     print("// " + header_name)
     raw = clean_source(f.read())
 
@@ -198,7 +198,7 @@ lv_fun_globs = [
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
 output_filename = "../mapping/lv_enum.h"
-sys.stdout = open(output_filename, 'w')
+sys.stdout = open(output_filename, 'w', encoding='utf-8')
 print("""// ======================================================================
 // Functions
 // ======================================================================
