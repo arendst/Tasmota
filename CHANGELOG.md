@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Reduce IRAM consumption of HDMI CEC to 1453 bytes
 - `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS
 - ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.12
+- ESP32 LVGL library from v8.3.8 to v8.3.9 (no functional change)
 
 ### Fixed
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 (#19408)
