@@ -338,7 +338,7 @@ void Bl09XXPreInit(void) {
       Bl09XX.model = BL0940_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0940_RX);
     }
-    else if (PinUsed(GPIO_BL0942_RX)) {
+    else if (PinUsed(GPIO_BL0942_RX, GPIO_ANY)) {
       Bl09XX.model = BL0942_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0942_RX, GPIO_ANY);
       uint32_t baudrate = GetPin(Bl09XX.rx_pin) - AGPIO(GPIO_BL0942_RX);  // 0 .. 3
@@ -354,7 +354,7 @@ void Bl09XXPreInit(void) {
         Energy->use_overtemp = true;                 // Use global temperature for overtemp detection
         Energy->phase_count = bl09xx_phase_count[Bl09XX.model];  // Handle two channels as two phases
         TasmotaGlobal.energy_driver = XNRG_14;
-        AddLog(LOG_LEVEL_DEBUG,PSTR("BL9: Enabling BL09%02d"), bl09xx_type[Bl09XX.model]);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("BL9: Enabling BL09%02d at %d bps"), bl09xx_type[Bl09XX.model], Bl09XX.baudrate);
       }
     }
   }
