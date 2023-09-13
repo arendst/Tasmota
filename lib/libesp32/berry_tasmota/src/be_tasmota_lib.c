@@ -145,6 +145,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _find_op, func(tasm_find_op)        // new C version for finding a rule operator
     _apply_str_op, func(tasm_apply_str_op)
     find_key_i, closure(Tasmota_find_key_i_closure)
+    find_list_i, closure(Tasmota_find_list_i_closure)
     find_op, closure(Tasmota_find_op_closure)
     add_rule, closure(Tasmota_add_rule_closure)
     remove_rule, closure(Tasmota_remove_rule_closure)

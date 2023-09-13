@@ -39,11 +39,14 @@ class Matter_Plugin
     0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
     0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
   }
+  # Accepted Update commands for virtual devices
+  static var UPDATE_COMMANDS = []
   var device                                # reference to the `device` global object
   var endpoint                              # current endpoint
   var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   var tick                                  # tick value when it was last updated
   var node_label                            # name of the endpoint, used only in bridge mode, "" if none
+  var virtual                               # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
 
   #############################################################
   # MVC Model
@@ -63,6 +66,7 @@ class Matter_Plugin
     self.clusters = self.consolidate_clusters()
     self.parse_configuration(config)
     self.node_label = config.find("name", "")
+    self.virtual = false
   end
 
   # proxy for the same method in IM
@@ -147,6 +151,14 @@ class Matter_Plugin
     #   o = real_super(o)
     # end
     # return ret
+  end
+
+  #############################################################
+  # consolidate_update_commands
+  #
+  # Return consolidated "update commands" for this class
+  def consolidate_update_commands()
+    return self.UPDATE_COMMANDS
   end
 
   #############################################################
@@ -368,6 +380,41 @@ class Matter_Plugin
     end
     # print("ui_string_to_conf", conf, arg)
     return conf
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # Takes the JSON string prefix
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    return ""
+  end
+
+  # This is to be called by matter_device to get the full state JSON
+  # including "Ep":<ep>,"Name"="<friendly_name"
+  def state_json()
+    import json
+    var ep_name = self.node_label ? f',"Name":{json.dump(self.node_label)}' : ""
+    var state = self.append_state_json()
+    if state
+      var ret = f'{{"Ep":{self.endpoint:i}{ep_name}{state}}}'
+      return ret
+    else
+      return nil
+    end
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  # The map is pre-cleaned and contains only keys declared in
+  # `self.UPDATE_COMMANDS` with the adequate case
+  # (no need to handle case-insensitive)
+  def update_virtual(payload_json)
+    # pass
   end
 
 end

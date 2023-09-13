@@ -225,5 +225,14 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
     end
   end
 
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json(payload_str)
+    return f',"ShutterPos":{self.shadow_shutter_pos},"ShutterTarget":{self.shadow_shutter_target}'
+  end
+
 end
 matter.Plugin_Shutter = Matter_Plugin_Shutter

@@ -35,6 +35,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     # 0x0008: inherited                                     # Level Control 1.6 p.57
     0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
   })
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Hue", "Sat")
   static var TYPES = { 0x010D: 2 }                  # Extended Color Light
 
   # Inherited
@@ -209,6 +210,29 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       return super(self).invoke_request(session, val, ctx)
     end
 
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # Takes the JSON string prefix
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json(payload_str)
+    return f',"Power":{int(self.shadow_onoff)},"Bri":{self.shadow_bri},"Hue":{self.shadow_hue},"Sat":{self.shadow_sat}'
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload_json)
+    var val_hue = int(payload_json.find("Hue"))         # int or nil
+    var val_sat = int(payload_json.find("Sat"))         # int or nil
+    if (val_hue != nil) || (val_sat != nil)
+      self.set_hue_sat(val_hue, val_sat)
+    end
+    super(self).update_virtual(payload_json)
   end
 
 end

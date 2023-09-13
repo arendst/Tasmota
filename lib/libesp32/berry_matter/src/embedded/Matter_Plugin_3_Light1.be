@@ -34,6 +34,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # 0x0006: inherited                                     # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],                # Level Control 1.6 p.57
   })
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
   static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
   # Inherited
@@ -82,6 +83,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   def set_bri(bri_254, pow)
     if (bri_254 < 0)    bri_254 = 0     end
     if (bri_254 > 254)  bri_254 = 254   end
+    pow = (pow != nil) ? bool(pow) : nil        # nil or bool
     if !self.virtual
       import light
       var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
@@ -185,6 +187,30 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     else
       return super(self).invoke_request(session, val, ctx)
     end
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # Takes the JSON string prefix
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    return f',"Power":{int(self.shadow_onoff)},"Bri":{self.shadow_bri}'
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload_json)
+    var val_onoff = payload_json.find("Power")
+    var val_bri = payload_json.find("Bri")
+    if val_bri != nil
+      self.set_bri(int(val_bri), val_onoff)
+      return    # don't call super() because we already handeld 'Power'
+    end
+    super(self).update_virtual(payload_json)
   end
 
 end

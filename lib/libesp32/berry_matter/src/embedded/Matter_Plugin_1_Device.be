@@ -37,14 +37,7 @@ class Matter_Plugin_Device : Matter_Plugin
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
-
-  #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    self.virtual = config.find("virtual", false)
-    super(self).init(device, endpoint, config)
-  end
+  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
 
   #############################################################
   # read an attribute
@@ -177,14 +170,6 @@ class Matter_Plugin_Device : Matter_Plugin
     else
       return super(self).invoke_request(session, val, ctx)
     end
-  end
-
-  #############################################################
-  # update_virtual
-  #
-  # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    # pass
   end
 
 end
