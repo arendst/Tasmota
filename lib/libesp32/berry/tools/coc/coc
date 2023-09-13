@@ -34,7 +34,7 @@ class builder:
         if re.search(r"\.(h|c|cc|cpp)$", filename):
             # print(f"> parse {filename}")
             text = ""
-            with open(filename) as f:
+            with open(filename, encoding='utf-8') as f:
                 text = f.read()
             # print(f"> len(text)={len(text)}")
             parser = coc_parser(text)
