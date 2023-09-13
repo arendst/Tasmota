@@ -183,7 +183,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(TLV.U1, fabric_actice)  # number of active fabrics
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
-      elif attribute == 0x0005          #  ---------- Current­ FabricIndex / u1 ----------
+      elif attribute == 0x0005          #  ---------- Current FabricIndex / u1 ----------
         var fab_index = session._fabric.get_fabric_index()
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
         return tlv_solo.set(TLV.U1, fab_index)      # number of active sessions
