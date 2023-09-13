@@ -1447,11 +1447,17 @@ void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
 
   if (PinUsed(gpio_pin, index)) {
     uint32_t pin = Pin(gpio_pin, index) & 0x3F;  // Fix possible overflow over 63 gpios
+#if CONFIG_IDF_TARGET_ESP32C3
+    gpio_hold_dis((gpio_num_t)pin);              // Allow state change
+#endif
     if (!bitRead(pinmode_init[pin / 32], pin % 32)) {
       bitSet(pinmode_init[pin / 32], pin % 32);
       pinMode(pin, OUTPUT);
     }
     digitalWrite(pin, state &1);
+#if CONFIG_IDF_TARGET_ESP32C3
+    gpio_hold_en((gpio_num_t)pin);               // Retain the state when the chip or system is reset, for example, when watchdog time-out or Deep-sleep
+#endif
   }
 }
 
