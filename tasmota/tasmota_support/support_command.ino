@@ -39,7 +39,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
-  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
+  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|" D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -79,7 +79,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
-  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid,
+  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid, &CmndBalance, &CmndGetAccountID,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -742,8 +742,8 @@ void CmndPublicKeys(void)
   char* mnemonic = NULL;
   getPlntmntKeys();
 
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint() );
+  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }\n",
+    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
   
   CmndStatusResponse(0);
   ResponseClear();
@@ -767,14 +767,13 @@ void CmndAccountID(void)
 {
   if( XdrvMailbox.data_len )
   {
-    storeKeyValuePair( "accountid", XdrvMailbox.data, XdrvMailbox.data_len );
+    setAccountID(XdrvMailbox.data, XdrvMailbox.data_len );
     Response_P(S_JSON_COMMAND_SVALUE,D_CMND_ACCOUNTID, XdrvMailbox.data );
   }
   else
   {
-    char buffer[10] = {0};
-    char* paccountid = getValueForKey("accountid", buffer);
-    Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", buffer );
+    char* paccountid = getAccountID();
+    Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
   }
   
   CmndStatusResponse(0);
@@ -798,6 +797,41 @@ void CmdMachineCid(void) {
   ResponseClear();
 }
 
+void CmndBalance(void) {
+
+  getPlntmntKeys();
+  HTTPClientLight http;
+  String uri = "/cosmos/bank/v1beta1/balances/";
+
+  uri = getPlanetmintAPI() + uri;
+  uri = uri + getRDDLAddress() ;
+  http.begin(uri);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.GET();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
+  
+  CmndStatusResponse(0);
+  ResponseClear();
+}
+
+void CmndGetAccountID()
+{
+  getPlntmntKeys();
+  uint64_t account_id = 0;
+  uint64_t sequence = 0;
+  bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
+  if( !gotAccountID )
+  {
+    char* paccountid = getAccountID();
+    account_id = (uint64_t) atoi( (const char*) paccountid);
+  }
+  ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), D_CMND_GETACCOUNTID, account_id);
+
+
+  CmndStatusResponse(0);
+  ResponseClear();
+}
 
 void CmndChallengeResponse(void) {
   char digest[256];
@@ -1051,12 +1085,16 @@ void CmndStatus(void)
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
 
 #ifdef USE_DRV_RDDL_NETWORK
-    int start_position = ResponseLength();
-    MqttShowSensor(f_show_sensors);
-    int current_position  = ResponseLength();
-    size_t data_length = (size_t)(current_position - start_position);
-    const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
-    runRDDLNotarizationWorkflow(data_str, data_length);
+    if( claimNotarizationMutex() )
+    {
+      int start_position = ResponseLength();
+      MqttShowSensor(f_show_sensors);
+      int current_position  = ResponseLength();
+      size_t data_length = (size_t)(current_position - start_position);
+      const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
+      runRDDLNotarizationWorkflow(data_str, data_length);
+      releaseNotarizationMutex();
+    }
 #else
     MqttShowSensor(f_show_sensors);
 #endif // USE_DRV_RDDL_NETWORK
