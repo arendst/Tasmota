@@ -37,6 +37,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
   })
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power")
   static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   # Inherited
@@ -147,6 +148,28 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
       end
     end
 
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # Takes the JSON string prefix
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    return f',"Power":{int(self.shadow_onoff)}'
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload_json)
+    var val_onoff = payload_json.find("Power")
+    if val_onoff != nil
+      self.set_onoff(bool(val_onoff))
+    end
+    super(self).update_virtual(payload_json)
   end
 
 end

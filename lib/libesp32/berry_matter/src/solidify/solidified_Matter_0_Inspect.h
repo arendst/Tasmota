@@ -301,5 +301,36 @@ be_local_closure(matter_consolidate_clusters,   /* name */
 );
 /*******************************************************************/
 
+
+/********************************************************************
+** Solidified function: UC_LIST
+********************************************************************/
+be_local_closure(matter_UC_LIST,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    1,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(UPDATE_COMMANDS),
+    }),
+    be_str_weak(UC_LIST),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x60080003,  //  0000  GETGBL	R2	G3
+      0x5C0C0000,  //  0001  MOVE	R3	R0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x88080500,  //  0003  GETMBR	R2	R2	K0
+      0x000C0401,  //  0004  ADD	R3	R2	R1
+      0x80040600,  //  0005  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
 /********************************************************************/
 /* End of solidification */

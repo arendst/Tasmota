@@ -7,6 +7,47 @@
 extern const bclass be_class_Matter_Plugin_Shutter;
 
 /********************************************************************
+** Solidified function: parse_configuration
+********************************************************************/
+be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota_shutter_index),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(ARG),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_nested_str_weak(shadow_shutter_inverted),
+    }),
+    be_str_weak(parse_configuration),
+    &be_const_str_solidified,
+    ( &(const binstruction[12]) {  /* code */
+      0x8C080301,  //  0000  GETMET	R2	R1	K1
+      0x88100102,  //  0001  GETMBR	R4	R0	K2
+      0x7C080400,  //  0002  CALL	R2	2
+      0x90020002,  //  0003  SETMBR	R0	K0	R2
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x4C0C0000,  //  0005  LDNIL	R3
+      0x1C080403,  //  0006  EQ	R2	R2	R3
+      0x780A0000,  //  0007  JMPF	R2	#0009
+      0x90020103,  //  0008  SETMBR	R0	K0	K3
+      0x5409FFFE,  //  0009  LDINT	R2	-1
+      0x90020802,  //  000A  SETMBR	R0	K4	R2
+      0x80000000,  //  000B  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_Shutter_read_attribute,   /* name */
@@ -201,88 +242,26 @@ be_local_closure(Matter_Plugin_Shutter_read_attribute,   /* name */
 
 
 /********************************************************************
-** Solidified function: parse_sensors
+** Solidified function: <lambda>
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
+be_local_closure(Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(Shutter),
-    /* K1   */  be_nested_str_weak(tasmota_shutter_index),
-    /* K2   */  be_const_int(1),
-    /* K3   */  be_nested_str_weak(contains),
-    /* K4   */  be_nested_str_weak(find),
-    /* K5   */  be_nested_str_weak(Position),
-    /* K6   */  be_nested_str_weak(shadow_shutter_pos),
-    /* K7   */  be_nested_str_weak(attribute_updated),
-    /* K8   */  be_nested_str_weak(Direction),
-    /* K9   */  be_nested_str_weak(shadow_shutter_direction),
-    /* K10  */  be_nested_str_weak(Target),
-    /* K11  */  be_nested_str_weak(shadow_shutter_target),
-    }),
-    be_str_weak(parse_sensors),
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(_X3Clambda_X3E),
     &be_const_str_solidified,
-    ( &(const binstruction[53]) {  /* code */
-      0x60080008,  //  0000  GETGBL	R2	G8
-      0x880C0101,  //  0001  GETMBR	R3	R0	K1
-      0x000C0702,  //  0002  ADD	R3	R3	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x000A0002,  //  0004  ADD	R2	K0	R2
-      0x8C0C0303,  //  0005  GETMET	R3	R1	K3
-      0x5C140400,  //  0006  MOVE	R5	R2
-      0x7C0C0400,  //  0007  CALL	R3	2
-      0x780E002A,  //  0008  JMPF	R3	#0034
-      0x940C0202,  //  0009  GETIDX	R3	R1	R2
-      0x8C100704,  //  000A  GETMET	R4	R3	K4
-      0x58180005,  //  000B  LDCONST	R6	K5
-      0x7C100400,  //  000C  CALL	R4	2
-      0x4C140000,  //  000D  LDNIL	R5
-      0x20140805,  //  000E  NE	R5	R4	R5
-      0x78160007,  //  000F  JMPF	R5	#0018
-      0x88140106,  //  0010  GETMBR	R5	R0	K6
-      0x20140805,  //  0011  NE	R5	R4	R5
-      0x78160003,  //  0012  JMPF	R5	#0017
-      0x8C140107,  //  0013  GETMET	R5	R0	K7
-      0x541E0101,  //  0014  LDINT	R7	258
-      0x5422000D,  //  0015  LDINT	R8	14
-      0x7C140600,  //  0016  CALL	R5	3
-      0x90020C04,  //  0017  SETMBR	R0	K6	R4
-      0x8C140704,  //  0018  GETMET	R5	R3	K4
-      0x581C0008,  //  0019  LDCONST	R7	K8
-      0x7C140400,  //  001A  CALL	R5	2
-      0x4C180000,  //  001B  LDNIL	R6
-      0x20180A06,  //  001C  NE	R6	R5	R6
-      0x781A0007,  //  001D  JMPF	R6	#0026
-      0x88180109,  //  001E  GETMBR	R6	R0	K9
-      0x20180A06,  //  001F  NE	R6	R5	R6
-      0x781A0003,  //  0020  JMPF	R6	#0025
-      0x8C180107,  //  0021  GETMET	R6	R0	K7
-      0x54220101,  //  0022  LDINT	R8	258
-      0x54260009,  //  0023  LDINT	R9	10
-      0x7C180600,  //  0024  CALL	R6	3
-      0x90021205,  //  0025  SETMBR	R0	K9	R5
-      0x8C180704,  //  0026  GETMET	R6	R3	K4
-      0x5820000A,  //  0027  LDCONST	R8	K10
-      0x7C180400,  //  0028  CALL	R6	2
-      0x4C1C0000,  //  0029  LDNIL	R7
-      0x201C0C07,  //  002A  NE	R7	R6	R7
-      0x781E0007,  //  002B  JMPF	R7	#0034
-      0x881C010B,  //  002C  GETMBR	R7	R0	K11
-      0x201C0C07,  //  002D  NE	R7	R6	R7
-      0x781E0003,  //  002E  JMPF	R7	#0033
-      0x8C1C0107,  //  002F  GETMET	R7	R0	K7
-      0x54260101,  //  0030  LDINT	R9	258
-      0x542A000A,  //  0031  LDINT	R10	11
-      0x7C1C0600,  //  0032  CALL	R7	3
-      0x90021606,  //  0033  SETMBR	R0	K11	R6
-      0x80000000,  //  0034  RET	0
+    ( &(const binstruction[ 4]) {  /* code */
+      0x60040009,  //  0000  GETGBL	R1	G9
+      0x5C080000,  //  0001  MOVE	R2	R0
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -290,52 +269,32 @@ be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
 
 
 /********************************************************************
-** Solidified function: update_shadow
+** Solidified function: append_state_json
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_update_shadow,   /* name */
+be_local_closure(Matter_Plugin_Shutter_append_state_json,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
+    6,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(update_inverted),
-    /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(cmd),
-    /* K3   */  be_nested_str_weak(ShutterPosition),
-    /* K4   */  be_nested_str_weak(tasmota_shutter_index),
-    /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_str_weak(parse_sensors),
-    /* K7   */  be_nested_str_weak(update_shadow),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_X2C_X22ShutterPos_X22_X3A_X25s_X2C_X22ShutterTarget_X22_X3A_X25s),
+    /* K1   */  be_nested_str_weak(shadow_shutter_pos),
+    /* K2   */  be_nested_str_weak(shadow_shutter_target),
     }),
-    be_str_weak(update_shadow),
+    be_str_weak(append_state_json),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0xB8060200,  //  0002  GETNGBL	R1	K1
-      0x8C040302,  //  0003  GETMET	R1	R1	K2
-      0x600C0008,  //  0004  GETGBL	R3	G8
-      0x88100104,  //  0005  GETMBR	R4	R0	K4
-      0x00100905,  //  0006  ADD	R4	R4	K5
-      0x7C0C0200,  //  0007  CALL	R3	1
-      0x000E0603,  //  0008  ADD	R3	K3	R3
-      0x50100200,  //  0009  LDBOOL	R4	1	0
-      0x7C040600,  //  000A  CALL	R1	3
-      0x78060002,  //  000B  JMPF	R1	#000F
-      0x8C080106,  //  000C  GETMET	R2	R0	K6
-      0x5C100200,  //  000D  MOVE	R4	R1
-      0x7C080400,  //  000E  CALL	R2	2
-      0x60080003,  //  000F  GETGBL	R2	G3
-      0x5C0C0000,  //  0010  MOVE	R3	R0
-      0x7C080200,  //  0011  CALL	R2	1
-      0x8C080507,  //  0012  GETMET	R2	R2	K7
-      0x7C080200,  //  0013  CALL	R2	1
-      0x80000000,  //  0014  RET	0
+    ( &(const binstruction[ 6]) {  /* code */
+      0x60080018,  //  0000  GETGBL	R2	G24
+      0x580C0000,  //  0001  LDCONST	R3	K0
+      0x88100101,  //  0002  GETMBR	R4	R0	K1
+      0x88140102,  //  0003  GETMBR	R5	R0	K2
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80040400,  //  0005  RET	1	R2
     })
   )
 );
@@ -507,47 +466,6 @@ be_local_closure(Matter_Plugin_Shutter_invoke_request,   /* name */
 
 
 /********************************************************************
-** Solidified function: parse_configuration
-********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota_shutter_index),
-    /* K1   */  be_nested_str_weak(find),
-    /* K2   */  be_nested_str_weak(ARG),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_weak(shadow_shutter_inverted),
-    }),
-    be_str_weak(parse_configuration),
-    &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0x8C080301,  //  0000  GETMET	R2	R1	K1
-      0x88100102,  //  0001  GETMBR	R4	R0	K2
-      0x7C080400,  //  0002  CALL	R2	2
-      0x90020002,  //  0003  SETMBR	R0	K0	R2
-      0x88080100,  //  0004  GETMBR	R2	R0	K0
-      0x4C0C0000,  //  0005  LDNIL	R3
-      0x1C080403,  //  0006  EQ	R2	R2	R3
-      0x780A0000,  //  0007  JMPF	R2	#0009
-      0x90020103,  //  0008  SETMBR	R0	K0	K3
-      0x5409FFFE,  //  0009  LDINT	R2	-1
-      0x90020802,  //  000A  SETMBR	R0	K4	R2
-      0x80000000,  //  000B  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: update_inverted
 ********************************************************************/
 be_local_closure(Matter_Plugin_Shutter_update_inverted,   /* name */
@@ -620,26 +538,141 @@ be_local_closure(Matter_Plugin_Shutter_update_inverted,   /* name */
 
 
 /********************************************************************
-** Solidified function: <lambda>
+** Solidified function: update_shadow
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
+be_local_closure(Matter_Plugin_Shutter_update_shadow,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(_X3Clambda_X3E),
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str_weak(update_inverted),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(cmd),
+    /* K3   */  be_nested_str_weak(ShutterPosition),
+    /* K4   */  be_nested_str_weak(tasmota_shutter_index),
+    /* K5   */  be_const_int(1),
+    /* K6   */  be_nested_str_weak(parse_sensors),
+    /* K7   */  be_nested_str_weak(update_shadow),
+    }),
+    be_str_weak(update_shadow),
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x60040009,  //  0000  GETGBL	R1	G9
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
+    ( &(const binstruction[21]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0xB8060200,  //  0002  GETNGBL	R1	K1
+      0x8C040302,  //  0003  GETMET	R1	R1	K2
+      0x600C0008,  //  0004  GETGBL	R3	G8
+      0x88100104,  //  0005  GETMBR	R4	R0	K4
+      0x00100905,  //  0006  ADD	R4	R4	K5
+      0x7C0C0200,  //  0007  CALL	R3	1
+      0x000E0603,  //  0008  ADD	R3	K3	R3
+      0x50100200,  //  0009  LDBOOL	R4	1	0
+      0x7C040600,  //  000A  CALL	R1	3
+      0x78060002,  //  000B  JMPF	R1	#000F
+      0x8C080106,  //  000C  GETMET	R2	R0	K6
+      0x5C100200,  //  000D  MOVE	R4	R1
+      0x7C080400,  //  000E  CALL	R2	2
+      0x60080003,  //  000F  GETGBL	R2	G3
+      0x5C0C0000,  //  0010  MOVE	R3	R0
+      0x7C080200,  //  0011  CALL	R2	1
+      0x8C080507,  //  0012  GETMET	R2	R2	K7
+      0x7C080200,  //  0013  CALL	R2	1
+      0x80000000,  //  0014  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: parse_sensors
+********************************************************************/
+be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
+  be_nested_proto(
+    11,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[12]) {     /* constants */
+    /* K0   */  be_nested_str_weak(Shutter),
+    /* K1   */  be_nested_str_weak(tasmota_shutter_index),
+    /* K2   */  be_const_int(1),
+    /* K3   */  be_nested_str_weak(contains),
+    /* K4   */  be_nested_str_weak(find),
+    /* K5   */  be_nested_str_weak(Position),
+    /* K6   */  be_nested_str_weak(shadow_shutter_pos),
+    /* K7   */  be_nested_str_weak(attribute_updated),
+    /* K8   */  be_nested_str_weak(Direction),
+    /* K9   */  be_nested_str_weak(shadow_shutter_direction),
+    /* K10  */  be_nested_str_weak(Target),
+    /* K11  */  be_nested_str_weak(shadow_shutter_target),
+    }),
+    be_str_weak(parse_sensors),
+    &be_const_str_solidified,
+    ( &(const binstruction[53]) {  /* code */
+      0x60080008,  //  0000  GETGBL	R2	G8
+      0x880C0101,  //  0001  GETMBR	R3	R0	K1
+      0x000C0702,  //  0002  ADD	R3	R3	K2
+      0x7C080200,  //  0003  CALL	R2	1
+      0x000A0002,  //  0004  ADD	R2	K0	R2
+      0x8C0C0303,  //  0005  GETMET	R3	R1	K3
+      0x5C140400,  //  0006  MOVE	R5	R2
+      0x7C0C0400,  //  0007  CALL	R3	2
+      0x780E002A,  //  0008  JMPF	R3	#0034
+      0x940C0202,  //  0009  GETIDX	R3	R1	R2
+      0x8C100704,  //  000A  GETMET	R4	R3	K4
+      0x58180005,  //  000B  LDCONST	R6	K5
+      0x7C100400,  //  000C  CALL	R4	2
+      0x4C140000,  //  000D  LDNIL	R5
+      0x20140805,  //  000E  NE	R5	R4	R5
+      0x78160007,  //  000F  JMPF	R5	#0018
+      0x88140106,  //  0010  GETMBR	R5	R0	K6
+      0x20140805,  //  0011  NE	R5	R4	R5
+      0x78160003,  //  0012  JMPF	R5	#0017
+      0x8C140107,  //  0013  GETMET	R5	R0	K7
+      0x541E0101,  //  0014  LDINT	R7	258
+      0x5422000D,  //  0015  LDINT	R8	14
+      0x7C140600,  //  0016  CALL	R5	3
+      0x90020C04,  //  0017  SETMBR	R0	K6	R4
+      0x8C140704,  //  0018  GETMET	R5	R3	K4
+      0x581C0008,  //  0019  LDCONST	R7	K8
+      0x7C140400,  //  001A  CALL	R5	2
+      0x4C180000,  //  001B  LDNIL	R6
+      0x20180A06,  //  001C  NE	R6	R5	R6
+      0x781A0007,  //  001D  JMPF	R6	#0026
+      0x88180109,  //  001E  GETMBR	R6	R0	K9
+      0x20180A06,  //  001F  NE	R6	R5	R6
+      0x781A0003,  //  0020  JMPF	R6	#0025
+      0x8C180107,  //  0021  GETMET	R6	R0	K7
+      0x54220101,  //  0022  LDINT	R8	258
+      0x54260009,  //  0023  LDINT	R9	10
+      0x7C180600,  //  0024  CALL	R6	3
+      0x90021205,  //  0025  SETMBR	R0	K9	R5
+      0x8C180704,  //  0026  GETMET	R6	R3	K4
+      0x5820000A,  //  0027  LDCONST	R8	K10
+      0x7C180400,  //  0028  CALL	R6	2
+      0x4C1C0000,  //  0029  LDNIL	R7
+      0x201C0C07,  //  002A  NE	R7	R6	R7
+      0x781E0007,  //  002B  JMPF	R7	#0034
+      0x881C010B,  //  002C  GETMBR	R7	R0	K11
+      0x201C0C07,  //  002D  NE	R7	R6	R7
+      0x781E0003,  //  002E  JMPF	R7	#0033
+      0x8C1C0107,  //  002F  GETMET	R7	R0	K7
+      0x54260101,  //  0030  LDINT	R9	258
+      0x542A000A,  //  0031  LDINT	R10	11
+      0x7C1C0600,  //  0032  CALL	R7	3
+      0x90021606,  //  0033  SETMBR	R0	K11	R6
+      0x80000000,  //  0034  RET	0
     })
   )
 );
@@ -653,16 +686,24 @@ extern const bclass be_class_Matter_Plugin_Device;
 be_local_class(Matter_Plugin_Shutter,
     6,
     &be_class_Matter_Plugin_Device,
-    be_nested_map(19,
+    be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, 4), be_const_closure(Matter_Plugin_Shutter_read_attribute_closure) },
-        { be_const_key_weak(shadow_shutter_pos, 18), be_const_var(1) },
-        { be_const_key_weak(tasmota_shutter_index, -1), be_const_var(0) },
-        { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Shutter_parse_sensors_closure) },
-        { be_const_key_weak(shadow_shutter_direction, -1), be_const_var(4) },
-        { be_const_key_weak(shadow_shutter_target, -1), be_const_var(2) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Shutter_invoke_request_closure) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Shutter_read_attribute_closure) },
+        { be_const_key_weak(shadow_shutter_direction, 3), be_const_var(4) },
+        { be_const_key_weak(shadow_shutter_pos, 0), be_const_var(1) },
         { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(Matter_Plugin_Shutter__X3Clambda_X3E_closure) },
+        { be_const_key_weak(shadow_shutter_inverted, 1), be_const_var(5) },
+        { be_const_key_weak(append_state_json, -1), be_const_closure(Matter_Plugin_Shutter_append_state_json_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Shutter_invoke_request_closure) },
+        { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Shutter_parse_sensors_closure) },
+        { be_const_key_weak(parse_configuration, 17), be_const_closure(Matter_Plugin_Shutter_parse_configuration_closure) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(514, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(shadow_shutter_target, -1), be_const_var(2) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -729,20 +770,13 @@ be_local_class(Matter_Plugin_Shutter,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(update_shadow, 5), be_const_closure(Matter_Plugin_Shutter_update_shadow_closure) },
-        { be_const_key_weak(NAME, 6), be_nested_str_weak(Shutter) },
+        { be_const_key_weak(tasmota_shutter_index, 11), be_const_var(0) },
+        { be_const_key_weak(NAME, 12), be_nested_str_weak(Shutter) },
+        { be_const_key_weak(shadow_shutter_tilt, -1), be_const_var(3) },
+        { be_const_key_weak(update_inverted, 8), be_const_closure(Matter_Plugin_Shutter_update_inverted_closure) },
+        { be_const_key_weak(update_shadow, 18), be_const_closure(Matter_Plugin_Shutter_update_shadow_closure) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(shutter) },
-        { be_const_key_weak(shadow_shutter_inverted, -1), be_const_var(5) },
-        { be_const_key_weak(ARG, 7), be_nested_str_weak(shutter) },
-        { be_const_key_weak(shadow_shutter_tilt, 8), be_const_var(3) },
-        { be_const_key_weak(parse_configuration, -1), be_const_closure(Matter_Plugin_Shutter_parse_configuration_closure) },
-        { be_const_key_weak(update_inverted, -1), be_const_closure(Matter_Plugin_Shutter_update_inverted_closure) },
-        { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(Matter_Plugin_Shutter__X3Clambda_X3E_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(514, -1), be_const_int(2) },
-    }))    ) } )) },
+        { be_const_key_weak(ARG, -1), be_nested_str_weak(shutter) },
     })),
     be_str_weak(Matter_Plugin_Shutter)
 );

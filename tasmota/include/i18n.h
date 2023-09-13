@@ -249,6 +249,7 @@
 #define D_RSLT_STATE "STATE"
 #define D_RSLT_UPTIME "UPTIME"
 #define D_RSLT_WARNING "WARNING"
+#define D_RSLT_COMMAND "COMMAND"
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 

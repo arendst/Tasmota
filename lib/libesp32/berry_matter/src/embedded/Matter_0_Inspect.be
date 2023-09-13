@@ -102,3 +102,14 @@ def consolidate_clusters(cl, m)
   return ret
 end
 matter.consolidate_clusters = consolidate_clusters
+
+#############################################################
+# consolidate_update_commands_list
+#
+# Build a consolidated list and remove duplicates
+#@ solidify:matter.UC_LIST,weak
+def UC_LIST(cl, *l)
+  var uc_parent = super(cl).UPDATE_COMMANDS
+  return uc_parent + l
+end
+matter.UC_LIST = UC_LIST

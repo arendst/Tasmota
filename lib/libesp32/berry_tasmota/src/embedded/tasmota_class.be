@@ -64,6 +64,19 @@ class Tasmota
     end
   end
 
+  # find a string in a list, case insensitive
+  def find_list_i(l, vali)
+    import string
+    var idx = 0
+    var valu = string.toupper(vali)
+    while idx < size(l)
+      if string.toupper(l[idx]) == valu
+        return idx
+      end
+      idx += 1
+    end
+    return nil
+  end
 
   # split the item when there is an operator, returns a list of (left,op,right)
   #-

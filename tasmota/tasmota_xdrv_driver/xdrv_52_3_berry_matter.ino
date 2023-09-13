@@ -111,10 +111,13 @@ extern "C" int matter_publish_command(bvm *vm) {
       if (use_fname) {
         ResponseAppend_P(PSTR("{\"%s\":"), friendly_name);
       } else {
-        ResponseAppend_P(PSTR("{\"ep%i\":"), ep);
+        ResponseAppend_P(PSTR("{\"%i\":"), ep);
       }
     }
     ResponseAppend_P(PSTR("{"));
+
+    // Add "Ep":<ep>
+    ResponseAppend_P(PSTR("\"" "Ep" "\":%i,"), ep);
 
     // Add "Name":"xxx" if name is present
     if (friendly_name && strlen(friendly_name)) {
@@ -156,13 +159,13 @@ extern "C" int matter_publish_command(bvm *vm) {
       }
       char stopic[TOPSZ];
       if (Settings->flag5.zb_received_as_subtopic) {
-        GetTopic_P(stopic, TELE, subtopic, json_prefix);
+        GetTopic_P(stopic, STAT, subtopic, json_prefix);
       } else {
-        GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
+        GetTopic_P(stopic, STAT, subtopic, PSTR(D_RSLT_COMMAND));
       }
       MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
     } else {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_COMMAND), Settings->flag.mqtt_sensor_retain);
     }
     XdrvRulesProcess(0);     // apply rules
     be_return_nil(vm);

@@ -7,6 +7,89 @@
 extern const bclass be_class_Matter_Plugin_Light2;
 
 /********************************************************************
+** Solidified function: update_virtual
+********************************************************************/
+be_local_closure(Matter_Plugin_Light2_update_virtual,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(find),
+    /* K1   */  be_nested_str_weak(CT),
+    /* K2   */  be_nested_str_weak(set_ct),
+    /* K3   */  be_nested_str_weak(update_virtual),
+    }),
+    be_str_weak(update_virtual),
+    &be_const_str_solidified,
+    ( &(const binstruction[18]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x8C0C0300,  //  0001  GETMET	R3	R1	K0
+      0x58140001,  //  0002  LDCONST	R5	K1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x7C080200,  //  0004  CALL	R2	1
+      0x4C0C0000,  //  0005  LDNIL	R3
+      0x200C0403,  //  0006  NE	R3	R2	R3
+      0x780E0002,  //  0007  JMPF	R3	#000B
+      0x8C0C0102,  //  0008  GETMET	R3	R0	K2
+      0x5C140400,  //  0009  MOVE	R5	R2
+      0x7C0C0400,  //  000A  CALL	R3	2
+      0x600C0003,  //  000B  GETGBL	R3	G3
+      0x5C100000,  //  000C  MOVE	R4	R0
+      0x7C0C0200,  //  000D  CALL	R3	1
+      0x8C0C0703,  //  000E  GETMET	R3	R3	K3
+      0x5C140200,  //  000F  MOVE	R5	R1
+      0x7C0C0400,  //  0010  CALL	R3	2
+      0x80000000,  //  0011  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: append_state_json
+********************************************************************/
+be_local_closure(Matter_Plugin_Light2_append_state_json,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_X2C_X22Power_X22_X3A_X25s_X2C_X22Bri_X22_X3A_X25s_X2C_X22CT_X22_X3A_X25s),
+    /* K1   */  be_nested_str_weak(shadow_onoff),
+    /* K2   */  be_nested_str_weak(shadow_bri),
+    /* K3   */  be_nested_str_weak(shadow_ct),
+    }),
+    be_str_weak(append_state_json),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x60080018,  //  0000  GETGBL	R2	G24
+      0x580C0000,  //  0001  LDCONST	R3	K0
+      0x60100009,  //  0002  GETGBL	R4	G9
+      0x88140101,  //  0003  GETMBR	R5	R0	K1
+      0x7C100200,  //  0004  CALL	R4	1
+      0x88140102,  //  0005  GETMBR	R5	R0	K2
+      0x88180103,  //  0006  GETMBR	R6	R0	K3
+      0x7C080800,  //  0007  CALL	R2	4
+      0x80040400,  //  0008  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: init
 ********************************************************************/
 be_local_closure(Matter_Plugin_Light2_init,   /* name */
@@ -101,146 +184,6 @@ be_local_closure(Matter_Plugin_Light2_set_ct,   /* name */
       0x7C080600,  //  0019  CALL	R2	3
       0x90020E01,  //  001A  SETMBR	R0	K7	R1
       0x80000000,  //  001B  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: update_ct_minmax
-********************************************************************/
-be_local_closure(Matter_Plugin_Light2_update_ct_minmax,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(get_option),
-    /* K2   */  be_nested_str_weak(ct_min),
-    /* K3   */  be_nested_str_weak(ct_max),
-    }),
-    be_str_weak(update_ct_minmax),
-    &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x540E0051,  //  0002  LDINT	R3	82
-      0x7C040400,  //  0003  CALL	R1	2
-      0x78060001,  //  0004  JMPF	R1	#0007
-      0x540A00C7,  //  0005  LDINT	R2	200
-      0x70020000,  //  0006  JMP		#0008
-      0x540A0098,  //  0007  LDINT	R2	153
-      0x90020402,  //  0008  SETMBR	R0	K2	R2
-      0x78060001,  //  0009  JMPF	R1	#000C
-      0x540A017B,  //  000A  LDINT	R2	380
-      0x70020000,  //  000B  JMP		#000D
-      0x540A01F3,  //  000C  LDINT	R2	500
-      0x90020602,  //  000D  SETMBR	R0	K3	R2
-      0x80000000,  //  000E  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: invoke_request
-********************************************************************/
-be_local_closure(Matter_Plugin_Light2_invoke_request,   /* name */
-  be_nested_proto(
-    13,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_weak(light),
-    /* K1   */  be_nested_str_weak(matter),
-    /* K2   */  be_nested_str_weak(TLV),
-    /* K3   */  be_nested_str_weak(cluster),
-    /* K4   */  be_nested_str_weak(command),
-    /* K5   */  be_nested_str_weak(update_shadow_lazy),
-    /* K6   */  be_nested_str_weak(findsubval),
-    /* K7   */  be_const_int(0),
-    /* K8   */  be_nested_str_weak(set_ct),
-    /* K9   */  be_nested_str_weak(log),
-    /* K10  */  be_nested_str_weak(ct_X3A),
-    /* K11  */  be_nested_str_weak(publish_command),
-    /* K12  */  be_nested_str_weak(CT),
-    /* K13  */  be_nested_str_weak(invoke_request),
-    }),
-    be_str_weak(invoke_request),
-    &be_const_str_solidified,
-    ( &(const binstruction[59]) {  /* code */
-      0xA4120000,  //  0000  IMPORT	R4	K0
-      0xB8160200,  //  0001  GETNGBL	R5	K1
-      0x88140B02,  //  0002  GETMBR	R5	R5	K2
-      0x88180703,  //  0003  GETMBR	R6	R3	K3
-      0x881C0704,  //  0004  GETMBR	R7	R3	K4
-      0x542202FF,  //  0005  LDINT	R8	768
-      0x1C200C08,  //  0006  EQ	R8	R6	R8
-      0x78220028,  //  0007  JMPF	R8	#0031
-      0x8C200105,  //  0008  GETMET	R8	R0	K5
-      0x7C200200,  //  0009  CALL	R8	1
-      0x54220009,  //  000A  LDINT	R8	10
-      0x1C200E08,  //  000B  EQ	R8	R7	R8
-      0x78220011,  //  000C  JMPF	R8	#001F
-      0x8C200506,  //  000D  GETMET	R8	R2	K6
-      0x58280007,  //  000E  LDCONST	R10	K7
-      0x7C200400,  //  000F  CALL	R8	2
-      0x8C240108,  //  0010  GETMET	R9	R0	K8
-      0x5C2C1000,  //  0011  MOVE	R11	R8
-      0x7C240400,  //  0012  CALL	R9	2
-      0x60240008,  //  0013  GETGBL	R9	G8
-      0x5C281000,  //  0014  MOVE	R10	R8
-      0x7C240200,  //  0015  CALL	R9	1
-      0x00261409,  //  0016  ADD	R9	K10	R9
-      0x900E1209,  //  0017  SETMBR	R3	K9	R9
-      0x8C24010B,  //  0018  GETMET	R9	R0	K11
-      0x582C000C,  //  0019  LDCONST	R11	K12
-      0x5C301000,  //  001A  MOVE	R12	R8
-      0x7C240600,  //  001B  CALL	R9	3
-      0x50240200,  //  001C  LDBOOL	R9	1	0
-      0x80041200,  //  001D  RET	1	R9
-      0x70020010,  //  001E  JMP		#0030
-      0x54220046,  //  001F  LDINT	R8	71
-      0x1C200E08,  //  0020  EQ	R8	R7	R8
-      0x78220002,  //  0021  JMPF	R8	#0025
-      0x50200200,  //  0022  LDBOOL	R8	1	0
-      0x80041000,  //  0023  RET	1	R8
-      0x7002000A,  //  0024  JMP		#0030
-      0x5422004A,  //  0025  LDINT	R8	75
-      0x1C200E08,  //  0026  EQ	R8	R7	R8
-      0x78220002,  //  0027  JMPF	R8	#002B
-      0x50200200,  //  0028  LDBOOL	R8	1	0
-      0x80041000,  //  0029  RET	1	R8
-      0x70020004,  //  002A  JMP		#0030
-      0x5422004B,  //  002B  LDINT	R8	76
-      0x1C200E08,  //  002C  EQ	R8	R7	R8
-      0x78220001,  //  002D  JMPF	R8	#0030
-      0x50200200,  //  002E  LDBOOL	R8	1	0
-      0x80041000,  //  002F  RET	1	R8
-      0x70020008,  //  0030  JMP		#003A
-      0x60200003,  //  0031  GETGBL	R8	G3
-      0x5C240000,  //  0032  MOVE	R9	R0
-      0x7C200200,  //  0033  CALL	R8	1
-      0x8C20110D,  //  0034  GETMET	R8	R8	K13
-      0x5C280200,  //  0035  MOVE	R10	R1
-      0x5C2C0400,  //  0036  MOVE	R11	R2
-      0x5C300600,  //  0037  MOVE	R12	R3
-      0x7C200800,  //  0038  CALL	R8	4
-      0x80041000,  //  0039  RET	1	R8
-      0x80000000,  //  003A  RET	0
     })
   )
 );
@@ -430,25 +373,173 @@ be_local_closure(Matter_Plugin_Light2_read_attribute,   /* name */
 
 
 /********************************************************************
+** Solidified function: invoke_request
+********************************************************************/
+be_local_closure(Matter_Plugin_Light2_invoke_request,   /* name */
+  be_nested_proto(
+    13,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[14]) {     /* constants */
+    /* K0   */  be_nested_str_weak(light),
+    /* K1   */  be_nested_str_weak(matter),
+    /* K2   */  be_nested_str_weak(TLV),
+    /* K3   */  be_nested_str_weak(cluster),
+    /* K4   */  be_nested_str_weak(command),
+    /* K5   */  be_nested_str_weak(update_shadow_lazy),
+    /* K6   */  be_nested_str_weak(findsubval),
+    /* K7   */  be_const_int(0),
+    /* K8   */  be_nested_str_weak(set_ct),
+    /* K9   */  be_nested_str_weak(log),
+    /* K10  */  be_nested_str_weak(ct_X3A),
+    /* K11  */  be_nested_str_weak(publish_command),
+    /* K12  */  be_nested_str_weak(CT),
+    /* K13  */  be_nested_str_weak(invoke_request),
+    }),
+    be_str_weak(invoke_request),
+    &be_const_str_solidified,
+    ( &(const binstruction[59]) {  /* code */
+      0xA4120000,  //  0000  IMPORT	R4	K0
+      0xB8160200,  //  0001  GETNGBL	R5	K1
+      0x88140B02,  //  0002  GETMBR	R5	R5	K2
+      0x88180703,  //  0003  GETMBR	R6	R3	K3
+      0x881C0704,  //  0004  GETMBR	R7	R3	K4
+      0x542202FF,  //  0005  LDINT	R8	768
+      0x1C200C08,  //  0006  EQ	R8	R6	R8
+      0x78220028,  //  0007  JMPF	R8	#0031
+      0x8C200105,  //  0008  GETMET	R8	R0	K5
+      0x7C200200,  //  0009  CALL	R8	1
+      0x54220009,  //  000A  LDINT	R8	10
+      0x1C200E08,  //  000B  EQ	R8	R7	R8
+      0x78220011,  //  000C  JMPF	R8	#001F
+      0x8C200506,  //  000D  GETMET	R8	R2	K6
+      0x58280007,  //  000E  LDCONST	R10	K7
+      0x7C200400,  //  000F  CALL	R8	2
+      0x8C240108,  //  0010  GETMET	R9	R0	K8
+      0x5C2C1000,  //  0011  MOVE	R11	R8
+      0x7C240400,  //  0012  CALL	R9	2
+      0x60240008,  //  0013  GETGBL	R9	G8
+      0x5C281000,  //  0014  MOVE	R10	R8
+      0x7C240200,  //  0015  CALL	R9	1
+      0x00261409,  //  0016  ADD	R9	K10	R9
+      0x900E1209,  //  0017  SETMBR	R3	K9	R9
+      0x8C24010B,  //  0018  GETMET	R9	R0	K11
+      0x582C000C,  //  0019  LDCONST	R11	K12
+      0x5C301000,  //  001A  MOVE	R12	R8
+      0x7C240600,  //  001B  CALL	R9	3
+      0x50240200,  //  001C  LDBOOL	R9	1	0
+      0x80041200,  //  001D  RET	1	R9
+      0x70020010,  //  001E  JMP		#0030
+      0x54220046,  //  001F  LDINT	R8	71
+      0x1C200E08,  //  0020  EQ	R8	R7	R8
+      0x78220002,  //  0021  JMPF	R8	#0025
+      0x50200200,  //  0022  LDBOOL	R8	1	0
+      0x80041000,  //  0023  RET	1	R8
+      0x7002000A,  //  0024  JMP		#0030
+      0x5422004A,  //  0025  LDINT	R8	75
+      0x1C200E08,  //  0026  EQ	R8	R7	R8
+      0x78220002,  //  0027  JMPF	R8	#002B
+      0x50200200,  //  0028  LDBOOL	R8	1	0
+      0x80041000,  //  0029  RET	1	R8
+      0x70020004,  //  002A  JMP		#0030
+      0x5422004B,  //  002B  LDINT	R8	76
+      0x1C200E08,  //  002C  EQ	R8	R7	R8
+      0x78220001,  //  002D  JMPF	R8	#0030
+      0x50200200,  //  002E  LDBOOL	R8	1	0
+      0x80041000,  //  002F  RET	1	R8
+      0x70020008,  //  0030  JMP		#003A
+      0x60200003,  //  0031  GETGBL	R8	G3
+      0x5C240000,  //  0032  MOVE	R9	R0
+      0x7C200200,  //  0033  CALL	R8	1
+      0x8C20110D,  //  0034  GETMET	R8	R8	K13
+      0x5C280200,  //  0035  MOVE	R10	R1
+      0x5C2C0400,  //  0036  MOVE	R11	R2
+      0x5C300600,  //  0037  MOVE	R12	R3
+      0x7C200800,  //  0038  CALL	R8	4
+      0x80041000,  //  0039  RET	1	R8
+      0x80000000,  //  003A  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: update_ct_minmax
+********************************************************************/
+be_local_closure(Matter_Plugin_Light2_update_ct_minmax,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(get_option),
+    /* K2   */  be_nested_str_weak(ct_min),
+    /* K3   */  be_nested_str_weak(ct_max),
+    }),
+    be_str_weak(update_ct_minmax),
+    &be_const_str_solidified,
+    ( &(const binstruction[15]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x540E0051,  //  0002  LDINT	R3	82
+      0x7C040400,  //  0003  CALL	R1	2
+      0x78060001,  //  0004  JMPF	R1	#0007
+      0x540A00C7,  //  0005  LDINT	R2	200
+      0x70020000,  //  0006  JMP		#0008
+      0x540A0098,  //  0007  LDINT	R2	153
+      0x90020402,  //  0008  SETMBR	R0	K2	R2
+      0x78060001,  //  0009  JMPF	R1	#000C
+      0x540A017B,  //  000A  LDINT	R2	380
+      0x70020000,  //  000B  JMP		#000D
+      0x540A01F3,  //  000C  LDINT	R2	500
+      0x90020602,  //  000D  SETMBR	R0	K3	R2
+      0x80000000,  //  000E  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_Plugin_Light2
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Light1;
 be_local_class(Matter_Plugin_Light2,
     3,
     &be_class_Matter_Plugin_Light1,
-    be_nested_map(13,
+    be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ct_min, -1), be_const_var(1) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Light2_invoke_request_closure) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(light2) },
-        { be_const_key_weak(set_ct, -1), be_const_closure(Matter_Plugin_Light2_set_ct_closure) },
-        { be_const_key_weak(shadow_ct, -1), be_const_var(0) },
-        { be_const_key_weak(update_ct_minmax, 8), be_const_closure(Matter_Plugin_Light2_update_ct_minmax_closure) },
+        { be_const_key_weak(update_virtual, -1), be_const_closure(Matter_Plugin_Light2_update_virtual_closure) },
+        { be_const_key_weak(ct_min, 8), be_const_var(1) },
+        { be_const_key_weak(append_state_json, -1), be_const_closure(Matter_Plugin_Light2_append_state_json_closure) },
         { be_const_key_weak(init, 4), be_const_closure(Matter_Plugin_Light2_init_closure) },
+        { be_const_key_weak(set_ct, -1), be_const_closure(Matter_Plugin_Light2_set_ct_closure) },
         { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Light2_update_shadow_closure) },
-        { be_const_key_weak(ct_max, 1), be_const_var(2) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(Light_X202_X20CT) },
-        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(3,
+    ( (struct bvalue*) &(const bvalue[]) {
+        be_nested_str_weak(Power),
+        be_nested_str_weak(Bri),
+        be_nested_str_weak(CT),
+    }))    ) } )) },
+        { be_const_key_weak(update_ct_minmax, -1), be_const_closure(Matter_Plugin_Light2_update_ct_minmax_closure) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(light2) },
+        { be_const_key_weak(read_attribute, 12), be_const_closure(Matter_Plugin_Light2_read_attribute_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Light2_invoke_request_closure) },
+        { be_const_key_weak(CLUSTERS, 14), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(8, 7), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -529,12 +620,13 @@ be_local_class(Matter_Plugin_Light2,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Light2_read_attribute_closure) },
+        { be_const_key_weak(shadow_ct, 9), be_const_var(0) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(268, -1), be_const_int(2) },
     }))    ) } )) },
+        { be_const_key_weak(ct_max, -1), be_const_var(2) },
     })),
     be_str_weak(Matter_Plugin_Light2)
 );

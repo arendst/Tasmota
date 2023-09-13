@@ -7,6 +7,100 @@
 extern const bclass be_class_Matter_Plugin_Sensor_Pressure;
 
 /********************************************************************
+** Solidified function: pre_value
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Pressure_pre_value,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(pre_value),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x20080202,  //  0001  NE	R2	R1	R2
+      0x780A0003,  //  0002  JMPF	R2	#0007
+      0x60080009,  //  0003  GETGBL	R2	G9
+      0x5C0C0200,  //  0004  MOVE	R3	R1
+      0x7C080200,  //  0005  CALL	R2	1
+      0x70020000,  //  0006  JMP		#0008
+      0x4C080000,  //  0007  LDNIL	R2
+      0x80040400,  //  0008  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: value_changed
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Pressure_value_changed,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_const_int(0),
+    }),
+    be_str_weak(value_changed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x54120402,  //  0001  LDINT	R4	1027
+      0x58140001,  //  0002  LDCONST	R5	K1
+      0x7C080600,  //  0003  CALL	R2	3
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: append_state_json
+********************************************************************/
+be_local_closure(Matter_Plugin_Sensor_Pressure_append_state_json,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_X2C_X22Pressure_X22_X3A_X25s),
+    /* K1   */  be_nested_str_weak(shadow_value),
+    }),
+    be_str_weak(append_state_json),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x60040018,  //  0000  GETGBL	R1	G24
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x880C0101,  //  0002  GETMBR	R3	R0	K1
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80040200,  //  0004  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_Sensor_Pressure_read_attribute,   /* name */
@@ -116,80 +210,22 @@ be_local_closure(Matter_Plugin_Sensor_Pressure_read_attribute,   /* name */
 
 
 /********************************************************************
-** Solidified function: pre_value
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Pressure_pre_value,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(pre_value),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0003,  //  0002  JMPF	R2	#0007
-      0x60080009,  //  0003  GETGBL	R2	G9
-      0x5C0C0200,  //  0004  MOVE	R3	R1
-      0x7C080200,  //  0005  CALL	R2	1
-      0x70020000,  //  0006  JMP		#0008
-      0x4C080000,  //  0007  LDNIL	R2
-      0x80040400,  //  0008  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: value_changed
-********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Pressure_value_changed,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
-    be_str_weak(value_changed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x54120402,  //  0001  LDINT	R4	1027
-      0x58140001,  //  0002  LDCONST	R5	K1
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_Plugin_Sensor_Pressure
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_class(Matter_Plugin_Sensor_Pressure,
     0,
     &be_class_Matter_Plugin_Sensor,
-    be_nested_map(7,
+    be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, 2), be_const_closure(Matter_Plugin_Sensor_Pressure_read_attribute_closure) },
-        { be_const_key_weak(pre_value, 4), be_const_closure(Matter_Plugin_Sensor_Pressure_pre_value_closure) },
-        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(pre_value, -1), be_const_closure(Matter_Plugin_Sensor_Pressure_pre_value_closure) },
+        { be_const_key_weak(TYPES, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(773, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(append_state_json, 1), be_const_closure(Matter_Plugin_Sensor_Pressure_append_state_json_closure) },
+        { be_const_key_weak(CLUSTERS, 7), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(5, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -250,14 +286,10 @@ be_local_class(Matter_Plugin_Sensor_Pressure,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(TYPE, 6), be_nested_str_weak(pressure) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(pressure) },
+        { be_const_key_weak(value_changed, 4), be_const_closure(Matter_Plugin_Sensor_Pressure_value_changed_closure) },
         { be_const_key_weak(NAME, -1), be_nested_str_weak(Pressure) },
-        { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Sensor_Pressure_value_changed_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(773, -1), be_const_int(2) },
-    }))    ) } )) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_Pressure_read_attribute_closure) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Pressure)
 );
