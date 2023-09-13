@@ -10,7 +10,7 @@ def firm_metrics(source, target, env):
         env.Execute("$PYTHONEXE -m tasmota_metrics \"" + str(tasmotapiolib.get_source_map_path(env).resolve()) + "\"")
     elif env["PIOPLATFORM"] == "espressif8266":
         map_file = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
-        with open(map_file,'r') as f:
+        with open(map_file,'r', encoding='utf-8') as f:
             phrase = "_text_end = ABSOLUTE (.)"
             for line in f:
                 if  phrase in line:
