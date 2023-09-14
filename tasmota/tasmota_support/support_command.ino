@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "rddl.h"
+#include "planetmintgo.h"
 
 
 
@@ -800,9 +801,12 @@ void CmdMachineCid(void) {
 void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
-    char buffer[674+1] = {0};
-    char* resolvedCid = getValueForKey(cid, buffer);
-    Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, buffer );
+    uint8_t* buff = getStack(MY_STACK_LIMIT);
+    char* charPtr = reinterpret_cast<char*>(buff);
+    
+    char* resolvedCid = getValueForKey(cid, charPtr);
+    Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
+    clearStack();
 } else {
     Response_P( "{ \"%s\": {\"%s\": \"%s\"} }", D_CMND_RESOLVEID, "does not exist" );
 }
