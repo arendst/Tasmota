@@ -359,7 +359,7 @@ be_local_closure(Matter_Plugin_Device_append_state_json,   /* name */
         /* K0   */  be_nested_str_weak(introspect),
         /* K1   */  be_nested_str_weak(json),
         /* K2   */  be_nested_str_weak(get),
-        /* K3   */  be_nested_str_weak(boot),
+        /* K3   */  be_nested_str_weak(bool),
         /* K4   */  be_nested_str_weak(_X2C_X22_X25s_X22_X3A_X25s),
         /* K5   */  be_nested_str_weak(dump),
         }),
