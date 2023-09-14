@@ -41,7 +41,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   var tasmota_shutter_index                         # Shutter number in Tasmota (zero based)
   var shadow_shutter_pos
   var shadow_shutter_target
-  var shadow_shutter_tilt
   var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
   var shadow_shutter_inverted                       # 1=same as matter 0=matter must invert
 
@@ -223,15 +222,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       end
       #
     end
-  end
-
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json(payload_str)
-    return f',"ShutterPos":{self.shadow_shutter_pos},"ShutterTarget":{self.shadow_shutter_target}'
   end
 
 end

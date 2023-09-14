@@ -147,15 +147,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   end
 
   #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Power":{int(self.shadow_onoff)}'
-  end
-
-  #############################################################
   # update_virtual
   #
   # Update internal state for virtual devices

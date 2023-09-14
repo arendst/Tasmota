@@ -43,6 +43,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # var shadow_shutter_target
   # var shadow_shutter_tilt
   # var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
+  var shadow_shutter_tilt
   var tilt_min, tilt_max
 
   #############################################################
@@ -162,15 +163,6 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
     # else
     return super(self).invoke_request(session, val, ctx)
 
-  end
-
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json(payload_str)
-    return f',"ShutterPos":{self.shadow_shutter_pos},"ShutterTarget":{self.shadow_shutter_target},"ShutterTilt":{self.shadow_shutter_tilt}'
   end
 
 end

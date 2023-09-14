@@ -213,16 +213,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   end
 
   #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # Takes the JSON string prefix
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json(payload_str)
-    return f',"Power":{int(self.shadow_onoff)},"Bri":{self.shadow_bri},"Hue":{self.shadow_hue},"Sat":{self.shadow_sat}'
-  end
-
-  #############################################################
   # update_virtual
   #
   # Update internal state for virtual devices

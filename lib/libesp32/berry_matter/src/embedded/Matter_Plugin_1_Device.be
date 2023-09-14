@@ -172,5 +172,48 @@ class Matter_Plugin_Device : Matter_Plugin
     end
   end
 
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON.
+  # The JSON is build via introspection to see what attributes
+  # exist and need to be output
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    import introspect
+    var ret = ""
+
+    # ret: string
+    # attribute: attrbute name
+    # key: in json
+    def _stats_json_inner(attribute, key)
+      import introspect
+      import json
+      var val
+      if (val := introspect.get(self, attribute)) != nil
+        if type(val) == 'boot'    val = int(val)  end         # transform bool into 1/0
+        ret += f',"{key}":{json.dump(val)}'
+      end
+    end
+
+    # lights
+    # print(f'{self=} {type(self)} {introspect.members(self)=}')
+    _stats_json_inner("shadow_onoff",      "Power")
+    _stats_json_inner("shadow_bri",        "Bri")
+    _stats_json_inner("shadow_ct",         "CT")
+    _stats_json_inner("shadow_hue",        "Hue")
+    _stats_json_inner("shadow_sat",        "Sat")
+    # shutters
+    _stats_json_inner("shadow_shutter_pos",    "ShutterPos")
+    _stats_json_inner("shadow_shutter_target", "ShutterTarget")
+    _stats_json_inner("shadow_shutter_tilt",   "ShutterTilt")
+
+    # sensors
+    _stats_json_inner("shadow_contact",    "Contact")
+    _stats_json_inner("shadow_occupancy",  "Occupancy")
+    # print(ret)
+    return ret
+  end
+
 end
 matter.Plugin_Device = Matter_Plugin_Device
