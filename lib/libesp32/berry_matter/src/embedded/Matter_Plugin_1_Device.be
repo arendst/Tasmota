@@ -191,7 +191,7 @@ class Matter_Plugin_Device : Matter_Plugin
       import json
       var val
       if (val := introspect.get(self, attribute)) != nil
-        if type(val) == 'boot'    val = int(val)  end         # transform bool into 1/0
+        if type(val) == 'bool'    val = int(val)  end         # transform bool into 1/0
         ret += f',"{key}":{json.dump(val)}'
       end
     end
