@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for HDMI CEC protocol (#19434)
 - Support different baudrates on BL0942
+- Matter support for Virtual Devices controllable via Rules or Berry
 
 ### Changed
 - Berry fast_loop is now called every 5ms whatever the Sleep value (#19436)
