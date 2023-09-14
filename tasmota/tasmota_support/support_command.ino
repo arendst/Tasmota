@@ -801,12 +801,12 @@ void CmdMachineCid(void) {
 void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
+    clearStack();
     uint8_t* buff = getStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
     char* resolvedCid = getValueForKey(cid, charPtr);
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
-    clearStack();
 } else {
     Response_P( "{ \"%s\": {\"%s\": \"%s\"} }", D_CMND_RESOLVEID, "does not exist" );
 }
