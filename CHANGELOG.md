@@ -3,13 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.1.0.2]
+## [13.1.0.3]
 ### Added
-- Support for HDMI CEC protocol (#19434)
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
-- Support different baudrates on BL0942
 
 ### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.1.0.2] 20230914
+### Added
+- Support for HDMI CEC protocol (#19434)
+- Support different baudrates on BL0942
 
 ### Changed
 - Berry fast_loop is now called every 5ms whatever the Sleep value (#19436)
@@ -26,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 - ESP32C3 relay click on restart
 
-### Removed
 
 ## [13.1.0.1] 20230831
 ### Added
