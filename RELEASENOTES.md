@@ -116,12 +116,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)
 - Variables ``%power<1..28>%`` and  ``%switch<1..28>%`` to rules [#19331](https://github.com/arendst/Tasmota/issues/19331)
 - Support for HDMI CEC protocol [#19434](https://github.com/arendst/Tasmota/issues/19434)
+- Support different baudrates on BL0942
+- Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 
 ### Breaking Changed
 
 ### Changed
-- Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 - ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.12
+- ESP32 LVGL library from v8.3.8 to v8.3.9 (no functional change)
+- Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 
 ### Fixed
 - Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341) and [#19374](https://github.com/arendst/Tasmota/issues/19374)
@@ -130,5 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 [#19408](https://github.com/arendst/Tasmota/issues/19408)
 - ESP32 Shutter migration [#19454](https://github.com/arendst/Tasmota/issues/19454)
 - ESP32 Shutter multi press button events [#19465](https://github.com/arendst/Tasmota/issues/19465)
+- Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
+- ESP32C3 relay click on restart
 
 ### Removed
