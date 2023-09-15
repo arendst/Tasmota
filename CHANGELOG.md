@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.1.0.3]
 ### Added
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
+- Matter support for Virtual Devices controllable via Rules or Berry (#19520)
 
 ### Breaking Changed
 
@@ -19,7 +20,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for HDMI CEC protocol (#19434)
 - Support different baudrates on BL0942
-- Matter support for Virtual Devices controllable via Rules or Berry
 
 ### Changed
 - Berry fast_loop is now called every 5ms whatever the Sleep value (#19436)
