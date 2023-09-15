@@ -732,7 +732,7 @@ void CmndMemonic(void)
   storeSeed();
   Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC,mnemonic );
 
-  CmndStatusResponse(0);
+  CmndStatusResponse(20);
   ResponseClear();
 
 }
@@ -743,10 +743,10 @@ void CmndPublicKeys(void)
   char* mnemonic = NULL;
   getPlntmntKeys();
 
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }\n",
+  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
     "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
   
-  CmndStatusResponse(0);
+  CmndStatusResponse(21);
   ResponseClear();
 }
 
@@ -760,7 +760,7 @@ void CmndPlanetmintAPI(void)
   }
 
   Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", getPlanetmintAPI() );
-  CmndStatusResponse(0);
+  CmndStatusResponse(22);
   ResponseClear();
 }
 
@@ -777,7 +777,7 @@ void CmndAccountID(void)
     Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
   }
   
-  CmndStatusResponse(0);
+  CmndStatusResponse(23);
   ResponseClear();
 }
 
@@ -794,7 +794,7 @@ void CmdMachineCid(void) {
     Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, buffer );
   }
   
-  CmndStatusResponse(0);
+  CmndStatusResponse(24);
   ResponseClear();
 }
 
@@ -811,7 +811,7 @@ void CmdResolveCid(void) {
     Response_P( "{ \"%s\": {\"%s\": \"%s\"} }", D_CMND_RESOLVEID, "does not exist" );
 }
 
-  CmndStatusResponse(0);
+  CmndStatusResponse(25);
   ResponseClear();
 }
 
@@ -829,7 +829,7 @@ void CmndBalance(void) {
   int httpResponseCode = http.GET();
   Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
 
-  CmndStatusResponse(0);
+  CmndStatusResponse(26);
   ResponseClear();
 }
 
@@ -844,10 +844,10 @@ void CmndGetAccountID()
     char* paccountid = getAccountID();
     account_id = (uint64_t) atoi( (const char*) paccountid);
   }
-  ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), D_CMND_GETACCOUNTID, account_id);
+  ResponseAppend_P("{ %s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
 
 
-  CmndStatusResponse(0);
+  CmndStatusResponse(27);
   ResponseClear();
 }
 
@@ -871,7 +871,7 @@ void CmndChallengeResponse(void) {
 
   Response_P("{ \"" D_CMND_CHALLENGERESPONSE "\": {\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
    "LiquidSig", liquidSigHash, "PlanetmintSig", planetmintSigHash );
-  CmndStatusResponse(0);
+  CmndStatusResponse(28);
   ResponseClear();
 }
 
