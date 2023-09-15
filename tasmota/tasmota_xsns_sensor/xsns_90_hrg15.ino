@@ -242,7 +242,9 @@ bool Rg15Command(void) {
       Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
-    ResponseCmndDone();
+    ResponseCmndIdxChar(XdrvMailbox.data);
+  } else {
+    ResponseCmndIdxError();
   }
 
   return serviced;
