@@ -122,7 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
-- ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.12
+- ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.13
 - ESP32 LVGL library from v8.3.8 to v8.3.9 (no functional change)
 - Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 
