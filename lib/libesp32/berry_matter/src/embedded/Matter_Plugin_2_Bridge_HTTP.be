@@ -26,7 +26,7 @@ import matter
 
 class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   static var TYPE = ""                              # name of the plug-in in json
-  static var NAME = ""                              # display name of the plug-in
+  static var DISPLAY_NAME = ""                              # display name of the plug-in
   static var ARG  = ""                              # additional argument name (or empty if none)
   static var ARG_HTTP = "url"                       # domain name
   static var UPDATE_TIME = 3000                     # update every 3s
@@ -233,7 +233,7 @@ class Matter_Plugin_Bridge_HTTP : Matter_Plugin_Device
   def web_values()
     import webserver
     self.web_values_prefix()
-    webserver.content_send("&lt;-- (" + self.NAME + ") --&gt;")
+    webserver.content_send("&lt;-- (" + self.DISPLAY_NAME + ") --&gt;")
   end
 
   # Show prefix before web value

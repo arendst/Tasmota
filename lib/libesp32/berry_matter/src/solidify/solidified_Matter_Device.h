@@ -22,7 +22,7 @@ be_local_closure(Matter_Device_get_plugin_class_displayname,   /* name */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(plugins_classes),
     /* K1   */  be_nested_str_weak(find),
-    /* K2   */  be_nested_str_weak(NAME),
+    /* K2   */  be_nested_str_weak(DISPLAY_NAME),
     /* K3   */  be_nested_str_weak(),
     }),
     be_str_weak(get_plugin_class_displayname),
@@ -4764,7 +4764,7 @@ be_local_closure(Matter_Device_MtrUpdate,   /* name */
     /* K9   */  be_nested_str_weak(remove),
     /* K10  */  be_nested_str_weak(find_plugin_by_friendly_name),
     /* K11  */  be_nested_str_weak(Invalid_X20Device),
-    /* K12  */  be_nested_str_weak(virtual),
+    /* K12  */  be_nested_str_weak(VIRTUAL),
     /* K13  */  be_nested_str_weak(Device_X20is_X20not_X20virtual),
     /* K14  */  be_nested_str_weak(consolidate_update_commands),
     /* K15  */  be_nested_str_weak(keys),

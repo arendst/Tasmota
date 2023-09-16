@@ -52,6 +52,37 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_pre_value,   /* name */
 
 
 /********************************************************************
+** Solidified function: value_changed
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_value_changed,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_const_int(0),
+    }),
+    be_str_weak(value_changed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x540E0401,  //  0001  LDINT	R3	1026
+      0x58100001,  //  0002  LDCONST	R4	K1
+      0x7C040600,  //  0003  CALL	R1	3
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_read_attribute,   /* name */
@@ -158,37 +189,6 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_read_attribute,   /* name */
 
 
 /********************************************************************
-** Solidified function: value_changed
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_value_changed,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
-    be_str_weak(value_changed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x54120401,  //  0001  LDINT	R4	1026
-      0x58140001,  //  0002  LDCONST	R5	K1
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Sensor_Temp_web_values,   /* name */
@@ -248,7 +248,16 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Temp,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(pre_value, 1), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_pre_value_closure) },
         { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_web_values_closure) },
-        { be_const_key_weak(CLUSTERS, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(TYPES, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(770, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_read_attribute_closure) },
+        { be_const_key_weak(value_changed, 6), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_value_changed_closure) },
+        { be_const_key_weak(DISPLAY_NAME, 4), be_nested_str_weak(Temperature) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_temperature) },
+        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(1026, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -308,15 +317,6 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Temp,
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
-    }))    ) } )) },
-        { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_read_attribute_closure) },
-        { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Temp_value_changed_closure) },
-        { be_const_key_weak(TYPE, 4), be_nested_str_weak(http_temperature) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(Temperature) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(770, -1), be_const_int(2) },
     }))    ) } )) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Temp)

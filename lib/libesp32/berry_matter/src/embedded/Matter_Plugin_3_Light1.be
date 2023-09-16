@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light1 : Matter_Plugin_Light0
   static var TYPE = "light1"                                # name of the plug-in in json
-  static var NAME = "Light 1 Dimmer"                        # display name of the plug-in
+  static var DISPLAY_NAME = "Light 1 Dimmer"                        # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -43,7 +43,6 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   # var shadow_onoff                                  # (bool) status of the light power on/off
   var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
 
@@ -58,7 +57,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # Update shadow
   #
   def update_shadow()
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       var light_status = light.get()
       if light_status != nil
@@ -84,7 +83,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if (bri_254 < 0)    bri_254 = 0     end
     if (bri_254 > 254)  bri_254 = 254   end
     pow = (pow != nil) ? bool(pow) : nil        # nil or bool
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
       if pow == nil

@@ -1288,7 +1288,7 @@ class Matter_Device
   # get a class name light "light0" and return displayname
   def get_plugin_class_displayname(name)
     var cl = self.plugins_classes.find(name)
-    return cl ? cl.NAME : ""
+    return cl ? cl.DISPLAY_NAME : ""
   end
 
   #############################################################
@@ -1587,7 +1587,7 @@ class Matter_Device
       end
 
       if (pl == nil)          return tasmota.resp_cmnd_str("Invalid Device")          end
-      if (!pl.virtual)        return tasmota.resp_cmnd_str("Device is not virtual")   end
+      if (!pl.VIRTUAL)        return tasmota.resp_cmnd_str("Device is not virtual")   end
       # filter parameter accedpted by plugin, and rename with canonical
       # Ex: {"power":1,"HUE":2} becomes {"Power":1,"Hue":2}
       var uc = pl.consolidate_update_commands()

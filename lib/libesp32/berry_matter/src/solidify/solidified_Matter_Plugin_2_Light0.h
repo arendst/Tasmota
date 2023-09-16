@@ -100,7 +100,7 @@ be_local_closure(Matter_Plugin_Light0_set_onoff,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(virtual),
+    /* K0   */  be_nested_str_weak(VIRTUAL),
     /* K1   */  be_nested_str_weak(light),
     /* K2   */  be_nested_str_weak(set),
     /* K3   */  be_nested_str_weak(power),
@@ -235,7 +235,7 @@ be_local_closure(Matter_Plugin_Light0_update_shadow,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(virtual),
+    /* K0   */  be_nested_str_weak(VIRTUAL),
     /* K1   */  be_nested_str_weak(light),
     /* K2   */  be_nested_str_weak(get),
     /* K3   */  be_nested_str_weak(find),
@@ -417,7 +417,7 @@ be_local_class(Matter_Plugin_Light0,
     &be_class_Matter_Plugin_Device,
     be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, 11), be_const_closure(Matter_Plugin_Light0_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, 9), be_const_closure(Matter_Plugin_Light0_read_attribute_closure) },
         { be_const_key_weak(UPDATE_TIME, 4), be_const_int(250) },
         { be_const_key_weak(update_virtual, 1), be_const_closure(Matter_Plugin_Light0_update_virtual_closure) },
         { be_const_key_weak(UPDATE_COMMANDS, 13), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -426,16 +426,10 @@ be_local_class(Matter_Plugin_Light0,
         be_nested_str_weak(Power),
     }))    ) } )) },
         { be_const_key_weak(find_val_i, -1), be_const_static_closure(Matter_Plugin_Light0_find_val_i_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Light0_init_closure) },
+        { be_const_key_weak(init, 11), be_const_closure(Matter_Plugin_Light0_init_closure) },
         { be_const_key_weak(set_onoff, 12), be_const_closure(Matter_Plugin_Light0_set_onoff_closure) },
-        { be_const_key_weak(update_shadow, 9), be_const_closure(Matter_Plugin_Light0_update_shadow_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(Light_X200_X20On) },
+        { be_const_key_weak(update_shadow, 8), be_const_closure(Matter_Plugin_Light0_update_shadow_closure) },
         { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Light0_invoke_request_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(256, -1), be_const_int(2) },
-    }))    ) } )) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -495,6 +489,12 @@ be_local_class(Matter_Plugin_Light0,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(256, -1), be_const_int(2) },
+    }))    ) } )) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Light_X200_X20On) },
         { be_const_key_weak(shadow_onoff, -1), be_const_var(0) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(light0) },
     })),

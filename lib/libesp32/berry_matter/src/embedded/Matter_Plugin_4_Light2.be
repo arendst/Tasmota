@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light2 : Matter_Plugin_Light1
   static var TYPE = "light2"                                # name of the plug-in in json
-  static var NAME = "Light 2 CT"                            # display name of the plug-in
+  static var DISPLAY_NAME = "Light 2 CT"                            # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -44,7 +44,6 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   # var shadow_onoff                                  # (bool) status of the light power on/off
   # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
   var shadow_ct                                     # (int 153..500, default 325) Color Temperatur in mireds
@@ -93,7 +92,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   def set_ct(ct)
     if ct < self.ct_min  ct = self.ct_min   end
     if ct > self.ct_max  ct = self.ct_max   end
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       light.set({'ct': ct})
       self.update_shadow()

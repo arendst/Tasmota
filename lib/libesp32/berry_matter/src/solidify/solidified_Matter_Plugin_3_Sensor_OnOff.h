@@ -274,7 +274,7 @@ be_local_class(Matter_Plugin_Sensor_OnOff,
     &be_class_Matter_Plugin_Device,
     be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(CLUSTERS, 5), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(CLUSTERS, 8), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(6, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -337,10 +337,10 @@ be_local_class(Matter_Plugin_Sensor_OnOff,
         { be_const_key_weak(UPDATE_TIME, 4), be_const_int(750) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(onoff) },
         { be_const_key_weak(append_state_json, 12), be_const_closure(Matter_Plugin_Sensor_OnOff_append_state_json_closure) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_read_attribute_closure) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(OnOff_X20Sensor) },
         { be_const_key_weak(shadow_onoff, -1), be_const_var(1) },
         { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_update_shadow_closure) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(OnOff_X20Sensor) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_read_attribute_closure) },
         { be_const_key_weak(parse_configuration, -1), be_const_closure(Matter_Plugin_Sensor_OnOff_parse_configuration_closure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,

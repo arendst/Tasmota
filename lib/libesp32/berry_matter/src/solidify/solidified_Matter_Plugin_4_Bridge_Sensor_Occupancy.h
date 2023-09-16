@@ -357,14 +357,18 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Occupancy,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(ARG_TYPE, 4), be_const_static_closure(Matter_Plugin_Bridge_Sensor_Occupancy__X3Clambda_X3E_closure) },
-        { be_const_key_weak(ARG_HINT, 14), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_HINT, 12), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
         { be_const_key_weak(shadow_occupancy, -1), be_const_var(1) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_init_closure) },
         { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_web_values_closure) },
-        { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
-        { be_const_key_weak(NAME, -1), be_nested_str_weak(Occupancy) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Occupancy) },
+        { be_const_key_weak(TYPES, 9), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(263, -1), be_const_int(2) },
+    }))    ) } )) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
-        { be_const_key_weak(parse_update, 5), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_parse_update_closure) },
+        { be_const_key_weak(parse_update, 14), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_parse_update_closure) },
         { be_const_key_weak(CLUSTERS, 11), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -426,15 +430,11 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Occupancy,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(tasmota_switch_index, 9), be_const_var(0) },
-        { be_const_key_weak(read_attribute, 12), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(263, -1), be_const_int(2) },
-    }))    ) } )) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_occupancy) },
+        { be_const_key_weak(tasmota_switch_index, 6), be_const_var(0) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute_closure) },
         { be_const_key_weak(web_values_prefix, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Occupancy_web_values_prefix_closure) },
+        { be_const_key_weak(TYPE, 5), be_nested_str_weak(http_occupancy) },
+        { be_const_key_weak(UPDATE_TIME, -1), be_const_int(5000) },
         { be_const_key_weak(UPDATE_CMD, 2), be_nested_str_weak(Status_X208) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Occupancy)

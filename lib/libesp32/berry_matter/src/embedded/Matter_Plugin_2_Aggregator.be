@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Aggregator : Matter_Plugin
   static var TYPE = "aggregator"      # name of the plug-in in json
-  static var NAME = "Aggregator"      # display name of the plug-in
+  static var DISPLAY_NAME = "Aggregator"      # display name of the plug-in
 #   static var CLUSTERS  = {
 #     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
 #   }

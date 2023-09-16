@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   static var TYPE = "http_light2"                   # name of the plug-in in json
-  static var NAME = "Light 2 CT"      # display name of the plug-in
+  static var DISPLAY_NAME = "Light 2 CT"      # display name of the plug-in
   # static var ARG  = "relay"                         # additional argument name (or empty if none)
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = matter.consolidate_clusters(_class, {

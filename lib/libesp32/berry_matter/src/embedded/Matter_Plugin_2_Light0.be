@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light0 : Matter_Plugin_Device
   static var TYPE = "light0"                        # name of the plug-in in json
-  static var NAME = "Light 0 On"                    # display name of the plug-in
+  static var DISPLAY_NAME = "Light 0 On"                    # display name of the plug-in
   static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class,
   {
@@ -44,7 +44,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   var shadow_onoff                                  # (bool) status of the light power on/off
 
   #############################################################
@@ -58,7 +57,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       var light_status = light.get()
       if light_status != nil
@@ -73,7 +72,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   end
 
   def set_onoff(pow)
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       light.set({'power':pow})
       self.update_shadow()

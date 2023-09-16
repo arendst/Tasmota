@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   # static var TYPE = ""                              # name of the plug-in in json
-  # static var NAME = ""                              # display name of the plug-in
+  # static var DISPLAY_NAME = ""                              # display name of the plug-in
   static var ARG  = "filter"                        # additional argument name (or empty if none)
   static var ARG_HTTP = "url"                       # domain name
   static var ARG_HINT = "Filter pattern"
@@ -73,9 +73,9 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
         var val = self.pre_value(real(self.tasmota_sensor_matcher.match(data)))
         if val != nil
           if val != self.shadow_value
-            self.value_changed(val)
+            self.value_changed()
+            self.shadow_value = val
           end
-          self.shadow_value = val
         end
       end
     end
@@ -86,7 +86,7 @@ class Matter_Plugin_Bridge_Sensor : Matter_Plugin_Bridge_HTTP
   #
   # This must be overriden.
   # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
-  def value_changed(val)
+  def value_changed()
     # self.attribute_updated(0x0402, 0x0000)
   end
 
