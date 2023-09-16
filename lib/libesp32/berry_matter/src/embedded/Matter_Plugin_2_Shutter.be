@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var TYPE = "shutter"                       # name of the plug-in in json
-  static var NAME = "Shutter"                       # display name of the plug-in
+  static var DISPLAY_NAME = "Shutter"                       # display name of the plug-in
   static var ARG  = "shutter"                       # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var ARG_HINT = "Relay<x> number"

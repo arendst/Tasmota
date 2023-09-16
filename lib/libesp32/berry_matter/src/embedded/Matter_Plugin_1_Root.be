@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Root : Matter_Plugin
   static var TYPE = "root"            # name of the plug-in in json
-  static var NAME = "Root node"       # display name of the plug-in
+  static var DISPLAY_NAME = "Root node"       # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461

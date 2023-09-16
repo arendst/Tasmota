@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_OnOff : Matter_Plugin_Device
   static var TYPE = "relay"                         # name of the plug-in in json
-  static var NAME = "Relay"                         # display name of the plug-in
+  static var DISPLAY_NAME = "Relay"                         # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var ARG_HINT = "Relay<x> number"
@@ -46,7 +46,6 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   var tasmota_relay_index                             # Relay number in Tasmota (zero based)
 
   #############################################################
@@ -69,7 +68,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    if !self.virtual
+    if !self.VIRTUAL
       var pow = tasmota.get_power(self.tasmota_relay_index - 1)
       if pow != nil
         if self.shadow_onoff != bool(pow)
@@ -85,7 +84,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # Model
   #
   def set_onoff(pow)
-    if !self.virtual
+    if !self.VIRTUAL
       tasmota.set_power(self.tasmota_relay_index - 1, bool(pow))
       self.update_shadow()
     else

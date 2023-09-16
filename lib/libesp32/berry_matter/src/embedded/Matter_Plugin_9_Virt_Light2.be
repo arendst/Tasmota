@@ -25,16 +25,10 @@ import matter
 
 class Matter_Plugin_Virt_Light2 : Matter_Plugin_Light2
   static var TYPE = "v_light2"                      # name of the plug-in in json
-  static var NAME = "(v) Light 2 CT"                # display name of the plug-in
+  static var DISPLAY_NAME = "v.Light 2 CT"                # display name of the plug-in
   static var ARG  = ""                              # no arg for virtual device
   static var ARG_HINT = "_Not used_"                # Hint for entering the Argument (inside 'placeholder')
-
-  #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    super(self).init(device, endpoint, config)
-    self.virtual = true
-  end
+  static var VIRTUAL = true                         # virtual device
 
 end
 matter.Plugin_Virt_Light2 = Matter_Plugin_Virt_Light2

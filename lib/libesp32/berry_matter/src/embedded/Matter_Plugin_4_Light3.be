@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light3 : Matter_Plugin_Light1
   static var TYPE = "light3"                                # name of the plug-in in json
-  static var NAME = "Light 3 RGB"                           # display name of the plug-in
+  static var DISPLAY_NAME = "Light 3 RGB"                           # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -63,7 +63,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   #
   def update_shadow()
     super(self).update_shadow()
-    if !self.virtual
+    if !self.VIRTUAL
       import light
       var light_status = light.get()
       if light_status != nil
@@ -93,7 +93,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       if sat_254 > 254    sat_254 = 254   end
     end
 
-    if !self.virtual
+    if !self.VIRTUAL
       var hue_360 = (hue_254 != nil) ? tasmota.scale_uint(hue_254, 0, 254, 0, 360) : nil
       var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
 

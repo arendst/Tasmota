@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Light3.be - implements the behavior for a virtual Light with 3 channels (RGB)
+# Matter_Plugin_9_Virt_Sensor_Pressure.be - implements the behavior for a Virtual Temperature Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -21,14 +21,14 @@ import matter
 
 # Matter plug-in for core behavior
 
-#@ solidify:Matter_Plugin_Virt_Light3,weak
+#@ solidify:Matter_Plugin_Virt_Sensor_Pressure,weak
 
-class Matter_Plugin_Virt_Light3 : Matter_Plugin_Light3
-  static var TYPE = "v_light3"                      # name of the plug-in in json
-  static var DISPLAY_NAME = "v.Light 3 RGB"               # display name of the plug-in
+class Matter_Plugin_Virt_Sensor_Pressure : Matter_Plugin_Sensor_Pressure
+  static var TYPE = "v_pressure"                    # name of the plug-in in json
+  static var DISPLAY_NAME = "v.Pressure"            # display name of the plug-in
   static var ARG  = ""                              # no arg for virtual device
   static var ARG_HINT = "_Not used_"                # Hint for entering the Argument (inside 'placeholder')
   static var VIRTUAL = true                         # virtual device
 
 end
-matter.Plugin_Virt_Light3 = Matter_Plugin_Virt_Light3
+matter.Plugin_Virt_Sensor_Pressure = Matter_Plugin_Virt_Sensor_Pressure

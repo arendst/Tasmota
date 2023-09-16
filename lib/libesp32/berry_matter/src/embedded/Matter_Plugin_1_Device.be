@@ -37,7 +37,6 @@ class Matter_Plugin_Device : Matter_Plugin
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
 
   #############################################################
   # read an attribute

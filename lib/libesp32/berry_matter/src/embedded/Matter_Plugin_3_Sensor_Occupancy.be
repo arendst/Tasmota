@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   static var TYPE = "occupancy"                     # name of the plug-in in json
-  static var NAME = "Occupancy"                     # display name of the plug-in
+  static var DISPLAY_NAME = "Occupancy"                     # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
@@ -37,6 +37,13 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_occupancy
+
+  #############################################################
+  # Constructor
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
+    self.shadow_occupancy = false
+  end
 
   #############################################################
   # parse_configuration
@@ -95,6 +102,31 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
     else
       return super(self).read_attribute(session, ctx, tlv_solo)
     end
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload_json)
+    var val_onoff = payload_json.find("Occupancy")
+    if val_onoff != nil
+      val_onoff = bool(val_onoff)
+      if self.shadow_occupancy != val_onoff
+        self.attribute_updated(0x0406, 0x0000)
+        self.shadow_occupancy = val_onoff
+      end
+    end
+    super(self).update_virtual(payload_json)
+  end
+
+  #############################################################
+  # append_state_json
+  #
+  # Output the current state in JSON
+  # New values need to be appended with `,"key":value` (including prefix comma)
+  def append_state_json()
+    return f',"Occupancy":{int(self.shadow_occupancy)}'
   end
 
 end

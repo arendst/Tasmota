@@ -27,12 +27,13 @@ import matter
 class Matter_Plugin
   # Global type system for plugins
   static var TYPE = ""                      # name of the plug-in in json
-  static var NAME = ""                      # display name of the plug-in
+  static var DISPLAY_NAME = ""                      # display name of the plug-in
   static var ARG  = ""                      # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
   static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
+  static var VIRTUAL = false                # set to true only for virtual devices
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = {
@@ -46,7 +47,6 @@ class Matter_Plugin
   var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   var tick                                  # tick value when it was last updated
   var node_label                            # name of the endpoint, used only in bridge mode, "" if none
-  var virtual                               # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
 
   #############################################################
   # MVC Model
@@ -66,7 +66,6 @@ class Matter_Plugin
     self.clusters = self.consolidate_clusters()
     self.parse_configuration(config)
     self.node_label = config.find("name", "")
-    self.virtual = false
   end
 
   # proxy for the same method in IM

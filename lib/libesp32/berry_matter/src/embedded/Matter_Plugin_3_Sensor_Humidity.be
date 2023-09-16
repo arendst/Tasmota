@@ -25,7 +25,9 @@ import matter
 
 class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   static var TYPE = "humidity"                      # name of the plug-in in json
-  static var NAME = "Humidity"                      # display name of the plug-in
+  static var DISPLAY_NAME = "Humidity"              # display name of the plug-in
+  static var JSON_NAME = "Humidity"                 # Name of the sensor attribute in JSON payloads
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Humidity")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0405: [0,1,2,0xFFFC,0xFFFD],                  # Humidity Measurement p.102 - no writable
   })
@@ -45,7 +47,7 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   #
   # This must be overriden.
   # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
-  def value_changed(val)
+  def value_changed()
     self.attribute_updated(0x0405, 0x0000)
   end
 
@@ -78,15 +80,6 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
     else
       return super(self).read_attribute(session, ctx, tlv_solo)
     end
-  end
-
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Humidity":{self.shadow_value}'
   end
 
 end

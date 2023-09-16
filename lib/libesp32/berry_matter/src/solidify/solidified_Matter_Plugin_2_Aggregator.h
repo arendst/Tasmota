@@ -106,14 +106,14 @@ be_local_class(Matter_Plugin_Aggregator,
     &be_class_Matter_Plugin,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(NAME, 3), be_nested_str_weak(Aggregator) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(aggregator) },
-        { be_const_key_weak(TYPES, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(14, -1), be_const_int(1) },
     }))    ) } )) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Aggregator_read_attribute_closure) },
+        { be_const_key_weak(TYPE, 3), be_nested_str_weak(aggregator) },
+        { be_const_key_weak(read_attribute, 0), be_const_closure(Matter_Plugin_Aggregator_read_attribute_closure) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Aggregator) },
     })),
     be_str_weak(Matter_Plugin_Aggregator)
 );

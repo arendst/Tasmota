@@ -227,45 +227,6 @@ void be_load_GetOptionReader_class(bvm *vm) {
 extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
 
 /********************************************************************
-** Solidified function: web_values
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(web_values_prefix),
-    /* K2   */  be_nested_str_weak(content_send),
-    /* K3   */  be_nested_str_weak(_X26lt_X3B_X2D_X2D_X20_X28),
-    /* K4   */  be_nested_str_weak(NAME),
-    /* K5   */  be_nested_str_weak(_X29_X20_X2D_X2D_X26gt_X3B),
-    }),
-    be_str_weak(web_values),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080101,  //  0001  GETMET	R2	R0	K1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x8C080302,  //  0003  GETMET	R2	R1	K2
-      0x88100104,  //  0004  GETMBR	R4	R0	K4
-      0x00120604,  //  0005  ADD	R4	K3	R4
-      0x00100905,  //  0006  ADD	R4	R4	K5
-      0x7C080400,  //  0007  CALL	R2	2
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: call_remote_sync
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
@@ -383,49 +344,6 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
 
 
 /********************************************************************
-** Solidified function: update_shadow
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tick),
-    /* K1   */  be_nested_str_weak(device),
-    /* K2   */  be_nested_str_weak(call_remote_sync),
-    /* K3   */  be_nested_str_weak(UPDATE_CMD),
-    /* K4   */  be_nested_str_weak(parse_http_response),
-    /* K5   */  be_const_int(1),
-    }),
-    be_str_weak(update_shadow),
-    &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
-      0x88040101,  //  0000  GETMBR	R1	R0	K1
-      0x88040300,  //  0001  GETMBR	R1	R1	K0
-      0x90020001,  //  0002  SETMBR	R0	K0	R1
-      0x8C040102,  //  0003  GETMET	R1	R0	K2
-      0x880C0103,  //  0004  GETMBR	R3	R0	K3
-      0x7C040400,  //  0005  CALL	R1	2
-      0x78060004,  //  0006  JMPF	R1	#000C
-      0x8C080104,  //  0007  GETMET	R2	R0	K4
-      0x58100005,  //  0008  LDCONST	R4	K5
-      0x5C140200,  //  0009  MOVE	R5	R1
-      0x88180103,  //  000A  GETMBR	R6	R0	K3
-      0x7C080800,  //  000B  CALL	R2	4
-      0x80000000,  //  000C  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: parse_http_response
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
@@ -494,6 +412,45 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
       0x5C2C0E00,  //  0024  MOVE	R11	R7
       0x7C200600,  //  0025  CALL	R8	3
       0x80000000,  //  0026  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: web_values
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(webserver),
+    /* K1   */  be_nested_str_weak(web_values_prefix),
+    /* K2   */  be_nested_str_weak(content_send),
+    /* K3   */  be_nested_str_weak(_X26lt_X3B_X2D_X2D_X20_X28),
+    /* K4   */  be_nested_str_weak(DISPLAY_NAME),
+    /* K5   */  be_nested_str_weak(_X29_X20_X2D_X2D_X26gt_X3B),
+    }),
+    be_str_weak(web_values),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080302,  //  0003  GETMET	R2	R1	K2
+      0x88100104,  //  0004  GETMBR	R4	R0	K4
+      0x00120604,  //  0005  ADD	R4	K3	R4
+      0x00100905,  //  0006  ADD	R4	R4	K5
+      0x7C080400,  //  0007  CALL	R2	2
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -571,6 +528,30 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
       0x8C140107,  //  0011  GETMET	R5	R0	K7
       0x7C140200,  //  0012  CALL	R5	1
       0x80000000,  //  0013  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: parse_update
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(parse_update),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
     })
   )
 );
@@ -783,30 +764,6 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix,   /* name */
 
 
 /********************************************************************
-** Solidified function: parse_update
-********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(parse_update),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: register_cmd_cb
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
@@ -870,6 +827,49 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
 
 
 /********************************************************************
+** Solidified function: update_shadow
+********************************************************************/
+be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tick),
+    /* K1   */  be_nested_str_weak(device),
+    /* K2   */  be_nested_str_weak(call_remote_sync),
+    /* K3   */  be_nested_str_weak(UPDATE_CMD),
+    /* K4   */  be_nested_str_weak(parse_http_response),
+    /* K5   */  be_const_int(1),
+    }),
+    be_str_weak(update_shadow),
+    &be_const_str_solidified,
+    ( &(const binstruction[13]) {  /* code */
+      0x88040101,  //  0000  GETMBR	R1	R0	K1
+      0x88040300,  //  0001  GETMBR	R1	R1	K0
+      0x90020001,  //  0002  SETMBR	R0	K0	R1
+      0x8C040102,  //  0003  GETMET	R1	R0	K2
+      0x880C0103,  //  0004  GETMBR	R3	R0	K3
+      0x7C040400,  //  0005  CALL	R1	2
+      0x78060004,  //  0006  JMPF	R1	#000C
+      0x8C080104,  //  0007  GETMET	R2	R0	K4
+      0x58100005,  //  0008  LDCONST	R4	K5
+      0x5C140200,  //  0009  MOVE	R5	R1
+      0x88180103,  //  000A  GETMBR	R6	R0	K3
+      0x7C080800,  //  000B  CALL	R2	4
+      0x80000000,  //  000C  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: every_250ms
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
@@ -911,26 +911,26 @@ be_local_class(Matter_Plugin_Bridge_HTTP,
         { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X2011) },
         { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_every_250ms_closure) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak() },
-        { be_const_key_weak(call_remote_sync, 5), be_const_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
+        { be_const_key_weak(call_remote_sync, 22), be_const_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
         { be_const_key_weak(web_value_onoff, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff_closure) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak() },
+        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(3000) },
-        { be_const_key_weak(update_shadow, 22), be_const_closure(Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
-        { be_const_key_weak(web_values, 21), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_closure) },
-        { be_const_key_weak(PREFIX, -1), be_nested_str_weak(_X7C_X20_X3Ci_X3E_X25s_X3C_X2Fi_X3E_X20) },
-        { be_const_key_weak(SYNC_TIMEOUT, 19), be_const_int(500) },
+        { be_const_key_weak(GetOptionReader, 5), be_const_class(be_class_GetOptionReader) },
+        { be_const_key_weak(parse_http_response, 21), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
+        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_update_closure) },
+        { be_const_key_weak(SYNC_TIMEOUT, 18), be_const_int(500) },
         { be_const_key_weak(is_local_device, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_is_local_device_closure) },
-        { be_const_key_weak(PROBE_TIMEOUT, 18), be_const_int(1700) },
+        { be_const_key_weak(PREFIX, 17), be_nested_str_weak(_X7C_X20_X3Ci_X3E_X25s_X3C_X2Fi_X3E_X20) },
         { be_const_key_weak(http_remote, 1), be_const_var(0) },
         { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_init_closure) },
         { be_const_key_weak(ARG_HTTP, -1), be_nested_str_weak(url) },
-        { be_const_key_weak(NAME, 17), be_nested_str_weak() },
-        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_update_closure) },
-        { be_const_key_weak(web_values_prefix, 9), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix_closure) },
+        { be_const_key_weak(DISPLAY_NAME, 9), be_nested_str_weak() },
+        { be_const_key_weak(web_values_prefix, 19), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix_closure) },
         { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_read_attribute_closure) },
+        { be_const_key_weak(PROBE_TIMEOUT, -1), be_const_int(1700) },
         { be_const_key_weak(register_cmd_cb, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb_closure) },
-        { be_const_key_weak(parse_http_response, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
-        { be_const_key_weak(GetOptionReader, -1), be_const_class(be_class_GetOptionReader) },
+        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_closure) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak() },
     })),
     be_str_weak(Matter_Plugin_Bridge_HTTP)
 );

@@ -63,8 +63,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_configuration,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Plugin_Bridge_Sensor_value_changed,   /* name */
   be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
+    1,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -160,10 +160,10 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
     }),
     be_str_weak(parse_update),
     &be_const_str_solidified,
-    ( &(const binstruction[36]) {  /* code */
+    ( &(const binstruction[35]) {  /* code */
       0x540E0007,  //  0000  LDINT	R3	8
       0x1C0C0403,  //  0001  EQ	R3	R2	R3
-      0x780E001F,  //  0002  JMPF	R3	#0023
+      0x780E001E,  //  0002  JMPF	R3	#0022
       0x8C0C0300,  //  0003  GETMET	R3	R1	K0
       0x58140001,  //  0004  LDCONST	R5	K1
       0x7C0C0400,  //  0005  CALL	R3	2
@@ -177,7 +177,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
       0x940C0303,  //  000D  GETIDX	R3	R1	K3
       0x90020803,  //  000E  SETMBR	R0	K4	R3
       0x880C0105,  //  000F  GETMBR	R3	R0	K5
-      0x780E0011,  //  0010  JMPF	R3	#0023
+      0x780E0010,  //  0010  JMPF	R3	#0022
       0x8C0C0106,  //  0011  GETMET	R3	R0	K6
       0x6014000A,  //  0012  GETGBL	R5	G10
       0x88180105,  //  0013  GETMBR	R6	R0	K5
@@ -188,15 +188,14 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
       0x7C0C0400,  //  0018  CALL	R3	2
       0x4C100000,  //  0019  LDNIL	R4
       0x20100604,  //  001A  NE	R4	R3	R4
-      0x78120006,  //  001B  JMPF	R4	#0023
+      0x78120005,  //  001B  JMPF	R4	#0022
       0x88100108,  //  001C  GETMBR	R4	R0	K8
       0x20100604,  //  001D  NE	R4	R3	R4
       0x78120002,  //  001E  JMPF	R4	#0022
       0x8C100109,  //  001F  GETMET	R4	R0	K9
-      0x5C180600,  //  0020  MOVE	R6	R3
-      0x7C100400,  //  0021  CALL	R4	2
-      0x90021003,  //  0022  SETMBR	R0	K8	R3
-      0x80000000,  //  0023  RET	0
+      0x7C100200,  //  0020  CALL	R4	1
+      0x90021003,  //  0021  SETMBR	R0	K8	R3
+      0x80000000,  //  0022  RET	0
     })
   )
 );

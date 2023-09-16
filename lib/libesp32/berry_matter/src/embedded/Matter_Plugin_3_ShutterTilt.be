@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   static var TYPE = "shutter+tilt"                  # name of the plug-in in json
-  static var NAME = "Shutter + Tilt"                # display name of the plug-in
+  static var DISPLAY_NAME = "Shutter + Tilt"                # display name of the plug-in
   # inherited static var ARG  = "shutter"                       # additional argument name (or empty if none)
   # inherited static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
