@@ -1,5 +1,5 @@
 #
-# Flash bootloader from URL
+# Flash bootloader from URL or filesystem
 #
 
 class bootloader
@@ -41,25 +41,32 @@ class bootloader
     cl.close()
   end
 
+  # returns true if ok
   def flash(url)
+    var fname = "bootloader.bin"      # default local name
     if url != nil
-      self.download(url)
+      if url[0..3] == "http"          # if starts with 'http' download
+        self.download(url)
+      else
+        fname = url                   # else get from file system
+      end
     end
     # address to flash the bootloader
     var addr = self.get_bootloader_address()
-    if addr == nil    raise "internal_error", "can't find address for bootloader" end
+    if addr == nil    tasmota.log("OTA: can't find address for bootloader", 2) return false end
 
-    var bl = open("bootloader.bin", "r")
+    var bl = open(fname, "r")
     if bl.readbytes(size(self._sign)) != self._sign
-      raise "value_error", "the file does not contain a bootloader signature"
+      tasmota.log("OTA: file does not contain a bootloader signature", 2)
+      return false
     end
     bl.seek(0)    # reset to start of file
 
     var bl_size = bl.size()
-    if bl_size <= 8291   raise "internal_error", "wrong bootloader size "+str(bl_size) end
-    if bl_size > (0x8000 - addr)  raise "internal_error", "bootloader is too large "+str(bl_size / 1024)+"kB" end
+    if bl_size <= 8291   tasmota.log("OTA: wrong bootloader size "+str(bl_size), 2) return false end
+    if bl_size > (0x8000 - addr)  tasmota.log("OTA: bootloader is too large "+str(bl_size / 1024)+"kB", 2) return false end
 
-    print("OTA: Flashing bootloader")
+    tasmota.log("OTA: Flashing bootloader", 2)
     # from now on there is no turning back, any failure means a bricked device
     import flash
     # read current value for bytes 2/3
@@ -76,8 +83,8 @@ class bootloader
       buf = bl.readbytes(0x1000)            # read next chunk
     end
     bl.close()
-    print("OTA: Booloader flashed, please restart")
-
+    tasmota.log("OTA: Booloader flashed, please restart", 2)
+    return true
   end
 end
 
@@ -90,6 +97,9 @@ import bootloader
 bootloader().flash('https://raw.githubusercontent.com/espressif/arduino-esp32/master/tools/sdk/esp32/bin/bootloader_dio_40m.bin')
 
 #bootloader().flash('https://raw.githubusercontent.com/espressif/arduino-esp32/master/tools/sdk/esp32/bin/bootloader_dout_40m.bin')
+
+### FLASH from local file
+bootloader().flash("bootloader-tasmota-c3.bin")
 
 #### debug only
 bl = bootloader()
