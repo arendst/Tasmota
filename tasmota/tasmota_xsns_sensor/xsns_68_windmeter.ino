@@ -101,7 +101,7 @@ void WindMeterInit(void)
   if (!Settings->windmeter_pulse_debounce) {
     Settings->windmeter_pulse_debounce = WINDMETER_DEF_PULSE_DEBOUNCE;
   }
-  if (!Settings->windmeter_measure_intvl) {
+  if (!Settings->windmeter_measure_intvl || Settings->windmeter_measure_intvl == 0) {
     Settings->windmeter_measure_intvl = WINDMETER_DEF_MEASURE_INTVL;
   }
   if (!Settings->windmeter_speed_factor) {
@@ -306,7 +306,12 @@ bool Xsns68Cmnd(void)
         Settings->windmeter_tele_pchange = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
         break;
       case 6:
-        Settings->windmeter_measure_intvl = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        uint8_t measure_intvl = (uint8_t)strtol(ArgV(argument, 2), nullptr, 10);
+        if (measure_intvl == 0) {
+          Settings->windmeter_measure_intvl = WINDMETER_DEF_MEASURE_INTVL;
+        } else {
+          Settings->windmeter_measure_intvl = measure_intvl;
+        }
         break;
     }
   }
