@@ -542,7 +542,7 @@ char* create_transaction( void* anyMsg, char* tokenAmount )
   }
 
   Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
-  coin.denom = "token";
+  coin.denom = "plmnt";
   coin.amount = tokenAmount;
   
   uint8_t* txbytes = NULL;
