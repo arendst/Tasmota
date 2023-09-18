@@ -265,6 +265,8 @@
 #define D_CMND_RESOLVEID "ResolveCID"
 #define D_CMND_BALANCE "Balance"
 #define D_CMND_GETACCOUNTID "GetAccountID"
+#define D_CMND_PLANETMINTDENOM "PlanetmintDenom"
+#define D_CMND_PLANETMINTCHAINID "PlanetmintChainID"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"

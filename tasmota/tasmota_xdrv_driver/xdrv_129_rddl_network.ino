@@ -443,6 +443,8 @@ String registerCID(const char* cid){
 
 char g_planetmintapi[100] = {0};
 char g_accountid[20] = {0};
+char g_chainid[30] = {0};
+char g_denom[20] = {0};
 
 void setPlanetmintAPI( const char* api, size_t len)
 {
@@ -467,7 +469,36 @@ char* getAccountID()
     getValueForKey( "accountid", g_accountid);
   return g_accountid;
 }
-  
+
+void setDenom( const char* denom, size_t len)
+{
+  storeKeyValuePair( "planetmintdenom", denom, len);
+  memset((void*)g_denom,0, 20);
+}
+char* getDenom()
+{
+  if( strlen( g_denom) == 0 )
+    getValueForKey( "planetmintdenom", g_denom);
+  if( strlen( g_denom) == 0 )
+    strcpy(g_denom, "plmnt");
+  return g_denom;
+}
+
+void setChainID( const char* chainid, size_t len)
+{
+  storeKeyValuePair( "planetmintchainid", chainid, len);
+  memset((void*)g_chainid,0, 30);
+}
+char* getChainID()
+{
+  if( strlen( g_chainid) == 0 )
+    getValueForKey( "planetmintchainid", g_chainid);
+  if( strlen( g_chainid) == 0 )
+    strcpy(g_chainid, "planetmintgotestv1");
+
+  return g_chainid;
+}
+
   
 int broadcast_transaction( char* tx_payload ){
   HTTPClientLight http;
@@ -542,12 +573,12 @@ char* create_transaction( void* anyMsg, char* tokenAmount )
   }
 
   Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
-  coin.denom = "plmnt";
+  coin.denom = getDenom();
   coin.amount = tokenAmount;
   
   uint8_t* txbytes = NULL;
   size_t tx_size = 0;
-  char* chain_id = "planetmintgo";
+  char* chain_id = getChainID();
   int ret = prepareTx( (Google__Protobuf__Any*)anyMsg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
   if( ret < 0 )
     return NULL;
