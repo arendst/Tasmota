@@ -42,11 +42,12 @@
 
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
-#define AUDIO_PWR_ON
-#define AUDIO_PWR_OFF
+#define AUDIO_PWR_ON    I2SAudioPower(true);
+#define AUDIO_PWR_OFF   I2SAudioPower(false);
 
-#define USE_I2S_RTTTL
+#define USE_I2S_SAY
 #define USE_I2S_SAY_TIME
+#define USE_I2S_RTTTL
 
 /*********************************************************************************************\
  * Driver Settings in memory
@@ -160,12 +161,11 @@ const int preallocateCodecSize = 29192; // MP3 codec max mem needed
 enum : int { EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2 };
 
 void sayTime(int hour, int minutes);
-void Cmd_MicRec(void);
-void Cmd_wav2mp3(void);
+void Cmndwav2mp3(void);
 void Cmd_Time(void);
 
 void Rtttl(char *buffer);
-void Cmd_I2SRtttl(void);
+void CmndI2SRtttl(void);
 
 /*********************************************************************************************\
  * Class for outputting sound as endpoint for ESP8266Audio library
@@ -572,6 +572,18 @@ int32_t I2sRecordShine(char *path) {
 /*********************************************************************************************\
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
+// error codes
+enum {
+  I2S_OK = 0,
+  I2S_ERR_OUTPUT_NOT_CONFIGURE,
+  I2S_ERR_DECODER_IN_USE,
+  I2S_ERR_FILE_NOT_FOUND,
+};
+
+// signal to an external Berry driver that we turn audio power on or off
+void I2SAudioPower(bool power) {
+  callBerryEventDispatcher(PSTR("audio"), PSTR("power"), power, nullptr, 0);
+}
 
 void I2SSettingsLoad(bool erase) {
     
@@ -754,7 +766,7 @@ void Webradio(const char *url) {
   if (audio_i2s.decoder || audio_i2s.mp3) return;
   if (!audio_i2s.out) return;
   if (audio_i2s.Settings->tx.webradio == 0) return;
-  AUDIO_PWR_ON
+  I2SAudioPower(true);
   audio_i2s.ifile = new AudioFileSourceICYStream(url);
   audio_i2s.ifile->RegisterMetadataCB(I2sMDCallback, NULL);
   audio_i2s.buff = new AudioFileSourceBuffer(audio_i2s.ifile, audio_i2s.preallocateBuffer, preallocateBufferSize);
@@ -809,7 +821,7 @@ void I2sStopPlaying() {
     delete audio_i2s.ifile;
     audio_i2s.ifile = NULL;
   }
-  AUDIO_PWR_OFF
+  I2SAudioPower(false);
 }
 
 #ifdef USE_WEBSERVER
@@ -827,25 +839,26 @@ void I2sWrShow(bool json) {
 }
 #endif  // USE_WEBSERVER
 
-void Play_mp3(const char *path) {
-  if (audio_i2s.decoder || audio_i2s.mp3) return;
-  if (!audio_i2s.out) return;
 
-  FS *mp3fsp = ufsp;
+// Play_mp3 - Play a MP3 file from filesystem
+//
+// Returns I2S_error_t
+int32_t I2SPlayMp3(const char *path) {
+  if (!audio_i2s.out) return I2S_ERR_OUTPUT_NOT_CONFIGURE;
+  if (audio_i2s.decoder || audio_i2s.mp3) return I2S_ERR_DECODER_IN_USE;
 
-  if (!strncmp(path, "/ffs", 4)) {
-    path += 4;
-    mp3fsp = ffsp;
+  // check if the filename starts with '/', if not add it
+  char fname[64];
+  if (path[0] != '/') {
+    snprintf(fname, sizeof(fname), "/%s", path);
+  } else {
+    snprintf(fname, sizeof(fname), "%s", path);
   }
+  if (!ufsp->exists(fname)) { return I2S_ERR_FILE_NOT_FOUND; }
 
-  if (!mp3fsp->exists(path)) {
-    AddLog(LOG_LEVEL_INFO,PSTR("MP3-Title not found: %s"),path);
-    return;
-  }
+  I2SAudioPower(true);
 
-  AUDIO_PWR_ON
-
-  audio_i2s.file = new AudioFileSourceFS(*mp3fsp, path);
+  audio_i2s.file = new AudioFileSourceFS(*ufsp, fname);
 
   audio_i2s.id3 = new AudioFileSourceID3(audio_i2s.file);
 
@@ -858,6 +871,7 @@ void Play_mp3(const char *path) {
 
   // Always use a task
   xTaskCreatePinnedToCore(I2sMp3Task, "MP3", 8192, NULL, 3, &audio_i2s.mp3_task_handle, 1);
+  return I2S_OK;
 }
 
 void mp3_delete(void) {
@@ -865,14 +879,14 @@ void mp3_delete(void) {
   delete audio_i2s.id3;
   delete audio_i2s.mp3;
   audio_i2s.mp3=nullptr;
-  AUDIO_PWR_OFF
+  I2SAudioPower(false);
 }
 
 void Say(char *text) {
 
   if (!audio_i2s.out) return;
 
-  AUDIO_PWR_ON
+  I2SAudioPower(true);
 
   ESP8266SAM *sam = new ESP8266SAM;
 
@@ -880,7 +894,7 @@ void Say(char *text) {
   delete sam;
   audio_i2s.out->stop();
 
-  AUDIO_PWR_OFF
+  I2SAudioPower(false);
 }
 
 /*********************************************************************************************\
@@ -888,26 +902,51 @@ void Say(char *text) {
 \*********************************************************************************************/
 
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
-  "Say|Gain|Time|Rtttl|Play|WR|REC|MGain"
+  "Gain|Play|WR|Rec|MGain|Stop"
+#ifdef USE_I2S_SAY
+  "|Say"
+#ifdef USE_I2S_SAY_TIME
+  "|Time"
+#endif // USE_I2S_SAY_TIME
+#endif // USE_I2S_SAY
+
+#ifdef USE_I2S_RTTTL
+  "|Rtttl"
+#endif
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
-  "|STREAM"
+  "|Stream"
 #endif // MP3_MIC_STREAM
 #ifdef I2S_BRIDGE
-  "|BRIDGE"
+  "|Bridge"
 #endif // I2S_BRIDGE
 ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
-  &Cmd_Say, &Cmd_Gain,&Cmd_Time,&Cmd_I2SRtttl,&Cmd_Play,&Cmd_WebRadio,&Cmd_MicRec,&Cmd_MicGain
+  &CmndI2SGain, &CmndI2SPlay, &CmndI2SWebRadio, &CmndI2SMicRec, &CmndI2SMicGain, &CmndI2SStop,
+#ifdef USE_I2S_SAY
+  &CmndI2SSay,
+#ifdef USE_I2S_SAY_TIME
+  &Cmd_Time,
+#endif // USE_I2S_SAY_TIME
+#endif // USE_I2S_SAY
+
+#ifdef USE_I2S_RTTTL
+  &CmndI2SI2SRtttl,
+#endif
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
-  ,&Cmd_MP3Stream
+  &CmndI2SMP3Stream,
 #endif // MP3_MIC_STREAM
 #ifdef I2S_BRIDGE
-  ,&Cmd_I2SBridge
+  &CmndI2SI2SBridge,
 #endif // I2S_BRIDGE
 };
 
-void Cmd_WebRadio(void) {
+void CmndI2SStop(void) {
+  I2sStopPlaying();
+  ResponseCmndDone();
+}
+
+void CmndI2SWebRadio(void) {
   if (!audio_i2s.out) return;
 
   if (audio_i2s.decoder) {
@@ -921,14 +960,33 @@ void Cmd_WebRadio(void) {
   }
 }
 
-void Cmd_Play(void) {
+void CmndI2SPlay(void) {
   if (XdrvMailbox.data_len > 0) {
-    Play_mp3(XdrvMailbox.data);
+    int32_t err = I2SPlayMp3(XdrvMailbox.data);
+    // display return message
+    switch (err) {
+      case I2S_OK:
+        ResponseCmndDone();
+        break;
+      case I2S_ERR_OUTPUT_NOT_CONFIGURE:
+        ResponseCmndChar("I2S output not configured");
+        break;
+      case I2S_ERR_DECODER_IN_USE:
+        ResponseCmndChar("Decoder already in use");
+        break;
+      case I2S_ERR_FILE_NOT_FOUND:
+        ResponseCmndChar("File not found");
+        break;
+      default:
+        ResponseCmndChar("Unknown error");
+        break;
+    }
+  } else {
+    ResponseCmndChar("Missing filename");
   }
-  ResponseCmndChar(XdrvMailbox.data);
 }
 
-void Cmd_Gain(void) {
+void CmndI2SGain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
     if (audio_i2s.out) {
       audio_i2s.Settings->tx.volume = XdrvMailbox.payload;
@@ -938,21 +996,21 @@ void Cmd_Gain(void) {
   ResponseCmndNumber(audio_i2s.Settings->tx.volume);
 }
 
-void Cmd_Say(void) {
+void CmndI2SSay(void) {
   if (XdrvMailbox.data_len > 0) {
     Say(XdrvMailbox.data);
   }
   ResponseCmndChar(XdrvMailbox.data);
 }
 
-void Cmd_I2SRtttl(void) {
+void CmndI2SI2SRtttl(void) {
   if (XdrvMailbox.data_len > 0) {
     Rtttl(XdrvMailbox.data);
   }
   ResponseCmndChar(XdrvMailbox.data);
 }
 
-void Cmd_MicRec(void) {
+void CmndI2SMicRec(void) {
 if (audio_i2s.Settings->rx.mp3_encoder == 1) {
   if (XdrvMailbox.data_len > 0) {
     if (!strncmp(XdrvMailbox.data, "-?", 2)) {
@@ -983,7 +1041,7 @@ else{
 }
 
 // mic gain in factor not percent
-void Cmd_MicGain(void) {
+void CmndI2SMicGain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 256)) {
       audio_i2s.Settings->rx.gain = XdrvMailbox.payload;
   }
