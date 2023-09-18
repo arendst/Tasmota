@@ -27,7 +27,8 @@
  #include <freertos/FreeRTOS.h>
  #include "string.h"
  #include "esp_log.h"
-#include "es7243e.h"
+ #include "rom/ets_sys.h"
+ #include "es7243e.h"
 
 
 static const char *TAG = "DRV7243E";
