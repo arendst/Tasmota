@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.13
 
 ### Fixed
+- ESP32 DS18x20 driver support extended over GPIO33
 
 ### Removed
 
@@ -36,7 +37,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Shutter multi press button events (#19465)
 - Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 - ESP32C3 relay click on restart
-
 
 ## [13.1.0.1] 20230831
 ### Added

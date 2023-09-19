@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Teleinfo power [#19381](https://github.com/arendst/Tasmota/issues/19381)
 - Exception 3 in IRHVAC [#19389](https://github.com/arendst/Tasmota/issues/19389)
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 [#19408](https://github.com/arendst/Tasmota/issues/19408)
+- ESP32 DS18x20 driver support extended over GPIO33
 - ESP32 Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 - ESP32 Shutter migration [#19454](https://github.com/arendst/Tasmota/issues/19454)
 - ESP32 Shutter multi press button events [#19465](https://github.com/arendst/Tasmota/issues/19465)
