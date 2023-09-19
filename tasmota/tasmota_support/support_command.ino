@@ -786,14 +786,16 @@ void CmndAccountID(void)
 void CmdMachineCid(void) {
   if( XdrvMailbox.data_len )
   {
-    storeKeyValuePairRaw( "machinecid", (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
+    rddl_writefile("machinecid", (uint8_t*)XdrvMailbox.data, XdrvMailbox.data_len);
     Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MACHINECID, XdrvMailbox.data );
   }
   else
   {
-    char buffer[58+1] = {0};
-    char* machinecid = getValueForKeyRaw("machinecid", buffer);
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, buffer );
+    char machinecid_buffer[58+1] = {0};
+    int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
+    if( readbytes < 0 )
+      memset((void*)machinecid_buffer,0, 58+1);
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, (char*)machinecid_buffer );
   }
   
   CmndStatusResponse(24);
@@ -807,11 +809,15 @@ void CmdResolveCid(void) {
     uint8_t* buff = getStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
-    char* resolvedCid = getValueForKey(cid, charPtr);
+    char machinecid_buffer[58+1] = {0};
+    int readbytes = readfile( cid, buff, MY_STACK_LIMIT);
+    if( readbytes < 0 )
+      memset((void*)machinecid_buffer,0, 58+1);
+
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
-} else {
-    Response_P( "{ \"%s\": {\"%s\": \"%s\"} }", D_CMND_RESOLVEID, "does not exist" );
-}
+  } else {
+      Response_P( "{ \"%s\": {\"%s\": \"%s\"} }", D_CMND_RESOLVEID, "does not exist" );
+  }
 
   CmndStatusResponse(25);
   ResponseClear();

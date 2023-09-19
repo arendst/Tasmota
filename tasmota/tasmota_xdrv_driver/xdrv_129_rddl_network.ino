@@ -54,7 +54,7 @@
 #include "planetmintgo/asset/tx.pb-c.h"
 #include "google/protobuf/any.pb-c.h"
 
-
+#include "LittleFS.h"
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
@@ -138,38 +138,9 @@ void getNotarizationMessage(){
   MqttShowSensor(false);
 }
 
-
-void storeKeyValuePair( const char* key, const char* value, size_t length)
-{
-  
-  if( 0 == length )
-    length = strlen(value);
-  length = length * 2;
-  char* hexstring = (char*)malloc(length+1);
-  hexstring[length] = 0;
-  toHexString( (char*)hexstring, (uint8_t*)value, length);
-  BrREPLRun((char*)"import persist");
-  String key_string = key;
-  String value_string = hexstring;
-  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
-  BrREPLRun((char*)cmd.c_str());
-  BrREPLRun((char*)"persist.save()");
-  free(hexstring);
-}
-
-void storeKeyValuePairRaw( const char* key, const char* value, size_t length)
-{
-  BrREPLRun((char*)"import persist");
-  String key_string = key;
-  String value_string = value;
-  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
-  BrREPLRun((char*)cmd.c_str());
-  BrREPLRun((char*)"persist.save()");
-}
-
 void storeSeed()
 {
-  storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
+  rddl_writefile( (const char*)"seed", secret_seed, SEED_SIZE );
   g_readSeed = false;
 }
 
@@ -213,53 +184,16 @@ void getPlntmntKeys(){
   toHexString( g_machineid_public_key_hex, g_machineid_public_key, 33*2);
 }
 
-bool hasKey(const char * key){
-  char result [10]= {0};
-  BrREPLRun((char*)"import persist");
-  String cmd = String("persist.has(\"") + String(key) + String("\")");
-  BrREPLRunRDDL((char*)cmd.c_str(), result );
-  if( strcmp( result,"true") == 0)
-    return true;
-  else 
-    return false;
-}
-
-char* getValueForKey( const char* key, char* buffer )
-{
-  if( ! hasKey(key) )
-    return NULL;
-  String key_string = key;
-  String cmd = String("persist.find(\"") + key_string + String("\")");
-  BrREPLRun((char*)"import persist");
-  BrREPLRunRDDL((char*)cmd.c_str(), buffer );
-  const uint8_t * storageString = fromHexString(buffer);
-  strcpy(buffer, (const char*) storageString );
-  return buffer;
-}
-
-char* getValueForKeyRaw( const char* key, char* buffer )
-{
-  if( ! hasKey(key) )
-    return NULL;
-  String key_string = key;
-  String cmd = String("persist.find(\"") + key_string + String("\")");
-  BrREPLRun((char*)"import persist");
-  BrREPLRunRDDL((char*)cmd.c_str(), buffer );
-  return buffer;
-}
-
 uint8_t* readSeed()
 {
   if( g_readSeed )
     return secret_seed;
 
-  char buffer[300] = {0};
-  char* ret = getValueForKey( "seed", buffer);
-  if( ret == NULL )
+  char buffer[200] = {0};
+  int readbytes = readfile( "seed", secret_seed, SEED_SIZE);
+  if( readbytes != SEED_SIZE )
     return NULL;
 
-  //const uint8_t * seed = fromHexString(buffer);
-  //memset( secret_seed, 0, SEED_SIZE );
   memcpy( secret_seed, (const void *)buffer, SEED_SIZE);
   g_readSeed = true;
 
@@ -448,37 +382,46 @@ char g_denom[20] = {0};
 
 void setPlanetmintAPI( const char* api, size_t len)
 {
-  storeKeyValuePair( "planetmintapi", api, len);
+  rddl_writefile( "planetmintapi", (uint8_t*)api, len);
   memset((void*)g_planetmintapi,0, 100);
 }
 char* getPlanetmintAPI()
 {
-  if( strlen( g_planetmintapi) == 0 )
-    getValueForKey( "planetmintapi", g_planetmintapi);
+  if( strlen( g_planetmintapi) == 0 ){
+    int readbytes = readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100);
+    if( readbytes < 0 )
+      memset((void*)g_planetmintapi,0, 100);
+  }
   return g_planetmintapi;
 }
 
 void setAccountID( const char* account, size_t len)
 {
-  storeKeyValuePair( "accountid", account, len);
+  rddl_writefile( "accountid", (uint8_t*)account, len);
   memset((void*)g_accountid,0, 20);
 }
 char* getAccountID()
 {
-  if( strlen( g_accountid) == 0 )
-    getValueForKey( "accountid", g_accountid);
+  if( strlen( g_accountid) == 0 ){
+      int readbytes = readfile( "accountid", (uint8_t*)g_accountid, 20);
+    if( readbytes < 0 )
+      memset((void*)g_planetmintapi,0, 100);
+  }
   return g_accountid;
 }
 
 void setDenom( const char* denom, size_t len)
 {
-  storeKeyValuePair( "planetmintdenom", denom, len);
+  rddl_writefile( "planetmintdenom", (uint8_t*)denom, len);
   memset((void*)g_denom,0, 20);
 }
 char* getDenom()
 {
-  if( strlen( g_denom) == 0 )
-    getValueForKey( "planetmintdenom", g_denom);
+  if( strlen( g_denom) == 0 ){
+      int readbytes = readfile( "planetmintdenom", (uint8_t*)g_denom, 20);
+    if( readbytes < 0 )
+      memset((void*)g_denom,0, 100);
+  }
   if( strlen( g_denom) == 0 )
     strcpy(g_denom, "plmnt");
   return g_denom;
@@ -486,13 +429,16 @@ char* getDenom()
 
 void setChainID( const char* chainid, size_t len)
 {
-  storeKeyValuePair( "planetmintchainid", chainid, len);
+  rddl_writefile( "planetmintchainid", (uint8_t*)chainid, len);
   memset((void*)g_chainid,0, 30);
 }
 char* getChainID()
 {
-  if( strlen( g_chainid) == 0 )
-    getValueForKey( "planetmintchainid", g_chainid);
+  if( strlen( g_chainid) == 0 ){
+      int readbytes = readfile( "planetmintchainid", (uint8_t*)g_chainid, 30);
+    if( readbytes < 0 )
+      memset((void*)g_chainid,0, 100);
+  }
   if( strlen( g_chainid) == 0 )
     strcpy(g_chainid, "planetmintgotestv1");
 
@@ -643,7 +589,11 @@ int registerMachine(void* anyMsg){
   toHexString( signature_hex, signature, 64*2);
 
   //getGPSstring( &gps_str );
-  char* machinecid = getValueForKeyRaw("machinecid", machinecid_buffer);
+  if( strlen( g_planetmintapi) == 0 ){
+    int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
+    if( readbytes < 0 )
+      memset((void*)machinecid_buffer,0, 58+1);
+  }
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
   metadata.additionaldatacid = machinecid_buffer;
@@ -678,26 +628,84 @@ int registerMachine(void* anyMsg){
   return 0;
 }
 
+int readfile( const char* filename, uint8_t* content, size_t length ){
+  char* filename_local = (char*) getStack( strlen( filename ) +2 );
+  filename_local[0]= '/';
+  int limit = 35;
+  int offset = 0;
+  if( strlen(filename) > limit)
+    offset = strlen(filename) -limit;
+  strcpy( &filename_local[1], filename+ offset);
+
+  if (!LittleFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return -1;
+  }
+
+  File file = LittleFS.open(filename_local, "r");
+
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return -1;
+  }
+  size_t readbytes = file.read(content, length);
+
+  file.close();
+  return readbytes;
+}
+
+bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
+  char* filename_local = (char*) getStack( strlen( filename ) +3 );
+  memset( filename_local, 0, strlen( filename ) +3 );
+  filename_local[0]= '/';
+  int limit = 35;
+  int offset = 0;
+  if( strlen(filename) > limit)
+    offset = strlen(filename) -limit;
+  strcpy( &filename_local[1], filename+ offset);
+
+  if (!LittleFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return false;
+  }
+
+  File file = LittleFS.open(filename_local, "w");
+
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return false;
+  }
+  size_t written = file.write(content, length);
+  file.close();
+  return (written == length);
+}
+
+
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
   getPlntmntKeys();
   int status = 0;
+
   if( hasMachineBeenAttested() )
   {
-    String signature = signRDDLNetworkMessageContent(data_str, data_length);
+    size_t data_size = data_length;
+    uint8_t* local_data = getStack( data_size+2 );
+
+    memcpy( local_data, data_str, data_size);
+    String signature = signRDDLNetworkMessageContent((const char*)local_data, data_size);
 
     //compute CID
-    const char* cid_str = (const char*) create_cid_v1_from_string( data_str );
+    const char* cid_str = (const char*) create_cid_v1_from_string( (const char*) local_data );
 
     // store cid
-    storeKeyValuePair( cid_str, data_str,0 );
+    rddl_writefile( cid_str, (uint8_t*)local_data, data_size );
 
     // register CID
-    registerCID( cid_str );
+    //registerCID( cid_str );
   
     Serial.println("Notarize: CID Asset\n");
-    ResponseAppend_P("Notarize: CID Asset\n");
+    ResponseAppend_P("Notarize: CID Asset %s\n", cid_str);
 
     generateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
   }
