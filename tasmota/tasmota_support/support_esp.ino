@@ -1132,13 +1132,6 @@ bool CanUsePSRAM(void) {
   if ((CHIP_ESP32 == chip_info.model) && (chip_revision < 300)) {
     return false;
   }
-#if ESP_IDF_VERSION_MAJOR < 4
-  uint32_t pkg_version = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG) & 0x7;
-  if ((CHIP_ESP32 == chip_info.model) && (pkg_version >= 6)) {
-    return false;   // support for embedded PSRAM of ESP32-PICO-V3-02 requires esp-idf 4.4
-  }
-#endif // ESP_IDF_VERSION_MAJOR < 4
-
 #endif // CONFIG_IDF_TARGET_ESP32
   return true;
 }
