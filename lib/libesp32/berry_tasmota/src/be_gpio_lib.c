@@ -15,6 +15,9 @@ extern int gp_pin_mode(bvm *vm);
 extern int gp_digital_write(bvm *vm);
 extern int gp_digital_read(bvm *vm);
 extern int gp_dac_voltage(bvm *vm);
+extern int gp_counter_read(bvm *vm);
+extern int gp_counter_set(bvm *vm);
+extern int gp_counter_add(bvm *vm);
 
 extern int gp_pin_used(bvm *vm);
 extern int gp_pin(bvm *vm);
@@ -31,6 +34,9 @@ module gpio (scope: global) {
     digital_write, func(gp_digital_write)
     digital_read, func(gp_digital_read)
     dac_voltage, func(gp_dac_voltage)
+    counter_read, func(gp_counter_read)
+    counter_set, func(gp_counter_set)
+    counter_add, func(gp_counter_add)
 
     pin_used, func(gp_pin_used)
     pin, func(gp_pin)
