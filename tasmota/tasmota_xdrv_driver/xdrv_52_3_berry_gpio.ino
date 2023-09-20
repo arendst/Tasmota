@@ -241,7 +241,7 @@ extern "C" {
     analogWritePhase(pin, duty, hpoint);
   }
 
-  // gpio.counter_read(index) -> int or nil
+  // gpio.counter_read(counter:int) -> int or nil
   //
   // Read counter value, or return nil if counter is not used
   int gp_counter_read(bvm *vm);
@@ -249,11 +249,11 @@ extern "C" {
 #ifdef USE_COUNTER
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isint(vm, 1)) {
-      int32_t pin = be_toint(vm, 1);
+      int32_t counter = be_toint(vm, 1);
 
       // is `index` refering to a counter?
-      if (CounterPinConfigured(pin)) {
-        be_pushint(vm, CounterPinRead(pin));
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinRead(counter));
         be_return(vm);
       } else {
         be_return_nil(vm);
@@ -270,12 +270,12 @@ extern "C" {
 #ifdef USE_COUNTER
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
-      int32_t pin = be_toint(vm, 1);
+      int32_t counter = be_toint(vm, 1);
       int32_t value = be_toint(vm, 2);
 
       // is `index` refering to a counter?
-      if (CounterPinConfigured(pin)) {
-        be_pushint(vm, CounterPinSet(pin, value, add));
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinSet(counter, value, add));
         be_return(vm);
       } else {
         be_return_nil(vm);
@@ -287,7 +287,7 @@ extern "C" {
 #endif
   }
 
-  // gpio.counter_set(index, value) -> int or nil
+  // gpio.counter_set(counter:int, value:int) -> int or nil
   //
   // Set the counter value, return the actual value, or return nil if counter is not used
   int gp_counter_set(bvm *vm);
@@ -295,7 +295,7 @@ extern "C" {
     return gp_counter_set_add(vm, false);
   }
 
-  // gpio.counter_add(index, value) -> int or nil
+  // gpio.counter_add(counter:int, value:int) -> int or nil
   //
   // Add to the counter value, return the actual value, or return nil if counter is not used
   int gp_counter_add(bvm *vm);
