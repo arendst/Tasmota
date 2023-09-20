@@ -716,6 +716,7 @@ const be_const_member_t lv0_constants[] = {
     { "STYLE_MIN_HEIGHT", be_cconst_int(LV_STYLE_MIN_HEIGHT) },
     { "STYLE_MIN_WIDTH", be_cconst_int(LV_STYLE_MIN_WIDTH) },
     { "STYLE_OPA", be_cconst_int(LV_STYLE_OPA) },
+    { "STYLE_OPA_LAYERED", be_cconst_int(LV_STYLE_OPA_LAYERED) },
     { "STYLE_OUTLINE_COLOR", be_cconst_int(LV_STYLE_OUTLINE_COLOR) },
     { "STYLE_OUTLINE_OPA", be_cconst_int(LV_STYLE_OUTLINE_OPA) },
     { "STYLE_OUTLINE_PAD", be_cconst_int(LV_STYLE_OUTLINE_PAD) },
