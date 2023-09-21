@@ -189,14 +189,11 @@ uint8_t* readSeed()
   if( g_readSeed )
     return secret_seed;
 
-  char buffer[200] = {0};
   int readbytes = readfile( "seed", secret_seed, SEED_SIZE);
   if( readbytes != SEED_SIZE )
     return NULL;
 
-  memcpy( secret_seed, (const void *)buffer, SEED_SIZE);
   g_readSeed = true;
-
   return secret_seed;
 }
 
