@@ -249,7 +249,7 @@ extern "C" {
 #ifdef USE_COUNTER
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isint(vm, 1)) {
-      int32_t counter = be_toint(vm, 1);
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
 
       // is `index` refering to a counter?
       if (CounterPinConfigured(counter)) {
@@ -270,7 +270,7 @@ extern "C" {
 #ifdef USE_COUNTER
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
-      int32_t counter = be_toint(vm, 1);
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
       int32_t value = be_toint(vm, 2);
 
       // is `index` refering to a counter?
