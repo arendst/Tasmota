@@ -18,6 +18,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <Arduino.h>
+#if ESP_IDF_VERSION_MAJOR < 5   // TODO Arduino 3.0 Port I2S
+
 #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
 
 #include "AudioOutputULP.h"
@@ -260,3 +263,4 @@ bool AudioOutputULP::stop()
 }
 
 #endif
+#endif  // ESP_IDF_VERSION_MAJOR < 5   // TODO Arduino 3.0 Port I2S

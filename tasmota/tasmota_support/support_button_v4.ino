@@ -27,6 +27,10 @@
 
 #define MAX_RELAY_BUTTON1       5            // Max number of relay controlled by BUTTON1
 
+#ifndef DOUBLE_CLICK_WINDOW
+ #define DOUBLE_CLICK_WINDOW 500             // Define Window size to recognize double clicks
+#endif
+
 const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between button input probe
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
@@ -457,7 +461,7 @@ void ButtonHandler(void) {
         } else {
           Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
           AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d multi-press %d"), button_index +1, Button.press_counter[button_index]);
-          Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
+          Button.window_timer[button_index] = uint32_t(DOUBLE_CLICK_WINDOW * loops_per_second) / 1000;
         }
         TasmotaGlobal.blinks = 201;
       }

@@ -1410,8 +1410,7 @@ void ConvertGpios(void) {
 }
 #endif  // ESP8266
 
-int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
-int IRAM_ATTR Pin(uint32_t gpio, uint32_t index) {
+int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0) {
   uint16_t real_gpio = gpio << 5;
   uint16_t mask = 0xFFE0;
   if (index < GPIO_ANY) {
@@ -1443,16 +1442,26 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
   TasmotaGlobal.gpio_pin[lpin] = gpio;
 }
 
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+#include "driver/gpio.h"                         // Include needed for Arduino 3
+#endif
+
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
   static uint32_t pinmode_init[2] = { 0 };       // Pins 0 to 63 !!!
 
   if (PinUsed(gpio_pin, index)) {
     uint32_t pin = Pin(gpio_pin, index) & 0x3F;  // Fix possible overflow over 63 gpios
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+    gpio_hold_dis((gpio_num_t)pin);              // Allow state change
+#endif
     if (!bitRead(pinmode_init[pin / 32], pin % 32)) {
       bitSet(pinmode_init[pin / 32], pin % 32);
       pinMode(pin, OUTPUT);
     }
     digitalWrite(pin, state &1);
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+    gpio_hold_en((gpio_num_t)pin);               // Retain the state when the chip or system is reset, for example, when watchdog time-out or Deep-sleep
+#endif
   }
 }
 
@@ -1589,6 +1598,7 @@ void TemplateGpios(myio *gp)
   // Expand template to physical GPIO array, j=phy_GPIO, i=template_GPIO
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
+/*
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     dest[i] = src[i];
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1603,6 +1613,24 @@ void TemplateGpios(myio *gp)
     dest[j] = src[i];
     j++;
 #endif
+*/
+#ifdef ESP8266
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    dest[j] = src[i];
+    j++;
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+    dest[i] = src[i];
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+    if (22 == i) { j = 33; }    // skip 22-32
+    dest[j] = src[i];
+    j++;
+#else  // ESP32
+    dest[Esp32TemplateToPhy[i]] = src[i];
+#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32
   }
   // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
 
@@ -1656,33 +1684,41 @@ void SetModuleType(void)
 #endif
 }
 
-bool FlashPin(uint32_t pin)
-{
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-  return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-  return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
-#elif defined(CONFIG_IDF_TARGET_ESP32)
-  return (pin >= 28) && (pin <= 31);      // ESP21 skip 28-31
-#else // ESP8266
+bool FlashPin(uint32_t pin) {
+#ifdef ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
+  return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
+#elif CONFIG_IDF_TARGET_ESP32C6
+  return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+  return (pin > 21) && (pin < 33);     // ESP32S2 skip 22-32
+#else
+  return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
+#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32
 }
 
-bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in template console
-{
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-  return (12==pin)||(13==pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-  return false;     // no red pin on ESP32S3
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-  return (33<=pin) && (37>=pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
-#elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
+bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, display in RED in template console
+#ifdef ESP8266
+  return (9 == pin) || (10 == pin);
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
+  return (12 == pin) || (13 == pin);   // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32C6
+  return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32S2
+  return false;                        // No red pin on ESP32S3
+#elif CONFIG_IDF_TARGET_ESP32S3
+  return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
+#else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
   // PICO can also have 16/17/18/23 not available
-  return ((6<=pin) && (11>=pin)) || (16==pin) || (17==pin);  // TODO adapt depending on the exact type of ESP32
-#else // ESP8266
-  return (9==pin)||(10==pin);
-#endif
+  return ((6 <= pin) && (11 >= pin)) || (16 == pin) || (17 == pin);  // TODO adapt depending on the exact type of ESP32
+#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32
 }
 
 uint32_t ValidPin(uint32_t pin, uint32_t gpio, uint8_t isTuya = false) {
@@ -1690,11 +1726,15 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio, uint8_t isTuya = false) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if CONFIG_IDF_TARGET_ESP32C2
 // ignore
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif CONFIG_IDF_TARGET_ESP32C3
 // ignore
-#elif defined(CONFIG_IDF_TARGET_ESP32)
+#elif CONFIG_IDF_TARGET_ESP32C6
+// ignore
+#elif CONFIG_IDF_TARGET_ESP32S2
+// ignore
+#elif CONFIG_IDF_TARGET_ESP32
 // ignore
 #else // not ESP32C3 and not ESP32S2
   if (((WEMOS == Settings->module) || isTuya) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
@@ -2068,18 +2108,17 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   return;              // USB console does not use serial
 #endif  // USE_USB_CDC_CONSOLE
-#endif  // ESP32C3, S2 or S3
+#endif  // ESP32C3/C6, S2 or S3
 #endif  // ESP32
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings->baudrate = TasmotaGlobal.baudrate / 300;
-
 }
 
 void SerialSendRaw(char *codes)
@@ -2208,6 +2247,30 @@ bool TimeReachedUsec(uint32_t timer)
   // Check if a certain timeout has been reached.
   const long passed = TimePassedSinceUsec(timer);
   return (passed >= 0);
+}
+
+void SystemBusyDelay(uint32_t busy) {
+/*
+  TasmotaGlobal.busy_time = millis();
+  SetNextTimeInterval(TasmotaGlobal.busy_time, busy +1);
+  if (!TasmotaGlobal.busy_time) {
+    TasmotaGlobal.busy_time++;
+  }
+*/
+  TasmotaGlobal.busy_time = busy;
+}
+
+void SystemBusyDelayExecute(void) {
+  if (TasmotaGlobal.busy_time) {
+/*
+    // Calls to millis() interrupt RMT and defeats our goal
+    if (!TimeReached(TasmotaGlobal.busy_time)) {
+      delay(1);
+    }
+*/
+    delay(TasmotaGlobal.busy_time);
+    TasmotaGlobal.busy_time = 0;
+  }
 }
 
 /*********************************************************************************************\
@@ -2371,7 +2434,8 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 }
 
 void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_payload = nullptr, const char* log_data_retained = nullptr) {
-  if (!TasmotaGlobal.enable_logging) { return; }
+  // Ignore any logging when maxlog_level = 0 OR logging for levels equal or lower than maxlog_level
+  if (!TasmotaGlobal.maxlog_level || (loglevel > TasmotaGlobal.maxlog_level)) { return; }
   // Store log_data in buffer
   // To lower heap usage log_data_payload may contain the payload data from MqttPublishPayload()
   //  and log_data_retained may contain optional retained message from MqttPublishPayload()
@@ -2453,13 +2517,18 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
   }
 }
 
-void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
+uint32_t HighestLogLevel() {
   uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
   if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
   if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
   if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
+  return highest_loglevel;
+}
+
+void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
+  uint32_t highest_loglevel = HighestLogLevel();
 
   // If no logging is requested then do not access heap to fight fragmentation
   if ((loglevel <= highest_loglevel) && (TasmotaGlobal.masterlog_level <= highest_loglevel)) {

@@ -356,6 +356,40 @@ static uint16_t buf_get2_be(buf_impl* attr, size_t offset)
     return 0;
 }
 
+static uint32_t buf_get3_le(buf_impl* attr, size_t offset)
+{
+    if ((int32_t)offset + 2 < attr->len) {
+        return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8) | (attr->bufptr[offset+2] << 16);
+    }
+    return 0;
+}
+
+static uint16_t buf_get3_be(buf_impl* attr, size_t offset)
+{
+    if ((int32_t)offset + 2 < attr->len) {
+        return attr->bufptr[offset+2] | (attr->bufptr[offset+1] << 8) | (attr->bufptr[offset] << 16);
+    }
+    return 0;
+}
+
+static void buf_set3_le(buf_impl* attr, size_t offset, uint32_t data)
+{
+    if ((int32_t)offset + 2 < attr->len) {
+        attr->bufptr[offset] = data & 0xFF;
+        attr->bufptr[offset+1] = (data >> 8) & 0xFF;
+        attr->bufptr[offset+2] = (data >> 16) & 0xFF;
+    }
+}
+
+static void buf_set3_be(buf_impl* attr, size_t offset, uint32_t data)
+{
+    if ((int32_t)offset + 2 < attr->len) {
+        attr->bufptr[offset+2] = data & 0xFF;
+        attr->bufptr[offset+1] = (data >> 8) & 0xFF;
+        attr->bufptr[offset] = (data >> 16) & 0xFF;
+    }
+}
+
 static void buf_set4_le(buf_impl* attr, size_t offset, uint32_t data)
 {
     if ((int32_t)offset + 3 < attr->len) {
@@ -832,12 +866,18 @@ static int m_get(bvm *vm, bbool sign)
             case 2:     ret = buf_get2_le(&attr, idx);
                         if (sign) { ret = (int16_t)(uint16_t) ret; }
                         break;
+            case 3:     ret = buf_get3_le(&attr, idx);
+                        if (sign & (ret & 0x800000)) { ret = ret | 0xFF000000; }
+                        break;
             case 4:     ret = buf_get4_le(&attr, idx);    break;
             case -2:    ret = buf_get2_be(&attr, idx);
                         if (sign) { ret = (int16_t)(uint16_t) ret; }
                         break;
+            case -3:    ret = buf_get3_be(&attr, idx);
+                        if (sign & (ret & 0x800000)) { ret = ret | 0xFF000000; }
+                        break;
             case -4:    ret = buf_get4_be(&attr, idx);    break;
-            default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
+            default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
         if (vsize != 0) {
@@ -911,10 +951,12 @@ static int m_set(bvm *vm)
             case -1:    /* fallback below */
             case 1:     buf_set1(&attr, idx, value);      break;
             case 2:     buf_set2_le(&attr, idx, value);   break;
+            case 3:     buf_set3_le(&attr, idx, value);   break;
             case 4:     buf_set4_le(&attr, idx, value);   break;
             case -2:    buf_set2_be(&attr, idx, value);   break;
+            case -3:    buf_set3_be(&attr, idx, value);   break;
             case -4:    buf_set4_be(&attr, idx, value);   break;
-            default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
+            default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
         m_write_attributes(vm, 1, &attr);  /* update attributes */

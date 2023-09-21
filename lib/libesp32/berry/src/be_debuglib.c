@@ -167,13 +167,44 @@ static int m_counters(bvm *vm)
     map_insert(vm, "call", vm->counter_call);
     map_insert(vm, "get", vm->counter_get);
     map_insert(vm, "set", vm->counter_set);
+    map_insert(vm, "getgbl", vm->counter_get_global);
     map_insert(vm, "try", vm->counter_try);
     map_insert(vm, "raise", vm->counter_exc);
     map_insert(vm, "objects", vm->counter_gc_kept);
+    map_insert(vm, "mem_alloc", vm->counter_mem_alloc);
+    map_insert(vm, "mem_free", vm->counter_mem_free);
+    map_insert(vm, "mem_realloc", vm->counter_mem_realloc);
     be_pop(vm, 1);
     be_return(vm);
 }
 #endif
+
+static int m_allocs(bvm *vm) {
+#if BE_USE_PERF_COUNTERS
+    be_pushint(vm, vm->counter_mem_alloc);
+    be_return(vm);
+#else
+    be_return_nil(vm);
+#endif
+}
+
+static int m_frees(bvm *vm) {
+#if BE_USE_PERF_COUNTERS
+    be_pushint(vm, vm->counter_mem_free);
+    be_return(vm);
+#else
+    be_return_nil(vm);
+#endif
+}
+
+static int m_reallocs(bvm *vm) {
+#if BE_USE_PERF_COUNTERS
+    be_pushint(vm, vm->counter_mem_realloc);
+    be_return(vm);
+#else
+    be_return_nil(vm);
+#endif
+}
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(debug) {
@@ -207,6 +238,10 @@ module debug (scope: global, depend: BE_USE_DEBUG_MODULE) {
     top, func(m_top)
     varname, func(m_varname), BE_DEBUG_VAR_INFO
     upvname, func(m_upvname), BE_DEBUG_VAR_INFO
+    // individual counters
+    allocs, func(m_allocs)
+    frees, func(m_frees)
+    reallocs, func(m_reallocs)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_debug.h"

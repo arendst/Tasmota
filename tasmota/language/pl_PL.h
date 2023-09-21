@@ -58,6 +58,7 @@
 #define D_AS "jak"
 #define D_AUTO "AUTO"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Miganie"
 #define D_BLINKOFF "Miganie - Wył."
 #define D_BOOT_COUNT "Licznik restartów"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT "Wyślij"
 #define D_TRUE "Prawda"
 #define D_TVOC "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Czas pracy"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "Odtwarzacz MP3"
 #define D_SENSOR_DFR562_BUSY   "MP3 zajęty"

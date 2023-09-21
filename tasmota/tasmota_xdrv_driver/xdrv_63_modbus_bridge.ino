@@ -162,6 +162,7 @@ struct ModbusBridge
 
   ModbusBridgeFunctionCode functionCode = ModbusBridgeFunctionCode::mb_undefined;
   ModbusBridgeType type = ModbusBridgeType::mb_undefined;
+  ModbusBridgeEndian endian = ModbusBridgeEndian::mb_undefined;
 
   uint16_t dataCount = 0;       // Number of bits or registers to read/write
   uint16_t byteCount = 0;       // Number of bytes to read/write
@@ -416,6 +417,8 @@ void ModbusBridgeHandle(void)
           else if (modbusBridge.type == ModbusBridgeType::mb_int32 || modbusBridge.type == ModbusBridgeType::mb_uint32 || modbusBridge.type == ModbusBridgeType::mb_float)
             data_count = (uint8_t)(((modbusBridge.count - 1) >> 5) + 1);
         }
+
+        // Copy modbus data to requested variables type
         for (uint8_t count = 0; count < data_count; count++)
         {
           char svalue[MBR_MAX_VALUE_LENGTH + 1] = "";
@@ -423,9 +426,9 @@ void ModbusBridgeHandle(void)
           {
             // Convert next 4 bytes to float
             float value = 0;
-            if (modbusBridge.buffer[1] < 3)
+            if (modbusBridge.endian == ModbusBridgeEndian::mb_lsb)
             {
-              // In bit mode only convert returned bits to values
+                // In lsb mode swap bytes
               if (modbusBridge.buffer[2] - (count * 4))
                 ((uint8_t *)&value)[0] = modbusBridge.buffer[dataOffset + (count * 4)]; // Get float values
               if ((modbusBridge.buffer[2] - (count * 4)) >> 1)
@@ -465,9 +468,9 @@ void ModbusBridgeHandle(void)
                 (modbusBridge.type == ModbusBridgeType::mb_uint32))
             {
               uint32_t value = 0;
-              if (modbusBridge.buffer[1] < 3)
+              if (modbusBridge.endian == ModbusBridgeEndian::mb_lsb)
               {
-              // In bit mode only convert returned bits to values
+                // In lsb mode swap bytes
                 if (modbusBridge.buffer[2] - (count * 4))
                   ((uint8_t *)&value)[0] = modbusBridge.buffer[dataOffset + (count * 4)]; // Get uint values
                 if (modbusBridge.buffer[2] - ((count * 4) - 1))
@@ -493,9 +496,9 @@ void ModbusBridgeHandle(void)
                      (modbusBridge.type == ModbusBridgeType::mb_uint16))
             {
               uint16_t value = 0;
-              if (modbusBridge.buffer[1] < 3)
+              if (modbusBridge.endian == ModbusBridgeEndian::mb_lsb)
               {
-                // In bit mode only convert returned bits to values
+                // In lsb mode swap bytes
                 if (modbusBridge.buffer[2] - (count * 2))
                   ((uint8_t *)&value)[0] = modbusBridge.buffer[dataOffset + (count * 2)];
                 if (modbusBridge.buffer[2] - ((count * 2) - 1))
@@ -759,10 +762,20 @@ void CmndModbusBridgeSend(void)
 
   const char *stype = root.getStr(PSTR(D_JSON_MODBUS_TYPE), "uint8");
   modbusBridge.count = root.getUInt(PSTR(D_JSON_MODBUS_COUNT), 1); // Number of values to read / write
-
+  const char *sendian = root.getStr(PSTR(D_JSON_MODBUS_ENDIAN), "undefined");
+  modbusBridge.endian = ModbusBridgeEndian::mb_undefined;
+  
   // If functioncode is 1, 2 or 15, the count is not the number of registers but the number
   // of bits to read or write, so calculate the number data bytes to read/write.
-  if ((functionCode == 1) || (functionCode == 2) || (functionCode == 15)) bitMode = true;
+  if ((functionCode == 1) || (functionCode == 2) || (functionCode == 15)) 
+  {
+    bitMode = true;
+    modbusBridge.endian = ModbusBridgeEndian::mb_lsb;
+  }
+
+  // Change endianess when specified
+  if (strcmp (sendian,"msb") == 0) modbusBridge.endian = ModbusBridgeEndian::mb_msb;
+  if (strcmp (sendian,"lsb") == 0) modbusBridge.endian =  ModbusBridgeEndian::mb_lsb; 
 
   if (modbusBridge.deviceAddress == 0)
     errorcode = ModbusBridgeError::wrongdeviceaddress;
@@ -934,26 +947,26 @@ void CmndModbusBridgeSend(void)
           break;
 
         case ModbusBridgeType::mb_int16:
-          writeData[jsonDataArrayPointer] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0))
-            : (int16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
+          writeData[jsonDataArrayPointer] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? jsonDataArray[jsonDataArrayPointer].getInt(0)
+            : ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0));
           break;
 
         case ModbusBridgeType::mb_uint16:
-          writeData[jsonDataArrayPointer] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0))
-            : (int16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
+          writeData[jsonDataArrayPointer] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? jsonDataArray[jsonDataArrayPointer].getUInt(0)
+            : ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0));
           break;
 
         case ModbusBridgeType::mb_int32:
-          writeData[(jsonDataArrayPointer * 2)] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0))
+          writeData[(jsonDataArrayPointer * 2)] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0))
             : (int16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16);
-          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16)
+          writeData[(jsonDataArrayPointer * 2) + 1] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16)
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0));
           break;
 
         case ModbusBridgeType::mb_uint32:
-          writeData[(jsonDataArrayPointer * 2)] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0))
+          writeData[(jsonDataArrayPointer * 2)] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0))
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16);
-          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16)
+          writeData[(jsonDataArrayPointer * 2) + 1] = modbusBridge.endian != ModbusBridgeEndian::mb_lsb ? ModbusBridgeSwapEndian16(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16)
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0));
           break;
 

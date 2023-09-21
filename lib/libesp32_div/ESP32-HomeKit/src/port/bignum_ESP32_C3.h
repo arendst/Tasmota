@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 #pragma once
 
 #include_next "mbedtls/bignum.h"
@@ -84,4 +84,4 @@ void esp_mpi_mul_mpi_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t nu
 
 
 //#endif // CONFIG_MBEDTLS_HARDWARE_MPI
-#endif //CONFIG_IDF_TARGET_ESP32C3
+#endif // CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6|| CONFIG_IDF_TARGET_ESP32S3

@@ -42,6 +42,9 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "esp_netif.h"
+#endif
 
 
 int WifiGetRssiAsQuality(int rssi) {
@@ -199,7 +202,6 @@ void WiFiSetSleepMode(void)
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
     }
   }
-  WifiSetOutputPower();
 }
 
 void WifiBegin(uint8_t flag, uint8_t channel) {
@@ -225,6 +227,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #endif
 
   WiFiSetSleepMode();
+  WifiSetOutputPower();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
 #ifdef ESP32
@@ -504,6 +507,7 @@ void WifiSetState(uint8_t state)
  * - DNS reporting actual values used (not the Settings):
  *    `DNSGetIP(n)`, `DNSGetIPStr(n)` with n=`0`/`1` (same dns for Wifi and Eth)
 \*****************************************************************************************************/
+bool WifiGetIP(IPAddress *ip, bool exclude_ap = false);
 // IPv4 for Wifi
 // Returns only IPv6 global address (no loopback and no link-local)
 bool WifiGetIPv4(IPAddress *ip)
@@ -563,15 +567,6 @@ bool WifiFindIPv6(IPAddress *ip, bool is_local, const char * if_type = "st") {
     }
   }
   return false;
-}
-// add an IPv6 link-local address to all netif
-void CreateLinkLocalIPv6(void)
-{
-#ifdef ESP32
-  for (auto intf = esp_netif_next(NULL); intf != NULL; intf = esp_netif_next(intf)) {
-    esp_netif_create_ip6_linklocal(intf);
-  }
-#endif // ESP32
 }
 
 
@@ -756,15 +751,29 @@ String IPForUrl(const IPAddress & ip)
 // Check to see if we have any routable IP address
 // IPv4 has always priority
 // Copy the value of the IP if pointer provided (optional)
-bool WifiGetIP(IPAddress *ip) {
-  if ((uint32_t)WiFi.localIP() != 0) {
+// `exclude_ap` allows to exlude AP IP address and focus only on local STA
+bool WifiGetIP(IPAddress *ip, bool exclude_ap) {
+#ifdef ESP32
+  wifi_mode_t mode = WiFi.getMode();
+  if ((mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.localIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.localIP(); }
     return true;
   }
-  if ((uint32_t)WiFi.softAPIP() != 0) {
+  if (!exclude_ap && (mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) && (uint32_t)WiFi.softAPIP() != 0) {
     if (ip != nullptr) { *ip = WiFi.softAPIP(); }
     return true;
   }
+#else
+  WiFiMode_t mode = WiFi.getMode();
+  if ((mode == WIFI_STA || mode == WIFI_AP_STA) && (uint32_t)WiFi.localIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.localIP(); }
+    return true;
+  }
+  if (!exclude_ap && (mode == WIFI_AP || mode == WIFI_AP_STA) && (uint32_t)WiFi.softAPIP() != 0) {
+    if (ip != nullptr) { *ip = WiFi.softAPIP(); }
+    return true;
+  }
+#endif
 #ifdef USE_IPV6
   IPAddress lip;
   if (WifiGetIPv6(&lip)) {
@@ -960,16 +969,70 @@ int WifiState(void)
   return state;
 }
 
-String WifiGetOutputPower(void)
-{
-  char stemp1[TOPSZ];
-  dtostrfd((float)(Settings->wifi_output_power) / 10, 1, stemp1);
-  return String(stemp1);
+float WifiGetOutputPower(void) {
+  if (Settings->wifi_output_power) {
+    Wifi.last_tx_pwr = Settings->wifi_output_power;
+  }
+  return (float)(Wifi.last_tx_pwr) / 10;
 }
 
-void WifiSetOutputPower(void)
-{
-  WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+void WifiSetOutputPower(void) {
+  if (Settings->wifi_output_power) {
+    WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Dynamic Tx power enabled"));  // WifiPower 0
+  }
+}
+
+void WiFiSetTXpowerBasedOnRssi(void) {
+  // Dynamic WiFi transmit power based on RSSI lowering overall DC power usage.
+  // Original idea by ESPEasy (@TD-er)
+  if (!Settings->flag4.network_wifi || Settings->wifi_output_power) { return; }
+  const WiFiMode_t cur_mode = WiFi.getMode();
+  if (cur_mode == WIFI_OFF) { return; }
+
+  // Range ESP32  : 2dBm - 20dBm
+  // Range ESP8266: 0dBm - 20.5dBm
+  int max_tx_pwr = MAX_TX_PWR_DBM_11b;
+  int threshold = WIFI_SENSITIVITY_n;
+  int phy_mode = WiFi.getPhyMode();
+  switch (phy_mode) {
+    case 1:                  // 11b (WIFI_PHY_MODE_11B)
+      threshold = WIFI_SENSITIVITY_11b;
+      if (max_tx_pwr > MAX_TX_PWR_DBM_11b) max_tx_pwr = MAX_TX_PWR_DBM_11b;
+      break;
+    case 2:                  // 11bg (WIFI_PHY_MODE_11G)
+      threshold = WIFI_SENSITIVITY_54g;
+      if (max_tx_pwr > MAX_TX_PWR_DBM_54g) max_tx_pwr = MAX_TX_PWR_DBM_54g;
+      break;
+    case 3:                  // 11bgn (WIFI_PHY_MODE_11N)
+      threshold = WIFI_SENSITIVITY_n;
+      if (max_tx_pwr > MAX_TX_PWR_DBM_n) max_tx_pwr = MAX_TX_PWR_DBM_n;
+      break;
+  }
+  threshold += 30;           // Margin in dBm * 10 on top of threshold
+
+  // Assume AP sends with max set by ETSI standard.
+  // 2.4 GHz: 100 mWatt (20 dBm)
+  // US and some other countries allow 1000 mW (30 dBm)
+  int rssi = WiFi.RSSI() * 10;
+  int newrssi = rssi - 200;  // We cannot send with over 20 dBm, thus it makes no sense to force higher TX power all the time.
+
+  int min_tx_pwr = 0;
+  if (newrssi < threshold) {
+    min_tx_pwr = threshold - newrssi;
+  }
+  if (min_tx_pwr > max_tx_pwr) {
+    min_tx_pwr = max_tx_pwr;
+  }
+  WiFi.setOutputPower((float)min_tx_pwr / 10);
+  delay(Wifi.last_tx_pwr < min_tx_pwr);  // If increase the TX power, give power supply of the unit some rest
+/*
+  if (Wifi.last_tx_pwr != min_tx_pwr) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: TX power %d, Sensitivity %d, RSSI %d"), min_tx_pwr / 10, threshold / 10, rssi / 10);
+  }
+*/
+  Wifi.last_tx_pwr = min_tx_pwr;
 }
 
 /*
@@ -1022,7 +1085,7 @@ void WifiConnect(void)
   }
 #endif // ESP32
   WifiSetState(0);
-  WifiSetOutputPower();
+//  WifiSetOutputPower();
 
 //#ifdef ESP8266
   // https://github.com/arendst/Tasmota/issues/16061#issuecomment-1216970170
@@ -1093,7 +1156,7 @@ void EspRestart(void)
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 
-  if (TasmotaGlobal.restart_halt) {
+  if (TasmotaGlobal.restart_halt) {  // Restart 2
     while (1) {
       OsWatchLoop();          // Feed OsWatch timer to prevent restart
       SetLedLink(1);          // Wifi led on
@@ -1101,7 +1164,11 @@ void EspRestart(void)
       SetLedLink(0);          // Wifi led off
       delay(800);             // Satisfy SDK
     }
-  } else {
+  }
+  else if (TasmotaGlobal.restart_deepsleep) {  // Restart 9
+    ESP.deepSleep(0);         // Deep sleep mode with only hardware triggered wake up
+  }
+  else {
     ESP_Restart();
   }
 }
@@ -1191,13 +1258,34 @@ bool WifiDNSGetIPv6Priority(void) {
 }
 
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
+#ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // try converting directly to IP
+  if (aResult.fromString(aHostname)) {
+    return true;   // we're done
+  }
+#endif
+#endif // USE_IPV6
+
   uint32_t dns_start = millis();
   bool success = WiFi.hostByName(aHostname, aResult, Settings->dns_timeout);
   uint32_t dns_end = millis();
   if (success) {
     // Host name resolved
+#ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR >= 5
+    // check if there is a zone-id
+    // look for '%' in string
+    const char *s = aHostname;
+    while (*s && *s != '%') { s++; }
+    if (*s == '%') {
+        // we have a zone id
+        aResult.setZone(netif_name_to_index(s + 1));
+    }
+#endif
+#endif // USE_IPV6
     if (0xFFFFFFFF != (uint32_t)aResult) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
       return true;
     }
   }

@@ -137,7 +137,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         logbuf("%s", opc2str(op));
         break;
     }
-    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf)+1);
+    memcpy(__lbuf_tmp, __lbuf, strlen(__lbuf) + 1);
     logbuf("%s\n", __lbuf_tmp);
     if (fout) {
         be_fwrite(fout, __lbuf, strlen(__lbuf));
@@ -156,7 +156,9 @@ void be_dumpclosure(bclosure *cl)
 #if BE_DEBUG_RUNTIME_INFO
     blineinfo *lineinfo = proto->lineinfo;
 #endif
+#if BE_DEBUG_SOURCE_FILE
     logfmt("source '%s', ", str(proto->source));
+#endif
     logfmt("function '%s':\n", str(proto->name));
 #if BE_DEBUG_RUNTIME_INFO
     if (lineinfo) { /* first line */
@@ -184,8 +186,10 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         blineinfo *end = it + proto->nlineinfo;
         int pc = cast_int(ip - proto->code - 1); /* now vm->ip has been increased */
         for (; it < end && pc > it->endpc; ++it);
-        sprintf(buf, ":%d:", it->linenumber);
+        snprintf(buf, sizeof(buf), ":%d:", it->linenumber);
+#if BE_DEBUG_SOURCE_FILE
         be_writestring(str(proto->source));
+#endif
         be_writestring(buf);
     } else {
         be_writestring("<unknown source>:");
@@ -262,7 +266,9 @@ static void hook_callnative(bvm *vm, int mask)
     be_stack_require(vm, BE_STACK_FREE_MIN + 2);
     info.type = mask;
     info.line = cf->lineinfo->linenumber;
+#if BE_DEBUG_SOURCE_FILE
     info.source = str(cl->proto->source);
+#endif
     info.func_name = str(cl->proto->name);
     info.data = hb->data;
     hb->hook(vm, &info);

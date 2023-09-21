@@ -42,7 +42,7 @@ SensirionRxFrame::SensirionRxFrame(uint8_t buffer[], size_t bufferSize)
 
 uint16_t SensirionRxFrame::getUInt32(uint32_t& data) {
     if (_numBytes < 4) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     data = static_cast<uint32_t>(_buffer[_index++]) << 24;
     data |= static_cast<uint32_t>(_buffer[_index++]) << 16;
@@ -61,7 +61,7 @@ uint16_t SensirionRxFrame::getInt32(int32_t& data) {
 
 uint16_t SensirionRxFrame::getUInt16(uint16_t& data) {
     if (_numBytes < 2) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     data = static_cast<uint16_t>(_buffer[_index++]) << 8;
     data |= static_cast<uint16_t>(_buffer[_index++]);
@@ -78,7 +78,7 @@ uint16_t SensirionRxFrame::getInt16(int16_t& data) {
 
 uint16_t SensirionRxFrame::getUInt8(uint8_t& data) {
     if (_numBytes < 1) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     data = _buffer[_index++];
     _numBytes -= 1;
@@ -87,7 +87,7 @@ uint16_t SensirionRxFrame::getUInt8(uint8_t& data) {
 
 uint16_t SensirionRxFrame::getInt8(int8_t& data) {
     if (_numBytes < 1) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     data = static_cast<int8_t>(_buffer[_index++]);
     _numBytes -= 1;
@@ -96,7 +96,7 @@ uint16_t SensirionRxFrame::getInt8(int8_t& data) {
 
 uint16_t SensirionRxFrame::getBool(bool& data) {
     if (_numBytes < 1) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     data = static_cast<bool>(_buffer[_index++]);
     _numBytes -= 1;
@@ -115,7 +115,7 @@ uint16_t SensirionRxFrame::getFloat(float& data) {
 
 uint16_t SensirionRxFrame::getBytes(uint8_t data[], size_t maxBytes) {
     if (_numBytes < 1) {
-        return RxFrameError | NoDataError;
+        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(NoDataError);
     }
     size_t readAmount = maxBytes;
     if (_numBytes < maxBytes) {

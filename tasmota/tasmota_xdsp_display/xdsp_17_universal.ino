@@ -454,6 +454,15 @@ int8_t cs;
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
 
+    bool iniinv = Settings->display_options.invert;
+    cp = strstr(ddesc, ":n,");
+    if (cp) {
+      cp+=3;
+      iniinv = strtol(cp, &cp, 10);
+      Settings->display_options.invert = iniinv;
+    }
+    renderer->invertDisplay(iniinv);
+
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH

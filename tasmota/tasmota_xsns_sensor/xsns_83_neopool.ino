@@ -2118,6 +2118,19 @@ void CmndNeopoolBit(void)
 }
 
 
+void CmndNeopoolFiltrationRes(uint16_t data)
+{
+  uint16_t speed = NeoPoolGetFiltrationSpeed();
+  if (speed) {
+    Response_P(PSTR("{\"%s\":\"%s\",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":\"%d\"}"),
+      XdrvMailbox.command,
+      GetStateText(data),
+      (speed < 3) ? speed : 3);
+  } else {
+    ResponseCmndStateText(data);
+  }
+}
+
 void CmndNeopoolFiltration(void)
 {
   uint16_t addr = MBF_PAR_FILT_MANUAL_STATE;
@@ -2165,6 +2178,8 @@ void CmndNeopoolFiltration(void)
         NeopoolResponseError();
         return;
       }
+      CmndNeopoolFiltrationRes(value[0]);
+      return;
     } else {
       NeopoolCmndError();
       return;
@@ -2174,15 +2189,7 @@ void CmndNeopoolFiltration(void)
     NeopoolResponseError();
     return;
   }
-  uint16_t speed = NeoPoolGetFiltrationSpeed();
-  if (speed) {
-    Response_P(PSTR("{\"%s\":\"%s\",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":\"%d\"}"),
-      XdrvMailbox.command,
-      GetStateText(data),
-      (speed < 3) ? speed : 3);
-  } else {
-    ResponseCmndStateText(data);
-  }
+  CmndNeopoolFiltrationRes(data);
 }
 
 

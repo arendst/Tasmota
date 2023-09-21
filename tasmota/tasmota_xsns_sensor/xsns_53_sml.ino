@@ -166,7 +166,7 @@ class SML_ESP32_SERIAL : public Stream {
 public:
 	SML_ESP32_SERIAL(uint32_t uart_index);
   virtual ~SML_ESP32_SERIAL();
-  bool begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin);
+  bool begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert);
   int32_t peek(void);
   int read(void) override;
   size_t write(uint8_t byte) override;
@@ -226,7 +226,7 @@ void SML_ESP32_SERIAL::end(void) {
   }
 }
 
-bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin) {
+bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int invert) {
   if (!m_valid) { return false; }
 
   m_buffer = 0;
@@ -246,7 +246,7 @@ bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int
     m_tx_pin = trxpin;
     hws = new HardwareSerial(uart_index);
     if (hws) {
-      hws->begin(speed, cfgmode, m_rx_pin, m_tx_pin);
+      hws->begin(speed, cfgmode, m_rx_pin, m_tx_pin, invert);
     }
   }
   return true;
@@ -383,6 +383,15 @@ typedef union {
   };
 } TRX_EN_TYPE;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t SO_DWS74_BUG : 1;
+    uint8_t SO_OBIS_LINE : 1;
+    uint8_t SO_TRX_INVERT : 1;
+  };
+} SO_FLAGS;
+
 #ifndef TMSBSIZ
 #define TMSBSIZ 256
 #endif
@@ -391,19 +400,20 @@ typedef union {
 #define SML_STIMEOUT 1000
 #endif
 
-#define SO_DWS74_BUG 1
-#define SO_OBIS_LINE 2
-
 #define METER_ID_SIZE 24
 
 #define SML_CRYPT_SIZE 16
+
+#ifndef SML_PREFIX_SIZE
+#define SML_PREFIX_SIZE 8
+#endif
 
 struct METER_DESC {
   int8_t srcpin;
   uint8_t type;
   uint16_t flag;
   int32_t params;
-  char prefix[8];
+  char prefix[SML_PREFIX_SIZE];
   int8_t trxpin;
   uint8_t tsecs;
   char *txmem;
@@ -419,7 +429,7 @@ struct METER_DESC {
   uint16_t sibsiz;
 	uint32_t lastms;
 	uint16_t tout_ms;
-  uint8_t so_flags;
+  SO_FLAGS so_flags;
   char meter_id[METER_ID_SIZE];
 #ifdef USE_SML_SPECOPT
   uint32_t so_obis1;
@@ -1018,7 +1028,7 @@ double dval;
                     break;
                 case 2:
                     // signed 16 bit
-                    if (meter_desc[index].so_flags & SO_DWS74_BUG) {
+                    if (meter_desc[index].so_flags.SO_DWS74_BUG) {
                       if (scaler == -2) {
                         value = (uint32_t)uvalue;
                       } else {
@@ -1294,7 +1304,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
   switch (mp->type) {
     case 'o':
       // asci obis
-      if (!(mp->so_flags & SO_OBIS_LINE)) {
+      if (!(mp->so_flags.SO_OBIS_LINE)) {
         mp->sbuff[mp->sbsiz - 1] = iob & 0x7f;
       } else {
         iob &= 0x7f;
@@ -1378,6 +1388,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           uint8_t tlen = (mp->sbuff[4] << 8) | mp->sbuff[5];
           if (mp->spos == 6 + tlen) {
             mp->spos = 0;
+            memmove(&mp->sbuff[0], &mp->sbuff[6], mp->sbsiz - 6);
             SML_Decode(meters);
             if (mp->client) {
               mp->client->flush();
@@ -1853,9 +1864,29 @@ void SML_Decode(uint8_t index) {
                   cp += skip;
                 }
               }
+            } else if (!strncmp(mp, "U64", 3)) {
+              uint32_t valh = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              uint32_t vall = (cp[4]<<24) | (cp[5]<<16) | (cp[6]<<8) | (cp[7]<<0);
+              uint64_t val = ((uint64_t)valh<<32) | vall;
+              mp += 3;
+              cp += 8;
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "u64", 3)) {
+              uint64_t valh = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
+              uint64_t vall = (cp[5]<<24) | (cp[4]<<16) | (cp[7]<<8) | (cp[6]<<0);
+              uint64_t val = ((uint64_t)valh<<32) | vall;
+              mp += 3;
+              cp += 8;
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "U32", 3)) {
+              mp += 3;
+              goto U32_do;
             } else if (!strncmp(mp, "UUuuUUuu", 8)) {
-              uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               mp += 8;
+              U32_do:
+              uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               cp += 4;
               if (*mp == 's') {
                 mp++;
@@ -1864,9 +1895,13 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
+            } else if (!strncmp(mp, "u32", 3)) {
+              mp += 3;
+              goto u32_do;
             } else if (!strncmp(mp, "uuUUuuUU", 8)) {
-              uint32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
               mp += 8;
+              u32_do:
+              uint32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
               cp += 4;
               if (*mp == 's') {
                 mp++;
@@ -1881,9 +1916,13 @@ void SML_Decode(uint8_t index) {
               ebus_dval = val;
               mp += 4;
               cp += 2;
+            } else if (!strncmp(mp, "S32", 3)) {
+              mp += 3;
+              goto S32_do;
             } else if (!strncmp(mp, "SSssSSss", 8)) {
-              int32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               mp += 8;
+              S32_do:
+              int32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               cp += 4;
               if (*mp == 's') {
                 mp++;
@@ -1892,9 +1931,13 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
+            } else if (!strncmp(mp, "s32", 3)) {
+              mp += 3;
+              goto s32_do;
             } else if (!strncmp(mp, "ssSSssSS", 8)) {
-              int32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
               mp += 8;
+              s32_do:
+              int32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
               cp += 4;
               if (*mp == 's') {
                 mp++;
@@ -2193,11 +2236,13 @@ void SML_Decode(uint8_t index) {
                 dval = mbus_dval;
                 mp++;
               } else {
-                uint16_t pos = meter_desc[mindex].sbuff[2] + 3;
-                if (pos > (meter_desc[mindex].sbsiz - 2)) pos = meter_desc[mindex].sbsiz - 2;
-                uint16_t crc = MBUS_calculateCRC(&meter_desc[mindex].sbuff[0], pos, 0xFFFF);
-                if (lowByte(crc) != meter_desc[mindex].sbuff[pos]) goto nextsect;
-                if (highByte(crc) != meter_desc[mindex].sbuff[pos + 1]) goto nextsect;
+                if (meter_desc[mindex].srcpin != TCP_MODE_FLG) {
+                  uint16_t pos = meter_desc[mindex].sbuff[2] + 3;
+                  if (pos > (meter_desc[mindex].sbsiz - 2)) pos = meter_desc[mindex].sbsiz - 2;
+                  uint16_t crc = MBUS_calculateCRC(&meter_desc[mindex].sbuff[0], pos, 0xFFFF);
+                  if (lowByte(crc) != meter_desc[mindex].sbuff[pos]) goto nextsect;
+                  if (highByte(crc) != meter_desc[mindex].sbuff[pos + 1]) goto nextsect;
+                }
                 dval = mbus_dval;
                 //AddLog(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
                 mp++;
@@ -2619,7 +2664,7 @@ struct METER_DESC *mp = &meter_desc[mnum];
 			break;
  		case '2':
 			cp += 2;
-			mp->so_flags = strtol(cp, &cp, 16);
+			mp->so_flags.data = strtol(cp, &cp, 16);
 			break;
 		case '3':
 			cp += 2;
@@ -2720,14 +2765,14 @@ void reset_sml_vars(uint16_t maxmeters) {
     mp->so_obis1 = 0;
     mp->so_obis2 = 0;
 #endif
-    mp->so_flags = 0;
+    mp->so_flags.data = 0;
     // addresses a bug in meter DWS74
 #ifdef DWS74_BUG
-    mp->so_flags |= SO_DWS74_BUG;
+    mp->so_flags.SO_DWS74_BUG = 1;
 #endif
 
 #ifdef SML_OBIS_LINE
-    mp->so_flags |= SO_OBIS_LINE;
+    mp->so_flags.SO_OBIS_LINE = 1;
 #endif
     if (mp->txmem) {
       free(mp->txmem);
@@ -2931,8 +2976,8 @@ dddef_exit:
           mmp->params = strtol(lp, &lp, 10);
           if (*lp != ',') goto next_line;
           lp++;
-          mmp->prefix[7] = 0;
-          for (uint32_t cnt = 0; cnt < 8; cnt++) {
+          mmp->prefix[SML_PREFIX_SIZE - 1] = 0;
+          for (uint32_t cnt = 0; cnt < SML_PREFIX_SIZE; cnt++) {
             if (*lp == SCRIPT_EOL || *lp == ',') {
               mmp->prefix[cnt] = 0;
               break;
@@ -3208,12 +3253,14 @@ next_line:
         if (mp->meter_ss->hardwareSerial()) {
           Serial.begin(mp->params, (SerialConfig)smode);
           ClaimSerial();
-          //Serial.setRxBufferSize(512);
+          if (mp->so_flags.SO_TRX_INVERT) {
+            U0C0 = U0C0 | BIT(UCRXI) | BIT(UCTXI); // Inverse RX, TX
+          }
         }
 #endif  // ESP8266
 
 #ifdef ESP32
-        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin);
+        mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin, mp->so_flags.SO_TRX_INVERT);
 #ifdef USE_ESP32_SW_SERIAL
 				mp->meter_ss->setRxBufferSize(mp->sibsiz);
 #endif
@@ -3244,7 +3291,7 @@ next_line:
     struct METER_DESC *mp = &meter_desc[meters];
     char type = mp->type;
 
-    if (!(mp->so_flags & SO_OBIS_LINE)) {
+    if (!(mp->so_flags.SO_OBIS_LINE)) {
       mp->shift_mode = (type != 'e' && type != 'k' && type != 'm' && type != 'M' && type != 'p' && type != 'R' && type != 'v');
     } else {
       mp->shift_mode = (type != 'o' && type != 'e' && type != 'k' && type != 'm' && type != 'M' && type != 'p' && type != 'R' && type != 'v');
@@ -3337,7 +3384,7 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
 #ifdef ESP8266
     Serial.begin(baud, (SerialConfig)smode);
 #else
-    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin);
+    meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin, sml_globs.mp[meter].so_flags.SO_TRX_INVERT);
 #endif
   }
   return 1;
@@ -3608,7 +3655,7 @@ typedef struct {
  } MODBUS_TCP_HEADER;
 
 uint16_t sml_swap(uint16_t in) {
-  return (in << 8) || in >> 8;
+  return (in << 8) | in >> 8;
 }
 
 // send modbus TCP frame with payload
@@ -3616,7 +3663,9 @@ uint16_t sml_swap(uint16_t in) {
 void sml_tcp_send(uint32_t meter, uint8_t *sbuff, uint16_t slen) {
 MODBUS_TCP_HEADER tcph;
 
-  tcph.T_ID = sml_swap(0x1234);
+  //tcph.T_ID = sml_swap(0x1234);
+  tcph.T_ID = random(0xffff);
+
   tcph.P_ID = 0;
   tcph.SIZE = sml_swap(6);
   tcph.U_ID = *sbuff;
@@ -3990,12 +4039,14 @@ bool Xsns53(uint32_t function) {
         SML_Init();
         break;
       case FUNC_LOOP:
-        if (sml_globs.ready) {
-          SML_Counter_Poll();
-          if (sml_globs.dump2log) {
-            dump2log();
-          } else {
-            SML_Poll();
+        if (bitRead(Settings->rule_enabled, 0)) {
+          if (sml_globs.ready) {
+            SML_Counter_Poll();
+            if (sml_globs.dump2log) {
+              dump2log();
+            } else {
+              SML_Poll();
+            }
           }
         }
         break;

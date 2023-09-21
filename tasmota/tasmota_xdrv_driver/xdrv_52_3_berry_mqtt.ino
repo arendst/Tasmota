@@ -33,8 +33,10 @@ extern "C" {
       bool retain = false;
       int32_t payload_start = 0;
       int32_t len = -1;   // send all of it
+      bool is_binary = be_isbytes(vm, 3);       // is this a binary payload (or false = string)
       if (top >= 4) { retain = be_tobool(vm, 4); }
       if (top >= 5) {
+        if (!is_binary) { be_raise(vm, "argument_error", "start and len are not allowed with string payloads"); }
         payload_start = be_toint(vm, 5);
         if (payload_start < 0) payload_start = 0;
       }
@@ -60,7 +62,7 @@ extern "C" {
 
       be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
 
-      MqttPublishPayload(topic, payload, len, retain);
+      MqttPublishPayload(topic, payload, is_binary ? len : 0 /*if string don't send length*/, retain);
 
       be_return_nil(vm); // Return
     }

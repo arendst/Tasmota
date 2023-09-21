@@ -201,7 +201,8 @@ void ZeroCrossMomentEnd(void) {
 #endif
 }
 
-void IRAM_ATTR ZeroCrossIsr(void) {
+void IRAM_ATTR ZeroCrossIsr(void);
+void ZeroCrossIsr(void) {
   uint32_t time = micros();
   TasmotaGlobal.zc_interval = ((int32_t) (time - TasmotaGlobal.zc_time));
   TasmotaGlobal.zc_time = time;
@@ -829,6 +830,11 @@ void MqttShowState(void)
   ResponseAppendTime();
   ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());
 
+  // Battery Level expliciet for deepsleep devices
+  if (Settings->battery_level_percent != 101) {
+    ResponseAppend_P(PSTR(",\"" D_CMND_ZIGBEE_BATTPERCENT "\":%d"), Settings->battery_level_percent);
+  }
+
 #ifdef ESP8266
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
@@ -1242,6 +1248,8 @@ void Every100mSeconds(void)
       }
     }
   }
+
+  WiFiSetTXpowerBasedOnRssi();
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1559,7 +1567,7 @@ void Every250mSeconds(void)
 
       TasmotaGlobal.restart_flag--;
       if (TasmotaGlobal.restart_flag <= 0) {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : PSTR(D_RESTARTING));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? PSTR("Halted") : (TasmotaGlobal.restart_deepsleep) ? PSTR("Sleeping") : PSTR(D_RESTARTING));
         EspRestart();
       }
     }
@@ -1915,6 +1923,8 @@ void TasConsoleInput(void) {
 //
 // This patched version of pinMode forces a full GPIO reset before setting new mode
 //
+#include "driver/gpio.h"
+
 extern "C" void ARDUINO_ISR_ATTR __pinMode(uint8_t pin, uint8_t mode);
 
 extern "C" void ARDUINO_ISR_ATTR pinMode(uint8_t pin, uint8_t mode) {
@@ -2222,11 +2232,19 @@ void GpioInit(void)
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));
   if (TasmotaGlobal.i2c_enabled) {
     TasmotaGlobal.i2c_enabled = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
+#ifdef ESP32
+    if (TasmotaGlobal.i2c_enabled) {
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus1 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL), Pin(GPIO_I2C_SDA));
+    }
+#endif
   }
 #ifdef ESP32
   TasmotaGlobal.i2c_enabled_2 = (PinUsed(GPIO_I2C_SCL, 1) && PinUsed(GPIO_I2C_SDA, 1));
   if (TasmotaGlobal.i2c_enabled_2) {
     TasmotaGlobal.i2c_enabled_2 = I2c2Begin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1));
+    if (TasmotaGlobal.i2c_enabled_2) {
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus2 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1));
+    }
   }
 #endif
 #endif  // USE_I2C
@@ -2251,6 +2269,12 @@ void GpioInit(void)
       }
     }
   }
+
+#ifdef USE_UFILESYS
+#ifdef USE_SDCARD
+  UfsCheckSDCardInit();
+#endif  // USE_SDCARD
+#endif  // USE_UFILESYS
 
   XdrvCall(FUNC_SETUP_RING1);                              // Setup RTC hardware
   XsnsXdrvCall(FUNC_SETUP_RING2);                          // Setup hardware supporting virtual switches/buttons/relays

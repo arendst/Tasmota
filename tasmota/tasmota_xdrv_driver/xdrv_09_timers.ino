@@ -64,6 +64,8 @@ int8_t timer_window[MAX_TIMERS] = { 0 };
  *         Rewrite for Arduino by 'jurs' for German Arduino forum
 \*********************************************************************************************/
 
+const char kTwilight[] PROGMEM = "|, " D_TWILIGHT_CIVIL "|, " D_TWILIGHT_NAUTICAL "|, " D_TWILIGHT_ASTRONOMICAL;
+
 const float pi2 = TWO_PI;
 const float pi = PI;
 const float RAD = DEG_TO_RAD;
@@ -74,9 +76,9 @@ uint32_t JulianDate(const struct TIME_T &now) {
   // https://en.wikipedia.org/wiki/Julian_day
 
   uint32_t Year = now.year;             // Year ex:2020
-  uint32_t Month = now.month;            // 1..12
-  uint32_t Day = now.day_of_month;     // 1..31
-  uint32_t Julian;                          // Julian day number
+  uint32_t Month = now.month;           // 1..12
+  uint32_t Day = now.day_of_month;      // 1..31
+  uint32_t Julian;                      // Julian day number
 
   if (Month <= 2) {
     Month += 12;
@@ -845,8 +847,8 @@ const char HTTP_FORM_TIMER2[] PROGMEM =
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
   "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b></label><br>"
-  "<label><input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)</label><br>"
-  "<label><input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)</label><br>"
+  "<label><input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b>%s (%s)</label><br>"
+  "<label><input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b>%s (%s)</label><br>"
   "</fieldset>"
   "<p></p>"
   "<span><select style='width:46px;' id='dr'></select></span>"
@@ -904,7 +906,10 @@ void HandleTimerConfiguration(void)
   }
   WSContentSend_P(HTTP_FORM_TIMER2);
 #ifdef USE_SUNRISE
-  WSContentSend_P(HTTP_FORM_TIMER3, 100 + (strlen(D_SUNSET) *12), GetSun(0).c_str(), GetSun(1).c_str());
+  char twilight[30];
+  GetTextIndexed(twilight, sizeof(twilight), Settings->mbflag2.sunrise_dawn_angle, kTwilight);
+  uint32_t slen = 100 + (max(strlen(D_SUNRISE), strlen(D_SUNSET)) *11) + (strlen(twilight) *9);  // Trial and error to keep it on one line while keeping it as centered as possible
+  WSContentSend_P(HTTP_FORM_TIMER3, slen, twilight, GetSun(0).c_str(), twilight, GetSun(1).c_str());
 #else
   WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE

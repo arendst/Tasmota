@@ -53,7 +53,7 @@ uint8_t ledcReadResolution(uint8_t chan);
 // was not yet attached.
 //
 // Returns: hardware channel number, or -1 if it failed
-int analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+int32_t analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
 
 // change both freq and range
 // `0`: set to global value
@@ -126,7 +126,12 @@ uint32_t analogGetTimerFrequency(uint8_t timer);
 
 #define ESPhttpUpdate httpUpdate
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "rom/ets_sys.h"
+#else
 #define os_delay_us ets_delay_us
+#endif
+
 // Serial minimal type to hold the config
 typedef int SerConfu8;
 //typedef int SerialConfig;  // Will be replaced enum in esp32_hal-uart.h (#7926)

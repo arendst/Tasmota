@@ -129,11 +129,10 @@ be_local_closure(Matter_Expirable_has_expired,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(rtc),
-    /* K2   */  be_nested_str_weak(utc),
-    /* K3   */  be_nested_str_weak(_expiration),
+    /* K1   */  be_nested_str_weak(rtc_utc),
+    /* K2   */  be_nested_str_weak(_expiration),
     }),
     be_str_weak(has_expired),
     &be_const_str_solidified,
@@ -144,12 +143,12 @@ be_local_closure(Matter_Expirable_has_expired,   /* name */
       0xB80A0000,  //  0003  GETNGBL	R2	K0
       0x8C080501,  //  0004  GETMET	R2	R2	K1
       0x7C080200,  //  0005  CALL	R2	1
-      0x94040502,  //  0006  GETIDX	R1	R2	K2
-      0x88080103,  //  0007  GETMBR	R2	R0	K3
+      0x5C040400,  //  0006  MOVE	R1	R2
+      0x88080102,  //  0007  GETMBR	R2	R0	K2
       0x4C0C0000,  //  0008  LDNIL	R3
       0x20080403,  //  0009  NE	R2	R2	R3
       0x780A0002,  //  000A  JMPF	R2	#000E
-      0x88080103,  //  000B  GETMBR	R2	R0	K3
+      0x88080102,  //  000B  GETMBR	R2	R0	K2
       0x28080202,  //  000C  GE	R2	R1	R2
       0x80040400,  //  000D  RET	1	R2
       0x50080000,  //  000E  LDBOOL	R2	0	0
@@ -224,11 +223,10 @@ be_local_closure(Matter_Expirable_set_expire_in_seconds,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(rtc),
-    /* K2   */  be_nested_str_weak(utc),
-    /* K3   */  be_nested_str_weak(set_expire_time),
+    /* K1   */  be_nested_str_weak(rtc_utc),
+    /* K2   */  be_nested_str_weak(set_expire_time),
     }),
     be_str_weak(set_expire_in_seconds),
     &be_const_str_solidified,
@@ -243,8 +241,8 @@ be_local_closure(Matter_Expirable_set_expire_in_seconds,   /* name */
       0xB80E0000,  //  0007  GETNGBL	R3	K0
       0x8C0C0701,  //  0008  GETMET	R3	R3	K1
       0x7C0C0200,  //  0009  CALL	R3	1
-      0x94080702,  //  000A  GETIDX	R2	R3	K2
-      0x8C0C0103,  //  000B  GETMET	R3	R0	K3
+      0x5C080600,  //  000A  MOVE	R2	R3
+      0x8C0C0102,  //  000B  GETMET	R3	R0	K2
       0x00140401,  //  000C  ADD	R5	R2	R1
       0x7C0C0400,  //  000D  CALL	R3	2
       0x80000000,  //  000E  RET	0

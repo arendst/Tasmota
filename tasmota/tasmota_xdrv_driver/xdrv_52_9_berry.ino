@@ -37,11 +37,11 @@ extern "C" {
 }
 
 const char kBrCommands[] PROGMEM = D_PRFX_BR "|"    // prefix
-  D_CMND_BR_RUN
+  D_CMND_BR_RUN "|" D_CMND_BR_RESTART
   ;
 
 void (* const BerryCommand[])(void) PROGMEM = {
-  CmndBrRun,
+  CmndBrRun, CmndBrRestart
   };
 
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len = 0);
@@ -64,10 +64,10 @@ void checkBeTop(void) {
  * Use PSRAM if available
 \*********************************************************************************************/
 extern "C" {
-  void *berry_malloc(uint32_t size);
+  void *berry_malloc(size_t size);
   void *berry_realloc(void *ptr, size_t size);
 #ifdef USE_BERRY_PSRAM
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return special_malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -77,7 +77,7 @@ extern "C" {
     return special_calloc(num, size);
   }
 #else
-  void *berry_malloc(uint32_t size) {
+  void *berry_malloc(size_t size) {
     return malloc(size);
   }
   void *berry_realloc(void *ptr, size_t size) {
@@ -89,7 +89,7 @@ extern "C" {
 #endif // USE_BERRY_PSRAM
 
 
-  void *berry_malloc32(uint32_t size) {
+  void *berry_malloc32(size_t size) {
   #ifdef USE_BERRY_IRAM
     return special_malloc32(size);
   #else
@@ -169,11 +169,20 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
 }
 
 // Simplified version of event loop. Just call `tasmota.fast_loop()`
-void callBerryFastLoop(void) {
+// `every_5ms` is a flag to wait at least 5ms between calss to `tasmota.fast_loop()`
+void callBerryFastLoop(bool every_5ms) {
+  static uint32_t fast_loop_last_call = 0;
   bvm *vm = berry.vm;
 
   if (nullptr == vm) { return; }
 
+  uint32_t now = millis();
+  if (every_5ms) {
+    if (!TimeReached(fast_loop_last_call + USE_BERRY_FAST_LOOP_SLEEP_MS /* 5ms */)) { return; }
+  }
+  fast_loop_last_call = now;
+
+  // TODO - can we make this dereferencing once for all?
   if (be_getglobal(vm, "tasmota")) {
     if (be_getmethod(vm, -1, "fast_loop")) {
       be_pushvalue(vm, -2); // add instance as first arg
@@ -304,11 +313,21 @@ void BrShowState(void) {
 /*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
+extern "C" void be_webserver_cb_deinit(bvm *vm);
 void BerryInit(void) {
   // clean previous VM if any
   if (berry.vm != nullptr) {
+    be_cb_deinit(berry.vm);   // deregister any C callback for this VM
+#ifdef USE_WEBSERVER
+    be_webserver_cb_deinit(berry.vm);   // deregister C callbacks managed by webserver
+#endif // USE_WEBSERVER
     be_vm_delete(berry.vm);
     berry.vm = nullptr;
+    berry.web_add_handler_done = false;
+    berry.autoexec_done = false;
+    berry.repl_active = false;
+    berry.rules_busy = false;
+    berry.timeout = 0;
   }
 
   int32_t ret_code1, ret_code2;
@@ -368,6 +387,17 @@ void BerryInit(void) {
 }
 
 /*********************************************************************************************\
+ * BrRestart - restart a fresh new Berry vm, unloading everything from previous VM
+\*********************************************************************************************/
+void CmndBrRestart(void) {
+  if (berry.vm == nullptr) {
+    ResponseCmndChar_P("Berry VM not started");
+  }
+  BerryInit();
+  ResponseCmndChar_P("Berry VM restarted");
+}
+
+/*********************************************************************************************\
  * Execute a script in Flash file-system
  *
  * Two options supported:
@@ -377,6 +407,12 @@ void BerryInit(void) {
 \*********************************************************************************************/
 void BrLoad(const char * script_name) {
   if (berry.vm == nullptr || TasmotaGlobal.no_autoexec) { return; }   // abort is berry is not running, or bootloop prevention kicked in
+
+  if (!strcmp_P(script_name, "autoexec.be")) {
+    if (Settings->flag6.berry_no_autoexec) {   // SetOption153 - (Berry) Disable autoexec.be on restart (1)
+      return;
+    }
+  }
 
   be_getglobal(berry.vm, PSTR("load"));
   if (!be_isnil(berry.vm, -1)) {
@@ -647,14 +683,16 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
       "Check the <a href='https://tasmota.github.io/docs/Berry/' target='_blank'>documentation</a>."
     "</div>"
   "</div>"
-  // "<textarea readonly id='t1' cols='340' wrap='off'></textarea>"
-  // "<br><br>"
   "<form method='get' id='fo' onsubmit='return l(1);'>"
   "<textarea id='c1' class='br0 bri' rows='4' cols='340' wrap='soft' autofocus required></textarea>"
-  // "<input id='c1' class='bri' type='text' rows='5' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
-  // "<input type='submit' value=\"Run code (or press 'Enter' twice)\">"
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
-  "</form>";
+  "</form>"
+#ifdef USE_BERRY_DEBUG
+  "<p><form method='post' >"
+  "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
+  "</form></p>"
+#endif // USE_BERRY_DEBUG
+  ;
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
   "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
@@ -700,6 +738,12 @@ void HandleBerryConsole(void)
     return;
   }
 
+  if (Webserver->hasArg(F("rst"))) {      // restart VM
+    BerryInit();
+    Webserver->sendHeader("Location", "/bc", true);
+    Webserver->send(302, "text/plain", "");
+  }
+
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));
 
   WSContentStart_P(PSTR("Berry " D_CONSOLE));
@@ -723,6 +767,11 @@ bool Xdrv52(uint32_t function)
   bool result = false;
 
   switch (function) {
+    case FUNC_SLEEP_LOOP:
+      if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
+        callBerryFastLoop(true);      // call `tasmota.fast_loop()` optimized for minimal performance impact
+      }
+      break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
         // we generate a synthetic event `autoexec`
@@ -730,9 +779,21 @@ bool Xdrv52(uint32_t function)
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
+
+        // check if `web_add_handler` was missed, for example because of Berry VM restart
+        if (!berry.web_add_handler_done) {
+          bool network_up = WifiHasIP();
+#ifdef USE_ETHERNET
+          network_up = network_up || EthernetHasIP();
+#endif
+          if (network_up) {       // if network is already up, send a synthetic event to trigger web handlers
+            callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+            berry.web_add_handler_done = true;
+          }
+        }
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
-        callBerryFastLoop();      // call `tasmota.fast_loop()` optimized for minimal performance impact
+        callBerryFastLoop(false);      // call `tasmota.fast_loop()` optimized for minimal performance impact
       }
       break;
 
@@ -792,7 +853,10 @@ bool Xdrv52(uint32_t function)
       callBerryEventDispatcher(PSTR("web_add_config_button"), nullptr, 0, nullptr);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+      if (!berry.web_add_handler_done) {
+        callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
+        berry.web_add_handler_done = true;
+      }
       WebServer_on(PSTR("/bc"), HandleBerryConsole);
       break;
 #endif // USE_WEBSERVER

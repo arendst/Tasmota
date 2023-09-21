@@ -46,7 +46,7 @@ class zcl_attribute : zcl_attribute_ntv
     elif k == "key"
       return self._get_key()
     else
-      return super(self).member(k)
+      return super(self).member(k)      # natural mapping
     end
   end
 
@@ -103,7 +103,6 @@ class zcl_attribute : zcl_attribute_ntv
   end
 
   def key_tostring()
-    import string
     var s = "<undefined>"
 
     var key = self.key
@@ -113,12 +112,12 @@ class zcl_attribute : zcl_attribute_ntv
         s += str(self.key_suffix)
       end
     elif (self.cluster != nil) && (self.attr_id != nil)
-      s = string.format("%04X/%04X", self.cluster, self.attr_id)
+      s = format("%04X/%04X", self.cluster, self.attr_id)
       if self.key_suffix > 1
         s += "+" + str(self.key_suffix)
       end
     elif (self.cluster != nil) && (self.cmd != nil) && (self.direction != nil)
-      s = string.format("%04X%s%02X", self.cluster, self.direction ? "?" : "!" ,self.cmd)
+      s = format("%04X%s%02X", self.cluster, self.direction ? "?" : "!" ,self.cmd)
       if self.key_suffix > 1
         s += "+" + str(self.key_suffix)
       end
@@ -130,7 +129,6 @@ class zcl_attribute : zcl_attribute_ntv
   def tostring()
     import introspect
     import json
-    import string
 
     var s = json.dump(self.key_tostring())
     s += ":"
@@ -142,8 +140,8 @@ class zcl_attribute : zcl_attribute_ntv
 
     if (self.cluster != nil) && (self.attr_id != nil) && (self.key != nil)
       # we have an alias
-      var key_alias = string.format("(%s)", self.key_tostring())
-      s += string.format(',%s:"%04X/%04X"', json.dump(key_alias), self.cluster, self.attr_id)
+      var key_alias = format("(%s)", self.key_tostring())
+      s += format(',%s:"%04X/%04X"', json.dump(key_alias), self.cluster, self.attr_id)
     end
 
     return s
@@ -200,19 +198,19 @@ class zcl_attribute_list : zcl_attribute_list_ntv
   end
 
   def tostring()
-    import string
     import json
 
     var items = []
     # {"Device":"0x246D","Name":"Plug","EnergyTotal":"0x000000000000","Endpoint":1,"LinkQuality":229}
+    var v
 
     # shortaddr
-    if self.shortaddr != nil
-      items.push(string.format('"Device":"0x%04X"', self.shortaddr))
+    if (v := self.shortaddr) != nil
+      items.push(f'"Device":"0x{v:04X}"')
     end
     # groupaddr
-    if self.groupaddr != nil
-      items.push(string.format('"Group":"0x%04X"', self.groupaddr))
+    if (v := self.groupaddr) != nil
+      items.push(f'"Group":"0x{v:04X}"')
     end
 
     # attributes
@@ -225,83 +223,20 @@ class zcl_attribute_list : zcl_attribute_list_ntv
     end
 
     # Endpoint
-    if self.src_ep != nil
-      items.push(string.format('"Endpoint":%i', self.src_ep))
+    if (v := self.src_ep) != nil
+      items.push(f'"Endpoint":{v}')
     end
 
     # LQI
-    if self.lqi != nil
-      items.push(string.format('"LinkQuality":%i', self.lqi))
+    if (v := self.lqi) != nil
+      items.push(f'"LinkQuality":{v}')
     end
 
     var s = "{" + items.concat(",") + "}"
     return s
 
-    # return string.format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
+    # return format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
   end
-end
-
-#@ solidify:zcl_attributes,weak
-class zcl_attributes
-  var shortaddr
-  var groupaddr
-  var lqi
-  var src_ep
-  var attr_list
-
-  def init(shortaddr, groupaddr, lqi, src_ep, attr_list)
-    self.shortaddr = shortaddr
-    self.groupaddr = groupaddr
-    self.lqi = lqi
-    self.src_ep = src_ep
-    if isinstance(self.attr_list, list)
-      self.attr_list = attr_list
-    else
-      self.attr_list = []
-    end
-  end
-
-  def push(attr)
-    self.attr_list.push(attr)
-  end
-
-  def tostring()
-    import string
-    import json
-
-    var items = []
-    # {"Device":"0x246D","Name":"Plug","EnergyTotal":"0x000000000000","Endpoint":1,"LinkQuality":229}
-
-    # shortaddr
-    if self.shortaddr != nil
-      items.push(string.format('"Device":"0x%04X"', self.shortaddr))
-    end
-    # groupaddr
-    if self.shortaddr != nil
-      items.push(string.format('"Group":"0x%04X"', self.groupaddr))
-    end
-
-    # attributes
-    for e: self.attr_list
-      items.push(e.tostring())
-    end
-
-    # Endpoint
-    if self.src_ep != nil
-      items.push(string.format('"Endpoint":%i', self.src_ep))
-    end
-
-    # Endpoint
-    if self.lqi != nil
-      items.push(string.format('"LinkQuality":%i', self.lqi))
-    end
-
-    var s = "{" + items.concat(",") + "}"
-    return s
-
-    # return string.format("shortaddr:0x%04X groupaddr:0x%04X %s", self.shortaddr, self.groupaddr, str(self.attr_list))
-  end
-
 end
 
 #-

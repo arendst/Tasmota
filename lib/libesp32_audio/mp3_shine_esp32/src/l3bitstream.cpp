@@ -34,7 +34,7 @@ void shine_format_bitstream(shine_global_config *config) {
     for ( gr = 0; gr < config->mpeg.granules_per_frame; gr++ )
       {
         int *pi = &config->l3_enc[ch][gr][0];
-        int32_t *pr = &config->mdct_freq[ch][gr][0];
+        int *pr = &config->mdct_freq[ch][gr][0];
         for ( i = 0; i < GRANULE_SIZE; i++ )
           {
             if ( (pr[i] < 0) && (pi[i] > 0) )

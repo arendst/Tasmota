@@ -13,6 +13,7 @@ def bin_map_copy(source, target, env):
     # get locations and file names based on variant
     map_file = tasmotapiolib.get_final_map_path(env)
     bin_file = tasmotapiolib.get_final_bin_path(env)
+    one_bin_file = bin_file
 
     if env["PIOPLATFORM"] == "espressif32":
         factory_tmp = pathlib.Path(firsttarget).with_suffix("")
@@ -21,7 +22,7 @@ def bin_map_copy(source, target, env):
         one_bin_file = one_bin_tmp.with_suffix(one_bin_tmp.suffix + ".factory.bin")
 
     # check if new target files exist and remove if necessary
-    for f in [map_file, bin_file]:
+    for f in [map_file, bin_file, one_bin_file]:
         if f.is_file():
             f.unlink()
 

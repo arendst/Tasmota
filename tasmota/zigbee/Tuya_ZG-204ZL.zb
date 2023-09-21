@@ -1,0 +1,9 @@
+#Z2Tv1
+# Human presence sensor Zigbee
+# https://zigbee.blakadder.com/Tuya_ZG-204ZL.html
+:TS0601,_TZE200_3towulqd
+:TS0601,_TZE200_1ibpyhdc
+:TS0601,_TZE200_bh3n6gk8
+EF00/0401=0406/0000   # map to Occupancy
+EF00/020C=0400/0000   # map to illuminance MeasuredValue
+EF00/0204=0001/0021,mul:2 # Battery level

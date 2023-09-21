@@ -65,7 +65,7 @@
  *
  * Prepare a template to be loaded either by:
  * - a rule like: rule3 on file#pcf8574.dat do {"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
- * - a script like: -y{"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
+ * - a script like: >y{"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}#
  * - file called pcf8574.dat with contents: {"NAME":"PCF8574 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]}
  *
  * Inverted relays and buttons               Ri8 Ri7 Ri6 Ri5 Ri4 Ri3 Ri2 Ri1 B1 B2 B3 B4 B5 B6 B7 B8
@@ -425,14 +425,15 @@ bool Pcf8574AddSwitch(void) {
 \*********************************************************************************************/
 
 void Pcf8574SwitchRelay(void) {
-  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-    uint8_t relay_state = bitRead(XdrvMailbox.index, i);
+  uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+  for (uint32_t i = 0; i < devices_present; i++) {
+    uint8_t relay_state = bitRead(XdrvMailbox.index, Pcf8574.relay_offset + i);
 
     if (Pcf8574.max_devices > 0 && Pcf8574_pin[i] < 99) {
       uint8_t board = Pcf8574_pin[i]>>3;
       uint8_t pin = Pcf8574_pin[i]&0x7;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
-      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
+      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, Pcf8574.relay_offset + i) ? !relay_state : relay_state;
 
       //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: SwitchRelay %d=%d => PCF-%d.D%d=%d"), i, relay_state, board +1, pin, _val);
       bitWrite(Pcf8574.pin_mask[board], pin, _val);
@@ -485,9 +486,10 @@ void Pcf8574ModuleInitMode1(void) {
 
     for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
       uint8_t _result = Settings->pcf8574_config[idx] >> i &1;
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings->power>>i&1, TasmotaGlobal.devices_present);
+      uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings->power>>i&1, devices_present);
       if (_result > 0) {
-        Pcf8574_pin[TasmotaGlobal.devices_present] = i + 8 * idx;
+        Pcf8574_pin[devices_present] = i + 8 * idx;
         bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
         if (!Settings->flag.save_state && !Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
           //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Set power from from chip state"));
@@ -575,7 +577,8 @@ void Pcf8574SaveSettings(void) {
       n = n&(n-1);
       count++;
     }
-    if (count <= TasmotaGlobal.devices_present) {
+    uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+    if (count <= devices_present) {
       UpdateDevicesPresent(-count);
     }
     for (byte i = 0; i < 8; i++) {
@@ -662,12 +665,12 @@ void Pcf8574ModuleInit(void) {
   if (Pcf8574.mode) {
     Pcf8574_pin = (uint16_t*)malloc(Pcf8574.max_connected_ports * sizeof(uint16_t));
     if (Pcf8574_pin) {
+      Pcf8574.relay_offset = TasmotaGlobal.devices_present;
 #ifdef USE_PCF8574_MODE2
       if (Pcf8574LoadTemplate()) {
         Pcf8574.mode = 2;
         Pcf8574.button_offset = -1;
         Pcf8574.switch_offset = -1;
-        Pcf8574.relay_offset = TasmotaGlobal.devices_present;
         Pcf8574.relay_max -= UpdateDevicesPresent(Pcf8574.relay_max);
       } else
 #endif  // USE_PCF8574_MODE2

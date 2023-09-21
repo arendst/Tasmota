@@ -35,14 +35,12 @@ typedef uint16_t Z_ShortAddress;
 const uint16_t BAD_SHORTADDR = 0xFFFE;
 
 #ifdef USE_ZIGBEE_ZNP
-enum ZnpCommandType {
+enum ZnpCommandType : uint8_t {
   Z_POLL = 0x00,
   Z_SREQ = 0x20,
   Z_AREQ = 0x40,
-  Z_SRSP = 0x60
-};
+  Z_SRSP = 0x60,
 
-enum ZnpSubsystem {
   Z_RPC_Error = 0x00,
   Z_SYS = 0x01,
   Z_MAC = 0x02,

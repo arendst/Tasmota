@@ -10,8 +10,8 @@
 
 Deze library maakt het mogelijk om Infraroodsignalen **te versturen en ontvangen** via het [Arduino framework](https://www.arduino.cc/) met veelgebruikte 940nm IR LEDs en IR ontvang modules. b.v. TSOP{17,22,24,36,38,44,48}* demodulatoren enz.
 
-## v2.8.5 nu beschikbaar
-Versie 2.8.5 van de bibliotheek is nu [beschikbaar](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Bekijk de [Release Notes](ReleaseNotes.md) voor alle belangrijke veranderingen.
+## v2.8.6 nu beschikbaar
+Versie 2.8.6 van de bibliotheek is nu [beschikbaar](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Bekijk de [Release Notes](ReleaseNotes.md) voor alle belangrijke veranderingen.
 
 #### Upgraden vanaf pre-v2.0
 Het gebruik van de bibliotheek is enigszins gewijzigd in v2.0. Je zult het gebruik moeten aanpassen om te kunnen werken met v2.0 en hoger. Je kunt meer lezen over de vereiste aanpassingen op onze [Upgraden naar v2.0](https://github.com/crankyoldgit/IRremoteESP8266/wiki/Upgrading-to-v2.0) pagina.

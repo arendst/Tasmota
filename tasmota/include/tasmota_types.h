@@ -186,10 +186,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_voltage_common : 1;        // bit 4  (v12.3.1.5) - SetOption150 - (Energy) Force no voltage/frequency common
     uint32_t matter_enabled : 1;           // bit 5  (v12.3.1.5) - SetOption151 - (Matter) Enable Matter protocol over Wifi
     uint32_t bistable_single_pin : 1;      // bit 6  (v12.5.0.1) - SetOption152 - (Power) Switch between two (0) or one (1) pin bistable relay control
-    uint32_t spare07 : 1;                  // bit 7
-    uint32_t spare08 : 1;                  // bit 8
-    uint32_t spare09 : 1;                  // bit 9
-    uint32_t spare10 : 1;                  // bit 10
+    uint32_t berry_no_autoexec : 1;        // bit 7  (v12.5.0.3) - SetOption153 - (Berry) Disable autoexec.be on restart (1)
+    uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
+    uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
+    uint32_t sen5x_passive_mode : 1;       // bit 10 (v13.1.0.1) - SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
     uint32_t spare11 : 1;                  // bit 11
     uint32_t spare12 : 1;                  // bit 12
     uint32_t spare13 : 1;                  // bit 13
@@ -602,32 +602,40 @@ typedef struct {
   // End of remapping, next is all other CPUs
   // ----------------------------------------
 #else
-  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x22 bytes (ESP32-C3) / 2x47 bytes (ESP32-S2)
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 #endif  // ESP32
-  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
   uint8_t       free_esp8266_41A[55];      // 41A
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c3_43C[10];      // 43C  - Due to smaller mytmplt
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
   uint8_t       free_esp32_448[4];         // 448
-#ifdef CONFIG_IDF_TARGET_ESP32S2
+  #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
-#endif
+  #endif
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
@@ -733,8 +741,8 @@ typedef struct {
   uint16_t      artnet_universe;           // 734
   uint16_t      modbus_sbaudrate;          // 736
   uint16_t      shutter_motorstop;         // 738
-
-  uint8_t       free_73A[3];               // 73A
+  uint8_t       battery_level_percent;     // 73A
+  uint8_t       hdmi_addr[2];              // 73B  HDMI CEC physical address - warning this is a non-aligned uint16
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -778,8 +786,9 @@ typedef struct {
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
+  uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_ea6[32];              // EA6
+  uint8_t       free_eb0[22];              // EB0  22 bytes
 
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7
@@ -836,7 +845,7 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       ex_modbus_sbaudrate;       // F61  - v12.2.0.5
+  uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
 
   uint8_t       modbus_sconfig;            // F62
 

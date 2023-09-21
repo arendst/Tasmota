@@ -360,7 +360,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
       }
     }
     // berry_log_C(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, &buf_len);
+    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, (int*)&buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;
 
@@ -486,7 +486,7 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
   } else { // class name
     be_find_global_or_module_member(vm, return_type);
     be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
-    be_call(vm, 1);                 // instanciate with 2 arguments, stack = instance, ptr, -1
+    be_call(vm, 1);                 // instanciate with 1 argument (ptr)
     be_pop(vm, 1);                  // stack = instance
     be_return(vm);
   }

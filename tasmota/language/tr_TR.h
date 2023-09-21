@@ -58,6 +58,7 @@
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT "İletim"
 #define D_TRUE "True"
 #define D_TVOC "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "yükseltme"
 #define D_UPLOAD "Yükleme"
 #define D_UPTIME "Açık Kalma Süresi"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_DFR562_BUSY   "MP3 Busy"

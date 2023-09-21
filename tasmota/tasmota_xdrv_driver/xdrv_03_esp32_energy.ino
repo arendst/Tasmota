@@ -26,6 +26,10 @@
 #define XDRV_03                   3
 #define XSNS_03                   3
 
+#ifndef MQTT_TELE_RETAIN
+#define MQTT_TELE_RETAIN          0
+#endif
+
 #define ENERGY_NONE               0
 #define ENERGY_WATCHDOG           4        // Allow up to 4 seconds before deciding no valid data present
 
@@ -176,6 +180,7 @@ typedef struct {
   uint8_t fifth_second;
   uint8_t command_code;
   uint8_t power_steady_counter;                 // Allow for power on stabilization
+  uint8_t margin_stable;
   uint8_t mplr_counter;
   uint8_t max_energy_state;
 
@@ -273,7 +278,7 @@ bool EnergyRtcSettingsValid(void) {
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
+const uint16_t XDRV_03_VERSION = 0x0102;              // Latest driver version (See settings deltas below)
 
 void EnergySettingsLoad(bool erase) {
   // *** Start init default values in case file is not found ***
@@ -308,6 +313,7 @@ void EnergySettingsLoad(bool erase) {
 //      Settings->energy_kWhtoday_ph[i], &Energy->Settings.energy_today_kWh[i],
 //      Settings->energy_kWhyesterday_ph[i], &Energy->Settings.energy_yesterday_kWh[i]);
   }
+  Energy->Settings.energy_kWhtotal_time = Settings->energy_kWhtotal_time;
 
   // v0102 additions
   Energy->Settings.gui_display = ENERGY_GUI_DISPLAY_MODE;
@@ -344,7 +350,7 @@ void EnergySettingsLoad(bool erase) {
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Energy use defaults as file system not ready or file not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -368,6 +374,12 @@ void EnergySettingsSave(void) {
     }
   }
 #endif  // USE_UFILESYS
+}
+
+bool EnergySettingsRestore(void) {
+  XdrvMailbox.data = (char*)&Energy->Settings;
+  XdrvMailbox.index = sizeof(tEnergySettings);
+  return true;
 }
 
 /********************************************************************************************/
@@ -608,6 +620,9 @@ void Energy200ms(void) {
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+      if (!Energy->Settings.energy_kWhtotal_time) {
+        Energy->Settings.energy_kWhtotal_time = LocalTime();
+      }
 
       if (!Energy->kWhtoday_offset_init && (RtcTime.day_of_year == Energy->Settings.energy_kWhdoy)) {
         Energy->kWhtoday_offset_init = true;
@@ -773,6 +788,7 @@ void EnergyMarginCheck(void) {
     ResponseJsonEndEnd();
     MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
     EnergyMqttShow();
+    Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
   // Max Power
@@ -893,6 +909,12 @@ void EnergyEverySecond(void) {
   }
 
   EnergyMarginCheck();
+  if (Energy->margin_stable) {
+    Energy->margin_stable--;
+    if (!Energy->margin_stable) {
+      EnergyMqttShow();
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -1751,6 +1773,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_RESET_SETTINGS:
         EnergySettingsLoad(1);
+        break;
+      case FUNC_RESTORE_SETTINGS:
+        result = EnergySettingsRestore();
         break;
       case FUNC_SAVE_SETTINGS:
         EnergySettingsSave();

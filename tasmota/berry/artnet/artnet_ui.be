@@ -87,7 +87,6 @@ class ArtNet_UI
   #######################################################################
   def page_artnet_ui()
     import webserver
-    import string
     if !webserver.check_privileged_access() return nil end
 
     # read configuration
@@ -100,13 +99,13 @@ class ArtNet_UI
     # webserver.content_send("<p><small>&nbsp;(This feature requires an internet connection)</small></p>")
     
     webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
-    webserver.content_send(string.format("<legend><b title='ArtNet'>&nbsp;ArtNet configuration</b></legend>"))
+    webserver.content_send(format("<legend><b title='ArtNet'>&nbsp;ArtNet configuration</b></legend>"))
 
     webserver.content_send("<p><form id=artnet_ui style='display: block;' action='/artnet_ui' method='post'>")
 
     # WS2812 bus configuration
-    webserver.content_send(string.format("<p>WS2812 configuration: </p>"))
-    webserver.content_send(string.format(
+    webserver.content_send(format("<p>WS2812 configuration: </p>"))
+    webserver.content_send(format(
       "<table style='width:100%%'>"
       "<tr><td style='width:150px'><b>GPIO</b></td><td style='width:150px'>"))
 
@@ -117,29 +116,29 @@ class ArtNet_UI
     else
       webserver.content_send("<select id='ws2812'>")
       for gp:ws2812_list
-        webserver.content_send(string.format("<option value='%i'>%s</option>", gp, "WS2812 - " + str(gp+1)))
+        webserver.content_send(format("<option value='%i'>%s</option>", gp, "WS2812 - " + str(gp+1)))
       end
       webserver.content_send("</select>")
     end
     webserver.content_send("</td><td></td></tr>")
 
-    webserver.content_send(string.format("<tr><td><b>Rows</b></td><td>"))
-    webserver.content_send(string.format("<input type='number' min='1' name='rows' value='%i'>", conf.rows))
+    webserver.content_send(format("<tr><td><b>Rows</b></td><td>"))
+    webserver.content_send(format("<input type='number' min='1' name='rows' value='%i'>", conf.rows))
     webserver.content_send("</td></tr>")
-    webserver.content_send(string.format("<tr><td><b>Columns</b></td><td>"))
-    webserver.content_send(string.format("<input type='number' min='1' name='cols' value='%i'>", conf.cols))
+    webserver.content_send(format("<tr><td><b>Columns</b></td><td>"))
+    webserver.content_send(format("<input type='number' min='1' name='cols' value='%i'>", conf.cols))
     webserver.content_send("</td></tr>")
-    webserver.content_send(string.format("<tr><td><b>Offset</b></td><td>"))
-    webserver.content_send(string.format("<input type='number' min='0' name='offs' value='%i'>", conf.offs))
+    webserver.content_send(format("<tr><td><b>Offset</b></td><td>"))
+    webserver.content_send(format("<input type='number' min='0' name='offs' value='%i'>", conf.offs))
     webserver.content_send("</td></tr>")
 
-    webserver.content_send(string.format("<tr><td><b>Alternate rows</b></td><td>"))
-    webserver.content_send(string.format("<input type='checkbox' name='alt'%s></p>", conf.alt ? " checked" : ""))
+    webserver.content_send(format("<tr><td><b>Alternate rows</b></td><td>"))
+    webserver.content_send(format("<input type='checkbox' name='alt'%s></p>", conf.alt ? " checked" : ""))
     webserver.content_send("</td></tr>")
 
     webserver.content_send("<tr><td>&nbsp;</td></tr>")
-    webserver.content_send(string.format("<tr><td><b>DMX universe</b></td><td>"))
-    webserver.content_send(string.format("<input type='number' min='0' name='univ' value='%i'>", conf.univ))
+    webserver.content_send(format("<tr><td><b>DMX universe</b></td><td>"))
+    webserver.content_send(format("<input type='number' min='0' name='univ' value='%i'>", conf.univ))
     webserver.content_send("</td></tr>")
     # description
     webserver.content_send("<tr><td colspan='3' style='word-wrap: break-word;'>")
@@ -149,23 +148,23 @@ class ArtNet_UI
     webserver.content_send("</table><hr>")
 
     # IP configuration
-    webserver.content_send(string.format("<p>IP listener: </p>"))
+    webserver.content_send(format("<p>IP listener: </p>"))
     webserver.content_send("<table style='width:100%%'>")
       # "<tr><td style='width:120px'><b>IP mode</b></td><td style='width:180px'>"))
     # webserver.content_send("<select id='ip'>")
-    # webserver.content_send(string.format("<option value='uni'%s>unicast</option>", conf.addr == 'uni' ? " selected" : ""))
-    # webserver.content_send(string.format("<option value='multi'%s>multicast</option>", conf.addr == 'multi' ? " selected" : ""))
+    # webserver.content_send(format("<option value='uni'%s>unicast</option>", conf.addr == 'uni' ? " selected" : ""))
+    # webserver.content_send(format("<option value='multi'%s>multicast</option>", conf.addr == 'multi' ? " selected" : ""))
     # webserver.content_send("</select>")
     # webserver.content_send("</td><td></td></tr>")
 
     webserver.content_send("<tr><td style='width:120px'><b>Port</b></td><td style='width:180px'>")
-    # webserver.content_send(string.format("<tr><td><b>Port</b></td><td>"))
-    webserver.content_send(string.format("<input type='number' min='1' name='port' value='%i'>", conf.port))
+    # webserver.content_send(format("<tr><td><b>Port</b></td><td>"))
+    webserver.content_send(format("<input type='number' min='1' name='port' value='%i'>", conf.port))
     webserver.content_send("</td></tr>")
     webserver.content_send("</table><hr>")
 
     # auto-run
-    webserver.content_send(string.format("<p><b>Auto-run at boot:</b> <input type='checkbox' name='auto'%s></p>", conf.auto ? " checked" : ""))
+    webserver.content_send(format("<p><b>Auto-run at boot:</b> <input type='checkbox' name='auto'%s></p>", conf.auto ? " checked" : ""))
 
     # button
     webserver.content_send("<button name='artnetapply' class='button bgrn'>Apply and Run</button>")
@@ -183,7 +182,6 @@ class ArtNet_UI
     import webserver
     if !webserver.check_privileged_access() return nil end
 
-    import string
     import persist
     import introspect
     
@@ -241,12 +239,12 @@ class ArtNet_UI
         raise "value_error", "Unknown command"
       end
     except .. as e, m
-      print(string.format("BRY: Exception> '%s' - %s", e, m))
+      print(format("BRY: Exception> '%s' - %s", e, m))
       #- display error page -#
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-      webserver.content_send(string.format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
+      webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
 
       webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to management page -#
       webserver.content_stop()                        #- end of web page -#

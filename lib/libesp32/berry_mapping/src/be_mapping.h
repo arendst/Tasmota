@@ -109,6 +109,8 @@ extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_
 extern int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type);
 extern int be_call_ctype_func(bvm *vm, const void *definition);     /* handler for Berry vm */
 
+extern void be_cb_deinit(bvm *vm);   /* remove all callbacks from the VM (just before shutdown of VM) */
+
 #ifdef __cplusplus
 }
 #endif

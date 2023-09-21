@@ -138,6 +138,7 @@ class lvh_obj
     # "text_rule": nil,
     # "text_rule_formula": nil,
     # "text_rule_format": nil,
+    # "meta": nil,
     # roller
     # "options": nil,
     # qrcode
@@ -154,6 +155,7 @@ class lvh_obj
   var _lv_label                             # sub-label if exists
   var _page                                 # parent page object
   var _action                               # value of the HASPmota `action` attribute, shouldn't be called `self.action` since we want to trigger the set/member functions
+  var _meta                                 # free form metadata
 
   #====================================================================
   # Rule engine to map value and text to rules
@@ -335,24 +337,23 @@ class lvh_obj
 
     var event_hasp = self._event_map.find(code)
     if event_hasp != nil
-      import string
+      import json
 
       var tas_event_more = ""   # complementary data
       if event.code == lv.EVENT_VALUE_CHANGED
         try
           # try to get the new val
           var val = self.val
-          if val != nil   tas_event_more = string.format(',"val":%i', val) end
+          if val != nil   tas_event_more = format(',"val":%s', json.dump(val)) end
           var text = self.text
           if text != nil
-            import json
             tas_event_more += ',"text":'
             tas_event_more += json.dump(text)
           end
         except ..
         end
       end
-      var tas_event = string.format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
+      var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
       # print("val=",val)
       tasmota.set_timer(0, /-> tasmota.publish_rule(tas_event))
     end
@@ -411,7 +412,6 @@ class lvh_obj
   #====================================================================
   def set_toggle(t)
     if type(t) == 'string'
-      import string
       t = string.toupper(str(t))
       if   t == "TRUE"  t = true
       elif t == "FALSE" t = false
@@ -779,13 +779,24 @@ class lvh_obj
   end
 
   #====================================================================
+  #  Metadata
+  #
+  #====================================================================
+  def set_meta(t)
+    self._meta = t
+  end
+  def get_meta()
+    return self._meta
+  end
+
+  #====================================================================
   #  Rule based updates of `val` and `text`
   #
   # `val_rule`: rule pattern to grab a value, ex: `ESP32#Temperature`
   # `val_rule_formula`: formula in Berry to transform the value
   #                     Ex: `val * 10`
   # `text_rule`: rule pattern to grab a value for text, ex: `ESP32#Temparature`
-  # `text_rule_format`: format used by `string.format()`
+  # `text_rule_format`: format used by `format()`
   #                     Ex: `%.1f °C`
   #====================================================================
   def set_val_rule(t)
@@ -827,8 +838,7 @@ class lvh_obj
       var func = compile(code)
       self._val_rule_function = func()
     except .. as e, m
-      import string
-      print(string.format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
+      print(format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
     end
   end
   def get_val_rule_formula()
@@ -842,8 +852,7 @@ class lvh_obj
       var func = compile(code)
       self._text_rule_function = func()
     except .. as e, m
-      import string
-      print(string.format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
+      print(format("HSP: failed to compile '%s' - %s (%s)", code, e, m))
     end
   end
   def get_text_rule_formula()
@@ -860,8 +869,7 @@ class lvh_obj
       try
         val_n = func(val_n)
       except .. as e, m
-        import string
-        print(string.format("HSP: failed to run self._val_rule_function - %s (%s)", e, m))
+        print(format("HSP: failed to run self._val_rule_function - %s (%s)", e, m))
       end
     end
 
@@ -881,15 +889,13 @@ class lvh_obj
       try
         val = func(val)
       except .. as e, m
-        import string
-        print(string.format("HSP: failed to run self._text_rule_function - %s (%s)", e, m))
+        print(format("HSP: failed to run self._text_rule_function - %s (%s)", e, m))
       end
     end
 
     var format = self._text_rule_format
     if type(format) == 'string'
-      import string
-      format = string.format(format, val)
+      format = format(format, val)
     else
       format = ""
     end
@@ -1335,10 +1341,9 @@ class lvh_page
     end
 
     # send page events
-    import string
-    var event_str_in = string.format('{"hasp":{"p%i":"out"}}', self._oh.lvh_page_cur_idx)
+    var event_str_in = format('{"hasp":{"p%i":"out"}}', self._oh.lvh_page_cur_idx)
     tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
-    var event_str_out = string.format('{"hasp":{"p%i":"in"}}', self._page_id)
+    var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
     tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
 
     # change current page
@@ -1715,7 +1720,6 @@ class HASPmota
   #====================================================================
   def parse_obj(jline, page)
     import global
-    import string
     import introspect
 
     var obj_id = int(jline.find("id"))        # id number or nil
@@ -1725,13 +1729,12 @@ class HASPmota
 
     # first run any Berry code embedded
     var berry_run = str(jline.find("berry_run"))
+    var func_compiled
     if berry_run != "nil"
       try
-        var func_compiled = compile(berry_run)
-        # run the compiled code once
-        func_compiled()
+        func_compiled = compile(berry_run)
       except .. as e,m
-        print(string.format("HSP: unable to run berry code \"%s\" - '%s' - %s", berry_run, e, m))
+        print(format("HSP: unable to compile berry code \"%s\" - '%s' - %s", berry_run, e, m))
       end
     end
 
@@ -1793,8 +1796,21 @@ class HASPmota
       lvh_page_cur.set_obj(obj_id, obj_lvh)
       
       # create a global variable for this object of form p<page>b<id>, ex p1b2
-      var glob_name = string.format("p%ib%i", lvh_page_cur.id(), obj_id)
+      var glob_name = format("p%ib%i", lvh_page_cur.id(), obj_id)
       global.(glob_name) = obj_lvh
+
+    end
+
+    if func_compiled != nil
+      try
+        # run the compiled code once
+        var f_ret = func_compiled()
+        if type(f_ret) == 'function'
+          f_ret(obj_lvh)
+        end
+      except .. as e,m
+        print(format("HSP: unable to run berry code \"%s\" - '%s' - %s", berry_run, e, m))
+      end
     end
 
     if obj_id == 0 && obj_type != "nil"

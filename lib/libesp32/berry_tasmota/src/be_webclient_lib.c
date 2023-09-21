@@ -30,6 +30,7 @@ extern int wc_getstring(bvm *vm);
 extern int wc_writefile(bvm *vm);
 extern int wc_writeflash(bvm *vm);
 extern int wc_getsize(bvm *vm);
+extern int wc_getbytes(bvm *vm);
 
 #include "be_fixed_be_class_webclient.h"
 
@@ -45,7 +46,7 @@ class be_class_webclient (scope: global, name: webclient) {
     .w, var
     init, func(wc_init)
     deinit, func(wc_deinit)
-    url_encode, func(wc_urlencode)
+    url_encode, static_func(wc_urlencode)
 
     begin, func(wc_begin)
     set_timeouts, func(wc_set_timeouts)
@@ -68,6 +69,7 @@ class be_class_webclient (scope: global, name: webclient) {
     write_file, func(wc_writefile)
     write_flash, func(wc_writeflash)
     get_size, func(wc_getsize)
+    get_bytes, func(wc_getbytes)
 }
 @const_object_info_end */
 

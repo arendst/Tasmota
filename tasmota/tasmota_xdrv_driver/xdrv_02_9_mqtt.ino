@@ -465,7 +465,9 @@ bool MqttIsConnected(void) {
 }
 
 void MqttDisconnect(void) {
-  MqttClient.disconnect();
+  if (MqttClient.connected()) {
+    MqttClient.disconnect();
+  }
 }
 
 void MqttSubscribeLib(const char *topic) {
@@ -911,9 +913,11 @@ void MqttDisconnected(int state) {
     Mqtt.retry_counter_delay++;
   }
 
-  MqttClient.disconnect();
-  // Check if this solves intermittent MQTT re-connection failures when broker is restarted
-  EspClient.stop();
+  if (MqttClient.connected()) {
+    MqttClient.disconnect();
+    // Check if this solves intermittent MQTT re-connection failures when broker is restarted
+    EspClient.stop();
+  }
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
     SettingsText(SET_MQTT_HOST), Settings->mqtt_port, state, Mqtt.retry_counter);
@@ -1058,8 +1062,7 @@ void MqttReconnect(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_ATTEMPTING_CONNECTION));
 
-  if (MqttClient.connected()) { MqttClient.disconnect(); }
-
+  MqttDisconnect();
   MqttSetClientTimeout();
 
   MqttClient.setCallback(MqttDataHandler);

@@ -105,6 +105,7 @@
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
 struct WIFI {
+  int last_tx_pwr;
   uint32_t last_event = 0;                 // Last wifi connection event
   uint32_t downtime = 0;                   // Wifi down duration
   uint16_t link_count = 0;                 // Number of wifi re-connect
@@ -199,10 +200,11 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 #ifdef ESP32
 /*
 #if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -210,7 +212,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #if ARDUINO_USB_MODE
 //#warning **** TasConsole ARDUINO_USB_MODE ****
-HWCDC TasConsole;                           // ESP32C3/S3 embedded USB using JTAG interface
+HWCDC TasConsole;                           // ESP32C3/C6/S3 embedded USB using JTAG interface
 bool tasconsole_serial = false;
 //#warning **** TasConsole uses HWCDC ****
 #else   // No ARDUINO_USB_MODE
@@ -304,12 +306,13 @@ struct TasmotaGlobal_t {
   bool ntp_force_sync;                      // Force NTP sync
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
+  bool restart_deepsleep;                   // Do not restart but do deepsleep
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
-  bool enable_logging;                      // Enable logging
 
   uint8_t user_globals[3];                  // User set global temp/hum/press
+  uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
@@ -335,6 +338,7 @@ struct TasmotaGlobal_t {
   uint8_t serial_in_byte;                   // Received byte
   uint8_t serial_skip;                      // Skip number of received messages
   uint8_t devices_present;                  // Max number of devices supported
+  uint8_t maxlog_level;                     // Max allowed log level
   uint8_t masterlog_level;                  // Master log level used to override set log level
   uint8_t seriallog_level;                  // Current copy of Settings->seriallog_level
   uint8_t syslog_level;                     // Current copy of Settings->syslog_level
@@ -397,12 +401,13 @@ TSettings* Settings = nullptr;
 
 void setup(void) {
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif  // DISABLE_ESP32_BROWNOUT
 
-#ifdef CONFIG_IDF_TARGET_ESP32
   // restore GPIO16/17 if no PSRAM is found
+  #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
@@ -412,6 +417,7 @@ void setup(void) {
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
+  #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
@@ -431,7 +437,7 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-  TasmotaGlobal.enable_logging = 1;
+  TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
   TasmotaGlobal.power_latching = 0x80000000;
 
@@ -477,7 +483,7 @@ void setup(void) {
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
 //  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
@@ -577,6 +583,7 @@ void setup(void) {
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +2) {  // Restarted 4 times
         Settings->rule_enabled = 0;                  // Disable all rules
+        Settings->flag3.shutter_mode = 0;            // disable shutter support
         TasmotaGlobal.no_autoexec = true;
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times

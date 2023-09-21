@@ -96,7 +96,7 @@ extern "C" {
     TwoWire & myWire = getWire(vm);
     if (top == 2 && be_isint(vm, 2)) {  // only 1 argument of type string accepted
       int32_t address = be_toint(vm, 2);
-      myWire.beginTransmission(address);
+      myWire.beginTransmission((int)address);
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);

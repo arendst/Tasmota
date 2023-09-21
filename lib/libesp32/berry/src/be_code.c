@@ -81,7 +81,8 @@ static int codeABx(bfuncinfo *finfo, bopcode op, int a, int bx)
 /* Move value from register b to register a */
 /* Check the previous instruction to compact both instruction as one if possible */
 /* If b is a constant, add LDCONST or add MOVE otherwise */
-static void code_move(bfuncinfo *finfo, int a, int b)
+/* returns false if the move operation happened, or true if there was a register optimization and `b` should be replaced by `a` */
+static bbool code_move(bfuncinfo *finfo, int a, int b)
 {
     if (finfo->pc) {  /* If not the first instruction of the function */
         binstruction *i = be_vector_end(&finfo->code);  /* get the last instruction */
@@ -91,7 +92,14 @@ static void code_move(bfuncinfo *finfo, int a, int b)
             int x = IGET_RA(*i), y = IGET_RKB(*i), z = IGET_RKC(*i);
             if (b == x && (a == y || (op < OP_NEG && a == z))) {
                 *i = (*i & ~IRA_MASK) | ISET_RA(a);
-                return;
+                return btrue;
+            }
+        }
+        if (!isK(b)) {  /* OP_MOVE */
+            /* check if the previous OP_MOVE is not identical */
+            binstruction mov = ISET_OP(OP_MOVE) | ISET_RA(a) | ISET_RKB(b) | ISET_RKC(0);
+            if (mov == *i) {
+                return btrue;   /* previous instruction is the same move, remove duplicate */
             }
         }
     }
@@ -100,6 +108,7 @@ static void code_move(bfuncinfo *finfo, int a, int b)
     } else {
         codeABC(finfo, OP_MOVE, a, b, 0);
     }
+    return bfalse;
 }
 
 /* Free register at top (checks that it´s a register) */
@@ -107,7 +116,7 @@ static void code_move(bfuncinfo *finfo, int a, int b)
 static void free_expreg(bfuncinfo *finfo, bexpdesc *e)
 {
     /* release temporary register */
-    if (e && e->type == ETREG) {
+    if (e && e->type == ETREG && e->v.idx == finfo->freereg - 1) {      /* free ETREG only if it's top of stack */
         be_code_freeregs(finfo, 1);
     }
 }
@@ -670,20 +679,25 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 
 /* Assign expr e2 to e1 */
 /* e1 must be in a register and have a valid idx */
+/* if `keep_reg` is true, do not release registre */
 /* return 1 if assignment was possible, 0 if type is not compatible */
-int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
+int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 {
     int src = exp2reg(finfo, e2,
         e1->type == ETLOCAL ? e1->v.idx : -1); /* Convert e2 to kreg */
         /* If e1 is a local variable, use the register */
 
-    if (e1->type != ETLOCAL || e1->v.idx != src) {
+    if (!keep_reg && (e1->type != ETLOCAL || e1->v.idx != src)) {
         free_expreg(finfo, e2); /* free source (checks only ETREG) */ /* TODO e2 is at top */
     }
     switch (e1->type) {
     case ETLOCAL: /* It can't be ETREG. */
         if (e1->v.idx != src) {
-            code_move(finfo, e1->v.idx, src); /* do explicit move only if needed */
+            bbool reg_optimized = code_move(finfo, e1->v.idx, src); /* do explicit move only if needed */
+            if (reg_optimized) {
+                free_expreg(finfo, e2); /* free source (checks only ETREG) */
+                *e2 = *e1;      /* now e2 is e1 ETLOCAL */
+            }
         }
         break;
     case ETGLOBAL: /* store to grobal R(A) -> G(Bx) by global index */
@@ -714,7 +728,7 @@ int be_code_nextreg(bfuncinfo *finfo, bexpdesc *e)
 {
     int dst = finfo->freereg;
     int src = exp2anyreg(finfo, e); /* get variable register index */
-    if (e->type != ETREG) { /* move local and const to new register */
+    if ((e->type != ETREG) || (src < dst - 1)) { /* move local and const to new register, don't move if already top of stack */
         code_move(finfo, dst, src);
         be_code_allocregs(finfo, 1);
     } else {
@@ -887,7 +901,7 @@ void be_code_import(bfuncinfo *finfo, bexpdesc *m, bexpdesc *v)
         codeABC(finfo, OP_IMPORT, dst, src, 0);
         m->type = ETREG;
         m->v.idx = dst;
-        be_code_setvar(finfo, v, m);
+        be_code_setvar(finfo, v, m, bfalse);
     }
 }
 

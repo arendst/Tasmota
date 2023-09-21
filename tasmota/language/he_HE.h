@@ -58,6 +58,7 @@
 #define D_AS "-כ"
 #define D_AUTO "אוטומטי"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "מהבהב"
 #define D_BLINKOFF "כיבוי היבהוב"
 #define D_BOOT_COUNT "מונה הפעלה מחדש"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT "עבר"
 #define D_TRUE "נכון"
 #define D_TVOC "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "שדרוג"
 #define D_UPLOAD "העלאה"
 #define D_UPTIME "זמן עליה"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "נגן מוזיקה"
 #define D_SENSOR_DFR562_BUSY   "MP3 Busy"

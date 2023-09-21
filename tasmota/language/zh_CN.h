@@ -58,6 +58,7 @@
 #define D_AS "名称:"
 #define D_AUTO "自动"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "闪烁"
 #define D_BLINKOFF "闪烁关"
 #define D_BOOT_COUNT "启动次数"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT "发送"
 #define D_TRUE "True"
 #define D_TVOC "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "升级"
 #define D_UPLOAD "上传"
 #define D_UPTIME "运行时间"
@@ -271,7 +275,7 @@
 #define D_CONFIGURATION "设置"
 #define D_INFORMATION "信息"
 #define D_FIRMWARE_UPGRADE "固件升级"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "控制台"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "确认重启"
 
@@ -492,12 +496,12 @@
 
 // xdrv_23_zigbee
 #define D_ZIGBEE_PERMITJOIN_ACTIVE "允许设备连入"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee 映射"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee 网络拓扑"
 #define D_ZIGBEE_NOT_STARTED "Zigbee 未启动"
 #define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "正在处理中 (等待 %d s.)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "无映射"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee 映射刷新"
-#define D_ZIGBEE_MAP   "Zigbee 映射"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "无拓扑"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee 拓扑结构刷新"
+#define D_ZIGBEE_MAP   "Zigbee 拓扑"
 #define D_ZIGBEE_PERMITJOIN "Zigbee 允许连入"
 #define D_ZIGBEE_GENERATE_KEY "正在生成 Zigbee 网络随机秘钥"
 #define D_ZIGBEE_UNKNOWN_DEVICE "未知设备"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_DFR562_BUSY   "MP3 Busy"

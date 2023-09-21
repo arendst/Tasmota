@@ -33,13 +33,14 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_tasmota_global_struct = {
     sizeof(TasmotaGlobal),  /* size in bytes */
-    8,  /* number of elements */
+    9,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[8]) {
+    (const be_ctypes_structure_item_t[9]) {
       // Warning: fields below need to be in alphabetical order
       { "devices_present", offsetof(TasmotaGlobal_t, devices_present), 0, 0, ctypes_u8, 0 },
       { "fast_loop_enabled", offsetof(TasmotaGlobal_t, berry_fast_loop_enabled), 0, 0, ctypes_u8, 0 },
       { "masterlog_level", offsetof(TasmotaGlobal_t, masterlog_level), 0, 0, ctypes_u8, 0 },
+      { "maxlog_level", offsetof(TasmotaGlobal_t, maxlog_level), 0, 0, ctypes_u8, 0 },
       { "restart_flag", offsetof(TasmotaGlobal_t, restart_flag), 0, 0, ctypes_u8, 0 },
       { "seriallog_level", offsetof(TasmotaGlobal_t, seriallog_level), 0, 0, ctypes_u8, 0 },
       { "sleep", offsetof(TasmotaGlobal_t, sleep), 0, 0, ctypes_u8, 0 },

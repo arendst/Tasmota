@@ -21,44 +21,63 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
-#include "esp_spi_flash.h"
+
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "esp_flash.h"
+#else
+  #include "esp_spi_flash.h"
+#endif
 
 size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t size) {
-    uint32_t addr = address_start;
-    size_t size_left = size;
-    size_t current_offset = 0;
-    esp_err_t ret;
-    // Memory is unaligned, so we need to copy it to an aligned buffer
-    uint8_t buffer[SPI_FLASH_SEC_SIZE] __attribute__((aligned(4)));
+  uint32_t addr = address_start;
+  size_t size_left = size;
+  size_t current_offset = 0;
+  esp_err_t ret;
+  // Memory is unaligned, so we need to copy it to an aligned buffer
+  uint8_t buffer[SPI_FLASH_SEC_SIZE] __attribute__((aligned(4)));
 
-    while (size_left) {
-      uint32_t page_addr = addr & ~(SPI_FLASH_SEC_SIZE - 1);
-      uint32_t addr_in_page = addr & (SPI_FLASH_SEC_SIZE - 1);
-      uint32_t size_in_page = size_left;
-      if (addr_in_page + size_in_page > SPI_FLASH_SEC_SIZE) {
-        size_in_page = SPI_FLASH_SEC_SIZE - addr_in_page;
-      }
-
-      // AddLog(LOG_LEVEL_DEBUG, ">>>: flash_write addr=%p size=%i -- page_addr=%p addr_in_page=%p size_in_page=%i size_left=%i", address_start, size, page_addr, addr_in_page, size_in_page, size_left);
-      // check if whole page?
-      if (addr_in_page == 0 && size_in_page == SPI_FLASH_SEC_SIZE) {
-        memcpy(buffer, data + current_offset, SPI_FLASH_SEC_SIZE);
-      } else {
-        ret = spi_flash_read(page_addr, buffer, SPI_FLASH_SEC_SIZE);
-        if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not read flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
-        memcpy(buffer + addr_in_page, data + current_offset, size_in_page);
-      }
-      ret = spi_flash_erase_sector(page_addr / SPI_FLASH_SEC_SIZE);
-      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X ret=%i", page_addr / SPI_FLASH_SEC_SIZE, ret); return 0; }
-      spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
-      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
-
-      addr += size_in_page;
-      current_offset += size_in_page;
-      size_left -= size_in_page;
+  while (size_left) {
+    uint32_t page_addr = addr & ~(SPI_FLASH_SEC_SIZE - 1);
+    uint32_t addr_in_page = addr & (SPI_FLASH_SEC_SIZE - 1);
+    uint32_t size_in_page = size_left;
+    if (addr_in_page + size_in_page > SPI_FLASH_SEC_SIZE) {
+      size_in_page = SPI_FLASH_SEC_SIZE - addr_in_page;
     }
 
-    return current_offset;
+    // AddLog(LOG_LEVEL_DEBUG, ">>>: flash_write addr=%p size=%i -- page_addr=%p addr_in_page=%p size_in_page=%i size_left=%i", address_start, size, page_addr, addr_in_page, size_in_page, size_left);
+    // check if whole page?
+    if (addr_in_page == 0 && size_in_page == SPI_FLASH_SEC_SIZE) {
+      memcpy(buffer, data + current_offset, SPI_FLASH_SEC_SIZE);
+    } else {
+#if ESP_IDF_VERSION_MAJOR < 5
+      ret = spi_flash_read(page_addr, buffer, SPI_FLASH_SEC_SIZE);
+#else
+      ret = esp_flash_read(NULL, buffer, page_addr, SPI_FLASH_SEC_SIZE);
+#endif
+      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not read flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
+      memcpy(buffer + addr_in_page, data + current_offset, size_in_page);
+    }
+#if ESP_IDF_VERSION_MAJOR < 5
+    ret = spi_flash_erase_sector(page_addr / SPI_FLASH_SEC_SIZE);
+#else
+    ret = esp_flash_erase_region(NULL, page_addr, SPI_FLASH_SEC_SIZE);
+#endif
+    if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X ret=%i", page_addr / SPI_FLASH_SEC_SIZE, ret); return 0; }
+#if ESP_IDF_VERSION_MAJOR < 5
+    spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
+#else
+    esp_flash_write(NULL, buffer, page_addr, SPI_FLASH_SEC_SIZE);
+#endif
+
+    if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
+
+    addr += size_in_page;
+    current_offset += size_in_page;
+    size_left -= size_in_page;
+  }
+
+  return current_offset;
 }
 
 /*********************************************************************************************\
@@ -84,7 +103,11 @@ extern "C" {
       }
       // allocate a buffer in the heap that will be automatically freed when going out of scope
       auto buf = std::unique_ptr<uint8_t[]>(new uint8_t[length]);
+#if ESP_IDF_VERSION_MAJOR < 5
       esp_err_t ret = spi_flash_read(address, buf.get(), length);
+#else
+      esp_err_t ret = esp_flash_read(NULL, buf.get(), address, length);
+#endif
       if (ret)  {
         be_raisef(vm, "internal_error", "Error calling spi_flash_read(0x%X, %i)", address, length);
       }
@@ -111,7 +134,11 @@ extern "C" {
         const void * bytes = be_tobytes(vm, 2, &length);
         if (bytes && length > 0) {
           if (no_erase) {
+#if ESP_IDF_VERSION_MAJOR < 5
             esp_err_t ret = spi_flash_write(address, (const uint8_t*)bytes, length);
+#else
+            esp_err_t ret = esp_flash_write(NULL, (const uint8_t*)bytes, address, length);
+#endif
             if (ret) {
               be_raisef(vm, "internal_error", "Error calling spi_flash_write() ret=%i", ret);
             }
@@ -144,7 +171,11 @@ extern "C" {
       if ((length % 0x1000) != 0 || length < 0) {
         be_raise(vm, "value_error", "Length must be a multiple of 0x1000");
       }
+#if ESP_IDF_VERSION_MAJOR < 5
       esp_err_t ret = spi_flash_erase_range(address, length);
+#else
+      esp_err_t ret = esp_flash_erase_region(NULL, address, length);
+#endif
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);

@@ -2,7 +2,7 @@
 
 #define mul(a,b) \
 ({ \
-	register int32_t res; \
+	register int res; \
 	__asm__ __volatile__("mult %0, %1" : : "r" (a), "r" (b)); \
 	__asm__ __volatile__("mfhi %0" : "=r" (res)); \
 	res; \
@@ -19,14 +19,14 @@
 
 #define mulz(hi,lo) \
 do { \
-	register int32_t t; \
+	register int t; \
 	__asm__ __volatile__("mfhi %0" : "=r" (t)); \
 	(hi) = t; \
 } while (0)
 
 #define cmuls(dre, dim, are, aim, bre, bim) \
 do { \
-	register int32_t t1, t2, tre; \
+	register int t1, t2, tre; \
 	__asm__ __volatile__("mult %0, %1" : : "r" (are), "r" (bre)); \
 	__asm__ __volatile__("msub %0, %1" : : "r" (aim), "r" (bim)); \
 	__asm__ __volatile__("mfhi %0; mflo %1" : "=r" (t1), "=r" (t2)); \

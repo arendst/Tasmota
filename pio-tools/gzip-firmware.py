@@ -57,7 +57,7 @@ if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATF
             )
         else:
             print(
-                "Compression reduced firmware size by {:.0f}% (was {} bytes, now {} bytes)".format(
+                "Compression reduced firmware size to {:.0f}% (was {} bytes, now {} bytes)".format(
                     (GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100,
                     ORG_FIRMWARE_SIZE,
                     GZ_FIRMWARE_SIZE,

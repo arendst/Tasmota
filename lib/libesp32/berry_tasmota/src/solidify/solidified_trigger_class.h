@@ -44,7 +44,7 @@ be_local_closure(Trigger_init,   /* name */
 ********************************************************************/
 be_local_closure(Trigger_tostring,   /* name */
   be_nested_proto(
-    10,                          /* nstack */
+    8,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -52,36 +52,33 @@ be_local_closure(Trigger_tostring,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(string),
-    /* K1   */  be_nested_str(format),
-    /* K2   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X25s_X2C_X20_X25s_X2C_X20_X25s_X29),
-    /* K3   */  be_nested_str(trig),
-    /* K4   */  be_nested_str(f),
-    /* K5   */  be_nested_str(id),
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X25s_X2C_X20_X25s_X2C_X20_X25s_X29),
+    /* K1   */  be_nested_str(trig),
+    /* K2   */  be_nested_str(f),
+    /* K3   */  be_nested_str(id),
     }),
     &be_const_str_tostring,
     &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080301,  //  0001  GETMET	R2	R1	K1
-      0x58100002,  //  0002  LDCONST	R4	K2
-      0x60140008,  //  0003  GETGBL	R5	G8
-      0x60180006,  //  0004  GETGBL	R6	G6
-      0x5C1C0000,  //  0005  MOVE	R7	R0
-      0x7C180200,  //  0006  CALL	R6	1
-      0x7C140200,  //  0007  CALL	R5	1
-      0x60180008,  //  0008  GETGBL	R6	G8
-      0x881C0103,  //  0009  GETMBR	R7	R0	K3
-      0x7C180200,  //  000A  CALL	R6	1
-      0x601C0008,  //  000B  GETGBL	R7	G8
-      0x88200104,  //  000C  GETMBR	R8	R0	K4
-      0x7C1C0200,  //  000D  CALL	R7	1
-      0x60200008,  //  000E  GETGBL	R8	G8
-      0x88240105,  //  000F  GETMBR	R9	R0	K5
-      0x7C200200,  //  0010  CALL	R8	1
-      0x7C080C00,  //  0011  CALL	R2	6
-      0x80040400,  //  0012  RET	1	R2
+    ( &(const binstruction[18]) {  /* code */
+      0x60040018,  //  0000  GETGBL	R1	G24
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x600C0008,  //  0002  GETGBL	R3	G8
+      0x60100006,  //  0003  GETGBL	R4	G6
+      0x5C140000,  //  0004  MOVE	R5	R0
+      0x7C100200,  //  0005  CALL	R4	1
+      0x7C0C0200,  //  0006  CALL	R3	1
+      0x60100008,  //  0007  GETGBL	R4	G8
+      0x88140101,  //  0008  GETMBR	R5	R0	K1
+      0x7C100200,  //  0009  CALL	R4	1
+      0x60140008,  //  000A  GETGBL	R5	G8
+      0x88180102,  //  000B  GETMBR	R6	R0	K2
+      0x7C140200,  //  000C  CALL	R5	1
+      0x60180008,  //  000D  GETGBL	R6	G8
+      0x881C0103,  //  000E  GETMBR	R7	R0	K3
+      0x7C180200,  //  000F  CALL	R6	1
+      0x7C040A00,  //  0010  CALL	R1	5
+      0x80040200,  //  0011  RET	1	R1
     })
   )
 );

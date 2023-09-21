@@ -78,6 +78,9 @@
 #define ADE7953_PREF              1540       // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
 #define ADE7953_UREF              26000      // 4194304 / (26000 / 10000) = 1613194 (= VGAIN)
 #define ADE7953_IREF              10000      // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be different than 4194304 in order to use calib.dat)
+#define ADE7953_NO_LOAD_THRESHOLD 29196      // According to ADE7953 datasheet the default threshold for no load detection is 58,393 use half this value to measure lower (5w) powers.
+#define ADE7953_NO_LOAD_ENABLE    0          // Set DISNOLOAD register to 0 to enable No-load detection
+#define ADE7953_NO_LOAD_DISABLE   7          // Set DISNOLOAD register to 7 to disable No-load detection
 
 // Default calibration parameters can be overridden by a rule as documented above.
 #define ADE7953_GAIN_DEFAULT      4194304    // = 0x400000 range 2097152 (min) to 6291456 (max)
@@ -120,13 +123,19 @@ enum Ade7953_16BitRegisters {
   ADE7943_PFB,                     // 0x10B   R    16  S   0x0000      Power factor (Current Channel B)
   ADE7943_ANGLE_A,                 // 0x10C   R    16  S   0x0000      Angle between the voltage input and the Current Channel A input
   ADE7943_ANGLE_B,                 // 0x10D   R    16  S   0x0000      Angle between the voltage input and the Current Channel B input
-  ADE7943_Period                   // 0x10E   R    16  U   0x0000      Period register
+  ADE7943_Period,                  // 0x10E   R    16  U   0x0000      Period register
+
+  ADE7953_RESERVED_0X120 = 0x120   // 0x120                            This register should be set to 30h to meet the performance specified in Table 1. To modify this register, it must be unlocked by setting Register Address 0xFE to 0xAD immediately prior.
 };
 
 enum Ade7953_32BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
   // ----------------------------     ------  ---  --  --  ----------  --------------------------------------------------------------------
   ADE7953_ACCMODE = 0x301,         // 0x301   R/W  24  U   0x000000    Accumulation mode (see Table 21)
+
+  ADE7953_AP_NOLOAD = 0x303,       // 0x303   R/W  24  U   0x00E419    No load threshold for actual power
+  ADE7953_VAR_NOLOAD,              // 0x304   R/W  24  U   0x00E419    No load threshold for reactive power
+  ADE7953_VA_NOLOAD,               // 0x305   R/W  24  U   0x000000    No load threshold for appearant power
 
   ADE7953_AVA = 0x310,             // 0x310   R    24  S   0x000000    Instantaneous apparent power (Current Channel A)
   ADE7953_BVA,                     // 0x311   R    24  S   0x000000    Instantaneous apparent power (Current Channel B)
@@ -402,9 +411,14 @@ void Ade7953Init(void) {
     Ade7953DumpRegs(chip);
 #endif  // ADE7953_DUMP_REGS
 
-    Ade7953Write(ADE7953_CONFIG, 0x0004);            // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
-    Ade7953Write(0x0FE, 0x00AD);                     // Unlock register 0x120
-    Ade7953Write(0x120, 0x0030);                     // Configure optimum setting
+    Ade7953Write(ADE7953_CONFIG, 0x0004);                        // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
+    Ade7953Write(0x0FE, 0x00AD);                                 // Unlock register 0x120
+    Ade7953Write(ADE7953_RESERVED_0X120, 0x0030);                // Configure optimum setting
+    Ade7953Write(ADE7953_DISNOLOAD, 0x07);                       // Disable no load detection, required before setting thresholds
+    Ade7953Write(ADE7953_AP_NOLOAD, ADE7953_NO_LOAD_THRESHOLD);  // Set no load treshold for active power
+    Ade7953Write(ADE7953_VAR_NOLOAD, ADE7953_NO_LOAD_THRESHOLD); // Set no load treshold for reactive power
+    Ade7953Write(ADE7953_DISNOLOAD, 0x00);                       // Enable no load detection
+
 #ifdef USE_ESP32_SPI
 //    int32_t value = Ade7953Read(0x702);              // Silicon version
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
@@ -510,16 +524,11 @@ void Ade7953GetData(void) {
   for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
     Ade7953.voltage_rms[channel] = reg[channel][4];
     Ade7953.current_rms[channel] = reg[channel][0];
-    if (Ade7953.current_rms[channel] < 2000) {        // No load threshold (20mA)
-      Ade7953.current_rms[channel] = 0;
-      Ade7953.active_power[channel] = 0;
-    } else {
-      Ade7953.active_power[channel] = abs(reg[channel][1]);
-      apparent_power[channel] = abs(reg[channel][2]);
-      reactive_power[channel] = abs(reg[channel][3]);
-      if ((ADE7953_SHELLY_EM == Ade7953.model) && (bitRead(acc_mode, 18 +(channel * 3)))) {  // VARNLOAD
-        reactive_power[channel] = 0;
-      }
+    Ade7953.active_power[channel] = abs(reg[channel][1]);
+    apparent_power[channel] = abs(reg[channel][2]);
+    reactive_power[channel] = abs(reg[channel][3]);
+    if ((ADE7953_SHELLY_EM == Ade7953.model) && (bitRead(acc_mode, 18 +(channel * 3)))) {  // VARNLOAD
+      reactive_power[channel] = 0;
     }
   }
 

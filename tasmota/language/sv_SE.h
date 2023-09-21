@@ -58,6 +58,7 @@
 #define D_AS "som"
 #define D_AUTO "AUTO"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blinka"
 #define D_BLINKOFF "BlinkaAv"
 #define D_BOOT_COUNT "Uppstartsräknare"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT "Sänd"
 #define D_TRUE "Sant"
 #define D_TVOC "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPGRADE "uppgradera"
 #define D_UPLOAD "Ladda upp"
 #define D_UPTIME "Upptid"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 spelare"
 #define D_SENSOR_DFR562_BUSY   "MP3 upptaget"

@@ -39,69 +39,55 @@ extern "C" {
 }
 
 // AudioOutput.set_rate(rate_hz:int) -> bool
-AudioOutput* be_audio_output_init_ntv(void) {
+AudioOutput* be_audio_output_init(void) {
   return new AudioOutput();
 }
-int32_t be_audio_output_init(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_init_ntv, "+.p", "");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_init, "+.p", "");
 
 // AudioOutput.set_rate(rate_hz:int) -> bool
-int be_audio_output_set_rate_ntv(AudioOutput* out, int hz) {
+int be_audio_output_set_rate(AudioOutput* out, int hz) {
   return out->SetRate(hz);
 }
-int32_t be_audio_output_set_rate(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_set_rate_ntv, "b", ".i");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_set_rate, "b", ".i");
 
 // AudioOutput.set_bits_per_sample(bits_per_sample:int) -> bool
-int be_audio_output_set_bits_per_sample_ntv(AudioOutput* out, int bps) {
+int be_audio_output_set_bits_per_sample(AudioOutput* out, int bps) {
   return out->SetBitsPerSample(bps);
 }
-int32_t be_audio_output_set_bits_per_sample(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_set_bits_per_sample_ntv, "b", ".i");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_set_bits_per_sample, "b", ".i");
 
 // AudioOutput.set_channels(channels:int) -> bool
-int be_audio_output_set_channels_ntv(AudioOutput* out, int channels) {
+int be_audio_output_set_channels(AudioOutput* out, int channels) {
   return out->SetChannels(channels);
 }
-int32_t be_audio_output_set_channels(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_set_channels_ntv, "b", ".i");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_set_channels, "b", ".i");
 
 // AudioOutput.set_gain(gain:real) -> bool
-int be_audio_output_set_gain_ntv(AudioOutput* out, float gain) {
+int be_audio_output_set_gain(AudioOutput* out, float gain) {
   return out->SetGain(gain);
 }
-int32_t be_audio_output_set_gain(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_set_gain_ntv, "b", ".f");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_set_gain, "b", ".f");
 
 // AudioOutput.begin() -> bool
-int be_audio_output_begin_ntv(AudioOutput* out) {
+int be_audio_output_begin(AudioOutput* out) {
   return out->begin();
 }
-int32_t be_audio_output_begin(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_begin_ntv, "b", ".");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_begin, "b", ".");
+
 // AudioOutput.stop() -> bool
-int be_audio_output_stop_ntv(AudioOutput* out) {
+int be_audio_output_stop(AudioOutput* out) {
   return out->stop();
 }
-int32_t be_audio_output_stop(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_stop_ntv, "b", ".");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_stop, "b", ".");
+
 // AudioOutput.flush() -> bool
-void be_audio_output_flush_ntv(AudioOutput* out) {
+void be_audio_output_flush(AudioOutput* out) {
   out->flush();
 }
-int32_t be_audio_output_flush(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_flush_ntv, "", ".");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_flush, "", ".");
 
 // AudioOutput.consume_mono(bytes) -> int
-int be_audio_output_consume_mono_ntv(AudioOutput* out, uint16_t *pcm, int bytes_len, int index) {
+int be_audio_output_consume_mono(AudioOutput* out, uint16_t *pcm, int bytes_len, int index) {
   int pcm_len = bytes_len / 2;
   int n;
   // berry_log_C("be_audio_output_consume_mono_ntv out=%p pcm=%p bytes_len=%i index=%i", out, pcm, bytes_len, index);
@@ -112,12 +98,10 @@ int be_audio_output_consume_mono_ntv(AudioOutput* out, uint16_t *pcm, int bytes_
   }
   return n;
 }
-int32_t be_audio_output_consume_mono(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_consume_mono_ntv, "i", ".(bytes)~i");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_consume_mono, "i", ".(bytes)~i");
 
 // AudioOutput.consume_stereo(bytes) -> int
-int be_audio_output_consume_stereo_ntv(AudioOutput* out, uint16_t *pcm, int bytes_len, int index) {
+int be_audio_output_consume_stereo(AudioOutput* out, uint16_t *pcm, int bytes_len, int index) {
   int pcm_len = bytes_len / 4;  // 2 samples LEFT+RIGHT of 2 bytes each
   int n;
   // berry_log_C("be_audio_output_consume_stereo_ntv out=%p pcm=%p bytes_len=%i index=%i", out, pcm, bytes_len, index);
@@ -129,12 +113,10 @@ int be_audio_output_consume_stereo_ntv(AudioOutput* out, uint16_t *pcm, int byte
   }
   return n;
 }
-int32_t be_audio_output_consume_stereo(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_consume_stereo_ntv, "i", ".(bytes)~i");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_consume_stereo, "i", ".(bytes)~i");
 
 // AudioOutput.consume_silence() -> int, push silence frames
-int be_audio_output_consume_silence_ntv(AudioOutput* out) {
+int be_audio_output_consume_silence(AudioOutput* out) {
   int n = 0;
   int16_t ms[2] = {0, 0};
   while (true) {
@@ -143,11 +125,15 @@ int be_audio_output_consume_silence_ntv(AudioOutput* out) {
   }
   return n;
 }
-int32_t be_audio_output_consume_silence(struct bvm *vm) {
-  return be_call_c_func(vm, (void*) &be_audio_output_consume_silence_ntv, "i", ".");
-}
+BE_FUNC_CTYPE_DECLARE(be_audio_output_consume_silence, "i", ".");
 
 #include "AudioOutputI2S.h"
+
+// AudioOutputI2S.set_lsb_justified(gain:real) -> nil
+int i2s_output_i2s_set_lsb_justified(AudioOutputI2S* out, bbool lsbJustified) {
+  return out->SetLsbJustified(lsbJustified);
+}
+BE_FUNC_CTYPE_DECLARE(i2s_output_i2s_set_lsb_justified, "b", ".b");
 
 extern "C" {
   
@@ -164,20 +150,20 @@ extern "C" {
 
 class be_class_AudioOutput (scope: global, name: AudioOutput, strings: weak) {
     .p, var
-    init, func(be_audio_output_init)
+    init, ctype_func(be_audio_output_init)
 
-    begin, func(be_audio_output_begin)
-    stop, func(be_audio_output_stop)
-    flush, func(be_audio_output_flush)
+    begin, ctype_func(be_audio_output_begin)
+    stop, ctype_func(be_audio_output_stop)
+    flush, ctype_func(be_audio_output_flush)
 
-    consume_mono, func(be_audio_output_consume_mono)
-    consume_stereo, func(be_audio_output_consume_stereo)
-    consume_silence, func(be_audio_output_consume_silence)
+    consume_mono, ctype_func(be_audio_output_consume_mono)
+    consume_stereo, ctype_func(be_audio_output_consume_stereo)
+    consume_silence, ctype_func(be_audio_output_consume_silence)
 
-    set_rate, func(be_audio_output_set_rate)
-    set_bits_per_sample, func(be_audio_output_set_bits_per_sample)
-    set_channels, func(be_audio_output_set_channels)
-    set_gain, func(be_audio_output_set_gain)
+    set_rate, ctype_func(be_audio_output_set_rate)
+    set_bits_per_sample, ctype_func(be_audio_output_set_bits_per_sample)
+    set_channels, ctype_func(be_audio_output_set_channels)
+    set_gain, ctype_func(be_audio_output_set_gain)
 }
 
 class be_class_AudioGenerator (scope: global, name: AudioGenerator, strings: weak) {
@@ -196,6 +182,8 @@ class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_cl
     init, func(i2s_output_i2s_init)
     deinit, func(i2s_output_i2s_deinit)
     stop, func(i2s_output_i2s_stop)
+
+    set_lsb_justified, ctype_func(i2s_output_i2s_set_lsb_justified)
 }
 
 class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super: be_class_AudioGenerator, strings: weak) {

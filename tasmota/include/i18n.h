@@ -123,7 +123,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
-#define D_JSON_NA "n/a"
+#define D_JSON_NULL "null"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -238,6 +238,7 @@
 #define D_JSON_MY "YaxisInduction"
 #define D_JSON_MZ "ZaxisInduction"
 #define D_JSON_MAGNETICFLD "MagneticInduction"
+#define D_JSON_BATTPERCENT "BatteryPercentage"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
@@ -248,6 +249,7 @@
 #define D_RSLT_STATE "STATE"
 #define D_RSLT_UPTIME "UPTIME"
 #define D_RSLT_WARNING "WARNING"
+#define D_RSLT_COMMAND "COMMAND"
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
@@ -573,6 +575,7 @@
     #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
     #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
     #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
+  #define D_JSON_IRHVAC_INCREMENTAL "Incremental"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
@@ -775,10 +778,18 @@
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
+#define D_CMND_BR_RESTART "Restart"
 #define D_BR_NOT_STARTED  "Berry not started"
 
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver
 #define D_CMND_SHIFT595_DEVICE_COUNT "Shift595DeviceCount"
+
+// Commands xdrv_70_hdmi_cec.ino
+#define D_PRFX_HDMI "Hdmi"
+#define D_CMND_HDMI_SEND "Send"
+#define D_CMND_HDMI_SEND_RAW "SendRaw"
+#define D_CMND_HDMI_TYPE "Type"
+#define D_CMND_HDMI_ADDR "Addr"
 
 // Commands xdrv_89_dali.ino
 #define D_CMND_DALI_POWER                 "power"
@@ -833,6 +844,8 @@
 #define D_LOG_TCP "TCP: "          // TCP bridge
 #define D_LOG_BERRY "BRY: "        // Berry scripting language
 #define D_LOG_LVGL "LVG: "         // LVGL graphics engine
+#define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
+#define D_LOG_SENSOR "SNS: "       // Sensor driver
 
 /********************************************************************************************/
 

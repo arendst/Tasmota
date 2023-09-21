@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 08.05.2023
+ * Updated until v9.4.0.1 - Last update 03.09.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -58,6 +58,7 @@
 #define D_AS                   "come"
 #define D_AUTO                 "AUTO"
 #define D_BATT                 "Batt"                 // Short for Battery
+#define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
 #define D_BLINKOFF             "Lampeggia OFF"
 #define D_BOOT_COUNT           "Numero boot"
@@ -187,6 +188,9 @@
 #define D_TRANSMIT             "Trasmessi"
 #define D_TRUE                 "Vero"
 #define D_TVOC                 "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "astronomico"
+#define D_TWILIGHT_CIVIL       "civile"
+#define D_TWILIGHT_NAUTICAL    "nautico"
 #define D_UPGRADE              "aggiornamento"
 #define D_UPLOAD               "Caricamento"
 #define D_UPTIME               "Tempo accensione"
@@ -651,6 +655,7 @@
 #define D_SENSOR_I2S_BCLK_IN            "I2S - WS IN"
 #define D_SENSOR_I2S_DIN                "I2S - DIN"
 #define D_SENSOR_I2S_DOUT               "I2S - DOUT"
+#define D_SENSOR_HDMI_CEC               "HDMI CEC"
 #define D_SENSOR_WS2812                 "WS2812"
 #define D_SENSOR_DFR562                 "Riproduttore MP3"
 #define D_SENSOR_DFR562_BUSY            "MP3 occupato"

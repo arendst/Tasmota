@@ -189,6 +189,9 @@ bool RtcRebootValid(void) {
 
 extern "C" {
 #include "spi_flash.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "spi_flash_mmap.h"
+#endif
 }
 
 #ifdef ESP8266
@@ -217,6 +220,7 @@ const uint8_t CFG_ROTATES = 7;      // Number of flash sectors used (handles upl
 
 uint32_t settings_location = EEPROM_LOCATION;
 uint32_t settings_crc32 = 0;
+uint32_t settings_size = 0;
 uint8_t *settings_buffer = nullptr;
 uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 
@@ -375,22 +379,6 @@ void SettingsSaveAll(void) {
  * Settings backup and restore
 \*********************************************************************************************/
 
-void SettingsBufferFree(void) {
-  if (settings_buffer != nullptr) {
-    free(settings_buffer);
-    settings_buffer = nullptr;
-  }
-}
-
-bool SettingsBufferAlloc(void) {
-  SettingsBufferFree();
-  if (!(settings_buffer = (uint8_t *)malloc(sizeof(TSettings)))) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
-    return false;
-  }
-  return true;
-}
-
 String SettingsConfigFilename(void) {
   char filename[TOPSZ];
   char hostname[sizeof(TasmotaGlobal.hostname)];
@@ -398,47 +386,143 @@ String SettingsConfigFilename(void) {
   return String(filename);
 }
 
+void SettingsBufferXor(void) {
+  if (config_xor_on_set) {
+    uint32_t xor_index = (settings_size > sizeof(TSettings)) ? 18 : 2;
+    for (uint32_t i = xor_index; i < settings_size; i++) {
+      settings_buffer[i] ^= (config_xor_on_set +i);
+    }
+  }
+}
+
+void SettingsBufferFree(void) {
+  if (settings_buffer != nullptr) {
+    free(settings_buffer);
+    settings_buffer = nullptr;
+  }
+  settings_size = 0;
+}
+
+bool SettingsBufferAlloc(uint32_t upload_size = 0);
+bool SettingsBufferAlloc(uint32_t upload_size) {
+  SettingsBufferFree();
+
+  settings_size = sizeof(TSettings);
+  if (upload_size >= sizeof(TSettings)) {
+    uint32_t mem = ESP_getFreeHeap();
+    if ((mem - upload_size) < (8 * 1024)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+      return false;
+    }
+    settings_size = upload_size;
+
+#ifdef USE_UFILESYS
+  } else {  
+    char filename[14];
+    for (uint32_t i = 0; i < 129; i++) {
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);
+      uint32_t fsize = TfsFileSize(filename);
+      if (fsize) {
+        if (settings_size == sizeof(TSettings)) {
+          settings_size += 16;                     // Add tar header for total file size
+        }
+        fsize = ((fsize / 16) * 16) + 16;          // Use 16-byte boundary
+        settings_size += (16 + fsize);             // Tar header size is 16 bytes
+      }
+    }
+#endif  // USE_UFILESYS
+
+  }
+
+  if (!(settings_buffer = (uint8_t *)calloc(settings_size, 1))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    return false;
+  }
+  return true;
+}
+
 uint32_t SettingsConfigBackup(void) {
   if (!SettingsBufferAlloc()) { return 0; }
 
+  uint8_t *filebuf_ptr = settings_buffer;
+
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    // Add tar header with total file size
+    snprintf_P((char*)filebuf_ptr, 14, PSTR(TASM_FILE_SETTINGS));  // /.settings
+    filebuf_ptr[14] = settings_size;
+    filebuf_ptr[15] = settings_size >> 8;
+    filebuf_ptr += 16;
+  }
+#endif  // USE_UFILESYS
+
   uint32_t cfg_crc32 = Settings->cfg_crc32;
-  Settings->cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  Settings->cfg_crc32 = GetSettingsCrc32();        // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  memcpy(filebuf_ptr, Settings, sizeof(TSettings));
+  Settings->cfg_crc32 = cfg_crc32;                 // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 
-  uint32_t config_len = sizeof(TSettings);
-  memcpy(settings_buffer, Settings, config_len);
-
-  Settings->cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
-
-  if (config_xor_on_set) {
-    for (uint32_t i = 2; i < config_len; i++) {
-      settings_buffer[i] ^= (config_xor_on_set +i);
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    filebuf_ptr += sizeof(TSettings);
+    char filename[14];
+    for (uint32_t i = 0; i < 129; i++) {
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);  // /.drvset012
+      uint32_t fsize = TfsFileSize(filename);
+      if (fsize) {
+        // Add tar header with file size
+        memcpy(filebuf_ptr, filename, 14);
+        filebuf_ptr[14] = fsize;
+        filebuf_ptr[15] = fsize >> 8;
+        filebuf_ptr += 16;
+        if (XdrvCallDriver(i, FUNC_RESTORE_SETTINGS)) {  // Enabled driver
+          // Use most relevant config data which might not have been saved to file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup driver %d"), i);
+          uint32_t data_size = fsize;              // Fix possible buffer overflow
+          if (data_size > XdrvMailbox.index) { data_size = XdrvMailbox.index; }
+          memcpy(filebuf_ptr, (uint8_t*)XdrvMailbox.data, data_size);
+          cfg_crc32 = GetCfgCrc32(filebuf_ptr +4, fsize -4);  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+          filebuf_ptr[0] = cfg_crc32;
+          filebuf_ptr[1] = cfg_crc32 >> 8;
+          filebuf_ptr[2] = cfg_crc32 >> 16;
+          filebuf_ptr[3] = cfg_crc32 >> 24;
+        } else {                                   // Disabled driver
+          // As driver is not active just copy file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+          TfsLoadFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        }
+        filebuf_ptr += ((fsize / 16) * 16) + 16;
+      }
     }
   }
-  return config_len;
+#endif  // USE_UFILESYS
+
+  SettingsBufferXor();
+  return settings_size;
 }
 
 bool SettingsConfigRestore(void) {
-  uint32_t config_len = sizeof(TSettings);
+  SettingsBufferXor();
 
-  if (config_xor_on_set) {
-    for (uint32_t i = 2; i < config_len; i++) {
-      settings_buffer[i] ^= (config_xor_on_set +i);
-    }
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    settings_size -= 16;
+    memmove(settings_buffer, settings_buffer +16, settings_size);  // Skip tar header
   }
+#endif  // USE_UFILESYS
 
   bool valid_settings = false;
 
-  // unsigned long version;                   // 008
+  // unsigned long version;                        // 008
   unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
   if (buffer_version > 0x06000000) {
-    // uint16_t      cfg_size;                  // 002
+    // uint16_t      cfg_size;                     // 002
     uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
     if (buffer_version > 0x0606000A) {
-      // uint32_t      cfg_crc32;                 // FFC
+      // uint32_t      cfg_crc32;                  // FFC
       uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
       valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
     } else {
-      // uint16_t      cfg_crc;                   // 00E
+      // uint16_t      cfg_crc;                    // 00E
       uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
       valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
     }
@@ -447,18 +531,21 @@ bool SettingsConfigRestore(void) {
   }
 
   if (valid_settings) {
-    // uint8_t       config_version;            // F36
+    // uint8_t       config_version;               // F36
 #ifdef ESP8266
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
-
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
     valid_settings = (2 == settings_buffer[0xF36]);  // Settings->config_version ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
     valid_settings = (3 == settings_buffer[0xF36]);  // Settings->config_version ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
     valid_settings = (4 == settings_buffer[0xF36]);  // Settings->config_version ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+    valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+    valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -467,12 +554,39 @@ bool SettingsConfigRestore(void) {
 
   if (valid_settings) {
     SettingsDefaultSet2();
-    memcpy((char*)Settings +16, settings_buffer +16, config_len -16);
-    Settings->version = buffer_version;  // Restore version and auto upgrade after restart
+    memcpy((char*)Settings +16, settings_buffer +16, sizeof(TSettings) -16);
+    Settings->version = buffer_version;            // Restore version and auto upgrade after restart
   }
 
-  SettingsBufferFree();
+#ifdef USE_UFILESYS
+  if (settings_size > sizeof(TSettings)) {
+    uint8_t *filebuf_ptr = settings_buffer + sizeof(TSettings);
+    while ((filebuf_ptr - settings_buffer) < settings_size) {
+      uint32_t driver = atoi((const char*)filebuf_ptr +8);      // /.drvset012 = 12
+      uint32_t fsize = filebuf_ptr[15] << 8 | filebuf_ptr[14];  // Tar header settings size
+      filebuf_ptr += 16;                           // Start of file settings
+      uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
+      bool valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
+      if (valid_buffer) {
+        if (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS)) {
+          // Restore live config data which will be saved to file before restart
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
+          filebuf_ptr[1]++;                        // Force invalid crc32 to enable auto upgrade after restart
+          uint32_t data_size = fsize;              // Fix possible buffer overflow
+          if (data_size > XdrvMailbox.index) { data_size = XdrvMailbox.index; }
+          memcpy((uint8_t*)XdrvMailbox.data, filebuf_ptr, data_size);  // Restore version and auto upgrade after restart
+        } else {
+          // As driver is not active just copy file
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore file %s (%d)"), (char*)filebuf_ptr -16, fsize);
+          TfsSaveFile((const char*)filebuf_ptr -16, (uint8_t*)filebuf_ptr, fsize);
+        }
+      }
+      filebuf_ptr += ((fsize / 16) * 16) + 16;     // Next tar header or eof
+    }
+  }
+#endif  // USE_UFILESYS
 
+  SettingsBufferFree();
   return valid_settings;
 }
 
@@ -699,12 +813,12 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (1 == settings_location) {
       TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)Settings, sizeof(TSettings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
       ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)Settings, sizeof(TSettings));
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings->save_flag);
     }
   }
 #endif  // ESP8266
@@ -714,7 +828,7 @@ void SettingsLoad(void) {
   if (source) {
     settings_location = 1;
     if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
     }
   }
 #endif  // ESP32
@@ -725,7 +839,7 @@ void SettingsLoad(void) {
 #ifdef USE_UFILESYS
     if (TfsLoadFile(TASM_FILE_SETTINGS_LKG, (uint8_t*)Settings, sizeof(TSettings)) && (Settings->cfg_crc32 == GetSettingsCrc32())) {
       settings_location = 1;
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings->save_flag);
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Loaded from LKG File, " D_COUNT " %lu"), Settings->save_flag);
     } else
 #endif  // USE_UFILESYS
     {
@@ -806,7 +920,7 @@ void SettingsSdkErase(void) {
 /********************************************************************************************/
 
 void SettingsDefault(void) {
-  AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
   SettingsDefaultSet2();
   SettingsDefaultSet3();
@@ -845,12 +959,16 @@ void SettingsDefaultSet2(void) {
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
   Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
   Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
   Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+  Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+  Settings->config_version = 6;  // ESP32C6
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -872,6 +990,7 @@ void SettingsDefaultSet2(void) {
   if (Settings->sleep < 50) {
     Settings->sleep = 50;                // Default to 50 for sleep, for now
   }
+  Settings->battery_level_percent = 101;
 
   // Module
   flag.interlock |= APP_INTERLOCK_MODE;
@@ -929,7 +1048,7 @@ void SettingsDefaultSet2(void) {
   flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
-  Settings->wifi_output_power = 170;
+  Settings->wifi_output_power = MAX_TX_PWR_DBM_54g;
   Settings->dns_timeout = DNS_TIMEOUT;
   Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
   ParseIPv4(&Settings->ipv4_address[0], PSTR(WIFI_IP_ADDRESS));
@@ -1181,12 +1300,12 @@ void SettingsDefaultSet2(void) {
 
   // Display
 //  Settings->display_model = 0;
-  Settings->display_mode = 1;
+  Settings->display_mode = 0;
   Settings->display_refresh = 2;
   Settings->display_rows = 2;
   Settings->display_cols[0] = 16;
   Settings->display_cols[1] = 8;
-  Settings->display_dimmer_protected = -10;  // 10%
+  Settings->display_dimmer_protected = -50;  // 50%
   Settings->display_size = 1;
   Settings->display_font = 1;
 //  Settings->display_rotate = 0;
@@ -1408,12 +1527,16 @@ void SettingsDelta(void) {
       Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
       Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
       Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
       Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+      Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+      Settings->config_version = 6;  // ESP32C6
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1608,7 +1731,7 @@ void SettingsDelta(void) {
       Settings->energy_current_calibration2 = Settings->energy_current_calibration;
     }
     if (Settings->version < 0x0C020005) {  // 12.2.0.5
-      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->modbus_sbaudrate = Settings->hdmi_cec_device_type;  // was ex_modbus_sbaudrate
       Settings->param[P_SERIAL_SKIP] = 0;
     }
     if (Settings->version < 0x0C030102) {  // 12.3.1.2
@@ -1631,6 +1754,9 @@ void SettingsDelta(void) {
       RtcSettings.energy_usage.last_return_kWhtotal /= 100;
       RtcSettings.energy_usage.last_usage_kWhtotal /= 100;
 #endif
+    }
+    if (Settings->version < 0x0D000003) {  // 13.0.0.3
+      Settings->battery_level_percent = 101;
     }
 
     Settings->version = VERSION;

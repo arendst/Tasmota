@@ -183,7 +183,10 @@ int raw_skip;
 const char HTTP_ENERGY_ID_TELEINFO[] PROGMEM =  "{s}ID{m}%s{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO_SELECT[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "%c{e}" ;
-const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
+const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT "{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP1_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p1{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP2_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p2{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP3_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p3{m}%d " D_UNIT_VA "{e}" ;
 //const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "%s{m}%d " D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_TARIF_TELEINFO_STD[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}%s{e}" ;
 const char HTTP_ENERGY_TARIF_TELEINFO_HISTO[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}Heures %s{e}" ;
@@ -192,8 +195,8 @@ const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d"
 const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
 const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_IMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d / %d / %d " D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UNIT_WATT "{e}" ;
-const char HTTP_ENERGY_PMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d / %d / %d " D_UNIT_WATT "{e}" ;
+const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d / %d / %d " D_UNIT_VA "{e}" ;
 const char HTTP_ENERGY_LABEL_VALUE[] PROGMEM =  "{s}%s{m}%s{e}" ;
 const char HTTP_ENERGY_LOAD_BAR[] PROGMEM = "<tr><div style='margin:4px;padding:0px;background-color:#ddd;border-radius:4px;'>"
                                             "<div style='font-size:0.75rem;font-weight:bold;padding:0px;text-align:center;border:1px solid #bbb;border-radius:4px;color:#444;background-color:%s;width:%d%%;'>"
@@ -331,11 +334,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s=%s, now %d"), me->name, me->value, (int) power);
 
             if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS1 || (ilabel == LABEL_SINSTS && Energy->phase_count == 1)) {
-                Energy->active_power[0] = power;
+                Energy->apparent_power[0] = power;
             } else if (ilabel == LABEL_SINSTS2) {
-                Energy->active_power[1] = power;
+                Energy->apparent_power[1] = power;
             } else if (ilabel == LABEL_SINSTS3) {
-                Energy->active_power[2] = power;
+                Energy->apparent_power[2] = power;
             }
         }
 
@@ -406,7 +409,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld  HP:%ld  Total:%ld"), hc, hp, total_wh);
                 }
 
-                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
+                AddLog (LOG_LEVEL_DEBUG_MORE, PSTR ("TIC: Total counter updated to %ld Wh"), total_wh);
                 if (total_wh>0) {
                     Energy->total[0] = (float) total_wh / 1000.0f;
                     Energy->import_active[0] = Energy->total[0];
@@ -422,17 +425,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 total_wh = atol(me->value);
                 Energy->total[0] = (float) total_wh / 1000.0f;
                 Energy->import_active[0] = Energy->total[0];
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total_wh);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: Total:%ldWh"), total_wh);
             }
 
             // Wh indexes (standard)
             else if ( ilabel == LABEL_EASF01)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%ld"), atol(me->value));
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: HC:%ld"), atol(me->value));
             }
             else if ( ilabel == LABEL_EASF02)
             {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%ld"), atol(me->value));
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: HP:%ld"), atol(me->value));
             }
 
             // Contract subscribed (legacy)
@@ -468,7 +471,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             else if (ilabel == LABEL_ISOUSC)
             {
                 isousc = atoi( me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
             // Contract subscribed (Power in KVA)
@@ -477,20 +480,20 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Convert KVA to A
                 isousc  = atoi( me->value) * 5  ;
 
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
             // Serial Number of device
             else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
             {
                 strcpy(serialNumber, me->value);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: %s set to %s"), me->name, serialNumber);
             }
             // Status
             else if (ilabel == LABEL_STGE)
             {
                 status_register = strtol(me->value, nullptr, 16);
-                AddLog(LOG_LEVEL_DEBUG, PSTR("Status Resister : %s set to %08X"), me->name, status_register);
+                AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Status Resister : %s set to %08X"), me->name, status_register);
             }
             
         }
@@ -786,7 +789,7 @@ bool TInfoCmd(void) {
     // At least "EnergyConfig"
     if (CMND_ENERGYCONFIG == Energy->command_code) {
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: len %d, data '%s'"), XdrvMailbox.data_len, XdrvMailbox.data ? XdrvMailbox.data : "null" );
 
         // Just "EnergyConfig" no more parameter
         // Show Teleinfo configuration
@@ -838,7 +841,7 @@ bool TInfoCmd(void) {
 
             int command_code = GetCommandCode(command, sizeof(command), pParam, kTInfo_Commands);
 
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: param '%s' cmnd %d"), pParam, command_code);
 
             switch (command_code) {
                 case CMND_TELEINFO_STANDARD:
@@ -1002,7 +1005,7 @@ void TInfoProcess(void)
     // if needed, update energy total every hour
     if (tick_update++ > 3600 * 4) {
         EnergyUpdateTotal();
-        AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %lu Wh"), total_wh);
+        AddLog (LOG_LEVEL_DEBUG, PSTR ("TIC: Total counter updated to %lu Wh"), total_wh);
         tick_update = 0;
     }
 
@@ -1169,6 +1172,7 @@ void TInfoShow(bool json)
         char name[33];
         char value[33];
         int percent;
+        int papp = -1;
 
         if (isousc) {
             uint8_t hue;
@@ -1186,6 +1190,22 @@ void TInfoShow(bool json)
                 HsToRgb(hue, 128, &red, &green, &blue);
                 snprintf_P(phase_color, sizeof(phase_color), PSTR("#%02X%02X%02X"), red, green, blue);
                 WSContentSend_P(HTTP_ENERGY_LOAD_BAR, phase_color, percent, percent);
+            }
+        }
+
+        if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
+            if ( getValueFromLabelIndex(LABEL_PAPP, value) ) {
+                WSContentSend_P(HTTP_ENERGY_PAPP_TELEINFO, atoi(value));
+            }
+        } else {
+            if (getValueFromLabelIndex(LABEL_SINSTS, value) ) {
+                WSContentSend_P(HTTP_ENERGY_PAPP_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS1, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP1_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS2, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP2_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS3, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP3_TELEINFO, atoi(value));
             }
         }
 

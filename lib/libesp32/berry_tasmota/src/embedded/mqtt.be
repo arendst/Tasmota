@@ -46,8 +46,7 @@ class MQTT : MQTT_ntv
       end
 
       def tostring()
-        import string
-        return string.format("<instance: %s('%s')>", classname(self), self.fulltopic)
+        return format("<instance: %s('%s')>", classname(self), self.fulltopic)
       end
 
       def mqtt_data(topic, idx, payload_s, payload_b)

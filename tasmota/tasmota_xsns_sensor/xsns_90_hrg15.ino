@@ -51,10 +51,10 @@ const char HTTP_RG15[] PROGMEM =
 TasmotaSerial *HydreonSerial = nullptr;
 
 struct RG15 {
-  float acc;
-  float event;
-  float total;
-  float rate;
+  float acc = NAN;
+  float event = NAN;
+  float total = NAN;
+  float rate = NAN;
   uint16_t time = RG15_EVENT_TIMEOUT;
   uint8_t init_step;
 } Rg15;
@@ -109,11 +109,37 @@ bool Rg15Process(char* buffer) {
   // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
   // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
-  if (buffer[0] == 'A' && buffer[1] == 'c' && buffer[2] == 'c') {
-    Rg15Parse(buffer, "Acc", &Rg15.acc);
-    Rg15Parse(buffer, "EventAcc", &Rg15.event);
-    Rg15Parse(buffer, "TotalAcc", &Rg15.total);
-    Rg15Parse(buffer, "RInt", &Rg15.rate);
+
+  // check for the expected data elements
+  // Acc should be a position 0 but note if missing we don't want to mistake it for EventAcc
+  if (strstr(buffer, "Acc")==buffer && strstr(buffer, "EventAcc") != nullptr && strstr(buffer, "TotalAcc") != nullptr && strstr(buffer, "RInt") != nullptr) {
+    Rg15.acc = NAN;
+    Rg15.event = NAN;
+    Rg15.total = NAN;
+    Rg15.rate = NAN;
+
+    float tmp;
+
+    if (Rg15Parse(buffer, "Acc", &tmp)) {
+      Rg15.acc=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'Acc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "EventAcc", &tmp)) {
+      Rg15.event=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'EventAcc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "TotalAcc", &tmp)) {
+      Rg15.total=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'TotalAcc' from accumulation data"));
+    }
+    if (Rg15Parse(buffer, "RInt", &tmp)) {
+      Rg15.rate=tmp;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Unable to parse 'RInt' from accumulation data"));
+    }
 
     if (Rg15.acc > 0.0f) {
       Rg15.time = RG15_EVENT_TIMEOUT;        // We have some data, so the rain event is on-going
@@ -146,6 +172,7 @@ void Rg15Poll(void) {
     if (Rg15.time) {                         // Check if the rain event has timed out, reset rate to 0
       Rg15.time--;
       if (!Rg15.time) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - rain event has timed out, reset acc & rate to 0 "));
         Rg15.acc = 0;
         Rg15.rate = 0;
         publish = true;
@@ -183,8 +210,15 @@ void Rg15Poll(void) {
 
 void Rg15Show(bool json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f,\"" D_JSON_EVENT "\":%2_f,\"" D_JSON_TOTAL "\":%2_f,\"" D_JSON_FLOWRATE "\":%2_f}"),
-      &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+    // if the parsing wasn't completely successful then skip the update
+    if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
+      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_ACTIVE, Rg15.acc);
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_EVENT, Rg15.event);
+      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_TOTAL, Rg15.total);
+      ResponseAppend_P(PSTR("\"%s\":%.2f"), D_JSON_FLOWRATE, Rg15.rate);
+      ResponseAppend_P(PSTR("}"));
+    }
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
@@ -208,7 +242,9 @@ bool Rg15Command(void) {
       Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
-    ResponseCmndDone();
+    ResponseCmndIdxChar(XdrvMailbox.data);
+  } else {
+    ResponseCmndIdxError();
   }
 
   return serviced;
@@ -227,6 +263,9 @@ bool Xsns90(uint32_t function) {
   else if (HydreonSerial) {
     switch (function) {
       case FUNC_EVERY_SECOND:
+        if((TasmotaGlobal.uptime % 60) == 0) {  // every minute
+          ExecuteCommand("Sensor90 R", SRC_SENSOR);
+        }
         Rg15Poll();
         break;
       case FUNC_COMMAND_SENSOR:

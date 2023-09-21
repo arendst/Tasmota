@@ -28,7 +28,7 @@ inline void socketpeeraddr(SOCKET s, IPADDRESS *addr, IPPORT *port) {
     sockaddr_in r;
     socklen_t len = sizeof(r);
     if(getpeername(s,(struct sockaddr*)&r,&len) < 0) {
-        printf("getpeername failed\n");
+//        printf("getpeername failed\n");
         *addr = 0;
         *port = 0;
     }
@@ -54,7 +54,7 @@ inline UDPSOCKET udpsocketcreate(unsigned short portNum)
     int s     = socket(AF_INET, SOCK_DGRAM, 0);
     addr.sin_port = htons(portNum);
     if (bind(s,(sockaddr*)&addr,sizeof(addr)) != 0) {
-        printf("Error, can't bind\n");
+//        printf("Error, can't bind\n");
         close(s);
         s = 0;
     }

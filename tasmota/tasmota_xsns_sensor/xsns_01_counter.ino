@@ -47,7 +47,8 @@ struct COUNTER {
 
 } Counter;
 
-void IRAM_ATTR CounterIsrArg(void *arg) {
+void IRAM_ATTR CounterIsrArg(void *arg);
+void CounterIsrArg(void *arg) {
   uint32_t index = *static_cast<uint8_t*>(arg);
 
   uint32_t time = micros();
@@ -98,6 +99,9 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
 void CounterInterruptDisable(bool state)
 {
   if (state) {   // Disable interrupts
+    if (Settings->flag4.zerocross_dimmer) {
+        return;
+    }
     if (Counter.any_counter) {
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
         if (PinUsed(GPIO_CNTR1, i)) {

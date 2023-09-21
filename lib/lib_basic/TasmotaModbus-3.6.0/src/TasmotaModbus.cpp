@@ -79,6 +79,11 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   uint8_t *frame;
   uint8_t framepointer = 0;
 
+#ifdef TASMOTAMODBUSDEBUG
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: @%02X f:%02X r:%04X c:%u &:%08X"), device_address, function_code, start_address, count, (uint32)write_data);
+  if (write_data) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: Write data 0x%04X"), write_data[0]);
+#endif
+
   uint16_t byte_count = count * 2; // In register mode count is nr of registers (2 bytes)
   if ((function_code == 1) || (function_code == 2) || (function_code == 15)) byte_count = ((count-1) / 8) + 1; // In bitmode count is nr of bits
 
@@ -107,11 +112,17 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
     if (write_data == NULL)
     {
       free(frame);
+#ifdef TASMOTAMODBUSDEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: no data (13.1)"));
+#endif
       return 13; // Register data not specified
     }
     if (count != 1)
     {
       free(frame);
+#ifdef TASMOTAMODBUSDEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: wrong count (12.1)"));
+#endif
       return 12; // Wrong register count
     }
     frame[framepointer++] = (uint8_t)(write_data[0] >> 8);  // MSB
@@ -127,11 +138,17 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
     if (write_data == NULL)
     {
       free(frame);
+#ifdef TASMOTAMODBUSDEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: no data (13.2)"));
+#endif
       return 13; // Register data not specified
     }
     if (count == 0)
     {
       free(frame);
+#ifdef TASMOTAMODBUSDEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: wrong count (12.2)"));
+#endif
       return 12; // Wrong register count
     }
     for (uint16_t bytepointer = 0; bytepointer < byte_count; bytepointer++)
@@ -142,6 +159,9 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   else
   {
     free(frame);
+#ifdef TASMOTAMODBUSDEBUG
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: wrong fct (1)"));
+#endif
     return 1; // Wrong function code
   }
 

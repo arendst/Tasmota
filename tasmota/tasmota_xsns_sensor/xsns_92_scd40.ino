@@ -135,7 +135,7 @@ void Scd40Detect(void)
 
   uint16_t sn[3];
   error = scd40.getSerialNumber(sn);
-  AddLog(LOG_LEVEL_NONE, PSTR("SCD40 serial nr 0x%X 0x%X 0x%X") ,sn[0], sn[1], sn[2]);
+  AddLog(LOG_LEVEL_INFO, PSTR("SCD40 serial nr 0x%X 0x%X 0x%X") ,sn[0], sn[1], sn[2]);
 
   //  by default, start measurements, only register device if this succeeds
 #ifdef USE_SCD40_LOWPOWER

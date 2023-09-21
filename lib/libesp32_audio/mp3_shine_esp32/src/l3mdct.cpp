@@ -5,8 +5,8 @@
 #include "l3subband.h"
 
 /* This is table B.9: coefficients for aliasing reduction */
-#define MDCT_CA(coef)	(int32_t)(coef / sqrt(1.0 + (coef * coef)) * 0x7fffffff)
-#define MDCT_CS(coef)	(int32_t)(1.0  / sqrt(1.0 + (coef * coef)) * 0x7fffffff)
+#define MDCT_CA(coef)	(int)(coef / sqrt(1.0 + (coef * coef)) * 0x7fffffff)
+#define MDCT_CS(coef)	(int)(1.0  / sqrt(1.0 + (coef * coef)) * 0x7fffffff)
 
 #define MDCT_CA0	MDCT_CA(-0.6)
 #define MDCT_CA1	MDCT_CA(-0.535)
@@ -38,7 +38,7 @@ void shine_mdct_initialise(shine_global_config *config) {
     for(k=36; k--; )
       /* combine window and mdct coefficients into a single table */
       /* scale and convert to fixed point before storing */
-      config->mdct.cos_l[m][k] = (int32_t)(sin(PI36*(k+0.5))
+      config->mdct.cos_l[m][k] = (int)(sin(PI36*(k+0.5))
                                       * cos((PI/72)*(2*k+19)*(2*m+1)) * 0x7fffffff);
 }
 
@@ -50,17 +50,17 @@ void shine_mdct_sub(shine_global_config *config, int stride) {
   /* note. we wish to access the array 'config->mdct_freq[2][2][576]' as
    * [2][2][32][18]. (32*18=576),
    */
-  int32_t (*mdct_enc)[18];
+  int (*mdct_enc)[18];
 
   int  ch,gr,band,j,k;
-  int32_t mdct_in[36];
+  int mdct_in[36];
 
   for(ch=config->wave.channels; ch--; )
   {
     for(gr=0; gr<config->mpeg.granules_per_frame; gr++)
     {
       /* set up pointer to the part of config->mdct_freq we're using */
-      mdct_enc = (int32_t (*)[18]) config->mdct_freq[ch][gr];
+      mdct_enc = (int (*)[18]) config->mdct_freq[ch][gr];
 
       /* polyphase filtering */
       for(k=0; k<18; k+=2)
@@ -91,7 +91,7 @@ void shine_mdct_sub(shine_global_config *config, int stride) {
 
         for(k=18; k--; )
         {
-		  int32_t vm;
+		  int vm;
 #ifdef __BORLANDC__
 		  uint32_t vm_lo;
 #else
