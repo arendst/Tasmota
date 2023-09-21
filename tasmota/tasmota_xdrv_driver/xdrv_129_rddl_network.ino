@@ -208,8 +208,8 @@ String signRDDLNetworkMessageContent( const char* data_str, size_t data_length){
   {
     SignDataHash( data_str, data_length,  pubkey_out, sig_out, hash_out);
   }
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "EnergyHash", hash_out);
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "EnergySig", sig_out);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Hash", hash_out);
+  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Signature", sig_out);
   ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "PublicKey", pubkey_out);
   return String(sig_out);
 }
