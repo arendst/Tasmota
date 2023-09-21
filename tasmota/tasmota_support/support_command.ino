@@ -41,7 +41,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
-  D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|"
+  D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -82,7 +82,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid, &CmndBalance, 
-  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID,
+  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -912,6 +912,24 @@ void CmndPlanetmintChainID(void) {
   }
   
   CmndStatusResponse(30);
+  ResponseClear();
+}
+
+void CmndMachineData(void) {
+
+  getPlntmntKeys();
+  HTTPClientLight http;
+  String uri = "/planetmint-go/machine/get_machine_by_public_key/";
+
+  uri = getPlanetmintAPI() + uri;
+  uri = uri + getExtPubKeyPlanetmint() ;
+  http.begin(uri);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.GET();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
+
+  CmndStatusResponse(31);
   ResponseClear();
 }
 

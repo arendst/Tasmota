@@ -39,8 +39,6 @@ const char* setSeed( char* pMnemonic, size_t len );
 const char* getMnemonicFromSeed( const uint8_t* seed, size_t length );
 bool getSeedFromMnemonic( const char* pMnemonic, size_t len, uint8_t* seedbuffer );
 
-int validateSignature();
-
 bool getKeyFromSeed( const uint8_t* seed, uint8_t* priv_key, uint8_t* pub_key, const char* curve_name);
 
 bool SignDataHash(const char* data_str, size_t data_length, char* pubkey_out, char* sig_out, char* hash_out);
@@ -48,7 +46,6 @@ bool SignDataHash(const char* data_str, size_t data_length, char* pubkey_out, ch
 int SignDataHashWithPrivKey(const uint8_t* digest, const uint8_t* priv_key, char* sig_out);
 
 bool verifyDataHash(const char* sig_str, const char* pub_key_str, const char* hash_str);
-
 
 bool getMachineIDSignature(  uint8_t* priv_key,  uint8_t* pub_key, uint8_t* signature, uint8_t* hash);
 

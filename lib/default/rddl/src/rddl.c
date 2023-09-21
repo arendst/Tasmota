@@ -109,25 +109,6 @@ bool getSeedFromMnemonic( const char* pMnemonic, size_t len, uint8_t* seedbuffer
   return true;  
 }
 
-int validateSignature() {
-  const ecdsa_curve *curve = &secp256k1;
-  uint8_t pub_key[33] = {0};
-  uint8_t hash[32] = {0};
-  uint8_t computed_sig[64] = {0};
-
-  const char pub_key_str[] = "02F8BC8B413BF803EA1DA9BE0FBFF4ED23FEED17A859187242007544F8535D3457";
-  const char hash_str[] = "83EC230810630863EEB5C873206F45E60D5FB9EA3F5241EEECFB514F261A57DF";
-  const char sig_str[] = "F551CDF6156FD2A8CC29428B61FDB9F5224928D5A5937E38F36D2D566C11B1DF13CD12E3BA2DAE6A33F091C549A5ADE537A5F07121AA1F4D4286B51260B228DE";
-
-
-  memcpy(pub_key, fromHexString(pub_key_str), 33);
-  memcpy(hash, fromHexString(hash_str), 32);
-  memcpy(computed_sig, fromHexString(sig_str), 64);
-
-  int verified = ecdsa_verify_digest(curve, pub_key, computed_sig, hash);
-  return verified;
-}
-
 bool getKeyFromSeed( const uint8_t* seed, uint8_t* priv_key, uint8_t* pub_key, const char* curve_name){
   // we expect curve name to be ED25519_NAME or SECP256K1_NAME
   HDNode node;
