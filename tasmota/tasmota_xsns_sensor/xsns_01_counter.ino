@@ -127,6 +127,40 @@ bool CounterPinState(void)
   return false;
 }
 
+// is this GPIO configured as a counter
+// this encapsulates the logic and avoids exposing internals to Berry
+bool CounterPinConfigured(int32_t counter) {
+  if ((counter > 0) && (counter <= MAX_COUNTERS) && (PinUsed(GPIO_CNTR1, counter - 1))) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// return counter value for this GPIO
+// this encapsulates the logic and avoids exposing internals to Berry
+uint32_t CounterPinRead(int32_t counter) {
+  if (CounterPinConfigured(counter)) {
+    return RtcSettings.pulse_counter[counter - 1];
+  }
+  return 0;
+}
+
+// set the value, add offset if `add` is true, return value
+// this encapsulates the logic and avoids exposing internals to Berry
+uint32_t CounterPinSet(int32_t counter, int32_t value, bool add) {
+  if (CounterPinConfigured(counter)) {
+    if (add) {
+      RtcSettings.pulse_counter[counter - 1] += value;
+    } else {
+      RtcSettings.pulse_counter[counter - 1] = value;
+    }
+    return RtcSettings.pulse_counter[counter - 1];
+  }
+  return 0;
+}
+
+
 void CounterInit(void)
 {
 

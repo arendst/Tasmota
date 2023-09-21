@@ -241,6 +241,67 @@ extern "C" {
     analogWritePhase(pin, duty, hpoint);
   }
 
+  // gpio.counter_read(counter:int) -> int or nil
+  //
+  // Read counter value, or return nil if counter is not used
+  int gp_counter_read(bvm *vm);
+  int gp_counter_read(bvm *vm) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinRead(counter));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+
+  int gp_counter_set_add(bvm *vm, bool add) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+      int32_t value = be_toint(vm, 2);
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinSet(counter, value, add));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+  // gpio.counter_set(counter:int, value:int) -> int or nil
+  //
+  // Set the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_set(bvm *vm);
+  int gp_counter_set(bvm *vm) {
+    return gp_counter_set_add(vm, false);
+  }
+
+  // gpio.counter_add(counter:int, value:int) -> int or nil
+  //
+  // Add to the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_add(bvm *vm);
+  int gp_counter_add(bvm *vm) {
+    return gp_counter_set_add(vm, true);
+  }
 }
 
 #endif  // USE_BERRY
