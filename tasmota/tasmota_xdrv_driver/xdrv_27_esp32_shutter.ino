@@ -2099,6 +2099,7 @@ void CmndShutterSetup(void) {
   uint32_t new_opentime;
   uint32_t new_closetime;
   uint8_t  max_runtime = 120; // max 120 seconds runtime
+  float daily_kWh[ENERGY_MAX_PHASES];           // 123.123 kWh
 
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     index_no = XdrvMailbox.index-1; // save, because will be changed in following operations
@@ -2107,6 +2108,9 @@ void CmndShutterSetup(void) {
     ShutterSettings.shutter_position[index_no]  = 0;
     ShutterSettings.shutter_closetime[index_no] = max_runtime * 10;
     ShutterSettings.shutter_opentime[index_no]  = max_runtime * 10;
+    for (uint8_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+      daily_kWh[i] = Energy->daily_kWh[i];
+    }
     ShutterInit();
     if (Energy->phase_count > 1) {
       AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open, autostop detect. max duration is 2min Phase:%d"),Energy->phase_count);
@@ -2139,6 +2143,9 @@ void CmndShutterSetup(void) {
       } 
     } 
     ShutterGlobal.callibration_run = false;
+    for (uint8_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+       Energy->daily_kWh[i] = daily_kWh[i];
+    }
   } else {
     // print out help instructions
     // will only work without TILT configuration
