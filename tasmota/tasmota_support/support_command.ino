@@ -929,7 +929,7 @@ void CmndMachineData(void) {
 
   getPlntmntKeys();
   HTTPClientLight http;
-  String uri = "/planetmint-go/machine/get_machine_by_public_key/";
+  String uri = "/github.com/planetmint/planetmint-go/machine/get_machine_by_public_key/";
 
   uri = getPlanetmintAPI() + uri;
   uri = uri + getExtPubKeyPlanetmint() ;
