@@ -491,7 +491,7 @@ bool hasMachineBeenAttested()
 {
   HTTPClientLight http;
 
-  String uri = "/planetmint-go/machine/get_machine_by_public_key/";
+  String uri = "/github.com/planetmint/planetmint-go/machine/get_machine_by_public_key/";
   uri = getPlanetmintAPI() + uri;
   uri = uri + g_ext_pub_key_planetmint;
   http.begin(uri);
@@ -499,10 +499,7 @@ bool hasMachineBeenAttested()
 
   int httpResponseCode = http.GET();
 
-  if (httpResponseCode == 404)
-    return false;
-  else
-    return true;
+  return (httpResponseCode == 200)
 }
 
 char* create_transaction( void* anyMsg, char* tokenAmount )
