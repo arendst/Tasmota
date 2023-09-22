@@ -195,6 +195,7 @@ struct SHUTTERGLOBAL {
   uint16_t open_velocity_max = RESOLUTION;   // maximum of PWM change during opening. Defines velocity on opening. Steppers and Servos only
   bool     callibration_run = false;         // if true a callibration is running and additional measures are captured
   uint8_t  stopp_armed = 0;                  // Count each step power usage is below limit of 1 Watt
+  uint16_t cycle_time = 0;                   // used for shuttersetup to get accurate timing
 } ShutterGlobal;
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
@@ -525,7 +526,6 @@ uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
     loop();
     if (Shutter[i].direction) {
       started   = true;
-      last_time = millis();
     }
   }
   if (!started) return 0;
@@ -537,8 +537,7 @@ uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
     AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. No stop detected... Cancel"));
     return 0;
   } 
-  // reduce cycle time by 0.1 because 2 Steps required to detect motorstop
-  cycle_time = (millis() - last_time) / 100 - (Shutter[i].motordelay * 10 / STEPS_PER_SECOND) - 0.1;
+  cycle_time =  (ShutterGlobal.cycle_time / 2) - (Shutter[i].motordelay * 10 / STEPS_PER_SECOND) ;
   dtostrfd((float)(cycle_time) / 10, 1, time_chr);
   AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Cycletime is: %s sec"), time_chr);
   return cycle_time;
@@ -1301,18 +1300,23 @@ void ShutterUpdatePosition(void)
          Shutter[i].tiltmoving);
 
       // Check calibration mode and energy information
-      if (ShutterGlobal.callibration_run ) {
+      // only execute every second step to remove some stress from the current sensor.
+      if (ShutterGlobal.callibration_run && Shutter[i].time%2 == 0) {
         // update energy consumption on every loop to dectect stop of the shutter
         XnrgCall(FUNC_ENERGY_EVERY_SECOND);
         // fency calculation with direction gives index 0 and 1 of the energy meter
         // stop if endpoint is reached
-        if (Energy->active_power[0] + Energy->active_power[1] < 1.0 && Shutter[i].time > 20){
+        if (Energy->active_power[0] + Energy->active_power[1] < 1.0 && Shutter[i].time > 100){
           ShutterGlobal.stopp_armed++;
-          AddLog(LOG_LEVEL_INFO, PSTR("SHT: stopp_armed:%d"),ShutterGlobal.stopp_armed);
-          if (ShutterGlobal.stopp_armed > 2) {
+          if (ShutterGlobal.stopp_armed == 1) {
+            ShutterGlobal.cycle_time = Shutter[i].time;
+          } 
+          AddLog(LOG_LEVEL_INFO, PSTR("SHT: %d stopp_armed:%d"),Shutter[i].time, ShutterGlobal.stopp_armed);
+          if (ShutterGlobal.stopp_armed > 5) {
             Shutter[i].target_position = Shutter[i].real_position;
           }
         } else {
+          //AddLog(LOG_LEVEL_INFO, PSTR("SHT: %d stopp_armed:%d, power:%.3f"),Shutter[i].time, ShutterGlobal.stopp_armed,Energy->active_power[0] + Energy->active_power[1]);
           ShutterGlobal.stopp_armed = 0;
         }
       }
@@ -2095,6 +2099,7 @@ void CmndShutterSetup(void) {
   uint32_t new_opentime;
   uint32_t new_closetime;
   uint8_t  max_runtime = 120; // max 120 seconds runtime
+  float daily_kWh[ENERGY_MAX_PHASES];           // 123.123 kWh
 
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     index_no = XdrvMailbox.index-1; // save, because will be changed in following operations
@@ -2103,6 +2108,9 @@ void CmndShutterSetup(void) {
     ShutterSettings.shutter_position[index_no]  = 0;
     ShutterSettings.shutter_closetime[index_no] = max_runtime * 10;
     ShutterSettings.shutter_opentime[index_no]  = max_runtime * 10;
+    for (uint8_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+      daily_kWh[i] = Energy->daily_kWh[i];
+    }
     ShutterInit();
     if (Energy->phase_count > 1) {
       AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup: Ensure shutter is close. Now open, autostop detect. max duration is 2min Phase:%d"),Energy->phase_count);
@@ -2135,6 +2143,9 @@ void CmndShutterSetup(void) {
       } 
     } 
     ShutterGlobal.callibration_run = false;
+    for (uint8_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+       Energy->daily_kWh[i] = daily_kWh[i];
+    }
   } else {
     // print out help instructions
     // will only work without TILT configuration
