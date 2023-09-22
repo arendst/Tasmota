@@ -499,7 +499,7 @@ bool hasMachineBeenAttested()
 
   int httpResponseCode = http.GET();
 
-  return (httpResponseCode == 200)
+  return (httpResponseCode == 200);
 }
 
 char* create_transaction( void* anyMsg, char* tokenAmount )
