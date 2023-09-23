@@ -3701,7 +3701,7 @@ String *WebButton1732[16] = {0,};
 void SetWebButton(uint8_t button_index, const char *text) {
   if (button_index < 16) 
     SettingsUpdateText(SET_BUTTON1 + button_index, text);
-  else if (button_index < 32) {
+  else if (button_index < MAX_BUTTON_TEXT) {
     button_index -= 16;
     if (!WebButton1732[button_index]) 
       WebButton1732[button_index] = new String(text);
@@ -3714,7 +3714,7 @@ const char* GetWebButton(uint8_t button_index) {
   static char empty[1] = {0};
   if (button_index < 16) 
     return SettingsText(SET_BUTTON1 + button_index);
-  else if (button_index < 32) {
+  else if (button_index < MAX_BUTTON_TEXT) {
     button_index -= 16;
     if (WebButton1732[button_index])
       return WebButton1732[button_index]->c_str();
