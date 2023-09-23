@@ -38,10 +38,31 @@
 \*********************************************************************************************/
 extern "C" {
 
-  // AudioOutput.set_rate(rate_hz:int) -> bool
-  void* be_audio_output_init(void) {
-    return new AudioOutput();
+  // AudioOutputI2S.init() -> instance 
+  void* be_audio_output_i2s_init(void) {
+    return audio_i2s.out;               // return the singleton of TasmotaAudioOutputI2S which is already initialized
   }
+
+  // AudioOutputI2S.deinit()-> void
+  void be_audio_output_i2s_deinit(TasmotaAudioOutputI2S * out) {
+    out->stop();
+  }
+
+  // AudioOutputI2S.begin() -> bool
+  int be_audio_output_i2s_begin(TasmotaAudioOutputI2S* out) {
+    return out->begin();
+  }
+
+  // AudioOutputI2S.stop() -> bool
+  int be_audio_output_i2s_stop(TasmotaAudioOutputI2S* out) {
+    return out->stop();
+  }
+
+  // AudioOutputI2S.flush() -> bool
+  void be_audio_output_i2s_flush(AudioOutput* out) {
+    out->flush();
+  }
+
   // AudioOutput.set_rate(rate_hz:int) -> bool
   int be_audio_output_set_rate(AudioOutput* out, int hz) {
     return out->SetRate(hz);
@@ -60,21 +81,6 @@ extern "C" {
   // AudioOutput.set_gain(gain:real) -> bool
   int be_audio_output_set_gain(AudioOutput* out, float gain) {
     return out->SetGain(gain);
-  }
-
-  // AudioOutput.begin() -> bool
-  int be_audio_output_begin(AudioOutput* out) {
-    return out->begin();
-  }
-
-  // AudioOutput.stop() -> bool
-  int be_audio_output_stop(AudioOutput* out) {
-    return out->stop();
-  }
-
-  // AudioOutput.flush() -> bool
-  void be_audio_output_flush(AudioOutput* out) {
-    out->flush();
   }
 
   // AudioOutput.consume_mono(bytes) -> int
@@ -136,16 +142,6 @@ extern "C" {
       be_setmember(vm, 1, ".p");
     }
 
-    be_return_nil(vm);
-  }
-
-  int i2s_output_i2s_stop(bvm *vm) {
-    int argc = be_top(vm);
-    be_getmember(vm, 1, ".p");
-    TasmotaAudioOutputI2S * audio = (TasmotaAudioOutputI2S *) be_tocomptr(vm, -1);
-    if (audio) {
-      audio->stop();
-    }
     be_return_nil(vm);
   }
 

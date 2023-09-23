@@ -120,6 +120,8 @@ class SensirionI2CSgp4x {
     uint16_t sendSelfTestCmd(void);
     uint16_t readSelfTestValue(uint16_t& testResult);
 
+    uint16_t getFeaturesValue(uint16_t& featureResult);
+
     /**
      * turnHeaterOff() - This command turns the hotplate off and stops the
      * measurement. Subsequently, the sensor enters the idle mode.
