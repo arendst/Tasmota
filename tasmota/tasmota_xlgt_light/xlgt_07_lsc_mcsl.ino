@@ -252,7 +252,7 @@ void LscMcAddFuctionButtons(void) {
   uint32_t rows = 1;
   uint32_t cols = 8;
   for (uint32_t i = 0; i < 8; i++) {
-    if (strlen(SettingsText(SET_BUTTON1 + i +1))) {
+    if (strlen(GetWebButton(i +1))) {
       rows <<= 1;
       cols >>= 1;
       break;
@@ -269,7 +269,7 @@ void LscMcAddFuctionButtons(void) {
       WSContentSend_P(PSTR("<td style='width:%d%%'><button onclick='la(\"&lsc=%d\");'>%s</button></td>"),  // &lsc is related to WebGetArg("lsc", tmp, sizeof(tmp));
         100 / cols,
         idx -1,
-        (strlen(SettingsText(SET_BUTTON1 + idx))) ? SettingsText(SET_BUTTON1 + idx) : itoa(idx, number, 10));
+        (strlen(GetWebButton(idx))) ? GetWebButton(idx) : itoa(idx, number, 10));
     }
   }
   WSContentSend_P(PSTR("</tr></table>"));
