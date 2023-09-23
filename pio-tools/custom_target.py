@@ -300,7 +300,7 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
     cmd = fs_info.get_extract_cmd(downloaded_file, unpack_dir)
     print("Executing extraction command: " + str(cmd))
     try:
-        returncode = subprocess.call(cmd, shell=False)
+        returncode = subprocess.call(cmd, shell=True)
         print("Unpacked filesystem.")
         return (True, unpack_dir)
     except subprocess.CalledProcessError as exc:
