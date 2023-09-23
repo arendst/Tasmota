@@ -208,7 +208,6 @@ be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
 be_extern_native_class(Leds_animator);
-be_extern_native_class(AudioOutput);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -296,7 +295,6 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_LVGL
 
 #ifdef USE_I2S_AUDIO_BERRY
-    &be_native_class(AudioOutput),
     &be_native_class(AudioGenerator),
     &be_native_class(AudioFileSource),
     &be_native_class(AudioOutputI2S),
