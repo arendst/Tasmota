@@ -137,7 +137,7 @@ void ens16xShow(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
   #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_ENS16x, name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
+        WSContentSend_PD(HTTP_SNS_ENS16x, name, pENS16X->AQIS, name, pENS16X->eCO2, name, pENS16X->TVOC);
   #endif
       }
     }
