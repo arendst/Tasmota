@@ -17,17 +17,46 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if defined(ESP32) && ESP_IDF_VERSION_MAJOR >= 5
 #if defined(USE_I2S_AUDIO) 
 
 #define XDRV_42           42
+
+#define USE_I2S_SAY
+#define USE_I2S_SAY_TIME
+#define USE_I2S_RTTTL
+#define USE_I2S_WEBRADIO
+
+// Macros used in audio sub-functions
+#undef AUDIO_PWR_ON
+#undef AUDIO_PWR_OFF
+#define AUDIO_PWR_ON    I2SAudioPower(true);
+#define AUDIO_PWR_OFF   I2SAudioPower(false);
+
+extern FS *ufsp;
+extern FS *ffsp;
+
+const int preallocateBufferSize = 16*1024;
+const int preallocateCodecSize = 29192; // MP3 codec max mem needed
+//const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
+
+void sayTime(int hour, int minutes);
+void Cmndwav2mp3(void);
+void Cmd_Time(void);
+
+void Rtttl(char *buffer);
+void CmndI2SRtttl(void);
+void I2sWebRadioStopPlaying(void);
 
 /*********************************************************************************************\
  * Commands definitions
 \*********************************************************************************************/
 
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
-  "Gain|Play|WR|Rec|MGain|Stop"
+  "Gain|Play|Rec|MGain|Stop"
+#ifdef USE_I2S_WEBRADIO
+  "|WR"
+#endif // USE_I2S_WEBRADIO
 #ifdef USE_I2S_SAY
   "|Say"
 #endif // USE_I2S_SAY
@@ -46,7 +75,10 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
-  &CmndI2SGain, &CmndI2SPlay, &CmndI2SWebRadio, &CmndI2SMicRec, &CmndI2SMicGain, &CmndI2SStop,
+  &CmndI2SGain, &CmndI2SPlay, &CmndI2SMicRec, &CmndI2SMicGain, &CmndI2SStop,
+#ifdef USE_I2S_WEBRADIO
+  &CmndI2SWebRadio,
+#endif // USE_I2S_WEBRADIO
 #ifdef USE_I2S_SAY
   &CmndI2SSay,
 #endif // USE_I2S_SAY
@@ -378,7 +410,6 @@ void I2sCheckCfg(void){
   }
   else{
     audio_i2s.Settings->sys.tx = 0;
-    audio_i2s.Settings->tx.webradio = 0;  // do not allocate buffer
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR("I2S: init pins bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"), Pin(GPIO_I2S_BCLK) , Pin(GPIO_I2S_WS), Pin(GPIO_I2S_DOUT), Pin(GPIO_I2S_MCLK), Pin(GPIO_I2S_DIN));
@@ -401,7 +432,7 @@ bool I2sPinInit(void) {
 
   if(audio_i2s.Settings->sys.tx == 1){
     audio_i2s.out = new TasmotaAudioOutputI2S;
-    int err = audio_i2s.out->SetPinout() ? 0 : 1;
+    int err = audio_i2s.out->startI2SChannel() ? 0 : 1;
     result += err;
   }
 
@@ -431,17 +462,6 @@ void I2sInit(void) {
       audio_i2s.Settings->rx.mp3_encoder = 0; // no PS-RAM -> no MP3 encoding
     }
   }
-
-  if(audio_i2s.Settings->tx.webradio == 1){
-    AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will allocate buffer for webradio "));
-    if (UsePSRAM()) {
-      audio_i2s.preallocateBuffer = heap_caps_malloc(preallocateBufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      audio_i2s.preallocateCodec = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    } else {
-      audio_i2s.preallocateBuffer = malloc(preallocateBufferSize);
-      audio_i2s.preallocateCodec = malloc(preallocateCodecSize);
-    }
-  }
 }
 
 /*********************************************************************************************\
@@ -466,48 +486,12 @@ void I2sMp3Task(void *arg) {
   }
 }
 
-void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
-  const char *ptr = reinterpret_cast<const char *>(cbData);
-  (void) isUnicode; // Punt this ball for now
-  (void) ptr;
-  if (strstr_P(type, PSTR("Title"))) {
-    strncpy(audio_i2s.wr_title, str, sizeof(audio_i2s.wr_title));
-    audio_i2s.wr_title[sizeof(audio_i2s.wr_title)-1] = 0;
-    //AddLog(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
-  } else {
-    // Who knows what to do?  Not me!
-  }
-}
-
 void I2sStatusCallback(void *cbData, int code, const char *string) {
   const char *ptr = reinterpret_cast<const char *>(cbData);
   (void) code;
   (void) ptr;
   //strncpy_P(status, string, sizeof(status)-1);
   //status[sizeof(status)-1] = 0;
-}
-
-void Webradio(const char *url) {
-  if (audio_i2s.decoder || audio_i2s.mp3) return;
-  if (!audio_i2s.out) return;
-  if (audio_i2s.Settings->tx.webradio == 0) return;
-  I2SAudioPower(true);
-  audio_i2s.ifile = new AudioFileSourceICYStream(url);
-  audio_i2s.ifile->RegisterMetadataCB(I2sMDCallback, NULL);
-  audio_i2s.buff = new AudioFileSourceBuffer(audio_i2s.ifile, audio_i2s.preallocateBuffer, preallocateBufferSize);
-  audio_i2s.buff->RegisterStatusCB(I2sStatusCallback, NULL);
-  audio_i2s.decoder = new AudioGeneratorMP3(audio_i2s.preallocateCodec, preallocateCodecSize);
-  audio_i2s.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
-  audio_i2s.decoder->begin(audio_i2s.buff, audio_i2s.out);
-  if (!audio_i2s.decoder->isRunning()) {
-  //  Serial.printf_P(PSTR("Can't connect to URL"));
-    I2sStopPlaying();
-  //  strcpy_P(status, PSTR("Unable to connect to URL"));
-    audio_i2s.retryms = millis() + 2000;
-  }
-
-  AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will launch webradio task"));
-  xTaskCreatePinnedToCore(I2sMp3Task2, "MP3-2", 8192, NULL, 3, &audio_i2s.mp3_task_handle, 1);
 }
 
 void I2sMp3Task2(void *arg){
@@ -534,36 +518,12 @@ void I2sStopPlaying() {
     delete audio_i2s.decoder;
     audio_i2s.decoder = NULL;
   }
+#ifdef USE_I2S_WEBRADIO
+  I2sWebRadioStopPlaying();
+#endif
 
-  if (audio_i2s.buff) {
-    audio_i2s.buff->close();
-    delete audio_i2s.buff;
-    audio_i2s.buff = NULL;
-  }
-
-  if (audio_i2s.ifile) {
-    audio_i2s.ifile->close();
-    delete audio_i2s.ifile;
-    audio_i2s.ifile = NULL;
-  }
   I2SAudioPower(false);
 }
-
-#ifdef USE_WEBSERVER
-const char HTTP_WEBRADIO[] PROGMEM =
-   "{s}" "I2S_WR-Title" "{m}%s{e}";
-
-void I2sWrShow(bool json) {
-    if (audio_i2s.decoder) {
-      if (json) {
-        ResponseAppend_P(PSTR(",\"WebRadio\":{\"Title\":\"%s\"}"), audio_i2s.wr_title);
-      } else {
-        WSContentSend_PD(HTTP_WEBRADIO,audio_i2s.wr_title);
-      }
-    }
-}
-#endif  // USE_WEBSERVER
-
 
 // Play_mp3 - Play a MP3 file from filesystem
 //
@@ -629,20 +589,6 @@ void Say(char *text) {
 void CmndI2SStop(void) {
   I2sStopPlaying();
   ResponseCmndDone();
-}
-
-void CmndI2SWebRadio(void) {
-  if (!audio_i2s.out) return;
-
-  if (audio_i2s.decoder) {
-    I2sStopPlaying();
-  }
-  if (XdrvMailbox.data_len > 0) {
-    Webradio(XdrvMailbox.data);
-    ResponseCmndChar(XdrvMailbox.data);
-  } else {
-    ResponseCmndChar_P(PSTR("Stopped"));
-  }
 }
 
 void CmndI2SPlay(void) {
@@ -784,5 +730,5 @@ bool Xdrv42(uint32_t function) {
   return result;
 }
 
-#endif  // USE_I2S_AUDIO
-#endif //ESP_IDF_VERSION_MAJOR >= 5
+#endif // USE_I2S_AUDIO
+#endif // defined(ESP32) && ESP_IDF_VERSION_MAJOR >= 5
