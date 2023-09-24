@@ -118,15 +118,15 @@ String InfluxDbAuth(void) {
 }
 
 bool InfluxDbHostByName(void) {
-  IPAddress ifdb_ip;
-  if (!WifiHostByName(SettingsText(SET_INFLUXDB_HOST), ifdb_ip)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Invalid ifxhost"));
-    return false;
+  String host = SettingsText(SET_INFLUXDB_HOST);
+  IFDB._serverUrl = "";
+  if (strncmp(host.c_str(),"http",4))
+    IFDB._serverUrl += "http://";
+  IFDB._serverUrl += host;
+  if (Settings->influxdb_port) {
+    IFDB._serverUrl += ":";
+    IFDB._serverUrl += Settings->influxdb_port;
   }
-  IFDB._serverUrl = "http://";
-  IFDB._serverUrl += ifdb_ip.toString();
-  IFDB._serverUrl += ":";
-  IFDB._serverUrl += Settings->influxdb_port;
   return true;
 }
 
@@ -206,7 +206,7 @@ void InfluxDbAfterRequest(int expectedStatusCode, bool modifyLastConnStatus) {
       IFDB._lastErrorResponse = IFDBhttpClient->errorToString(IFDB._lastStatusCode);
     }
     IFDB._lastErrorResponse.trim();  // Remove trailing \n
-    AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error %s"), IFDB._lastErrorResponse.c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR("IFX: Error '%s'"), IFDB._lastErrorResponse.c_str());
   } else {
     AddLog(IFDB.log_level, PSTR("IFX: Done"));
   }
@@ -274,6 +274,7 @@ int InfluxDbPostData(const char *data) {
     IFDBhttpClient->addHeader(F("Content-Type"), F("text/plain"));
     InfluxDbBeforeRequest();
     IFDB._lastStatusCode = IFDBhttpClient->POST((uint8_t*)data, strlen(data));
+    AddLog(IFDB.log_level, PSTR("IFX: POST statusCode %d"), IFDB._lastStatusCode);
     InfluxDbAfterRequest(204, true);
     IFDBhttpClient->end();
   }
