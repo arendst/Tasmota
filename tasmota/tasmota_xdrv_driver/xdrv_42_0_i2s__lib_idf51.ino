@@ -44,36 +44,36 @@
 
 typedef struct{
   struct{
-    uint32_t version : 8 = 0;
+    uint8_t   version = 0;    // B00
 
     // runtime options, will be saved but ignored on setting read
-    uint32_t duplex : 1 = 0; // depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means -> try to use duplex if possible
-    uint32_t tx : 1 = 0; // depends on GPIO setting
-    uint32_t rx : 1 = 0; // depends on GPIO setting
+    bool      duplex = 0;     // B01 - depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means -> try to use duplex if possible
+    bool      tx = 0;         // B02 - depends on GPIO setting
+    bool      rx = 0;         // B03 - depends on GPIO setting
+    uint32_t  spare01;        // B04-07
   } sys;
   struct {
-    uint32_t mode : 2 = 0;        // bit 0+1 STD = 0, PDM = 1, TDM = 2
-    uint32_t apll : 1 = 1;        // bit 2 - will be ignored on unsupported SOC's
-    uint32_t mono : 1 = 0;        // bit 3  0 = stereo, 1 = mono
-    uint32_t codec : 1 = 0;       // bit 4 - S3 box only, unused for now
-    uint32_t slot_config : 3 = 0; // bit 5-7 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
-    uint32_t volume : 8 = 10;     // bit 8-15
-    uint32_t mclk_inv : 1 = 0;    // bit 16 - invert mclk
-    uint32_t bclk_inv : 1 = 0;    // bit 17 - invert bclk
-    uint32_t ws_inv : 1 = 0;      // bit 18 - invert ws
-    uint32_t spare02 : 13;        // bit 19-31
+    uint8_t   mode = 0;       // B00 STD = 0, PDM = 1, TDM = 2
+    bool     apll = 1;        // B01 - will be ignored on unsupported SOC's
+    bool     channels = 0;    // B02 - 1 = mono, 2 = stereo
+    uint8_t  codec = 0;       // B03 - S3 box only, unused for now
+    uint8_t  slot_config = 0; // B04 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
+    uint8_t  volume = 10;     // B05
+    bool     mclk_inv = 0;    // B06 - invert mclk
+    bool     bclk_inv = 0;    // B07 - invert bclk
+    bool     ws_inv = 0;      // B08 - invert ws
+    uint8_t  spare[7];        // B09-0F
   } tx;
   struct {
-    struct{
-    uint16_t sample_rate = 32000;
-    uint8_t gain = 30;
-    uint8_t mode = 0;   //STD = 0, PDM = 1, TDM = 2
+    uint32_t  sample_rate = 32000;  // B00-03
+    uint8_t   gain = 30;            // B04
+    uint8_t   mode = 0;             // B05 - STD = 0, PDM = 1, TDM = 2
 
-    uint8_t slot_mask : 2 = 1; // left = 1 /right = 2 /both = 3
-    uint8_t slot_mode : 1 = 0; // mono/stereo - 1 is added for both
-    uint8_t codec : 1 = 0; // unused for now
-    uint8_t mp3_encoder : 1 = 1; // will be ignored without PS-RAM
-    };
+    uint8_t   slot_mask = 1;        // B06 - left = 1 /right = 2 /both = 3
+    uint8_t   slot_mode = 0;        // B07 - mono/stereo - 1 is added for both
+    uint8_t   codec = 0;            // B08 - unused for now
+    uint8_t   mp3_encoder = 1;      // B09 - will be ignored without PS-RAM
+    uint8_t  spare[6];              // B0A-0F
   } rx;
 } tI2SSettings;
 
@@ -189,13 +189,13 @@ public:
   // ------------------------------------------------------------------------------------------
   // Getters
   inline uint8_t getTxMode(void) const { return _tx_mode; }
-  inline bool getTxMono(void) const { return _tx_mono; }
+  inline uint8_t getTxChannels(void) const { return _tx_channels; }
   inline bool getTxEnabled(void) const { return _tx_enabled; }
 
   // ------------------------------------------------------------------------------------------
   // Setters
   inline void setTxMode(uint8_t mode) { _tx_mode = mode; }
-  inline void setTxMono(bool mono) { _tx_mono = mono; }
+  inline void setTxChannels(uint8_t channels) { _tx_channels = channels; }
   inline void setTxEnabled(bool enabled) { _tx_enabled = enabled; }
 
   // ------------------------------------------------------------------------------------------
@@ -231,8 +231,8 @@ protected:
   // TX
   uint8_t _tx_mode = EXTERNAL_I2S;    // EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2
   bool    _tx_enabled = false;        // true = enabled, false = disabled
-  bool    _tx_mono = false;           // true = mono, false = stereo
-  i2s_chan_handle_t _tx_chan;     // I2S channel handle, automatically computed
+  uint8_t    _tx_channels = 2;        // true = mono, false = stereo
+  i2s_chan_handle_t _tx_chan;         // I2S channel handle, automatically computed
 
   // GPIOs for I2S
   gpio_num_t  _gpio_mclk = GPIO_NUM_NC;            // GPIO for master clock
@@ -254,8 +254,10 @@ void TasmotaAudioOutputI2S::loadSettings(void) {
   hertz = 16000;
   _i2s_on = false;
   bps = I2S_DATA_BIT_WIDTH_16BIT;
-  _tx_mono = audio_i2s.Settings->tx.mono;
-  channels = _tx_mono ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
+  _tx_channels = audio_i2s.Settings->tx.channels;
+  if (_tx_channels == 0) { _tx_channels = 1; }      // if zero channel default to mono
+  if (_tx_channels > 2) { _tx_channels = 2; }       // if > 2 channels default to stereo
+  channels = (_tx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
   _tx_mode = EXTERNAL_I2S;
   _tx_enabled = false;
 
@@ -309,7 +311,7 @@ int32_t TasmotaAudioOutputI2S::consumeSamples(int16_t *samples, size_t count) {
     int16_t left = samples[i*2 + LEFTCHANNEL];
     int16_t right = samples[i*2 + RIGHTCHANNEL];
 
-    if (this->_tx_mono) {
+    if (this->_tx_channels == 1) {    // if mono, average the two samples
       // Average the two samples and overwrite
       int32_t ttl = left + right;
       left = right = (ttl>>1) & 0xffff;
