@@ -45,7 +45,6 @@ typedef struct ENS16xData_s {
   uint16_t  AQIS;
 
   uint8_t ready;
-  uint8_t type;
   uint8_t tcnt;
   uint8_t ecnt;
 } ENS16xDATA_t;
@@ -59,30 +58,32 @@ void ens16xDetect(void)
 {
   ENS16xCount = 0;
   ENS16xDATA_t *pENS16X;
+  ScioSense_ENS16x *ens16x;
   uint8_t i2caddr = ENS16x_I2CADDR_0;
   for (uint8_t i = 0 ; i < ENS16x_MAX_COUNT; i++, i2caddr++) {
     if (!I2cActive(i2caddr)) {
+      ens16x = new ScioSense_ENS16x(i2caddr);
+      if (!ens16x) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(ENS16x_LOG":@%02X create error!"), i2caddr);
+        continue;
+      }
+      if (!(ens16x->begin())) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(ENS16x_LOG":@%02X begin error!"), i2caddr);
+        continue;
+      }
+      if (!(ens16x->setMode(ENS16x_OPMODE_STD))) {
+        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@%02X setmode error!"), i2caddr);
+        continue;
+      }
       pENS16X = (ENS16xDATA_t*)calloc(1, sizeof(ENS16xDATA_t));
       if (!pENS16X) {
-        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@0x02%X Memory error!"), i2caddr);
-        return;
+        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@%02X Memory error!"), i2caddr);
+        continue;
       }
-      pENS16X->ens16x = new ScioSense_ENS16x(i2caddr);
-      if (!pENS16X->ens16x) {
-        AddLog(LOG_LEVEL_ERROR, PSTR(ENS16x_LOG":@0x02%X Memory error 2!"), i2caddr);
-        free(pENS16X);
-        return;
-      }
-      ENS16xData[i] = pENS16X;
-      if (pENS16X->ens16x->begin()) {
-        if (pENS16X->ens16x->available()) {
-          if (pENS16X->ens16x->setMode(ENS16x_OPMODE_STD) ) {
-            pENS16X->type = 1;
-            I2cSetActiveFound(ENS16x_I2CADDR_0, "ENS16xa");
-            ENS16xCount++;
-          }
-        }
-      }
+      pENS16X->ens16x = ens16x;
+      ENS16xData[ENS16xCount] = pENS16X;
+      ENS16xCount++;
+      I2cSetActiveFound(i2caddr, ENS16x_DEVICE_NAME);
     }
   }
 }
@@ -91,30 +92,28 @@ void ens16xUpdate(void)  // Perform every n second
 {
   for (uint8_t i = 0 ; i < ENS16xCount; i++) {
     ENS16xDATA_t *pENS16X = ENS16xData[i];
-    if (pENS16X->type) {
-      pENS16X->tcnt++;
-      if (pENS16X->tcnt >= ENS16x_EVERYNSECONDS) {
-        pENS16X->tcnt = 0;
-        pENS16X->ready = 0;
-        if (pENS16X->ens16x->available()) {
-          pENS16X->ens16x->measure();
-          pENS16X->TVOC = pENS16X->ens16x->getTVOC();
-          pENS16X->eCO2 = pENS16X->ens16x->geteCO2();
-          if (pENS16X->ens16x->revENS16x() > 0) pENS16X->AQIS = pENS16X->ens16x->getAQIS();
-          else pENS16X->AQIS = pENS16X->ens16x->getAQI();
+    pENS16X->tcnt++;
+    if (pENS16X->tcnt >= ENS16x_EVERYNSECONDS) {
+      pENS16X->tcnt = 0;
+      pENS16X->ready = 0;
+      if (pENS16X->ens16x->available()) {
+        pENS16X->ens16x->measure();
+        pENS16X->TVOC = pENS16X->ens16x->getTVOC();
+        pENS16X->eCO2 = pENS16X->ens16x->geteCO2();
+        if (pENS16X->ens16x->revENS16x() > 0) pENS16X->AQIS = pENS16X->ens16x->getAQIS();
+        else pENS16X->AQIS = pENS16X->ens16x->getAQI();
 
-          pENS16X->ready = 1;
-          pENS16X->ecnt = 0;
-        }
-      } else {
-        // failed, count up
-        pENS16X->ecnt++;
-        if (pENS16X->ecnt > 6) {
-          // after 30 seconds, restart
-          pENS16X->ens16x->begin();
-          if (pENS16X->ens16x->available()) {
-            pENS16X->ens16x->setMode(ENS16x_OPMODE_STD);
-          }
+        pENS16X->ready = 1;
+        pENS16X->ecnt = 0;
+      }
+    } else {
+      // failed, count up
+      pENS16X->ecnt++;
+      if (pENS16X->ecnt > 6) {
+        // after 30 seconds, restart
+        pENS16X->ens16x->begin();
+        if (pENS16X->ens16x->available()) {
+          pENS16X->ens16x->setMode(ENS16x_OPMODE_STD);
         }
       }
     }
@@ -137,7 +136,7 @@ void ens16xShow(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{\"AQIS\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
   #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_ENS16x, name, pENS16X->AQIS, pENS16X->eCO2, pENS16X->TVOC);
+        WSContentSend_PD(HTTP_SNS_ENS16x, name, pENS16X->AQIS, name, pENS16X->eCO2, name, pENS16X->TVOC);
   #endif
       }
     }
@@ -157,7 +156,7 @@ bool Xsns111(uint32_t function)
   if (FUNC_INIT == function) {
     ens16xDetect();
   }
-  else {
+  else if (ENS16xCount) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         ens16xUpdate();

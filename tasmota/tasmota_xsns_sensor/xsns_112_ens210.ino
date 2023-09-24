@@ -34,8 +34,6 @@
 #define ENS210_EVERYNSECONDS 	5
 #define ENS210_DEVICE_NAME		"EN210"
 #define ENS210_LOG				    "E21"
-#define ENS210_MAX_COUNT		  2
-
 
 #include "ScioSense_ENS210.h"
 
@@ -46,96 +44,74 @@ typedef struct ENS210DATA_s {
   float  humidity;
 
   uint8_t ready;
-  uint8_t type;
   uint8_t tcnt;
   uint8_t ecnt;
 } ENS210DATA_t;
 
-ENS210DATA_t *ENS210data[ENS210_MAX_COUNT] = {nullptr, };
-uint8_t ENS210Count = 0;
+ENS210DATA_t *ENS210data = nullptr;
 
 /********************************************************************************************/
 
 void ens210Detect(void)
 {
-  ENS210Count = 0;
-  ENS210DATA_t *pENS210;
   uint8_t i2caddr = ENS210_I2CADDR;
-  for (uint8_t i = 0; i < ENS210_MAX_COUNT; i++, i2caddr++)
+  if (!I2cActive(i2caddr))
   {
-    if (!I2cActive(i2caddr))
-    {
-      pENS210 = (ENS210DATA_t *)calloc(1, sizeof(ENS210DATA_t));
-      if (!pENS210)
-      {
-        AddLog(LOG_LEVEL_ERROR, PSTR(ENS210_LOG ":@0x02%X Memory error!"), i2caddr);
-        return;
-      }
-      pENS210->ens210 = new ScioSense_ENS210(i2caddr);
-      if (!pENS210->ens210)
-      {
-        AddLog(LOG_LEVEL_ERROR, PSTR(ENS210_LOG ":@0x02%X Memory error 2!"), i2caddr);
-        free(pENS210);
-        return;
-      }
-      ENS210data[i] = pENS210;
-      if (pENS210->ens210->begin())
-      {
-        if (pENS210->ens210->available())
-        {
-          pENS210->ens210->setSingleMode(false);
-          pENS210->type = 1;
-          I2cSetActiveFound(i2caddr, ENS210_DEVICE_NAME);
-          ENS210Count++;
-        }
-      }
+    ScioSense_ENS210 *ens210 = new ScioSense_ENS210(i2caddr);
+    if (!ens210) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(ENS210_LOG ":@%02X create error!"), i2caddr);
+      return;
     }
+    if (!ens210->begin()) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(ENS210_LOG ":@%02X begin error!"), i2caddr);
+      return;
+    }
+    if (!ens210->available()) {
+      AddLog(LOG_LEVEL_ERROR, PSTR(ENS210_LOG ":@%02X available error!"), i2caddr);
+      return;
+    }
+    ens210->setSingleMode(false);
+    ENS210data = (ENS210DATA_t *)calloc(1, sizeof(ENS210DATA_t));
+    if (!ENS210data) {
+      AddLog(LOG_LEVEL_ERROR, PSTR(ENS210_LOG ":@%02X Memory error!"), i2caddr);
+      return;
+    }
+    ENS210data->ens210 = ens210;
+    I2cSetActiveFound(i2caddr, ENS210_DEVICE_NAME);
   }
 }
 
 void ens210Update(void)  // Perform every n second
 {
-  for (uint8_t i = 0 ; i < ENS210Count; i++) {
-    ENS210DATA_t *pENS210 = ENS210data[i];
-    if (pENS210->type) {
-      pENS210->tcnt++;
-      if (pENS210->tcnt >= ENS210_EVERYNSECONDS) {
-        pENS210->tcnt = 0;
-        pENS210->ready = 0;
-        if (pENS210->ens210->available()) {
-          pENS210->ens210->measure();
-              
-          pENS210->temperature = pENS210->ens210->getTempCelsius();
-          pENS210->humidity = pENS210->ens210->getHumidityPercent();
-          pENS210->ready = 1;
-          pENS210->ecnt = 0;
-        } else {
-          // failed, count up
-          pENS210->ecnt++;
-          if (pENS210->ecnt > 6) {
-            // after 30 seconds, restart
-            pENS210->ens210->begin();
-            if (pENS210->ens210->available()) {
-              pENS210->ens210->setSingleMode(false);
-            }
-          }
-        }  
+  ENS210data->tcnt++;
+  if (ENS210data->tcnt >= ENS210_EVERYNSECONDS) {
+    ENS210data->tcnt = 0;
+    ENS210data->ready = 0;
+    if (ENS210data->ens210->available()) {
+      ENS210data->ens210->measure();
+          
+      ENS210data->temperature = ENS210data->ens210->getTempCelsius();
+      ENS210data->humidity = ENS210data->ens210->getHumidityPercent();
+      ENS210data->ready = 1;
+      ENS210data->ecnt = 0;
+    } else {
+      // failed, count up
+      ENS210data->ecnt++;
+      if (ENS210data->ecnt > 6) {
+        // after 30 seconds, restart
+        ENS210data->ens210->begin();
+        if (ENS210data->ens210->available()) {
+          ENS210data->ens210->setSingleMode(false);
+        }
       }
-    }
+    }  
   }
 }
 
 void ens210Show(bool json)
 {
-  char name[20];
-  for (uint8_t i = 0 ; i < ENS210Count; i++) {
-    ENS210DATA_t *pENS210 = ENS210data[i];
-    if (pENS210->type) {
-      if (pENS210->ready) {
-        snprintf_P(name, sizeof(name), (ENS210Count > 1) ? PSTR("%s%c%d") : PSTR("%s"), ENS210_DEVICE_NAME, IndexSeparator(), i +1);
-        TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), name, pENS210->temperature, pENS210->humidity);
-      }
-    }
+  if (ENS210data->ready) {
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), ENS210_DEVICE_NAME, ENS210data->temperature, ENS210data->humidity);
   }
 }
 
@@ -152,7 +128,7 @@ bool Xsns112(uint32_t function)
   if (FUNC_INIT == function) {
     ens210Detect();
   }
-  else {
+  else if (ENS210data) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         ens210Update();
