@@ -42,34 +42,55 @@
  * Driver Settings in memory
 \*********************************************************************************************/
 
+// I2S communication mode
+enum : int8_t {
+  I2S_MODE_STD = 0,     // I2S mode standard
+  I2S_MODE_PDM = 1,     // I2S mode PDM
+  I2S_MODE_TDM = 2,     // I2S mode TDM
+  I2S_MODE_DAC = 3,     // Using internal DAC - only available on ESP32
+};
+
+// I2S slot mask (left, right, both)
+enum : int8_t {
+  I2S_SLOT_LEFT = 1,    // left
+  I2S_SLOT_RIGHT = 2,   // right
+  I2S_SLOT_BOTH = 3,    // both
+};
+
+// I2S slot configuration
+enum : int8_t {
+  I2S_SLOT_MSB = 0,     // MSB
+  I2S_SLOT_PCM = 1,     // PCM
+  I2S_SLOT_PHILIPS = 2, // Philips
+};
+
 typedef struct{
   struct{
     uint8_t   version = 0;    // B00
 
     // runtime options, will be saved but ignored on setting read
-    bool      duplex = 0;     // B01 - depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means -> try to use duplex if possible
-    bool      tx = 0;         // B02 - depends on GPIO setting
-    bool      rx = 0;         // B03 - depends on GPIO setting
-    uint32_t  spare01;        // B04-07
+    bool      duplex = 0;           // B01 - depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means -> try to use duplex if possible
+    bool      tx = 0;               // B02 - depends on GPIO setting
+    bool      rx = 0;               // B03 - depends on GPIO setting
+    uint32_t  spare01;              // B04-07
   } sys;
   struct {
-    uint8_t   mode = 0;       // B00 STD = 0, PDM = 1, TDM = 2
-    bool     apll = 1;        // B01 - will be ignored on unsupported SOC's
-    bool     channels = 0;    // B02 - 1 = mono, 2 = stereo
-    uint8_t  codec = 0;       // B03 - S3 box only, unused for now
-    uint8_t  slot_config = 0; // B04 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
-    uint8_t  volume = 10;     // B05
-    bool     mclk_inv = 0;    // B06 - invert mclk
-    bool     bclk_inv = 0;    // B07 - invert bclk
-    bool     ws_inv = 0;      // B08 - invert ws
-    uint8_t  spare[7];        // B09-0F
+    uint8_t  mode = I2S_MODE_STD;   // B00 - I2S mode standard, PDM, TDM, DAC
+    bool     apll = 1;              // B01 - will be ignored on unsupported SOC's
+    uint8_t  channels = 2;          // B02 - 1 = mono, 2 = stereo
+    uint8_t  codec = 0;             // B03 - S3 box only, unused for now
+    uint8_t  slot_config = I2S_SLOT_MSB;// B04 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
+    uint8_t  volume = 10;           // B05
+    bool     mclk_inv = 0;          // B06 - invert mclk
+    bool     bclk_inv = 0;          // B07 - invert bclk
+    bool     ws_inv = 0;            // B08 - invert ws
+    uint8_t  spare[7];              // B09-0F
   } tx;
   struct {
-    uint32_t  sample_rate = 32000;  // B00-03
+    uint32_t  sample_rate = 16000;  // B00-03
     uint8_t   gain = 30;            // B04
-    uint8_t   mode = 0;             // B05 - STD = 0, PDM = 1, TDM = 2
-
-    uint8_t   slot_mask = 1;        // B06 - left = 1 /right = 2 /both = 3
+    uint8_t   mode = I2S_MODE_STD;  // B05 - I2S mode standard, PDM, TDM, DAC
+    uint8_t   slot_mask = I2S_SLOT_LEFT;// B06 - slot mask 
     uint8_t   slot_mode = 0;        // B07 - mono/stereo - 1 is added for both
     uint8_t   codec = 0;            // B08 - unused for now
     uint8_t   mp3_encoder = 1;      // B09 - will be ignored without PS-RAM
@@ -106,10 +127,7 @@ struct AUDIO_I2S_t {
   TaskHandle_t mp3_task_handle;
   TaskHandle_t mic_task_handle;
 
-  uint32_t mic_size;
-  uint8_t *mic_buff;
   char mic_path[32];
-  File fwp;
   uint8_t mic_stop;
   int8_t mic_error;
   bool use_stream = false;
@@ -131,8 +149,6 @@ struct AUDIO_I2S_t {
   int8_t ptt_pin = -1;
 
 } audio_i2s;
-
-enum : int { EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2 };
 
 /*********************************************************************************************\
  * Class for outputting sound as endpoint for ESP8266Audio library
@@ -172,7 +188,7 @@ public:
   }
 
   virtual bool SetRate(int hz) {
-    AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: SetRate: %i"), hz);
+    AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: SetRate: %i was %i on=%i"), hz, this->hertz, _i2s_on);
     if (hz == (int) this->hertz) { return true; }
     this->hertz = hz;
     if (_i2s_on) {
@@ -229,7 +245,7 @@ protected:
   bool    _i2s_on = false;            // is I2S audio active
   // local copy of useful settings for audio
   // TX
-  uint8_t _tx_mode = EXTERNAL_I2S;    // EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2
+  uint8_t _tx_mode = I2S_MODE_STD;    // EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2
   bool    _tx_enabled = false;        // true = enabled, false = disabled
   uint8_t    _tx_channels = 2;        // true = mono, false = stereo
   i2s_chan_handle_t _tx_chan;         // I2S channel handle, automatically computed
@@ -255,10 +271,10 @@ void TasmotaAudioOutputI2S::loadSettings(void) {
   _i2s_on = false;
   bps = I2S_DATA_BIT_WIDTH_16BIT;
   _tx_channels = audio_i2s.Settings->tx.channels;
-  if (_tx_channels == 0) { _tx_channels = 1; }      // if zero channel default to mono
+  if (_tx_channels == 0) { _tx_channels = 2; }      // if zero channel default to stereo
   if (_tx_channels > 2) { _tx_channels = 2; }       // if > 2 channels default to stereo
   channels = (_tx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
-  _tx_mode = EXTERNAL_I2S;
+  _tx_mode = I2S_MODE_STD;
   _tx_enabled = false;
 
   _gpio_mclk = (gpio_num_t) Pin(GPIO_I2S_MCLK);
@@ -292,6 +308,7 @@ bool TasmotaAudioOutputI2S::stop() {
   if (audio_i2s.Settings->sys.duplex == 0 && audio_i2s.Settings->sys.rx == 1) {
     i2s_del_channel(_tx_chan);
     _i2s_on = false;
+    AddLog(LOG_LEVEL_INFO, "I2S: stop: I2S channel disabled");
   }
   _tx_enabled = false;
   return true;
@@ -322,7 +339,7 @@ int32_t TasmotaAudioOutputI2S::consumeSamples(int16_t *samples, size_t count) {
       right = (((int16_t)(right & 0xff)) - 128) << 8;
     }
 
-    if (_tx_mode == INTERNAL_DAC) {
+    if (_tx_mode == I2S_MODE_DAC) {
       left = Amplify(left) + 0x8000;
       right = Amplify(right) + 0x8000;
     } else {
@@ -377,14 +394,14 @@ bool TasmotaAudioOutputI2S::startI2SChannel(void) {
   };
 
   // change configuration if we are using PCM or PHILIPS
-  if (audio_i2s.Settings->tx.slot_config == 1) {    // PCM
+  if (audio_i2s.Settings->tx.slot_config == I2S_SLOT_PCM) {    // PCM
     tx_std_cfg.slot_cfg = I2S_STD_PCM_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels);
-  } else if (audio_i2s.Settings->tx.slot_config == 2) { // PHILIPS
+  } else if (audio_i2s.Settings->tx.slot_config == I2S_SLOT_PHILIPS) { // PHILIPS
     tx_std_cfg.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels);
   }
 
   _i2s_on = (i2s_channel_init_std_mode(_tx_chan, &tx_std_cfg) == 0);
-  AddLog(LOG_LEVEL_DEBUG, "I2S: TX channel with %i bit width on %i channels initialized ok=%i", bps, channels, _i2s_on);
+  AddLog(LOG_LEVEL_DEBUG, "I2S: TX channel with %i bits width on %i channels initialized i2s_on=%i", bps, channels, _i2s_on);
 
   if (audio_i2s.Settings->sys.duplex == 1) {
     i2s_channel_init_std_mode(audio_i2s.rx_handle, &tx_std_cfg);
@@ -403,7 +420,7 @@ int TasmotaAudioOutputI2S::updateClockConfig(void) {
 #endif
   int result = i2s_channel_reconfig_std_clock(_tx_chan, &clk_cfg );
   if (_tx_enabled) { i2s_channel_enable(_tx_chan); }
-  AddLog(LOG_LEVEL_DEBUG, "I2S: Updating clock config, result=%i", result);
+  AddLog(LOG_LEVEL_DEBUG, "I2S: Updating clock config");
   return result;
 }
 
