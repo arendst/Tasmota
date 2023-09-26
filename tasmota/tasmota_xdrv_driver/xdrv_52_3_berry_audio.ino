@@ -308,6 +308,19 @@ extern "C" {
     be_return_nil(vm);
   }
 #endif // USE_UFILESYS
+
+
+  // ----------------------------------------------------------------------
+  // AudioInputI2S.init() -> instance 
+  void* be_audio_input_i2s_init(void) {
+    return audio_i2s.out;               // return the singleton of TasmotaAudioOutputI2S which is already initialized
+  }
+
+  // AudioInputI2S.deinit()-> void
+  void be_audio_input_i2s_deinit(TasmotaAudioOutputI2S * out) {
+    out->stop();
+  }
+
 }
 
 #endif  // USE_I2S_AUDIO_BERRY

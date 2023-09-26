@@ -86,6 +86,17 @@ BE_FUNC_CTYPE_DECLARE(be_audio_output_consume_silence, "i", ".");
 extern int i2s_output_i2s_set_lsb_justified(void* out, bbool lsbJustified);
 BE_FUNC_CTYPE_DECLARE(i2s_output_i2s_set_lsb_justified, "b", ".b");
 
+// ----------------------------------------------------------------------
+// Audio Input I2S
+
+// AudioInputI2S.init() -> instance 
+extern void* be_audio_input_i2s_init(void);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_init, "+.p", "");
+
+// AudioInputI2S.deinit()-> void
+extern void* be_audio_input_i2s_deinit(void* instance);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_deinit, "", ".");
+
 
 #include "be_fixed_be_class_AudioOutputI2S.h"
 #include "be_fixed_be_class_AudioGenerator.h"
@@ -93,6 +104,7 @@ BE_FUNC_CTYPE_DECLARE(i2s_output_i2s_set_lsb_justified, "b", ".b");
 #include "be_fixed_be_class_AudioGeneratorMP3.h"
 #include "be_fixed_be_class_AudioFileSource.h"
 #include "be_fixed_be_class_AudioFileSourceFS.h"
+#include "be_fixed_be_class_AudioInputI2S.h"
 
 /* @const_object_info_begin
 
@@ -144,6 +156,12 @@ class be_class_AudioGeneratorMP3 (scope: global, name: AudioGeneratorMP3, super:
 class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super: be_class_AudioFileSource, strings: weak) {
     init, func(i2s_file_source_fs_init)
     deinit, func(i2s_file_source_fs_deinit)
+}
+
+class be_class_AudioInputI2S (scope: global, name: AudioInputI2S, strings: weak) {
+    .p, var
+    init, ctype_func(be_audio_input_i2s_init)
+    deinit, ctype_func(be_audio_input_i2s_deinit)
 }
 
 @const_object_info_end */

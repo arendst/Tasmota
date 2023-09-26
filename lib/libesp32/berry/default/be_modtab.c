@@ -215,6 +215,7 @@ be_extern_native_class(AudioGeneratorWAV);
 be_extern_native_class(AudioGeneratorMP3);
 be_extern_native_class(AudioFileSourceFS);
 be_extern_native_class(AudioOpusDecoder);
+be_extern_native_class(AudioInputI2S);
 be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
@@ -304,6 +305,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(AudioFileSourceFS),
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
+    &be_native_class(AudioInputI2S),
 #endif // USE_I2S_AUDIO_BERRY
 #if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
