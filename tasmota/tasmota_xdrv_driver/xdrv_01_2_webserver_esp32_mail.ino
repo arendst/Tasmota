@@ -294,7 +294,9 @@ void attach_File(char *path) {
     }
     att.descr.filename = cp;
     att.descr.mime = "application/octet-stream"; //binary data
+#if ESP_MAIL_VERSION_NUM<30409
     att.file.storage_type = esp_mail_file_storage_type_univ;
+#endif
     att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
     email_mptr->addAttachment(att);
     email_mptr->resetAttachItem(att);
