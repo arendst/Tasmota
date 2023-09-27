@@ -608,6 +608,7 @@ int registerMachine(void* anyMsg){
   machine.metadata = &metadata;
   machine.type = RDDL_MACHINE_POWER_SWITCH;
   machine.machineidsignature = signature_hex;
+  machine.address = (char*)g_address;
  
   Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
   machineMsg.creator = (char*)g_address;
@@ -701,7 +702,7 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
     Serial.println("Notarize: CID Asset\n");
     ResponseAppend_P("Notarize: CID Asset %s\n", cid_str);
 
-    generateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
+    generateAnyCIDAttestMsg(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
   }
   else{
     Serial.println("Register: Machine\n");

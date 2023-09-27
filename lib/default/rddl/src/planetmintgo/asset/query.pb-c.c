@@ -97,6 +97,186 @@ void   planetmintgo__asset__query_params_response__free_unpacked
   assert(message->base.descriptor == &planetmintgo__asset__query_params_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   planetmintgo__asset__query_get_cids_by_address_request__init
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressRequest         *message)
+{
+  static const Planetmintgo__Asset__QueryGetCIDsByAddressRequest init_value = PLANETMINTGO__ASSET__QUERY_GET_CIDS_BY_ADDRESS_REQUEST__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__asset__query_get_cids_by_address_request__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__asset__query_get_cids_by_address_request__pack
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__asset__query_get_cids_by_address_request__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Asset__QueryGetCIDsByAddressRequest *
+       planetmintgo__asset__query_get_cids_by_address_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Asset__QueryGetCIDsByAddressRequest *)
+     protobuf_c_message_unpack (&planetmintgo__asset__query_get_cids_by_address_request__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__asset__query_get_cids_by_address_request__free_unpacked
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   planetmintgo__asset__query_get_cids_by_address_response__init
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressResponse         *message)
+{
+  static const Planetmintgo__Asset__QueryGetCIDsByAddressResponse init_value = PLANETMINTGO__ASSET__QUERY_GET_CIDS_BY_ADDRESS_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__asset__query_get_cids_by_address_response__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__asset__query_get_cids_by_address_response__pack
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__asset__query_get_cids_by_address_response__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Asset__QueryGetCIDsByAddressResponse *
+       planetmintgo__asset__query_get_cids_by_address_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Asset__QueryGetCIDsByAddressResponse *)
+     protobuf_c_message_unpack (&planetmintgo__asset__query_get_cids_by_address_response__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__asset__query_get_cids_by_address_response__free_unpacked
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_cids_by_address_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   planetmintgo__asset__query_get_notarized_asset_request__init
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetRequest         *message)
+{
+  static const Planetmintgo__Asset__QueryGetNotarizedAssetRequest init_value = PLANETMINTGO__ASSET__QUERY_GET_NOTARIZED_ASSET_REQUEST__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__asset__query_get_notarized_asset_request__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__asset__query_get_notarized_asset_request__pack
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__asset__query_get_notarized_asset_request__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Asset__QueryGetNotarizedAssetRequest *
+       planetmintgo__asset__query_get_notarized_asset_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Asset__QueryGetNotarizedAssetRequest *)
+     protobuf_c_message_unpack (&planetmintgo__asset__query_get_notarized_asset_request__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__asset__query_get_notarized_asset_request__free_unpacked
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   planetmintgo__asset__query_get_notarized_asset_response__init
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetResponse         *message)
+{
+  static const Planetmintgo__Asset__QueryGetNotarizedAssetResponse init_value = PLANETMINTGO__ASSET__QUERY_GET_NOTARIZED_ASSET_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t planetmintgo__asset__query_get_notarized_asset_response__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t planetmintgo__asset__query_get_notarized_asset_response__pack
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t planetmintgo__asset__query_get_notarized_asset_response__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Planetmintgo__Asset__QueryGetNotarizedAssetResponse *
+       planetmintgo__asset__query_get_notarized_asset_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Planetmintgo__Asset__QueryGetNotarizedAssetResponse *)
+     protobuf_c_message_unpack (&planetmintgo__asset__query_get_notarized_asset_response__descriptor,
+                                allocator, len, data);
+}
+void   planetmintgo__asset__query_get_notarized_asset_response__free_unpacked
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &planetmintgo__asset__query_get_notarized_asset_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 #define planetmintgo__asset__query_params_request__field_descriptors NULL
 #define planetmintgo__asset__query_params_request__field_indices_by_name NULL
 #define planetmintgo__asset__query_params_request__number_ranges NULL
@@ -153,11 +333,219 @@ const ProtobufCMessageDescriptor planetmintgo__asset__query_params_response__des
   (ProtobufCMessageInit) planetmintgo__asset__query_params_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCMethodDescriptor planetmintgo__asset__query__method_descriptors[1] =
+static const ProtobufCFieldDescriptor planetmintgo__asset__query_get_cids_by_address_request__field_descriptors[3] =
+{
+  {
+    "address",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressRequest, address),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "lookupPeriodInMin",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT64,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressRequest, lookupperiodinmin),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "pagination",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressRequest, pagination),
+    &cosmos__base__query__v1beta1__page_request__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned planetmintgo__asset__query_get_cids_by_address_request__field_indices_by_name[] = {
+  0,   /* field[0] = address */
+  1,   /* field[1] = lookupPeriodInMin */
+  2,   /* field[2] = pagination */
+};
+static const ProtobufCIntRange planetmintgo__asset__query_get_cids_by_address_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor planetmintgo__asset__query_get_cids_by_address_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.asset.QueryGetCIDsByAddressRequest",
+  "QueryGetCIDsByAddressRequest",
+  "Planetmintgo__Asset__QueryGetCIDsByAddressRequest",
+  "planetmintgo.asset",
+  sizeof(Planetmintgo__Asset__QueryGetCIDsByAddressRequest),
+  3,
+  planetmintgo__asset__query_get_cids_by_address_request__field_descriptors,
+  planetmintgo__asset__query_get_cids_by_address_request__field_indices_by_name,
+  1,  planetmintgo__asset__query_get_cids_by_address_request__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__asset__query_get_cids_by_address_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor planetmintgo__asset__query_get_cids_by_address_response__field_descriptors[2] =
+{
+  {
+    "cids",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_STRING,
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressResponse, n_cids),
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressResponse, cids),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "pagination",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetCIDsByAddressResponse, pagination),
+    &cosmos__base__query__v1beta1__page_response__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned planetmintgo__asset__query_get_cids_by_address_response__field_indices_by_name[] = {
+  0,   /* field[0] = cids */
+  1,   /* field[1] = pagination */
+};
+static const ProtobufCIntRange planetmintgo__asset__query_get_cids_by_address_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor planetmintgo__asset__query_get_cids_by_address_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.asset.QueryGetCIDsByAddressResponse",
+  "QueryGetCIDsByAddressResponse",
+  "Planetmintgo__Asset__QueryGetCIDsByAddressResponse",
+  "planetmintgo.asset",
+  sizeof(Planetmintgo__Asset__QueryGetCIDsByAddressResponse),
+  2,
+  planetmintgo__asset__query_get_cids_by_address_response__field_descriptors,
+  planetmintgo__asset__query_get_cids_by_address_response__field_indices_by_name,
+  1,  planetmintgo__asset__query_get_cids_by_address_response__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__asset__query_get_cids_by_address_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor planetmintgo__asset__query_get_notarized_asset_request__field_descriptors[1] =
+{
+  {
+    "cid",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetNotarizedAssetRequest, cid),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned planetmintgo__asset__query_get_notarized_asset_request__field_indices_by_name[] = {
+  0,   /* field[0] = cid */
+};
+static const ProtobufCIntRange planetmintgo__asset__query_get_notarized_asset_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor planetmintgo__asset__query_get_notarized_asset_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.asset.QueryGetNotarizedAssetRequest",
+  "QueryGetNotarizedAssetRequest",
+  "Planetmintgo__Asset__QueryGetNotarizedAssetRequest",
+  "planetmintgo.asset",
+  sizeof(Planetmintgo__Asset__QueryGetNotarizedAssetRequest),
+  1,
+  planetmintgo__asset__query_get_notarized_asset_request__field_descriptors,
+  planetmintgo__asset__query_get_notarized_asset_request__field_indices_by_name,
+  1,  planetmintgo__asset__query_get_notarized_asset_request__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__asset__query_get_notarized_asset_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor planetmintgo__asset__query_get_notarized_asset_response__field_descriptors[2] =
+{
+  {
+    "cid",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetNotarizedAssetResponse, cid),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "address",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Asset__QueryGetNotarizedAssetResponse, address),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned planetmintgo__asset__query_get_notarized_asset_response__field_indices_by_name[] = {
+  1,   /* field[1] = address */
+  0,   /* field[0] = cid */
+};
+static const ProtobufCIntRange planetmintgo__asset__query_get_notarized_asset_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor planetmintgo__asset__query_get_notarized_asset_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "planetmintgo.asset.QueryGetNotarizedAssetResponse",
+  "QueryGetNotarizedAssetResponse",
+  "Planetmintgo__Asset__QueryGetNotarizedAssetResponse",
+  "planetmintgo.asset",
+  sizeof(Planetmintgo__Asset__QueryGetNotarizedAssetResponse),
+  2,
+  planetmintgo__asset__query_get_notarized_asset_response__field_descriptors,
+  planetmintgo__asset__query_get_notarized_asset_response__field_indices_by_name,
+  1,  planetmintgo__asset__query_get_notarized_asset_response__number_ranges,
+  (ProtobufCMessageInit) planetmintgo__asset__query_get_notarized_asset_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCMethodDescriptor planetmintgo__asset__query__method_descriptors[3] =
 {
   { "Params", &planetmintgo__asset__query_params_request__descriptor, &planetmintgo__asset__query_params_response__descriptor },
+  { "GetCIDsByAddress", &planetmintgo__asset__query_get_cids_by_address_request__descriptor, &planetmintgo__asset__query_get_cids_by_address_response__descriptor },
+  { "GetNotarizedAsset", &planetmintgo__asset__query_get_notarized_asset_request__descriptor, &planetmintgo__asset__query_get_notarized_asset_response__descriptor },
 };
 const unsigned planetmintgo__asset__query__method_indices_by_name[] = {
+  1,        /* GetCIDsByAddress */
+  2,        /* GetNotarizedAsset */
   0         /* Params */
 };
 const ProtobufCServiceDescriptor planetmintgo__asset__query__descriptor =
@@ -167,7 +555,7 @@ const ProtobufCServiceDescriptor planetmintgo__asset__query__descriptor =
   "Query",
   "Planetmintgo__Asset__Query",
   "planetmintgo.asset",
-  1,
+  3,
   planetmintgo__asset__query__method_descriptors,
   planetmintgo__asset__query__method_indices_by_name
 };
@@ -178,6 +566,22 @@ void planetmintgo__asset__query__params(ProtobufCService *service,
 {
   assert(service->descriptor == &planetmintgo__asset__query__descriptor);
   service->invoke(service, 0, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
+}
+void planetmintgo__asset__query__get_cids_by_address(ProtobufCService *service,
+                                                     const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *input,
+                                                     Planetmintgo__Asset__QueryGetCIDsByAddressResponse_Closure closure,
+                                                     void *closure_data)
+{
+  assert(service->descriptor == &planetmintgo__asset__query__descriptor);
+  service->invoke(service, 1, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
+}
+void planetmintgo__asset__query__get_notarized_asset(ProtobufCService *service,
+                                                     const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *input,
+                                                     Planetmintgo__Asset__QueryGetNotarizedAssetResponse_Closure closure,
+                                                     void *closure_data)
+{
+  assert(service->descriptor == &planetmintgo__asset__query__descriptor);
+  service->invoke(service, 2, (const ProtobufCMessage *) input, (ProtobufCClosure) closure, closure_data);
 }
 void planetmintgo__asset__query__init (Planetmintgo__Asset__Query_Service *service,
                                        Planetmintgo__Asset__Query_ServiceDestroy destroy)

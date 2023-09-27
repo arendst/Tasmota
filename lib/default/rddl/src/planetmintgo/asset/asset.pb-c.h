@@ -26,13 +26,11 @@ typedef struct Planetmintgo__Asset__Asset Planetmintgo__Asset__Asset;
 struct  Planetmintgo__Asset__Asset
 {
   ProtobufCMessage base;
-  char *hash;
-  char *signature;
-  char *pubkey;
+  char *cid;
 };
 #define PLANETMINTGO__ASSET__ASSET__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__asset__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string }
 
 
 /* Planetmintgo__Asset__Asset methods */

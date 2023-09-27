@@ -11,6 +11,7 @@
 #define RDDL_MACHINE_CONTROLLER         7
 #define RDDL_MACHINE_CHARGER            8
 #define RDDL_MACHINE_BMS                9 
-#define RDDL_MACHINE_ESS               10 
+#define RDDL_MACHINE_ESS               10
+
 
 #endif

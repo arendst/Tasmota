@@ -21,6 +21,10 @@ PROTOBUF_C__BEGIN_DECLS
 
 typedef struct Planetmintgo__Asset__QueryParamsRequest Planetmintgo__Asset__QueryParamsRequest;
 typedef struct Planetmintgo__Asset__QueryParamsResponse Planetmintgo__Asset__QueryParamsResponse;
+typedef struct Planetmintgo__Asset__QueryGetCIDsByAddressRequest Planetmintgo__Asset__QueryGetCIDsByAddressRequest;
+typedef struct Planetmintgo__Asset__QueryGetCIDsByAddressResponse Planetmintgo__Asset__QueryGetCIDsByAddressResponse;
+typedef struct Planetmintgo__Asset__QueryGetNotarizedAssetRequest Planetmintgo__Asset__QueryGetNotarizedAssetRequest;
+typedef struct Planetmintgo__Asset__QueryGetNotarizedAssetResponse Planetmintgo__Asset__QueryGetNotarizedAssetResponse;
 
 
 /* --- enums --- */
@@ -54,6 +58,51 @@ struct  Planetmintgo__Asset__QueryParamsResponse
 #define PLANETMINTGO__ASSET__QUERY_PARAMS_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__query_params_response__descriptor) \
     , NULL }
+
+
+struct  Planetmintgo__Asset__QueryGetCIDsByAddressRequest
+{
+  ProtobufCMessage base;
+  char *address;
+  uint64_t lookupperiodinmin;
+  Cosmos__Base__Query__V1beta1__PageRequest *pagination;
+};
+#define PLANETMINTGO__ASSET__QUERY_GET_CIDS_BY_ADDRESS_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__query_get_cids_by_address_request__descriptor) \
+    , (char *)protobuf_c_empty_string, 0, NULL }
+
+
+struct  Planetmintgo__Asset__QueryGetCIDsByAddressResponse
+{
+  ProtobufCMessage base;
+  size_t n_cids;
+  char **cids;
+  Cosmos__Base__Query__V1beta1__PageResponse *pagination;
+};
+#define PLANETMINTGO__ASSET__QUERY_GET_CIDS_BY_ADDRESS_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__query_get_cids_by_address_response__descriptor) \
+    , 0,NULL, NULL }
+
+
+struct  Planetmintgo__Asset__QueryGetNotarizedAssetRequest
+{
+  ProtobufCMessage base;
+  char *cid;
+};
+#define PLANETMINTGO__ASSET__QUERY_GET_NOTARIZED_ASSET_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__query_get_notarized_asset_request__descriptor) \
+    , (char *)protobuf_c_empty_string }
+
+
+struct  Planetmintgo__Asset__QueryGetNotarizedAssetResponse
+{
+  ProtobufCMessage base;
+  char *cid;
+  char *address;
+};
+#define PLANETMINTGO__ASSET__QUERY_GET_NOTARIZED_ASSET_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__query_get_notarized_asset_response__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
 
 
 /* Planetmintgo__Asset__QueryParamsRequest methods */
@@ -94,6 +143,82 @@ Planetmintgo__Asset__QueryParamsResponse *
 void   planetmintgo__asset__query_params_response__free_unpacked
                      (Planetmintgo__Asset__QueryParamsResponse *message,
                       ProtobufCAllocator *allocator);
+/* Planetmintgo__Asset__QueryGetCIDsByAddressRequest methods */
+void   planetmintgo__asset__query_get_cids_by_address_request__init
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressRequest         *message);
+size_t planetmintgo__asset__query_get_cids_by_address_request__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest   *message);
+size_t planetmintgo__asset__query_get_cids_by_address_request__pack
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest   *message,
+                      uint8_t             *out);
+size_t planetmintgo__asset__query_get_cids_by_address_request__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Asset__QueryGetCIDsByAddressRequest *
+       planetmintgo__asset__query_get_cids_by_address_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__asset__query_get_cids_by_address_request__free_unpacked
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message,
+                      ProtobufCAllocator *allocator);
+/* Planetmintgo__Asset__QueryGetCIDsByAddressResponse methods */
+void   planetmintgo__asset__query_get_cids_by_address_response__init
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressResponse         *message);
+size_t planetmintgo__asset__query_get_cids_by_address_response__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse   *message);
+size_t planetmintgo__asset__query_get_cids_by_address_response__pack
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse   *message,
+                      uint8_t             *out);
+size_t planetmintgo__asset__query_get_cids_by_address_response__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Asset__QueryGetCIDsByAddressResponse *
+       planetmintgo__asset__query_get_cids_by_address_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__asset__query_get_cids_by_address_response__free_unpacked
+                     (Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message,
+                      ProtobufCAllocator *allocator);
+/* Planetmintgo__Asset__QueryGetNotarizedAssetRequest methods */
+void   planetmintgo__asset__query_get_notarized_asset_request__init
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetRequest         *message);
+size_t planetmintgo__asset__query_get_notarized_asset_request__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest   *message);
+size_t planetmintgo__asset__query_get_notarized_asset_request__pack
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest   *message,
+                      uint8_t             *out);
+size_t planetmintgo__asset__query_get_notarized_asset_request__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Asset__QueryGetNotarizedAssetRequest *
+       planetmintgo__asset__query_get_notarized_asset_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__asset__query_get_notarized_asset_request__free_unpacked
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message,
+                      ProtobufCAllocator *allocator);
+/* Planetmintgo__Asset__QueryGetNotarizedAssetResponse methods */
+void   planetmintgo__asset__query_get_notarized_asset_response__init
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetResponse         *message);
+size_t planetmintgo__asset__query_get_notarized_asset_response__get_packed_size
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse   *message);
+size_t planetmintgo__asset__query_get_notarized_asset_response__pack
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse   *message,
+                      uint8_t             *out);
+size_t planetmintgo__asset__query_get_notarized_asset_response__pack_to_buffer
+                     (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse   *message,
+                      ProtobufCBuffer     *buffer);
+Planetmintgo__Asset__QueryGetNotarizedAssetResponse *
+       planetmintgo__asset__query_get_notarized_asset_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   planetmintgo__asset__query_get_notarized_asset_response__free_unpacked
+                     (Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message,
+                      ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*Planetmintgo__Asset__QueryParamsRequest_Closure)
@@ -101,6 +226,18 @@ typedef void (*Planetmintgo__Asset__QueryParamsRequest_Closure)
                   void *closure_data);
 typedef void (*Planetmintgo__Asset__QueryParamsResponse_Closure)
                  (const Planetmintgo__Asset__QueryParamsResponse *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Asset__QueryGetCIDsByAddressRequest_Closure)
+                 (const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Asset__QueryGetCIDsByAddressResponse_Closure)
+                 (const Planetmintgo__Asset__QueryGetCIDsByAddressResponse *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Asset__QueryGetNotarizedAssetRequest_Closure)
+                 (const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *message,
+                  void *closure_data);
+typedef void (*Planetmintgo__Asset__QueryGetNotarizedAssetResponse_Closure)
+                 (const Planetmintgo__Asset__QueryGetNotarizedAssetResponse *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -113,6 +250,14 @@ struct Planetmintgo__Asset__Query_Service
                  const Planetmintgo__Asset__QueryParamsRequest *input,
                  Planetmintgo__Asset__QueryParamsResponse_Closure closure,
                  void *closure_data);
+  void (*get_cids_by_address)(Planetmintgo__Asset__Query_Service *service,
+                              const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *input,
+                              Planetmintgo__Asset__QueryGetCIDsByAddressResponse_Closure closure,
+                              void *closure_data);
+  void (*get_notarized_asset)(Planetmintgo__Asset__Query_Service *service,
+                              const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *input,
+                              Planetmintgo__Asset__QueryGetNotarizedAssetResponse_Closure closure,
+                              void *closure_data);
 };
 typedef void (*Planetmintgo__Asset__Query_ServiceDestroy)(Planetmintgo__Asset__Query_Service *);
 void planetmintgo__asset__query__init (Planetmintgo__Asset__Query_Service *service,
@@ -121,16 +266,30 @@ void planetmintgo__asset__query__init (Planetmintgo__Asset__Query_Service *servi
     { &planetmintgo__asset__query__descriptor, protobuf_c_service_invoke_internal, NULL }
 #define PLANETMINTGO__ASSET__QUERY__INIT(function_prefix__) \
     { PLANETMINTGO__ASSET__QUERY__BASE_INIT,\
-      function_prefix__ ## params  }
+      function_prefix__ ## params,\
+      function_prefix__ ## get_cids_by_address,\
+      function_prefix__ ## get_notarized_asset  }
 void planetmintgo__asset__query__params(ProtobufCService *service,
                                         const Planetmintgo__Asset__QueryParamsRequest *input,
                                         Planetmintgo__Asset__QueryParamsResponse_Closure closure,
                                         void *closure_data);
+void planetmintgo__asset__query__get_cids_by_address(ProtobufCService *service,
+                                                     const Planetmintgo__Asset__QueryGetCIDsByAddressRequest *input,
+                                                     Planetmintgo__Asset__QueryGetCIDsByAddressResponse_Closure closure,
+                                                     void *closure_data);
+void planetmintgo__asset__query__get_notarized_asset(ProtobufCService *service,
+                                                     const Planetmintgo__Asset__QueryGetNotarizedAssetRequest *input,
+                                                     Planetmintgo__Asset__QueryGetNotarizedAssetResponse_Closure closure,
+                                                     void *closure_data);
 
 /* --- descriptors --- */
 
 extern const ProtobufCMessageDescriptor planetmintgo__asset__query_params_request__descriptor;
 extern const ProtobufCMessageDescriptor planetmintgo__asset__query_params_response__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__asset__query_get_cids_by_address_request__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__asset__query_get_cids_by_address_response__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__asset__query_get_notarized_asset_request__descriptor;
+extern const ProtobufCMessageDescriptor planetmintgo__asset__query_get_notarized_asset_response__descriptor;
 extern const ProtobufCServiceDescriptor planetmintgo__asset__query__descriptor;
 
 PROTOBUF_C__END_DECLS

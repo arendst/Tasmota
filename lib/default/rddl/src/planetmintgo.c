@@ -204,43 +204,14 @@ int generateAnyAttestMachineMsg(Google__Protobuf__Any* anyMsg, Planetmintgo__Mac
     return 0;
 }
 
-
-int generateAnyCIDAttestMsg( Google__Protobuf__Any* anyMsg, char *public_address )
-{
-    Planetmintgo__Asset__MsgNotarizeAsset msg = PLANETMINTGO__ASSET__MSG_NOTARIZE_ASSET__INIT;
-    msg.creator = public_address;
-    msg.hash = "cid";
-    msg.signature = "313d60b37ca2f168d33b7d6234f6d8725d910d0a74872350874bb0a98f8cc8584204010720b9d1dfe3800fdbf067d07bba13d2954d2e98943e18b8fe1fadf77b";
-    msg.pubkey = "02328de87896b9cbb5101c335f40029e4be898988b470abbf683f1a0b318d73470";
-
-    anyMsg->type_url = "/planetmintgo.asset.MsgNotarizeAsset";
-    anyMsg->value.len = planetmintgo__asset__msg_notarize_asset__get_packed_size(&msg);
-    anyMsg->value.data = getStack(anyMsg->value.len);
-    if( !anyMsg->value.data )
-        return -1;
-    planetmintgo__asset__msg_notarize_asset__pack(&msg, anyMsg->value.data);
-    return 0;
-}
-
-int generateAnyCIDAttestMsgGeneric( Google__Protobuf__Any* anyMsg, const char* cid, uint8_t* priv_key, uint8_t* pub_key, char* public_address, const char* ext_pub_key)
+int generateAnyCIDAttestMsg( Google__Protobuf__Any* anyMsg, const char* cid, uint8_t* priv_key, uint8_t* pub_key, char* public_address, const char* ext_pub_key)
 {
 
     Planetmintgo__Asset__MsgNotarizeAsset msg = PLANETMINTGO__ASSET__MSG_NOTARIZE_ASSET__INIT;
 
-    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
-    sha256(cid, strlen(cid), digest);
-
-    const ecdsa_curve *curve = &secp256k1;
-
-    uint8_t signature[64]= {0};
-    char signature_hex[64*2+1] = {0};
-    int res = ecdsa_sign_digest(curve, (const unsigned char *)priv_key, (const unsigned char *)digest, signature, NULL, NULL);
-    toHexString(signature_hex, signature, 128);
-
     msg.creator = public_address;
-    msg.hash = (char*)cid;
-    msg.signature =  signature_hex;
-    msg.pubkey = ext_pub_key;
+    msg.cid = (char*)cid;
+
 
     anyMsg->type_url = "/planetmintgo.asset.MsgNotarizeAsset";
     anyMsg->value.len = planetmintgo__asset__msg_notarize_asset__get_packed_size(&msg);

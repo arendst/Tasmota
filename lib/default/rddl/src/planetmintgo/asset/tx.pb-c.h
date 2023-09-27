@@ -28,13 +28,11 @@ struct  Planetmintgo__Asset__MsgNotarizeAsset
 {
   ProtobufCMessage base;
   char *creator;
-  char *hash;
-  char *signature;
-  char *pubkey;
+  char *cid;
 };
 #define PLANETMINTGO__ASSET__MSG_NOTARIZE_ASSET__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__asset__msg_notarize_asset__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
 
 
 struct  Planetmintgo__Asset__MsgNotarizeAssetResponse

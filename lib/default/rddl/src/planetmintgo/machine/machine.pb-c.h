@@ -40,10 +40,11 @@ struct  Planetmintgo__Machine__Machine
   Planetmintgo__Machine__Metadata *metadata;
   uint32_t type;
   char *machineidsignature;
+  char *address;
 };
 #define PLANETMINTGO__MACHINE__MACHINE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__machine__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL, 0, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
 
 
 struct  Planetmintgo__Machine__Metadata
@@ -65,10 +66,11 @@ struct  Planetmintgo__Machine__MachineIndex
   char *machineid;
   char *issuerplanetmint;
   char *issuerliquid;
+  char *address;
 };
 #define PLANETMINTGO__MACHINE__MACHINE_INDEX__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&planetmintgo__machine__machine_index__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
 
 
 /* Planetmintgo__Machine__Machine methods */

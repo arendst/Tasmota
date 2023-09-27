@@ -142,7 +142,7 @@ void   planetmintgo__machine__machine_index__free_unpacked
   assert(message->base.descriptor == &planetmintgo__machine__machine_index__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_descriptors[12] =
+static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_descriptors[13] =
 {
   {
     "name",
@@ -288,8 +288,21 @@ static const ProtobufCFieldDescriptor planetmintgo__machine__machine__field_desc
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "address",
+    13,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Machine__Machine, address),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned planetmintgo__machine__machine__field_indices_by_name[] = {
+  12,   /* field[12] = address */
   4,   /* field[4] = amount */
   2,   /* field[2] = domain */
   7,   /* field[7] = issuerLiquid */
@@ -306,7 +319,7 @@ static const unsigned planetmintgo__machine__machine__field_indices_by_name[] = 
 static const ProtobufCIntRange planetmintgo__machine__machine__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 12 }
+  { 0, 13 }
 };
 const ProtobufCMessageDescriptor planetmintgo__machine__machine__descriptor =
 {
@@ -316,7 +329,7 @@ const ProtobufCMessageDescriptor planetmintgo__machine__machine__descriptor =
   "Planetmintgo__Machine__Machine",
   "planetmintgo.machine",
   sizeof(Planetmintgo__Machine__Machine),
-  12,
+  13,
   planetmintgo__machine__machine__field_descriptors,
   planetmintgo__machine__machine__field_indices_by_name,
   1,  planetmintgo__machine__machine__number_ranges,
@@ -400,7 +413,7 @@ const ProtobufCMessageDescriptor planetmintgo__machine__metadata__descriptor =
   (ProtobufCMessageInit) planetmintgo__machine__metadata__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor planetmintgo__machine__machine_index__field_descriptors[3] =
+static const ProtobufCFieldDescriptor planetmintgo__machine__machine_index__field_descriptors[4] =
 {
   {
     "machineId",
@@ -438,8 +451,21 @@ static const ProtobufCFieldDescriptor planetmintgo__machine__machine_index__fiel
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "address",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Planetmintgo__Machine__MachineIndex, address),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned planetmintgo__machine__machine_index__field_indices_by_name[] = {
+  3,   /* field[3] = address */
   2,   /* field[2] = issuerLiquid */
   1,   /* field[1] = issuerPlanetmint */
   0,   /* field[0] = machineId */
@@ -447,7 +473,7 @@ static const unsigned planetmintgo__machine__machine_index__field_indices_by_nam
 static const ProtobufCIntRange planetmintgo__machine__machine_index__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor planetmintgo__machine__machine_index__descriptor =
 {
@@ -457,7 +483,7 @@ const ProtobufCMessageDescriptor planetmintgo__machine__machine_index__descripto
   "Planetmintgo__Machine__MachineIndex",
   "planetmintgo.machine",
   sizeof(Planetmintgo__Machine__MachineIndex),
-  3,
+  4,
   planetmintgo__machine__machine_index__field_descriptors,
   planetmintgo__machine__machine_index__field_indices_by_name,
   1,  planetmintgo__machine__machine_index__number_ranges,

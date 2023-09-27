@@ -52,39 +52,15 @@ void   planetmintgo__asset__asset__free_unpacked
   assert(message->base.descriptor == &planetmintgo__asset__asset__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor planetmintgo__asset__asset__field_descriptors[3] =
+static const ProtobufCFieldDescriptor planetmintgo__asset__asset__field_descriptors[1] =
 {
   {
-    "hash",
+    "cid",
     1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__Asset, hash),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "signature",
-    2,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__Asset, signature),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "pubkey",
-    3,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__Asset, pubkey),
+    offsetof(Planetmintgo__Asset__Asset, cid),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -92,14 +68,12 @@ static const ProtobufCFieldDescriptor planetmintgo__asset__asset__field_descript
   },
 };
 static const unsigned planetmintgo__asset__asset__field_indices_by_name[] = {
-  0,   /* field[0] = hash */
-  2,   /* field[2] = pubkey */
-  1,   /* field[1] = signature */
+  0,   /* field[0] = cid */
 };
 static const ProtobufCIntRange planetmintgo__asset__asset__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 1 }
 };
 const ProtobufCMessageDescriptor planetmintgo__asset__asset__descriptor =
 {
@@ -109,7 +83,7 @@ const ProtobufCMessageDescriptor planetmintgo__asset__asset__descriptor =
   "Planetmintgo__Asset__Asset",
   "planetmintgo.asset",
   sizeof(Planetmintgo__Asset__Asset),
-  3,
+  1,
   planetmintgo__asset__asset__field_descriptors,
   planetmintgo__asset__asset__field_indices_by_name,
   1,  planetmintgo__asset__asset__number_ranges,

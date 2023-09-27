@@ -97,7 +97,7 @@ void   planetmintgo__asset__msg_notarize_asset_response__free_unpacked
   assert(message->base.descriptor == &planetmintgo__asset__msg_notarize_asset_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor planetmintgo__asset__msg_notarize_asset__field_descriptors[4] =
+static const ProtobufCFieldDescriptor planetmintgo__asset__msg_notarize_asset__field_descriptors[2] =
 {
   {
     "creator",
@@ -112,36 +112,12 @@ static const ProtobufCFieldDescriptor planetmintgo__asset__msg_notarize_asset__f
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "hash",
+    "cid",
     2,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__MsgNotarizeAsset, hash),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "signature",
-    3,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__MsgNotarizeAsset, signature),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "pubKey",
-    4,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Planetmintgo__Asset__MsgNotarizeAsset, pubkey),
+    offsetof(Planetmintgo__Asset__MsgNotarizeAsset, cid),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -149,15 +125,13 @@ static const ProtobufCFieldDescriptor planetmintgo__asset__msg_notarize_asset__f
   },
 };
 static const unsigned planetmintgo__asset__msg_notarize_asset__field_indices_by_name[] = {
+  1,   /* field[1] = cid */
   0,   /* field[0] = creator */
-  1,   /* field[1] = hash */
-  3,   /* field[3] = pubKey */
-  2,   /* field[2] = signature */
 };
 static const ProtobufCIntRange planetmintgo__asset__msg_notarize_asset__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 2 }
 };
 const ProtobufCMessageDescriptor planetmintgo__asset__msg_notarize_asset__descriptor =
 {
@@ -167,7 +141,7 @@ const ProtobufCMessageDescriptor planetmintgo__asset__msg_notarize_asset__descri
   "Planetmintgo__Asset__MsgNotarizeAsset",
   "planetmintgo.asset",
   sizeof(Planetmintgo__Asset__MsgNotarizeAsset),
-  4,
+  2,
   planetmintgo__asset__msg_notarize_asset__field_descriptors,
   planetmintgo__asset__msg_notarize_asset__field_indices_by_name,
   1,  planetmintgo__asset__msg_notarize_asset__number_ranges,
