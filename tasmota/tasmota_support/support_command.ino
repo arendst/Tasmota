@@ -43,6 +43,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_ZIGBEE_BATTPERCENT "|"
   D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
   D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
+  D_CMND_POPCHALLENGE "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -84,7 +85,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
   &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid, &CmndBalance, 
-  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData,
+  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -940,6 +941,42 @@ void CmndMachineData(void) {
   Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
 
   CmndStatusResponse(31);
+  ResponseClear();
+}
+
+void CmndPoPChallenge(void) {
+
+  if( XdrvMailbox.data_len )
+  {
+    clearStack();
+    size_t length = 1048;
+    uint8_t* content =  getStack( length );
+    const char* cid = XdrvMailbox.data;
+    int readBytes = readfile( cid, content, length );
+    if( readBytes >= 0 ){
+      char* encoding = "hex"; // or "raw", "hex", "b58", "base64"
+      uint8_t* encoded_content =  getStack( length );
+      char* encoded_data = (char*)getStack( 2*readBytes+1 );
+      memset( encoded_data, 0,2*readBytes+1 );
+      toHexString( encoded_data, content, 2*readBytes );
+      Response_P( "{ \"%s\": {", D_CMND_POPCHALLENGE);
+      ResponseAppend_P( "\"%s\": \"%s\",", "cid", cid );
+      ResponseAppend_P( "\"%s\": \"%s\",", "encoding", encoding );
+      ResponseAppend_P( "\"%s\": \"%s\"", "data", encoded_data );
+      ResponseAppend_P( "} }");
+    }
+    else if( readBytes == -1 ){
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Internal Error: FS not mountable" );
+    }
+    else if( readBytes == -2 ){
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Failed: file not found" );
+    }
+  }
+  else{
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Please define a challenge" );
+  }
+  
+  CmndStatusResponse(32);
   ResponseClear();
 }
 

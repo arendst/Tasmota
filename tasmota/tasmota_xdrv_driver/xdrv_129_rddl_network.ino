@@ -640,8 +640,8 @@ int readfile( const char* filename, uint8_t* content, size_t length ){
   File file = LittleFS.open(filename_local, "r");
 
   if (!file) {
-    Serial.println("Failed to open file for writing");
-    return -1;
+    Serial.println("Failed to open file for reading");
+    return -2;
   }
   size_t readbytes = file.read(content, length);
 

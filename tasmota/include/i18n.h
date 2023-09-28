@@ -270,6 +270,7 @@
 #define D_CMND_GETACCOUNTID "GetAccountID"
 #define D_CMND_PLANETMINTDENOM "PlanetmintDenom"
 #define D_CMND_PLANETMINTCHAINID "PlanetmintChainID"
+#define D_CMND_POPCHALLENGE "PoPChallenge"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"
