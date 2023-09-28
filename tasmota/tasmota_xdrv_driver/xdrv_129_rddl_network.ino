@@ -533,41 +533,40 @@ char* create_transaction( void* anyMsg, char* tokenAmount )
     strcpy( payload+ strlen( payload ), "\", \"mode\": \"BROADCAST_MODE_SYNC\" }");
   }
   else
-    ResponseAppend_P("note engouth memory:\n");
+    ResponseAppend_P("not engouth memory:\n");
 
   return payload;
 }
 
-bool getGPSstring( char** gps_data ){
+char* getGPSstring(){
   HTTPClientLight http;
   bool status = false;
   String uri = "https://us-central1-rddl-io-8680.cloudfunctions.net/geolocation-888954d";
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
-
+  char* gps_data = NULL;
   int httpResponseCode = http.GET();
 
   if (httpResponseCode > 0) {
     String payload = http.getString();
     Serial.println(httpResponseCode);
     Serial.println(payload);
-    *gps_data = (char*)malloc( 200);
-    memset( *gps_data, 0, 200);
-    strcpy(*gps_data, payload.c_str());
-    status = removeIPAddr( *gps_data );
+    gps_data = (char*)getStack(300);
+    memset( gps_data, 0, 300);
+    strcpy(gps_data, payload.c_str());
+    status = removeIPAddr( gps_data );
   }
   else {
     Serial.println("Error on HTTP request\n");
   }
 
   http.end();
-  return status;
+  return gps_data;
 }
 
 int registerMachine(void* anyMsg){
   
   char machinecid_buffer[58+1] = {0};
-  //char* gps_str = NULL;
 
   uint8_t signature[64]={0};
   char signature_hex[64*2+1]={0};
@@ -582,16 +581,17 @@ int registerMachine(void* anyMsg){
   
   toHexString( signature_hex, signature, 64*2);
 
-  //getGPSstring( &gps_str );
-  if( strlen( g_planetmintapi) == 0 ){
-    int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
-    if( readbytes < 0 )
-      memset((void*)machinecid_buffer,0, 58+1);
-  }
+  char* gps_str = getGPSstring();
+  if (!gps_str )
+    gps_str = "";
+
+  int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
+  if( readbytes < 0 )
+    memset((void*)machinecid_buffer,0, 58+1);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
   metadata.additionaldatacid = machinecid_buffer;
-  metadata.gps = "";// gps_str;
+  metadata.gps = gps_str;
   metadata.assetdefinition = "{\"Version\": \"0.1\"}";
   metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
 
