@@ -682,7 +682,11 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 char* SettingsText(uint32_t index) {
   char* position = Settings->text_pool;
 
-  if (index >= SET_MAX) {
+  if (index >= SET_MAX) { // Index above SET_MAX are not stored in Settings
+#ifdef USE_WEBSERVER
+    if (SET_BUTTON17 <= index && index <= SET_BUTTON32)
+      return (char*)GetWebButton(index-SET_BUTTON17+16);
+#endif
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
