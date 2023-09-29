@@ -230,7 +230,7 @@ struct {
 #endif //USE_ENERGY_SENSOR
 #endif //USE_MI_EXT_GUI
 
-#ifdef USE_MI_HOMEKIT
+#if USE_MI_HOMEKIT==1
   void *outlet_hap_service[4]; //arbitrary chosen
   int8_t HKconnectedControllers = 0; //should never be < 0
   uint8_t HKinfoMsg = 0;
@@ -249,8 +249,8 @@ struct mi_sensor_t{
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
   uint16_t PID;
-  uint8_t *key;
-  uint32_t lastTimeSeen;
+  uint8_t *key = nullptr;
+  char *name = nullptr;
   union {
     struct {
       uint32_t needsKey:1;
@@ -331,7 +331,7 @@ struct mi_sensor_t{
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
-#ifdef USE_MI_HOMEKIT
+#if USE_MI_HOMEKIT==1
   //HAP handles
   void *temp_hap_service;
   void *hum_hap_service;
@@ -350,9 +350,9 @@ struct mi_sensor_t{
 
 #define D_CMND_MI32 "MI32"
 
-const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Cfg|Option";
+const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Name|Cfg|Option";
 
-void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Cfg, &CmndMi32Option };
+void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Name,&CmndMi32Cfg, &CmndMi32Option };
 
 #define UNKNOWN_MI  0
 #define FLORA       1
@@ -490,25 +490,23 @@ enum MI32_HKInfoMsg {
 const char HTTP_BTN_MENU_MI32[] PROGMEM = "<p><form action='m32' method='get'><button>Mi Dashboard</button></form></p>";
 
 const char HTTP_MI32_SCRIPT_1[] PROGMEM =
-  "function setUp(){setInterval(countUp,1000); setInterval(update,100);}"
+  "function setUp(){setInterval(countUp,1000); setInterval(update,1000);}"
   "function countUp(){let ti=document.querySelectorAll('.Ti');"
   "for(const el of ti){var t=parseInt(el.innerText);el.innerText=t+1;}}"
-  "function update(){"         //source, value
-    "var xr=new XMLHttpRequest();"
-    "xr.onreadystatechange=()=>{"
-      "if(xr.readyState==4&&xr.status==200){"
-            "var r = xr.response;" // new widget
-            "if(r.length>2000){return;};if(r.length==0){return;}"
-            "var d = document.createElement('div');"
-            "d.innerHTML = r.trim();"
-            "var old = eb(d.firstChild.id);"
-            "old.parentNode.replaceChild(d.firstChild,old);"
-        "};"
-      "};"
-    "xr.open('GET','/m32?wi=1',true);"
-    "xr.send();"
-    "};"
-  ;
+  "function update(){"
+    "fetch('/m32?wi=1').then(r=>r.text())"
+    ".then((r)=>{"
+      // console.log(r); // optional
+      "if(r.length>0){"
+        "var d=document.createElement('div');"
+        "d.innerHTML=r.trim();"
+        "var old=eb(d.firstChild.id);"
+        "old.parentNode.replaceChild(d.firstChild, old);"
+      "}"
+    "})"
+    //".catch((e) => {console.error(e);});" //optional
+  "};"
+;
 
 const char HTTP_MI32_STYLE[] PROGMEM =
   "<style onload=setTimeout(setUp,500)>.parent {display: flex;flex-wrap: wrap;justify-content: center;}svg{float:inline-end;}"
@@ -525,7 +523,7 @@ const char HTTP_MI32_PARENT_START[] PROGMEM =
       "<div class='box'><h2>MI32 Bridge</h2>"
           "Observing <span id='numDev'>%u</span> devices<br>"
           "Uptime: <span class='Ti'>%u</span> seconds<br>"
-#ifdef USE_MI_HOMEKIT
+#if USE_MI_HOMEKIT==1
           "HomeKit setup code: %s<br>"
           "HAP controller connections: %d<br>"
 #else
