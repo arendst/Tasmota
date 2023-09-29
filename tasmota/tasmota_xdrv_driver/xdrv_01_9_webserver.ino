@@ -1266,18 +1266,18 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
       uint32_t cols = WebDeviceColumns();
       for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
-        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
+        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(idx -1)));
 #ifdef USE_SHUTTER
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
+            (set_button) ? GetWebButton(idx -1) : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
             "");
         } else {
 #endif  // USE_SHUTTER
           snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
+            (set_button) ? GetWebButton(idx -1) : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
             (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
 #ifdef USE_SHUTTER
         }
@@ -3696,6 +3696,32 @@ void CmndWebSensor(void)
   ResponseJsonEnd();
 }
 
+String *WebButton1732[16] = {0,};
+
+void SetWebButton(uint8_t button_index, const char *text) {
+  if (button_index < 16) 
+    SettingsUpdateText(SET_BUTTON1 + button_index, text);
+  else if (button_index < MAX_BUTTON_TEXT) {
+    button_index -= 16;
+    if (!WebButton1732[button_index]) 
+      WebButton1732[button_index] = new String(text);
+    else
+      *WebButton1732[button_index] = text;
+  }
+}
+
+const char* GetWebButton(uint8_t button_index) {
+  static char empty[1] = {0};
+  if (button_index < 16) 
+    return SettingsText(SET_BUTTON1 + button_index);
+  else if (button_index < MAX_BUTTON_TEXT) {
+    button_index -= 16;
+    if (WebButton1732[button_index])
+      return WebButton1732[button_index]->c_str();
+  }
+  return empty;
+}
+
 void CmndWebButton(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_BUTTON_TEXT)) {
@@ -3703,9 +3729,9 @@ void CmndWebButton(void)
       ResponseCmndAll(SET_BUTTON1, MAX_BUTTON_TEXT);
     } else {
       if (XdrvMailbox.data_len > 0) {
-        SettingsUpdateText(SET_BUTTON1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
+        SetWebButton(XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
       }
-      ResponseCmndIdxChar(SettingsText(SET_BUTTON1 + XdrvMailbox.index -1));
+      ResponseCmndIdxChar(GetWebButton(XdrvMailbox.index -1));
     }
   }
 }

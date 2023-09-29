@@ -958,7 +958,7 @@ void ShutterReportPosition(bool always, uint32_t index)
       ShutterLogPos(i);
       shutter_running++;
     }
-    if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
+    if (i && index == MAX_SHUTTERS_ESP32) { ResponseAppend_P(PSTR(",")); }
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     uint32_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
     ResponseAppend_P(JSON_SHUTTER_POS, i + 1, (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
