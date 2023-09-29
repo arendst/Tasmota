@@ -225,7 +225,6 @@ struct {
   } option;
 #ifdef USE_MI_EXT_GUI
   uint32_t widgetSlot;
-  bool openFetchRequest = false;
 #ifdef USE_ENERGY_SENSOR
   uint8_t *energy_history;
 #endif //USE_ENERGY_SENSOR
