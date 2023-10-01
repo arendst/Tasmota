@@ -30,6 +30,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 750                      # update every 750ms
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Contact")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
   })

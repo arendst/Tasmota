@@ -32,10 +32,6 @@
   #define SHUTTER_RELAY_OPERATION_TIME 100 // wait for direction relay 0.1sec before power up main relay
 #endif
 
-#ifndef MOTOR_STOP_TIME
- #define MOTOR_STOP_TIME 500 // wait 0.5 second after stop to do any other action. e.g. move in the opposite direction
-#endif
-
 //#define SHUTTER_UNITTEST
 
 #define D_SHUTTER "SHUTTER"
@@ -491,9 +487,9 @@ void ShutterReportPosition(bool always, uint32_t index)
       shutter_running++;
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
-    uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
-    uint32_t target = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
+    uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+    uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
+    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
   }
   ResponseJsonEnd();
   if (always || shutter_running) {
@@ -645,7 +641,6 @@ void ShutterPowerOff(uint8_t i)
   if (Settings->save_data) {
     TasmotaGlobal.save_data_counter = Settings->save_data;
   }
-  //delay(MOTOR_STOP_TIME);
   Shutter[i].last_stop_time = millis();
 }
 
@@ -1404,10 +1399,8 @@ void CmndShutterPosition(void)
                   AddLog(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter[index].switch_mode == SHT_PULSE);
                   for (uint8_t k=0 ; k <= (uint8_t)(Shutter[index].switch_mode == SHT_PULSE) ; k++) {
                     ExecuteCommandPowerShutter(Settings->shutter_startrelay[index], 1, SRC_SHUTTER);
-                    //delay(MOTOR_STOP_TIME);
                     ShutterWaitForMotorStop(index);
                     ExecuteCommandPowerShutter(Settings->shutter_startrelay[index], 0, SRC_SHUTTER);
-                    //delay(MOTOR_STOP_TIME);
                     ShutterWaitForMotorStop(index);
                   }
                   // reset shutter time to avoid 2 seconds above count as runtime
@@ -1928,11 +1921,10 @@ bool Xdrv27(uint32_t function)
         break;
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-          uint8_t position = (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i] : Settings->shutter_position[i];
-          uint8_t target   = (Settings->shutter_options[i] & 1) ? 100 - ShutterRealToPercentPosition(Shutter[i].target_position, i) : ShutterRealToPercentPosition(Shutter[i].target_position, i);
-
+          uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
           ResponseAppend_P(",");
-          ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter[i].direction,target, Shutter[i].tilt_real_pos);
+          ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
              DomoticzSensor(DZ_SHUTTER, position);
