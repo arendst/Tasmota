@@ -97,6 +97,35 @@ BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_init, "+.p", "");
 extern void* be_audio_input_i2s_deinit(void* instance);
 BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_deinit, "", ".");
 
+// AudioInputI2S.begin() -> bool
+extern int be_audio_input_i2s_begin(bvm *vm, void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_begin, "b", "@.");
+
+// AudioInputI2S.stop() -> bool
+extern int be_audio_input_i2s_stop(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_stop, "b", ".");
+
+extern int be_audio_input_i2s_read_bytes(bvm *vm);
+
+// AudioInputI2S.set_gain(gain:real) -> bool
+extern int be_audio_input_set_gain(void* in, float gain);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_set_gain, "b", ".f");
+
+// AudioInputI2S.get_rate() -> int
+extern int be_audio_input_i2s_get_rate(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_rate, "i", ".");
+
+// AudioInputI2S.get_bits_per_sample() -> int
+extern int be_audio_input_i2s_get_bits_per_sample(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_bits_per_sample, "i", ".");
+
+// AudioInputI2S.get_channels() -> int
+extern int be_audio_input_i2s_get_channels(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_channels, "i", ".");
+
+// AudioInputI2S.get_gain() -> real
+extern float be_audio_input_i2s_get_gain(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_gain, "f", ".");
 
 #include "be_fixed_be_class_AudioOutputI2S.h"
 #include "be_fixed_be_class_AudioGenerator.h"
@@ -162,6 +191,17 @@ class be_class_AudioInputI2S (scope: global, name: AudioInputI2S, strings: weak)
     .p, var
     init, ctype_func(be_audio_input_i2s_init)
     deinit, ctype_func(be_audio_input_i2s_deinit)
+
+    begin, ctype_func(be_audio_input_i2s_begin)
+    stop, ctype_func(be_audio_input_i2s_stop)
+    read_bytes, func(be_audio_input_i2s_read_bytes)
+
+    get_rate, ctype_func(be_audio_input_i2s_get_rate)
+    get_bits_per_sample, ctype_func(be_audio_input_i2s_get_bits_per_sample)
+    get_channels, ctype_func(be_audio_input_i2s_get_channels)
+    get_gain, ctype_func(be_audio_input_i2s_get_gain)
+
+    set_gain, ctype_func(be_audio_input_set_gain)
 }
 
 @const_object_info_end */
