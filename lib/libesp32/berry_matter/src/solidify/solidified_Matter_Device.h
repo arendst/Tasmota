@@ -4769,7 +4769,7 @@ be_local_closure(Matter_Device_MtrUpdate,   /* name */
     /* K14  */  be_nested_str_weak(consolidate_update_commands),
     /* K15  */  be_nested_str_weak(keys),
     /* K16  */  be_nested_str_weak(find_list_i),
-    /* K17  */  be_nested_str_weak(Invalid_X20command_X20_X27_X25s_X27),
+    /* K17  */  be_nested_str_weak(Invalid_X20attribute_X20_X27_X25s_X27),
     /* K18  */  be_nested_str_weak(stop_iteration),
     /* K19  */  be_nested_str_weak(update_virtual),
     /* K20  */  be_nested_str_weak(state_json),
@@ -4869,7 +4869,7 @@ be_local_closure(Matter_Device_MtrUpdate,   /* name */
       0x8C341B01,  //  0055  GETMET	R13	R13	K1
       0x603C0018,  //  0056  GETGBL	R15	G24
       0x58400011,  //  0057  LDCONST	R16	K17
-      0x9444080B,  //  0058  GETIDX	R17	R4	R11
+      0x5C441600,  //  0058  MOVE	R17	R11
       0x7C3C0400,  //  0059  CALL	R15	2
       0x7C340400,  //  005A  CALL	R13	2
       0xA8040001,  //  005B  EXBLK	1	1
