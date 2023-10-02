@@ -136,7 +136,7 @@ extern "C" {
       be_setmember(vm, 1, "remote_port");
       be_pop(vm, 1);
 
-      be_return(vm);  /* return code */
+      be_return(vm);
     } else {
       be_return_nil(vm);
     }
