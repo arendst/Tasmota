@@ -249,8 +249,10 @@ class Partition_wizard_UI
       webserver.content_send(string.format("<p>You can expand the file system by %i KB.<br>Its content will be lost.</p>", unallocated))
 
       webserver.content_send("<form action='/part_wiz' method='post' ")
-      webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
-      webserver.content_send("<p></p><button name='max_fs' class='button bred'>Resize FS to max</button></form></p>")
+      if !self.support_grow_on_mount()
+        webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'")
+      end
+      webserver.content_send("><p></p><button name='max_fs' class='button bred'>Resize FS to max</button></form></p>")
       
       webserver.content_send("<p></p></fieldset><p></p>")
     elif self.has_factory_layout(p)
@@ -680,6 +682,21 @@ class Partition_wizard_UI
   end
 
   #######################################################################
+  # returns true is LittleFS supports grow on mount
+  #
+  # True if version is above 13.1.0.3
+  #######################################################################
+  def support_grow_on_mount()
+    import introspect
+    if introspect.get(tasmota, "version") != nil
+      if tasmota.version() >= 0x0D010003
+        return true
+      end
+    end
+    return false
+  end
+
+  #######################################################################
   # Web Controller, called by POST to `/part_wiz`
   #######################################################################
   def page_part_ctl()
@@ -710,7 +727,9 @@ class Partition_wizard_UI
         var fs_slot = p.slots[-1]
         fs_slot.sz += unallocated * 1024
         p.save()
-        p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
+        if !self.support_grow_on_mount()
+          p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
+        end
 
         #- and force restart -#
         webserver.redirect("/?rst=")

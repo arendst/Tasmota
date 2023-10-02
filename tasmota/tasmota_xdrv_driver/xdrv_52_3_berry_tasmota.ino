@@ -535,6 +535,11 @@ extern "C" {
     be_pushint(vm, ret);
     be_return(vm);
   }
+
+  int32_t be_Tasmota_version(void) {
+    return VERSION;
+  }
+
   /*
 
   # test patterns for all-in-one version
