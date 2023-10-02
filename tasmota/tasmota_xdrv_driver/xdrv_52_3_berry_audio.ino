@@ -40,21 +40,22 @@ extern "C" {
 
   // AudioOutputI2S.init() -> instance 
   void* be_audio_output_i2s_init(void) {
-    return audio_i2s.out;               // return the singleton of TasmotaAudioOutputI2S which is already initialized
+    return audio_i2s.out;               // return the singleton of TasmotaI2S which is already initialized
   }
 
   // AudioOutputI2S.deinit()-> void
-  void be_audio_output_i2s_deinit(TasmotaAudioOutputI2S * out) {
+  void be_audio_output_i2s_deinit(TasmotaI2S * out) {
     out->stop();
   }
 
   // AudioOutputI2S.begin() -> bool
-  int be_audio_output_i2s_begin(TasmotaAudioOutputI2S* out) {
+  int be_audio_output_i2s_begin(TasmotaI2S* out) {
+    if (I2SPrepareTx()) { return false; }
     return out->begin();
   }
 
   // AudioOutputI2S.stop() -> bool
-  int be_audio_output_i2s_stop(TasmotaAudioOutputI2S* out) {
+  int be_audio_output_i2s_stop(TasmotaI2S* out) {
     return out->stop();
   }
 
@@ -125,7 +126,7 @@ extern "C" {
   // AudioOutputI2S()
   //
   int i2s_output_i2s_init(bvm *vm) {
-    TasmotaAudioOutputI2S * audio = new TasmotaAudioOutputI2S();
+    TasmotaI2S * audio = new TasmotaI2S();
     be_pushcomptr(vm, (void*) audio);
     be_setmember(vm, 1, ".p");
     be_return_nil(vm);
@@ -134,7 +135,7 @@ extern "C" {
   int i2s_output_i2s_deinit(bvm *vm) {
     int argc = be_top(vm);
     be_getmember(vm, 1, ".p");
-    TasmotaAudioOutputI2S * audio = (TasmotaAudioOutputI2S *) be_tocomptr(vm, -1);
+    TasmotaI2S * audio = (TasmotaI2S *) be_tocomptr(vm, -1);
     if (audio) {
       delete audio;
       // clear
@@ -177,6 +178,7 @@ extern "C" {
   int i2s_generator_wav_begin(bvm *vm) {
     int argc = be_top(vm);
     if (argc > 2) {
+      if (I2SPrepareTx()) { be_raisef(vm, "internal_error", "I2SPrepareTx() failed"); be_return_nil(vm); } 
       AudioGeneratorWAV * wav = i2s_generator_wav_get(vm);
       be_getmember(vm, 2, ".p");
       AudioFileSource * source = (AudioFileSource*) be_tocomptr(vm, -1);
@@ -244,6 +246,7 @@ extern "C" {
   int i2s_generator_mp3_begin(bvm *vm) {
     int argc = be_top(vm);
     if (argc > 2) {
+      if (I2SPrepareTx()) { be_raisef(vm, "internal_error", "I2SPrepareTx() failed"); be_return_nil(vm); } 
       AudioGeneratorMP3 * mp3 = i2s_generator_mp3_get(vm);
       be_getmember(vm, 2, ".p");
       AudioFileSource * source = (AudioFileSource*) be_tocomptr(vm, -1);
@@ -313,12 +316,99 @@ extern "C" {
   // ----------------------------------------------------------------------
   // AudioInputI2S.init() -> instance 
   void* be_audio_input_i2s_init(void) {
-    return audio_i2s.out;               // return the singleton of TasmotaAudioOutputI2S which is already initialized
+    return audio_i2s.in;               // return the singleton of TasmotaI2S which is already initialized
   }
 
   // AudioInputI2S.deinit()-> void
-  void be_audio_input_i2s_deinit(TasmotaAudioOutputI2S * out) {
-    out->stop();
+  void be_audio_input_i2s_deinit(TasmotaI2S * in) {
+    in->stop();
+  }
+
+  // AudioInputI2S.begin() -> bool
+  int be_audio_input_i2s_begin(bvm *vm, TasmotaI2S* in) {
+    if (I2SPrepareRx()) { be_raisef(vm, "internal_error", "I2SPrepareRx() failed"); be_return_nil(vm); } 
+    in->I2sMicInit();
+    return in->getRxRunning();
+  }
+
+  // AudioInputI2S.stop() -> bool
+  int be_audio_input_i2s_stop(TasmotaI2S* in) {
+    in->I2sMicDeinit();
+    return true;
+  }
+
+
+  // AudioInputI2S.get_rate() -> int
+  int be_audio_input_i2s_get_rate(TasmotaI2S* in) {
+    return in->getRxRate();
+  }
+
+  // AudioInputI2S.get_bits_per_sample() -> int
+  int be_audio_input_i2s_get_bits_per_sample(TasmotaI2S* in) {
+    return in->getRxBitsPerSample();
+  }
+
+  // AudioInputI2S.get_channels() -> int
+  int be_audio_input_i2s_get_channels(TasmotaI2S* in) {
+    return in->getRxChannels();
+  }
+
+  // AudioInputI2S.get_gain() -> real
+  float be_audio_input_i2s_get_gain(TasmotaI2S* in) {
+    return in->getRxGain();
+  }
+
+  // AudioInputI2S.set_gain(gain:real) -> bool
+  int be_audio_input_set_gain(TasmotaI2S* in, float gain) {
+    return true;     // TODO
+    // return in->SetGain(gain);
+  }
+
+
+  // AudioInputI2S.read_bytes() -> bytes()
+  //
+  // Reads bytes in the input buffer
+  // Pre-condition: microphone but be recording (call begin() first)
+  //
+  // Returns `nil` if not configured or buffer empty
+  // Returns `bytes()` instance with 16-bits audio
+  int be_audio_input_i2s_read_bytes(bvm *vm) {
+    int argc = be_top(vm);
+    if (!audio_i2s.in->getRxRunning()) { be_return_nil(vm); }
+
+    uint16_t buf_audio[256];
+
+    size_t bytes_read = 0;
+    esp_err_t err = i2s_channel_read(audio_i2s.in->getRxHandle(), buf_audio, sizeof(buf_audio), &bytes_read, 0);
+    // AddLog(LOG_LEVEL_DEBUG, "BRY: be_audio_input_i2s_read_bytes - err=%i bytes=%i", err, bytes_read);
+    if ((err != ESP_OK) && (err != ESP_ERR_TIMEOUT)) { be_return_nil(vm); }
+    if (bytes_read == 0) { be_return_nil(vm); }
+
+    // we received some data
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+      // we have already a bytes() buffer
+      be_pushvalue(vm, 2);    // push on top
+      // resize to btr
+      be_getmember(vm, -1, "resize");
+      be_pushvalue(vm, -2);
+      be_pushint(vm, bytes_read);
+      be_call(vm, 2);
+      be_pop(vm, 3);
+    } else {
+      be_pushbytes(vm, nullptr, bytes_read); // allocate a buffer of size btr filled with zeros
+    }
+
+    // get the address of the buffer
+    be_getmember(vm, -1, "_buffer");
+    be_pushvalue(vm, -2);
+    be_call(vm, 1);
+    uint8_t * buf = (uint8_t*) be_tocomptr(vm, -2);
+    be_pop(vm, 2);
+
+    // copy
+    memmove(buf, buf_audio, bytes_read);
+
+    be_return(vm);  /* return code */
   }
 
 }
