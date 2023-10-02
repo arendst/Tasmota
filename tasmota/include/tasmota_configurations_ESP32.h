@@ -301,7 +301,6 @@
 
 #define USE_COUNTER
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-#define USE_ETHERNET
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_IR_REMOTE                             // Disable IR driver
@@ -314,23 +313,28 @@
 
 #define USE_I2S
 #define USE_SPI
-#define USE_LVGL
-#define USE_LVGL_HASPMOTA
-#define USE_LVGL_FREETYPE
-  #undef SET_ESP32_STACK_SIZE
-  #define SET_ESP32_STACK_SIZE (24 * 1024)
-#define USE_LVGL_PNG_DECODER
-#define USE_DISPLAY
-#define SHOW_SPLASH
-#define USE_XPT2046
-#define USE_FT5206
-#define USE_GT911
-#define USE_MPU_ACCEL
-#define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
+
+#ifndef ESP32C2
+  #define USE_LVGL
+  #define USE_LVGL_HASPMOTA
+  #define USE_LVGL_FREETYPE
+    #undef SET_ESP32_STACK_SIZE
+    #define SET_ESP32_STACK_SIZE (24 * 1024)
+  #define USE_LVGL_PNG_DECODER
+  #define USE_DISPLAY
+  #define SHOW_SPLASH
+  #define USE_XPT2046
+  #define USE_FT5206
+  #define USE_GT911
+  #define USE_MPU_ACCEL
+  #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
-#define USE_MLX90614
-#define USE_UNIVERSAL_DISPLAY
-#define USE_DISPLAY_LVGL_ONLY
+  #define USE_MLX90614
+  #define USE_UNIVERSAL_DISPLAY
+  #define USE_DISPLAY_LVGL_ONLY
+
+  #define USE_ETHERNET
+#endif // ESP32C2
 
 #ifdef USE_WT32_ETH01
   #undef ETH_TYPE
