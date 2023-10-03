@@ -8,15 +8,26 @@ All notable changes to this project will be documented in this file.
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 - Matter support for Virtual Devices controllable via Rules or Berry (#19520)
 - Berry read and write Counters (#19558)
+- ESP32 support for influxdb access using https (#19582)
+- Support for ENS16x (air quality) and ENS210 (temp & RH) sensors (#19479)
+- Support for non-persistent ``WebButton17`` to ``WebButton32`` (#19580)
+- Command ``Mi32Name`` (#19619)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.13
 - ESP32 LVGL library from v8.3.9 to v8.3.10 (no functional change)
+- Consolidate SGP40 and SGP41 into SGP4x driver (#19560)
+- ESP32 Audio preparation for Arduino Core v3 (#19637)
+- ESP32 LittleFS updated to version with grow option (#19635)
+- ESP32 Partition Wizard grow filesystem support (#19645)
 
 ### Fixed
 - ESP32 DS18x20 driver support extended over GPIO33
+- ESP32 Shutter button quad press (#19589)
+- Compile error with new email lib (#19608)
+- ESP32 Arduino Core v2 wifi client flush (#19642)
 
 ### Removed
 
@@ -25,10 +36,12 @@ All notable changes to this project will be documented in this file.
 - Support for HDMI CEC protocol (#19434)
 - Support different baudrates on BL0942
 
+### Breaking Changed
+- `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS (#19460)
+
 ### Changed
 - Berry fast_loop is now called every 5ms whatever the Sleep value (#19436)
 - Reduce IRAM consumption of HDMI CEC to 1453 bytes (#19452)
-- `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS (#19460)
 - ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.12
 - ESP32 LVGL library from v8.3.8 to v8.3.9 (no functional change)
 
