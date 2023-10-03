@@ -1034,9 +1034,9 @@ be_local_closure(Partition_resize_fs_to_max,   /* name */
       0x7C080600,  //  000F  CALL	R2	3
       0x8C080106,  //  0010  GETMET	R2	R0	K6
       0x7C080200,  //  0011  CALL	R2	1
-      0x5409FFFE,  //  0012  LDINT	R2	-1
-      0x880C0107,  //  0013  GETMBR	R3	R0	K7
-      0x94080602,  //  0014  GETIDX	R2	R3	R2
+      0x88080107,  //  0012  GETMBR	R2	R0	K7
+      0x540DFFFE,  //  0013  LDINT	R3	-1
+      0x94080403,  //  0014  GETIDX	R2	R2	R3
       0x541603FF,  //  0015  LDINT	R5	1024
       0x08140205,  //  0016  MUL	R5	R1	R5
       0x88100508,  //  0017  GETMBR	R4	R2	K8
@@ -1414,9 +1414,9 @@ be_local_closure(Partition_invalidate_spiffs,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
-      0x5409FFFE,  //  0001  LDINT	R2	-1
-      0x880C0101,  //  0002  GETMBR	R3	R0	K1
-      0x94080602,  //  0003  GETIDX	R2	R3	R2
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x540DFFFE,  //  0002  LDINT	R3	-1
+      0x94080403,  //  0003  GETIDX	R2	R2	R3
       0x8C100502,  //  0004  GETMET	R4	R2	K2
       0x7C100200,  //  0005  CALL	R4	1
       0x74120000,  //  0006  JMPT	R4	#0008
@@ -1556,9 +1556,9 @@ be_local_closure(Partition_get_unallocated_k,   /* name */
     &be_const_str_get_unallocated_k,
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
-      0x5405FFFE,  //  0000  LDINT	R1	-1
-      0x88080100,  //  0001  GETMBR	R2	R0	K0
-      0x94040401,  //  0002  GETIDX	R1	R2	R1
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x5409FFFE,  //  0001  LDINT	R2	-1
+      0x94040202,  //  0002  GETIDX	R1	R1	R2
       0x8C0C0301,  //  0003  GETMET	R3	R1	K1
       0x7C0C0200,  //  0004  CALL	R3	1
       0x780E000B,  //  0005  JMPF	R3	#0012
