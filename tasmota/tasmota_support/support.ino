@@ -727,7 +727,7 @@ bool NewerVersion(char* version_str) {
   char version_dup[strlen(version_str) +1];
   strncpy(version_dup, version_str, sizeof(version_dup));  // Duplicate the version_str as strtok_r will modify it.
   // Loop through the version string, splitting on '.' seperators.
-  for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
+  for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(TASMOTA_VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
     // The fields in a version string can only range from 0-255.
     if ((field < 0) || (field > 255)) {
@@ -744,17 +744,17 @@ bool NewerVersion(char* version_str) {
   }
   // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
   // If not, then don't consider it a valid version string.
-  if ((i < 2) || (i > sizeof(VERSION))) {
+  if ((i < 2) || (i > sizeof(TASMOTA_VERSION))) {
     return false;
   }
   // Keep shifting the parsed version until we hit the maximum number of tokens.
   // VERSION stores the major number of the version in the most significant byte of the uint32_t.
-  while (i < sizeof(VERSION)) {
+  while (i < sizeof(TASMOTA_VERSION)) {
     version <<= 8;
     i++;
   }
   // Now we should have a fully constructed version number in uint32_t form.
-  return (version > VERSION);
+  return (version > TASMOTA_VERSION);
 }
 
 int32_t UpdateDevicesPresent(int32_t change) {

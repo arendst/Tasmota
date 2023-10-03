@@ -537,7 +537,7 @@ extern "C" {
   }
 
   int32_t be_Tasmota_version(void) {
-    return VERSION;
+    return TASMOTA_VERSION;
   }
 
   /*
