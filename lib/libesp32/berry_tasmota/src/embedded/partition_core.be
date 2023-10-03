@@ -591,7 +591,6 @@ class Partition
       var fs_slot = self.slots[-1]
       fs_slot.sz += unallocated * 1024
       self.save()
-      self.invalidate_spiffs()   # erase SPIFFS or data is corrupt
 
       # restart
       tasmota.global.restart_flag = 2
@@ -599,19 +598,6 @@ class Partition
     except .. as e, m
       tasmota.log(format("BRY: Exception> '%s' - %s", e, m), 2)
     end
-  end
-
-  #- invalidate SPIFFS partition to force format at next boot -#
-  #- we simply erase the first byte of the first 2 blocks in the SPIFFS partition -#
-  def invalidate_spiffs()
-    import flash
-    #- we expect the SPIFFS partition to be the last one -#
-    var spiffs = self.slots[-1]
-    if !spiffs.is_spiffs() raise 'value_error', 'No SPIFFS partition found' end
-
-    var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
-    flash.write(spiffs.start         , b)    #- block #0 -#
-    flash.write(spiffs.start + 0x1000, b)    #- block #1 -#
   end
 
   # switch to safeboot `factory` partition
