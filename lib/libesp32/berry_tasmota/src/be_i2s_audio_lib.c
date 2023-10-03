@@ -127,6 +127,18 @@ BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_channels, "i", ".");
 extern float be_audio_input_i2s_get_gain(void* in);
 BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_gain, "f", ".");
 
+// AudioInputI2S.get_dc_offset() -> float
+extern int be_audio_input_i2s_get_dc_offset(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_dc_offset, "i", ".");
+
+// AudioInputI2S.get_lowpass_alpha() -> float
+extern float be_audio_input_i2s_get_lowpass_alpha(void* in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_lowpass_alpha, "f", ".");
+
+// AudioInputI2S.set_lowpass_alpha(alpha:float) -> bool
+extern int be_audio_input_i2s_set_lowpass_alpha(void* in, float alpha);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_set_lowpass_alpha, "b", ".f");
+
 #include "be_fixed_be_class_AudioOutputI2S.h"
 #include "be_fixed_be_class_AudioGenerator.h"
 #include "be_fixed_be_class_AudioGeneratorWAV.h"
@@ -202,6 +214,10 @@ class be_class_AudioInputI2S (scope: global, name: AudioInputI2S, strings: weak)
     get_gain, ctype_func(be_audio_input_i2s_get_gain)
 
     set_gain, ctype_func(be_audio_input_set_gain)
+    get_dc_offset, ctype_func(be_audio_input_i2s_get_dc_offset)
+
+    get_lowpass_alpha, ctype_func(be_audio_input_i2s_get_lowpass_alpha)
+    set_lowpass_alpha, ctype_func(be_audio_input_i2s_set_lowpass_alpha)
 }
 
 @const_object_info_end */

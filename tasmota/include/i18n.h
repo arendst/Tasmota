@@ -763,6 +763,11 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
+// Commands xdrv_42_audio - I2S Audio
+#define D_PRFX_I2S "I2S"
+#define D_JSON_I2S_CONFIG "Config"
+
+
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
