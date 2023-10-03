@@ -166,16 +166,16 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
 static std::queue<BLEqueueBuffer_t> BLEmessageQueue;
 
 class MI32ServerCallbacks: public NimBLEServerCallbacks {
-    void onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
         BLEqueueBuffer_t q;
         q.length = 6;
         q.type = BLE_OP_ON_CONNECT;
         q.buffer = new uint8_t[q.length];
-        memcpy(q.buffer,desc->peer_ota_addr.val,6);
+        memcpy(q.buffer,connInfo.getAddress().getNative(),6); // return MAC address in the queue buffer
         BLEmessageQueue.push(q);
         MI32.infoMsg = MI32_SERV_CLIENT_CONNECTED;
     };
-    void onDisconnect(NimBLEServer* pServer) {
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
         BLEqueueBuffer_t q;
         q.length = 0;
         q.type = BLE_OP_ON_DISCONNECT;
@@ -187,7 +187,7 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
 };
 
 class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
-    void onRead(NimBLECharacteristic* pCharacteristic){
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo){
         BLEqueueBuffer_t q;
         q.length = 0;
         q.type = BLE_OP_ON_READ;
@@ -196,7 +196,7 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
         BLEmessageQueue.push(q);
     };
 
-    void onWrite(NimBLECharacteristic* pCharacteristic) {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         BLEqueueBuffer_t q;
         q.type = BLE_OP_ON_WRITE;
         q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
@@ -220,7 +220,7 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
         BLEmessageQueue.push(q);
     };
 
-    void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue) {
+    void onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
         BLEqueueBuffer_t q;
         q.length = 0;
         q.type = BLE_OP_ON_UNSUBSCRIBE + subValue;
