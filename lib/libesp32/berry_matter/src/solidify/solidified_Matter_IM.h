@@ -2452,9 +2452,9 @@ be_local_closure(Matter_IM__inner_process_read_request,   /* name */
           0x5C341400,  //  00C3  MOVE	R13	R10
           0x7C2C0400,  //  00C4  CALL	R11	2
           0x70020014,  //  00C5  JMP		#00DB
-          0x542DFFFE,  //  00C6  LDINT	R11	-1
-          0x88300121,  //  00C7  GETMBR	R12	R0	K33
-          0x942C180B,  //  00C8  GETIDX	R11	R12	R11
+          0x882C0121,  //  00C6  GETMBR	R11	R0	K33
+          0x5431FFFE,  //  00C7  LDINT	R12	-1
+          0x942C160C,  //  00C8  GETIDX	R11	R11	R12
           0x6034000C,  //  00C9  GETGBL	R13	G12
           0x5C381600,  //  00CA  MOVE	R14	R11
           0x7C340200,  //  00CB  CALL	R13	1

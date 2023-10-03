@@ -358,7 +358,7 @@ static int suffix_destreg(bfuncinfo *finfo, bexpdesc *e1, int dst, bbool no_reg_
         /* both are ETREG, we keep the lowest and discard the other */
         if (reg1 != reg2) {
             cand_dst = min(reg1, reg2);
-            be_code_freeregs(finfo, 1);  /* and free the other one */
+            be_code_freeregs(finfo, finfo->freereg - cand_dst);  /* and free the other one */
         } else {
             cand_dst = reg1;  /* both ETREG are equal, we return its value */
         }
@@ -726,8 +726,8 @@ int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 /* if local or const, allocate a new register and copy value */
 int be_code_nextreg(bfuncinfo *finfo, bexpdesc *e)
 {
-    int dst = finfo->freereg;
     int src = exp2anyreg(finfo, e); /* get variable register index */
+    int dst = finfo->freereg;
     if ((e->type != ETREG) || (src < dst - 1)) { /* move local and const to new register, don't move if already top of stack */
         code_move(finfo, dst, src);
         be_code_allocregs(finfo, 1);
@@ -832,8 +832,8 @@ void be_code_ret(bfuncinfo *finfo, bexpdesc *e)
 /* Both expdesc are materialized in kregs */
 static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
 {
-    int key = exp2anyreg(finfo, k);
     c->v.ss.obj = exp2anyreg(finfo, c);
+    int key = exp2anyreg(finfo, k);
     c->v.ss.tt = c->type;
     c->v.ss.idx = key;
 }
