@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.14
 
 ### Fixed
 

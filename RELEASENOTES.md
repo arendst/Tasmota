@@ -129,7 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS [#19460](https://github.com/arendst/Tasmota/issues/19460)
 
 ### Changed
-- ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.13
+- ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.14
 - ESP32 LVGL library from v8.3.8 to v8.3.10 (no functional change)
 - Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 - Consolidate SGP40 and SGP41 into SGP4x driver [#19560](https://github.com/arendst/Tasmota/issues/19560)
