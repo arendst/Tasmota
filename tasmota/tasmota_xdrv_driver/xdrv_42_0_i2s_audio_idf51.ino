@@ -34,6 +34,8 @@
 #define AUDIO_PWR_ON    I2SAudioPower(true);
 #define AUDIO_PWR_OFF   I2SAudioPower(false);
 
+#define AUDIO_CONFIG_FILENAME "/.drvset042"
+
 extern FS *ufsp;
 extern FS *ffsp;
 
@@ -54,7 +56,7 @@ void I2sWebRadioStopPlaying(void);
 \*********************************************************************************************/
 
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
-  "Gain|Play|Rec|MGain|Stop"
+  "Gain|Play|Rec|MGain|Stop|Config"
 #ifdef USE_I2S_DEBUG
   "|Mic"      // debug only
 #endif // USE_I2S_DEBUG
@@ -79,7 +81,7 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
-  &CmndI2SGain, &CmndI2SPlay, &CmndI2SMicRec, &CmndI2SMicGain, &CmndI2SStop,
+  &CmndI2SGain, &CmndI2SPlay, &CmndI2SMicRec, &CmndI2SMicGain, &CmndI2SStop, &CmndI2SConfig,
 #ifdef USE_I2S_DEBUG
   &CmndI2SMic,
 #endif // USE_I2S_DEBUG
@@ -103,6 +105,141 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #endif // I2S_BRIDGE
 };
 
+
+/*********************************************************************************************\
+ * I2S configuration
+\*********************************************************************************************/
+
+void CmndI2SConfig(void) {
+  tI2SSettings * cfg = audio_i2s.Settings;
+
+  // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  TrimSpace(XdrvMailbox.data);
+  if (strlen(XdrvMailbox.data) > 0) {
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
+    if (!root) { ResponseCmndChar_P(D_JSON_INVALID_JSON); return; }
+
+    // remove "I2SConfig" primary key if present
+    JsonParserToken config_tk = root[D_PRFX_I2S D_JSON_I2S_CONFIG];
+    if ((bool)config_tk) {
+      root = config_tk.getObject();
+    }
+
+    JsonParserToken sys_tk = root["Sys"];
+    if (sys_tk.isObject()) {
+      JsonParserObject sys = sys_tk.getObject();
+      cfg->sys.mclk_inv[0] = sys.getUInt(PSTR("MclkInv0"), cfg->sys.mclk_inv[0]);
+      cfg->sys.mclk_inv[1] = sys.getUInt(PSTR("MclkInv1"), cfg->sys.mclk_inv[1]);
+      cfg->sys.bclk_inv[0] = sys.getUInt(PSTR("BclkInv0"), cfg->sys.bclk_inv[0]);
+      cfg->sys.bclk_inv[1] = sys.getUInt(PSTR("BclkInv1"), cfg->sys.bclk_inv[1]);
+      cfg->sys.ws_inv[0] = sys.getUInt(PSTR("WsInv0"), cfg->sys.ws_inv[0]);
+      cfg->sys.ws_inv[1] = sys.getUInt(PSTR("WsInv1"), cfg->sys.ws_inv[1]);
+      cfg->sys.mp3_preallocate = sys.getUInt(PSTR("Mp3Preallocate"), cfg->sys.mp3_preallocate);
+    }
+
+    JsonParserToken tx_tk = root["Tx"];
+    if (tx_tk.isObject()) {
+      JsonParserObject tx = tx_tk.getObject();
+      // cfg->tx.sample_rate = tx.getUInt(PSTR("SampleRate"), cfg->tx.sample_rate);
+      cfg->tx.gain = tx.getUInt(PSTR("Gain"), cfg->tx.gain);
+      cfg->tx.mode = tx.getUInt(PSTR("Mode"), cfg->tx.mode);
+      cfg->tx.slot_mask = tx.getUInt(PSTR("SlotMask"), cfg->tx.slot_mask);
+      cfg->tx.slot_config = tx.getUInt(PSTR("SlotConfig"), cfg->tx.slot_config);
+      cfg->tx.channels = tx.getUInt(PSTR("Channels"), cfg->tx.channels);
+      cfg->tx.apll = tx.getUInt(PSTR("APLL"), cfg->tx.apll);
+    }
+
+    JsonParserToken rx_tk = root["Rx"];
+    if (rx_tk.isObject()) {
+      JsonParserObject rx = rx_tk.getObject();
+      cfg->rx.sample_rate = rx.getUInt(PSTR("SampleRate"), cfg->rx.sample_rate);
+      float rx_gain = ((float)cfg->rx.gain) / 16;
+      rx_gain = rx.getFloat(PSTR("Gain"), rx_gain);
+      cfg->rx.gain = (uint16_t)(rx_gain * 16);
+      // cfg->rx.gain = rx.getUInt(PSTR("Gain"), cfg->rx.gain);
+      cfg->rx.mode = rx.getUInt(PSTR("Mode"), cfg->rx.mode);
+      cfg->rx.slot_mask = rx.getUInt(PSTR("SlotMask"), cfg->rx.slot_mask);
+      cfg->rx.slot_config = rx.getUInt(PSTR("SlotConfig"), cfg->rx.slot_config);
+      cfg->rx.channels = rx.getUInt(PSTR("Channels"), cfg->rx.channels);
+      cfg->rx.dc_filter_alpha = rx.getUInt(PSTR("DCFilterAlpha"), cfg->rx.dc_filter_alpha);
+      cfg->rx.lowpass_alpha = rx.getUInt(PSTR("LowpassAlpha"), cfg->rx.lowpass_alpha);
+      cfg->rx.apll = rx.getUInt(PSTR("APLL"), cfg->rx.apll);
+    }
+    I2SSettingsSave(AUDIO_CONFIG_FILENAME);
+  }
+
+  float mic_gain = ((float)cfg->rx.gain) / 16;
+  Response_P("{\"" D_PRFX_I2S D_JSON_I2S_CONFIG "\":{"
+                  // Sys
+                  "\"Sys\":{"
+                    "\"Version\":%d,"
+                    "\"Duplex\":%d,"
+                    "\"Tx\":%d,"
+                    "\"Rx\":%d,"
+                    "\"Exclusive\":%d,"
+                    "\"MclkInv0\":%d,"
+                    "\"MclkInv1\":%d,"
+                    "\"BclkInv0\":%d,"
+                    "\"BclkInv1\":%d,"
+                    "\"WsInv0\":%d,"
+                    "\"WsInv1\":%d,"
+                    "\"Mp3Preallocate\":%d"
+                  "},"
+                  "\"Tx\":{"
+                    "\"SampleRate\":%d,"
+                    "\"Gain\":%d,"
+                    "\"Mode\":%d,"
+                    "\"SlotMask\":%d,"
+                    "\"SlotConfig\":%d,"
+                    "\"Channels\":%d,"
+                    "\"APLL\":%d"
+                  "},"
+                  "\"Rx\":{"
+                    "\"SampleRate\":%d,"
+                    "\"Gain\":%_f,"
+                    // "\"Gain\":%d,"
+                    "\"Mode\":%d,"
+                    "\"SlotMask\":%d,"
+                    "\"SlotConfig\":%d,"
+                    "\"Channels\":%d,"
+                    "\"DCFilterAlpha\":%d,"
+                    "\"LowpassAlpha\":%d,"
+                    "\"APLL\":%d"
+                  "}}}",
+                  cfg->sys.version,
+                  cfg->sys.duplex,
+                  cfg->sys.tx,
+                  cfg->sys.rx,
+                  cfg->sys.exclusive,
+                  cfg->sys.mclk_inv[0],
+                  cfg->sys.mclk_inv[1],
+                  cfg->sys.bclk_inv[0],
+                  cfg->sys.bclk_inv[1],
+                  cfg->sys.ws_inv[0],
+                  cfg->sys.ws_inv[1],
+                  cfg->sys.mp3_preallocate,
+                  //
+                  cfg->tx.sample_rate,
+                  cfg->tx.gain,
+                  cfg->tx.mode,
+                  cfg->tx.slot_mask,
+                  cfg->tx.slot_config,
+                  cfg->tx.channels,
+                  cfg->tx.apll,
+                  //
+                  cfg->rx.sample_rate,
+                  &mic_gain,
+                  // cfg->rx.gain,
+                  cfg->rx.mode,
+                  cfg->rx.slot_mask,
+                  cfg->rx.slot_config,
+                  cfg->rx.channels,
+                  cfg->rx.dc_filter_alpha,
+                  cfg->rx.lowpass_alpha,
+                  cfg->rx.apll
+                  );
+}
 /*********************************************************************************************\
  * microphone related functions
 \*********************************************************************************************/
@@ -229,7 +366,7 @@ exit:
     audio_i2s.client.stop();
   }
 
-  audio_i2s.out->I2sMicDeinit();
+  audio_i2s.out->micDeinit();
   audio_i2s.mic_stop = 0;
   audio_i2s.mic_error = error;
   AddLog(LOG_LEVEL_INFO, PSTR("mp3task result code: %d"), error);
@@ -253,7 +390,7 @@ int32_t I2sRecordShine(char *path) {
   if (audio_i2s.use_stream) {
     stack = 8000;
   }
-  audio_i2s.out->I2sMicInit();
+  audio_i2s.out->micInit();
 
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s.mic_task_handle, 1);
 
@@ -299,6 +436,12 @@ void I2SSettingsLoad(const char * config_filename, bool erase) {
   }
   else if (TfsLoadFile(config_filename, (uint8_t*)audio_i2s.Settings, sizeof(tI2SSettings))) {
     AddLog(LOG_LEVEL_INFO, "I2S: config loaded from file '%s'", config_filename);
+    if ((audio_i2s.Settings->sys.version == 0) || (audio_i2s.Settings->sys.version > AUDIO_SETTINGS_VERSION)) {
+      delete audio_i2s.Settings;
+      audio_i2s.Settings = new tI2SSettings();
+      AddLog(LOG_LEVEL_DEBUG, "I2S: unsuppoted configuration version, use defaults");
+      I2SSettingsSave(config_filename);
+    }
   }
   else {
     // File system not ready: No flash space reserved for file system
@@ -343,7 +486,7 @@ void I2sInit(void) {
     return;
   }
 
-  I2SSettingsLoad("/.drvset042", false);    // load configuration (no-erase)
+  I2SSettingsLoad(AUDIO_CONFIG_FILENAME, false);    // load configuration (no-erase)
   if (!audio_i2s.Settings) { return; }     // fatal error, could not allocate memory for configuration
 
   // detect if we need full-duplex on port 0
@@ -469,6 +612,7 @@ void I2sInit(void) {
       i2s->setRxFreq(audio_i2s.Settings->rx.sample_rate);
       i2s->setRxChannels(audio_i2s.Settings->rx.channels);
       i2s->setRate(audio_i2s.Settings->rx.sample_rate);
+      i2s->setRxGain(audio_i2s.Settings->rx.gain);
     }
 
     if (i2s->startI2SChannel(tx, rx)) {
@@ -499,13 +643,13 @@ void I2sInit(void) {
   }
   audio_i2s.mp3ram = nullptr;
 
-  if (audio_i2s.Settings->rx.mp3_preallocate == 1){
+  if (audio_i2s.Settings->sys.mp3_preallocate == 1){
     // if (UsePSRAM()) {
     AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will allocate buffer for mp3 encoder"));
     audio_i2s.mp3ram = special_malloc(preallocateCodecSize);
     // }
     // else{
-      // audio_i2s.Settings->rx.mp3_preallocate = 0; // no PS-RAM -> no MP3 encoding
+      // audio_i2s.Settings->sys.mp3_preallocate = 0; // no PS-RAM -> no MP3 encoding
     // }
   }
   AddLog(LOG_LEVEL_DEBUG, "I2S: I2sInit done");
@@ -677,14 +821,20 @@ void CmndI2SMic(void) {
 
   esp_err_t err = ESP_OK;
   if (audio_i2s.decoder || audio_i2s.mp3) return;
-  audio_i2s.in->I2sMicInit();
+  audio_i2s.in->micInit();
   if (audio_i2s.in->getRxRunning()) {
     uint8_t buf[128];
 
     size_t bytes_read = 0;
-    esp_err_t err = i2s_channel_read(audio_i2s.in->getRxHandle(), buf, sizeof(buf), &bytes_read, 0);
-    if (err == ESP_ERR_TIMEOUT) { err = ESP_OK; }
-    AddLog(LOG_LEVEL_INFO, "I2S: Mic (err:%i size:%i) %*_H", err, bytes_read, bytes_read, buf);
+    int32_t btr = audio_i2s.in->readMic(buf, sizeof(buf), true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/);
+    if (btr < 0) {
+      AddLog(LOG_LEVEL_INFO, "I2S: Mic (err:%i)", -btr);
+      ResponseCmndChar("I2S Mic read error");
+      return;
+    }
+    // esp_err_t err = i2s_channel_read(audio_i2s.in->getRxHandle(), buf, sizeof(buf), &bytes_read, 0);
+    // if (err == ESP_ERR_TIMEOUT) { err = ESP_OK; }
+    AddLog(LOG_LEVEL_INFO, "I2S: Mic (%i) %*_H", btr, btr, buf);
   }
 
   // err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s.mic_task_handle, 1);
@@ -765,7 +915,7 @@ void CmndI2SI2SRtttl(void) {
 }
 
 void CmndI2SMicRec(void) {
-  if (audio_i2s.Settings->rx.mp3_preallocate == 1) {
+  if (audio_i2s.Settings->sys.mp3_preallocate == 1) {
     if (XdrvMailbox.data_len > 0) {
       if (!strncmp(XdrvMailbox.data, "-?", 2)) {
         Response_P("{\"I2SREC-duration\":%d}", audio_i2s.recdur);

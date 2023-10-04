@@ -131,9 +131,11 @@ public:
   inline uint8_t getRxBitsPerSample(void) const { return 16; }      // TODO - hardcoded to 16 bits for recording
   inline uint16_t getRxRate(void) const { return _rx_freq; }
   inline uint8_t getRxChannels(void) const { return _rx_channels; }
-  inline float getRxGain(void) const { return 1.0f; }               // TODO - hardcoded to 1.0 for recording
   inline bool getRxRunning(void) const { return _rx_running; }
   inline i2s_chan_handle_t getRxHandle(void) const { return _rx_handle; }
+  inline float getRxGain(void) const { return ((float)_rx_gain) / 16; }
+  inline int32_t getRxDCOffset(void) const { return _rx_dc_offset; }
+  inline uint16_t getRxLowpassAlpha(void) const { return ((float)_rx_lowpass_alpha / 0x8000); }
 
   // ------------------------------------------------------------------------------------------
   // Setters
@@ -144,6 +146,15 @@ public:
   inline void setRxMode(uint8_t mode) { _rx_mode = mode; }
   inline void setRxChannels(uint8_t channels) { _rx_channels = channels; }
   inline void setRxRunning(bool running) { _rx_running = running; }
+  inline void setRxGain(float f) { _rx_gain = (uint16_t)(f * 16); }
+
+  void setRxLowpassAlpha(float f) {
+    if (f < 0) { f = 0; }
+    if (f > 1) { f = 1; }
+    _rx_lowpass_alpha = (uint16_t)(f * 0x8000);
+    _rx_lowpass_one_alpha = 0x8000 - _rx_lowpass_alpha;
+    _rx_lowpass_y_prev = 0;
+  }
 
   // ------------------------------------------------------------------------------------------
   // AudioOutput has inconsistent case for methods, provide consistent setters for super class
@@ -158,6 +169,8 @@ public:
   bool startI2SChannel(bool tx, bool rx);
   int updateClockConfig(void);
 
+  int32_t readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass);
+
   // The following is now the preferred function
   // and allows to send multiple samples at once
   //
@@ -170,11 +183,12 @@ public:
 
   // ------------------------------------------------------------------------------------------
   // Microphone related methods
-  uint32_t I2sMicInit(void);
-  void I2sMicDeinit(void);
+  uint32_t micInit(void);
+  void micDeinit(void);
 
 protected:
-  void loadSettings(void);            // load all settings from Settings file and template - the goal is to have zero touch
+  int16_t dcFilter(int16_t pcm_in);
+  int16_t lowpassFilter(int16_t pcm_in);
 
 protected:
 
@@ -202,6 +216,9 @@ protected:
   uint8_t   _rx_slot_config = I2S_SLOT_MSB;// I2S slot configuration
   uint16_t  _rx_freq = 16000;             // I2S Rx sampling frequency in Hz
 
+  uint16_t  _rx_gain = 0x10;              // Microphone gain in Q12.4 format (0x10 = 1.0)
+  int16_t   _rx_dc_offset = 0x8000;       // DC offset for PCM data, or 0x8000 if not set yet
+
   // GPIOs for I2S
   gpio_num_t  _gpio_mclk = GPIO_NUM_NC;   // GPIO for master clock
   gpio_num_t  _gpio_bclk = GPIO_NUM_NC;   // GPIO for bit clock
@@ -212,6 +229,15 @@ protected:
   bool    _gpio_bclk_inv = false;         // invert bit clock
   bool    _gpio_ws_inv = false;           // invert word select
   bool    _apll = false;                  // use APLL instead of PLL
+
+  // DC blocking filter
+  int16_t _rx_dc_x_prev = 0;
+  int16_t _rx_dc_y_prev = 0;
+
+  // Low-pass filter
+  uint16_t  _rx_lowpass_alpha = 0;           // alpha parameter for lowpass filter Q1.15
+  uint16_t  _rx_lowpass_one_alpha = 0x8000;  // 1 - alpha, Q1.15
+  int16_t   _rx_lowpass_y_prev = 0;
 };
 
 
@@ -400,6 +426,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
     }
 
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
+    // change to 3 buffers of 512 samples
+    rx_chan_cfg.dma_desc_num = 3;
+    rx_chan_cfg.dma_frame_num = 512;
 
     AddLog(LOG_LEVEL_DEBUG, "I2S: rx_chan_cfg id:%i role:%i dma_desc_num:%i dma_frame_num:%i auto_clear:%i",
           rx_chan_cfg.id, rx_chan_cfg.role, rx_chan_cfg.dma_desc_num, rx_chan_cfg.dma_frame_num, rx_chan_cfg.auto_clear);
@@ -421,7 +450,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
-          // if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_pdm_cfg.slot_cfg.slot_mask = (i2s_pdm_slot_mask_t)_rx_slot_mask; }
+          if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_pdm_cfg.slot_cfg.slot_mask = (i2s_pdm_slot_mask_t)_rx_slot_mask; }
 
           // AddLog(LOG_LEVEL_DEBUG, "I2S: rx_pdm_cfg clk_cfg sample_rate_hz:%i clk_src:%i mclk_multiple:%i dn_sample_mode:%i",
           //       rx_pdm_cfg.clk_cfg.sample_rate_hz, rx_pdm_cfg.clk_cfg.clk_src, rx_pdm_cfg.clk_cfg.mclk_multiple, rx_pdm_cfg.clk_cfg.dn_sample_mode);
@@ -489,7 +518,7 @@ int TasmotaI2S::updateClockConfig(void) {
  * microphone related functions
 \*********************************************************************************************/
 
-uint32_t TasmotaI2S::I2sMicInit(void) {
+uint32_t TasmotaI2S::micInit(void) {
   if (!_rx_configured) { return 0; }   // nothing configured
 
   esp_err_t err = ESP_OK;
@@ -497,82 +526,6 @@ uint32_t TasmotaI2S::I2sMicInit(void) {
 
   i2s_slot_mode_t slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
   AddLog(LOG_LEVEL_DEBUG, "I2S: mic init rx_channels:%i rx_running:%i rx_handle:%p", slot_mode, _rx_running, _rx_handle);
-
-  // if (_tx_configured && _rx_running) {      // duplex mode, mic was already initialized
-  //   AddLog(LOG_LEVEL_DEBUG, "I2S: mic init exit Rx already enabled");
-  //   return 0; // no need to en- or disable when in full duplex mode and already initialized
-  // }
-
-  // if (_rx_handle == nullptr){
-  //   i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-
-  //   AddLog(LOG_LEVEL_DEBUG, "I2S: rx_chan_cfg id:%i role:%i dma_desc_num:%i dma_frame_num:%i auto_clear:%i",
-  //         rx_chan_cfg.id, rx_chan_cfg.role, rx_chan_cfg.dma_desc_num, rx_chan_cfg.dma_frame_num, rx_chan_cfg.auto_clear);
-
-  //   err = i2s_new_channel(&rx_chan_cfg, NULL, &_rx_handle);
-  //   AddLog(LOG_LEVEL_DEBUG, "I2S: mic init i2s_new_channel err=%i", err);
-  //   switch (_rx_mode){
-  //     case I2S_MODE_PDM:
-  //       {
-  //         i2s_pdm_rx_config_t rx_pdm_cfg = {
-  //           .clk_cfg = I2S_PDM_RX_CLK_DEFAULT_CONFIG(_rx_freq),
-  //           /* The default mono slot is the left slot (whose 'select pin' of the PDM microphone is pulled down) */
-  //           .slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
-  //           // .slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, slot_mode),
-  //           .gpio_cfg = {
-  //             .clk = _gpio_ws,
-  //             .din = _gpio_din,
-  //             .invert_flags = {
-  //               .clk_inv = _gpio_ws_inv,
-  //             },
-  //           },
-  //         };
-  //         if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_pdm_cfg.slot_cfg.slot_mask = (i2s_pdm_slot_mask_t)_rx_slot_mask; }
-
-  //         // AddLog(LOG_LEVEL_DEBUG, "I2S: rx_pdm_cfg clk_cfg sample_rate_hz:%i clk_src:%i mclk_multiple:%i dn_sample_mode:%i",
-  //         //       rx_pdm_cfg.clk_cfg.sample_rate_hz, rx_pdm_cfg.clk_cfg.clk_src, rx_pdm_cfg.clk_cfg.mclk_multiple, rx_pdm_cfg.clk_cfg.dn_sample_mode);
-
-  //         // AddLog(LOG_LEVEL_DEBUG, "I2S: rx_pdm_cfg slot_cfg data_bit_width:%i slot_bit_width:%i slot_mode:%i slot_mask:%i",
-  //         //       rx_pdm_cfg.slot_cfg.data_bit_width, rx_pdm_cfg.slot_cfg.slot_bit_width, rx_pdm_cfg.slot_cfg.slot_mode, rx_pdm_cfg.slot_cfg.slot_mask);
-
-  //         // AddLog(LOG_LEVEL_DEBUG, "I2S: rx_pdm_cfg gpio_cfg clk:%i din:%i clk_inv:%i",
-  //         //       rx_pdm_cfg.gpio_cfg.clk, rx_pdm_cfg.gpio_cfg.din, rx_pdm_cfg.gpio_cfg.invert_flags.clk_inv);
-
-  //         err = i2s_channel_init_pdm_rx_mode(_rx_handle, &rx_pdm_cfg);
-  //         AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: RX channel in PDM mode, CLK: %i, DIN: %i, 16 bit width, %i channel(s), err code: 0x%04X"),
-  //                 _gpio_ws, _gpio_din, slot_mode, err);
-  //       }
-  //       break;
-  //     case I2S_MODE_STD:
-  //       {        
-  //         i2s_std_config_t rx_std_cfg = {
-  //           .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(_rx_freq),
-  //           .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, slot_mode),
-  //           .gpio_cfg = {
-  //             .mclk = (gpio_num_t)Pin(GPIO_I2S_MCLK),
-  //             .bclk = (gpio_num_t)Pin(GPIO_I2S_BCLK),
-  //             .ws   = (gpio_num_t)Pin(GPIO_I2S_WS),
-  //             .dout = I2S_GPIO_UNUSED,
-  //             .din  = (gpio_num_t)Pin(GPIO_I2S_DIN),
-  //             .invert_flags = {
-  //               .mclk_inv = false,
-  //               .bclk_inv = false,
-  //               .ws_inv   = false,
-  //             },
-  //           },
-  //         };
-  //         if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_rx_slot_mask; }
-
-  //         err = i2s_channel_init_std_mode(audio_i2s.rx_handle, &rx_std_cfg);
-  //         AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode err:%i", err);
-  //         AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with 16 bit width on %i channel(s) initialized", slot_mode);
-  //       }
-  //       break;
-  //     default:
-  //       AddLog(LOG_LEVEL_INFO, "I2S: invalid rx mode=%i", _rx_mode);
-  //       return -1;
-  //   }
-  // }
 
   if (!_rx_running) {
     err = i2s_channel_enable(_rx_handle);
@@ -583,7 +536,7 @@ uint32_t TasmotaI2S::I2sMicInit(void) {
 }
 
 
-void TasmotaI2S::I2sMicDeinit(void) {
+void TasmotaI2S::micDeinit(void) {
   esp_err_t err = ESP_OK;
   gpio_num_t clk_gpio;
 
@@ -597,6 +550,98 @@ void TasmotaI2S::I2sMicDeinit(void) {
     _rx_running = false;
     AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel disable: %i", err);
   }
+}
+
+// Read data into buffer of uint16_t[]
+//
+// Returns:
+//  n<0: error occured
+//  0: no data available
+//  n>0: number of bytes read
+int32_t TasmotaI2S::readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass) {
+  if (!audio_i2s.in->getRxRunning()) { return -1; }
+
+  size_t btr = 0;
+  esp_err_t err = i2s_channel_read(_rx_handle, buffer, size, &btr, 0 /* do not wait */);
+  if ((err != ESP_OK) && (err != ESP_ERR_TIMEOUT)) { return -err; }
+  if (btr == 0) { return 0; }
+  int16_t *samples = (int16_t*) buffer;
+  size_t samples_count = btr / 2;   // 16 bits signed samples
+
+  // Apply DC block
+  if (dc_block) {
+    if (_rx_dc_x_prev == 0 && _rx_dc_y_prev == 0) {
+      int32_t sum_samples = 0;
+      for (uint32_t i=0; i<samples_count; i++) {
+        sum_samples += samples[i];
+      }
+      _rx_dc_offset = sum_samples / samples_count;
+      _rx_dc_x_prev = _rx_dc_offset;
+      _rx_dc_y_prev = 0;
+    }
+    // apply dc_blocking filter
+    for (uint32_t i=0; i<samples_count; i++) {
+      samples[i] = dcFilter(samples[i]);
+    }
+    _rx_dc_offset = _rx_dc_x_prev - _rx_dc_y_prev;    // update new offset
+  }
+
+  // apply gain
+  if (apply_gain) {
+    for (uint32_t i=0; i<samples_count; i++) {
+      int32_t val = (((int32_t)samples[i]) * _rx_gain) / 0x10;
+      // clipping if overflow
+      if (val > 0x7FFF) { val = 0x7FFF; }
+      if (val < -0x8000) { val = -0x8000; }
+      samples[i] = val;
+    }
+  }
+
+  // lowpass filter
+  if (lowpass && _rx_lowpass_alpha != 0) {
+    // apply lowpass filter
+    for (uint32_t i=0; i<samples_count; i++) {
+      samples[i] = lowpassFilter(samples[i]);
+    }
+  }
+
+  return btr;
+}
+
+// DC Blocking filter
+// 1 - 2^(-7) = 0.9921875
+// binary: 0.111111011111111    Q1.15
+int16_t TasmotaI2S::dcFilter(int16_t pcm_in) {
+  #define A1 32511        // (1-2^(-7)) Q32:1.31
+  int16_t delta_x;
+  int32_t a1_y_prev;
+  int16_t pcm_out;
+
+  delta_x = pcm_in - _rx_dc_x_prev;
+  a1_y_prev = (A1 * (int32_t)_rx_dc_y_prev) / 0x8000;
+  pcm_out = delta_x + (int16_t)a1_y_prev;
+  _rx_dc_x_prev = pcm_in;
+  _rx_dc_y_prev = pcm_out;
+  return pcm_out;
+}
+
+// low pass filter
+// See: https://en.wikipedia.org/wiki/Low-pass_filter#Simple_infinite_impulse_response_filter
+// For 3000Hz low pass filter, RC = 0.0000530786
+// dt = 1/16000 = 0.0000625
+// alpha = dt / (RC + dt) = 0.540757545
+// alpha = (b) 0.100010100110111 = 0x4537
+// 1 - alpha = 0x3A9C
+int16_t TasmotaI2S::lowpassFilter(int16_t pcm_in) {
+  // const int32_t alpha = 0x4537;
+  // const int32_t one_alpha = 0x3A9C;
+  int32_t a1_y_prev;
+  int16_t pcm_out;
+
+  a1_y_prev = (_rx_lowpass_alpha * _rx_lowpass_y_prev) / 0x8000 + (_rx_lowpass_one_alpha * pcm_in) / 0x8000;
+  pcm_out = (int16_t)a1_y_prev;
+  _rx_lowpass_y_prev = pcm_out;
+  return pcm_out;
 }
 
 #endif // USE_I2S_AUDIO

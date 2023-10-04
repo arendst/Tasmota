@@ -1596,7 +1596,7 @@ class Matter_Device
       for k: payload_json.keys()
         var cleaned_command_idx = tasmota.find_list_i(uc, k)
         if (cleaned_command_idx == nil)
-          tasmota.resp_cmnd_str(f"Invalid command '{payload_json[k]}'")
+          tasmota.resp_cmnd_str(f"Invalid attribute '{k}'")
           return
         end
         cmd_cleaned[uc[cleaned_command_idx]] = payload_json[k]

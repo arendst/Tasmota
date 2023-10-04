@@ -507,7 +507,7 @@ void setup(void) {
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
 #ifdef ESP32
-  AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
+  AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardwareRevision().c_str(),
             FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
   // AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
   #if !defined(HAS_PSRAM_FIX)
@@ -601,9 +601,9 @@ void setup(void) {
 
   memcpy_P(TasmotaGlobal.version, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
-  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
-    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), TASMOTA_VERSION >> 24 & 0xff, TASMOTA_VERSION >> 16 & 0xff, TASMOTA_VERSION >> 8 & 0xff);  // Release version 6.3.0
+  if (TASMOTA_VERSION & 0xff) {  // Development or patched version 6.3.0.10
+    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, TASMOTA_VERSION & 0xff);
   }
 
   // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino

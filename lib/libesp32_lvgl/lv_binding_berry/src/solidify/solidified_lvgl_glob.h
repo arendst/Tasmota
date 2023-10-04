@@ -917,9 +917,9 @@ be_local_closure(LVGL_glob_register_obj,   /* name */
       0x50080200,  //  000C  LDBOOL	R2	1	0
       0x80040400,  //  000D  RET	1	R2
       0x70020004,  //  000E  JMP		#0014
-      0x88080302,  //  000F  GETMBR	R2	R1	K2
-      0x880C0100,  //  0010  GETMBR	R3	R0	K0
-      0x980C0401,  //  0011  SETIDX	R3	R2	R1
+      0x88080100,  //  000F  GETMBR	R2	R0	K0
+      0x880C0302,  //  0010  GETMBR	R3	R1	K2
+      0x98080601,  //  0011  SETIDX	R2	R3	R1
       0x50080000,  //  0012  LDBOOL	R2	0	0
       0x80040400,  //  0013  RET	1	R2
       0x80000000,  //  0014  RET	0

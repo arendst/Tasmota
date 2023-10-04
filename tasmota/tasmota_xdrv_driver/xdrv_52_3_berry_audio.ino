@@ -327,13 +327,13 @@ extern "C" {
   // AudioInputI2S.begin() -> bool
   int be_audio_input_i2s_begin(bvm *vm, TasmotaI2S* in) {
     if (I2SPrepareRx()) { be_raisef(vm, "internal_error", "I2SPrepareRx() failed"); be_return_nil(vm); } 
-    in->I2sMicInit();
+    in->micInit();
     return in->getRxRunning();
   }
 
   // AudioInputI2S.stop() -> bool
   int be_audio_input_i2s_stop(TasmotaI2S* in) {
-    in->I2sMicDeinit();
+    in->micDeinit();
     return true;
   }
 
@@ -360,10 +360,25 @@ extern "C" {
 
   // AudioInputI2S.set_gain(gain:real) -> bool
   int be_audio_input_set_gain(TasmotaI2S* in, float gain) {
-    return true;     // TODO
-    // return in->SetGain(gain);
+    in->setRxGain(gain);
+    return true;
   }
 
+  // AudioInputI2S.get_dc_offset() -> float
+  int be_audio_input_i2s_get_dc_offset(TasmotaI2S* in) {
+    return in->getRxDCOffset();
+  }
+
+  // AudioInputI2S.get_lowpass_alpha() -> float
+  float be_audio_input_i2s_get_lowpass_alpha(TasmotaI2S* in) {
+    return in->getRxLowpassAlpha();
+  }
+
+  // AudioInputI2S.set_lowpass_alpha(alpha:float) -> bool
+  int be_audio_input_i2s_set_lowpass_alpha(TasmotaI2S* in, float alpha) {
+    in->setRxLowpassAlpha(alpha);
+    return true;
+  }
 
   // AudioInputI2S.read_bytes() -> bytes()
   //
@@ -374,15 +389,16 @@ extern "C" {
   // Returns `bytes()` instance with 16-bits audio
   int be_audio_input_i2s_read_bytes(bvm *vm) {
     int argc = be_top(vm);
-    if (!audio_i2s.in->getRxRunning()) { be_return_nil(vm); }
 
-    uint16_t buf_audio[256];
+    be_getmember(vm, 1, ".p");
+    TasmotaI2S *in = (TasmotaI2S*) be_tocomptr(vm, -1);
+    be_pop(vm, 1);
 
-    size_t bytes_read = 0;
-    esp_err_t err = i2s_channel_read(audio_i2s.in->getRxHandle(), buf_audio, sizeof(buf_audio), &bytes_read, 0);
-    // AddLog(LOG_LEVEL_DEBUG, "BRY: be_audio_input_i2s_read_bytes - err=%i bytes=%i", err, bytes_read);
-    if ((err != ESP_OK) && (err != ESP_ERR_TIMEOUT)) { be_return_nil(vm); }
-    if (bytes_read == 0) { be_return_nil(vm); }
+    if (!in->getRxRunning()) { be_return_nil(vm); }
+
+    uint16_t buf_audio[512];
+    int32_t btr = in->readMic((uint8_t*)buf_audio, sizeof(buf_audio), true /*dc_block*/, true /*apply_gain*/, true /*lowpass*/);
+    if (btr <= 0) { be_return_nil(vm); }
 
     // we received some data
     if (argc >= 2 && be_isbytes(vm, 2)) {
@@ -391,11 +407,11 @@ extern "C" {
       // resize to btr
       be_getmember(vm, -1, "resize");
       be_pushvalue(vm, -2);
-      be_pushint(vm, bytes_read);
+      be_pushint(vm, btr);
       be_call(vm, 2);
       be_pop(vm, 3);
     } else {
-      be_pushbytes(vm, nullptr, bytes_read); // allocate a buffer of size btr filled with zeros
+      be_pushbytes(vm, nullptr, btr); // allocate a buffer of size btr filled with zeros
     }
 
     // get the address of the buffer
@@ -406,7 +422,7 @@ extern "C" {
     be_pop(vm, 2);
 
     // copy
-    memmove(buf, buf_audio, bytes_read);
+    memmove(buf, buf_audio, btr);
 
     be_return(vm);  /* return code */
   }
