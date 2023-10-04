@@ -1083,21 +1083,20 @@ typedef struct {
 String GetDeviceHardwareRevision(void) {
   // ESP32-S2
   // ESP32-D0WDQ6 v1.0
-  // ESP32-C3 v2.0
-  // ESP32-C3 v3.0
+  // ESP32-C3 v0.3
   // ESP32-C6FH4 v0.0
   String result = GetDeviceHardware();   // ESP32-C3
 
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-//  if (chip_info.revision) {              // Only show >rev 0.0
-    // idf5 efuse_hal_chip_revision(void)
-    uint32_t chip_revision = chip_info.revision;
-    if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
-    char revision[16];
-    snprintf_P(revision, sizeof(revision), PSTR(" v%d.%d"), chip_revision / 100, chip_revision % 100);
-    result += revision;                  // ESP32-C3 v3.0
-//  }
+#if ESP_IDF_VERSION_MAJOR >= 5
+  uint32_t chip_revision = chip_info.revision;       // 16-bit chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
+#else
+  uint32_t chip_revision = chip_info.full_revision;  // 16-bit chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
+#endif
+  char revision[16];
+  snprintf_P(revision, sizeof(revision), PSTR(" v%d.%d"), chip_revision / 100, chip_revision % 100);
+  result += revision;                  // ESP32-C3 v0.3
 
   return result;
 }
