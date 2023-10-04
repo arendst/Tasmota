@@ -3,7 +3,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.1.0.3]
+## [13.1.0.4]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.1.0.3] 20211003
 ### Added
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 - Matter support for Virtual Devices controllable via Rules or Berry (#19520)
@@ -12,8 +23,6 @@ All notable changes to this project will be documented in this file.
 - Support for ENS16x (air quality) and ENS210 (temp & RH) sensors (#19479)
 - Support for non-persistent ``WebButton17`` to ``WebButton32`` (#19580)
 - Command ``Mi32Name`` (#19619)
-
-### Breaking Changed
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.13
@@ -28,8 +37,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Shutter button quad press (#19589)
 - Compile error with new email lib (#19608)
 - ESP32 Arduino Core v2 wifi client flush (#19642)
-
-### Removed
 
 ## [13.1.0.2] 20230914
 ### Added

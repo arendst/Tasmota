@@ -110,7 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.1.0.3
+## Changelog v13.1.0.4
 ### Added
 - Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)

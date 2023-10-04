@@ -937,7 +937,7 @@ void SettingsDefaultSet1(void) {
   Settings->cfg_holder = (uint16_t)CFG_HOLDER;
   Settings->cfg_size = sizeof(TSettings);
 //  Settings->save_flag = 0;
-  Settings->version = VERSION;
+  Settings->version = TASMOTA_VERSION;
 //  Settings->bootcount = 0;
 //  Settings->cfg_crc = 0;
 }
@@ -1467,7 +1467,7 @@ void SettingsEnableAllI2cDrivers(void) {
 /********************************************************************************************/
 
 void SettingsDelta(void) {
-  if (Settings->version != VERSION) {      // Fix version dependent changes
+  if (Settings->version != TASMOTA_VERSION) {  // Fix version dependent changes
 
 #ifdef ESP8266
 #ifndef UPGRADE_V8_MIN
@@ -1763,7 +1763,7 @@ void SettingsDelta(void) {
       Settings->battery_level_percent = 101;
     }
 
-    Settings->version = VERSION;
+    Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
   }
 
