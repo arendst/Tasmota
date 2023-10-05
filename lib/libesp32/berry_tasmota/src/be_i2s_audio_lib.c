@@ -139,6 +139,14 @@ BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_get_lowpass_alpha, "f", ".");
 extern int be_audio_input_i2s_set_lowpass_alpha(void* in, float alpha);
 BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_set_lowpass_alpha, "b", ".f");
 
+// AudioInputI2S.rms_bytes(int16*:bytes) -> int
+extern int be_audio_input_i2s_rms_bytes(void *buf, size_t len);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_rms_bytes, "i", "(bytes)~");
+
+// AudioInputI2S.sqrt_fast(int) -> int
+extern int be_audio_input_i2s_sqrt_fast(int in);
+BE_FUNC_CTYPE_DECLARE(be_audio_input_i2s_sqrt_fast, "i", "i");
+
 #include "be_fixed_be_class_AudioOutputI2S.h"
 #include "be_fixed_be_class_AudioGenerator.h"
 #include "be_fixed_be_class_AudioGeneratorWAV.h"
@@ -201,6 +209,7 @@ class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super:
 
 class be_class_AudioInputI2S (scope: global, name: AudioInputI2S, strings: weak) {
     .p, var
+    peak, var
     init, ctype_func(be_audio_input_i2s_init)
     deinit, ctype_func(be_audio_input_i2s_deinit)
 
@@ -218,6 +227,9 @@ class be_class_AudioInputI2S (scope: global, name: AudioInputI2S, strings: weak)
 
     get_lowpass_alpha, ctype_func(be_audio_input_i2s_get_lowpass_alpha)
     set_lowpass_alpha, ctype_func(be_audio_input_i2s_set_lowpass_alpha)
+
+    rms_bytes, static_ctype_func(be_audio_input_i2s_rms_bytes)
+    sqrt_fast, static_ctype_func(be_audio_input_i2s_sqrt_fast)
 }
 
 @const_object_info_end */

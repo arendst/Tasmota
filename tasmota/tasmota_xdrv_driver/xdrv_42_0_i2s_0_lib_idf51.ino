@@ -169,7 +169,7 @@ public:
   bool startI2SChannel(bool tx, bool rx);
   int updateClockConfig(void);
 
-  int32_t readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass);
+  int32_t readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass, uint32_t *peak_ptr);
 
   // The following is now the preferred function
   // and allows to send multiple samples at once
@@ -558,7 +558,11 @@ void TasmotaI2S::micDeinit(void) {
 //  n<0: error occured
 //  0: no data available
 //  n>0: number of bytes read
-int32_t TasmotaI2S::readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass) {
+//  peak: peak value of the mic (can go above 32767 to indicate clipping)
+int32_t TasmotaI2S::readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool apply_gain, bool lowpass, uint32_t *peak_ptr) {
+  uint32_t peak = 0;
+  if (peak_ptr) { *peak_ptr = peak; }
+
   if (!audio_i2s.in->getRxRunning()) { return -1; }
 
   size_t btr = 0;
@@ -587,14 +591,23 @@ int32_t TasmotaI2S::readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool 
   }
 
   // apply gain
-  if (apply_gain) {
-    for (uint32_t i=0; i<samples_count; i++) {
-      int32_t val = (((int32_t)samples[i]) * _rx_gain) / 0x10;
-      // clipping if overflow
-      if (val > 0x7FFF) { val = 0x7FFF; }
-      if (val < -0x8000) { val = -0x8000; }
-      samples[i] = val;
+  for (uint32_t i=0; i<samples_count; i++) {
+    int32_t val = samples[i];
+    if (apply_gain) {
+      val = (val * _rx_gain) / 0x10;
     }
+    // clipping if overflow, and compute peak value
+    if (val > 0x7FFF) {
+      if (val > peak) { peak = val; }     // clipping
+      val = 0x7FFF;
+    } else if (val < -0x8000) {
+      val = -0x8000;
+      if (-val > peak) { peak = -val; }     // clipping
+    } else {
+      if ((val > 0) && (val > peak)) { peak = val; }
+      if ((val < 0) && (-val > peak)) { peak = -val; }
+    }
+    samples[i] = val;
   }
 
   // lowpass filter
@@ -605,6 +618,7 @@ int32_t TasmotaI2S::readMic(uint8_t *buffer, uint32_t size, bool dc_block, bool 
     }
   }
 
+  if (peak_ptr) { *peak_ptr = peak; }
   return btr;
 }
 
