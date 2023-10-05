@@ -826,7 +826,7 @@ void CmndI2SMic(void) {
     uint8_t buf[128];
 
     size_t bytes_read = 0;
-    int32_t btr = audio_i2s.in->readMic(buf, sizeof(buf), true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/);
+    int32_t btr = audio_i2s.in->readMic(buf, sizeof(buf), true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
     if (btr < 0) {
       AddLog(LOG_LEVEL_INFO, "I2S: Mic (err:%i)", -btr);
       ResponseCmndChar("I2S Mic read error");
