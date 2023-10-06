@@ -46,6 +46,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+  var shadow_onoff                                    # (bool) status of the light power on/off
   var tasmota_relay_index                             # Relay number in Tasmota (zero based)
 
   #############################################################

@@ -320,6 +320,11 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
+
+  // light.set_bri(bri:int) -> nil
+  void l_set_bri(int bri) {
+    light_controller.changeBri(bri);
+  }
 }
 
 #endif // USE_LIGHT
