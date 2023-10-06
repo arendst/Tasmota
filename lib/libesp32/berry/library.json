@@ -27,6 +27,6 @@
         "+<*.cpp>",
         "+<*.h>"
     ],
-    "flags": [ "-I$PROJECT_DIR/tasmota", "-DCOMPILE_BERRY_LIB" ]
+    "flags": [ "-I$PROJECT_DIR/tasmota", "-DCOMPILE_BERRY_LIB", "-includeesp_idf_version.h" ]
   }
 }
