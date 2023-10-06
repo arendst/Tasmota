@@ -237,11 +237,13 @@ void TTGO_WebShow(uint32_t json) {
     ResponseAppend_P(PSTR(",\"BMAX\":%d,\"BMAY\":%d,\"BMAZ\":%d"),acc.x,acc.y,acc.z);
 #endif
     ResponseJsonEnd();
+#ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_TTGO,vstring,cstring,bvstring,bcstring,ttgo_adc.per,tstring);
 #ifdef USE_BMA423
     WSContentSend_PD(HTTP_TTGO_BMA,acc.x,acc.y,acc.z);
 #endif // USE_BMA423
+#endif  // USE_WEBSERVER
   }
 }
 

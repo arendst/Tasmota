@@ -454,6 +454,7 @@ void PIDShowValues(void) {
   ResponseAppend_P(PSTR("}"));
 }
 
+#ifdef USE_WEBSERVER
 void PIDShowValuesWeb(void) {
 
 #define D_PID_DISPLAY_NAME     "PID Controller"
@@ -485,6 +486,7 @@ void PIDShowValuesWeb(void) {
     WSContentSend_PD(HTTP_PID_POWER_FORMAT, D_PID_POWER, 0, &f_buf);
   }
 }
+#endif  // USE_WEBSERVER
 
 void PIDRun(void) {
   double power = Pid.pid.tick(Pid.current_time_secs);
@@ -537,9 +539,11 @@ bool Xdrv49(uint32_t function) {
     case FUNC_JSON_APPEND:
       PIDShowValues();
       break;
+#ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
       PIDShowValuesWeb();
       break;
+#endif  // USE_WEBSERVER
   }
   return result;
 }
