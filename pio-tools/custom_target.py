@@ -117,6 +117,9 @@ def _parse_partitions(env):
                 "size": tokens[4],
                 "flags": tokens[5] if len(tokens) > 5 else None
             }
+            if partition["name"] == "spiffs":
+                partition["size"] = "0xc50000"
+            print(partition)
             result.append(partition)
             next_offset = (_parse_size(partition['offset']) +
                            _parse_size(partition['size']))
@@ -225,13 +228,60 @@ def esp8266_get_esptoolpy_reset_flags(resetmethod):
     return ["--before", resets[0], "--after", resets[1]]
 
 ## Script interface functions
+def parse_partition_table(content):
+    entries = [e for e in content.split(b'\xaaP') if len(e) > 0]
+    print("Partition data:")
+    for entry in entries:
+        # print(entry[:30])
+        type = entry[1]
+        if type == 0x82:
+            offset = int.from_bytes(entry[2:5], byteorder='little', signed=False)
+            size = int.from_bytes(entry[6:9], byteorder='little', signed=False)
+            print("type:",hex(type))
+            print("address:",hex(offset))
+            print("size:",hex(size))
+            env["SPIFFS_START"] = offset
+            env["SPIFFS_SIZE"] = size
+            env["SPIFFS_PAGE"] = int("0x100", 16)
+            env["SPIFFS_BLOCK"] = int("0x1000", 16)
+
+def get_partition_table():
+    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
+    upload_port = join(env.get("UPLOAD_PORT", "none"))
+    if "none" in upload_port:
+        env.AutodetectUploadPort()
+        upload_port = join(env.get("UPLOAD_PORT", "none"))
+    fs_file = join(env["PROJECT_DIR"], "partition_table.bin")
+    esptoolpy_flags = [
+            "--chip", mcu,
+            "--port", upload_port,
+            "--baud",  env.subst("$UPLOAD_SPEED"),
+            "--before", "default_reset",
+            "--after", "hard_reset",
+            "read_flash",
+            "0x8000",
+            "0x1000",
+            fs_file
+    ]
+    esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
+    print("Executing flash download command.")
+    print(esptoolpy_cmd)
+    try:
+        returncode = subprocess.call(esptoolpy_cmd, shell=False)
+        print("Downloaded filesystem binary.")
+    except subprocess.CalledProcessError as exc:
+        print("Downloading failed with " + str(exc))
+    with open(fs_file, mode="rb") as file:
+        content = file.read()
+        parse_partition_table(content)
 
 def get_fs_type_start_and_length():
     platform = env["PIOPLATFORM"]
     if platform == "espressif32":
         print("Retrieving filesystem info for ESP32.")
         print("Partition file: " + str(env.subst("$PARTITIONS_TABLE_CSV")))
-        esp32_fetch_spiffs_size(env)
+        # esp32_fetch_spiffs_size(env)
+        get_partition_table()
         return SPIFFSInfo(env["SPIFFS_START"], env["SPIFFS_SIZE"], env["SPIFFS_PAGE"], env["SPIFFS_BLOCK"])
     elif platform == "espressif8266":
         print("Retrieving filesystem info for ESP8266.")
@@ -256,6 +306,7 @@ def get_fs_type_start_and_length():
     pass
 
 def download_fs(fs_info: FSInfo):
+    print(fs_info)
     esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     if "none" in upload_port:
@@ -289,6 +340,9 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
     # control the unpack directory
     unpack_dir = env.GetProjectOption("custom_unpack_dir", "unpacked_fs")
     #unpack_dir = "unpacked_fs"
+    if not os.path.exists(downloaded_file):
+        print("No .bin with filesystem found")
+        assert(1)
     try:
         if os.path.exists(unpack_dir):
             shutil.rmtree(unpack_dir)
@@ -316,6 +370,7 @@ def display_fs(extracted_dir):
 def command_download_fs(*args, **kwargs):
     print("Entrypoint")
     #print(env.Dump())
+    get_partition_table()
     info = get_fs_type_start_and_length()
     print("Parsed FS info: " + str(info))
     download_ok, downloaded_file = download_fs(info)
