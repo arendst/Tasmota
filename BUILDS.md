@@ -32,8 +32,8 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SUNRISE               | x | x / x | x | x | x | x |
 | USE_RULES                 | x | x / x | x | x | x | x |
 | USE_SCRIPT                | - | - / - | - | - | - | - |
-| USE_EXPRESSION            | - | - / - | - | - | - | - |
-| SUPPORT_IF_STATEMENT      | - | - / - | - | - | - | - |
+| USE_EXPRESSION            | - | - / x | - | - | - | - | Every ESP32 + ESP8266 > 1MB
+| SUPPORT_IF_STATEMENT      | - | - / x | - | - | - | - | Every ESP32 + ESP8266 > 1MB
 | USE_HOTPLUG               | - | - / - | - | - | - | - |
 | USE_PROMETHEUS            | - | - / - | - | - | - | - |
 | USE_PING                  | - | - / - | - | - | - | - |

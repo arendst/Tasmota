@@ -1727,8 +1727,8 @@ void EnergyShow(bool json) {
       XnrgCall(FUNC_WEB_COL_SENSOR);
       WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
       XnrgCall(FUNC_WEB_SENSOR);
-#endif  // USE_WEBSERVER
     }
+#endif  // USE_WEBSERVER
   }
   EnergyFmtFree();
 }
