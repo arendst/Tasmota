@@ -6,6 +6,7 @@
 ** https://github.com/Skiars/berry/blob/master/LICENSE
 ********************************************************************/
 #include "berry.h"
+#include "esp_idf_version.h"
 
 /* this file contains the declaration of the module table. */
 
