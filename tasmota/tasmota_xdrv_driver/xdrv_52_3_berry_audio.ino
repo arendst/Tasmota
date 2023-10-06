@@ -20,17 +20,13 @@
 
 #ifdef USE_BERRY
 
-#ifdef USE_I2S_AUDIO_BERRY
+#if defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
 
 #include "AudioGeneratorWAV.h"
 #include "AudioGeneratorMP3.h"
 #include "AudioFileSourceFS.h"
 
 #include <berry.h>
-
-#if ESP_IDF_VERSION_MAJOR < 5
-  #error "USE_I2S_AUDIO_BERRY is only supported for ESP-IDF 5.1 or later"
-#endif
 
 /*********************************************************************************************\
  * AudioOutput class
@@ -474,5 +470,5 @@ extern "C" {
   }
 }
 
-#endif  // USE_I2S_AUDIO_BERRY
+#endif  // defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
 #endif  // USE_BERRY

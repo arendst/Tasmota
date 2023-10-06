@@ -5,7 +5,7 @@
 
 #define asm_mul(x,y) \
 ({ \
-    register int result; \
+    int result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
     result ;\
 })
@@ -31,7 +31,7 @@
 #ifndef asm_mulr    //no rounding shortcut
 #define asm_mulr(x,y) \
 ({ \
-    register int result; \
+    int result; \
     asm ("mulsh %0, %2, %1" : "=r" (result) : "r" (x), "r" (y)); \
     result ;\
 })
@@ -42,7 +42,7 @@
 #ifndef asm_mulsr   //no rounding shortcut
 #define asm_mulsr(x,y) \
 ({ \
-    register int result; \
+    int result; \
     asm ( \
         "mulsh %0, %2, %1\n\t" \
         "add %0, %0, %0" \
