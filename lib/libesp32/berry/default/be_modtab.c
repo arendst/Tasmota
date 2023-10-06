@@ -295,7 +295,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(lv_clock_icon),
 #endif // USE_LVGL
 
-#ifdef USE_I2S_AUDIO_BERRY
+#if defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
     &be_native_class(AudioGenerator),
     &be_native_class(AudioFileSource),
     &be_native_class(AudioOutputI2S),
@@ -306,7 +306,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
     &be_native_class(AudioInputI2S),
-#endif // USE_I2S_AUDIO_BERRY
+#endif // defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
 #if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
 #endif
