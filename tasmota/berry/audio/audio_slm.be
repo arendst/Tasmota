@@ -67,5 +67,5 @@ class Audio_SLM
   end
 end
 
-audio_slm = Audio_SLM()
+var audio_slm = Audio_SLM()
 return audio_slm
