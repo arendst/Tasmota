@@ -848,8 +848,9 @@ typedef struct {
   uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
 
   uint8_t       modbus_sconfig;            // F62
+  uint8_t       windmeter_measure_intvl;   // F63
 
-  uint8_t       free_f63[13];              // F63 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f64[12];              // F64 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint32_t      touch_threshold;           // F70
