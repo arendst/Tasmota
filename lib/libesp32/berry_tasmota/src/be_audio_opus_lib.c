@@ -29,7 +29,7 @@ void *be_audio_opus_decoder_init_ntv(int freq, int channels) {
 
   return buf;
 }
-int32_t be_audio_opus_decoder_init(struct bvm *vm) {
+int be_audio_opus_decoder_init(struct bvm *vm) {
   return be_call_c_func(vm, (void*) &be_audio_opus_decoder_init_ntv, "+.p", "i[i]");
 }
 
@@ -38,13 +38,13 @@ void *be_audio_opus_decoder_deinit_ntv(OpusDecoder* buf) {
   if (buf) BE_EXPLICIT_FREE(buf);
   return NULL;
 }
-int32_t be_audio_opus_decoder_deinit(struct bvm *vm) {
+int be_audio_opus_decoder_deinit(struct bvm *vm) {
   return be_call_c_func(vm, (void*) &be_audio_opus_decoder_deinit_ntv, "", ".");
 }
 
 
 // decode(payload:bytes) -> pcm:bytes()
-int32_t be_audio_opus_decoder_decode(struct bvm *vm) {
+int be_audio_opus_decoder_decode(struct bvm *vm) {
   int32_t argc = be_top(vm);
   be_call_c_func(vm, NULL, NULL, ".(bytes)[ii]");
 
