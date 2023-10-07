@@ -792,7 +792,9 @@
 #define D_CMND_ADCPARAM "AdcParam"
 
 // Commands xsns_05_ds18x20.ino
-#define D_CMND_DS_ALIAS "DS18Alias"
+#define D_CMND_DS_ALIAS "Alias"
+#define D_CMND_DS_RESCAN "Rescan"
+#define D_CMND_DS_RETRYREAD "RetryRead"
 
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
