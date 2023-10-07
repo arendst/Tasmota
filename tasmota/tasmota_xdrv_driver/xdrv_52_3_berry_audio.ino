@@ -323,13 +323,13 @@ extern "C" {
   // AudioInputI2S.begin() -> bool
   int be_audio_input_i2s_begin(bvm *vm, TasmotaI2S* in) {
     if (I2SPrepareRx()) { be_raisef(vm, "internal_error", "I2SPrepareRx() failed"); be_return_nil(vm); } 
-    in->micInit();
+    in->startRx();
     return in->getRxRunning();
   }
 
   // AudioInputI2S.stop() -> bool
   int be_audio_input_i2s_stop(TasmotaI2S* in) {
-    in->micDeinit();
+    in->stopRx();
     return true;
   }
 
