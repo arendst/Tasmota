@@ -366,7 +366,7 @@ exit:
     audio_i2s.client.stop();
   }
 
-  audio_i2s.out->micDeinit();
+  audio_i2s.out->stopRx();
   audio_i2s.mic_stop = 0;
   audio_i2s.mic_error = error;
   AddLog(LOG_LEVEL_INFO, PSTR("mp3task result code: %d"), error);
@@ -390,7 +390,7 @@ int32_t I2sRecordShine(char *path) {
   if (audio_i2s.use_stream) {
     stack = 8000;
   }
-  audio_i2s.out->micInit();
+  audio_i2s.out->startRx();
 
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s.mic_task_handle, 1);
 
@@ -407,6 +407,7 @@ enum {
   I2S_ERR_INPUT_NOT_CONFIGURED,
   I2S_ERR_DECODER_IN_USE,
   I2S_ERR_FILE_NOT_FOUND,
+  I2S_ERR_TX_FAILED,
 };
 
 // signal to an external Berry driver that we turn audio power on or off
@@ -489,18 +490,8 @@ void I2sInit(void) {
   I2SSettingsLoad(AUDIO_CONFIG_FILENAME, false);    // load configuration (no-erase)
   if (!audio_i2s.Settings) { return; }     // fatal error, could not allocate memory for configuration
 
-  // detect if we need full-duplex on port 0
-  bool duplex = false;
-  if ((gpio_din_0 >= 0) && (gpio_dout_0 >= 0)) {
-    // conditions are potentially favorable for duplex
-    if (audio_i2s.Settings->rx.mode == I2S_MODE_PDM || audio_i2s.Settings->tx.mode == I2S_MODE_PDM ){
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: PDM forbids full duplex mode, ignoring 'I2S DIN 1'"));
-      gpio_din_0 = -1;        // hence deconfigure DIN_0 which can't be used
-    } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: will try to use full duplex mode"));
-      duplex = true;
-    }
-  }
+  bool duplex = false;      // the same ports are used for input and output
+  bool exclusive = false;   // signals that in/out have a shared GPIO and need to un/install driver before use
 
   // AddLog(LOG_LEVEL_INFO, PSTR("I2S: init pins bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"),
   //                         Pin(GPIO_I2S_BCLK, 0) , Pin(GPIO_I2S_WS, 0), Pin(GPIO_I2S_DOUT, 0), Pin(GPIO_I2S_MCLK, 0), Pin(GPIO_I2S_DIN, 0));
@@ -509,7 +500,6 @@ void I2sInit(void) {
   audio_i2s.Settings->sys.tx = false;
   audio_i2s.Settings->sys.rx = false;
   audio_i2s.Settings->sys.exclusive = false;
-  bool exclusive = false;   // signals that in/out have a shared GPIO and need to un/install driver before use
 
   for (uint32_t port = 0; port < SOC_I2S_NUM; port++) {
     int32_t bclk = Pin(GPIO_I2S_BCLK, port);
@@ -525,8 +515,15 @@ void I2sInit(void) {
     // if neither input, nor output, nor DAC/ADC skip (WS could is only needed for DAC but supports only port 0)
     if (din < 0 && dout < 0 && (ws < 0 || port !=0)) { continue; }
 
+    duplex = (din >= 0) && (dout >= 0);
+    if (duplex) {
+      if (audio_i2s.Settings->rx.mode == I2S_MODE_PDM || audio_i2s.Settings->tx.mode == I2S_MODE_PDM ){
+        exclusive = true;
+      }
+      AddLog(LOG_LEVEL_DEBUG, "I2S: enabling duplex mode, exclusive;%i", exclusive);
+    }
+
     const char *err_msg = nullptr;   // to save code, we indicate an error with a message configured
-    bool duplex = (din >= 0) && (dout >= 0);
     bool dac_mode = false;
     if (din >= 0 || dout >= 0) {
       // we have regular I2S configuration
@@ -568,12 +565,6 @@ void I2sInit(void) {
       else if (port != 0 && dout >= 0 && audio_i2s.Settings->tx.mode == I2S_MODE_PDM) {
         err_msg = "PDM Tx is not supported";
       }
-      // 8. check that we don't try full-duplex with PDM in either direction
-      else if (duplex && (audio_i2s.Settings->rx.mode == I2S_MODE_PDM || audio_i2s.Settings->tx.mode == I2S_MODE_PDM )) {
-        err_msg = "PDM forbids full duplex mode";
-        duplex = false;
-        din = -1;         // deconfigure DIN_0 which can't be used
-      }
     } else {
       dac_mode = true;
       // no DIN/DOUT, try DAC mode
@@ -592,8 +583,13 @@ void I2sInit(void) {
     tx = (dout >= 0) || dac_mode;
     rx = (din >= 0);
 
-    if (duplex) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: will try to use full duplex mode"));
+    if (tx && audio_i2s.out) {
+      AddLog(LOG_LEVEL_DEBUG, "I2S: Warning: Tx already configured, skipping superfluous Tx configuration");
+      tx = false;
+    }
+    if (rx && audio_i2s.in) {
+      AddLog(LOG_LEVEL_DEBUG, "I2S: Warning: Rx already configured, skipping superfluous Rx configuration");
+      rx = false;
     }
 
     TasmotaI2S * i2s = new TasmotaI2S;
@@ -611,35 +607,44 @@ void I2sInit(void) {
       i2s->setRxMode(audio_i2s.Settings->rx.mode);
       i2s->setRxFreq(audio_i2s.Settings->rx.sample_rate);
       i2s->setRxChannels(audio_i2s.Settings->rx.channels);
-      i2s->setRate(audio_i2s.Settings->rx.sample_rate);
       i2s->setRxGain(audio_i2s.Settings->rx.gain);
     }
 
-    if (i2s->startI2SChannel(tx, rx)) {
-      // succesful, register handlers
-      if (tx) {
-        audio_i2s.out = i2s;
-        audio_i2s.Settings->sys.tx = true;
-      }
-      if (rx) {
-        audio_i2s.in = i2s;
-        audio_i2s.Settings->sys.rx = true;
-      }
-      if (duplex) {
-        audio_i2s.Settings->sys.duplex = true;
-      }
+    bool init_tx_ok = false;
+    bool init_rx_ok = false;
+    if (tx && rx && exclusive) {
+      i2s->setExclusive(true);
+      audio_i2s.Settings->sys.exclusive = exclusive;
+      // in exclusive mode, we need to intialize in sequence Tx and Rx
+      init_tx_ok = i2s->startI2SChannel(true, false);
+      init_rx_ok = i2s->startI2SChannel(false, true);
+    } else if (tx && rx) {
+      init_tx_ok = init_rx_ok = i2s->startI2SChannel(true, true);
+    } else {
+      if (tx) { init_tx_ok = i2s->startI2SChannel(true, false); }
+      if (rx) { init_rx_ok = i2s->startI2SChannel(false, true); }
     }
+    if (init_tx_ok) { audio_i2s.out = i2s; }
+    if (init_rx_ok) { audio_i2s.in = i2s; }
+    audio_i2s.Settings->sys.tx = init_tx_ok;
+    audio_i2s.Settings->sys.rx = init_rx_ok;
+    if (init_tx_ok && init_rx_ok) { audio_i2s.Settings->sys.duplex = true; }
+
+    // if intput and output are configured, don't proceed with other IS2 ports
+    if (audio_i2s.out && audio_i2s.in) {
+      break;
+    }
+
   }
 
   // do we have exclusive mode?
-  audio_i2s.Settings->sys.exclusive = exclusive;
   if (audio_i2s.out) { audio_i2s.out->setExclusive(exclusive); }
   if (audio_i2s.in) { audio_i2s.in->setExclusive(exclusive); }
 
   if(audio_i2s.out != nullptr){
     audio_i2s.out->SetGain(((float)audio_i2s.Settings->tx.gain / 100.0) * 4.0);
-    audio_i2s.out->begin();
-    audio_i2s.out->stop();
+    audio_i2s.out->beginTx();     // TODO - useful?
+    audio_i2s.out->stopTx();
   }
   audio_i2s.mp3ram = nullptr;
 
@@ -647,10 +652,6 @@ void I2sInit(void) {
     // if (UsePSRAM()) {
     AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will allocate buffer for mp3 encoder"));
     audio_i2s.mp3ram = special_malloc(preallocateCodecSize);
-    // }
-    // else{
-      // audio_i2s.Settings->sys.mp3_preallocate = 0; // no PS-RAM -> no MP3 encoding
-    // }
   }
   AddLog(LOG_LEVEL_DEBUG, "I2S: I2sInit done");
 }
@@ -669,9 +670,7 @@ int32_t I2SPrepareTx(void) {
   AddLog(LOG_LEVEL_DEBUG, "I2S: I2SPrepareTx out=%p", audio_i2s.out);
   if (!audio_i2s.out) { return I2S_ERR_OUTPUT_NOT_CONFIGURED; }
 
-  if (audio_i2s.Settings->sys.exclusive) {
-    // TODO - deconfigure input driver
-  }
+  if (!audio_i2s.out->beginTx()) { return I2S_ERR_TX_FAILED; }
   return I2S_OK;
 }
 
@@ -804,7 +803,7 @@ void Say(char *text) {
 
   sam->Say(audio_i2s.out, text);
   delete sam;
-  audio_i2s.out->stop();
+  audio_i2s.out->stopTx();
 
   I2SAudioPower(false);
 }
@@ -821,7 +820,7 @@ void CmndI2SMic(void) {
 
   esp_err_t err = ESP_OK;
   if (audio_i2s.decoder || audio_i2s.mp3) return;
-  audio_i2s.in->micInit();
+  audio_i2s.in->startRx();
   if (audio_i2s.in->getRxRunning()) {
     uint8_t buf[128];
 
@@ -872,6 +871,9 @@ void CmndI2SPlay(void) {
         break;
       case I2S_ERR_FILE_NOT_FOUND:
         ResponseCmndChar("File not found");
+        break;
+      case I2S_ERR_TX_FAILED:
+        ResponseCmndChar("Unable to open sound output");
         break;
       default:
         ResponseCmndChar("Unknown error");
