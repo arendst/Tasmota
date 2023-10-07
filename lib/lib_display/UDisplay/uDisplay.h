@@ -333,6 +333,8 @@ class uDisplay : public Renderer {
    void delay_arg(uint32_t arg);
    void Send_EP_Data(void);
    void send_spi_cmds(uint16_t cmd_offset, uint16_t cmd_size);
+   void send_spi_icmds(uint16_t cmd_size);
+   
 
 #ifdef USE_ESP32_S3
    int8_t par_cs;
