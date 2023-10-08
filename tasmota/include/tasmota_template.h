@@ -60,7 +60,7 @@ enum UserSelectablePins {
   GPIO_MGC3130_XFER, GPIO_MGC3130_RESET,  // MGC3130 interface
   GPIO_RF_SENSOR,                      // Rf receiver with sensor decoding
   GPIO_AZ_TXD, GPIO_AZ_RXD,            // AZ-Instrument 7798 Serial interface
-  GPIO_MAX31855CS, GPIO_MAX31855CLK, GPIO_MAX31855DO,  // MAX31855 Serial interface
+  GPIO_MAX31855CS1, GPIO_MAX31855CLK, GPIO_MAX31855DO,  // MAX31855 Serial interface
   GPIO_NRG_SEL, GPIO_NRG_SEL_INV, GPIO_NRG_CF1, GPIO_HLW_CF, GPIO_HJL_CF,  // HLW8012/HJL-01/BL0937 energy monitoring
   GPIO_MCP39F5_TX, GPIO_MCP39F5_RX, GPIO_MCP39F5_RST,  // MCP39F501 Energy monitoring (Shelly2)
   GPIO_PN532_TXD, GPIO_PN532_RXD,      // PN532 NFC Serial interface
@@ -477,6 +477,7 @@ const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
+#define MAX_MAX31855S    6
 #define MAX_MAX31865S    6
 #define MAX_MCP23XXX     6
 #define MAX_FLOWRATEMETER 2
@@ -1056,7 +1057,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MGC3130_RESET),
 #endif
 #ifdef USE_MAX31855
-  AGPIO(GPIO_MAX31855CS),               // MAX31855 Serial interface
+  AGPIO(GPIO_MAX31855CS1) + MAX_MAX31855S, //MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),              // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),               // MAX31855 Serial interface
 #endif
