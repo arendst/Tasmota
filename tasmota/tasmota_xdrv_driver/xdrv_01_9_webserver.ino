@@ -2379,21 +2379,21 @@ void HandleInformation(void)
   }
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s %d (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WiFi.channel(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_INFORMATION "}2" D_SSID ": %s | " D_RSSI ": %d%%, %d dBm | Mode: 11%c | " D_CHANNEL ": %d | " D_BSSID ": %s"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), WiFi.channel(), WiFi.BSSIDstr().c_str());
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6
     String ipv6_addr = WifiGetIPv6Str();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Global (wifi)}2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Global (WiFi)}2%s"), ipv6_addr.c_str());
     }
     ipv6_addr = WifiGetIPv6LinkLocalStr();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Local (wifi)}2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Local (WiFi)}2%s"), ipv6_addr.c_str());
     }
 #endif  // USE_IPV6
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
-      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (WiFi)}2%_I"), (uint32_t)WiFi.localIP());
     }
     show_hr = true;
   }
