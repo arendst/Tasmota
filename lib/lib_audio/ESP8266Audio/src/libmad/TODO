@@ -1,0 +1,69 @@
+
+ libmad - MPEG audio decoder library
+ Copyright (C) 2000-2004 Underbit Technologies, Inc.
+
+ $Id: TODO,v 1.3 2004/02/05 09:02:39 rob Exp $
+
+===============================================================================
+
+libmad:
+  - more API layers (buffering, PCM samples, dithering, etc.)
+  - x86 performance optimization compiler flags
+  - function documentation, general docs
+  - finish async API
+  - parse system streams?
+  - MPEG-2 MC, AAC?
+  - logarithmic multiplication?
+  - multiple frame decoding for better locality of reference?
+  - frame serial numbers, Layer III frame continuity checks
+
+fixed.h:
+  - experiment with FPM_INTEL:
+
+# if 1
+#    define mad_f_scale64(hi, lo)  \
+    ({ mad_fixed_t __result;  \
+       asm ("shrl %3,%1\n\t"  \
+	    "shll %4,%2\n\t"  \
+	    "orl %2,%1"  \
+	    : "=rm" (__result)  \
+	    : "0" (lo), "r" (hi),  \
+	      "I" (MAD_F_SCALEBITS), "I" (32 - MAD_F_SCALEBITS)  \
+	    : "cc");  \
+       __result;  \
+    })
+# else
+#    define mad_f_scale64(hi, lo)  \
+    ({ mad_fixed64hi_t __hi_;  \
+       mad_fixed64lo_t __lo_;  \
+       mad_fixed_t __result;  \
+       asm ("sall %2,%1"  \
+	    : "=r" (__hi_)  \
+	    : "0" (hi), "I" (32 - MAD_F_SCALEBITS)  \
+	    : "cc");  \
+       asm ("shrl %2,%1"  \
+	    : "=r" (__lo_)  \
+	    : "0" (lo), "I" (MAD_F_SCALEBITS)  \
+	    : "cc");  \
+       asm ("orl %1,%2"  \
+	    : "=rm" (__result)  \
+	    : "r" (__hi_), "0" (__lo_)  \
+	    : "cc");  \
+       __result;  \
+    })
+# endif
+
+libmad Layer I:
+  - check frame length sanity
+
+libmad Layer II:
+  - check frame length sanity
+
+libmad Layer III:
+  - circular buffer
+  - optimize zero_part from Huffman decoding throughout
+  - MPEG 2.5 8000 Hz sf bands? mixed blocks?
+  - stereo->mono conversion optimization?
+  - enable frame-at-a-time decoding
+  - improve portability of huffman.c
+

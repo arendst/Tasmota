@@ -1,0 +1,7 @@
+#Z2Tv1
+# Extension for Air Quality - clusters from Concentration Measurement
+:                                   # apply to all devices
+040D/0000,CO2,mul:1000000                   # concentration in ppm
+040D/0001,CO2Min,mul:1000000
+040D/0002,CO2Max,mul:1000000
+040D/0003,CO2Tolerance,mul:1000000

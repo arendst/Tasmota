@@ -1,0 +1,24 @@
+#######################################
+# Syntax Coloring Map For Test
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+A4988_Stepper	KEYWORD1	A4988_Stepper
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+doMove	KEYWORD2
+doRotate	KEYWORD2
+setRPM	KEYWORD2
+setSPR	KEYWORD2
+setMIS	KEYWORD2
+version	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

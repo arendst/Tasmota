@@ -1,0 +1,473 @@
+#!/bin/bash
+
+CROSS_CC=arm-linux-gnueabihf-gcc
+CROSS_CXX=arm-linux-gnueabihf-g++
+
+function help {
+cat <<EOF
+configure script for RF24 library.
+Options:
+
+Help:
+    -h, --help                  print this message
+
+Driver options:
+    --driver=[wiringPi|SPIDEV|MRAA|RPi|LittleWire]
+                                Driver for RF24 library. [configure autodetected]
+
+Building options:
+    --os=[LINUX|DARWIN]         Operating system. [configure autodetected]
+    --soc=[BCM2835|BCM2836|AM33XX|A10|A13|A20|H3]
+                                SoC type to be used. [configure autodetected]
+    --cpu-flags=<CFLAGS>        CPU defining/optimizing flags to be used. [configure autodetected]
+    --extra-cflags=<CFLAGS>     Extra C flags passed to C/C++ compilation. []
+    --extra-ldflags=<LDFLAGS>   Extra C flags passed to linking. []
+    --libname=<LIBNAME>         Library name. [rf24]
+    --c_compiler=<CC>           C compiler. [arm-linux-gnueabihf-gcc][gcc]
+    --cxx_compiler=<CXX>        C++ compiler [arm-linux-gnueabihf-g++][g++]
+    --no-clean                  Don't clean previous build artifacts
+
+Installation options:
+    --prefix=<PREFIX>           Installation prefix path. [/usr/local]
+    --lib-dir=<DIR>             Library target installation directory. [PREFIX/lib]
+    --header-dir=<DIR>          Header files target installation directory. [PREFIX/include]
+    --examples-dir=<DIR>        Example files installation directory. [PREFIX/bin]
+    --ldconfig=<LDCONFIG>       Ldconfig binary. Can be set to '' to skip ldconfig step. [ldconfig]
+
+Cross-compilation options:
+    --remote-host=<REMOTE_HOST> Remote hostname for installation.
+    --remote-user=<REMOTE_USER> Remote username for installation. [current user]
+    --remote-port=<REMOTE_PORT> Ssh port of remote machine. [22]
+    --remote=<USER@HOST>        Remote ssh host identification for installation [REMOTE_USER@REMOTE_HOST]
+    --remote-prefix=<RPREFIX>   Remote host installation prefix path. [/usr/local]
+    --remote-lib-dir=<DIR>      Remote library target installation directory [RPREFIX/lib]
+    --remote-header-dir=<DIR>   Remote header files target installation directory. [RPREFIX/include]
+    --remote-ldconfig=<RLDCON>  Remote ldconfig binary filename. Can be set to '' to skip ldconfig call. [ldconfig]
+    --remote-examples-dir=<DIR> Example files remote installation directory. Default: [REMOTE_PREFIX/bin]
+
+EOF
+}
+
+function execute_check {
+    if [ "${REMOTE}" ]; then
+        ssh -o 'PasswordAuthentication=no' -o 'PreferredAuthentications=publickey' -o 'ConnectTimeout=30' -o 'BatchMode=yes' -o 'StrictHostKeyChecking=no' -p ${REMOTE_PORT} ${REMOTE} $1
+    else
+        eval $1
+    fi
+}
+
+function die {
+    echo "[ERROR] $1"
+    exit $2
+}
+
+function detect_machine {
+    local cpu=$(execute_check "uname -m 2>/dev/null")
+    local machine=$(execute_check "cat /sys/firmware/devicetree/base/model 2>/dev/null")
+    local hardware=$(execute_check "grep sunxi_platform /sys/class/sunxi_info/sys_info 2>/dev/null | sed 's/^.*: \(.*\)$/\1/'")
+    if [ -z "$hardware" ]; then
+        local hardware=$(execute_check "grep Hardware /proc/cpuinfo 2>/dev/null | sed 's/^.*: \(.*\)$/\1/'")
+    fi
+    local soc="unknown"
+    local tp="unknown"
+
+    if [ -z "$cpu" ]; then
+        cpu="unknown"
+    fi
+
+    case $hardware in
+    BCM2708|BCM2835)
+        soc="BCM2835"
+        if [[ $machine == "Raspberry"* ]]; then
+            tp="RPi"
+        fi
+        ;;
+    BCM2709)
+        soc="BCM2836"
+        if [[ $machine == "Raspberry"* ]]; then
+            tp="RPi2"
+        fi
+        ;;
+    sun4i|Sun4iw1p1)
+        soc="A10"
+        ;;
+    sun5i|Sun4iw2p1)
+        soc="A13"
+        ;;
+    Sun4iw2p2)
+        soc="A12"
+        ;;
+    Sun4iw2p3)
+        soc="A10s"
+        ;;
+    sun6i|Sun8iw1p1)
+        soc="A31"
+        ;;
+    Sun8iw1p2)
+        soc="A31s"
+        ;;
+    sun7i|Sun8iw2p1)
+        soc="A20"
+        if [[ $machine == "Banana Pi"* ]]; then
+            tp="BananaPi"
+        elif [[ $machine == "Banana Pro"* ]]; then
+            tp="BananaPro"
+        fi
+        ;;
+    sun8i|Sun8iw7p1)
+        soc="H3"
+        ;;
+    Sun8iw3p1)
+        soc="A23"
+        ;;
+    Sun8iw5p1)
+        soc="A33"
+        ;;
+    Sun8iw6p1)
+        soc="A83t"
+        ;;
+    sun9i|Sun9iw1p1)
+        soc="A80"
+        ;;
+    Sun9iw1p2)
+        soc="A80t"
+        ;;
+    sun50i|Sun50iw1p1)
+        soc="A64"
+        ;;
+    'Generic AM33XX'*)
+        soc="AM33XX"
+        ;;
+    *)
+        soc="unknown"
+    esac
+    echo "${soc} ${tp} ${cpu}"
+}
+
+function gcc_cpu_flags {
+    local soc=$1
+    case $soc in
+    BCM2835)
+        flags="-march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard"
+        ;;
+    BCM2836)
+        flags="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+        ;;
+    AM33XX)
+        flags="-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard"
+        ;;
+    A10)
+        flags="-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard"
+        ;;
+    A13)
+        flags="-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard"
+        ;;
+    A20)
+        flags="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+        ;;
+    H3)
+        flags="-march=armv8-a -mtune=cortex-a53 -mfpu=neon-vfpv4 -mfloat-abi=hard"
+        ;;
+    *)
+        flags=""
+    esac
+    echo ${flags}
+}
+
+function detect_driver {
+    if [[ $(execute_check "cat /proc/cpuinfo | grep Hardware | grep 'BCM2708\|BCM2709\|BCM2835'") ]]; then
+        result=RPi
+    elif [[ $(execute_check 'ls /dev/spidev* 2>/dev/null') ]]; then
+        result=SPIDEV
+    elif [[ $(execute_check "file /usr/lib/libwiringPi.so*") ]]; then
+        result=wiringPi
+    elif [[ $(execute_check "${REMOTE_LDCONFIG} -p | grep libmraa") ]]; then
+        result=MRAA
+    elif [[ $(execute_check "${REMOTE_LDCONFIG} -p | grep liblittlewire-spi") ]]; then
+        result=LittleWire
+    else
+        result=""
+    fi
+    echo $result
+}
+
+function gen_symlink_names {
+    base_name="$1"
+    version="$2"
+
+    IFS='.' read -r -a ver <<< "$version"
+    versions=""
+    for index in "${!ver[@]}" ; do
+        verstr=""
+        for ind in `seq 0 $(expr $index - 1)` ; do
+            verstr="${verstr}.${ver[$ind]}"
+        done
+        versions="${base_name}${verstr} $versions"
+    done
+    echo ${versions}
+}
+
+params="OS SOC DRIVER CPUFLAGS CFLAGS PREFIX REMOTE_PREFIX LIB LIBNAME LIB_VERSION LIBSYMLINKS LIBDEPRECATE CC CXX LIB_DIR REMOTE_LIB_DIR HEADER_DIR REMOTE_HEADER_DIR DRIVER_DIR ARCH_DIR REMOTE REMOTE_HOST REMOTE_USER REMOTE_PORT SHARED_LINKER_FLAGS SHARED_LINKER_LIBS LDCONFIG REMOTE_LDCONFIG EXAMPLES_DIR REMOTE_EXAMPLES_DIR"
+
+for opt do
+    if [ "$opt" = "-h" ] || [ "$opt" = "--help" ]; then
+        help
+        exit 0
+    fi
+    optarg="${opt#*=}"
+    case "$opt" in
+    --os=*)
+        OS="$optarg"
+        ;;
+    --soc=*)
+        SOC="$optarg"
+        ;;
+    --cpu-flags=*)
+        CPUFLAGS="$optarg"
+        ;;
+    --extra-cflags=*)
+        CFLAGS="$optarg"
+        ;;
+    --extra-ldflags=*)
+        LDFLAGS="$optarg"
+        ;;
+    --libname=*)
+        LIB="$optarg"
+        ;;
+    --c_compiler=*)
+        CC="$optarg"
+        ;;
+    --cxx_compiler=*)
+        CXX="$optarg"
+        ;;
+    --no-clean*)
+        NO_CLEAN="1"
+        ;;
+    --prefix=*)
+        PREFIX="$optarg"
+        ;;
+    --lib-dir=*)
+        LIB_DIR="$optarg"
+        ;;
+    --header-dir=*)
+        HEADER_DIR="$optarg"
+        ;;
+    --examples-dir=*)
+        EXAMPLES_DIR="$optarg"
+        ;;
+    --ldconfig=*)
+        LDCONFIG="$optarg"
+        ;;
+    --driver=*)
+        DRIVER="$optarg"
+        ;;
+    --remote-host=*)
+        REMOTE_HOST="$optarg"
+        ;;
+    --remote-user=*)
+        REMOTE_USER="$optarg"
+        ;;
+    --remote-port=*)
+        REMOTE_PORT="$optarg"
+        ;;
+    --remote=*)
+        REMOTE="$optarg"
+        ;;
+    --remote-prefix=*)
+        REMOTE_PREFIX="$optarg"
+        ;;
+    --remote-lib-dir=*)
+        REMOTE_LIB_DIR="$optarg"
+        ;;
+    --remote-header-dir=*)
+        REMOTE_HEADER_DIR="$optarg"
+        ;;
+    --remote-ldconfig=*)
+        REMOTE_LDCONFIG="$optarg"
+        ;;
+    --remote-examples-dir=*)
+        REMOTE_EXAMPLES_DIR="$optarg"
+        ;;
+    *)
+        echo "[WARNING] Unknown option detected:$opt, ignored"
+        ;;
+    esac
+done
+
+#*******************************************
+# remote machine verification
+if [ "${REMOTE_HOST}" ]; then
+    if [ "${REMOTE_USER}" ]; then
+        REMOTE=${REMOTE_USER}@${REMOTE_HOST}
+    else
+        REMOTE=${REMOTE_HOST}
+    fi
+fi
+if [ "${REMOTE}" ]; then
+    echo "[SECTION] Checking remote host."
+    if [ -z "${REMOTE_HOST}" ]; then
+        REMOTE_HOST=${REMOTE/*@/}
+    fi
+    if [ -z "${REMOTE_PORT}" ]; then
+        REMOTE_PORT=22
+    fi
+    if [ "$(nmap ${REMOTE_HOST} -Pn  --host-timeout 30s -p ${REMOTE_PORT} 2>/dev/null | grep open)" ]; then
+        echo "  [OK] ssh daemon on ${REMOTE_HOST} port ${REMOTE_PORT} seems to be listening."
+    else
+        echo "  [WARNING] ssh on ${REMOTE_HOST} port ${REMOTE_PORT} seems not to be listening or nmap not installed."
+    fi
+    if [[ "$(execute_check 'echo ok 2>/dev/null' 2>/dev/null)" ]]; then
+        echo "  [OK] Remote machine ssh passwordless login configured fine."
+    else
+        die "Remote machine ssh and/or passwordless login check failed." 4
+    fi
+    if [[ $(execute_check "sudo echo ok 2>/dev/null") ]]; then
+        echo "  [OK] Remote machine sudo configured fine."
+    else
+        die "Remote machine sudo test failed." 5
+    fi
+fi
+
+if [ -z "${CC}" ]; then
+    echo "[SECTION] Detecting arm compilation environment."
+    if [[ $(command -v ${CROSS_CC} 2>/dev/null) ]]; then
+        echo "  [OK] ${CROSS_CC} detected."
+        CC=${CROSS_CC}
+        CROSS_SYSROOT="$(${CC} --print-sysroot)"
+        if [ "${CROSS_SYSROOT}" = "/" ]; then
+            CROSS_SYSROOT=""
+        fi
+    else
+        echo "  [INFO] ${CROSS_CC} not found."
+    fi
+    if [[ $(command -v ${CROSS_CXX} 2>/dev/null) ]]; then
+        echo "  [OK] ${CROSS_CXX} detected."
+        CXX=${CROSS_CXX}
+    else
+        echo "  [INFO] ${CROSS_CXX} not found."
+    fi
+fi
+
+if [ "${CROSS_SYSROOT}" ]; then
+    PREFIX="${CROSS_SYSROOT}/usr/local"
+fi
+
+PREFIX=${PREFIX:-/usr/local}
+REMOTE_PREFIX=${REMOTE_PREFIX:-/usr/local}
+LIB_DIR=${LIB_DIR:-${PREFIX}/lib}
+REMOTE_LIB_DIR=${REMOTE_LIB_DIR:-${REMOTE_PREFIX}/lib}
+HEADER_DIR=${HEADER_DIR:-${PREFIX}/include/RF24}
+REMOTE_HEADER_DIR=${REMOTE_HEADER_DIR:-${REMOTE_PREFIX}/include/RF24}
+EXAMPLES_DIR=${EXAMPLES_DIR:-${PREFIX}/bin}
+REMOTE_EXAMPLES_DIR=${REMOTE_EXAMPLES_DIR:-${REMOTE_PREFIX}/bin}
+LDCONFIG=${LDCONFIG-ldconfig}
+REMOTE_LDCONFIG=${REMOTE_LDCONFIG-/sbin/ldconfig}
+LIB=${LIB:-rf24}
+LIB_VERSION=${LIB_VERSION:-$(awk -F "=" '/version/ {print $2}' library.properties)}
+LIB_DEPRECATE_NAME=${LIB_DEPRECATE_NAME:-"rf24-bcm"}
+LIB_DEPRECATE_VERSION=${LIB_DEPRECATE_VERSION:-""}
+CC=${CC:-gcc}
+CXX=${CXX:-g++}
+ARCH_DIR=${ARCH_DIR:-utility}
+
+
+if [ -z "${SOC}" ]; then
+    echo "[SECTION] Detecting target machine."
+    info=($(detect_machine))
+    SOC=${info[0]}
+    TYPE=${info[1]}
+    CPU=${info[2]}
+    echo "[OK] machine detected: SoC=${SOC}, Type=${TYPE}, CPU=${CPU}."
+fi
+
+if [ -z "${CPUFLAGS}" ]; then
+    CPUFLAGS=$(gcc_cpu_flags $SOC)
+fi
+
+
+#*******************************************
+# DRIVER detection
+if [ -z "${DRIVER}" ]; then
+    echo "[SECTION] Detecting DRIVER"
+    DRIVER=$(detect_driver)
+    if [ -z "${DRIVER}" ]; then
+        die "No supported driver detected. Run configure with --driver=<driver> to set a driver explicitly." 1
+    fi
+    echo "  [OK] DRIVER detected:${DRIVER}."
+fi
+
+case ${DRIVER} in
+wiringPi)
+    SHARED_LINKER_LIBS+=" -pthread -lwiringPi"
+    CFLAGS+=" -lwiringPi"
+    ;;
+SPIDEV)
+    SHARED_LINKER_LIBS+=" -pthread"
+    ;;
+RPi)
+    SHARED_LINKER_LIBS+=" -pthread"
+    ;;
+MRAA)
+    SHARED_LINKER_LIBS+=" -lmraa"
+    ;;
+LittleWire)
+    SHARED_LINKER_LIBS+=" -llittlewire-spi"
+    ;;
+*)
+    die "Unsupported DRIVER: ${DRIVER}." 2
+    ;;
+esac
+
+#*******************************************
+# OS detection
+if [ -z "${OS}" ]; then
+    echo "[SECTION] Detecting OS."
+    OS=$(execute_check "uname")
+    OS=${OS^^}
+    echo "  [INFO] OS detected:${OS}."
+fi
+
+case ${OS} in
+LINUX)
+    DYN_SUFFIX=so
+    SHARED_LINKER_FLAGS+=" -shared -Wl,-soname,lib${LIB}.${DYN_SUFFIX}.${LIB_VERSION%%.*}"
+    ;;
+DARWIN)
+    DYN_SUFFIX=dylib
+    SHARED_LINKER_FLAGS+=" -dynamiclib -install_name ${LIB_DIR}/lib${LIB}.${DYN_SUFFIX}.${LIB_VERSION%%.*}"
+    ;;
+*)
+    die "Unsupported OS: ${OS}." 3
+    ;;
+esac
+
+
+LIBNAME=${LIBNAME:-lib${LIB}.${DYN_SUFFIX}.${LIB_VERSION}}
+LIBSYMLINKS="${LIBSYMLINKS:-$(gen_symlink_names lib${LIB}.${DYN_SUFFIX} ${LIB_VERSION})}"
+if [ "${LIB_DEPRECATE_NAME}" ]; then
+    LIBDEPRECATE="${LIBDEPRECATE:-lib${LIB_DEPRECATE_NAME}.${DYN_SUFFIX}}"
+    if [ "${LIB_DEPRECATE_VERSION}" ]; then
+        LIBDEPRECATE="${LIBDEPRECATE}.${LIB_DEPRECATE_VERSION}"
+    fi
+fi
+DRIVER_DIR=${DRIVER_DIR:-${ARCH_DIR}/${DRIVER}}
+CFLAGS="$CPUFLAGS -Ofast -Wall -pthread $CFLAGS"
+
+echo "[SECTION] Preparing configuration."
+cp ${DRIVER_DIR}/includes.h ${ARCH_DIR}/includes.h
+
+echo "[SECTION] Saving configuration."
+echo -n "" > Makefile.inc
+for param in ${params}; do
+    if [[ ${!param} ]]; then
+        echo "${param}=${!param}" >> Makefile.inc
+    fi
+done
+
+if [ -z "${NO_CLEAN}" ]; then
+    echo "[SECTION] Cleaning previous builds."
+    make clean >/dev/null
+fi
+
+
+echo "[OK] Finished."

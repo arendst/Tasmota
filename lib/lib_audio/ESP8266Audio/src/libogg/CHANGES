@@ -1,0 +1,104 @@
+Version 1.3.4 (2019 August 30)
+
+* Faster slice-by-8 CRC32 implementation.
+  see https://lwn.net/Articles/453931/ for motivation.
+* Add CMake build.
+* Deprecate Visual Studio project files in favor of CMake.
+* configure --disable-crc option for fuzzing.
+* Various build fixes.
+* Documentation and example code fixes.
+
+Version 1.3.3 (2017 November 7)
+
+ * Fix an issue with corrupt continued packet handling.
+ * Update Windows projects and build settings.
+ * Remove Mac OS 9 build support.
+
+Version 1.3.2 (2014 May 27)
+
+ * Fix an bug in oggpack_writecopy().
+
+Version 1.3.1 (2013 May 12)
+
+* Guard against very large packets.
+* Respect the configure --docdir override.
+* Documentation fixes.
+* More Windows build fixes.
+
+Version 1.3.0 (2011 August 4)
+
+* Add ogg_stream_flush_fill() call
+  This produces longer packets on flush, similar to
+  what ogg_stream_pageout_fill() does for single pages.
+* Windows build fixes
+
+Version 1.2.2 (2010 December 07)
+
+* Build fix (types correction) for Mac OS X
+* Update win32 project files to Visual Studio 2008
+* ogg_stream_pageout_fill documentation fix
+
+Version 1.2.1 (2010 November 01)
+
+* Various build updates (see SVN)
+* Add ogg_stream_pageout_fill() to API to allow applications
+  greater explicit flexibility in page sizing.
+* Documentation updates including multiplexing description,
+  terminology and API (incl. ogg_packet_clear(),
+  ogg_stream_pageout_fill())
+* Correct possible buffer overwrite in stream encoding on 32 bit
+  when a single packet exceed 250MB.
+* Correct read-buffer overrun [without side effects] under
+  similar circumstances.
+* Update unit testing to work properly with new page spill
+  heuristic.
+
+Version 1.2.0 (2010 March 25)
+
+* Alter default flushing behavior to span less often and use larger page
+  sizes when packet sizes are large.
+* Build fixes for additional compilers
+* Documentation updates
+
+Version 1.1.4 (2009 June 24)
+
+* New async error reporting mechanism. Calls made after a fatal error are
+  now safely handled in the event an error code is ignored
+* Added allocation checks useful to some embedded applications
+* fix possible read past end of buffer when reading 0 bits
+* Updates to API documentation
+* Build fixes
+
+Version 1.1.3 (2005 November 27)
+
+ * Correct a bug in the granulepos field of pages where no packet ends
+ * New VS2003 and XCode builds, minor fixes to other builds
+ * documentation fixes and cleanup
+
+Version 1.1.2 (2004 September 23)
+
+ * fix a bug with multipage packet assembly after seek
+
+Version 1.1.1 (2004 September 12)
+
+ * various bugfixes
+ * important bugfix for 64-bit platforms
+ * various portability fixes
+ * autotools cleanup from Thomas Vander Stichele
+ * Symbian OS build support from Colin Ward at CSIRO
+ * new multiplexed Ogg stream documentation
+
+Version 1.1 (2003 November 17)
+
+ * big-endian bitpacker routines for Theora
+ * various portability fixes
+ * improved API documentation
+ * RFC 3533 documentation of the format by Silvia Pfeiffer at CSIRO
+ * RFC 3534 documentation of the application/ogg mime-type by Linus Walleij
+
+Version 1.0 (2002 July 19)
+
+ * First stable release
+ * little-endian bitpacker routines for Vorbis
+ * basic Ogg bitstream sync and coding support
+

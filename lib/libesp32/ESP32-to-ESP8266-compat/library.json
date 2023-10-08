@@ -1,0 +1,8 @@
+{
+    "name": "ESP32-to-ESP8266-compat",
+    "keywords": "esp32, esp8266",
+    "description": "Allows Tasmota to compile for esp32",
+    "version": "0.0.2",
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+}

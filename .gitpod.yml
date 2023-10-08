@@ -1,0 +1,11 @@
+tasks:
+  - command: pip3 install -U platformio && platformio run -e tasmota
+
+image:
+  file: .gitpod.Dockerfile
+
+vscode:
+  extensions:
+    - Atishay-Jain.All-Autocomplete
+    - esbenp.prettier-vscode
+    - shardulm94.trailing-spaces

@@ -1,0 +1,165 @@
+name: Tasmota CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: development
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+      - '**.ino'
+      - '**.json'
+      - '**.properties'
+      - 'pio-tools/*.py'
+      - '**.ini'
+      - '.github/workflows/build_all_the_things.yml'
+
+jobs:
+  os-check-win:
+    runs-on: windows-2019
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32-safeboot
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  os-check-mac:
+    runs-on: macOS-12
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32-webcam
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  base-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota
+          - tasmota-4M
+          - tasmota-display
+          - tasmota-ir
+          - tasmota-knx
+          - tasmota-lite
+          - tasmota-minimal
+          - tasmota-sensors
+          - tasmota-zbbridge
+          - tasmota32
+          - tasmota32c3
+          - tasmota32s2
+          - tasmota32s3
+          - tasmota32-zbbrdgpro
+          - tasmota-zigbee
+          - tasmota32-bluetooth
+          - tasmota32-core2
+          - tasmota32-nspanel
+          - tasmota32-display
+          - tasmota32-ir
+          - tasmota32-lvgl
+          - tasmota32c3cdc
+          - tasmota32s2cdc
+          - tasmota32s3cdc
+          - tasmota32solo1
+          - tasmota32solo1-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c3cdc-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
+          - tasmota32s3-safeboot
+          - tasmota32s3cdc-safeboot
+          - tasmota32c2-safeboot
+          - tasmota32c6-safeboot
+          - tasmota32c6cdc-safeboot
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  language-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant: [ tasmota ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output

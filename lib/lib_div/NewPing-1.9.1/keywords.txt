@@ -1,0 +1,30 @@
+###################################
+# Syntax Coloring Map For NewPing
+###################################
+
+###################################
+# Datatypes (KEYWORD1)
+###################################
+
+NewPing	KEYWORD1
+
+###################################
+# Methods and Functions (KEYWORD2)
+###################################
+
+ping	KEYWORD2
+ping_in	KEYWORD2
+ping_cm	KEYWORD2
+ping_median	KEYWORD2
+ping_timer	KEYWORD2
+check_timer	KEYWORD2
+ping_result	KEYWORD2
+timer_us	KEYWORD2
+timer_ms	KEYWORD2
+timer_stop	KEYWORD2
+convert_in	KEYWORD2
+convert_cm	KEYWORD2
+
+###################################
+# Constants (LITERAL1)
+###################################

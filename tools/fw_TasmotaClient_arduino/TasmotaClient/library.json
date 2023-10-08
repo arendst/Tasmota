@@ -1,0 +1,14 @@
+{
+    "name": "TasmotaClient",
+    "version": "0.0.2",
+    "keywords": [
+      "serial", "io", "TasmotaClient"
+    ],
+    "description": "TasmotaClient Driver Library",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/andrethomas/TasmotaSlave"
+    },
+    "frameworks": "arduino"
+}

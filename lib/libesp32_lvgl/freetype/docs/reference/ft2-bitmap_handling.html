@@ -1,0 +1,1504 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="API Reference Documentation for FreeType-2.10.4">
+      
+      
+      
+        <meta name="author" content="FreeType Contributors">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="images/favico.ico">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
+    
+    
+      
+        <title>Bitmap Handling - FreeType-2.10.4 API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/application.adb8469c.css">
+      
+        <link rel="stylesheet" href="assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#4caf50">
+      
+    
+    
+      <script src="assets/javascripts/modernizr.86422ebf.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Noto Serif","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="green" data-md-color-accent="green">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#bitmap-handling" tabindex="0" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="." title="FreeType-2.10.4 API Reference" aria-label="FreeType-2.10.4 API Reference" class="md-header-nav__button md-logo">
+          
+            <img alt="logo" src="images/favico.ico" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              FreeType-2.10.4 API Reference
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Bitmap Handling
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="." title="FreeType-2.10.4 API Reference" class="md-nav__button md-logo">
+      
+        <img alt="logo" src="images/favico.ico" width="48" height="48">
+      
+    </a>
+    FreeType-2.10.4 API Reference
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="index.html" title="TOC" class="md-nav__link">
+      TOC
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="ft2-index.html" title="Index" class="md-nav__link">
+      Index
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      General Remarks
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        General Remarks
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_inclusion.html" title="FreeType's header inclusion scheme" class="md-nav__link">
+      FreeType's header inclusion scheme
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-user_allocation.html" title="User allocation" class="md-nav__link">
+      User allocation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Core API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-version.html" title="FreeType Version" class="md-nav__link">
+      FreeType Version
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-basic_types.html" title="Basic Data Types" class="md-nav__link">
+      Basic Data Types
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-base_interface.html" title="Base Interface" class="md-nav__link">
+      Base Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_variants.html" title="Unicode Variation Sequences" class="md-nav__link">
+      Unicode Variation Sequences
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-color_management.html" title="Glyph Color Management" class="md-nav__link">
+      Glyph Color Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-layer_management.html" title="Glyph Layer Management" class="md-nav__link">
+      Glyph Layer Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_management.html" title="Glyph Management" class="md-nav__link">
+      Glyph Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-mac_specific.html" title="Mac Specific Interface" class="md-nav__link">
+      Mac Specific Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sizes_management.html" title="Size Management" class="md-nav__link">
+      Size Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_file_macros.html" title="Header File Macros" class="md-nav__link">
+      Header File Macros
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Format-Specific API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Format-Specific API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-multiple_masters.html" title="Multiple Masters" class="md-nav__link">
+      Multiple Masters
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_tables.html" title="TrueType Tables" class="md-nav__link">
+      TrueType Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-type1_tables.html" title="Type 1 Tables" class="md-nav__link">
+      Type 1 Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sfnt_names.html" title="SFNT Names" class="md-nav__link">
+      SFNT Names
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bdf_fonts.html" title="BDF and PCF Files" class="md-nav__link">
+      BDF and PCF Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cid_fonts.html" title="CID Fonts" class="md-nav__link">
+      CID Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pfr_fonts.html" title="PFR Fonts" class="md-nav__link">
+      PFR Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-winfnt_fonts.html" title="Window FNT Files" class="md-nav__link">
+      Window FNT Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-font_formats.html" title="Font Formats" class="md-nav__link">
+      Font Formats
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gasp_table.html" title="Gasp Table" class="md-nav__link">
+      Gasp Table
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Controlling FreeType Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Controlling FreeType Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-auto_hinter.html" title="The auto-hinter" class="md-nav__link">
+      The auto-hinter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cff_driver.html" title="The CFF driver" class="md-nav__link">
+      The CFF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-t1_cid_driver.html" title="The Type 1 and CID drivers" class="md-nav__link">
+      The Type 1 and CID drivers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-tt_driver.html" title="The TrueType driver" class="md-nav__link">
+      The TrueType driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pcf_driver.html" title="The PCF driver" class="md-nav__link">
+      The PCF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-properties.html" title="Driver properties" class="md-nav__link">
+      Driver properties
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-parameter_tags.html" title="Parameter Tags" class="md-nav__link">
+      Parameter Tags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lcd_rendering.html" title="Subpixel Rendering" class="md-nav__link">
+      Subpixel Rendering
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Cache Sub-System
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Cache Sub-System
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cache_subsystem.html" title="Cache Sub-System" class="md-nav__link">
+      Cache Sub-System
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" checked>
+    
+    <label class="md-nav__link" for="nav-8">
+      Support API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Support API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-computations.html" title="Computations" class="md-nav__link">
+      Computations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-list_processing.html" title="List Processing" class="md-nav__link">
+      List Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-outline_processing.html" title="Outline Processing" class="md-nav__link">
+      Outline Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-quick_advance.html" title="Quick retrieval of advance values" class="md-nav__link">
+      Quick retrieval of advance values
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Bitmap Handling
+      </label>
+    
+    <a href="ft2-bitmap_handling.html" title="Bitmap Handling" class="md-nav__link md-nav__link--active">
+      Bitmap Handling
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_init" class="md-nav__link">
+    FT_Bitmap_Init
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_copy" class="md-nav__link">
+    FT_Bitmap_Copy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_embolden" class="md-nav__link">
+    FT_Bitmap_Embolden
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_convert" class="md-nav__link">
+    FT_Bitmap_Convert
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_blend" class="md-nav__link">
+    FT_Bitmap_Blend
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_glyphslot_own_bitmap" class="md-nav__link">
+    FT_GlyphSlot_Own_Bitmap
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_done" class="md-nav__link">
+    FT_Bitmap_Done
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-raster.html" title="Scanline Converter" class="md-nav__link">
+      Scanline Converter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_stroker.html" title="Glyph Stroker" class="md-nav__link">
+      Glyph Stroker
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-system_interface.html" title="System Interface" class="md-nav__link">
+      System Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-module_management.html" title="Module Management" class="md-nav__link">
+      Module Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gzip.html" title="GZIP Streams" class="md-nav__link">
+      GZIP Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lzw.html" title="LZW Streams" class="md-nav__link">
+      LZW Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bzip2.html" title="BZIP2 Streams" class="md-nav__link">
+      BZIP2 Streams
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      Error Codes
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        Error Codes
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-error_enumerations.html" title="Error Enumerations" class="md-nav__link">
+      Error Enumerations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-error_code_values.html" title="Error Code Values" class="md-nav__link">
+      Error Code Values
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+    
+    <label class="md-nav__link" for="nav-10">
+      Miscellaneous
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-10">
+        Miscellaneous
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gx_validation.html" title="TrueTypeGX/AAT Validation" class="md-nav__link">
+      TrueTypeGX/AAT Validation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-incremental.html" title="Incremental Loading" class="md-nav__link">
+      Incremental Loading
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_engine.html" title="The TrueType Engine" class="md-nav__link">
+      The TrueType Engine
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-ot_validation.html" title="OpenType Validation" class="md-nav__link">
+      OpenType Validation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_init" class="md-nav__link">
+    FT_Bitmap_Init
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_copy" class="md-nav__link">
+    FT_Bitmap_Copy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_embolden" class="md-nav__link">
+    FT_Bitmap_Embolden
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_convert" class="md-nav__link">
+    FT_Bitmap_Convert
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_blend" class="md-nav__link">
+    FT_Bitmap_Blend
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_glyphslot_own_bitmap" class="md-nav__link">
+    FT_GlyphSlot_Own_Bitmap
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_bitmap_done" class="md-nav__link">
+    FT_Bitmap_Done
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <p><a href="https://www.freetype.org">FreeType</a> &raquo; <a href="../">Docs</a> &raquo; <a href="index.html#support-api">Support API</a> &raquo; Bitmap Handling</p>
+<hr />
+<h1 id="bitmap-handling">Bitmap Handling<a class="headerlink" href="#bitmap-handling" title="Permanent link">&para;</a></h1>
+<h2 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">&para;</a></h2>
+<p>This section contains functions for handling <code><a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a></code> objects, automatically adjusting the target's bitmap buffer size as needed.</p>
+<p>Note that none of the functions changes the bitmap's &lsquo;flow&rsquo; (as indicated by the sign of the <code>pitch</code> field in <code><a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a></code>).</p>
+<p>To set the flow, assign an appropriate positive or negative value to the <code>pitch</code> field of the target <code><a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a></code> object after calling <code><a href="ft2-bitmap_handling.html#ft_bitmap_init">FT_Bitmap_Init</a></code> but before calling any of the other functions described here.</p>
+<h2 id="ft_bitmap_init">FT_Bitmap_Init<a class="headerlink" href="#ft_bitmap_init" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <span class="keyword">void</span> )
+  <b>FT_Bitmap_Init</b>( <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>  *abitmap );
+
+  /* deprecated */
+  FT_EXPORT( <span class="keyword">void</span> )
+  FT_Bitmap_New( <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>  *abitmap );
+</code></pre></div>
+
+<p>Initialize a pointer to an <code><a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a></code> structure.</p>
+<h4>inout</h4>
+
+<table class="fields">
+<tr><td class="val" id="abitmap">abitmap</td><td class="desc">
+<p>A pointer to the bitmap structure.</p>
+</td></tr>
+</table>
+
+<h4>note</h4>
+
+<p>A deprecated name for the same function is <code>FT_Bitmap_New</code>.</p>
+<hr>
+
+<h2 id="ft_bitmap_copy">FT_Bitmap_Copy<a class="headerlink" href="#ft_bitmap_copy" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_Bitmap_Copy</b>( <a href="ft2-base_interface.html#ft_library">FT_Library</a>        library,
+                  <span class="keyword">const</span> <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>  *source,
+                  <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>        *target );
+</code></pre></div>
+
+<p>Copy a bitmap into another one.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle to a library object.</p>
+</td></tr>
+<tr><td class="val" id="source">source</td><td class="desc">
+<p>A handle to the source bitmap.</p>
+</td></tr>
+</table>
+
+<h4>output</h4>
+
+<table class="fields">
+<tr><td class="val" id="target">target</td><td class="desc">
+<p>A handle to the target bitmap.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p><code>source-&gt;buffer</code> and <code>target-&gt;buffer</code> must neither be equal nor overlap.</p>
+<hr>
+
+<h2 id="ft_bitmap_embolden">FT_Bitmap_Embolden<a class="headerlink" href="#ft_bitmap_embolden" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_Bitmap_Embolden</b>( <a href="ft2-base_interface.html#ft_library">FT_Library</a>  library,
+                      <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>*  bitmap,
+                      <a href="ft2-basic_types.html#ft_pos">FT_Pos</a>      xStrength,
+                      <a href="ft2-basic_types.html#ft_pos">FT_Pos</a>      yStrength );
+</code></pre></div>
+
+<p>Embolden a bitmap. The new bitmap will be about <code>xStrength</code> pixels wider and <code>yStrength</code> pixels higher. The left and bottom borders are kept unchanged.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle to a library object.</p>
+</td></tr>
+<tr><td class="val" id="xstrength">xStrength</td><td class="desc">
+<p>How strong the glyph is emboldened horizontally. Expressed in 26.6 pixel format.</p>
+</td></tr>
+<tr><td class="val" id="ystrength">yStrength</td><td class="desc">
+<p>How strong the glyph is emboldened vertically. Expressed in 26.6 pixel format.</p>
+</td></tr>
+</table>
+
+<h4>inout</h4>
+
+<table class="fields">
+<tr><td class="val" id="bitmap">bitmap</td><td class="desc">
+<p>A handle to the target bitmap.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p>The current implementation restricts <code>xStrength</code> to be less than or equal to&nbsp;8 if bitmap is of pixel_mode <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_PIXEL_MODE_MONO</a></code>.</p>
+<p>If you want to embolden the bitmap owned by a <code><a href="ft2-base_interface.html#ft_glyphslotrec">FT_GlyphSlotRec</a></code>, you should call <code><a href="ft2-bitmap_handling.html#ft_glyphslot_own_bitmap">FT_GlyphSlot_Own_Bitmap</a></code> on the slot first.</p>
+<p>Bitmaps in <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_PIXEL_MODE_GRAY2</a></code> and <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_PIXEL_MODE_GRAY</a></code>@ format are converted to <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_PIXEL_MODE_GRAY</a></code> format (i.e., 8bpp).</p>
+<hr>
+
+<h2 id="ft_bitmap_convert">FT_Bitmap_Convert<a class="headerlink" href="#ft_bitmap_convert" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_Bitmap_Convert</b>( <a href="ft2-base_interface.html#ft_library">FT_Library</a>        library,
+                     <span class="keyword">const</span> <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>  *source,
+                     <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>        *target,
+                     <a href="ft2-basic_types.html#ft_int">FT_Int</a>            alignment );
+</code></pre></div>
+
+<p>Convert a bitmap object with depth 1bpp, 2bpp, 4bpp, 8bpp or 32bpp to a bitmap object with depth 8bpp, making the number of used bytes per line (a.k.a. the &lsquo;pitch&rsquo;) a multiple of <code>alignment</code>.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle to a library object.</p>
+</td></tr>
+<tr><td class="val" id="source">source</td><td class="desc">
+<p>The source bitmap.</p>
+</td></tr>
+<tr><td class="val" id="alignment">alignment</td><td class="desc">
+<p>The pitch of the bitmap is a multiple of this argument. Common values are 1, 2, or 4.</p>
+</td></tr>
+</table>
+
+<h4>output</h4>
+
+<table class="fields">
+<tr><td class="val" id="target">target</td><td class="desc">
+<p>The target bitmap.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p>It is possible to call <code><a href="ft2-bitmap_handling.html#ft_bitmap_convert">FT_Bitmap_Convert</a></code> multiple times without calling <code><a href="ft2-bitmap_handling.html#ft_bitmap_done">FT_Bitmap_Done</a></code> (the memory is simply reallocated).</p>
+<p>Use <code><a href="ft2-bitmap_handling.html#ft_bitmap_done">FT_Bitmap_Done</a></code> to finally remove the bitmap object.</p>
+<p>The <code>library</code> argument is taken to have access to FreeType's memory handling functions.</p>
+<p><code>source-&gt;buffer</code> and <code>target-&gt;buffer</code> must neither be equal nor overlap.</p>
+<hr>
+
+<h2 id="ft_bitmap_blend">FT_Bitmap_Blend<a class="headerlink" href="#ft_bitmap_blend" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_Bitmap_Blend</b>( <a href="ft2-base_interface.html#ft_library">FT_Library</a>         library,
+                   <span class="keyword">const</span> <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>*   source,
+                   <span class="keyword">const</span> <a href="ft2-basic_types.html#ft_vector">FT_Vector</a>    source_offset,
+                   <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>*         target,
+                   <a href="ft2-basic_types.html#ft_vector">FT_Vector</a>         *atarget_offset,
+                   <a href="ft2-color_management.html#ft_color">FT_Color</a>           color );
+</code></pre></div>
+
+<p>Blend a bitmap onto another bitmap, using a given color.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle to a library object.</p>
+</td></tr>
+<tr><td class="val" id="source">source</td><td class="desc">
+<p>The source bitmap, which can have any <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_Pixel_Mode</a></code> format.</p>
+</td></tr>
+<tr><td class="val" id="source_offset">source_offset</td><td class="desc">
+<p>The offset vector to the upper left corner of the source bitmap in 26.6 pixel format. It should represent an integer offset; the function will set the lowest six bits to zero to enforce that.</p>
+</td></tr>
+<tr><td class="val" id="color">color</td><td class="desc">
+<p>The color used to draw <code>source</code> onto <code>target</code>.</p>
+</td></tr>
+</table>
+
+<h4>inout</h4>
+
+<table class="fields">
+<tr><td class="val" id="target">target</td><td class="desc">
+<p>A handle to an <code>FT_Bitmap</code> object. It should be either initialized as empty with a call to <code><a href="ft2-bitmap_handling.html#ft_bitmap_init">FT_Bitmap_Init</a></code>, or it should be of type <code><a href="ft2-basic_types.html#ft_pixel_mode">FT_PIXEL_MODE_BGRA</a></code>.</p>
+</td></tr>
+<tr><td class="val" id="atarget_offset">atarget_offset</td><td class="desc">
+<p>The offset vector to the upper left corner of the target bitmap in 26.6 pixel format. It should represent an integer offset; the function will set the lowest six bits to zero to enforce that.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p>This function doesn't perform clipping.</p>
+<p>The bitmap in <code>target</code> gets allocated or reallocated as needed; the vector <code>atarget_offset</code> is updated accordingly.</p>
+<p>In case of allocation or reallocation, the bitmap's pitch is set to <code>4 * width</code>. Both <code>source</code> and <code>target</code> must have the same bitmap flow (as indicated by the sign of the <code>pitch</code> field).</p>
+<p><code>source-&gt;buffer</code> and <code>target-&gt;buffer</code> must neither be equal nor overlap.</p>
+<h4>since</h4>
+
+<p>2.10</p>
+<hr>
+
+<h2 id="ft_glyphslot_own_bitmap">FT_GlyphSlot_Own_Bitmap<a class="headerlink" href="#ft_glyphslot_own_bitmap" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_GlyphSlot_Own_Bitmap</b>( <a href="ft2-base_interface.html#ft_glyphslot">FT_GlyphSlot</a>  slot );
+</code></pre></div>
+
+<p>Make sure that a glyph slot owns <code>slot-&gt;bitmap</code>.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="slot">slot</td><td class="desc">
+<p>The glyph slot.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p>This function is to be used in combination with <code><a href="ft2-bitmap_handling.html#ft_bitmap_embolden">FT_Bitmap_Embolden</a></code>.</p>
+<hr>
+
+<h2 id="ft_bitmap_done">FT_Bitmap_Done<a class="headerlink" href="#ft_bitmap_done" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_BITMAP_H (freetype/ftbitmap.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <a href="ft2-basic_types.html#ft_error">FT_Error</a> )
+  <b>FT_Bitmap_Done</b>( <a href="ft2-base_interface.html#ft_library">FT_Library</a>  library,
+                  <a href="ft2-basic_types.html#ft_bitmap">FT_Bitmap</a>  *bitmap );
+</code></pre></div>
+
+<p>Destroy a bitmap object initialized with <code><a href="ft2-bitmap_handling.html#ft_bitmap_init">FT_Bitmap_Init</a></code>.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle to a library object.</p>
+</td></tr>
+<tr><td class="val" id="bitmap">bitmap</td><td class="desc">
+<p>The bitmap object to be freed.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>FreeType error code. 0&nbsp;means success.</p>
+<h4>note</h4>
+
+<p>The <code>library</code> argument is taken to have access to FreeType's memory handling functions.</p>
+<hr>
+                
+                  
+                
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="ft2-quick_advance.html" title="Quick retrieval of advance values" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Quick retrieval of advance values
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="ft2-raster.html" title="Scanline Converter" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Scanline Converter
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright 2020 <a href = "https://www.freetype.org/license.html">The FreeType Project</a>.
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="assets/javascripts/application.c33a9706.js"></script>
+      
+      <script>app.initialize({version:"1.1",url:{base:"."}})</script>
+      
+        <script src="javascripts/extra.js"></script>
+      
+    
+  </body>
+</html>

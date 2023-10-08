@@ -1,0 +1,52 @@
+menu "E-Paper Driver"
+    choice EPD_DRIVER_DISPLAY_TYPE
+        prompt "Display Type"
+        default EPD_DISPLAY_TYPE_ED097OC4
+        help
+            This option sets the display type to drive.
+
+        config EPD_DISPLAY_TYPE_ED097OC4
+            bool "ED097OC4"
+
+        config EPD_DISPLAY_TYPE_ED060SC4
+            bool "ED060SC4"
+
+        config EPD_DISPLAY_TYPE_ED060XC3
+            bool "ED060XC3"
+
+		config EPD_DISPLAY_TYPE_ED060SCT
+            bool "ED060SCT"
+
+        config EPD_DISPLAY_TYPE_ED097TC2
+            bool "ED097TC2"
+
+        config EPD_DISPLAY_TYPE_ED133UT2
+            bool "ED133UT2"
+        
+        config EPD_DISPLAY_TYPE_ED047TC1
+            bool "ED047TC1 (LILYGO 4.7 inch)"
+
+        config EPD_DISPLAY_TYPE_ED097OC4_LQ
+            bool "ED097OC4 Low Quality"
+    endchoice
+
+
+    choice EPD_DRIVER_BOARD_REVISION
+        prompt "Board / Board Revision"
+        default EPD_BOARD_REVISION_V2_V3
+        help
+            The board revision to compile for.
+
+        config EPD_BOARD_REVISION_LILYGO_T5_47
+            bool "LILYGO T5-4.7 inch e-paper"
+
+        config EPD_BOARD_REVISION_V2_V3
+            bool "epdiy v2 / v3"
+
+        config EPD_BOARD_REVISION_V4
+            bool "epdiy v4"
+
+        config EPD_BOARD_REVISION_V5
+            bool "epdiy v5"
+    endchoice
+endmenu

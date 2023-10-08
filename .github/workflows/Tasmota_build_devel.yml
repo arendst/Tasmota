@@ -1,0 +1,252 @@
+
+name: Build_development
+
+on:
+  workflow_dispatch:      # Start a workflow
+  push:
+    branches: development
+    paths-ignore:
+    - '.github/**'        # Ignore changes towards the .github directory
+    - '**.md'             # Do no build if *.md files changes
+
+# Ensures that only one deploy task per branch/environment will run at a time.
+concurrency:
+  group: environment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  be_solidify:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install clang compiler
+        run: |
+          sudo apt-get install -f clang
+      - name: Make Berry and Tasmota Berry code
+        run: |
+          cd lib/libesp32/berry
+          make
+          cd ../berry_tasmota
+          ../berry/berry -s -g solidify_all.be
+      - name: Matter Berry Code
+        run: |
+          cd lib/libesp32/berry_matter
+          ../berry/berry -s -g solidify_all.be
+      - name: LVGL Berry Code
+        run: |
+          cd lib/libesp32_lvgl/lv_binding_berry
+          ../../libesp32/berry/berry -s -g solidify_all.be
+      - uses: jason2866/upload-artifact@v2.0.2
+        with:
+          name: '["berry_tasmota", "berry_matter", "berry_lvgl", "berry_header"]'
+          path: '["./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify", "./lib/libesp32/berry/generate"]'
+
+  push_solidified:
+    needs: be_solidify
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - uses: jason2866/download-artifact@v3
+        with:
+          name: |
+            berry_tasmota
+            berry_matter
+            berry_lvgl
+            berry_header
+          path: |
+            ./lib/libesp32/berry_tasmota/src/solidify
+            ./lib/libesp32/berry_matter/src/solidify
+            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+            ./lib/libesp32/berry/generate
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Solidified Code updated
+
+  safeboot-images:
+    needs: push_solidified
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
+          - tasmota32solo1-safeboot
+          - tasmota32-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c3cdc-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
+          - tasmota32s3-safeboot
+          - tasmota32s3cdc-safeboot
+          - tasmota32c2-safeboot
+          - tasmota32c6-safeboot
+          - tasmota32c6cdc-safeboot
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: development
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - name: Upload safeboot firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./build_output
+
+  base-images:
+    needs: push_solidified
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
+          - tasmota
+          - tasmota-4M
+          - tasmota-minimal
+          - tasmota-display
+          - tasmota-ir
+          - tasmota-knx
+          - tasmota-lite
+          - tasmota-sensors
+          - tasmota-zbbridge
+          - tasmota-zigbee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: development
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  base32-images:
+    needs: safeboot-images
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
+          - tasmota32
+          - tasmota32-zbbrdgpro
+          - tasmota32-webcam
+          - tasmota32-bluetooth
+          - tasmota32-nspanel
+          - tasmota32-display
+          - tasmota32-ir
+          - tasmota32-lvgl
+          - tasmota32c3
+          - tasmota32c3cdc
+          - tasmota32s2
+          - tasmota32s2cdc
+          - tasmota32s3
+          - tasmota32s3cdc
+          - tasmota32solo1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: development
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Download safeboot firmwares
+        uses: actions/download-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./firmware
+      - name: Display downloaded files
+        run: |
+          ls -R ./firmware/
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  language-images:
+    needs: safeboot-images
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant: [ tasmota, tasmota32 ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: development
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Download safeboot firmwares
+        uses: actions/download-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./firmware
+      - name: Display downloaded files
+        run: |
+          ls -R ./firmware/
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+      - name: Upload language firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  Start_final_copy:
+    needs: [base-images, base32-images, language-images]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Dispatch workflow in arendst/Tasmota-firmware
+      run: |
+         curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
+         -H 'Accept: application/vnd.github.everest-preview+json' \
+         -u ${{ secrets.API_TOKEN_GITHUB }} \
+         --data '{"ref": "gh_actions"}'

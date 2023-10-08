@@ -1,0 +1,14 @@
+#Z2Tv1
+# GiEX garden watering https://www.aliexpress.com/item/1005004222098040.html
+:TS0601,_TZE200_sh1btabb
+EF00/0101,WaterMode                 # duration=0 / capacity=1
+EF00/0102,WaterState                # off=0 / on=1
+EF00/0365,IrrigationStartTime       # (string) ex: "08:12:26"
+EF00/0366,IrrigationStopTime        # (string) ex: "08:13:36"
+EF00/0267,CycleIrrigationNumTimes   # number of cycle irrigation times, set to 0 for single cycle
+EF00/0268,IrrigationTarget          # duration in minutes or capacity in Liters (depending on mode)
+EF00/0269,CycleIrrigationInterval   # cycle irrigation interval (minutes, max 1440)
+EF00/026A,CurrentTemperature        # (value ignored because isn't a valid tempurature reading.  Misdocumented and usage unclear)
+EF00/026C=0001/0021,mul:2           # match to BatteryPercentage
+EF00/026F,WaterConsumed             # water consumed (Litres)
+EF00/0372,LastIrrigationDuration    # (string) Ex: "00:01:10,0"

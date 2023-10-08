@@ -1,0 +1,14 @@
+{
+    "name": "Berry int64 implementation for 32 bits architecture",
+    "version": "1.0",
+    "description": "Berry int64",
+    "license": "MIT",
+    "homepage": "https://github.com/*g",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    }
+  }

@@ -1,0 +1,8 @@
+{
+    "name": "Micro-RTSP",
+    "keywords": "esp32, rtsp",
+    "description": "Mikro RTSP server",
+    "version": "0.1.6",
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+}

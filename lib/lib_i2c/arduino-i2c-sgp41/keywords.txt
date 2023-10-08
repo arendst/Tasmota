@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2CSgp41	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+executeConditioning	KEYWORD2
+measureRawSignals	KEYWORD2
+executeSelfTest	KEYWORD2
+turnHeaterOff	KEYWORD2
+getSerialNumber	KEYWORD2
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sgp41	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

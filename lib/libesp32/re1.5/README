@@ -1,0 +1,48 @@
+What is re1.5?
+==============
+
+re1 (http://code.google.com/p/re1/) is "toy regular expression implementation"
+by Russel Cox, featuring simplicity and minimal code size unheard of in other
+implementations. re2 (http://code.google.com/p/re2/) is "an efficient,
+principled regular expression library" by the same author. It is robust,
+full-featured, and ... bloated, comparing to re1.
+
+re1.5 is an attempt to start with re1 codebase and add features required for
+minimalistic real-world use, while sticking to the minimal code size and
+memory use.
+
+Why?
+====
+re1.5 is intended for use in highly constrained, e.g. embedded, environments,
+where offering familiar high-level string matching functionality is still
+beneficial.
+
+Features
+========
+
+* Like re1, re1.5 retains design where compiled expression can be executed
+(matched) by multiple backends, each with its own distinctive design and
+runtime properties (complexity and memory usage).
+* Unlike re1, regexes are compiled to memory-efficient bytecode. Exact size
+of the bytecode can be found prior to compilation (for memory allocation).
+* External API functions feature namespace prefix to improve clarity and
+avoid name clashes when integrating into other projects.
+* Matchers are NUL-char clean and take size of the input string as a param.
+* Support for quoted chars in regex.
+* Support for ^, $ assertions in regex.
+* Support for "match" vs "search" operations, as common in other regex APIs.
+* Support for named character classes: \d \D \s \S \w \W.
+
+TODO
+====
+
+* Support for repetition operator {n} and {n,m}.
+* Support for Unicode (UTF-8).
+* Support for matching flags like case-insensitive, dot matches all,
+multiline, etc.
+* Support for more assertions like \A, \Z.
+
+Author and License
+==================
+re1.5 is maintained by Paul Sokolovsky pfalcon at users.sourceforge.net and
+licensed under BSD license, just as the original re1.
