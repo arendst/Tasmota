@@ -70,21 +70,21 @@ void MAX31855_Init(void) {
 int32_t MAX31855_ShiftIn(uint8_t Length, uint32_t index) {
   int32_t dataIn = 0;
 
-  digitalWrite(Pin(GPIO_MAX31855CS1, index), LOW);       // CS = LOW -> Start SPI communication
+  digitalWrite(Pin(GPIO_MAX31855CS1, index), LOW);  // CS = LOW -> Start SPI communication
   delayMicroseconds(1);                             // CS fall to output enable = max. 100ns
 
   for (uint32_t i = 0; i < Length; i++) {
     digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
-    delayMicroseconds(1);                        // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
+    delayMicroseconds(1);                           // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
     dataIn <<= 1;
     if (digitalRead(Pin(GPIO_MAX31855DO))) {
       dataIn |= 1;
     }
     digitalWrite(Pin(GPIO_MAX31855CLK), HIGH);
-    delayMicroseconds(1);                        // CLK pulse width high = min. 100ns
+    delayMicroseconds(1);                           // CLK pulse width high = min. 100ns
   }
 
-  digitalWrite(Pin(GPIO_MAX31855CS1, index), HIGH);      // CS = HIGH -> End SPI communication
+  digitalWrite(Pin(GPIO_MAX31855CS1, index), HIGH); // CS = HIGH -> End SPI communication
   digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
   return dataIn;
 }
