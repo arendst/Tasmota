@@ -825,7 +825,7 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "float") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_float;
-    modbusBridge.dataCount = bitMode ? 2 * modbusBridge.count : modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "raw") == 0)
   {
