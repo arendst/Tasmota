@@ -59,6 +59,7 @@
 #define MAX17043_CONFIG_POWER_UP_DEFAULT    0x971C
 #define MAX17043_CONFIG_SAFE_MASK           0xFF1F  // mask out sleep bit (7), unused bit (6) and alert bit (4)
 #define MAX17043_CONFIG_ALERT_MASK          0x0020  // mask alert bit (4)
+#define MAX17043_CONFIG_SLEEP_MASK          0x0080  // mask sleep bit (7)
 
 #ifndef MAX17043_ALERT_THRESHOLD
 #define MAX17043_ALERT_THRESHOLD    32   // legacy sensor code set this to 32%
@@ -93,6 +94,8 @@ void Max17043Init(void) {
       // mask out unpredictable bits on the config register
       config_reg = I2cRead16(MAX17043_ADDRESS, MAX17043_CONFIG) & MAX17043_CONFIG_SAFE_MASK;
       if (config_reg == MAX17043_CONFIG_POWER_UP_DEFAULT || config_reg == config_with_threshold) {
+        // must write the config register again to clear sleep bit
+        I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, config_with_threshold);
         max17043 = true;
         I2cSetActiveFound(MAX17043_ADDRESS, MAX17043_NAME);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SNS: Waking from deep sleep - skipping " MAX17043_NAME " Power on Reset & Quick Start"));
@@ -100,7 +103,6 @@ void Max17043Init(void) {
     } else {
       // otherwise perform a full Power on Reset (which is the same as disconnecting power)
       // and a Quick Start which essentially does the same but handles a noisy power up sequence
-
       I2cWrite16(MAX17043_ADDRESS, MAX17043_COMMAND, MAX17043_MODE_COMMAND_POWERONRESET);
       delay(10);
       // confirm this is a MAX17043 (must read after power on reset, as reset does just that to the config register)
@@ -166,6 +168,11 @@ bool Xsns110(uint32_t function) {
         Max17043Show(0);
         break;
 #endif // USE_WEBSERVER
+#ifdef USE_DEEPSLEEP
+      case FUNC_SAVE_BEFORE_RESTART:
+        I2cWrite16(MAX17043_ADDRESS, MAX17043_CONFIG, config_with_threshold | MAX17043_CONFIG_SLEEP_MASK);
+        break;
+#endif // USE_DEEPSLEEP 
     }
   }
   return false;
