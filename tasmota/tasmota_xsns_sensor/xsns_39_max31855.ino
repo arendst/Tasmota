@@ -48,14 +48,14 @@ void MAX31855_Init(void) {
     digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
 
     for (uint32_t i = 0; i < MAX_MAX31855S; i++) {
-      if (PinUsed(GPIO_MAX31855CS1, i)) {
+      if (PinUsed(GPIO_MAX31855CS, i)) {
         max31855_pins_used |= 1 << i;  //set lowest bit
         max31855_count ++;
         // Set GPIO modes for SW-SPI
-        pinMode(Pin(GPIO_MAX31855CS1, i), OUTPUT);
+        pinMode(Pin(GPIO_MAX31855CS, i), OUTPUT);
 
         // Chip not selected
-        digitalWrite(Pin(GPIO_MAX31855CS1, i), HIGH);
+        digitalWrite(Pin(GPIO_MAX31855CS, i), HIGH);
 
         max31855_initialized = true;
       }
@@ -70,7 +70,7 @@ void MAX31855_Init(void) {
 int32_t MAX31855_ShiftIn(uint8_t Length, uint32_t index) {
   int32_t dataIn = 0;
 
-  digitalWrite(Pin(GPIO_MAX31855CS1, index), LOW);  // CS = LOW -> Start SPI communication
+  digitalWrite(Pin(GPIO_MAX31855CS, index), LOW);  // CS = LOW -> Start SPI communication
   delayMicroseconds(1);                             // CS fall to output enable = max. 100ns
 
   for (uint32_t i = 0; i < Length; i++) {
@@ -84,7 +84,7 @@ int32_t MAX31855_ShiftIn(uint8_t Length, uint32_t index) {
     delayMicroseconds(1);                           // CLK pulse width high = min. 100ns
   }
 
-  digitalWrite(Pin(GPIO_MAX31855CS1, index), HIGH); // CS = HIGH -> End SPI communication
+  digitalWrite(Pin(GPIO_MAX31855CS, index), HIGH); // CS = HIGH -> End SPI communication
   digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
   return dataIn;
 }
@@ -155,6 +155,7 @@ void MAX31855_GetResult(void) {
 void MAX31855_Show(bool Json) {
   char sensor_name_text[10];
   char sensor_name[12];
+  uint8_t report_once = 0;
   GetTextIndexed(sensor_name_text, sizeof(sensor_name_text), Settings->flag4.max6675, kMax31855Types);
   sprintf(sensor_name, "%s",sensor_name_text);
   for (uint32_t i = 0; i < MAX_MAX31855S; i++) {
@@ -169,16 +170,15 @@ void MAX31855_Show(bool Json) {
           Settings->flag2.temperature_resolution, &MAX31855_Result[i].ProbeTemperature,
           Settings->flag2.temperature_resolution, &MAX31855_Result[i].ReferenceTemperature,
           MAX31855_Result[i].ErrorCode);
+        if ((0 == TasmotaGlobal.tele_period) && (!report_once)) {
 #ifdef USE_DOMOTICZ
-        if (0 == TasmotaGlobal.tele_period) {
           DomoticzFloatSensor(DZ_TEMP, MAX31855_Result[i].ProbeTemperature);
-        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if (0 == TasmotaGlobal.tele_period) {
           KnxSensor(KNX_TEMPERATURE, MAX31855_Result[i].ProbeTemperature);
-        }
 #endif  // USE_KNX
+          report_once++;
+        }
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_Temp(sensor_name, MAX31855_Result[i].ProbeTemperature);
