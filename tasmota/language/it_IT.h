@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 03.09.2023
+ * Updated until v9.4.0.1 - Last update 09.10.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -306,7 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN          "Aggiorna per nuova scansione"
 #define D_DUPLICATE_ACCESSPOINT          "Access Point duplicato"
 #define D_SKIPPING_LOW_QUALITY           "Ignorato a causa di bassa qualità"
-#define D_MODE                           "Mode"
+#define D_MODE                           "Modalità"
 #define D_RSSI                           "RSSI"
 #define D_WEP                            "WEP"
 #define D_WPA_PSK                        "WPA PSK"
