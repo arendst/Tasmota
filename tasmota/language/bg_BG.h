@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Обновяване за повторно сканиране"
 #define D_DUPLICATE_ACCESSPOINT "Дублирана точка за достъп"
 #define D_SKIPPING_LOW_QUALITY "Пропускане поради лошо качество"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

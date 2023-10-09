@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Refresh to scan again"
 #define D_DUPLICATE_ACCESSPOINT "Duplicate AccessPoint"
 #define D_SKIPPING_LOW_QUALITY "Skipping due to low quality"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

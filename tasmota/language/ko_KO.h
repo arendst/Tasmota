@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "검색 재시도"
 #define D_DUPLICATE_ACCESSPOINT "중복된 AccessPoint"
 #define D_SKIPPING_LOW_QUALITY "약한 네트워크 신호 무시"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

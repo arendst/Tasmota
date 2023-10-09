@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "刷新并重试"
 #define D_DUPLICATE_ACCESSPOINT "重复AP"
 #define D_SKIPPING_LOW_QUALITY "忽略弱信号网络"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

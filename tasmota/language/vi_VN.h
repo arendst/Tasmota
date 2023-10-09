@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Quét lại"
 #define D_DUPLICATE_ACCESSPOINT "Điểm truy cập trùng lặp"
 #define D_SKIPPING_LOW_QUALITY "Bỏ qua do tín hiệu kém"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

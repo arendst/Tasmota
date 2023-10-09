@@ -2379,7 +2379,13 @@ void HandleInformation(void)
   }
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_INFORMATION "}2" D_SSID ": %s<BR>" D_RSSI ": %d%%, %d dBm<BR>Mode: 11%c<BR>" D_CHANNEL ": %d<BR>" D_BSSID ": %s"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), WiFi.channel(), WiFi.BSSIDstr().c_str());
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_INFORMATION "}2" D_SSID " %s<br>" D_RSSI " %d%%, %d dBm<br>" D_MODE " 11%c<br>" D_CHANNEL " %d<br>" D_BSSID " %s"), 
+      Settings->sta_active +1,
+      HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(),
+      WifiGetRssiAsQuality(rssi), rssi,
+      pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]),
+      WiFi.channel(),
+      WiFi.BSSIDstr().c_str());
     WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6

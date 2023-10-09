@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Uppdatera för att skanna igen"
 #define D_DUPLICATE_ACCESSPOINT "Dubblett accesspunkt"
 #define D_SKIPPING_LOW_QUALITY "Hoppa över pga dålig kvalitet"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

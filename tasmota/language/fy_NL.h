@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Ferfarskje om opnij te sykjen"
 #define D_DUPLICATE_ACCESSPOINT "Dûbele tagongspunt"
 #define D_SKIPPING_LOW_QUALITY "Oerslaan fanwegen lege opfangkwaliteit"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

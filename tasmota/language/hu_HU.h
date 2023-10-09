@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Frissíts az újrakereséshez"
 #define D_DUPLICATE_ACCESSPOINT "Duplikált access point"
 #define D_SKIPPING_LOW_QUALITY "Rossz, alacsony jelminőség"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

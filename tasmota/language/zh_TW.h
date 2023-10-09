@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "重新整理以重新掃描"
 #define D_DUPLICATE_ACCESSPOINT "重覆的存取點"
 #define D_SKIPPING_LOW_QUALITY "正在忽略訊號品質不佳的訊號"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

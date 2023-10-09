@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Zopakovať sken"
 #define D_DUPLICATE_ACCESSPOINT "Kópia AP"
 #define D_SKIPPING_LOW_QUALITY "Preskočenie z dôvodu kvality signálu"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Tekrar tarama - yenile"
 #define D_DUPLICATE_ACCESSPOINT "AP'yi çoğalt"
 #define D_SKIPPING_LOW_QUALITY "Düşük kalitedekileri dikkate alma"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

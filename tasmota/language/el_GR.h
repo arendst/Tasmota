@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Πατήστε ανανέωση για μια νέα σάρωση"
 #define D_DUPLICATE_ACCESSPOINT "Διπλότυπο AccessPoint"
 #define D_SKIPPING_LOW_QUALITY "Παράκαμψη λόγω χαμηλής ποιότητας"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"

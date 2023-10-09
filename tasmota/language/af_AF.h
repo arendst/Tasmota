@@ -306,6 +306,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Verfris om weer te skandeer"
 #define D_DUPLICATE_ACCESSPOINT "Duplikaat AccessPoint"
 #define D_SKIPPING_LOW_QUALITY "Slaan oor as gevolg van lae gehalte"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
