@@ -44,6 +44,7 @@ enum UserSelectablePins {
   GPIO_DSB, GPIO_DSB_OUT,              // DS18B20 or DS18S20
   GPIO_WS2812,                         // WS2812 Led string
   GPIO_MHZ_TXD, GPIO_MHZ_RXD,          // MH-Z19 Serial interface
+  GPIO_HC8_RXD,          // HC8 Serial interface
   GPIO_PZEM0XX_TX, GPIO_PZEM004_RX, GPIO_PZEM016_RX, GPIO_PZEM017_RX, // PZEM Serial Modbus interface
   GPIO_SAIR_TX, GPIO_SAIR_RX,          // SenseAir Serial interface
   GPIO_PMS5003_TX, GPIO_PMS5003_RX,    // Plantower PMS5003 Serial interface
@@ -302,6 +303,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DS18X20 "|" D_SENSOR_DS18X20 "_o|"
   D_SENSOR_WS2812 "|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
+  D_SENSOR_HC8_RX "|"
   D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|" D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_PMS5003_TX "|" D_SENSOR_PMS5003_RX "|"
@@ -958,6 +960,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MHZ19
   AGPIO(GPIO_MHZ_TXD),                  // MH-Z19 Serial interface
   AGPIO(GPIO_MHZ_RXD),                  // MH-Z19 Serial interface
+#endif
+#ifdef USE_HC8
+  AGPIO(GPIO_HC8_RXD),                  // HC8 Serial interface
 #endif
 #ifdef USE_SENSEAIR
   AGPIO(GPIO_SAIR_TX),                  // SenseAir Serial interface
