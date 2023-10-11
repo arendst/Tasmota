@@ -568,10 +568,7 @@ void ShutterInit(void)
   //Initialize to get relay that changed
   ShutterGlobal.RelayOldMask = TasmotaGlobal.power;
 
-  // if shutter 4 is unused
-  if (ShutterSettings.shutter_startrelay[MAX_SHUTTERS_ESP32 -1] == 0) {
-     ShutterGlobal.open_velocity_max = ShutterSettings.shuttercoeff[4][3] > 0 ? ShutterSettings.shuttercoeff[4][3] : ShutterGlobal.open_velocity_max;
-  }
+  ShutterGlobal.open_velocity_max = ShutterSettings.open_velocity_max;
   for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     if (ShutterSettings.shutter_startrelay[i] && (ShutterSettings.shutter_startrelay[i] <= 32 )) {
@@ -996,7 +993,8 @@ void ShutterRtc50mS(void)
             startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
   #endif  // ESP8266
   #ifdef ESP32
-            analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
+            ledcWriteTone(i, Shutter[i].pwm_velocity);  //
+            ledcWrite(i, 512);  // Setzt den PWM-Wert auf 0
             TasmotaGlobal.pwm_value[i] = 512;
             pwm_apply = true;
   #endif  // ESP32
@@ -1179,9 +1177,10 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
         analogWrite(Pin(GPIO_PWM1, i), 0);
 #endif
 #ifdef ESP32
-        analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));
-        TasmotaGlobal.pwm_value[i] = 0;
-        PwmApplyGPIO(false);
+        ledcSetup(i, Shutter[i].pwm_velocity, 8);
+        ledcAttachPin(Pin(GPIO_PWM1, i), i);  // Nehmen Sie an, dass GPIO_PWM1 der gewünschte GPIO-Pin ist.
+        ledcWriteTone(i, Shutter[i].pwm_velocity);  //
+        ledcWrite(i, 0);  // Setzt den PWM-Wert auf 0
 #endif
         RtcSettings.pulse_counter[i] = 0;
       break;
@@ -1708,9 +1707,7 @@ void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
     ShutterGlobal.open_velocity_max =  XdrvMailbox.payload;
-    if (TasmotaGlobal.shutters_present < 4) {
-      ShutterSettings.shuttercoeff[4][3] = ShutterGlobal.open_velocity_max;
-    }
+    ShutterSettings.open_velocity_max = ShutterGlobal.open_velocity_max;
     ShutterInit();
   }
   ResponseCmndNumber(ShutterGlobal.open_velocity_max);
