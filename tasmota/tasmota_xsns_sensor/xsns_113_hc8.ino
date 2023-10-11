@@ -97,7 +97,7 @@ void Hc8Show(bool json)
   char model[4] = "HC8";
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d\"}"),
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":\"%d\"}"),
         types, model, hc8_last_ppm);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
