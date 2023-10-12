@@ -44,7 +44,6 @@ enum UserSelectablePins {
   GPIO_DSB, GPIO_DSB_OUT,              // DS18B20 or DS18S20
   GPIO_WS2812,                         // WS2812 Led string
   GPIO_MHZ_TXD, GPIO_MHZ_RXD,          // MH-Z19 Serial interface
-  GPIO_HC8_RXD,          // HC8 Serial interface
   GPIO_PZEM0XX_TX, GPIO_PZEM004_RX, GPIO_PZEM016_RX, GPIO_PZEM017_RX, // PZEM Serial Modbus interface
   GPIO_SAIR_TX, GPIO_SAIR_RX,          // SenseAir Serial interface
   GPIO_PMS5003_TX, GPIO_PMS5003_RX,    // Plantower PMS5003 Serial interface
@@ -213,6 +212,7 @@ enum UserSelectablePins {
   GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
   GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
   GPIO_HDMI_CEC,                        // Support for HDMI CEC
+  GPIO_HC8_RXD,                         // HC8 Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -303,7 +303,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DS18X20 "|" D_SENSOR_DS18X20 "_o|"
   D_SENSOR_WS2812 "|"
   D_SENSOR_MHZ_TX "|" D_SENSOR_MHZ_RX "|"
-  D_SENSOR_HC8_RX "|"
   D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|" D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_PMS5003_TX "|" D_SENSOR_PMS5003_RX "|"
@@ -473,6 +472,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
   D_GPIO_DINGTIAN_OE "|"
   D_SENSOR_HDMI_CEC "|"
+  D_SENSOR_HC8_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
