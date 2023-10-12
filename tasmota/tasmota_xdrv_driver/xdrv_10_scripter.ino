@@ -11953,11 +11953,7 @@ int32_t call2pwl(const char *url) {
 #endif // TESLA_POWERWALL
 
 
-#ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
-#else
-#include <WiFiClientSecure.h>
-#endif //ESP8266
 
 // get https info page json string
 uint32_t call2https(const char *host, const char *path) {
