@@ -32,7 +32,6 @@
 #include <memory>
 #include <Arduino.h>
 #include <WiFiClient.h>
-#include <WiFiClientSecure.h>
 
 #include <HTTPClient.h>     // import definitions from the original code
 

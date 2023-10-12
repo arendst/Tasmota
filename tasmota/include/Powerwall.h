@@ -4,12 +4,7 @@
 #define Powerwall_h
 
 // include libraries
-#ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
-#else
-#include <WiFiClientSecure.h>
-#endif //ESP8266
-
 
 class Powerwall {
    private:
