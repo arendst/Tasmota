@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Krag faktor"
 #define D_POWERUSAGE "Krag"
 #define D_POWERUSAGE_ACTIVE "Regte krag"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Oënskynlike krag"
 #define D_POWERUSAGE_REACTIVE "reaktiewe krag"
 #define D_PRESSURE "Druk"

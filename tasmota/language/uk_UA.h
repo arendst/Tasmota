@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Коефіцієнт потужності"
 #define D_POWERUSAGE "Потужність"
 #define D_POWERUSAGE_ACTIVE "Активна потужність"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Загальна потужність"
 #define D_POWERUSAGE_REACTIVE "Реактивна потужність"
 #define D_PRESSURE "Тиск"

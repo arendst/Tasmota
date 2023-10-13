@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
 #define D_POWERUSAGE_ACTIVE    "Potenza attiva"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT  "Potenza apparente"
 #define D_POWERUSAGE_REACTIVE  "Potenza reattiva"
 #define D_PRESSURE             "Pressione"

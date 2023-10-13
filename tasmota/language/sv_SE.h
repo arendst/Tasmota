@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Spänningsfaktor"
 #define D_POWERUSAGE "Spänning"
 #define D_POWERUSAGE_ACTIVE "Aktiv spänning"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Skenbar spänning"
 #define D_POWERUSAGE_REACTIVE "Responsiv spänning"
 #define D_PRESSURE "Tryck"

@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Cosinus fi"
 #define D_POWERUSAGE "Moc"
 #define D_POWERUSAGE_ACTIVE "Moc czynna"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Moc pozorna"
 #define D_POWERUSAGE_REACTIVE "Moc bierna"
 #define D_PRESSURE "Ciśnienie"

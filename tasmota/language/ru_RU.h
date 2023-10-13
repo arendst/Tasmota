@@ -153,6 +153,7 @@
 #define D_POWER_FACTOR "Коэффициент мощности"
 #define D_POWERUSAGE "Мощность"
 #define D_POWERUSAGE_ACTIVE "Активная мощность"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Полная мощность"
 #define D_POWERUSAGE_REACTIVE "Реактивная мощность"
 #define D_PRESSURE "Давление"

@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Teljesítménytényező"
 #define D_POWERUSAGE "Energiafelhasználás"
 #define D_POWERUSAGE_ACTIVE "Aktív teljesítmény"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Látszólagos teljesítmény"
 #define D_POWERUSAGE_REACTIVE "Reaktív teljesítmény"
 #define D_PRESSURE "Nyomás"

@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Factor de Putere"
 #define D_POWERUSAGE "Putere"
 #define D_POWERUSAGE_ACTIVE "Putere Activă"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Putere Aparentă"
 #define D_POWERUSAGE_REACTIVE "Putere Reactivă"
 #define D_PRESSURE "Presiune"

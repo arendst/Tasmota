@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Güç Faktörü"
 #define D_POWERUSAGE "Güç"
 #define D_POWERUSAGE_ACTIVE "Aktif Güç"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Görünen Güç"
 #define D_POWERUSAGE_REACTIVE "Reaktif Güç"
 #define D_PRESSURE "Basınç"

@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "功率因数"
 #define D_POWERUSAGE "功率"
 #define D_POWERUSAGE_ACTIVE "有功功率"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "视在功率"
 #define D_POWERUSAGE_REACTIVE "无功功率"
 #define D_PRESSURE "气压"

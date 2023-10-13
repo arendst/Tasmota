@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR "Krêftfaktor"
 #define D_POWERUSAGE "Krêft"
 #define D_POWERUSAGE_ACTIVE "Eigentlike krêft"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Skynber krêft"
 #define D_POWERUSAGE_REACTIVE "Blynde krêft"
 #define D_PRESSURE "Luchtdruk"
