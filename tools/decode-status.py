@@ -300,7 +300,7 @@ a_features = [[
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
     "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
-    "","","",""
+    "USE_HC8","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -328,7 +328,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.1.0.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -5,16 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ## [13.1.0.4]
 ### Added
+- Support for HC8 CO2 sensor (#19714)
+- ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` (#19700)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.13 to v2.0.14
-- MAX31855/MAX6675 sensors driver support up to 6 (#9329)
+- MAX31855/MAX6675 sensors driver support up to 6 (#19329)
 
 ### Fixed
+- ESP32 shutter frequency (#19717)
 
 ### Removed
+- WiFiClientSecure in favour of WiFiClientSecureLightBearSSL (#19725)
 
 ## [13.1.0.3] 20211003
 ### Added

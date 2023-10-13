@@ -120,7 +120,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 - Support for HDMI CEC protocol [#19434](https://github.com/arendst/Tasmota/issues/19434)
 - Support for ENS16x (air quality) and ENS210 (temp & RH) sensors [#19479](https://github.com/arendst/Tasmota/issues/19479)
+- Support for HC8 CO2 sensor [#19714](https://github.com/arendst/Tasmota/issues/19714)
 - Support for non-persistent ``WebButton17`` to ``WebButton32`` [#19580](https://github.com/arendst/Tasmota/issues/19580)
+- ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` [#19700](https://github.com/arendst/Tasmota/issues/19700)
 - ESP32 support for influxdb access using https [#19582](https://github.com/arendst/Tasmota/issues/19582)
 - Berry read and write Counters [#19558](https://github.com/arendst/Tasmota/issues/19558)
 - Matter support for Virtual Devices controllable via Rules or Berry [#19520](https://github.com/arendst/Tasmota/issues/19520)
@@ -133,6 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 LVGL library from v8.3.8 to v8.3.10 (no functional change)
 - Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 - Consolidate SGP40 and SGP41 into SGP4x driver [#19560](https://github.com/arendst/Tasmota/issues/19560)
+- MAX31855/MAX6675 sensors driver support up to 6 [#19329](https://github.com/arendst/Tasmota/issues/19329)
 - ESP32 LittleFS updated to version with grow option [#19635](https://github.com/arendst/Tasmota/issues/19635)
 - ESP32 Audio preparation for Arduino Core v3 [#19637](https://github.com/arendst/Tasmota/issues/19637)
 
@@ -146,6 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Shutter migration [#19454](https://github.com/arendst/Tasmota/issues/19454)
 - ESP32 Shutter multi press button events [#19465](https://github.com/arendst/Tasmota/issues/19465)
 - ESP32 Shutter button quad press [#19589](https://github.com/arendst/Tasmota/issues/19589)
+- ESP32 shutter frequency [#19717](https://github.com/arendst/Tasmota/issues/19717)
 - ESP32 Arduino Core v2 wifi client flush [#19642](https://github.com/arendst/Tasmota/issues/19642)
 - ESP32 Partition Wizard grow filesystem support [#19645](https://github.com/arendst/Tasmota/issues/19645)
 - ESP32C3 relay click on restart
