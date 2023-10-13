@@ -11960,13 +11960,8 @@ uint32_t call2https(const char *host, const char *path) {
   //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
 
-#ifdef ESP32
-  WiFiClientSecure *httpsClient;
-  httpsClient = new WiFiClientSecure;
-#else
   BearSSL::WiFiClientSecure_light *httpsClient;
   httpsClient = new BearSSL::WiFiClientSecure_light(1024, 1024);
-#endif
 
   httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
