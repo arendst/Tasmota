@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 09.10.2023
+ * Updated until v9.4.0.1 - Last update 13.10.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -152,7 +152,7 @@
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
 #define D_POWERUSAGE_ACTIVE    "Potenza attiva"
-#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Potenza attiva totale"
 #define D_POWERUSAGE_APPARENT  "Potenza apparente"
 #define D_POWERUSAGE_REACTIVE  "Potenza reattiva"
 #define D_PRESSURE             "Pressione"
@@ -674,7 +674,7 @@
 #define D_SENSOR_IRRECV                 "IR - RX"
 #define D_SENSOR_MHZ_RX                 "MHZ - RX"
 #define D_SENSOR_MHZ_TX                 "MHZ - TX"
-#define D_SENSOR_HC8_RX                 "HC8 - Rx"
+#define D_SENSOR_HC8_RX                 "HC8 - RX"
 #define D_SENSOR_PZEM004_RX             "PZEM004 - RX"
 #define D_SENSOR_PZEM016_RX             "PZEM016 - RX"
 #define D_SENSOR_PZEM017_RX             "PZEM017 - RX"
