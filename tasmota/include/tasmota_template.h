@@ -212,6 +212,7 @@ enum UserSelectablePins {
   GPIO_GM861_TX, GPIO_GM861_RX,         // GM861 Serial interface
   GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
   GPIO_HDMI_CEC,                        // Support for HDMI CEC
+  GPIO_HC8_RXD,                         // HC8 Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -471,6 +472,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_GM861_TX "|" D_SENSOR_GM861_RX "|"
   D_GPIO_DINGTIAN_OE "|"
   D_SENSOR_HDMI_CEC "|"
+  D_SENSOR_HC8_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -958,6 +960,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MHZ19
   AGPIO(GPIO_MHZ_TXD),                  // MH-Z19 Serial interface
   AGPIO(GPIO_MHZ_RXD),                  // MH-Z19 Serial interface
+#endif
+#ifdef USE_HC8
+  AGPIO(GPIO_HC8_RXD),                  // HC8 Serial interface
 #endif
 #ifdef USE_SENSEAIR
   AGPIO(GPIO_SAIR_TX),                  // SenseAir Serial interface
