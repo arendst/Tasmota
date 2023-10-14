@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` (#19700)
 
 ### Breaking Changed
+- Removed support for Homekit in favour of Matter (#19738)
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.13 to v2.0.14

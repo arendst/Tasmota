@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS [#19460](https://github.com/arendst/Tasmota/issues/19460)
+- Removed support for Homekit in favour of Matter [#19738](https://github.com/arendst/Tasmota/issues/19738)
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.14
