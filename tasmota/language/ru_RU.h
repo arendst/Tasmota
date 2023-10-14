@@ -286,7 +286,7 @@
 #define D_CONFIGURE_MQTT "Настройки MQTT"
 #define D_CONFIGURE_DOMOTICZ "Настройки Domoticz"
 #define D_CONFIGURE_LOGGING "Настройки логирования"
-#define D_CONFIGURE_OTHER "Прочие настрйки"
+#define D_CONFIGURE_OTHER "Прочие настройки"
 #define D_CONFIRM_RESET_CONFIGURATION "Выполнить cброс настроек?"
 #define D_RESET_CONFIGURATION "Сброс настроек"
 #define D_BACKUP_CONFIGURATION "Резервное копирование настроек"
