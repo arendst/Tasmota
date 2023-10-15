@@ -25,20 +25,6 @@
 #include "driver/gpio.h"
 #include "soc/soc_caps.h"
 
-#include "AudioFileSourcePROGMEM.h"
-#include "AudioFileSourceID3.h"
-#include "AudioGeneratorMP3.h"
-
-#include <ESP8266SAM.h>
-#include "AudioFileSourceFS.h"
-#include "AudioGeneratorTalkie.h"
-#include "AudioFileSourceICYStream.h"
-#include "AudioFileSourceBuffer.h"
-#include "AudioGeneratorAAC.h"
-
-#include <layer3.h>
-#include <types.h>
-
 /*********************************************************************************************\
  * Driver Settings in memory
 \*********************************************************************************************/
@@ -134,41 +120,8 @@ struct AUDIO_I2S_t {
   tI2SSettings *Settings;
 
   i2s_chan_handle_t rx_handle = nullptr;
-
-  AudioGeneratorMP3 *mp3 = nullptr;
-  AudioFileSourceFS *file = nullptr;
-
   TasmotaI2S *out = nullptr;        // instance used for I2S output, or `nullptr` if none
   TasmotaI2S *in = nullptr;         // instance used for I2S input, or `nullptr` if none (it can be the same as `out` in case of full duplex)
-
-  AudioFileSourceID3 *id3 = nullptr;
-  AudioGeneratorMP3 *decoder = NULL;
-  void *mp3ram = NULL;
-
-  TaskHandle_t mp3_task_handle;
-  TaskHandle_t mic_task_handle;
-
-  char mic_path[32];
-  uint8_t mic_stop;
-  int8_t mic_error;
-  bool use_stream = false;
-
-
-// SHINE
-  uint32_t recdur;
-  uint8_t  stream_active;
-  uint8_t  stream_enable;
-  WiFiClient client;
-  ESP8266WebServer *MP3Server;
-
-// I2S_BRIDGE
-  BRIDGE_MODE bridge_mode;
-  WiFiUDP i2s_bridge_udp;
-  WiFiUDP i2s_bridgec_udp;
-  IPAddress i2s_bridge_ip;
-  TaskHandle_t i2s_bridge_h;
-  int8_t ptt_pin = -1;
-
 } audio_i2s;
 
 #endif // USE_I2S_AUDIO

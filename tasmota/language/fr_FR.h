@@ -657,6 +657,7 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS In"
 #define D_SENSOR_I2S_DIN       "I2S DIn"
 #define D_SENSOR_I2S_DOUT      "I2S DOut"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
 #define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"

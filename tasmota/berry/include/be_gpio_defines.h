@@ -101,6 +101,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "HX711_SCK", (int32_t) GPIO_HX711_SCK },
     { "I2C_SCL", (int32_t) GPIO_I2C_SCL },
     { "I2C_SDA", (int32_t) GPIO_I2C_SDA },
+    { "I2S_DAC", (int32_t) GPIO_I2S_DAC },
     { "I2S_IN_CLK", (int32_t) GPIO_I2S_BCLK_IN },
     { "I2S_IN_DATA", (int32_t) GPIO_I2S_DIN },
     { "I2S_IN_SLCT", (int32_t) GPIO_I2S_WS_IN },

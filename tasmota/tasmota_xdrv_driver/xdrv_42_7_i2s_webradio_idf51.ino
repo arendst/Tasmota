@@ -65,17 +65,17 @@ void Webradio(const char *url) {
     return;
   }
 
-  if (audio_i2s.decoder || audio_i2s.mp3) return;
+  // if (audio_i2s_mp3.decoder || audio_i2s_mp3.mp3) return;
   if (!audio_i2s.out) return;
   I2SAudioPower(true);
   Audio_webradio.ifile = new AudioFileSourceICYStream(url);
   Audio_webradio.ifile->RegisterMetadataCB(I2sMDCallback, NULL);
   Audio_webradio.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, Audio_webradio.preallocateBuffer, preallocateBufferSize);
   Audio_webradio.buff->RegisterStatusCB(I2sStatusCallback, NULL);
-  audio_i2s.decoder = new AudioGeneratorMP3(Audio_webradio.preallocateCodec, preallocateCodecSize);
-  audio_i2s.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
-  audio_i2s.decoder->begin(Audio_webradio.buff, audio_i2s.out);
-  if (!audio_i2s.decoder->isRunning()) {
+  audio_i2s_mp3.decoder = new AudioGeneratorMP3(Audio_webradio.preallocateCodec, preallocateCodecSize);
+  audio_i2s_mp3.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
+  audio_i2s_mp3.decoder->begin(Audio_webradio.buff, audio_i2s.out);
+  if (!audio_i2s_mp3.decoder->isRunning()) {
   //  Serial.printf_P(PSTR("Can't connect to URL"));
     I2sStopPlaying();
   //  strcpy_P(status, PSTR("Unable to connect to URL"));
@@ -83,7 +83,7 @@ void Webradio(const char *url) {
   }
 
   AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will launch webradio task"));
-  xTaskCreatePinnedToCore(I2sMp3Task2, "MP3-2", 8192, NULL, 3, &audio_i2s.mp3_task_handle, 1);
+  xTaskCreatePinnedToCore(I2sMp3Task2, "MP3-2", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
 }
 
 #ifdef USE_WEBSERVER
@@ -91,7 +91,7 @@ const char HTTP_WEBRADIO[] PROGMEM =
    "{s}" "I2S_WR-Title" "{m}%s{e}";
 
 void I2sWrShow(bool json) {
-    if (audio_i2s.decoder) {
+    if (audio_i2s_mp3.decoder) {
       if (json) {
         ResponseAppend_P(PSTR(",\"WebRadio\":{\"Title\":\"%s\"}"), Audio_webradio.wr_title);
       } else {
@@ -104,7 +104,7 @@ void I2sWrShow(bool json) {
 void CmndI2SWebRadio(void) {
   if (!audio_i2s.out) return;
 
-  if (audio_i2s.decoder) {
+  if (audio_i2s_mp3.decoder) {
     I2sStopPlaying();
   }
   if (XdrvMailbox.data_len > 0) {
