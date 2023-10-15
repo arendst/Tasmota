@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.13 to v2.0.14
 - MAX31855/MAX6675 sensors driver support up to 6 (#19329)
+- ESP32 analog from `analogRead()` to calibrated `analogReadMilliVolts()` (#19732)
+- I2S refactoring in preparation for core 3 (#19749)
 
 ### Fixed
 - ESP32 shutter frequency (#19717)

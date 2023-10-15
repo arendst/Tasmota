@@ -138,7 +138,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Consolidate SGP40 and SGP41 into SGP4x driver [#19560](https://github.com/arendst/Tasmota/issues/19560)
 - MAX31855/MAX6675 sensors driver support up to 6 [#19329](https://github.com/arendst/Tasmota/issues/19329)
 - ESP32 LittleFS updated to version with grow option [#19635](https://github.com/arendst/Tasmota/issues/19635)
-- ESP32 Audio preparation for Arduino Core v3 [#19637](https://github.com/arendst/Tasmota/issues/19637)
+- ESP32 I2S audio preparation for Arduino Core v3 [#19637](https://github.com/arendst/Tasmota/issues/19637)
+- ESP32 analog from `analogRead()` to calibrated `analogReadMilliVolts()` [#19732](https://github.com/arendst/Tasmota/issues/19732)
 
 ### Fixed
 - Shutter invert [#19341](https://github.com/arendst/Tasmota/issues/19341) and [#19374](https://github.com/arendst/Tasmota/issues/19374)
