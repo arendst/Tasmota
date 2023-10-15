@@ -538,7 +538,7 @@ uint8_t ShutterGetFreeChannel() {
     //SOC_LEDC_CHANNEL_NUM   
     nextFreeChannel = tmax(nextFreeChannel, Shutter[i].ledc_channel);
   }
-  if (nextFreeChannel == SOC_LEDC_CHANNEL_NUM) {
+  if (nextFreeChannel >= SOC_LEDC_CHANNEL_NUM) {
     AddLog(LOG_LEVEL_ERROR, PSTR("SHT: All PWM channel busy. Open issue-ticket."));
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel+1);
