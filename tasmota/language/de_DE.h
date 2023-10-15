@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.0.0.3
+ * Updated until v13.1.0.4
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -152,7 +152,7 @@
 #define D_POWER_FACTOR "Leistungsfaktor"
 #define D_POWERUSAGE "Leistung"
 #define D_POWERUSAGE_ACTIVE "Wirkleistung"
-#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Summe Wirkleistung"
 #define D_POWERUSAGE_APPARENT "Scheinleistung"
 #define D_POWERUSAGE_REACTIVE "Blindleistung"
 #define D_PRESSURE "Luftdruck"
@@ -267,7 +267,7 @@
 #define D_REDIRECTED "umgeleitet zu captive portal"
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WLAN-Manager AccessPoint gesetzt und behält Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "WLAN-Manager AccessPoint gesetzt"
-#define D_TRYING_TO_CONNECT "Versuche Gerät mit Netzwerk zu verbinden"
+#define D_TRYING_TO_CONNECT "Versuche mit Netzwerk zu verbinden"
 
 #define D_RESTART_IN "Neustart in"
 #define D_SECONDS "Sekunden"
@@ -294,7 +294,7 @@
 
 #define D_MODULE_PARAMETERS "Geräte-Einstellungen"
 #define D_MODULE_TYPE "Gerätetyp"
-#define D_PULLUP_ENABLE "Kein Taster/Schalter Pull-up"
+#define D_PULLUP_ENABLE "Pull-up aktiv"
 #define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "serieller Eingang [serial in]"
@@ -303,7 +303,7 @@
 #define D_WIFI_PARAMETERS "WLAN-Einstellungen"
 #define D_SCAN_FOR_WIFI_NETWORKS "WLAN-Netzwerk suchen und auswählen"
 #define D_SCAN_DONE "Suche abgeschlossen"
-#define D_NO_NETWORKS_FOUND "Keine Netzwerke gefunden"
+#define D_NO_NETWORKS_FOUND "Kein Netzwerk gefunden"
 #define D_REFRESH_TO_SCAN_AGAIN "Aktualisieren, um erneut zu suchen"
 #define D_DUPLICATE_ACCESSPOINT "AccessPoint duplizieren"
 #define D_SKIPPING_LOW_QUALITY "überspringe wegen niedriger Qualität"
@@ -323,7 +323,7 @@
 #define D_SHOW_MORE_OPTIONS "Mehr Optionen"
 #define D_CHECK_CREDENTIALS "Bitte SSID/Passwort überprüfen"
 #define D_SUCCESSFUL_WIFI_CONNECTION "mit Wifi verbunden"
-#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "das Fenster kann geschlossen werden"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Fenster kann geschlossen werden"
 #define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Adresse"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
@@ -343,7 +343,7 @@
 #define D_OTHER_PARAMETERS "Sonstige Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
-#define D_DEVICE_NAME "Device Name"
+#define D_DEVICE_NAME "Geräte Name"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
@@ -693,7 +693,7 @@
 #define D_SENSOR_SDIO_D1       "SDIO D1"
 #define D_SENSOR_SDIO_D2       "SDIO D2"
 #define D_SENSOR_SDIO_D3       "SDIO D3"
-#define D_SENSOR_BACKLIGHT    "Backlight"
+#define D_SENSOR_BACKLIGHT     "Backlight"
 #define D_SENSOR_PMS5003_TX    "PMS5003 Tx"
 #define D_SENSOR_PMS5003_RX    "PMS5003 Rx"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
@@ -917,8 +917,8 @@
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
 #define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
-#define D_SENSOR_BL6523_TX "BL6523 Tx"
-#define D_SENSOR_BL6523_RX "BL6523 Rx"
+#define D_SENSOR_BL6523_TX     "BL6523 Tx"
+#define D_SENSOR_BL6523_RX     "BL6523 Rx"
 #define D_SENSOR_HEARTBEAT     "Herzschlag"
 #define D_SENSOR_RESET         "Reset"
 #define D_GPIO_SHIFT595_SRCLK  "74x595 SRCLK"
