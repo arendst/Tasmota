@@ -17,6 +17,8 @@
 #include "mult_mips_gcc.h"
 #elif defined(__arm__) && !defined(__thumb__)
 #include "mult_sarm_gcc.h"
+#elif defined(__XTENSA__)
+#include "mult_xtensa_gcc.h"
 #endif
 
 /* Include and define generic instructions,

@@ -532,7 +532,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
       tx_std_cfg.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels);
     }
     if (_tx_slot_mask != I2S_SLOT_NOCHANGE) { tx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_tx_slot_mask; }
+#if SOC_I2S_SUPPORTS_APLL
     if (_apll) { tx_std_cfg.clk_cfg.clk_src = I2S_CLK_SRC_APLL; }
+#endif // SOC_I2S_SUPPORTS_APLL
 
     err = i2s_channel_init_std_mode(_tx_handle, &tx_std_cfg);
     AddLog(LOG_LEVEL_DEBUG, "I2S: i2s_channel_init_std_mode TX channel bits:%i channels:%i hertz:%i err=0x%04X", bps, channels, hertz, err);
@@ -589,6 +591,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
     err = i2s_new_channel(&rx_chan_cfg, NULL, &_rx_handle);
     AddLog(LOG_LEVEL_DEBUG, "I2S: i2s_new_channel Rx err:%i", err);
     switch (_rx_mode){
+#if SOC_I2S_SUPPORTS_PDM_RX
       case I2S_MODE_PDM:
         {
           i2s_pdm_rx_config_t rx_pdm_cfg = {
@@ -623,6 +626,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
           }
         }
         break;
+#endif // SOC_I2S_SUPPORTS_PDM_RX
       case I2S_MODE_STD:
         {        
           i2s_std_config_t rx_std_cfg = {
