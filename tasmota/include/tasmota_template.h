@@ -213,6 +213,7 @@ enum UserSelectablePins {
   GPIO_DINGTIAN_OE,                     // New version of Dingtian relay board where PL is not shared with OE
   GPIO_HDMI_CEC,                        // Support for HDMI CEC
   GPIO_HC8_RXD,                         // HC8 Serial interface
+  GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -473,6 +474,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_DINGTIAN_OE "|"
   D_SENSOR_HDMI_CEC "|"
   D_SENSOR_HC8_RX "|"
+  D_SENSOR_I2S_DAC "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -578,9 +580,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_I2S_AUDIO) || defined (USE_I2S)
   AGPIO(GPIO_I2S_MCLK) + MAX_I2S,       // I2S master clock
   AGPIO(GPIO_I2S_BCLK) + MAX_I2S,       // I2S bit clock
+  AGPIO(GPIO_I2S_DOUT) + MAX_I2S,       // I2S Out Data
+  AGPIO(GPIO_I2S_DAC) + 2,              // I2S DAC Output
   AGPIO(GPIO_I2S_WS) + MAX_I2S,         // I2S word select
   AGPIO(GPIO_I2S_DIN) + MAX_I2S,        // I2S IN Data
-  AGPIO(GPIO_I2S_DOUT) + MAX_I2S,       // I2S Out Data
 #endif
 #ifdef USE_I2S
   AGPIO(GPIO_I2S_BCLK_IN) + MAX_I2S,    // I2S bit clock in
