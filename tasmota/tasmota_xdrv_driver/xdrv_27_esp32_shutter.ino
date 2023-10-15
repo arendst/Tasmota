@@ -23,6 +23,7 @@
  * Shutter or Blind support using two consecutive relays
  * Shutters for ESP32 with max eight shutters using more RAM and Settings from filesystem
 \*********************************************************************************************/
+#include "soc/soc_caps.h"
 
 #define XDRV_27            27
 #ifndef SHUTTER_STEPPER
@@ -178,6 +179,7 @@ struct SHUTTER {
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
   uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
+  uint8_t  ledc_channel = 0;           // current used channel for PWM
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
@@ -489,7 +491,9 @@ void ShutterDecellerateForStop(uint8_t i)
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
         TasmotaGlobal.pwm_value[i] = 0;
-        ledcWrite(i, 0);
+        ledcWrite(Shutter[i].ledc_channel, 0);
+        ledcAttachPin(Pin(GPIO_PWM1, i), SOC_LEDC_CHANNEL_NUM);
+        Shutter[i].ledc_channel = 0;
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
@@ -526,6 +530,20 @@ uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
   dtostrfd((float)(cycle_time) / 10, 1, time_chr);
   AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Cycletime is: %s sec"), time_chr);
   return cycle_time;
+}
+
+uint8_t ShutterGetFreeChannel() {
+  uint8_t nextFreeChannel = 0;
+  for (uint8_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
+    //SOC_LEDC_CHANNEL_NUM   
+    nextFreeChannel = tmax(nextFreeChannel, Shutter[i].ledc_channel);
+  }
+  if (nextFreeChannel == SOC_LEDC_CHANNEL_NUM) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("SHT: All PWM channel busy. Open issue-ticket."));
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel+1);
+  }
+  return nextFreeChannel++;
 }
 
 uint8_t ShutterGetOptions(uint8_t index) {
@@ -974,7 +992,7 @@ void ShutterRtc50mS(void)
             ShutterUpdateVelocity(i);
             digitalWrite(Pin(GPIO_PWM1, i), LOW);
 
-            ledcWriteTone(i, Shutter[i].pwm_velocity);  //
+            ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  //
             //ledcWrite(i, 512);  // Setzt den PWM-Wert auf 0
             TasmotaGlobal.pwm_value[i] = 512;
           }
@@ -1148,10 +1166,11 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
-        ledcSetup(i, Shutter[i].pwm_velocity, 8);
-        ledcAttachPin(Pin(GPIO_PWM1, i), i);  
-        ledcWriteTone(i, Shutter[i].pwm_velocity);  
-        ledcWrite(i, 0);  // Setzt den PWM-Wert auf 0
+        Shutter[i].ledc_channel = ShutterGetFreeChannel();
+        ledcSetup(Shutter[i].ledc_channel, Shutter[i].pwm_velocity, 8);
+        ledcAttachPin(Pin(GPIO_PWM1, i), Shutter[i].ledc_channel);  
+        ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  
+        ledcWrite(Shutter[i].ledc_channel, 0);  // Setzt den PWM-Wert auf 0
         RtcSettings.pulse_counter[i] = 0;
       break;
 #endif
