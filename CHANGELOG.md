@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - WiFiClientSecure in favour of WiFiClientSecureLightBearSSL (#19725)
 
-## [13.1.0.3] 20211003
+## [13.1.0.3] 20231003
 ### Added
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 - Matter support for Virtual Devices controllable via Rules or Berry (#19520)
