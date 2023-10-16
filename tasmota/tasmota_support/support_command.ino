@@ -249,14 +249,6 @@ void CmndWifiTest(void)
 #endif //USE_WEBSERVER
 }
 
-void CmndBatteryPercent(void) {
-  if (XdrvMailbox.payload > 101) XdrvMailbox.payload = 100;
-  if (XdrvMailbox.payload >= 0) {
-      Settings->battery_level_percent = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->battery_level_percent);
-}
-
 #endif  // not defined FIRMWARE_MINIMAL_ONLY
 
 void ResponseCmndNumber(int value) {
@@ -313,6 +305,7 @@ void ResponseCmndAll(uint32_t text_index, uint32_t count) {
 #ifdef MQTT_DATA_STRING
   for (uint32_t i = 0; i < count; i++) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
+    if ((SET_BUTTON1 == text_index) && (16 == i)) { real_index = SET_BUTTON17 -16; }
     ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i)?',':'{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str());
   }
   ResponseJsonEnd();
@@ -1846,11 +1839,19 @@ void CmndTemplate(void)
       SettingsUpdateText(SET_TEMPLATE_NAME, PSTR("Merged"));
       uint32_t j = 0;
       for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-#else
+#ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+        // No change
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+//        if (22 == i) { j = 33; }  // TODO 20230821 verify
+#else  // ESP32
+//        if (28 == i) { j = 32; }  // TODO 20230821 verify
+#endif  // Non plain ESP32
+#endif  // ESP32
         if (TasmotaGlobal.my_module.io[j] > GPIO_NONE) {
           Settings->user_template.gp.io[i] = TasmotaGlobal.my_module.io[j];
         }
@@ -2592,6 +2593,18 @@ void CmndDnsTimeout(void) {
     Settings->dns_timeout = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->dns_timeout);
+}
+
+void UpdateBatteryPercent(int batt_percentage) {
+  if (batt_percentage > 101) { batt_percentage = 100; }
+  if (batt_percentage >= 0) {
+    Settings->battery_level_percent = batt_percentage;
+  }
+}
+
+void CmndBatteryPercent(void) {
+  UpdateBatteryPercent(XdrvMailbox.payload);
+  ResponseCmndNumber(Settings->battery_level_percent);
 }
 
 #ifdef USE_I2C

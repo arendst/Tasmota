@@ -66,11 +66,11 @@ const int shine_scale_fact_band_index[9][23] =
 
 /* note. 0.035781 is shine_enwindow maximum value */
 /* scale and convert to fixed point before storing */
-#define SHINE_EW(x)					(int32_t)((double)(x) * 0x7fffffff)
+#define SHINE_EW(x)					(int)((double)(x) * 0x7fffffff)
 #define SHINE_EW2(a,b)					SHINE_EW(a), SHINE_EW(b)
 #define SHINE_EW10(a,b,c,d,e,f,g,h,i,j)	SHINE_EW2(a,b), SHINE_EW2(c,d), SHINE_EW2(e,f), SHINE_EW2(g,h), SHINE_EW2(i,j)
 
-const int32_t shine_enwindow[] = {
+const int shine_enwindow[] = {
 SHINE_EW10(   0.000000, -0.000000, -0.000000, -0.000000, -0.000000, -0.000000, -0.000000, -0.000001, -0.000001, -0.000001),
 SHINE_EW10(  -0.000001, -0.000001, -0.000001, -0.000002, -0.000002, -0.000002, -0.000002, -0.000003, -0.000003, -0.000003),
 SHINE_EW10(  -0.000004, -0.000004, -0.000005, -0.000005, -0.000006, -0.000007, -0.000008, -0.000008, -0.000009, -0.000010),

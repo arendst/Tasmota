@@ -227,8 +227,12 @@ String GetCodeCores(void) {
   #define ESP32_ARCH              "esp32s2"
 #elif CONFIG_IDF_TARGET_ESP32S3
   #define ESP32_ARCH              "esp32s3"
+#elif CONFIG_IDF_TARGET_ESP32C2
+  #define ESP32_ARCH              "esp32c2"
 #elif CONFIG_IDF_TARGET_ESP32C3
   #define ESP32_ARCH              "esp32c3"
+#elif CONFIG_IDF_TARGET_ESP32C6
+  #define ESP32_ARCH              "esp32c6"
 #else
   #define ESP32_ARCH              ""
 #endif
@@ -246,8 +250,12 @@ String GetCodeCores(void) {
     #include "esp32s2/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
     #include "esp32s3/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C2
+    #include "esp32c2/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
     #include "esp32c3/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
+    #include "esp32c6/rom/rtc.h"
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
@@ -412,6 +420,7 @@ extern "C" {
 #include "esp_image_format.h"
 }
 #include "esp_system.h"
+#include "esp_flash.h"
 #if ESP_IDF_VERSION_MAJOR > 3       // IDF 4+
   #if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
     #include "esp32/rom/spi_flash.h"
@@ -422,9 +431,15 @@ extern "C" {
   #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
     #include "esp32s3/rom/spi_flash.h"
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
+  #elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
+    #include "esp32c2/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
     #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
+  #elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
+    #include "esp32c6/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
@@ -566,6 +581,7 @@ int32_t EspPartitionMmap(uint32_t action) {
 // ESP32 specific
 //
 
+#ifdef CONFIG_IDF_TARGET_ESP32
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
@@ -573,6 +589,7 @@ void DisableBrownout(void) {
   // https://github.com/espressif/arduino-esp32/issues/863#issuecomment-347179737
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // Disable brownout detector
 }
+#endif  // ESP32
 
 //
 // ESP32 Alternatives
@@ -631,11 +648,13 @@ uint32_t ESP_getChipId(void) {
   return id;
 }
 
-uint32_t ESP_getFlashChipMagicSize(void)
-{
+uint32_t ESP_getFlashChipMagicSize(void) {
     esp_image_header_t fhdr;
-    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
-        return 0;
+//    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr.magic, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+//      return 0;
+//    }
+    if (esp_flash_read(esp_flash_default_chip, (void*)&fhdr, ESP_FLASH_IMAGE_BASE, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+      return 0;
     }
     return ESP_magicFlashChipSize(fhdr.spi_size);
 }
@@ -739,7 +758,7 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
   return psramFound();
 #else
   #if ESP_IDF_VERSION_MAJOR >= 5
@@ -836,15 +855,17 @@ String GetDeviceHardware(void) {
   // https://www.espressif.com/en/products/socs
 
 /*
-Source: esp-idf esp_system.h and esptool
+Source: esp-idf esp_system.h or arduino core esp_chip_info.h and esptool
 
 typedef enum {
     CHIP_ESP32  = 1, //!< ESP32
     CHIP_ESP32S2 = 2, //!< ESP32-S2
     CHIP_ESP32S3 = 9, //!< ESP32-S3
     CHIP_ESP32C3 = 5, //!< ESP32-C3
-    CHIP_ESP32H2 = 6, //!< ESP32-H2
     CHIP_ESP32C2 = 12, //!< ESP32-C2
+    CHIP_ESP32C6 = 13, //!< ESP32-C6
+    CHIP_ESP32H2 = 16, //!< ESP32-H2
+    CHIP_POSIX_LINUX = 999, //!< The code is running on POSIX/Linux simulator
 } esp_chip_model_t;
 
 // Chip feature flags, used in esp_chip_info_t
@@ -855,264 +876,227 @@ typedef enum {
 #define CHIP_FEATURE_IEEE802154     BIT(6)      //!< Chip has IEEE 802.15.4
 #define CHIP_FEATURE_EMB_PSRAM      BIT(7)      //!< Chip has embedded psram
 
-
 // The structure represents information about the chip
 typedef struct {
     esp_chip_model_t model;  //!< chip model, one of esp_chip_model_t
     uint32_t features;       //!< bit mask of CHIP_FEATURE_x feature flags
+    uint16_t revision;       //!< chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
     uint8_t cores;           //!< number of CPU cores
-    uint8_t revision;        //!< chip revision number
 } esp_chip_info_t;
 
 */
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-
   uint32_t chip_model = chip_info.model;
   uint32_t chip_revision = chip_info.revision;
 //  uint32_t chip_revision = ESP.getChipRevision();
-  bool rev3 = (3 == chip_revision);
+  // idf5 efuse_hal_chip_revision(void)
+  if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
+  bool rev3 = (chip_revision >= 300);
 //  bool single_core = (1 == ESP.getChipCores());
   bool single_core = (1 == chip_info.cores);
 
-  if (chip_model < 2) {  // ESP32
-    /*
-    ESP32 Series
-    - 32-bit MCU & 2.4 GHz Wi-Fi & Bluetooth/Bluetooth LE
-    - Two or one CPU core(s) with adjustable clock frequency, ranging from 80 MHz to 240 MHz
-    - +19.5 dBm output power ensures a good physical range
-    - Classic Bluetooth for legacy connections, also supporting L2CAP, SDP, GAP, SMP, AVDTP, AVCTP, A2DP (SNK) and AVRCP (CT)
-    - Support for Bluetooth Low Energy (Bluetooth LE) profiles including L2CAP, GAP, GATT, SMP, and GATT-based profiles like BluFi, SPP-like, etc
-    - Bluetooth Low Energy (Bluetooth LE) connects to smart phones, broadcasting low-energy beacons for easy detection
-    - Sleep current is less than 5 μA, making it suitable for battery-powered and wearable-electronics applications
-    - Peripherals include capacitive touch sensors, Hall sensor, SD card interface, Ethernet, high-speed SPI, UART, I2S and I2C
-    */
-#ifdef CONFIG_IDF_TARGET_ESP32
-/* esptool:
-    def get_pkg_version(self):
-        word3 = self.read_efuse(3)
-        pkg_version = (word3 >> 9) & 0x07
-        pkg_version += ((word3 >> 2) & 0x1) << 3
-        return pkg_version
-*/
+  uint32_t pkg_version = 0;
 #if (ESP_IDF_VERSION_MAJOR >= 5)
-    uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
-#else
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
-    uint32_t pkg_version = chip_ver & 0x7;
+  pkg_version = bootloader_common_get_chip_ver_pkg();
 #endif
 
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
+  switch (chip_model) {
+    case 0:
+    case 1: {  // ESP32
+      /*
+      ESP32 Series
+      - 32-bit MCU & 2.4 GHz Wi-Fi & Bluetooth/Bluetooth LE
+      - Two or one CPU core(s) with adjustable clock frequency, ranging from 80 MHz to 240 MHz
+      - +19.5 dBm output power ensures a good physical range
+      - Classic Bluetooth for legacy connections, also supporting L2CAP, SDP, GAP, SMP, AVDTP, AVCTP, A2DP (SNK) and AVRCP (CT)
+      - Support for Bluetooth Low Energy (Bluetooth LE) profiles including L2CAP, GAP, GATT, SMP, and GATT-based profiles like BluFi, SPP-like, etc
+      - Bluetooth Low Energy (Bluetooth LE) connects to smart phones, broadcasting low-energy beacons for easy detection
+      - Sleep current is less than 5 μA, making it suitable for battery-powered and wearable-electronics applications
+      - Peripherals include capacitive touch sensors, Hall sensor, SD card interface, Ethernet, high-speed SPI, UART, I2S and I2C
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32
+#if (ESP_IDF_VERSION_MAJOR < 5)
+      pkg_version = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG) & 0x7;
+#endif
 
-    switch (pkg_version) {
-      case 0:
-        if (single_core) { return F("ESP32-S0WDQ6"); }     // Max 240MHz, Single core, QFN 6*6
-        else if (rev3)   { return F("ESP32-D0WDQ6-V3"); }  // Max 240MHz, Dual core, QFN 6*6
-        else {             return F("ESP32-D0WDQ6"); }     // Max 240MHz, Dual core, QFN 6*6
-      case 1:
-        if (single_core) { return F("ESP32-S0WD"); }       // Max 160MHz, Single core, QFN 5*5, ESP32-SOLO-1, ESP32-DevKitC
-        else if (rev3)   { return F("ESP32-D0WD-V3"); }    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC
-        else {             return F("ESP32-D0WD"); }       // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32D, ESP32_WROVER-B, ESP32-DevKitC
-      case 2:              return F("ESP32-D2WD");         // Max 160MHz, Dual core, QFN 5*5, 2MB embedded flash
-      case 3:
-        if (single_core) { return F("ESP32-S0WD-OEM"); }   // Max 160MHz, Single core, QFN 5*5, Xiaomi Yeelight
-        else {             return F("ESP32-D0WD-OEM"); }   // Max 240MHz, Dual core, QFN 5*5
-      case 4:
-        if (single_core) { return F("ESP32-U4WDH-S"); }    // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-MINI-1, ESP32-DevKitM-1
-        else {             return F("ESP32-U4WDH-D"); }    // Max 240MHz, Dual core, QFN 5*5, 4MB embedded flash
-      case 5:
-        if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
-        else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
-      case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, LGA 7*7, 8MB embedded flash, 2MB embedded PSRAM, ESP32-PICO-MINI-02, ESP32-PICO-DevKitM-2
-      case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC
-    }
+//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d"), chip_info.model, chip_revision, chip_info.cores);
+
+      switch (pkg_version) {
+        case 0:
+          if (single_core) { return F("ESP32-S0WDQ6"); }     // Max 240MHz, Single core, QFN 6*6
+          else if (rev3)   { return F("ESP32-D0WDQ6-V3"); }  // Max 240MHz, Dual core, QFN 6*6
+          else {             return F("ESP32-D0WDQ6"); }     // Max 240MHz, Dual core, QFN 6*6
+        case 1:
+          if (single_core) { return F("ESP32-S0WD"); }       // Max 160MHz, Single core, QFN 5*5, ESP32-SOLO-1, ESP32-DevKitC
+          else if (rev3)   { return F("ESP32-D0WD-V3"); }    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC
+          else {             return F("ESP32-D0WD"); }       // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32D, ESP32_WROVER-B, ESP32-DevKitC
+        case 2:              return F("ESP32-D2WD");         // Max 160MHz, Dual core, QFN 5*5, 2MB embedded flash
+        case 3:
+          if (single_core) { return F("ESP32-S0WD-OEM"); }   // Max 160MHz, Single core, QFN 5*5, Xiaomi Yeelight
+          else {             return F("ESP32-D0WD-OEM"); }   // Max 240MHz, Dual core, QFN 5*5
+        case 4:
+          if (single_core) { return F("ESP32-U4WDH-S"); }    // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-MINI-1, ESP32-DevKitM-1
+          else {             return F("ESP32-U4WDH-D"); }    // Max 240MHz, Dual core, QFN 5*5, 4MB embedded flash
+        case 5:
+          if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
+          else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
+        case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, LGA 7*7, 8MB embedded flash, 2MB embedded PSRAM, ESP32-PICO-MINI-02, ESP32-PICO-DevKitM-2
+        case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC
+      }
 #endif  // CONFIG_IDF_TARGET_ESP32
-    return F("ESP32");
-  }
-  else if (2 == chip_model) {  // ESP32-S2
-    /*
-    ESP32-S2 Series
-    - 32-bit MCU & 2.4 GHz Wi-Fi
-    - High-performance 240 MHz single-core CPU
-    - Ultra-low-power performance: fine-grained clock gating, dynamic voltage and frequency scaling
-    - Security features: eFuse、flash encryption, secure boot, signature verification, integrated AES, SHA and RSA algorithms
-    - Peripherals include 43 GPIOs, 1 full-speed USB OTG interface, SPI, I2S, UART, I2C, LED PWM, LCD interface, camera interface, ADC, DAC, touch sensor, temperature sensor
-    - Availability of common cloud connectivity agents and common product features shortens the time to market
-    */
+      return F("ESP32");
+    }
+    case 2: {  // ESP32-S2
+      /*
+      ESP32-S2 Series
+      - 32-bit MCU & 2.4 GHz Wi-Fi
+      - High-performance 240 MHz single-core CPU
+      - Ultra-low-power performance: fine-grained clock gating, dynamic voltage and frequency scaling
+      - Security features: eFuse、flash encryption, secure boot, signature verification, integrated AES, SHA and RSA algorithms
+      - Peripherals include 43 GPIOs, 1 full-speed USB OTG interface, SPI, I2S, UART, I2C, LED PWM, LCD interface, camera interface, ADC, DAC, touch sensor, temperature sensor
+      - Availability of common cloud connectivity agents and common product features shortens the time to market
+      */
 #ifdef CONFIG_IDF_TARGET_ESP32S2
-/* esptool:
-    def get_flash_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
+#if (ESP_IDF_VERSION_MAJOR < 5)
+      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_FLASH_VERSION) & 0xF;
+#endif
+      uint32_t psram_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PSRAM_VERSION);
+      pkg_version += ((psram_ver & 0xF) * 100);
 
-    def get_psram_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 28) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_FLASH_VERSION);
-    uint32_t psram_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PSRAM_VERSION);
-    uint32_t pkg_version = (chip_ver & 0xF) + ((psram_ver & 0xF) * 100);
+//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-S2");           // Max 240MHz, Single core, QFN 7*7, ESP32-S2-WROOM, ESP32-S2-WROVER, ESP32-S2-Saola-1, ESP32-S2-Kaluga-1
-      case 1:              return F("ESP32-S2FH2");        // Max 240MHz, Single core, QFN 7*7, 2MB embedded flash, ESP32-S2-MINI-1, ESP32-S2-DevKitM-1
-      case 2:              return F("ESP32-S2FH4");        // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash
-      case 3:              return F("ESP32-S2FN4R2");      // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , ESP32-S2-MINI-1U, ESP32-S2-DevKitM-1U
-      case 100:            return F("ESP32-S2R2");
-      case 102:            return F("ESP32-S2FNR2");       // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , Lolin S2 mini
-    }
+      switch (pkg_version) {
+        case 0:              return F("ESP32-S2");           // Max 240MHz, Single core, QFN 7*7, ESP32-S2-WROOM, ESP32-S2-WROVER, ESP32-S2-Saola-1, ESP32-S2-Kaluga-1
+        case 1:              return F("ESP32-S2FH2");        // Max 240MHz, Single core, QFN 7*7, 2MB embedded flash, ESP32-S2-MINI-1, ESP32-S2-DevKitM-1
+        case 2:              return F("ESP32-S2FH4");        // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash
+        case 3:              return F("ESP32-S2FN4R2");      // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , ESP32-S2-MINI-1U, ESP32-S2-DevKitM-1U
+        case 100:            return F("ESP32-S2R2");
+        case 102:            return F("ESP32-S2FNR2");       // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , Lolin S2 mini
+      }
 #endif  // CONFIG_IDF_TARGET_ESP32S2
-    return F("ESP32-S2");
-  }
-  else if (4 == chip_model) {  // ESP32-S3(beta2)
-    return F("ESP32-S3");
-  }
-  else if (5 == chip_model) {  // ESP32-C3 = ESP8685
-    /*
-    ESP32-C3 Series
-    - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
-    - 32-bit RISC-V single-core processor with a four-stage pipeline that operates at up to 160 MHz
-    - State-of-the-art power and RF performance
-    - 400 KB of SRAM and 384 KB of ROM on the chip, and SPI, Dual SPI, Quad SPI, and QPI interfaces that allow connection to flash
-    - Reliable security features ensured by RSA-3072-based secure boot, AES-128-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, hardware acceleration support for cryptographic algorithms
-    - Rich set of peripheral interfaces and GPIOs, ideal for various scenarios and complex applications
-    */
+      return F("ESP32-S2");
+    }
+    case 5: {  // ESP32-C3 = ESP8685 if embedded flash
+      /*
+      ESP32-C3 Series
+      - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
+      - 32-bit RISC-V single-core processor with a four-stage pipeline that operates at up to 160 MHz
+      - State-of-the-art power and RF performance
+      - 400 KB of SRAM and 384 KB of ROM on the chip, and SPI, Dual SPI, Quad SPI, and QPI interfaces that allow connection to flash
+      - Reliable security features ensured by RSA-3072-based secure boot, AES-128-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, hardware acceleration support for cryptographic algorithms
+      - Rich set of peripheral interfaces and GPIOs, ideal for various scenarios and complex applications
+      */
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-C3");           // Max 160MHz, Single core, QFN 5*5, ESP32-C3-WROOM-02, ESP32-C3-DevKitC-02
-      case 1:              return F("ESP32-C3FH4");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-C3-MINI-1, ESP32-C3-DevKitM-1
-    }
+#if (ESP_IDF_VERSION_MAJOR < 5)
+      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION) & 0x7;
+#endif
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C3");           // Max 160MHz, Single core, QFN 5*5, ESP32-C3-WROOM-02, ESP32-C3-DevKitC-02
+//        case 1:              return F("ESP32-C3FH4");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-C3-MINI-1, ESP32-C3-DevKitM-1
+        case 1:              return F("ESP8685");            // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-C3-MINI-1, ESP32-C3-DevKitM-1
+        case 2:              return F("ESP32-C3 AZ");        // QFN32
+        case 3:              return F("ESP8686");            // QFN24
+      }
 #endif  // CONFIG_IDF_TARGET_ESP32C3
-    return F("ESP32-C3");
-  }
-  else if (6 == chip_model) {  // ESP32-S3(beta3)
-    return F("ESP32-S3");
-  }
-  else if (7 == chip_model) {  // ESP32-C6(beta)
-#ifdef CONFIG_IDF_TARGET_ESP32C6
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-C6");
+      return F("ESP32-C3");
     }
-#endif  // CONFIG_IDF_TARGET_ESP32C6
-    return F("ESP32-C6");
-  }
-  else if (9 == chip_model) {  // ESP32-S3
-    /*
-    ESP32-S3 Series
-    - 32-bit MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
-    - Xtensa® 32-bit LX7 dual-core processor that operates at up to 240 MHz
-    - 512 KB of SRAM and 384 KB of ROM on the chip, and SPI, Dual SPI, Quad SPI, Octal SPI, QPI, and OPI interfaces that allow connection to flash and external RAM
-    - Additional support for vector instructions in the MCU, which provides acceleration for neural network computing and signal processing workloads
-    - Peripherals include 45 programmable GPIOs, SPI, I2S, I2C, PWM, RMT, ADC and UART, SD/MMC host and TWAITM
-    - Reliable security features ensured by RSA-based secure boot, AES-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, “World Controller”
-    */
+    case 4:     // ESP32-S3(beta2)
+    case 6:     // ESP32-S3(beta3)
+    case 9:  {  // ESP32-S3
+      /*
+      ESP32-S3 Series
+      - 32-bit MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
+      - Xtensa® 32-bit LX7 dual-core processor that operates at up to 240 MHz
+      - 512 KB of SRAM and 384 KB of ROM on the chip, and SPI, Dual SPI, Quad SPI, Octal SPI, QPI, and OPI interfaces that allow connection to flash and external RAM
+      - Additional support for vector instructions in the MCU, which provides acceleration for neural network computing and signal processing workloads
+      - Peripherals include 45 programmable GPIOs, SPI, I2S, I2C, PWM, RMT, ADC and UART, SD/MMC host and TWAITM
+      - Reliable security features ensured by RSA-based secure boot, AES-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, “World Controller”
+      */
 #ifdef CONFIG_IDF_TARGET_ESP32S3
-    // no variants for now
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+      switch (pkg_version) {
+        case 0:              return F("ESP32-S3");           // QFN56
+        case 1:              return F("ESP32-S3-PICO-1");    // LGA56
+      }
+#endif
 #endif  // CONFIG_IDF_TARGET_ESP32S3
-    return F("ESP32-S3");                                  // Max 240MHz, Dual core, QFN 7*7, ESP32-S3-WROOM-1, ESP32-S3-DevKitC-1
-  }
-  else if (10 == chip_model) {  // ESP32-H2(beta1)
-#ifdef CONFIG_IDF_TARGET_ESP32H2
-/* esptool:
-    def get_pkg_version(self):
-        num_word = 3
-        block1_addr = self.EFUSE_BASE + 0x044
-        word3 = self.read_reg(block1_addr + (4 * num_word))
-        pkg_version = (word3 >> 21) & 0x0F
-        return pkg_version
-*/
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
-
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
-
-    switch (pkg_version) {
-      case 0:              return F("ESP32-H2");
+      return F("ESP32-S3");                                  // Max 240MHz, Dual core, QFN 7*7, ESP32-S3-WROOM-1, ESP32-S3-DevKitC-1
     }
+    case 12: {  // ESP32-C2 = ESP8684 if embedded flash
+      /*
+      ESP32-C2 Series
+      - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
+      - 32-bit RISC-V single-core processor that operates at up to 120 MHz
+      - State-of-the-art power and RF performance
+      - 576 KB ROM, 272 KB SRAM (16 KB for cache) on the chip
+      - 14 programmable GPIOs: SPI, UART, I2C, LED PWM controller, General DMA controller (GDMA), SAR ADC, Temperature sensor
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C2");
+        case 1:              return F("ESP32-C2");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32C2
+      return F("ESP32-C2");
+    }
+    case 7:     // ESP32-C6(beta)
+    case 13: {  // ESP32-C6
+      /*
+      ESP32-C6 Series
+      - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi 6 & Bluetooth 5 (LE) & IEEE 802.15.4
+      - 32-bit RISC-V single-core processor that operates at up to 160 MHz
+      - State-of-the-art power and RF performance
+      - 320 KB ROM, 512 KB SRAM, 16 KB Low-power SRAM on the chip, and works with external flash
+      - 30 (QFN40) or 22 (QFN32) programmable GPIOs, with support for SPI, UART, I2C, I2S, RMT, TWAI and PWM
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32C6
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C6");
+        case 1:              return F("ESP32-C6FH4");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32C6
+      return F("ESP32-C6");
+    }
+    case 10:    // ESP32-H2(beta1)
+    case 14:    // ESP32-H2(beta2)
+    case 16: {  // ESP32-H2
+#ifdef CONFIG_IDF_TARGET_ESP32H2
+      switch (pkg_version) {
+        case 0:              return F("ESP32-H2");
+      }
 #endif  // CONFIG_IDF_TARGET_ESP32H2
-    return F("ESP32-H2");
-  }
-  else if (12 == chip_model) {  // ESP32-C2 = ESP8684
-    /*
-    ESP32-C2 Series
-    - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi & Bluetooth 5 (LE)
-    - 32-bit RISC-V single-core processor that operates at up to 120 MHz
-    - State-of-the-art power and RF performance
-    - 576 KB ROM, 272 KB SRAM (16 KB for cache) on the chip
-    - 14 programmable GPIOs: SPI, UART, I2C, LED PWM controller, General DMA controller (GDMA), SAR ADC, Temperature sensor
-    */
-
-    return F("ESP32-C2");
-  }
-  else if (13 == chip_model) {  // ESP32-C6
-    /*
-    ESP32-C6 Series
-    - 32-bit RISC-V MCU & 2.4 GHz Wi-Fi 6 & Bluetooth 5 (LE) & IEEE 802.15.4
-    - 32-bit RISC-V single-core processor that operates at up to 160 MHz
-    - State-of-the-art power and RF performance
-    - 320 KB ROM, 512 KB SRAM, 16 KB Low-power SRAM on the chip, and works with external flash
-    - 30 (QFN40) or 22 (QFN32) programmable GPIOs, with support for SPI, UART, I2C, I2S, RMT, TWAI and PWM
-    */
-
-    return F("ESP32-C6");
-  }
-  else if (14 == chip_model) {  // ESP32-H2(beta2)
-    return F("ESP32-H2");
+      return F("ESP32-H2");
+    }
+    case 18: {  // ESP32-P4
+#ifdef CONFIG_IDF_TARGET_ESP32P4
+      switch (pkg_version) {
+        case 0:              return F("ESP32-P4");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32P4
+      return F("ESP32-P4");
+    }
   }
   return F("ESP32");
 }
 
 String GetDeviceHardwareRevision(void) {
   // ESP32-S2
-  // ESP32-D0WDQ6 rev.1
-  // ESP32-C3 rev.2
-  // ESP32-C3 rev.3
+  // ESP32-D0WDQ6 v1.0
+  // ESP32-C3 v0.3
+  // ESP32-C6FH4 v0.0
   String result = GetDeviceHardware();   // ESP32-C3
 
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-  char revision[10] = { 0 };
-  if (chip_info.revision) {
-    snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
-  }
-  result += revision;                    // ESP32-C3 rev.3
+#if ESP_IDF_VERSION_MAJOR >= 5
+  uint32_t chip_revision = chip_info.revision;       // 16-bit chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
+#else
+  uint32_t chip_revision = chip_info.full_revision;  // 16-bit chip revision number (in format MXX; where M - wafer major version, XX - wafer minor version)
+#endif
+  char revision[16];
+  snprintf_P(revision, sizeof(revision), PSTR(" v%d.%d"), chip_revision / 100, chip_revision % 100);
+  result += revision;                  // ESP32-C3 v0.3
 
   return result;
 }
@@ -1141,17 +1125,12 @@ bool CanUsePSRAM(void) {
 #ifdef CONFIG_IDF_TARGET_ESP32
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-  if ((CHIP_ESP32 == chip_info.model) && (chip_info.revision < 3)) {
+  uint32_t chip_revision = chip_info.revision;
+  // idf5 efuse_hal_chip_revision(void)
+  if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
+  if ((CHIP_ESP32 == chip_info.model) && (chip_revision < 300)) {
     return false;
   }
-#if ESP_IDF_VERSION_MAJOR < 4
-  uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
-  uint32_t pkg_version = chip_ver & 0x7;
-  if ((CHIP_ESP32 == chip_info.model) && (pkg_version >= 6)) {
-    return false;   // support for embedded PSRAM of ESP32-PICO-V3-02 requires esp-idf 4.4
-  }
-#endif // ESP_IDF_VERSION_MAJOR < 4
-
 #endif // CONFIG_IDF_TARGET_ESP32
   return true;
 }

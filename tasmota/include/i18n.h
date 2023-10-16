@@ -123,7 +123,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
-#define D_JSON_NA "n/a"
+#define D_JSON_NULL "null"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -238,6 +238,7 @@
 #define D_JSON_MY "YaxisInduction"
 #define D_JSON_MZ "ZaxisInduction"
 #define D_JSON_MAGNETICFLD "MagneticInduction"
+#define D_JSON_ALERT "Alert"
 #define D_JSON_BATTPERCENT "BatteryPercentage"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
@@ -249,6 +250,7 @@
 #define D_RSLT_STATE "STATE"
 #define D_RSLT_UPTIME "UPTIME"
 #define D_RSLT_WARNING "WARNING"
+#define D_RSLT_COMMAND "COMMAND"
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
@@ -762,6 +764,11 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
+// Commands xdrv_42_audio - I2S Audio
+#define D_PRFX_I2S "I2S"
+#define D_JSON_I2S_CONFIG "Config"
+
+
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
@@ -771,6 +778,13 @@
 // Commands xdrv_60_shift595.ino - 74x595 family shift register driver
 #define D_CMND_SHIFT595_DEVICE_COUNT "Shift595DeviceCount"
 
+// Commands xdrv_70_hdmi_cec.ino
+#define D_PRFX_HDMI "Hdmi"
+#define D_CMND_HDMI_SEND "Send"
+#define D_CMND_HDMI_SEND_RAW "SendRaw"
+#define D_CMND_HDMI_TYPE "Type"
+#define D_CMND_HDMI_ADDR "Addr"
+
 // Commands xdrv_89_dali.ino
 #define D_CMND_DALI_POWER                 "power"
 #define D_CMND_DALI_DIMMER                "dim"
@@ -779,7 +793,9 @@
 #define D_CMND_ADCPARAM "AdcParam"
 
 // Commands xsns_05_ds18x20.ino
-#define D_CMND_DS_ALIAS "DS18Alias"
+#define D_CMND_DS_ALIAS "Alias"
+#define D_CMND_DS_RESCAN "Rescan"
+#define D_CMND_DS_RETRYREAD "RetryRead"
 
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
@@ -954,6 +970,7 @@ const char HTTP_SNS_POWER[]               PROGMEM = "{s}" D_POWERUSAGE_ACTIVE   
 const char HTTP_SNS_IMPORT_POWER[]        PROGMEM = "{s}" D_IMPORT_POWER            "{m}%s " D_UNIT_WATT          "{e}";
 const char HTTP_SNS_EXPORT_POWER[]        PROGMEM = "{s}" D_EXPORT_POWER            "{m}%s " D_UNIT_WATT          "{e}";
 const char HTTP_SNS_MAX_POWER[]           PROGMEM = "{s}" D_MAX_POWER               "{m}%s " D_UNIT_WATT          "{e}";
+const char HTTP_SNS_POWER_TOTAL[]         PROGMEM = "{s}" D_POWERUSAGE_ACTIVE_TOTAL "{m}%s " D_UNIT_WATT          "{e}";
 const char HTTP_SNS_POWERUSAGE_APPARENT[] PROGMEM = "{s}" D_POWERUSAGE_APPARENT     "{m}%s " D_UNIT_VA            "{e}";
 const char HTTP_SNS_POWERUSAGE_REACTIVE[] PROGMEM = "{s}" D_POWERUSAGE_REACTIVE     "{m}%s " D_UNIT_VAR           "{e}";
 const char HTTP_SNS_POWER_FACTOR[]        PROGMEM = "{s}" D_POWER_FACTOR            "{m}%s                         {e}";

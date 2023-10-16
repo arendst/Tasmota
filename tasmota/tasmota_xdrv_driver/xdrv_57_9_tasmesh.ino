@@ -678,6 +678,7 @@ void MESHshow(bool json) {
     }
   } else {
 #ifdef ESP32 //web UI only on the the broker = ESP32
+#ifdef USE_WEBSERVER
     if (ROLE_BROKER == MESH.role) {
 //      WSContentSend_PD(PSTR("TAS-MESH:<br>"));
       WSContentSend_PD(PSTR("<b>Broker MAC</b> %s<br>"), WiFi.softAPmacAddress().c_str());
@@ -718,6 +719,7 @@ void MESHshow(bool json) {
         idx++;
       }
     }
+#endif  // USE_WEBSERVER
 #endif  // ESP32
   }
 }

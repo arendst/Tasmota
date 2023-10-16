@@ -24,7 +24,11 @@
 #include "esp8266toEsp32.h"
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include <driver/dac_oneshot.h>
+#else
 #include <driver/dac.h>
+#endif
 #endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
@@ -60,8 +64,17 @@ extern "C" {
             // DAC
 #if   defined(CONFIG_IDF_TARGET_ESP32)
             if (25 == pin || 26 == pin) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+              dac_oneshot_handle_t channel_handle;
+              const dac_channel_t channel = (25 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
+              dac_oneshot_config_t channel_cfg = {
+                .chan_id = channel,
+              };
+              esp_err_t err = dac_oneshot_new_channel(&channel_cfg, &channel_handle);
+#else
               dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
               esp_err_t err = dac_output_enable(channel);
+#endif
               if (err) {
                 be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
               }
@@ -70,8 +83,17 @@ extern "C" {
             }
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
             if (17 == pin || 18 == pin) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+              dac_oneshot_handle_t channel_handle;
+              const dac_channel_t channel = (17 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
+              dac_oneshot_config_t channel_cfg = {
+                .chan_id = channel,
+              };
+              esp_err_t err = dac_oneshot_new_channel(&channel_cfg, &channel_handle);
+#else
               dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
               esp_err_t err = dac_output_enable(channel);
+#endif
               if (err) {
                 be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
               }
@@ -129,8 +151,18 @@ extern "C" {
       uint32_t dac_value = changeUIntScale(mV, 0, 3300, 0, 255);    // convert from 0..3300 ms to 0..255
 #if   defined(CONFIG_IDF_TARGET_ESP32)
       if (25 == pin || 26 == pin) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+        dac_oneshot_handle_t channel_handle;
+        const dac_channel_t channel = (25 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
+        dac_oneshot_config_t channel_cfg = {
+          .chan_id = channel,
+        };
+        esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
+#else
         dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
+//        esp_err_t err = dac_output_voltage(channel, dac_value);
+        esp_err_t err = dac_output_enable(channel);
+#endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
         }
@@ -139,16 +171,24 @@ extern "C" {
       }
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
       if (17 == pin || 18 == pin) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+        dac_oneshot_handle_t channel_handle;
+        const dac_channel_t channel = (17 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
+        dac_oneshot_config_t channel_cfg = {
+          .chan_id = channel,
+        };
+        esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
+#else
         dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
+//        esp_err_t err = dac_output_voltage(channel, dac_value);
+        esp_err_t err = dac_output_enable(channel);
+#endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
         }
       } else {
         be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
       }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-      be_raise(vm, "value_error", "DAC unsupported in this chip");
 #else
       be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
@@ -201,6 +241,67 @@ extern "C" {
     analogWritePhase(pin, duty, hpoint);
   }
 
+  // gpio.counter_read(counter:int) -> int or nil
+  //
+  // Read counter value, or return nil if counter is not used
+  int gp_counter_read(bvm *vm);
+  int gp_counter_read(bvm *vm) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinRead(counter));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+
+  int gp_counter_set_add(bvm *vm, bool add) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+      int32_t value = be_toint(vm, 2);
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinSet(counter, value, add));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+  // gpio.counter_set(counter:int, value:int) -> int or nil
+  //
+  // Set the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_set(bvm *vm);
+  int gp_counter_set(bvm *vm) {
+    return gp_counter_set_add(vm, false);
+  }
+
+  // gpio.counter_add(counter:int, value:int) -> int or nil
+  //
+  // Add to the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_add(bvm *vm);
+  int gp_counter_add(bvm *vm) {
+    return gp_counter_set_add(vm, true);
+  }
 }
 
 #endif  // USE_BERRY

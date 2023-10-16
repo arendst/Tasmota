@@ -142,6 +142,13 @@ class AXP192_M5Stack_Tough : AXP192
     end
   end
 
+  # respond to audio events
+  def audio(cmd, idx, payload, raw)
+    if cmd == "power"
+      self.set_speaker_enable(idx)
+    end
+  end
+
   # Touch Panel reset pin
   def touch_reset(state)
     self.write_gpio(1, state)

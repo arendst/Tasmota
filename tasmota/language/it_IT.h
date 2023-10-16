@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 23.07.2023
+ * Updated until v9.4.0.1 - Last update 15.10.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -152,6 +152,7 @@
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
 #define D_POWERUSAGE_ACTIVE    "Potenza attiva"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Potenza attiva totale"
 #define D_POWERUSAGE_APPARENT  "Potenza apparente"
 #define D_POWERUSAGE_REACTIVE  "Potenza reattiva"
 #define D_PRESSURE             "Pressione"
@@ -188,6 +189,9 @@
 #define D_TRANSMIT             "Trasmessi"
 #define D_TRUE                 "Vero"
 #define D_TVOC                 "TVOC"
+#define D_TWILIGHT_ASTRONOMICAL "astronomico"
+#define D_TWILIGHT_CIVIL       "civile"
+#define D_TWILIGHT_NAUTICAL    "nautico"
 #define D_UPGRADE              "aggiornamento"
 #define D_UPLOAD               "Caricamento"
 #define D_UPTIME               "Tempo accensione"
@@ -303,6 +307,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN          "Aggiorna per nuova scansione"
 #define D_DUPLICATE_ACCESSPOINT          "Access Point duplicato"
 #define D_SKIPPING_LOW_QUALITY           "Ignorato a causa di bassa qualità"
+#define D_MODE                           "Modalità"
 #define D_RSSI                           "RSSI"
 #define D_WEP                            "WEP"
 #define D_WPA_PSK                        "WPA PSK"
@@ -652,6 +657,8 @@
 #define D_SENSOR_I2S_BCLK_IN            "I2S - WS IN"
 #define D_SENSOR_I2S_DIN                "I2S - DIN"
 #define D_SENSOR_I2S_DOUT               "I2S - DOUT"
+#define D_SENSOR_I2S_DAC                "I2S - DAC"
+#define D_SENSOR_HDMI_CEC               "HDMI CEC"
 #define D_SENSOR_WS2812                 "WS2812"
 #define D_SENSOR_DFR562                 "Riproduttore MP3"
 #define D_SENSOR_DFR562_BUSY            "MP3 occupato"
@@ -668,6 +675,7 @@
 #define D_SENSOR_IRRECV                 "IR - RX"
 #define D_SENSOR_MHZ_RX                 "MHZ - RX"
 #define D_SENSOR_MHZ_TX                 "MHZ - TX"
+#define D_SENSOR_HC8_RX                 "HC8 - RX"
 #define D_SENSOR_PZEM004_RX             "PZEM004 - RX"
 #define D_SENSOR_PZEM016_RX             "PZEM016 - RX"
 #define D_SENSOR_PZEM017_RX             "PZEM017 - RX"

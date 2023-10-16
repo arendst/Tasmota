@@ -26,3 +26,34 @@ assert(s == "foo")
 
 b.ok()
 assert(s == "foo")
+
+# detect a wrong compilation when accessing index
+# Berry compilation problem:
+#
+# ```berry
+# def f(self) print(self.a[128]) end
+# ```
+#
+# Compilation assigns unwanted registers:
+# ```
+#       0x60040001,  //  0000  GETGBL     R1      G1
+#       0x540A007F,  //  0001  LDINT      R2      128
+#       0x880C0100,  //  0002  GETMBR     R3      R0      K0
+#       0x94080602,  //  0003  GETIDX     R2      R3      R2
+#       0x5C100400,  //  0004  MOVE       R4      R2         <- PROBLEM
+#       0x7C040200,  //  0005  CALL       R1      1
+#       0x80000000,  //  0006  RET        0
+# ```
+#
+# With the fix, the integer is retrieved in second place, and erroneous register is not allocated:
+# ```
+#       0x60040001,  //  0000  GETGBL     R1      G1
+#       0x88080100,  //  0001  GETMBR     R2      R0      K0
+#       0x540E007F,  //  0002  LDINT      R3      128
+#       0x94080403,  //  0003  GETIDX     R2      R2      R3
+#       0x7C040200,  //  0004  CALL       R1      1
+#       0x80000000,  //  0005  RET        0
+# ```
+def f(a,b) return b end
+l = [1,2,3,4]
+assert(f(l[-1],l[-2]) == 3)

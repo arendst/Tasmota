@@ -186,6 +186,8 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
 
     disp->inv_en_cnt = 1;
 
+    _lv_ll_init(&disp->sync_areas, sizeof(lv_area_t));
+
     lv_disp_t * disp_def_tmp = disp_def;
     disp_def                 = disp; /*Temporarily change the default screen to create the default screens on the
                                         new display*/
@@ -316,6 +318,7 @@ void lv_disp_remove(lv_disp_t * disp)
     }
 
     _lv_ll_remove(&LV_GC_ROOT(_lv_disp_ll), disp);
+    _lv_ll_clear(&disp->sync_areas);
     if(disp->refr_timer) lv_timer_del(disp->refr_timer);
     lv_mem_free(disp);
 
@@ -513,7 +516,7 @@ lv_coord_t lv_disp_get_dpi(const lv_disp_t * disp)
  * Call in the display driver's `flush_cb` function when the flushing is finished
  * @param disp_drv pointer to display driver in `flush_cb` where this function is called
  */
-LV_ATTRIBUTE_FLUSH_READY void lv_disp_flush_ready(lv_disp_drv_t * disp_drv)
+void LV_ATTRIBUTE_FLUSH_READY lv_disp_flush_ready(lv_disp_drv_t * disp_drv)
 {
     disp_drv->draw_buf->flushing = 0;
     disp_drv->draw_buf->flushing_last = 0;
@@ -525,7 +528,7 @@ LV_ATTRIBUTE_FLUSH_READY void lv_disp_flush_ready(lv_disp_drv_t * disp_drv)
  * @param disp_drv pointer to display driver
  * @return true: it's the last area to flush; false: there are other areas too which will be refreshed soon
  */
-LV_ATTRIBUTE_FLUSH_READY bool lv_disp_flush_is_last(lv_disp_drv_t * disp_drv)
+bool LV_ATTRIBUTE_FLUSH_READY lv_disp_flush_is_last(lv_disp_drv_t * disp_drv)
 {
     return disp_drv->draw_buf->flushing_last;
 }

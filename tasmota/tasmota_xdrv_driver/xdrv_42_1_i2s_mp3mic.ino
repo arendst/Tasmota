@@ -18,7 +18,7 @@
 */
 
 
-#ifdef ESP32
+#if ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
 #if ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
 uint32_t SpeakerMic(uint8_t spkr) {
@@ -332,4 +332,4 @@ void Cmd_MicGain(void) {
 }
 
 #endif // USE_I2S_AUDIO
-#endif // ESP32
+#endif // ESP32 && (ESP_IDF_VERSION_MAJOR < 5)

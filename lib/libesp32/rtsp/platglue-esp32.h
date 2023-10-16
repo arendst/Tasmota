@@ -22,7 +22,7 @@ typedef uint16_t IPPORT; // on linux use network byte order
 #define NULLSOCKET NULL
 
 inline void closesocket(SOCKET s) {
-    printf("closing TCP socket\n");
+//    printf("closing TCP socket\n");
 
     if(s) {
         s->stop();
@@ -38,7 +38,7 @@ inline void socketpeeraddr(SOCKET s, IPADDRESS *addr, IPPORT *port) {
 }
 
 inline void udpsocketclose(UDPSOCKET s) {
-    printf("closing UDP socket\n");
+//    printf("closing UDP socket\n");
     if(s) {
         s->stop();
         delete s;
@@ -50,7 +50,7 @@ inline UDPSOCKET udpsocketcreate(unsigned short portNum)
     UDPSOCKET s = new WiFiUDP();
 
     if(!s->begin(portNum)) {
-        printf("Can't bind port %d\n", portNum);
+//        printf("Can't bind port %d\n", portNum);
         delete s;
         return NULL;
     }
@@ -69,8 +69,9 @@ inline ssize_t udpsocketsend(UDPSOCKET sockfd, const void *buf, size_t len,
 {
     sockfd->beginPacket(destaddr, destport);
     sockfd->write((const uint8_t *)  buf, len);
-    if(!sockfd->endPacket())
-        printf("error sending udp packet\n");
+    if(!sockfd->endPacket()) {
+//        printf("error sending udp packet\n");
+    }
 
     return len;
 }
@@ -83,7 +84,7 @@ inline ssize_t udpsocketsend(UDPSOCKET sockfd, const void *buf, size_t len,
 inline int socketread(SOCKET sock, char *buf, size_t buflen, int timeoutmsec)
 {
     if(!sock->connected()) {
-        printf("client has closed the socket\n");
+//        printf("client has closed the socket\n");
         return 0;
     }
 

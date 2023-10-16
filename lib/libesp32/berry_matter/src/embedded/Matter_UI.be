@@ -34,6 +34,8 @@ import matter
 class Matter_UI
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact"
+                              "|-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
+                              "|v_temp|v_pressure|v_illuminance|v_humidity|v_contact"
   # static var _CLASSES_HTTP  = "-http"
   static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
@@ -496,8 +498,8 @@ class Matter_UI
       var typ = class_types[i]
       if typ == ''
         webserver.content_send("<option value=''></option>")
-      elif typ == '-http'
-        webserver.content_send("<option value='' disabled>--- Tasmota Remote ---</option>")
+      elif typ == '-virtual'
+        webserver.content_send("<option value='' disabled>--- Virtual Devices ---</option>")
       else
         var nam = self.device.get_plugin_class_displayname(typ)
         webserver.content_send(format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))

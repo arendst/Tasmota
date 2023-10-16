@@ -44,20 +44,48 @@
 #define ADE7880_WATCHDOG        5            // Allow x seconds of missed interrupts before reinit
 
 // Default calibration parameters can be overridden by a rule as documented above.
+#ifndef ADE7880_FREQ_INIT
 #define ADE7880_FREQ_INIT       0            // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz (1). Default 45 Hz to 55 Hz (0).
+#endif
+#ifndef ADE7880_AIGAIN_INIT
 #define ADE7880_AIGAIN_INIT     3166385      // rms, current_a
+#endif
+#ifndef ADE7880_BIGAIN_INIT
 #define ADE7880_BIGAIN_INIT     3125691      // rms, current_b
+#endif
+#ifndef ADE7880_CIGAIN_INIT
 #define ADE7880_CIGAIN_INIT     3131983      // rms, current_c
+#endif
+#ifndef ADE7880_NIGAIN_INIT
 #define ADE7880_NIGAIN_INIT     1756557      // rms, current_s !!
+#endif
+#ifndef ADE7880_AVGAIN_INIT
 #define ADE7880_AVGAIN_INIT     -767262      // rms, voltage_a
+#endif
+#ifndef ADE7880_BVGAIN_INIT
 #define ADE7880_BVGAIN_INIT     -763439      // rms, voltage_b
+#endif
+#ifndef ADE7880_CVGAIN_INIT
 #define ADE7880_CVGAIN_INIT     -749854      // rms, voltage_c
+#endif
+#ifndef ADE7880_APHCAL_INIT
 #define ADE7880_APHCAL_INIT     180          // angles, angle0
+#endif
+#ifndef ADE7880_BPHCAL_INIT
 #define ADE7880_BPHCAL_INIT     176          // angles, angle1
+#endif
+#ifndef ADE7880_CPHCAL_INIT
 #define ADE7880_CPHCAL_INIT     176          // angles, angle2
+#endif
+#ifndef ADE7880_APGAIN_INIT
 #define ADE7880_APGAIN_INIT     -1345820     // powers, totactive, a
+#endif
+#ifndef ADE7880_BPGAIN_INIT
 #define ADE7880_BPGAIN_INIT     -1347328     // powers, totactive, b
+#endif
+#ifndef ADE7880_CPGAIN_INIT
 #define ADE7880_CPGAIN_INIT     -1351979     // powers, totactive, c
+#endif
 
 enum Ade7880DspRegisters {
   // Register Name                    Addres  R/W  Bt  CommBln  Ty  Default     Description
@@ -545,7 +573,7 @@ void Ade7880Service0(void) {
   Ade7880.irq0_state = 0;
 }
 
-void IRAM_ATTR Ade7880Isr0(void) {
+static void IRAM_ATTR Ade7880Isr0(void) {
   // Poll sequence
   if (!Ade7880.irq0_state) {
     Ade7880.irq0_state = 1;

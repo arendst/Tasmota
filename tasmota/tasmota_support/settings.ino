@@ -536,13 +536,16 @@ bool SettingsConfigRestore(void) {
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
-
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
     valid_settings = (2 == settings_buffer[0xF36]);  // Settings->config_version ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
     valid_settings = (3 == settings_buffer[0xF36]);  // Settings->config_version ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
     valid_settings = (4 == settings_buffer[0xF36]);  // Settings->config_version ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+    valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+    valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -679,7 +682,11 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 char* SettingsText(uint32_t index) {
   char* position = Settings->text_pool;
 
-  if (index >= SET_MAX) {
+  if (index >= SET_MAX) { // Index above SET_MAX are not stored in Settings
+#ifdef USE_WEBSERVER
+    if (SET_BUTTON17 <= index && index <= SET_BUTTON32)
+      return (char*)GetWebButton(index-SET_BUTTON17+16);
+#endif
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
@@ -930,7 +937,7 @@ void SettingsDefaultSet1(void) {
   Settings->cfg_holder = (uint16_t)CFG_HOLDER;
   Settings->cfg_size = sizeof(TSettings);
 //  Settings->save_flag = 0;
-  Settings->version = VERSION;
+  Settings->version = TASMOTA_VERSION;
 //  Settings->bootcount = 0;
 //  Settings->cfg_crc = 0;
 }
@@ -956,12 +963,16 @@ void SettingsDefaultSet2(void) {
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
   Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
   Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
   Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+  Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+  Settings->config_version = 6;  // ESP32C6
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1456,7 +1467,7 @@ void SettingsEnableAllI2cDrivers(void) {
 /********************************************************************************************/
 
 void SettingsDelta(void) {
-  if (Settings->version != VERSION) {      // Fix version dependent changes
+  if (Settings->version != TASMOTA_VERSION) {  // Fix version dependent changes
 
 #ifdef ESP8266
 #ifndef UPGRADE_V8_MIN
@@ -1520,12 +1531,16 @@ void SettingsDelta(void) {
       Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
       Settings->config_version = 2;  // ESP32S3
 #elif CONFIG_IDF_TARGET_ESP32S2
       Settings->config_version = 3;  // ESP32S2
 #elif CONFIG_IDF_TARGET_ESP32C3
       Settings->config_version = 4;  // ESP32C3
+#elif CONFIG_IDF_TARGET_ESP32C2
+      Settings->config_version = 5;  // ESP32C2
+#elif CONFIG_IDF_TARGET_ESP32C6
+      Settings->config_version = 6;  // ESP32C6
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1720,7 +1735,7 @@ void SettingsDelta(void) {
       Settings->energy_current_calibration2 = Settings->energy_current_calibration;
     }
     if (Settings->version < 0x0C020005) {  // 12.2.0.5
-      Settings->modbus_sbaudrate = Settings->ex_modbus_sbaudrate;
+      Settings->modbus_sbaudrate = Settings->hdmi_cec_device_type;  // was ex_modbus_sbaudrate
       Settings->param[P_SERIAL_SKIP] = 0;
     }
     if (Settings->version < 0x0C030102) {  // 12.3.1.2
@@ -1748,7 +1763,7 @@ void SettingsDelta(void) {
       Settings->battery_level_percent = 101;
     }
 
-    Settings->version = VERSION;
+    Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
   }
 

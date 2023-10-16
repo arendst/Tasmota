@@ -177,8 +177,9 @@ BE_FUNC_CTYPE_DECLARE(matter_get_command_name, "s", "ii")
 extern const void* matter_get_ip_bytes(const char* ip_str, size_t* ret_len);
 BE_FUNC_CTYPE_DECLARE(matter_get_ip_bytes, "&", "s")
 
+extern int matter_publish_command(bvm *vm);
 
-#include "solidify/solidified_Matter_inspect.h"
+#include "solidify/solidified_Matter_0_Inspect.h"
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
 #include "solidify/solidified_Matter_Path.h"
@@ -200,7 +201,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
 #include "solidify/solidified_Matter_Control_Message.h"
-#include "solidify/solidified_Matter_Plugin.h"
+#include "solidify/solidified_Matter_Plugin_0.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Device.h"
@@ -208,37 +209,47 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 
 #include "../generate/be_matter_certs.h"
 
-#include "solidify/solidified_Matter_Plugin_Root.h"
-#include "solidify/solidified_Matter_Plugin_Aggregator.h"
-#include "solidify/solidified_Matter_Plugin_Device.h"
-#include "solidify/solidified_Matter_Plugin_OnOff.h"
-#include "solidify/solidified_Matter_Plugin_Light0.h"
-#include "solidify/solidified_Matter_Plugin_Light1.h"
-#include "solidify/solidified_Matter_Plugin_Light2.h"
-#include "solidify/solidified_Matter_Plugin_Light3.h"
-#include "solidify/solidified_Matter_Plugin_Shutter.h"
-#include "solidify/solidified_Matter_Plugin_ShutterTilt.h"
-#include "solidify/solidified_Matter_Plugin_Sensor.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Pressure.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Temp.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Illuminance.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Humidity.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Occupancy.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_OnOff.h"
-#include "solidify/solidified_Matter_Plugin_Sensor_Contact.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_HTTP.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_OnOff.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Light0.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Light1.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Light2.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Light3.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Pressure.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Temp.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Illuminance.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Humidity.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Occupancy.h"
-#include "solidify/solidified_Matter_Plugin_Bridge_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_1_Root.h"
+#include "solidify/solidified_Matter_Plugin_2_Aggregator.h"
+#include "solidify/solidified_Matter_Plugin_1_Device.h"
+#include "solidify/solidified_Matter_Plugin_2_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_2_Light0.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Light0.h"
+#include "solidify/solidified_Matter_Plugin_3_Light1.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Light1.h"
+#include "solidify/solidified_Matter_Plugin_4_Light2.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Light2.h"
+#include "solidify/solidified_Matter_Plugin_4_Light3.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Light3.h"
+#include "solidify/solidified_Matter_Plugin_2_Shutter.h"
+#include "solidify/solidified_Matter_Plugin_3_ShutterTilt.h"
+#include "solidify/solidified_Matter_Plugin_2_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_2_Bridge_HTTP.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_3_Bridge_Light0.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Light1.h"
+#include "solidify/solidified_Matter_Plugin_5_Bridge_Light2.h"
+#include "solidify/solidified_Matter_Plugin_5_Bridge_Light3.h"
+#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Contact.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -276,6 +287,7 @@ module matter (scope: global, strings: weak) {
   setmember, closure(matter_setmember_closure)
   member, closure(matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
+  publish_command, func(matter_publish_command)
 
   get_vendor_name, ctype_func(matter_get_vendor_name)
   get_cluster_name, ctype_func(matter_get_cluster_name)
@@ -288,6 +300,8 @@ module matter (scope: global, strings: weak) {
   sort, closure(matter_sort_closure)
   jitter, closure(matter_jitter_closure)
   inspect, closure(matter_inspect_closure)
+  consolidate_clusters, closure(matter_consolidate_clusters_closure)
+  UC_LIST, closure(matter_UC_LIST_closure)
   Profiler, class(be_class_Matter_Profiler)
 
   // Status codes
@@ -420,20 +434,30 @@ module matter (scope: global, strings: weak) {
   Plugin_Aggregator, class(be_class_Matter_Plugin_Aggregator) // Aggregator
   Plugin_Device, class(be_class_Matter_Plugin_Device)   // Generic device (abstract)
   Plugin_OnOff, class(be_class_Matter_Plugin_OnOff)     // Relay/Light behavior (OnOff)
+  Plugin_Virt_OnOff, class(be_class_Matter_Plugin_Virt_OnOff)     // Relay/Light virtual (OnOff)
   Plugin_Light0, class(be_class_Matter_Plugin_Light0)     // OnOff Light
+  Plugin_Virt_Light0, class(be_class_Matter_Plugin_Virt_Light0)     // OnOff Light Virtual
   Plugin_Light1, class(be_class_Matter_Plugin_Light1)     // Dimmable Light
+  Plugin_Virt_Light1, class(be_class_Matter_Plugin_Virt_Light1)     // Dimmable Light Virtual
   Plugin_Light2, class(be_class_Matter_Plugin_Light2)     // Color Temperature Light
+  Plugin_Virt_Light2, class(be_class_Matter_Plugin_Virt_Light2)     // Color Temperature Light Virtual
   Plugin_Light3, class(be_class_Matter_Plugin_Light3)     // Extended Color Light
+  Plugin_Virt_Light3, class(be_class_Matter_Plugin_Virt_Light3)     // Extended Color Light Virtual
   Plugin_Shutter, class(be_class_Matter_Plugin_Shutter)   // Shutter
   Plugin_ShutterTilt, class(be_class_Matter_Plugin_ShutterTilt)   // Shutter + Tilt
   Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
   Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
+  Plugin_Sensor_Virt_Pressure, class(be_class_Matter_Plugin_Virt_Sensor_Pressure)   // Pressure Virtual Sensor
   Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
+  Plugin_Virt_Sensor_Temp, class(be_class_Matter_Plugin_Virt_Sensor_Temp)           // Temperature Sensor
   Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
+  Plugin_Virt_Sensor_Illuminance, class(be_class_Matter_Plugin_Virt_Sensor_Illuminance) // Illuminance Virtual Sensor
   Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
+  Plugin_Sensor_Virt_Humidity, class(be_class_Matter_Plugin_Virt_Sensor_Humidity)   // Humidity Virtual Sensor
   Plugin_Sensor_Occupancy, class(be_class_Matter_Plugin_Sensor_Occupancy)           // Occupancy Sensor
   Plugin_Sensor_OnOff, class(be_class_Matter_Plugin_Sensor_OnOff)           // Simple OnOff Sensor
   Plugin_Sensor_Contact, class(be_class_Matter_Plugin_Sensor_Contact)           // Contact Sensor
+  Plugin_Virt_Sensor_Contact, class(be_class_Matter_Plugin_Virt_Sensor_Contact)           // Virtual Contact Sensor
   Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
   Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
   Plugin_Bridge_Light0, class(be_class_Matter_Plugin_Bridge_Light0)   // HTTP OnOff Light

@@ -183,7 +183,10 @@ int raw_skip;
 const char HTTP_ENERGY_ID_TELEINFO[] PROGMEM =  "{s}ID{m}%s{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO_SELECT[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "%c{e}" ;
-const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
+const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT "{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP1_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p1{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP2_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p2{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PAPP3_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE_APPARENT " p3{m}%d " D_UNIT_VA "{e}" ;
 //const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "%s{m}%d " D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_TARIF_TELEINFO_STD[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}%s{e}" ;
 const char HTTP_ENERGY_TARIF_TELEINFO_HISTO[] PROGMEM = "{s}" D_CURRENT_TARIFF "{m}Heures %s{e}" ;
@@ -192,8 +195,8 @@ const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d"
 const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
 const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_IMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d / %d / %d " D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UNIT_WATT "{e}" ;
-const char HTTP_ENERGY_PMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d / %d / %d " D_UNIT_WATT "{e}" ;
+const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d " D_UNIT_VA "{e}" ;
+const char HTTP_ENERGY_PMAX3_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d / %d / %d " D_UNIT_VA "{e}" ;
 const char HTTP_ENERGY_LABEL_VALUE[] PROGMEM =  "{s}%s{m}%s{e}" ;
 const char HTTP_ENERGY_LOAD_BAR[] PROGMEM = "<tr><div style='margin:4px;padding:0px;background-color:#ddd;border-radius:4px;'>"
                                             "<div style='font-size:0.75rem;font-weight:bold;padding:0px;text-align:center;border:1px solid #bbb;border-radius:4px;color:#444;background-color:%s;width:%d%%;'>"
@@ -331,11 +334,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s=%s, now %d"), me->name, me->value, (int) power);
 
             if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS1 || (ilabel == LABEL_SINSTS && Energy->phase_count == 1)) {
-                Energy->active_power[0] = power;
+                Energy->active_power[0] = Energy->apparent_power[0] = power;
             } else if (ilabel == LABEL_SINSTS2) {
-                Energy->active_power[1] = power;
+                Energy->active_power[1] = Energy->apparent_power[1] = power;
             } else if (ilabel == LABEL_SINSTS3) {
-                Energy->active_power[2] = power;
+                Energy->active_power[2] = Energy->apparent_power[2] = power;
             }
         }
 
@@ -1169,6 +1172,7 @@ void TInfoShow(bool json)
         char name[33];
         char value[33];
         int percent;
+        int papp = -1;
 
         if (isousc) {
             uint8_t hue;
@@ -1186,6 +1190,22 @@ void TInfoShow(bool json)
                 HsToRgb(hue, 128, &red, &green, &blue);
                 snprintf_P(phase_color, sizeof(phase_color), PSTR("#%02X%02X%02X"), red, green, blue);
                 WSContentSend_P(HTTP_ENERGY_LOAD_BAR, phase_color, percent, percent);
+            }
+        }
+
+        if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
+            if ( getValueFromLabelIndex(LABEL_PAPP, value) ) {
+                WSContentSend_P(HTTP_ENERGY_PAPP_TELEINFO, atoi(value));
+            }
+        } else {
+            if (getValueFromLabelIndex(LABEL_SINSTS, value) ) {
+                WSContentSend_P(HTTP_ENERGY_PAPP_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS1, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP1_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS2, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP2_TELEINFO, atoi(value));
+            } else if (getValueFromLabelIndex(LABEL_SINSTS3, value)) {
+                WSContentSend_P(HTTP_ENERGY_PAPP3_TELEINFO, atoi(value));
             }
         }
 

@@ -600,9 +600,9 @@ be_local_closure(Animate_engine_animate,   /* name */
       0x140C0706,  //  0018  LT	R3	R3	K6
       0x780E0000,  //  0019  JMPF	R3	#001B
       0xB0060F08,  //  001A  RAISE	1	K7	K8
-      0x880C0104,  //  001B  GETMBR	R3	R0	K4
-      0x88100105,  //  001C  GETMBR	R4	R0	K5
-      0x940C0803,  //  001D  GETIDX	R3	R4	R3
+      0x880C0105,  //  001B  GETMBR	R3	R0	K5
+      0x88100104,  //  001C  GETMBR	R4	R0	K4
+      0x940C0604,  //  001D  GETIDX	R3	R3	R4
       0x6014000F,  //  001E  GETGBL	R5	G15
       0x5C180600,  //  001F  MOVE	R6	R3
       0xB81E1200,  //  0020  GETNGBL	R7	K9

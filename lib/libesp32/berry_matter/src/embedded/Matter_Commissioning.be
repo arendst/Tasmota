@@ -294,7 +294,7 @@ class Matter_Commisioning_Context
     end
     for fabric : self.device.sessions.fabrics
       if fabric.noc == nil || fabric.fabric_id == nil || fabric.device_id == nil     continue end
-      # compute candidateDestinationId, Section 4.13.2.4.1, “Destination Identifier”
+      # compute candidateDestinationId, Section 4.13.2.4.1, "Destination Identifier"
       var destinationMessage = initiatorRandom + fabric.get_ca_pub() + fabric.fabric_id + fabric.device_id
       var key = fabric.get_ipk_group_key()
       # tasmota.log("MTR: SIGMA1: destinationMessage=" + destinationMessage.tohex(), 4)

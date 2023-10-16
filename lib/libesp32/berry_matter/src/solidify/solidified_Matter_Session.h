@@ -811,10 +811,14 @@ be_local_closure(Matter_Session_get_admin_subject,   /* name */
     }),
     be_str_weak(get_admin_subject),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x80040200,  //  0002  RET	1	R1
+      0x78060002,  //  0001  JMPF	R1	#0005
+      0x88040100,  //  0002  GETMBR	R1	R0	K0
+      0x88040301,  //  0003  GETMBR	R1	R1	K1
+      0x70020000,  //  0004  JMP		#0006
+      0x4C040000,  //  0005  LDNIL	R1
+      0x80040200,  //  0006  RET	1	R1
     })
   )
 );
@@ -840,10 +844,14 @@ be_local_closure(Matter_Session_get_fabric_compressed,   /* name */
     }),
     be_str_weak(get_fabric_compressed),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x80040200,  //  0002  RET	1	R1
+      0x78060002,  //  0001  JMPF	R1	#0005
+      0x88040100,  //  0002  GETMBR	R1	R0	K0
+      0x88040301,  //  0003  GETMBR	R1	R1	K1
+      0x70020000,  //  0004  JMP		#0006
+      0x4C040000,  //  0005  LDNIL	R1
+      0x80040200,  //  0006  RET	1	R1
     })
   )
 );
@@ -1261,10 +1269,14 @@ be_local_closure(Matter_Session_get_fabric_label,   /* name */
     }),
     be_str_weak(get_fabric_label),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x80040200,  //  0002  RET	1	R1
+      0x78060002,  //  0001  JMPF	R1	#0005
+      0x88040100,  //  0002  GETMBR	R1	R0	K0
+      0x88040301,  //  0003  GETMBR	R1	R1	K1
+      0x70020000,  //  0004  JMP		#0006
+      0x4C040000,  //  0005  LDNIL	R1
+      0x80040200,  //  0006  RET	1	R1
     })
   )
 );
@@ -1481,10 +1493,14 @@ be_local_closure(Matter_Session_get_admin_vendor,   /* name */
     }),
     be_str_weak(get_admin_vendor),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x80040200,  //  0002  RET	1	R1
+      0x78060002,  //  0001  JMPF	R1	#0005
+      0x88040100,  //  0002  GETMBR	R1	R0	K0
+      0x88040301,  //  0003  GETMBR	R1	R1	K1
+      0x70020000,  //  0004  JMP		#0006
+      0x4C040000,  //  0005  LDNIL	R1
+      0x80040200,  //  0006  RET	1	R1
     })
   )
 );

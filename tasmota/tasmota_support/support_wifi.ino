@@ -42,6 +42,9 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+  #include "esp_netif.h"
+#endif
 
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
@@ -563,15 +566,6 @@ bool WifiFindIPv6(IPAddress *ip, bool is_local, const char * if_type = "st") {
     }
   }
   return false;
-}
-// add an IPv6 link-local address to all netif
-void CreateLinkLocalIPv6(void)
-{
-#ifdef ESP32
-  for (auto intf = esp_netif_next(NULL); intf != NULL; intf = esp_netif_next(intf)) {
-    esp_netif_create_ip6_linklocal(intf);
-  }
-#endif // ESP32
 }
 
 
@@ -1263,11 +1257,32 @@ bool WifiDNSGetIPv6Priority(void) {
 }
 
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
+#ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // try converting directly to IP
+  if (aResult.fromString(aHostname)) {
+    return true;   // we're done
+  }
+#endif
+#endif // USE_IPV6
+
   uint32_t dns_start = millis();
   bool success = WiFi.hostByName(aHostname, aResult, Settings->dns_timeout);
   uint32_t dns_end = millis();
   if (success) {
     // Host name resolved
+#ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR >= 5
+    // check if there is a zone-id
+    // look for '%' in string
+    const char *s = aHostname;
+    while (*s && *s != '%') { s++; }
+    if (*s == '%') {
+        // we have a zone id
+        aResult.setZone(netif_name_to_index(s + 1));
+    }
+#endif
+#endif // USE_IPV6
     if (0xFFFFFFFF != (uint32_t)aResult) {
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "DNS resolved '%s' (%s) in %i ms"), aHostname, aResult.toString().c_str(), dns_end - dns_start);
       return true;

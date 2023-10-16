@@ -227,7 +227,7 @@ namespace {
   void addFloatToJson(JsonGeneratorObject& json, const char* key, float value, float noValueConstant = NAN) {
     if (!isnan(noValueConstant) && value == noValueConstant) {
       //The "no sensor value" may not be straightforward (e.g.-100.0), hence replacing with explicit n/a
-      json.add(key, PSTR(D_JSON_NA));
+      json.addStrRaw(key, D_JSON_NULL);
       return;
     }
     char s[6];  // Range: -99.9 <> 999.9 should be fine for any sensible temperature value :)
@@ -240,7 +240,7 @@ namespace {
     if (modelStr != kUnknownStr) {
       json.add(key, modelStr);
     } else {  // Fallback to int value
-      json.add(key, model);
+      json.add(key, (int32_t)model);
     }
   }
 } // namespace {
@@ -258,13 +258,13 @@ String sendACJsonState(const stdAc::state_t &state) {
     case stdAc::ac_command_t::kConfigCommand:
       // Note: for `kConfigCommand` the semantics of clock/sleep is abused IRremoteESP8266 lib-side for key/value pair
       //       Ref: lib/lib_basic/IRremoteESP8266/IRremoteESP8266/src/IRac.cpp[L3062-3066]
-      json.add(PSTR(D_JSON_IRHVAC_CONFIG_KEY), state.clock);
-      json.add(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), state.sleep);
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_KEY), (int32_t)state.clock);
+      json.add(PSTR(D_JSON_IRHVAC_CONFIG_VALUE), (int32_t)state.sleep);
       break;
     case stdAc::ac_command_t::kTimerCommand:
       json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(state.power));
       if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), irutils::minsToString(state.clock)); }
-      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), (int32_t)state.sleep);
       break;
     case stdAc::ac_command_t::kControlCommand:
     default:
@@ -288,8 +288,8 @@ String sendACJsonState(const stdAc::state_t &state) {
       json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
       json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
       json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
-      json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
-      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), state.clock); }
+      json.add(PSTR(D_JSON_IRHVAC_SLEEP), (int32_t)state.sleep);
+      if(state.clock != -1) { json.add(PSTR(D_JSON_IRHVAC_CLOCK), (int32_t)state.clock); }
       json.add(PSTR(D_JSON_IRHVAC_IFEEL), IRac::boolToString(state.iFeel));
       addFloatToJson(json, PSTR(D_JSON_IRHVAC_SENSOR_TEMP), state.sensorTemperature, kNoTempValue);
       break;

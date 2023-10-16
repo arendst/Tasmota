@@ -32,7 +32,6 @@
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
 #endif
 
 #include <StreamString.h>

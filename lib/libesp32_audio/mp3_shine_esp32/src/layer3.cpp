@@ -106,12 +106,12 @@ shine_global_config *shine_initialise(shine_config_t *pub_config) {
   for (x = 0; x < MAX_CHANNELS; x++) {
       for (y = 0; y < MAX_GRANULES; y++) {
         // 2 * 2 * 576 each
-        config->l3_enc[x][y] = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //Significant performance hit in IRAM
+        config->l3_enc[x][y] = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //Significant performance hit in IRAM
         if (!config->l3_enc[x][y]) {
           // error should never occur because of spiram size
           //config->l3_enc[x][y] = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE,MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT);
         }
-        config->mdct_freq[x][y] = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 1%
+        config->mdct_freq[x][y] = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 1%
         if (!config->mdct_freq[x][y]) {
           // error
           //config->mdct_freq[x][y] = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT);
@@ -123,15 +123,15 @@ shine_global_config *shine_initialise(shine_config_t *pub_config) {
 #endif
   config->l3loop = (l3loop_t*)heap_caps_malloc(sizeof(l3loop_t), MALLOC_CAP_SPIRAM);
 #ifdef  SHINE_DEBUG
-  printf("xrsq & xrabs each: %d\n", sizeof(int32_t)*GRANULE_SIZE);
+  printf("xrsq & xrabs each: %d\n", sizeof(int)*GRANULE_SIZE);
 #endif
-  config->l3loop->xrsq = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
+  config->l3loop->xrsq = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   if (!config->l3loop->xrsq) {
     // error
     //config->l3loop->xrsq = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   }
 
-  config->l3loop->xrabs = (int*)heap_caps_malloc_prefer(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
+  config->l3loop->xrabs = (int*)heap_caps_malloc_prefer(4*GRANULE_SIZE, MALLOC_CAP_32BIT, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   if (!config->l3loop->xrabs) {
     //config->l3loop->xrabs = (int*)heap_caps_malloc(sizeof(int32_t)*GRANULE_SIZE, MALLOC_CAP_SPIRAM|MALLOC_CAP_32BIT); //OK 0.5%
   }
@@ -226,7 +226,8 @@ Counters 2664123380 : 2664123448 : 2666717886 : 2668665908 : 2668859025
 
 
 static unsigned char *shine_encode_buffer_internal(shine_global_config *config, int *written, int stride) {
-  counter[0] = xthal_get_ccount();
+  counter[0] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
+  // counter[0] = xthal_get_ccount();
   if(config->mpeg.frac_slots_per_frame) {
     config->mpeg.padding   = (config->mpeg.slot_lag <= (config->mpeg.frac_slots_per_frame - 1.0));
     config->mpeg.slot_lag += (config->mpeg.padding - config->mpeg.frac_slots_per_frame);
@@ -234,18 +235,22 @@ static unsigned char *shine_encode_buffer_internal(shine_global_config *config, 
 
   config->mpeg.bits_per_frame = 8*(config->mpeg.whole_slots_per_frame + config->mpeg.padding);
   config->mean_bits = (config->mpeg.bits_per_frame - config->sideinfo_len)/config->mpeg.granules_per_frame;
-  counter[1] = xthal_get_ccount();
+  counter[1] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
+  // counter[1] = xthal_get_ccount();
   /* apply mdct to the polyphase output */
   // put on core 1
   shine_mdct_sub(config, stride);
-  counter[2] = xthal_get_ccount();
+  counter[2] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
+  // counter[2] = xthal_get_ccount();
   /* bit and noise allocation */
   //put on core 0
   shine_iteration_loop(config);
-  counter[3] = xthal_get_ccount();
+  counter[3] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
+  // counter[3] = xthal_get_ccount();
   /* write the frame to the bitstream */
   shine_format_bitstream(config);
-  counter[4] = xthal_get_ccount();
+  counter[4] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
+  // counter[4] = xthal_get_ccount();
   /* Return data. */
   *written = config->bs.data_position;
   config->bs.data_position = 0;

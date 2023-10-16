@@ -665,6 +665,23 @@ class Matter_Device
   end
 
   #############################################################
+  # Find plugin by endpoint
+  def find_plugin_by_friendly_name(name)
+    if (name == nil) || (size(name) == 0)   return nil      end     # invalid name
+
+    var idx = 0
+    while idx < size(self.plugins)
+      var pl = self.plugins[idx]
+      var pl_name = pl.get_name()
+      if (pl_name != nil) && (size(pl_name) > 0) && (pl_name == name)
+        return pl
+      end
+      idx += 1
+    end
+    return nil
+  end
+
+  #############################################################
   # Persistance of Matter Device parameters
   #
   #############################################################
@@ -886,7 +903,7 @@ class Matter_Device
         # Add Hostname (based on MAC) with IPv4/IPv6 addresses
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !eth.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
           mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
         else
@@ -896,11 +913,11 @@ class Matter_Device
       else
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
-        if !self.ipv4only
+        if !self.ipv4only || !wifi.contains('ip6local')
           # tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
         else
-          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, wifi.find('ip','')), 3)
+          tasmota.log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_wifi, wifi.find('ip','')), 3)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
         end
       end
@@ -1271,7 +1288,7 @@ class Matter_Device
   # get a class name light "light0" and return displayname
   def get_plugin_class_displayname(name)
     var cl = self.plugins_classes.find(name)
-    return cl ? cl.NAME : ""
+    return cl ? cl.DISPLAY_NAME : ""
   end
 
   #############################################################
@@ -1514,6 +1531,8 @@ class Matter_Device
   #
   def register_commands()
     tasmota.add_cmd("MtrJoin", /cmd_found, idx, payload, payload_json -> self.MtrJoin(cmd_found, idx, payload, payload_json))
+    tasmota.add_cmd("MtrUpdate", /cmd_found, idx, payload, payload_json -> self.MtrUpdate(cmd_found, idx, payload, payload_json))
+    tasmota.add_cmd("MtrInfo", /cmd_found, idx, payload, payload_json -> self.MtrInfo(cmd_found, idx, payload, payload_json))
   end
 
   #####################################################################
@@ -1531,6 +1550,114 @@ class Matter_Device
     tasmota.resp_cmnd_done()
   end
 
+  #####################################################################
+  # `MtrUpdate`
+  #
+  # MtrUpdate {"ep":1, "Power":1}
+  # MtrUpdate {"name":"ep1", "power":1}
+  # MtrUpdate {"Name":"Light0", "Power":0}
+  # MtrUpdate {"Name":"Light0", "Power":1}
+  # MtrUpdate {"Name":"Light1", "Power":0}
+  # MtrUpdate {"Name":"Light1", "Power":1,"Bri":55}
+  # MtrUpdate {"Name":"Light2", "Power":0}
+  # MtrUpdate {"Name":"Light2", "Power":1, "CT":400, "Bri":20}
+  # MtrUpdate {"Name":"Light3", "Power":0}
+  # MtrUpdate {"Name":"Light3", "Power":1, "Bri":20, "Hue":85, "Sat":200}
+  #
+  def MtrUpdate(cmd_found, idx, payload, payload_json)
+    if payload_json == nil    return tasmota.resp_cmnd_str("Invalid JSON")    end
+
+    var key_ep = tasmota.find_key_i(payload_json, 'Ep')
+    var key_name = tasmota.find_key_i(payload_json, 'Name')
+    if key_ep || key_name
+      var pl = nil                  # plugin instance
+
+      if key_ep
+        var ep = int(payload_json[key_ep])
+        if ep <= 0  return tasmota.resp_cmnd_str("Invalid 'Ep' attribute")         end
+        pl = self.find_plugin_by_endpoint(ep)
+        payload_json.remove(key_ep)
+      end
+
+      if key_name
+        if pl == nil
+          pl = self.find_plugin_by_friendly_name(payload_json[key_name])
+        end
+        payload_json.remove(key_name)
+      end
+
+      if (pl == nil)          return tasmota.resp_cmnd_str("Invalid Device")          end
+      if (!pl.VIRTUAL)        return tasmota.resp_cmnd_str("Device is not virtual")   end
+      # filter parameter accedpted by plugin, and rename with canonical
+      # Ex: {"power":1,"HUE":2} becomes {"Power":1,"Hue":2}
+      var uc = pl.consolidate_update_commands()
+      # check that all commands are in the list of supported commands
+      var cmd_cleaned = {}
+      for k: payload_json.keys()
+        var cleaned_command_idx = tasmota.find_list_i(uc, k)
+        if (cleaned_command_idx == nil)
+          tasmota.resp_cmnd_str(f"Invalid attribute '{k}'")
+          return
+        end
+        cmd_cleaned[uc[cleaned_command_idx]] = payload_json[k]
+      end
+      # call plug-in
+      pl.update_virtual(cmd_cleaned)
+      var state_json = pl.state_json()
+      if state_json
+        var cmnd_status = f'{{"{cmd_found}":{state_json}}}'
+        return tasmota.resp_cmnd(cmnd_status)
+      else
+        return tasmota.resp_cmnd_done()
+      end
+    end
+
+    tasmota.resp_cmnd_str("Missing 'Device' attribute")
+  end
+
+  #####################################################################
+  # `MtrInfo`
+  #
+  # MtrInfo 9
+  def MtrInfo(cmd_found, idx, payload, payload_json)
+    if payload == ""
+      # dump all devices
+    end
+
+    if payload == ""
+      # dump all
+      for pl: self.plugins
+        self.MtrInfo_one(pl.endpoint)
+      end
+
+    elif  type(payload_json) == 'int'
+      # try ep number
+      self.MtrInfo_one(payload_json)
+
+    else
+      # try by name
+      var pl = self.find_plugin_by_friendly_name(payload)
+      if pl != nil
+        self.MtrInfo_one(pl.endpoint)
+      end
+    end
+
+    tasmota.resp_cmnd_done()
+  end
+
+  # output for a single endpoint
+  def MtrInfo_one(ep)
+    var pl = self.find_plugin_by_endpoint(ep)
+    if pl == nil    return    end     # abort
+
+    var state_json = pl.state_json()
+    if state_json
+      var mtr_info = f'{{"' 'MtrInfo"' ':{state_json}}}'
+      # publish
+      # tasmota.publish_rule(mtr_info)
+      tasmota.publish_result(mtr_info, "")
+    end
+  end
 
 end
 matter.Device = Matter_Device

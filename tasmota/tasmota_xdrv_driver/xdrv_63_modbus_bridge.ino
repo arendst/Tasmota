@@ -208,9 +208,15 @@ bool ModbusBridgeBegin(void)
       ClaimSerial();
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
-  }
-  modbusBridge.buffer = (uint8_t *)malloc(MBR_RECEIVE_BUFFER_SIZE);
 
+	if (nullptr == modbusBridge.buffer) modbusBridge.buffer = (uint8_t *)malloc(MBR_RECEIVE_BUFFER_SIZE);
+	if (nullptr == modbusBridge.buffer)
+	{
+		ModbusBridgeAllocError(PSTR("BUFFER"));
+		result = false;
+	}
+  }
+  
   return result;
 }
 
@@ -567,11 +573,11 @@ void ModbusBridgeInit(void)
 {
   if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX))
   {
-    modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX), Pin(GPIO_MBR_TX_ENA));
+    if (nullptr == modbusBridgeModbus) modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX), Pin(GPIO_MBR_TX_ENA));
     ModbusBridgeBegin();
 #ifdef USE_MODBUS_BRIDGE_TCP
     // If TCP bridge is enabled allocate a TCP receive buffer
-    modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
+    if (nullptr == modbusBridgeTCP.tcp_buf) modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
     if (nullptr == modbusBridgeTCP.tcp_buf)
     {
       ModbusBridgeAllocError(PSTR("TCP"));
@@ -668,7 +674,7 @@ void ModbusTCPHandle(void)
         uint8_t mbdeviceaddress = (uint8_t)modbusBridgeTCP.tcp_buf[6];
         uint8_t mbfunctioncode = (uint8_t)modbusBridgeTCP.tcp_buf[7];
         uint16_t mbstartaddress = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[8]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[9]));
-        uint16_t *writeData = NULL;
+        uint16_t *writeData = nullptr;
         uint16_t count = 0;
 
         modbusBridgeTCP.tcp_transaction_id = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[0]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[1]));
@@ -696,7 +702,7 @@ void ModbusTCPHandle(void)
           modbusBridge.dataCount = 1;
           modbusBridge.type = ModbusBridgeType::mb_uint16;
 
-          writeData = (uint16_t *)malloc((byteCount / 2)+1);
+          writeData = (uint16_t *)malloc(byteCount+1);
           if (nullptr == writeData)
           {
             ModbusBridgeAllocError(PSTR("write"));
@@ -746,7 +752,7 @@ void ModbusTCPHandle(void)
 
 void CmndModbusBridgeSend(void)
 {
-  uint16_t *writeData = NULL;
+  uint16_t *writeData = nullptr;
   uint8_t writeDataSize = 0;
   bool bitMode = false;
   ModbusBridgeError errorcode = ModbusBridgeError::noerror;
@@ -825,7 +831,7 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "float") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_float;
-    modbusBridge.dataCount = bitMode ? 2 * modbusBridge.count : modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "raw") == 0)
   {
@@ -900,8 +906,8 @@ void CmndModbusBridgeSend(void)
     }
     else
     {
-      writeData = (uint16_t *)malloc(modbusBridge.dataCount);
-      if (nullptr == writeData)
+ 	  writeData = (uint16_t *)malloc(modbusBridge.dataCount * 2);      
+	  if (nullptr == writeData)
       {
         ModbusBridgeAllocError(PSTR("write"));
         return;

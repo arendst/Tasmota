@@ -149,6 +149,12 @@
  End Arduino user-config
 **********************************/
 
+#ifndef CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE
+#define CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE 4096
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_ROLE_CENTRAL // means for Tasmota: nimble was already embedded into the Arduino framework
+
 /* This section should not be altered */
 #ifndef CONFIG_BT_NIMBLE_ROLE_CENTRAL_DISABLED
 #define CONFIG_BT_NIMBLE_ROLE_CENTRAL
@@ -168,10 +174,6 @@
 
 #ifndef CONFIG_BT_NIMBLE_PINNED_TO_CORE
 #define CONFIG_BT_NIMBLE_PINNED_TO_CORE 0
-#endif
-
-#ifndef CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE
-#define CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE 4096
 #endif
 
 #ifndef CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL
@@ -284,7 +286,7 @@
 #define CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE 2
 #endif
 
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
+#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6) && !defined(CONFIG_IDF_TARGET_ESP32S3)
 #define CONFIG_IDF_TARGET_ESP32 1
 #endif
 
@@ -324,9 +326,12 @@
 #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 #endif
 
+#endif //CONFIG_BT_NIMBLE_ROLE_CENTRAL
+
 /* Enables the use of Arduino String class for attribute values */
 #if defined __has_include
 #  if __has_include (<Arduino.h>)
 #    define NIMBLE_CPP_ARDUINO_STRING_AVAILABLE
 #  endif
 #endif
+

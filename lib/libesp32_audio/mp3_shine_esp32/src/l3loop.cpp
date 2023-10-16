@@ -31,7 +31,7 @@ static void calc_xmin( gr_info *cod_info, shine_psy_xmin_t *l3_xmin, int gr, int
 static int quantize(int ix[GRANULE_SIZE], int stepsize, shine_global_config *config);
 
 
-int32_t sqrt_int(int32_t r) {
+int sqrt_int(int r) {
     float x;
     float rr = r;
     float y = rr*0.5;
@@ -40,7 +40,7 @@ int32_t sqrt_int(int32_t r) {
     x = (1.5f*x) - (x*x)*(x*y);
     if(r>101123) x = (1.5f*x) - (x*x)*(x*y);
 
-    int32_t is = (int32_t)(x*rr + 0.5f);
+    int is = (int)(x*rr + 0.5f);
     return is + ((r - is*is)>>31);
 }
 
@@ -382,7 +382,7 @@ void shine_loop_initialise(shine_global_config *config) {
        * In quantize, the long multiply does not shift it's result left one
        * bit to compensate.
        */
-      config->l3loop->steptabi[i] = (int32_t)((config->l3loop->steptab[i]*2) + 0.5);
+      config->l3loop->steptabi[i] = (int)((config->l3loop->steptab[i]*2) + 0.5);
   }
 
   /* quantize: vector conversion, three quarter power table.
@@ -401,7 +401,7 @@ void shine_loop_initialise(shine_global_config *config) {
 int quantize(int ix[GRANULE_SIZE], int stepsize, shine_global_config *config )
 {
   int i, max, ln;
-  int32_t scalei;
+  int scalei;
   float scale, dbl;
 
   scalei = config->l3loop->steptabi[stepsize+127]; /* 2**(-stepsize/4) */
@@ -444,8 +444,8 @@ int quantize(int ix[GRANULE_SIZE], int stepsize, shine_global_config *config )
  * Function: Calculate the maximum of ix from 0 to 575
  */
 static inline int ix_max( int ix[GRANULE_SIZE], unsigned int begin, unsigned int end ) {
-  register int i;
-  register int max = 0;
+  int i;
+  int max = 0;
 
   for(i=begin;i<end;i++)
     if(max < ix[i])
@@ -756,8 +756,8 @@ int count_bit(int ix[GRANULE_SIZE],
               unsigned int end,
               unsigned int table ) {
   unsigned            linbits, ylen;
-  register int        i, sum;
-  register int        x,y;
+  int        i, sum;
+  int        x,y;
   const struct huffcodetab *h;
 
   if(!table)

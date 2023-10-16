@@ -10,7 +10,7 @@ extern const int samplerates[9];
 extern const int bitrates[16][4];
 
 extern const int  shine_scale_fact_band_index[9][23];
-extern const int32_t shine_enwindow[];
+extern const int shine_enwindow[];
 
 #endif
 

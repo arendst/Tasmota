@@ -574,7 +574,7 @@ void Ds18x20Show(bool json) {
 }
 
 #ifdef DS18x20_USE_ID_ALIAS
-const char kds18Commands[] PROGMEM = "|"  // No prefix
+const char kds18Commands[] PROGMEM = "DS18|"  // prefix
   D_CMND_DS_ALIAS;
 
 void (* const DSCommand[])(void) PROGMEM = {

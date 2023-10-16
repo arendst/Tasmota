@@ -75,6 +75,9 @@ public:
         tmpaddr->sin6_family = AF_INET6;
         memcpy(tmpaddr->sin6_addr.un.u8_addr, &ip[0], 16);
         tmpaddr->sin6_port = htons(port);
+#if ESP_IDF_VERSION_MAJOR >= 5
+        tmpaddr->sin6_scope_id = ip.zone();
+#endif
     } else {
 #endif
         struct sockaddr_in *tmpaddr = (struct sockaddr_in *)&serveraddr;
@@ -314,7 +317,6 @@ public:
           struct sockaddr_in *s = (struct sockaddr_in *)&local_address;
           local_port = ntohs(s->sin_port);
           local_addr = IPAddress((uint32_t)(s->sin_addr.s_addr));
-          // return IPAddress((uint32_t)(s->sin_addr.s_addr));
       }
 #ifdef USE_IPV6
       // IPv6, but it might be IPv4 mapped address
@@ -323,10 +325,12 @@ public:
           local_port = ntohs(saddr6->sin6_port);
           if (T_IN6_IS_ADDR_V4MAPPED(saddr6->sin6_addr.un.u32_addr)) {
               local_addr = IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12);
-              // return IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12);
           } else {
+#if ESP_IDF_VERSION_MAJOR >= 5
+              local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr), saddr6->sin6_scope_id);
+#else
               local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
-              // return IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
+#endif
           }
       }
 #endif // USE_IPV6

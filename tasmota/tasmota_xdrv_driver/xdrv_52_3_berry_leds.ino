@@ -33,8 +33,13 @@ enum {
   neopixel_type_end
 };
 
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+typedef NeoPixelBus<NeoGrbFeature, NeoEsp32SpiN800KbpsMethod> neopixel_ws2812_grb_t;
+typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32SpiNSk6812Method> neopixel_sk6812_grbw_t;
+#else
 typedef NeoPixelBus<NeoGrbFeature, NeoEsp32RmtN800KbpsMethod> neopixel_ws2812_grb_t;
 typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32RmtNSk6812Method> neopixel_sk6812_grbw_t;
+#endif
 
 
 /*********************************************************************************************\

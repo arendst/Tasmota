@@ -139,28 +139,7 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
 #endif
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
-    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
-      "sk(g[i],i);"                       // Set GPIO
-    "}";
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
-    "j=0;"
-    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 22-32
-      "if(22==i){j=33;}"
-      "sk(g[i],j);"                       // Set GPIO
-      "j++;"
-    "}";
-#elif defined(CONFIG_IDF_TARGET_ESP32)
-const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
-    "j=0;"
-    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 28-31
-      "if(28==i){j=32;}"
-      "sk(g[i],j);"                       // Set GPIO
-      "j++;"
-    "}";
-#else // ESP8266
+#ifdef ESP8266
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
@@ -169,7 +148,32 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}";
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
+      "sk(g[i],i);"                       // Set GPIO
+    "}";
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 22-32
+      "if(22==i){j=33;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#else  // ESP32
+const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
+    "j=0;"
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 28-31
+      "if(28==i){j=32;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}";
+#endif  // Non plain ESP32    
+#endif  // ESP32
+
 const char HTTP_SCRIPT_TEMPLATE3[] PROGMEM =
     "\";"
     "sk(g[13]," STR(ADC0_PIN) ");";       // Set ADC0
@@ -1262,18 +1266,18 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
       uint32_t cols = WebDeviceColumns();
       for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
-        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
+        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(idx -1)));
 #ifdef USE_SHUTTER
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((Settings->shutter_options[abs(ShutterWebButton)-1] & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
+            (set_button) ? GetWebButton(idx -1) : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
             "");
         } else {
 #endif  // USE_SHUTTER
           snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
+            (set_button) ? GetWebButton(idx -1) : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
             (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
 #ifdef USE_SHUTTER
         }
@@ -1617,13 +1621,9 @@ void HandleTemplateConfiguration(void) {
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
     for (uint32_t i = 0; i < nitems(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-      // ESP32C3 we always send all GPIOs, Flash are just hidden
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+      // ESP32C2/C3/C6 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-      if (!FlashPin(i)) {
-        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
-      }
 #else
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
@@ -1669,8 +1669,8 @@ void HandleTemplateConfiguration(void) {
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-    // ESP32C3 all gpios are in the template, flash are hidden
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+    // ESP32C2/C3/C6 all gpios are in the template, flash are hidden
     bool hidden = FlashPin(i);
     WSContentSend_P(PSTR("<tr%s><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
       hidden ? PSTR(" hidden") : "",
@@ -1720,6 +1720,7 @@ void TemplateSaveSettings(void) {
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
+/*    
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1734,6 +1735,24 @@ void TemplateSaveSettings(void) {
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
 #endif
+*/
+#ifdef ESP8266
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
+    j++;
+#endif  // ESP8266
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+    if (22 == i) { j = 33; }    // skip 22-32
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
+    j++;
+#else  // ESP32
+    snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(Esp32TemplateToPhy[i]));
+#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32
   }
 
   uint32_t flag = 0;
@@ -2360,21 +2379,28 @@ void HandleInformation(void)
   }
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s %d (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WiFi.channel(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_INFORMATION "}2" D_SSID " %s<br>" D_RSSI " %d%%, %d dBm<br>" D_MODE " 11%c<br>" D_CHANNEL " %d<br>" D_BSSID " %s"), 
+      Settings->sta_active +1,
+      HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(),
+      WifiGetRssiAsQuality(rssi), rssi,
+      pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]),
+      WiFi.channel(),
+      WiFi.BSSIDstr().c_str());
+    WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? PSTR(".local") : "");
 #ifdef USE_IPV6
     String ipv6_addr = WifiGetIPv6Str();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Global (wifi)}2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Global (WiFi)}2%s"), ipv6_addr.c_str());
     }
     ipv6_addr = WifiGetIPv6LinkLocalStr();
     if (ipv6_addr != "") {
-      WSContentSend_P(PSTR("}1 IPv6 Local (wifi)}2%s"), ipv6_addr.c_str());
+      WSContentSend_P(PSTR("}1 IPv6 Local (WiFi)}2%s"), ipv6_addr.c_str());
     }
 #endif  // USE_IPV6
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
-      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (WiFi)}2%_I"), (uint32_t)WiFi.localIP());
     }
     show_hr = true;
   }
@@ -3677,6 +3703,32 @@ void CmndWebSensor(void)
   ResponseJsonEnd();
 }
 
+String *WebButton1732[16] = {0,};
+
+void SetWebButton(uint8_t button_index, const char *text) {
+  if (button_index < 16) 
+    SettingsUpdateText(SET_BUTTON1 + button_index, text);
+  else if (button_index < MAX_BUTTON_TEXT) {
+    button_index -= 16;
+    if (!WebButton1732[button_index]) 
+      WebButton1732[button_index] = new String(text);
+    else
+      *WebButton1732[button_index] = text;
+  }
+}
+
+const char* GetWebButton(uint8_t button_index) {
+  static char empty[1] = {0};
+  if (button_index < 16) 
+    return SettingsText(SET_BUTTON1 + button_index);
+  else if (button_index < MAX_BUTTON_TEXT) {
+    button_index -= 16;
+    if (WebButton1732[button_index])
+      return WebButton1732[button_index]->c_str();
+  }
+  return empty;
+}
+
 void CmndWebButton(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_BUTTON_TEXT)) {
@@ -3684,9 +3736,9 @@ void CmndWebButton(void)
       ResponseCmndAll(SET_BUTTON1, MAX_BUTTON_TEXT);
     } else {
       if (XdrvMailbox.data_len > 0) {
-        SettingsUpdateText(SET_BUTTON1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
+        SetWebButton(XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
       }
-      ResponseCmndIdxChar(SettingsText(SET_BUTTON1 + XdrvMailbox.index -1));
+      ResponseCmndIdxChar(GetWebButton(XdrvMailbox.index -1));
     }
   }
 }

@@ -106,7 +106,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
-void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+static void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
@@ -124,7 +124,7 @@ void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   encoder->state = (state >> 2);
 }
 
-void IRAM_ATTR RotaryIsrArg(void *arg) {
+static void IRAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // Theo Arends
@@ -145,9 +145,9 @@ void RotaryInitMaxSteps(void) {
   }
   uint8_t max_steps = Settings->param[P_ROTARY_MAX_STEP];
   if (!Rotary.model) { max_steps *= 3; }
-  Rotary.dimmer_increment = 100 / max_steps;  // Dimmer 1..100 = 100
-  Rotary.ct_increment =     350 / max_steps;  // Ct 153..500 = 347
-  Rotary.color_increment =  360 / max_steps;  // Hue 0..359 = 360
+  Rotary.dimmer_increment = 100 / min((uint8_t)100, max_steps);  // Dimmer 1..100 = 100
+  Rotary.ct_increment =     350 / min((uint8_t)350, max_steps);  // Ct 153..500 = 347
+  Rotary.color_increment =  360 / min((uint8_t)360, max_steps);  // Hue 0..359 = 360
 }
 
 void RotaryInit(void) {

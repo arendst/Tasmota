@@ -120,3 +120,6 @@ Index | Define              | Driver   | Device   | Address(es) | Description
   81  | USE_PCA9557         | xdrv_69  | PCA95xx  | 0x18 - 0x1F | 8-bit I/O expander as virtual button/switch/relay
   82  | USE_SGP4X           | xsns_109 | SGP4X    | 0x59        | Gas (TVOC/NOx index)
   83  | USE_MAX17043        | xsns_110 | MAX17043 | 0x36        | Fuel-gauge for 3.7 Volt Lipo battery
+  84  | USE_ENS16x          | xsns_111 | ENS16x   | 0x52 - 0x53 | Gas (TVOC, eCO2) and air quality sensor
+  85  | USE_ENS210          | xsns_112 | ENS210   | 0x43 - 0x44 | Temperature and humidity sensor
+  

@@ -2375,9 +2375,11 @@ void SML_Show(boolean json) {
             tpowstr[i] = *mp++;
           }
           tpowstr[i] = 0;
+#ifdef USE_WEBSERVER
           // export html
           //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s{e}", b_mqtt_data,tpowstr);
           WSContentSend_PD(PSTR("{s}%s{e}"), tpowstr);
+#endif  // USE_WEBSERVER
           // rewind, to ensure strchr
           mp--;
           mp = strchr(mp, '|');
@@ -2491,11 +2493,12 @@ void SML_Show(boolean json) {
                   }
                 }
               }
-
+#ifdef USE_WEBSERVER
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
              if (strcmp(name, "*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"), sml_globs.mp[mindex].prefix, name,tpowstr, unit);
+#endif  // USE_WEBSERVER
             }
           }
         }
@@ -2512,8 +2515,10 @@ void SML_Show(boolean json) {
      if (!nojson) {
        ResponseAppend_P(PSTR("}"));
      }
+#ifdef USE_WEBSERVER
    } else {
      //WSContentSend_PD(PSTR("%s"),b_mqtt_data);
+#endif  // USE_WEBSERVER
    }
 
 

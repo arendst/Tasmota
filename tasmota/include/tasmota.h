@@ -60,21 +60,18 @@ const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (M
 const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
 const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in first settings block - Legacy limit for ESP8266, but extended for ESP32 (see below)
-#ifdef ESP32
-                                            // Max number of PWM channels (total including extended) - ESP32 only
-  #if defined(CONFIG_IDF_TARGET_ESP32)
-    const uint8_t MAX_PWMS = 16;            // ESP32: 16 ledc PWM channels in total - TODO for now
-  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
-  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    const uint8_t MAX_PWMS = 8;             // ESP32S3: 8 ledc PWM channels in total
-  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
+#ifdef ESP32                                // Max number of PWM channels (total including extended) - ESP32 only
+  #if CONFIG_IDF_TARGET_ESP32
+  const uint8_t MAX_PWMS = 16;              // ESP32: 16 ledc PWM channels in total - TODO for now
+  #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+  const uint8_t MAX_PWMS = 8;               // ESP32S2/S3: 8 ledc PWM channels in total
+  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+  const uint8_t MAX_PWMS = 6;               // ESP32C2/C3/C6: 6 ledc PWM channels in total
   #else
-    const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
+  const uint8_t MAX_PWMS = 5;               // Unknown - revert to 5 PWM max
   #endif
 #else
-  const uint8_t MAX_PWMS = 5;               // (not used on ESP8266)
+const uint8_t MAX_PWMS = 5;                 // (not used on ESP8266)
 #endif
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
@@ -100,19 +97,17 @@ const uint16_t VL53LXX_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
 const uint8_t MAX_I2C = 2;                  // Max number of I2C controllers (ESP32 = 2)
 const uint8_t MAX_SPI = 2;                  // Max number of Hardware SPI controllers (ESP32 = 2)
 const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S controllers (ESP32 = 2)
-
-#if CONFIG_IDF_TARGET_ESP32
-const uint8_t MAX_RMT = 8;                  // Max number or RMT channels (ESP32 only)
-#elif CONFIG_IDF_TARGET_ESP32S2
-const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32S2 only)
-#elif CONFIG_IDF_TARGET_ESP32S3
-const uint8_t MAX_RMT = 1;                  // Max number or RMT channels (ESP32S3 only)
-#elif CONFIG_IDF_TARGET_ESP32C3
-const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
-#else
-const uint8_t MAX_RMT = 0;                  // Max number or RMT channels (0 if unknown)
-#endif
-
+  #if CONFIG_IDF_TARGET_ESP32
+  const uint8_t MAX_RMT = 8;                // Max number or RMT channels (ESP32 only)
+  #elif CONFIG_IDF_TARGET_ESP32S2
+  const uint8_t MAX_RMT = 4;                // Max number or RMT channels (ESP32S2 only)
+  #elif CONFIG_IDF_TARGET_ESP32S3
+  const uint8_t MAX_RMT = 1;                // Max number or RMT channels (ESP32S3 only)
+  #elif CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+  const uint8_t MAX_RMT = 2;                // Max number or RMT channels (ESP32C3 only)
+  #else
+  const uint8_t MAX_RMT = 0;                // Max number or RMT channels (0 if unknown)
+  #endif
 #else
 const uint8_t MAX_I2C = 0;                  // Max number of I2C controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_SPI = 0;                  // Max number of Hardware SPI controllers (ESP8266 = 0, no choice)
@@ -127,7 +122,7 @@ const uint8_t MAX_STATE_TEXT = 4;           // Max number of State names (OFF, O
 const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
-const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
+const uint8_t MAX_BUTTON_TEXT = 32;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
@@ -138,11 +133,13 @@ const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-const uint8_t MAX_ADCS = 5;                 // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
-#else   // ESP32
-const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
-#endif  // ESP32C3
+  #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
+  const uint8_t MAX_ADCS = 5;               // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  const uint8_t MAX_ADCS = 7;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
+  #else   // ESP32
+  const uint8_t MAX_ADCS = 8;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
+  #endif  // ESP32C3
 const uint8_t MAX_SWITCHES_TXT = 28;        // Max number of switches user text
 #endif  // ESP32
 
@@ -206,11 +203,11 @@ const uint16_t CMDSZ = 24;                  // Max number of characters in comma
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
 
 #ifdef ESP8266
-#ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
-const uint16_t LOG_BUFFER_SIZE = 6096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
-#else
-const uint16_t LOG_BUFFER_SIZE = 4096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
-#endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+  #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+  const uint16_t LOG_BUFFER_SIZE = 6096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+  #else
+  const uint16_t LOG_BUFFER_SIZE = 4096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
+  #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
 #else   // Not ESP8266
 const uint16_t LOG_BUFFER_SIZE = 6096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 #endif  // ESP8266
@@ -305,21 +302,21 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define	XPT2046_MAXY			3870
 
 #ifdef ESP32
-  #if defined(CONFIG_IDF_TARGET_ESP32S2)
+  #if CONFIG_IDF_TARGET_ESP32S2
     #define MAX_TX_PWR_DBM_11b    195
     #define MAX_TX_PWR_DBM_54g    150
     #define MAX_TX_PWR_DBM_n      130
     #define WIFI_SENSITIVITY_11b  -880
     #define WIFI_SENSITIVITY_54g  -750
     #define WIFI_SENSITIVITY_n    -720
-  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+  #elif CONFIG_IDF_TARGET_ESP32S3
     #define MAX_TX_PWR_DBM_11b    210
     #define MAX_TX_PWR_DBM_54g    190
     #define MAX_TX_PWR_DBM_n      185
     #define WIFI_SENSITIVITY_11b  -880
     #define WIFI_SENSITIVITY_54g  -760
     #define WIFI_SENSITIVITY_n    -720
-  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
     #define MAX_TX_PWR_DBM_11b    210
     #define MAX_TX_PWR_DBM_54g    190
     #define MAX_TX_PWR_DBM_n      185
@@ -487,7 +484,12 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_SHD_PARAM,
                          SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET, SET_INFLUXDB_RP,
-                         SET_MAX };
+                         SET_MAX, // limit of texts stored in Settings
+                         // Index above are not stored in Settings and should be handled specifically in SettingText()
+                         SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,
+                         SET_BUTTON25, SET_BUTTON26, SET_BUTTON27, SET_BUTTON28, SET_BUTTON29, SET_BUTTON30, SET_BUTTON31, SET_BUTTON32,
+                         SET_FINAL_MAX
+                         };
 
 enum SpiInterfaces { SPI_NONE, SPI_MOSI, SPI_MISO, SPI_MOSI_MISO };
 
@@ -518,10 +520,10 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_MAX };
+                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_SENSOR, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
                                       "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|"
-                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47";
+                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47|Sensor";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

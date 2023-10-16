@@ -25,6 +25,20 @@ end
 var prefix_dir = "src/embedded/"
 var prefix_out = "src/solidify/"
 
+def sort(l)
+  # insertion sort
+  for i:1..size(l)-1
+    var k = l[i]
+    var j = i
+    while (j > 0) && (l[j-1] > k)
+      l[j] = l[j-1]
+      j -= 1
+    end
+    l[j] = k
+  end
+  return l
+end
+
 def clean_directory(dir)
   var file_list = os.listdir(dir)
   for f : file_list
@@ -78,6 +92,7 @@ end
 clean_directory(prefix_out)
 
 var src_file_list = os.listdir(prefix_dir)
+src_file_list = sort(src_file_list)
 for src_file : src_file_list
   if src_file[0] == '.'  continue end
   parse_file(src_file, prefix_out)

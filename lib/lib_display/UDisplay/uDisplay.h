@@ -6,15 +6,15 @@
 #include <Wire.h>
 #include <SPI.h>
 
-
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32S3
 #define USE_ESP32_S3
 #endif
-#endif
-
-#ifdef ESP32
 #include "driver/spi_master.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "soc/gpio_periph.h"
+#include <rom/gpio.h>
+#endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif
 
 #ifdef USE_ESP32_S3
@@ -37,6 +37,9 @@ static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin
 #include "esp_lcd_panel_ops.h"
 #include <hal/dma_types.h>
 #include <rom/cache.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "esp_rom_lldesc.h"
+#endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif // USE_ESP32_S3
 
 #define _UDSP_I2C 1
@@ -89,13 +92,16 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #undef GPIO_CLR
 #undef GPIO_SET_SLOW
 #undef GPIO_CLR_SLOW
-#if CONFIG_IDF_TARGET_ESP32C3
+
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
 #define GPIO_CLR(A) GPIO.out_w1tc.val = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts.val = (1 << A)
 #else // plain ESP32
 #define GPIO_CLR(A) GPIO.out_w1tc = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
 #endif
+
+
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
 #define GPIO_SET_SLOW(A) digitalWrite(A, HIGH)
 
@@ -110,7 +116,7 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
 
 
-#ifdef USE_ESP32_S3
+#if defined(USE_ESP32_S3) && ESP_IDF_VERSION_MAJOR < 5
 struct esp_lcd_i80_bus_t {
     int bus_id;            // Bus ID, index from 0
     portMUX_TYPE spinlock; // spinlock used to protect i80 bus members(hal, device_list, cur_trans)
@@ -143,7 +149,9 @@ struct esp_rgb_panel_t
   size_t resolution_hz;                                        // Peripheral clock resolution
   esp_lcd_rgb_timing_t timings;                                // RGB timing parameters (e.g. pclk, sync pulse, porch width)
   gdma_channel_handle_t dma_chan;                              // DMA channel handle
+#if ESP_IDF_VERSION_MAJOR < 5
   esp_lcd_rgb_panel_frame_trans_done_cb_t on_frame_trans_done; // Callback, invoked after frame trans done
+#endif // ESP_IDF_VERSION_MAJOR < 5
   void *user_ctx;                                              // Reserved user's data of callback functions
   int x_gap;                                                   // Extra gap in x coordinate, it's used when calculate the flush window
   int y_gap;                                                   // Extra gap in y coordinate, it's used when calculate the flush window
@@ -155,8 +163,7 @@ struct esp_rgb_panel_t
   } flags;
   dma_descriptor_t dma_nodes[]; // DMA descriptor pool of size `num_dma_nodes`
 };
-
-#endif
+#endif //USE_ESP32_S3 && ESP_IDF_VERSION_MAJOR < 5
 
 
 class uDisplay : public Renderer {
@@ -326,6 +333,8 @@ class uDisplay : public Renderer {
    void delay_arg(uint32_t arg);
    void Send_EP_Data(void);
    void send_spi_cmds(uint16_t cmd_offset, uint16_t cmd_size);
+   void send_spi_icmds(uint16_t cmd_size);
+   
 
 #ifdef USE_ESP32_S3
    int8_t par_cs;
@@ -352,7 +361,9 @@ class uDisplay : public Renderer {
    uint16_t pclk_active_neg;
 
    esp_lcd_panel_handle_t _panel_handle = NULL;
+#if ESP_IDF_VERSION_MAJOR < 5
    esp_rgb_panel_t *_rgb_panel;
+#endif //ESP_IDF_VERSION_MAJOR < 5
    uint16_t *rgb_fb;
 
 

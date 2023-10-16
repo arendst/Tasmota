@@ -189,7 +189,9 @@ void Script_ticker4_end(void) {
 }
 #endif
 
-
+#ifndef HARDWARE_FALLBACK
+#define HARDWARE_FALLBACK          2
+#endif
 
 // EEPROM MACROS
 // i2c eeprom
@@ -4988,8 +4990,8 @@ extern char *SML_GetSVal(uint32_t index);
             if (Is_gpio_used(rxpin) || Is_gpio_used(txpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
             }
-
-            glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, 1, 0, rxbsiz);
+ 
+            glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, HARDWARE_FALLBACK, 0, rxbsiz);
 
             if (glob_script_mem.sp) {
               fvar = glob_script_mem.sp->begin(br, ConvertSerialConfig(sconfig));
@@ -5003,8 +5005,9 @@ extern char *SML_GetSVal(uint32_t index);
 #endif
               AddLog(LOG_LEVEL_INFO, PSTR("SCR: Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d uart=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz, uart);
               Settings->serial_config = savc;
-              if (rxpin == 3 and txpin == 1) ClaimSerial();
-
+              if (glob_script_mem.sp->hardwareSerial()) {
+                ClaimSerial();
+              }
             } else {
               fvar = -2;
             }
@@ -11950,24 +11953,15 @@ int32_t call2pwl(const char *url) {
 #endif // TESLA_POWERWALL
 
 
-#ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
-#else
-#include <WiFiClientSecure.h>
-#endif //ESP8266
 
 // get https info page json string
 uint32_t call2https(const char *host, const char *path) {
   //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
 
-#ifdef ESP32
-  WiFiClientSecure *httpsClient;
-  httpsClient = new WiFiClientSecure;
-#else
   BearSSL::WiFiClientSecure_light *httpsClient;
   httpsClient = new BearSSL::WiFiClientSecure_light(1024, 1024);
-#endif
 
   httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
