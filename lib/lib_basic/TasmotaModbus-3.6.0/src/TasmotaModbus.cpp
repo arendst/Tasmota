@@ -109,7 +109,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   else if ((function_code == 5) || (function_code == 6))
   {
-    if (write_data == NULL)
+    if (write_data == nullptr)
     {
       free(frame);
 #ifdef TASMOTAMODBUSDEBUG
@@ -135,7 +135,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
 
     frame[framepointer++] = byte_count;
 
-    if (write_data == NULL)
+    if (write_data == nullptr)
     {
       free(frame);
 #ifdef TASMOTAMODBUSDEBUG
