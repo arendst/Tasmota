@@ -334,11 +334,11 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s=%s, now %d"), me->name, me->value, (int) power);
 
             if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS1 || (ilabel == LABEL_SINSTS && Energy->phase_count == 1)) {
-                Energy->apparent_power[0] = power;
+                Energy->active_power[0] = Energy->apparent_power[0] = power;
             } else if (ilabel == LABEL_SINSTS2) {
-                Energy->apparent_power[1] = power;
+                Energy->active_power[1] = Energy->apparent_power[1] = power;
             } else if (ilabel == LABEL_SINSTS3) {
-                Energy->apparent_power[2] = power;
+                Energy->active_power[2] = Energy->apparent_power[2] = power;
             }
         }
 
