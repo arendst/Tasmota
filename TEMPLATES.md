@@ -549,7 +549,7 @@ Goldair SleepSmart GCPF315   {"NAME":"Goldair Fan","GPIO":[0,0,0,0,0,0,0,0,0,230
 Holmes 36" Oscillating Tower  {"NAME":"Generic","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":54,"CMND":"TuyaMcu 11,1 | TuyaMcu 12,5 | WebButton1 Power | WebButton2 Oscillation "}
 Lucci Connect Remote Control  {"NAME":"Lucci Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 QuietCool Gable Mount Attic  {"NAME":"QuietCool-AFG-SMT-PRO-2.0","GPIO":[0,0,0,0,0,224,0,0,0,0,0,0,0,0,640,608,0,0,0,225,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Interlock 1|WebButton1 Low|WebButton2 High|SO8 1"}
-Sichler Haushaltsgerarte Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
+Sichler Haushaltsgeraete Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Technical Pro                {"NAME":"FXA16 Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 12,8"}
 Zemismart Bladeless          {"NAME":"Bladeless Fan","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 ```
