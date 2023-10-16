@@ -702,7 +702,7 @@ void ModbusTCPHandle(void)
           modbusBridge.dataCount = 1;
           modbusBridge.type = ModbusBridgeType::mb_uint16;
 
-          writeData = (uint16_t *)malloc((byteCount)+1);
+          writeData = (uint16_t *)malloc(byteCount+1);
           if (nullptr == writeData)
           {
             ModbusBridgeAllocError(PSTR("write"));
