@@ -137,6 +137,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Display invert setting after tasmota start in uDisplay driver [#19337](https://github.com/arendst/Tasmota/issues/19337)
 - Consolidate SGP40 and SGP41 into SGP4x driver [#19560](https://github.com/arendst/Tasmota/issues/19560)
 - MAX31855/MAX6675 sensors driver support up to 6 [#19329](https://github.com/arendst/Tasmota/issues/19329)
+- Teleinfo use Apparent Power as Active Power approximation [#19756](https://github.com/arendst/Tasmota/issues/19756)
+
 - ESP32 LittleFS updated to version with grow option [#19635](https://github.com/arendst/Tasmota/issues/19635)
 - ESP32 I2S audio preparation for Arduino Core v3 [#19637](https://github.com/arendst/Tasmota/issues/19637)
 - ESP32 analog from `analogRead()` to calibrated `analogReadMilliVolts()` [#19732](https://github.com/arendst/Tasmota/issues/19732)
@@ -146,6 +148,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Teleinfo power [#19381](https://github.com/arendst/Tasmota/issues/19381)
 - Exception 3 in IRHVAC [#19389](https://github.com/arendst/Tasmota/issues/19389)
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 [#19408](https://github.com/arendst/Tasmota/issues/19408)
+- ModbusBridge write memory leak [#19758](https://github.com/arendst/Tasmota/issues/19758)
+
 - ESP32 DS18x20 driver support extended over GPIO33
 - ESP32 Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 - ESP32 Shutter migration [#19454](https://github.com/arendst/Tasmota/issues/19454)

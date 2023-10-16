@@ -16,10 +16,11 @@ All notable changes to this project will be documented in this file.
 - MAX31855/MAX6675 sensors driver support up to 6 (#19329)
 - ESP32 analog from `analogRead()` to calibrated `analogReadMilliVolts()` (#19732)
 - I2S refactoring in preparation for core 3 (#19749)
-- Teleinfo use Apparent Power as Active Power approximation
+- Teleinfo use Apparent Power as Active Power approximation (#19756)
 
 ### Fixed
 - ESP32 shutter frequency (#19717)
+- ModbusBridge write memory leak (#19758)
 
 ### Removed
 - WiFiClientSecure in favour of WiFiClientSecureLightBearSSL (#19725)
