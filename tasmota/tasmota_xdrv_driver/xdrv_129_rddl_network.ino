@@ -711,7 +711,7 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   }
   if (status >= 0) {
     ResponseAppend_P("TX processing:\n");
-    char* tx_payload = create_transaction(&anyMsg, "2");
+    char* tx_payload = create_transaction(&anyMsg, "1");
 
     if(!tx_payload)
       return;
