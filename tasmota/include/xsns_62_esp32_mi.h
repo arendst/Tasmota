@@ -198,7 +198,7 @@ struct {
       uint32_t triggeredTele:1;
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t didGetConfig:1;
-      uint32_t didStartHAP:1;
+
       uint32_t triggerBerryAdvCB:1;
       uint32_t triggerBerryConnCB:1;
       uint32_t triggerNextConnJob:1;
@@ -230,12 +230,6 @@ struct {
 #endif //USE_ENERGY_SENSOR
 #endif //USE_MI_EXT_GUI
 
-#if USE_MI_HOMEKIT==1
-  void *outlet_hap_service[4]; //arbitrary chosen
-  int8_t HKconnectedControllers = 0; //should never be < 0
-  uint8_t HKinfoMsg = 0;
-  char hk_setup_code[11];
-#endif //USE_MI_HOMEKIT
   void *beConnCB;
   void *beAdvCB;
   void *beServerCB;
@@ -331,17 +325,6 @@ struct mi_sensor_t{
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
-#if USE_MI_HOMEKIT==1
-  //HAP handles
-  void *temp_hap_service;
-  void *hum_hap_service;
-  void *light_hap_service;
-  void *motion_hap_service;
-  void *door_sensor_hap_service;
-  void *button_hap_service[6];
-  void *bat_hap_service;
-  void *leak_hap_service;
-#endif //USE_MI_HOMEKIT
 };
 
 /*********************************************************************************************\
@@ -399,8 +382,6 @@ const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
 const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning|Server characteristic set|Server advertisement set|Server scan response set|Server client did connect|Server client did disconnect";
-
-const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
 
 const char kMI32_ButtonMsg[] PROGMEM = "Single|Double|Hold"; //mapping: in Tasmota: 1,2,3 ; for HomeKit and Xiaomi 0,1,2
 /*********************************************************************************************\
@@ -473,14 +454,6 @@ enum MI32_BLEInfoMsg {
   MI32_SERV_CLIENT_DISCONNECTED
 };
 
-enum MI32_HKInfoMsg {
-  MI32_HAP_DID_START = 1,
-  MI32_HAP_DID_NOT_START,
-  MI32_HAP_CONTROLLER_DISCONNECTED,
-  MI32_HAP_CONTROLLER_CONNECTED,
-  MI32_HAP_OUTLET_ADDED
-};
-
 /*********************************************************************************************\
  * extended web gui
 \*********************************************************************************************/
@@ -523,12 +496,6 @@ const char HTTP_MI32_PARENT_START[] PROGMEM =
       "<div class='box'><h2>MI32 Bridge</h2>"
           "Observing <span id='numDev'>%u</span> devices<br>"
           "Uptime: <span class='Ti'>%u</span> seconds<br>"
-#if USE_MI_HOMEKIT==1
-          "HomeKit setup code: %s<br>"
-          "HAP controller connections: %d<br>"
-#else
-          "HomeKit not enabled%s<br>"
-#endif //USE_MI_HOMEKIT
           "Free Heap: %u kB"
       "</div>";
 
