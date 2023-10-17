@@ -54,7 +54,6 @@
 #include "planetmintgo/asset/tx.pb-c.h"
 #include "google/protobuf/any.pb-c.h"
 
-#include "LittleFS.h"
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
@@ -189,8 +188,7 @@ uint8_t* readSeed()
   if( g_readSeed )
     return secret_seed;
 
-  int readbytes = readfile( "seed", secret_seed, SEED_SIZE);
-  if( readbytes != SEED_SIZE )
+  if( !readfile( "seed", secret_seed, SEED_SIZE) )
     return NULL;
 
   g_readSeed = true;
@@ -385,8 +383,7 @@ void setPlanetmintAPI( const char* api, size_t len)
 char* getPlanetmintAPI()
 {
   if( strlen( g_planetmintapi) == 0 ){
-    int readbytes = readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100);
-    if( readbytes < 0 )
+    if( !readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100))
       memset((void*)g_planetmintapi,0, 100);
   }
   return g_planetmintapi;
@@ -400,9 +397,8 @@ void setAccountID( const char* account, size_t len)
 char* getAccountID()
 {
   if( strlen( g_accountid) == 0 ){
-      int readbytes = readfile( "accountid", (uint8_t*)g_accountid, 20);
-    if( readbytes < 0 )
-      memset((void*)g_planetmintapi,0, 100);
+    if( !readfile( "accountid", (uint8_t*)g_accountid, 20))
+      memset((void*)g_accountid,0, 20);
   }
   return g_accountid;
 }
@@ -415,8 +411,7 @@ void setDenom( const char* denom, size_t len)
 char* getDenom()
 {
   if( strlen( g_denom) == 0 ){
-      int readbytes = readfile( "planetmintdenom", (uint8_t*)g_denom, 20);
-    if( readbytes < 0 )
+    if( !readfile( "planetmintdenom", (uint8_t*)g_denom, 20) )
       memset((void*)g_denom,0, 100);
   }
   if( strlen( g_denom) == 0 )
@@ -432,12 +427,11 @@ void setChainID( const char* chainid, size_t len)
 char* getChainID()
 {
   if( strlen( g_chainid) == 0 ){
-      int readbytes = readfile( "planetmintchainid", (uint8_t*)g_chainid, 30);
-    if( readbytes < 0 )
+    if( !readfile( "planetmintchainid", (uint8_t*)g_chainid, 30) )
       memset((void*)g_chainid,0, 100);
   }
   if( strlen( g_chainid) == 0 )
-    strcpy(g_chainid, "planetmintgotestv1");
+    strcpy(g_chainid, "planetmint-testnet-1");
 
   return g_chainid;
 }
@@ -585,8 +579,7 @@ int registerMachine(void* anyMsg){
   if (!gps_str )
     gps_str = "";
 
-  int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
-  if( readbytes < 0 )
+  if( !readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1) )
     memset((void*)machinecid_buffer,0, 58+1);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
@@ -632,21 +625,7 @@ int readfile( const char* filename, uint8_t* content, size_t length ){
     offset = strlen(filename) -limit;
   strcpy( &filename_local[1], filename+ offset);
 
-  if (!LittleFS.begin()) {
-    Serial.println("Failed to mount file system");
-    return -1;
-  }
-
-  File file = LittleFS.open(filename_local, "r");
-
-  if (!file) {
-    Serial.println("Failed to open file for reading");
-    return -2;
-  }
-  size_t readbytes = file.read(content, length);
-
-  file.close();
-  return readbytes;
+  return TfsLoadFile(filename_local, (uint8_t*)content, length);
 }
 
 bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
@@ -659,22 +638,16 @@ bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
     offset = strlen(filename) -limit;
   strcpy( &filename_local[1], filename+ offset);
 
-  if (!LittleFS.begin()) {
-    Serial.println("Failed to mount file system");
+#ifdef USE_UFILESYS
+  if (TfsSaveFile(filename_local, (const uint8_t*)content, length)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to write file content"));
     return false;
-  }
-
-  File file = LittleFS.open(filename_local, "w");
-
-  if (!file) {
-    Serial.println("Failed to open file for writing");
-    return false;
-  }
-  size_t written = file.write(content, length);
-  file.close();
-  return (written == length);
+  } 
+  return true;
+#else
+  return false;
+#endif  // USE_UFILESYS
 }
-
 
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;

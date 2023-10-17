@@ -782,13 +782,10 @@ void CmndAccountID(void)
   if( XdrvMailbox.data_len )
   {
     setAccountID(XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_ACCOUNTID, XdrvMailbox.data );
   }
-  else
-  {
-    char* paccountid = getAccountID();
-    Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
-  }
+  char* paccountid = getAccountID();
+  Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
+
   
   CmndStatusResponse(23);
   ResponseClear();
@@ -803,8 +800,7 @@ void CmdMachineCid(void) {
   else
   {
     char machinecid_buffer[58+1] = {0};
-    int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
-    if( readbytes < 0 )
+    if( !readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1) )
       memset((void*)machinecid_buffer,0, 58+1);
     Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, (char*)machinecid_buffer );
   }
@@ -821,8 +817,7 @@ void CmdResolveCid(void) {
     char* charPtr = reinterpret_cast<char*>(buff);
     
     char machinecid_buffer[58+1] = {0};
-    int readbytes = readfile( cid, buff, MY_STACK_LIMIT);
-    if( readbytes < 0 )
+    if( !readfile( cid, buff, MY_STACK_LIMIT) )
       memset((void*)machinecid_buffer,0, 58+1);
 
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
@@ -951,11 +946,12 @@ void CmndPoPChallenge(void) {
     clearStack();
     size_t length = 1048;
     uint8_t* content =  getStack( length );
+    memset( content, 0, length);
     const char* cid = XdrvMailbox.data;
-    int readBytes = readfile( cid, content, length );
-    if( readBytes >= 0 ){
+    if( readfile( cid, content, length )){
       char* encoding = "hex"; // or "raw", "hex", "b58", "base64"
       uint8_t* encoded_content =  getStack( length );
+      int readBytes = strlen( (const char*)content );
       char* encoded_data = (char*)getStack( 2*readBytes+1 );
       memset( encoded_data, 0,2*readBytes+1 );
       toHexString( encoded_data, content, 2*readBytes );
@@ -965,11 +961,8 @@ void CmndPoPChallenge(void) {
       ResponseAppend_P( "\"%s\": \"%s\"", "data", encoded_data );
       ResponseAppend_P( "} }");
     }
-    else if( readBytes == -1 ){
-      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Internal Error: FS not mountable" );
-    }
-    else if( readBytes == -2 ){
-      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Failed: file not found" );
+    else{
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Failed: to read file" );
     }
   }
   else{
