@@ -386,6 +386,8 @@ char* getPlanetmintAPI()
     if( !readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100))
       memset((void*)g_planetmintapi,0, 100);
   }
+  if( strlen( g_planetmintapi) == 0 )
+    strcpy(g_planetmintapi, "https://testnet-api.rddl.io");
   return g_planetmintapi;
 }
 
