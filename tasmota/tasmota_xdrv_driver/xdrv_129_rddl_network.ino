@@ -125,7 +125,7 @@ void CmndDrvText(void) {
 void RDDLNetworkSettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
-
+    SettingsUpdateText( SET_DEVICENAME, "RDDL-Tasmota");
 }
 
 void RDDLNetworkSettingsSave(void) {
@@ -746,7 +746,6 @@ void RDDLNetworkNotarizationScheduler(){
 
 bool Xdrv129(uint32_t function) {
   bool result = false;
-
   switch (function) {
     case FUNC_RESET_SETTINGS:
       RDDLNetworkSettingsLoad(1);
