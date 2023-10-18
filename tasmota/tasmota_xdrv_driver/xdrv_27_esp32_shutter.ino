@@ -23,7 +23,6 @@
  * Shutter or Blind support using two consecutive relays
  * Shutters for ESP32 with max eight shutters using more RAM and Settings from filesystem
 \*********************************************************************************************/
-#include "soc/soc_caps.h"
 
 #define XDRV_27            27
 #ifndef SHUTTER_STEPPER
@@ -179,8 +178,6 @@ struct SHUTTER {
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
   uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
-  uint8_t  ledc_channel = 0;           // current used channel for PWM
-  uint32_t current_stop_way = 0;
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
@@ -411,7 +408,6 @@ void ShutterCalculateAccelerator(uint8_t i)
         min_runtime_ms = current_pwm_velocity * 1000 / STEPS_PER_SECOND / velocity_change_per_step_max;
         // decellaration way from current velocity
         current_stop_way = min_runtime_ms * STEPS_PER_SECOND * (current_pwm_velocity + velocity_change_per_step_max) * Shutter[i].direction  / 2 / ShutterGlobal.open_velocity_max - (Shutter[i].accelerator<0?Shutter[i].direction*1000*current_pwm_velocity/ShutterGlobal.open_velocity_max:0);
-        Shutter[i].current_stop_way = current_stop_way;
         next_possible_stop_position = current_real_position + current_stop_way ;
         // ensure that the accelerotor kicks in at the first overrun of the target position
         if (  Shutter[i].accelerator < 0 || next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
@@ -473,6 +469,9 @@ int32_t ShutterCalculatePosition(uint32_t i)
 
 void ShutterDecellerateForStop(uint8_t i)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
@@ -493,9 +492,7 @@ void ShutterDecellerateForStop(uint8_t i)
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
         TasmotaGlobal.pwm_value[i] = 0;
-        ledcWrite(Shutter[i].ledc_channel, 0);
-        ledcAttachPin(Pin(GPIO_PWM1, i), SOC_LEDC_CHANNEL_NUM);
-        Shutter[i].ledc_channel = 0;
+        pwm_apply = true;
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
@@ -504,6 +501,9 @@ void ShutterDecellerateForStop(uint8_t i)
       Shutter[i].pwm_velocity = 0;
     break;
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
@@ -534,23 +534,6 @@ uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
   return cycle_time;
 }
 
-uint8_t ShutterGetFreeChannel() {
-  uint8_t nextFreeChannel = 0;
-  for (uint8_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-    //SOC_LEDC_CHANNEL_NUM   
-    nextFreeChannel = tmax(nextFreeChannel, Shutter[i].ledc_channel);
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: %d -> channel %d"), i, Shutter[i].ledc_channel);
-  }
-  if (nextFreeChannel >= SOC_LEDC_CHANNEL_NUM) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("SHT: All PWM channel busy. Open issue-ticket."));
-    return 0;
-  } else {
-    nextFreeChannel++;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel);
-  }
-  return nextFreeChannel;
-}
-
 uint8_t ShutterGetOptions(uint8_t index) {
    return ShutterSettings.shutter_options[index];
 }
@@ -579,7 +562,7 @@ void ShutterInit(void)
   ShutterGlobal.RelayShutterMask = 0;
   //Initialize to get relay that changed
   ShutterGlobal.RelayOldMask = TasmotaGlobal.power;
-  
+
   ShutterGlobal.open_velocity_max = ShutterSettings.open_velocity_max;
   for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
@@ -983,6 +966,9 @@ void ShutterReportPosition(bool always, uint32_t index)
 
 void ShutterRtc50mS(void)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
     // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     if (Shutter[i].direction) {
@@ -1003,15 +989,17 @@ void ShutterRtc50mS(void)
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
             digitalWrite(Pin(GPIO_PWM1, i), LOW);
-
-            ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  //
-            //ledcWrite(i, 512);  // Setzt den PWM-Wert auf 0
+            analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
             TasmotaGlobal.pwm_value[i] = 512;
+            pwm_apply = true;
           }
         break;
       }
     } // if (Shutter[i].direction)
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 void ShutterSetPosition(uint32_t device, uint32_t position)
@@ -1178,12 +1166,9 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
-        Shutter[i].ledc_channel = ShutterGetFreeChannel();
-        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Channel %d assigned to SHT %d"),Shutter[i].ledc_channel, i);
-        ledcSetup(Shutter[i].ledc_channel, Shutter[i].pwm_velocity, 8);
-        ledcAttachPin(Pin(GPIO_PWM1, i), Shutter[i].ledc_channel);  
-        ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  
-        ledcWrite(Shutter[i].ledc_channel, 0);  // Setzt den PWM-Wert auf 0
+        analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));
+        TasmotaGlobal.pwm_value[i] = 0;
+        PwmApplyGPIO(false);
         RtcSettings.pulse_counter[i] = 0;
       break;
 #endif
@@ -1210,6 +1195,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 
     // avoid file system writes during move to minimize missing steps. 15min diabled. Will re renabled on full stop
     TasmotaGlobal.save_data_counter = 900;
+
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
 
@@ -1286,9 +1272,9 @@ void ShutterUpdatePosition(void)
       // Update time information
       int32_t deltatime = Shutter[i].time - Shutter[i].last_reported_time;
       Shutter[i].last_reported_time = Shutter[i].time + 1;
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
-        i+1, Shutter[i].time, deltatime, Shutter[i].current_stop_way, Shutter[i].pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, Shutter[i].real_position, 
-        Shutter[i].current_stop_way + Shutter[i].real_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
+        i+1, Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
+        next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
 
       // Check calibration mode and energy information
