@@ -124,7 +124,6 @@ def esp32_create_combined_bin(source, target, env):
     # factory_offset = -1      # error code value - currently unused
     app_offset = 0x10000     # default value for "old" scheme
     fs_offset = -1           # error code value
-    flash_size_from_esp, flash_size_was_overridden = esp32_detect_flashsize()
 
     with open(env.BoardConfig().get("build.partitions")) as csv_file:
         print("Read partitions from ",env.BoardConfig().get("build.partitions"))
@@ -143,11 +142,6 @@ def esp32_create_combined_bin(source, target, env):
                 #     factory_offset = int(row[3],base=16)
                 elif(row[0] == 'spiffs'):
                     partition_size = row[4]
-                    if flash_size_was_overridden:
-                        print(f"Will override fixed FS partition size from {env.BoardConfig().get('build.partitions')}: {partition_size} ...")
-                        partition_size =  hex(int(flash_size_from_esp.split("MB")[0]) * 0x100000 - int(row[3],base=16))
-                        print(f"... with computed maximum size from connected {env.get('BOARD_MCU')}: {partition_size}")
-                        patch_partitions_bin(partition_size)
                     if esp32_build_filesystem(partition_size):
                         fs_offset = int(row[3],base=16)
 
@@ -169,7 +163,7 @@ def esp32_create_combined_bin(source, target, env):
     else:
         esp32_fetch_safeboot_bin(tasmota_platform)
 
-    flash_size = env.BoardConfig().get("build.flash_size", "4MB")
+    flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
     flash_freq = env.BoardConfig().get("build.f_flash", "40000000L")
     flash_freq = str(flash_freq).replace("L", "")
     flash_freq = str(int(int(flash_freq) / 1000000)) + "m"
