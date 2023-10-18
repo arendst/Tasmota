@@ -469,9 +469,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
 
 void ShutterDecellerateForStop(uint8_t i)
 {
-#ifdef ESP32
   bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
-#endif
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
@@ -501,9 +499,7 @@ void ShutterDecellerateForStop(uint8_t i)
       Shutter[i].pwm_velocity = 0;
     break;
   }
-#ifdef ESP32
   if (pwm_apply) { PwmApplyGPIO(false); }
-#endif
 }
 
 uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
@@ -966,10 +962,8 @@ void ShutterReportPosition(bool always, uint32_t index)
 
 void ShutterRtc50mS(void)
 {
-#ifdef ESP32
   bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
-#endif
-    // No Logging allowed. RTC Timer
+  // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     if (Shutter[i].direction) {
       // update position data before increasing counter
@@ -997,9 +991,7 @@ void ShutterRtc50mS(void)
       }
     } // if (Shutter[i].direction)
   }
-#ifdef ESP32
   if (pwm_apply) { PwmApplyGPIO(false); }
-#endif
 }
 
 void ShutterSetPosition(uint32_t device, uint32_t position)
