@@ -579,7 +579,7 @@ void ShutterInit(void)
   ShutterGlobal.RelayShutterMask = 0;
   //Initialize to get relay that changed
   ShutterGlobal.RelayOldMask = TasmotaGlobal.power;
-
+  
   ShutterGlobal.open_velocity_max = ShutterSettings.open_velocity_max;
   for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
@@ -827,8 +827,16 @@ void ShutterPowerOff(uint8_t i)
   #endif
       break;
   }
+
+  // restore save_data behavior if all shutters are in stopped state
   if (Settings->save_data) {
-    TasmotaGlobal.save_data_counter = Settings->save_data;
+    bool shutter_all_stopped = true;
+    for (uint8_t j = 0 ; j < TasmotaGlobal.shutters_present ; j++) {
+      if (Shutter[j].direction != 0)
+        shutter_all_stopped = false;
+    }
+    if (shutter_all_stopped)
+      TasmotaGlobal.save_data_counter = Settings->save_data;
   }
   Shutter[i].last_stop_time = millis();
 }
@@ -1201,10 +1209,9 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
         Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
     }
 
-    // avoid file system writes during move to minimize missing steps
+    // avoid file system writes during move to minimize missing steps. 15min diabled. Will re renabled on full stop
     if (Settings->save_data) {
-      uint32_t move_duration = (direction > 0) ? Shutter[i].open_time : Shutter[i].close_time;
-      TasmotaGlobal.save_data_counter = Settings->save_data + (move_duration / 10) +1;
+      TasmotaGlobal.save_data_counter = 900;
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
