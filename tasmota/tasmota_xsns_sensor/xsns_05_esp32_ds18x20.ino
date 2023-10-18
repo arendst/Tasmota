@@ -408,7 +408,7 @@ void CmndDSAlias(void) {
 
     for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
       for (uint32_t j = 0; j < 8; j++) {
-        sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);
+        sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);
       }
       if (!strncmp(Argument1, address, 12) && Argument2[0]) {
         snprintf_P(ds18x20_sensor[i].alias, DS18X20_ALIAS_LEN, PSTR("%s"), Argument2);
