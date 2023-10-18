@@ -353,32 +353,30 @@ const char kds18Commands[] PROGMEM = "DS18|"  // prefix
 void (* const DSCommand[])(void) PROGMEM = {
   &CmndDSAlias, &CmndDSRescan ,&CmndDSRetryRead };
 
-
 void CmndDSRetryRead(void) {
   char argument[XdrvMailbox.data_len];
 
-  if (ArgC()==1) {
+  if (ArgC() == 1) {
     DS18X20Data.retryRead = atoi(ArgV(argument, 1));
   }
-  Response_P(PSTR("{\"DS18" D_CMND_DS_RETRYREAD "\": %d}"),DS18X20Data.retryRead);
+  Response_P(PSTR("{\"DS18" D_CMND_DS_RETRYREAD "\": %d}"), DS18X20Data.retryRead);
 } 
-  
 
 void CmndDSRescan(void) {
   char argument[XdrvMailbox.data_len];
   uint8_t retries = 1;
   uint8_t sensorsToFind = 1;
-  if (ArgC()>0 && ArgC()<3) {
+  if ((ArgC() > 0) && (ArgC() < 3)) {
     sensorsToFind = atoi(ArgV(argument, 1));
   }
-  if (ArgC()==2) {
+  if (ArgC() == 2) {
     retries = atoi(ArgV(argument, 2));
   }
   
   DS18X20Data.sensors = 0;
   memset(&ds18x20_sensor, 0, sizeof(ds18x20_sensor));
 
-  while (DS18X20Data.sensors < sensorsToFind && retries-- > 0) {
+  while ((DS18X20Data.sensors < sensorsToFind) && (retries-- > 0)) {
     Ds18x20Search();
     AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
   }
@@ -388,28 +386,29 @@ void CmndDSRescan(void) {
     Ds18x20Name(i);
     char address[17];
     for (uint32_t j = 0; j < 8; j++) {
-      sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);  // Skip sensor type and crc
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);  // Skip sensor type and crc
     }
-    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"),DS18X20Data.name, address);
-    if (i < DS18X20Data.sensors-1) {ResponseAppend_P(PSTR(","));}
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"), DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) { ResponseAppend_P(PSTR(",")); }
   }
   ResponseAppend_P(PSTR("}"));
 }
 
 void CmndDSAlias(void) {
-  // Ds18Alias 430516707FA6FF28,Sensorname
+  // Ds18Alias 430516707FA6FF28,SensorName - Use SensorName instead of DS18B20
+  // Ds18Alias 430516707FA6FF28,0          - Disable alias (default)
   char Argument1[XdrvMailbox.data_len];
   char Argument2[XdrvMailbox.data_len];
   char address[17];
 
-  if (ArgC()==2) {
+  if (ArgC() == 2) {
     ArgV(Argument1, 1);
     ArgV(Argument2, 2);
     TrimSpace(Argument2);
 
     for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
       for (uint32_t j = 0; j < 8; j++) {
-        sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);
+        sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);
       }
       if (!strncmp(Argument1, address, 12) && Argument2[0]) {
         snprintf_P(ds18x20_sensor[i].alias, DS18X20_ALIAS_LEN, PSTR("%s"), Argument2);
@@ -423,10 +422,10 @@ void CmndDSAlias(void) {
     Ds18x20Name(i);
     char address[17];
     for (uint32_t j = 0; j < 8; j++) {
-      sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);  // Skip sensor type and crc
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);  // Skip sensor type and crc
     }
-    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"),DS18X20Data.name, address);
-    if (i < DS18X20Data.sensors-1) ResponseAppend_P(PSTR(","));
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"), DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) { ResponseAppend_P(PSTR(",")); }
   }
   ResponseAppend_P(PSTR("}"));
 }
