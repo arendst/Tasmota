@@ -180,6 +180,7 @@ struct SHUTTER {
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
   uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
   uint8_t  ledc_channel = 0;           // current used channel for PWM
+  uint32_t current_stop_way = 0;
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
@@ -410,6 +411,7 @@ void ShutterCalculateAccelerator(uint8_t i)
         min_runtime_ms = current_pwm_velocity * 1000 / STEPS_PER_SECOND / velocity_change_per_step_max;
         // decellaration way from current velocity
         current_stop_way = min_runtime_ms * STEPS_PER_SECOND * (current_pwm_velocity + velocity_change_per_step_max) * Shutter[i].direction  / 2 / ShutterGlobal.open_velocity_max - (Shutter[i].accelerator<0?Shutter[i].direction*1000*current_pwm_velocity/ShutterGlobal.open_velocity_max:0);
+        Shutter[i].current_stop_way = current_stop_way;
         next_possible_stop_position = current_real_position + current_stop_way ;
         // ensure that the accelerotor kicks in at the first overrun of the target position
         if (  Shutter[i].accelerator < 0 || next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
@@ -537,13 +539,16 @@ uint8_t ShutterGetFreeChannel() {
   for (uint8_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
     //SOC_LEDC_CHANNEL_NUM   
     nextFreeChannel = tmax(nextFreeChannel, Shutter[i].ledc_channel);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: %d -> channel %d"), i, Shutter[i].ledc_channel);
   }
   if (nextFreeChannel >= SOC_LEDC_CHANNEL_NUM) {
     AddLog(LOG_LEVEL_ERROR, PSTR("SHT: All PWM channel busy. Open issue-ticket."));
+    return 0;
   } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel+1);
+    nextFreeChannel++;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel);
   }
-  return nextFreeChannel++;
+  return nextFreeChannel;
 }
 
 uint8_t ShutterGetOptions(uint8_t index) {
@@ -1167,6 +1172,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
         Shutter[i].ledc_channel = ShutterGetFreeChannel();
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Channel %d assigned to SHT %d"),Shutter[i].ledc_channel, i);
         ledcSetup(Shutter[i].ledc_channel, Shutter[i].pwm_velocity, 8);
         ledcAttachPin(Pin(GPIO_PWM1, i), Shutter[i].ledc_channel);  
         ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  
@@ -1276,9 +1282,9 @@ void ShutterUpdatePosition(void)
       // Update time information
       int32_t deltatime = Shutter[i].time - Shutter[i].last_reported_time;
       Shutter[i].last_reported_time = Shutter[i].time + 1;
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
-        i+1, Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
-        next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
+        i+1, Shutter[i].time, deltatime, Shutter[i].current_stop_way, Shutter[i].pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, Shutter[i].real_position, 
+        Shutter[i].current_stop_way + Shutter[i].real_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
 
       // Check calibration mode and energy information
