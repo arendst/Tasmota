@@ -68,17 +68,6 @@
 
 #include "include/xsns_62_esp32_mi.h"
 
-#if USE_MI_HOMEKIT==0
-  #undef USE_MI_HOMEKIT
-#endif
-#if USE_MI_HOMEKIT==1
-extern "C" void mi_homekit_main(void);
-extern "C" void mi_homekit_update_value(void* handle, float value, uint32_t type);
-extern "C" void mi_homekit_stop();
-void MI32getSetupCodeFromMAC(char* code);
-#endif //USE_MI_HOMEKIT
-
-
 void MI32scanEndedCB(NimBLEScanResults results);
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 void MI32AddKey(mi_bindKey_t keyMAC);
@@ -497,18 +486,12 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.fert=1;
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
-#if USE_MI_HOMEKIT==1
-      _newSensor.light_hap_service = nullptr;
-#endif
       break;
     case NLIGHT:
       _newSensor.events=0x00;
       _newSensor.feature.motion=1;
       _newSensor.feature.NMT=1;
       _newSensor.NMT=0;
-#if USE_MI_HOMEKIT==1
-      _newSensor.motion_hap_service = nullptr;
-#endif //USE_MI_HOMEKIT
       break;
     case MJYD2S:
       _newSensor.NMT=0;
@@ -517,10 +500,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.NMT=1;
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
-#if USE_MI_HOMEKIT==1
-      _newSensor.light_hap_service = nullptr;
-      _newSensor.motion_hap_service = nullptr;
-#endif //USE_MI_HOMEKIT
       _newSensor.feature.bat=1;
       _newSensor.NMT=0;
       break;
@@ -531,17 +510,11 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
         _newSensor.feature.knob = 1;
         _newSensor.dimmer = 0;
       }
-#if USE_MI_HOMEKIT==1
-      _newSensor.button_hap_service[0] = nullptr;
-#endif //USE_MI_HOMEKIT
       break;
     case MCCGQ02:
       _newSensor.events=0x00;
       _newSensor.feature.bat=1;
       _newSensor.feature.door=1;
-#if USE_MI_HOMEKIT==1
-      _newSensor.door_sensor_hap_service = nullptr;
-#endif //USE_MI_HOMEKIT
       _newSensor.door = 255;
       break;
     case SJWS01L:
@@ -549,11 +522,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.bat=1;
       _newSensor.feature.Btn=1;
       _newSensor.Btn=99;
-#if USE_MI_HOMEKIT==1
-      _newSensor.leak_hap_service = nullptr;
-      _newSensor.bat_hap_service = nullptr;
-      _newSensor.button_hap_service[0] = nullptr;
-#endif //USE_MI_HOMEKIT
       break;
     default:
       _newSensor.hum=NAN;
@@ -562,11 +530,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.hum=1;
       _newSensor.feature.tempHum=1;
       _newSensor.feature.bat=1;
-#if USE_MI_HOMEKIT==1
-      _newSensor.temp_hap_service = nullptr;
-      _newSensor.hum_hap_service = nullptr;
-      _newSensor.bat_hap_service = nullptr;
-#endif //USE_MI_HOMEKIT
       break;
     }
   MIBLEsensors.push_back(_newSensor);
@@ -707,17 +670,6 @@ void MI32Init(void) {
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Put WiFi modem in sleep mode"));
       WiFi.setSleep(true); // Sleep
     }
-  }
-
-  if(MI32.mode.didGetConfig && !Settings->flag5.zigbee_hide_bridge_topic){ // borrow SO125 1 to turn off HomeKit
-    MI32.mode.didStartHAP = 0;
-  #if USE_MI_HOMEKIT==1
-    MI32getSetupCodeFromMAC(MI32.hk_setup_code);
-    AddLog(LOG_LEVEL_INFO,PSTR("M32: Init HAP core"));
-    mi_homekit_main();
-  #else
-    MI32.mode.didStartHAP = 1;
-  #endif //USE_MI_HOMEKIT
   }
 
   if (!MI32.mode.init) {
@@ -924,128 +876,7 @@ extern "C" {
   }
 
 } //extern "C"
-/*********************************************************************************************\
- * Homekit section
-\*********************************************************************************************/
-#if USE_MI_HOMEKIT==1
-extern "C" {
 
-  const char * MI32getSetupCode(){
-    return (const char*)MI32.hk_setup_code;
-  }
-
-  uint32_t MI32numOfRelays(){
-    if(TasmotaGlobal.devices_present>0) MI32.HKinfoMsg = MI32_HAP_OUTLET_ADDED;
-    return TasmotaGlobal.devices_present;
-  }
-
-  void MI32setRelayFromHK(uint32_t relay, bool onOff){
-      ExecuteCommandPower(relay, onOff, SRC_IGNORE);
-  }
-
-  uint32_t MI32getDeviceType(uint32_t slot){
-    return MIBLEsensors[slot].type;
-  }
-
-/**
- * @brief Get at least a bit of the status of the HAP core, i.e. to reduce the activy of the driver while doing the pairing
- *
- * @param event
- */
-  void MI32passHapEvent(uint32_t event){
-    switch(event){
-      case 5: //HAP_EVENT_PAIRING_STARTED
-        MI32suspendScanTask();
-      default:
-        MI32resumeScanTask();
-    }
-    if(event==4){
-      MI32.HKinfoMsg = MI32_HAP_CONTROLLER_DISCONNECTED;
-      MI32.HKconnectedControllers--;
-    }
-    if(event==3){
-      MI32.HKinfoMsg = MI32_HAP_CONTROLLER_CONNECTED;
-      MI32.HKconnectedControllers++;
-    }
-  }
-
-  void MI32didStartHAP(bool HAPdidStart){
-    if(HAPdidStart) {
-      MI32.mode.didStartHAP = 1;
-      MI32.HKinfoMsg = MI32_HAP_DID_START;
-      }
-    else{
-      MI32.HKinfoMsg = MI32_HAP_DID_NOT_START;
-    }
-  }
-
-/**
- * @brief Simply store the writeable HAP characteristics as void pointers in the "main" driver for updates of the values
- *
- * @param slot - sensor slot in MIBLEsensors
- * @param type - sensors type, except for the buttons this is equal to the mibeacon types
- * @param handle - a void ponter to a characteristic
- */
-  void MI32saveHAPhandles(uint32_t slot, uint32_t type, void* handle){
-    // AddLog(LOG_LEVEL_INFO,PSTR("M32: pass ptr to hap service, type:%u"), type);
-    switch(type){
-      case 1000: case 1001: case 1002: case 1003: case 1004: case 1005:
-        MIBLEsensors[slot].button_hap_service[type-1000] = handle;
-        break;
-      case 0x04:
-        MIBLEsensors[slot].temp_hap_service = handle;
-        break;
-      case 0x06:
-        MIBLEsensors[slot].hum_hap_service = handle;
-        break;
-      case 0x0a:
-        MIBLEsensors[slot].bat_hap_service = handle;
-        break;
-      case 0x07:
-        MIBLEsensors[slot].light_hap_service = handle;
-        break;
-      case 0x0f:
-        MIBLEsensors[slot].motion_hap_service = handle;
-        break;
-      case 0x14:
-        MIBLEsensors[slot].leak_hap_service = handle;
-        break;
-      case 0x19:
-        MIBLEsensors[slot].door_sensor_hap_service = handle;
-        break;
-      case 0xf0:
-        if(slot>3) break; //support only 4 for now
-        MI32.outlet_hap_service[slot] = handle;
-        break;
-    }
-  }
-}
-
-/**
- * @brief Creates a simplified setup code from the Wifi MAC for HomeKit by converting every ascii-converted byte to 1, if it not 2-9
- *        Example: AABBCC1234f2
- *              -> 111-11-234
- *        This is no security feature, only for convenience
- *  * @param setupcode
- */
-  void MI32getSetupCodeFromMAC(char *setupcode){
-    uint8_t _mac[6];
-    char _macStr[13] = { 0 };
-    WiFi.macAddress(_mac);
-    ToHex_P(_mac,6,_macStr,13);
-    AddLog(LOG_LEVEL_INFO,PSTR("M32: Wifi MAC: %s"), _macStr);
-    for(int i = 0; i<10; i++){
-      if(_macStr[i]>'9' || _macStr[i]<'1') setupcode[i]='1';
-      else setupcode[i] = _macStr[i];
-    }
-    setupcode[3] = '-';
-    setupcode[6] = '-';
-    setupcode[10] = 0;
-    AddLog(LOG_LEVEL_INFO,PSTR("M32: HK setup code: %s"), setupcode);
-    return;
-  }
-
-#endif //USE_MI_HOMEKIT
 /*********************************************************************************************\
  * Config section
 \*********************************************************************************************/
@@ -1651,11 +1482,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].longpress = _payload.Btn.value;
         MI32.mode.shallTriggerTele = 1;
         MIBLEsensors[_slot].eventType.longpress = 1;
-#if USE_MI_HOMEKIT==1
-      if((void**)MIBLEsensors[_slot].button_hap_service[0] != nullptr){
-        mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[0], (float)2.0f, 0x01); // only one button, long press = 2
-        }
-#endif //USE_MI_HOMEKIT
         break;
       }
       // single, double, long
@@ -1668,13 +1494,6 @@ if(decryptRet!=0){
       }
       MIBLEsensors[_slot].eventType.Btn = 1;
       MI32.mode.shallTriggerTele = 1;
-#if USE_MI_HOMEKIT==1
-      if(MIBLEsensors[_slot].Btn>5) break; // hard coded limit for now
-      if((void**)MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn] != nullptr){
-        // AddLog(LOG_LEVEL_DEBUG,PSTR("Send Button %u:  SingleLong:%u, pointer: %x"), MIBLEsensors[_slot].Btn,_singleLong,MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn] );
-        mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn], (float)MIBLEsensors[_slot].BtnType, 0x01);
-        }
-#endif //USE_MI_HOMEKIT
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
     case 0x04:
@@ -1685,9 +1504,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].eventType.temp = 1;
         DEBUG_SENSOR_LOG(PSTR("Mode 4: temp updated"));
       }
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].temp_hap_service, _tempFloat, 0x04);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
       MI32addHistory(MIBLEsensors[_slot].temp_history, _tempFloat, 0);
 #endif //USE_MI_EXT_GUI
@@ -1701,9 +1517,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].eventType.hum = 1;
         DEBUG_SENSOR_LOG(PSTR("Mode 6: hum updated"));
       }
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].hum_hap_service, _tempFloat,0x06);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
       MI32addHistory(MIBLEsensors[_slot].hum_history, _tempFloat, 1);
 #endif //USE_MI_EXT_GUI
@@ -1716,9 +1529,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].eventType.noMotion  = 1;
       }
       MIBLEsensors[_slot].eventType.lux  = 1;
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].light_hap_service, (float)MIBLEsensors[_slot].lux,0x07);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
       MI32addHistory(MIBLEsensors[_slot].lux_history, (float)MIBLEsensors[_slot].lux, 2);
 #endif //USE_MI_EXT_GUI
@@ -1749,9 +1559,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].bat = _payload.bat;
         MIBLEsensors[_slot].eventType.bat  = 1;
         DEBUG_SENSOR_LOG(PSTR("Mode a: bat updated"));
-#if USE_MI_HOMEKIT==1
-          mi_homekit_update_value(MIBLEsensors[_slot].bat_hap_service, (float)_payload.bat,0xa);
-#endif //USE_MI_HOMEKIT
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode a: U8: %u %%"), _payload.bat);
     break;
@@ -1780,10 +1587,6 @@ if(decryptRet!=0){
       MIBLEsensors[_slot].eventType.lux = 1;
       MIBLEsensors[_slot].NMT = 0;
       MI32.mode.shallTriggerTele = 1;
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].motion_hap_service, (float)1,0x0f);
-        mi_homekit_update_value(MIBLEsensors[_slot].light_hap_service, (float)_payload.lux,0x07);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
       MI32addHistory(MIBLEsensors[_slot].lux_history, (float)MIBLEsensors[_slot].lux, 2);
 #endif //USE_MI_EXT_GUI
@@ -1794,9 +1597,6 @@ if(decryptRet!=0){
       MIBLEsensors[_slot].leak = _payload.leak;
       MIBLEsensors[_slot].eventType.leak = 1;
       if(_payload.leak>0) MI32.mode.shallTriggerTele = 1;
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].leak_hap_service, (float)_payload.leak,0x14);
-#endif //USE_MI_HOMEKIT
       break;
     case 0x17:
       MIBLEsensors[_slot].feature.NMT = 1;
@@ -1811,9 +1611,6 @@ if(decryptRet!=0){
       MIBLEsensors[_slot].eventType.door = 1;
       MIBLEsensors[_slot].events++;
       MI32.mode.shallTriggerTele = 1;
-#if USE_MI_HOMEKIT==1
-        mi_homekit_update_value(MIBLEsensors[_slot].door_sensor_hap_service, (float)_payload.door,0x19);
-#endif //USE_MI_HOMEKIT
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 19: %u"), _payload.door);
     break;
 
@@ -1823,9 +1620,6 @@ if(decryptRet!=0){
         MIBLEsensors[_slot].events++;
         MIBLEsensors[_slot].NMT = 0;
         MI32.mode.shallTriggerTele = 1;
-#if USE_MI_HOMEKIT==1
-          mi_homekit_update_value(MIBLEsensors[_slot].motion_hap_service, (float)1,0x0f);
-#endif //USE_MI_HOMEKIT
       }
       else{
         //unknown payload
@@ -1865,11 +1659,6 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
 
   MIBLEsensors[_slot].eventType.tempHum  = 1;
   MIBLEsensors[_slot].eventType.bat  = 1;
-#if USE_MI_HOMEKIT==1
-    mi_homekit_update_value(MIBLEsensors[_slot].temp_hap_service, MIBLEsensors.at(_slot).temp,0x04);
-    mi_homekit_update_value(MIBLEsensors[_slot].hum_hap_service, MIBLEsensors.at(_slot).hum,0x06);
-    mi_homekit_update_value(MIBLEsensors[_slot].bat_hap_service, (float)MIBLEsensors.at(_slot).bat,0x0a);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
   bitSet(MI32.widgetSlot,_slot);
   MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
@@ -1898,9 +1687,6 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI
           MIBLEsensors[_slot].temp = _tempFloat;
           MIBLEsensors[_slot].eventType.temp  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: temp updated"));
-#if USE_MI_HOMEKIT==1
-            mi_homekit_update_value(MIBLEsensors[_slot].temp_hap_service, _tempFloat,0x04);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
           MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
 #endif //USE_MI_EXT_GUI
@@ -1910,9 +1696,6 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI
           MIBLEsensors[_slot].hum = _tempFloat;
           MIBLEsensors[_slot].eventType.hum  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: hum updated"));
-#if USE_MI_HOMEKIT==1
-            mi_homekit_update_value(MIBLEsensors[_slot].hum_hap_service, _tempFloat,0x06);
-#endif //USE_MI_HOMEKIT
 #ifdef USE_MI_EXT_GUI
           MI32addHistory(MIBLEsensors[_slot].hum_history, (float)MIBLEsensors[_slot].hum, 1);
 #endif //USE_MI_EXT_GUI
@@ -2029,14 +1812,7 @@ void MI32Every50mSecond(){
     AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s"),_message);
     MI32.infoMsg = 0;
   }
-#if USE_MI_HOMEKIT==1
-  if(MI32.HKinfoMsg > 0){
-    char _message[32];
-    GetTextIndexed(_message, sizeof(_message), MI32.HKinfoMsg-1, kMI32_HKInfoMsg);
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s"),_message);
-    MI32.HKinfoMsg = 0;
-  }
-#endif //USE_MI_HOMEKIT
+
 }
 
 /**
@@ -2046,25 +1822,9 @@ void MI32Every50mSecond(){
 
 void MI32EverySecond(bool restart){
 
-#if USE_MI_HOMEKIT==1
-  if(TasmotaGlobal.devices_present>0){
-    for(uint32_t i=0;i<TasmotaGlobal.devices_present;i++){
-      power_t mask = 1 << i;
-      // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Power masl: %u"), (TasmotaGlobal.power & mask));
-      mi_homekit_update_value(MI32.outlet_hap_service[i],(TasmotaGlobal.power & mask)!=0,0xf0);
-    }
-  }
-#endif //USE_MI_HOMEKIT
-
-
   for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
     if(MIBLEsensors[i].type==NLIGHT || MIBLEsensors[i].type==MJYD2S){
       MIBLEsensors[i].NMT++;
-#if USE_MI_HOMEKIT==1
-      if(MIBLEsensors[i].NMT > 20){ //TODO: Make a choosable timeout later
-        mi_homekit_update_value(MIBLEsensors[i].motion_hap_service,0.0f,0x0f);
-      }
-#endif //USE_MI_HOMEKIT
     }
   }
 }
@@ -2355,12 +2115,9 @@ void MI32InitGUI(void){
   WSContentSend_P(HTTP_MI32_STYLE_SVG,1,185,124,124,185,124,124);
   WSContentSend_P(HTTP_MI32_STYLE_SVG,2,151,190,216,151,190,216);
   WSContentSend_P(HTTP_MI32_STYLE_SVG,3,242,240,176,242,240,176);
-#if USE_MI_HOMEKIT==1
-  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),MI32.hk_setup_code,MI32.HKconnectedControllers,ESP.getFreeHeap()/1024);
-#else
-  const char _setupCode[1] = {0};
-  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),_setupCode,ESP.getFreeHeap()/1024);
-#endif //USE_MI_HOMEKIT
+
+  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),ESP.getFreeHeap()/1024);
+
   for(uint32_t _slot = 0;_slot<MIBLEsensors.size();_slot++){
     MI32sendWidget(_slot);
   }
@@ -2574,11 +2331,7 @@ void MI32Show(bool json)
       MI32suspendScanTask();
 
       WSContentSend_P(HTTP_MI32, MIBLEsensors.size());
-#if USE_MI_HOMEKIT==1
-      if(MI32.mode.didStartHAP){
-        WSContentSend_PD(PSTR("{s}HomeKit Code{m} %s{e}"),MI32.hk_setup_code);
-      }
-#endif //USE_MI_HOMEKIT
+
 #ifndef USE_MI_EXT_GUI
       for (uint32_t i = 0; i<MIBLEsensors.size(); i++) {
         WSContentSend_PD(HTTP_MI32_HL);
@@ -2642,12 +2395,6 @@ int ExtStopBLE(){
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
         while (MI32.mode.runningScan) yield();
       }
-#if USE_MI_HOMEKIT==1
-      if(MI32.mode.didStartHAP) {
-        AddLog(LOG_LEVEL_INFO,PSTR("M32: stop Homebridge"));
-        mi_homekit_stop();
-      }
-#endif //USE_MI_HOMEKIT
       return 0;
 }
 

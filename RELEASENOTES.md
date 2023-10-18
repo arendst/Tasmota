@@ -116,7 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Commands to allow setting of timeprop parameters [#19310](https://github.com/arendst/Tasmota/issues/19310)
 - Command ``Mi32Name`` [#19619](https://github.com/arendst/Tasmota/issues/19619)
 - Variables ``%power<1..28>%`` and  ``%switch<1..28>%`` to rules [#19331](https://github.com/arendst/Tasmota/issues/19331)
-- Support different baudrates on BL0942
+- Support different baudrates on BL0942 energy monitor
 - Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
 - Support for HDMI CEC protocol [#19434](https://github.com/arendst/Tasmota/issues/19434)
 - Support for ENS16x (air quality) and ENS210 (temp & RH) sensors [#19479](https://github.com/arendst/Tasmota/issues/19479)
@@ -148,6 +148,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Exception 3 in IRHVAC [#19389](https://github.com/arendst/Tasmota/issues/19389)
 - PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 [#19408](https://github.com/arendst/Tasmota/issues/19408)
 - ModbusBridge write memory leak [#19758](https://github.com/arendst/Tasmota/issues/19758)
+- Zigbee timezone when device reads LocalTime attribute [#19772](https://github.com/arendst/Tasmota/issues/19772)
 - ESP32 DS18x20 driver support extended over GPIO33
 - ESP32 Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
 - ESP32 Shutter migration [#19454](https://github.com/arendst/Tasmota/issues/19454)
@@ -156,8 +157,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 shutter frequency [#19717](https://github.com/arendst/Tasmota/issues/19717)
 - ESP32 Arduino Core v2 wifi client flush [#19642](https://github.com/arendst/Tasmota/issues/19642)
 - ESP32 Partition Wizard grow filesystem support [#19645](https://github.com/arendst/Tasmota/issues/19645)
-- ESP32C3 relay click on restart
+- ESP32-C3 relay click on restart
 - Matter support for Virtual Devices controllable via Rules or Berry [#19520](https://github.com/arendst/Tasmota/issues/19520)
 
 ### Removed
-- Removed support for Homekit in favour of Matter [#19738](https://github.com/arendst/Tasmota/issues/19738)
+- Support for Homekit in favour of Matter [#19738](https://github.com/arendst/Tasmota/issues/19738)

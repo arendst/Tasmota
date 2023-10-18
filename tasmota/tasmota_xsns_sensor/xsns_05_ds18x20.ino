@@ -483,6 +483,7 @@ void Ds18x20Name(uint8_t sensor) {
   }
   snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #elif defined(DS18x20_USE_ID_ALIAS)
+  sensor = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[sensor].alias[0] != '0') {
     if (isdigit(ds18x20_sensor[sensor].alias[0])) {
       snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens%c%d"), IndexSeparator(), atoi(ds18x20_sensor[sensor].alias));
