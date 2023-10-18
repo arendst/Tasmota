@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - ESP32 shutter frequency (#19717)
 - ModbusBridge write memory leak (#19758)
-- Zigbee fix timezone when device reads LocalTime attribute
+- Zigbee timezone when device reads LocalTime attribute (#19772)
 
 ### Removed
 - WiFiClientSecure in favour of WiFiClientSecureLightBearSSL (#19725)
