@@ -56,30 +56,6 @@ else:
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
-def patch_partitions_bin(size_string):
-    partition_bin_path = join(env.subst("$BUILD_DIR"),"partitions.bin")
-    with open(partition_bin_path, 'r+b') as file:
-        binary_data = file.read(0xb0)
-        import hashlib
-        bin_list = list(binary_data)
-        size = codecs.decode(size_string[2:], 'hex_codec') # 0xc50000 -> [c5,00,00]
-        bin_list[0x8a] = size[0]
-        bin_list[0x8b] = size[1]
-        result = hashlib.md5(bytes(bin_list[0:0xa0]))
-        partition_data = bytes(bin_list) + result.digest()
-        file.seek(0)
-        file.write(partition_data)
-        print("New partition hash:",result.digest().hex())
-
-def esp32_detect_flashsize():
-    if not "upload" in COMMAND_LINE_TARGETS:
-        return "4MB",False
-    size = env.get("TASMOTA_flash_size")
-    if size == None:
-        return "4MB",False
-    else:
-        return size,True
-
 def esp32_create_chip_string(chip):
     tasmota_platform = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
     tasmota_platform = tasmota_platform.split('-')[0]
