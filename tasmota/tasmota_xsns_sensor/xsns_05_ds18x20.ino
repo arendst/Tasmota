@@ -468,36 +468,42 @@ bool Ds18x20Read(uint8_t sensor) {
 }
 
 void Ds18x20Name(uint8_t sensor) {
-  uint8_t index = sizeof(ds18x20_chipids);
+  uint32_t sensor_index = ds18x20_sensor[sensor].index;
+
+  uint32_t index = sizeof(ds18x20_chipids);
   while (--index) {
-    if (ds18x20_sensor[ds18x20_sensor[sensor].index].address[0] == ds18x20_chipids[index]) {
+    if (ds18x20_sensor[sensor_index].address[0] == ds18x20_chipids[index]) {
       break;
     }
   }
+  // DS18B20
   GetTextIndexed(DS18X20Data.name, sizeof(DS18X20Data.name), index, kDs18x20Types);
 
 #ifdef DS18x20_USE_ID_AS_NAME
   char address[17];
   for (uint32_t j = 0; j < 3; j++) {
-    sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[sensor].index].address[3-j]);  // Only last 3 bytes
+    sprintf(address+2*j, "%02X", ds18x20_sensor[sensor_index].address[3-j]);  // Only last 3 bytes
   }
+  // DS18B20-8EC44C
   snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
+  return;
 #elif defined(DS18x20_USE_ID_ALIAS)
-  sensor = ds18x20_sensor[sensor].index;
-  if (ds18x20_sensor[sensor].alias[0] != '0') {
-    if (isdigit(ds18x20_sensor[sensor].alias[0])) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens%c%d"), IndexSeparator(), atoi(ds18x20_sensor[sensor].alias));
+  if (ds18x20_sensor[sensor_index].alias[0] && (ds18x20_sensor[sensor_index].alias[0] != '0')) {
+    if (isdigit(ds18x20_sensor[sensor_index].alias[0])) {
+      // DS18Sens-1
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens%c%d"), IndexSeparator(), atoi(ds18x20_sensor[sensor_index].alias));
     } else {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s"), ds18x20_sensor[sensor].alias);
+      // UserText
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s"), ds18x20_sensor[sensor_index].alias);
     }
-  } else {
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor + 1);
+    return;
   }
-#else // no #defines set
+#endif  // DS18x20_USE_ID_AS_NAME or DS18x20_USE_ID_ALIAS
+
   if (DS18X20Data.sensors > 1) {
+    // DS18B20-1
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor + 1);
   }
-#endif
 }
 
 /********************************************************************************************/
@@ -582,6 +588,7 @@ void (* const DSCommand[])(void) PROGMEM = {
   &CmndDSAlias };
 
 void CmndDSAlias(void) {
+  // Ds18Alias 430516707FA6FF28,Sensorname
   char Argument1[XdrvMailbox.data_len];
   char Argument2[XdrvMailbox.data_len];
   char address[17];
@@ -614,7 +621,7 @@ void CmndDSAlias(void) {
   }
   ResponseAppend_P(PSTR("}"));
 }
-#endif // DS18x20_USE_ID_ALIAS
+#endif  // DS18x20_USE_ID_ALIAS
 
 /*********************************************************************************************\
  * Interface
