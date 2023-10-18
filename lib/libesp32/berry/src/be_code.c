@@ -472,7 +472,18 @@ static int exp2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
         int pcf = NO_JUMP;  /* position of an eventual LOAD false */
         int pct = NO_JUMP;  /* position of an eventual LOAD true */
         int jpt = appendjump(finfo, jumpboolop(e, 1), e);
-        reg = e->v.idx;
+        /* below is a simplified version of `codedestreg` for a single bexpdesc */
+        if (e->type == ETREG) {
+            /* if e is already ETREG from local calculation, we reuse the register */
+            reg = e->v.idx;
+        } else {
+            /* otherwise, we allocate a new register or use the target provided */
+            if (dst < 0) {
+                reg = be_code_allocregs(finfo, 1);
+            } else {
+                reg = dst;
+            }
+        }
         be_code_conjump(finfo, &e->t, jpt);
         pcf = code_bool(finfo, reg, 0, 1);
         pct = code_bool(finfo, reg, 1, 0);

@@ -27,7 +27,7 @@ be_local_closure(MQTT_mqtt_data,   /* name */
     }),
     &be_const_str_mqtt_data,
     &be_const_str_solidified,
-    ( &(const binstruction[32]) {  /* code */
+    ( &(const binstruction[31]) {  /* code */
       0x88140100,  //  0000  GETMBR	R5	R0	K0
       0x4C180000,  //  0001  LDNIL	R6
       0x1C140A06,  //  0002  EQ	R5	R5	R6
@@ -37,13 +37,13 @@ be_local_closure(MQTT_mqtt_data,   /* name */
       0x60180010,  //  0006  GETGBL	R6	G16
       0x881C0100,  //  0007  GETMBR	R7	R0	K0
       0x7C180200,  //  0008  CALL	R6	1
-      0xA8020011,  //  0009  EXBLK	0	#001C
+      0xA8020010,  //  0009  EXBLK	0	#001B
       0x5C1C0C00,  //  000A  MOVE	R7	R6
       0x7C1C0000,  //  000B  CALL	R7	0
       0x88200F01,  //  000C  GETMBR	R8	R7	K1
       0x4C240000,  //  000D  LDNIL	R9
       0x20201009,  //  000E  NE	R8	R8	R9
-      0x7822000A,  //  000F  JMPF	R8	#001B
+      0x78220009,  //  000F  JMPF	R8	#001A
       0x8C200F02,  //  0010  GETMET	R8	R7	K2
       0x5C280200,  //  0011  MOVE	R10	R1
       0x5C2C0400,  //  0012  MOVE	R11	R2
@@ -52,14 +52,13 @@ be_local_closure(MQTT_mqtt_data,   /* name */
       0x7C200A00,  //  0015  CALL	R8	5
       0x74160001,  //  0016  JMPT	R5	#0019
       0x74220000,  //  0017  JMPT	R8	#0019
-      0x50200001,  //  0018  LDBOOL	R8	0	1
-      0x50200200,  //  0019  LDBOOL	R8	1	0
-      0x5C141000,  //  001A  MOVE	R5	R8
-      0x7001FFED,  //  001B  JMP		#000A
-      0x58180003,  //  001C  LDCONST	R6	K3
-      0xAC180200,  //  001D  CATCH	R6	1	0
-      0xB0080000,  //  001E  RAISE	2	R0	R0
-      0x80040A00,  //  001F  RET	1	R5
+      0x50140001,  //  0018  LDBOOL	R5	0	1
+      0x50140200,  //  0019  LDBOOL	R5	1	0
+      0x7001FFEE,  //  001A  JMP		#000A
+      0x58180003,  //  001B  LDCONST	R6	K3
+      0xAC180200,  //  001C  CATCH	R6	1	0
+      0xB0080000,  //  001D  RAISE	2	R0	R0
+      0x80040A00,  //  001E  RET	1	R5
     })
   )
 );

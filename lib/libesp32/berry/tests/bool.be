@@ -47,3 +47,7 @@ assert(bool({nil:nil}) == false)# changed behavior - `nil` key is ignored so the
 import introspect
 assert(bool(introspect.toptr(0x1000)) == true)
 assert(bool(introspect.toptr(0)) == false)
+
+# reproduce bug https://github.com/berry-lang/berry/issues/372
+def f() var a = false var b = true || a return a end
+assert(f() == false)
