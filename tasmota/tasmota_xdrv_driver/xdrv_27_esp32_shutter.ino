@@ -829,15 +829,14 @@ void ShutterPowerOff(uint8_t i)
   }
 
   // restore save_data behavior if all shutters are in stopped state
-  if (Settings->save_data) {
-    bool shutter_all_stopped = true;
-    for (uint8_t j = 0 ; j < TasmotaGlobal.shutters_present ; j++) {
-      if (Shutter[j].direction != 0)
-        shutter_all_stopped = false;
-    }
-    if (shutter_all_stopped)
-      TasmotaGlobal.save_data_counter = Settings->save_data;
+  bool shutter_all_stopped = true;
+  for (uint8_t j = 0 ; j < TasmotaGlobal.shutters_present ; j++) {
+    if (Shutter[j].direction != 0)
+      shutter_all_stopped = false;
   }
+  if (shutter_all_stopped)
+    TasmotaGlobal.save_data_counter = Settings->save_data;
+
   Shutter[i].last_stop_time = millis();
 }
 
@@ -1210,9 +1209,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     }
 
     // avoid file system writes during move to minimize missing steps. 15min diabled. Will re renabled on full stop
-    if (Settings->save_data) {
-      TasmotaGlobal.save_data_counter = 900;
-    }
+    TasmotaGlobal.save_data_counter = 900;
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
 
