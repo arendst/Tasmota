@@ -23,7 +23,6 @@
  * Shutter or Blind support using two consecutive relays
  * Shutters for ESP32 with max eight shutters using more RAM and Settings from filesystem
 \*********************************************************************************************/
-#include "soc/soc_caps.h"
 
 #define XDRV_27            27
 #ifndef SHUTTER_STEPPER
@@ -179,7 +178,6 @@ struct SHUTTER {
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
   uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
-  uint8_t  ledc_channel = 0;           // current used channel for PWM
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
@@ -471,6 +469,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
 
 void ShutterDecellerateForStop(uint8_t i)
 {
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
@@ -491,9 +490,7 @@ void ShutterDecellerateForStop(uint8_t i)
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
         TasmotaGlobal.pwm_value[i] = 0;
-        ledcWrite(Shutter[i].ledc_channel, 0);
-        ledcAttachPin(Pin(GPIO_PWM1, i), SOC_LEDC_CHANNEL_NUM);
-        Shutter[i].ledc_channel = 0;
+        pwm_apply = true;
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
@@ -502,6 +499,7 @@ void ShutterDecellerateForStop(uint8_t i)
       Shutter[i].pwm_velocity = 0;
     break;
   }
+  if (pwm_apply) { PwmApplyGPIO(false); }
 }
 
 uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
@@ -530,20 +528,6 @@ uint16_t ShutterGetCycleTime(uint8_t i, uint8_t  max_runtime) {
   dtostrfd((float)(cycle_time) / 10, 1, time_chr);
   AddLog(LOG_LEVEL_ERROR, PSTR("SHT: Setup. Cycletime is: %s sec"), time_chr);
   return cycle_time;
-}
-
-uint8_t ShutterGetFreeChannel() {
-  uint8_t nextFreeChannel = 0;
-  for (uint8_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-    //SOC_LEDC_CHANNEL_NUM   
-    nextFreeChannel = tmax(nextFreeChannel, Shutter[i].ledc_channel);
-  }
-  if (nextFreeChannel >= SOC_LEDC_CHANNEL_NUM) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("SHT: All PWM channel busy. Open issue-ticket."));
-  } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Use channel %d"), nextFreeChannel+1);
-  }
-  return nextFreeChannel++;
 }
 
 uint8_t ShutterGetOptions(uint8_t index) {
@@ -822,9 +806,16 @@ void ShutterPowerOff(uint8_t i)
   #endif
       break;
   }
-  if (Settings->save_data) {
-    TasmotaGlobal.save_data_counter = Settings->save_data;
+
+  // restore save_data behavior if all shutters are in stopped state
+  bool shutter_all_stopped = true;
+  for (uint8_t j = 0 ; j < TasmotaGlobal.shutters_present ; j++) {
+    if (Shutter[j].direction != 0)
+      shutter_all_stopped = false;
   }
+  if (shutter_all_stopped)
+    TasmotaGlobal.save_data_counter = Settings->save_data;
+
   Shutter[i].last_stop_time = millis();
 }
 
@@ -971,7 +962,8 @@ void ShutterReportPosition(bool always, uint32_t index)
 
 void ShutterRtc50mS(void)
 {
-    // No Logging allowed. RTC Timer
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+  // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     if (Shutter[i].direction) {
       // update position data before increasing counter
@@ -991,15 +983,15 @@ void ShutterRtc50mS(void)
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
             digitalWrite(Pin(GPIO_PWM1, i), LOW);
-
-            ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  //
-            //ledcWrite(i, 512);  // Setzt den PWM-Wert auf 0
+            analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
             TasmotaGlobal.pwm_value[i] = 512;
+            pwm_apply = true;
           }
         break;
       }
     } // if (Shutter[i].direction)
   }
+  if (pwm_apply) { PwmApplyGPIO(false); }
 }
 
 void ShutterSetPosition(uint32_t device, uint32_t position)
@@ -1166,11 +1158,9 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
-        Shutter[i].ledc_channel = ShutterGetFreeChannel();
-        ledcSetup(Shutter[i].ledc_channel, Shutter[i].pwm_velocity, 8);
-        ledcAttachPin(Pin(GPIO_PWM1, i), Shutter[i].ledc_channel);  
-        ledcWriteTone(Shutter[i].ledc_channel, Shutter[i].pwm_velocity);  
-        ledcWrite(Shutter[i].ledc_channel, 0);  // Setzt den PWM-Wert auf 0
+        analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));
+        TasmotaGlobal.pwm_value[i] = 0;
+        PwmApplyGPIO(false);
         RtcSettings.pulse_counter[i] = 0;
       break;
 #endif
@@ -1195,11 +1185,9 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
         Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
     }
 
-    // avoid file system writes during move to minimize missing steps
-    if (Settings->save_data) {
-      uint32_t move_duration = (direction > 0) ? Shutter[i].open_time : Shutter[i].close_time;
-      TasmotaGlobal.save_data_counter = Settings->save_data + (move_duration / 10) +1;
-    }
+    // avoid file system writes during move to minimize missing steps. 15min diabled. Will re renabled on full stop
+    TasmotaGlobal.save_data_counter = 900;
+
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
 
