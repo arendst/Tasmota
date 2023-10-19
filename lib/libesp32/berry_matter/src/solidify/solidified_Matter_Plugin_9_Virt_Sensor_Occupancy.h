@@ -17,7 +17,7 @@ be_local_class(Matter_Plugin_Virt_Sensor_Occupancy,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(VIRTUAL, 3), be_const_bool(1) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(v_X2EOccupancy) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(v_Occupancy) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(v_occupancy) },
         { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(_Not_X20used_) },
         { be_const_key_weak(ARG, 2), be_nested_str_weak() },
     })),
