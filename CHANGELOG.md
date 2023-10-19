@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [13.2.0] 20231018
+## [13.2.0] 20231019
 - Release Quincy
 
-## [13.1.0.4] 20231018
+## [13.1.0.4] 20231019
 ### Added
 - Support for HC8 CO2 sensor (#19714)
 - ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` (#19700)
