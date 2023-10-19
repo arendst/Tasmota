@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.1.0.4]
+## [13.2.0.1]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [13.2.0] 20231019
+- Release Quincy
+
+## [13.1.0.4] 20231019
 ### Added
 - Support for HC8 CO2 sensor (#19714)
 - ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` (#19700)
@@ -85,8 +102,6 @@ All notable changes to this project will be documented in this file.
 - Shutter invert (#19341, #19374)
 - Teleinfo power (#19381)
 - Exception 3 in IRHVAC (#19389)
-
-## [Released] - Development
 
 ## [13.1.0] 20230815
 - Release Quentin
