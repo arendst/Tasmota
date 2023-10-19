@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Prepare I2C drivers for bus2 support
 
 ### Fixed
+- NeoPool filtration mode display
 - ESP32 I2C allow bus2 support when bus1 is not enabled
 
 ### Removed
