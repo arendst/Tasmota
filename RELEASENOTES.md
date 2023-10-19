@@ -113,11 +113,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v13.2.0.1
 ### Added
 - Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3
+- ESP32 I2C bus2 support to iAQ core driver [#19799](https://github.com/arendst/Tasmota/issues/19799)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
+- ESP32 I2C allow bus2 support when bus1 is not enabled
 
 ### Removed
