@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- NeoPool filtration mode display [#19801](https://github.com/arendst/Tasmota/issues/19801)
 - ESP32 I2C allow bus2 support when bus1 is not enabled
 
 ### Removed
