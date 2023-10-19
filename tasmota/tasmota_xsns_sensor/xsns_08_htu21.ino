@@ -229,7 +229,7 @@ void HtuDetect(void) {
           Htu.delay_humidity = 23;
       }
       GetTextIndexed(Htu.types, sizeof(Htu.types), index, kHtuTypes);
-      I2cSetActiveFound(Htu.address, Htu.types);
+      I2cSetActiveFound(Htu.address, Htu.types, Htu.bus);
       break;
     }
   }
