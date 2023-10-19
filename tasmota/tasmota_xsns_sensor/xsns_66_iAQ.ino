@@ -75,14 +75,9 @@ void IAQ_Init(void) {
     if (!IAQ_Read()) { continue; }
     I2cSetActiveFound(I2_ADR_IAQ, "IAQ", bus);
     iAQ.ready = true;
+    break;
   }
 
-/*
-  if (!I2cSetDevice(I2_ADR_IAQ)) { return; }
-  I2cSetActiveFound(I2_ADR_IAQ, "IAQ");
-  iAQ.i2c_address = I2_ADR_IAQ;
-  iAQ.ready = true;
-*/
 /*
   for (iAQ.i2c_address = I2_ADR_IAQ; iAQ.i2c_address < I2_ADR_IAQ +5; iAQ.i2c_address++) {
     if (I2cActive(iAQ.i2c_address)) { continue; }
