@@ -114,7 +114,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - I2C bus2 support to iAQ core sensor [#19799](https://github.com/arendst/Tasmota/issues/19799)
-- I2C bus2 support to HTU temperature sensor
+- I2C bus2 support to HTU temperature and humidity sensor
+- I2C bus2 support to BH1750 ambient light sensor
 
 ### Breaking Changed
 
