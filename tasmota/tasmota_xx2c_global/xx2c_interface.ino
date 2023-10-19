@@ -413,7 +413,11 @@ const uint8_t kI2cList[] = {
 /*********************************************************************************************/
 
 bool I2cEnabled(uint32_t i2c_index) {
+#ifdef ESP8266
   return (TasmotaGlobal.i2c_enabled && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
+#else  
+  return ((TasmotaGlobal.i2c_enabled || TasmotaGlobal.i2c_enabled_2) && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
+#endif
 }
 
 void I2cDriverState(void) {
