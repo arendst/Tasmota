@@ -454,12 +454,11 @@ module matter (scope: global, strings: weak) {
   Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
   Plugin_Virt_Sensor_Illuminance, class(be_class_Matter_Plugin_Virt_Sensor_Illuminance) // Illuminance Virtual Sensor
   Plugin_Sensor_Humidity, class(be_class_Matter_Plugin_Sensor_Humidity)   // Humidity Sensor
-  Plugin_Sensor_Virt_Humidity, class(be_class_Matter_Plugin_Virt_Sensor_Humidity)   // Humidity Virtual Sensor
   Plugin_Sensor_Occupancy, class(be_class_Matter_Plugin_Sensor_Occupancy)           // Occupancy Sensor
-  Plugin_Sensor_OnOff, class(be_class_Matter_Plugin_Sensor_OnOff)           // Simple OnOff Sensor
+  Plugin_Sensor_Virt_Humidity, class(be_class_Matter_Plugin_Virt_Sensor_Humidity)   // Humidity Virtual Sensor
   Plugin_Sensor_Contact, class(be_class_Matter_Plugin_Sensor_Contact)           // Contact Sensor
+  Plugin_Virt_Sensor_Occupancy, class(be_class_Matter_Plugin_Virt_Sensor_Occupancy)           // Virtual Occupancy Sensor
   Plugin_Virt_Sensor_Contact, class(be_class_Matter_Plugin_Virt_Sensor_Contact)           // Virtual Contact Sensor
-  Plugin_Virt_Sensor_Contact, class(be_class_Matter_Plugin_Virt_Sensor_Occupancy)           // Virtual Occupancy Sensor
   Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
   Plugin_Bridge_OnOff, class(be_class_Matter_Plugin_Bridge_OnOff)     // HTTP Relay/Light behavior (OnOff)
   Plugin_Bridge_Light0, class(be_class_Matter_Plugin_Bridge_Light0)   // HTTP OnOff Light
