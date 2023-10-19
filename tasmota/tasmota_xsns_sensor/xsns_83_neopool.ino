@@ -1885,7 +1885,7 @@ void NeoPoolShow(bool json)
     }
 
     // Filtration mode
-    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) < MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : nitems(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode);
+    GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PAR_FILT_MODE) <= MBV_PAR_FILT_INTELLIGENT ? NeoPoolGetData(MBF_PAR_FILT_MODE) : nitems(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode);
     WSContentSend_PD(HTTP_SNS_NEOPOOL_FILT_MODE, neopool_type, stemp);
 
     // Relays
