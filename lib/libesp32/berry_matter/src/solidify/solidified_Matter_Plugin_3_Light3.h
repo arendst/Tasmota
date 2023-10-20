@@ -1,4 +1,4 @@
-/* Solidification of Matter_Plugin_4_Light3.h */
+/* Solidification of Matter_Plugin_3_Light3.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/

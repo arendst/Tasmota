@@ -23,18 +23,19 @@ import matter
 
 #@ solidify:Matter_Plugin_Light1,weak
 
-class Matter_Plugin_Light1 : Matter_Plugin_Light0
+class Matter_Plugin_Light1 : Matter_Plugin_Device
   static var TYPE = "light1"                                # name of the plug-in in json
   static var DISPLAY_NAME = "Light 1 Dimmer"                        # display name of the plug-in
+  static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
     # 0x0004: inherited                                     # Groups 1.3 p.21
     # 0x0005: inherited                                     # Scenes 1.4 p.30 - no writable
-    # 0x0006: inherited                                     # On/Off 1.5 p.48
+    0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],                # Level Control 1.6 p.57
   })
-  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power", "Bri")
   static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
   # Inherited
@@ -43,13 +44,14 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var shadow_onoff                                  # (bool) status of the light power on/off
+  var shadow_onoff                                  # (bool) status of the light power on/off
   var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
+    self.shadow_onoff = false
     self.shadow_bri = 0
   end
 
@@ -61,6 +63,11 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       import light
       var light_status = light.get()
       if light_status != nil
+        var pow = light_status.find('power', nil)
+        if pow != self.shadow_onoff
+          self.attribute_updated(0x0006, 0x0000)
+          self.shadow_onoff = pow
+        end
         var bri = light_status.find('bri', nil)
         if bri != nil
           bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
@@ -72,6 +79,19 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       end
     end
     super(self).update_shadow()     # superclass manages 'power'
+  end
+
+  def set_onoff(pow)
+    if !self.VIRTUAL
+      import light
+      light.set({'power':pow})
+      self.update_shadow()
+    else
+      if pow != self.shadow_onoff
+        self.attribute_updated(0x0006, 0x0000)
+        self.shadow_onoff = pow
+      end
+    end
   end
 
   #############################################################
@@ -113,7 +133,18 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+      self.update_shadow_lazy()
+      if   attribute == 0x0000          #  ---------- OnOff / bool ----------
+        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
+      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
+        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
+      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
+        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
         return tlv_solo.set(TLV.U1, self.shadow_bri)
@@ -148,7 +179,23 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     var command = ctx.command
 
     # ====================================================================================================
-    if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
+      self.update_shadow_lazy()
+      if   command == 0x0000            # ---------- Off ----------
+        self.set_onoff(false)
+        self.publish_command('Power', 0)
+        return true
+      elif command == 0x0001            # ---------- On ----------
+        self.set_onoff(true)
+        self.publish_command('Power', 1)
+        return true
+      elif command == 0x0002            # ---------- Toggle ----------
+        self.set_onoff(!self.shadow_onoff)
+        self.publish_command('Power', self.shadow_onoff ? 1 : 0)
+        return true
+      end
+    # ====================================================================================================
+    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_254 = val.findsubval(0)  # Hue 0..254
@@ -198,6 +245,8 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if val_bri != nil
       self.set_bri(int(val_bri), val_onoff)
       return    # don't call super() because we already handeld 'Power'
+    elif val_onoff != nil
+      self.set_onoff(bool(val_onoff))
     end
     super(self).update_virtual(payload_json)
   end
