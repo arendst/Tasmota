@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Prepare I2C drivers for bus2 support
+- Matter Light0 now accept a Relay number
 
 ### Fixed
 - NeoPool filtration mode display (#19801)
