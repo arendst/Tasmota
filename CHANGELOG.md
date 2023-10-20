@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - I2C bus2 support to iAQ core sensor (#19799)
 - I2C bus2 support to HTU temperature and humidity sensor
 - I2C bus2 support to BH1750 ambient light sensor
+- I2C bus2 support to ADS1115 A/D Converter
+- I2C bus2 support to SHTxX temperature and humidity sensor
+- I2C bus2 support to HYTxxx temperature and humidity sensor
 
 ### Breaking Changed
 

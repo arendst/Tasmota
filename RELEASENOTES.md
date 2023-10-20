@@ -116,6 +116,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2C bus2 support to iAQ core sensor [#19799](https://github.com/arendst/Tasmota/issues/19799)
 - I2C bus2 support to HTU temperature and humidity sensor
 - I2C bus2 support to BH1750 ambient light sensor
+- I2C bus2 support to ADS1115 A/D Converter
+- I2C bus2 support to SHTxX temperature and humidity sensor
+- I2C bus2 support to HYTxxx temperature and humidity sensor
 
 ### Breaking Changed
 

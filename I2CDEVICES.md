@@ -29,7 +29,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   10  | USE_BMP             | xsns_09  | BME680   | 0x76 - 0x77 | Yes  | Pressure, temperature, humidity and gas sensor
   11  | USE_BH1750          | xsns_10  | BH1750   | 0x23, 0x5C  | Yes  | Ambient light intensity sensor
   12  | USE_VEML6070        | xsns_11  | VEML6070 | 0x38 - 0x39 |      | Ultra violet light intensity sensor
-  13  | USE_ADS1115         | xsns_12  | ADS1115  | 0x48 - 0x4B |      | 4-channel 16-bit A/D converter
+  13  | USE_ADS1115         | xsns_12  | ADS1115  | 0x48 - 0x4B | Yes  | 4-channel 16-bit A/D converter
   14  | USE_INA219          | xsns_13  | INA219   | 0x40 - 0x41, 0x44 - 0x45 |      | Low voltage current sensor
   15  | USE_SHT3X           | xsns_14  | SHT3X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
   15  | USE_SHT3X           | xsns_14  | SHT4X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
