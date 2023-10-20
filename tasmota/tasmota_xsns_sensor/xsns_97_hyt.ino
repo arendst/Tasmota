@@ -36,6 +36,7 @@
 struct HYT {
   float   humidity = NAN;
   float   temperature = NAN;
+  uint8_t bus;
   uint8_t valid = 0;
   uint8_t count = 0;
   char    name[6] = "HYT";
@@ -44,14 +45,16 @@ struct HYT {
 bool HYT_Read(void) {
   if (HYT.valid) { HYT.valid--; }
 
-  Wire.beginTransmission(HYT_ADDR);
-  Wire.requestFrom(HYT_ADDR, 4);
-  if (Wire.available() == 4) {
-    uint8_t data1      = Wire.read();
-    uint8_t data2      = Wire.read();
-    uint8_t data3      = Wire.read();
-    uint8_t data4      = Wire.read();
-    Wire.endTransmission();
+  TwoWire& myWire = I2cGetWire(HYT.bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+  myWire.beginTransmission(HYT_ADDR);
+  myWire.requestFrom(HYT_ADDR, 4);
+  if (myWire.available() == 4) {
+    uint8_t data1      = myWire.read();
+    uint8_t data2      = myWire.read();
+    uint8_t data3      = myWire.read();
+    uint8_t data4      = myWire.read();
+    myWire.endTransmission();
 
     // Convert the data to 14-bits
     float humidity = ((((data1 & 0x3F) * 256) + data2) * 100.0) / 16383.0;
@@ -72,9 +75,13 @@ bool HYT_Read(void) {
 /********************************************************************************************/
 
 void HYT_Detect(void) {
-  if (I2cSetDevice(HYT_ADDR)) {
-    I2cSetActiveFound(HYT_ADDR, "HYT");
-    HYT.count = 1;
+  for (HYT.bus = 0; HYT.bus < 2; HYT.bus++) {
+    if (!I2cSetDevice(HYT_ADDR, HYT.bus)) { continue; }
+    if (HYT_Read()) {
+      I2cSetActiveFound(HYT_ADDR, "HYT", HYT.bus);
+      HYT.count = 1;
+      break;
+    }
   }
 }
 
