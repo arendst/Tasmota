@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2C bus2 support to ADS1115 A/D Converter
 - I2C bus2 support to SHTxX temperature and humidity sensor
 - I2C bus2 support to HYTxxx temperature and humidity sensor
+- I2C bus2 support to SI1145/6/7 Ultra violet index and light sensor
 
 ### Breaking Changed
 
