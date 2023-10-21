@@ -183,7 +183,7 @@ void Ads1115Detect(void) {
           I2cValidRead16(&buffer, ads1115_addresses[i], ADS1115_REG_POINTER_CONFIG, bus)) {
         Ads1115[ads1115_count].address = ads1115_addresses[i];
         Ads1115[ads1115_count].bus = bus;
-        Ads1115StartComparator(ads1115_count, i, ADS1115_REG_CONFIG_MODE_CONTIN);
+        Ads1115StartComparator(ads1115_count, 0, ADS1115_REG_CONFIG_MODE_CONTIN);
         I2cSetActiveFound(Ads1115[ads1115_count].address, "ADS1115", Ads1115[ads1115_count].bus);
         ads1115_count++;
         if (4 == ads1115_count) { return; }

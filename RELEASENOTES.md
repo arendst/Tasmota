@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- Matter Light0 now accept a Relay number [#19809](https://github.com/arendst/Tasmota/issues/19809)
 
 ### Fixed
 - NeoPool filtration mode display [#19801](https://github.com/arendst/Tasmota/issues/19801)
