@@ -1774,12 +1774,11 @@ void CmndGpioRead(void)
   myio template_gp;
   TemplateGpios(&template_gp);
   bool jsflg = false;
+  Response_P(PSTR("{\"" D_CMND_GPIOREAD "\":{"));
   for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
     uint32_t sensor_type = template_gp.io[i];
     if ((sensor_type != GPIO_NONE) && (AGPIO(GPIO_USER) != sensor_type)) {
-      if (!jsflg) {
-        Response_P(PSTR("{"));
-      } else {
+      if (jsflg) {
         ResponseAppend_P(PSTR(","));
       }
       jsflg = true;
@@ -1787,11 +1786,7 @@ void CmndGpioRead(void)
       ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":%d"), i, state);
     }
   }
-  if (jsflg) {
-    ResponseJsonEnd();
-  } else {
-     Response_P(PSTR("{}"));
-  }
+  ResponseAppend_P(PSTR("}}"));
 }
 
 void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
