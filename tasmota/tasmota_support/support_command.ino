@@ -1768,16 +1768,21 @@ void CmndGpio(void)
   }
 }
 
-// Perform a digitalRead on each configured PGIO
-void CmndGpioRead(void)
-{
+void CmndGpioRead(void) {
+  // Perform a digitalRead on each configured GPIO
   myio template_gp;
   TemplateGpios(&template_gp);
   bool jsflg = false;
   Response_P(PSTR("{\"" D_CMND_GPIOREAD "\":{"));
   for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
-    uint32_t sensor_type = template_gp.io[i];
-    if ((sensor_type != GPIO_NONE) && (AGPIO(GPIO_USER) != sensor_type)) {
+    bool sensor_active = false;
+    uint32_t sensor_type = template_gp.io[i];        // Template GPIO
+    if ((sensor_type != GPIO_NONE) && (AGPIO(GPIO_USER) != sensor_type)) { 
+      sensor_active = true;
+    } else if (Settings->my_gp.io[i] != GPIO_NONE) { // Module GPIO
+      sensor_active = true;
+    }
+    if (sensor_active) {
       if (jsflg) {
         ResponseAppend_P(PSTR(","));
       }
