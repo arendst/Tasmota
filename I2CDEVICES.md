@@ -40,7 +40,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   19  | USE_SI1145          | xsns_24  | SI1145   | 0x60        | Yes  | Ultra violet index and light sensor
   19  | USE_SI1145          | xsns_24  | SI1146   | 0x60        | Yes  | Ultra violet index and light sensor
   19  | USE_SI1145          | xsns_24  | SI1147   | 0x60        | Yes  | Ultra violet index and light sensor
-  20  | USE_LM75AD          | xsns_26  | LM75AD   | 0x48 - 0x4F |      | Temperature sensor
+  20  | USE_LM75AD          | xsns_26  | LM75AD   | 0x48 - 0x4F | Yes  | Temperature sensor
   21  | USE_APDS9960        | xsns_27  | APDS9960 | 0x39        |      | Proximity ambient light RGB and gesture sensor
   22  | USE_MCP230xx        | xsns_29  | MCP23008 | 0x20 - 0x26 |      |  8-bit I/O expander
   22  | USE_MCP230xx        | xsns_29  | MCP23017 | 0x20 - 0x26 |      | 16-bit I/O expander
