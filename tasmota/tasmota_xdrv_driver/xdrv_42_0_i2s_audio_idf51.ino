@@ -963,7 +963,7 @@ void CmndI2SGain(void) {
 
 void CmndI2SSay(void) {
   if (XdrvMailbox.data_len > 0) {
-    if (I2SPrepareTx()) {
+    if (I2SPrepareTx() != I2S_OK) {
       ResponseCmndChar("I2S output not configured");
       return;
     } else {

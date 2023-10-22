@@ -72,8 +72,8 @@ public:
   TasmotaI2S() {
     // set some defaults
     hertz = 16000;
-    bps = I2S_DATA_BIT_WIDTH_16BIT;
-    channels = 2;
+    bps = I2S_DATA_BIT_WIDTH_16BIT;   // bps sent to consumeAudio (this is different from channels of I2S stream)
+    channels = 2;     // number of channels sent to consumeAudio (this is different from channels of I2S stream)
     gainF2P6 = 32;    // equivalent of 0.5
   }
 
@@ -146,7 +146,7 @@ public:
 
   inline bool getExclusive(void) const {return _exclusive; }
   inline uint8_t getTxMode(void) const { return _tx_mode; }
-  inline uint8_t getTxChannels(void) const { return channels; }
+  inline uint8_t getTxChannels(void) const { return _tx_channels; }
   inline bool getTxRunning(void) const { return _tx_running; }
   inline i2s_chan_handle_t getTxHandle(void) const { return _tx_handle; }
 #ifdef SOC_DAC_SUPPORTED
@@ -174,7 +174,7 @@ public:
       _tx_configured = true;
     }
   }
-  inline void setTxChannels(uint8_t channels) { SetChannels(channels); }
+  inline void setTxChannels(uint8_t channels) { _tx_channels = channels; }
   inline void setTxRunning(bool running) { _tx_running = running; }
   inline void setRxMode(uint8_t mode) { _rx_mode = mode; }
   inline void setRxChannels(uint8_t channels) { _rx_channels = channels; }
@@ -236,13 +236,14 @@ protected:
 
   // local copy of useful settings for audio
   // TX
-  bool    _tx_configured = false;         // true = configured, false = not configured
-  uint8_t _tx_mode = I2S_MODE_STD;        // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
-  uint8_t _tx_slot_mask = I2S_SLOT_NOCHANGE;
-  bool    _tx_running = false;            // true = enabled, false = disabled
-  // uint8_t    _tx_channels = 2;            // number of channels, 1 = mono, 2 = stereo -- `channels`
+  bool      _tx_configured = false;       // true = configured, false = not configured
+  uint8_t   _tx_mode = I2S_MODE_STD;      // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
+  uint8_t   _tx_slot_mask = I2S_SLOT_NOCHANGE;
+  bool      _tx_running = false;          // true = enabled, false = disabled
+  uint8_t   _tx_channels = 2;             // number of channels, 1 = mono, 2 = stereo -- `channels`
   i2s_chan_handle_t _tx_handle = nullptr; // I2S channel handle, automatically computed
-  uint8_t    _tx_slot_config = I2S_SLOT_MSB;// I2S slot configuration
+  uint8_t   _tx_slot_config = I2S_SLOT_MSB;// I2S slot configuration
+  uint8_t   _tx_bps = 16;                 // bits per sample, 16 or 8
 
   // RX
   bool      _rx_configured = false;       // true = configured, false = not configured
@@ -253,6 +254,7 @@ protected:
   i2s_chan_handle_t _rx_handle = nullptr; // I2S channel handle, automatically computed
   uint8_t   _rx_slot_config = I2S_SLOT_MSB;// I2S slot configuration
   uint16_t  _rx_freq = 16000;             // I2S Rx sampling frequency in Hz
+  uint8_t   _rx_bps = 16;                 // bits per sample, 16 or 8
 
   uint16_t  _rx_gain = 0x10;              // Microphone gain in Q12.4 format (0x10 = 1.0)
   int16_t   _rx_dc_offset = 0x8000;       // DC offset for PCM data, or 0x8000 if not set yet
@@ -508,9 +510,11 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
     }
 
     // by default we configure for MSB 2 slots `I2S_STD_MSB_SLOT_DEFAULT_CONFIG`
+    i2s_slot_mode_t tx_slot_mode = (_tx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
+    i2s_data_bit_width_t tx_data_bit_width = (_tx_bps == 8) ? I2S_DATA_BIT_WIDTH_8BIT : I2S_DATA_BIT_WIDTH_16BIT;
     i2s_std_config_t tx_std_cfg = {
       .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(hertz),
-      .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels),
+      .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(tx_data_bit_width, tx_slot_mode),
       .gpio_cfg = {
         .mclk = _gpio_mclk,
         .bclk = _gpio_bclk,
@@ -527,9 +531,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
 
     // change configuration if we are using PCM or PHILIPS
     if (_tx_slot_config == I2S_SLOT_PCM) {    // PCM
-      tx_std_cfg.slot_cfg = I2S_STD_PCM_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels);
+      tx_std_cfg.slot_cfg = I2S_STD_PCM_SLOT_DEFAULT_CONFIG(tx_data_bit_width, tx_slot_mode);
     } else if (_tx_slot_config == I2S_SLOT_PHILIPS) { // PHILIPS
-      tx_std_cfg.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG((i2s_data_bit_width_t)bps, (i2s_slot_mode_t)channels);
+      tx_std_cfg.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(tx_data_bit_width, tx_slot_mode);
     }
     if (_tx_slot_mask != I2S_SLOT_NOCHANGE) { tx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_tx_slot_mask; }
 #if SOC_I2S_SUPPORTS_APLL
@@ -577,10 +581,11 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
   if (rx) {
     gpio_num_t clk_gpio;
 
-    i2s_slot_mode_t slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
-    AddLog(LOG_LEVEL_DEBUG, "I2S: mic init rx_channels:%i rx_running:%i rx_handle:%p", slot_mode, _rx_running, _rx_handle);
+    i2s_slot_mode_t rx_slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
+    AddLog(LOG_LEVEL_DEBUG, "I2S: mic init rx_channels:%i rx_running:%i rx_handle:%p", rx_slot_mode, _rx_running, _rx_handle);
 
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(_i2s_port, I2S_ROLE_MASTER);
+    i2s_data_bit_width_t rx_data_bit_width = (_rx_bps == 8) ? I2S_DATA_BIT_WIDTH_8BIT : I2S_DATA_BIT_WIDTH_16BIT;
     // change to 3 buffers of 512 samples
     rx_chan_cfg.dma_desc_num = 3;
     rx_chan_cfg.dma_frame_num = 512;
@@ -597,7 +602,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
           i2s_pdm_rx_config_t rx_pdm_cfg = {
             .clk_cfg = I2S_PDM_RX_CLK_DEFAULT_CONFIG(_rx_freq),
             /* The default mono slot is the left slot (whose 'select pin' of the PDM microphone is pulled down) */
-            .slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, (i2s_slot_mode_t)_rx_channels),
+            .slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(rx_data_bit_width, rx_slot_mode),
             .gpio_cfg = {
               .clk = _gpio_ws,
               .din = _gpio_din,
@@ -631,7 +636,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
         {        
           i2s_std_config_t rx_std_cfg = {
             .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(_rx_freq),
-            .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, slot_mode),
+            .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(rx_data_bit_width, rx_slot_mode),
             .gpio_cfg = {
               .mclk = (gpio_num_t)Pin(GPIO_I2S_MCLK),
               .bclk = (gpio_num_t)Pin(GPIO_I2S_BCLK),
@@ -649,7 +654,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
 
           err = i2s_channel_init_std_mode(_rx_handle, &rx_std_cfg);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode err:%i", err);
-          AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with 16 bit width on %i channel(s) initialized", slot_mode);
+          AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with 16 bit width on %i channel(s) initialized", rx_slot_mode);
           if (err) {
             _rx_handle = nullptr;
             return false;
@@ -713,8 +718,8 @@ uint32_t TasmotaI2S::startRx(void) {
   esp_err_t err = ESP_OK;
   gpio_num_t clk_gpio;
 
-  i2s_slot_mode_t slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
-  AddLog(LOG_LEVEL_DEBUG, "I2S: mic init rx_channels:%i rx_running:%i rx_handle:%p", slot_mode, _rx_running, _rx_handle);
+  i2s_slot_mode_t rx_slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
+  AddLog(LOG_LEVEL_DEBUG, "I2S: mic init rx_channels:%i rx_running:%i rx_handle:%p", rx_slot_mode, _rx_running, _rx_handle);
 
   if (!_rx_running) {
     err = i2s_channel_enable(_rx_handle);
