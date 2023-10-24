@@ -671,8 +671,17 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(-, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                var_setreal(dst, x.r - y.r);
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x - y);
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "-", ins);
             } else {
@@ -685,8 +694,17 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(*, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                var_setreal(dst, x.r * y.r);
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x * y);
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "*", ins);
             } else {
@@ -704,11 +722,23 @@ newframe: /* a new call frame */
                     var_setint(dst, x / y);
                 }
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                if (y.r == cast(breal, 0)) {
+                    vm_error(vm, "divzero_error", "division by zero");
+                }
+                var_setreal(dst, x.r / y.r);
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 if (y == cast(breal, 0)) {
                     vm_error(vm, "divzero_error", "division by zero");
                 }
                 var_setreal(dst, x / y);
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "/", ins);
             } else {
@@ -721,7 +751,16 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(%, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                var_setreal(dst, mathfunc(fmod)(x.r, y.r));
+#else  // CONFIG_IDF_TARGET_ESP32
                 var_setreal(dst, mathfunc(fmod)(var_toreal(a), var_toreal(b)));
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "%", ins);
             } else {
