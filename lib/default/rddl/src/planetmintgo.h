@@ -38,7 +38,7 @@ int prepareTx( Google__Protobuf__Any* anyMsg,
 
 bool removeIPAddr( char* gps_data );
 
-#define MY_STACK_LIMIT 6144
+#define MY_STACK_LIMIT 7168
 
 uint8_t* getStack( size_t size );
 void clearStack();
