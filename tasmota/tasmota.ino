@@ -228,6 +228,7 @@ TASCONSOLE TasConsole{USBSerial};           // ESP32C3/C6/S3 embedded USB using 
 #else   // No ARDUINO_USB_MODE
 #include "USB.h"
 #include "USBCDC.h"
+USBCDC USBSerial;                           // ESP32Sx embedded USB interface
 TASCONSOLE TasConsole{USBSerial};           // ESP32Sx embedded USB interface
 //#warning **** TasConsole uses USBCDC ****
 #endif  // ARDUINO_USB_MODE
