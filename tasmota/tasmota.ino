@@ -532,8 +532,8 @@ void setup(void) {
 
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
-  bool is_connected_to_USB = false;
 
+  bool is_connected_to_USB = false;
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
   rtc_clk_bbpll_add_consumer();    // Maybe unneeded
   usb_serial_jtag_ll_ena_intr_mask(USB_SERIAL_JTAG_INTR_SOF);
@@ -545,6 +545,8 @@ void setup(void) {
       delay(1);
   }
   rtc_clk_bbpll_remove_consumer();
+#else
+  is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
   if (is_connected_to_USB) {
