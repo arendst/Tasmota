@@ -487,7 +487,7 @@ bool hasMachineBeenAttested()
 {
   HTTPClientLight http;
 
-  String uri = "/github.com/planetmint/planetmint-go/machine/get_machine_by_public_key/";
+  String uri = "/planetmint/machine/get_machine_by_public_key/";
   uri = getPlanetmintAPI() + uri;
   uri = uri + g_ext_pub_key_planetmint;
   http.begin(uri);
