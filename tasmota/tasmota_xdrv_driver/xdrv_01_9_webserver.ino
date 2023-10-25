@@ -1248,25 +1248,35 @@ void HandleRoot(void)
         }
       }  // Settings->flag3.pwm_multi_channels
     }
-#endif // USE_LIGHT
-    WSContentSend_P(HTTP_TABLE100);
-    WSContentSend_P(PSTR("<tr>"));
+// Check if the Sonoff iFan module is being used
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
+      // Send a command to the web server to create a 'Toggle' button
+      // The '36' is the button type, '1' is the button number
+      // 'D_BUTTON_TOGGLE' is the label for the button
       WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1,
-        (strlen(SettingsText(SET_BUTTON1))) ? SettingsText(SET_BUTTON1) : PSTR(D_BUTTON_TOGGLE),
+        PSTR(D_BUTTON_TOGGLE),
         "");
+      // Loop through each fan speed
       for (uint32_t i = 0; i < MaxFanspeed(); i++) {
+        // Format a string with the fan speed number
         snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
+        // Send a command to the web server to create a button for this fan speed
+        // The '16' is the button type, 'i +2' is the button number
+        // The label for the button is either a custom label from settings or the fan speed number
         WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2,
           (strlen(SettingsText(SET_BUTTON2 + i))) ? SettingsText(SET_BUTTON2 + i) : stemp,
           "");
       }
     } else {
 #endif  // USE_SONOFF_IFAN
+      // Get the number of device columns for non-iFan modules
       uint32_t cols = WebDeviceColumns();
+      // Loop through each device present in non-iFan modules
       for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
-        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(idx -1)));
+        // Check if a custom label has been set for this button
+        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
+
 #ifdef USE_SHUTTER
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
