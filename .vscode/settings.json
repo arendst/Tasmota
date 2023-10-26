@@ -70,5 +70,10 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
+    ],
+    "cSpell.words": [
+      "Sonoff",
+      "srcset",
+      "Tasmota"
     ]
   }

@@ -99,7 +99,7 @@ To accept the CLA it is required to put a x between [ ] on `[ ] I accept the CLA
 
 **Why a CLA ?**
 
-_"A Contributor Licence Agreement (CLA) is strongly recommended when accepting third party contributions to an open development project, such as an open source software project. In order to redistribute contributions, it is necessary to ensure that the project has the necessary rights to do so. A Contributor Licence Agreement is a lightweight agreement, signed by the copyright holder, that grants the necessary rights for the contribution to be redistributed as part of the project."_ [OSS Watch](http://oss-watch.ac.uk/resources/cla)
+_"A Contributor License Agreement (CLA) is strongly recommended when accepting third party contributions to an open development project, such as an open source software project. In order to redistribute contributions, it is necessary to ensure that the project has the necessary rights to do so. A Contributor License Agreement is a lightweight agreement, signed by the copyright holder, that grants the necessary rights for the contribution to be redistributed as part of the project."_ [OSS Watch](http://oss-watch.ac.uk/resources/cla)
 
 A CLA is a legal document in which you state _you are entitled to contribute the code/documentation/translation to the project_ you’re contributing to and that _you are willing to have it used in distributions and derivative works_. This means that should there be any kind of legal issue in the future as to the origins and ownership of any particular piece of code, then that project has the necessary forms on file from the contributor(s) saying they were permitted to make this contribution.
 
