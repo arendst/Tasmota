@@ -90,7 +90,7 @@ a_setoption = [[
     "(Restart) Number of restarts to start detecting boot loop (default 1)",
     "(Light) RGB and White channel separation (default 0)",
     "(IR) Set the smallest sized UNKNOWN message packets we actually care about (default 6, max 255)",
-    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurments (default 128)",
+    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurements (default 128)",
     "(Button/Shutter) Ignore button change in seconds (default 0)",
     "(Wifi) Interval in seconds between gratuitous ARP requests (default 60)",
     "(Energy) Turn all power off at or above this temperature (default 90C)",

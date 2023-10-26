@@ -20,7 +20,7 @@
 
 Provides:
   Uploads binary file to OTA server.
-  Usually initated from http-uploader.py
+  Usually initiated from http-uploader.py
 
 Requirements:
   - Python

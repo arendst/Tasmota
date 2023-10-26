@@ -31,7 +31,7 @@ def bin_map_copy(source, target, env):
     # copy firmware.bin and map to final destination
     shutil.copy(firsttarget, bin_file)
     if env["PIOPLATFORM"] == "espressif32":
-        # the map file is needed later for fimrmware-metrics.py
+        # the map file is needed later for firmware-metrics.py
         shutil.copy(tasmotapiolib.get_source_map_path(env), map_file)
         if("safeboot" not in firmware_name):
             shutil.copy(factory, one_bin_file)

@@ -17,7 +17,7 @@ Callback Id                 | Bool | xdrv | xsns | xnrg | xlgt | Description
 ----------------------------|------|------|------|------|------|----------------------------------
 FUNC_SETTINGS_OVERRIDE      |      |  x   |      |      |      | Override start-up settings
 FUNC_PIN_STATE              |  x   |  1   |  2   |      |      | At GPIO configuration
-FUNC_I2C_INIT               |      |  x   |      |      |      | Immediatly after I2C init
+FUNC_I2C_INIT               |      |  x   |      |      |      | Immediately after I2C init
 FUNC_MODULE_INIT            |  x   |  3   |  1   |      |  2   | Init module specific parameters
 FUNC_PRE_INIT               |      |  1   |  3   |  2   |      | Once GPIO have been established
 FUNC_INIT                   |      |  1   |  3   |  2   |      | At end of initialisation
