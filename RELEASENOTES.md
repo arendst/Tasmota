@@ -121,6 +121,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2C bus2 support to HYTxxx temperature and humidity sensor
 - I2C bus2 support to SI1145/6/7 Ultra violet index and light sensor
 - I2C bus2 support to LM75AD temperature sensor
+- Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X [#19850](https://github.com/arendst/Tasmota/issues/19850)
 - Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
 
