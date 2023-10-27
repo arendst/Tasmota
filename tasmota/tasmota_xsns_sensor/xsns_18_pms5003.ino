@@ -27,7 +27,7 @@
  * You can either support PMS3003 or PMS5003-7003 at one time. To enable the PMS3003 support
  * you must enable the define PMS_MODEL_PMS3003 on your configuration file.
  * For PMSx003T models that report temperature and humidity define PMS_MODEL_PMS5003T
- * This module can also support de Winsum ZH03x series of dust particle sensors,
+ * This module can also support de Winsen ZH03x series of dust particle sensors,
  * To support those sensors, you must define PMS_MODEL_ZH03X in the confuguration file.
 \*********************************************************************************************/
 
@@ -183,7 +183,7 @@ bool PmsReadData(void)
 
   return true;
 }
-
+#ifdef PMS_MODEL_ZH03X
 bool ZH03ReadDataPassive() // process the passive mode response of the ZH03x sensor
 {
   if (! PmsSerial->available()) {
@@ -236,6 +236,7 @@ bool ZH03ReadDataPassive() // process the passive mode response of the ZH03x sen
   return true;
 
 }
+#endif  // PMS_MODEL_ZH03X
 
 /*********************************************************************************************\
  * Command Sensor18
@@ -283,12 +284,10 @@ void PmsSecond(void)                 // Every second
       // wakeup sensor WARMUP_PERIOD before read interval
       Pms.wake_mode = 1;
       PmsSendCmd(CMD_WAKEUP);
-      AddLog(LOG_LEVEL_DEBUG_MORE, "ZH03x: Wake up command issued");
     }
     if (Pms.time >= Settings->pms_wake_interval) {
       // sensor is awake and warmed up, set up for reading
       PmsSendCmd(CMD_READ_DATA);
-      AddLog(LOG_LEVEL_DEBUG_MORE, "ZH03x: Read command issued (1)");
       Pms.ready = 1;
       Pms.time = 0;
     }
@@ -310,7 +309,6 @@ void PmsSecond(void)                 // Every second
       Pms.valid = 10;
       if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
         PmsSendCmd(CMD_SLEEP);
-        AddLog(LOG_LEVEL_DEBUG_MORE, "ZH03x: Sleep command issued");
         Pms.wake_mode = 0;
         Pms.ready = 0;
       }
@@ -319,7 +317,6 @@ void PmsSecond(void)                 // Every second
         Pms.valid--;
         if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
           PmsSendCmd(CMD_READ_DATA);
-          AddLog(LOG_LEVEL_DEBUG_MORE, "ZH03x: Read command issued (2)");
           Pms.ready = 1;
         }
       }
