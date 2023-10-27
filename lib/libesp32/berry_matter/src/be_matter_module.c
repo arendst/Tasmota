@@ -451,7 +451,9 @@ module matter (scope: global, strings: weak) {
   Plugin_ShutterTilt, class(be_class_Matter_Plugin_ShutterTilt)   // Shutter + Tilt
   Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
   Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
+  Plugin_Sensor_Flow, class(be_class_Matter_Plugin_Sensor_Flow)   // Flow Sensor
   Plugin_Sensor_Virt_Pressure, class(be_class_Matter_Plugin_Virt_Sensor_Pressure)   // Pressure Virtual Sensor
+  Plugin_Sensor_Virt_Flow, class(be_class_Matter_Plugin_Virt_Sensor_Pressure)   // Flow Virtual Sensor
   Plugin_Sensor_Flow, class(be_class_Matter_Plugin_Sensor_Flow)   // Flow Sensor
   Plugin_Sensor_Virt_Flow, class(be_class_Matter_Plugin_Virt_Sensor_Flow)   // Flow Virtual Sensor
   Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
