@@ -29,7 +29,7 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
   static var JSON_NAME = "Flow"                 # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Flow")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0403: [0,1,2,0xFFFC,0xFFFD],                  # Flow Measurement
+    0x0404: [0,1,2,0xFFFC,0xFFFD],                  # Flow Measurement
   })
   static var TYPES = { 0x0306: 2 }                  # Flow Sensor, rev 2
 
@@ -60,7 +60,7 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0403              # ========== Flow Measurement 2.4 p.98 ==========
+    if   cluster == 0x0404              # ========== Flow Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
         if self.shadow_value != nil
           return tlv_solo.set(TLV.I2, int(self.shadow_value)) # MeasuredValue represents the flow in m3/h
