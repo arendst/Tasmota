@@ -1,7 +1,12 @@
 Import("env")
+env = DefaultEnvironment()
+platform = env.PioPlatform()
+
 
 import glob
 import os
+import shutil
+from os.path import join
 
 def FindInoNodes(env):
     src_dir = glob.escape(env.subst("$PROJECT_SRC_DIR"))

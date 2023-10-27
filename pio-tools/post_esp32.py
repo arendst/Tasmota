@@ -16,7 +16,7 @@
 # -  0x1000 | ~\.platformio\packages\framework-arduinoespressif32\tools\sdk\esp32\bin\bootloader_dout_40m.bin
 # -  0x8000 | ~\Tasmota\.pio\build\<env name>\partitions.bin
 # -  0xe000 | ~\.platformio\packages\framework-arduinoespressif32\tools\partitions\boot_app0.bin
-# - 0x10000 | ~\.platformio/packages/framework-arduinoespressif32/variants/tasmota/\<env name>-safeboot.bin
+# - 0x10000 | ~\Tasmota\<variants_dir>/<env name>-safeboot.bin
 # - 0xe0000 | ~\Tasmota\.pio\build\<env name>/firmware.bin
 # - 0x3b0000| ~\Tasmota\.pio\build\<env name>/littlefs.bin
 
@@ -37,6 +37,13 @@ from SCons.Script import COMMAND_LINE_TARGETS
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
+variants_dir = env.BoardConfig().get("build.variants_dir", "")
+variant = env.BoardConfig().get("build.variant", "")
+sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
+chip = env.get("BOARD_MCU")
+mcu_build_variant = env.BoardConfig().get("build.variant", "").lower()
+
+# Copy safeboots firmwares in place when running in Github
 github_actions = os.getenv('GITHUB_ACTIONS')
 extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
 build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
@@ -45,16 +52,31 @@ if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
     if github_actions and os.path.exists("./firmware/firmware"):
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-solo1/variants/tasmota")
+        if variants_dir:
+            shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
 elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
     if github_actions and os.path.exists("./firmware/firmware"):
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-ITEAD/variants/tasmota")
+        if variants_dir:
+            shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
 else:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
     if github_actions and os.path.exists("./firmware/firmware"):
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduinoespressif32/variants/tasmota")
+        if variants_dir:
+            shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
 
-variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
+# Copy pins_arduino.h to variants folder
+if variants_dir:
+    mcu_build_variant_path = join(FRAMEWORK_DIR, "variants", mcu_build_variant, "pins_arduino.h")
+    custom_variant_build = join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant, "pins_arduino.h")
+    os.makedirs(join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant), exist_ok=True)
+    shutil.copy(mcu_build_variant_path, custom_variant_build)
+
+if not variants_dir:
+    variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
+    env.BoardConfig().update("build.variants_dir", variants_dir)
 
 def esp32_detect_flashsize():
     uploader = env.subst("$UPLOADER")
@@ -195,9 +217,7 @@ def esp32_create_combined_bin(source, target, env):
 
 
     new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
-    sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
-    chip = env.get("BOARD_MCU")
     tasmota_platform = esp32_create_chip_string(chip)
 
     if "-DUSE_USB_CDC_CONSOLE" in env.BoardConfig().get("build.extra_flags") and "cdc" not in tasmota_platform:
@@ -274,8 +294,8 @@ def esp32_create_combined_bin(source, target, env):
             )
             print("Will use custom upload command for flashing operation to add file system defined for this build target.")
 
-    #print('Using esptool.py arguments: %s' % ' '.join(cmd))
     if("safeboot" not in firmware_name):
+        #print('Using esptool.py arguments: %s' % ' '.join(cmd))
         esptool.main(cmd)
 
 
