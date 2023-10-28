@@ -41,7 +41,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "variants/tasmota/tasmota32s3cdc-safeboot.bin"
+          "tasmota32s3cdc-safeboot.bin"
         ]
       ]
     },
