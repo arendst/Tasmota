@@ -662,6 +662,7 @@ NeoPoolResMBitfield neopool_resolution {
 #define D_NEOPOOL_JSON_FILTRATION_INTELLIGENT "Intelligent"
 #define D_NEOPOOL_JSON_FILTRATION_BACKWASH    "Backwash"
 #define D_NEOPOOL_JSON_MODULES                "Modules"
+#define D_NEOPOOL_JSON_POWERUNIT              "Powerunit"
 #define D_NEOPOOL_JSON_CHLORINE               "Chlorine"
 #define D_NEOPOOL_JSON_CONDUCTIVITY           "Conductivity"
 #define D_NEOPOOL_JSON_FILTRATION             "Filtration"
@@ -1538,7 +1539,7 @@ void NeoPoolShow(bool json)
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
       float f420mA = (float)NeoPoolGetData(MBF_AMP_4_20_MICRO)/100;
-      ResponseAppend_P(PSTR(",\""  D_JSON_POWERUSAGE  "\":{"));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_POWERUNIT  "\":{"));
       if (neopool_power_module_version ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_VERSION, &neopool_power_module_version, 1)) {
         ResponseAppend_P(PSTR("\""  D_JSON_VERSION  "\":\"V%d.%d\","),

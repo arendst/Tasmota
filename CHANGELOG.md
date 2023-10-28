@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed
 
 ### Breaking Changed
+- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit``
 
 ### Changed
 - Prepare I2C drivers for bus2 support
