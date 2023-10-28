@@ -1629,9 +1629,14 @@ void NeoPoolShow(bool json)
         sunit = PSTR(D_NEOPOOL_UNIT_GPERH);
         int dec = 1;
       }
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_HIDRO)/10;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_HIDRO_NOM)/10;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
       ResponseAppend_P(PSTR( "\""  D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
@@ -1760,7 +1765,14 @@ void NeoPoolShow(bool json)
       }
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
       WSContentSend_PD(HTTP_SNS_NEOPOOL_HYDROLYSIS, neopool_type, dec, &fvalue, sunit);
+
       // S1
+      float fhidromax = (float)NeoPoolGetData(MBF_PAR_HIDRO)/10;
+      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_HIDRO " %s"), dec, &fhidromax, sunit);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_INACTIVE, stemp);
+      WSContentSend_PD(PSTR(" "));
+
+      // S2
       if (0 == (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_NORMAL, PSTR(D_NEOPOOL_STATUS_OFF));
       } else if (0 == (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL1)) {
@@ -1773,14 +1785,14 @@ void NeoPoolShow(bool json)
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_NORMAL, PSTR(D_NEOPOOL_STATUS_OFF));
       }
       WSContentSend_PD(PSTR(" "));
-      // S2
+      // S3
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_COVER));
       } else  {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_COVER));
       }
       WSContentSend_PD(PSTR(" "));
-      // S3
+      // S4
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) {
         if ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) == 0) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK "+" D_NEOPOOL_REDOX));
@@ -1791,7 +1803,7 @@ void NeoPoolShow(bool json)
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_SHOCK));
       }
       WSContentSend_PD(PSTR(" "));
-      // S4
+      // S5
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_LOW));
       } else  {
