@@ -662,6 +662,7 @@ NeoPoolResMBitfield neopool_resolution {
 #define D_NEOPOOL_JSON_FILTRATION_INTELLIGENT "Intelligent"
 #define D_NEOPOOL_JSON_FILTRATION_BACKWASH    "Backwash"
 #define D_NEOPOOL_JSON_MODULES                "Modules"
+#define D_NEOPOOL_JSON_POWERUNIT              "Powerunit"
 #define D_NEOPOOL_JSON_CHLORINE               "Chlorine"
 #define D_NEOPOOL_JSON_CONDUCTIVITY           "Conductivity"
 #define D_NEOPOOL_JSON_FILTRATION             "Filtration"
@@ -805,6 +806,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *              3 - Smart
  *              4 - Intelligent
  *             13 - Backwash
+ *
+ * NPFiltrationSpeed {<speed>}
+ *            (only available for non-standard filtration types)
+ *            get/set manual filtration speed (speed = 1..3)
+ *            get filtration speed if <speed> is omitted, otherwise set new speed
+ *              1 - low
+ *              2 - mid
+ *              3 - high
  *
  * NPTime {<time>}
  *            get/set system time
@@ -974,6 +983,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_BITL "BitL"
 #define D_CMND_NP_FILTRATION "Filtration"
 #define D_CMND_NP_FILTRATIONMODE "Filtrationmode"
+#define D_CMND_NP_FILTRATIONSPEED "Filtrationspeed"
 #define D_CMND_NP_TIME "Time"
 #define D_CMND_NP_LIGHT "Light"
 #define D_CMND_NP_PHMIN "pHMin"
@@ -1002,6 +1012,7 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_BITL "|"
   D_CMND_NP_FILTRATION "|"
   D_CMND_NP_FILTRATIONMODE "|"
+  D_CMND_NP_FILTRATIONSPEED "|"
   D_CMND_NP_TIME "|"
   D_CMND_NP_LIGHT "|"
   D_CMND_NP_PHMIN "|"
@@ -1031,6 +1042,7 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolBit,
   &CmndNeopoolFiltration,
   &CmndNeopoolFiltrationMode,
+  &CmndNeopoolFiltrationSpeed,
   &CmndNeopoolTime,
   &CmndNeopoolLight,
   &CmndNeopoolpHMin,
@@ -1527,7 +1539,7 @@ void NeoPoolShow(bool json)
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
       float f420mA = (float)NeoPoolGetData(MBF_AMP_4_20_MICRO)/100;
-      ResponseAppend_P(PSTR(",\""  D_JSON_POWERUSAGE  "\":{"));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_POWERUNIT  "\":{"));
       if (neopool_power_module_version ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_VERSION, &neopool_power_module_version, 1)) {
         ResponseAppend_P(PSTR("\""  D_JSON_VERSION  "\":\"V%d.%d\","),
@@ -1537,14 +1549,21 @@ void NeoPoolShow(bool json)
       }
       if (neopool_power_module_nodeid[0] ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, neopool_power_module_nodeid, nitems(neopool_power_module_nodeid))) {
-        ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
-          neopool_power_module_nodeid[0],
-          neopool_power_module_nodeid[1],
-          neopool_power_module_nodeid[2],
-          neopool_power_module_nodeid[3],
-          neopool_power_module_nodeid[4],
-          neopool_power_module_nodeid[5]
-        );
+        if (Settings->flag6.neopool_outputsensitive) {
+          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
+            neopool_power_module_nodeid[0],
+            neopool_power_module_nodeid[1],
+            neopool_power_module_nodeid[2],
+            neopool_power_module_nodeid[3],
+            neopool_power_module_nodeid[4],
+            neopool_power_module_nodeid[5]
+          );
+        }
+        else {
+          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"XXXX XXXX XXXX XXXX XXXX %04X\","),
+            neopool_power_module_nodeid[5]
+          );
+        }
       }
       ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
         Settings->flag2.voltage_resolution, &f5volt,
@@ -1629,9 +1648,14 @@ void NeoPoolShow(bool json)
         sunit = PSTR(D_NEOPOOL_UNIT_GPERH);
         int dec = 1;
       }
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_HIDRO)/10;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_HIDRO_NOM)/10;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
       ResponseAppend_P(PSTR( "\""  D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
@@ -1760,7 +1784,14 @@ void NeoPoolShow(bool json)
       }
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
       WSContentSend_PD(HTTP_SNS_NEOPOOL_HYDROLYSIS, neopool_type, dec, &fvalue, sunit);
+
       // S1
+      float fhidromax = (float)NeoPoolGetData(MBF_PAR_HIDRO)/10;
+      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_HIDRO " %s"), dec, &fhidromax, sunit);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_INACTIVE, stemp);
+      WSContentSend_PD(PSTR(" "));
+
+      // S2
       if (0 == (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_MODULE_ACTIVE)) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_NORMAL, PSTR(D_NEOPOOL_STATUS_OFF));
       } else if (0 == (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL1)) {
@@ -1773,14 +1804,14 @@ void NeoPoolShow(bool json)
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_NORMAL, PSTR(D_NEOPOOL_STATUS_OFF));
       }
       WSContentSend_PD(PSTR(" "));
-      // S2
+      // S3
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_COVER));
       } else  {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_COVER));
       }
       WSContentSend_PD(PSTR(" "));
-      // S3
+      // S4
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) {
         if ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) == 0) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK "+" D_NEOPOOL_REDOX));
@@ -1791,7 +1822,7 @@ void NeoPoolShow(bool json)
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_SHOCK));
       }
       WSContentSend_PD(PSTR(" "));
-      // S4
+      // S5
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_LOW));
       } else  {
@@ -2222,6 +2253,41 @@ void CmndNeopoolFiltrationMode(void)
     return;
   }
   ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : nitems(kNeoPoolFiltrationModeCmnd)-1, kNeoPoolFiltrationMode));
+}
+
+
+void CmndNeopoolFiltrationSpeed(void)
+{
+  uint16_t speed;
+  uint16_t filtration_conf;
+
+  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_CONF, &filtration_conf, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  if (MBV_PAR_FILTRATION_TYPE_STANDARD == (filtration_conf & MBMSK_PAR_FILTRATION_CONF_TYPE)) {
+      // no speed control for standard filtration types
+      NeopoolCmndError();
+      return;
+  }
+
+  speed = NeoPoolGetFiltrationSpeed();
+  if (XdrvMailbox.data_len) {
+    if (XdrvMailbox.payload >= 1 && XdrvMailbox.payload <= 3) {
+      speed = XdrvMailbox.payload;
+      // Set filtration speed
+      if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_PAR_FILTRATION_CONF,
+          (filtration_conf & ~MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) | ((speed - 1) << MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED))) {
+          NeopoolResponseError();
+          return;
+        }
+      NeoPoolWriteRegisterWord(MBF_EXEC, 1);
+    } else {
+        NeopoolCmndError();
+        return;
+    }
+  }
+  ResponseCmndNumber(speed);
 }
 
 

@@ -16,8 +16,12 @@ All notable changes to this project will be documented in this file.
 - Command ``GpioRead`` to show input state (#19810)
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
 - Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X (#19850)
+- NeoPool hydrolysis setpoint and max
+- NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed
+- NeoPool ``SetOption157`` to output sensitive data
 
 ### Breaking Changed
+- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit``
 
 ### Changed
 - Prepare I2C drivers for bus2 support
