@@ -806,6 +806,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *              4 - Intelligent
  *             13 - Backwash
  *
+ * NPFiltrationSpeed {<speed>}
+ *            (only available for non-standard filtration types)
+ *            get/set manual filtration speed (speed = 1..3)
+ *            get filtration speed if <speed> is omitted, otherwise set new speed
+ *              1 - low
+ *              2 - mid
+ *              3 - high
+ *
  * NPTime {<time>}
  *            get/set system time
  *            get current time if <time> is omitted, otherwise set time according:
@@ -974,6 +982,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_BITL "BitL"
 #define D_CMND_NP_FILTRATION "Filtration"
 #define D_CMND_NP_FILTRATIONMODE "Filtrationmode"
+#define D_CMND_NP_FILTRATIONSPEED "Filtrationspeed"
 #define D_CMND_NP_TIME "Time"
 #define D_CMND_NP_LIGHT "Light"
 #define D_CMND_NP_PHMIN "pHMin"
@@ -1002,6 +1011,7 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_BITL "|"
   D_CMND_NP_FILTRATION "|"
   D_CMND_NP_FILTRATIONMODE "|"
+  D_CMND_NP_FILTRATIONSPEED "|"
   D_CMND_NP_TIME "|"
   D_CMND_NP_LIGHT "|"
   D_CMND_NP_PHMIN "|"
@@ -1031,6 +1041,7 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolBit,
   &CmndNeopoolFiltration,
   &CmndNeopoolFiltrationMode,
+  &CmndNeopoolFiltrationSpeed,
   &CmndNeopoolTime,
   &CmndNeopoolLight,
   &CmndNeopoolpHMin,
@@ -2234,6 +2245,41 @@ void CmndNeopoolFiltrationMode(void)
     return;
   }
   ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : nitems(kNeoPoolFiltrationModeCmnd)-1, kNeoPoolFiltrationMode));
+}
+
+
+void CmndNeopoolFiltrationSpeed(void)
+{
+  uint16_t speed;
+  uint16_t filtration_conf;
+
+  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_CONF, &filtration_conf, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  if (MBV_PAR_FILTRATION_TYPE_STANDARD == (filtration_conf & MBMSK_PAR_FILTRATION_CONF_TYPE)) {
+      // no speed control for standard filtration types
+      NeopoolCmndError();
+      return;
+  }
+
+  speed = NeoPoolGetFiltrationSpeed();
+  if (XdrvMailbox.data_len) {
+    if (XdrvMailbox.payload >= 1 && XdrvMailbox.payload <= 3) {
+      speed = XdrvMailbox.payload;
+      // Set filtration speed
+      if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_PAR_FILTRATION_CONF,
+          (filtration_conf & ~MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) | ((speed - 1) << MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED))) {
+          NeopoolResponseError();
+          return;
+        }
+      NeoPoolWriteRegisterWord(MBF_EXEC, 1);
+    } else {
+        NeopoolCmndError();
+        return;
+    }
+  }
+  ResponseCmndNumber(speed);
 }
 
 
