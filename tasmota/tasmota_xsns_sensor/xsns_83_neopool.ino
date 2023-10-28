@@ -1549,14 +1549,21 @@ void NeoPoolShow(bool json)
       }
       if (neopool_power_module_nodeid[0] ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, neopool_power_module_nodeid, nitems(neopool_power_module_nodeid))) {
-        ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
-          neopool_power_module_nodeid[0],
-          neopool_power_module_nodeid[1],
-          neopool_power_module_nodeid[2],
-          neopool_power_module_nodeid[3],
-          neopool_power_module_nodeid[4],
-          neopool_power_module_nodeid[5]
-        );
+        if (Settings->flag6.neopool_outputsensitive) {
+          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
+            neopool_power_module_nodeid[0],
+            neopool_power_module_nodeid[1],
+            neopool_power_module_nodeid[2],
+            neopool_power_module_nodeid[3],
+            neopool_power_module_nodeid[4],
+            neopool_power_module_nodeid[5]
+          );
+        }
+        else {
+          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"XXXX XXXX XXXX XXXX XXXX %04X\","),
+            neopool_power_module_nodeid[5]
+          );
+        }
       }
       ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
         Settings->flag2.voltage_resolution, &f5volt,
