@@ -1116,7 +1116,7 @@ bool IRAM_ATTR CEC_Device::setLineState(bool state, bool check)
 // manage callbacks
 void CEC_Device::OnReady(int logical_address)
 {
-  if (_on_rx_cb) { _on_ready_cb(this, logical_address); }
+  if (_on_ready_cb) { _on_ready_cb(this, logical_address); }
 
 	// This is called after the logical address has been allocated
   int physical_address = getPhysicalAddress();
