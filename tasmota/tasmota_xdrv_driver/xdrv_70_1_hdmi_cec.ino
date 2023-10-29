@@ -284,13 +284,13 @@ uint16_t HDMIGetPhysicalAddress(void) {
 
 void CmndHDMIAddr(void) {
   if (XdrvMailbox.data_len > 0) {
-    if ((XdrvMailbox.payload < 1)) {
+    if ((XdrvMailbox.payload > 0)) {
       uint16_t hdmi_addr = XdrvMailbox.payload;
       Settings->hdmi_addr[0] = (hdmi_addr) & 0xFF;
       Settings->hdmi_addr[1] = (hdmi_addr >> 8) & 0xFF;
     }
   }
-  uint16_t hdmi_addr = HDMIGetPhysicalAddress();
+  uint16_t hdmi_addr = HDMI_CEC_device->discoverPhysicalAddress();
   Response_P(PSTR("{\"%s\":\"0x%04X\"}"), XdrvMailbox.command, hdmi_addr);
 }
 
