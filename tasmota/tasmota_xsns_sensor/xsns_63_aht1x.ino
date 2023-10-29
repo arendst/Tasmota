@@ -40,7 +40,7 @@
  *            and allows other I2C Devices on the bus but have only one I2C Address (0x38)
  * 14.09.2021 support AHT20 without enabling AHT1x 
  *
- * 26.10.2023 c
+ * 26.10.2023 support for AHT30 added.
  *
  * AHT20 I2C Address: 0x38
  * AHT30 I2C Address: 0x38
