@@ -2730,6 +2730,7 @@ Shelly 2                     {"NAME":"Shelly 2","GPIO":[0,2752,0,2784,224,225,0,
 Shelly 2.5                   {"NAME":"Shelly 2.5","GPIO":[320,0,0,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 Shelly EM                    {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
 Shelly i3 Action and Scenes Activation Device  {"NAME":"Shelly i3","GPIO":[0,0,0,0,0,320,0,0,193,194,192,0,0,4736],"FLAG":0,"BASE":18}
+Shelly Plus 0-10V Dimmer     {"NAME":"Shelly Plus 0-10V Dimmer","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,193,1,0,0,0,0,0,32,416,0,0,0,0,0,4736,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Shelly Plus 1                {"NAME":"Shelly Plus 1 ","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,32,224,0,0,0,0,0,4736,4705,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Shelly Plus 1PM              {"NAME":"Shelly Plus 1PM","GPIO":[0,0,0,0,192,2720,0,0,0,0,0,0,0,0,2656,0,0,0,0,2624,0,32,224,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Shelly Plus 2PM              {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,34,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1}
