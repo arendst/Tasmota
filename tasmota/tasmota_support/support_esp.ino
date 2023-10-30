@@ -659,8 +659,9 @@ uint32_t ESP_getFlashChipMagicSize(void) {
     return ESP_magicFlashChipSize(fhdr.spi_size);
 }
 
-uint32_t ESP_magicFlashChipSize(uint8_t byte) {
-    switch(byte & 0x0F) {
+uint32_t ESP_magicFlashChipSize(uint8_t spi_size) {
+/*  
+    switch(spi_size & 0x0F) {
     case 0x0: // 8 MBit (1MB)
         return 1048576;
     case 0x1: // 16 MBit (2MB)
@@ -676,6 +677,8 @@ uint32_t ESP_magicFlashChipSize(uint8_t byte) {
     default:  // fail so return (1KB)
         return 1024;      
     }
+*/    
+  return (uint32_t)0x100000 << spi_size;  // 0 = 8 MBit (1MB), 5 = 256 MBit (32MB)
 }
 
 uint32_t ESP_getSketchSize(void) {
