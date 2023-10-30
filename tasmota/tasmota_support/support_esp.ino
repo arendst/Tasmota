@@ -678,7 +678,7 @@ uint32_t ESP_magicFlashChipSize(uint8_t spi_size) {
         return 1024;      
     }
 */    
-  return (uint32_t)0x100000 << spi_size;  // 0 = 8 MBit (1MB), 5 = 256 MBit (32MB)
+  return (uint32_t)0x100000 << (spi_size & 0x0F);  // 0 = 8 MBit (1MB), 5 = 256 MBit (32MB)
 }
 
 uint32_t ESP_getSketchSize(void) {
