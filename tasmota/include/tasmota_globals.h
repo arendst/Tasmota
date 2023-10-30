@@ -74,7 +74,9 @@ String EthernetMacAddress(void);
 \*-------------------------------------------------------------------------------------------*/
 
 // created in pio-tools/pre_source_dir.py
-#if defined(CONFIG_TASMOTA_FLASHMODE_QIO)
+#if defined(CONFIG_TASMOTA_FLASHMODE_OPI)
+  #define D_TASMOTA_FLASHMODE "OPI"
+#elif (CONFIG_TASMOTA_FLASHMODE_QIO)
   #define D_TASMOTA_FLASHMODE "QIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_QOUT)
    #define D_TASMOTA_FLASHMODE "QOUT"
