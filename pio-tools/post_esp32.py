@@ -113,9 +113,12 @@ def patch_partitions_bin(size_string):
         binary_data = file.read(0xb0)
         import hashlib
         bin_list = list(binary_data)
-        size = codecs.decode(size_string[2:], 'hex_codec') # 0xc50000 -> [c5,00,00]
-        bin_list[0x8a] = size[0]
-        bin_list[0x8b] = size[1]
+        size_string = int(size_string[2:],16)
+        size_string = f"{size_string:08X}"
+        size = codecs.decode(size_string, 'hex_codec') # 0xc50000 -> [00,c5,00,00]
+        bin_list[0x89] = size[2]
+        bin_list[0x8a] = size[1]
+        bin_list[0x8b] = size[0]
         result = hashlib.md5(bytes(bin_list[0:0xa0]))
         partition_data = bytes(bin_list) + result.digest()
         file.seek(0)
