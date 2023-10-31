@@ -674,7 +674,13 @@ void ShutterInit(void)
       Shutter[i].tilt_target_pos        = Shutter[i].tilt_real_pos = ShutterSettings.shutter_tilt_pos[i];
       Shutter[i].tilt_velocity          = Shutter[i].tilt_config[2] > 0 ? ((Shutter[i].tilt_config[1] - Shutter[i].tilt_config[0]) / Shutter[i].tilt_config[2]) + 1  : 1;
       Shutter[i].close_velocity_max     = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
-      Shutter[i].min_realPositionChange = 2 * tmax(ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
+
+      //servo can make any movement without time restriction
+      Shutter[i].min_realPositionChange = 0;
+      if (ShutterGlobal.position_mode != SHT_PWM_VALUE) {
+        Shutter[i].min_realPositionChange = 2 * tmax(ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
+      }
+      
       Shutter[i].min_TiltChange         = 2 * Shutter[i].tilt_velocity;
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"), i+1, Shutter[i].min_realPositionChange, Shutter[i].min_TiltChange);
@@ -984,16 +990,19 @@ void ShutterRtc50mS(void)
         case SHT_PWM_VALUE:
           ShutterUpdateVelocity(i);
           Shutter[i].real_position += Shutter[i].direction > 0 ? Shutter[i].pwm_velocity : (Shutter[i].direction < 0 ? -Shutter[i].pwm_velocity : 0);
+          // avoid overshoot on servo if changes are very small
+          if ((Shutter[i].direction > 0 && Shutter[i].real_position > Shutter[i].target_position)
+            || (Shutter[i].direction < 0 && Shutter[i].real_position < Shutter[i].target_position)) {
+              Shutter[i].real_position = Shutter[i].target_position;
+            }
           Shutter[i].pwm_value      = SHT_DIV_ROUND((ShutterSettings.shutter_pwmrange[1][i]-ShutterSettings.shutter_pwmrange[0][i]) * Shutter[i].real_position , Shutter[i].open_max)+ShutterSettings.shutter_pwmrange[0][i];
           TasmotaGlobal.pwm_value[i] = Shutter[i].pwm_value;
-          //analogWritePhase(Pin(GPIO_PWM1, i), Shutter[i].pwm_value, 0);
-          //analogWriteFreq(200,Pin(GPIO_PWM1, i));
           pwm_apply = true;
         break;
 
         case SHT_COUNTER:
           if (Shutter[i].accelerator) {
-            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
+            //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
             digitalWrite(Pin(GPIO_PWM1, i), LOW);
             analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
