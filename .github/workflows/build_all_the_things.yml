@@ -91,6 +91,7 @@ jobs:
           - tasmota-zbbridge
           - tasmota32
           - tasmota32c3
+          - tasmota32c6cdc-arduino30
           - tasmota32s2
           - tasmota32s3
           - tasmota32-zbbrdgpro
