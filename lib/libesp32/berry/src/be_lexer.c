@@ -271,9 +271,7 @@ static void skip_comment(blexer *lexer)
             c = next(lexer);
         } while (!(mark && c == '#') && c != EOS);
         if (c == EOS) {
-        	char tmp[64];
-        	sprintf(tmp, "unterminated comment block started in line %d", lno);
-            be_lexerror(lexer, tmp);
+            be_lexerror(lexer, be_pushfstring(lexer->vm, "unterminated comment block started in line %d", lno));
         }
         next(lexer); /* skip '#' */
     } else { /* line comment */
