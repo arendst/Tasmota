@@ -1,0 +1,50 @@
+---
+name: Release RDDL
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "true"
+
+      - name: Tag
+        run: |
+          if ! [[ ${{ github.event.inputs.tag }} =~ ^rddl-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag needs to be rddl-vX.Y.Z, e.g. rddl-v1.2.3"
+            exit 1
+          fi
+          git tag ${{ github.event.inputs.tag }}
+          git push origin ${{ github.event.inputs.tag }}
+
+      - name: Docker container
+        run: docker build -t docker-tasmota -f docker/Dockerfile ./docker/
+
+      - name: Build firmware
+        run: docker run --rm -v $(pwd):/tasmota -u $UID:$GID docker-tasmota -e tasmota32 -e tasmota32c3
+
+      - name: Prepare firmware for upload
+        run: |
+          mv ./build_output/firmware/tasmota32.bin ./build_output/firmware/tasmota32-rddl.bin
+          mv ./build_output/firmware/tasmota32c3.bin ./build_output/firmware/tasmota32c3-rddl.bin
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: false
+          files: |
+            ./build_output/firmware/tasmota32-rddl.bin
+            ./build_output/firmware/tasmota32c3-rddl.bin
+          name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.tag }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true
