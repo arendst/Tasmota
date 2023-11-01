@@ -67,10 +67,10 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
         else
           return tlv_solo.set(TLV.NULL, nil)
         end
-      elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 500)  # 500 hPA
-      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 1500)  # 1500 hPA
+      elif attribute == 0x0001              #  ---------- MinMeasuredValue / i16 ----------
+        return tlv_solo.set(TLV.I2, 0)      # 500 m3/h
+      elif attribute == 0x0002              #  ---------- MaxMeasuredValue / i16 ----------
+        return tlv_solo.set(TLV.I2, 65534)  # 65534 m3/h
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
