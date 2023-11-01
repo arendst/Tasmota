@@ -23,7 +23,7 @@
       "arduino",
       "espidf"
     ],
-    "name": "Espressif Generic ESP32-C2 = 4M Flash",
+    "name": "Espressif Generic ESP32-C2 = 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
     "upload": {
       "arduino": {
         "flash_extra_images": [
