@@ -134,6 +134,15 @@ bool NimBLERemoteCharacteristic::canWriteNoResponse() {
     return (m_charProp & BLE_GATT_CHR_PROP_WRITE_NO_RSP) != 0;
 } // canWriteNoResponse
 
+/**
+ * @brief Return properties as bitfield
+ * 
+ * @return uint8_t 
+ */
+uint8_t NimBLERemoteCharacteristic::getProperties() {
+    return m_charProp;
+}
+
 
 /**
  * @brief Callback used by the API when a descriptor is discovered or search complete.

@@ -141,6 +141,13 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
+struct BLEringBufferItem_t{
+  uint16_t returnCharUUID;
+  uint16_t handle;
+  uint32_t type;
+  uint8_t length;
+};
+
 #pragma pack(0)
 
 
@@ -156,11 +163,6 @@ struct MI32connectionContextBerry_t{
   int error;
   bool oneOp;
   bool response;
-};
-
-struct MI32notificationBuffer_t{
-  uint8_t buffer[256];
-  uint16_t returnCharUUID;
 };
 
 struct BLEqueueBuffer_t{
