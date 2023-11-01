@@ -61,8 +61,16 @@
 #define XSNS_62                    62
 
 #include <NimBLEDevice.h>
+// undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
+#undef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_NONE
+#undef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_INFO
+#undef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_DEBUG_MORE
 #include <vector>
 #include <queue>
+#include "freertos/ringbuf.h"
 
 #include <t_bearssl.h>
 
@@ -93,18 +101,6 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.conCtx->error = MI32_CONN_DID_DISCCONNECT;
     MI32.mode.triggerBerryConnCB = 1; //mainly for unexpected or requested disconnects
     //AddLog(LOG_LEVEL_DEBUG,PSTR("disconnected"));
-  }
-  bool onConnParamsUpdateRequest(NimBLEClient* MI32Client, const ble_gap_upd_params* params) {
-    if(params->itvl_min < 24) { /** 1.25ms units */
-      return false;
-    } else if(params->itvl_max > 40) { /** 1.25ms units */
-      return false;
-    } else if(params->latency > 2) { /** Number of intervals allowed to skip */
-      return false;
-    } else if(params->supervision_timeout > 100) { /** 10ms units */
-      return false;
-    }
-    return true;
   }
 };
 
@@ -224,7 +220,8 @@ static MI32AdvCallbacks MI32ScanCallbacks;
 static MI32SensorCallback MI32SensorCB;
 static MI32CharacteristicCallbacks MI32ChrCallback;
 static NimBLEClient* MI32Client;
-static std::queue<MI32notificationBuffer_t> MI32NotificationQueue;
+
+RingbufHandle_t MI32BufferQueue = nullptr;
 
 /*********************************************************************************************\
  * BLE callback functions
@@ -237,15 +234,19 @@ void MI32scanEndedCB(NimBLEScanResults results){
 
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
   if(isNotify){
-    MI32notificationBuffer_t _buf;
-    _buf.buffer[0] = (uint8_t)length;
-    memcpy(_buf.buffer+1, pData, length);
-    _buf.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
-    MI32NotificationQueue.push(_buf);
+    struct{
+      BLEringBufferItem_t header;
+      uint8_t buffer[255];
+    } item;
+    item.header.length = length;
+    // item.header.type = 103;  does not matter for now
+    memcpy(item.buffer,pData,length);
+    item.header.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
+    item.header.handle = pRemoteCharacteristic->getHandle();
+    xRingbufferSend(MI32BufferQueue, (const void*)&item, sizeof(BLEringBufferItem_t) + length , pdMS_TO_TICKS(1));
     MI32.mode.readingDone = 1;
-    MI32.mode.triggerBerryConnCB = 1;
     MI32.infoMsg = MI32_GOT_NOTIFICATION;
-    return; // do not discard data
+    return;
   }
 }
 /*********************************************************************************************\
@@ -1127,10 +1128,67 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
   return true;
 }
 
+/**
+ * @brief Retrieves all services of the connected BLE device and stores the result into the transfer buffer of Berry's BLE module
+*         buffer format: 
+ *        first byte: number of services
+ *        next byte: format of the UUID in bits, next N bytes: the UUID as 16-bit-uint or uint8_t buffer of 16 bytes
+ *        ... next service
+ */
+void MI32ConnectionGetServices(){
+  std::vector<NimBLERemoteService*> *srvvector = MI32Client->getServices(true); // refresh
+  MI32.conCtx->buffer[1] = srvvector->size(); // number of services
+  uint32_t i = 2;
+  for (auto &srv: *srvvector) {
+    MI32.conCtx->buffer[i] = srv->getUUID().bitSize(); // 16/128 bit
+    if(MI32.conCtx->buffer[i] == 16){
+      MI32.conCtx->buffer[i+1] = srv->getUUID().getNative()->u16.value & 0xff;
+      MI32.conCtx->buffer[i+2] = srv->getUUID().getNative()->u16.value >> 8;
+    }
+    else{
+      memcpy((MI32.conCtx->buffer)+i+1,srv->getUUID().getNative()->u128.value,MI32.conCtx->buffer[i]); // the UUID
+    }
+    i += 1 + (MI32.conCtx->buffer[i]/8);
+  }
+  MI32.conCtx->buffer[0] = i;
+}
+
+/**
+ * @brief Retrieves all characteristics of the given service and stores the result into the transfer buffer of Berry's BLE module
+ *         buffer format: 
+ *         first byte: number of characteristics
+ *         next byte: format of the UUID in bits, next N bytes: the UUID as 16-bit-uint or uint8_t buffer of 16 bytes
+ *         next byte: properties in a bitfield
+ *         ... next characteristic
+ * 
+ * @param pSvc 
+ */
+void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc);
+void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc){
+  std::vector<NimBLERemoteCharacteristic*> *charvector = pSvc->getCharacteristics(true); // refresh
+  MI32.conCtx->buffer[1] = charvector->size(); // number of characteristics
+  uint32_t i = 2;
+  for (auto &chr: *charvector) {
+    MI32.conCtx->buffer[i] = chr->getUUID().bitSize(); // 16/128 bit
+    if(MI32.conCtx->buffer[i] == 16){
+      MI32.conCtx->buffer[i+1] = chr->getUUID().getNative()->u16.value & 0xff;
+      MI32.conCtx->buffer[i+2] = chr->getUUID().getNative()->u16.value >> 8;
+    }
+    else{
+      memcpy((MI32.conCtx->buffer)+i+1,chr->getUUID().getNative()->u128.value,MI32.conCtx->buffer[i]); // the UUID
+    }
+    i += 1 + (MI32.conCtx->buffer[i]/8);
+    MI32.conCtx->buffer[i] = chr->getProperties(); // flags as bitfield
+    MI32.conCtx->buffer[i+1] = chr->getHandle() & 0xff;
+    MI32.conCtx->buffer[i+2] = chr->getHandle() >> 8;
+    i += 3;
+  }
+  MI32.conCtx->buffer[0] = i;
+}
+
 bool MI32StartConnectionTask(){
     if(MI32.conCtx == nullptr) return false;
     if(MI32.conCtx->buffer == nullptr) return false;
-    MI32NotificationQueue = {};
     MI32.mode.willConnect = 1;
     MI32Scan->stop();
     MI32suspendScanTask();
@@ -1173,6 +1231,7 @@ void MI32ConnectionTask(void *pvParameters){
       }
       NimBLERemoteService* pSvc = nullptr;
       NimBLERemoteCharacteristic* pChr = nullptr;
+      std::vector<NimBLERemoteCharacteristic*>*charvector = nullptr;
 
       // AddLog(LOG_LEVEL_INFO,PSTR("M32: start connection loop"));
       bool keepConnectionAlive = true;
@@ -1193,12 +1252,26 @@ void MI32ConnectionTask(void *pvParameters){
           MI32Client->disconnect();
           break;
         }
-        pSvc = MI32Client->getService(MI32.conCtx->serviceUUID);
-        if(pSvc) {
-            pChr = pSvc->getCharacteristic(MI32.conCtx->charUUID);
+
+        if(MI32.conCtx->operation == 6){ // get remote services to Berry
+          MI32ConnectionGetServices();
         }
         else{
-          MI32.conCtx->error = MI32_CONN_NO_SERVICE;
+          pSvc = MI32Client->getService(MI32.conCtx->serviceUUID);
+        }
+
+        if(pSvc) {
+          if(MI32.conCtx->operation == 7){ // get remote characteristics to Berry
+            MI32ConnectionGetCharacteristics(pSvc);
+          }
+          else{
+            pChr = pSvc->getCharacteristic(MI32.conCtx->charUUID);
+          }
+        }
+        else{
+          if(MI32.conCtx->operation != 6){
+            MI32.conCtx->error = MI32_CONN_NO_SERVICE;
+          }
         }
         if (pChr){
           switch(MI32.conCtx->operation){
@@ -1228,13 +1301,22 @@ void MI32ConnectionTask(void *pvParameters){
               MI32.mode.readingDone = 1;
               break;
             case 3:
-              if(pChr->canNotify()) {
-                if(pChr->subscribe(true,MI32notifyCB, MI32.conCtx->response)){
-                  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: subscribe"));
+              if (MI32BufferQueue == nullptr){
+                MI32BufferQueue = xRingbufferCreate(2048, RINGBUF_TYPE_NOSPLIT);
+                if(!MI32BufferQueue) {
+                  MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
+                  break;
                 }
               }
-              else{
-                MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
+              charvector = pSvc->getCharacteristics(true); // always try to subscribe to all characteristics with the same UUID
+              for (auto &it: *charvector) {
+                if (it->getUUID() == MI32.conCtx->charUUID) {
+                  if (it->canNotify()) {
+                    if(!it->subscribe(true, MI32notifyCB, MI32.conCtx->response)) {
+                      MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY; // will return the last result only ATM, maybe check differently
+                    }
+                  }
+                }
               }
               break;
           default:
@@ -1242,7 +1324,9 @@ void MI32ConnectionTask(void *pvParameters){
           }
         }
         else{
-            MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
+            if(MI32.conCtx->operation < 5){ // no characteristics are fine for ops, that are not read, write or subscribe
+              MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
+            }
         }
         timer = 0;
 
@@ -1277,6 +1361,10 @@ void MI32ConnectionTask(void *pvParameters){
   }
   MI32.mode.connected = 0;
   MI32.mode.triggerBerryConnCB = 1;
+  if (MI32BufferQueue != nullptr){
+    vRingbufferDelete(MI32BufferQueue);
+    MI32BufferQueue = nullptr;
+  }
   MI32StartTask(MI32_TASK_SCAN);
   vTaskDelete( NULL );
 }
@@ -1285,7 +1373,6 @@ void MI32ConnectionTask(void *pvParameters){
 
 bool MI32StartServerTask(){
   AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Server task ... start"));
-  MI32NotificationQueue = {};
   xTaskCreatePinnedToCore(
     MI32ServerTask,    /* Function to implement the task */
     "MI32ServerTask",  /* Name of the task */
@@ -1766,24 +1853,34 @@ void MI32Every50mSecond(){
     }
     MI32.mode.triggerBerryAdvCB = 0;
   }
-  if(MI32.mode.triggerBerryConnCB || !MI32NotificationQueue.empty()){
-    if(!MI32NotificationQueue.empty()){
-      MI32notificationBuffer_t _buf = MI32NotificationQueue.front();
-      MI32NotificationQueue.pop();
-      memcpy(MI32.conCtx->buffer,_buf.buffer,_buf.buffer[0]+1);
-      MI32.conCtx->returnCharUUID = _buf.returnCharUUID;
+
+  if(MI32BufferQueue != nullptr && MI32.mode.triggerBerryConnCB == 0) {
+    size_t size;
+    BLEringBufferItem_t *q = (BLEringBufferItem_t *)xRingbufferReceive(MI32BufferQueue, &size, pdMS_TO_TICKS(1));
+    
+    if(q != nullptr){
+      if(q->length != 0){
+        memcpy(MI32.conCtx->buffer,&q->length,q->length + 1);
+      }
+      MI32.conCtx->returnCharUUID = q->returnCharUUID;
+      MI32.conCtx->handle = q->handle;
       MI32.conCtx->operation = 103;
       MI32.conCtx->error = 0;
+      vRingbufferReturnItem(MI32BufferQueue, (void *)q);
+      MI32.mode.triggerBerryConnCB = 1;
     }
+  }
+  if(MI32.mode.triggerBerryConnCB == 1){
     if(MI32.beConnCB != nullptr){
-    void (*func_ptr)(int, int, int) = (void (*)(int, int, int))MI32.beConnCB;
-    char _message[32];
-    GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
-    func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID);
+      void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beConnCB;
+      char _message[32];
+      GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
+      func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
     }
     MI32.mode.triggerBerryConnCB = 0;
   }
+
 
   if(!BLEmessageQueue.empty()){
     BLEqueueBuffer_t q = BLEmessageQueue.front();
