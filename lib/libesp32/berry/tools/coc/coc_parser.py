@@ -104,7 +104,7 @@ class coc_parser:
         return r[0]
 
     def parse_object(self):
-        self.text = re.sub("\s+//.*?$", "", self.text, flags=re.MULTILINE)      # remove trailing comments
+        self.text = re.sub(r"\s+//.*?$", "", self.text, flags=re.MULTILINE)      # remove trailing comments
         while True:
             obj = self.parse_block()
             self.objects.append(obj)
