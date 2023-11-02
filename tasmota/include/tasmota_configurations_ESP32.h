@@ -214,9 +214,9 @@
 
 // -- Optional modules ----------------------------
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
-
-#undef USE_IR_REMOTE                             // Disable IR driver
 #undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
+
+#define USE_IR_REMOTE                            // Enable IR driver
 
 #define USE_TLS
 #define USE_WEBSERVER
