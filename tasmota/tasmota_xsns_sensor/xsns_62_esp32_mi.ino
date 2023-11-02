@@ -2003,7 +2003,7 @@ void CmndMi32Option(void){
       if(XdrvMailbox.data_len>0){
         if(MI32.option.activeScan != onOff){
           MI32.option.activeScan = onOff;
-          if(MI32.mode.runningScan){
+          if(MI32.mode.runningScan == 1){
             MI32.mode.updateScan = 1;
           }
           else{
@@ -2487,10 +2487,9 @@ void MI32Show(bool json)
 int ExtStopBLE(){
       if(Settings->flag5.mi32_enable == 0) return 0;
       if (MI32.ScanTask != nullptr){
-        MI32Scan->stop();
         MI32.mode.deleteScanTask = 1;
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
-        while (MI32.mode.runningScan) yield();
+        while (MI32.mode.runningScan == 1) delay(5);
       }
       return 0;
 }
