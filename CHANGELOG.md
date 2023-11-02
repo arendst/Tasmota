@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool hydrolysis setpoint and max
 - NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed
 - NeoPool ``SetOption157`` to output sensitive data
+- HASPmota add styling properties
 
 ### Breaking Changed
 - NeoPool SENSOR topic ``Power`` renamed to ``Powerunit``

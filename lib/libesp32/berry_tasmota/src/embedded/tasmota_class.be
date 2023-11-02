@@ -428,6 +428,10 @@ class Tasmota
           return true
         except .. as e, m
           print(format("BRY: failed to run compiled code '%s' - %s", e, m))
+          if self._debug_present
+            import debug
+            debug.traceback()
+          end
         end
       end
       return false
