@@ -48,6 +48,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 keep FS intact when over flashing with VSC (#19816)
 - Increase MAX_HUE_DEVICES to 32 (#19820)
 - MI32 updates (#19893)
+- NeoPool ``NPHydrolysis`` percent and unit
 
 ### Fixed
 - NeoPool filtration mode display (#19801)
