@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.2.0.1]
+## [13.2.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [13.2.0.1] 20231103
 ### Added
 - I2C bus2 support to iAQ core sensor (#19799)
 - I2C bus2 support to HTU temperature and humidity sensor
@@ -17,9 +29,12 @@ All notable changes to this project will be documented in this file.
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
 - Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X (#19850)
 - NeoPool hydrolysis setpoint and max
-- NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed
-- NeoPool ``SetOption157`` to output sensitive data
-- HASPmota add styling properties
+- NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed (#19857)
+- NeoPool ``SetOption157`` to output sensitive data (#19857)
+- Neopool enhancements for HA (#19857)
+- ST7735S display.ini for 1.44 inch 128x128 red SPI display (#19862)
+- HASPmota add styling properties (#19912)
+- Matter flow sensor suppor (#19852)
 
 ### Breaking Changed
 - NeoPool SENSOR topic ``Power`` renamed to ``Powerunit``
@@ -27,13 +42,15 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Prepare I2C drivers for bus2 support
 - Matter Light0 now accept a Relay number (#19809)
+- ESP32 keep FS intact when over flashing with VSC (#19816)
+- Increase MAX_HUE_DEVICES to 32 (#19820)
+- MI32 updates (#19893)
 
 ### Fixed
 - NeoPool filtration mode display (#19801)
+- Compile USE_PID (#19890)
 - ESP32 I2C allow bus2 support when bus1 is not enabled
-
-### Removed
-
+- ESP32 IR receive with Arduino Core 3 (#19904)
 
 ## [Released]
 
