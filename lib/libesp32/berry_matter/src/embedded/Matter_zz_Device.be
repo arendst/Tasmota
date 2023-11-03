@@ -1,5 +1,5 @@
 #
-# Matter_Device.be - implements a generic Matter device (commissionee)
+# Matter_zz_Device.be - implements a generic Matter device (commissionee)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -31,7 +31,7 @@ class Matter_Device
   var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
   var plugins                         # list of plugins instances
   var plugins_persist                 # true if plugins configuration needs to be saved
-  var plugins_classes                 # map of registered classes by type name
+  static var plugins_classes = matter.plugins_classes                # map of registered classes by type name
   var plugins_config                  # map of JSON configuration for plugins
   var plugins_config_remotes          # map of information on each remote under "remotes" key, '{}' when empty
   var udp_server                      # `matter.UDPServer()` object
@@ -86,9 +86,7 @@ class Matter_Device
     self.tick = 0
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
-    self.plugins_classes = {}
     self.plugins_config_remotes = {}
-    self.register_native_classes()                # register all native classes
     self.vendorid = self.VENDOR_ID
     self.productid = self.PRODUCT_ID
     self.root_iterations = self.PBKDF_ITERATIONS
@@ -1271,18 +1269,6 @@ class Matter_Device
   end
 
   #############################################################
-  # register_plugin_class
-  #
-  # Adds a class by name
-  def register_plugin_class(cl)
-    import introspect
-    var typ = introspect.get(cl, 'TYPE')      # make sure we don't crash if TYPE does not exist
-    if typ
-      self.plugins_classes[typ] = cl
-    end
-  end
-
-  #############################################################
   # get_plugin_class_displayname
   #
   # get a class name light "light0" and return displayname
@@ -1300,23 +1286,6 @@ class Matter_Device
     return cl ? cl.ARG : ""
   end
 
-  #############################################################
-  # register_native_classes
-  #
-  # Adds a class by name
-  def register_native_classes(name, cl)
-    # try to register any class that starts with 'Plugin_'
-    import introspect
-    import string
-    for k: introspect.members(matter)
-      var v = introspect.get(matter, k)
-      if type(v) == 'class' && string.find(k, "Plugin_") == 0
-        self.register_plugin_class(v)
-      end
-    end
-    # tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
-  end
-  
   #############################################################
   # Dynamic adding and removal of endpoints (bridge mode)
   #############################################################
