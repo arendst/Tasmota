@@ -1,4 +1,4 @@
-/* Solidification of Matter_Plugin_3_Sensor_OnOff.h */
+/* Solidification of Matter_Plugin_2_Sensor_OnOff.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
