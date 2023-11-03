@@ -100,7 +100,7 @@ be_local_closure(Matter_Plugin_Sensor_Flow_read_attribute,   /* name */
       0x781E0005,  //  001C  JMPF	R7	#0023
       0x8C1C0706,  //  001D  GETMET	R7	R3	K6
       0x88240907,  //  001E  GETMBR	R9	R4	K7
-      0x542A01F3,  //  001F  LDINT	R10	500
+      0x58280004,  //  001F  LDCONST	R10	K4
       0x7C1C0600,  //  0020  CALL	R7	3
       0x80040E00,  //  0021  RET	1	R7
       0x70020018,  //  0022  JMP		#003C
@@ -108,7 +108,7 @@ be_local_closure(Matter_Plugin_Sensor_Flow_read_attribute,   /* name */
       0x781E0005,  //  0024  JMPF	R7	#002B
       0x8C1C0706,  //  0025  GETMET	R7	R3	K6
       0x88240907,  //  0026  GETMBR	R9	R4	K7
-      0x542A05DB,  //  0027  LDINT	R10	1500
+      0x542AFFFD,  //  0027  LDINT	R10	65534
       0x7C1C0600,  //  0028  CALL	R7	3
       0x80040E00,  //  0029  RET	1	R7
       0x70020010,  //  002A  JMP		#003C
