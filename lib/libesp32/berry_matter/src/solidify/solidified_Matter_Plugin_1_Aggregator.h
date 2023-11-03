@@ -1,4 +1,4 @@
-/* Solidification of Matter_Plugin_2_Aggregator.h */
+/* Solidification of Matter_Plugin_1_Aggregator.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/

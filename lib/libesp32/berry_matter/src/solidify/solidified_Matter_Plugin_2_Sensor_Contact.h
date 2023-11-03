@@ -1,4 +1,4 @@
-/* Solidification of Matter_Plugin_3_Sensor_Contact.h */
+/* Solidification of Matter_Plugin_2_Sensor_Contact.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
