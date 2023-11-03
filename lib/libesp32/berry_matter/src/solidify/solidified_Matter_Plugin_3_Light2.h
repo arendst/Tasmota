@@ -156,49 +156,58 @@ be_local_closure(Matter_Plugin_Light2_update_shadow,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(light),
-    /* K1   */  be_nested_str_weak(update_ct_minmax),
-    /* K2   */  be_nested_str_weak(update_shadow),
-    /* K3   */  be_nested_str_weak(get),
-    /* K4   */  be_nested_str_weak(find),
-    /* K5   */  be_nested_str_weak(ct),
-    /* K6   */  be_nested_str_weak(shadow_ct),
-    /* K7   */  be_nested_str_weak(attribute_updated),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(VIRTUAL),
+    /* K1   */  be_nested_str_weak(light),
+    /* K2   */  be_nested_str_weak(update_ct_minmax),
+    /* K3   */  be_nested_str_weak(update_shadow),
+    /* K4   */  be_nested_str_weak(get),
+    /* K5   */  be_nested_str_weak(find),
+    /* K6   */  be_nested_str_weak(ct),
+    /* K7   */  be_nested_str_weak(shadow_ct),
+    /* K8   */  be_nested_str_weak(attribute_updated),
     }),
     be_str_weak(update_shadow),
     &be_const_str_solidified,
-    ( &(const binstruction[30]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080101,  //  0001  GETMET	R2	R0	K1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x60080003,  //  0003  GETGBL	R2	G3
-      0x5C0C0000,  //  0004  MOVE	R3	R0
-      0x7C080200,  //  0005  CALL	R2	1
-      0x8C080502,  //  0006  GETMET	R2	R2	K2
+    ( &(const binstruction[38]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x7406001D,  //  0001  JMPT	R1	#0020
+      0xA4060200,  //  0002  IMPORT	R1	K1
+      0x8C080102,  //  0003  GETMET	R2	R0	K2
+      0x7C080200,  //  0004  CALL	R2	1
+      0x60080003,  //  0005  GETGBL	R2	G3
+      0x5C0C0000,  //  0006  MOVE	R3	R0
       0x7C080200,  //  0007  CALL	R2	1
-      0x8C080303,  //  0008  GETMET	R2	R1	K3
+      0x8C080503,  //  0008  GETMET	R2	R2	K3
       0x7C080200,  //  0009  CALL	R2	1
-      0x4C0C0000,  //  000A  LDNIL	R3
-      0x200C0403,  //  000B  NE	R3	R2	R3
-      0x780E000F,  //  000C  JMPF	R3	#001D
-      0x8C0C0504,  //  000D  GETMET	R3	R2	K4
-      0x58140005,  //  000E  LDCONST	R5	K5
-      0x4C180000,  //  000F  LDNIL	R6
-      0x7C0C0600,  //  0010  CALL	R3	3
-      0x4C100000,  //  0011  LDNIL	R4
-      0x1C100604,  //  0012  EQ	R4	R3	R4
-      0x78120000,  //  0013  JMPF	R4	#0015
-      0x880C0106,  //  0014  GETMBR	R3	R0	K6
-      0x88100106,  //  0015  GETMBR	R4	R0	K6
-      0x20100604,  //  0016  NE	R4	R3	R4
-      0x78120004,  //  0017  JMPF	R4	#001D
-      0x8C100107,  //  0018  GETMET	R4	R0	K7
-      0x541A02FF,  //  0019  LDINT	R6	768
-      0x541E0006,  //  001A  LDINT	R7	7
-      0x7C100600,  //  001B  CALL	R4	3
-      0x90020C03,  //  001C  SETMBR	R0	K6	R3
-      0x80000000,  //  001D  RET	0
+      0x8C080304,  //  000A  GETMET	R2	R1	K4
+      0x7C080200,  //  000B  CALL	R2	1
+      0x4C0C0000,  //  000C  LDNIL	R3
+      0x200C0403,  //  000D  NE	R3	R2	R3
+      0x780E000F,  //  000E  JMPF	R3	#001F
+      0x8C0C0505,  //  000F  GETMET	R3	R2	K5
+      0x58140006,  //  0010  LDCONST	R5	K6
+      0x4C180000,  //  0011  LDNIL	R6
+      0x7C0C0600,  //  0012  CALL	R3	3
+      0x4C100000,  //  0013  LDNIL	R4
+      0x1C100604,  //  0014  EQ	R4	R3	R4
+      0x78120000,  //  0015  JMPF	R4	#0017
+      0x880C0107,  //  0016  GETMBR	R3	R0	K7
+      0x88100107,  //  0017  GETMBR	R4	R0	K7
+      0x20100604,  //  0018  NE	R4	R3	R4
+      0x78120004,  //  0019  JMPF	R4	#001F
+      0x8C100108,  //  001A  GETMET	R4	R0	K8
+      0x541A02FF,  //  001B  LDINT	R6	768
+      0x541E0006,  //  001C  LDINT	R7	7
+      0x7C100600,  //  001D  CALL	R4	3
+      0x90020E03,  //  001E  SETMBR	R0	K7	R3
+      0x70020004,  //  001F  JMP		#0025
+      0x60040003,  //  0020  GETGBL	R1	G3
+      0x5C080000,  //  0021  MOVE	R2	R0
+      0x7C040200,  //  0022  CALL	R1	1
+      0x8C040303,  //  0023  GETMET	R1	R1	K3
+      0x7C040200,  //  0024  CALL	R1	1
+      0x80000000,  //  0025  RET	0
     })
   )
 );

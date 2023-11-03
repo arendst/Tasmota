@@ -60,18 +60,19 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   #
   def update_shadow()
     super(self).update_shadow()
+    if !self.VIRTUAL
+      import json
+      var ret = tasmota.cmd("Status 8", true)
+      if ret != nil
+        var j = json.load(ret)
+        if j != nil
+          var state = false
+          state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
 
-    import json
-    var ret = tasmota.cmd("Status 8", true)
-    if ret != nil
-      var j = json.load(ret)
-      if j != nil
-        var state = false
-        state = (j.find("Switch" + str(self.tasmota_switch_index)) == "ON")
-
-        if self.shadow_contact != state
-          self.attribute_updated(0x0045, 0x0000)
-          self.shadow_contact = state
+          if self.shadow_contact != state
+            self.attribute_updated(0x0045, 0x0000)
+            self.shadow_contact = state
+          end
         end
       end
     end

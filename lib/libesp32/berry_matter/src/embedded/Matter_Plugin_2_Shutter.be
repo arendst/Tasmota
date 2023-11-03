@@ -78,10 +78,12 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # Update shadow
   #
   def update_shadow()
-    self.update_inverted()
-    var sp = tasmota.cmd("ShutterPosition" + str(self.tasmota_shutter_index + 1), true)
-    if sp
-      self.parse_sensors(sp)
+    if !self.VIRTUAL
+      self.update_inverted()
+      var sp = tasmota.cmd("ShutterPosition" + str(self.tasmota_shutter_index + 1), true)
+      if sp
+        self.parse_sensors(sp)
+      end
     end
     super(self).update_shadow()
   end
