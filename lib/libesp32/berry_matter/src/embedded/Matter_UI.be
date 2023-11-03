@@ -33,13 +33,13 @@ import matter
 #################################################################################
 class Matter_UI
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
-                              "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact"
+                              "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow"
                               "|-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
-                              "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact"
+                              "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow"
   # static var _CLASSES_HTTP  = "-http"
   static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
-                              "|http_occupancy|http_contact"
+                              "|http_occupancy|http_contact|http_flow"
   var device
 
   # ####################################################################################################

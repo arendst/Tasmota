@@ -226,7 +226,9 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_3_ShutterTilt.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Flow.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Flow.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Temp.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Temp.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Illuminance.h"
@@ -251,6 +253,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Flow.h"
 
 /*********************************************************************************************\
  * Get a bytes() object of the certificate DAC/PAI_Cert
@@ -448,7 +451,9 @@ module matter (scope: global, strings: weak) {
   Plugin_ShutterTilt, class(be_class_Matter_Plugin_ShutterTilt)   // Shutter + Tilt
   Plugin_Sensor, class(be_class_Matter_Plugin_Sensor)     // Generic Sensor
   Plugin_Sensor_Pressure, class(be_class_Matter_Plugin_Sensor_Pressure)   // Pressure Sensor
+  Plugin_Sensor_Flow, class(be_class_Matter_Plugin_Sensor_Flow)   // Flow Sensor
   Plugin_Sensor_Virt_Pressure, class(be_class_Matter_Plugin_Virt_Sensor_Pressure)   // Pressure Virtual Sensor
+  Plugin_Sensor_Virt_Flow, class(be_class_Matter_Plugin_Virt_Sensor_Flow)   // Flow Virtual Sensor
   Plugin_Sensor_Temp, class(be_class_Matter_Plugin_Sensor_Temp)           // Temperature Sensor
   Plugin_Virt_Sensor_Temp, class(be_class_Matter_Plugin_Virt_Sensor_Temp)           // Temperature Sensor
   Plugin_Sensor_Illuminance, class(be_class_Matter_Plugin_Sensor_Illuminance) // Illuminance Sensor
@@ -468,6 +473,7 @@ module matter (scope: global, strings: weak) {
   Plugin_Bridge_Light3, class(be_class_Matter_Plugin_Bridge_Light3)   // HTTP RGB Light
   Plugin_Bridge_Sensor, class(be_class_Matter_Plugin_Bridge_Sensor)   // HTTP generic sensor
   Plugin_Bridge_Sensor_Pressure, class(be_class_Matter_Plugin_Bridge_Sensor_Pressure)   // HTTP Pressure sensor
+  Plugin_Bridge_Sensor_Flow, class(be_class_Matter_Plugin_Bridge_Sensor_Flow)   // HTTP Flow sensor
   Plugin_Bridge_Sensor_Temp, class(be_class_Matter_Plugin_Bridge_Sensor_Temp)   // HTTP Temperature sensor
   Plugin_Bridge_Sensor_Illuminance, class(be_class_Matter_Plugin_Bridge_Sensor_Illuminance)   // HTTP Illuminance sensor
   Plugin_Bridge_Sensor_Humidity, class(be_class_Matter_Plugin_Bridge_Sensor_Humidity)   // HTTP Humidity sensor
