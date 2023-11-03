@@ -123,25 +123,29 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2C bus2 support to LM75AD temperature sensor
 - Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X [#19850](https://github.com/arendst/Tasmota/issues/19850)
 - ST7735S display.ini for 1.44 inch 128x128 red SPI display [#19862](https://github.com/arendst/Tasmota/issues/19862)
+- Scripter TCP client [#19914](https://github.com/arendst/Tasmota/issues/19914)
 - NeoPool hydrolysis setpoint and max
 - NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed [#19857](https://github.com/arendst/Tasmota/issues/19857)
 - NeoPool command ``SetOption157`` to enable output of sensitive data [#19857](https://github.com/arendst/Tasmota/issues/19857)
-- Neopool enhancements for HomeAssistant [#19857](https://github.com/arendst/Tasmota/issues/19857)
+- NeoPool enhancements for HomeAssistant [#19857](https://github.com/arendst/Tasmota/issues/19857)
 - Support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
 - HASPmota add styling properties [#19912](https://github.com/arendst/Tasmota/issues/19912)
 - Matter flow sensor suppor [#19852](https://github.com/arendst/Tasmota/issues/19852)
 
 ### Breaking Changed
+- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit`` [#19857](https://github.com/arendst/Tasmota/issues/19857)
 
 ### Changed
 - Increase MAX_HUE_DEVICES to 32 [#19820](https://github.com/arendst/Tasmota/issues/19820)
-- Matter Light0 now accept a Relay number [#19809](https://github.com/arendst/Tasmota/issues/19809)
 - MI32 updates [#19893](https://github.com/arendst/Tasmota/issues/19893)
 - ESP32 keep FileSystem intact when over flashing with VSC [#19816](https://github.com/arendst/Tasmota/issues/19816)
+- Matter Light0 now accept a Relay number [#19809](https://github.com/arendst/Tasmota/issues/19809)
+- Matter update hierarchy of plugins [#19915](https://github.com/arendst/Tasmota/issues/19915)
 
 ### Fixed
 - Compile USE_PID [#19890](https://github.com/arendst/Tasmota/issues/19890)
+- Scripter timer issue [#19914](https://github.com/arendst/Tasmota/issues/19914)
 - NeoPool filtration mode display [#19801](https://github.com/arendst/Tasmota/issues/19801)
 - ESP32 I2C allow bus2 support when bus1 is not enabled
 - ESP32 IR receive with Arduino Core 3 [#19904](https://github.com/arendst/Tasmota/issues/19904)

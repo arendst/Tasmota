@@ -5,12 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ## [13.2.0.2]
 ### Added
+- Scripter TCP client (#19914)
 
 ### Breaking Changed
 
 ### Changed
+- Matter update hierarchy of plugins (#19915)
 
 ### Fixed
+- Scripter timer issue (#19914)
 
 ### Removed
 
@@ -31,13 +34,13 @@ All notable changes to this project will be documented in this file.
 - NeoPool hydrolysis setpoint and max
 - NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed (#19857)
 - NeoPool ``SetOption157`` to output sensitive data (#19857)
-- Neopool enhancements for HA (#19857)
+- NeoPool enhancements for HA (#19857)
 - ST7735S display.ini for 1.44 inch 128x128 red SPI display (#19862)
 - HASPmota add styling properties (#19912)
 - Matter flow sensor suppor (#19852)
 
 ### Breaking Changed
-- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit``
+- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit`` (#19857)
 
 ### Changed
 - Prepare I2C drivers for bus2 support
