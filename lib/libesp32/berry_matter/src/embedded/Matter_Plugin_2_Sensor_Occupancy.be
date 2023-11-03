@@ -60,17 +60,19 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   #
   def update_shadow()
     super(self).update_shadow()
-    var switch_str = "Switch" + str(self.tasmota_switch_index)
+    if !self.VIRTUAL
+      var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-    var j = tasmota.cmd("Status 8", true)
-    if j != nil   j = j.find("StatusSNS") end
-    if j != nil && j.contains(switch_str)
-      var state = (j.find(switch_str) == "ON")
+      var j = tasmota.cmd("Status 8", true)
+      if j != nil   j = j.find("StatusSNS") end
+      if j != nil && j.contains(switch_str)
+        var state = (j.find(switch_str) == "ON")
 
-      if (self.shadow_occupancy != state)
-        self.attribute_updated(0x0406, 0x0000)
+        if (self.shadow_occupancy != state)
+          self.attribute_updated(0x0406, 0x0000)
+        end
+        self.shadow_occupancy = state
       end
-      self.shadow_occupancy = state
     end
   end
 

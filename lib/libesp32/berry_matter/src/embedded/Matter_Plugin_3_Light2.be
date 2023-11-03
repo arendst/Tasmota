@@ -61,17 +61,21 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # Update shadow
   #
   def update_shadow()
-    import light
-    self.update_ct_minmax()
-    super(self).update_shadow()
-    var light_status = light.get()
-    if light_status != nil
-      var ct = light_status.find('ct', nil)
-      if ct  == nil     ct = self.shadow_ct      end
-      if ct  != self.shadow_ct
-        self.attribute_updated(0x0300, 0x0007)
-        self.shadow_ct = ct
+    if !self.VIRTUAL
+      import light
+      self.update_ct_minmax()
+      super(self).update_shadow()
+      var light_status = light.get()
+      if light_status != nil
+        var ct = light_status.find('ct', nil)
+        if ct  == nil     ct = self.shadow_ct      end
+        if ct  != self.shadow_ct
+          self.attribute_updated(0x0300, 0x0007)
+          self.shadow_ct = ct
+        end
       end
+    else
+      super(self).update_shadow()
     end
   end
 
