@@ -205,7 +205,9 @@ LvGLStatus Adafruit_LvGL_Glue::begin(Renderer *tft, void *touch, bool debug) {
   lvgl_buffer_size = tft->width() * (flushlines ? flushlines:LV_BUFFER_ROWS);
   if (tft->lvgl_pars()->use_dma) {
     lvgl_buffer_size /= 2;
-    lv_pixel_buf2 = new lv_color_t[lvgl_buffer_size];
+    if (lvgl_buffer_size < 1000000) {
+      lv_pixel_buf2 = new lv_color_t[lvgl_buffer_size];
+    }
     if (!lv_pixel_buf2) {
       return status;
     }
