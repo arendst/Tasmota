@@ -73,14 +73,6 @@ extern "C" void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
   }
 }
 
-#ifdef ESP8266
-uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
-  //ACDimmerTimer_intr();
-  ACDimmerTimer_intr();
-  return ac_zero_cross_dimmer.actual_tigger_Period * 80;
-}
-#endif // ESP8266
-
 void ACDimmerInit()
 {
   for (uint8_t i = 0 ; i < 5; i++) {
@@ -130,6 +122,13 @@ extern "C" void IRAM_ATTR ACDimmerTimer_intr() {
     }
   }
 }
+
+#ifdef ESP8266
+extern "C" uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
+  ACDimmerTimer_intr();
+  return ac_zero_cross_dimmer.actual_tigger_Period * 80;
+}
+#endif // ESP8266
 
 void ACDimmerInterruptDisable(bool disable)
 { 
