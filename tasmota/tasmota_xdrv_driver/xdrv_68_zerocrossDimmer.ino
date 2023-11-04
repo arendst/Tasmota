@@ -322,6 +322,4 @@ bool Xdrv68(uint32_t function)
   return result;
 }
 
-// #endif // !enabled(ESP32) || (ESP_IDF_VERSION_MAJOR < 5)
-
 #endif  // USE_AC_ZERO_CROSS_DIMMER
