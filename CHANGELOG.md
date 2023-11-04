@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Scripter timer issue (#19914)
+- Fix Zero-Cross Dimmer for ESP32 with Core3
 
 ### Removed
 
