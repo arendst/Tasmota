@@ -22,7 +22,13 @@
 #ifdef USE_LVGL
 
 #include <berry.h>
+
+// silence warning with Core3
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
 #include "lvgl.h"
+#pragma GCC diagnostic pop
+
 #include "be_mapping.h"
 #include "be_ctypes.h"
 #include "lv_berry.h"
