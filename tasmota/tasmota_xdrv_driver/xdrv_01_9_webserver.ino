@@ -2851,7 +2851,7 @@ void HandleUploadLoop(void) {
           char tmp[16];
           WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
           uint32_t upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
-          AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "freespace=%i filesize=%i", ESP.getFreeSketchSpace(), upload_size);
+          AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "Freespace %i Filesize %i", ESP.getFreeSketchSpace(), upload_size);
           if (upload_size > ESP.getFreeSketchSpace()) {   // TODO revisit this test
 #endif
             Web.upload_error = 4;  // Program flash size is larger than real flash size
