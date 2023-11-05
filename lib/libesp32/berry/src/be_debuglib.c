@@ -84,6 +84,19 @@ static int m_codedump(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_gcdebug(bvm *vm) {
+    int argc = be_top(vm);
+    if (argc >= 1 && be_isbool(vm, 1)) {
+        if (be_tobool(vm, 1)) {
+            comp_set_gc_debug(vm);
+        } else {
+            comp_clear_gc_debug(vm);
+        }
+    }
+    be_pushbool(vm, comp_is_gc_debug(vm));
+    be_return(vm);
+}
+
 static int m_traceback(bvm *vm)
 {
     be_tracestack(vm);
@@ -223,6 +236,7 @@ be_native_module_attr_table(debug) {
     be_native_module_function("varname", m_varname),
     be_native_module_function("upvname", m_upvname)
 #endif
+    be_native_module_function("gcdebug", m_gcdebug)
 };
 
 be_define_native_module(debug, NULL);
@@ -242,6 +256,8 @@ module debug (scope: global, depend: BE_USE_DEBUG_MODULE) {
     allocs, func(m_allocs)
     frees, func(m_frees)
     reallocs, func(m_reallocs)
+    // GC debug mode
+    gcdebug, func(m_gcdebug)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_debug.h"

@@ -73,9 +73,9 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
             vm->counter_mem_free++;
 #endif
             if (ptr == NULL) { return NULL; }   /* safeguard */
-#if BE_USE_DEBUG_GC
-            memset(ptr, 0xFF, old_size); /* fill the structure with invalid pointers */
-#endif
+            if (BE_USE_DEBUG_GC || comp_is_gc_debug(vm)) {
+                memset(ptr, 0xFF, old_size); /* fill the structure with invalid pointers */
+            }
             free_from_pool(vm, ptr, old_size);
             break;    /* early exit */
         }
