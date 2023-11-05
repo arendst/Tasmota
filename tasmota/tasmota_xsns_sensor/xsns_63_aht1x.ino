@@ -77,7 +77,7 @@
 uint8_t AHTSetCalCmd[3]    = { AHTX_CMD, 0x08, 0x00 }; // load factory calibration coeff
 uint8_t AHTSetCycleCmd[3]  = { AHTX_CMD, 0x28, 0x00 }; // enable cycle mode
 uint8_t AHTMeasureCmd[3]   = { 0xAC, 0x33, 0x00 };     // start measurment command
-uint8_t AHTResetCmd        =   0xB0;                   // soft reset command
+uint8_t AHTResetCmd        =   0xBA;                   // soft reset command
 
 struct {
   bool write_ok = false;
