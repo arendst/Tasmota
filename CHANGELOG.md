@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.2.0.2]
 ### Added
 - Scripter TCP client (#19914)
+- Berry ``debug.gcdebug()`` to enable GC debugging
 
 ### Breaking Changed
 
