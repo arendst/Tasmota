@@ -89,6 +89,7 @@ jobs:
           - tasmota-minimal
           - tasmota-sensors
           - tasmota-zbbridge
+          - tasmota-aws
           - tasmota32
           - tasmota32c3
           - tasmota32c6cdc-arduino30

@@ -130,6 +130,7 @@ jobs:
           - tasmota-knx
           - tasmota-lite
           - tasmota-sensors
+          - tasmota-aws
           - tasmota-zbbridge
           - tasmota-zigbee
     steps:

@@ -70,6 +70,7 @@ jobs:
           - tasmota-sensors
           - tasmota-zbbridge
           - tasmota-zigbee
+          - tasmota-aws
     steps:
       - uses: actions/checkout@v3
         with:
