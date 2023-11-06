@@ -1,5 +1,5 @@
 /*
-  xdrv_42_0_i2s_0_lib_idf51.ino - Simplified Audio library, core class
+  xdrv_42_0_i2s_3_lib_idf51.ino - Simplified Audio library, core class
 
   Copyright (C) 2021  Gerhard Mutz, Theo Arends, Staars, Stephan Hadinger
 
@@ -21,9 +21,8 @@
 #ifdef USE_I2S_AUDIO
 
 #include "AudioOutput.h"
-#include "driver/dac_continuous.h"
 
-// If DAC is not supported, proide some placeholders
+// If DAC is not supported, provide some placeholders
 #ifndef SOC_DAC_SUPPORTED
   #define dac_continuous_enable(...)        (0xFF)
   #define dac_continuous_disable(...)       (0xFF)
@@ -319,6 +318,7 @@ bool TasmotaI2S::beginTx(void) {
   esp_err_t err = ESP_OK;
   if (isDACMode()) {
     err = dac_continuous_enable((dac_continuous_handle_t) _tx_handle);
+    dac_task_start((dac_continuous_handle_t) _tx_handle);
   } else {
     err = i2s_channel_enable(_tx_handle);
   }
@@ -338,6 +338,7 @@ bool TasmotaI2S::stopTx() {
   if (!_tx_handle) { return true; }           // nothing to do
   if (_tx_running) {
     if (isDACMode()) {
+      dac_task_stop();
       err = dac_continuous_disable((dac_continuous_handle_t) _tx_handle);
     } else {
       err = i2s_channel_disable(_tx_handle);
@@ -435,16 +436,18 @@ int32_t TasmotaI2S::consumeSamples(int16_t *samples, size_t count) {
       right = (((int16_t)(right & 0xff)) - 128) << 8;
     }
 
+    // apply gain
+    left = Amplify(left);
+    right = Amplify(right);
+
     if (isDACMode()) {
-      left = Amplify(left) + 0x8000;
-      right = Amplify(right) + 0x8000;
+      ms[i*2 + LEFTCHANNEL] = left + 0x8000;
+      ms[i*2 + RIGHTCHANNEL] = right + 0x8000;
     } else {
-      left = Amplify(left);
-      right = Amplify(right);
+      ms[i*2 + LEFTCHANNEL] = left;
+      ms[i*2 + RIGHTCHANNEL] = right;
     }
 
-    ms[i*2 + LEFTCHANNEL] = left;
-    ms[i*2 + RIGHTCHANNEL] = right;
   }
 
   // AddLog(LOG_LEVEL_DEBUG, "I2S: consumeSamples: left=%i right=%i", ms[0], ms[1]);
@@ -452,9 +455,7 @@ int32_t TasmotaI2S::consumeSamples(int16_t *samples, size_t count) {
   size_t i2s_bytes_written;
   esp_err_t err = ESP_OK;
   if (isDACMode()) {
-    err = dac_continuous_write((dac_continuous_handle_t) _tx_handle, (uint8_t*) ms, sizeof(ms), &i2s_bytes_written, -1);
-    // Serial.printf("."); Serial.flush();
-    // AddLog(LOG_LEVEL_DEBUG, "I2S: dac_continuous_write err=0x%04X bytes_written=%i buf=%*_H", err, i2s_bytes_written, sizeof(ms), (uint8_t*) ms);
+    i2s_bytes_written = send_dac_data((uint8_t*)ms, sizeof(ms));
   } else {
     err = i2s_channel_write(_tx_handle, ms, sizeof(ms), &i2s_bytes_written, 0);
   }
@@ -563,7 +564,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
       .freq_hz = hertz,
       .offset = 0,
       .clk_src = DAC_DIGI_CLK_SRC_APLL, /*DAC_DIGI_CLK_SRC_DEFAULT*/
-      .chan_mode = DAC_CHANNEL_MODE_SIMUL,
+      .chan_mode = DAC_CHANNEL_MODE_ALTER,
     };
     // AddLog(LOG_LEVEL_DEBUG, "I2S: dac_chan_cfg chan_mask:%i clk_src:%i chan_mode:%i",
     //   dac_chan_cfg.chan_mask, dac_chan_cfg.clk_src, dac_chan_cfg.chan_mode);
