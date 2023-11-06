@@ -364,7 +364,7 @@ static uint32_t buf_get3_le(buf_impl* attr, size_t offset)
     return 0;
 }
 
-static uint16_t buf_get3_be(buf_impl* attr, size_t offset)
+static uint32_t buf_get3_be(buf_impl* attr, size_t offset)
 {
     if ((int32_t)offset + 2 < attr->len) {
         return attr->bufptr[offset+2] | (attr->bufptr[offset+1] << 8) | (attr->bufptr[offset] << 16);
