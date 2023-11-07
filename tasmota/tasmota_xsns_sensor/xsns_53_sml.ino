@@ -90,6 +90,13 @@
 #define SML_OBIS_LINE
 #endif
 
+#ifdef ESP32
+#ifndef NO_USE_SML_CANBUS
+// canbus support
+#undef USE_SML_CANBUS
+#define USE_SML_CANBUS
+#endif
+#endif
 
 #ifdef USE_SML_TCP_SECURE
 #define USE_SML_TCP_IP_STR
@@ -110,6 +117,27 @@
 #ifdef USE_SML_DECRYPT
 #include "han_Parser.h"
 #endif
+
+
+#ifdef USE_SML_CANBUS
+
+#ifdef ESP8266
+// esp8266 uses SPI MPC2515
+#undef SML_CAN_MASKS
+#undef SML_CAN_FILTERS
+#define SML_CAN_MASKS 2
+#define SML_CAN_FILTERS 6
+#include "mcp2515.h"
+#else
+// esp32 uses native twai
+#undef SML_CAN_MASKS
+#undef SML_CAN_FILTERS
+#define SML_CAN_MASKS 1
+#define SML_CAN_FILTERS 1
+#include <can.h>
+#include "driver/twai.h"
+#endif
+#endif // USE_SML_CANBUS
 
 /* special options per meter
 1:
@@ -151,6 +179,13 @@ time serial pointer is reset to zero
 on esp32 the uart index may be set, normally it is allocated from 2 down to 0 automatically
 thus you can combine serial SML with serial script , berry or serial drivers.
 
+8:
+on esp32 1 filter mask
+on esp8266 2 filter masks
+
+9:
+on esp32 1 filter
+on esp8266 6 filters
 */
 
 //#define MODBUS_DEBUG
@@ -479,6 +514,17 @@ struct METER_DESC {
 
 #endif // USE_SML_TCP
 
+
+#ifdef USE_SML_CANBUS
+#ifdef ESP8266
+  MCP2515 *mcp2515;
+#else
+  //twai_handle_t *canp;
+#endif
+  uint32_t can_masks[SML_CAN_MASKS];
+  uint32_t can_filters[SML_CAN_FILTERS];
+#endif // USE_SML_CANBUS
+
 #ifdef ESP32
   int8_t uart_index;
 #endif
@@ -549,6 +595,9 @@ struct SML_GLOBS {
 	struct METER_DESC *mp;
   uint8_t to_cnt;
   bool ready;
+#ifdef USE_SML_CANBUS
+  uint8_t twai_installed;
+#endif // USE_SML_CANBUS
 } sml_globs;
 
 
@@ -694,8 +743,9 @@ void dump2log(void) {
   //if (!SML_SAVAILABLE) return;
 	if (!sml_globs.log_data) return;
 
+  struct METER_DESC *mp = &meter_desc[meter];
+
 #ifdef USE_SML_DECRYPT
-	struct METER_DESC *mp = &meter_desc[meter];
 	if (mp->use_crypt == true) {
 			d_lastms = millis();
       while ((millis() - d_lastms) < 50) {
@@ -862,6 +912,81 @@ void dump2log(void) {
       	}
 				}
 				break;
+ #ifdef USE_SML_CANBUS       
+      case 'C':
+ #ifdef ESP8266     
+        if (mp->mcp2515 == nullptr) break;
+        { struct can_frame canFrame;
+        while (mp->mcp2515->checkReceive()) {
+            if (mp->mcp2515->readMessage(&canFrame) == MCP2515::ERROR_OK) {
+              mp->sbuff[0] = canFrame.can_id >> 24;
+              mp->sbuff[1] = canFrame.can_id >> 16;
+              mp->sbuff[2] = canFrame.can_id >> 8;
+              mp->sbuff[3] = canFrame.can_id;
+              mp->sbuff[4] = canFrame.can_dlc;
+              for (int i = 0; i < canFrame.can_dlc; i++) {
+                mp->sbuff[5 + i] = canFrame.data[i];
+              }
+              sml_dump_start(' ');
+              for (uint8_t index = 0; index < canFrame.can_dlc + 5; index++) {
+                sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x", mp->sbuff[index]);
+                sml_globs.sml_logindex += 2;
+                if (index == 3) {
+                  sml_globs.log_data[sml_globs.sml_logindex] = ':';
+                  sml_globs.sml_logindex++;
+                  sml_globs.log_data[sml_globs.sml_logindex] = ' ';
+                  sml_globs.sml_logindex++;
+                }
+              }
+              sml_globs.log_data[sml_globs.sml_logindex] = 0;
+              AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+            } else {
+              if (mp->mcp2515->checkError()) {
+                uint8_t errFlags = mp->mcp2515->getErrorFlags();
+                mp->mcp2515->clearRXnOVRFlags();
+                AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Received error %d"), errFlags);
+              }
+            }
+        }
+        }
+        break;
+#else
+        // esp32 native CAN
+        if (!sml_globs.twai_installed) break;
+        {
+        uint32_t alerts_triggered = sml_can_check_alerts();
+
+        // Check if message is received
+        if (alerts_triggered & TWAI_ALERT_RX_DATA) {
+          twai_message_t message;
+          while (twai_receive(&message, 0) == ESP_OK) {
+            mp->sbuff[0] = message.identifier >> 24;
+            mp->sbuff[1] = message.identifier >> 16;
+            mp->sbuff[2] = message.identifier >> 8;
+            mp->sbuff[3] = message.identifier;
+            mp->sbuff[4] = message.data_length_code;
+            for (int i = 0; i < message.data_length_code; i++) {
+              mp->sbuff[5 + i] = message.data[i];
+            }
+            sml_dump_start(' ');
+            for (uint8_t index = 0; index < message.data_length_code + 5; index++) {
+              sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x", mp->sbuff[index]);
+              sml_globs.sml_logindex += 2;
+              if (index == 3) {
+                  sml_globs.log_data[sml_globs.sml_logindex] = ':';
+                  sml_globs.sml_logindex++;
+                  sml_globs.log_data[sml_globs.sml_logindex] = ' ';
+                  sml_globs.sml_logindex++;
+              }
+            }
+            sml_globs.log_data[sml_globs.sml_logindex] = 0;
+            AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
+          }
+        }
+        }
+        break;
+#endif
+#endif // USE_SML_CANBUS
     	default:
       	// raw dump
       	d_lastms = millis();
@@ -1480,6 +1605,7 @@ uint32_t meters;
 
     for (meters = 0; meters < sml_globs.meters_used; meters++) {
       struct METER_DESC *mp = &meter_desc[meters];
+      if (mp->type == 'C') continue;
       if (mp->type != 'c') {
         if (mp->srcpin != TCP_MODE_FLG) {
           if (!mp->meter_ss) continue;
@@ -2184,7 +2310,7 @@ void SML_Decode(uint8_t index) {
         } else {
           double dval;
           char type = sml_globs.mp[mindex].type;
-          if (type != 'e' && type != 'r' && type != 'R' && type != 'm' && type != 'M' && type != 'k' && type != 'p' && type != 'v') {
+          if (type != 'C' && type != 'e' && type != 'r' && type != 'R' && type != 'm' && type != 'M' && type != 'k' && type != 'p' && type != 'v') {
             // get numeric values
             if (type == 'o' || type == 'c') {
               if (*mp == '(') {
@@ -2256,7 +2382,6 @@ void SML_Decode(uint8_t index) {
                 dval = ebus_dval;
               }
             }
-
           }
 #ifdef USE_SML_MEDIAN_FILTER
           if (sml_globs.mp[mindex].flag & 16) {
@@ -2375,11 +2500,9 @@ void SML_Show(boolean json) {
             tpowstr[i] = *mp++;
           }
           tpowstr[i] = 0;
-#ifdef USE_WEBSERVER
           // export html
           //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s{e}", b_mqtt_data,tpowstr);
           WSContentSend_PD(PSTR("{s}%s{e}"), tpowstr);
-#endif  // USE_WEBSERVER
           // rewind, to ensure strchr
           mp--;
           mp = strchr(mp, '|');
@@ -2493,12 +2616,11 @@ void SML_Show(boolean json) {
                   }
                 }
               }
-#ifdef USE_WEBSERVER
+
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
              if (strcmp(name, "*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"), sml_globs.mp[mindex].prefix, name,tpowstr, unit);
-#endif  // USE_WEBSERVER
             }
           }
         }
@@ -2515,10 +2637,8 @@ void SML_Show(boolean json) {
      if (!nojson) {
        ResponseAppend_P(PSTR("}"));
      }
-#ifdef USE_WEBSERVER
    } else {
      //WSContentSend_PD(PSTR("%s"),b_mqtt_data);
-#endif  // USE_WEBSERVER
    }
 
 
@@ -2714,6 +2834,32 @@ struct METER_DESC *mp = &meter_desc[mnum];
 			mp->uart_index = strtol(cp, &cp, 10);
 #endif // ESP32
 			break;
+
+#ifdef USE_SML_CANBUS
+     case '8':
+      cp += 2;
+      for (uint8_t cnt = 0; cnt < SML_CAN_MASKS; cnt++) {
+				mp->can_masks[cnt] = sml_hex32(cp);
+        cp += 8;
+        if (*cp != ',') {
+          break;
+        }
+        cp++;
+			}
+      break;
+    case '9':
+      cp += 2;
+      for (uint8_t cnt = 0; cnt < SML_CAN_FILTERS; cnt++) {
+				mp->can_filters[cnt] = sml_hex32(cp);
+        cp += 8;
+        if (*cp != ',') {
+          break;
+        }
+        cp++;
+			}
+      break;
+
+#endif // USE_SML_CANBUS
 	}
 	return cp;
 }
@@ -2797,6 +2943,15 @@ void reset_sml_vars(uint16_t maxmeters) {
     mp->uart_index = -1;
 #endif
 
+#ifdef USE_SML_CANBUS
+    for (uint8_t cnt = 0; cnt < SML_CAN_MASKS; cnt++) {
+			mp->can_masks[cnt] = 0;
+		}
+    for (uint8_t cnt = 0; cnt < SML_CAN_FILTERS; cnt++) {
+			mp->can_filters[cnt] = 0;
+    }
+#endif // USE_SML_CANBUS
+
 #ifdef USE_SML_DECRYPT
 		if (mp->use_crypt) {
 			if (mp->hp) {
@@ -2850,6 +3005,17 @@ void SML_Init(void) {
       sml_globs.sml_mf = 0;
     }
 #endif
+
+#ifdef USE_SML_CANBUS
+#ifdef ESP32
+    if (sml_globs.twai_installed) {
+      twai_stop();
+      twai_driver_uninstall();
+      sml_globs.twai_installed = false;
+    }
+#endif
+#endif // USE_SML_CANBUS
+
     reset_sml_vars(sml_globs.meters_used);
   }
 
@@ -3176,6 +3342,119 @@ next_line:
           InjektCounterValue(meters, RtcSettings.pulse_counter[cindex], 0.0);
           cindex++;
         }
+    } else if (mp->type == 'C') {
+#ifdef USE_SML_CANBUS
+
+#ifdef ESP8266
+      mp->mcp2515 = nullptr;
+      if ( PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK) ) {
+        mp->mcp2515 = new MCP2515(mp->srcpin);
+        if (MCP2515::ERROR_OK != mp->mcp2515->reset()) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Failed to reset module"));
+          return;
+        }
+
+        if (MCP2515::ERROR_OK != mp->mcp2515->setBitrate((CAN_SPEED)(mp->params%100), (CAN_CLOCK)(mp->params/100))) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Failed to set module bitrate"));
+          return;
+        }
+
+        //attachInterrupt(mp->trxpin, sml_canbus_irq, FALLING);
+
+        if (MCP2515::ERROR_OK != mp->mcp2515->setConfigMode()) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Failed to set config mode"));
+        } else {
+          if (mp->can_filters[0]) mp->mcp2515->setFilter(MCP2515::RXF0, true, mp->can_filters[0]);
+          if (mp->can_filters[1]) mp->mcp2515->setFilter(MCP2515::RXF1, true, mp->can_filters[1]);
+          if (mp->can_filters[2]) mp->mcp2515->setFilter(MCP2515::RXF2, true, mp->can_filters[2]);
+          if (mp->can_filters[3]) mp->mcp2515->setFilter(MCP2515::RXF3, true, mp->can_filters[3]);
+          if (mp->can_filters[4]) mp->mcp2515->setFilter(MCP2515::RXF4, true, mp->can_filters[4]);
+          if (mp->can_filters[5]) mp->mcp2515->setFilter(MCP2515::RXF5, true, mp->can_filters[5]);
+
+          if (mp->can_masks[0]) mp->mcp2515->setFilterMask(MCP2515::MASK0, true, mp->can_masks[0]);
+          if (mp->can_masks[1]) mp->mcp2515->setFilterMask(MCP2515::MASK1, true, mp->can_masks[1]);
+
+         }
+
+        if (MCP2515::ERROR_OK != mp->mcp2515->setNormalMode()) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Failed to set normal mode"));
+          return;
+        }
+
+        AddLog(LOG_LEVEL_INFO, PSTR("SML CAN: Initialized"));
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: SPI not configuered"));
+      }
+ #else
+      // Initialize configuration structures using macro initializers
+      twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)mp->trxpin, (gpio_num_t)mp->srcpin, TWAI_MODE_NORMAL);
+      uint8_t qlen = mp->params/100;
+      if (qlen < 8) {
+        qlen = 8;
+      }
+      g_config.rx_queue_len = qlen;
+      twai_timing_config_t t_config;
+      switch (mp->params%100) {
+        case 0:
+          t_config = TWAI_TIMING_CONFIG_25KBITS();
+          break;
+        case 1:
+          t_config = TWAI_TIMING_CONFIG_50KBITS();
+          break;
+        case 2:
+          t_config = TWAI_TIMING_CONFIG_100KBITS();
+          break;
+        case 3:
+          t_config = TWAI_TIMING_CONFIG_125KBITS();
+          break;
+        case 4:
+          t_config = TWAI_TIMING_CONFIG_250KBITS();
+          break;
+        case 5:
+          t_config = TWAI_TIMING_CONFIG_500KBITS();
+          break;
+        case 6:
+          t_config = TWAI_TIMING_CONFIG_800KBITS();
+          break;
+        case 7:
+          t_config = TWAI_TIMING_CONFIG_1MBITS();
+          break;
+        default:
+          t_config = TWAI_TIMING_CONFIG_125KBITS();
+          break;
+      }
+    
+      twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+
+      if (mp->can_filters[0]) {
+        f_config.acceptance_code = mp->can_filters[0] << 3; 
+        f_config.acceptance_mask = mp->can_masks[0] << 3; 
+        f_config.single_filter = true;
+      }
+      sml_globs.twai_installed = false;
+      // Install TWAI driver
+      if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("Can driver installed"));
+        // Start TWAI driver
+        if (twai_start() == ESP_OK) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("Can driver started"));
+          // Reconfigure alerts to detect frame receive, Bus-Off error and RX queue full states
+          uint32_t alerts_to_enable = TWAI_ALERT_RX_DATA | TWAI_ALERT_RX_QUEUE_FULL | TWAI_ALERT_TX_IDLE | TWAI_ALERT_TX_SUCCESS | TWAI_ALERT_TX_FAILED | TWAI_ALERT_ERR_PASS | TWAI_ALERT_BUS_ERROR;
+          if (twai_reconfigure_alerts(alerts_to_enable, NULL) == ESP_OK) {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("CAN Alerts reconfigured"));
+            AddLog(LOG_LEVEL_INFO, PSTR("Can driver ready"));
+            sml_globs.twai_installed = true;
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to reconfigure CAN alerts"));
+          } 
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to start can driver"));
+        }
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to install can driver"));
+      }
+ #endif     
+#endif // USE_SML_CANBUS
     } else {
       // serial input, init
       if (mp->srcpin == TCP_MODE_FLG) {
@@ -3364,7 +3643,9 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
   meter = abs(meter);
   if (meter < 1 || meter > sml_globs.meters_used) return 0;
   meter--;
-  if (!meter_desc[meter].meter_ss) return 0;
+  if (meter_desc[meter].type != 'C') {
+    if (!meter_desc[meter].meter_ss) return 0;
+  }
   if (flag > 0) {
     SML_Send_Seq(meter, hstr);
   } else {
@@ -3460,7 +3741,9 @@ int32_t SML_Set_WStr(uint32_t meter, char *hstr) {
   if (sml_globs.ready == false) return 0;
   if (meter < 1 || meter > sml_globs.meters_used) return -1;
   meter--;
-  if (!meter_desc[meter].meter_ss) return -2;
+  if (meter_desc[meter].type != 'C') {
+    if (!meter_desc[meter].meter_ss) return -2;
+  }
   meter_desc[meter].script_str = hstr;
   return 0;
 }
@@ -3564,6 +3847,123 @@ uint32_t ctime = millis();
 }
 
 #ifdef USE_SCRIPT
+
+#ifdef USE_SML_CANBUS
+
+
+#ifdef ESP32
+#define POLLING_RATE_MS 100
+uint32_t sml_can_check_alerts() {
+
+  uint32_t alerts_triggered;
+  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));
+  twai_status_info_t twaistatus;
+  twai_get_status_info(&twaistatus);
+
+  // Handle alerts
+  if (alerts_triggered & TWAI_ALERT_ERR_PASS) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Alert: TWAI controller has become error passive."));
+  }
+  if (alerts_triggered & TWAI_ALERT_BUS_ERROR) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Alert: A (Bit, Stuff, CRC, Form, ACK) error has occurred on the bus."));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Bus error count: %d"), twaistatus.bus_error_count);
+  }
+  if (alerts_triggered & TWAI_ALERT_RX_QUEUE_FULL) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Alert: The RX queue is full causing a received frame to be lost."));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RX buffered: %d"), twaistatus.msgs_to_rx);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RX missed: %d"), twaistatus.rx_missed_count);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RX overrun %d"), twaistatus.rx_overrun_count);
+  }
+
+  if (alerts_triggered & TWAI_ALERT_TX_FAILED) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Alert: The Transmission failed."));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TX buffered: %d"), twaistatus.msgs_to_tx);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TX error: %d"), twaistatus.tx_error_counter);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TX failed: %d"), twaistatus.tx_failed_count);
+  }
+  
+  if (alerts_triggered & TWAI_ALERT_TX_SUCCESS) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Alert: The Transmission was successful."));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TX buffered: %d"), twaistatus.msgs_to_tx);
+  }
+
+  return alerts_triggered;
+}
+
+#endif // ESP32
+
+
+#define SML_CAN_MAX_FRAMES 8
+
+void SML_CANBUS_Read() {
+#ifdef ESP8266
+  struct can_frame canFrame;
+
+  for (uint32_t meter = 0; meter < sml_globs.meters_used; meter++) {
+    struct METER_DESC *mp = &sml_globs.mp[meter];
+    uint8_t nCounter = 0;
+
+    if (mp->type != 'C') continue;
+
+    if (mp->mcp2515 == nullptr) continue;
+
+    while (mp->mcp2515->checkReceive() && nCounter <= SML_CAN_MAX_FRAMES) {
+      if (mp->mcp2515->readMessage(&canFrame) == MCP2515::ERROR_OK) {
+          mp->sbuff[0] = canFrame.can_id >> 24;
+          mp->sbuff[1] = canFrame.can_id >> 16;
+          mp->sbuff[2] = canFrame.can_id >> 8;
+          mp->sbuff[3] = canFrame.can_id;
+          mp->sbuff[4] = canFrame.can_dlc;
+          for (int i = 0; i < canFrame.can_dlc; i++) {
+            mp->sbuff[5 + i] = canFrame.data[i];
+          }
+          SML_Decode(meter);
+          nCounter++;
+      } else {
+        if (mp->mcp2515->checkError()) {
+          uint8_t errFlags = mp->mcp2515->getErrorFlags();
+          mp->mcp2515->clearRXnOVRFlags();
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SML CAN: Received error %d"), errFlags);
+          break;
+        }
+      }
+    }
+  }
+#else
+
+  for (uint32_t meter = 0; meter < sml_globs.meters_used; meter++) {
+    struct METER_DESC *mp = &sml_globs.mp[meter];
+    uint8_t nCounter = 0;
+
+    if (mp->type != 'C') continue;
+
+    if (sml_globs.twai_installed) {
+        uint32_t alerts_triggered = sml_can_check_alerts();
+
+        // Check if message is received
+        if (alerts_triggered & TWAI_ALERT_RX_DATA) {
+          // One or more messages received. Handle all.
+          twai_message_t message;
+          while (twai_receive(&message, 0) == ESP_OK) {
+            mp->sbuff[0] = message.identifier >> 24;
+            mp->sbuff[1] = message.identifier >> 16;
+            mp->sbuff[2] = message.identifier >> 8;
+            mp->sbuff[3] = message.identifier;
+            mp->sbuff[4] = message.data_length_code;
+            for (int i = 0; i < message.data_length_code; i++) {
+              mp->sbuff[5 + i] = message.data[i];
+            }
+            SML_Decode(meter);
+          }
+        }
+        
+    }
+  } 
+
+#endif
+}
+#endif // USE_SML_CANBUS
+
 char *SML_Get_Sequence(char *cp,uint32_t index) {
   if (!index) return cp;
   uint32_t cindex = 0;
@@ -3649,6 +4049,18 @@ uint8_t sml_hexnibble(char chr) {
     if (chr >= 'a' && chr <= 'f') rVal = chr + 10 - 'a';
   }
   return rVal;
+}
+
+uint32_t sml_hex32(char *cp) {
+  uint32_t iob = (sml_hexnibble(*cp++) << 4) | sml_hexnibble(*cp++);
+  uint32_t result = iob << 24;
+  iob = (sml_hexnibble(*cp++) << 4) | sml_hexnibble(*cp++);
+  result |= iob << 16;
+  iob = (sml_hexnibble(*cp++) << 4) | sml_hexnibble(*cp++);
+  result |= iob << 8;
+  iob = (sml_hexnibble(*cp++) << 4) | sml_hexnibble(*cp++);
+  result |= iob;
+  return result;
 }
 
 typedef struct {
@@ -3760,6 +4172,8 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
     rflg = 1;
     cp++;
   }
+
+  struct METER_DESC *mp = &meter_desc[meter];
   while (*cp) {
     if (!*cp || !*(cp+1)) break;
     if (*cp == ',') break;
@@ -3769,8 +4183,8 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
     slen++;
     if (slen >= sizeof(sbuff)-6) break; // leave space for checksum
   }
-  if (meter_desc[meter].type == 'm' || meter_desc[meter].type == 'M' || meter_desc[meter].type == 'k') {
-    if (meter_desc[meter].type == 'k') {
+  if (mp->type == 'm' || mp->type == 'M' || mp->type == 'k') {
+    if (mp->type == 'k') {
       // kamstrup, append crc, cr
       *ucp++ = 0;
       *ucp++ = 0;
@@ -3813,12 +4227,12 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
     }
 
   }
-  if (meter_desc[meter].type == 'o') {
+  if (mp->type == 'o') {
     for (uint32_t cnt = 0; cnt < slen; cnt++) {
       sbuff[cnt] |= (CalcEvenParity(sbuff[cnt]) << 7);
     }
   }
-  if (meter_desc[meter].type == 'p') {
+  if (mp->type == 'p') {
     *ucp++ = 0xc0;
     *ucp++ = 0xa8;
     *ucp++ = 1;
@@ -3828,18 +4242,59 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
     slen += 6;
   }
 
-  if (meter_desc[meter].srcpin == TCP_MODE_FLG) {
+  if (mp->srcpin == TCP_MODE_FLG) {
     sml_tcp_send(meter, sbuff, slen);
   } else {
-    if (meter_desc[meter].trx_en.trxen) {
-      digitalWrite(meter_desc[meter].trx_en.trxenpin, meter_desc[meter].trx_en.trxenpol ^ 1);
-    }
-    meter_desc[meter].meter_ss->flush();
-    meter_desc[meter].meter_ss->write(sbuff, slen);
-    if (meter_desc[meter].trx_en.trxen) {
-      // must wait for all data sent
-      meter_desc[meter].meter_ss->flush();
-      digitalWrite(meter_desc[meter].trx_en.trxenpin, meter_desc[meter].trx_en.trxenpol);
+    if (mp->type == 'C') {
+#ifdef USE_SML_CANBUS
+#ifdef ESP8266
+      if (mp->mcp2515 != nullptr) {
+        struct can_frame canMsg;
+        canMsg.can_id = (uint32_t) (sbuff[0] << 24 | sbuff[1] << 16 | sbuff[2] << 8 | sbuff[3]);
+        canMsg.can_dlc = sbuff[4];
+        for (uint8_t i = 0; i < canMsg.can_dlc; i++) {
+          canMsg.data[i] = sbuff[i + 5];
+        }
+        mp->mcp2515->sendMessage(&canMsg);
+      }
+#else
+      if (sml_globs.twai_installed) {
+        twai_message_t message;
+        message.identifier = (uint32_t) (sbuff[0] << 24 | sbuff[1] << 16 | sbuff[2] << 8 | sbuff[3]);
+        message.data_length_code = sbuff[4];
+        for (uint8_t i = 0; i < message.data_length_code; i++) {
+          message.data[i] = sbuff[i + 5];
+        }
+
+        message.flags = 0;
+        if (message.identifier & 0x80000000) {
+          message.extd = 1;
+          message.identifier &= 0x7fffffff;
+        }
+
+        twai_clear_receive_queue();
+
+        // Queue message for transmission
+        if (twai_transmit(&message, pdMS_TO_TICKS(100)) == ESP_OK) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("Can message queued for transmission"));
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to queue can message for transmission"));
+        }
+      }
+#endif
+#endif // USE_SML_CANBUS
+    } else { 
+      if (mp->trx_en.trxen) {
+        digitalWrite(meter_desc[meter].trx_en.trxenpin, meter_desc[meter].trx_en.trxenpol ^ 1);
+      }
+      mp->meter_ss->flush();
+      mp->meter_ss->write(sbuff, slen);
+      if (mp->trx_en.trxen) {
+        // must wait for all data sent
+        mp->meter_ss->flush();
+        digitalWrite(mp->trx_en.trxenpin, mp->trx_en.trxenpol);
+      }
+
     }
   }
 
@@ -3848,14 +4303,14 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
     Hexdump(sbuff, slen);
 #else
     uint8_t type = sml_globs.mp[(sml_globs.dump2log&7) - 1].type;
-    if (type == 'm' || type == 'M' || type == 'k') {
+    if (type == 'm' || type == 'M' || type == 'k' || type == 'C') {
       Hexdump(sbuff, slen);
     }
 #endif
   }
 
 #ifdef MODBUS_DEBUG
-  uint8_t type = meter_desc[meter].type;
+  uint8_t type = mp->type;
   if (!sml_globs.dump2log && (type == 'm' || type == 'M' || type == 'k')) {
     AddLog(LOG_LEVEL_INFO, PSTR("transmit index >> %d"),sml_globs.mp[meter].index);
     Hexdump(sbuff, slen);
@@ -4051,6 +4506,9 @@ bool Xsns53(uint32_t function) {
               dump2log();
             } else {
               SML_Poll();
+#ifdef USE_SML_CANBUS
+              SML_CANBUS_Read();
+#endif// USE_SML_CANBUS
             }
           }
         }
