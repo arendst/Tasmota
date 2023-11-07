@@ -69,7 +69,6 @@
 #undef LOG_LEVEL_DEBUG
 #undef LOG_LEVEL_DEBUG_MORE
 #include <vector>
-#include <queue>
 #include "freertos/ringbuf.h"
 
 #include <t_bearssl.h>
@@ -81,11 +80,11 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 void MI32AddKey(mi_bindKey_t keyMAC);
 
 std::vector<mi_sensor_t> MIBLEsensors;
-
+RingbufHandle_t BLERingBufferQueue = nullptr;
 static BLEScan* MI32Scan;
 
 /*********************************************************************************************\
- * Classes
+ * Callback Classes
 \*********************************************************************************************/
 
 class MI32SensorCallback : public NimBLEClientCallbacks {
@@ -105,7 +104,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
 };
 
 class MI32AdvCallbacks: public NimBLEScanCallbacks {
-  void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+  void IRAM_ATTR onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     static bool _mutex = false;
     if(_mutex) return;
     _mutex = true;
@@ -148,24 +147,26 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
   };
 };
 
-static std::queue<BLEqueueBuffer_t> BLEmessageQueue;
-
 class MI32ServerCallbacks: public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
-        BLEqueueBuffer_t q;
-        q.length = 6;
-        q.type = BLE_OP_ON_CONNECT;
-        q.buffer = new uint8_t[q.length];
-        memcpy(q.buffer,connInfo.getAddress().getNative(),6); // return MAC address in the queue buffer
-        BLEmessageQueue.push(q);
+        struct{
+          BLERingBufferItem_t header;
+          uint8_t buffer[6];
+        } item;
+        item.header.length = 6;
+        item.header.type = BLE_OP_ON_CONNECT;
+        memcpy(item.buffer,connInfo.getAddress().getNative(),6);
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 6 , pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_CONNECTED;
     };
     void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
-        BLEqueueBuffer_t q;
-        q.length = 0;
-        q.type = BLE_OP_ON_DISCONNECT;
+        struct{
+          BLERingBufferItem_t header;
+        } item;
+        item.header.length = 0;
+        item.header.type = BLE_OP_ON_DISCONNECT;
         memset(MI32.conCtx->MAC,0,6);
-        BLEmessageQueue.push(q);
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_DISCONNECTED;
         NimBLEDevice::startAdvertising();
     };
@@ -173,45 +174,53 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
 
 class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo){
-        BLEqueueBuffer_t q;
-        q.length = 0;
-        q.type = BLE_OP_ON_READ;
-        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
-        q.handle = pCharacteristic->getHandle();
-        BLEmessageQueue.push(q);
+        struct{
+          BLERingBufferItem_t header;
+        } item;
+        item.header.length = 0;
+        item.header.type = BLE_OP_ON_READ;
+        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.handle = pCharacteristic->getHandle();
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
     };
 
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-        BLEqueueBuffer_t q;
-        q.type = BLE_OP_ON_WRITE;
-        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
-        q.handle = pCharacteristic->getHandle();
-        q.length = pCharacteristic->getDataLength();
-        q.buffer = new uint8_t[q.length];
-        memcpy(q.buffer,pCharacteristic->getValue(),pCharacteristic->getDataLength());
-        BLEmessageQueue.push(q);
+        struct{
+          BLERingBufferItem_t header;
+          uint8_t buffer[255];
+        } item;
+        item.header.length = pCharacteristic->getDataLength();;
+        item.header.type = BLE_OP_ON_WRITE;
+        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.handle = pCharacteristic->getHandle();
+        memcpy(item.buffer,pCharacteristic->getValue(),pCharacteristic->getDataLength());
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + item.header.length , pdMS_TO_TICKS(1));
     };
 
     /** The status returned in status is defined in NimBLECharacteristic.h.
      *  The value returned in code is the NimBLE host return code.
      */
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) {
-        BLEqueueBuffer_t q;
-        q.length = 0;
-        q.type = BLE_OP_ON_STATUS;
-        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
-        q.handle = pCharacteristic->getHandle();
-        q.value = code;
-        BLEmessageQueue.push(q);
+        struct{
+          BLERingBufferItem_t header;
+          uint8_t buffer[4];
+        } item;
+        item.header.length = 4;
+        item.header.type = BLE_OP_ON_STATUS;
+        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.handle = pCharacteristic->getHandle();
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 4, pdMS_TO_TICKS(1));
     };
 
     void onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
-        BLEqueueBuffer_t q;
-        q.length = 0;
-        q.type = BLE_OP_ON_UNSUBSCRIBE + subValue;
-        q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
-        q.handle = pCharacteristic->getHandle();
-        BLEmessageQueue.push(q);
+        struct{
+          BLERingBufferItem_t header;
+        } item;
+        item.header.length = 0;
+        item.header.type = BLE_OP_ON_UNSUBSCRIBE + subValue;;
+        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.handle = pCharacteristic->getHandle();
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
     };
 };
 
@@ -220,8 +229,6 @@ static MI32AdvCallbacks MI32ScanCallbacks;
 static MI32SensorCallback MI32SensorCB;
 static MI32CharacteristicCallbacks MI32ChrCallback;
 static NimBLEClient* MI32Client;
-
-RingbufHandle_t MI32BufferQueue = nullptr;
 
 /*********************************************************************************************\
  * BLE callback functions
@@ -235,7 +242,7 @@ void MI32scanEndedCB(NimBLEScanResults results){
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
   if(isNotify){
     struct{
-      BLEringBufferItem_t header;
+      BLERingBufferItem_t header;
       uint8_t buffer[255];
     } item;
     item.header.length = length;
@@ -243,7 +250,7 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
     memcpy(item.buffer,pData,length);
     item.header.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
     item.header.handle = pRemoteCharacteristic->getHandle();
-    xRingbufferSend(MI32BufferQueue, (const void*)&item, sizeof(BLEringBufferItem_t) + length , pdMS_TO_TICKS(1));
+    xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(1));
     MI32.mode.readingDone = 1;
     MI32.infoMsg = MI32_GOT_NOTIFICATION;
     return;
@@ -272,9 +279,9 @@ void MI32stripColon(char* _string){
 }
 
 /**
- * @brief Convert string that repesents a hexadecimal number to a byte array
+ * @brief Convert string that represents a hexadecimal number to a byte array
  *
- * @param _string input string in format: AABBCCDDEEFF or AA:BB:CC:DD:EE:FF, caseinsensitive
+ * @param _string input string in format: AABBCCDDEEFF or AA:BB:CC:DD:EE:FF, case insensitive
  * @param _mac  target byte array must match the correct size (i.e. AA:BB -> uint8_t bytes[2])
  */
 
@@ -299,7 +306,7 @@ void MI32HexStringToBytes(char* _string, uint8_t* _byteArray) {
 /**
  * @brief Reverse an array of 6 bytes
  *
- * @param _mac a byte array of size 6 (typicalliy representing a MAC address)
+ * @param _mac a byte array of size 6 (typically representing a MAC address)
  */
 void MI32_ReverseMAC(uint8_t _mac[]){
   uint8_t _reversedMAC[6];
@@ -1301,9 +1308,9 @@ void MI32ConnectionTask(void *pvParameters){
               MI32.mode.readingDone = 1;
               break;
             case 3:
-              if (MI32BufferQueue == nullptr){
-                MI32BufferQueue = xRingbufferCreate(2048, RINGBUF_TYPE_NOSPLIT);
-                if(!MI32BufferQueue) {
+              if (BLERingBufferQueue == nullptr){
+                BLERingBufferQueue = xRingbufferCreate(2048, RINGBUF_TYPE_NOSPLIT);
+                if(!BLERingBufferQueue) {
                   MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
                   break;
                 }
@@ -1361,9 +1368,9 @@ void MI32ConnectionTask(void *pvParameters){
   }
   MI32.mode.connected = 0;
   MI32.mode.triggerBerryConnCB = 1;
-  if (MI32BufferQueue != nullptr){
-    vRingbufferDelete(MI32BufferQueue);
-    MI32BufferQueue = nullptr;
+  if (BLERingBufferQueue != nullptr){
+    vRingbufferDelete(BLERingBufferQueue);
+    BLERingBufferQueue = nullptr;
   }
   MI32StartTask(MI32_TASK_SCAN);
   vTaskDelete( NULL );
@@ -1373,6 +1380,13 @@ void MI32ConnectionTask(void *pvParameters){
 
 bool MI32StartServerTask(){
   AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Server task ... start"));
+  if (BLERingBufferQueue == nullptr){
+    BLERingBufferQueue = xRingbufferCreate(2048, RINGBUF_TYPE_NOSPLIT);
+    if(!BLERingBufferQueue) {
+      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to create ringbuffer queue"));
+      return false;
+    }
+  }
   xTaskCreatePinnedToCore(
     MI32ServerTask,    /* Function to implement the task */
     "MI32ServerTask",  /* Name of the task */
@@ -1385,12 +1399,21 @@ bool MI32StartServerTask(){
 }
 
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
+/**
+ * @brief Sets the advertisement message from the data of the context, could be regular advertisement or scan response
+ * 
+ * @param pServer - our server instance
+ * @param servicesToStart - for the first run, this vector holds all our services, would not be used for later modifications of the advertisement message
+ * @param shallStartServices - true only for the first call, which will finish the construction of the server by starting all services
+ */
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
   NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-  BLEqueueBuffer_t q;
-  q.length = 0;
+  struct{
+    BLERingBufferItem_t header;
+    uint8_t buffer[255];
+  } item;
+  item.header.length = 0;
   if(shallStartServices && MI32.conCtx->operation == BLE_OP_SET_ADV){
-    q.buffer = new uint8_t[256];
     for (auto & pService : servicesToStart) {
         pService->start();
     }
@@ -1402,13 +1425,13 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
         std::vector<NimBLECharacteristic *> characteristics = pService->getCharacteristics();
         for (auto & pCharacteristic : characteristics) {
           uint16_t handle = pCharacteristic->getHandle(); // now we have handles, so pass them to Berry
-          q.buffer[idx] = (uint8_t)handle>>8;
-          q.buffer[idx+1] = (uint8_t)handle&0xff;
+          item.buffer[idx] = (uint8_t)handle>>8;
+          item.buffer[idx+1] = (uint8_t)handle&0xff;
           if (idx > 254) break; // limit to 127 characteristics
           idx += 2;
         }
       }
-      q.length = idx;
+      item.header.length = idx;
     }
     servicesToStart.clear(); // release vector
   }
@@ -1424,13 +1447,20 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
   }
 
   MI32.infoMsg = MI32_SERV_SCANRESPONSE_ADDED + (MI32.conCtx->operation - BLE_OP_SET_SCAN_RESP); // .. ADV or SCAN RESPONSE
-  q.type = MI32.conCtx->operation;
-  q.returnCharUUID = 0; // does not matter
-  q.handle = 0; //dito
-  BLEmessageQueue.push(q);
+  item.header.type = MI32.conCtx->operation;
+  item.header.returnCharUUID = 0;
+  item.header.handle = 0;
+  xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + item.header.length, pdMS_TO_TICKS(20));
 }
 
 void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
+/**
+ * @brief Create a characteristic or modify its value with data of the context
+ * 
+ * @param pServer - our server instance
+ * @param servicesToStart - before the finish of the server construction, a characteristic and maybe the holding service will be created and added to this vector
+ * @param shallStartServices - true, if the server construction is not finished by first setting of advertisement data
+ */
 void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
   MI32.conCtx->error = MI32_CONN_NO_ERROR;
   NimBLEService *pService = pServer->getServiceByUUID(MI32.conCtx->serviceUUID); // retrieve ...
@@ -1462,12 +1492,14 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
   }
   pCharacteristic->setValue(MI32.conCtx->buffer + 1, MI32.conCtx->buffer[0]); // set value
   pCharacteristic->notify(true); // always notify .. for now
-  BLEqueueBuffer_t q;
-  q.length = 0;
-  q.type = BLE_OP_SET_CHARACTERISTIC;
-  q.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
-  q.handle = pCharacteristic->getHandle(); // this returns "-1", no valid handle yet :(                   
-  BLEmessageQueue.push(q);
+  struct{
+    BLERingBufferItem_t header;
+  } item;
+  item.header.length = 0;
+  item.header.type = BLE_OP_SET_CHARACTERISTIC;
+  item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+  item.header.handle = pCharacteristic->getHandle();
+  xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
 }
 
 void MI32ServerTask(void *pvParameters){
@@ -1483,9 +1515,11 @@ void MI32ServerTask(void *pvParameters){
     while(MI32.mode.triggerNextServerJob == 0){
       if(MI32.mode.deleteServerTask == 1){
         delete MI32.conCtx;
-        MI32.conCtx = nullptr;
         pServer->stopAdvertising();
         MI32StartTask(MI32_TASK_SCAN);
+        vRingbufferDelete(BLERingBufferQueue);
+        BLERingBufferQueue = nullptr;
+        MI32.conCtx = nullptr;
         vTaskDelete( NULL );
       }
       vTaskDelay(50/ portTICK_PERIOD_MS);
@@ -1854,9 +1888,11 @@ void MI32Every50mSecond(){
     MI32.mode.triggerBerryAdvCB = 0;
   }
 
-  if(MI32BufferQueue != nullptr && MI32.mode.triggerBerryConnCB == 0) {
+  // client callback
+  // handle notification queue only if there is no message from read/write or subscribe, which is prioritized
+  if(MI32.mode.connected == 1 && BLERingBufferQueue != nullptr && MI32.mode.triggerBerryConnCB == 0) {
     size_t size;
-    BLEringBufferItem_t *q = (BLEringBufferItem_t *)xRingbufferReceive(MI32BufferQueue, &size, pdMS_TO_TICKS(1));
+    BLERingBufferItem_t *q = (BLERingBufferItem_t *)xRingbufferReceive(BLERingBufferQueue, &size, pdMS_TO_TICKS(1));
     
     if(q != nullptr){
       if(q->length != 0){
@@ -1866,7 +1902,7 @@ void MI32Every50mSecond(){
       MI32.conCtx->handle = q->handle;
       MI32.conCtx->operation = 103;
       MI32.conCtx->error = 0;
-      vRingbufferReturnItem(MI32BufferQueue, (void *)q);
+      vRingbufferReturnItem(BLERingBufferQueue, (void *)q);
       MI32.mode.triggerBerryConnCB = 1;
     }
   }
@@ -1881,25 +1917,28 @@ void MI32Every50mSecond(){
     MI32.mode.triggerBerryConnCB = 0;
   }
 
-
-  if(!BLEmessageQueue.empty()){
-    BLEqueueBuffer_t q = BLEmessageQueue.front();
-    BLEmessageQueue.pop();
-    MI32.conCtx->returnCharUUID = q.returnCharUUID;
-    MI32.conCtx->handle = q.handle;
-    MI32.conCtx->operation = q.type;
-    MI32.conCtx->error = 0;
-    if(q.length != 0){
-      MI32.conCtx->buffer[0] = q.length;
-      memcpy(MI32.conCtx->buffer + 1,q.buffer,q.length);
-      delete q.buffer;
-    }
-    if(MI32.beServerCB != nullptr){
-      void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beServerCB;
-      char _message[32];
-      GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
-      func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
+  // server callback
+  if(MI32.mode.connected == 0 && BLERingBufferQueue != nullptr){
+    size_t size;
+    BLERingBufferItem_t *q = (BLERingBufferItem_t *)xRingbufferReceive(BLERingBufferQueue, &size, pdMS_TO_TICKS(1));
+    
+    if(q != nullptr){
+      if(q->length != 0){
+        memcpy(MI32.conCtx->buffer,&q->length,q->length + 1);
+      }
+      MI32.conCtx->buffer[0] = q->length;
+      MI32.conCtx->returnCharUUID = q->returnCharUUID;
+      MI32.conCtx->handle = q->handle;
+      MI32.conCtx->operation = q->type;
+      MI32.conCtx->error = 0;
+      vRingbufferReturnItem(BLERingBufferQueue, (void *)q);
+      if(MI32.beServerCB != nullptr){
+        void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beServerCB;
+        char _message[32];
+        GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
+        func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
+      }
     }
   }
 
