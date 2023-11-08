@@ -29,9 +29,9 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
   static var JSON_NAME = "Flow"                 # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Flow")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0404: [0,1,2,0xFFFC,0xFFFD],                  # Flow Measurement
+    0x0404: [0,1,2,0xFFFC,0xFFFD],              # Flow Measurement
   })
-  static var TYPES = { 0x0306: 2 }                  # Flow Sensor, rev 2
+  static var TYPES = { 0x0306: 1 }              # Flow Sensor, rev 1
 
   #############################################################
   # Pre-process value
@@ -39,7 +39,7 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    return val != nil ? int(val) : nil
+    return val != nil ? int(val * 10) : nil     # MeasuredValue represents 10 x flow in m3/h
   end
 
   #############################################################
@@ -63,14 +63,14 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     if   cluster == 0x0404              # ========== Flow Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
         if self.shadow_value != nil
-          return tlv_solo.set(TLV.I2, int(self.shadow_value)) # MeasuredValue represents the flow in m3/h
+          return tlv_solo.set(TLV.U2, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
         else
           return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0001              #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 0)      # 500 m3/h
+        return tlv_solo.set(TLV.U2, 0)      # 0 m3/h
       elif attribute == 0x0002              #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 65534)  # 65534 m3/h
+        return tlv_solo.set(TLV.U2, 65534)  # 65534 m3/h
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
