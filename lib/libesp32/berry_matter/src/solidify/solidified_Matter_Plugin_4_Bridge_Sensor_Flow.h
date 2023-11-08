@@ -22,16 +22,17 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_pre_value,   /* name */
     NULL,                       /* no const */
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
+    ( &(const binstruction[10]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
       0x20080202,  //  0001  NE	R2	R1	R2
-      0x780A0003,  //  0002  JMPF	R2	#0007
+      0x780A0004,  //  0002  JMPF	R2	#0008
       0x60080009,  //  0003  GETGBL	R2	G9
-      0x5C0C0200,  //  0004  MOVE	R3	R1
-      0x7C080200,  //  0005  CALL	R2	1
-      0x70020000,  //  0006  JMP		#0008
-      0x4C080000,  //  0007  LDNIL	R2
-      0x80040400,  //  0008  RET	1	R2
+      0x540E0009,  //  0004  LDINT	R3	10
+      0x080C0203,  //  0005  MUL	R3	R1	R3
+      0x7C080200,  //  0006  CALL	R2	1
+      0x70020000,  //  0007  JMP		#0009
+      0x4C080000,  //  0008  LDNIL	R2
+      0x80040400,  //  0009  RET	1	R2
     })
   )
 );
@@ -90,7 +91,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute,   /* name */
     /* K4   */  be_const_int(0),
     /* K5   */  be_nested_str_weak(shadow_value),
     /* K6   */  be_nested_str_weak(set),
-    /* K7   */  be_nested_str_weak(I2),
+    /* K7   */  be_nested_str_weak(U2),
     /* K8   */  be_nested_str_weak(NULL),
     /* K9   */  be_const_int(1),
     /* K10  */  be_const_int(2),
@@ -233,7 +234,7 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Flow,
         { be_const_key_weak(TYPES, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(774, -1), be_const_int(2) },
+        { be_const_key_int(774, -1), be_const_int(1) },
     }))    ) } )) },
         { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute_closure) },
         { be_const_key_weak(value_changed, 6), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_value_changed_closure) },
