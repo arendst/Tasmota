@@ -67,7 +67,7 @@ class Matter_Plugin_Bridge_Sensor_Flow : Matter_Plugin_Bridge_Sensor
           return tlv_solo.set(TLV.NULL, nil)
         end
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.U2, 0)  # 500 m3/h
+        return tlv_solo.set(TLV.U2, 0)  # 0 m3/h
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.U2, 65534)  # 65534 m3/h
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
