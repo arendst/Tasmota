@@ -6,16 +6,17 @@ All notable changes to this project will be documented in this file.
 ## [13.2.0.2]
 ### Added
 - Scripter TCP client (#19914)
-- Berry ``debug.gcdebug()`` to enable GC debugging
+- Berry ``debug.gcdebug()`` to enable GC debugging (#19936)
 
 ### Breaking Changed
 
 ### Changed
 - Matter update hierarchy of plugins (#19915)
+- NeoPool ``NPHydrolysis`` percent and unit (#19924)
 
 ### Fixed
 - Scripter timer issue (#19914)
-- Fix Zero-Cross Dimmer for ESP32 with Core3
+- Zero-Cross Dimmer for ESP32 with Core3 (#19929)
 
 ### Removed
 
@@ -50,7 +51,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 keep FS intact when over flashing with VSC (#19816)
 - Increase MAX_HUE_DEVICES to 32 (#19820)
 - MI32 updates (#19893)
-- NeoPool ``NPHydrolysis`` percent and unit
 
 ### Fixed
 - NeoPool filtration mode display (#19801)
