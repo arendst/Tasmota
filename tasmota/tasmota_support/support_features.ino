@@ -19,6 +19,8 @@
 
 /*********************************************************************************************\
  * Feature list
+ * 
+ * Note: When extending/updating feature[] also extend/update a_features in decode-status.py
 \*********************************************************************************************/
 
 constexpr uint32_t feature[] = {
@@ -885,9 +887,15 @@ constexpr uint32_t feature[] = {
 #ifdef USE_HC8
   0x10000000 |  // xsns_113_hc8.ino
 #endif
-//  0x20000000 |  //
-//  0x40000000 |  //
-//  0x80000000 |  //
+#ifdef USE_HDMI_CEC
+  0x20000000 |  // xdrv_70_0_hdmi_cec.ino
+#endif
+#ifdef USE_BLE_ESP32
+  0x40000000 |  // xdrv_79_esp32_ble.ino
+#endif
+#ifdef USE_MATTER_DEVICE
+  0x80000000 |  // xdrv_52_9_berry.ino
+#endif
   0,
 //  0x00000001 |  // 
 //  0x00000002 |  // 
@@ -926,9 +934,9 @@ constexpr uint32_t feature[] = {
 /*********************************************************************************************/
 
 void ResponseAppendFeatures(void) {
-  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\""), LANGUAGE_LCID); 
+  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%04X\""), LANGUAGE_LCID);  // Locale ID
   for (uint32_t i = 0; i < (sizeof(feature) / sizeof(uint32_t)); i++) {
-    ResponseAppend_P(PSTR(",\"%08X\""), feature[i]); 
+    ResponseAppend_P(PSTR(",\"%08X\""), feature[i]);                            // Tasmota feature list
   }
   ResponseAppend_P(PSTR("]"));
 }

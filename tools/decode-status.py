@@ -300,7 +300,7 @@ a_features = [[
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
     "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
-    "USE_HC8","","",""
+    "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
     ],[
     "","","","",
     "","","","",
