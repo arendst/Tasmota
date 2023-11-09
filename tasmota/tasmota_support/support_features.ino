@@ -18,10 +18,10 @@
 */
 
 /*********************************************************************************************\
- * Fill feature list
+ * Feature list
 \*********************************************************************************************/
 
-constexpr uint32_t feature1 = 
+constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
   0x00000001 |  // xdrv_03_energy.ino
 #endif
@@ -118,9 +118,7 @@ constexpr uint32_t feature1 =
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_POWER_LIMIT)
   0x80000000 |  // xdrv_03_energy.ino
 #endif
-  0;
-
-constexpr uint32_t feature2 = 
+  0,
 #ifdef USE_CONFIG_OVERRIDE
   0x00000001 |  // user_config(_override).h
 #endif
@@ -217,9 +215,7 @@ constexpr uint32_t feature2 =
 #ifdef USE_DEBUG_DRIVER
   0x80000000 |  // xdrv_99_debug.ino
 #endif
-  0;
-
-constexpr uint32_t feature3 = 
+  0,
 #ifdef USE_COUNTER
   0x00000001 |  // xsns_01_counter.ino
 #endif
@@ -316,9 +312,7 @@ constexpr uint32_t feature3 =
 #ifdef USE_TM1638
   0x80000000 |  // xdrv_66_tm1638.ino
 #endif
-  0;
-
-constexpr uint32_t feature4 = 
+  0,
 #if defined(USE_I2C) && defined(USE_MCP230xx)
   0x00000001 |  // xsns_29_mcp230xx.ino
 #endif
@@ -415,9 +409,7 @@ constexpr uint32_t feature4 =
 #if defined(USE_I2C) && defined(USE_PAJ7620)
   0x80000000 |  // xsns_50_paj7620.ino
 #endif
-  0;
-
-constexpr uint32_t feature5 = 
+  0,
 #ifdef USE_BUZZER
   0x00000001 |  // xdrv_24_buzzer.ino
 #endif
@@ -514,10 +506,7 @@ constexpr uint32_t feature5 =
 #ifdef USE_PWM_DIMMER
   0x80000000 |  // xdrv_35_pwm_dimmer
 #endif
-  0;
-
-constexpr uint32_t feature6 = 
-  // Only fill this once
+  0,
 #ifdef USE_KEELOQ
   0x00000001 |  // xdrv_36_keeloq.ino
 #endif
@@ -614,9 +603,7 @@ constexpr uint32_t feature6 =
 #if defined(ESP32) && defined(USE_WEBCAM)
   0x80000000 |  // xdrv_81_webcam.ino
 #endif
-  0;
-
-constexpr uint32_t feature7 = 
+  0,
 #if defined(USE_I2C) && defined(USE_EZOORP)
   0x00000001 |  // xsns_78_ezoorp.ino
 #endif
@@ -713,9 +700,7 @@ constexpr uint32_t feature7 =
 #ifdef USE_PROJECTOR_CTRL
   0x80000000 |  // xdrv_53_projector_ctrl.ino
 #endif
-  0;
-
-constexpr uint32_t feature8 = 
+  0,
 #if defined(USE_I2C) && defined(USE_MPU_ACCEL)
   0x00000001 |  // xsns_85_mpu6886.ino
 #endif
@@ -812,9 +797,7 @@ constexpr uint32_t feature8 =
 #ifdef USE_DISPLAY_TM1621_SONOFF
   0x80000000 |  // xdrv_87_esp32_sonoff_tm1621.ino
 #endif
-  0;
-
-constexpr uint32_t feature9 = 
+  0,
 #if defined(USE_I2C) && defined(USE_SGP40)
   0x00000001 |  // xsns_98_sgp40.ino
 #endif
@@ -905,9 +888,7 @@ constexpr uint32_t feature9 =
 //  0x20000000 |  //
 //  0x40000000 |  //
 //  0x80000000 |  //
-  0;
-
-constexpr uint32_t feature10 = 
+  0,
 //  0x00000001 |  // 
 //  0x00000002 |  // 
 //  0x00000004 |  // 
@@ -940,11 +921,14 @@ constexpr uint32_t feature10 =
 //  0x20000000 |  //
 //  0x40000000 |  //
 //  0x80000000 |  //
-  0;
+  0 };
 
 /*********************************************************************************************/
 
 void ResponseAppendFeatures(void) {
-  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
-    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8, feature9, feature10);
+  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\""), LANGUAGE_LCID); 
+  for (uint32_t i = 0; i < (sizeof(feature) / sizeof(uint32_t)); i++) {
+    ResponseAppend_P(PSTR(",\"%08X\""), feature[i]); 
+  }
+  ResponseAppend_P(PSTR("]"));
 }
