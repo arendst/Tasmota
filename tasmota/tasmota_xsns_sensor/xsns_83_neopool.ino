@@ -586,13 +586,6 @@ bool neopool_system_gperh = false;        // emulation defaults off
 
 #define NEOPOOL_RELAY_MAX           7     // Number of relais build-in
 
-enum NeoPoolResult {
-  NEOPOOL_RESULT_DEC = false,
-  NEOPOOL_RESULT_HEX,
-  NEOPOOL_RESULT_MAX
-};
-uint8_t neopool_result = NEOPOOL_RESULT_HEX;
-
 bool neopool_active = false;
 volatile bool neopool_poll = true;
 
@@ -693,7 +686,6 @@ const uint16_t NeoPoolRegCheck[] PROGMEM = {
   MBF_PAR_UICFG_MACHINE
 };
 uint16_t *NeoPoolRegCheckData;
-uint16_t NeoPoolTelePeriod = 0;
 uint32_t NeoPoolRegCheckDataTimeout = 0;
 
 
@@ -714,17 +706,38 @@ enum NeoPoolModbusCode {
   NEOPOOL_MODBUS_ERROR_DEADLOCK
 };
 
+
+
+// NPResult possible values
+enum NeoPoolResult {
+  NEOPOOL_RESULT_DEC = false,
+  NEOPOOL_RESULT_HEX,
+  NEOPOOL_RESULT_MAX
+};
+
+// Sensor saved variables
+#define NEOPOOL_SETTING_VERSION       0x0100
+#define NEOPOOL_DEFAULT_PHRES         1
+#define NEOPOOL_DEFAULT_CLRES         1
+#define NEOPOOL_DEFAULT_IONRES        1
+#define NEOPOOL_DEFAULT_RESULT        NEOPOOL_RESULT_HEX
+#define NEOPOOL_DEFAULT_NPTELEPERIOD  0
+
 // NeoPool value resolutions
 typedef struct {
   uint16_t ph : 2;
   uint16_t cl : 2;
   uint16_t ion : 2;
 } NeoPoolResMBitfield;
-NeoPoolResMBitfield neopool_resolution {
-  .ph = 1,
-  .cl = 1,
-  .ion = 1
-};
+
+// Global structure containing sensor saved variables
+struct {
+  uint32_t  crc32;
+  uint16_t  version;
+  NeoPoolResMBitfield resolution;
+  uint8_t   result;
+  uint16_t  npteleperiod;
+} NeoPoolSettings;
 
 
 #define D_NEOPOOL_NAME "NeoPool"
@@ -1223,10 +1236,8 @@ void NeoPoolPoll(void)              // Poll modbus register
 /*********************************************************************************************/
 
 void NeoPoolInit(void) {
+  NeoPoolSettingsLoad(false);
   neopool_active = false;
-#ifdef DEBUG_TASMOTA_SENSOR
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit"));
-#endif  // DEBUG_TASMOTA_SENSOR
   if (PinUsed(GPIO_NEOPOOL_RX) && PinUsed(GPIO_NEOPOOL_TX)) {
     NeoPoolModbus = new TasmotaModbus(Pin(GPIO_NEOPOOL_RX), Pin(GPIO_NEOPOOL_TX));
     uint8_t result = NeoPoolModbus->Begin(NEOPOOL_MODBUS_SPEED);
@@ -1240,13 +1251,13 @@ void NeoPoolInit(void) {
     }
 #ifdef DEBUG_TASMOTA_SENSOR
     else {
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit Modbus init failed %d"), result);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolInit Modbus init failed %d"), result);
     }
 #endif  // DEBUG_TASMOTA_SENSOR
   }
 #ifdef DEBUG_TASMOTA_SENSOR
   else {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit no GPIOs assigned"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeoPoolInit no GPIOs assigned"));
   }
 #endif  // DEBUG_TASMOTA_SENSOR
 
@@ -1259,9 +1270,6 @@ bool NeoPoolInitData(void)
 
   neopool_error = true;
   neopool_power_module_version = 0;
-#ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInitData - NeoPoolReg size %ld"), sizeof(NeoPoolReg));
-#endif  // DEBUG_TASMOTA_SENSOR
   memset(neopool_power_module_nodeid, 0, sizeof(neopool_power_module_nodeid));
 
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
@@ -1288,9 +1296,6 @@ bool NeoPoolInitData(void)
       }
     }
   }
-#ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInitData returns %d"), result);
-#endif  // DEBUG_TASMOTA_SENSOR
 
   return result;
 }
@@ -1704,9 +1709,6 @@ void NeoPoolShow(bool json)
   *stemp = 0;
 
   if (json) {
-#ifdef DEBUG_TASMOTA_SENSOR
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolShow json"));
-#endif  // DEBUG_TASMOTA_SENSOR
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_NAME  "\":{"));
 
     // Time
@@ -1766,13 +1768,13 @@ void NeoPoolShow(bool json)
     // pH
     if (NeoPoolIspHModule()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), neopool_resolution.ph, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fvalue);
 
       // S1
       float fphmin = (float)NeoPoolGetData(MBF_PAR_PH2)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), neopool_resolution.ph, &fphmin);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmin);
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), neopool_resolution.ph, &fphmax);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
 
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_STATE  "\":%d"), (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM));
@@ -1808,9 +1810,9 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsChlorine()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CHLORINE  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_CL1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -1823,11 +1825,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsIonization()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_IONIZATION  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION_NOM);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -2027,11 +2029,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIspHModule()) {
       // Data
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, neopool_resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
       WSContentSend_PD(PSTR("&nbsp;"));
       // S1
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), neopool_resolution.ph, &fphmax);
+      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color,
         (((uint16_t)(fvalue*10) > (uint16_t)(fphmax*10)) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE), stemp);
       WSContentSend_PD(PSTR(" "));
@@ -2081,7 +2083,7 @@ void NeoPoolShow(bool json)
     // Chlorine
     if (NeoPoolIsChlorine()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, neopool_resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
     }
 
     // Conductivity
@@ -2100,7 +2102,7 @@ void NeoPoolShow(bool json)
         );
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type,
-        neopool_resolution.ion, &fvalue,
+        NeoPoolSettings.resolution.ion, &fvalue,
         stemp,
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_LOW ? PSTR(" " D_NEOPOOL_LOW) : PSTR("")
       );
@@ -2183,11 +2185,11 @@ void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool 
   uint32_t ldata;
 
   Response_P(PSTR("{\"%s\":{\""  D_JSON_ADDRESS  "\":"), XdrvMailbox.command);
-  ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%04X\"") : PSTR("%d"), addr);
+  ResponseAppend_P(NEOPOOL_RESULT_HEX == NeoPoolSettings.result ? PSTR("\"0x%04X\"") : PSTR("%d"), addr);
   ResponseAppend_P(PSTR(",\""  D_JSON_DATA  "\":"));
 
   data_fmt = PSTR("%ld");
-  if (NEOPOOL_RESULT_HEX == neopool_result) {
+  if (NEOPOOL_RESULT_HEX == NeoPoolSettings.result) {
     data_fmt = fbits32 ? PSTR("\"0x%08X\"") : PSTR("\"0x%04X\"");
   }
   ldata = (uint32_t)data[0];
@@ -2232,9 +2234,9 @@ void NeopoolResponseError(void)
 void CmndNeopoolResult(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < NEOPOOL_RESULT_MAX) {
-    neopool_result = XdrvMailbox.payload;
+    NeoPoolSettings.result = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(neopool_result);
+  ResponseCmndNumber(NeoPoolSettings.result);
 }
 
 
@@ -2672,7 +2674,7 @@ void CmndNeopoolpHMin(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH2, 100, 0, (float)data/100)) {
-      CmndNeopoolGetParam(MBF_PAR_PH2, 100, neopool_resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH2, 100, NeoPoolSettings.resolution.ph);
     }
   } else {
     NeopoolCmndError();
@@ -2690,7 +2692,7 @@ void CmndNeopoolpHMax(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH1, 100, (float)data/100, 14)) {
-      CmndNeopoolGetParam(MBF_PAR_PH1, 100, neopool_resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH1, 100, NeoPoolSettings.resolution.ph);
     }
   } else {
     NeopoolCmndError();
@@ -2796,7 +2798,7 @@ void CmndNeopoolIonization(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_ION, 1, 0, (float)data)) {
-      CmndNeopoolGetParam(MBF_PAR_ION, 1, neopool_resolution.ion);
+      CmndNeopoolGetParam(MBF_PAR_ION, 1, NeoPoolSettings.resolution.ion);
     }
   } else {
     NeopoolCmndError();
@@ -2808,7 +2810,7 @@ void CmndNeopoolChlorine(void)
 {
   if (NeoPoolIsChlorine()) {
     if (CmndNeopoolSetParam(MBF_PAR_CL1, 100, 0, 10)) {
-      CmndNeopoolGetParam(MBF_PAR_CL1, 100, neopool_resolution.cl);
+      CmndNeopoolGetParam(MBF_PAR_CL1, 100, NeoPoolSettings.resolution.cl);
     }
   } else {
     NeopoolCmndError();
@@ -2837,9 +2839,9 @@ void CmndNeopoolControl(void)
 void CmndNeopoolTelePeriod(void)
 {
   if (XdrvMailbox.data_len && ((XdrvMailbox.payload == 0 || (XdrvMailbox.payload >= 5 && XdrvMailbox.payload <= 3600)))) {
-    NeoPoolTelePeriod = XdrvMailbox.payload;
+    NeoPoolSettings.npteleperiod = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolTelePeriod);
+  ResponseCmndNumber(NeoPoolSettings.npteleperiod);
 }
 
 
@@ -2885,27 +2887,27 @@ void CmndNeopoolOnError(void)
 void CmndNeopoolPHRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    neopool_resolution.ph = XdrvMailbox.payload;
+    NeoPoolSettings.resolution.ph = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(neopool_resolution.ph);
+  ResponseCmndNumber(NeoPoolSettings.resolution.ph);
 }
 
 
 void CmndNeopoolCLRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    neopool_resolution.cl = XdrvMailbox.payload;
+    NeoPoolSettings.resolution.cl = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(neopool_resolution.cl);
+  ResponseCmndNumber(NeoPoolSettings.resolution.cl);
 }
 
 
 void CmndNeopoolIONRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    neopool_resolution.ion = XdrvMailbox.payload;
+    NeoPoolSettings.resolution.ion = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(neopool_resolution.ion);
+  ResponseCmndNumber(NeoPoolSettings.resolution.ion);
 }
 
 
@@ -2935,16 +2937,13 @@ void NeopoolMqttShow(void) {
 void NeopoolCheckChanges(void) {
   bool data_changed = false;
 
-  if ( 0 == NeoPoolTelePeriod ) {
+  if ( 0 == NeoPoolSettings.npteleperiod ) {
     return;
   }
 
   if (nullptr == NeoPoolRegCheckData) {
     // alloc mem for compare data
     NeoPoolRegCheckData = (uint16_t *)malloc(sizeof(*NeoPoolReg) * nitems(NeoPoolRegCheck));
-#ifdef DEBUG_TASMOTA_SENSOR
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeopoolCheckChanges - malloc %d * %d = %p"), sizeof(*NeoPoolReg), nitems(NeoPoolRegCheck), NeoPoolRegCheckData);
-#endif  // DEBUG_TASMOTA_SENSOR
     if (nullptr != NeoPoolRegCheckData) {
       memset(NeoPoolRegCheckData, 0, sizeof(*NeoPoolReg) * nitems(NeoPoolRegCheck));
     }
@@ -2976,11 +2975,68 @@ void NeopoolCheckChanges(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeopoolCheckChanges() %s"), data_changed ? PSTR("true") : PSTR("false"));
 #endif  // DEBUG_TASMOTA_SENSOR
   if (data_changed) {
-    NeoPoolRegCheckDataTimeout = millis() + (NeoPoolTelePeriod * 1000);
+    NeoPoolRegCheckDataTimeout = millis() + (NeoPoolSettings.npteleperiod * 1000);
     NeopoolMqttShow();
   }
 }
 
+
+void NeoPoolSettingsLoad(bool erase) {
+  char filename[20];
+
+  memset(&NeoPoolSettings, 0x00, sizeof(NeoPoolSettings));
+  NeoPoolSettings.crc32 = GetCfgCrc32((uint8_t*)&NeoPoolSettings +4, sizeof(NeoPoolSettings) -4);
+  NeoPoolSettings.version = NEOPOOL_SETTING_VERSION;
+  NeoPoolSettings.resolution.ph = NEOPOOL_DEFAULT_PHRES;
+  NeoPoolSettings.resolution.cl = NEOPOOL_DEFAULT_CLRES;
+  NeoPoolSettings.resolution.ion = NEOPOOL_DEFAULT_IONRES;
+  NeoPoolSettings.result = NEOPOOL_DEFAULT_RESULT;
+  NeoPoolSettings.npteleperiod = NEOPOOL_DEFAULT_NPTELEPERIOD;
+
+#ifdef USE_UFILESYS
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_83);
+  if (erase) {
+    TfsDeleteFile(filename);  // Use defaults
+  }
+  else if (TfsLoadFile(filename, (uint8_t*)&NeoPoolSettings, sizeof(NeoPoolSettings))) {
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Settings loaded from file '%s'"), filename);
+#endif  // DEBUG_TASMOTA_SENSOR
+  }
+  else {
+#ifdef DEBUG_TASMOTA_SENSOR
+    // File system not ready: No flash space reserved for file system
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Use default settings as file system not ready or file '%s' not found"), filename);
+#endif  // DEBUG_TASMOTA_SENSOR
+    NeoPoolSettingsSave();
+  }
+#else   // USE_UFILESYS
+  AddLog(LOG_LEVEL_INFO, PSTR("NEO: No file system found, NeoPool uses default values and must be set manually"));
+#endif  // USE_UFILESYS
+}
+
+
+void NeoPoolSettingsSave(void) {
+#ifdef USE_UFILESYS
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&NeoPoolSettings +4, sizeof(NeoPoolSettings) -4);  // Skip crc32
+  if (crc32 != NeoPoolSettings.crc32) {
+    NeoPoolSettings.crc32 = crc32;
+    char filename[20];
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_83);
+    if (TfsSaveFile(filename, (const uint8_t*)&NeoPoolSettings, sizeof(NeoPoolSettings))) {
+#ifdef DEBUG_TASMOTA_SENSOR
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: saved to file '%s'"), filename);
+#endif  // DEBUG_TASMOTA_SENSOR
+    }
+#ifdef DEBUG_TASMOTA_SENSOR
+    else {
+      // File system not ready: No flash space reserved for file system
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ERROR file system not ready or unable to save file '%s'"), filename);
+    }
+#endif  // DEBUG_TASMOTA_SENSOR
+  }
+#endif  // USE_UFILESYS
+}
 
 /*********************************************************************************************\
  * Interface
@@ -2994,6 +3050,12 @@ bool Xsns83(uint32_t function)
     NeoPoolInit();
   } else if (neopool_active) {
     switch (function) {
+      case FUNC_PRE_INIT:
+        NeoPoolSettingsLoad(false);
+        break;
+      case FUNC_SAVE_SETTINGS:
+        NeoPoolSettingsSave();
+        break;
       case FUNC_EVERY_250_MSECOND:
         NeoPoolPoll();
         break;
@@ -3008,7 +3070,7 @@ bool Xsns83(uint32_t function)
         break;
       case FUNC_AFTER_TELEPERIOD:
         // remember time of last regular SENSOR publish
-        NeoPoolRegCheckDataTimeout = millis() + (NeoPoolTelePeriod * 1000);
+        NeoPoolRegCheckDataTimeout = millis() + (NeoPoolSettings.npteleperiod * 1000);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
