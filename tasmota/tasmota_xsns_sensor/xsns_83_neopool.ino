@@ -64,7 +64,7 @@
 #define NEOPOOL_READ_REGISTER        0x04   // Function code used to read register
 #define NEOPOOL_WRITE_REGISTER       0x10   // Function code used to write register
 #define NEOPOOL_READ_TIMEOUT           25   // read data timeout in ms
-#define NEOPOOL_DATA_TIMEOUT        30000   // directly read data register data discard timout in ms
+#define NEOPOOL_CACHE_INVALID_TIME     30   // data cache invalidation time in s
 
 
 // Pool LED RGB lights with different programs, the individual programs can be selected
@@ -614,21 +614,88 @@ void (* neopoll_cmd)(void) = nullptr;
 
 // Modbus register set to read
 // Defines blocks of register read once with a single read
-struct {
+typedef struct {
   const uint16_t addr;
   const uint16_t cnt;
   uint16_t *data;
-} NeoPoolReg[] = {
-  // complete poll cycle needs 1750 ms to read complete register set
-  {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
-  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
-  {MBF_PAR_VERSION,       MBF_PAR_HIDRO_NOM                 - MBF_PAR_VERSION       + 1, nullptr},
-  {MBF_PAR_TIME_LOW,      MBF_PAR_HEATING_GPIO              - MBF_PAR_TIME_LOW      + 1, nullptr},
-  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},
-  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},
-  {MBF_VOLT_24_36,        MBF_VOLT_12                       - MBF_VOLT_24_36        + 1, nullptr},
-  {MBF_VOLT_5,            MBF_AMP_4_20_MICRO                - MBF_VOLT_5            + 1, nullptr}
+} TNeoPoolReg;
+
+// complete poll cycle needs 2000 ms to read complete register set
+#define NEOPOOL_REG_QUERY {\
+  {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},\
+  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},\
+  {MBF_PAR_VERSION,       MBF_PAR_HIDRO_NOM                 - MBF_PAR_VERSION       + 1, nullptr},\
+  {MBF_PAR_TIME_LOW,      MBF_PAR_HEATING_GPIO              - MBF_PAR_TIME_LOW      + 1, nullptr},\
+  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},\
+  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},\
+  {MBF_VOLT_24_36,        MBF_VOLT_12                       - MBF_VOLT_24_36        + 1, nullptr},\
+  {MBF_VOLT_5,            MBF_AMP_4_20_MICRO                - MBF_VOLT_5            + 1, nullptr}\
+}
+TNeoPoolReg NeoPoolReg[] = NEOPOOL_REG_QUERY;
+
+// Register to check for NPTelePeriod changes
+const uint16_t NeoPoolRegCheck[] PROGMEM = {
+  // excl. values that change almost continuously
+  // MBF_PAR_TIME_LOW,
+  // MBF_PAR_TIME_HIGH,
+  // MBF_VOLT_12,
+  // MBF_VOLT_24_36,
+  // MBF_VOLT_5,
+  // MBF_AMP_4_20_MICRO,
+  // MBF_CELL_RUNTIME_LOW,
+  // MBF_CELL_RUNTIME_HIGH,
+  // MBF_CELL_RUNTIME_PART_LOW,
+  // MBF_CELL_RUNTIME_PART_HIGH,
+  // MBF_CELL_RUNTIME_POLA_LOW,
+  // MBF_CELL_RUNTIME_POLA_HIGH,
+  // MBF_CELL_RUNTIME_POLB_LOW,
+  // MBF_CELL_RUNTIME_POLB_HIGH,
+  // MBF_CELL_RUNTIME_POL_CHANGES_LOW,
+  // MBF_CELL_RUNTIME_POL_CHANGES_HIGH,
+
+  // measured values delayed (set bit 15 to indicate often value changes)
+  MBF_ION_CURRENT          | 0x8000,
+  MBF_MEASURE_CL           | 0x8000,
+  MBF_MEASURE_CONDUCTIVITY | 0x8000,
+  MBF_MEASURE_PH           | 0x8000,
+  MBF_MEASURE_RX           | 0x8000,
+  MBF_MEASURE_TEMPERATURE  | 0x8000,
+  MBF_HIDRO_CURRENT        | 0x8000,
+
+  // undelayed measured values
+  MBF_HIDRO_STATUS,
+  MBF_PH_STATUS,
+  MBF_RELAY_STATE,
+
+  // undelayed setting values
+  MBF_CELL_BOOST,
+  MBF_PAR_CL1,
+  MBF_PAR_FILT_MODE,
+  MBF_PAR_HIDRO,
+  MBF_PAR_HIDRO_NOM,
+  MBF_PAR_ION,
+  MBF_PAR_PH1,
+  MBF_PAR_PH2,
+  MBF_PAR_RX1,
+
+  MBF_PAR_CD_RELAY_GPIO,
+  MBF_PAR_CL_RELAY_GPIO,
+  MBF_PAR_FILT_GPIO,
+  MBF_PAR_FILTVALVE_GPIO,
+  MBF_PAR_HEATING_GPIO,
+  MBF_PAR_LIGHTING_GPIO,
+  MBF_PAR_PH_ACID_RELAY_GPIO,
+  MBF_PAR_PH_BASE_RELAY_GPIO,
+  MBF_PAR_RX_RELAY_GPIO,
+  MBF_PAR_UV_RELAY_GPIO,
+  MBF_PAR_ION_NOM,
+  MBF_PAR_TEMPERATURE_ACTIVE,
+  MBF_PAR_UICFG_MACHINE
 };
+uint16_t *NeoPoolRegCheckData;
+uint16_t NeoPoolTelePeriod = 0;
+uint32_t NeoPoolRegCheckDataTimeout = 0;
+
 
 typedef struct {
   uint16_t addr;
@@ -866,9 +933,9 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            (only available if hydrolysis/electrolysis control is present)
  *            get/set hydrolysis/electrolysis level
  *            get current level if <level> is omitted, otherwise set:
- *            0..100 in % for systems configured to %
- *            0..<max> in g/h for systems configured for g/h (<max> depends by MBF_PAR_HIDRO_NOM register value)
- *            <level> can specified in % on all systems by appending the % sign to the value
+ *            0..100 in % for NeoPool systems configured to %
+ *            0..<max> in g/h for NeoPool systems configured for g/h (<max> depends by M_PAR_HIDRO_NOM register value)
+ *            <level> can specified in % on all NeoPool systems by appending the % sign to the value
  *
  * NPIonization {<level>}
  *            (only available if ionization control is present)
@@ -882,6 +949,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPControl
  *            Show information about system controls
+ *
+ * NPTelePeriod {time}
+ *            enables/disables auto telemetry SENSOR message when NeoPool values change (time = 0 or 5..3600):
+ *            0 disable this function off (default), SENSOR message are only reported depending on TelePeriod setting
+ *            5..3600 set the minimum of seconds between two SENSOR messages for NeoPool measured (sensor) values (Status changes for relays and settings trigger the SENSOR messages immediately, regardless of this time)
+ *            If <time> is set higher than TelePeriod, only status changes for relays and settings will trigger SENSOR message.
  *
  * NPSave
  *            write data permanently into EEPROM
@@ -994,6 +1067,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_IONIZATION "Ionization"
 #define D_CMND_NP_CHLORINE "Chlorine"
 #define D_CMND_NP_CONTROL "Control"
+#define D_CMND_NP_TELEPERIOD "TelePeriod"
 #define D_CMND_NP_SAVE "Save"
 #define D_CMND_NP_EXEC "Exec"
 #define D_CMND_NP_ESCAPE "Escape"
@@ -1026,6 +1100,7 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_IONIZATION "|"
   D_CMND_NP_CHLORINE "|"
   D_CMND_NP_CONTROL "|"
+  D_CMND_NP_TELEPERIOD "|"
   D_CMND_NP_SAVE "|"
   D_CMND_NP_EXEC "|"
   D_CMND_NP_ESCAPE "|"
@@ -1059,6 +1134,7 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolIonization,
   &CmndNeopoolChlorine,
   &CmndNeopoolControl,
+  &CmndNeopoolTelePeriod,
   &CmndNeopoolSave,
   &CmndNeopoolExec,
   &CmndNeopoolEscape,
@@ -1148,6 +1224,9 @@ void NeoPoolPoll(void)              // Poll modbus register
 
 void NeoPoolInit(void) {
   neopool_active = false;
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit"));
+#endif  // DEBUG_TASMOTA_SENSOR
   if (PinUsed(GPIO_NEOPOOL_RX) && PinUsed(GPIO_NEOPOOL_TX)) {
     NeoPoolModbus = new TasmotaModbus(Pin(GPIO_NEOPOOL_RX), Pin(GPIO_NEOPOOL_TX));
     uint8_t result = NeoPoolModbus->Begin(NEOPOOL_MODBUS_SPEED);
@@ -1159,34 +1238,60 @@ void NeoPoolInit(void) {
         neopool_active = true;
       }
     }
+#ifdef DEBUG_TASMOTA_SENSOR
+    else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit Modbus init failed %d"), result);
+    }
+#endif  // DEBUG_TASMOTA_SENSOR
   }
+#ifdef DEBUG_TASMOTA_SENSOR
+  else {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInit no GPIOs assigned"));
+  }
+#endif  // DEBUG_TASMOTA_SENSOR
+
 }
 
 
 bool NeoPoolInitData(void)
 {
-  bool result = false;
+  bool result = true;
 
   neopool_error = true;
   neopool_power_module_version = 0;
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInitData - NeoPoolReg size %ld"), sizeof(NeoPoolReg));
+#endif  // DEBUG_TASMOTA_SENSOR
   memset(neopool_power_module_nodeid, 0, sizeof(neopool_power_module_nodeid));
+
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
     if (nullptr == NeoPoolReg[i].data) {
       NeoPoolReg[i].data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].cnt);
       if (nullptr != NeoPoolReg[i].data) {
         memset(NeoPoolReg[i].data, 0, sizeof(uint16_t)*NeoPoolReg[i].cnt);
-#ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: Init - addr 0x%04x cnt %d data %p"), NeoPoolReg[i].addr, NeoPoolReg[i].cnt, NeoPoolReg[i].data);
-#endif  // DEBUG_TASMOTA_SENSOR
-        result = true;
-      }
-#ifdef DEBUG_TASMOTA_SENSOR
+       }
       else {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Init - out of memory"));
-      }
+#ifdef DEBUG_TASMOTA_SENSOR
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInitData - NeoPoolReg[%d].data out of memory"), i);
 #endif  // DEBUG_TASMOTA_SENSOR
+        result = false;
+      }
     }
   }
+
+  if (!result) {
+    // release partially reserved memory on init error
+    for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
+      if (nullptr != NeoPoolReg[i].data) {
+        free(NeoPoolReg[i].data);
+        NeoPoolReg[i].data = nullptr;
+      }
+    }
+  }
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolInitData returns %d"), result);
+#endif  // DEBUG_TASMOTA_SENSOR
+
   return result;
 }
 
@@ -1204,7 +1309,7 @@ void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
     snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i ? PSTR(",") : PSTR(""), data[i]);
     strncat(log_data, h, cnt*7+1);
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
   free(log_data);
 }
 #endif  // DEBUG_TASMOTA_SENSOR
@@ -1244,7 +1349,7 @@ uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
       uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, cnt);
       if (error) {
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data error %d"), addr, error);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X read data error %d"), addr, error);
 #endif  // DEBUG_TASMOTA_SENSOR
         NeoPool250msSetStatus(true);
         free(buffer);
@@ -1262,12 +1367,12 @@ uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
       return NEOPOOL_MODBUS_OK;
     }
 #ifdef DEBUG_TASMOTA_SENSOR
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read out of memory"), addr);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X read out of memory"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
     return NEOPOOL_MODBUS_ERROR_OUT_OF_MEM;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read data timeout"), addr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X read data timeout"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPool250msSetStatus(true);
   return NEOPOOL_MODBUS_ERROR_TIMEOUT;
@@ -1289,7 +1394,7 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
   frame = (uint8_t*)malloc(numbytes+2);
   if (nullptr == frame) {
 #ifdef DEBUG_TASMOTA_SENSOR
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write out of memory"), addr);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X write out of memory"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
     return NEOPOOL_MODBUS_ERROR_OUT_OF_MEM;
   }
@@ -1327,7 +1432,7 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
     uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, 1);
     if (0 != error && 9 != error) { // ReceiveBuffer can't handle 0x10 code result
 #ifdef DEBUG_TASMOTA_SENSOR
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response error %d"), addr, error);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X write data response error %d"), addr, error);
 #endif  // DEBUG_TASMOTA_SENSOR
       NeoPool250msSetStatus(true);
       return NEOPOOL_MODBUS_ERROR_RW_DATA;
@@ -1349,7 +1454,7 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
     return NEOPOOL_MODBUS_OK;
   }
 #ifdef DEBUG_TASMOTA_SENSOR
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X write data response timeout"), addr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X write data response timeout"), addr);
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPool250msSetStatus(true);
   return NEOPOOL_MODBUS_ERROR_TIMEOUT;
@@ -1400,12 +1505,13 @@ uint8_t NeoPoolWriteRegisterWord(uint16_t addr, uint16_t data)
 }
 
 
-uint16_t NeoPoolGetDataTO(uint16_t addr, int32_t timeout)
+uint16_t NeoPoolGetCacheData(uint16_t addr, int32_t timeout)
 {
   uint16_t data;
   bool datavalid = false;
   uint16_t i;
 
+  // search in regular data storage
   for (i = 0; !datavalid && i < nitems(NeoPoolReg); i++) {
     if (nullptr != NeoPoolReg[i].data && addr >= NeoPoolReg[i].addr && addr < NeoPoolReg[i].addr+NeoPoolReg[i].cnt) {
       data = NeoPoolReg[i].data[addr - NeoPoolReg[i].addr];
@@ -1414,10 +1520,10 @@ uint16_t NeoPoolGetDataTO(uint16_t addr, int32_t timeout)
   }
 
   if (!datavalid) {
+    // not found in regular data storage, search within cache
     if (timeout < 0) {
-      timeout = NEOPOOL_DATA_TIMEOUT;
+      timeout = NEOPOOL_CACHE_INVALID_TIME * 1000;
     }
-    // search in temportary data array
     for (i = 0; !datavalid && i < NeoPoolDataCount; i++) {
       if (nullptr != NeoPoolData && addr == NeoPoolData[i].addr) {
         if (millis() < NeoPoolData[i].ts) {
@@ -1432,6 +1538,7 @@ uint16_t NeoPoolGetDataTO(uint16_t addr, int32_t timeout)
     }
 
     if (!datavalid) {
+      // no cache hit, read origin from modbus register and store result within cache
       NeoPoolReadRegisterRaw(addr, &data, 1);
       datavalid = true;
       if (nullptr == NeoPoolData) {
@@ -1460,7 +1567,7 @@ uint16_t NeoPoolGetDataTO(uint16_t addr, int32_t timeout)
 
 uint16_t NeoPoolGetData(uint16_t addr)
 {
-  return NeoPoolGetDataTO(addr, -1);
+  return NeoPoolGetCacheData(addr, -1);
 }
 
 
@@ -1597,6 +1704,9 @@ void NeoPoolShow(bool json)
   *stemp = 0;
 
   if (json) {
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolShow json"));
+#endif  // DEBUG_TASMOTA_SENSOR
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_NAME  "\":{"));
 
     // Time
@@ -2724,6 +2834,15 @@ void CmndNeopoolControl(void)
 }
 
 
+void CmndNeopoolTelePeriod(void)
+{
+  if (XdrvMailbox.data_len && ((XdrvMailbox.payload == 0 || (XdrvMailbox.payload >= 5 && XdrvMailbox.payload <= 3600)))) {
+    NeoPoolTelePeriod = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(NeoPoolTelePeriod);
+}
+
+
 void CmndNeopoolSave(void)
 {
   if (NEOPOOL_MODBUS_OK == NeoPoolWriteRegisterWord(MBF_SAVE_TO_EEPROM, 1)) {
@@ -2801,6 +2920,68 @@ void CmndNeopoolgPerh(void)
 #endif
 
 
+void NeopoolMqttShow(void) {
+  int tele_period_save = TasmotaGlobal.tele_period;
+  TasmotaGlobal.tele_period = 2;
+  ResponseClear();
+  ResponseAppendTime();
+  NeoPoolShow(true);
+  TasmotaGlobal.tele_period = tele_period_save;
+  ResponseJsonEnd();
+  MqttPublishTeleSensor();
+}
+
+
+void NeopoolCheckChanges(void) {
+  bool data_changed = false;
+
+  if ( 0 == NeoPoolTelePeriod ) {
+    return;
+  }
+
+  if (nullptr == NeoPoolRegCheckData) {
+    // alloc mem for compare data
+    NeoPoolRegCheckData = (uint16_t *)malloc(sizeof(*NeoPoolReg) * nitems(NeoPoolRegCheck));
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeopoolCheckChanges - malloc %d * %d = %p"), sizeof(*NeoPoolReg), nitems(NeoPoolRegCheck), NeoPoolRegCheckData);
+#endif  // DEBUG_TASMOTA_SENSOR
+    if (nullptr != NeoPoolRegCheckData) {
+      memset(NeoPoolRegCheckData, 0, sizeof(*NeoPoolReg) * nitems(NeoPoolRegCheck));
+    }
+#ifdef DEBUG_TASMOTA_SENSOR
+    else {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeopoolCheckChanges - out of memory"));
+    }
+#endif  // DEBUG_TASMOTA_SENSOR
+  }
+
+  for (uint32_t i = 0; nullptr != NeoPoolRegCheckData && i < nitems(NeoPoolRegCheck); i++) {
+    uint16_t data = NeoPoolGetData(pgm_read_word(NeoPoolRegCheck + i) & 0x0FFF);
+    if (NeoPoolRegCheckData[i] != data) {
+#ifdef DEBUG_TASMOTA_SENSOR
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeopoolCheckChanges() addr 0x%04X: data stored %d (0x%04X), data read %d (0x%04X)"), 
+        pgm_read_word(NeoPoolRegCheck + i) & 0x0FFF,
+        NeoPoolRegCheckData[i], NeoPoolRegCheckData[i],
+        data, data);
+#endif  // DEBUG_TASMOTA_SENSOR
+      if (0 == (pgm_read_word(NeoPoolRegCheck + i) & 0xF000) || millis() > NeoPoolRegCheckDataTimeout) {
+        // changes only for undelayed measured value or time overrun
+        NeoPoolRegCheckData[i] = data;
+        data_changed = true;
+      }
+    }
+  }
+
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeopoolCheckChanges() %s"), data_changed ? PSTR("true") : PSTR("false"));
+#endif  // DEBUG_TASMOTA_SENSOR
+  if (data_changed) {
+    NeoPoolRegCheckDataTimeout = millis() + (NeoPoolTelePeriod * 1000);
+    NeopoolMqttShow();
+  }
+}
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -2816,15 +2997,22 @@ bool Xsns83(uint32_t function)
       case FUNC_EVERY_250_MSECOND:
         NeoPoolPoll();
         break;
+      case FUNC_EVERY_SECOND:
+        NeopoolCheckChanges();
+        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kNPCommands, NPCommand);
         break;
       case FUNC_JSON_APPEND:
-        NeoPoolShow(1);
+        NeoPoolShow(true);
+        break;
+      case FUNC_AFTER_TELEPERIOD:
+        // remember time of last regular SENSOR publish
+        NeoPoolRegCheckDataTimeout = millis() + (NeoPoolTelePeriod * 1000);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        NeoPoolShow(0);
+        NeoPoolShow(false);
         break;
 #endif  // USE_WEBSERVER
     }
