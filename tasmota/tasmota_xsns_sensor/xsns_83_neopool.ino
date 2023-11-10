@@ -361,7 +361,7 @@ enum NeoPoolConstAndBitMask {
   MBMSK_NOTIF_MISC_CHANGED                = 0x0020, //  5 Misc page changed
 
   // MBF_CELL_BOOST
-  MBMSK_CELL_BOOST_REDOX_CTL              = 0x8000, // undocumented - Disable redox ctrl
+  MBMSK_CELL_BOOST_NO_REDOX_CTL           = 0x8000, // undocumented - Disable redox ctrl
   MBMSK_CELL_BOOST_STATE                  = 0x0500, // undocumented - Boost
   MBMSK_CELL_BOOST_START                  = 0x00A0, // undocumented - Start boost
 
@@ -783,6 +783,8 @@ struct {
 #define D_NEOPOOL_JSON_UNIT                   "Unit"
 #define D_NEOPOOL_JSON_COVER                  "Cover"
 #define D_NEOPOOL_JSON_SHOCK                  "Boost"
+#define D_NEOPOOL_JSON_OFF                    "OFF"
+#define D_NEOPOOL_JSON_ON                     "ON"
 #define D_NEOPOOL_JSON_LOW                    "Low"
 #define D_NEOPOOL_JSON_SETPOINT               "Setpoint"
 #define D_NEOPOOL_JSON_MIN                    "Min"
@@ -838,6 +840,17 @@ const char kNeoPoolFiltrationSpeed[] PROGMEM =
   D_NEOPOOL_FILTRATION_MEDIUM "|"
   D_NEOPOOL_FILTRATION_FAST
   ;
+
+const char kNeoPoolBoostCmnd[] PROGMEM =
+  D_NEOPOOL_JSON_OFF "|"
+  D_NEOPOOL_JSON_ON "|"
+  D_NEOPOOL_JSON_REDOX
+  ;
+
+const uint16_t sNeoPoolBoost[] PROGMEM = {
+  0x0000,
+  MBMSK_CELL_BOOST_STATE | MBMSK_CELL_BOOST_START | MBMSK_CELL_BOOST_NO_REDOX_CTL,
+  MBMSK_CELL_BOOST_STATE | MBMSK_CELL_BOOST_START };
 
 const char kNeoPoolpHAlarms[] PROGMEM =
   D_NEOPOOL_SETPOINT_OK "|"
@@ -903,6 +916,13 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *              1 - low
  *              2 - mid
  *              3 - high
+ *
+ * NPBoost {<mode>}
+ *            get/set hydrolysis/electrolysis boost mode (mode = 0..2)
+ *            get mode if <mode> is omitted, otherwise set new mode according:
+ *              0|OFF   - boost off
+ *              1|ON    - boost on
+ *              2|REDOX - boost on with redox control
  *
  * NPTime {<time>}
  *            get/set system time
@@ -1070,6 +1090,7 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_FILTRATION "Filtration"
 #define D_CMND_NP_FILTRATIONMODE "Filtrationmode"
 #define D_CMND_NP_FILTRATIONSPEED "Filtrationspeed"
+#define D_CMND_NP_BOOST "Boost"
 #define D_CMND_NP_TIME "Time"
 #define D_CMND_NP_LIGHT "Light"
 #define D_CMND_NP_PHMIN "pHMin"
@@ -1103,6 +1124,7 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_FILTRATION "|"
   D_CMND_NP_FILTRATIONMODE "|"
   D_CMND_NP_FILTRATIONSPEED "|"
+  D_CMND_NP_BOOST "|"
   D_CMND_NP_TIME "|"
   D_CMND_NP_LIGHT "|"
   D_CMND_NP_PHMIN "|"
@@ -1137,6 +1159,7 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolFiltration,
   &CmndNeopoolFiltrationMode,
   &CmndNeopoolFiltrationSpeed,
+  &CmndNeopoolBoost,
   &CmndNeopoolTime,
   &CmndNeopoolLight,
   &CmndNeopoolpHMin,
@@ -1878,7 +1901,7 @@ void NeoPoolShow(bool json)
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_COVER  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER) ? 1 : 0 );
       // S3
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) ? 1 : 2) : 0 );
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_NO_REDOX_CTL) ? 1 : 2) : 0 );
       // S4
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_LOW  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) ? 1 : 0 );
 
@@ -2006,7 +2029,7 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(PSTR(" "));
       // S4
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) {
-        if ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) == 0) {
+        if ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_NO_REDOX_CTL) == 0) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK "+" D_NEOPOOL_REDOX));
         } else {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK));
@@ -2481,6 +2504,44 @@ void CmndNeopoolFiltrationSpeed(void)
     }
   }
   ResponseCmndNumber(speed);
+}
+
+
+void CmndNeopoolBoost(void)
+{
+  uint16_t data;
+
+  if (XdrvMailbox.data_len) {
+    char command[CMDSZ];
+    int mode = GetCommandCode(command, sizeof(command), XdrvMailbox.data, kNeoPoolBoostCmnd);
+    if (mode < 0) {
+      mode = XdrvMailbox.payload;
+    }
+    if (mode >= 0 && mode < nitems(sNeoPoolBoost)) {
+      uint16_t boostflags = pgm_read_word(sNeoPoolBoost + mode);
+      if (CmndNeopoolSetParam(MBF_CELL_BOOST, boostflags, 1, 0, (float)0xFFFF)) {
+        if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_NOTIFICATION, 0x7F)) {
+          NeopoolResponseError();
+          return;
+        }
+      }
+    } else {
+      NeopoolCmndError();
+      return;
+    }
+  }
+  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_CELL_BOOST, &data, 1)) {
+    NeopoolResponseError();
+    return;
+  }
+  for(uint16_t i=0; i < nitems(kNeoPoolBoostCmnd); i++) {
+    if (data == pgm_read_word(sNeoPoolBoost + i)) {
+      char stemp[80];
+      ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), i, kNeoPoolBoostCmnd));
+      return;
+    }
+  }
+  NeopoolCmndError();
 }
 
 
