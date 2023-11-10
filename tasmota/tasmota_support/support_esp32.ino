@@ -36,10 +36,6 @@
   #define ESP32_ARCH              ""
 #endif
 
-// Handle 20k of NVM
-
-#include <nvs.h>
-
 // See libraries\ESP32\examples\ResetReason.ino
 #if ESP_IDF_VERSION_MAJOR > 3      // IDF 4+
   #include "esp_chip_info.h"
@@ -64,17 +60,16 @@
   #include "rom/rtc.h"
 #endif
 
-#if ESP_IDF_VERSION_MAJOR >= 5
-  #include "esp_chip_info.h"
-#endif
-
 // Set the Stacksize for Arduino core. Default is 8192, some builds may need a bigger one
 size_t getArduinoLoopTaskStackSize(void) {
-    return SET_ESP32_STACK_SIZE;
+  return SET_ESP32_STACK_SIZE;
 }
 
-
 #include <esp_phy_init.h>
+
+// Handle 20k of NVM
+
+#include <nvs.h>
 
 bool NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle_t handle;
@@ -593,6 +588,32 @@ bool UsePSRAM(void) {
   return FoundPSRAM() && can_use_psram;
 }
 
+/*
+ * ESP32 v1 and v2 needs some special patches to use PSRAM.
+ * Standard Tasmota 32 do not include those patches.
+ * If using ESP32 v1, please add: `-mfix-esp32-psram-cache-issue -lc-psram-workaround -lm-psram-workaround`
+ *
+ * This function returns true if the chip supports PSRAM natively (v3) or if the
+ * patches are present.
+ */
+bool CanUsePSRAM(void) {
+  if (!FoundPSRAM()) return false;
+#ifdef HAS_PSRAM_FIX
+  return true;
+#endif
+#ifdef CONFIG_IDF_TARGET_ESP32
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+  uint32_t chip_revision = chip_info.revision;
+  // idf5 efuse_hal_chip_revision(void)
+  if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
+  if ((CHIP_ESP32 == chip_info.model) && (chip_revision < 300)) {
+    return false;
+  }
+#endif // CONFIG_IDF_TARGET_ESP32
+  return true;
+}
+
 void *special_malloc(uint32_t size) {
   if (UsePSRAM()) {
     return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -925,32 +946,6 @@ String GetCodeCores(void) {
 #else
   return F("");
 #endif
-}
-
-/*
- * ESP32 v1 and v2 needs some special patches to use PSRAM.
- * Standard Tasmota 32 do not include those patches.
- * If using ESP32 v1, please add: `-mfix-esp32-psram-cache-issue -lc-psram-workaround -lm-psram-workaround`
- *
- * This function returns true if the chip supports PSRAM natively (v3) or if the
- * patches are present.
- */
-bool CanUsePSRAM(void) {
-  if (!FoundPSRAM()) return false;
-#ifdef HAS_PSRAM_FIX
-  return true;
-#endif
-#ifdef CONFIG_IDF_TARGET_ESP32
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  uint32_t chip_revision = chip_info.revision;
-  // idf5 efuse_hal_chip_revision(void)
-  if (chip_revision < 100) { chip_revision *= 100; }  // Make <idf5 idf5
-  if ((CHIP_ESP32 == chip_info.model) && (chip_revision < 300)) {
-    return false;
-  }
-#endif // CONFIG_IDF_TARGET_ESP32
-  return true;
 }
 
 /*********************************************************************************************\
