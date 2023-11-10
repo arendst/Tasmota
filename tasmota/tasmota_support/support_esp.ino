@@ -677,7 +677,8 @@ uint32_t ESP_magicFlashChipSize(uint8_t spi_size) {
     default:  // fail so return (1KB)
         return 1024;      
     }
-*/    
+*/
+  // When spi_size is bigger than 11 will return 0 (0x100000000 = 0x00000000)
   return (uint32_t)0x100000 << (spi_size & 0x0F);  // 0 = 8 MBit (1MB), 5 = 256 MBit (32MB)
 }
 
@@ -1158,6 +1159,11 @@ float ESP_getFreeHeap1024(void) {
  * High entropy hardware random generator
  * Thanks to DigitalAlchemist
 \*********************************************************************************************/
+
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include <esp_random.h>
+#endif
+
 // Based on code from https://raw.githubusercontent.com/espressif/esp-idf/master/components/esp32/hw_random.c
 uint32_t HwRandom(void) {
 #if ESP8266
@@ -1165,6 +1171,11 @@ uint32_t HwRandom(void) {
   #define _RAND_ADDR 0x3FF20E44UL
 #endif  // ESP8266
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // See for more info on the HW RNG:
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/api-reference/system/random.html
+  return esp_random();
+#endif
   #define _RAND_ADDR 0x3FF75144UL
 #endif  // ESP32
   static uint32_t last_ccount = 0;
