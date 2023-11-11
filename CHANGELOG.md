@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool sensor delta trigger (command ``NPTelePeriod``) (#19973)
 - NeoPool store settings on unified file system (#19973)
 - NeoPool command ``NPBoost`` (#19973)
+- Partition Wizard can be loaded dynamically
 
 ### Breaking Changed
 

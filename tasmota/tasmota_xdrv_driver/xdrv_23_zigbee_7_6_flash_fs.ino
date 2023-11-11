@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_ZIGBEE
+#if defined(USE_ZIGBEE) || defined(USE_BERRY)
 
 #ifdef ESP32
 #include <vfs_api.h>
@@ -40,6 +40,12 @@ public:
   FlashFileImpl(const char* str) {
     _buf = str;
     _len = strlen_P(str);
+    _seek = 0;
+  }
+
+  FlashFileImpl(const void* buf, size_t len) {
+    _buf = (const char*)buf;
+    _len = len;
     _seek = 0;
   }
 

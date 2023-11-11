@@ -12,6 +12,7 @@
 
 void be_bytecode_save(bvm *vm, const char *filename, bproto *proto);
 bclosure* be_bytecode_load(bvm *vm, const char *filename);
+bclosure* be_bytecode_load_from_fs(bvm *vm, void *fp);
 bbool be_bytecode_check(const char *path);
 
 #endif
