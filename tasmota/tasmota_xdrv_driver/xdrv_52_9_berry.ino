@@ -765,10 +765,8 @@ void HandleBerryPartiionWizardLoaderButton(void) {
   WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='Partition_Wizard'/><button>[Load Partition Wizard]</button></form><p></p>");
 }
 
-#define PARTITION_WIZARD_URL      "http://ota.tasmota.com/tapp/partition_wizard.bec"
-
 void HandleBerryPartitionWizardLoader(void) {
-  if (BerryBECLoader(PARTITION_WIZARD_URL)) {
+  if (BerryBECLoader(USE_BERRY_PARTITION_WIZARD_URL)) {
     // All good, redirect
     Webserver->sendHeader("Location", "/part_wiz", true);
     Webserver->send(302, "text/plain", "");
