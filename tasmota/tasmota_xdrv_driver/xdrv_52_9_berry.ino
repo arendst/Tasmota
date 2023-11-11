@@ -25,6 +25,7 @@
 #include <berry.h>
 extern "C" {
   #include "be_bytecode.h"
+  #include "be_var.h"
 }
 #include "berry_tasmota.h"
 #ifdef USE_MATTER_DEVICE
@@ -762,7 +763,15 @@ void HandleBerryConsole(void)
 
 // Display a Button to dynamically load the Partition Wizard
 void HandleBerryPartiionWizardLoaderButton(void) {
-  WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='Partition_Wizard'/><button>[Load Partition Wizard]</button></form><p></p>");
+  bvm * vm = berry.vm;
+  static const char PARTITION_WIZARD_NAME[] = "partition_wizard";
+  if (!berry.partition_wizard_loaded) {
+    if (!be_global_find(vm, be_newstr(vm, PARTITION_WIZARD_NAME)) < 0) {    // the global name `partition_wizard` doesn't exist
+      WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='Partition_Wizard'/><button>[Load Partition Wizard]</button></form><p></p>");
+    } else {
+      berry.partition_wizard_loaded = true;
+    }
+  }
 }
 
 void HandleBerryPartitionWizardLoader(void) {
@@ -914,9 +923,7 @@ bool Xdrv52(uint32_t function)
       } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
 #ifdef USE_BERRY_PARTITION_WIZARD
-      if (!berry.partition_wizard_loaded) {
-        HandleBerryPartiionWizardLoaderButton();
-      }
+      HandleBerryPartiionWizardLoaderButton();
 #endif // USE_BERRY_PARTITION_WIZARD
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
         callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
