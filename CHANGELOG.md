@@ -7,9 +7,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Scripter TCP client (#19914)
 - Berry ``debug.gcdebug()`` to enable GC debugging (#19936)
-- NeoPool sensor delta trigger (command ``NPTelePeriod``)
-- NeoPool store settings on unified file system
-- NeoPool command ``NPBoost``
+- Berry AES_CBC to crypto module (#19964)
+- NeoPool sensor delta trigger (command ``NPTelePeriod``) (#19973)
+- NeoPool store settings on unified file system (#19973)
+- NeoPool command ``NPBoost`` (#19973)
 
 ### Breaking Changed
 
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Scripter timer issue (#19914)
 - Zero-Cross Dimmer for ESP32 with Core3 (#19929)
+- Matter flow sensor (#19961)
 
 ### Removed
 

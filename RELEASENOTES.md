@@ -127,10 +127,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool hydrolysis setpoint and max
 - NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed [#19857](https://github.com/arendst/Tasmota/issues/19857)
 - NeoPool command ``SetOption157`` to enable output of sensitive data [#19857](https://github.com/arendst/Tasmota/issues/19857)
+- NeoPool command ``NPBoost`` [#19973](https://github.com/arendst/Tasmota/issues/19973)
+- NeoPool sensor delta trigger (command ``NPTelePeriod``) [#19973](https://github.com/arendst/Tasmota/issues/19973)
 - NeoPool enhancements for HomeAssistant [#19857](https://github.com/arendst/Tasmota/issues/19857)
+- NeoPool store settings on unified file system [#19973](https://github.com/arendst/Tasmota/issues/19973)
 - Support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
 - Berry ``debug.gcdebug()`` to enable GC debugging [#19936](https://github.com/arendst/Tasmota/issues/19936)
+- Berry AES_CBC to crypto module [#19964](https://github.com/arendst/Tasmota/issues/19964)
 - HASPmota add styling properties [#19912](https://github.com/arendst/Tasmota/issues/19912)
 - Matter flow sensor suppor [#19852](https://github.com/arendst/Tasmota/issues/19852)
 
