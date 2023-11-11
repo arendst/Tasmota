@@ -596,6 +596,24 @@ void load_global_info(bvm *vm, void *fp)
     be_global_release_space(vm);
 }
 
+bclosure* be_bytecode_load_from_fs(bvm *vm, void *fp)
+{
+    int version = load_head(fp);
+    if (version == BYTECODE_VERSION) {
+        bclosure *cl = be_newclosure(vm, 0);
+        var_setclosure(vm->top, cl);
+        be_stackpush(vm);
+        load_global_info(vm, fp);
+        load_proto(vm, fp, &cl->proto, -1, version);
+        be_stackpop(vm, 2); /* pop the closure and list */
+        be_fclose(fp);
+        return cl;
+    }
+    bytecode_error(vm, be_pushfstring(vm,
+        "invalid bytecode version."));
+    return NULL;
+}
+
 bclosure* be_bytecode_load(bvm *vm, const char *filename)
 {
     void *fp = be_fopen(filename, "rb");
@@ -603,22 +621,9 @@ bclosure* be_bytecode_load(bvm *vm, const char *filename)
         bytecode_error(vm, be_pushfstring(vm,
             "can not open file '%s'.", filename));
     } else {
-        int version = load_head(fp);
-        if (version == BYTECODE_VERSION) {
-            bclosure *cl = be_newclosure(vm, 0);
-            var_setclosure(vm->top, cl);
-            be_stackpush(vm);
-            load_global_info(vm, fp);
-            load_proto(vm, fp, &cl->proto, -1, version);
-            be_stackpop(vm, 2); /* pop the closure and list */
-            be_fclose(fp);
-            return cl;
-        }
-        bytecode_error(vm, be_pushfstring(vm,
-            "invalid bytecode version '%s'.", filename));
+        return be_bytecode_load_from_fs(vm, fp);
     }
-    bytecode_error(vm, be_pushfstring(vm,
-        "invalid bytecode file '%s'.", filename));
     return NULL;
 }
+
 #endif /* BE_USE_BYTECODE_LOADER */

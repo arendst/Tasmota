@@ -93,6 +93,9 @@ public:
   int32_t timeout = 0;                  // Berry heartbeat timeout, preventing code to run for too long. `0` means not enabled
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
   bool web_add_handler_done = false;    // did we already sent `web_add_handler` event
+#ifdef USE_BERRY_PARTITION_WIZARD
+  bool partition_wizard_loaded = false; // did we already load Parition_Wizard
+#endif // USE_BERRY_PARTITION_WIZARD
   bool autoexec_done = false;           // do we still need to load 'autoexec.be'
   bool repl_active = false;             // is REPL running (activates log recording)
   // output log is stored as a LinkedList of buffers
