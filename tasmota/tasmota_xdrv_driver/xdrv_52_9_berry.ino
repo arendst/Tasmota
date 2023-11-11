@@ -766,7 +766,7 @@ void HandleBerryPartiionWizardLoaderButton(void) {
   bvm * vm = berry.vm;
   static const char PARTITION_WIZARD_NAME[] = "partition_wizard";
   if (!berry.partition_wizard_loaded) {
-    if (!be_global_find(vm, be_newstr(vm, PARTITION_WIZARD_NAME)) < 0) {    // the global name `partition_wizard` doesn't exist
+    if (be_global_find(vm, be_newstr(vm, PARTITION_WIZARD_NAME)) < 0) {    // the global name `partition_wizard` doesn't exist
       WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='Partition_Wizard'/><button>[Load Partition Wizard]</button></form><p></p>");
     } else {
       berry.partition_wizard_loaded = true;
