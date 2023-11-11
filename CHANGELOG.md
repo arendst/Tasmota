@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Scripter TCP client (#19914)
 - Berry ``debug.gcdebug()`` to enable GC debugging (#19936)
+- NeoPool sensor delta trigger (command ``NPTelePeriod``)
+- NeoPool store settings on unified file system
+- NeoPool command ``NPBoost``
 
 ### Breaking Changed
 
