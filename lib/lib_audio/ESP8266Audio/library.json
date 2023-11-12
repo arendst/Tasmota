@@ -22,6 +22,6 @@
     ],
 	"build": {
 		"includeDir": ".",
-		"flags": [ "-Wno-stringop-overread", "-Wno-incompatible-pointer-types" ]
+		"flags": [ "-Wno-stringop-overread" ]
 	}
 }
