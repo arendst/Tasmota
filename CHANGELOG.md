@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Scripter timer issue (#19914)
 - Zero-Cross Dimmer for ESP32 with Core3 (#19929)
 - Matter flow sensor (#19961)
+- Berry ``gpio.dac_voltage()`` broken in 13.2.0
 
 ### Removed
 
