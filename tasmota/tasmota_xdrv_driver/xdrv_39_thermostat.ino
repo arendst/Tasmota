@@ -2048,36 +2048,15 @@ void CmndEnableOutputSet(void)
  * Web UI
 \*********************************************************************************************/
 
-
-// To be done, add all of this defines in according languages file when all will be finished
-// Avoid multiple changes on all language files during development
-// --------------------------------------------------
-// xdrv_39_thermostat.ino
-#define D_THERMOSTAT                  "Thermostat"
-#define D_THERMOSTAT_SET_POINT        "Set Point"
-#define D_THERMOSTAT_SENSOR           "Current"
-#define D_THERMOSTAT_GRADIENT         "Gradient"
-#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
-#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
-#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
-#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
-#define D_THERMOSTAT_RAMP_UP          "Ramp up"
-#define D_THERMOSTAT_PI               "PI"
-#define D_THERMOSTAT_AUTOTUNE         "Autotune"
-#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
-#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
-#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
-// --------------------------------------------------
-
-
 #ifdef USE_WEBSERVER
-const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
-const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
-const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
-const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_INFO[]           PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
+const char HTTP_THERMOSTAT_TEMPERATURE[]    PROGMEM = "{s}%s{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_THERMOSTAT_TEMP_GRAD[]      PROGMEM = "{s}" D_THERMOSTAT_GRADIENT "{m}%c%*_f " D_UNIT_DEGREE "%c/" D_UNIT_HOUR "{e}";
+const char HTTP_THERMOSTAT_DUTY_CYCLE[]     PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_THERMOSTAT_CYCLE_TIME[]     PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
 const char HTTP_THERMOSTAT_CONTROL_METHOD[] PROGMEM = "{s}" D_THERMOSTAT_CONTROL_METHOD "{m}%s{e}";
-const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
-const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
+const char HTTP_THERMOSTAT_PI_AUTOTUNE[]    PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
+const char HTTP_THERMOSTAT_HL[]             PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
@@ -2122,8 +2101,8 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
       value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
     }
-    f_temperature = value / 1000.0f;
-    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+    f_temperature = abs(value) / 1000.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMP_GRAD, value < 0 ? '-' : '+', Settings->flag2.temperature_resolution, &f_temperature, c_unit);
 
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output));
 

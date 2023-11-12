@@ -547,6 +547,22 @@
 #define D_DEVICE_INPUT "Eingang"
 #define D_DEVICE_OUTPUT "Ausgang"
 
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Solltemperatur"
+#define D_THERMOSTAT_SENSOR           "Aktuelle Temperatur"
+#define D_THERMOSTAT_GRADIENT         "Temperaturänderung"
+#define D_THERMOSTAT_DUTY_CYCLE       "Aussteuergrad"
+#define D_THERMOSTAT_CYCLE_TIME       "Periodendauer"
+#define D_THERMOSTAT_PI_AUTOTUNE      "Auto PI-Abstimmung"
+#define D_THERMOSTAT_CONTROL_METHOD   "Reglertyp"
+#define D_THERMOSTAT_RAMP_UP          "Anlauf"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Anlauf (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
