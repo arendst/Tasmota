@@ -25,7 +25,9 @@
 
 // silence warning with Core3
 #pragma GCC diagnostic push
+#if defined(__GNUC__) && (__GNUC__ >= 10)
 #pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#endif
 #include "lvgl.h"
 #pragma GCC diagnostic pop
 
