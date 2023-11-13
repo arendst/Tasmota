@@ -2049,7 +2049,7 @@ void CmndEnableOutputSet(void)
 \*********************************************************************************************/
 
 #ifdef USE_WEBSERVER
-const char HTTP_THERMOSTAT_INFO[]           PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
+const char HTTP_THERMOSTAT_INFO[]           PROGMEM = "{s}" D_THERMOSTAT " %d{m}%s{e}";
 const char HTTP_THERMOSTAT_TEMPERATURE[]    PROGMEM = "{s}%s{m}%*_f " D_UNIT_DEGREE "%c{e}";
 const char HTTP_THERMOSTAT_TEMP_GRAD[]      PROGMEM = "{s}" D_THERMOSTAT_GRADIENT "{m}%c%*_f " D_UNIT_DEGREE "%c/" D_UNIT_HOUR "{e}";
 const char HTTP_THERMOSTAT_DUTY_CYCLE[]     PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
@@ -2068,7 +2068,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
 {
   if (json) {
     float f_target_temp = Thermostat[ctr_output].temp_target_level / 10.0f;
-    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output);
+    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output + 1);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
@@ -2083,13 +2083,13 @@ void ThermostatShow(uint8_t ctr_output, bool json)
   WSContentSend_P(HTTP_THERMOSTAT_HL);
 
   if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
-    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_DISABLED );
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_DISABLED );
 
   } else {
     char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
     float f_temperature;
 
-    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED);
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_ENABLED);
 
     f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
