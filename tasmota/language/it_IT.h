@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 15.10.2023
+ * Updated until v9.4.0.1 - Last update 13.11.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -548,20 +548,20 @@
 #define D_DEVICE_OUTPUT       "Uscita"
 
 // xdrv_39_thermostat.ino
-#define D_THERMOSTAT                  "Thermostat"
-#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
-#define D_THERMOSTAT_SENSOR           "Current Temperature"
-#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
-#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
-#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
-#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
-#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
-#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT                  "Termostato"
+#define D_THERMOSTAT_SET_POINT        "Temperatura impostata"
+#define D_THERMOSTAT_SENSOR           "Temperatura attuale"
+#define D_THERMOSTAT_GRADIENT         "Gradiente temperatura"
+#define D_THERMOSTAT_DUTY_CYCLE       "Ciclo lavoro"
+#define D_THERMOSTAT_CYCLE_TIME       "Tempo ciclo"
+#define D_THERMOSTAT_PI_AUTOTUNE      "Regolazione automatica  PI"
+#define D_THERMOSTAT_CONTROL_METHOD   "Metodo controllo"
+#define D_THERMOSTAT_RAMP_UP          "Rampa"
 #define D_THERMOSTAT_PI               "PI"
-#define D_THERMOSTAT_AUTOTUNE         "Autotune"
-#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
-#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
-#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE         "Regolazione automatica"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Rampa (ibrida)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (ibdrida)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Regolazione automatica (ibrida)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY       "Sensore occupato"

@@ -156,5 +156,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Zero-Cross Dimmer for ESP32 with Core3 [#19929](https://github.com/arendst/Tasmota/issues/19929)
 - ESP32 I2C allow bus2 support when bus1 is not enabled
 - ESP32 IR receive with Arduino Core 3 [#19904](https://github.com/arendst/Tasmota/issues/19904)
+- ESP32-C3 ledlink functionality regression from v13.1.0.2
+- Berry ``gpio.dac_voltage()`` regression from v13.1.0.1 [#19997](https://github.com/arendst/Tasmota/issues/19997)
 
 ### Removed

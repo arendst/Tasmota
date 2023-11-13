@@ -48,10 +48,10 @@
 #define D_MONTH3LIST "JanFebMärAprMaiJunJulAugSepOktNovDez"
 
 // Non JSON decimal separator
-#define D_DECIMAL_SEPARATOR "."
+#define D_DECIMAL_SEPARATOR ","
 
 // Common
-#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ABSOLUTE_HUMIDITY "Abs. Feuchtigkeit"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Luftqualität"
 #define D_AP "AP"                    // Access Point
@@ -63,7 +63,7 @@
 #define D_BLINKOFF "BlinkenAus"
 #define D_BOOT_COUNT "Anzahl Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
-#define D_BSSID "BSSId"
+#define D_BSSID "BSSID"
 #define D_BUTTON "Knopf"
 #define D_BY "von"                   // Written by me
 #define D_BYTES "Bytes"
@@ -226,7 +226,7 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog-Logging aktiviert"
 
 #define D_SET_BAUDRATE_TO "Setze Baudrate auf"
-#define D_RECEIVED_TOPIC "empfangenes topic"
+#define D_RECEIVED_TOPIC "empfangenes Topic"
 #define D_DATA_SIZE "Datengröße"
 #define D_ANALOG_INPUT "Analog"
 
@@ -264,7 +264,7 @@
 #define D_WITH_IP_ADDRESS "mit IP-Adresse"
 #define D_WEBSERVER_STOPPED "Web-Server angehalten"
 #define D_FILE_NOT_FOUND "Datei nicht gefunden"
-#define D_REDIRECTED "umgeleitet zu captive portal"
+#define D_REDIRECTED "umgeleitet zum Captive Portal"
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "WLAN-Manager AccessPoint gesetzt und behält Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "WLAN-Manager AccessPoint gesetzt"
 #define D_TRYING_TO_CONNECT "Versuche mit Netzwerk zu verbinden"
@@ -327,8 +327,8 @@
 #define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Adresse"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
-#define D_CLIENT "client"
-#define D_FULL_TOPIC "full topic"
+#define D_CLIENT "Client"
+#define D_FULL_TOPIC "Full Topic"
 
 #define D_LOGGING_PARAMETERS "Logging-Einstellungen"
 #define D_SERIAL_LOG_LEVEL "Seriell-Log Level"
@@ -343,8 +343,8 @@
 #define D_OTHER_PARAMETERS "Sonstige Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
-#define D_DEVICE_NAME "Geräte Name"
-#define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
+#define D_DEVICE_NAME "Gerätename"
+#define D_WEB_ADMIN_PASSWORD "Passwort für Weboberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
@@ -477,7 +477,7 @@
 #define D_KNX_PARAMETERS "KNX-Parameter"
 #define D_KNX_GENERAL_CONFIG "Allgemein"
 #define D_KNX_PHYSICAL_ADDRESS "Physikalische Adresse"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Muss einmalig im KNX-Netzwerk sein )"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "(Muss einmalig im KNX-Netzwerk sein)"
 #define D_KNX_ENABLE "KNX aktivieren"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Daten zum Senden an Gruppenadresse"
 #define D_ADD "Hinzufügen"
