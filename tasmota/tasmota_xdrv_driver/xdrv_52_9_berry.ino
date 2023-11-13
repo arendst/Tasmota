@@ -761,6 +761,7 @@ void HandleBerryConsole(void)
   WSContentStop();
 }
 
+#ifdef USE_BERRY_PARTITION_WIZARD
 // Display a Button to dynamically load the Partition Wizard
 void HandleBerryPartiionWizardLoaderButton(void) {
   bvm * vm = berry.vm;
@@ -785,6 +786,7 @@ void HandleBerryPartitionWizardLoader(void) {
     Webserver->send(302, "text/plain", "");
   }
 }
+#endif //USE_BERRY_PARTITION_WIZARD
 
 // return true if successful
 bool BerryBECLoader(const char * url) {
