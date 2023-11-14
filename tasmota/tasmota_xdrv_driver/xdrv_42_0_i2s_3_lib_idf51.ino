@@ -316,10 +316,13 @@ bool TasmotaI2S::beginTx(void) {
   }
 
   esp_err_t err = ESP_OK;
+#ifdef SOC_DAC_SUPPORTED
   if (isDACMode()) {
     err = dac_continuous_enable((dac_continuous_handle_t) _tx_handle);
     dac_task_start((dac_continuous_handle_t) _tx_handle);
-  } else {
+  } else
+#endif // SOC_DAC_SUPPORTED
+  {
     err = i2s_channel_enable(_tx_handle);
   }
   AddLog(LOG_LEVEL_INFO, "I2S: Tx i2s_channel_enable err=0x%04X", err);
