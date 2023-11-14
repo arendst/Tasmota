@@ -67,7 +67,7 @@ void RtcSettingsSave(void) {
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
 #endif  // ESP8266
 #ifdef ESP32
-    RtcDataSettings = RtcSettings;
+    memcpy((void*)&RtcDataSettings, &RtcSettings, sizeof(RtcSettings));
 #endif  // ESP32
 
     rtc_settings_crc = GetRtcSettingsCrc();
@@ -79,7 +79,7 @@ bool RtcSettingsLoad(uint32_t update) {
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
 #endif  // ESP8266
 #ifdef ESP32
-  RtcSettings = RtcDataSettings;
+  memcpy((void*)&RtcSettings, &RtcDataSettings, sizeof(RtcSettings));
 #endif  // ESP32
 
   bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);

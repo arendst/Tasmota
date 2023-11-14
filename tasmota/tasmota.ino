@@ -21,6 +21,7 @@
 #ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #endif // ESP32_STAGE
+#include <atomic>
 #include "include/tasmota_compat.h"
 #include "include/tasmota_version.h"        // Tasmota version information
 #include "include/tasmota.h"                // Enumeration used in my_user_config.h
@@ -149,13 +150,13 @@ TRtcReboot RtcReboot;
 static RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
 #endif  // ESP32
 
-typedef struct {
+struct TRtcSettings {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
   uint32_t      ex_energy_kWhtoday;        // 294
   uint32_t      ex_energy_kWhtotal;        // 298
-  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
+  std::atomic<uint32_t> pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   uint32_t      nextwakeup;                // 2C8
@@ -170,7 +171,7 @@ typedef struct {
   int32_t       energy_kWhtotal_ph[3];     // 2E4
   int32_t       energy_kWhexport_ph[3];    // 2F0
   uint32_t      utc_time;                  // 2FC
-} TRtcSettings;
+};
 TRtcSettings RtcSettings;
 #ifdef ESP32
 static RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
