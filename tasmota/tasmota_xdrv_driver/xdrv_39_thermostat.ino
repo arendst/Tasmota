@@ -1285,7 +1285,7 @@ void ThermostatDebug(uint8_t ctr_output)
 {
   char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
-  dtostrfd(ctr_output, 0, ctr_output_chr);
+  dtostrfd(ctr_output + 1, 0, ctr_output_chr);
   dtostrfd(Thermostat[ctr_output].status.counter_seconds, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_THERMOSTAT "Thermostat[%s].status.counter_seconds: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.thermostat_mode, 0, result_chr);
@@ -1340,7 +1340,7 @@ void DebugControllerParameters(uint8_t ctr_output)
 {
   char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
-  dtostrfd(ctr_output, 0, ctr_output_chr);
+  dtostrfd(ctr_output + 1, 0, ctr_output_chr);
   dtostrfd(Thermostat[ctr_output].status.controller_mode, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_THERMOSTAT "Thermostat[%s].CONTROLLERMODESET: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_pi_cycle, 0, result_chr);
