@@ -184,8 +184,10 @@
 #define USE_WEBSERVER
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-#define USE_ETHERNET
+#ifdef ESP32_4M
+  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
+  #define USE_ETHERNET
+#endif // ESP32_4M
 
 #endif  // FIRMWARE_SAFEBOOT
 
