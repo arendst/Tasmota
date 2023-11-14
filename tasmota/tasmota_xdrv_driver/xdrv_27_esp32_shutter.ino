@@ -668,6 +668,8 @@ void ShutterInit(void)
         break;
         case SHT_COUNTER:
           ShutterGlobal.open_velocity_max = ShutterSettings.open_velocity_max;
+	  // Limit the numbers of shutter to 4 because only 4 counters can be defined
+          TasmotaGlobal.shutters_present = tmin(TasmotaGlobal.shutters_present, 4);
         break; 
       }
            
