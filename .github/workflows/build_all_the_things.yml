@@ -130,6 +130,7 @@ jobs:
           #platformio upgrade --dev
           #platformio update
           cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+          cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v3
