@@ -61,7 +61,7 @@
 #define D_BATTERY_CHARGE "Ladung"    // Battery charge in %
 #define D_BLINK "Blinken"
 #define D_BLINKOFF "BlinkenAus"
-#define D_BOOT_COUNT "Anzahl Startvorgänge"
+#define D_BOOT_COUNT "Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
 #define D_BSSID "BSSID"
 #define D_BUTTON "Knopf"
@@ -368,7 +368,7 @@
 #define D_PROGRAM_VERSION "Tasmota Version"
 #define D_BUILD_DATE_AND_TIME "Erstellungszeitpunkt"
 #define D_CORE_AND_SDK_VERSION "Core-/SDK-Version"
-#define D_FLASH_WRITE_COUNT "Anz. Flash-Schreibzyklen"
+#define D_FLASH_WRITE_COUNT "Flash-Schreibzyklen"
 #define D_MAC_ADDRESS "MAC-Adresse"
 #define D_MQTT_HOST "MQTT Host"
 #define D_MQTT_PORT "MQTT Port"
