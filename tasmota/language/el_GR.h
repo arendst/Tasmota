@@ -166,7 +166,6 @@
 #define D_RESTART "Επανεκκίνηση"
 #define D_RESTARTING "Επανεκκινεί"
 #define D_RESTART_REASON "Αιτία επανεκκίνησης"
-#define D_RESTORE "επαναφορά"
 #define D_RETAINED "διακράτηση"
 #define D_RULE "Κανόνας"
 #define D_SAVE "Αποθήκευση"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "αναβάθμιση"
 #define D_UPLOAD "Ανέβασμα"
 #define D_UPTIME "Χρόνος λειτουργίας"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Reset"
 #define D_BACKUP_CONFIGURATION "Εξαγωγή"
 #define D_RESTORE_CONFIGURATION "Επαναφορά"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Κεντρικό μενού"
 
 #define D_MODULE_PARAMETERS "Παράμετροι μονάδας"

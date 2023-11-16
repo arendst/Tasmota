@@ -166,7 +166,6 @@
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartowanie"
 #define D_RESTART_REASON "Przyczyna restartu"
-#define D_RESTORE "Przywracanie"
 #define D_RETAINED "Zachowane"
 #define D_RULE "Reguła"
 #define D_SAVE "Zapisz"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Czas pracy"
 #define D_USED "użyte"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Reset ustawień"
 #define D_BACKUP_CONFIGURATION "Kopia ustawień"
 #define D_RESTORE_CONFIGURATION "Przywracanie ustawień"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menu główne"
 
 #define D_MODULE_PARAMETERS "Parametry modułu"

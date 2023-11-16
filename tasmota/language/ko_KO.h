@@ -166,7 +166,6 @@
 #define D_RESTART "재시작"
 #define D_RESTARTING "재시작 중.."
 #define D_RESTART_REASON "재시작 사유"
-#define D_RESTORE "복구"
 #define D_RETAINED "보류"
 #define D_RULE "규칙"
 #define D_SAVE "저장"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "업그레이드"
 #define D_UPLOAD "업로드"
 #define D_UPTIME "가동시간"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "설정 초기화"
 #define D_BACKUP_CONFIGURATION "설정 백업"
 #define D_RESTORE_CONFIGURATION "설정 복구"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "메인 메뉴"
 
 #define D_MODULE_PARAMETERS "모듈 설정"

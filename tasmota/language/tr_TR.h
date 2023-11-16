@@ -166,7 +166,6 @@
 #define D_RESTART "Yeniden Başlat"
 #define D_RESTARTING "Yeniden Başlatılıyor"
 #define D_RESTART_REASON "Yeniden Başlatma Sebebi"
-#define D_RESTORE "restore"
 #define D_RETAINED "tutulan"
 #define D_RULE "Kural"
 #define D_SAVE "Kaydet"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "yükseltme"
 #define D_UPLOAD "Yükleme"
 #define D_UPTIME "Açık Kalma Süresi"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Tüm Ayarları Resetle"
 #define D_BACKUP_CONFIGURATION "Ayarları Yedekle"
 #define D_RESTORE_CONFIGURATION "Ayarları Geri Yükle"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Ana Menü"
 
 #define D_MODULE_PARAMETERS "Modül parametreleri"

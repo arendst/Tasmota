@@ -166,7 +166,6 @@
 #define D_RESTART "איתחול"
 #define D_RESTARTING "הפעלה מחדש"
 #define D_RESTART_REASON "סיבת הפעלה מחדש"
-#define D_RESTORE "שחזור"
 #define D_RETAINED "שמור"
 #define D_RULE "חוק"
 #define D_SAVE "שמירה"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "שדרוג"
 #define D_UPLOAD "העלאה"
 #define D_UPTIME "זמן עליה"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "אתחול הגדרות"
 #define D_BACKUP_CONFIGURATION "גיבוי הגדרות"
 #define D_RESTORE_CONFIGURATION "שחזור הגדרות"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "תפריט ראשי"
 
 #define D_MODULE_PARAMETERS "מודול פרמטרים"

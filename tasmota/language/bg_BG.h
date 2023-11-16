@@ -166,7 +166,6 @@
 #define D_RESTART "Рестартиране"
 #define D_RESTARTING "Рестартиране"
 #define D_RESTART_REASON "Причина за рестарт"
-#define D_RESTORE "възстановяване"
 #define D_RETAINED "запазено"
 #define D_RULE "Правило"
 #define D_SAVE "Запазване"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "Обновяване"
 #define D_UPLOAD "Качването е"
 #define D_UPTIME "Време на работа"
 #define D_USED "използвано"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Нулиране на настройки"
 #define D_BACKUP_CONFIGURATION "Резервно копие на настройки"
 #define D_RESTORE_CONFIGURATION "Възстановяване на настройки"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Начало"
 
 #define D_MODULE_PARAMETERS "Параметри на модула"

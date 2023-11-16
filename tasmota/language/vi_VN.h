@@ -166,7 +166,6 @@
 #define D_RESTART "Khởi động lại"
 #define D_RESTARTING "Đang khởi động"
 #define D_RESTART_REASON "Lý do khởi động lại"
-#define D_RESTORE "khôi phục"
 #define D_RETAINED "lưu giữ"
 #define D_RULE "Quy luật"
 #define D_SAVE "Lưu"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "nâng cấp"
 #define D_UPLOAD "Tải lên"
 #define D_UPTIME "Thời gian chạy"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Xóa cấu hình"
 #define D_BACKUP_CONFIGURATION "Tạo bản lưu cấu hình"
 #define D_RESTORE_CONFIGURATION "Khôi phục cấu hình"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Màn hình chính"
 
 #define D_MODULE_PARAMETERS "Các thông số mô đun"

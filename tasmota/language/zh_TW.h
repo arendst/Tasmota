@@ -166,7 +166,6 @@
 #define D_RESTART "重新啟動"
 #define D_RESTARTING "正在重新啟動"
 #define D_RESTART_REASON "重新啟動的原因"
-#define D_RESTORE "讀取設定"
 #define D_RETAINED "已保留"
 #define D_RULE "規則"
 #define D_SAVE "儲存"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "升級"
 #define D_UPLOAD "上傳"
 #define D_UPTIME "啟動時間"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "重設設定"
 #define D_BACKUP_CONFIGURATION "備份設定"
 #define D_RESTORE_CONFIGURATION "回復設定"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "主選單"
 
 #define D_MODULE_PARAMETERS "模組參數"

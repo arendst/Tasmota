@@ -166,7 +166,6 @@
 #define D_RESTART "Перезавантаження"
 #define D_RESTARTING "Перезавантаження"
 #define D_RESTART_REASON "Причина перезавантаження"
-#define D_RESTORE "відновлення"
 #define D_RETAINED "зберігати"
 #define D_RULE "Правило"
 #define D_SAVE "Зберегти"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "оновлення"
 #define D_UPLOAD "Завантажити"
 #define D_UPTIME "Час роботи"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Скидання конфігурації"
 #define D_BACKUP_CONFIGURATION "Резервне копіювання конфігурації"
 #define D_RESTORE_CONFIGURATION "Відновлення конфігурації"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Головне меню"
 
 #define D_MODULE_PARAMETERS "Параметри модуля"

@@ -166,7 +166,6 @@
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartování"
 #define D_RESTART_REASON "Příčina restartu"
-#define D_RESTORE "Obnovit"
 #define D_RETAINED "Zachováno"
 #define D_RULE "Rule"
 #define D_SAVE "Ulož"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "aktualizace"
 #define D_UPLOAD "Nahrání..."
 #define D_UPTIME "Uptime"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Reset nastavení"
 #define D_BACKUP_CONFIGURATION "Záloha nastavení"
 #define D_RESTORE_CONFIGURATION "Obnovení nastavení"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Hlavní menu"
 
 #define D_MODULE_PARAMETERS "Nastavení modulu"

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.1.0.4
+ * Updated until v13.2.0.2 - Last update 16.11.2023
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -166,7 +166,6 @@
 #define D_RESTART "Neustart"
 #define D_RESTARTING "starte neu"
 #define D_RESTART_REASON "Grund für Neustart"
-#define D_RESTORE "Wiederherstellung"
 #define D_RETAINED "beibehalten"
 #define D_RULE "Regel"
 #define D_SAVE "Speichern"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "astronomisch"
 #define D_TWILIGHT_CIVIL "zivil"
 #define D_TWILIGHT_NAUTICAL "nautisch"
-#define D_UPGRADE "update"
 #define D_UPLOAD "Upload"
 #define D_UPTIME "Laufzeit"
 #define D_USED "genutzt"
@@ -290,9 +288,10 @@
 #define D_RESET_CONFIGURATION "Konfiguration zurücksetzen"
 #define D_BACKUP_CONFIGURATION "Konfiguration sichern"
 #define D_RESTORE_CONFIGURATION "Konfiguration wiederherstellen"
+#define D_START_RESTORE "Wiederherstellung starten"
 #define D_MAIN_MENU "Hauptmenü"
 
-#define D_MODULE_PARAMETERS "Geräte-Einstellungen"
+#define D_MODULE_PARAMETERS "Geräteeinstellungen"
 #define D_MODULE_TYPE "Gerätetyp"
 #define D_PULLUP_ENABLE "Pull-up aktiv"
 #define D_ADC "ADC"
@@ -1199,7 +1198,7 @@
 #define D_NEOPOOL_RELAY_VALVE             "Ventil"
 #define D_NEOPOOL_RELAY_AUX               "Aux"
 #define D_NEOPOOL_TIME                    "Zeit"
-#define D_NEOPOOL_FILT_MODE               "Filtration mode"
+#define D_NEOPOOL_FILT_MODE               "Filtermodus"
 #define D_NEOPOOL_CELL_RUNTIME            "Laufzeit Zelle"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrAus"

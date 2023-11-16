@@ -167,7 +167,6 @@
 #define D_RESTART "Перезагрузка"
 #define D_RESTARTING "Перезагрузка"
 #define D_RESTART_REASON "Причина перезагрузки"
-#define D_RESTORE "восстановление"
 #define D_RETAINED "нераспред."
 #define D_RULE "Правило"
 #define D_SAVE "Сохранить"
@@ -193,7 +192,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "обновление"
 #define D_UPLOAD "Загрузить"
 #define D_UPTIME "Аптайм"
 #define D_USED "использовано"
@@ -291,6 +289,7 @@
 #define D_RESET_CONFIGURATION "Сброс настроек"
 #define D_BACKUP_CONFIGURATION "Резервное копирование настроек"
 #define D_RESTORE_CONFIGURATION "Восстановление настроек"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Главное меню"
 
 #define D_MODULE_PARAMETERS "Настройки модуля"
