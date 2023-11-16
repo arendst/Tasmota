@@ -92,21 +92,15 @@ void Tsl2591Show(bool json)
 
 bool tsl2591CommandSensor() {
   bool serviced = true;
-
-  //tsl.setGain(TSL2591_GAIN_LOW);
-  //Response_P("test");
-
   char argument[XdrvMailbox.data_len];
-
   long value = 0;
+  
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
-
+  
   bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
-
   if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
-
   switch (XdrvMailbox.payload) {
     case 1:
       tsl.setGain(TSL2591_GAIN_LOW);
@@ -143,6 +137,8 @@ bool tsl2591CommandSensor() {
           break;
       }
   }
+  Response_P(PSTR(" {Gain input = %d} {Gain hex = %d}"),XdrvMailbox.payload,tsl.getGain());
+  ResponseAppend_P(PSTR(" {Timing input = %d} {Timing hex = %d}"),value,tsl.getTiming());
   return serviced;
 }
 
