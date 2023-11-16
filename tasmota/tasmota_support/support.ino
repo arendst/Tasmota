@@ -1452,9 +1452,9 @@ void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
   if (PinUsed(gpio_pin, index)) {
     uint32_t pin = Pin(gpio_pin, index) & 0x3F;  // Fix possible overflow over 63 gpios
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-    if (GPIO_REL1 == gpio_pin) {
+//    if (GPIO_REL1 == gpio_pin) {
       gpio_hold_dis((gpio_num_t)pin);            // Allow state change
-    }
+//    }
 #endif
     if (!bitRead(pinmode_init[pin / 32], pin % 32)) {
       bitSet(pinmode_init[pin / 32], pin % 32);
