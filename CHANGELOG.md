@@ -11,13 +11,14 @@ All notable changes to this project will be documented in this file.
 - NeoPool sensor delta trigger (command ``NPTelePeriod``) (#19973)
 - NeoPool store settings on unified file system (#19973)
 - NeoPool command ``NPBoost`` (#19973)
-- Partition Wizard can be loaded dynamically
+- ESP32 Partition Wizard can be loaded dynamically (#19980)
 
 ### Breaking Changed
 
 ### Changed
 - Matter update hierarchy of plugins (#19915)
 - NeoPool ``NPHydrolysis`` percent and unit (#19924)
+- Thermostat JSON index from 0 to 1 (#20011)
 
 ### Fixed
 - Scripter timer issue (#19914)
