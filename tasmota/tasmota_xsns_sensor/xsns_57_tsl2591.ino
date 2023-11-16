@@ -101,7 +101,7 @@ bool tsl2591CommandSensor() {
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
-
+  
   bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
   if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
 
