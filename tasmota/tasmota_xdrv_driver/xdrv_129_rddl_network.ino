@@ -371,7 +371,6 @@ String registerCID(const char* cid){
 }
 
 char g_planetmintapi[100] = {0};
-char g_accountid[20] = {0};
 char g_chainid[30] = {0};
 char g_denom[20] = {0};
 
@@ -389,20 +388,6 @@ char* getPlanetmintAPI()
   if( strlen( g_planetmintapi) == 0 )
     strcpy(g_planetmintapi, "https://testnet-api.rddl.io");
   return g_planetmintapi;
-}
-
-void setAccountID( const char* account, size_t len)
-{
-  rddl_writefile( "accountid", (uint8_t*)account, len);
-  memset((void*)g_accountid,0, 20);
-}
-char* getAccountID()
-{
-  if( strlen( g_accountid) == 0 ){
-    if( !readfile( "accountid", (uint8_t*)g_accountid, 20))
-      memset((void*)g_accountid,0, 20);
-  }
-  return g_accountid;
 }
 
 void setDenom( const char* denom, size_t len)
@@ -505,7 +490,7 @@ char* create_transaction( void* anyMsg, char* tokenAmount )
   bool gotAccountID = getAccountInfo( g_address, &account_id, &sequence );
   if( !gotAccountID )
   {
-    account_id = (uint64_t) atoi( (const char*) getAccountID());
+    return NULL;
   }
 
   Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
@@ -560,10 +545,8 @@ char* getGPSstring(){
   return gps_data;
 }
 
-int registerMachine(void* anyMsg){
+int registerMachine(void* anyMsg, const char* machineCategory, const char* manufacturer, const char* cid){
   
-  char machinecid_buffer[58+1] = {0};
-
   uint8_t signature[64]={0};
   char signature_hex[64*2+1]={0};
   uint8_t hash[32];
@@ -580,23 +563,27 @@ int registerMachine(void* anyMsg){
   char* gps_str = getGPSstring();
   if (!gps_str )
     gps_str = "";
+  
+  size_t desLength = strlen( manufacturer) + strlen( machineCategory )+ 36;
+  char* deviceDescription = (char*)getStack( desLength );
+  int written = sprintf( deviceDescription, "{\"Category\":\"%s\", \"Manufacturer\":\"%s\"}", machineCategory, manufacturer);
 
-  if( !readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1) )
-    memset((void*)machinecid_buffer,0, 58+1);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-  metadata.additionaldatacid = machinecid_buffer;
+  metadata.additionaldatacid = (char*)cid;
   metadata.gps = gps_str;
-  metadata.assetdefinition = "{\"Version\": \"0.1\"}";
-  metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
+  metadata.assetdefinition = "{\"Version\":\"0.2\"}";
+  metadata.device = deviceDescription;
 
   Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
   machine.name = (char*)g_address;
-  machine.ticker = NULL;
-  machine.domain = "lab.r3c.network";
-  machine.reissue = false;
-  machine.amount = 1;
-  machine.precision = 8;
+  
+  // machine.ticker = NULL;                 //obsolete
+  // machine.domain = "lab.r3c.network";    //obsolete
+  // machine.reissue = false;               //obsolete
+  // machine.amount = 1;                    //obsolete
+  // machine.precision = 8;                 //obsolete
+  
   machine.issuerplanetmint = g_ext_pub_key_planetmint;
   machine.issuerliquid = g_ext_pub_key_liquid;
   machine.machineid = g_machineid_public_key_hex;
@@ -604,6 +591,7 @@ int registerMachine(void* anyMsg){
   machine.type = RDDL_MACHINE_POWER_SWITCH;
   machine.machineidsignature = signature_hex;
   machine.address = (char*)g_address;
+
  
   Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
   machineMsg.creator = (char*)g_address;
@@ -651,50 +639,62 @@ bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
 #endif  // USE_UFILESYS
 }
 
+int sendMessages( void* pAnyMsg) {
+    ResponseAppend_P("TX processing:\n");
+    char* tx_payload = create_transaction(pAnyMsg, "1");
+
+    if(!tx_payload)
+      return -1;
+    ResponseAppend_P("TX broadcast:\n");
+    int broadcast_return = broadcast_transaction( tx_payload );
+    return broadcast_return;
+}
+
+void runRDDLMachineAttestation(const char* machineCategory, const char* manufacturer, const char* cid ){
+  Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
+  clearStack();
+  getPlntmntKeys();
+
+  Serial.println("Register: Machine\n");
+  int status = registerMachine(&anyMsg, machineCategory, manufacturer, cid );
+  if ( status >= 0 ){
+    status = sendMessages( &anyMsg );
+  }
+}
+
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
   getPlntmntKeys();
-  int status = 0;
 
-  if( hasMachineBeenAttested() )
-  {
-    size_t data_size = data_length;
-    uint8_t* local_data = getStack( data_size+2 );
+  if( !hasMachineBeenAttested() )
+    return;
 
-    memcpy( local_data, data_str, data_size);
-    String signature = signRDDLNetworkMessageContent((const char*)local_data, data_size);
+  size_t data_size = data_length;
+  uint8_t* local_data = getStack( data_size+2 );
 
-    //compute CID
-    const char* cid_str = (const char*) create_cid_v1_from_string( (const char*) local_data );
+  memcpy( local_data, data_str, data_size);
+  String signature = signRDDLNetworkMessageContent((const char*)local_data, data_size);
 
-    // store cid
-    rddl_writefile( cid_str, (uint8_t*)local_data, data_size );
+  //compute CID
+  const char* cid_str = (const char*) create_cid_v1_from_string( (const char*) local_data );
 
-    // register CID
-    //registerCID( cid_str );
-  
-    Serial.println("Notarize: CID Asset\n");
-    ResponseAppend_P("Notarize: CID Asset %s\n", cid_str);
+  // store cid
+  rddl_writefile( cid_str, (uint8_t*)local_data, data_size );
 
-    generateAnyCIDAttestMsg(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
-  }
-  else{
-    Serial.println("Register: Machine\n");
-    ResponseAppend_P("Register: Machine\n");
-    status = registerMachine(&anyMsg);
-  }
-  if (status >= 0) {
-    ResponseAppend_P("TX processing:\n");
-    char* tx_payload = create_transaction(&anyMsg, "1");
+  // register CID
+  //registerCID( cid_str );
 
-    if(!tx_payload)
-      return;
-    ResponseAppend_P("TX broadcast:\n");
-    int broadcast_return = broadcast_transaction( tx_payload );
-  }
+  Serial.println("Notarize: CID Asset\n");
+
+  generateAnyCIDAttestMsg(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
+  sendMessages( &anyMsg );
+
   ResponseJsonEnd();
 }
+
+
+
 
 bool g_mutex_running_notarization = false;
 

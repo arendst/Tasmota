@@ -41,9 +41,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_ZIGBEE_BATTPERCENT "|"
-  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
+  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
   D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
-  D_CMND_POPCHALLENGE "|"
+  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -84,8 +84,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
-  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid, &CmndBalance, 
-  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
+  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmndBalance, 
+  &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
+  &CmndAttestMachine, 
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -777,38 +778,6 @@ void CmndPlanetmintAPI(void)
   ResponseClear();
 }
 
-void CmndAccountID(void)
-{
-  if( XdrvMailbox.data_len )
-  {
-    setAccountID(XdrvMailbox.data, XdrvMailbox.data_len );
-  }
-  char* paccountid = getAccountID();
-  Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
-
-  
-  CmndStatusResponse(23);
-  ResponseClear();
-}
-
-void CmdMachineCid(void) {
-  if( XdrvMailbox.data_len )
-  {
-    rddl_writefile("machinecid", (uint8_t*)XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MACHINECID, XdrvMailbox.data );
-  }
-  else
-  {
-    char machinecid_buffer[58+1] = {0};
-    if( !readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1) )
-      memset((void*)machinecid_buffer,0, 58+1);
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, (char*)machinecid_buffer );
-  }
-  
-  CmndStatusResponse(24);
-  ResponseClear();
-}
-
 void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
@@ -816,9 +785,8 @@ void CmdResolveCid(void) {
     uint8_t* buff = getStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
-    char machinecid_buffer[58+1] = {0};
     if( !readfile( cid, buff, MY_STACK_LIMIT) )
-      memset((void*)machinecid_buffer,0, 58+1);
+      charPtr[0]=0;
 
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
   } else {
@@ -970,6 +938,61 @@ void CmndPoPChallenge(void) {
   }
   
   CmndStatusResponse(32);
+  ResponseClear();
+}
+#define MAX_TOKENS 6
+void CmndAttestMachine(void) {
+  char* msg = "No parameters found. Please enter: machine categroy, machine manufacturer, CID to cover more details";
+  if( XdrvMailbox.data_len )
+  {
+    // verify if two parameters are passed. 
+    
+    int tokenCount = 0;  // Counter for the number of tokens
+    char* tokens[MAX_TOKENS] = {NULL};
+
+    // Initialize all tokens to NULL
+    for (int i = 0; i < MAX_TOKENS; i++) {
+      tokens[i] = "";
+    }
+
+    // Duplicate the string as strtok modifies the original string
+    char tempString[strlen( (const char*)XdrvMailbox.data) + 1];
+    strcpy(tempString, XdrvMailbox.data);
+
+    // Using strtok to split and store tokens
+    char* token = strtok(tempString, " "); // Space as delimiter
+    while (token != NULL && tokenCount < MAX_TOKENS) {
+      tokens[tokenCount++] = token;
+      token = strtok(NULL, " "); // Continue to next token
+    }
+    Response_P("{");
+    // Output based on token count
+    if (tokenCount == 0) {
+      Serial.println(msg);
+    } else if (tokenCount == 1) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "2 params" );
+    } else if (tokenCount == 2) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "2 params" );
+    } else if (tokenCount == 3) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "3 params" );
+    } else {
+      Serial.println("More than two tokens found.");
+    }
+    // attest machine
+    if( tokenCount > 0 && tokenCount < 4){
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, " valid set of params" );
+      runRDDLMachineAttestation( tokens[0], tokens[1], tokens[2] );
+    }
+
+    ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, XdrvMailbox.data );
+  }
+  else
+  {
+    Serial.println( msg );
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_ATTESTMACHINE, msg );
+  }
+   ResponseAppend_P("}");
+  CmndStatusResponse(33);
   ResponseClear();
 }
 
