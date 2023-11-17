@@ -1916,24 +1916,6 @@ void TasConsoleInput(void) {
 
 /********************************************************************************************/
 
-#ifdef ESP32
-// Since ESP-IDF 4.4, GPIO matrix or I/O is not reset during a restart
-// and GPIO configuration can get stuck because of leftovers
-//
-// This patched version of pinMode forces a full GPIO reset before setting new mode
-//
-#include "driver/gpio.h"
-
-extern "C" void ARDUINO_ISR_ATTR __pinMode(uint8_t pin, uint8_t mode);
-
-extern "C" void ARDUINO_ISR_ATTR pinMode(uint8_t pin, uint8_t mode) {
-  gpio_reset_pin((gpio_num_t)pin);
-  __pinMode(pin, mode);
-}
-#endif
-
-/********************************************************************************************/
-
 void GpioInit(void)
 {
   if (!ValidModule(Settings->module)) {
