@@ -757,11 +757,14 @@ void CmndPublicKeys(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
-  getPlntmntKeys();
-
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
-  
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+      "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
+  }
   CmndStatusResponse(21);
   ResponseClear();
 }
@@ -821,32 +824,40 @@ void CmdResolveCid(void) {
 
 void CmndBalance(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/cosmos/bank/v1beta1/balances/";
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_BALANCE, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/cosmos/bank/v1beta1/balances/";
 
-  uri = SettingsText(SET_PLANETMINT_API)  + uri;
-  uri = uri + getRDDLAddress() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getRDDLAddress() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
+  }
   CmndStatusResponse(26);
   ResponseClear();
 }
 
 void CmndGetAccountID()
 {
-  getPlntmntKeys();
   uint64_t account_id = 0;
   uint64_t sequence = 0;
-  bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
-  if( !gotAccountID ){
-    Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "Initialize Keys first (Mnemonic)");
   } else {
-    Response_P("{ \"%s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
+    bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
+    if( !gotAccountID ){
+      Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
+    } else {
+      Response_P("{ \"%s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
+    }
   }
 
   CmndStatusResponse(27);
@@ -906,18 +917,21 @@ void CmndPlanetmintChainID(void) {
 
 void CmndMachineData(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/planetmint/machine/get_machine_by_public_key/";
+  if( !getPlntmntKeys() ){
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_MACHINEDATA, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/planetmint/machine/get_machine_by_public_key/";
 
-  uri = SettingsText(SET_PLANETMINT_API)  + uri;
-  uri = uri + getExtPubKeyPlanetmint() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getExtPubKeyPlanetmint() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
+  }
   CmndStatusResponse(31);
   ResponseClear();
 }

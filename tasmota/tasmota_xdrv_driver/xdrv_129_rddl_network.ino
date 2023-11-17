@@ -146,8 +146,9 @@ void storeSeed()
 #define ADDRESS_HASH_SIZE 20
 #define ADDRESS_TAIL 20
 
-void getPlntmntKeys(){
-  readSeed();
+bool getPlntmntKeys(){
+  if( readSeed() == NULL )
+    return false;
   HDNode node_planetmint;
   hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_planetmint);
   hdnode_private_ckd_prime(&node_planetmint, 44);
@@ -180,6 +181,8 @@ void getPlntmntKeys(){
 
   ecdsa_get_public_key33(&secp256k1, private_key_machine_id, g_machineid_public_key);
   toHexString( g_machineid_public_key_hex, g_machineid_public_key, 33*2);
+
+  return true;
 }
 
 uint8_t* readSeed()
@@ -598,7 +601,8 @@ int sendMessages( void* pAnyMsg) {
 void runRDDLMachineAttestation(const char* machineCategory, const char* manufacturer, const char* cid ){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
-  getPlntmntKeys();
+  if( !getPlntmntKeys() )
+    return;
 
   Serial.println("Register: Machine\n");
   int status = registerMachine(&anyMsg, machineCategory, manufacturer, cid );
@@ -610,7 +614,8 @@ void runRDDLMachineAttestation(const char* machineCategory, const char* manufact
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
-  getPlntmntKeys();
+  if( !getPlntmntKeys() )
+    return;
 
   if( !hasMachineBeenAttested() )
     return;
