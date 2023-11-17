@@ -31,8 +31,7 @@
 #define XDRV_129               129
 
 #define DRV_DEMO_MAX_DRV_TEXT  16
-//#define RDDL_NETWORK_15_MINUTES_IN_MS  (15*60*1000)
-#define RDDL_NETWORK_NOTARIZATION_TIMER_IN_SECONDS (3*60)
+#define RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS (60*60)
 
 
 #include "planetmint.h"
@@ -732,7 +731,7 @@ void RDDLNotarize(){
 
 void RDDLNetworkNotarizationScheduler(){
   ++counted_seconds;
-  if( counted_seconds >= RDDL_NETWORK_NOTARIZATION_TIMER_IN_SECONDS)
+  if( counted_seconds >= RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS)
   {
     counted_seconds=0;
     RDDLNotarize();
