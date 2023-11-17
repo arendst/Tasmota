@@ -166,7 +166,6 @@
 #define D_RESTART "Reinici"
 #define D_RESTARTING "Reinciant"
 #define D_RESTART_REASON "Raó de resinici"
-#define D_RESTORE "recuperar"
 #define D_RETAINED "retingut"
 #define D_RULE "Regla"
 #define D_SAVE "Guardar"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "actualitza"
 #define D_UPLOAD "Envia"
 #define D_UPTIME "Temps engegat"
 #define D_USED "usat"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Reiniciar la Configuració"
 #define D_BACKUP_CONFIGURATION "Guardar la Configuració"
 #define D_RESTORE_CONFIGURATION "Restaurar la Configuració"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menú Principal"
 
 #define D_MODULE_PARAMETERS "Paràmetes del Mòdul"

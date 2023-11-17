@@ -166,7 +166,6 @@
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
 #define D_RESTART_REASON "Motivo do reinício"
-#define D_RESTORE "Restauração"
 #define D_RETAINED "Manter"
 #define D_RULE "Regra"
 #define D_SAVE "Salvar"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "atualização"
 #define D_UPLOAD "Enviar"
 #define D_UPTIME "Tempo de atividade"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Apagar configuração"
 #define D_BACKUP_CONFIGURATION "Salvar configuração"
 #define D_RESTORE_CONFIGURATION "Repor configuração"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menu principal"
 
 #define D_MODULE_PARAMETERS "Parâmetros do módulo"

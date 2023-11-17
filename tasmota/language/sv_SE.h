@@ -166,7 +166,6 @@
 #define D_RESTART "Omstart"
 #define D_RESTARTING "Startar om"
 #define D_RESTART_REASON "Omstartsorsak"
-#define D_RESTORE "återställ"
 #define D_RETAINED "bevarad"
 #define D_RULE "Regel"
 #define D_SAVE "Spara"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "uppgradera"
 #define D_UPLOAD "Ladda upp"
 #define D_UPTIME "Upptid"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Nollställ konfiguration"
 #define D_BACKUP_CONFIGURATION "Säkerhetskopiera konfiguration"
 #define D_RESTORE_CONFIGURATION "Återställ konfiguration"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Huvudmeny"
 
 #define D_MODULE_PARAMETERS "Modulparameterar"

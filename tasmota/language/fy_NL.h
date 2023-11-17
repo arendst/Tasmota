@@ -166,7 +166,6 @@
 #define D_RESTART "Op 'e nij begjinne"
 #define D_RESTARTING "Op 'e nij begjinne"
 #define D_RESTART_REASON "Reden opnij starte"
-#define D_RESTORE "herstelle"
 #define D_RETAINED "beholden"
 #define D_RULE "Regel"
 #define D_SAVE "Bewarje"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "upgrade"
 #define D_UPLOAD "Stjoere"
 #define D_UPTIME "Betjenstiid"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Konfiguraasje weromsette"
 #define D_BACKUP_CONFIGURATION "Konfiguraasje opslaan"
 #define D_RESTORE_CONFIGURATION "Konfiguraasje herstelle"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Haadmenu"
 
 #define D_MODULE_PARAMETERS "Module parameters"
