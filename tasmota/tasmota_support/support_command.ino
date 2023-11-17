@@ -772,21 +772,22 @@ void CmndPlanetmintAPI(void)
 
   if( XdrvMailbox.data_len )
   {
-    setPlanetmintAPI((const char*)XdrvMailbox.data, XdrvMailbox.data_len);
+    SettingsUpdateText( SET_PLANETMINT_API, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", getPlanetmintAPI() );
+  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", SettingsText(SET_PLANETMINT_API) );
   CmndStatusResponse(22);
   ResponseClear();
 }
 
 void CmndNotarizationPeriodicity(void) {
   if( XdrvMailbox.data_len ) {
-    setPeriodicity( XdrvMailbox.data, XdrvMailbox.data_len );
+    //verify convertibility
+    uint32_t value = (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY));
+    SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, XdrvMailbox.data);
   }
 
-  uint32_t periodicity = getPeriodicity();
-  Response_P( "{ \"%s\": {\"%s\": \"%u\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", periodicity );
+  Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", SettingsText( SET_NOTARIZTATION_PERIODICITY) );
 
   CmndStatusResponse(23);
   ResponseClear();
@@ -824,7 +825,7 @@ void CmndBalance(void) {
   HTTPClientLight http;
   String uri = "/cosmos/bank/v1beta1/balances/";
 
-  uri = getPlanetmintAPI() + uri;
+  uri = SettingsText(SET_PLANETMINT_API)  + uri;
   uri = uri + getRDDLAddress() ;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
@@ -879,15 +880,12 @@ void CmndChallengeResponse(void) {
 void CmndPlanetmintDenom(void) {
   if( XdrvMailbox.data_len )
   {
-    setDenom((const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_DENOM, (const char*)XdrvMailbox.data);
   }
-  else
-  {
-    char* p_denom = getDenom();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTDENOM, p_denom );
-  }
-  
+
+  char* p_denom = SettingsText( SET_PLANETMINT_DENOM );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, p_denom );
+
   CmndStatusResponse(29);
   ResponseClear();
 }
@@ -895,14 +893,12 @@ void CmndPlanetmintDenom(void) {
 void CmndPlanetmintChainID(void) {
   if( XdrvMailbox.data_len )
   {
-    setChainID( (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_CHAINID, (const char*)XdrvMailbox.data);
+
   }
-  else
-  {
-    char* p_chainid = getChainID();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTCHAINID, p_chainid );
-  }
+
+  char* p_chainid = SettingsText( SET_PLANETMINT_CHAINID );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, p_chainid);
   
   CmndStatusResponse(30);
   ResponseClear();
@@ -914,7 +910,7 @@ void CmndMachineData(void) {
   HTTPClientLight http;
   String uri = "/planetmint/machine/get_machine_by_public_key/";
 
-  uri = getPlanetmintAPI() + uri;
+  uri = SettingsText(SET_PLANETMINT_API)  + uri;
   uri = uri + getExtPubKeyPlanetmint() ;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");

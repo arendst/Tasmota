@@ -368,86 +368,11 @@ String registerCID(const char* cid){
 
   return jwt_token;
 }
-
-char g_planetmintapi[100] = {0};
-char g_chainid[30] = {0};
-char g_denom[20] = {0};
-uint32_t g_periodicity = 0;
-
-void setPlanetmintAPI( const char* api, size_t len)
-{
-  rddl_writefile( "planetmintapi", (uint8_t*)api, len);
-  memset((void*)g_planetmintapi,0, 100);
-}
-char* getPlanetmintAPI()
-{
-  if( strlen( g_planetmintapi) == 0 ){
-    if( !readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100))
-      memset((void*)g_planetmintapi,0, 100);
-    if( strlen( g_planetmintapi) == 0 )
-      strcpy(g_planetmintapi, "https://testnet-api.rddl.io");
-  }
-
-  return g_planetmintapi;
-}
-
-void setDenom( const char* denom, size_t len)
-{
-  rddl_writefile( "planetmintdenom", (uint8_t*)denom, len);
-  memset((void*)g_denom,0, 20);
-}
-char* getDenom()
-{
-  if( strlen( g_denom) == 0 ){
-    if( !readfile( "planetmintdenom", (uint8_t*)g_denom, 20) )
-      memset((void*)g_denom,0, 100);
-    if( strlen( g_denom) == 0 )
-      strcpy(g_denom, "plmnt");
-  }
-
-  return g_denom;
-}
-
-void setChainID( const char* chainid, size_t len)
-{
-  rddl_writefile( "planetmintchainid", (uint8_t*)chainid, len);
-  memset((void*)g_chainid,0, 30);
-}
-char* getChainID()
-{
-  if( strlen( g_chainid) == 0 ){
-    if( !readfile( "planetmintchainid", (uint8_t*)g_chainid, 30) )
-      memset((void*)g_chainid,0, 100);
-    if( strlen( g_chainid) == 0 )
-      strcpy(g_chainid, "planetmint-testnet-1");
-  }
-  return g_chainid;
-}
-
-void setPeriodicity( const char* periodicity, size_t len)
-{
-  rddl_writefile( "periodicity", (uint8_t*)periodicity, len);
-  g_periodicity = 0;
-}
-uint32_t getPeriodicity()
-{
-  if( g_periodicity == 0 ){
-    char buffer[30] = {0};
-    if( !readfile( "periodicity", (uint8_t*)buffer, 30) )
-      g_periodicity = 0;
-    g_periodicity =atoi( (const char*)buffer );
-    
-    if( g_periodicity == 0 )
-      g_periodicity = RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS;
-  }
-  return g_periodicity;
-}
-
   
 int broadcast_transaction( char* tx_payload ){
   HTTPClientLight http;
   String uri = "/cosmos/tx/v1beta1/txs";
-  uri = getPlanetmintAPI() + uri;
+  uri = SettingsText(SET_PLANETMINT_API)  + uri;
   http.begin(uri);
   http.addHeader("accept", "application/json");
   http.addHeader("Content-Type", "application/json");
@@ -466,7 +391,7 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
   HTTPClientLight http;
   String uri = "/cosmos/auth/v1beta1/account_info/";
 
-  uri = getPlanetmintAPI() + uri;
+  uri = SettingsText(SET_PLANETMINT_API)  + uri;
   uri = uri + g_address;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
@@ -493,7 +418,7 @@ bool hasMachineBeenAttested()
   HTTPClientLight http;
 
   String uri = "/planetmint/machine/get_machine_by_public_key/";
-  uri = getPlanetmintAPI() + uri;
+  uri = SettingsText(SET_PLANETMINT_API)  + uri;
   uri = uri + g_ext_pub_key_planetmint;
   http.begin(uri);
   http.addHeader("Content-Type", "application/json");
@@ -514,12 +439,12 @@ char* create_transaction( void* anyMsg, char* tokenAmount )
   }
 
   Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
-  coin.denom = getDenom();
+  coin.denom = SettingsText( SET_PLANETMINT_DENOM );
   coin.amount = tokenAmount;
   
   uint8_t* txbytes = NULL;
   size_t tx_size = 0;
-  char* chain_id = getChainID();
+  char* chain_id = SettingsText( SET_PLANETMINT_CHAINID );
   int ret = prepareTx( (Google__Protobuf__Any*)anyMsg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
   if( ret < 0 )
     return NULL;
@@ -752,13 +677,12 @@ void RDDLNotarize(){
 
 void RDDLNetworkNotarizationScheduler(){
   ++counted_seconds;
-  if( counted_seconds >= getPeriodicity())
+  if( counted_seconds >= (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY)))
   {
     counted_seconds=0;
     RDDLNotarize();
   }
 }
-
 
 /*********************************************************************************************\
  * Interface
@@ -775,7 +699,6 @@ bool Xdrv129(uint32_t function) {
       break;
     case FUNC_COMMAND:
       RDDLNotarize();
-      result = true;
       break;
     case FUNC_PRE_INIT:
       RDDLNetworkSettingsLoad(0);
@@ -784,6 +707,7 @@ bool Xdrv129(uint32_t function) {
       // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
       break;
   }
+  result = true;
   return result;
 }
 
