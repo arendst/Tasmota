@@ -1387,6 +1387,12 @@ void SettingsDefaultSet2(void) {
   Settings->flag5 = flag5;
   Settings->flag6 = flag6;
   Settings->mbflag2 = mbflag2;
+
+  SettingsUpdateText( SET_PLANETMINT_API, "https://testnet-api.rddl.io");
+  SettingsUpdateText( SET_PLANETMINT_CHAINID, "planetmint-testnet-1");
+  SettingsUpdateText( SET_PLANETMINT_DENOM, "plmnt");
+  SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, "3600");
+  
 }
 
 void SettingsDefaultSet3(void) {

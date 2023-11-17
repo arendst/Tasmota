@@ -42,8 +42,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_ZIGBEE_BATTPERCENT "|"
   D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
-  D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
-  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|"
+  D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
+  D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
+  D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" 
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -84,9 +85,10 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
-  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmndBalance, 
-  &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
-  &CmndAttestMachine, 
+  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
+  &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
+  &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
+  &CmndNotarizationPeriodicity, &CmndNotarize, 
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -755,11 +757,14 @@ void CmndPublicKeys(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
-  getPlntmntKeys();
-
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
-  
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+      "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
+  }
   CmndStatusResponse(21);
   ResponseClear();
 }
@@ -770,11 +775,31 @@ void CmndPlanetmintAPI(void)
 
   if( XdrvMailbox.data_len )
   {
-    setPlanetmintAPI((const char*)XdrvMailbox.data, XdrvMailbox.data_len);
+    SettingsUpdateText( SET_PLANETMINT_API, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", getPlanetmintAPI() );
+  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", SettingsText(SET_PLANETMINT_API) );
   CmndStatusResponse(22);
+  ResponseClear();
+}
+
+void CmndNotarizationPeriodicity(void) {
+  if( XdrvMailbox.data_len ) {
+    //verify convertibility
+    uint32_t value = (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY));
+    SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, XdrvMailbox.data);
+  }
+
+  Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", SettingsText( SET_NOTARIZTATION_PERIODICITY) );
+
+  CmndStatusResponse(23);
+  ResponseClear();
+}
+
+void CmndNotarize(void) {
+  RDDLNotarize();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_NOTARIZE, "finished" );
+  CmndStatusResponse(24);
   ResponseClear();
 }
 
@@ -799,35 +824,41 @@ void CmdResolveCid(void) {
 
 void CmndBalance(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/cosmos/bank/v1beta1/balances/";
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_BALANCE, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/cosmos/bank/v1beta1/balances/";
 
-  uri = getPlanetmintAPI() + uri;
-  uri = uri + getRDDLAddress() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getRDDLAddress() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
+  }
   CmndStatusResponse(26);
   ResponseClear();
 }
 
 void CmndGetAccountID()
 {
-  getPlntmntKeys();
   uint64_t account_id = 0;
   uint64_t sequence = 0;
-  bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
-  if( !gotAccountID )
+  if( !getPlntmntKeys() )
   {
-    char* paccountid = getAccountID();
-    account_id = (uint64_t) atoi( (const char*) paccountid);
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "Initialize Keys first (Mnemonic)");
+  } else {
+    bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
+    if( !gotAccountID ){
+      Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
+    } else {
+      Response_P("{ \"%s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
+    }
   }
-  ResponseAppend_P("{ %s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
-
 
   CmndStatusResponse(27);
   ResponseClear();
@@ -860,15 +891,12 @@ void CmndChallengeResponse(void) {
 void CmndPlanetmintDenom(void) {
   if( XdrvMailbox.data_len )
   {
-    setDenom((const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_DENOM, (const char*)XdrvMailbox.data);
   }
-  else
-  {
-    char* p_denom = getDenom();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTDENOM, p_denom );
-  }
-  
+
+  char* p_denom = SettingsText( SET_PLANETMINT_DENOM );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, p_denom );
+
   CmndStatusResponse(29);
   ResponseClear();
 }
@@ -876,14 +904,12 @@ void CmndPlanetmintDenom(void) {
 void CmndPlanetmintChainID(void) {
   if( XdrvMailbox.data_len )
   {
-    setChainID( (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_CHAINID, (const char*)XdrvMailbox.data);
+
   }
-  else
-  {
-    char* p_chainid = getChainID();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTCHAINID, p_chainid );
-  }
+
+  char* p_chainid = SettingsText( SET_PLANETMINT_CHAINID );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, p_chainid);
   
   CmndStatusResponse(30);
   ResponseClear();
@@ -891,18 +917,21 @@ void CmndPlanetmintChainID(void) {
 
 void CmndMachineData(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/planetmint/machine/get_machine_by_public_key/";
+  if( !getPlntmntKeys() ){
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_MACHINEDATA, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/planetmint/machine/get_machine_by_public_key/";
 
-  uri = getPlanetmintAPI() + uri;
-  uri = uri + getExtPubKeyPlanetmint() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getExtPubKeyPlanetmint() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
+  }
   CmndStatusResponse(31);
   ResponseClear();
 }
