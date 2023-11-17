@@ -372,6 +372,7 @@ String registerCID(const char* cid){
 char g_planetmintapi[100] = {0};
 char g_chainid[30] = {0};
 char g_denom[20] = {0};
+uint32_t g_periodicity = 0;
 
 void setPlanetmintAPI( const char* api, size_t len)
 {
@@ -383,9 +384,10 @@ char* getPlanetmintAPI()
   if( strlen( g_planetmintapi) == 0 ){
     if( !readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100))
       memset((void*)g_planetmintapi,0, 100);
+    if( strlen( g_planetmintapi) == 0 )
+      strcpy(g_planetmintapi, "https://testnet-api.rddl.io");
   }
-  if( strlen( g_planetmintapi) == 0 )
-    strcpy(g_planetmintapi, "https://testnet-api.rddl.io");
+
   return g_planetmintapi;
 }
 
@@ -399,9 +401,10 @@ char* getDenom()
   if( strlen( g_denom) == 0 ){
     if( !readfile( "planetmintdenom", (uint8_t*)g_denom, 20) )
       memset((void*)g_denom,0, 100);
+    if( strlen( g_denom) == 0 )
+      strcpy(g_denom, "plmnt");
   }
-  if( strlen( g_denom) == 0 )
-    strcpy(g_denom, "plmnt");
+
   return g_denom;
 }
 
@@ -415,11 +418,29 @@ char* getChainID()
   if( strlen( g_chainid) == 0 ){
     if( !readfile( "planetmintchainid", (uint8_t*)g_chainid, 30) )
       memset((void*)g_chainid,0, 100);
+    if( strlen( g_chainid) == 0 )
+      strcpy(g_chainid, "planetmint-testnet-1");
   }
-  if( strlen( g_chainid) == 0 )
-    strcpy(g_chainid, "planetmint-testnet-1");
-
   return g_chainid;
+}
+
+void setPeriodicity( const char* periodicity, size_t len)
+{
+  rddl_writefile( "periodicity", (uint8_t*)periodicity, len);
+  g_periodicity = 0;
+}
+uint32_t getPeriodicity()
+{
+  if( g_periodicity == 0 ){
+    char buffer[30] = {0};
+    if( !readfile( "periodicity", (uint8_t*)buffer, 30) )
+      g_periodicity = 0;
+    g_periodicity =atoi( (const char*)buffer );
+    
+    if( g_periodicity == 0 )
+      g_periodicity = RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS;
+  }
+  return g_periodicity;
 }
 
   
@@ -731,7 +752,7 @@ void RDDLNotarize(){
 
 void RDDLNetworkNotarizationScheduler(){
   ++counted_seconds;
-  if( counted_seconds >= RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS)
+  if( counted_seconds >= getPeriodicity())
   {
     counted_seconds=0;
     RDDLNotarize();

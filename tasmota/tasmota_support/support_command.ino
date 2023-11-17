@@ -42,8 +42,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_ZIGBEE_BATTPERCENT "|"
   D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
-  D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
-  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|"
+  D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
+  D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
+  D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" 
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -84,9 +85,10 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
-  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmndBalance, 
-  &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
-  &CmndAttestMachine, 
+  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
+  &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
+  &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
+  &CmndNotarizationPeriodicity, &CmndNotarize, 
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -778,6 +780,25 @@ void CmndPlanetmintAPI(void)
   ResponseClear();
 }
 
+void CmndNotarizationPeriodicity(void) {
+  if( XdrvMailbox.data_len ) {
+    setPeriodicity( XdrvMailbox.data, XdrvMailbox.data_len );
+  }
+
+  uint32_t periodicity = getPeriodicity();
+  Response_P( "{ \"%s\": {\"%s\": \"%u\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", periodicity );
+
+  CmndStatusResponse(23);
+  ResponseClear();
+}
+
+void CmndNotarize(void) {
+  RDDLNotarize();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_NOTARIZE, "finished" );
+  CmndStatusResponse(24);
+  ResponseClear();
+}
+
 void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
@@ -821,13 +842,11 @@ void CmndGetAccountID()
   uint64_t account_id = 0;
   uint64_t sequence = 0;
   bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
-  if( !gotAccountID )
-  {
-    char* paccountid = getAccountID();
-    account_id = (uint64_t) atoi( (const char*) paccountid);
+  if( !gotAccountID ){
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
+  } else {
+    Response_P("{ \"%s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
   }
-  ResponseAppend_P("{ %s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
-
 
   CmndStatusResponse(27);
   ResponseClear();
