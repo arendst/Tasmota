@@ -993,7 +993,11 @@ extern "C" void ARDUINO_ISR_ATTR pinMode(uint8_t pin, uint8_t mode) {
   __pinMode(pin, mode);
 #ifdef CONFIG_IDF_TARGET_ESP32C3
   // See GpioForceHoldRelay() below
-  gpio_hold_dis((gpio_num_t)pin);      // Allow state change
+  static uint64_t pin_hold_mask = 0;
+  if (!bitRead(pin_hold_mask, pin)) {
+    bitSet(pin_hold_mask, pin);
+    gpio_hold_dis((gpio_num_t)pin);    // Allow state change
+  }
 #endif
 }
 
@@ -1004,10 +1008,15 @@ void GpioForceHoldRelay(void) {
 
 //  gpio_force_hold_all();             // This will hold flash/serial too so do not use
 
-  uint16_t real_gpio = GPIO_REL1 << 5;
-  uint16_t mask = 0xFFE0;
-  for (uint32_t i = 0; i < nitems(TasmotaGlobal.gpio_pin); i++) {
-    if ((TasmotaGlobal.gpio_pin[i] & mask) == real_gpio) {
+  // Use current gpio config
+//  for (uint32_t i = 0; i < nitems(TasmotaGlobal.gpio_pin); i++) {
+//    if ((TasmotaGlobal.gpio_pin[i] & 0xFFE0) == GPIO_REL1 << 5) {
+  // Use future gpio config
+  myio template_gp;
+  TemplateGpios(&template_gp);
+  for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
+    if (((Settings->my_gp.io[i] & 0xFFE0) == GPIO_REL1 << 5) ||
+        ((template_gp.io[i] & 0xFFE0) == GPIO_REL1 << 5)) {
       gpio_hold_en((gpio_num_t)i);     // Retain the state when the chip or system is reset, for example, when watchdog time-out or Deep-sleep
     }
   }
