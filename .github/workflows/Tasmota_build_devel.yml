@@ -177,7 +177,7 @@ jobs:
           - tasmota32s3cdc
           - tasmota32solo1
           - tasmota32c2-arduino30
-          - tasmota32c6-arduino30
+          - tasmota32c6cdc-arduino30
     steps:
       - uses: actions/checkout@v3
         with:
