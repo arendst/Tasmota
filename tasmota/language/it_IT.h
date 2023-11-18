@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 13.11.2023
+ * Updated until v9.4.0.1 - Last update 18.11.2023
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -288,7 +288,7 @@
 #define D_RESET_CONFIGURATION          "Impostazioni predefinite"
 #define D_BACKUP_CONFIGURATION         "Salva impostazioni"
 #define D_RESTORE_CONFIGURATION        "Carica impostazioni"
-#define D_START_RESTORE                "Start restore"
+#define D_START_RESTORE                "Avvia ripristino"
 #define D_MAIN_MENU                    "Menu principale"
 
 #define D_MODULE_PARAMETERS  "Parametri modulo"
@@ -1219,6 +1219,7 @@
 
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "Dose media radiazioni"
+#define D_AVG_RAD_DOSE                    "Radiazioni"
 #define D_UNIT_US_H                       "µSv/h"
 
 #endif  // _LANGUAGE_IT_IT_H_
