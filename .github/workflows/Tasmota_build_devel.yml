@@ -176,6 +176,8 @@ jobs:
           - tasmota32s3
           - tasmota32s3cdc
           - tasmota32solo1
+          - tasmota32c2-arduino30
+          - tasmota32c6-arduino30
     steps:
       - uses: actions/checkout@v3
         with:
@@ -188,6 +190,9 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+          cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Run PlatformIO
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v3
         with:
@@ -225,6 +230,9 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+          cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Run PlatformIO
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v3
         with:
