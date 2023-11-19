@@ -158,7 +158,7 @@
 #define D_PRESSURE "Luftdruck"
 #define D_PRESSUREATSEALEVEL "Luftdruck auf Meereshöhe"
 #define D_PROGRAM_FLASH_SIZE "Flash nutzbar"
-#define D_PROGRAM_SIZE "Größe Programm"
+#define D_PROGRAM_SIZE "Programmgröße"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regen"
 #define D_RANGE "Bereich"
@@ -1070,14 +1070,14 @@
 #define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Verwalte Dateisystem"
+#define D_MANAGE_FILE_SYSTEM   "Dateisystem verwalten"
 #define D_FS_SIZE              "Größe"
 #define D_FS_FREE              "Frei"
 #define D_NEW_FILE             "neue-datei.txt"
-#define D_CREATE_NEW_FILE      "Datei erstellen und bearbeiten"
+#define D_CREATE_NEW_FILE      "Neue Datei erstellen"
 #define D_EDIT_FILE            "Datei bearbeiten"
-#define D_CONFIRM_FILE_DEL     "Datei löschen bestätigen"
-#define D_SHOW_HIDDEN_FILES    "Zeige versteckte Datei(en)"
+#define D_CONFIRM_FILE_DEL     "Datei wirklich löschen?"
+#define D_SHOW_HIDDEN_FILES    "Versteckte Datei(en) anzeigen"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Umgebung:"
