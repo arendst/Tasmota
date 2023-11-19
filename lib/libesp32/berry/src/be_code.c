@@ -478,11 +478,7 @@ static int exp2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
             reg = e->v.idx;
         } else {
             /* otherwise, we allocate a new register or use the target provided */
-            if (dst < 0) {
-                reg = be_code_allocregs(finfo, 1);
-            } else {
-                reg = dst;
-            }
+            reg = (dst < 0) ? be_code_allocregs(finfo, 1) : dst;
         }
         be_code_conjump(finfo, &e->t, jpt);
         pcf = code_bool(finfo, reg, 0, 1);
@@ -690,16 +686,20 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 
 /* Assign expr e2 to e1 */
 /* e1 must be in a register and have a valid idx */
-/* if `keep_reg` is true, do not release registre */
+/* if `keep_reg` is true, do not release register */
 /* return 1 if assignment was possible, 0 if type is not compatible */
 int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 {
+    /* free_e2 indicates special case where ETINDEX or ETMEMBER need to be freed if top of registers */
+    bbool free_e2 = (e2->type == ETINDEX || e2->type == ETMEMBER) && (e2->v.ss.idx != e1->v.idx) && (e2->v.ss.idx == finfo->freereg - 1);
     int src = exp2reg(finfo, e2,
         e1->type == ETLOCAL ? e1->v.idx : -1); /* Convert e2 to kreg */
         /* If e1 is a local variable, use the register */
 
     if (!keep_reg && (e1->type != ETLOCAL || e1->v.idx != src)) {
         free_expreg(finfo, e2); /* free source (checks only ETREG) */ /* TODO e2 is at top */
+    } else if (!keep_reg && free_e2) {
+        be_code_freeregs(finfo, 1);
     }
     switch (e1->type) {
     case ETLOCAL: /* It can't be ETREG. */

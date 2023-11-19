@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Matter flow sensor (#19961)
 - Berry ``gpio.dac_voltage()`` regression from v13.1.0.1 (#19997)
 - ESP32-C3 ledlink functionality regression from v13.1.0.2
+- Fix Berry parser error in specific cases
 
 ### Removed
 
