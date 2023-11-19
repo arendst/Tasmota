@@ -10052,7 +10052,11 @@ const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
       "}"
       "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
+#ifdef USE_BACK_COMPAT_JS
+      "x.onreadystatechange=function(){"
+#else
       "x.onreadystatechange=()=>{"
+#endif
         "if(x.readyState==4&&x.status==200){"
         //  "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
           "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\");"

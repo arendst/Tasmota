@@ -531,7 +531,11 @@ const char HTTP_SCRIPT_XFER_STATE[] PROGMEM =
   "function z9(){"
     "if(x!=null){x.abort();}"       // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
+#ifdef USE_BACK_COMPAT_JS
+    "x.onreadystatechange=function(){"
+#else
     "x.onreadystatechange=()=>{"
+#endif
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText;"
         "if(s!=7){"                 // ZBU_UPLOAD

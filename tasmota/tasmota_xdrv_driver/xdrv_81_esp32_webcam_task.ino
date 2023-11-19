@@ -2229,8 +2229,11 @@ void WcPicSetup(void) {
 #endif  
 }
 
-
+#ifdef USE_BACK_COMPAT_JS
+const char HTTP_WEBCAM_MENUVIDEOCONTROL[] PROGMEM = "<p></p><button onclick=\"fetch('/cs?c2=64&c1=%s').then(function(){location.reload();});\" name>%s</button>";
+#else
 const char HTTP_WEBCAM_MENUVIDEOCONTROL[] PROGMEM = "<p></p><button onclick=\"fetch('/cs?c2=64&c1=%s').then(()=>{location.reload();});\" name>%s</button>";
+#endif
 
 void WcShowStream(void) {
   // if streaming is enabled (1 or 2), start stream server
@@ -2258,7 +2261,11 @@ void WcShowStream(void) {
   // spare15 is 'hide cam on menu'
   if (!Settings->webcam_config.spare15 && Settings->webcam_config.stream && Wc.CamServer && Wc.up!=0) {
     // Give the webcam webserver some time to prepare the stream - catch error in JS
+#ifdef USE_BACK_COMPAT_JS
+    WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(function(){this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
+#else
     WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
+#endif
     WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcmenuvideooff", "Turn Off Video");
   }
 }

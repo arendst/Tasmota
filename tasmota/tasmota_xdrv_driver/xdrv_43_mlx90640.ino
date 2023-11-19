@@ -97,7 +97,12 @@ const char HTTP_MLX90640_1_SNS_COMPRESSED[] PROGMEM = "\x3D\x3C\x1F\xF4\x65\x2A\
 #else
 const char HTTP_MLX90640_1_SNS[] PROGMEM =
     "<script type='text/javascript'>"
+#ifdef USE_BACK_COMPAT_JS
+   #warning("TODO: create the mapping function equivalent")
         "const map=(value,x1,y1,x2,y2)=>(value-x1)*(y2-x2)/(y1-x1)+x2;"
+#else
+        "const map=(value,x1,y1,x2,y2)=>(value-x1)*(y2-x2)/(y1-x1)+x2;"
+#endif
         "const image = new Image;"
         "var canvas,ctx,grd;"
         "var gPx,poi=[];var rA=[];" //gradient pixel, POI's, rawArray
@@ -114,6 +119,10 @@ const char HTTP_MLX90640_1_SNS[] PROGMEM =
   ;
 #endif //USE_UNISHOX_COMPRESSION
 #ifdef USE_UNISHOX_COMPRESSION
+
+#ifdef USE_BACK_COMPAT_JS
+ #warning("TODO: create the compressed constant")
+#else
 const size_t HTTP_MLX90640_2a_SNS_SIZE = 632;
 const char HTTP_MLX90640_2a_SNS_COMPRESSED[] PROGMEM = "\x33\xBF\xA0\xB7\x9A\x3E\x23\x8C\xF0\x5E\x74\x5B\xD4\xFE\x67\x61\x1D\xD3\x02\xF8"
                              "\x3A\xDC\xE3\xBA\x77\x91\xED\xF8\x47\x74\xFB\x16\x11\xF6\x75\x05\xBC\xCE\xF1\xE0"
@@ -140,16 +149,25 @@ const char HTTP_MLX90640_2a_SNS_COMPRESSED[] PROGMEM = "\x33\xBF\xA0\xB7\x9A\x3E
                              "\xC8\x70\xB3\x06\x1F\xCF\xB3\xC1\xB3\xE7\x4C\x18\xF8\xEE\x9F\x64\x3C\x4C\xA8\xFB"
                              "\x3A\x8F\xB3\xB0\x68\x46\xC3\xB4\x7D\x9D\xBF\x1D\xB3\xEC\xF8\x7D\x9D\xB3\x33\xAA"
                              "\xBE\x2D\x9D\xE3\xC1\xB3\xE7\x4F\x3E\x10\xEE\x9D\xE3\xC1\xEE\x3C\x1B";
+#endif
 #define  HTTP_MLX90640_2a_SNS       Decompress(HTTP_MLX90640_2a_SNS_COMPRESSED,HTTP_MLX90640_2a_SNS_SIZE).c_str()
 #else
 const char HTTP_MLX90640_2a_SNS[] PROGMEM =
   "var line = 0;"
+#ifdef USE_BACK_COMPAT_JS
+  "setInterval(function(){"
+#else
   "setInterval(()=>{"
+#endif
   "rl('ul',line);"   // 0 = do NOT force refresh
   "},200);"
   "function rl(s,v){"         //source, value
     "var xr=new XMLHttpRequest();"
+#ifdef USE_BACK_COMPAT_JS
+    "xr.onreadystatechange=function(){"
+#else
     "xr.onreadystatechange=()=>{"
+#endif
       "if(xr.readyState==4&&xr.status==200){"
             "var aB = xr.response;" // arrayBuffer
             "var i;"

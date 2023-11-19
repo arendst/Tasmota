@@ -64,9 +64,9 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <DNSServer.h>
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #include "./html_compressed/HTTP_HEADER1_ES6.h"
+  #include "compressed/HTTP_HEADER1_ES6.h"
 #else
-  #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
+  #include "uncompressed/HTTP_HEADER1_ES6.h"
 #endif
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
@@ -82,22 +82,22 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
 
 #ifdef USE_UNISHOX_COMPRESSION
   #ifdef USE_SCRIPT_WEB_DISPLAY
-    #include "./html_compressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
+    #include "compressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
   #else
-    #include "./html_compressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+    #include "compressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
   #endif
-  #include "./html_compressed/HTTP_SCRIPT_ROOT_PART2.h"
+  #include "compressed/HTTP_SCRIPT_ROOT_PART2.h"
 #else
   #ifdef USE_SCRIPT_WEB_DISPLAY
-    #include "./html_uncompressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
+    #include "uncompressed/HTTP_SCRIPT_ROOT_WEB_DISPLAY.h"
   #else
     #ifdef USE_WEB_SSE
-      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_SSE_NO_WEB_DISPLAY.h"
+      #include "uncompressed/HTTP_SCRIPT_ROOT_SSE_NO_WEB_DISPLAY.h"
     #else
-      #include "./html_uncompressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
+      #include "uncompressed/HTTP_SCRIPT_ROOT_NO_WEB_DISPLAY.h"
     #endif  // USE_WEB_SSE
   #endif
-  #include "./html_uncompressed/HTTP_SCRIPT_ROOT_PART2.h"
+  #include "uncompressed/HTTP_SCRIPT_ROOT_PART2.h"
 #endif
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
@@ -121,9 +121,9 @@ const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
   "setTimeout(function(){location.href='.';},%d);";
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
+  #include "compressed/HTTP_SCRIPT_CONSOL.h"
 #else
-  #include "./html_uncompressed/HTTP_SCRIPT_CONSOL.h"
+  #include "uncompressed/HTTP_SCRIPT_CONSOL.h"
 #endif
 
 const char HTTP_MODULE_TEMPLATE_REPLACE_INDEX[] PROGMEM =
@@ -132,11 +132,11 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #include "./html_compressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
-  #include "./html_compressed/HTTP_SCRIPT_TEMPLATE.h"
+  #include "compressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
+  #include "compressed/HTTP_SCRIPT_TEMPLATE.h"
 #else
-  #include "./html_uncompressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
-  #include "./html_uncompressed/HTTP_SCRIPT_TEMPLATE.h"
+  #include "uncompressed/HTTP_SCRIPT_MODULE_TEMPLATE.h"
+  #include "uncompressed/HTTP_SCRIPT_TEMPLATE.h"
 #endif
 
 #ifdef ESP8266
@@ -214,15 +214,15 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   "wl(i);";
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT.h"
-  #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT32.h"
-  #include "./html_compressed/HTTP_HEAD_STYLE1.h"
-  #include "./html_compressed/HTTP_HEAD_STYLE2.h"
+  #include "compressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "compressed/HTTP_HEAD_LAST_SCRIPT32.h"
+  #include "compressed/HTTP_HEAD_STYLE1.h"
+  #include "compressed/HTTP_HEAD_STYLE2.h"
 #else
-  #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
-  #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
-  #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
-  #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
+  #include "uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
+  #include "uncompressed/HTTP_HEAD_STYLE1.h"
+  #include "uncompressed/HTTP_HEAD_STYLE2.h"
 #endif
 
 #ifdef USE_ZIGBEE
@@ -230,9 +230,9 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
 // Battery icon from https://css.gg/battery
 //
   #ifdef USE_UNISHOX_COMPRESSION
-    #include "./html_compressed/HTTP_HEAD_STYLE_ZIGBEE.h"
+    #include "compressed/HTTP_HEAD_STYLE_ZIGBEE.h"
   #else
-    #include "./html_uncompressed/HTTP_HEAD_STYLE_ZIGBEE.h"
+    #include "uncompressed/HTTP_HEAD_STYLE_ZIGBEE.h"
   #endif
 #endif // USE_ZIGBEE
 

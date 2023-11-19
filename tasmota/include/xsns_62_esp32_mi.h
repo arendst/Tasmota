@@ -467,8 +467,13 @@ const char HTTP_MI32_SCRIPT_1[] PROGMEM =
   "function countUp(){let ti=document.querySelectorAll('.Ti');"
   "for(const el of ti){var t=parseInt(el.innerText);el.innerText=t+1;}}"
   "function update(){"
+#ifdef USE_BACK_COMPAT_JS
+    "fetch('/m32?wi=1').then(function(r){return r.text()})"   // TODO: fix this "=>"
+    ".then(function(r){"
+#else
     "fetch('/m32?wi=1').then(r=>r.text())"
     ".then((r)=>{"
+#endif
       // console.log(r); // optional
       "if(r.length>0){"
         "var d=document.createElement('div');"

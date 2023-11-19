@@ -1115,7 +1115,11 @@ void WcShowStream(void) {
     }
     if (Wc.CamServer && Wc.up!=0) {
       // Give the webcam webserver some time to prepare the stream - catch error in JS
+#ifdef USE_BACK_COMPAT_JS
+      WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(function(){this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
+#else
       WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
+#endif
     }
   }
 }

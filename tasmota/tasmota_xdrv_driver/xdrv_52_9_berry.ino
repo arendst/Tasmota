@@ -558,7 +558,11 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
       "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
+#ifdef USE_BACK_COMPAT_JS
+      "x.onreadystatechange=function(){"
+#else
       "x.onreadystatechange=()=>{"
+#endif
         "if(x.readyState==4&&x.status==200){"
           "var d,t1;"
           "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/,2);"  // Field separator

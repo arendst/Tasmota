@@ -1,6 +1,6 @@
 ###############################################################
-# compresses all files found in ..\..\tasmota\html_uncompressed
-# write compressed C code to    ..\..\tasmota\html_compressed
+# compresses all files found in ..\..\tasmota\html\uncompressed
+# write compressed C code to    ..\..\tasmota\html\compressed
 # Instructions:
 # open a console, e.g. in vscode, open a 'terminal'
 # cd .\tools\unishox
@@ -12,9 +12,9 @@
 #
 # Example Tasmota code:
 # #ifdef USE_UNISHOX_COMPRESSION
-#   #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
+#   #include "./html/compressed/HTTP_SCRIPT_CONSOL.h"
 # #else
-#   #include "./html_uncompressed/HTTP_SCRIPT_CONSOL.h"
+#   #include "./html/uncompressed/HTTP_SCRIPT_CONSOL.h"
 # #endif
 #
 ###############################################################
@@ -48,8 +48,12 @@ def extract_c_string(s: str) -> str:
         out += c
   return out
 
-path_compressed   = path.join('..','..','tasmota','html_compressed')
-path_uncompressed = path.join('..','..','tasmota','html_uncompressed')
+path_compressed   = path.join('..','..','tasmota','html_compat_js','compressed')
+path_uncompressed = path.join('..','..','tasmota','html_compat_js','uncompressed')
+#path_compressed   = path.join('..','..','tasmota','html','compressed')
+#path_uncompressed = path.join('..','..','tasmota','html','uncompressed')
+#path_compressed   = path.join('..','..','tasmota','html_compressed')
+#path_uncompressed = path.join('..','..','tasmota','html_uncompressed')
 
 files = listdir(path_uncompressed)
 
