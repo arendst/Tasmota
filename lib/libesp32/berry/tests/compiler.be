@@ -58,7 +58,7 @@ def f(a,b) return b end
 l = [1,2,3,4]
 assert(f(l[-1],l[-2]) == 3)
 
-# Compileation problem:
+# Compilation problem:
 # def test()
 #   var line = '1234567890'
 #   line = line[3..7]
