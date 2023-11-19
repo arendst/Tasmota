@@ -691,7 +691,7 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 {
     /* free_e2 indicates special case where ETINDEX or ETMEMBER need to be freed if top of registers */
-    bbool free_e2 = (e2->type == ETINDEX || e2->type == ETMEMBER) && (e2->v.idx != e1->v.idx) && (e2->v.ss.idx == finfo->freereg - 1);
+    bbool free_e2 = (e2->type == ETINDEX || e2->type == ETMEMBER) && (e2->v.ss.idx != e1->v.idx) && (e2->v.ss.idx == finfo->freereg - 1);
     int src = exp2reg(finfo, e2,
         e1->type == ETLOCAL ? e1->v.idx : -1); /* Convert e2 to kreg */
         /* If e1 is a local variable, use the register */
