@@ -37,6 +37,7 @@ uint8_t      client_next = 0;
 uint8_t     *tcp_buf = nullptr;     // data transfer buffer
 bool         ip_filter_enabled = false;
 IPAddress    ip_filter;
+bool         tcp_serial = false;
 
 #include <TasmotaSerial.h>
 TasmotaSerial *TCPSerial = nullptr;
@@ -57,8 +58,6 @@ void TCPLoop(void)
   uint8_t c;
   bool busy;    // did we transfer some data?
   int32_t buf_len;
-
-  if (!TCPSerial) return;
 
   // check for a new client connection
   if ((server_tcp) && (server_tcp->hasClient())) {
@@ -138,14 +137,21 @@ void TCPLoop(void)
 
 void TCPInit(void) {
   if (PinUsed(GPIO_TCP_RX) && PinUsed(GPIO_TCP_TX)) {
-    if (0 == (0x80 & Settings->tcp_config)) // !0x80 means unitialized
-      Settings->tcp_config = 0x80 | ParseSerialConfig("8N1"); // default as 8N1 for backward compatibility
+    if (0 == (0x80 & Settings->tcp_config)) {  // !0x80 means unitialized
+      Settings->tcp_config = 0x80 | ParseSerialConfig("8N1");  // default as 8N1 for backward compatibility
+    }
     tcp_buf = (uint8_t*) malloc(TCP_BRIDGE_BUF_SIZE);
-    if (!tcp_buf) { AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer")); return; }
+    if (!tcp_buf) { 
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer"));
+      return;
+    }
 
-    if (!Settings->tcp_baudrate)  { Settings->tcp_baudrate = 115200 / 1200; }
+    if (!Settings->tcp_baudrate) { 
+      Settings->tcp_baudrate = 115200 / 1200;
+    }
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
-    if (TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+    tcp_serial = TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));
+    if (tcp_serial) {
       if (TCPSerial->hardwareSerial()) {
         ClaimSerial();
       }
@@ -167,9 +173,6 @@ void TCPInit(void) {
 // Params: port,<IPv4 allow>
 //
 void CmndTCPStart(void) {
-
-  if (!TCPSerial) { return; }
-
   int32_t tcp_port = XdrvMailbox.payload;
   if (ArgC() == 2) {
     char sub_string[XdrvMailbox.data_len];
@@ -205,8 +208,6 @@ void CmndTCPStart(void) {
 }
 
 void CmndTCPBaudrate(void) {
-  if (!TCPSerial) { return; }
-
   if ((XdrvMailbox.payload >= 1200) && (XdrvMailbox.payload <= 115200)) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
     if (Settings->tcp_baudrate != XdrvMailbox.payload) {
@@ -220,8 +221,6 @@ void CmndTCPBaudrate(void) {
 }
 
 void CmndTCPConfig(void) {
-  if (!TCPSerial) { return; }
-
   if (XdrvMailbox.data_len > 0) {
     uint8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
     if ((serial_config >= 0) && (Settings->tcp_config != (0x80 | serial_config))) {
@@ -240,8 +239,6 @@ void CmndTCPConfig(void) {
 //
 void CmndTCPConnect(void) {
   int32_t tcp_port = XdrvMailbox.payload;
-
-  if (!TCPSerial) { return; }
 
   if (ArgC() == 2) {
     char sub_string[XdrvMailbox.data_len];
@@ -283,16 +280,17 @@ bool Xdrv41(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_LOOP:
-      TCPLoop();
-      break;
-    case FUNC_PRE_INIT:
-      TCPInit();
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kTCPCommands, TCPCommand);
-      break;
+  if (FUNC_PRE_INIT == function) {
+    TCPInit();
+  } else if (tcp_serial) {
+    switch (function) {
+      case FUNC_LOOP:
+        TCPLoop();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kTCPCommands, TCPCommand);
+        break;
+    }
   }
   return result;
 }
