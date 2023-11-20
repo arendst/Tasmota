@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.2.0.2 - Last update 16.11.2023
+ * Updated until v13.2.0.2 - Last update 19.11.2023
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -51,7 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
-#define D_ABSOLUTE_HUMIDITY "Abs. Feuchtigkeit"
+#define D_ABSOLUTE_HUMIDITY "Abs․ Feuchtigkeit"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Luftqualität"
 #define D_AP "AP"                    // Access Point
@@ -107,7 +107,7 @@
 #define D_FILE "Datei"
 #define D_FILE_SYSTEM_SIZE "Dateisystemgröße"
 #define D_FLOW_RATE "Durchflussmenge"
-#define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
+#define D_FRAGMENTATION "frag․"      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame Rate"
 #define D_FREE_MEMORY "Freier Arbeitsspeicher"
 #define D_PSR_MAX_MEMORY "PS-RAM Speicher"
@@ -158,7 +158,7 @@
 #define D_PRESSURE "Luftdruck"
 #define D_PRESSUREATSEALEVEL "Luftdruck auf Meereshöhe"
 #define D_PROGRAM_FLASH_SIZE "Flash nutzbar"
-#define D_PROGRAM_SIZE "Größe Programm"
+#define D_PROGRAM_SIZE "Programmgröße"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regen"
 #define D_RANGE "Bereich"
@@ -176,7 +176,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnetzmaske"
 #define D_SUBSCRIBE_TO "abonniere"
-#define D_UNSUBSCRIBE_FROM "löse abo. von"
+#define D_UNSUBSCRIBE_FROM "löse abo․ von"
 #define D_SUCCESSFUL "erfolgreich"
 #define D_SUNRISE "Sonnenaufgang"
 #define D_SUNSET "Sonnenuntergang"
@@ -230,7 +230,7 @@
 
 // support.ino
 #define D_OSWATCH "osWatch"
-#define D_BLOCKED_LOOP "Schleife blockiert."
+#define D_BLOCKED_LOOP "Schleife blockiert"
 #define D_WPS_FAILED_WITH_STATUS "WPS fehlgeschlagen mit Status"
 #define D_ACTIVE_FOR_3_MINUTES "aktiv für 3 Minuten"
 #define D_FAILED_TO_START "Starten fehlgeschlagen"
@@ -241,9 +241,9 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Verbindung fehlgeschlagen, da AP nicht erreicht werden konnte"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen, da der AP nicht antwortet (timeout)"
-#define D_ATTEMPTING_CONNECTION "Verbindungsversuch..."
-#define D_CHECKING_CONNECTION "Prüfe Verbindung..."
-#define D_QUERY_DONE "Suchanfrage abgeschlossen. MQTT-Services gefunden"
+#define D_ATTEMPTING_CONNECTION "Verbindungsversuch…"
+#define D_CHECKING_CONNECTION "Prüfe Verbindung…"
+#define D_QUERY_DONE "Suchanfrage abgeschlossen․ MQTT-Services gefunden"
 #define D_MQTT_SERVICE_FOUND "MQTT-Service gefunden bei"
 #define D_FOUND_AT "gefunden bei"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog-Host nicht gefunden"
@@ -397,9 +397,9 @@
 #define D_UPLOAD_ERR_1 "Keine Datei ausgewählt"
 #define D_UPLOAD_ERR_2 "Nicht genug Speicherplatz"
 #define D_UPLOAD_ERR_3 "Falsche Dateisignatur"
-#define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn. Flashspeicher"
+#define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn․ Flashspeicher"
 #define D_UPLOAD_ERR_5 "Upload Buffer Vergleich weicht ab"
-#define D_UPLOAD_ERR_6 "Upload fehlgeschlagen. Aktiviere logging 3"
+#define D_UPLOAD_ERR_6 "Upload fehlgeschlagen․ Aktiviere logging 3"
 #define D_UPLOAD_ERR_7 "Upload abgebrochen"
 #define D_UPLOAD_ERR_8 "Datei ungültig"
 #define D_UPLOAD_ERR_9 "Datei zu groß"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Benötige user=<Benutzername>&password=<Passwort>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert..."
+#define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert…"
 #define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
 #define D_RETRY_IN "Wiederversuch in"
 #define D_VERIFIED "verifiziert mit Fingerabdruck"
@@ -488,7 +488,7 @@
 #define D_KNX_COMMAND_READ "Lesen"
 #define D_KNX_COMMAND_OTHER "Andere"
 #define D_SENT_TO "gesendet an"
-#define D_KNX_WARNING "Die Gruppenadresse (0/0/0) ist reserviert und kann nicht verwendet werden."
+#define D_KNX_WARNING "Die Gruppenadresse (0/0/0) ist reserviert und kann nicht verwendet werden"
 #define D_KNX_ENHANCEMENT "Erweiterte Kommunikation"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
@@ -499,7 +499,7 @@
 #define D_ZIGBEE_PERMITJOIN_ACTIVE "Gerätekopplung erlaubt"
 #define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Karte"
 #define D_ZIGBEE_NOT_STARTED "Zigbee nicht gestartet"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s. verbleibend)"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s․ verbleibend)"
 #define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte"
 #define D_ZIGBEE_MAP_REFRESH "Zigbee Karte erneuern"
 #define D_ZIGBEE_MAP   "Zigbee Karte"
@@ -526,7 +526,7 @@
 // xdrv_89_dali.ino
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
-#define D_CONFIGURE_DALI                  "Konfig. DALI"
+#define D_CONFIGURE_DALI                  "Konfig․ DALI"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
@@ -592,9 +592,9 @@
 #define D_PROXIMITY "Nähe"
 
 // xsns_32_mpu6050.ino
-#define D_AX_AXIS "Beschl. X-Achse"
-#define D_AY_AXIS "Beschl. Y-Achse"
-#define D_AZ_AXIS "Beschl. Z-Achse"
+#define D_AX_AXIS "Beschl․ X-Achse"
+#define D_AY_AXIS "Beschl․ Y-Achse"
+#define D_AZ_AXIS "Beschl․ Z-Achse"
 #define D_GX_AXIS "Gyroskop X-Achse"
 #define D_GY_AXIS "Gyroskop Y-Achse"
 #define D_GZ_AXIS "Gyroskop Z-Achse"
@@ -1070,22 +1070,22 @@
 #define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Verwalte Dateisystem"
+#define D_MANAGE_FILE_SYSTEM   "Dateisystem verwalten"
 #define D_FS_SIZE              "Größe"
 #define D_FS_FREE              "Frei"
 #define D_NEW_FILE             "neue-datei.txt"
-#define D_CREATE_NEW_FILE      "Datei erstellen und bearbeiten"
+#define D_CREATE_NEW_FILE      "Neue Datei erstellen"
 #define D_EDIT_FILE            "Datei bearbeiten"
-#define D_CONFIRM_FILE_DEL     "Datei löschen bestätigen"
-#define D_SHOW_HIDDEN_FILES    "Zeige versteckte Datei(en)"
+#define D_CONFIRM_FILE_DEL     "Datei wirklich löschen?"
+#define D_SHOW_HIDDEN_FILES    "Versteckte Datei(en) anzeigen"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "Umgebung:"
-#define D_AS3935_ENERGY "Energie:"
-#define D_AS3935_DISTANCE "Entfernung:"
-#define D_AS3935_DISTURBER "Entstörer:"
-#define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "ca.:"
+#define D_AS3935_GAIN "Umgebung"
+#define D_AS3935_ENERGY "Energie"
+#define D_AS3935_DISTANCE "Entfernung"
+#define D_AS3935_DISTURBER "Entstörer"
+#define D_AS3935_VRMS "µVrms"
+#define D_AS3935_APRX "ca․"
 #define D_AS3935_AWAY "entfernt"
 #define D_AS3935_LIGHT "Blitz"
 #define D_AS3935_OUT "ausserhalb der Reichweite"
@@ -1096,13 +1096,13 @@
 #define D_AS3935_INTNOEV "Interrupt ohne Grund!"
 #define D_AS3935_FLICKER "IRQ Pin flackert!"
 #define D_AS3935_POWEROFF "Ausgeschaltet"
-#define D_AS3935_NOMESS "lausche..."
+#define D_AS3935_NOMESS "lausche…"
 #define D_AS3935_ON "An"
 #define D_AS3935_OFF "Aus"
 #define D_AS3935_INDOORS "Indoors"
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "Kalibrierung fehlerhaft"
-#define D_AS3935_CAL_OK "Cap gesetzt auf:"
+#define D_AS3935_CAL_OK "Cap gesetzt auf"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
@@ -1114,8 +1114,8 @@
 #define D_CURRENT_TARIFF  "Aktueller Tarif"
 #define D_TARIFF          "Tarif"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "max. Leistung"
-#define D_MAX_CURRENT     "max. Stromstärke"
+#define D_MAX_POWER       "max․ Leistung"
+#define D_MAX_CURRENT     "max․ Stromstärke"
 
 // xsns_79_as608.ino
 #define D_FP_ENROLL_PLACEFINGER "Finger auflegen"
