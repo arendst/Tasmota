@@ -1337,6 +1337,19 @@ void ebus_esc(uint8_t *ebus_buffer, unsigned char len) {
 
 }
 
+// check ebus escapes
+uint8_t check_ebus_esc(uint8_t *ebus_buffer, unsigned char len) {
+    short count,count1;
+    count1 = 0;
+    for (count = 0; count < len; count++) {
+        if (ebus_buffer[count] == EBUS_ESC) {
+            //found escape
+            count1++;
+        }
+    }
+    return count1;
+}
+
 uint8_t ebus_crc8(uint8_t data, uint8_t crc_init) {
 	uint8_t crc;
 	uint8_t polynom;
@@ -1568,16 +1581,16 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
       if (iob == EBUS_SYNC) {
         // should be end of telegramm
         // QQ,ZZ,PB,SB,NN ..... CRC, ACK SYNC
-        if (mp->spos > 4 + 5) {
+        if (mp->spos > 5 && mp->spos > mp->sbuff[4] + 5) {
           // get telegramm lenght
-          uint16_t tlen = mp->sbuff[4] + 5;
+          uint16_t tlen = mp->sbuff[4] + 5 + check_ebus_esc(mp->sbuff, mp->spos);
           // test crc
-          if (mp->sbuff[tlen] = ebus_CalculateCRC(mp->sbuff, tlen)) {
-              ebus_esc(mp->sbuff, tlen);
+          if (mp->sbuff[tlen] == ebus_CalculateCRC(mp->sbuff, tlen)) {
+              ebus_esc(mp->sbuff, mp->spos);
               SML_Decode(meters);
           } else {
               // crc error
-              //AddLog(LOG_LEVEL_INFO, PSTR("ebus crc error"));
+              AddLog(LOG_LEVEL_INFO, PSTR("ebus crc error"));
           }
         }
         mp->spos = 0;
