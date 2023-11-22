@@ -79,6 +79,10 @@ extern const bclass be_class_md5;
 const be_const_member_t be_crypto_members[] = {
   // name with prefix '/' indicates a Berry class
   // entries need to be sorted (ignoring the prefix char)
+#ifdef USE_BERRY_CRYPTO_AES_CBC
+  { "/AES_CBC", (intptr_t) &be_class_aes_cbc },
+#endif // USE_BERRY_CRYPTO_AES_CBC
+
 #ifdef USE_BERRY_CRYPTO_AES_CCM
   { "/AES_CCM", (intptr_t) &be_class_aes_ccm },
 #endif // USE_BERRY_CRYPTO_AES_CTR
@@ -90,10 +94,6 @@ const be_const_member_t be_crypto_members[] = {
 #ifdef USE_BERRY_CRYPTO_AES_GCM
   { "/AES_GCM", (intptr_t) &be_class_aes_gcm },
 #endif // USE_BERRY_CRYPTO_AES_GCM
-
-#ifdef USE_BERRY_CRYPTO_AES_CBC
-  { "/AES_CBC", (intptr_t) &be_class_aes_cbc },
-#endif // USE_BERRY_CRYPTO_AES_CBC
 
 #ifdef USE_BERRY_CRYPTO_EC_C25519
   { "/EC_C25519", (intptr_t) &be_class_ec_c25519 },
