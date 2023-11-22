@@ -63,6 +63,8 @@
 
 TasmotaSerial *TuyaSerial = nullptr;
 
+void TuyaSendCmd(uint8_t cmd, uint8_t payload[], uint16_t payload_len);
+
 struct TUYA {
   uint16_t Levels[5] = {0,0,0,0,0};       // Array to store the values of TuyaMCU channels
   uint16_t Snapshot[5] = {0,0,0,0,0};     // Array to store a snapshot of Tasmota actual channel values
@@ -170,9 +172,6 @@ TuyaSend6 11,ABCD -> Sends raw (Type 0) data to dpId
 */
 
 void CmndTuyaSend(void) {
-  if (XdrvMailbox.index > 6 && XdrvMailbox.index < 8) {
-    return;
-  }
   if (XdrvMailbox.index == 0) {
     TuyaRequestState(0);
     ResponseCmndDone();
@@ -211,6 +210,18 @@ void CmndTuyaSend(void) {
           TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
         } else if (6 == XdrvMailbox.index) {
           TuyaSendRaw(dpId, data);
+        } else if (7 == XdrvMailbox.index) {
+          uint8_t cmd = dpId;
+          // send ANY cmd with payload from hex string
+          // calculates length and checksum for you.
+          // like "0," to send a heartbeat, "3,4" to set wifi led mode,
+          // "0x1c,0110041305060702" - set local time
+          // sends immediately....
+          uint16_t strSize = strlen(data);
+          uint16_t len = strSize/2;
+          uint8_t value[len];
+          convertHexStringtoBytes(value, data, len);
+          TuyaSendCmd(cmd, value, len);
         }
         ResponseCmndDone();
       }
