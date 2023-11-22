@@ -84,7 +84,7 @@
 #define D_DATA "Данные"
 #define D_DARKLIGHT "Темный"
 #define D_DEBUG "Отладка"
-#define D_DEWPOINT "Dew point"
+#define D_DEWPOINT "Точка росы"
 #define D_DISABLED "Блокирован"
 #define D_MOVING_DISTANCE "Moving Distance"
 #define D_STATIC_DISTANCE "Static Distance"
