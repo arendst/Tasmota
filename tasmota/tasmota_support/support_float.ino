@@ -412,8 +412,13 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 
   uint32_t result;
   if ((num - from_min) < 0x8000L) {   // no overflow possible
-    uint32_t numerator = ((num - from_min) * 2 + 1) * (to_max - to_min + 1);
-    result = numerator / ((from_max - from_min + 1) * 2) + to_min;
+    if (to_max - to_min > from_max - from_min) {
+      uint32_t numerator = (num - from_min) * (to_max - to_min) * 2;
+      result = ((numerator / (from_max - from_min)) + 1 ) / 2 + to_min;
+    } else {
+      uint32_t numerator = ((num - from_min) * 2 + 1) * (to_max - to_min + 1);
+      result = numerator / ((from_max - from_min + 1) * 2) + to_min;
+    }
   } else {    // no pre-rounding since it might create an overflow
     uint32_t numerator = (num - from_min) * (to_max - to_min + 1);
     result = numerator / (from_max - from_min) + to_min;
