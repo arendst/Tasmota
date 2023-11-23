@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Matter update hierarchy of plugins (#19915)
 - NeoPool ``NPHydrolysis`` percent and unit (#19924)
 - Thermostat JSON index from 0 to 1 (#20011)
+- Fixed `changeUIntScale` for linearity when expanding range
 
 ### Fixed
 - Scripter timer issue (#19914)
