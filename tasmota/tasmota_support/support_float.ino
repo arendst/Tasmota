@@ -376,8 +376,8 @@ float sqrt1(const float x)
 //
 // New version, you don't need the "to_min < to_max" precondition anymore
 //
-// PRE-CONDITIONS (if not satisfied, you may 'halt and catch fire')
-//    from_min < from_max  (not checked)
+// PRE-CONDITIONS (if not satisfied, returns the smallest between to_min and to_max')
+//    from_min < from_max  (checked)
 //    from_min <= num <= from_max  (checked)
 // POST-CONDITIONS
 //    to_min <= result <= to_max
@@ -425,6 +425,38 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
   }
 
   return (uint32_t) (result > to_max ? to_max : (result < to_min ? to_min : result));
+}
+
+//
+// changeIntScale
+// Change a value for range a..b to c..d, for signed ints (16 bits max to avoid overflow)
+//
+// PRE-CONDITIONS (if not satisfied, returns the smallest between to_min and to_max')
+//    from_min < from_max  (checked)
+//    from_min <= num <= from_max  (checked)
+// POST-CONDITIONS
+//    to_min <= result <= to_max
+//
+int16_t changeIntScale(int16_t num, int16_t from_min, int16_t from_max,
+                                    int16_t to_min, int16_t to_max) {
+
+  // guard-rails
+  if (from_min >= from_max) {
+    return (to_min > to_max ? to_max : to_min);  // invalid input, return arbitrary value
+  }
+  int32_t from_offset = 0;
+  if (from_min < 0) {
+    from_offset = - from_min;
+  }
+  int32_t to_offset = 0;
+  if (to_min < 0) {
+    to_offset = - to_min;
+  }
+  if (to_max < (- to_offset)) {
+    to_offset = - to_max;
+  }
+
+  return changeUIntScale(num + from_offset, from_min + from_offset, from_max + from_offset, to_min + to_offset, to_max + to_offset) - to_offset;
 }
 
 // Force a float value between two ranges, and adds or substract the range until we fit

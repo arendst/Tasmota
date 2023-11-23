@@ -409,6 +409,24 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: tasmota.scale_int(int * 5) -> int
+  //
+  int32_t l_scaleint(struct bvm *vm);
+  int32_t l_scaleint(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 5 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5)) {
+      int32_t val = be_toint(vm, 1);
+      int32_t from_min = be_toint(vm, 2);
+      int32_t from_max = be_toint(vm, 3);
+      int32_t to_min = be_toint(vm, 4);
+      int32_t to_max = be_toint(vm, 5);
+      int32_t scaled = changeIntScale(val, from_min, from_max, to_min, to_max);
+      be_pushint(vm, scaled);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   int32_t l_respCmnd(bvm *vm);
   int32_t l_respCmnd(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
