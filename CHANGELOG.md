@@ -12,7 +12,8 @@ All notable changes to this project will be documented in this file.
 - NeoPool store settings on unified file system (#19973)
 - NeoPool command ``NPBoost`` (#19973)
 - ESP32 Partition Wizard can be loaded dynamically (#19980)
-- Berry `scale_int`, equivalent of `scale_uint` for signed integers
+- Berry `scale_int`, equivalent of `scale_uint` for signed integers (#20090)
+- ESP32 support for Avago Tech Bluetooth Buttons (#20088)
 
 ### Breaking Changed
 
@@ -20,7 +21,6 @@ All notable changes to this project will be documented in this file.
 - Matter update hierarchy of plugins (#19915)
 - NeoPool ``NPHydrolysis`` percent and unit (#19924)
 - Thermostat JSON index from 0 to 1 (#20011)
-- Fixed `changeUIntScale` for linearity when expanding range
 
 ### Fixed
 - Scripter timer issue (#19914)
@@ -28,7 +28,8 @@ All notable changes to this project will be documented in this file.
 - Matter flow sensor (#19961)
 - Berry ``gpio.dac_voltage()`` regression from v13.1.0.1 (#19997)
 - ESP32-C3 ledlink functionality regression from v13.1.0.2
-- Fix Berry parser error in specific cases
+- Berry parser error in specific cases (#20059)
+- ``changeUIntScale`` for linearity when expanding range (#20089)
 
 ### Removed
 
