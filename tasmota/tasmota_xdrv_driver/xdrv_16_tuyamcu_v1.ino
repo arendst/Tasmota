@@ -1395,13 +1395,14 @@ void TuyaSerialInput(void)
         Tuya.buffer[Tuya.byte_counter++] = 0xAA;
         Tuya.cmd_checksum = 0xFF;
       } else {
-        Tuya.byte_counter = 0;
+        Tuya.byte_counter = 0; // if not received 0xAA right after the 0x55, reset the state machine
       }
     }
     else if (Tuya.byte_counter < 5) {
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
       Tuya.cmd_checksum += serial_in_byte;
-      if (Tuya.byte_counter == 6) { // Get length of data
+      if (Tuya.byte_counter == 6) { 
+        // Get length of data, max buffer is 256 bytes, so only taking into account lowest byte of length
         Tuya.data_len = serial_in_byte + 6;
       }
     }
