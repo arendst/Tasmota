@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool store settings on unified file system (#19973)
 - NeoPool command ``NPBoost`` (#19973)
 - ESP32 Partition Wizard can be loaded dynamically (#19980)
+- Berry `scale_int`, equivalent of `scale_uint` for signed integers
 
 ### Breaking Changed
 
