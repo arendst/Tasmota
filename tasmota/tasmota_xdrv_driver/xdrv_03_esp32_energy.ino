@@ -1401,8 +1401,8 @@ void EnergyDrvInit(void) {
     EnergySettingsLoad(0);
     EnergyRtcSettingsLoad();
     AddLog(LOG_LEVEL_INFO, PSTR("NRG: Init driver %d"), TasmotaGlobal.energy_driver);
-  } else {
-    free(Energy);                       // No energy driver found so release memory
+//  } else {
+//    free(Energy);                       // No energy driver found so release memory
   }
 }
 
