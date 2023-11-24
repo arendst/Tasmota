@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-C3 ledlink functionality regression from v13.1.0.2
 - Berry parser error in specific cases (#20059)
 - ``changeUIntScale`` for linearity when expanding range (#20089)
+- ESP32 remove restart energy logging if no energy monitoring is selected
 
 ### Removed
 
