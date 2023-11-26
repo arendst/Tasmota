@@ -36,10 +36,6 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
     int len = 0;
     int headersize = 2 + systemTitleLength;
     ptr += systemTitleLength;
-#ifdef USE_IM350
-    len=*ptr;
-    ptr++;
-#else
     if(((*ptr) & 0xFF) == 0x81) {
         ptr++;
         len = *ptr;
@@ -62,8 +58,11 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
     // ???????? single frame did only decode with this compare
         ptr++;
         headersize++;
+    } else {
+        len = *ptr;
+        ptr++;
+        headersize++;
     }
-#endif
     if(len + headersize > ctx.length)
         return DATA_PARSE_INCOMPLETE;
 
