@@ -3356,9 +3356,13 @@ int WebQuery(char *buffer) {
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
-          const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
+          const char* read0 = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = read0;
+Serial.print("a=");Serial.println(read0);
           ResponseClear();
+Serial.print("b=");Serial.println(read0);
           Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
+Serial.print("c=");Serial.println(read0);
           char text[2] = { 0 };
           text[0] = *read++;
           bool assume_json = (text[0] == '{') || (text[0] == '[');
@@ -3374,7 +3378,9 @@ int WebQuery(char *buffer) {
             text[0] = *read++;
           }
           if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+Serial.print("y=");Serial.println(read0);
           ResponseJsonEnd();
+Serial.print("z=");Serial.println(read0);
 #ifdef USE_SCRIPT
           extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case
