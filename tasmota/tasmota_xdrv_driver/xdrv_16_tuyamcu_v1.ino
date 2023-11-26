@@ -1382,22 +1382,18 @@ void TuyaSerialInput(void)
     yield();
     uint8_t serial_in_byte = TuyaSerial->read();
     time_last_byte_received = millis();
-TuyaSerial->write(serial_in_byte);
     if (Tuya.byte_counter == 0) {
-digitalWrite(14,1);
       if (serial_in_byte == 0x55) {            // Start TUYA Packet
-digitalWrite(12,1);
         Tuya.buffer[Tuya.byte_counter++] = 0x55;
       }
     }
     else if (Tuya.byte_counter == 1) {
       if (serial_in_byte == 0xAA) { // Only packets with header 0x55AA are valid
-digitalWrite(13,1);
         Tuya.buffer[Tuya.byte_counter++] = 0xAA;
         Tuya.cmd_checksum = 0xFF;
       } else {
         Tuya.byte_counter = 0; // if not received 0xAA right after the 0x55, reset the state machine
-        AddLog(0,PSTR("TYA: 0x55 without 0x55"));
+        AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("TYA: 0x55 without 0xAA - resync"));
       }
     }
     else if (Tuya.byte_counter < 6) {
@@ -1405,17 +1401,16 @@ digitalWrite(13,1);
       Tuya.cmd_checksum += serial_in_byte;
       if (Tuya.byte_counter == 6) { 
         // Get length of data, max buffer is 256 bytes, so only taking into account lowest byte of length
-digitalWrite(15,1);
         Tuya.data_len = serial_in_byte + 6;
       }
     }
     else if (Tuya.byte_counter == Tuya.data_len) {
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
       if (Tuya.cmd_checksum == serial_in_byte) { // Compare checksum and process packet
-        AddLogBuffer(0,(uint8_t*)Tuya.buffer,Tuya.byte_counter);
+        AddLogBuffer(LOG_LEVEL_DEBUG_MORE,(uint8_t*)Tuya.buffer,Tuya.byte_counter);
         TuyaProcessMessage();
       } else {
-        AddLog(0,PSTR("TYA: checksum error: 0x%02X instead of 0x%02X"), serial_in_byte, Tuya.cmd_checksum);
+        AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("TYA: checksum error: 0x%02X instead of 0x%02X"), serial_in_byte, Tuya.cmd_checksum);
       }
       Tuya.byte_counter = 0;
     }
@@ -1429,13 +1424,9 @@ digitalWrite(15,1);
   }
   // reset the state machine if no bytes received since a long time
   if (Tuya.byte_counter > 0 && (millis() - time_last_byte_received) > TUYA_CMD_TIMEOUT) {
-digitalWrite(14,0);
-digitalWrite(12,0);
-digitalWrite(13,0);
-digitalWrite(15,0);
      Tuya.byte_counter = 0;
      time_last_byte_received = millis();
-     AddLog(0,PSTR("TYA: timeout"));
+     AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("TYA: serial receive timeout"));
    }
 }
 
@@ -1682,6 +1673,7 @@ bool Xdrv16(uint32_t function) {
   if (FUNC_MODULE_INIT == function) {
     result = TuyaModuleSelected();
     Tuya.active = result;
+    AddLog(LOG_LEVEL_DEBUG,PSTR("TYA: Active=%d"),Tuya.active);
   }
   else if (Tuya.active) {
     switch (function) {
