@@ -226,6 +226,7 @@ struct {
   void *beServerCB;
   uint8_t *beAdvBuf;
   uint8_t infoMsg = 0;
+  uint8_t role = 0;
 } MI32;
 
 struct mi_sensor_t{
@@ -473,8 +474,14 @@ const char HTTP_MI32_SCRIPT_1[] PROGMEM =
 ;
 
 const char HTTP_MI32_STYLE[] PROGMEM =
-  "<style onload=setTimeout(setUp,500)>.parent {display: flex;flex-wrap: wrap;justify-content: center;}svg{float:inline-end;}"
-  ".box {flex: 0 1 335px;margin: 5px;padding: 5px;border-radius: 0.8rem;background-color: rgba(221, 221, 221, 0.2);}</style>";
+  "<style onload=setTimeout(setUp,500)>body{display:flex;flex-direction:column;}"
+  ".parent{display:grid;grid-template-columns:repeat(auto-fill,350px);grid-template-rows:repeat(auto-fill,220px);"
+  "grid-auto-rows:220px;grid-auto-columns:350px;gap:1rem;justify-content:center;}"
+  "svg{float:inline-end;}"
+  ".box{padding:10px;border-radius:0.8rem;background-color:rgba(221, 221, 221, 0.2);}"
+  "@media screen and (min-width: 720px){.wide{grid-column:span 2;grid-row:span 1;}.big {grid-column:span 2;grid-row:span 2;}}"
+  ".tall {grid-column:span 1;grid-row:span 2;}"
+  "</style>";
 
 const char HTTP_MI32_STYLE_SVG[] PROGMEM =
   "<svg height='0'><defs><linearGradient id='grd%u'  x1='0%%' y1='0%%' x2='0%%' y2='15%%'>"
@@ -482,12 +489,15 @@ const char HTTP_MI32_STYLE_SVG[] PROGMEM =
   "<stop offset='1' stop-color='rgba(%u, %u, %u, 0)'/></linearGradient></defs></svg>"
   ;
 
+const char HTTP_MI32_PARENT_BLE_ROLE[] PROGMEM = "None|Observer|Peripheral|Central";
+
 const char HTTP_MI32_PARENT_START[] PROGMEM =
   "<div class='parent'>"
-      "<div class='box'><h2>MI32 Bridge</h2>"
-          "Observing <span id='numDev'>%u</span> devices<br>"
-          "Uptime: <span class='Ti'>%u</span> seconds<br>"
-          "Free Heap: %u kB"
+      "<div class='box tall'><h2>MI32 Bridge</h2>"
+          "Observing <span id='numDev'>%u</span> devices<br><br>"
+          "Uptime: <span class='Ti'>%u</span> seconds<br><br>"
+          "Free Heap: %u kB<br><br>"
+          "BLE Role: %s"
       "</div>";
 
 const char HTTP_MI32_WIDGET[] PROGMEM =
