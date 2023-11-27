@@ -526,11 +526,11 @@ int registerMachine(void* anyMsg, const char* machineCategory, const char* manuf
   Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
   machine.name = (char*)g_address;
   
-  // machine.ticker = NULL;                 //obsolete
-  // machine.domain = "lab.r3c.network";    //obsolete
-  // machine.reissue = false;               //obsolete
-  // machine.amount = 1;                    //obsolete
-  // machine.precision = 8;                 //obsolete
+  machine.ticker = NULL;                 //obsolete - in the future
+  machine.domain = "lab.r3c.network";    //obsolete - in the future
+  machine.reissue = false;               //obsolete - in the future
+  machine.amount = 1;                    //obsolete - in the future
+  machine.precision = 8;                 //obsolete - in the future
   
   machine.issuerplanetmint = g_ext_pub_key_planetmint;
   machine.issuerliquid = g_ext_pub_key_liquid;
