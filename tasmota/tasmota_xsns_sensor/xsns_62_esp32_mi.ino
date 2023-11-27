@@ -1019,6 +1019,7 @@ void MI32resumeScanTask(void){
 
 void MI32StartTask(uint32_t task){
   if (MI32.mode.willConnect == 1) return; // we are in the middle of connecting to something ... do not interrupt this.
+  MI32.role = 0;
   switch(task){
     case MI32_TASK_SCAN:
       if (MI32.mode.connected == 1) return;
@@ -1045,6 +1046,7 @@ void MI32StartScanTask(){
     if(MI32.ScanTask!=nullptr) vTaskDelete(MI32.ScanTask);
     MI32.mode.runningScan = 1;
     MI32.mode.deleteScanTask = 0;
+    MI32.role = 1;
     xTaskCreatePinnedToCore(
     MI32ScanTask,    /* Function to implement the task */
     "MI32ScanTask",  /* Name of the task */
@@ -1199,6 +1201,7 @@ bool MI32StartConnectionTask(){
     MI32.mode.willConnect = 1;
     MI32Scan->stop();
     MI32suspendScanTask();
+    MI32.role = 2;
     xTaskCreatePinnedToCore(
       MI32ConnectionTask,    /* Function to implement the task */
       "MI32ConnectionTask",  /* Name of the task */
@@ -1387,6 +1390,7 @@ bool MI32StartServerTask(){
       return false;
     }
   }
+  MI32.role = 3;
   xTaskCreatePinnedToCore(
     MI32ServerTask,    /* Function to implement the task */
     "MI32ServerTask",  /* Name of the task */
@@ -2125,7 +2129,11 @@ void MI32sendEnergyWidget(){
 #ifdef USE_WEBCAM
 void MI32sendCamWidget(){
     if (Wc.CamServer && Wc.up) {
-      WSContentSend_P(PSTR("<img class='box' id='cam' src='http://%_I:81/stream'>"),
+      WSContentSend_P(PSTR("<div class='box"));
+      if(Settings->webcam_config.resolution>7){
+        WSContentSend_P(PSTR(" big"));
+      }
+      WSContentSend_P(PSTR("' id='cam' style='background-image:url(http://%_I:81/stream);background-repeat:no-repeat;background-size:cover;'></div>"),
         (uint32_t)WiFi.localIP());
     }
 }
@@ -2242,7 +2250,6 @@ void MI32sendWidget(uint32_t slot){
 }
 
 void MI32InitGUI(void){
-  MI32suspendScanTask();
   MI32.widgetSlot=0;
   WSContentStart_P("m32");
   WSContentSend_P(HTTP_MI32_SCRIPT_1);
@@ -2252,11 +2259,15 @@ void MI32InitGUI(void){
   WSContentSend_P(HTTP_MI32_STYLE_SVG,2,151,190,216,151,190,216);
   WSContentSend_P(HTTP_MI32_STYLE_SVG,3,242,240,176,242,240,176);
 
-  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),ESP.getFreeHeap()/1024);
+  char _role[16];
+  GetTextIndexed(_role, sizeof(_role), MI32.role, HTTP_MI32_PARENT_BLE_ROLE);
+  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),ESP.getFreeHeap()/1024,_role);
 
-  for(uint32_t _slot = 0;_slot<MIBLEsensors.size();_slot++){
+  uint32_t _slot;
+  for(_slot = 0;_slot<MIBLEsensors.size();_slot++){
     MI32sendWidget(_slot);
   }
+
 #ifdef USE_MI_ESP32_ENERGY
   MI32sendEnergyWidget();
 #endif //USE_MI_ESP32_ENERGY
@@ -2266,7 +2277,6 @@ void MI32InitGUI(void){
   WSContentSend_P(PSTR("</div>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-  MI32resumeScanTask();
 }
 
 void MI32HandleWebGUI(void){

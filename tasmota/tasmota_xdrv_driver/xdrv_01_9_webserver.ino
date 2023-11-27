@@ -726,6 +726,9 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer '%s' denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."), referer.c_str());
     return false;
   } else {
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+    MI32suspendScanTask();
+#endif // defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     return true;
   }
 }
@@ -997,6 +1000,9 @@ void WSContentEnd(void) {
   WSContentFlush();                                // Flush chunk buffer
   _WSContentSend("");                              // Signal end of chunked content
   Webserver->client().stop();
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+  MI32resumeScanTask();
+#endif // defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
 }
 
 void WSContentStop(void) {
