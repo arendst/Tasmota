@@ -447,9 +447,9 @@ const char kUploadErrors[] PROGMEM =
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions { HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY };
-enum WebCmndStatus { WEBCMND_DONE=0, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR
+enum WebCmndStatus { WEBCMND_DONE, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR, WEBCMND_VALID_RESPONSE
 #ifdef USE_WEBGETCONFIG
-  , WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
+  ,WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
 #endif // USE_WEBGETCONFIG
                    };
 
@@ -3353,19 +3353,25 @@ int WebQuery(char *buffer) {
       else return status;
 
       if (http_code > 0) {                    // http_code will be negative on error
-        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
+        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
           // Return received data to the user - Adds 900+ bytes to the code
           String response = http.getString();  // File found at server - may need lot of ram or trigger out of memory!
           const char* read = response.c_str();
-          ResponseClear();
+
+//          uint32_t len = response.length() + 1;
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Response '%*_H' = %s"), len, (uint8_t*)read, read);
+
           Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
-          char text[2] = { 0 };
+          char text[3] = { 0 };               // Make room foor double %
           text[0] = *read++;
           bool assume_json = (text[0] == '{') || (text[0] == '[');
           if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
           while (text[0] != '\0') {
             if (text[0] > 31) {               // Remove control characters like linefeed
+              if ('%' == text[0]) {           // Fix char string expansion for %
+                text[1] = '%';
+              }
               if (assume_json) {
                 if (ResponseAppend_P(text) == ResponseSize()) { break; };
               } else {
@@ -3373,6 +3379,7 @@ int WebQuery(char *buffer) {
               }
             }
             text[0] = *read++;
+            text[1] = '\0';
           }
           if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
           ResponseJsonEnd();
@@ -3381,9 +3388,9 @@ int WebQuery(char *buffer) {
           // recursive call must be possible in this case
           tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBQUERY));
+          status = WEBCMND_VALID_RESPONSE;
+        } else
 #endif  // USE_WEBSEND_RESPONSE
-        }
         status = WEBCMND_DONE;
       } else {
         status = WEBCMND_CONNECT_FAILED;
@@ -3490,7 +3497,7 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR
+const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR "|" 
 #ifdef USE_WEBGETCONFIG
   "|" D_JSON_FILE_NOT_FOUND "|" D_JSON_OTHER_HTTP_ERROR "|" D_JSON_CONNECTION_LOST "|" D_JSON_INVALID_FILE_TYPE
 #endif // USE_WEBGETCONFIG
@@ -3642,17 +3649,20 @@ void CmndWebSend(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
-    char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    if (result != WEBCMND_VALID_RESPONSE) {
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    }
   }
 }
 
-void CmndWebQuery(void)
-{
+void CmndWebQuery(void) {
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebQuery(XdrvMailbox.data);
-    char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    if (result != WEBCMND_VALID_RESPONSE) {
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    }
   }
 }
 

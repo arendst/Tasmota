@@ -165,6 +165,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool filtration mode display [#19801](https://github.com/arendst/Tasmota/issues/19801)
 - Zero-Cross Dimmer for ESP32 with Core3 [#19929](https://github.com/arendst/Tasmota/issues/19929)
 - ``changeUIntScale`` for linearity when expanding range [#20089](https://github.com/arendst/Tasmota/issues/20089)
+- ``WebQuery`` response buffer corruption and format character ``%`` [#20111](https://github.com/arendst/Tasmota/issues/20111)
 - ESP32 I2C allow bus2 support when bus1 is not enabled
 - ESP32 remove restart energy logging if no energy monitoring is selected
 - ESP32 IR receive with Arduino Core 3 [#19904](https://github.com/arendst/Tasmota/issues/19904)

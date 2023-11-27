@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Berry parser error in specific cases (#20059)
 - ``changeUIntScale`` for linearity when expanding range (#20089)
 - ESP32 remove restart energy logging if no energy monitoring is selected
+- ``WebQuery`` response buffer corruption and format character ``%`` (#20111)
 
 ### Removed
 
