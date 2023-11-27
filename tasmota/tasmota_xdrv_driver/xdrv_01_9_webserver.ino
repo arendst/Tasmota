@@ -3356,39 +3356,43 @@ int WebQuery(char *buffer) {
 #ifdef USE_WEBSEND_RESPONSE
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
           // Return received data to the user - Adds 900+ bytes to the code
-          String response = http.getString();  // File found at server - may need lot of ram or trigger out of memory!
+          String response = http.getString(); // File found at server - may need lot of ram or trigger out of memory!
           const char* read = response.c_str();
 
 //          uint32_t len = response.length() + 1;
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Response '%*_H' = %s"), len, (uint8_t*)read, read);
 
-          Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
           char text[3] = { 0 };               // Make room foor double %
           text[0] = *read++;
-          bool assume_json = (text[0] == '{') || (text[0] == '[');
-          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-          while (text[0] != '\0') {
-            if (text[0] > 31) {               // Remove control characters like linefeed
-              if ('%' == text[0]) {           // Fix char string expansion for %
-                text[1] = '%';
+          if (text[0] != '\0') {
+            Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
+            bool assume_json = (text[0] == '{') || (text[0] == '[');
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            while (text[0] != '\0') {
+              if (text[0] > 31) {             // Remove control characters like linefeed
+                if ('%' == text[0]) {         // Fix char string formatting for %
+                  text[1] = '%';
+                }
+                if (assume_json) {
+                  if (ResponseAppend_P(text) == ResponseSize()) { break; };
+                } else {
+                  if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
+                }
               }
-              if (assume_json) {
-                if (ResponseAppend_P(text) == ResponseSize()) { break; };
-              } else {
-                if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
-              }
+              text[0] = *read++;
+              text[1] = '\0';
             }
-            text[0] = *read++;
-            text[1] = '\0';
-          }
-          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-          ResponseJsonEnd();
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            ResponseJsonEnd();
 #ifdef USE_SCRIPT
-          extern uint8_t tasm_cmd_activ;
-          // recursive call must be possible in this case
-          tasm_cmd_activ = 0;
+            extern uint8_t tasm_cmd_activ;
+            // recursive call must be possible in this case
+            tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
-          status = WEBCMND_VALID_RESPONSE;
+            status = WEBCMND_VALID_RESPONSE;
+          } else {
+            status = WEBCMND_DONE;
+          }
         } else
 #endif  // USE_WEBSEND_RESPONSE
         status = WEBCMND_DONE;
