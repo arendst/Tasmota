@@ -3356,7 +3356,8 @@ int WebQuery(char *buffer) {
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
-          const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
+          String response = http.getString();  // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = response.c_str();
           ResponseClear();
           Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
           char text[2] = { 0 };
