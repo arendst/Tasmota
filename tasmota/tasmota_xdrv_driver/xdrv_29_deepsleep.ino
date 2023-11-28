@@ -38,7 +38,7 @@
 
 const uint32_t DEEPSLEEP_MAX = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
 const uint32_t DEEPSLEEP_MAX_CYCLE = 60 * 60;            // Maximum time for a deepsleep as defined by chip hardware
-const uint32_t DEEPSLEEP_MIN_TIME = 5;                   // Allow 5 seconds skew
+const uint32_t DEEPSLEEP_MIN_TIME = 15;                  // Allow 15 seconds skew
 const uint32_t DEEPSLEEP_START_COUNTDOWN = 4;            // Allow 4 seconds to update web console before deepsleep
 
 const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
@@ -53,7 +53,7 @@ uint8_t deepsleep_flag = 0;
 bool DeepSleepEnabled(void)
 {
   if ((Settings->deepsleep < 10) || (Settings->deepsleep > DEEPSLEEP_MAX)) {
-    Settings->deepsleep = 0;     // Issue #6961
+    Settings->deepsleep = 0;    // Issue #6961
     return false;               // Disabled
   }
 
@@ -144,7 +144,7 @@ void DeepSleepCalculate()
         // day_bitarray>0 otherwhise no weekday selected
         // rule keyword "Wakeup"
         // Timer action: rule
-        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && POWER_BLINK == xtimer.power) {
+        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled, 0) && POWER_BLINK == xtimer.power) {
 #ifdef USE_SUNRISE
           if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
             ApplyTimerOffsets(&xtimer);
@@ -206,7 +206,7 @@ void DeepSleepStart(void)
   if (RtcSettings.nextwakeup <= (LocalTime() + DEEPSLEEP_MIN_TIME)) {
     // ensure nextwakeup is at least in the future, and add 5%
     RtcSettings.nextwakeup += (((LocalTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings->deepsleep) + 1) * Settings->deepsleep;
-    RtcSettings.nextwakeup += Settings->deepsleep * 0.05;
+    //RtcSettings.nextwakeup += Settings->deepsleep * 0.05;
     //AddLog(LOG_LEVEL_DEBUG, PSTR("DSL: Time too short: time %ld, next %ld, slip %ld"), timeslip, RtcSettings.nextwakeup, RtcSettings.deepsleep_slip);
   }
 
@@ -269,7 +269,7 @@ void CmndDeepsleepTime(void)
      ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < DEEPSLEEP_MAX))) {
     Settings->deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
-    deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : DEEPSLEEP_START_COUNTDOWN;
+    deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : DEEPSLEEP_START_COUNTDOWN + (ResetReason() != REASON_DEEP_SLEEP_AWAKE?60:0);
     if (deepsleep_flag) {
       if (!Settings->tele_period) {
         Settings->tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
@@ -294,7 +294,7 @@ bool Xdrv29(uint32_t function)
       break;
     case FUNC_AFTER_TELEPERIOD:
         if (DeepSleepEnabled() && !deepsleep_flag && (Settings->tele_period == 10 || Settings->tele_period == 300 || millis() > 20000)) {
-          // on initial start the device will be 64 seconds awake. This allows to make changes
+          // on initial start the device will be 40 seconds awake. This allows to make changes
           deepsleep_flag = DEEPSLEEP_START_COUNTDOWN + (ResetReason() != REASON_DEEP_SLEEP_AWAKE?60:0);  // Start deepsleep in 4 seconds
         }
       break;
