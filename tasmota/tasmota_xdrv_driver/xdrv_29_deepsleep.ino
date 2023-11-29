@@ -258,8 +258,9 @@ void DeepSleepEverySecond(void)
     }
     return; 
   }
-  if (!Settings->flag3.timers_enable || !bitRead(Settings->rule_enabled | Settings->rule_once, 0) ) { 
-    deepsleep_flag = 0; 
+  if (GetRule(0) == "Wakeup" && ( !Settings->flag3.timers_enable || !bitRead(Settings->rule_enabled | Settings->rule_once, 0) )) { 
+    deepsleep_flag = 0;
+    Settings->deepsleep = 0;
     return; 
   }
 #endif
