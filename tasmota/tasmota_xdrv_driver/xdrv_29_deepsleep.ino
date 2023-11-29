@@ -1,4 +1,4 @@
-/*
+c/*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
   Copyright (C) 2023  Stefan Bode
@@ -52,6 +52,9 @@ uint8_t deepsleep_flag = 0;
 
 bool DeepSleepEnabled(void)
 {
+  if (GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled | Settings->rule_once, 0)) {
+    return true;
+  }
   if ((Settings->deepsleep < 10) || (Settings->deepsleep > DEEPSLEEP_MAX)) {
     Settings->deepsleep = 0;    // Issue #6961
     return false;               // Disabled
@@ -133,7 +136,7 @@ void DeepSleepCalculate()
   
   // default add to the next wakeup. May be overwritten by "Wakeup" rule
   RtcSettings.nextwakeup += Settings->deepsleep;
-#if defined(USE_RULES) || defined(USE_SCRIPT)
+#if defined(USE_RULES)
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
     if (Settings->flag3.timers_enable) { 
@@ -144,7 +147,7 @@ void DeepSleepCalculate()
         // day_bitarray>0 otherwhise no weekday selected
         // rule keyword "Wakeup"
         // Timer action: rule
-        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled, 0) && POWER_BLINK == xtimer.power) {
+        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled | Settings->rule_once, 0) && POWER_BLINK == xtimer.power) {
 #ifdef USE_SUNRISE
           if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
             ApplyTimerOffsets(&xtimer);
@@ -159,6 +162,8 @@ void DeepSleepCalculate()
       // we found a timer 604800 == seconds in one week
       if (secondsToTarget < 604800) {
         Settings->deepsleep = secondsToTarget;
+        // check if rule ist just once
+        bitWrite(Settings->rule_once, 0, 0);
         SettingsSaveAll();
         AddLog(LOG_LEVEL_DEBUG, PSTR("DSL: Wakeup: %ld [s]"), secondsToTarget);
         RtcSettings.nextwakeup = LocalTime() + secondsToTarget - (LocalTime() % 60);
@@ -245,8 +250,19 @@ void DeepSleepEverySecond(void)
     AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi no connect %d [s]. Deepsleep"), DEEPSLEEP_NETWORK_TIMEOUT);
     deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
   }
-
-  if (!deepsleep_flag) { return; }
+#if defined(USE_RULES)
+  if (!deepsleep_flag) { 
+    if (Settings->flag3.timers_enable && GetRule(0) == "Wakeup" 
+        && bitRead(Settings->rule_enabled | Settings->rule_once, 0) ) { 
+      deepsleep_flag = 60; 
+    }
+    return; 
+  }
+  if (!Settings->flag3.timers_enable || !bitRead(Settings->rule_enabled | Settings->rule_once, 0) ) { 
+    deepsleep_flag = 0; 
+    return; 
+  }
+#endif
   deepsleep_flag--;
   AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Countdown: %d"),deepsleep_flag);
   if (DeepSleepEnabled()) {
