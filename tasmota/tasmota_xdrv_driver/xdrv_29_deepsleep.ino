@@ -1,4 +1,4 @@
-c/*
+/*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
   Copyright (C) 2023  Stefan Bode
