@@ -136,7 +136,7 @@ void DeepSleepCalculate()
   
   // default add to the next wakeup. May be overwritten by "Wakeup" rule
   RtcSettings.nextwakeup += Settings->deepsleep;
-#if defined(USE_RULES)
+#if defined(USE_RULES) && defined(USE_TIMERS) 
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
     if (Settings->flag3.timers_enable) { 
@@ -170,7 +170,7 @@ void DeepSleepCalculate()
       }
     }
   } //if (RtcTime.valid)
-#endif  // USE_RULES
+#endif  // USE_RULES && TIMERS
 }
 
 
@@ -250,20 +250,27 @@ void DeepSleepEverySecond(void)
     AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi no connect %d [s]. Deepsleep"), DEEPSLEEP_NETWORK_TIMEOUT);
     deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
   }
-#if defined(USE_RULES)
+#if defined(USE_RULES) && defined(USE_TIMERS)
   if (!deepsleep_flag) { 
+    //AddLog(LOG_LEVEL_ERROR, PSTR("DSL: timers %d, rule: %d, once %d, comb %d, bitr %d"),Settings->flag3.timers_enable, Settings->rule_enabled, Settings->rule_once, Settings->rule_enabled | Settings->rule_once, bitRead(Settings->rule_enabled | Settings->rule_once, 0));
     if (Settings->flag3.timers_enable && GetRule(0) == "Wakeup" 
         && bitRead(Settings->rule_enabled | Settings->rule_once, 0) ) { 
+      //AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Start timer"));    
       deepsleep_flag = 60; 
     }
     return; 
   }
+  //AddLog(LOG_LEVEL_ERROR, PSTR("DSL: wakeup: %d, timer %d, rules %d"),GetRule(0) == "Wakeup", Settings->flag3.timers_enable, bitRead(Settings->rule_enabled | Settings->rule_once, 0));
   if (GetRule(0) == "Wakeup" && ( !Settings->flag3.timers_enable || !bitRead(Settings->rule_enabled | Settings->rule_once, 0) )) { 
     deepsleep_flag = 0;
     Settings->deepsleep = 0;
+    //AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Stop timer")); 
     return; 
   }
+#else
+  if (!deepsleep_flag) { return; }
 #endif
+
   deepsleep_flag--;
   AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Countdown: %d"),deepsleep_flag);
   if (DeepSleepEnabled()) {
