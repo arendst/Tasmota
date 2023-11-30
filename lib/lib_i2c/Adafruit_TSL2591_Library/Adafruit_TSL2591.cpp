@@ -117,7 +117,7 @@ enum
 Adafruit_TSL2591::Adafruit_TSL2591()
 {
   _initialized = false;
-  _integration = TSL2591_INTEGRATIONTIME_300MS;
+  _integration = TSL2591_INTEGRATIONTIME_100MS;
   _gain        = TSL2591_GAIN_MED;
 
   // we cant do wire initialization till later, because we havent loaded Wire yet
