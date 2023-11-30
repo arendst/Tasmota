@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.2.0.2
 ### Added
+- DeepSleep TIMER support [#20042](https://github.com/arendst/Tasmota/discussions/20042)
 - Command ``GpioRead`` to show input state [#19810](https://github.com/arendst/Tasmota/issues/19810)
 - I2C bus2 support to iAQ core sensor [#19799](https://github.com/arendst/Tasmota/issues/19799)
 - I2C bus2 support to HTU temperature and humidity sensor
