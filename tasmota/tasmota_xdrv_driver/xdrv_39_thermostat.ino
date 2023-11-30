@@ -1388,6 +1388,8 @@ uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
   return value;
 }
 
+#define TEMPLEN (4)
+
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
   String buf = ResponseData();   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
@@ -1398,9 +1400,9 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
     if (  (THERMOSTAT_SENSOR_NUMBER > 1)
         &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
         &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
-      char temp[4];
+      char temp[TEMPLEN];
       temp[0] = IndexSeparator();
-      snprintf(&temp[1], 4, "%u", (ctr_output + 1));
+      snprintf(&temp[1], TEMPLEN-1, "%u", (ctr_output + 1));
       sensor_name.concat(temp);
     }
     JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
