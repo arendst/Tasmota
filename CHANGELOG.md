@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Partition Wizard can be loaded dynamically (#19980)
 - Berry `scale_int`, equivalent of `scale_uint` for signed integers (#20090)
 - ESP32 support for Avago Tech Bluetooth Buttons (#20088)
+- DeepSleep support through TIMERS
 
 ### Breaking Changed
 
