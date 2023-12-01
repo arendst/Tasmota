@@ -108,8 +108,8 @@ bool tsl2591CommandSensor() {
   tsl.setGain(gain_enum_array[XdrvMailbox.payload-1]);
   tsl.setTiming(int_enum_array[value-1]);
 
-  Response_P(PSTR(" {Gain input = %d} {Gain hex = %d}"),XdrvMailbox.payload,tsl.getGain());
-  ResponseAppend_P(PSTR(" {Timing input = %d} {Timing hex = %d}"),value,tsl.getTiming());
+  Response_P(PSTR("{\"Gain input\":%d,\"Gain hex\":0x%x,"),XdrvMailbox.payload,tsl.getGain());
+  ResponseAppend_P(PSTR("\"Timing input\":%d,\"Timing hex\":0x0%x}"),value,tsl.getTiming());
   return serviced;
 }
 
