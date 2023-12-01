@@ -106,7 +106,7 @@ end
 #-
 
 var strip = Leds.matrix(5,5, gpio.pin(gpio.WS2812, 1))
-var r = Rainbow_Matrix(strip, 0.5)
+var r = Rainbow_stripes(strip, 0.5)
 r.start()
 
 -#
