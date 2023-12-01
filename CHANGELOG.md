@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.2.0.2]
+## [13.2.0.3]
+### Added
+- DeepSleep support through TIMERS (#20117)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.2.0.2] 20231130
 ### Added
 - Scripter TCP client (#19914)
 - Berry ``debug.gcdebug()`` to enable GC debugging (#19936)
@@ -14,9 +26,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Partition Wizard can be loaded dynamically (#19980)
 - Berry `scale_int`, equivalent of `scale_uint` for signed integers (#20090)
 - ESP32 support for Avago Tech Bluetooth Buttons (#20088)
-- DeepSleep support through TIMERS
-
-### Breaking Changed
 
 ### Changed
 - Matter update hierarchy of plugins (#19915)
@@ -33,9 +42,6 @@ All notable changes to this project will be documented in this file.
 - ``changeUIntScale`` for linearity when expanding range (#20089)
 - ESP32 remove restart energy logging if no energy monitoring is selected
 - ``WebQuery`` response buffer corruption and format character ``%`` (#20111)
-
-### Removed
-
 
 ## [13.2.0.1] 20231103
 ### Added
