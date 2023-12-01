@@ -1388,8 +1388,6 @@ uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
   return value;
 }
 
-#define TASMOTA_XDRV_39_THERMOSTAT_TEMPLEN (4)
-
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
   String buf = ResponseData();   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
@@ -1400,9 +1398,9 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
     if (  (THERMOSTAT_SENSOR_NUMBER > 1)
         &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
         &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
-      char temp[TASMOTA_XDRV_39_THERMOSTAT_TEMPLEN];
+      char temp[4];
       temp[0] = IndexSeparator();
-      snprintf(&temp[1], TASMOTA_XDRV_39_THERMOSTAT_TEMPLEN-1, "%u", (ctr_output + 1));
+      snprintf(&temp[1], sizeof(temp)-1, "%u", (ctr_output + 1));
       sensor_name.concat(temp);
     }
     JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
