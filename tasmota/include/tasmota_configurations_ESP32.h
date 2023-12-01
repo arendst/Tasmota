@@ -272,12 +272,16 @@
 
 #define USE_SDCARD
 
-#define USE_ADC
+#ifndef USE_BERRY_ULP                              // potential performance gains with ULP
+  #define USE_ADC                                  // so do not use common ADC funtions in that case
+#endif
 //#undef USE_BERRY                                 // Disable Berry scripting language
 
 #define USE_ETHERNET                             // Add support for ethernet (+20k code)
-#define USE_BLE_ESP32                            // Enable full BLE driver
-#define USE_EQ3_ESP32
+#ifndef USE_MI_EXT_GUI
+  #define USE_BLE_ESP32                            // Enable full BLE driver
+  #define USE_EQ3_ESP32
+#endif // USE_MI_EXT_GUI
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
 #endif  // FIRMWARE_BLUETOOTH
