@@ -1398,10 +1398,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
     if (  (THERMOSTAT_SENSOR_NUMBER > 1)
         &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
         &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
-      char temp[4];
-      temp[0] = IndexSeparator();
-      snprintf(&temp[1], sizeof(temp)-1, "%u", (ctr_output + 1));
-      sensor_name.concat(temp);
+      sensor_name.concat(IndexSeparator() + String(ctr_output + 1));
     }
     JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
     if (value_token.isNum()) {
