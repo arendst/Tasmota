@@ -52,9 +52,11 @@ uint8_t deepsleep_flag = 0;
 
 bool DeepSleepEnabled(void)
 {
+#if defined(USE_RULES) && defined(USE_TIMERS) 
   if (GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled | Settings->rule_once, 0)) {
     return true;
   }
+#endif
   if ((Settings->deepsleep < 10) || (Settings->deepsleep > DEEPSLEEP_MAX)) {
     Settings->deepsleep = 0;    // Issue #6961
     return false;               // Disabled
