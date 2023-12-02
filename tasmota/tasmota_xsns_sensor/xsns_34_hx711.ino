@@ -44,7 +44,7 @@
 #define HX_SCALE             120     // Default result of measured weight / reference weight when scale is 1
 #endif
 #ifndef HX711_CAL_PRECISION
-#define HX711_CAL_PRECISION  1     // When calibration is to course, raise this value.
+#define HX711_CAL_PRECISION  10     // When calibration is too course, raise this value.
 #endif
 
 
