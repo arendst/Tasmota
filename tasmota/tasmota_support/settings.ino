@@ -1762,6 +1762,11 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0D000003) {  // 13.0.0.3
       Settings->battery_level_percent = 101;
     }
+#if (LANGUAGE_LCID == 1049)
+    if (Settings->version < 0x0D020003) {  // 13.2.0.3
+      Settings->web_color[1][2] &= 0xFE;   // Reset WebColor2 bit0 once. Fix by user setting WebColor2 bit0 (like #252525)
+    }
+#endif
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

@@ -900,6 +900,13 @@ void WSContentSendStyle_P(const char* formatP, ...) {
     _WSContentSendBuffer(false, formatP, arg);
     va_end(arg);
   }
+
+#if defined(ESP32) || (LANGUAGE_LCID == 1049)
+  if (0 == (WebColor(COL_BACKGROUND) & 1)) {       // Show LHBT background if WebColor2 bit0 is not set
+    WSContentSend_P(PSTR("body{background:linear-gradient(#FF0018 7%%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%%);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"));
+  }
+#endif
+
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
   WebColor(COL_TEXT_WARNING),
