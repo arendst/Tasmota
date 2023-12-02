@@ -140,7 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DeepSleep support through TIMERS [#20117](https://github.com/arendst/Tasmota/issues/20117)
 - Support for ESP32-C2 and ESP32-C6 using Arduino core v3
 - ESP32 core v3 auto TasConsole USB or Serial connection by @staars
-- ESP32 show LHBT background if ``WebColor2`` bit0 is not set. Bit0 is default set using #252525
+- ESP32 show LGBT background if ``WebColor2`` bit0 is not set. Bit0 is default set using #252525
 - ESP32 Partition Wizard can be loaded dynamically [#19980](https://github.com/arendst/Tasmota/issues/19980)
 - ESP32 support for Avago Tech Bluetooth Buttons [#20088](https://github.com/arendst/Tasmota/issues/20088)
 - Berry ``debug.gcdebug()`` to enable GC debugging [#19936](https://github.com/arendst/Tasmota/issues/19936)
