@@ -247,7 +247,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_TEXT
+  "<div style='background:#%06x;text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_BACKGROUND, COLOR_TEXT
 #ifdef FIRMWARE_MINIMAL
 #ifdef FIRMWARE_SAFEBOOT
   "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEBOOT "</h3></span>"  // COLOR_TEXT_WARNING
@@ -902,12 +902,12 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   }
 
 #if defined(ESP32) || (LANGUAGE_LCID == 1049)
-  if (0 == (WebColor(COL_BACKGROUND) & 1)) {       // Show LGBT background if WebColor2 bit0 is not set
+  if (0 == (WebColor(COL_BACKGROUND) & 1)) {       // Show colorful background if WebColor2 bit0 is not set
     WSContentSend_P(PSTR("body{background:linear-gradient(#FF0018 7%%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%%);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"));
   }
 #endif
 
-  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
+  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_BACKGROUND), WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
   WebColor(COL_TEXT_WARNING),
 #endif

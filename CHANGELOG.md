@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.2.0.3]
 ### Added
 - DeepSleep support through TIMERS (#20117)
-- ESP32 show LGBT background if ``WebColor2`` bit0 is not set. Bit0 is default set using #252525
+- ESP32 show colorful background if ``WebColor2`` bit0 is not set. Bit0 is default set using #252525
 
 ### Breaking Changed
 
