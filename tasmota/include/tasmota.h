@@ -484,6 +484,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_SHD_PARAM,
                          SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET, SET_INFLUXDB_RP,
+                         SET_CANVAS,
                          SET_MAX, // limit of texts stored in Settings
                          // Index above are not stored in Settings and should be handled specifically in SettingText()
                          SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,

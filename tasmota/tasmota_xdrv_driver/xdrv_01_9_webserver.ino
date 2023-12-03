@@ -900,13 +900,10 @@ void WSContentSendStyle_P(const char* formatP, ...) {
     _WSContentSendBuffer(false, formatP, arg);
     va_end(arg);
   }
-
-#if defined(ESP32) || (LANGUAGE_LCID == 1049)
-  if (0 == (WebColor(COL_BACKGROUND) & 1)) {       // Show colorful background if WebColor2 bit0 is not set
-    WSContentSend_P(PSTR("body{background:linear-gradient(#FF0018 7%%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%%);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"));
+  if (strlen(SettingsText(SET_CANVAS))) {
+//    WSContentSend_P(PSTR("body{background:%s;background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"), SettingsText(SET_CANVAS));
+    WSContentSend_P(PSTR("body{background:%s 0 0 / cover no-repeat fixed;}"), SettingsText(SET_CANVAS));
   }
-#endif
-
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_BACKGROUND), WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
   WebColor(COL_TEXT_WARNING),
@@ -3514,6 +3511,10 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
 const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR "|" 
 #ifdef USE_WEBGETCONFIG
   "|" D_JSON_FILE_NOT_FOUND "|" D_JSON_OTHER_HTTP_ERROR "|" D_JSON_CONNECTION_LOST "|" D_JSON_INVALID_FILE_TYPE
@@ -3531,7 +3532,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
-  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_WEBCANVAS
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
 #endif
@@ -3552,7 +3553,7 @@ void (* const WebCommand[])(void) PROGMEM = {
   &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
-  &CmndWebColor, &CmndWebSensor, &CmndWebButton
+  &CmndWebColor, &CmndWebSensor, &CmndWebButton, &CmndWebCanvas
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
 #endif
@@ -3562,9 +3563,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #endif  // FIRMWARE_MINIMAL_ONLY
   };
 
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
+/*********************************************************************************************/
 
 void CmndWebTime(void) {
   // 2017-03-07T11:08:02-07:00
@@ -3769,6 +3768,23 @@ void CmndWebButton(void)
       ResponseCmndIdxChar(GetWebButton(XdrvMailbox.index -1));
     }
   }
+}
+
+void CmndWebCanvas(void) {
+  /*
+  WebCanvas allows GUI body canvas configuration using either "url" or "gradient".
+  The provided text overrules the body CSS background property "body{background:<WebCanvas> 0 0 / cover no-repeat fixed;}"
+  - WebCanvas "  // Reset canvas
+  - WebCanvas 0  // Reset canvas
+  - WebCanvas linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)  // Gradient pride flag
+  - WebCanvas linear-gradient(#FF0018 16%,#FFA52C 16% 33%,#FFFF41 33% 50%,#008018 50% 67%,#0000F9 67% 84%,#86007D 84%)  // Pride flag
+  - WebCanvas url(http://ota.tasmota.com/tasmota/images/prf.png)  // Pride flag
+  - WebCanvas url(http://ota.tasmota.com/tasmota/images/tasmota_logo.png)  // Tasmota logo
+  */
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_CANVAS, (SC_CLEAR == Shortcut()) ? "" : XdrvMailbox.data);
+  }
+  ResponseCmndChar(SettingsText(SET_CANVAS));
 }
 
 #ifdef USE_CORS

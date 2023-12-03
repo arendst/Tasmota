@@ -445,6 +445,7 @@
 #define D_CMND_WEBQUERY "WebQuery"
 #define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_WEBBUTTON "WebButton"
+#define D_CMND_WEBCANVAS "WebCanvas"
 #define D_CMND_WEBTIME "WebTime"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_WEBGETCONFIG "WebGetConfig"

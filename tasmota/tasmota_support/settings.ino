@@ -1764,7 +1764,7 @@ void SettingsDelta(void) {
     }
 #if (LANGUAGE_LCID == 1049)
     if (Settings->version < 0x0D020003) {  // 13.2.0.3
-      Settings->web_color[1][2] &= 0xFE;   // Reset WebColor2 bit0 once. Fix by user setting WebColor2 bit0 (like #252525)
+      SettingsUpdateText(SET_CANVAS, PSTR("linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)"));
     }
 #endif
 
