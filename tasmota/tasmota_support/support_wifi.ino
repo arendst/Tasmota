@@ -1168,7 +1168,12 @@ void EspRestart(void) {
     }
   }
   else if (TasmotaGlobal.restart_deepsleep) {  // Restart 9
+  #ifdef USE_DEEPSLEEP
+    DeepSleepStart();
+    // should never come to this line....
+  #endif
     ESP.deepSleep(0);         // Deep sleep mode with only hardware triggered wake up
+
   }
   else {
     ESP_Restart();
