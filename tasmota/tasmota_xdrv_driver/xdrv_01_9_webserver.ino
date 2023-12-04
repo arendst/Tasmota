@@ -3780,7 +3780,7 @@ void CmndWebCanvas(void) {
   - WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)        // Gradient pride flag
   - WebCanvas linear-gradient(#F02 16%,#F93 16% 33%,#FF4 33% 50%,#082 50% 67%,#00F 67% 84%,#708 84%)  // Pride flag
   - WebCanvas linear-gradient(90deg,#05A 33%,#FFF 33% 67%,#F43 67%)        // Flag France
-  - WebCanvas linear-gradient(#FFF 33%,#07D 33% 67%,#F34 67%)              // Flag The Netherlands
+  - WebCanvas linear-gradient(#059 33%,#FFF 33% 67%,#F43 67%)              // Flag The Netherlands
   - WebCanvas linear-gradient(#05B 50%,#FD0 50%)                           // Flag Ukraine
   - WebCanvas linear-gradient(#FFF 33%,#07D 33% 67%,#F34 67%)              // Flag Russia
   - WebCanvas url(http://ota.tasmota.com/tasmota/images/prf.png)           // Pride flag
