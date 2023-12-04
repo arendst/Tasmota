@@ -149,7 +149,7 @@ void DeepSleepCalculate()
         // day_bitarray>0 otherwhise no weekday selected
         // rule keyword "Wakeup"
         // Timer action: rule
-        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && bitRead(Settings->rule_enabled | Settings->rule_once, 0) && POWER_BLINK == xtimer.power) {
+        if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && (TasmotaGlobal.restart_deepsleep || bitRead(Settings->rule_enabled | Settings->rule_once, 0)) && POWER_BLINK == xtimer.power) {
 #ifdef USE_SUNRISE
           if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
             ApplyTimerOffsets(&xtimer);
@@ -210,7 +210,7 @@ void DeepSleepStart(void)
   AddLog(LOG_LEVEL_DEBUG, PSTR("DSL: Time %ld, next %ld, slip %ld"), timeslip, RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
   // It may happen that wakeup in just <5 seconds in future
   // In this case also add deepsleep to nextwakeup
-  if (RtcSettings.nextwakeup <= (LocalTime() + DEEPSLEEP_MIN_TIME)) {
+  if (RtcSettings.nextwakeup <= (LocalTime() + DEEPSLEEP_MIN_TIME) && Settings->deepsleep > 0 ) {
     // ensure nextwakeup is at least in the future, and add 5%
     RtcSettings.nextwakeup += (((LocalTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings->deepsleep) + 1) * Settings->deepsleep;
     //RtcSettings.nextwakeup += Settings->deepsleep * 0.05;
@@ -223,7 +223,9 @@ void DeepSleepStart(void)
   }
   // Limit sleeptime to DEEPSLEEP_MAX_CYCLE
   // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - LocalTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - LocalTime();
-  deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - LocalTime());
+  deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup>0?RtcSettings.nextwakeup - LocalTime():0);
+
+  
 
   // Sending Deepsleep parameters to automation for react
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"" D_PRFX_DEEPSLEEP "\":%d,\"Wakeup\":%d}}"), (char*)dt.c_str(), LocalTime(), RtcSettings.nextwakeup);
