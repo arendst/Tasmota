@@ -3772,13 +3772,18 @@ void CmndWebButton(void)
 
 void CmndWebCanvas(void) {
   /*
-  WebCanvas allows GUI body canvas configuration using either "url" or "gradient".
+  WebCanvas allows GUI body canvas configuration using a color, "url" or "gradient".
   The provided text overrules the body CSS background property "body{background:<WebCanvas> 0 0 / cover no-repeat fixed;}"
-  - WebCanvas "  // Reset canvas
-  - WebCanvas 0  // Reset canvas
-  - WebCanvas linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)  // Gradient pride flag
-  - WebCanvas linear-gradient(#FF0018 16%,#FFA52C 16% 33%,#FFFF41 33% 50%,#008018 50% 67%,#0000F9 67% 84%,#86007D 84%)  // Pride flag
-  - WebCanvas url(http://ota.tasmota.com/tasmota/images/prf.png)  // Pride flag
+  - WebCanvas "                                                            // Set canvas to WebColor2
+  - WebCanvas 0                                                            // Set canvas to WebColor2
+  - WebCanvas red                                                          // Red canvas
+  - WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)        // Gradient pride flag
+  - WebCanvas linear-gradient(#F02 16%,#F93 16% 33%,#FF4 33% 50%,#082 50% 67%,#00F 67% 84%,#708 84%)  // Pride flag
+  - WebCanvas linear-gradient(90deg,#05A 33%,#FFF 33% 67%,#F43 67%)        // Flag France
+  - WebCanvas linear-gradient(#FFF 33%,#07D 33% 67%,#F34 67%)              // Flag The Netherlands
+  - WebCanvas linear-gradient(#05B 50%,#FD0 50%)                           // Flag Ukraine
+  - WebCanvas linear-gradient(#FFF 33%,#07D 33% 67%,#F34 67%)              // Flag Russia
+  - WebCanvas url(http://ota.tasmota.com/tasmota/images/prf.png)           // Pride flag
   - WebCanvas url(http://ota.tasmota.com/tasmota/images/tasmota_logo.png)  // Tasmota logo
   */
   if (XdrvMailbox.data_len > 0) {

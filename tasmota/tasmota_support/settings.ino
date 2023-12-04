@@ -1764,7 +1764,7 @@ void SettingsDelta(void) {
     }
 #if (LANGUAGE_LCID == 1049)
     if (Settings->version < 0x0D020003) {  // 13.2.0.3
-      SettingsUpdateText(SET_CANVAS, PSTR("linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)"));
+      SettingsUpdateText(SET_CANVAS, PSTR("linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)"));
     }
 #endif
 
