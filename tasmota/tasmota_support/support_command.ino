@@ -20,7 +20,7 @@
 #include <string.h>
 #include "rddl.h"
 #include "planetmintgo.h"
-
+#include "rddlSDKAPI.h"
 
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
@@ -736,17 +736,9 @@ void CmndMemonic(void)
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
 
-  if( XdrvMailbox.data_len )
-  {
-    mnemonic = (char*)setSeed( XdrvMailbox.data, XdrvMailbox.data_len );
-  }
-  else
-  {
-    mnemonic = (char*)getMnemonic();
-    mnemonic = (char*)setSeed( mnemonic, strlen(mnemonic) );
-  }
-  storeSeed();
-  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC,mnemonic );
+  mnemonic = sdkSetSeed(XdrvMailbox.data, XdrvMailbox.data_len);
+  
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC, mnemonic );
 
   CmndStatusResponse(20);
   ResponseClear();
@@ -757,13 +749,13 @@ void CmndPublicKeys(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
-  if( !getPlntmntKeys() )
+  if( !sdkGetPlntmntKeys() )
   {
     Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
   }
   else {
     Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-      "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
+      "Address", sdkGetRDDLAddress(), "Liquid", sdkGetExtPubKeyLiquid(), "Planetmint", sdkGetExtPubKeyPlanetmint(), "Machine ID", sdkGetMachinePublicKey() );
   }
   CmndStatusResponse(21);
   ResponseClear();
@@ -1010,7 +1002,7 @@ void CmndAttestMachine(void) {
     // attest machine
     if( tokenCount > 0 && tokenCount < 4){
       ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, " valid set of params" );
-      runRDDLMachineAttestation( tokens[0], tokens[1], tokens[2] );
+      runRDDLSDKMachineAttestation( tokens[0], tokens[1], tokens[2] );
     }
 
     ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, XdrvMailbox.data );
@@ -1261,7 +1253,7 @@ void CmndStatus(void)
       int current_position  = ResponseLength();
       size_t data_length = (size_t)(current_position - start_position);
       const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
-      runRDDLNotarizationWorkflow(data_str, data_length);
+      runRDDLSDKNotarizationWorkflow(data_str, data_length);
       releaseNotarizationMutex();
     }
 #else

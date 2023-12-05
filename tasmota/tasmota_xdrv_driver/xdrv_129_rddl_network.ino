@@ -53,6 +53,8 @@
 #include "planetmintgo/asset/tx.pb-c.h"
 #include "google/protobuf/any.pb-c.h"
 
+#include "rddlSDKAPI.h"
+
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
@@ -675,7 +677,7 @@ void RDDLNotarize(){
     size_t data_length = (size_t)(current_position - start_position);
     const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
 
-    runRDDLNotarizationWorkflow(data_str, data_length);
+    runRDDLSDKNotarizationWorkflow(data_str, data_length);
     releaseNotarizationMutex();
   }
 }

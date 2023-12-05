@@ -1,3 +1,6 @@
 [submodule "docker"]
 	path = docker
 	url = https://github.com/rddl-network/docker-tasmota
+[submodule "lib/default/rddl-sdk"]
+	path = lib/default/rddl-sdk
+	url = https://github.com/rddl-network/rddl-sdk.git
