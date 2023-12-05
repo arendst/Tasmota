@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.2.0.3]
 ### Added
 - DeepSleep support through TIMERS (#20117)
-- Command ``WebCanvas linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)`` to set GUI canvas
+- Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
 
 ### Breaking Changed
 

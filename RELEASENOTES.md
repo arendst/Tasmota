@@ -119,7 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v13.2.0.3
 ### Added
 - Command ``GpioRead`` to show input state [#19810](https://github.com/arendst/Tasmota/issues/19810)
-- Command ``WebCanvas linear-gradient(#FF0018 7%,#FFA52C,#FFFF41,#008018,#0000F9,#86007D 93%)`` to set GUI canvas
+- Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
 - I2C bus2 support to iAQ core sensor [#19799](https://github.com/arendst/Tasmota/issues/19799)
 - I2C bus2 support to HTU temperature and humidity sensor
 - I2C bus2 support to BH1750 ambient light sensor
