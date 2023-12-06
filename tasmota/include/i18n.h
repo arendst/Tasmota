@@ -259,6 +259,7 @@
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"
 #define D_CMND_MNEMONIC "Mnemonic"
+#define D_CMND_STORESEED "StoreSeed"
 #define D_CMND_PUBLICKEYS "PublicKeys"
 #define D_CMND_PLANETMINTAPI "PlanetmintAPI"
 #define D_CMND_CHALLENGERESPONSE "ChallengeResponse"

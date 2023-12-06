@@ -41,7 +41,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_ZIGBEE_BATTPERCENT "|"
-  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
+  D_CMND_MNEMONIC "|" D_CMND_STORESEED "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" 
@@ -85,7 +85,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
-  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
+  &CmndMemonic, &CmndStoreSeed, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, 
@@ -744,6 +744,27 @@ void CmndMemonic(void)
   ResponseClear();
 
 }
+
+
+void CmndStoreSeed(void)
+{
+
+  if( XdrvMailbox.data_len == 128)
+  {
+    memcpy(secret_seed, fromHexString(XdrvMailbox.data), XdrvMailbox.data_len/2);
+    storeSeed();
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_STORESEED, "Seed Stored!");
+  }
+  else
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_STORESEED, "FAIL! SEED SIZE IS NOT 64 BYTES");
+  }
+
+  CmndStatusResponse(20);
+  ResponseClear();
+
+}
+
 
 void CmndPublicKeys(void)
 {
