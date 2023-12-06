@@ -600,6 +600,19 @@ class Partition
     end
   end
 
+  #- invalidate SPIFFS partition to force format at next boot -#
+  #- we simply erase the first byte of the first 2 blocks in the SPIFFS partition -#
+  def invalidate_spiffs()
+    import flash
+    #- we expect the SPIFFS partition to be the last one -#
+    var spiffs = self.slots[-1]
+    if !spiffs.is_spiffs() raise 'value_error', 'No FS partition found' end
+
+    var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
+    flash.write(spiffs.start         , b)    #- block #0 -#
+    flash.write(spiffs.start + 0x1000, b)    #- block #1 -#
+  end
+  
   # switch to safeboot `factory` partition
   def switch_factory(force_ota)
     import flash
