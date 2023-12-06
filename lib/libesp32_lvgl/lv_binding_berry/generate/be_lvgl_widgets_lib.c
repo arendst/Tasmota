@@ -907,12 +907,14 @@ extern int lvbe_table_set_col_cnt(bvm *vm);
 extern int lvbe_table_set_col_width(bvm *vm);
 extern int lvbe_table_add_cell_ctrl(bvm *vm);
 extern int lvbe_table_clear_cell_ctrl(bvm *vm);
+extern int lvbe_table_set_cell_user_data(bvm *vm);
 extern int lvbe_table_get_cell_value(bvm *vm);
 extern int lvbe_table_get_row_cnt(bvm *vm);
 extern int lvbe_table_get_col_cnt(bvm *vm);
 extern int lvbe_table_get_col_width(bvm *vm);
 extern int lvbe_table_has_cell_ctrl(bvm *vm);
 extern int lvbe_table_get_selected_cell(bvm *vm);
+extern int lvbe_table_get_cell_user_data(bvm *vm);
 
 /* `lv_textarea` external functions definitions */
 extern int lvbe_textarea_create(bvm *vm);

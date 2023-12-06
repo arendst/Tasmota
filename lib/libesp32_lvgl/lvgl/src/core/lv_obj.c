@@ -149,9 +149,9 @@ void lv_init(void)
     lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE);
 #endif
     /*Test if the IDE has UTF-8 encoding*/
-    char * txt = "Á";
+    const char * txt = "Á";
 
-    uint8_t * txt_u8 = (uint8_t *)txt;
+    const uint8_t * txt_u8 = (uint8_t *)txt;
     if(txt_u8[0] != 0xc3 || txt_u8[1] != 0x81 || txt_u8[2] != 0x00) {
         LV_LOG_WARN("The strings have no UTF-8 encoding. Non-ASCII characters won't be displayed.");
     }
@@ -861,6 +861,10 @@ static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e)
         if(layout || align || w == LV_SIZE_CONTENT || h == LV_SIZE_CONTENT) {
             lv_obj_mark_layout_as_dirty(obj);
         }
+    }
+    else if(code == LV_EVENT_CHILD_DELETED) {
+        obj->readjust_scroll_after_layout = 1;
+        lv_obj_mark_layout_as_dirty(obj);
     }
     else if(code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
         lv_coord_t d = lv_obj_calculate_ext_draw_size(obj, LV_PART_MAIN);

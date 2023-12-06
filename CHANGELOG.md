@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 LVGL library from v8.3.10 to v8.3.11 (no functional change)
 
 ### Fixed
 
