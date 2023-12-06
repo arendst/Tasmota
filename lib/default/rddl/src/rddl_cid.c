@@ -26,7 +26,7 @@ char* create_cid_v1_from_string(const char* data) {
     size_t input_length = SHA256_DIGEST_LENGTH + 4;  // calculate the length of the actual content to be encoded
     size_t buffer_size = (input_length + 4) / 5 * 8 + 1;  // calculate the buffer size for the base32-encoded string
 
-    char* base32_cid = (char*)getStack(buffer_size + 2);  // Allocate 2 extra bytes: one for the 'b' prefix and one for the null terminator
+    char* base32_cid = (char*)malloc(buffer_size + 2);  // Allocate 2 extra bytes: one for the 'b' prefix and one for the null terminator
     base32_cid[0] = 'b';  // Add 'b' prefix
     base32_encode(pre_encoded_cid, input_length, base32_cid + 1, buffer_size, BASE32_ALPHABET_RFC4648);
     string_to_lowercase(base32_cid);

@@ -87,7 +87,7 @@ const char* setSeed( char* pMnemonic, size_t len )
   if( !mnemonic_check( pMnemonic ) )
     return "";
 
-  mnemonic_to_seed(pMnemonic, "", secret_seed, 0);
+  mnemonic_to_seed(pMnemonic, "TREZOR", secret_seed, 0);
   return (const char*)pMnemonic;
 }
 
@@ -105,7 +105,7 @@ bool getSeedFromMnemonic( const char* pMnemonic, size_t len, uint8_t* seedbuffer
   if( !mnemonic_check( pMnemonic ) )
     return false;
   
-  mnemonic_to_seed(pMnemonic, "", seedbuffer, NULL);
+  mnemonic_to_seed(pMnemonic, "TREZOR", seedbuffer, NULL);
   return true;  
 }
 

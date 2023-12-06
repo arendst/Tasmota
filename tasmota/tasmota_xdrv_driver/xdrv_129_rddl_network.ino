@@ -33,8 +33,22 @@
 #define DRV_DEMO_MAX_DRV_TEXT  16
 #define RDDL_NETWORK_NOTARIZATION_TIMER_ONE_HOUR_IN_SECONDS (60*60)
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "planetmint.h"
+
+#include "hmac.h"
+#include "sha3.h"
+
+#include "base64_plntmnt.h"
+#include "ed25519.h"
+
+
+
 #include "rddl.h"
 #include "rddl_cid.h"
 #include "bip39.h"
