@@ -152,12 +152,6 @@ void getNotarizationMessage(){
   MqttShowSensor(false);
 }
 
-void storeSeed()
-{
-  rddl_writefile( (const char*)"seed", secret_seed, SEED_SIZE );
-  g_readSeed = false;
-}
-
 #define PUB_KEY_SIZE 33
 #define ADDRESS_HASH_SIZE 20
 #define ADDRESS_TAIL 20

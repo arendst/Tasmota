@@ -751,8 +751,7 @@ void CmndStoreSeed(void)
 
   if( XdrvMailbox.data_len == 128)
   {
-    memcpy(secret_seed, fromHexString(XdrvMailbox.data), XdrvMailbox.data_len/2);
-    storeSeed();
+    sdkStoreSeed((char*)fromHexString(XdrvMailbox.data));
     Response_P("{ \"%s\":\"%s\" }", D_CMND_STORESEED, "Seed Stored!");
   }
   else
