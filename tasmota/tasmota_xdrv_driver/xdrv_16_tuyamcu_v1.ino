@@ -390,11 +390,11 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
 #ifdef USE_TUYA_MCU_UPGRADE
 uint32_t TuyaMCUFlashFirmware(uint8_t * data, uint32_t size){
   uint32_t error = 0;
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade received via WebUpdate, binary-size: %d"), size);
+  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: received via WebUpdate, binary-size: %d"), size);
   
   Tuya.mcu_upg.binary_len = size;
   if (Tuya.mcu_upg.flash_buffer.init(size, data)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade start OTA transfer ... "));
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: start OTA transfer ... "));
     TuyaSendInitiateUpgrade();
   }
   else {
