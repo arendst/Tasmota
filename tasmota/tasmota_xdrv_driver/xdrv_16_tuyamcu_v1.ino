@@ -790,7 +790,7 @@ void TuyaSendUpgradePackage(bool next = false) {
 
       // This is the last package and it is not necessary (but possible) that the tuya MCU repsonse to this package
       Tuya.mcu_upg.flags.trigger_version = 1;
-      Tuya.mcu_upg.response_timeout = millis() + 20000;
+      Tuya.mcu_upg.response_timeout = millis() + 30000;       //This timeout is necessary to let the MCU flash the OTA file in its internal memory
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: all %d bytes are transfered, send last package with total number of transfered bytes."), bytesTransferred);
     }
@@ -801,7 +801,7 @@ void TuyaSendUpgradePackage(bool next = false) {
   } else { // MCU-upgrade finished with response to the last package.
       AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: OTA chunk transfer finished."));
       Tuya.mcu_upg.flags.trigger_version = 1;
-      Tuya.mcu_upg.response_timeout = millis() + 20000;
+      Tuya.mcu_upg.response_timeout = millis() + 30000;     //This timeout is necessary to let the MCU flash the OTA file in its internal memory
   }
 }
 
@@ -874,7 +874,7 @@ void TuyaCleanupMcuUpgradeData(bool success) {
 }
 
 bool TuyaMcuUpgradeInProgress() {
-  return Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() > 0 || Tuya.mcu_upg.flags.request_version;
+  return Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() > 0 || Tuya.mcu_upg.flags.request_version || Tuya.mcu_upg.flags.trigger_version;
 }
 #endif
 
@@ -1382,11 +1382,17 @@ void TuyaHandleProductInfoPacket(void) {
       }
     }
     if (receivedVersion) {
-      if (strcmp_P(Tuya.mcu_upg.new_version.get(), receivedVersion) == 0) {
+      if (nullptr != Tuya.mcu_upg.new_version) {
+        if (strcmp_P(Tuya.mcu_upg.new_version.get(), receivedVersion) == 0) {
+          AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: successful to version: %s"), receivedVersion);
+          success = true;
+        }
+        else {
+          AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: failed to version: %s"), Tuya.mcu_upg.new_version.get());
+        }
+      }
+      else {
         AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: successful to version: %s"), receivedVersion);
-        success = true;
-      } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: failed to version: %s"), Tuya.mcu_upg.new_version.get());
       }
     }
     TuyaCleanupMcuUpgradeData(success);
