@@ -29,8 +29,12 @@
 #ifdef ESP8266
 extern "C" uint32_t _FS_start;     // ... depending on core-sdk-version
 #elif defined ESP32
+#ifdef USE_UFILESYS
 extern FS *ufsp;
 extern char *fileOnly (char *);
+#else
+#error USE_TUYA_MCU_UPGRADE will only compile with active UFS (define USE_UFILESYS)
+#endif
 #endif
 
 TuyaUpgBuffer::TuyaUpgBuffer (void) {
