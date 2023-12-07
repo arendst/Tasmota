@@ -80,16 +80,14 @@ private:
 struct MCU_UPGRADE_DATA {
   WiFiClient *wifi_client = nullptr;
   HTTPClient *http_client = nullptr;
-  class TuyaUpgBuffer flash_buffer;
-  
-  bool next_send_req = false;
-  
+  class TuyaUpgBuffer flash_buffer;  
   uint32_t response_timeout = 0;          // Time after packages need to be resent.
   uint8_t retry_cnt = 0;                  // retry counter if MCU doesn't respond on a message
   uint32_t binary_len = 0;                // size fo the binary
   std::unique_ptr<char[]> new_version;    // expected version string
   bool version_req_sent = false;          // To decide if mcu_upg_response_timeout need to be evaluated
-  bool version_req_trigger =  false;
+  bool version_req_trigger =  false;      // Set this trigger and a delay (response_timeout) to query the product ID
+  bool next_send_req = false;             // Set this trigger and a delay (response_timeout) to send the next OTA package
 };
 
 #ifdef __cplusplus
