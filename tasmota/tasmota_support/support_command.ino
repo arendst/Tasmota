@@ -1272,20 +1272,7 @@ void CmndStatus(void)
     else
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
 
-#ifdef USE_DRV_RDDL_NETWORK
-    if( claimNotarizationMutex() )
-    {
-      int start_position = ResponseLength();
-      MqttShowSensor(f_show_sensors);
-      int current_position  = ResponseLength();
-      size_t data_length = (size_t)(current_position - start_position);
-      const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
-      runRDDLSDKNotarizationWorkflow(data_str, data_length);
-      releaseNotarizationMutex();
-    }
-#else
     MqttShowSensor(f_show_sensors);
-#endif // USE_DRV_RDDL_NETWORK
 
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);
