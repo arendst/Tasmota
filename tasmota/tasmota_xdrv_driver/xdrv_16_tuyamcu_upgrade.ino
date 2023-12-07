@@ -64,14 +64,17 @@ TuyaUpgBuffer::~TuyaUpgBuffer (void) {
 
 bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   reset();
+  SettingsSave(1);          // Free flash for upload
 #ifdef ESP8266
   // prepare to use OTA-partition
-  _start = (ESP.getSketchSize() + _flash_sector_size - 1) & (~(_flash_sector_size - 1));
-  _end = (uint32_t)&_FS_start - 0x40200000;
-  _num_sectors = (_end - _start)/_flash_sector_size;
+  uint32_t flash_write_start_sector = FlashWriteStartSector();
+  uint32_t flash_write_max_sector = FlashWriteMaxSector();
+  
+  _start = flash_write_start_sector * _flash_sector_size;
+  _end = flash_write_max_sector * _flash_sector_size;
+  _num_sectors = flash_write_max_sector - flash_write_start_sector;
   _current_address = _start;
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: used size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), 
-          ESP.getSketchSize(), _start, _end, _num_sectors);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), _start, _end, _num_sectors);
 #elif defined ESP32
   //using the ufs
   uint32_t maxMem = (UfsSize() * 1024);
