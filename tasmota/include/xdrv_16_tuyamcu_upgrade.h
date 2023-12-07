@@ -85,9 +85,16 @@ struct MCU_UPGRADE_DATA {
   uint8_t retry_cnt = 0;                  // retry counter if MCU doesn't respond on a message
   uint32_t binary_len = 0;                // size fo the binary
   std::unique_ptr<char[]> new_version;    // expected version string
-  bool version_req_sent = false;          // To decide if mcu_upg_response_timeout need to be evaluated
-  bool version_req_trigger =  false;      // Set this trigger and a delay (response_timeout) to query the product ID
-  bool next_send_req = false;             // Set this trigger and a delay (response_timeout) to send the next OTA package
+  union {
+    uint8_t data;
+    struct {
+      uint8_t trigger_version     : 1;
+      uint8_t trigger_next_packet : 1;
+      uint8_t request_version     : 1;
+      uint8_t request_init_upgd   : 1;
+      uint8_t unused              : 4;
+    };
+  } flags;
 };
 
 #ifdef __cplusplus

@@ -690,6 +690,9 @@ void TuyaSendInitiateUpgrade() {
   payload_buffer[2] = (Tuya.mcu_upg.binary_len >> 8) & 0xFF;
   payload_buffer[3] = Tuya.mcu_upg.binary_len & 0xFF;
 
+  Tuya.mcu_upg.response_timeout = millis() + 5000;
+  Tuya.mcu_upg.flags.request_init_upgd = 1;
+
   TuyaSendCmd(TUYA_CMD_INITIATING_UPGRADE, payload_buffer, payload_len);
 }
 
@@ -725,7 +728,7 @@ void TuyaSendUpgradePackage(bool next = false) {
       payload_buffer[3] = bytesTransferred & 0xFF;
 
       // This is the last package and it is not necessary (but possible) that the tuya MCU repsonse to this package
-      Tuya.mcu_upg.version_req_trigger = true;
+      Tuya.mcu_upg.flags.trigger_version = 1;
       Tuya.mcu_upg.response_timeout = millis() + 20000;
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: all %d bytes are transfered, send last package with total number of transfered bytes."), bytesTransferred);
@@ -736,7 +739,7 @@ void TuyaSendUpgradePackage(bool next = false) {
     TuyaCleanupMcuUpgradeData();
   } else { // MCU-upgrade finished with response to the last package.
       AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: OTA chunk transfer finished."));
-      Tuya.mcu_upg.version_req_trigger = true;
+      Tuya.mcu_upg.flags.trigger_version = 1;
       Tuya.mcu_upg.response_timeout = millis() + 20000;
   }
 }
@@ -800,12 +803,11 @@ void TuyaCleanupMcuUpgradeData() {
   Tuya.mcu_upg.retry_cnt = 0;
   Tuya.mcu_upg.binary_len = 0;
   Tuya.mcu_upg.new_version.reset(nullptr);
-  Tuya.mcu_upg.version_req_sent = false;
-  Tuya.mcu_upg.next_send_req = false;
+  Tuya.mcu_upg.flags.data = 0;
 }
 
 bool TuyaMcuUpgradeInProgress() {
-  return Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() > 0 || Tuya.mcu_upg.version_req_sent;
+  return Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() > 0 || Tuya.mcu_upg.flags.request_version;
 }
 #endif
 
@@ -1248,6 +1250,7 @@ void TuyaProcessStatePacket(void) {
 
 #ifdef USE_TUYA_MCU_UPGRADE
 void TuyaHandleInitUpgradeResponse(void) {
+  Tuya.mcu_upg.flags.request_init_upgd = 0;
   if (1 == Tuya.data_len && 0x03 > Tuya.buffer[6]) { // check data length and wheather they are valid
       uint32_t chunk_size = (256 << Tuya.buffer[6]);
       AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: set transfering chunk size to %d."), chunk_size);
@@ -1266,7 +1269,7 @@ void TuyaHandlePkgUpgradeResponse(void) {
       Tuya.mcu_upg.retry_cnt = 0;
       // send next package in 1 second, so the OTA process is more stable
       Tuya.mcu_upg.response_timeout = millis() + 500;
-      Tuya.mcu_upg.next_send_req = true;
+      Tuya.mcu_upg.flags.trigger_next_packet = 1;
       //TuyaSendUpgradePackage(true);
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: Upgrade package response: Invalid data size (%d)!"), Tuya.data_len);
@@ -1294,8 +1297,8 @@ void TuyaHandleProductInfoPacket(void) {
   char *data = &Tuya.buffer[6];
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU Product ID: %.*s"), dataLength, data);
 #ifdef USE_TUYA_MCU_UPGRADE
-  if (Tuya.mcu_upg.version_req_sent) {
-    Tuya.mcu_upg.version_req_sent = false;
+  if (Tuya.mcu_upg.flags.request_version) {
+    Tuya.mcu_upg.flags.request_version = 0;
     char *receivedVersion = nullptr;
     if (dataLength > 0) {
       char *p;
@@ -1955,23 +1958,28 @@ bool Xdrv16(uint32_t function) {
 #ifdef USE_TUYA_MCU_UPGRADE
         //avoid collision of heartbeat responses
         if (Tuya.heartbeat_timer && Tuya.mcu_upg.response_timeout < millis()){
-          if (Tuya.mcu_upg.next_send_req) {
+          if (Tuya.mcu_upg.flags.request_init_upgd){
+            //clean OTA data because missing response to initial upgrade packet
+            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: missing initial upgrade packet response."));
+            TuyaCleanupMcuUpgradeData();
+          }
+          else if (Tuya.mcu_upg.flags.trigger_next_packet) {
             //send next OTA package
-            Tuya.mcu_upg.next_send_req = false;
+            Tuya.mcu_upg.flags.trigger_next_packet = 0;
             TuyaSendUpgradePackage(true);
           }
           else if (Tuya.mcu_upg.flash_buffer.getCurrentPacketSize()){
-            //repeate last OTA package
+            //repeat last OTA package
             TuyaSendUpgradePackage(false); 
           }
-          else if (Tuya.mcu_upg.version_req_trigger) {
+          else if (Tuya.mcu_upg.flags.trigger_version) {
             //query the product ID
-            Tuya.mcu_upg.version_req_trigger = false;
+            Tuya.mcu_upg.flags.trigger_version = 0;
             Tuya.mcu_upg.response_timeout = millis() + 60000;
             TuyaRequestState(8);
-            Tuya.mcu_upg.version_req_sent = true;
+            Tuya.mcu_upg.flags.request_version = 1;
           }
-          else if (Tuya.mcu_upg.version_req_sent) {
+          else if (Tuya.mcu_upg.flags.request_version) {
             //clean OTA data after successfull update but missing product id
             AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: after a successfull OTA the product id is missing."));
             TuyaCleanupMcuUpgradeData();
