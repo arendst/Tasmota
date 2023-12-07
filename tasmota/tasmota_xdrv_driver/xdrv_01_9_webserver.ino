@@ -236,6 +236,13 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #endif
 #endif // USE_ZIGBEE
 
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER) || defined(USE_TUYA_MCU_UPGRADE)
+  #define USE_WEB_FW_UPGRADE
+
+  // Helper macro to stringify an enum value
+  #define ENUM_TO_STRING(value) #value
+#endif
+
 const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
   // Signal Strength Indicator
   ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
@@ -354,13 +361,37 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<br><b>" D_OTA_URL "</b><br><input id='o' placeholder=\"OTA_URL\" value=\"%s\"><br>"
   "<br><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br><br>"
-  "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
+  "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>"
+#ifdef USE_WEB_FW_UPGRADE
+  "<br><b>" "OTA firmware type" "</b></br>"
+  "<select id='firmwareType' name='firmwareType'>"
+  "<option value=" ENUM_TO_STRING(UPL_TASMOTA) ">Tasmota</option>"
+#ifdef USE_RF_FLASH
+  "<option value=" ENUM_TO_STRING(UPL_EFM8BB1) ">EFM8BB1 MCU</option>"
+#endif //USE_RF_FLASH
+#ifdef USE_TASMOTA_CLIENT
+  "<option value=" ENUM_TO_STRING(UPL_TASMOTACLIENT) ">Arduino Uno/Pro MCU</option>"
+#endif  // USE_TASMOTA_CLIENT
+#ifdef SHELLY_FW_UPGRADE
+  "<option value=" ENUM_TO_STRING(UPL_EFR32) ">Shelly MCU</option>"
+#endif  // SHELLY_FW_UPGRADE
+#ifdef USE_CCLOADER
+  "<option value=" ENUM_TO_STRING(UPL_SHD) ">CC25xx MCU</option>"
+#endif  // USE_CCLOADER
+#ifdef USE_ZIGBEE_EZSP
+  "<option value=" ENUM_TO_STRING(UPL_CCL) ">EFR32 MCU</option>"
+#endif  // USE_ZIGBEE_EZSP
+#ifdef USE_TUYA_MCU_UPGRADE
+  "<option value=" ENUM_TO_STRING(UPL_TUYA) ">Tuya MCU</option>"
+#endif  //USE_TUYA_MCU_UPGRADE
+#endif //USE_WEB_FW_UPGRADE
+  "</select>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
-  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.submit();'"
-    ">%s</button></form>"
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.action+=\"&ftype=\";this.form.action+=document.getElementById(\"firmwareType\").value;this.form.submit();'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
@@ -370,8 +401,8 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
-  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;return upl(this);'"
-    ">%s</button></form>"
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.action+=\"&ftype=\";this.form.action+=document.getElementById(\"firmwareType\").value;return upl(this);'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
@@ -467,6 +498,21 @@ struct WEB {
   bool reset_web_log_flag = false;                  // Reset web console log
   bool initial_config = false;
 } Web;
+
+#ifdef  USE_WEB_FW_UPGRADE
+static enum UploadTypes convertStringToUploadType (const char * str){
+  if (0 == strcmp(str, ENUM_TO_STRING(UPL_TASMOTA))) return UPL_TASMOTA;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_SETTINGS))) return UPL_SETTINGS;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_EFM8BB1))) return UPL_EFM8BB1;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_TASMOTACLIENT))) return UPL_TASMOTACLIENT;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_EFR32))) return UPL_EFR32;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_SHD))) return UPL_SHD;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_CCL))) return UPL_CCL;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_TUYA))) return UPL_TUYA;
+  else if (0 == strcmp(str, ENUM_TO_STRING(UPL_UFSFILE))) return UPL_UFSFILE;
+  else return UPL_TASMOTA;
+}
+#endif
 
 // Helper function to avoid code duplication (saves 4k Flash)
 // arg can be in PROGMEM
@@ -2581,10 +2627,6 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER) || defined(USE_TUYA_MCU_UPGRADE)
-#define USE_WEB_FW_UPGRADE
-#endif
-
 #ifdef USE_WEB_FW_UPGRADE
 
 struct {
@@ -2808,6 +2850,13 @@ void HandleUploadLoop(void) {
   // ***** Step2: Write upload file
   else if (UPLOAD_FILE_WRITE == upload.status) {
     if (0 == upload.totalSize) {  // First block received
+#ifdef USE_WEB_FW_UPGRADE
+      char ftypeStr[32] = {0};
+      enum UploadTypes ftype = UPL_TASMOTA;
+      WebGetArg("ftype", ftypeStr, sizeof(ftypeStr));                    // OTA filetype
+      ftype = convertStringToUploadType(ftypeStr);
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "OTA filetype=%d, %s", ftype, ftypeStr);
+#endif
       if (UPL_SETTINGS == Web.upload_file_type) {
         uint32_t set_size = sizeof(TSettings);
 #ifdef USE_UFILESYS
@@ -2823,31 +2872,31 @@ void HandleUploadLoop(void) {
       }
 #ifdef USE_WEB_FW_UPGRADE
 #ifdef USE_RF_FLASH
-      else if ((SONOFF_BRIDGE == TasmotaGlobal.module_type) && (':' == upload.buf[0])) {  // Check if this is a RF bridge FW file
+      else if ((UPL_EFM8BB1 == ftype) && (SONOFF_BRIDGE == TasmotaGlobal.module_type) && (':' == upload.buf[0])) {  // Check if this is a RF bridge FW file
         BUploadInit(UPL_EFM8BB1);
       }
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
-      else if (TasmotaClient_Available() && (':' == upload.buf[0])) {  // Check if this is a ARDUINO CLIENT hex file
+      else if ((UPL_TASMOTACLIENT == ftype) && TasmotaClient_Available() && (':' == upload.buf[0])) {  // Check if this is a ARDUINO CLIENT hex file
         BUploadInit(UPL_TASMOTACLIENT);
       }
 #endif  // USE_TASMOTA_CLIENT
 #ifdef SHELLY_FW_UPGRADE
-      else if (ShdPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]))) {
+      else if ((UPL_SHD == ftype) && ShdPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]))) {
         BUploadInit(UPL_SHD);
       }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_CCLOADER
-      else if (CCLChipFound() && 0x02 == upload.buf[0]) { // the 0x02 is only an assumption!!
+      else if ((UPL_CCL == ftype) && CCLChipFound() && (0x02 == upload.buf[0])) { // the 0x02 is only an assumption!!
         BUploadInit(UPL_CCL);
       }
 #endif  // USE_CCLOADER
 #ifdef USE_ZIGBEE_EZSP
 #ifdef ESP8266
-      else if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
+      else if ((UPL_EFR32 == ftype) && (SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
 #endif  // ESP8266
 #ifdef ESP32
-      else if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
+      else if ((UPL_EFR32 == ftype) && PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
 #endif  // ESP32
         // Read complete file into ESP8266 flash
         // Current files are about 200k
@@ -2857,12 +2906,20 @@ void HandleUploadLoop(void) {
       }
 #endif  // USE_ZIGBEE_EZSP
 #ifdef USE_TUYA_MCU_UPGRADE
-      else if (IsModuleTuya()) { // There is no marker in tuya mcu firmware file which can be checked in this state
+      // There is no marker in tuya mcu firmware file which can be checked in this state
+#ifdef ESP8266
+      else if ((UPL_TUYA == ftype) && IsModuleTuya())
+#elif defined ESP32
+      else if ((UPL_TUYA == ftype) && PinUsed(GPIO_TUYA_RX) && PinUsed(GPIO_TUYA_TX))
+#endif
+      {
         BUploadInit(UPL_TUYA);
       }
 #endif // USE_TUYA_MCU_UPGRADE
-#endif  // USE_WEB_FW_UPGRADE
+      else if ((UPL_TASMOTA == ftype) && (UPL_TASMOTA == Web.upload_file_type)) {
+#else
       else if (UPL_TASMOTA == Web.upload_file_type) {
+#endif  // USE_WEB_FW_UPGRADE
         if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
           Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
           return;
