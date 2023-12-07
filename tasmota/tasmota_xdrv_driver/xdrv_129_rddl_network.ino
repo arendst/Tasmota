@@ -39,6 +39,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
+#include <algorithm>
 
 
 #include "hmac.h"
@@ -47,7 +49,13 @@
 #include "base64_plntmnt.h"
 #include "ed25519.h"
 
-
+#ifdef ESP32
+#ifdef USE_SDCARD
+#include <SD.h>
+#endif  // USE_SDCARD
+#include "FFat.h"
+#include "FS.h"
+#endif  // ESP32
 
 #include "rddl.h"
 #include "rddl_cid.h"
@@ -207,195 +215,7 @@ uint8_t* readSeed()
   return secret_seed;
 }
 
-String signRDDLNetworkMessageContent( const char* data_str, size_t data_length){
-  char pubkey_out[66+1] = {0};
-  char sig_out[128+1] = {0};
-  char hash_out[64+1] = {0};
-  if( readSeed() != NULL )
-  {
-    SignDataHash( data_str, data_length,  pubkey_out, sig_out, hash_out);
-  }
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Hash", hash_out);
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Signature", sig_out);
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "PublicKey", pubkey_out);
-  return String(sig_out);
-}
 
-void getCIDString( char* cidbuffer, size_t buffersize, const char* message ){
-
-}
-
-String getEdDSAChallengeCall( const char* public_key ){
-  String challenge;
-  HTTPClientLight http;
-
-  String uri = "https://cid-resolver.rddl.io/auth/?public_key=";
-  uri = uri + public_key;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
-
-  int httpResponseCode = http.GET();
-
-  if (httpResponseCode > 0) {
-    String payload = http.getString();
-    Serial.println(httpResponseCode);
-    Serial.println(payload);
-    
-    int start = payload.indexOf("{");
-    int end = payload.indexOf("}");
-    //start +14 to skip  {"challenge":"
-    //end -2 to skip "}
-    challenge = payload.substring(start+14, end-2);
-    //ResponseAppend_P(PSTR("Payload received %s\n"), challenge.c_str());
-
-  }
-  else {
-    Serial.println("Error on HTTP request\n");
-    //ResponseAppend_P(PSTR("Error on HTTPS request\n"));
-  }
-
-  http.end();
-  return challenge;
-}
-
-String getJWTTokenCall( const char* public_key, const unsigned char* signature){
-  String jwt_token;
-  HTTPClientLight http;
-  //char hexed_signature[200]={0};
-
-  //toHexString( hexed_signature, (unsigned char*)signature, 68 );
-  //ResponseAppend_P(PSTR("b58 signature: %s\n"), signature);
-  String uri = "https://cid-resolver.rddl.io/auth/?public_key=";
-  uri = uri + public_key + "&signature=" + (char *)signature;
-  //ResponseAppend_P(PSTR("JWT URI: %s\n"), uri.c_str());
-  http.begin(uri);
-  http.addHeader("accept", "application/json");
-
-  int httpResponseCode = http.POST((uint8_t*)"",0);
-
-  if (httpResponseCode > 0) {
-    String payload = http.getString();
-    Serial.println(httpResponseCode);
-    Serial.println(payload);
-    
-    int start = payload.indexOf("{");
-    int end = payload.indexOf("}");
-    //start +14 to skip  {"challenge":"
-    //start +17 to skip  {"access_token":"
-    //end -2 to skip "}
-    jwt_token = payload.substring(start+17, end-1);
-    //ResponseAppend_P(PSTR("Payload received JWT: %s\n"), jwt_token.c_str());
-
-  }
-  else {
-    Serial.println("Error on HTTP request");
-    //ResponseAppend_P(PSTR("Error on HTTPS request\n"));
-  }
-
-  http.end();
-  return jwt_token;
-}
-
-String registerCID_call( const char* jwt_token, const char* url, const char* cid){
-  String result;
-  HTTPClientLight http;
-
-  String token = "Bearer ";
-  token = token + jwt_token;
-
-
-  String uri = "https://cid-resolver.rddl.io/entry/?cid=";
-  uri = uri + cid + "&url=" + url;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("Authorization", token);
-
-  int httpResponseCode = http.POST((uint8_t*)"",0);
-
-  if (httpResponseCode > 0) {
-    String payload = http.getString();
-    Serial.println(httpResponseCode);
-    Serial.println(payload);
-    
-    int start = payload.indexOf("{");
-    int end = payload.indexOf("}");
-    //start +14 to skip  {"challenge":"
-    //end -2 to skip "}
-    result = payload.substring(start, end);
-    //ResponseAppend_P(PSTR("Payload received CID registration: %s\n"), result.c_str());
-
-  }
-  else {
-    Serial.println("Error on HTTP request\n");
-    //ResponseAppend_P(PSTR("Error on HTTPS request\n"));
-  }
-
-  http.end();
-  return result;
-}
-
-String registerCID(const char* cid){
-  char* public_key = NULL;
-  size_t b58_size = 80;
-  uint8_t priv_key[33] = {0};
-  uint8_t pub_key[34] = {0};
-  uint8_t b58_pub_key[b58_size] = {0};
-  unsigned char signature[65] = {0};
-  
-
-  readSeed();
-  getKeyFromSeed((const uint8_t*)secret_seed, priv_key, pub_key, ED25519_NAME);
-  char* planetmint_key = (char*) pub_key +1;
-  
-  bool ret = b58enc((char*)b58_pub_key, &b58_size, planetmint_key, 32);
-  // if( ret == true )
-  //   ResponseAppend_P(PSTR("B58 encoding: %u - %s\n"), b58_size, b58_pub_key);
-  // else
-  //   ResponseAppend_P(PSTR("B58 encoding: failed\n"));
-
-  String challenge = getEdDSAChallengeCall((const char *)b58_pub_key);
-
-  SHA256_CTX ctx;
-  uint8_t hash[SHA256_DIGEST_LENGTH+1] = {0};
-  sha256_Init(&ctx);
-  sha256_Update(&ctx, (const uint8_t*)challenge.c_str(), challenge.length());
-  sha256_Final(&ctx, hash);
-
-  char hexbuf[67]={0};
-  toHexString( hexbuf,(uint8_t*)hash, 66 );
-  //ResponseAppend_P(PSTR("HASH: %s\n"), hexbuf);
-
-  //sign EdDSA challenge
-  ed25519_sign( (const unsigned char*)hash, SHA256_DIGEST_LENGTH, (const unsigned char*)priv_key,(const unsigned char*)planetmint_key, signature);
-  size_t sig_size = 200;
-  char b58sig[sig_size] = {0};
-  b58enc( b58sig, &sig_size, signature, 64);
-
-  //send signed challenge to  server, get JWT
-  String jwt_token = getJWTTokenCall( (const char *)b58_pub_key, (const unsigned char*)b58sig);
-  
-  //register CID
-  char uri[300]={0};
-  snprintf( uri, 300, "xmpp:%s.%s@m2m.rddl.io", cid, planetmint_key);
-  registerCID_call( jwt_token.c_str(), (const char*) uri, cid);
-
-  return jwt_token;
-}
-  
-int broadcast_transaction( char* tx_payload ){
-  HTTPClientLight http;
-  String uri = "/cosmos/tx/v1beta1/txs";
-  uri = SettingsText(SET_PLANETMINT_API)  + uri;
-  http.begin(uri);
-  http.addHeader("accept", "application/json");
-  http.addHeader("Content-Type", "application/json");
-  
-  int ret = 0;
-  ret = http.POST( (uint8_t*)tx_payload, strlen(tx_payload) );
-  ResponseAppend_P(PSTR(",\"%s\":\"%u\"\n"), "respose code", ret);
-  ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "respose string", http.getString().c_str());
-  return ret;
-}
 
 
 bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t* sequence )
@@ -424,144 +244,6 @@ bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t
     ResponseAppend_P("Account parsing issue\n");
 
   return ret;
-}
-
-bool hasMachineBeenAttested()
-{
-  HTTPClientLight http;
-
-  String uri = "/planetmint/machine/get_machine_by_public_key/";
-  uri = SettingsText(SET_PLANETMINT_API)  + uri;
-  uri = uri + g_ext_pub_key_planetmint;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
-
-  int httpResponseCode = http.GET();
-
-  return (httpResponseCode == 200);
-}
-
-char* create_transaction( void* anyMsg, char* tokenAmount )
-{
-  uint64_t account_id = 0;
-  uint64_t sequence = 0;
-  bool gotAccountID = getAccountInfo( g_address, &account_id, &sequence );
-  if( !gotAccountID )
-  {
-    return NULL;
-  }
-
-  Cosmos__Base__V1beta1__Coin coin = COSMOS__BASE__V1BETA1__COIN__INIT;
-  coin.denom = SettingsText( SET_PLANETMINT_DENOM );
-  coin.amount = tokenAmount;
-  
-  uint8_t* txbytes = NULL;
-  size_t tx_size = 0;
-  char* chain_id = SettingsText( SET_PLANETMINT_CHAINID );
-  int ret = prepareTx( (Google__Protobuf__Any*)anyMsg, &coin, g_priv_key_planetmint, g_pub_key_planetmint, sequence, chain_id, account_id, &txbytes, &tx_size);
-  if( ret < 0 )
-    return NULL;
-
-  size_t allocation_size = ceil( ((tx_size+3-1)/3)*4)+2 + 150;
-  char* payload = (char*) getStack( allocation_size );
-  if( payload )
-  {
-    memset( payload, 0, allocation_size );
-    strcpy(payload, "{ \"tx_bytes\": \"" );
-    char * p = bintob64( payload+ strlen( payload ), txbytes, tx_size);
-    strcpy( payload+ strlen( payload ), "\", \"mode\": \"BROADCAST_MODE_SYNC\" }");
-  }
-  else
-    ResponseAppend_P("not engouth memory:\n");
-
-  return payload;
-}
-
-char* getGPSstring(){
-  HTTPClientLight http;
-  bool status = false;
-  String uri = "https://us-central1-rddl-io-8680.cloudfunctions.net/geolocation-888954d";
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
-  char* gps_data = NULL;
-  int httpResponseCode = http.GET();
-
-  if (httpResponseCode > 0) {
-    String payload = http.getString();
-    Serial.println(httpResponseCode);
-    Serial.println(payload);
-    gps_data = (char*)getStack(300);
-    memset( gps_data, 0, 300);
-    strcpy(gps_data, payload.c_str());
-    status = removeIPAddr( gps_data );
-  }
-  else {
-    Serial.println("Error on HTTP request\n");
-  }
-
-  http.end();
-  return gps_data;
-}
-
-int registerMachine(void* anyMsg, const char* machineCategory, const char* manufacturer, const char* cid){
-  
-  uint8_t signature[64]={0};
-  char signature_hex[64*2+1]={0};
-  uint8_t hash[32];
-
-  bool ret_bool = getMachineIDSignature(  private_key_machine_id,  g_machineid_public_key, signature, hash);
-  if( ! ret_bool )
-  {
-    ResponseAppend_P("No machine signature\n");
-    return -1;
-  }
-  
-  toHexString( signature_hex, signature, 64*2);
-
-  char* gps_str = getGPSstring();
-  if (!gps_str )
-    gps_str = "";
-  
-  size_t desLength = strlen( manufacturer) + strlen( machineCategory )+ 36;
-  char* deviceDescription = (char*)getStack( desLength );
-  int written = sprintf( deviceDescription, "{\"Category\":\"%s\", \"Manufacturer\":\"%s\"}", machineCategory, manufacturer);
-
-
-  Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-  metadata.additionaldatacid = (char*)cid;
-  metadata.gps = gps_str;
-  metadata.assetdefinition = "{\"Version\":\"0.2\"}";
-  metadata.device = deviceDescription;
-
-  Planetmintgo__Machine__Machine machine = PLANETMINTGO__MACHINE__MACHINE__INIT;
-  machine.name = (char*)g_address;
-  
-  machine.ticker = NULL;                 //obsolete - in the future
-  machine.domain = "lab.r3c.network";    //obsolete - in the future
-  machine.reissue = false;               //obsolete - in the future
-  machine.amount = 1;                    //obsolete - in the future
-  machine.precision = 8;                 //obsolete - in the future
-  
-  machine.issuerplanetmint = g_ext_pub_key_planetmint;
-  machine.issuerliquid = g_ext_pub_key_liquid;
-  machine.machineid = g_machineid_public_key_hex;
-  machine.metadata = &metadata;
-  machine.type = RDDL_MACHINE_POWER_SWITCH;
-  machine.machineidsignature = signature_hex;
-  machine.address = (char*)g_address;
-
- 
-  Planetmintgo__Machine__MsgAttestMachine machineMsg = PLANETMINTGO__MACHINE__MSG_ATTEST_MACHINE__INIT;
-  machineMsg.creator = (char*)g_address;
-  machineMsg.machine = &machine;
-  int ret = generateAnyAttestMachineMsg((Google__Protobuf__Any*)anyMsg, &machineMsg);
-  if( ret<0 )
-  {
-    ResponseAppend_P("No Attestation message\n");
-    return -1;
-  }
-
-  return 0;
 }
 
 int readfile( const char* filename, uint8_t* content, size_t length ){
@@ -597,65 +279,6 @@ bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
 #endif  // USE_UFILESYS
 }
 
-int sendMessages( void* pAnyMsg) {
-    ResponseAppend_P("TX processing:\n");
-    char* tx_payload = create_transaction(pAnyMsg, "1");
-
-    if(!tx_payload)
-      return -1;
-    ResponseAppend_P("TX broadcast:\n");
-    int broadcast_return = broadcast_transaction( tx_payload );
-    return broadcast_return;
-}
-
-void runRDDLMachineAttestation(const char* machineCategory, const char* manufacturer, const char* cid ){
-  Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
-  clearStack();
-  if( !getPlntmntKeys() )
-    return;
-
-  Serial.println("Register: Machine\n");
-  int status = registerMachine(&anyMsg, machineCategory, manufacturer, cid );
-  if ( status >= 0 ){
-    status = sendMessages( &anyMsg );
-  }
-}
-
-void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
-  Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
-  clearStack();
-  if( !getPlntmntKeys() )
-    return;
-
-  if( !hasMachineBeenAttested() )
-    return;
-
-  size_t data_size = data_length;
-  uint8_t* local_data = getStack( data_size+2 );
-
-  memcpy( local_data, data_str, data_size);
-  String signature = signRDDLNetworkMessageContent((const char*)local_data, data_size);
-
-  //compute CID
-  const char* cid_str = (const char*) create_cid_v1_from_string( (const char*) local_data );
-
-  // store cid
-  rddl_writefile( cid_str, (uint8_t*)local_data, data_size );
-
-  // register CID
-  //registerCID( cid_str );
-
-  Serial.println("Notarize: CID Asset\n");
-
-  generateAnyCIDAttestMsg(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address, g_ext_pub_key_planetmint );
-  sendMessages( &anyMsg );
-
-  ResponseJsonEnd();
-}
-
-
-
-
 bool g_mutex_running_notarization = false;
 
 bool claimNotarizationMutex()
@@ -688,6 +311,51 @@ void RDDLNotarize(){
     runRDDLSDKNotarizationWorkflow(data_str, data_length);
     releaseNotarizationMutex();
   }
+}
+
+void RemoveFiles(){
+  deleteOldestFiles(500);
+}
+
+extern fs::FS* TfsFileSysHandle();
+void deleteOldestFiles( int count ) {
+    FS* filesystem = TfsFileSysHandle();
+    if( !filesystem )
+      Serial.println("Failed to mount file system");
+    
+    File dir = filesystem->open("/");
+    std::vector<String> files;
+    String nextFile = dir.getNextFileName();
+    while (nextFile.length() > 0) {
+        //unsigned long timeStamp = extractTimestamp(fileName);
+        //files.push_back(std::make_pair(fileName, timeStamp));
+        if( nextFile.length() > 20 ){
+          files.push_back( nextFile );
+        }
+        nextFile = dir.getNextFileName();
+    }
+
+    // // Sort files based on timestamp
+    // std::sort(files.begin(), files.end(), [](const auto &a, const auto &b) {
+    //     return a.second < b.second;
+    // });
+
+    // Delete the oldest 'count' files
+    for (int i = 0; i < count && i < files.size(); ++i) {
+        //AddLog(LOG_LEVEL_INFO, PSTR("Removing %s") ,files[i]);
+#ifdef USE_UFILESYS
+         if( TfsDeleteFile( files[i].c_str()) ) {
+          //if (LittleFS.remove(files[i])) {
+          Serial.println("Deleted file: " + files[i]);
+         } else {
+
+          Serial.println("Failed to delete file: " + files[i]);
+         }
+#else
+        Serial.println("Failed to delete file: " + files[i]);
+#endif 
+
+    }
 }
 
 void RDDLNetworkNotarizationScheduler(){

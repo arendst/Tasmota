@@ -44,7 +44,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MNEMONIC "|" D_CMND_STORESEED "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
-  D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" 
+  D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -88,7 +88,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndMemonic, &CmndStoreSeed, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
-  &CmndNotarizationPeriodicity, &CmndNotarize, 
+  &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -1034,6 +1034,13 @@ void CmndAttestMachine(void) {
   }
    ResponseAppend_P("}");
   CmndStatusResponse(33);
+  ResponseClear();
+}
+
+void CmndRemoveFiles(void) {
+  RemoveFiles();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_REMOVE_FILES, "Removed Files" );
+  CmndStatusResponse(34);
   ResponseClear();
 }
 

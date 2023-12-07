@@ -365,6 +365,11 @@ size_t TfsFileSize(const char *fname){
   return flen;
 }
 
+fs::FS* TfsFileSysHandle(){
+  if (!ffs_type) { return nullptr; } 
+  return ffsp;
+}
+
 bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
   if (!ffs_type) { return false; }
 #ifdef USE_WEBCAM
