@@ -391,7 +391,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
   "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.action+=\"&ftype=\";this.form.action+=document.getElementById(\"firmwareType\").value;this.form.submit();'"
-    ">" D_START " %s</button></form>"
+    ">%s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
@@ -402,7 +402,7 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
   "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.action+=\"&ftype=\";this.form.action+=document.getElementById(\"firmwareType\").value;return upl(this);'"
-    ">" D_START " %s</button></form>"
+    ">%s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
