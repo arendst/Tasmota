@@ -2852,10 +2852,9 @@ void HandleUploadLoop(void) {
     if (0 == upload.totalSize) {  // First block received
 #ifdef USE_WEB_FW_UPGRADE
       char ftypeStr[32] = {0};
-      enum UploadTypes ftype = UPL_TASMOTA;
       WebGetArg("ftype", ftypeStr, sizeof(ftypeStr));                    // OTA filetype
-      ftype = convertStringToUploadType(ftypeStr);
-      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "OTA filetype=%d, %s", ftype, ftypeStr);
+      enum UploadTypes ftype = convertStringToUploadType(ftypeStr);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "selected OTA filetype=%d, (%s)"), ftype, ftypeStr);
 #endif
       if (UPL_SETTINGS == Web.upload_file_type) {
         uint32_t set_size = sizeof(TSettings);
@@ -2908,11 +2907,11 @@ void HandleUploadLoop(void) {
 #ifdef USE_TUYA_MCU_UPGRADE
       // There is no marker in tuya mcu firmware file which can be checked in this state
 #ifdef ESP8266
-      else if ((UPL_TUYA == ftype) && IsModuleTuya())
-#elif defined ESP32
-      else if ((UPL_TUYA == ftype) && PinUsed(GPIO_TUYA_RX) && PinUsed(GPIO_TUYA_TX))
-#endif
-      {
+      else if ((UPL_TUYA == ftype) && IsModuleTuya()) {
+#endif  // ESP8266
+#ifdef ESP32
+      else if ((UPL_TUYA == ftype) && PinUsed(GPIO_TUYA_RX) && PinUsed(GPIO_TUYA_TX)) {
+#endif // ESP32
         BUploadInit(UPL_TUYA);
       }
 #endif // USE_TUYA_MCU_UPGRADE
@@ -2932,7 +2931,7 @@ void HandleUploadLoop(void) {
           char tmp[16];
           WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
           uint32_t upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
-          AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "Freespace %i Filesize %i", ESP.getFreeSketchSpace(), upload_size);
+          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Freespace %i Filesize %i"), ESP.getFreeSketchSpace(), upload_size);
           if (upload_size > ESP.getFreeSketchSpace()) {   // TODO revisit this test
 #endif
             Web.upload_error = 4;  // Program flash size is larger than real flash size
