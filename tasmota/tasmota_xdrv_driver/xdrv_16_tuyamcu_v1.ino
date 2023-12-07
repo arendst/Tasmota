@@ -2076,9 +2076,10 @@ bool Xdrv16(uint32_t function) {
       case FUNC_WEB_SENSOR:
         TuyaSensorsShow(0);
         break;
-      case FUNC_WEB_ADD_HANDLER:
 #ifdef USE_TUYA_MCU_UPGRADE
+      case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_TUYA_MCU_OTA), HandleTuyaOTAWebUploadProgress);
+        break;
 #endif  // USE_TUYA_MCU_UPGRADE
 #endif  // USE_WEBSERVER
     }
