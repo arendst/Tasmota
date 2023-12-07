@@ -69,6 +69,7 @@ bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: used size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), 
           ESP.getSketchSize(), _start, _end, _num_sectors);
 #elif defined ESP32
+  //using the ufs
   uint32_t maxMem = (UfsSize() * 1024);
   uint32_t freeMem = (UfsFree() * 1024);
   AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: ufs size: %d, ufs free: %d, OTA-binary-size: %d"), 

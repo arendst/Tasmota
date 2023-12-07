@@ -752,13 +752,13 @@ bool TuyaCreateStreamToMcuBinary(const char* url) {
     Tuya.mcu_upg.binary_len = Tuya.mcu_upg.http_client->getSize();
     if (HTTP_CODE_OK == code) {
 #ifdef ESP8266
-      if (ESP.getFreeSketchSpace() < Tuya.mcu_upg.binary_len) {
+      uint32_t freeBytes = ESP.getFreeSketchSpace();
 #elif defined ESP32
-      uint32_t freeUfsInBytes = (UfsFree() * 1024);
-      if (freeUfsInBytes < Tuya.mcu_upg.binary_len) {
+      uint32_t freeBytes = (UfsFree() * 1024);
 #endif
+      if (freeBytes < Tuya.mcu_upg.binary_len) {
         success = false;
-        ResponseAppend_P(PSTR("Error: Not enough memory for MCU-binary (free: %d, binary-size: %d)!"), freeUfsInBytes, Tuya.mcu_upg.binary_len);
+        ResponseAppend_P(PSTR("Error: Not enough memory for MCU-binary (free: %d, binary-size: %d)!"), freeBytes, Tuya.mcu_upg.binary_len);
         Tuya.mcu_upg.http_client->end();
       }
     } else {
