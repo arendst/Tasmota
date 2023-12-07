@@ -63,6 +63,385 @@
 
 TasmotaSerial *TuyaSerial = nullptr;
 
+#ifdef USE_TUYA_MCU_UPGRADE
+#include <t_bearssl_hash.h>
+#include <memory>
+
+#ifdef ESP8266
+extern "C" uint32_t _FS_start;     // ... depending on core-sdk-version
+#elif defined ESP32
+extern FS *ufsp;
+
+extern char *fileOnly(char *);
+#endif
+
+class TuyaUpgBuffer final {
+public:
+  TuyaUpgBuffer() {}
+  ~TuyaUpgBuffer() {
+#ifdef ESP32
+    if (_fname) {
+      delete[] _fname;
+      _fname = nullptr;
+    }
+#endif
+    if (_buffer) {
+      delete[] _buffer;
+      _buffer = nullptr;
+    }
+    if (_md5_context) {
+      delete _md5_context;
+      _md5_context = nullptr;
+    }
+    if (_current_packet) {
+      delete[] _current_packet;
+      _current_packet = nullptr;
+    }
+  }
+
+  bool init(uint32_t len, char* checksum = nullptr, char* filename = NULL) {
+    reset();
+#ifdef ESP8266
+    // prepare to use OTA-partition
+    _start = (ESP.getSketchSize() + _flash_sector_size - 1) & (~(_flash_sector_size - 1));
+    _end = (uint32_t)&_FS_start - 0x40200000;
+    _num_sectors = (_end - _start)/_flash_sector_size;
+    _current_address = _start;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: used size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), 
+           ESP.getSketchSize(), _start, _end, _num_sectors);
+#elif defined ESP32
+    uint32_t maxMem = (UfsSize() * 1024);
+    uint32_t freeMem = (UfsFree() * 1024);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: ufs size: %d, ufs free: %d, OTA-binary-size: %d"), 
+           maxMem, freeMem, len);
+    
+    char * fname = fileOnly(filename);
+    size_t fname_size = strlen(fname);
+    _fname = new char[fname_size + 2];
+    _fname[0] = '/';
+    strncpy(&_fname[1], fname, fname_size);
+    _fname[1 + fname_size] = '\0';
+    
+    if (ufsp->exists(_fname)) {
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: ota file with equal filename exists: %s. Try to delete."), _fname);
+      if (!ufsp->remove(_fname)) {
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: file deletion failed"));
+        return false;
+      }
+    }
+
+    File ota_file = ufsp->open(_fname, "w");
+    if (!ota_file) {
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: ota file %s couldn't created"), _fname);
+      return false;
+    }
+    ota_file.close();
+#endif
+    if (ESP.getFreeHeap() > 2 * _flash_sector_size) {
+      _buffer_size = _flash_sector_size;
+    } else {
+      _buffer_size = 256;
+    }
+    _buffer = new uint8_t[_buffer_size];
+    _buffer_pos = 0;
+    _len = len;
+    _checksum = checksum;
+#ifdef ESP8266
+    return _start > 0 && _num_sectors > 0 && _buffer;
+#elif defined ESP32
+    return freeMem > _len && (ufsp->exists(_fname)) && _buffer;
+#endif
+  }
+
+  void reset() {
+    _start = 0;
+    _end = 0;
+    _num_sectors = 0;
+    _current_address = 0;
+    _len = 0;
+    _buffer_size = 0;
+#ifdef ESP32
+    if (_fname) {
+      delete[] _fname;
+      _fname = nullptr;
+    }
+#endif
+    if (_buffer) {
+      delete[] _buffer;
+      _buffer = nullptr;
+    }
+    if (_md5_context) {
+      delete _md5_context;
+      _md5_context = nullptr;
+    }
+    _checksum = nullptr;
+    _packet_size = 0;
+    if (_current_packet) {
+      delete[] _current_packet;
+      _current_packet = nullptr;
+    }
+    _current_packet_size = 0;
+  }
+
+  uint32_t writeToFlashOrFile(Stream &data) {
+    uint32_t bytesWritten = 0;
+    _md5_context = new br_md5_context;
+    if (0 < _len && _md5_context) {
+      br_md5_init(_md5_context);
+      uint32_t toRead = 0;
+      while (0 < remaining()) {
+#ifdef ESP8266
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: Try transfering to flash, Size of binary: %d/%d"), remaining(), _len);
+#elif defined ESP32
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: Try transfering to UFS, Size of binary: %d/%d"), remaining(), _len);
+#endif
+        uint8_t retryCount = 1;
+        uint32_t bytesToRead = _buffer_size - _buffer_pos;
+        if (bytesToRead > remaining()) {
+          bytesToRead = remaining();
+        }
+        toRead = data.readBytes(_buffer + _buffer_pos, bytesToRead);
+        while (toRead == 0 && retryCount < MAX_RETRIES) {
+          delay(100);
+          toRead = data.readBytes(_buffer + _buffer_pos, bytesToRead);
+          ++retryCount;
+        }
+        if (toRead == 0) { // three Timeouts
+          ResponseAppend_P(PSTR("readBytes timed out"));
+          abort();
+          return bytesWritten;
+        }
+        _buffer_pos += toRead;
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: buffer_size: %d, buffer_pos: %d, bytesToRead: %d, toRead: %d"),
+          _buffer_size, _buffer_pos, bytesToRead, toRead);
+        if((_buffer_pos == remaining() || _buffer_pos == _buffer_size) &&
+            !writeBuffer()) {
+#ifdef ESP8266
+          AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error writing to Flash! %d bytes written"), bytesWritten);
+#elif defined ESP32
+          AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error writing to UFS! %d bytes written"), bytesWritten);
+#endif
+          abort();
+          return bytesWritten;
+        }
+        bytesWritten += toRead;
+        yield();
+      }
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: writeToFlashOrFile: DONE! %d bytes written"), bytesWritten);
+    return bytesWritten;
+  }
+
+  bool isChecksumOk() {
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: verify if checksum is: %s"), _checksum);
+    bool checksumOk = true;
+    if(_checksum)
+    {
+      if (_md5_context && 32 == strlen(_checksum)) {
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: length of given checksum is OK"));
+        char *toConvert = _checksum;
+        uint8_t md5_in[16];
+        uint8_t md5_out[16];
+        for(uint8_t i = 0; i < 16; ++i, toConvert += 2) {
+          char currentValue[3];
+          memcpy_P(&currentValue[0], toConvert, 2);
+          currentValue[2] = '\0';
+          md5_in[i] = strtoul(currentValue, nullptr, 16);
+        }
+
+        br_md5_out(_md5_context, md5_out);
+        for (uint8_t i = 0; i < 16; ++i) {
+          checksumOk = checksumOk && (md5_in[i] == md5_out[i]);
+        }
+      } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error calculating the checksums!"));
+        checksumOk = false;
+      }
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: checksum is: %s"), checksumOk ? "OK" : "not OK");
+    return checksumOk;
+  }
+
+  void resetPosition() { _current_address = _start; readToBuffer(); }
+  bool hasMoreData() { return remaining() > 0 || _current_packet_size > 0; }
+
+  uint32_t bytesRead() { return _current_address - _start; }
+  uint32_t getPackageOffset() { return bytesRead() - _current_packet_size; }
+  void setPacketSize(uint16_t value) { _packet_size = value; };
+
+  bool readNextPacket() {
+    uint32_t bytesRead = 0;
+    if (_current_packet) {
+      delete[] _current_packet;
+      _current_packet = nullptr;
+    }
+    _current_packet_size = _packet_size;
+    if (_current_packet_size > remaining()) {
+      _current_packet_size = remaining();
+    }
+    if (0 < _current_packet_size) {
+      _current_packet = new uint8_t[_current_packet_size];
+      while (bytesRead < _current_packet_size) {
+        if (_buffer_pos < _buffer_size) {
+          uint32_t bytesToCopy = _current_packet_size - bytesRead;
+          if ( bytesToCopy > (_buffer_size - _buffer_pos)) {
+            bytesToCopy = _buffer_size - _buffer_pos;
+          }
+          memcpy_P(_current_packet + bytesRead, _buffer + _buffer_pos, bytesToCopy);
+          _current_address += bytesToCopy;
+          _buffer_pos += bytesToCopy;
+          bytesRead += bytesToCopy;
+        } else {
+          if (!readToBuffer()) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return (bytesRead == _current_packet_size);
+  }
+
+  void getCurrentPacket(uint8_t *toBuffer) {
+    if (toBuffer && _current_packet) {
+      memcpy_P(toBuffer, _current_packet, _current_packet_size);
+    }
+  }
+
+  uint16_t getCurrentPacketSize() { return _current_packet_size; };
+
+private:
+  uint32_t remaining() { return _len - (_current_address - _start); };
+  void abort() { _current_address = (_start + _len); }
+
+#ifdef ESP8266
+  bool eraseSector() {
+    bool eraseResult = true;
+    static uint8_t log = 5;
+    if (_current_address % _flash_sector_size == 0) {
+      eraseResult = ESP.flashEraseSector(_current_address/_flash_sector_size);
+    }
+    return eraseResult;
+  }
+
+  bool writeBuffer() {
+    bool writeResult = true;
+
+    if (eraseSector()) {
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Erasing current sector OK. Writing buffer to flash!"));
+      writeResult = ESP.flashWrite(_current_address, (uint32_t*) _buffer, _buffer_pos);
+    } else { // if erase was unsuccessful
+      abort();
+      AddLog(LOG_LEVEL_ERROR, PSTR("TYA: writeBuffer: Error erasing current sector in Flash!"));
+      return false;
+    }
+
+    if (!writeResult) {
+      abort();
+      AddLog(LOG_LEVEL_ERROR, PSTR("TYA: writeBuffer: Error writing buffer to Flash!"));
+      return false;
+    }
+    
+    br_md5_update(_md5_context, _buffer, _buffer_pos);
+
+    _current_address += _buffer_pos;
+    _buffer_pos = 0;
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Buffer written to flash!"));
+    return true;
+  }
+
+  bool readToBuffer() {
+    uint32_t bytesToRead = _buffer_size;
+    if (bytesToRead > remaining()) {
+      bytesToRead = remaining();
+    }
+    _buffer_pos = 0;
+
+    return ESP.flashRead(_current_address, (uint32_t*) _buffer, bytesToRead);
+  }
+
+#elif defined ESP32
+  bool writeBuffer() {
+    File ota_file = ufsp->open(_fname, "a");
+    if (!ota_file) {
+      abort();
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: file %s couldn't be opened."), _fname);
+      return false;
+    }
+    
+    uint32_t ret_write = ota_file.write(_buffer, _buffer_pos);
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Writing buffer to file, ret_write = %d!"),ret_write);
+
+    ota_file.close();
+
+    br_md5_update(_md5_context, _buffer, _buffer_pos);
+
+    _current_address += _buffer_pos;
+    _buffer_pos = 0;
+
+    return true;
+  }
+
+  bool readToBuffer() {
+    uint32_t bytesToRead = _buffer_size;
+    if (bytesToRead > remaining()) {
+      bytesToRead = remaining();
+    }
+    _buffer_pos = 0;
+
+    File ota_file = ufsp->open(_fname, "r");
+    if (!ota_file) {
+      abort();
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: readToBuffer: file %s couldn't be opened."), _fname);
+      return false;
+    }
+    
+    uint32_t seek_return = ota_file.seek(_current_address);
+    uint32_t read_return = ota_file.read(_buffer, bytesToRead);
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: readToBuffer: curr_addr: %d, ret_seek: %d, ret_read: %d"), _current_address, seek_return, read_return);
+    
+    ota_file.close();
+
+    return true;
+  }
+#endif
+
+  static const uint8_t MAX_RETRIES = 3;
+  uint32_t _start = 0;
+  uint32_t _end = 0;
+  uint32_t _num_sectors = 0;
+  uint32_t _current_address = 0;
+  uint32_t _len = 0;
+  uint32_t _buffer_size = 0;
+  uint32_t _buffer_pos = 0;
+  uint8_t *_buffer = nullptr;
+  br_md5_context *_md5_context = nullptr;
+  char* _checksum = nullptr;
+  uint16_t _packet_size = 0;
+  uint8_t *_current_packet = nullptr;
+  uint16_t _current_packet_size = 0;
+#ifdef ESP8266
+  static const uint32_t _flash_sector_size = FLASH_SECTOR_SIZE;
+#elif defined ESP32
+  static const uint32_t _flash_sector_size = 4096;
+  char *_fname = nullptr;
+#endif
+};
+
+// parameters used for MCU upgrade
+struct MCU_UPGRADE_DATA {
+  WiFiClient *wifi_client = nullptr;
+  HTTPClient *http_client = nullptr;
+  TuyaUpgBuffer flash_buffer;
+  uint32_t response_timeout = 0;          // Time after packages need to be resent.
+  uint8_t retry_cnt = 0;                  // retry counter if MCU doesn't respond on a message
+  uint32_t binary_len = 0;                // size fo the binary
+  std::unique_ptr<char[]> new_version;    // expected version string
+  bool version_req_sent = false;          // To decide if mcu_upg_response_timeout need to be evaluated
+  
+};
+#endif
+
 void TuyaSendCmd(uint8_t cmd, uint8_t payload[], uint16_t payload_len);
 
 struct TUYA {
@@ -80,7 +459,7 @@ struct TUYA {
   bool ignore_dim = false;                // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
   uint8_t cmd_status = 0;                 // Current status of serial-read
   uint8_t cmd_checksum = 0;               // Checksum of tuya command
-  uint8_t data_len = 0;                   // Data lenght of command
+  uint16_t data_len = 0;                  // Data lenght of command
   uint8_t wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer = 0;            // 10 second heartbeat timer for tuya module
 #ifdef USE_ENERGY_SENSOR
@@ -95,6 +474,9 @@ struct TUYA {
   bool ignore_tuyareceived = false;       // When a modeset changes ignore stat
   bool active;
   uint32_t time_last_cmd;                 // to compute timeout on response and not sending another message
+#ifdef USE_TUYA_MCU_UPGRADE
+  struct MCU_UPGRADE_DATA mcu_upg;        // Data relevant to MCU-Upgrade
+#endif
 } Tuya;
 
 #define TUYA_CMD_TIMEOUT        200
@@ -111,6 +493,10 @@ struct TUYA {
 // #define D_CMND_TUYA_SET_HUM "SetHum"
 // #define D_CMND_TUYA_SET_TIMER "SetTimer"
 
+#ifdef USE_TUYA_MCU_UPGRADE
+#define D_CMND_TUYA_UPGRADE "Upgrade"
+#endif
+
 const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expanded in the future)
 //          71              72          73            74            75
   "" D_JSON_TEMPERATURE "|TempSet|" D_JSON_HUMIDITY "|HumSet|" D_JSON_ILLUMINANCE
@@ -118,10 +504,17 @@ const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expande
   "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "|" D_ENVIRONMENTAL_CONCENTRATION "|Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
-  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST "|TempSetRes";
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST "|TempSetRes"
+#ifdef USE_TUYA_MCU_UPGRADE
+   "|" D_CMND_TUYA_UPGRADE
+#endif
+  ;
 
 void (* const TuyaCommand[])(void) PROGMEM = {
   &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
+#ifdef USE_TUYA_MCU_UPGRADE
+  , &CmndTuyaUpgrade
+#endif
 };
 
 const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
@@ -369,6 +762,55 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
   } else { return; }
 }
 
+#ifdef USE_TUYA_MCU_UPGRADE
+void CmndTuyaUpgrade(void) { // Command to update the tuya mcu
+  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade received: %s"), XdrvMailbox.data);
+  Response_P(PSTR("{\"%s\":{\"Result\":\""), XdrvMailbox.command);  // Builds TuyaUpgrade
+  if (!TuyaMcuUpgradeInProgress()) {
+    TuyaCleanupMcuUpgradeData();
+ 
+    char* parm[3] = { nullptr };
+    if (XdrvMailbox.data_len > 0) {
+      uint8_t i = 0;
+      char *p;
+      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 3; str = strtok_r(nullptr, ", ", &p)) {
+        parm[i] = str;
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrage parameter: %s"), parm[i]);
+        i++;
+      }
+      const size_t versionStrLen =  strlen(parm[0]) + 3;
+      Tuya.mcu_upg.new_version.reset(new char[versionStrLen]);
+      strcpy_P(Tuya.mcu_upg.new_version.get() + 1, parm[0]);
+      Tuya.mcu_upg.new_version[0] = '"';
+      Tuya.mcu_upg.new_version[versionStrLen - 2] = '"';
+      Tuya.mcu_upg.new_version[versionStrLen - 1] = '\0';
+
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrage version: %s"), Tuya.mcu_upg.new_version.get());
+      if (TuyaCreateStreamToMcuBinary(parm[2])) {
+        if (Tuya.mcu_upg.flash_buffer.init(Tuya.mcu_upg.binary_len, parm[1], parm[2])) {
+          if (Tuya.mcu_upg.binary_len == Tuya.mcu_upg.flash_buffer.writeToFlashOrFile(*Tuya.mcu_upg.wifi_client)) {
+            if (Tuya.mcu_upg.flash_buffer.isChecksumOk()) {
+              ResponseAppend_P(PSTR("Starting MCU-Upgrade..."));
+              TuyaSendInitiateUpgrade();
+            } else {
+              ResponseAppend_P(PSTR("Error: Verification of Checksum failed!"));
+            }
+          }
+        } else {
+          ResponseAppend_P(PSTR("Error: Unable to copy MCU-binary to flash!"));
+        }
+      }
+    } else {
+      ResponseAppend_P(PSTR("Error: No parameter given!"));
+    }
+  } else {
+    ResponseAppend_P(PSTR("Error: MCU-Upgrade in progress!"));
+  }
+  ResponseAppend_P(PSTR("\""));
+  ResponseJsonEndEnd();
+}
+#endif
+
 int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive RGB strings
 {
   for (;; Str1++, Str2++) {
@@ -613,6 +1055,124 @@ void TuyaSendRaw(uint8_t id, char data[]) {
 
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
+
+#ifdef USE_TUYA_MCU_UPGRADE
+void TuyaSendInitiateUpgrade() {
+  const uint16_t payload_len = 4;
+  uint8_t payload_buffer[payload_len];
+  payload_buffer[0] = Tuya.mcu_upg.binary_len >> 24;
+  payload_buffer[1] = (Tuya.mcu_upg.binary_len >> 16) & 0xFF;
+  payload_buffer[2] = (Tuya.mcu_upg.binary_len >> 8) & 0xFF;
+  payload_buffer[3] = Tuya.mcu_upg.binary_len & 0xFF;
+
+  TuyaSendCmd(TUYA_CMD_INITIATING_UPGRADE, payload_buffer, payload_len);
+}
+
+void TuyaSendUpgradePackage(bool next = false)
+{
+  if (Tuya.mcu_upg.flash_buffer.hasMoreData() && 3 > Tuya.mcu_upg.retry_cnt) {
+    if (next) {
+      if (!Tuya.mcu_upg.flash_buffer.readNextPacket()) {
+        TuyaCleanupMcuUpgradeData();
+        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: Problems reading from flash!"));
+        return;
+      }
+    }
+    const uint16_t payload_len = Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() + 4;
+    uint8_t payload_buffer[payload_len];
+    if (4 < payload_len) {
+      uint32_t offset = Tuya.mcu_upg.flash_buffer.getPackageOffset();
+      payload_buffer[0] = offset >> 24;
+      payload_buffer[1] = (offset >> 16) & 0xFF;
+      payload_buffer[2] = (offset >> 8) & 0xFF;
+      payload_buffer[3] = offset & 0xFF;
+      Tuya.mcu_upg.flash_buffer.getCurrentPacket(&payload_buffer[4]);
+    } else {
+      uint32_t bytesTransferred = Tuya.mcu_upg.flash_buffer.bytesRead();
+      payload_buffer[0] = bytesTransferred >> 24;
+      payload_buffer[1] = (bytesTransferred >> 16) & 0xFF;
+      payload_buffer[2] = (bytesTransferred >> 8) & 0xFF;
+      payload_buffer[3] = bytesTransferred & 0xFF;
+    }
+    TuyaSendCmd(TUYA_CMD_UPGRADE_PACKAGE, payload_buffer, payload_len);
+    Tuya.mcu_upg.response_timeout = millis() + 5000;
+    Tuya.mcu_upg.retry_cnt++;
+  } else if (3 <= Tuya.mcu_upg.retry_cnt) { // ERROR
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade failed! Maximum retry-count reached."));
+    TuyaCleanupMcuUpgradeData();
+  } else { // MCU-upgrade finished.
+    Tuya.mcu_upg.response_timeout = millis() + 60000;
+    TuyaRequestState(8);
+    Tuya.mcu_upg.version_req_sent = true;
+  }
+}
+
+bool TuyaCreateStreamToMcuBinary(const char* url) {
+  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrage: Try do connect to: %s"), url);
+  bool success = true;
+  Tuya.mcu_upg.wifi_client = new WiFiClient;
+  if (!Tuya.mcu_upg.wifi_client) {
+    ResponseAppend_P(PSTR("\"Error: Creating WiFiClient failed!\""));
+    return false;
+  }
+  Tuya.mcu_upg.http_client = new HTTPClient;
+  if (Tuya.mcu_upg.http_client) {
+    Tuya.mcu_upg.http_client->begin(*Tuya.mcu_upg.wifi_client, url);
+    Tuya.mcu_upg.http_client->useHTTP10(true);
+    Tuya.mcu_upg.http_client->setTimeout(8000);
+    Tuya.mcu_upg.http_client->setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+    Tuya.mcu_upg.http_client->setUserAgent("Tasmota-TuyaMCU-http-Upgrade");
+
+    int code = Tuya.mcu_upg.http_client->GET();
+    Tuya.mcu_upg.binary_len = Tuya.mcu_upg.http_client->getSize();
+    if (HTTP_CODE_OK == code) {
+#ifdef ESP8266
+      if (ESP.getFreeSketchSpace() < Tuya.mcu_upg.binary_len) {
+#elif defined ESP32
+      uint32_t freeUfsInBytes = (UfsFree() * 1024);
+      if (freeUfsInBytes < Tuya.mcu_upg.binary_len) {
+#endif
+        success = false;
+        ResponseAppend_P(PSTR("Error: Not enough memory for MCU-binary (free: %d, binary-size: %d)!"), freeUfsInBytes, Tuya.mcu_upg.binary_len);
+        Tuya.mcu_upg.http_client->end();
+      }
+    } else {
+      ResponseAppend_P(PSTR("Error: http(s) GET failed with code: %d"), code);
+      Tuya.mcu_upg.http_client->end();
+      success = false;
+    }
+  } else {
+    ResponseAppend_P(PSTR("Error: Creating HTTPClient failed!"));
+    Tuya.mcu_upg.http_client->end();
+    success = false;
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: Size of binary: %d"), Tuya.mcu_upg.binary_len);
+  return success;
+}
+
+void TuyaCleanupMcuUpgradeData() {
+  if (Tuya.mcu_upg.http_client) {
+    Tuya.mcu_upg.http_client->end();
+    delete Tuya.mcu_upg.http_client;
+    Tuya.mcu_upg.http_client = nullptr;
+  }
+  if (Tuya.mcu_upg.wifi_client) {
+    delete Tuya.mcu_upg.wifi_client;
+    Tuya.mcu_upg.wifi_client = nullptr;
+  }
+  Tuya.mcu_upg.flash_buffer.reset();
+  Tuya.mcu_upg.response_timeout = 0;
+  Tuya.mcu_upg.retry_cnt = 0;
+  Tuya.mcu_upg.binary_len = 0;
+  Tuya.mcu_upg.new_version.reset(nullptr);
+  Tuya.mcu_upg.version_req_sent = false;
+}
+
+bool TuyaMcuUpgradeInProgress() {
+  return Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() > 0 || Tuya.mcu_upg.version_req_sent;
+}
+#endif
+
 bool TuyaSetPower(void)
 {
   bool status = false;
@@ -1049,6 +1609,30 @@ void TuyaProcessStatePacket(void) {
       dpidStart += dpDataLen + 4;
   }
 }
+
+#ifdef USE_TUYA_MCU_UPGRADE
+void TuyaHandleInitUpgradeResponse(void) {
+  if (1 == Tuya.data_len && 0x03 > Tuya.buffer[6]) { // check data length and wheather they are valid
+      Tuya.mcu_upg.flash_buffer.setPacketSize(256 << Tuya.buffer[6]); // 256 = 0x0100
+      Tuya.mcu_upg.retry_cnt = 0;
+      Tuya.mcu_upg.flash_buffer.resetPosition();
+      TuyaSendUpgradePackage(true);
+  } else {
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Initiate Upgrade response: Invalid data size or packet size!"));
+    TuyaCleanupMcuUpgradeData();
+  }
+}
+
+void TuyaHandlePkgUpgradeResponse(void) {
+  if (0 == Tuya.data_len) { // check data length
+      Tuya.mcu_upg.retry_cnt = 0;
+      TuyaSendUpgradePackage(true);
+  } else {
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Upgrade package response: Invalid data size or packet size!"));
+  }
+}
+#endif
+
 void TuyaLowPowerModePacketProcess(void) {
   switch (Tuya.buffer[3]) {
     case TUYA_CMD_QUERY_PRODUCT:
@@ -1068,6 +1652,32 @@ void TuyaHandleProductInfoPacket(void) {
   uint16_t dataLength = Tuya.buffer[4] << 8 | Tuya.buffer[5];
   char *data = &Tuya.buffer[6];
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU Product ID: %.*s"), dataLength, data);
+#ifdef USE_TUYA_MCU_UPGRADE
+  if (Tuya.mcu_upg.version_req_sent) {
+    Tuya.mcu_upg.version_req_sent = false;
+    char *receivedVersion = nullptr;
+    if (dataLength > 0) {
+      char *p;
+      uint8_t i = 0;
+      for (char *str = strtok_r(data, ", ", &p); str && i < 3; str = strtok_r(nullptr, ", ", &p)) {
+        char *pPair;
+        char *key = strtok_r(str, ":", &pPair);
+        if (strcmp_P(key, "\"v\"") == 0) {
+          receivedVersion = strtok_r(nullptr, ": ", &pPair);
+        }
+        i++;
+      }
+    }
+    if (receivedVersion) {
+      if (strcmp_P(Tuya.mcu_upg.new_version.get(), receivedVersion) == 0) {
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrage successful to version: %s"), receivedVersion);
+      } else {
+        AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrage failed to version: %s"), Tuya.mcu_upg.new_version.get());
+      }
+    }
+    TuyaCleanupMcuUpgradeData();
+  }
+#endif
 }
 
 void TuyaSendLowPowerSuccessIfNeeded(void) {
@@ -1158,6 +1768,17 @@ void TuyaNormalPowerModePacketProcess(void)
     case TUYA_CMD_GET_NETWORK_STATUS:
       TuyaSetNetworkState();
       break;
+
+#ifdef USE_TUYA_MCU_UPGRADE
+    case TUYA_CMD_INITIATING_UPGRADE:
+      AddLog(LOG_LEVEL_INFO, PSTR("TYA: RX Init-Upgrade Response"));
+      TuyaHandleInitUpgradeResponse();
+      break;
+    case TUYA_CMD_UPGRADE_PACKAGE:
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX Package-Upgrade Response"));
+      TuyaHandlePkgUpgradeResponse();
+      break;
+#endif
 #ifdef USE_TUYA_TIME
     case TUYA_CMD_SET_TIME:
       TuyaSetTime();
@@ -1690,6 +2311,12 @@ bool Xdrv16(uint32_t function) {
           TuyaSendLowPowerSuccessIfNeeded();
         }
         if (Tuya.ignore_topic_timeout < millis()) { Tuya.SuspendTopic = false; }
+#ifdef USE_TUYA_MCU_UPGRADE
+        if (Tuya.mcu_upg.flash_buffer.getCurrentPacketSize() && Tuya.mcu_upg.response_timeout < millis()) { 
+            TuyaSendUpgradePackage(false); 
+        }
+        if (Tuya.mcu_upg.version_req_sent && Tuya.mcu_upg.response_timeout < millis()) { TuyaCleanupMcuUpgradeData(); }
+#endif
         break;
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();
