@@ -2581,7 +2581,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER)
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER) || defined(USE_TUYA_MCU_UPGRADE)
 #define USE_WEB_FW_UPGRADE
 #endif
 
@@ -2689,6 +2689,15 @@ void HandleUploadDone(void) {
     return;
   }
 #endif  // USE_ZIGBEE_EZSP
+
+#if defined(USE_TUYA_MCU_UPGRADE)
+  if ((UPL_TUYA == Web.upload_file_type) && !Web.upload_error && BUpload.ready) {
+    BUpload.ready = false;  //  Make sure not to follow thru again
+    TuyaMCUFlashFirmware(FlashDirectAccess(), BUpload.spi_hex_size);
+    HandleTuyaOTAWebUploadProgress();
+    return;
+  }
+#endif  // USE_TUYA_MCU_UPGRADE
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
@@ -2847,6 +2856,11 @@ void HandleUploadLoop(void) {
         BUploadInit(UPL_EFR32);
       }
 #endif  // USE_ZIGBEE_EZSP
+#ifdef USE_TUYA_MCU_UPGRADE
+      else if (IsModuleTuya()) { // There is no marker in tuya mcu firmware file which can be checked in this state
+        BUploadInit(UPL_TUYA);
+      }
+#endif // USE_TUYA_MCU_UPGRADE
 #endif  // USE_WEB_FW_UPGRADE
       else if (UPL_TASMOTA == Web.upload_file_type) {
         if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
@@ -2958,12 +2972,18 @@ void HandleUploadLoop(void) {
       if (UPL_CCL == Web.upload_file_type) {
         error = CLLFlashFirmware(data, BUpload.spi_hex_size);
       }
-#endif  // SHELLY_FW_UPGRADE
+#endif  // USE_CCLOADER
 #ifdef USE_ZIGBEE_EZSP
       if (UPL_EFR32 == Web.upload_file_type) {
         BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
       }
 #endif  // USE_ZIGBEE_EZSP
+#ifdef USE_TUYA_MCU_UPGRADE
+      if (UPL_TUYA == Web.upload_file_type) {
+        BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
+        //error = TuyaMCUFlashFirmware(data, BUpload.spi_hex_size);
+      }
+#endif  // USE_TUYA_MCU_UPGRADE
       if (error != 0) {
 //        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
         Web.upload_error = error + (100 * (Web.upload_file_type -1));  // Add offset to discriminate transfer errors

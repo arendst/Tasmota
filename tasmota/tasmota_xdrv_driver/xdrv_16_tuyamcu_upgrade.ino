@@ -62,6 +62,23 @@ TuyaUpgBuffer::~TuyaUpgBuffer (void) {
   }
 }
 
+bool TuyaUpgBuffer::init (uint32_t len, uint8_t * file_data){
+  reset();
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: prepare OTA file transfer with a binary size of: %d"), len);
+  if (ESP.getFreeHeap() > 2 * _flash_sector_size) {
+    _buffer_size = _flash_sector_size;
+  } else {
+    _buffer_size = 256;
+  }
+  _buffer = new uint8_t[_buffer_size];
+  _buffer_pos = 0;
+  _len = len;
+  _ota_file_data = file_data;
+  _file_upl_by_webupgrade = true;
+
+  return true;
+}
+
 bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   reset();
   SettingsSave(1);          // Free flash for upload
@@ -114,6 +131,7 @@ bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   _buffer_pos = 0;
   _len = len;
   _checksum = checksum;
+  _state = OTA_STATE_INIT;
 #ifdef ESP8266
   return _start > 0 && _num_sectors > 0 && _buffer;
 #elif defined ESP32
@@ -128,6 +146,9 @@ void TuyaUpgBuffer::reset (void) {
   _current_address = 0;
   _len = 0;
   _buffer_size = 0;
+  _ota_file_data = nullptr;
+  _file_upl_by_webupgrade = false;
+  _state = OTA_STATE_RESET;
 #ifdef ESP32
   if (_fname) {
     delete[] _fname;
@@ -155,6 +176,7 @@ uint32_t TuyaUpgBuffer::writeToFlashOrFile (Stream &data) {
   uint32_t bytesWritten = 0;
   _md5_context = new br_md5_context;
   if (0 < _len && _md5_context) {
+    _state = OTA_STATE_TRANSFER_TO_NVM;
     br_md5_init(_md5_context);
     uint32_t toRead = 0;
     while (0 < remaining()) {
@@ -241,6 +263,7 @@ void TuyaUpgBuffer::setPacketSize (uint16_t value) {
 
 bool TuyaUpgBuffer::readNextPacket (void) {
   uint32_t bytesRead = 0;
+  _state = OTA_STATE_TRANSFER_TO_MCU;
   if (_current_packet) {
     delete[] _current_packet;
     _current_packet = nullptr;
@@ -288,7 +311,21 @@ uint32_t TuyaUpgBuffer::remaining (void) {
 }
 
 void TuyaUpgBuffer::abort (void) {
+  _state = OTA_STATE_ABORT;
   _current_address = (_start + _len);
+}
+
+void TuyaUpgBuffer::ready (bool ready){
+  if (ready){
+    _state = OTA_STATE_FINISHED_SUCCESS;
+  }
+  else {
+    _state = OTA_STATE_FINISHED_FAILED;
+  }
+}
+
+ota_state_t TuyaUpgBuffer::getState (void){
+  return _state;
 }
 
 #ifdef ESP8266
@@ -332,6 +369,11 @@ bool TuyaUpgBuffer::readToBuffer (void) {
   }
   _buffer_pos = 0;
 
+  if (_file_upl_by_webupgrade) {
+    memcpy_P(&_ota_file_data[_current_address], _buffer, bytesToRead);
+    return true;
+  }
+
   return ESP.flashRead(_current_address, (uint32_t*) _buffer, bytesToRead);
 }
 
@@ -361,6 +403,11 @@ bool TuyaUpgBuffer::readToBuffer (void) {
     bytesToRead = remaining();
   }
   _buffer_pos = 0;
+
+  if (_file_upl_by_webupgrade) {
+    memcpy_P(&_ota_file_data[_current_address], _buffer, bytesToRead);
+    return true;
+  }
 
   File ota_file = ufsp->open(_fname, "r");
   if (!ota_file) {

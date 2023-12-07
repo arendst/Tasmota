@@ -388,11 +388,72 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
 }
 
 #ifdef USE_TUYA_MCU_UPGRADE
+uint32_t TuyaMCUFlashFirmware(uint8_t * data, uint32_t size){
+  uint32_t error = 0;
+  AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade received via WebUpdate, binary-size: %d"), size);
+  
+  Tuya.mcu_upg.binary_len = size;
+  if (Tuya.mcu_upg.flash_buffer.init(size, data)) {
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade start OTA transfer ... "));
+    TuyaSendInitiateUpgrade();
+  }
+  else {
+    AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade OTA init failed!"));
+    error = 1;
+  }
+  
+  return error;
+};
+
+#define WEB_HANDLE_TUYA_MCU_OTA     "tx"
+
+const char HTTP_SCRIPT_TUYA_XFER_STATE[] PROGMEM =
+  "function z10(){"
+    "if(x!=null){x.abort();}"       // Abort if no response within 2 seconds (happens on restart 1)
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=()=>{"
+      "if(x.readyState==4&&x.status==200){"
+        "var s=x.responseText;"
+        "if(s>3){"                 // > OTA_STATE_TRANSFER_TO_MCU
+          "location.href='/u3';"    // Load page HandleUploadDone()
+        "}"
+      "}"
+    "};"
+    "x.open('GET','" WEB_HANDLE_TUYA_MCU_OTA "?z=1',true);"  // ?z related to Webserver->hasArg("z")
+    "x.send();"
+    "lt=setTimeout(z10,950);"        // Poll every 0.95 second
+  "}"
+  "wl(z10);";                        // Execute z10() on page load
+
+void HandleTuyaOTAWebUploadProgress(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (Webserver->hasArg("z")) {     // Status refresh requested
+    ota_state_t ota_state = Tuya.mcu_upg.flash_buffer.getState();
+    if (OTA_STATE_ABORT == ota_state || OTA_STATE_FINISHED_FAILED == ota_state) {
+      Web.upload_error = 7;         // Upload aborted (transfer failed)
+    }
+    WSContentBegin(200, CT_PLAIN);
+    WSContentSend_P(PSTR("%d"), ota_state);
+    WSContentEnd();
+    return;
+  }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_TRANSFER));
+
+  WSContentStart_P(PSTR(D_INFORMATION));
+  WSContentSend_P(HTTP_SCRIPT_TUYA_XFER_STATE);
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD_TRANSFER " ...</b></div>"));
+  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
 void CmndTuyaUpgrade(void) { // Command to update the tuya mcu
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: command received: %s"), XdrvMailbox.data);
   Response_P(PSTR("{\"%s\":{\"Result\":\""), XdrvMailbox.command);  // Builds TuyaUpgrade
   if (!TuyaMcuUpgradeInProgress()) {
-    TuyaCleanupMcuUpgradeData();
+    TuyaCleanupMcuUpgradeData(false);
  
     char* parm[3] = { nullptr };
     if (XdrvMailbox.data_len > 0) {
@@ -700,7 +761,7 @@ void TuyaSendUpgradePackage(bool next = false) {
   if (Tuya.mcu_upg.flash_buffer.hasMoreData() && 3 > Tuya.mcu_upg.retry_cnt) {
     if (next) {
       if (!Tuya.mcu_upg.flash_buffer.readNextPacket()) {
-        TuyaCleanupMcuUpgradeData();
+        TuyaCleanupMcuUpgradeData(false);
         AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: problems reading next packet!"));
         return;
       }
@@ -736,7 +797,7 @@ void TuyaSendUpgradePackage(bool next = false) {
     TuyaSendCmd(TUYA_CMD_UPGRADE_PACKAGE, payload_buffer, payload_len);
   } else if (3 <= Tuya.mcu_upg.retry_cnt) { // ERROR
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: OTA chunk transfer failed because maximum retry-count reached."));
-    TuyaCleanupMcuUpgradeData();
+    TuyaCleanupMcuUpgradeData(false);
   } else { // MCU-upgrade finished with response to the last package.
       AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: OTA chunk transfer finished."));
       Tuya.mcu_upg.flags.trigger_version = 1;
@@ -787,7 +848,7 @@ bool TuyaCreateStreamToMcuBinary(const char* url) {
   return success;
 }
 
-void TuyaCleanupMcuUpgradeData() {
+void TuyaCleanupMcuUpgradeData(bool success) {
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: clean upgrade data."), Tuya.mcu_upg.binary_len);
   if (Tuya.mcu_upg.http_client) {
     Tuya.mcu_upg.http_client->end();
@@ -804,6 +865,12 @@ void TuyaCleanupMcuUpgradeData() {
   Tuya.mcu_upg.binary_len = 0;
   Tuya.mcu_upg.new_version.reset(nullptr);
   Tuya.mcu_upg.flags.data = 0;
+  if (success){
+    Tuya.mcu_upg.flash_buffer.ready(true);
+  }
+  else {
+    Tuya.mcu_upg.flash_buffer.ready(false);
+  }
 }
 
 bool TuyaMcuUpgradeInProgress() {
@@ -1260,7 +1327,7 @@ void TuyaHandleInitUpgradeResponse(void) {
       TuyaSendUpgradePackage(true);
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: initiate upgrade response: invalid data size (%d) or packet size (%d)!"), Tuya.data_len, Tuya.buffer[6]);
-    TuyaCleanupMcuUpgradeData();
+    TuyaCleanupMcuUpgradeData(false);
   }
 }
 
@@ -1273,6 +1340,7 @@ void TuyaHandlePkgUpgradeResponse(void) {
       //TuyaSendUpgradePackage(true);
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: Upgrade package response: Invalid data size (%d)!"), Tuya.data_len);
+    TuyaCleanupMcuUpgradeData(false);
   }
 }
 #endif
@@ -1298,6 +1366,7 @@ void TuyaHandleProductInfoPacket(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU Product ID: %.*s"), dataLength, data);
 #ifdef USE_TUYA_MCU_UPGRADE
   if (Tuya.mcu_upg.flags.request_version) {
+    bool success = false;
     Tuya.mcu_upg.flags.request_version = 0;
     char *receivedVersion = nullptr;
     if (dataLength > 0) {
@@ -1315,11 +1384,12 @@ void TuyaHandleProductInfoPacket(void) {
     if (receivedVersion) {
       if (strcmp_P(Tuya.mcu_upg.new_version.get(), receivedVersion) == 0) {
         AddLog(LOG_LEVEL_INFO, PSTR("TYA: MCU-Upgrade: successful to version: %s"), receivedVersion);
+        success = true;
       } else {
         AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: failed to version: %s"), Tuya.mcu_upg.new_version.get());
       }
     }
-    TuyaCleanupMcuUpgradeData();
+    TuyaCleanupMcuUpgradeData(success);
   }
 #endif
 }
@@ -1960,8 +2030,13 @@ bool Xdrv16(uint32_t function) {
         if (Tuya.heartbeat_timer && Tuya.mcu_upg.response_timeout < millis()){
           if (Tuya.mcu_upg.flags.request_init_upgd){
             //clean OTA data because missing response to initial upgrade packet
-            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: missing initial upgrade packet response."));
-            TuyaCleanupMcuUpgradeData();
+            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: missing initial upgrade packet response. This is an indication that the MCU firmware has not implemented the firmware update process."));
+            TuyaCleanupMcuUpgradeData(false);
+          }
+          else if (Tuya.mcu_upg.flags.request_version) {
+            //clean OTA data after successfull update but missing product id
+            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: after a successfull OTA the product id is missing."));
+            TuyaCleanupMcuUpgradeData(false);
           }
           else if (Tuya.mcu_upg.flags.trigger_next_packet) {
             //send next OTA package
@@ -1978,11 +2053,6 @@ bool Xdrv16(uint32_t function) {
             Tuya.mcu_upg.response_timeout = millis() + 60000;
             TuyaRequestState(8);
             Tuya.mcu_upg.flags.request_version = 1;
-          }
-          else if (Tuya.mcu_upg.flags.request_version) {
-            //clean OTA data after successfull update but missing product id
-            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: after a successfull OTA the product id is missing."));
-            TuyaCleanupMcuUpgradeData();
           }
         }
 #endif
@@ -2006,6 +2076,10 @@ bool Xdrv16(uint32_t function) {
       case FUNC_WEB_SENSOR:
         TuyaSensorsShow(0);
         break;
+      case FUNC_WEB_ADD_HANDLER:
+#ifdef USE_TUYA_MCU_UPGRADE
+        WebServer_on(PSTR("/" WEB_HANDLE_TUYA_MCU_OTA), HandleTuyaOTAWebUploadProgress);
+#endif  // USE_TUYA_MCU_UPGRADE
 #endif  // USE_WEBSERVER
     }
   }

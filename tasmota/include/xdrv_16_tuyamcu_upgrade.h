@@ -27,10 +27,21 @@ extern "C" {
 #ifdef USE_TUYA_MCU
 #ifdef USE_TUYA_MCU_UPGRADE
 
+typedef enum {
+  OTA_STATE_RESET = 0,
+  OTA_STATE_INIT,
+  OTA_STATE_TRANSFER_TO_NVM,
+  OTA_STATE_TRANSFER_TO_MCU,
+  OTA_STATE_FINISHED_SUCCESS,
+  OTA_STATE_FINISHED_FAILED,
+  OTA_STATE_ABORT
+} ota_state_t;
+
 class TuyaUpgBuffer final {
 public:
   TuyaUpgBuffer (void);
   ~TuyaUpgBuffer (void);
+  bool init (uint32_t len = 0, uint8_t * file_data = nullptr);
   bool init (uint32_t len = 0, char* checksum = nullptr, char* filename = NULL);
   void reset (void);
   uint32_t writeToFlashOrFile(Stream &data);
@@ -43,6 +54,8 @@ public:
   bool readNextPacket (void);
   void getCurrentPacket (uint8_t *toBuffer);
   uint16_t getCurrentPacketSize (void);
+  ota_state_t getState (void);
+  void ready (bool ready = false);
 
 private:
   uint32_t remaining (void);
@@ -74,6 +87,9 @@ private:
   static const uint32_t _flash_sector_size = 4096;
   char *_fname = nullptr;
 #endif
+  uint8_t * _ota_file_data = nullptr;
+  bool _file_upl_by_webupgrade = false;
+  ota_state_t _state = OTA_STATE_RESET;
 };
 
 // parameters used for MCU upgrade
