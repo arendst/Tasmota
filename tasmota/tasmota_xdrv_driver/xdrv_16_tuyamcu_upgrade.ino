@@ -370,7 +370,7 @@ bool TuyaUpgBuffer::readToBuffer (void) {
   _buffer_pos = 0;
 
   if (_file_upl_by_webupgrade) {
-    memcpy_P(&_ota_file_data[_current_address], _buffer, bytesToRead);
+    memcpy_P(_buffer, &_ota_file_data[_current_address], bytesToRead);
     return true;
   }
 
@@ -405,7 +405,7 @@ bool TuyaUpgBuffer::readToBuffer (void) {
   _buffer_pos = 0;
 
   if (_file_upl_by_webupgrade) {
-    memcpy_P(&_ota_file_data[_current_address], _buffer, bytesToRead);
+    memcpy_P(_buffer, &_ota_file_data[_current_address], bytesToRead);
     return true;
   }
 
