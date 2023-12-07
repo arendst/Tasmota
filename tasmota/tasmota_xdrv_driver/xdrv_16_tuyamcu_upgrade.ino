@@ -66,13 +66,13 @@ bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   _end = (uint32_t)&_FS_start - 0x40200000;
   _num_sectors = (_end - _start)/_flash_sector_size;
   _current_address = _start;
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: used size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: used size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), 
           ESP.getSketchSize(), _start, _end, _num_sectors);
 #elif defined ESP32
   //using the ufs
   uint32_t maxMem = (UfsSize() * 1024);
   uint32_t freeMem = (UfsFree() * 1024);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaUpgBuffer: ufs size: %d, ufs free: %d, OTA-binary-size: %d"), 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: ufs size: %d, ufs free: %d, OTA-binary-size: %d"), 
           maxMem, freeMem, len);
   
   char * fname = fileOnly(filename);
@@ -83,18 +83,19 @@ bool TuyaUpgBuffer::init (uint32_t len, char* checksum, char* filename) {
   _fname[1 + fname_size] = '\0';
   
   if (ufsp->exists(_fname)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: ota file with equal filename exists: %s. Try to delete."), _fname);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: OTA file with equal filename exists: %s. It will be deleted now."), _fname);
     if (!ufsp->remove(_fname)) {
-      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: file deletion failed"));
+      AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: file deletion failed"));
       return false;
     }
   }
 
   File ota_file = ufsp->open(_fname, "w");
   if (!ota_file) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: ota file %s couldn't created"), _fname);
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: OTA file %s couldn't created"), _fname);
     return false;
   }
+
   ota_file.close();
 #endif
   if (ESP.getFreeHeap() > 2 * _flash_sector_size) {
@@ -150,11 +151,7 @@ uint32_t TuyaUpgBuffer::writeToFlashOrFile (Stream &data) {
     br_md5_init(_md5_context);
     uint32_t toRead = 0;
     while (0 < remaining()) {
-#ifdef ESP8266
-      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: Try transfering to flash, Size of binary: %d/%d"), remaining(), _len);
-#elif defined ESP32
-      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: Try transfering to UFS, Size of binary: %d/%d"), remaining(), _len);
-#endif
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: transfering OTA file chunk to internal memory %d/%d"), (_len - remaining()), _len);
       uint8_t retryCount = 1;
       uint32_t bytesToRead = _buffer_size - _buffer_pos;
       if (bytesToRead > remaining()) {
@@ -172,33 +169,25 @@ uint32_t TuyaUpgBuffer::writeToFlashOrFile (Stream &data) {
         return bytesWritten;
       }
       _buffer_pos += toRead;
-      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: buffer_size: %d, buffer_pos: %d, bytesToRead: %d, toRead: %d"),
-        _buffer_size, _buffer_pos, bytesToRead, toRead);
-      if((_buffer_pos == remaining() || _buffer_pos == _buffer_size) &&
-          !writeBuffer()) {
-#ifdef ESP8266
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error writing to Flash! %d bytes written"), bytesWritten);
-#elif defined ESP32
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error writing to UFS! %d bytes written"), bytesWritten);
-#endif
+      if((_buffer_pos == remaining() || _buffer_pos == _buffer_size) && !writeBuffer()) {
+        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: error transfering OTA file chunk to internal memory, %d bytes written!"), bytesWritten);
         abort();
         return bytesWritten;
       }
       bytesWritten += toRead;
-      yield();
+      yield();          // to satisfying the WDT
     }
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: writeToFlashOrFile: DONE! %d bytes written"), bytesWritten);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: OTA file transfer done, %d bytes written."), bytesWritten);
   return bytesWritten;
 }
 
 bool TuyaUpgBuffer::isChecksumOk (void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: verify if checksum is: %s"), _checksum);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: verify checksum %s"), _checksum);
   bool checksumOk = true;
-  if(_checksum)
-  {
+  if(_checksum) {
     if (_md5_context && 32 == strlen(_checksum)) {
-      AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: length of given checksum is OK"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: length of given checksum is OK"));
       char *toConvert = _checksum;
       uint8_t md5_in[16];
       uint8_t md5_out[16];
@@ -214,11 +203,11 @@ bool TuyaUpgBuffer::isChecksumOk (void) {
         checksumOk = checksumOk && (md5_in[i] == md5_out[i]);
       }
     } else {
-      AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaUpgBuffer: Error calculating the checksums!"));
+      AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: error calculating the checksums!"));
       checksumOk = false;
     }
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaUpgBuffer: checksum is: %s"), checksumOk ? "OK" : "not OK");
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: MCU-Upgrade: checksum is %s"), checksumOk ? "OK" : "not OK");
   return checksumOk;
 }
 
@@ -298,7 +287,6 @@ void TuyaUpgBuffer::abort (void) {
 #ifdef ESP8266
 bool TuyaUpgBuffer::eraseSector (void) {
   bool eraseResult = true;
-  static uint8_t log = 5;
   if (_current_address % _flash_sector_size == 0) {
     eraseResult = ESP.flashEraseSector(_current_address/_flash_sector_size);
   }
@@ -309,17 +297,16 @@ bool TuyaUpgBuffer::writeBuffer (void) {
   bool writeResult = true;
 
   if (eraseSector()) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Erasing current sector OK. Writing buffer to flash!"));
     writeResult = ESP.flashWrite(_current_address, (uint32_t*) _buffer, _buffer_pos);
   } else { // if erase was unsuccessful
     abort();
-    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: writeBuffer: Error erasing current sector in Flash!"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: error erasing sector %d in flash!"), (_current_address/_flash_sector_size));
     return false;
   }
 
   if (!writeResult) {
     abort();
-    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: writeBuffer: Error writing buffer to Flash!"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: error writing buffer @ address 0x%lx to flash!"), _current_address);
     return false;
   }
   
@@ -327,7 +314,7 @@ bool TuyaUpgBuffer::writeBuffer (void) {
 
   _current_address += _buffer_pos;
   _buffer_pos = 0;
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Buffer written to flash!"));
+
   return true;
 }
 
@@ -346,13 +333,11 @@ bool TuyaUpgBuffer::writeBuffer (void) {
   File ota_file = ufsp->open(_fname, "a");
   if (!ota_file) {
     abort();
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: file %s couldn't be opened."), _fname);
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: file %s couldn't be opened."), _fname);
     return false;
   }
   
-  uint32_t ret_write = ota_file.write(_buffer, _buffer_pos);
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: writeBuffer: Writing buffer to file, ret_write = %d!"),ret_write);
-
+  ota_file.write(_buffer, _buffer_pos);
   ota_file.close();
 
   br_md5_update(_md5_context, _buffer, _buffer_pos);
@@ -373,13 +358,22 @@ bool TuyaUpgBuffer::readToBuffer (void) {
   File ota_file = ufsp->open(_fname, "r");
   if (!ota_file) {
     abort();
-    AddLog(LOG_LEVEL_INFO, PSTR("TYA: readToBuffer: file %s couldn't be opened."), _fname);
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: file %s couldn't be opened."), _fname);
     return false;
   }
   
-  uint32_t seek_return = ota_file.seek(_current_address);
-  uint32_t read_return = ota_file.read(_buffer, bytesToRead);
-  AddLog(LOG_LEVEL_INFO, PSTR("TYA: readToBuffer: curr_addr: %d, ret_seek: %d, ret_read: %d"), _current_address, seek_return, read_return);
+  if (!ota_file.seek(_current_address)) {
+    abort();
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: file position %d not seekable."), _current_address);
+    return false;
+  }
+  
+  uint32_t bytesObtained = ota_file.read(_buffer, bytesToRead);
+  if (bytesToRead != bytesObtained) {
+    abort();
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: file read out error (obtain: %d/expected: %d)."), bytesObtained, bytesToRead);
+    return false;
+  }
   
   ota_file.close();
 
