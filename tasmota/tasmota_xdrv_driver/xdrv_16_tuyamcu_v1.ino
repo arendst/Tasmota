@@ -1320,14 +1320,6 @@ void TuyaProcessMessage(void) {
   ResponseAppend_P(PSTR("}}"));
 
   if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-/*
-    for (uint8_t cmdsID = 0; sizeof(TuyaExcludeCMDsFromMQTT) > cmdsID; cmdsID++){
-      if (TuyaExcludeCMDsFromMQTT[cmdsID] == Tuya.buffer[3]) {
-        isCmdToSuppress = true;
-        break;
-      }
-    }
-*/
     for (uint8_t cmdsID = 0; cmdsID < sizeof(TuyaExcludeCMDsFromMQTT); cmdsID++) {
       if (pgm_read_byte(TuyaExcludeCMDsFromMQTT +cmdsID) == Tuya.buffer[3]) {
         isCmdToSuppress = true;
@@ -1418,14 +1410,13 @@ void TuyaSerialInput(void)
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
       Tuya.cmd_checksum += serial_in_byte;
     } 
-    else { // buffer overflow, erset the state machine
+    else { // buffer overflow, reset the state machine
       Tuya.byte_counter = 0;
     }
   }
   // reset the state machine if no bytes received since a long time
   if (Tuya.byte_counter > 0 && (millis() - time_last_byte_received) > TUYA_CMD_TIMEOUT) {
      Tuya.byte_counter = 0;
-     time_last_byte_received = millis();
      AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("TYA: serial receive timeout"));
    }
 }
