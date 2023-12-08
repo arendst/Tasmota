@@ -1,4 +1,4 @@
-/* Solidification of leds_animator.h */
+/* Solidification of leds_0_animator.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
