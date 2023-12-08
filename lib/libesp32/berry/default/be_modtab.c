@@ -206,8 +206,10 @@ be_extern_native_class(AXP192);
 be_extern_native_class(AXP202);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
+be_extern_native_class(Leds_frame);
 be_extern_native_class(Leds);
 be_extern_native_class(Leds_animator);
+be_extern_native_class(Leds_pulse);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -276,7 +278,9 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_WS2812
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
+    &be_native_class(Leds_frame),
     &be_native_class(Leds_animator),
+    &be_native_class(Leds_pulse),
 #endif // USE_WS2812
 #ifdef USE_ENERGY_SENSOR
     &be_native_class(energy_struct),
