@@ -653,7 +653,7 @@ void MqttPublishLoggingAsync(bool refresh) {
   while (GetLog(Settings->mqttlog_level, &index, &line, &len)) {
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-    MqttPublishLib(stopic, (const uint8_t*)line, len -1, false);
+    //MqttPublishLib(stopic, (const uint8_t*)line, len -1, false);
   }
 }
 
@@ -739,7 +739,7 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
   prefix &= 3;
   char stopic[TOPSZ];
   GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, romram);
-  MqttPublishPayload(stopic, payload, binary_length, retained);
+  //MqttPublishPayload(stopic, payload, binary_length, retained);
 
 #if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
   if ((prefix > 0) && (Settings->flag4.awsiot_shadow) && (Mqtt.connected)) {    // placeholder for SetOptionXX
@@ -847,12 +847,30 @@ void MqttPublishPowerState(uint32_t device) {
     GetPowerDevice(scommand, device, sizeof(scommand), Settings->flag.device_index_enable);           // SetOption26 - Switch between POWER or POWER1
     GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, (Settings->flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
     Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(TasmotaGlobal.power, device -1)));
-    MqttPublish(stopic);
+    //MqttPublish(stopic);
+    /////////////////////////////Mia Linea///////////////////////////////////////////////////
+    char estadoPower;
+    char *OriginalS = GetStateText(bitRead(TasmotaGlobal.power, device - 1));
+    if (strcmp("ON", OriginalS) == 0)
+    {
+      estadoPower = '1';
+      MqttPublishPayload(TasmotaGlobal.mqtt_topic, (const char*)"1", 0, false);
+    }
+    else
+    {
+      estadoPower = '0';
+      MqttPublishPayload(TasmotaGlobal.mqtt_topic, (const char*)"0", 0, false);
+    }
+    Serial.print("Original: ");
+    Serial.print(GetStateText(bitRead(TasmotaGlobal.power, device - 1)));
+    Serial.print(" estadoPower: ");
+    Serial.println(estadoPower);
+    ///////////////////////////////Mia Linea//////////////////////////////////////////
 
     if (!Settings->flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
       GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
       Response_P(GetStateText(bitRead(TasmotaGlobal.power, device -1)));
-      MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
+      //MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
     }
 
 #ifdef USE_INFLUXDB
@@ -936,7 +954,7 @@ void MqttConnected(void) {
 
     GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
     Response_P(PSTR(MQTT_LWT_ONLINE));
-    MqttPublish(stopic, true);
+    //MqttPublish(stopic, true);
 
     if (!Settings->flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
       // Satisfy iobroker (#299)
@@ -945,18 +963,18 @@ void MqttConnected(void) {
     }
 
     GetTopic_P(stopic, CMND, TasmotaGlobal.mqtt_topic, PSTR("#"));
-    MqttSubscribe(stopic);
+    //MqttSubscribe(stopic);
     if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
       uint32_t real_index = SET_MQTT_GRP_TOPIC;
       for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
         if (1 == i) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
         if (strlen(SettingsText(real_index +i))) {
           GetGroupTopic_P(stopic, PSTR("#"), real_index +i);  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
-          MqttSubscribe(stopic);
+          //c(stopic);
         }
       }
       GetFallbackTopic_P(stopic, PSTR("#"));
-      MqttSubscribe(stopic);
+      //MqttSubscribe(stopic);
     }
 
     XdrvCall(FUNC_MQTT_SUBSCRIBE);
