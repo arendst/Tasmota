@@ -4,6 +4,6 @@
  *******************************************************************/
 #ifdef USE_WS2812
 
-#include "solidify/solidified_leds_animator.h"
+#include "solidify/solidified_leds_0_animator.h"
 
 #endif // USE_WS2812
