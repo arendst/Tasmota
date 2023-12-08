@@ -529,7 +529,9 @@ public:
 
         // ESP_LOGI(TAG, "Enable RMT TX channel");
         ret += rmt_enable(_channel.RmtChannelNumber);
-        AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
+        // if (ret) {
+        //     AddLog(2,"RMT: initialized with error code: %u on pin: %u",ret, _pin);
+        // }
     }
 
     void Update(bool maintainBufferConsistency)
