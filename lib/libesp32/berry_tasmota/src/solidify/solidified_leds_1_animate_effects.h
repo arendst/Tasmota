@@ -1,4 +1,4 @@
-/* Solidification of leds_animate_effects.h */
+/* Solidification of leds_1_animate_effects.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
