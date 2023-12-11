@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 LVGL library from v8.3.10 to v8.3.11 (no functional change)
 
 ### Fixed
+- HASPmota `bar` fixed `val` attribute
 
 ### Removed
 
