@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
 
 ### Breaking Changed
+- Remove Berry `every_200ms` event which didn't work anyways
 
 ### Changed
 - ESP32 LVGL library from v8.3.10 to v8.3.11 (no functional change)
