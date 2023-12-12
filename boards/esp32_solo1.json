@@ -31,7 +31,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "variants/tasmota/tasmota32solo1-safeboot.bin"
+          "tasmota32solo1-safeboot.bin"
         ]
       ]
     },

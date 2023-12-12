@@ -268,13 +268,13 @@ void be_gcstrtab(bvm *vm)
             }
         }
     }
-#if BE_USE_DEBUG_GC == 0
-    if (tab->count < size >> 2 && size > 8) {
-        resize(vm, size >> 1);
+    if (BE_USE_DEBUG_GC || comp_is_gc_debug(vm)) {
+        resize(vm, tab->count + 4);
+    } else {
+        if (tab->count < size >> 2 && size > 8) {
+            resize(vm, size >> 1);
+        }
     }
-#else
-    resize(vm, tab->count + 4);
-#endif
 }
 
 uint32_t be_strhash(const bstring *s)

@@ -41,15 +41,43 @@ struct  {
   uint16_t  pred;
   uint16_t  Tvoc;
   uint8_t   i2c_address;
+  uint8_t   i2c_bus;
   uint8_t   status;
   bool      ready;
 } iAQ;
 
+bool IAQ_Read(void) {
+  TwoWire& myWire = I2cGetWire(iAQ.i2c_bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+
+  uint8_t buf[9];
+  buf[2] = IAQ_STATUS_I2C_ERR; // populate entry with error code
+  myWire.requestFrom(iAQ.i2c_address, sizeof(buf));
+  for (uint32_t i = 0; i < 9; i++) {
+    buf[i] = myWire.read();
+  }
+  // AddLog(LOG_LEVEL_DEBUG, "iAQ: buffer %x %x %x %x %x %x %x %x %x ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
+  if (IAQ_STATUS_I2C_ERR == buf[2]) {
+    return false;
+  }
+  iAQ.pred = (buf[0]<<8) + buf[1];
+  iAQ.status = buf[2];
+  iAQ.resistance =  ((uint32_t)buf[3]<<24) + ((uint32_t)buf[4]<<16) + ((uint32_t)buf[5]<<8) + (uint32_t)buf[6];
+  iAQ.Tvoc =  (buf[7]<<8) + buf[8];
+  return true;
+}
+
 void IAQ_Init(void) {
-  if (!I2cSetDevice(I2_ADR_IAQ)) { return; }
-  I2cSetActiveFound(I2_ADR_IAQ, "IAQ");
-  iAQ.i2c_address = I2_ADR_IAQ;
-  iAQ.ready = true;
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    if (!I2cSetDevice(I2_ADR_IAQ, bus)) { continue; }
+    iAQ.i2c_address = I2_ADR_IAQ;
+    iAQ.i2c_bus = bus;
+    if (!IAQ_Read()) { continue; }
+    I2cSetActiveFound(I2_ADR_IAQ, "IAQ", bus);
+    iAQ.ready = true;
+    break;
+  }
+
 /*
   for (iAQ.i2c_address = I2_ADR_IAQ; iAQ.i2c_address < I2_ADR_IAQ +5; iAQ.i2c_address++) {
     if (I2cActive(iAQ.i2c_address)) { continue; }
@@ -60,20 +88,6 @@ void IAQ_Init(void) {
     }
   }
 */
-}
-
-void IAQ_Read(void) {
-  uint8_t buf[9];
-  buf[2] = IAQ_STATUS_I2C_ERR; // populate entry with error code
-  Wire.requestFrom(iAQ.i2c_address, sizeof(buf));
-  for( uint32_t i=0; i<9; i++ ) {
-    buf[i]= Wire.read();
-  }
-  // AddLog(LOG_LEVEL_DEBUG, "iAQ: buffer %x %x %x %x %x %x %x %x %x ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
-  iAQ.pred = (buf[0]<<8) + buf[1];
-  iAQ.status = buf[2];
-  iAQ.resistance =  ((uint32_t)buf[3]<<24) + ((uint32_t)buf[4]<<16) + ((uint32_t)buf[5]<<8) + (uint32_t)buf[6];
-  iAQ.Tvoc =  (buf[7]<<8) + buf[8];
 }
 
 /*********************************************************************************************\

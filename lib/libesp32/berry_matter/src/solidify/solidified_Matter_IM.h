@@ -2455,19 +2455,19 @@ be_local_closure(Matter_IM__inner_process_read_request,   /* name */
           0x882C0121,  //  00C6  GETMBR	R11	R0	K33
           0x5431FFFE,  //  00C7  LDINT	R12	-1
           0x942C160C,  //  00C8  GETIDX	R11	R11	R12
-          0x6034000C,  //  00C9  GETGBL	R13	G12
-          0x5C381600,  //  00CA  MOVE	R14	R11
-          0x7C340200,  //  00CB  CALL	R13	1
-          0x6038000C,  //  00CC  GETGBL	R14	G12
-          0x5C3C1400,  //  00CD  MOVE	R15	R10
-          0x7C380200,  //  00CE  CALL	R14	1
-          0x00341A0E,  //  00CF  ADD	R13	R13	R14
-          0xB83A0000,  //  00D0  GETNGBL	R14	K0
-          0x88381D0E,  //  00D1  GETMBR	R14	R14	K14
-          0x88381D0F,  //  00D2  GETMBR	R14	R14	K15
-          0x18341A0E,  //  00D3  LE	R13	R13	R14
-          0x78360001,  //  00D4  JMPF	R13	#00D7
-          0x4034160A,  //  00D5  CONNECT	R13	R11	R10
+          0x6030000C,  //  00C9  GETGBL	R12	G12
+          0x5C341600,  //  00CA  MOVE	R13	R11
+          0x7C300200,  //  00CB  CALL	R12	1
+          0x6034000C,  //  00CC  GETGBL	R13	G12
+          0x5C381400,  //  00CD  MOVE	R14	R10
+          0x7C340200,  //  00CE  CALL	R13	1
+          0x0030180D,  //  00CF  ADD	R12	R12	R13
+          0xB8360000,  //  00D0  GETNGBL	R13	K0
+          0x88341B0E,  //  00D1  GETMBR	R13	R13	K14
+          0x88341B0F,  //  00D2  GETMBR	R13	R13	K15
+          0x1830180D,  //  00D3  LE	R12	R12	R13
+          0x78320001,  //  00D4  JMPF	R12	#00D7
+          0x4030160A,  //  00D5  CONNECT	R12	R11	R10
           0x70020003,  //  00D6  JMP		#00DB
           0x88300121,  //  00D7  GETMBR	R12	R0	K33
           0x8C301912,  //  00D8  GETMET	R12	R12	K18

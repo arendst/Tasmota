@@ -552,6 +552,11 @@ struct SCRIPT_MEM {
     ScriptOneWire ow;
 #endif
 
+#ifdef USE_SCRIPT_TCP_SERVER
+    WiFiServer *tcp_server;
+    WiFiClient tcp_client;
+#endif
+
 } glob_script_mem;
 
 
@@ -612,7 +617,7 @@ int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg);
 int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, TS_FLOAT **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum);
 #endif
 char *eval_sub(char *lp, TS_FLOAT *fvar, char *rstr);
-uint32_t script_ow(uint8_t sel, uint32_t val);
+int32_t script_ow(uint8_t sel, uint32_t val);
 int32_t script_logfile_write(char *path, char *payload, uint32_t size);
 void script_sort_array(TS_FLOAT *array, uint16_t size);
 
@@ -1190,6 +1195,8 @@ char *script;
       free(imemptr);
       if (strings_op) free(strings_op);
     }
+
+    glob_script_mem.script_lastmillis = millis();
     return err;
 }
 
@@ -5799,6 +5806,184 @@ extern char *SML_GetSVal(uint32_t index);
           goto nfuncexit;
         }
 #endif
+#ifdef USE_SCRIPT_TCP_SERVER
+        if (!strncmp_XP(lp, XPSTR("wso("), 4)) {
+          TS_FLOAT port;
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &port, gv);
+          glob_script_mem.tcp_server = new WiFiServer(port);
+          fvar = 0;
+          if (!glob_script_mem.tcp_server) {
+            fvar = -1;
+          } else  {
+            AddLog(LOG_LEVEL_INFO, PSTR("tcp server started"));
+          }
+          glob_script_mem.tcp_server->begin();
+          glob_script_mem.tcp_server->setNoDelay(true);
+
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsc("), 4)) {
+          if (glob_script_mem.tcp_server) {
+            glob_script_mem.tcp_client.stop();
+            glob_script_mem.tcp_server->stop();
+            delete glob_script_mem.tcp_server;
+            glob_script_mem.tcp_server = 0;
+          }
+          fvar = 0;
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsa("), 4)) {
+          fvar = 0;
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_server->hasClient()) {
+              glob_script_mem.tcp_client = glob_script_mem.tcp_server->available();
+              AddLog(LOG_LEVEL_DEBUG, PSTR("tcp client connected"));
+            }
+            if (glob_script_mem.tcp_client && glob_script_mem.tcp_client.connected()) {
+              fvar = glob_script_mem.tcp_client.available();
+            } else {
+              AddLog(LOG_LEVEL_DEBUG, PSTR("tcp client not connected"));
+            }
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, PSTR("tcp server not active"));
+          }
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsrs("), 5)) {
+          fvar = 0;
+          char buff[SCRIPT_MAXSSIZE];
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_client.connected()) {
+                uint16_t slen = glob_script_mem.tcp_client.available();
+                if (slen > sizeof(buff)) {
+                  slen = sizeof(buff);
+                }
+                for (uint16_t cnt = 0; cnt < slen; cnt++) {
+                  buff[cnt] = glob_script_mem.tcp_client.read();
+                }
+                buff[slen] = 0; 
+                if (sp) strlcpy(sp, buff, glob_script_mem.max_ssize);
+            }
+          }
+          goto strexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsws("), 5)) {
+          fvar = 0;
+          char buff[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, buff, 0);
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_client.connected()) {
+              glob_script_mem.tcp_client.write(buff, strlen(buff));
+            }
+          }
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsra("), 5)) {
+          TS_FLOAT *fpd = 0;
+          uint16_t alend;
+          uint16_t ipos;
+          lp = get_array_by_name(lp + 5, &fpd, &alend, &ipos);
+          SCRIPT_SKIP_SPACES
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_client.connected()) {
+                uint16_t slen = glob_script_mem.tcp_client.available();
+                if (slen > alend) {
+                  slen = alend;
+                }
+                for (uint16_t cnt = 0; cnt < slen; cnt++) {
+                  *fpd++ = glob_script_mem.tcp_client.read();
+                }
+                fvar = slen;
+            }
+          }
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wswa("), 5)) {
+          TS_FLOAT *fpd = 0;
+          uint16_t alend;
+          uint16_t ipos;
+          lp = get_array_by_name(lp + 5, &fpd, &alend, &ipos);
+          SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          uint16_t al = fvar;
+          if (al > alend) {
+            al = alend;
+          }
+          SCRIPT_SKIP_SPACES
+
+          uint16_t opts = 0;
+          if (*lp != ')') {
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+            opts = fvar;
+          }
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_client.connected()) {
+              uint8_t *abf = (uint8_t*)malloc(al * 4);
+              uint8_t *oabf = abf;
+              uint16_t dlen = 0;
+              if (abf) {
+                for (uint16_t cnt = 0; cnt < al; cnt++) {
+                  switch (opts) {
+                    case 0:
+                      //glob_script_mem.tcp_client.write((uint8_t)*fpd++);
+                      *abf++ = (uint8_t)*fpd++;
+                      dlen++;
+                      break;
+                    case 1:
+                      { 
+                        uint16_t wval = *fpd++;
+                        //glob_script_mem.tcp_client.write(wval >> 8);
+                        //glob_script_mem.tcp_client.write(wval);
+                        *abf++ = (wval >> 8);
+                        *abf++ = wval;
+                        dlen += 2;
+                      }
+                      break;
+                    case 2:
+                      {
+                        int16_t swval = *fpd++;
+                        //glob_script_mem.tcp_client.write(swval >> 8);
+                        //glob_script_mem.tcp_client.write(swval);
+                        *abf++ = (swval >> 8);
+                        *abf++ = swval;
+                        dlen += 2;
+                      }
+                      break;
+                    case 3:
+                      {
+                        uint32_t lval = *(uint32_t*)fpd;
+                        fpd++;
+                        //glob_script_mem.tcp_client.write(lval >> 24);
+                        //glob_script_mem.tcp_client.write(lval >> 16);
+                        //glob_script_mem.tcp_client.write(lval >> 8);
+                        //glob_script_mem.tcp_client.write(lval);
+                        *abf++ = (lval >> 24);
+                        *abf++ = (lval >> 16);
+                        *abf++ = (lval >> 8);
+                        *abf++ = lval;
+                        dlen += 4;
+                      }
+                      break;
+                  }
+                }
+                glob_script_mem.tcp_client.write(oabf, dlen);
+                free(oabf);
+              }
+            }
+          }
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("wsf("), 4)) {
+          fvar = -1;
+          if (glob_script_mem.tcp_server) {
+            if (glob_script_mem.tcp_client.connected()) {
+              glob_script_mem.tcp_client.flush();
+              fvar = 0;
+            }
+          }
+          goto nfuncexit;
+        }
+#endif
         break;
       case 'y':
         if (!strncmp_XP(vname, XPSTR("year"), 4)) {
@@ -7754,7 +7939,7 @@ bool script_OneWireCrc8(uint8_t *addr) {
   return (crc == *addr);               // addr 8
 }
 
-uint32_t script_ow(uint8_t sel, uint32_t val) {
+int32_t script_ow(uint8_t sel, uint32_t val) {
 uint32_t res = 0;
 uint8_t bits;
 bool invert = false;

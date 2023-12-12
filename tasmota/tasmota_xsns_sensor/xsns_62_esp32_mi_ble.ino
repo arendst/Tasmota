@@ -24,6 +24,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.2 20231123  changed - added support for Avago Tech Bluetooth buttons                              
+  -------
   0.9.2.1 20210217  changed - make features alos depend on received data - i.e. 'unknown' devices will show what they send.
                               Add MI32Option6 1 to switch to tele/tasmota_ble/<somename> style MQTT independent of HASS discovery.
   -------
@@ -483,8 +485,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_SCALE_V1    15
 #define MI_SCALE_V2    16
 #define MI_CGDK2       17
+#define AT_BTN         18
 
-#define MI_MI32_TYPES    17 //count this manually
+#define MI_MI32_TYPES    18 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -504,6 +507,7 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x181d, // Mi Scale V1
   0x181b,  // Mi Scale V2
   0x066f,  // CGDK2
+  0x004e  // Avago Tech Bluetooth Buttons (Company Id)
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -523,7 +527,8 @@ const char kMI32DeviceType13[] PROGMEM ="DOOR";
 const char kMI32DeviceType14[] PROGMEM ="MISCALEV1";
 const char kMI32DeviceType15[] PROGMEM ="MISCALEV2";
 const char kMI32DeviceType16[] PROGMEM ="CGDK2";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16};
+const char kMI32DeviceType17[] PROGMEM ="ATBTN";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16,kMI32DeviceType17};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -558,6 +563,7 @@ const char FLORA_Svc[] PROGMEM =                "00001204-0000-1000-8000-00805F9
 const char FLORA_BattChar[] PROGMEM =           "00001A02-0000-1000-8000-00805F9B34FB";
 
 
+const uint8_t ATBTN_Addr[] = { 0xc1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6 }; // All Avago Buttons seem to use same source address
 
 /*********************************************************************************************\
  * enumerations
@@ -1057,6 +1063,14 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     }
   }
 
+  // ATBTN uses manufacturer data and not a service - bit more like an IBeacon
+  if (memcmp(ATBTN_Addr, addr, 6) == 0)
+  {
+    //AddLog(LOG_LEVEL_INFO, PSTR("M32: AvagoBtn: %s"), advertisedDevice->toString().c_str());
+    MI32ParseATBtn((uint8_t*)advertisedDevice->getManufacturerData().data(), advertisedDevice->getManufacturerData().length(), addr, RSSI);
+    return 0;
+  }
+
   int svcdataCount = advertisedDevice->getServiceDataCount();
 
   if (svcdataCount == 0) {
@@ -1463,9 +1477,11 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
  *
  * @param _MAC     BLE address of the sensor
  * @param _type       Type number of the sensor
+ * @param counter     sequence number of broadcast - same for duplicates
+ * @paramm ignoreDulicates  ignore if counter matches lastCnt and previous broardcasts
  * @return uint32_t   Known or new slot in the sensors-vector
  */
-uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter){
+uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter, bool ignoreDuplicate = false){
 
   //AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: %s: will test ID-type: %x"),D_CMND_MI32, _type);
   bool _success = false;
@@ -1490,7 +1506,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       if(MIBLEsensors[i].lastCnt==counter) {
         // AddLog(LOG_LEVEL_DEBUG,PSTR("Old packet"));
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: %s: slot: %u/%u - ign repeat"),D_CMND_MI32, i, MIBLEsensors.size());
-        //return 0xff; // packet received before, stop here
+        if(ignoreDuplicate) return 0xff; // packet received before, stop here
       }
       if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Frame %d, last %d"), counter, MIBLEsensors[i].lastCnt);
       MIBLEsensors[i].lastCnt = counter;
@@ -1523,7 +1539,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
   _newSensor.lux = 0x00ffffff;
   _newSensor.light = -1;
   _newSensor.Btn = -1;
-
+  _newSensor.lastCnt = counter;
   switch (_type)
     {
     case MI_FLORA:
@@ -1566,6 +1582,11 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.feature.scale=1;
       _newSensor.feature.impedance=1;
       break;
+    case AT_BTN:
+      _newSensor.feature.Btn=1;
+      _newSensor.needkey = KEY_NOT_REQUIRED;
+      break;
+
     default:
       _newSensor.hum=NAN;
       _newSensor.feature.temp=1;
@@ -2133,6 +2154,61 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
 
   return res;
 }
+
+
+/*
+  AT Button Manufacturer Data
+  0 Company ID = 2 bytes
+  2 Unknown = 4 bytes 7fffffff
+  6 Counter = 1 byte
+  7 Unknown = 1 byte 05
+  8 Switch = 2 bytes
+  10 Unknown = 1 byte 00
+  11 Button = 1 bytes 0x (x = 1 to 3) 
+  12 Unknown = 4 bytes 50000100
+*/
+struct __attribute__ ((packed)) ATBtn_data
+{
+  uint16_t company_id;
+  uint32_t unknown1;
+  uint8_t counter;
+  uint8_t unknown2;
+  union {
+    struct {
+      uint8_t switch1;
+      uint8_t switch2;
+    };
+    uint16_t switch_id;
+  };
+  uint8_t unknown3;
+  uint8_t button_id;
+  uint32_t unknown4;
+};
+
+void MI32ParseATBtn(uint8_t *buf, uint16_t bufsize, const uint8_t* addr, int RSSI) {
+
+  ATBtn_data* data = (ATBtn_data*)buf;
+  // AddLog(LOG_LEVEL_INFO,PSTR("ATBTN %04x, %d, Counter(%u) Switch(%04x), Button(%x) %x"), data->company_id, bufsize, data->counter, data->switch_id, data->button_id, kMI32DeviceID[AT_BTN-1]);
+  if (bufsize != sizeof(ATBtn_data) || data->company_id != kMI32DeviceID[AT_BTN-1])
+    return;
+  // since all have same address, we'll move the "switch Id" into the last two addr fields to give each switch a unique MAC address
+  uint8_t _addr[6];
+  memcpy(_addr,addr,6);
+  _addr[4] = data->switch1;
+  _addr[5] = data->switch2;
+  uint32_t _slot = MIBLEgetSensorSlot(_addr, kMI32DeviceID[AT_BTN-1], data->counter, true);
+  if(_slot==0xff) return;
+
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), MI32getDeviceName(_slot),_slot);
+  MIBLEsensors[_slot].RSSI=RSSI;
+  MIBLEsensors[_slot].lastTime = millis();
+  MIBLEsensors[_slot].eventType.Btn = 1;
+  MI32.mode.shallTriggerTele = 1;
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+  MIBLEsensors[_slot].feature.Btn = 1;
+  MIBLEsensors[_slot].Btn = data->button_id;
+}
+
 
 ////////////////////////////////////////////////////////////
 // this SHOULD parse any MI packet, including encrypted.
@@ -2745,6 +2821,9 @@ void MI32TimeoutSensors(){
   // remove devices for which the adverts have timed out
   for (int i = MIBLEsensors.size()-1; i >= 0 ; i--) {
     //if (MIBLEsensors[i].MAC[2] || MIBLEsensors[i].MAC[3] || MIBLEsensors[i].MAC[4] || MIBLEsensors[i].MAC[5]){
+      // Since we use a pseudo MAC for the ATBTN slots we need to ignore these warnings
+      if (memcmp(MIBLEsensors[i].MAC, ATBTN_Addr, 4) == 0)  // Skip pseudo AT BTN addresses
+        continue;
       if (!BLE_ESP32::devicePresent(MIBLEsensors[i].MAC)){
         uint8_t *mac = MIBLEsensors[i].MAC;
         AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Dev no longer present MAC: %02x%02x%02x%02x%02x%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);

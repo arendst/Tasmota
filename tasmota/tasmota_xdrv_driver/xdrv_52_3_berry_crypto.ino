@@ -534,6 +534,89 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * AES_CBC class
+ * 
+\*********************************************************************************************/
+extern "C" {
+  // `AES_CBC.encrypt1(secret_key:bytes(16),iv:bytes(16),data:bytes(n*16))-> bool (true)
+  int32_t m_aes_cbc_encrypt1(bvm *vm);
+  int32_t m_aes_cbc_encrypt1(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 3  && be_isbytes(vm, 1)    // secret_key  - 16 bytes
+                   && be_isbytes(vm, 2)    // iv          - 16 bytes
+                   && be_isbytes(vm, 3)    // data/cipher - multiple 16 bytes
+                   ) {
+
+      size_t key_len = 0;
+      const void * key = be_tobytes(vm, 1, &key_len);
+      if (key_len != 16) {
+        be_raise(vm, "value_error", "Key size must be 16 bytes");
+      }
+
+      size_t iv_len = 0;
+      void * iv = (void *) be_tobytes(vm, 2, &iv_len);
+      if (iv_len != 16) {
+        be_raise(vm, "value_error", "IV size must be 16");
+      }
+
+      size_t data_len = 0;
+      void * data = (void *) be_tobytes(vm, 3, &data_len);
+      if (data_len%16 != 0) {
+        be_raise(vm, "value_error", "Data size must be multiple of 16");
+      }
+
+      // Initialize an AES CBC encryption structure with the secret key, then run with IV and data
+      br_aes_small_cbcenc_keys cbc_ctx;
+      br_aes_small_cbcenc_init(&cbc_ctx, key, 16);
+      br_aes_small_cbcenc_run( &cbc_ctx, iv, data, data_len );
+      
+      // (unchecked )success
+      be_pushbool(vm, btrue);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+  // `AES_CBC.decrypt1(secret_key:bytes(16),iv:bytes(16),cipher:bytes(n*16))-> bool (true)
+  int32_t m_aes_cbc_decrypt1(bvm *vm);
+  int32_t m_aes_cbc_decrypt1(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 3  && be_isbytes(vm, 1)    // secret_key  - 16 bytes
+                   && be_isbytes(vm, 2)    // iv          - 16 bytes
+                   && be_isbytes(vm, 3)    // cipher/data - multiple 16 bytes
+                   ) {
+
+      size_t key_len = 0;
+      const void * key = be_tobytes(vm, 1, &key_len);
+      if (key_len != 16) {
+        be_raise(vm, "value_error", "Key size must be 16 bytes");
+      }
+
+      size_t iv_len = 0;
+      void * iv = (void *) be_tobytes(vm, 2, &iv_len);
+      if (iv_len != 16) {
+        be_raise(vm, "value_error", "IV size must be 16");
+      }
+
+      size_t data_len = 0;
+      void * data = (void *) be_tobytes(vm, 3, &data_len);
+      if (data_len%16 != 0) {
+        be_raise(vm, "value_error", "Cipher size must be multiple of 16");
+      }
+
+      // Initialize an AES CBC decryption structure with the secret key, then run with IV and data
+      br_aes_small_cbcdec_keys cbc_ctx;
+      br_aes_small_cbcdec_init(&cbc_ctx, key, 16);
+      br_aes_small_cbcdec_run( &cbc_ctx, iv, data, data_len );
+      
+      // (unchecked )success
+      be_pushbool(vm, btrue);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * SHA256 class
  * 
 \*********************************************************************************************/

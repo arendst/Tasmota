@@ -701,6 +701,7 @@ void WcInterrupt(uint32_t state) {
   // Stop camera ISR if active to fix TG1WDT_SYS_RESET
   if (!Wc.up) { return; }
 
+  WcSetStreamserver(state);
   if (state) {
     // Re-enable interrupts
     cam_start();

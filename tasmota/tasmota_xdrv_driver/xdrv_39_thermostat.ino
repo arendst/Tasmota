@@ -1285,7 +1285,7 @@ void ThermostatDebug(uint8_t ctr_output)
 {
   char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
-  dtostrfd(ctr_output, 0, ctr_output_chr);
+  dtostrfd(ctr_output + 1, 0, ctr_output_chr);
   dtostrfd(Thermostat[ctr_output].status.counter_seconds, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_THERMOSTAT "Thermostat[%s].status.counter_seconds: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].status.thermostat_mode, 0, result_chr);
@@ -1340,7 +1340,7 @@ void DebugControllerParameters(uint8_t ctr_output)
 {
   char ctr_output_chr[FLOATSZ];
   char result_chr[FLOATSZ];
-  dtostrfd(ctr_output, 0, ctr_output_chr);
+  dtostrfd(ctr_output + 1, 0, ctr_output_chr);
   dtostrfd(Thermostat[ctr_output].status.controller_mode, 0, result_chr);
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_THERMOSTAT "Thermostat[%s].CONTROLLERMODESET: %s"), ctr_output_chr, result_chr);
   dtostrfd(Thermostat[ctr_output].time_pi_cycle, 0, result_chr);
@@ -1394,16 +1394,12 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   JsonParserObject root = parser.getRootObject();
   if (root) {
     String sensor_name = THERMOSTAT_SENSOR_NAME;
-    const char* value_c;
     if (  (THERMOSTAT_SENSOR_NUMBER > 1)
         &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
         &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
-      char temp[4];
-      temp[0] = IndexSeparator();
-      snprintf(&temp[1], 4, "%u", (ctr_output + 1));
-      sensor_name.concat(temp);
+      sensor_name.concat(IndexSeparator() + String(ctr_output + 1));
     }
-    JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
+    JsonParserToken value_token = root[sensor_name].getObject()[PSTR(D_JSON_TEMPERATURE)];
     if (value_token.isNum()) {
       int16_t value = value_token.getFloat() * 10;
       if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
@@ -2048,36 +2044,15 @@ void CmndEnableOutputSet(void)
  * Web UI
 \*********************************************************************************************/
 
-
-// To be done, add all of this defines in according languages file when all will be finished
-// Avoid multiple changes on all language files during development
-// --------------------------------------------------
-// xdrv_39_thermostat.ino
-#define D_THERMOSTAT                  "Thermostat"
-#define D_THERMOSTAT_SET_POINT        "Set Point"
-#define D_THERMOSTAT_SENSOR           "Current"
-#define D_THERMOSTAT_GRADIENT         "Gradient"
-#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
-#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
-#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
-#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
-#define D_THERMOSTAT_RAMP_UP          "Ramp up"
-#define D_THERMOSTAT_PI               "PI"
-#define D_THERMOSTAT_AUTOTUNE         "Autotune"
-#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
-#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
-#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
-// --------------------------------------------------
-
-
 #ifdef USE_WEBSERVER
-const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
-const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
-const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
-const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_INFO[]           PROGMEM = "{s}" D_THERMOSTAT " %d{m}%s{e}";
+const char HTTP_THERMOSTAT_TEMPERATURE[]    PROGMEM = "{s}%s{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_THERMOSTAT_TEMP_GRAD[]      PROGMEM = "{s}" D_THERMOSTAT_GRADIENT "{m}%c%*_f " D_UNIT_DEGREE "%c/" D_UNIT_HOUR "{e}";
+const char HTTP_THERMOSTAT_DUTY_CYCLE[]     PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_THERMOSTAT_CYCLE_TIME[]     PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
 const char HTTP_THERMOSTAT_CONTROL_METHOD[] PROGMEM = "{s}" D_THERMOSTAT_CONTROL_METHOD "{m}%s{e}";
-const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
-const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
+const char HTTP_THERMOSTAT_PI_AUTOTUNE[]    PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
+const char HTTP_THERMOSTAT_HL[]             PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
@@ -2089,7 +2064,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
 {
   if (json) {
     float f_target_temp = Thermostat[ctr_output].temp_target_level / 10.0f;
-    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output);
+    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output + 1);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
     ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
     ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
@@ -2104,13 +2079,13 @@ void ThermostatShow(uint8_t ctr_output, bool json)
   WSContentSend_P(HTTP_THERMOSTAT_HL);
 
   if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
-    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_DISABLED );
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_DISABLED );
 
   } else {
     char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
     float f_temperature;
 
-    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED);
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_ENABLED);
 
     f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
@@ -2122,8 +2097,8 @@ void ThermostatShow(uint8_t ctr_output, bool json)
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
       value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
     }
-    f_temperature = value / 1000.0f;
-    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+    f_temperature = abs(value) / 1000.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMP_GRAD, value < 0 ? '-' : '+', Settings->flag2.temperature_resolution, &f_temperature, c_unit);
 
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output));
 

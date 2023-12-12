@@ -166,7 +166,6 @@
 #define D_RESTART "איתחול"
 #define D_RESTARTING "הפעלה מחדש"
 #define D_RESTART_REASON "סיבת הפעלה מחדש"
-#define D_RESTORE "שחזור"
 #define D_RETAINED "שמור"
 #define D_RULE "חוק"
 #define D_SAVE "שמירה"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "שדרוג"
 #define D_UPLOAD "העלאה"
 #define D_UPTIME "זמן עליה"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "אתחול הגדרות"
 #define D_BACKUP_CONFIGURATION "גיבוי הגדרות"
 #define D_RESTORE_CONFIGURATION "שחזור הגדרות"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "תפריט ראשי"
 
 #define D_MODULE_PARAMETERS "מודול פרמטרים"
@@ -546,6 +545,22 @@
 #define D_DEVICE "Device"
 #define D_DEVICE_INPUT "Input"
 #define D_DEVICE_OUTPUT "Output"
+
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "שרת עסוק"

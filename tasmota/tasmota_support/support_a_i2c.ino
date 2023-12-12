@@ -49,15 +49,25 @@ bool I2c2Begin(int sda, int scl, uint32_t frequency) {
 }
 #endif
 
+TwoWire& I2cGetWire(uint8_t bus = 0) {
+  if (!bus && TasmotaGlobal.i2c_enabled) {
+    return Wire;
+#ifdef ESP32
+  } else if (bus && TasmotaGlobal.i2c_enabled_2) {
+    return Wire1;
+#endif  // ESP32
+  } else {
+//    AddLog(LOG_LEVEL_ERROR, PSTR("I2C: bus%d not initialized"), bus +1);
+    return *(TwoWire*)nullptr;
+  }
+}
+
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint8_t bus = 0) {
   i2c_buffer = 0;
-#ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // Error
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  if (bus) { return false; }                              // Second I2c bus ESP32 only
-  TwoWire & myWire = Wire;
-#endif
+
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return false; }               // No valid I2c bus
+
   uint8_t retry = I2C_RETRY_COUNTER;
   bool status = false;
   while (!status && retry) {
@@ -147,13 +157,9 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg, uint8_t bus = 0) {
 }
 
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint8_t bus = 0) {
-#ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // Error
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  if (bus) { return false; }  // Second I2c bus ESP32 only
-  TwoWire & myWire = Wire;
-#endif
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return false; }               // No valid I2c bus
+
   uint8_t x = I2C_RETRY_COUNTER;
   do {
     myWire.beginTransmission((uint8_t)addr);              // start transmission to device
@@ -176,13 +182,9 @@ bool I2cWrite16(uint8_t addr, uint8_t reg, uint32_t val, uint8_t bus = 0) {
 }
 
 bool I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
-#ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return true; }  // Error
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  if (bus) { return true; }  // Second I2c bus ESP32 only
-  TwoWire & myWire = Wire;
-#endif
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return true; }               // No valid I2c bus
+
   myWire.beginTransmission((uint8_t)addr);
   myWire.write((uint8_t)reg);
   myWire.endTransmission();
@@ -197,13 +199,9 @@ bool I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, u
 }
 
 int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
-#ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return 1; }  // Error
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  if (bus) { return 1; }  // Second I2c bus ESP32 only
-  TwoWire & myWire = Wire;
-#endif
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return 1; }                   // No valid I2c bus
+
   myWire.beginTransmission((uint8_t)addr);
   myWire.write((uint8_t)reg);
   while (len--) {
@@ -229,16 +227,14 @@ void I2cScan(uint8_t bus = 0) {
   // 3: received NACK on transmit of data
   // 4: other error
   // 5: timeout
-
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return; }  // No valid I2c bus
 #ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return; }
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
   Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Device(s) found on bus%d at"), bus +1);
 #else
-  if (bus) { return; }  // Second I2c bus ESP32 only
-  TwoWire & myWire = Wire;
   Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"Device(s) found at"));
 #endif
+
   uint8_t error = 0;
   uint8_t address = 0;
   uint8_t any = 0;
@@ -311,13 +307,9 @@ bool I2cActive(uint32_t addr, uint8_t bus = 0) {
 }
 
 bool I2cSetDevice(uint32_t addr, uint8_t bus = 0) {
-#ifdef ESP32
-  if (bus && !TasmotaGlobal.i2c_enabled_2) { return false; }  // If no second bus report as not present;
-  TwoWire & myWire = (bus == 0) ? Wire : Wire1;
-#else
-  bus = 0;
-  TwoWire & myWire = Wire;
-#endif
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+
   addr &= 0x7F;         // Max I2C address is 127
   if (I2cActive(addr, bus)) {
     return false;       // If already active report as not present;

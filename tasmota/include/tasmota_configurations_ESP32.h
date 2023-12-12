@@ -200,30 +200,7 @@
   #define CODE_IMAGE_STR "arduino30"
 #endif
 
-
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_WEBCAM
-#undef FIRMWARE_BLUETOOTH
-#undef FIRMWARE_LVGL
-#undef FIRMWARE_TASMOTA32
-
-
-// -- Optional modules ----------------------------
-#undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
-
-#undef USE_IR_REMOTE                             // Disable IR driver
-#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
-
-#define USE_TLS
-#define USE_WEBSERVER
-#define USE_WEBCLIENT
-#define USE_WEBCLIENT_HTTPS
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-#define USE_ETHERNET
+#define FIRMWARE_TASMOTA32
 
 #endif  // FIRMWARE_ARDUINO30
 
@@ -295,19 +272,17 @@
 
 #define USE_SDCARD
 
-#define USE_ADC
+#ifndef USE_BERRY_ULP                              // potential performance gains with ULP
+  #define USE_ADC                                  // so do not use common ADC funtions in that case
+#endif
 //#undef USE_BERRY                                 // Disable Berry scripting language
-#if defined(USE_MI_HOMEKIT)                      // Switch between Homekit and full BLE driver
-  #define USE_MI_ESP32
-  #if(USE_MI_HOMEKIT != 1)                       // Enable(1)/ Disable(0) Homekit, only for the .c-file
-    #undef USE_MI_HOMEKIT
-  #endif // disable USE_MI_HOMEKIT
-#else
-  #define USE_ETHERNET                             // Add support for ethernet (+20k code)
-  #define USE_BLE_ESP32                          // Enable full BLE driver
+
+#define USE_ETHERNET                             // Add support for ethernet (+20k code)
+#ifndef USE_MI_EXT_GUI
+  #define USE_BLE_ESP32                            // Enable full BLE driver
   #define USE_EQ3_ESP32
-  #define USE_MI_ESP32                           // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
-#endif // enable USE_MI_HOMEKIT
+#endif // USE_MI_EXT_GUI
+#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
 #endif  // FIRMWARE_BLUETOOTH
 

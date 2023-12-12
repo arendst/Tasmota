@@ -34,11 +34,7 @@
 #define SHT3X_TYPES         3          // SHT3X, SHTCX and SHT4X
 #define SHT3X_ADDRESSES     3          // 0x44, 0x45 and 0x70
 
-enum SHT3X_Types {
-  SHT3X_TYPE_SHT3X,
-  SHT3X_TYPE_SHTCX,
-  SHT3X_TYPE_SHT4X
-};
+enum SHT3X_Types { SHT3X_TYPE_SHT3X, SHT3X_TYPE_SHTCX, SHT3X_TYPE_SHT4X };
 const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
 
 uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x70 };
@@ -47,6 +43,7 @@ uint8_t sht3x_count = 0;
 struct SHT3XSTRUCT {
   uint8_t type;        // Sensor type
   uint8_t address;     // I2C bus address
+  uint8_t bus;
   char types[6];  // Sensor type name and address, e.g. "SHT3X"
 } sht3x_sensors[SHT3X_ADDRESSES];
 
@@ -67,39 +64,42 @@ uint8_t Sht3xComputeCrc(uint8_t data[], uint8_t len) {
   return crc;
 }
 
-bool Sht3xRead(uint32_t type, float &t, float &h, uint8_t i2c_address) {
-  uint8_t data[6];
-
+bool Sht3xRead(uint32_t sensor, float &t, float &h) {
   t = NAN;
   h = NAN;
 
-  Wire.beginTransmission(i2c_address);
+  TwoWire& myWire = I2cGetWire(sht3x_sensors[sensor].bus);
+  if (&myWire == nullptr) { return false; }   // No valid I2c bus
+  uint32_t type = sht3x_sensors[sensor].type;
+  uint8_t i2c_address = sht3x_sensors[sensor].address;
+  myWire.beginTransmission(i2c_address);
   switch (type) {
     case SHT3X_TYPE_SHT3X:
       // TODO: Clock stretching is used for SHT3x but not for SHTC3. Why?
-      Wire.write(0x2C);                     // Enable clock stretching
-      Wire.write(0x06);                     // High repeatability measurement
+      myWire.write(0x2C);                     // Enable clock stretching
+      myWire.write(0x06);                     // High repeatability measurement
       break;
     case SHT3X_TYPE_SHTCX:
-      Wire.write(0x35);                     // Wake from
-      Wire.write(0x17);                     // sleep
-      Wire.endTransmission();
-      Wire.beginTransmission(i2c_address);
+      myWire.write(0x35);                     // Wake from
+      myWire.write(0x17);                     // sleep
+      myWire.endTransmission();
+      myWire.beginTransmission(i2c_address);
       // TODO: Clock stretching is used for SHT3x but not for SHTC3. Why?
-      Wire.write(0x78);                     // Disable clock stretching
-      Wire.write(0x66);                     // Normal mode measurement
+      myWire.write(0x78);                     // Disable clock stretching
+      myWire.write(0x66);                     // Normal mode measurement
       break;
     case SHT3X_TYPE_SHT4X:
-      Wire.write(0xFD);                     // High repeatability measurement
+      myWire.write(0xFD);                     // High repeatability measurement
       break;
   }
-  if (Wire.endTransmission() != 0) {        // Stop I2C transmission
+  if (myWire.endTransmission() != 0) {        // Stop I2C transmission
     return false;
   }
-  delay(30);                                // Timing verified with logic analyzer (10 is to short)
-  Wire.requestFrom(i2c_address, (uint8_t)6); // Request 6 bytes of data
+  delay(30);                                  // Timing verified with logic analyzer (10 is to short)
+  uint8_t data[6];
+  myWire.requestFrom(i2c_address, (uint8_t)6); // Request 6 bytes of data
   for (uint32_t i = 0; i < 6; i++) {
-    data[i] = Wire.read();                  // temperature (MSB, LSB, CRC), humidity (MSB, LSB, CRC)
+    data[i] = myWire.read();                  // temperature (MSB, LSB, CRC), humidity (MSB, LSB, CRC)
   };
   if ((Sht3xComputeCrc(&data[0], 2) != data[2]) || (Sht3xComputeCrc(&data[3], 2) != data[5])) {
     return false;
@@ -119,15 +119,21 @@ void Sht3xDetect(void) {
   float t;
   float h;
 
-  for (uint32_t k = 0; k < SHT3X_TYPES; k++) {
-    sht3x_sensors[sht3x_count].type = k;
-    for (uint32_t i = 0; i < SHT3X_ADDRESSES; i++) {
-      if (!I2cSetDevice(sht3x_addresses[i])) { continue; }
-      sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
-      if (Sht3xRead(sht3x_sensors[sht3x_count].type, t, h, sht3x_sensors[sht3x_count].address)) {
-        GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
-        I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types);
-        sht3x_count++;
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    for (uint32_t k = 0; k < SHT3X_TYPES; k++) {
+      sht3x_sensors[sht3x_count].type = k;
+      for (uint32_t i = 0; i < SHT3X_ADDRESSES; i++) {
+        if (!I2cSetDevice(sht3x_addresses[i], bus)) { continue; }
+        sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
+        sht3x_sensors[sht3x_count].bus = bus;
+        if (Sht3xRead(sht3x_count, t, h)) {
+          GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
+          I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].bus);
+          sht3x_count++;
+          if (SHT3X_ADDRESSES == sht3x_count) {
+            return;
+          }
+        }
       }
     }
   }
@@ -139,7 +145,7 @@ void Sht3xShow(bool json) {
   char types[11];
 
   for (uint32_t i = 0; i < sht3x_count; i++) {
-    if (Sht3xRead(sht3x_sensors[i].type, t, h, sht3x_sensors[i].address)) {
+    if (Sht3xRead(i, t, h)) {
       t = ConvertTemp(t);
       h = ConvertHumidity(h);
       strlcpy(types, sht3x_sensors[i].types, sizeof(types));

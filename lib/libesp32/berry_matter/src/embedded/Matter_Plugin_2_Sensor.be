@@ -49,7 +49,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # The device calls regularly `tasmota.read_sensors()` and converts
   # it to json.
   def parse_sensors(payload)
-    if self.tasmota_sensor_matcher
+    if !self.VIRTUAL && self.tasmota_sensor_matcher
       var val = self.pre_value(real(self.tasmota_sensor_matcher.match(payload)))
       if val != nil
         if val != self.shadow_value

@@ -1029,7 +1029,7 @@
 
 //#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 
-//#define USE_NEOPOOL                              // Add support for Sugar Valley NeoPool Controller - also known under brands Hidrolife, Aquascenic, Oxilife, Bionet, Hidroniser, UVScenic, Station, Brilix, Bayrol and Hay (+6k flash, +60 mem)
+//#define USE_NEOPOOL                              // Add support for Sugar Valley NeoPool Controller - also known under brands Hidrolife, Aquascenic, Oxilife, Bionet, Hidroniser, UVScenic, Station, Brilix, Bayrol and Hay (+14k flash, +120 mem)
 //  #define NEOPOOL_MODBUS_ADDRESS       1         // Any modbus address
 
 //#define USE_FLOWRATEMETER                        // Add support for water flow meter YF-DN50 and similary (+1k7 code)
@@ -1141,6 +1141,8 @@
                                                  // Note that only one cipher is enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256 which is very commonly used and highly secure
     #define USE_BERRY_WEBCLIENT_USERAGENT  "TasmotaClient" // default user-agent used, can be changed with `wc.set_useragent()`
     #define USE_BERRY_WEBCLIENT_TIMEOUT  2000    // Default timeout in milliseconds
+    //#define USE_BERRY_PARTITION_WIZARD           // Add a button to dynamically load the Partion Wizard from a bec file online (+1.3KB Flash)
+    #define USE_BERRY_PARTITION_WIZARD_URL      "http://ota.tasmota.com/tapp/partition_wizard.bec"
   #define USE_BERRY_TCPSERVER                    // Enable TCP socket server (+0.6k)
   // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
   // Berry crypto extensions below:

@@ -648,10 +648,10 @@ String DNSGetIPStr(uint32_t idx)
 void WifiDumpAddressesIPv6(void)
 {
   for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
-    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c' IPv4 %s", intf->name[0], intf->name[1], IPAddress(intf->ip_addr).toString().c_str());
+    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c%i' IPv4 %s", intf->name[0], intf->name[1], intf->num, IPAddress(intf->ip_addr).toString().c_str());
     for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (!ip_addr_isany_val(intf->ip6_addr[i]))
-        AddLog(LOG_LEVEL_DEBUG, "IP : '%c%c' IPv6 %s %s", intf->name[0], intf->name[1],
+        AddLog(LOG_LEVEL_DEBUG, "IP : '%c%c%i' IPv6 %s %s", intf->name[0], intf->name[1], intf->num,
                                 IPAddress(intf->ip6_addr[i]).toString().c_str(),
                                 ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "");
     }
@@ -1149,11 +1149,14 @@ void WifiDisable(void) {
   TasmotaGlobal.global_state.wifi_down = 1;
 }
 
-void EspRestart(void)
-{
+void EspRestart(void) {
   ResetPwm();
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
+
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  GpioForceHoldRelay();       // Retain the state when the chip or system is reset, for example, when watchdog time-out or Deep-sleep
+#endif  // CONFIG_IDF_TARGET_ESP32C3
 
   if (TasmotaGlobal.restart_halt) {  // Restart 2
     while (1) {
@@ -1165,7 +1168,12 @@ void EspRestart(void)
     }
   }
   else if (TasmotaGlobal.restart_deepsleep) {  // Restart 9
+  #ifdef USE_DEEPSLEEP
+    DeepSleepStart();
+    // should never come to this line....
+  #endif
     ESP.deepSleep(0);         // Deep sleep mode with only hardware triggered wake up
+
   }
   else {
     ESP_Restart();

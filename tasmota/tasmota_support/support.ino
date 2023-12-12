@@ -1442,26 +1442,16 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
   TasmotaGlobal.gpio_pin[lpin] = gpio;
 }
 
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-#include "driver/gpio.h"                         // Include needed for Arduino 3
-#endif
-
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
   static uint32_t pinmode_init[2] = { 0 };       // Pins 0 to 63 !!!
 
   if (PinUsed(gpio_pin, index)) {
     uint32_t pin = Pin(gpio_pin, index) & 0x3F;  // Fix possible overflow over 63 gpios
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-    gpio_hold_dis((gpio_num_t)pin);              // Allow state change
-#endif
     if (!bitRead(pinmode_init[pin / 32], pin % 32)) {
       bitSet(pinmode_init[pin / 32], pin % 32);
       pinMode(pin, OUTPUT);
     }
     digitalWrite(pin, state &1);
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-    gpio_hold_en((gpio_num_t)pin);               // Retain the state when the chip or system is reset, for example, when watchdog time-out or Deep-sleep
-#endif
   }
 }
 
@@ -1726,17 +1716,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio, uint8_t isTuya = false) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-#if CONFIG_IDF_TARGET_ESP32C2
-// ignore
-#elif CONFIG_IDF_TARGET_ESP32C3
-// ignore
-#elif CONFIG_IDF_TARGET_ESP32C6
-// ignore
-#elif CONFIG_IDF_TARGET_ESP32S2
-// ignore
-#elif CONFIG_IDF_TARGET_ESP32
-// ignore
-#else // not ESP32C3 and not ESP32S2
+#ifdef ESP8266
   if (((WEMOS == Settings->module) || isTuya) && !Settings->flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10

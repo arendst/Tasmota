@@ -166,7 +166,6 @@
 #define D_RESTART "Khởi động lại"
 #define D_RESTARTING "Đang khởi động"
 #define D_RESTART_REASON "Lý do khởi động lại"
-#define D_RESTORE "khôi phục"
 #define D_RETAINED "lưu giữ"
 #define D_RULE "Quy luật"
 #define D_SAVE "Lưu"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "nâng cấp"
 #define D_UPLOAD "Tải lên"
 #define D_UPTIME "Thời gian chạy"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Xóa cấu hình"
 #define D_BACKUP_CONFIGURATION "Tạo bản lưu cấu hình"
 #define D_RESTORE_CONFIGURATION "Khôi phục cấu hình"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Màn hình chính"
 
 #define D_MODULE_PARAMETERS "Các thông số mô đun"
@@ -546,6 +545,22 @@
 #define D_DEVICE "Thiết bị"
 #define D_DEVICE_INPUT "Đầu vào"
 #define D_DEVICE_OUTPUT "Đầu ra"
+
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Cảm biến đang bận"

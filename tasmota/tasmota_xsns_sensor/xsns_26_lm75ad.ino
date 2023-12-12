@@ -47,31 +47,30 @@
 
 bool lm75ad_type = false;
 uint8_t lm75ad_address;
+uint8_t lm75ad_bus;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
-void LM75ADDetect(void)
-{
-  for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
-    lm75ad_address = lm75ad_addresses[i];
-    if (!I2cSetDevice(lm75ad_address)) {
-      continue; // do not make the next step without a confirmed device on the bus
-    }
-    uint16_t buffer;
-    if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
-      if (buffer == 0x4B00) {
-        lm75ad_type = true;
-        I2cSetActiveFound(lm75ad_address, "LM75AD");
-        break;
+void LM75ADDetect(void) {
+  for (lm75ad_bus = 0; lm75ad_bus < 2; lm75ad_bus++) {
+    for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
+      lm75ad_address = lm75ad_addresses[i];
+      if (!I2cSetDevice(lm75ad_address, lm75ad_bus)) { continue; } // do not make the next step without a confirmed device on the bus
+      uint16_t buffer;
+      if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER, lm75ad_bus)) {
+        if (buffer == 0x4B00) {
+          lm75ad_type = true;
+          I2cSetActiveFound(lm75ad_address, "LM75AD", lm75ad_bus);
+          return;
+        }
       }
     }
   }
 }
 
-float LM75ADGetTemp(void)
-{
+float LM75ADGetTemp(void) {
   int16_t sign = 1;
 
-  uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
+  uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER, lm75ad_bus);
   if (t & 0x8000) { // we are getting a negative temperature value
     t = (~t) +0x20;
     sign = -1;
@@ -80,14 +79,13 @@ float LM75ADGetTemp(void)
   return ConvertTemp(sign * t * 0.125f);
 }
 
-void LM75ADShow(bool json)
-{
+void LM75ADShow(bool json) {
   float t = LM75ADGetTemp();
 
   if (json) {
     ResponseAppend_P(JSON_SNS_F_TEMP, "LM75AD", Settings->flag2.temperature_resolution, &t);
 #ifdef USE_DOMOTICZ
-    if (0 == TasmotaGlobal.tele_period) DomoticzFloatSensor(DZ_TEMP, t);
+    if (0 == TasmotaGlobal.tele_period) { DomoticzFloatSensor(DZ_TEMP, t); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

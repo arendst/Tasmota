@@ -91,6 +91,14 @@
 #endif  // ESP32
 #endif  // USE_UFILESYS
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "include/tasconsole.h"
+#if SOC_USB_SERIAL_JTAG_SUPPORTED
+#include "hal/usb_serial_jtag_ll.h"
+#include "esp_private/rtc_clk.h"
+#endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
+#endif  // ESP_IDF_VERSION_MAJOr
+
 // Structs
 #include "include/tasmota_types.h"
 
@@ -198,6 +206,47 @@ struct XDRVMAILBOX {
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+
+/*
+#if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
+    CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
+*/
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
+//#warning **** TasConsole use USB ****
+bool tasconsole_serial = false;
+
+#if ARDUINO_USB_MODE
+//#warning **** TasConsole ARDUINO_USB_MODE ****
+//HWCDC HWCDCSerial;                        // Already defined in HWCDC.cpp
+TASCONSOLE TasConsole{HWCDCSerial};         // ESP32C3/C6/S3 embedded USB using JTAG interface
+//#warning **** TasConsole uses HWCDC ****
+#else   // No ARDUINO_USB_MODE
+#include "USB.h"
+#include "USBCDC.h"
+//USBCDC USBSerial;                         // Already defined in USBCDC.cpp
+TASCONSOLE TasConsole{USBSerial};           // ESP32Sx embedded USB interface
+//#warning **** TasConsole uses USBCDC ****
+#endif  // ARDUINO_USB_MODE
+
+#else  // No USE_USB_CDC_CONSOLE
+TASCONSOLE TasConsole{Serial};
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // USE_USB_CDC_CONSOLE
+#else   // No ESP32C3, S2 or S3
+TASCONSOLE TasConsole{Serial};
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // ESP32C3, S2 or S3
+
+#else  // ESP_IDF_VERSION_MAJOR < 5
+
 /*
 #if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
     CONFIG_IDF_TARGET_ESP32C6 ||            // support USB via HWCDC using JTAG interface
@@ -234,6 +283,8 @@ HardwareSerial TasConsole = Serial;         // Fallback serial interface for non
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
 #endif  // ESP32C3, S2 or S3
+
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
 
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
@@ -478,11 +529,66 @@ void setup(void) {
     Settings = (TSettings*)malloc(sizeof(TSettings));
   }
 
+#ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_CDC_CONSOLE
+
+  bool is_connected_to_USB = false;
+#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
+  rtc_clk_bbpll_add_consumer();    // Maybe unneeded
+  usb_serial_jtag_ll_ena_intr_mask(USB_SERIAL_JTAG_INTR_SOF);
+  usb_serial_jtag_ll_clr_intsts_mask(USB_SERIAL_JTAG_INTR_SOF);
+  // First check if USB cable is connected - maybe add a new SetOption to prevent this
+  for (uint32_t i = 0; i < 1000; i++) {  // Allow the host to send at least one SOF packet, 1ms should be enough but let's be very conservative here - maybe unneeded
+      is_connected_to_USB = ((usb_serial_jtag_ll_get_intraw_mask() & USB_SERIAL_JTAG_INTR_SOF) != 0);
+      if (is_connected_to_USB) { break; }
+      delay(1);
+  }
+  rtc_clk_bbpll_remove_consumer();
+#else
+  is_connected_to_USB = true;      // S2
+#endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
+
+  if (is_connected_to_USB) {
+    TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
+  //  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
+    TasConsole.begin(115200);    // Will always be 115200 bps
+#if !ARDUINO_USB_MODE
+    USB.begin();                 // This needs a serial console with DTR/DSR support
+#endif  // No ARDUINO_USB_MODE
+    TasConsole.println();
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
+  } else {
+    // Init command serial console preparing for AddLog use
+    Serial.begin(TasmotaGlobal.baudrate);
+    Serial.println();
+    TasConsole = Serial; // Fallback
+    tasconsole_serial = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Fall back to serial port, no SOF packet detected on USB port"));
+  }
+#else   // No USE_USB_CDC_CONSOLE
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+  TasConsole = Serial;
+#endif  // USE_USB_CDC_CONSOLE
+#else   // No ESP32C3, S2 or S3
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+  TasConsole = Serial;
+#endif  // ESP32C3, S2 or S3
+
+#else  // ESP_IDF_VERSION_MAJOR < 5
+
   // Init command console (either serial or USB) preparing for AddLog use
   Serial.begin(TasmotaGlobal.baudrate);
   Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
-#ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
@@ -499,7 +605,14 @@ void setup(void) {
 #else   // No ESP32C3, S2 or S3
   TasConsole = Serial;
 #endif  // ESP32C3, S2 or S3
+
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
+
 #else   // No ESP32
+  // Init command serial console preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasConsole = Serial;
 #endif  // ESP32
 

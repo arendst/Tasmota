@@ -166,7 +166,6 @@
 #define D_RESTART "重启"
 #define D_RESTARTING "正在重启"
 #define D_RESTART_REASON "重启原因"
-#define D_RESTORE "恢复"
 #define D_RETAINED "已保留"
 #define D_RULE "规则"
 #define D_SAVE "保存"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "升级"
 #define D_UPLOAD "上传"
 #define D_UPTIME "运行时间"
 #define D_USED "已使用"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "重置配置"
 #define D_BACKUP_CONFIGURATION "备份配置"
 #define D_RESTORE_CONFIGURATION "还原配置"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "主菜单"
 
 #define D_MODULE_PARAMETERS "模块设置"
@@ -546,6 +545,22 @@
 #define D_DEVICE "Device"
 #define D_DEVICE_INPUT "Input"
 #define D_DEVICE_OUTPUT "Output"
+
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "传感器正忙"

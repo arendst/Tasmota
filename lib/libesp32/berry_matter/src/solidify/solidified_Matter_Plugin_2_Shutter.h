@@ -606,40 +606,43 @@ be_local_closure(Matter_Plugin_Shutter_update_shadow,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(update_inverted),
-    /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(cmd),
-    /* K3   */  be_nested_str_weak(ShutterPosition),
-    /* K4   */  be_nested_str_weak(tasmota_shutter_index),
-    /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_str_weak(parse_sensors),
-    /* K7   */  be_nested_str_weak(update_shadow),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(VIRTUAL),
+    /* K1   */  be_nested_str_weak(update_inverted),
+    /* K2   */  be_nested_str_weak(tasmota),
+    /* K3   */  be_nested_str_weak(cmd),
+    /* K4   */  be_nested_str_weak(ShutterPosition),
+    /* K5   */  be_nested_str_weak(tasmota_shutter_index),
+    /* K6   */  be_const_int(1),
+    /* K7   */  be_nested_str_weak(parse_sensors),
+    /* K8   */  be_nested_str_weak(update_shadow),
     }),
     be_str_weak(update_shadow),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0xB8060200,  //  0002  GETNGBL	R1	K1
-      0x8C040302,  //  0003  GETMET	R1	R1	K2
-      0x600C0008,  //  0004  GETGBL	R3	G8
-      0x88100104,  //  0005  GETMBR	R4	R0	K4
-      0x00100905,  //  0006  ADD	R4	R4	K5
-      0x7C0C0200,  //  0007  CALL	R3	1
-      0x000E0603,  //  0008  ADD	R3	K3	R3
-      0x50100200,  //  0009  LDBOOL	R4	1	0
-      0x7C040600,  //  000A  CALL	R1	3
-      0x78060002,  //  000B  JMPF	R1	#000F
-      0x8C080106,  //  000C  GETMET	R2	R0	K6
-      0x5C100200,  //  000D  MOVE	R4	R1
-      0x7C080400,  //  000E  CALL	R2	2
-      0x60080003,  //  000F  GETGBL	R2	G3
-      0x5C0C0000,  //  0010  MOVE	R3	R0
-      0x7C080200,  //  0011  CALL	R2	1
-      0x8C080507,  //  0012  GETMET	R2	R2	K7
-      0x7C080200,  //  0013  CALL	R2	1
-      0x80000000,  //  0014  RET	0
+    ( &(const binstruction[23]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x7406000E,  //  0001  JMPT	R1	#0011
+      0x8C040101,  //  0002  GETMET	R1	R0	K1
+      0x7C040200,  //  0003  CALL	R1	1
+      0xB8060400,  //  0004  GETNGBL	R1	K2
+      0x8C040303,  //  0005  GETMET	R1	R1	K3
+      0x600C0008,  //  0006  GETGBL	R3	G8
+      0x88100105,  //  0007  GETMBR	R4	R0	K5
+      0x00100906,  //  0008  ADD	R4	R4	K6
+      0x7C0C0200,  //  0009  CALL	R3	1
+      0x000E0803,  //  000A  ADD	R3	K4	R3
+      0x50100200,  //  000B  LDBOOL	R4	1	0
+      0x7C040600,  //  000C  CALL	R1	3
+      0x78060002,  //  000D  JMPF	R1	#0011
+      0x8C080107,  //  000E  GETMET	R2	R0	K7
+      0x5C100200,  //  000F  MOVE	R4	R1
+      0x7C080400,  //  0010  CALL	R2	2
+      0x60040003,  //  0011  GETGBL	R1	G3
+      0x5C080000,  //  0012  MOVE	R2	R0
+      0x7C040200,  //  0013  CALL	R1	1
+      0x8C040308,  //  0014  GETMET	R1	R1	K8
+      0x7C040200,  //  0015  CALL	R1	1
+      0x80000000,  //  0016  RET	0
     })
   )
 );

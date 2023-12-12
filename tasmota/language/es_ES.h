@@ -166,7 +166,6 @@
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
 #define D_RESTART_REASON "Causa Reinicio"
-#define D_RESTORE "Restauración"
 #define D_RETAINED "Grabado"
 #define D_RULE "Regla"
 #define D_SAVE "Grabar"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "Actualización"
 #define D_UPLOAD "Carga"
 #define D_UPTIME "Tiempo Encendido"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Reset de Configuración"
 #define D_BACKUP_CONFIGURATION "Backup de Configuración"
 #define D_RESTORE_CONFIGURATION "Restaurar Configuración"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menú Principal"
 
 #define D_MODULE_PARAMETERS "Parámetros del módulo"
@@ -546,6 +545,22 @@
 #define D_DEVICE "Dispositivo"
 #define D_DEVICE_INPUT "Entrada"
 #define D_DEVICE_OUTPUT "Salida"
+
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor ocupado"

@@ -1,9 +1,9 @@
 /********************************************************************
- * Berry module `webserver`
+ * Berry module `crypto`
  * 
- * To use: `import webserver`
+ * To use: `import crypto`
  * 
- * Allows to respond to HTTP request
+ * Allows to use crypto functions
  *******************************************************************/
 #include "be_constobj.h"
 #include "be_mapping.h"
@@ -28,6 +28,9 @@ extern int m_aes_gcm_tag(bvm *vm);
 extern int m_aes_ctr_init(bvm *vm);
 extern int m_aes_ctr_run(bvm *vm);
 extern int m_aes_ctr_tag(bvm *vm);
+
+extern int m_aes_cbc_encrypt1(bvm *vm);
+extern int m_aes_cbc_decrypt1(bvm *vm);
 
 extern int m_ec_p256_pubkey(bvm *vm);
 extern int m_ec_p256_sharedkey(bvm *vm);
@@ -64,6 +67,7 @@ extern const bclass be_class_md5;
 #include "be_fixed_be_class_aes_ccm.h"
 #include "be_fixed_be_class_aes_gcm.h"
 #include "be_fixed_be_class_aes_ctr.h"
+#include "be_fixed_be_class_aes_cbc.h"
 #include "be_fixed_be_class_ec_p256.h"
 #include "be_fixed_be_class_ec_c25519.h"
 #include "be_fixed_be_class_sha256.h"
@@ -75,6 +79,10 @@ extern const bclass be_class_md5;
 const be_const_member_t be_crypto_members[] = {
   // name with prefix '/' indicates a Berry class
   // entries need to be sorted (ignoring the prefix char)
+#ifdef USE_BERRY_CRYPTO_AES_CBC
+  { "/AES_CBC", (intptr_t) &be_class_aes_cbc },
+#endif // USE_BERRY_CRYPTO_AES_CBC
+
 #ifdef USE_BERRY_CRYPTO_AES_CCM
   { "/AES_CCM", (intptr_t) &be_class_aes_ccm },
 #endif // USE_BERRY_CRYPTO_AES_CTR
@@ -160,6 +168,11 @@ class be_class_aes_ctr (scope: global, name: AES_CTR) {
     init, func(m_aes_ctr_init)
     encrypt, func(m_aes_ctr_run)
     decrypt, func(m_aes_ctr_run)
+}
+
+class be_class_aes_cbc (scope: global, name: AES_CBC) {
+    decrypt1, static_func(m_aes_cbc_decrypt1)
+    encrypt1, static_func(m_aes_cbc_encrypt1)
 }
 
 class be_class_ec_p256 (scope: global, name: EC_P256) {

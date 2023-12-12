@@ -8,7 +8,7 @@ Automatic payload encryption is applied using the WiFi-password1 as the key. A m
 As ACK/NACK messages seem to be not reliable on both ESP-platforms, the method "send-and-pray" is used.
 
 
-## Working priciple
+## Working principle
 
 An ESP32 is needed as gateway/broker to connect the nodes (typically an ESP8266) to the WLAN. The ESP32 will receive the MQTT-topic of every node and subscribe to it as a proxy.
 If a MQTT-message in the form of 'cmnd/node_topic/...' is received, the broker will automatically send this to the referring node via ESP-NOW.

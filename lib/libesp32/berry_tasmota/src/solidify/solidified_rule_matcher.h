@@ -1372,8 +1372,8 @@ be_local_closure(Rule_Matcher_parse,   /* name */
       0x0434170A,  //  0049  SUB	R13	R11	K10
       0x4034120D,  //  004A  CONNECT	R13	R9	R13
       0x94300A0D,  //  004B  GETIDX	R12	R5	R13
-      0x0038170A,  //  004C  ADD	R14	R11	K10
-      0x5C241C00,  //  004D  MOVE	R9	R14
+      0x0034170A,  //  004C  ADD	R13	R11	K10
+      0x5C241A00,  //  004D  MOVE	R9	R13
       0x70020002,  //  004E  JMP		#0052
       0x40341310,  //  004F  CONNECT	R13	R9	K16
       0x94300A0D,  //  0050  GETIDX	R12	R5	R13
@@ -1400,10 +1400,10 @@ be_local_closure(Rule_Matcher_parse,   /* name */
       0x04441B0A,  //  0065  SUB	R17	R13	K10
       0x40461211,  //  0066  CONNECT	R17	K9	R17
       0x94301811,  //  0067  GETIDX	R12	R12	R17
-      0x60480009,  //  0068  GETGBL	R18	G9
-      0x5C4C2000,  //  0069  MOVE	R19	R16
-      0x7C480200,  //  006A  CALL	R18	1
-      0x5C382400,  //  006B  MOVE	R14	R18
+      0x60440009,  //  0068  GETGBL	R17	G9
+      0x5C482000,  //  0069  MOVE	R18	R16
+      0x7C440200,  //  006A  CALL	R17	1
+      0x5C382200,  //  006B  MOVE	R14	R17
       0x1C3C1915,  //  006C  EQ	R15	R12	K21
       0x783E0004,  //  006D  JMPF	R15	#0073
       0x8C3C0703,  //  006E  GETMET	R15	R3	K3

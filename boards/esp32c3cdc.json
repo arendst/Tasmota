@@ -17,6 +17,10 @@
       "bluetooth"
     ],
     "debug": {
+      "default_tool": "esp-builtin",
+      "onboard_tools": [
+        "esp-builtin"
+      ],
       "openocd_target": "esp32c3.cfg"
     },
     "frameworks": [
@@ -29,7 +33,7 @@
         "flash_extra_images": [
           [
             "0x10000",
-            "variants/tasmota/tasmota32c3cdc-safeboot.bin"
+            "tasmota32c3cdc-safeboot.bin"
           ]
         ]
       },
@@ -37,7 +41,6 @@
       "maximum_ram_size": 327680,
       "maximum_size": 4194304,
       "require_upload_port": true,
-      "before_reset": "usb_reset",
       "speed": 460800
     },
     "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/hw-reference/esp32c3/user-guide-devkitm-1.html",

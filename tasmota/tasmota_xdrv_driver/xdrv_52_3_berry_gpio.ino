@@ -160,8 +160,8 @@ extern "C" {
         esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
 #else
         dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-//        esp_err_t err = dac_output_voltage(channel, dac_value);
-        esp_err_t err = dac_output_enable(channel);
+        esp_err_t err = dac_output_voltage(channel, dac_value);
+        // err = dac_output_enable(channel);
 #endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
@@ -180,8 +180,8 @@ extern "C" {
         esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
 #else
         dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-//        esp_err_t err = dac_output_voltage(channel, dac_value);
-        esp_err_t err = dac_output_enable(channel);
+        esp_err_t err = dac_output_voltage(channel, dac_value);
+        // err = dac_output_enable(channel);
 #endif
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);

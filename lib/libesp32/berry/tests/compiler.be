@@ -57,3 +57,24 @@ assert(s == "foo")
 def f(a,b) return b end
 l = [1,2,3,4]
 assert(f(l[-1],l[-2]) == 3)
+
+# Compilation problem:
+# def test()
+#   var line = '1234567890'
+#   line = line[3..7]
+# # print(line)
+#   for n : 1..2 end
+# end
+# test()
+
+# BRY: Exception> 'attribute_error' - the 'range' object has no method '()'
+# stack traceback:
+#     :5: in function `test`
+#     :7: in function `main`
+def test()
+  var line = '1234567890'
+  line = line[3..7]
+# print(line)
+  for n : 1..2 end
+end
+test()

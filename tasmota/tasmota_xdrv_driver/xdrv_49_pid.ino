@@ -455,8 +455,6 @@ void PIDShowValues(void) {
 }
 
 #ifdef USE_WEBSERVER
-void PIDShowValuesWeb(void) {
-
 #define D_PID_DISPLAY_NAME     "PID Controller"
 #define D_PID_SET_POINT        "Set Point"
 #define D_PID_PRESENT_VALUE    "Current Value"
@@ -466,12 +464,13 @@ void PIDShowValuesWeb(void) {
 #define D_PID_MODE_MANUAL      "Manual"
 #define D_PID_MODE_OFF         "Off"
 
-  const char HTTP_PID_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
-  const char HTTP_PID_INFO[] PROGMEM = "{s}" D_PID_DISPLAY_NAME "{m}%s{e}";
-  const char HTTP_PID_SP_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
-  const char HTTP_PID_PV_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
-  const char HTTP_PID_POWER_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f " D_UNIT_PERCENT;
+const char HTTP_PID_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
+const char HTTP_PID_INFO[] PROGMEM = "{s}" D_PID_DISPLAY_NAME "{m}%s{e}";
+const char HTTP_PID_SP_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
+const char HTTP_PID_PV_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f ";
+const char HTTP_PID_POWER_FORMAT[] PROGMEM = "{s}%s " "{m}%*_f " D_UNIT_PERCENT;
 
+void PIDShowValuesWeb(void) {
   float f_buf;
 
   WSContentSend_P(HTTP_PID_HL);

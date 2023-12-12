@@ -132,6 +132,9 @@ class Leds : Leds_ntv
   def pixel_count()
     return self.call_native(8)
   end
+  def pixel_offset()
+    return 0
+  end
   def clear_to(col, bri)
     self.call_native(9, self.to_gamma(col, bri))
   end
@@ -155,20 +158,8 @@ class Leds : Leds_ntv
   # end
 
   # apply gamma and bri
-  def to_gamma(rgbw, bri)
-    bri = (bri != nil) ? bri : 100
-    var r = tasmota.scale_uint(bri, 0, 100, 0, (rgbw & 0xFF0000) >> 16)
-    var g = tasmota.scale_uint(bri, 0, 100, 0, (rgbw & 0x00FF00) >> 8)
-    var b = tasmota.scale_uint(bri, 0, 100, 0, (rgbw & 0x0000FF))
-    if self.gamma
-      return light.gamma8(r) << 16 |
-             light.gamma8(g) <<  8 |
-             light.gamma8(b)
-    else
-      return r << 16 |
-             g <<  8 |
-             b
-    end
+  def to_gamma(rgb, bri)
+    return self.apply_bri_gamma(rgb, bri, self.gamma)
   end
 
   # `segment`
@@ -218,15 +209,19 @@ class Leds : Leds_ntv
       def pixel_size()
         return self.strip.pixel_size()
       end
+      def pixel_offset()
+        return self.offset
+      end
       def pixel_count()
         return self.leds
       end
       def clear_to(col, bri)
-        var i = 0
-        while i < self.leds
-          self.strip.set_pixel_color(i + self.offset, col, bri)
-          i += 1
-        end
+        self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.leds)
+        # var i = 0
+        # while i < self.leds
+        #   self.strip.set_pixel_color(i + self.offset, col, bri)
+        #   i += 1
+        # end
       end
       def set_pixel_color(idx, col, bri)
         self.strip.set_pixel_color(idx + self.offset, col, bri)
@@ -302,12 +297,11 @@ class Leds : Leds_ntv
       def pixel_count()
         return self.w * self.h
       end
+      def pixel_offset()
+        return self.offset
+      end
       def clear_to(col, bri)
-        var i = 0
-        while i < self.w * self.h
-          self.strip.set_pixel_color(i + self.offset, col, bri)
-          i += 1
-        end
+        self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.w * self.h)
       end
       def set_pixel_color(idx, col, bri)
         self.strip.set_pixel_color(idx + self.offset, col, bri)

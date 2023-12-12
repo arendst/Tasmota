@@ -91,6 +91,7 @@ jobs:
           - tasmota-zbbridge
           - tasmota32
           - tasmota32c3
+          - tasmota32c6cdc-arduino30
           - tasmota32s2
           - tasmota32s3
           - tasmota32-zbbrdgpro
@@ -129,6 +130,7 @@ jobs:
           #platformio upgrade --dev
           #platformio update
           cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
+          cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v3

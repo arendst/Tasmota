@@ -730,7 +730,7 @@ void Ade7953DrvInit(void) {
       }
     }
 #ifdef USE_ESP32_SPI
-#ifdef USE_SHELLY_PRO
+#if (defined(USE_SHELLY_PRO) && defined(USE_MCP23XXX_DRV)) || defined(USE_SHELLY_PRO_V2)
     if (Ade7953.model == ADE7953_SHELLY_PRO_4PM) {
       ShellyPro4Reset();
     }

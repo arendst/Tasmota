@@ -190,7 +190,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
     uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t sen5x_passive_mode : 1;       // bit 10 (v13.1.0.1) - SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
-    uint32_t spare11 : 1;                  // bit 11
+    uint32_t neopool_outputsensitive : 1;  // bit 11 (v13.2.0.1) - SetOption157 - (NeoPool) Output sensitive data (1)
     uint32_t spare12 : 1;                  // bit 12
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14

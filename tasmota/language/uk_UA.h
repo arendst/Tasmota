@@ -166,7 +166,6 @@
 #define D_RESTART "Перезавантаження"
 #define D_RESTARTING "Перезавантаження"
 #define D_RESTART_REASON "Причина перезавантаження"
-#define D_RESTORE "відновлення"
 #define D_RETAINED "зберігати"
 #define D_RULE "Правило"
 #define D_SAVE "Зберегти"
@@ -192,7 +191,6 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
-#define D_UPGRADE "оновлення"
 #define D_UPLOAD "Завантажити"
 #define D_UPTIME "Час роботи"
 #define D_USED "used"
@@ -290,6 +288,7 @@
 #define D_RESET_CONFIGURATION "Скидання конфігурації"
 #define D_BACKUP_CONFIGURATION "Резервне копіювання конфігурації"
 #define D_RESTORE_CONFIGURATION "Відновлення конфігурації"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Головне меню"
 
 #define D_MODULE_PARAMETERS "Параметри модуля"
@@ -546,6 +545,22 @@
 #define D_DEVICE "Device"
 #define D_DEVICE_INPUT "Input"
 #define D_DEVICE_OUTPUT "Output"
+
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Давач DS18x20 зайнятий"

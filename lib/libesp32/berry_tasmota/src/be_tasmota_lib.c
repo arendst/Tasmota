@@ -34,6 +34,7 @@ extern int l_yield(bvm *vm);
 extern int l_delay(bvm *vm);
 extern int l_delay_microseconds(bvm *vm);
 extern int l_scaleuint(bvm *vm);
+extern int l_scaleint(bvm *vm);
 extern int l_logInfo(bvm *vm);
 extern int l_loglevel(bvm *vm);
 extern int l_save(bvm *vm);
@@ -118,6 +119,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     delay, func(l_delay)
     delay_microseconds, func(l_delay_microseconds)
     scale_uint, static_func(l_scaleuint)
+    scale_int, static_func(l_scaleint)
     log, func(l_logInfo)
     loglevel, func(l_loglevel)
     save, func(l_save)

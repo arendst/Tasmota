@@ -102,7 +102,7 @@ struct ModbusBridgeTCP
 };
 
 ModbusBridgeTCP modbusBridgeTCP;
-#endif
+#endif  // USE_MODBUS_BRIDGE_TCP
 
 #include <TasmotaModbus.h>
 TasmotaModbus *modbusBridgeModbus = nullptr;
@@ -171,6 +171,7 @@ struct ModbusBridge
   uint8_t count = 0;            // Number of values to read / write
   bool raw = false;
   uint8_t *buffer = nullptr;    // Buffer for storing read / write data
+  bool enabled = false;
 };
 
 ModbusBridge modbusBridge;
@@ -193,28 +194,28 @@ void ModbusBridgeAllocError(const char* s)
 //
 // Applies serial configuration to modbus serial port
 //
-bool ModbusBridgeBegin(void)
-{
-  if ((Settings->modbus_sbaudrate < 1) || (Settings->modbus_sbaudrate > (115200 / 300)))
+bool ModbusBridgeBegin(void) {
+  if ((Settings->modbus_sbaudrate < 1) || (Settings->modbus_sbaudrate > (115200 / 300))) {
     Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
-  if (Settings->modbus_sconfig > TS_SERIAL_8O2)
+  }
+  if (Settings->modbus_sconfig > TS_SERIAL_8O2) {
     Settings->modbus_sconfig = TS_SERIAL_8N1;
+  }
 
   int result = modbusBridgeModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
-  if (result)
-  {
-    if (2 == result)
-    {
+  if (result) {
+    if (2 == result) {
       ClaimSerial();
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
 
-	if (nullptr == modbusBridge.buffer) modbusBridge.buffer = (uint8_t *)malloc(MBR_RECEIVE_BUFFER_SIZE);
-	if (nullptr == modbusBridge.buffer)
-	{
-		ModbusBridgeAllocError(PSTR("BUFFER"));
-		result = false;
-	}
+    if (nullptr == modbusBridge.buffer) {
+      modbusBridge.buffer = (uint8_t *)malloc(MBR_RECEIVE_BUFFER_SIZE);
+    }
+    if (nullptr == modbusBridge.buffer) {
+      ModbusBridgeAllocError(PSTR("BUFFER"));
+      result = false;
+    }
   }
   
   return result;
@@ -569,31 +570,29 @@ void ModbusBridgeHandle(void)
 //
 // Inits the tasmota modbus driver, sets serialport and if TCP enabled allocates a TCP buffer
 //
-void ModbusBridgeInit(void)
-{
-  if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX))
-  {
-    if (nullptr == modbusBridgeModbus) modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX), Pin(GPIO_MBR_TX_ENA));
-    ModbusBridgeBegin();
+void ModbusBridgeInit(void) {
+  if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX)) {
+    modbusBridgeModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX), Pin(GPIO_MBR_TX_ENA));
+    if (ModbusBridgeBegin()) {
+      modbusBridge.enabled = true;
 #ifdef USE_MODBUS_BRIDGE_TCP
-    // If TCP bridge is enabled allocate a TCP receive buffer
-    if (nullptr == modbusBridgeTCP.tcp_buf) modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
-    if (nullptr == modbusBridgeTCP.tcp_buf)
-    {
-      ModbusBridgeAllocError(PSTR("TCP"));
-      return;
-    }
+      // If TCP bridge is enabled allocate a TCP receive buffer
+      if (nullptr == modbusBridgeTCP.tcp_buf) modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
+      if (nullptr == modbusBridgeTCP.tcp_buf) {
+        ModbusBridgeAllocError(PSTR("TCP"));
+        return;
+      }
 #ifdef MODBUS_BRIDGE_TCP_DEFAULT_PORT
-    else 
-    {
-      AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), MODBUS_BRIDGE_TCP_DEFAULT_PORT);
+      else {
+        AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), MODBUS_BRIDGE_TCP_DEFAULT_PORT);
 
-      modbusBridgeTCP.server_tcp = new WiFiServer(MODBUS_BRIDGE_TCP_DEFAULT_PORT);
-      modbusBridgeTCP.server_tcp->begin(); // start TCP server
-      modbusBridgeTCP.server_tcp->setNoDelay(true);
+        modbusBridgeTCP.server_tcp = new WiFiServer(MODBUS_BRIDGE_TCP_DEFAULT_PORT);
+        modbusBridgeTCP.server_tcp->begin(); // start TCP server
+        modbusBridgeTCP.server_tcp->setNoDelay(true);
+      }
+#endif  // MODBUS_BRIDGE_TCP_DEFAULT_PORT
+#endif  // USE_MODBUS_BRIDGE_TCP
     }
-#endif
-#endif
   }
 }
 
@@ -607,9 +606,6 @@ void ModbusTCPHandle(void)
   uint8_t c;
   bool busy; // did we transfer some data?
   int32_t buf_len;
-
-  if (!modbusBridgeModbus)
-    return;
 
   // check for a new client connection
   if ((modbusBridgeTCP.server_tcp) && (modbusBridgeTCP.server_tcp->hasClient()))
@@ -1055,13 +1051,8 @@ void CmndModbusBridgeSetConfig(void)
 //
 void CmndModbusTCPStart(void)
 {
-
-  if (!modbusBridgeModbus)
-  {
-    return;
-  }
-
   int32_t tcp_port = XdrvMailbox.payload;
+
   if (ArgC() == 2)
   {
     char sub_string[XdrvMailbox.data_len];
@@ -1108,11 +1099,6 @@ void CmndModbusTCPStart(void)
 void CmndModbusTCPConnect(void)
 {
   int32_t tcp_port = XdrvMailbox.payload;
-
-  if (!modbusBridgeModbus)
-  {
-    return;
-  }
 
   if (ArgC() == 2)
   {
@@ -1170,23 +1156,19 @@ bool Xdrv63(uint32_t function)
 {
   bool result = false;
 
-  if (FUNC_PRE_INIT == function)
-  {
+  if (FUNC_PRE_INIT == function) {
     ModbusBridgeInit();
-  }
-  else if (modbusBridgeModbus)
-  {
-    switch (function)
-    {
-    case FUNC_COMMAND:
-      result = DecodeCommand(kModbusBridgeCommands, ModbusBridgeCommand);
-      break;
-    case FUNC_LOOP:
-      ModbusBridgeHandle();
+  } else if (modbusBridge.enabled) {
+    switch (function) {
+      case FUNC_LOOP:
+        ModbusBridgeHandle();
 #ifdef USE_MODBUS_BRIDGE_TCP
-      ModbusTCPHandle();
+        ModbusTCPHandle();
 #endif
-      break;
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kModbusBridgeCommands, ModbusBridgeCommand);
+        break;
     }
   }
   return result;

@@ -2099,6 +2099,31 @@
     #endif
 #endif
 
+/*API for LittleFS (library needs to be added separately). Uses lfs_file_open, lfs_file_read, etc*/
+#ifndef LV_USE_FS_LITTLEFS
+    #ifdef CONFIG_LV_USE_FS_LITTLEFS
+        #define LV_USE_FS_LITTLEFS CONFIG_LV_USE_FS_LITTLEFS
+    #else
+        #define LV_USE_FS_LITTLEFS 0
+    #endif
+#endif
+#if LV_USE_FS_LITTLEFS
+    #ifndef LV_FS_LITTLEFS_LETTER
+        #ifdef CONFIG_LV_FS_LITTLEFS_LETTER
+            #define LV_FS_LITTLEFS_LETTER CONFIG_LV_FS_LITTLEFS_LETTER
+        #else
+            #define LV_FS_LITTLEFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+        #endif
+    #endif
+    #ifndef LV_FS_LITTLEFS_CACHE_SIZE
+        #ifdef CONFIG_LV_FS_LITTLEFS_CACHE_SIZE
+            #define LV_FS_LITTLEFS_CACHE_SIZE CONFIG_LV_FS_LITTLEFS_CACHE_SIZE
+        #else
+            #define LV_FS_LITTLEFS_CACHE_SIZE 0    /*>0 to cache this number of bytes in lv_fs_read()*/
+        #endif
+    #endif
+#endif
+
 /*PNG decoder library*/
 #ifndef LV_USE_PNG
     #ifdef CONFIG_LV_USE_PNG
@@ -2188,6 +2213,25 @@
             #else
                 #define LV_FREETYPE_CACHE_FT_SIZES 0
             #endif
+        #endif
+    #endif
+#endif
+
+/*Tiny TTF library*/
+#ifndef LV_USE_TINY_TTF
+    #ifdef CONFIG_LV_USE_TINY_TTF
+        #define LV_USE_TINY_TTF CONFIG_LV_USE_TINY_TTF
+    #else
+        #define LV_USE_TINY_TTF 0
+    #endif
+#endif
+#if LV_USE_TINY_TTF
+    /*Load TTF data from files*/
+    #ifndef LV_TINY_TTF_FILE_SUPPORT
+        #ifdef CONFIG_LV_TINY_TTF_FILE_SUPPORT
+            #define LV_TINY_TTF_FILE_SUPPORT CONFIG_LV_TINY_TTF_FILE_SUPPORT
+        #else
+            #define LV_TINY_TTF_FILE_SUPPORT 0
         #endif
     #endif
 #endif

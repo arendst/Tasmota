@@ -260,6 +260,7 @@ static void skip_comment(blexer *lexer)
 {
     next(lexer); /* skip '#' */
     if (lgetc(lexer) == '-') { /* mult-line comment */
+        int lno = lexer->linenumber;
         int mark, c = 'x'; /* skip first '-' (#- ... -#) */
         do {
             mark = c == '-';
@@ -269,6 +270,9 @@ static void skip_comment(blexer *lexer)
             }
             c = next(lexer);
         } while (!(mark && c == '#') && c != EOS);
+        if (c == EOS) {
+            be_lexerror(lexer, be_pushfstring(lexer->vm, "unterminated comment block started in line %d", lno));
+        }
         next(lexer); /* skip '#' */
     } else { /* line comment */
         while (!is_newline(lgetc(lexer)) && lgetc(lexer)) {

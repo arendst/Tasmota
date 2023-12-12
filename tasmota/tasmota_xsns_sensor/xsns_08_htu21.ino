@@ -63,6 +63,7 @@ struct {
   float temperature = 0;
   float humidity = 0;
   uint8_t address;
+  uint8_t bus;
   uint8_t type = 0;
   uint8_t delay_temp;
   uint8_t delay_humidity = 50;
@@ -72,8 +73,7 @@ struct {
 
 /*********************************************************************************************/
 
-uint8_t HtuCheckCrc8(uint16_t data)
-{
+uint8_t HtuCheckCrc8(uint16_t data) {
   for (uint32_t bit = 0; bit < 16; bit++) {
     if (data & 0x8000) {
       data =  (data << 1) ^ HTU21_CRC8_POLYNOM;
@@ -84,22 +84,33 @@ uint8_t HtuCheckCrc8(uint16_t data)
   return data >>= 8;
 }
 
-uint8_t HtuReadDeviceId(void)
-{
-  HtuReset();  // Fixes ESP32 sensor loss at restart
+bool HtuReset(void) {
+  TwoWire& myWire = I2cGetWire(Htu.bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+
+  myWire.beginTransmission(HTU21_ADDR);
+  myWire.write(HTU21_RESET);
+  myWire.endTransmission();
+  delay(15);                // Reset takes 15ms
+  return true;
+}
+
+uint8_t HtuReadDeviceId(void) {
+  if (!HtuReset()) { return 0; };  // Fixes ESP32 sensor loss at restart
 
   uint16_t deviceID = 0;
   uint8_t checksum = 0;
 
-  Wire.beginTransmission(HTU21_ADDR);
-  Wire.write(HTU21_SERIAL2_READ1);
-  Wire.write(HTU21_SERIAL2_READ2);
-  Wire.endTransmission();
+  TwoWire& myWire = I2cGetWire(Htu.bus);
+  myWire.beginTransmission(HTU21_ADDR);
+  myWire.write(HTU21_SERIAL2_READ1);
+  myWire.write(HTU21_SERIAL2_READ2);
+  myWire.endTransmission();
 
-  Wire.requestFrom(HTU21_ADDR, 3);
-  deviceID  = Wire.read() << 8;
-  deviceID |= Wire.read();
-  checksum  = Wire.read();
+  myWire.requestFrom(HTU21_ADDR, 3);
+  deviceID  = myWire.read() << 8;
+  deviceID |= myWire.read();
+  checksum  = myWire.read();
   if (HtuCheckCrc8(deviceID) == checksum) {
     deviceID = deviceID >> 8;
   } else {
@@ -108,28 +119,17 @@ uint8_t HtuReadDeviceId(void)
   return (uint8_t)deviceID;
 }
 
-void HtuSetResolution(uint8_t resolution)
-{
-  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG);
+void HtuSetResolution(uint8_t resolution) {
+  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG, Htu.bus);
   current &= 0x7E;          // Replace current resolution bits with 0
   current |= resolution;    // Add new resolution bits to register
-  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
+  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current, Htu.bus);
 }
 
-void HtuReset(void)
-{
-  Wire.beginTransmission(HTU21_ADDR);
-  Wire.write(HTU21_RESET);
-  Wire.endTransmission();
-  delay(15);                // Reset takes 15ms
-}
+void HtuHeater(uint8_t heater) {
+  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG, Htu.bus);
 
-void HtuHeater(uint8_t heater)
-{
-  uint8_t current = I2cRead8(HTU21_ADDR, HTU21_READREG);
-
-  switch(heater)
-  {
+  switch(heater) {
     case HTU21_HEATER_ON  : current |= heater;
                             break;
     case HTU21_HEATER_OFF : current &= heater;
@@ -137,48 +137,47 @@ void HtuHeater(uint8_t heater)
     default               : current &= heater;
                             break;
   }
-  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
+  I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current, Htu.bus);
 }
 
-void HtuInit(void)
-{
+void HtuInit(void) {
   HtuReset();
   HtuHeater(HTU21_HEATER_OFF);
   HtuSetResolution(HTU21_RES_RH12_T14);
 }
 
-bool HtuRead(void)
-{
+bool HtuRead(void) {
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
 
   if (Htu.valid) { Htu.valid--; }
 
-  Wire.beginTransmission(HTU21_ADDR);
-  Wire.write(HTU21_READTEMP);
-  if (Wire.endTransmission() != 0) { return false; }           // In case of error
+  TwoWire& myWire = I2cGetWire(Htu.bus);
+  myWire.beginTransmission(HTU21_ADDR);
+  myWire.write(HTU21_READTEMP);
+  if (myWire.endTransmission() != 0) { return false; }           // In case of error
   delay(Htu.delay_temp);                                       // Sensor time at max resolution
 
-  Wire.requestFrom(HTU21_ADDR, 3);
-  if (3 == Wire.available()) {
-    sensorval = Wire.read() << 8;                              // MSB
-    sensorval |= Wire.read();                                  // LSB
-    checksum = Wire.read();
+  myWire.requestFrom(HTU21_ADDR, 3);
+  if (3 == myWire.available()) {
+    sensorval = myWire.read() << 8;                              // MSB
+    sensorval |= myWire.read();                                  // LSB
+    checksum = myWire.read();
   }
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
   Htu.temperature = ConvertTemp(0.002681f * (float)sensorval - 46.85f);
 
-  Wire.beginTransmission(HTU21_ADDR);
-  Wire.write(HTU21_READHUM);
-  if (Wire.endTransmission() != 0) { return false; }           // In case of error
+  myWire.beginTransmission(HTU21_ADDR);
+  myWire.write(HTU21_READHUM);
+  if (myWire.endTransmission() != 0) { return false; }           // In case of error
   delay(Htu.delay_humidity);                                   // Sensor time at max resolution
 
-  Wire.requestFrom(HTU21_ADDR, 3);
-  if (3 <= Wire.available()) {
-    sensorval = Wire.read() << 8;                              // MSB
-    sensorval |= Wire.read();                                  // LSB
-    checksum = Wire.read();
+  myWire.requestFrom(HTU21_ADDR, 3);
+  if (3 <= myWire.available()) {
+    sensorval = myWire.read() << 8;                              // MSB
+    sensorval |= myWire.read();                                  // LSB
+    checksum = myWire.read();
   }
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
@@ -201,41 +200,42 @@ bool HtuRead(void)
 
 /********************************************************************************************/
 
-void HtuDetect(void)
-{
+void HtuDetect(void) {
   Htu.address = HTU21_ADDR;
-  if (!I2cSetDevice(Htu.address)) { return; }
+  for (Htu.bus = 0; Htu.bus < 2; Htu.bus++) {
+    if (!I2cSetDevice(Htu.address, Htu.bus)) { continue; }
 
-  Htu.type = HtuReadDeviceId();
-  if (Htu.type) {
-    uint8_t index = 0;
-    HtuInit();
-    switch (Htu.type) {
-      case HTU21_CHIPID:
-        Htu.delay_temp = 50;
-        Htu.delay_humidity = 16;
-        break;
-      case SI7021_CHIPID:
-        index++;  // 3
-      case SI7020_CHIPID:
-        index++;  // 2
-      case SI7013_CHIPID:
-        index++;  // 1
-        Htu.delay_temp = 12;
-        Htu.delay_humidity = 23;
-        break;
-      default:
-        index = 4;
-        Htu.delay_temp = 50;
-        Htu.delay_humidity = 23;
+    Htu.type = HtuReadDeviceId();
+    if (Htu.type) {
+      uint8_t index = 0;
+      HtuInit();
+      switch (Htu.type) {
+        case HTU21_CHIPID:
+          Htu.delay_temp = 50;
+          Htu.delay_humidity = 16;
+          break;
+        case SI7021_CHIPID:
+          index++;  // 3
+        case SI7020_CHIPID:
+          index++;  // 2
+        case SI7013_CHIPID:
+          index++;  // 1
+          Htu.delay_temp = 12;
+          Htu.delay_humidity = 23;
+          break;
+        default:
+          index = 4;
+          Htu.delay_temp = 50;
+          Htu.delay_humidity = 23;
+      }
+      GetTextIndexed(Htu.types, sizeof(Htu.types), index, kHtuTypes);
+      I2cSetActiveFound(Htu.address, Htu.types, Htu.bus);
+      break;
     }
-    GetTextIndexed(Htu.types, sizeof(Htu.types), index, kHtuTypes);
-    I2cSetActiveFound(Htu.address, Htu.types);
   }
 }
 
-void HtuEverySecond(void)
-{
+void HtuEverySecond(void) {
   if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
     // HTU21: 68mS, SI70xx: 37mS
     if (!HtuRead()) {
@@ -244,8 +244,7 @@ void HtuEverySecond(void)
   }
 }
 
-void HtuShow(bool json)
-{
+void HtuShow(bool json) {
   if (Htu.valid) {
     TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Htu.types, Htu.temperature, Htu.humidity);
   }
