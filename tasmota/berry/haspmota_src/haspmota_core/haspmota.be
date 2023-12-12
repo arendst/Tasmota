@@ -1320,13 +1320,20 @@ class lvh_dropdown : lvh_obj
   end
 end
 
+class lvh_bar : lvh_obj
+  static _lv_class = lv.bar
+  
+  def set_val(t)
+    self._lv_obj.set_value(t, lv.ANIM_OFF)
+  end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
 # and doesn't have any specific behavior
 #
 #################################################################################
-class lvh_bar : lvh_obj         static _lv_class = lv.bar         end
 class lvh_btn : lvh_obj         static _lv_class = lv.btn         end
 class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
 class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
