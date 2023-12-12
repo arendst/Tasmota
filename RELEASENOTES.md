@@ -75,7 +75,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-13.2.0
+- http://ota.tasmota.com/tasmota/release-13.3.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -106,7 +106,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-13.2.0
+- https://ota.tasmota.com/tasmota32/release-13.3.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -116,71 +116,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.2.0.3
+## Changelog v13.3.0.1
 ### Added
-- Support for ESP32-C2 and ESP32-C6 using Arduino Core3
-- Command ``GpioRead`` to show input state [#19810](https://github.com/arendst/Tasmota/issues/19810)
-- Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
-- I2C bus2 support to iAQ core sensor [#19799](https://github.com/arendst/Tasmota/issues/19799)
-- I2C bus2 support to HTU temperature and humidity sensor
-- I2C bus2 support to BH1750 ambient light sensor
-- I2C bus2 support to ADS1115 A/D Converter
-- I2C bus2 support to SHTxX temperature and humidity sensor
-- I2C bus2 support to HYTxxx temperature and humidity sensor
-- I2C bus2 support to SI1145/6/7 Ultra violet index and light sensor
-- I2C bus2 support to LM75AD temperature sensor
-- Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X [#19850](https://github.com/arendst/Tasmota/issues/19850)
-- ST7735S display.ini for 1.44 inch 128x128 red SPI display [#19862](https://github.com/arendst/Tasmota/issues/19862)
-- Scripter TCP client [#19914](https://github.com/arendst/Tasmota/issues/19914)
-- NeoPool hydrolysis setpoint and max
-- NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed [#19857](https://github.com/arendst/Tasmota/issues/19857)
-- NeoPool command ``SetOption157`` to enable output of sensitive data [#19857](https://github.com/arendst/Tasmota/issues/19857)
-- NeoPool command ``NPBoost`` [#19973](https://github.com/arendst/Tasmota/issues/19973)
-- NeoPool sensor delta trigger (command ``NPTelePeriod``) [#19973](https://github.com/arendst/Tasmota/issues/19973)
-- NeoPool enhancements for HomeAssistant [#19857](https://github.com/arendst/Tasmota/issues/19857)
-- NeoPool store settings on unified file system [#19973](https://github.com/arendst/Tasmota/issues/19973)
-- DeepSleep support through TIMERS [#20117](https://github.com/arendst/Tasmota/issues/20117)
-- ESP32 auto TasConsole USB or Serial connection for Core3 by @staars
-- ESP32 Partition Wizard can be loaded dynamically [#19980](https://github.com/arendst/Tasmota/issues/19980)
-- ESP32 support for Avago Tech Bluetooth Buttons [#20088](https://github.com/arendst/Tasmota/issues/20088)
-- Berry ``debug.gcdebug()`` to enable GC debugging [#19936](https://github.com/arendst/Tasmota/issues/19936)
-- Berry AES_CBC to crypto module [#19964](https://github.com/arendst/Tasmota/issues/19964)
-- Berry `scale_int`, equivalent of `scale_uint` for signed integers [#20090](https://github.com/arendst/Tasmota/issues/20090)
-- HASPmota add styling properties [#19912](https://github.com/arendst/Tasmota/issues/19912)
-- Matter flow sensor support [#19852](https://github.com/arendst/Tasmota/issues/19852)
 
 ### Breaking Changed
-- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit`` [#19857](https://github.com/arendst/Tasmota/issues/19857)
-- Remove Berry `every_200ms` event which didn't work anyways [#20205](https://github.com/arendst/Tasmota/issues/20205)
 
 ### Changed
-- ESP32 Framework (Arduino Core3) from v3.0.0-alpha1 to v3.0.0-alpha3
-- ESP32 LVGL library from v8.3.10 to v8.3.11 (no functional change)
-- Increase MAX_HUE_DEVICES to 32 [#19820](https://github.com/arendst/Tasmota/issues/19820)
-- NeoPool ``NPHydrolysis`` percent and unit [#19924](https://github.com/arendst/Tasmota/issues/19924)
-- Thermostat JSON index from 0 to 1 [#20011](https://github.com/arendst/Tasmota/issues/20011)
-- MI32 updates [#19893](https://github.com/arendst/Tasmota/issues/19893)
-- ESP32 keep FileSystem intact when over flashing with VSC [#19816](https://github.com/arendst/Tasmota/issues/19816)
-- Berry leds animation refactoring stage 1 [#20197](https://github.com/arendst/Tasmota/issues/20197)
-- Berry ULP API changes for Core3/IDF5 [#20198](https://github.com/arendst/Tasmota/issues/20198)
-- Matter Light0 now accept a Relay number [#19809](https://github.com/arendst/Tasmota/issues/19809)
-- Matter update hierarchy of plugins [#19915](https://github.com/arendst/Tasmota/issues/19915)
 
 ### Fixed
-- Compile USE_PID [#19890](https://github.com/arendst/Tasmota/issues/19890)
-- Scripter timer issue [#19914](https://github.com/arendst/Tasmota/issues/19914)
-- NeoPool filtration mode display [#19801](https://github.com/arendst/Tasmota/issues/19801)
-- ``changeUIntScale`` for linearity when expanding range [#20089](https://github.com/arendst/Tasmota/issues/20089)
-- TUYA state machine (in TUYA v1) [#20110](https://github.com/arendst/Tasmota/issues/20110)
-- ``WebQuery`` response buffer corruption and format character ``%`` [#20111](https://github.com/arendst/Tasmota/issues/20111)
-- ESP32 I2C allow bus2 support when bus1 is not enabled
-- ESP32 remove restart energy logging if no energy monitoring is selected
-- ESP32 IR receive with Arduino Core3 [#19904](https://github.com/arendst/Tasmota/issues/19904)
-- ESP32 Zero-Cross Dimmer for Core3 [#19929](https://github.com/arendst/Tasmota/issues/19929)
-- ESP32-C3 ledlink functionality regression from v13.1.0.2
-- ESP32 Neopixel flicker for Core3/IDF5 [#20196](https://github.com/arendst/Tasmota/issues/20196)
-- Berry parser error in specific cases [#20059](https://github.com/arendst/Tasmota/issues/20059)
-- Berry ``gpio.dac_voltage()`` regression from v13.1.0.1 [#19997](https://github.com/arendst/Tasmota/issues/19997)
-- HASPmota `bar` fixed `val` attribute [#20208](https://github.com/arendst/Tasmota/issues/20208)
 
 ### Removed
