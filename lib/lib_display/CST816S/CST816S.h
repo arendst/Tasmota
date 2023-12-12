@@ -29,8 +29,7 @@
 
 #define CST816S_address 0x15
 
-enum GESTURE
-{
+enum GESTURE {
     NONE = 0x00,
     SWIPE_UP = 0x01,
     SWIPE_DOWN = 0x02,
@@ -39,11 +38,9 @@ enum GESTURE
     SINGLE_CLICK = 0x05,
     DOUBLE_CLICK = 0x0B,
     LONG_PRESS = 0x0C
-
 };
 
-struct data_struct
-{
+struct data_struct {
     byte gestureID; // Gesture ID
     byte points;    // Number of touch points
     byte event;     // Event (0 = Down, 1 = Up, 2 = Contact)
@@ -53,8 +50,7 @@ struct data_struct
     uint8_t versionInfo[3];
 };
 
-class CST816S
-{
+class CST816S {
 
 public:
     CST816S(TwoWire *use_wire, int8_t irq = 0, int8_t rst = 1);

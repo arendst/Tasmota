@@ -37,8 +37,7 @@
     @param	irq
             touch interrupt pin
 */
-CST816S::CST816S(TwoWire *use_wire, int8_t irq, int8_t rst)
-{
+CST816S::CST816S(TwoWire *use_wire, int8_t irq, int8_t rst) {
     wire = use_wire;
     _rst = rst;
     _irq = irq;
@@ -47,8 +46,7 @@ CST816S::CST816S(TwoWire *use_wire, int8_t irq, int8_t rst)
 /*!
     @brief  read touch data
 */
-void CST816S::read_touch()
-{
+void CST816S::read_touch() {
     byte data_raw[8];
     i2c_read(CST816S_address, 0x01, data_raw, 6);
 
@@ -62,8 +60,7 @@ void CST816S::read_touch()
 /*!
     @brief  handle interrupts
 */
-void IRAM_ATTR CST816S::handleISR(void)
-{
+void IRAM_ATTR CST816S::handleISR(void) {
     _event_available = true;
 }
 
@@ -72,8 +69,7 @@ void IRAM_ATTR CST816S::handleISR(void)
     @param	interrupt
             type of interrupt FALLING, RISING..
 */
-void CST816S::begin(int interrupt)
-{
+void CST816S::begin(int interrupt) {
     pinMode(_irq, INPUT);
     pinMode(_rst, OUTPUT);
 
@@ -94,10 +90,8 @@ void CST816S::begin(int interrupt)
 /*!
     @brief  check for a touch event
 */
-bool CST816S::available()
-{
-    if (_event_available)
-    {
+bool CST816S::available() {
+    if (_event_available) {
         read_touch();
         _event_available = false;
         return true;
@@ -108,8 +102,7 @@ bool CST816S::available()
 /*!
     @brief  put the touch screen in standby mode
 */
-void CST816S::sleep()
-{
+void CST816S::sleep() {
     digitalWrite(_rst, LOW);
     delay(5);
     digitalWrite(_rst, HIGH);
@@ -121,10 +114,8 @@ void CST816S::sleep()
 /*!
     @brief  get the gesture event name
 */
-String CST816S::gesture()
-{
-    switch (data.gestureID)
-    {
+String CST816S::gesture() {
+    switch (data.gestureID) {
     case NONE:
         return "NONE";
         break;
@@ -166,15 +157,12 @@ String CST816S::gesture()
     @param	length
             length of data
 */
-uint8_t CST816S::i2c_read(uint16_t addr, uint8_t reg_addr, uint8_t *reg_data, size_t length)
-{
+uint8_t CST816S::i2c_read(uint16_t addr, uint8_t reg_addr, uint8_t *reg_data, size_t length) {
     wire->beginTransmission(addr);
     wire->write(reg_addr);
-    if (wire->endTransmission(true))
-        return -1;
+    if (wire->endTransmission(true)) return -1;
     wire->requestFrom(addr, length, true);
-    for (int i = 0; i < length; i++)
-    {
+    for (int i = 0; i < length; i++) {
         *reg_data++ = wire->read();
     }
     return 0;
@@ -192,15 +180,12 @@ uint8_t CST816S::i2c_read(uint16_t addr, uint8_t reg_addr, uint8_t *reg_data, si
     @param	length
             length of data
 */
-uint8_t CST816S::i2c_write(uint8_t addr, uint8_t reg_addr, const uint8_t *reg_data, size_t length)
-{
+uint8_t CST816S::i2c_write(uint8_t addr, uint8_t reg_addr, const uint8_t *reg_data, size_t length) {
     wire->beginTransmission(addr);
     wire->write(reg_addr);
-    for (int i = 0; i < length; i++)
-    {
+    for (int i = 0; i < length; i++) {
         wire->write(*reg_data++);
     }
-    if (wire->endTransmission(true))
-        return -1;
+    if (wire->endTransmission(true)) return -1;
     return 0;
 }
