@@ -72,9 +72,9 @@ typedef struct TSGlobal_t
 
 TSGlobal_t TSGlobal;
 
+bool CST816S_found = false;
 bool FT5206_found = false;
 bool GT911_found = false;
-bool CST816S_found = false;
 bool XPT2046_found = false;
 bool SRES_found = false;
 
@@ -101,7 +101,7 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
 bool Touch_GetStatus(uint8_t *touches, uint16_t *x, uint16_t *y, uint8_t *gesture,
                      uint16_t *raw_x, uint16_t *raw_y)
 {
-  if (TSGlobal.external_ts || FT5206_found || XPT2046_found)
+  if (TSGlobal.external_ts || FT5206_found || XPT2046_found || CST816S_found)
   {
     if (touches)
     {
@@ -134,7 +134,7 @@ bool Touch_GetStatus(uint8_t *touches, uint16_t *x, uint16_t *y, uint8_t *gestur
 
 uint32_t Touch_Status(int32_t sel)
 {
-  if (TSGlobal.external_ts || FT5206_found || GT911_found || XPT2046_found || SRES_found)
+  if (TSGlobal.external_ts || FT5206_found || GT911_found || XPT2046_found || CST816S_found || SRES_found)
   {
     switch (sel)
     {
