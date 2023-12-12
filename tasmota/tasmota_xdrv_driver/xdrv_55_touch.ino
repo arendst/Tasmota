@@ -212,32 +212,32 @@ int16_t CST816S_y() {
   return CST816S_touchp->data.y;
 }
 
-TS_Gesture CST816S_gesture() {
+uint8_t CST816S_gesture() {
   switch (CST816S_touchp->data.gestureID)
   {
   case 0x01: // SWIPE_UP
-    return TS_Gesture.TS_Gest_Move_Up;
+    return TS_Gest_Move_Up;
     break;
   case 0x02: // SWIPE_DOWN
-    return TS_Gesture.TS_Gest_Move_Down;
+    return TS_Gest_Move_Down;
     break;
   case 0x03: // SWIPE_LEFT
-    return TS_Gesture.TS_Gest_Move_Left;
+    return TS_Gest_Move_Left;
     break;
   case 0x04: // SWIPE_RIGHT
-    return TS_Gesture.TS_Gest_Move_Right;
+    return TS_Gest_Move_Right;
     break;
   case 0x05: // SINGLE_CLICK
-    return TS_Gesture.TS_Gest_None;
+    return TS_Gest_None;
     break;
   case 0x0B: // DOUBLE_CLICK
-    return TS_Gesture.TS_Gest_None;
+    return TS_Gest_None;
     break;
   case 0x0C: // LONG_PRESS
-    return TS_Gesture.TS_Gest_None;
+    return TS_Gest_None;
     break;
   default: // NONE
-    return TS_Gesture.TS_Gest_None;
+    return TS_Gest_None;
     break;
   }
 }
