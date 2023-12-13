@@ -43,12 +43,6 @@
 #include <algorithm>
 
 
-#include "hmac.h"
-#include "sha3.h"
-
-#include "base64_plntmnt.h"
-#include "ed25519.h"
-
 #ifdef ESP32
 #ifdef USE_SDCARD
 #include <SD.h>
@@ -57,50 +51,11 @@
 #include "FS.h"
 #endif  // ESP32
 
-#include "rddl.h"
-#include "rddl_cid.h"
-#include "bip39.h"
-#include "bip32.h"
-#include "curves.h"
-#include "ed25519.h"
-#include "base58.h"
-#include "math.h"
-#include "secp256k1.h"
-
-#include "rddl_types.h"
-#include "planetmintgo.h"
-#include "planetmintgo/machine/machine.pb-c.h"
-#include "cosmos/tx/v1beta1/tx.pb-c.h"
-#include "planetmintgo/machine/tx.pb-c.h"
-#include "planetmintgo/asset/tx.pb-c.h"
-#include "google/protobuf/any.pb-c.h"
-
 #include "rddlSDKAPI.h"
 
-#define EXT_PUB_KEY_SIZE 112
+
 uint32_t counted_seconds = 0;
 
-uint8_t g_priv_key_planetmint[32+1] = {0};
-uint8_t g_priv_key_liquid[32+1] = {0};
-uint8_t g_pub_key_planetmint[33+1] = {0};
-uint8_t g_pub_key_liquid[33+1] = {0};
-uint8_t g_machineid_public_key[33+1]={0};
-
-
-char g_address[64] = {0};
-char g_ext_pub_key_planetmint[EXT_PUB_KEY_SIZE+1] = {0};
-char g_ext_pub_key_liquid[EXT_PUB_KEY_SIZE+1] = {0};
-char g_machineid_public_key_hex[33*2+1] = {0};
-  
-
-const char* getRDDLAddress() { return (const char*) g_address; }
-const char* getExtPubKeyLiquid() { return (const char*)g_ext_pub_key_liquid; }
-const char* getExtPubKeyPlanetmint() { return (const char*)g_ext_pub_key_planetmint; }
-const uint8_t* getPrivKeyLiquid() { return (const uint8_t*)g_priv_key_liquid; }
-const uint8_t* getPrivKeyPlanetmint() { return (const uint8_t*)g_priv_key_planetmint; }
-const char* getMachinePublicKey() { return (const char*) g_machineid_public_key_hex; }
-
-bool g_readSeed = false;
 
 // Demo command line commands
 const char kDrvDemoCommands[] PROGMEM = "Drv|"  // Prefix
@@ -148,7 +103,7 @@ void CmndDrvText(void) {
 void RDDLNetworkSettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
-    SettingsUpdateText( SET_DEVICENAME, "RDDL-Tasmota");
+    sdkSetSetting( SET_DEVICENAME, "RDDL-Tasmota");
 }
 
 void RDDLNetworkSettingsSave(void) {
@@ -164,120 +119,6 @@ void getNotarizationMessage(){
 #define ADDRESS_HASH_SIZE 20
 #define ADDRESS_TAIL 20
 
-bool getPlntmntKeys(){
-  if( readSeed() == NULL )
-    return false;
-  HDNode node_planetmint;
-  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_planetmint);
-  hdnode_private_ckd_prime(&node_planetmint, 44);
-  hdnode_private_ckd_prime(&node_planetmint, 8680);
-  hdnode_private_ckd_prime(&node_planetmint, 0);
-  hdnode_private_ckd(&node_planetmint, 0);
-  hdnode_private_ckd(&node_planetmint, 0);
-  hdnode_fill_public_key(&node_planetmint);
-  memcpy(g_priv_key_planetmint, node_planetmint.private_key, 32);
-  memcpy(g_pub_key_planetmint, node_planetmint.public_key, PUB_KEY_SIZE);
-
-  HDNode node_rddl;
-  hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_rddl);
-  hdnode_private_ckd_prime(&node_rddl, 44);
-  hdnode_private_ckd_prime(&node_rddl, 1776);
-  hdnode_private_ckd_prime(&node_rddl, 0);
-  hdnode_private_ckd(&node_rddl, 0);
-  hdnode_private_ckd(&node_rddl, 0);
-  hdnode_fill_public_key(&node_rddl);
-  memcpy(g_priv_key_liquid, node_rddl.private_key, 32);
-  memcpy(g_pub_key_liquid, node_rddl.public_key, PUB_KEY_SIZE);
-
-  
-  uint8_t address_bytes[ADDRESS_TAIL] = {0};
-  pubkey2address( g_pub_key_planetmint, PUB_KEY_SIZE, address_bytes );
-  getAddressString( address_bytes, g_address);
-  uint32_t fingerprint = hdnode_fingerprint(&node_planetmint);
-  int ret = hdnode_serialize_public( &node_planetmint, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
-  int ret2 = hdnode_serialize_public( &node_rddl, fingerprint, VERSION_PUBLIC, g_ext_pub_key_liquid, EXT_PUB_KEY_SIZE);
-
-  ecdsa_get_public_key33(&secp256k1, private_key_machine_id, g_machineid_public_key);
-  toHexString( g_machineid_public_key_hex, g_machineid_public_key, 33*2);
-
-  return true;
-}
-
-uint8_t* readSeed()
-{
-  if( g_readSeed )
-    return secret_seed;
-
-  if( !readfile( "seed", secret_seed, SEED_SIZE) )
-    return NULL;
-
-  g_readSeed = true;
-  return secret_seed;
-}
-
-
-
-
-bool getAccountInfo( const char* account_address, uint64_t* account_id, uint64_t* sequence )
-{
-  // get account info from planetmint-go
-  HTTPClientLight http;
-  String uri = "/cosmos/auth/v1beta1/account_info/";
-
-  uri = SettingsText(SET_PLANETMINT_API)  + uri;
-  uri = uri + g_address;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
-
-  int httpResponseCode = http.GET();
-  int _account_id = 0;
-  int _sequence = 0;
-  //ResponseAppend_P(PSTR(",\"%s\":\"%s\"\n"), "Account parsing", );
-
-  bool ret = get_account_info( http.getString().c_str() ,&_account_id, &_sequence );
-  if( ret )
-  {
-    *account_id = (uint64_t) _account_id;
-    *sequence = (uint64_t) _sequence;
-  }
-  else
-    ResponseAppend_P("Account parsing issue\n");
-
-  return ret;
-}
-
-int readfile( const char* filename, uint8_t* content, size_t length ){
-  char* filename_local = (char*) getStack( strlen( filename ) +2 );
-  filename_local[0]= '/';
-  int limit = 35;
-  int offset = 0;
-  if( strlen(filename) > limit)
-    offset = strlen(filename) -limit;
-  strcpy( &filename_local[1], filename+ offset);
-
-  return TfsLoadFile(filename_local, (uint8_t*)content, length);
-}
-
-bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
-  char* filename_local = (char*) getStack( strlen( filename ) +3 );
-  memset( filename_local, 0, strlen( filename ) +3 );
-  filename_local[0]= '/';
-  int limit = 35;
-  int offset = 0;
-  if( strlen(filename) > limit)
-    offset = strlen(filename) -limit;
-  strcpy( &filename_local[1], filename+ offset);
-
-#ifdef USE_UFILESYS
-  if (TfsSaveFile(filename_local, (const uint8_t*)content, length)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("Failed to write file content"));
-    return false;
-  } 
-  return true;
-#else
-  return false;
-#endif  // USE_UFILESYS
-}
 
 bool g_mutex_running_notarization = false;
 
@@ -360,7 +201,7 @@ void deleteOldestFiles( int count ) {
 
 void RDDLNetworkNotarizationScheduler(){
   ++counted_seconds;
-  if( counted_seconds >= (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY)))
+  if( counted_seconds >= (uint32_t)atoi(sdkGetSetting( SET_NOTARIZTATION_PERIODICITY)))
   {
     counted_seconds=0;
     RDDLNotarize();
@@ -382,6 +223,8 @@ bool Xdrv129(uint32_t function) {
       break;
     case FUNC_COMMAND:
       RDDLNotarize();
+      result = true;
+
       break;
     case FUNC_PRE_INIT:
       RDDLNetworkSettingsLoad(0);
@@ -390,7 +233,6 @@ bool Xdrv129(uint32_t function) {
       // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
       break;
   }
-  result = true;
   return result;
 }
 
