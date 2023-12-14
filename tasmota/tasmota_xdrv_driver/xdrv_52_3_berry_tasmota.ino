@@ -427,6 +427,61 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  /*
+  Implements the 5-order polynomial approximation to sin(x).
+  @param i   angle (with 2^15 units/circle)
+  @return    16 bit fixed point Sine value (4.12) (ie: +4096 = +1 & -4096 = -1)
+
+  The result is accurate to within +- 1 count. ie: +/-2.44e-4.
+  */
+  int16_t fpsin(int16_t i)
+  {
+      /* Convert (signed) input to a value between 0 and 8192. (8192 is pi/2, which is the region of the curve fit). */
+      /* ------------------------------------------------------------------- */
+      i <<= 1;
+      uint8_t c = i<0; //set carry for output pos/neg
+
+      if(i == (i|0x4000)) // flip input value to corresponding value in range [0..8192)
+          i = (1<<15) - i;
+      i = (i & 0x7FFF) >> 1;
+      /* ------------------------------------------------------------------- */
+
+      /* The following section implements the formula:
+      = y * 2^-n * ( A1 - 2^(q-p)* y * 2^-n * y * 2^-n * [B1 - 2^-r * y * 2^-n * C1 * y]) * 2^(a-q)
+      Where the constants are defined as follows:
+      */
+      // enum {A1=3370945099UL, B1=2746362156UL, C1=292421UL};
+      // enum {n=13, p=32, q=31, r=3, a=12};
+
+      uint32_t y = (292421UL*((uint32_t)i))>>13;
+      y = 2746362156UL - (((uint32_t)i*y)>>3);
+      y = (uint32_t)i * (y>>13);
+      y = (uint32_t)i * (y>>13);
+      y = 3370945099UL - (y>>(32-31));
+      y = (uint32_t)i * (y>>13);
+      y = (y+(1UL<<(31-12-1)))>>(31-12); // Rounding
+
+      return c ? -y : y;
+  }
+
+  // Berry: tasmota.sine_int(int) -> int
+  //
+  // Input: 8192 is pi/2
+  // Output: -4096 is -1, 4096 is +1
+  //
+  // https://www.nullhardware.com/blog/fixed-point-sine-and-cosine-for-embedded-systems/
+  int32_t l_sineint(struct bvm *vm);
+  int32_t l_sineint(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1 && be_isint(vm, 1)) {
+      int32_t val = be_toint(vm, 1);
+
+      be_pushint(vm, fpsin(val));
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   int32_t l_respCmnd(bvm *vm);
   int32_t l_respCmnd(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments

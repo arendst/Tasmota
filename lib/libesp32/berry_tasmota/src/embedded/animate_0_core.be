@@ -1,13 +1,8 @@
-# class Leds_animator
-
-#@ solidify:Leds_animator,weak
-
-# for solidification
-class Leds_frame end
+# class Animate_core
 
 ##########################################################################################
 #
-# class Leds_animator
+# class Animate_core
 #
 # Simple framework to orchestrate all the animations for a led strip or led matrix
 #
@@ -15,7 +10,8 @@ class Leds_frame end
 # This version uses `fast_loop` for up to 5ms animation time (200 Hz)
 #
 ##########################################################################################
-class Leds_animator
+#@ solidify:Animate_core,weak
+class Animate_core
   var strip         # neopixelbus object
   var pixel_count   # number of pixels in the strip
   var bri           # brightness of the animation, 0..100, default 50
@@ -35,6 +31,7 @@ class Leds_animator
   var back_color      # background color RRGGBB
 
   def init(strip, bri)
+    import animate
     self.strip = strip
     if (bri == nil)   bri = 50    end
     self.bri = bri      # percentage of brightness 0..100
@@ -44,8 +41,8 @@ class Leds_animator
     self.painters = []
     #
     self.clear()        # clear all leds first
-    self.frame = Leds_frame(self.pixel_count)
-    self.layer = Leds_frame(self.pixel_count)
+    self.frame = animate.frame(self.pixel_count)
+    self.layer = animate.frame(self.pixel_count)
     #
     self.fast_loop_cb = def() self.fast_loop() end
     self.back_color = 0x000000
