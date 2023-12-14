@@ -165,33 +165,6 @@ be_local_closure(Animate_core_animate,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_bri
-********************************************************************/
-be_local_closure(Animate_core_get_bri,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(bri),
-    }),
-    be_str_weak(get_bri),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x80040400,  //  0001  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
 be_local_closure(Animate_core_set_bri,   /* name */
@@ -208,33 +181,6 @@ be_local_closure(Animate_core_set_bri,   /* name */
     /* K0   */  be_nested_str_weak(bri),
     }),
     be_str_weak(set_bri),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x80000000,  //  0001  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_back_color
-********************************************************************/
-be_local_closure(Animate_core_set_back_color,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(back_color),
-    }),
-    be_str_weak(set_back_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
@@ -297,6 +243,33 @@ be_local_closure(Animate_core_stop,   /* name */
 
 
 /********************************************************************
+** Solidified function: set_back_color
+********************************************************************/
+be_local_closure(Animate_core_set_back_color,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(back_color),
+    }),
+    be_str_weak(set_back_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: set_cb
 ********************************************************************/
 be_local_closure(Animate_core_set_cb,   /* name */
@@ -310,8 +283,8 @@ be_local_closure(Animate_core_set_cb,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(animate_object),
-    /* K1   */  be_nested_str_weak(animate_method),
+    /* K0   */  be_nested_str_weak(obj),
+    /* K1   */  be_nested_str_weak(mth),
     }),
     be_str_weak(set_cb),
     &be_const_str_solidified,
@@ -451,6 +424,33 @@ be_local_closure(Animate_core_add_painter,   /* name */
 
 
 /********************************************************************
+** Solidified function: get_bri
+********************************************************************/
+be_local_closure(Animate_core_get_bri,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(bri),
+    }),
+    be_str_weak(get_bri),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x80040400,  //  0001  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: fast_loop
 ********************************************************************/
 be_local_closure(Animate_core_fast_loop,   /* name */
@@ -484,8 +484,8 @@ be_local_closure(Animate_core_fast_loop,   /* name */
     /* K17  */  be_const_int(-16777216),
     /* K18  */  be_nested_str_weak(paint),
     /* K19  */  be_nested_str_weak(blend_pixels),
-    /* K20  */  be_nested_str_weak(animate_object),
-    /* K21  */  be_nested_str_weak(animate_method),
+    /* K20  */  be_nested_str_weak(obj),
+    /* K21  */  be_nested_str_weak(mth),
     /* K22  */  be_nested_str_weak(paste_pixels),
     /* K23  */  be_nested_str_weak(pixels_buffer),
     /* K24  */  be_nested_str_weak(bri),
@@ -644,31 +644,31 @@ be_local_class(Animate_core,
     NULL,
     be_nested_map(28,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(bri, 23), be_const_var(2) },
+        { be_const_key_weak(bri, 8), be_const_var(2) },
         { be_const_key_weak(remove, -1), be_const_closure(Animate_core_remove_closure) },
-        { be_const_key_weak(start, 21), be_const_closure(Animate_core_start_closure) },
+        { be_const_key_weak(start, 11), be_const_closure(Animate_core_start_closure) },
         { be_const_key_weak(fast_loop, -1), be_const_closure(Animate_core_fast_loop_closure) },
         { be_const_key_weak(add_animator, -1), be_const_closure(Animate_core_add_animator_closure) },
-        { be_const_key_weak(FAST_LOOP_MIN, 8), be_const_int(20) },
-        { be_const_key_weak(animate, -1), be_const_closure(Animate_core_animate_closure) },
+        { be_const_key_weak(FAST_LOOP_MIN, 9), be_const_int(20) },
+        { be_const_key_weak(obj, -1), be_const_var(8) },
         { be_const_key_weak(pixel_count, -1), be_const_var(1) },
+        { be_const_key_weak(animate, -1), be_const_closure(Animate_core_animate_closure) },
         { be_const_key_weak(animators, -1), be_const_var(4) },
-        { be_const_key_weak(back_color, 11), be_const_var(12) },
-        { be_const_key_weak(fast_loop_cb, 12), be_const_var(6) },
+        { be_const_key_weak(fast_loop_cb, -1), be_const_var(6) },
+        { be_const_key_weak(get_bri, 24), be_const_closure(Animate_core_get_bri_closure) },
+        { be_const_key_weak(back_color, 13), be_const_var(12) },
         { be_const_key_weak(frame, -1), be_const_var(10) },
-        { be_const_key_weak(animate_object, -1), be_const_var(8) },
-        { be_const_key_weak(stop, -1), be_const_closure(Animate_core_stop_closure) },
+        { be_const_key_weak(set_cb, 23), be_const_closure(Animate_core_set_cb_closure) },
         { be_const_key_weak(init, -1), be_const_closure(Animate_core_init_closure) },
-        { be_const_key_weak(set_cb, 13), be_const_closure(Animate_core_set_cb_closure) },
-        { be_const_key_weak(running, -1), be_const_var(3) },
-        { be_const_key_weak(strip, 15), be_const_var(0) },
+        { be_const_key_weak(running, 21), be_const_var(3) },
+        { be_const_key_weak(strip, 14), be_const_var(0) },
         { be_const_key_weak(fast_loop_next, -1), be_const_var(7) },
-        { be_const_key_weak(set_back_color, 14), be_const_closure(Animate_core_set_back_color_closure) },
+        { be_const_key_weak(set_back_color, 15), be_const_closure(Animate_core_set_back_color_closure) },
         { be_const_key_weak(add_painter, -1), be_const_closure(Animate_core_add_painter_closure) },
-        { be_const_key_weak(set_bri, 24), be_const_closure(Animate_core_set_bri_closure) },
-        { be_const_key_weak(layer, 9), be_const_var(11) },
-        { be_const_key_weak(animate_method, 6), be_const_var(9) },
-        { be_const_key_weak(get_bri, -1), be_const_closure(Animate_core_get_bri_closure) },
+        { be_const_key_weak(mth, -1), be_const_var(9) },
+        { be_const_key_weak(layer, 12), be_const_var(11) },
+        { be_const_key_weak(stop, -1), be_const_closure(Animate_core_stop_closure) },
+        { be_const_key_weak(set_bri, -1), be_const_closure(Animate_core_set_bri_closure) },
         { be_const_key_weak(painters, -1), be_const_var(5) },
         { be_const_key_weak(clear, 3), be_const_closure(Animate_core_clear_closure) },
         { be_const_key_weak(add_background_animator, 2), be_const_closure(Animate_core_add_background_animator_closure) },
