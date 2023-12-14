@@ -192,40 +192,17 @@ int16_t SRES_y() {
 
 bool CST816S_event_available = false;
 uint8_t CST816S_bus = 0;
-uint8_t CST816S_irq = 0;
-uint8_t CST816S_rst = 0;
-
-void IRAM_ATTR CST816S_handleISR(void) {
-  CST816S_event_available = true;
-}
 
 uint8_t CST816S_map_gesture(uint8_t gesture) {
-  switch (gesture)
-  {
-  case 0x01: // SWIPE_UP
-    return TS_Gest_Move_Up;
-    break;
-  case 0x02: // SWIPE_DOWN
-    return TS_Gest_Move_Down;
-    break;
-  case 0x03: // SWIPE_LEFT
-    return TS_Gest_Move_Left;
-    break;
-  case 0x04: // SWIPE_RIGHT
-    return TS_Gest_Move_Right;
-    break;
-  case 0x05: // SINGLE_CLICK
-    return TS_Gest_None;
-    break;
-  case 0x0B: // DOUBLE_CLICK
-    return TS_Gest_None;
-    break;
-  case 0x0C: // LONG_PRESS
-    return TS_Gest_None;
-    break;
-  default: // NONE
-    return TS_Gest_None;
-    break;
+  switch (gesture) {
+    case 0x01: return TS_Gest_Move_Up;    // SWIPE_UP
+    case 0x02: return TS_Gest_Move_Down;  // SWIPE_DOWN
+    case 0x03: return TS_Gest_Move_Left;  // SWIPE_LEFT
+    case 0x04: return TS_Gest_Move_Right; // SWIPE_RIGHT
+    case 0x05: return TS_Gest_None;       // SINGLE_CLICK
+    case 0x0B: return TS_Gest_None;       // DOUBLE_CLICK
+    case 0x0C: return TS_Gest_None;       // LONG_PRESS
+    default: return TS_Gest_None;         // NONE
   }
 }
 
@@ -245,27 +222,24 @@ bool CST816S_available() {
 bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interrupt = RISING) {
   CST816S_found = false;
   CST816S_bus = bus;
-  CST816S_irq = irq_pin;
-  CST816S_rst = rst_pin;
-  pinMode(CST816S_irq, INPUT);
-  pinMode(CST816S_rst, OUTPUT);
-  digitalWrite(CST816S_rst, HIGH);
+  pinMode(irq_pin, INPUT);
+  pinMode(rst_pin, OUTPUT);
+  digitalWrite(rst_pin, HIGH);
   delay(50);
-  digitalWrite(CST816S_rst, LOW);
+  digitalWrite(rst_pin, LOW);
   delay(5);
-  digitalWrite(CST816S_rst, HIGH);
+  digitalWrite(rst_pin, HIGH);
   delay(50);
   uint8_t version;
   I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
   delay(5);
   uint8_t versionInfo[3];
   I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
-  attachInterrupt(CST816S_irq, &CST816S_handleISR, interrupt);
+  attachInterrupt(irq_pin, []{ CST816S_event_available = true; }, interrupt);
   CST816S_found = true;
-  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S"));
+  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S, version: %d, versionInfo: %d.%d.%d"), version, versionInfo[0], versionInfo[1], versionInfo[2]);
   return CST816S_found;
 }
-
 #endif // USE_CST816S
 
 #ifdef USE_FT5206
