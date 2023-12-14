@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Matter Contact sensor was not triggering any update (#20232)
 
 ### Removed
 
@@ -36,7 +37,6 @@ All notable changes to this project will be documented in this file.
 - TUYA state machine (in TUYA v1) (#20110)
 - ESP32 Neopixel flicker for Core3/IDF5 (#20196)
 - HASPmota `bar` fixed `val` attribute (#20208)
-- Matter Contact sensor was not triggering any update
 
 ## [13.2.0.2] 20231130
 ### Added
