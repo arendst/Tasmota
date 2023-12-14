@@ -187,33 +187,37 @@ int16_t SRES_y() {
 #endif
 
 #ifdef USE_CST816S
-#include <CST816S.h>
-// touch panel controller
-CST816S *CST816S_touchp;
+#undef CST816S_address
+#define CST816S_address 0x15
 
-bool CST816S_Touch_Init(TwoWire *i2c, int8_t irq_pin, int8_t rst_pin) {
-  CST816S_found = false;
-  CST816S_touchp = new CST816S(i2c, irq_pin, rst_pin);
-  CST816S_touchp->begin();
-  CST816S_found = true;
-  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S"));
-  return CST816S_found;
+bool CST816S_event_available = false;
+uint8_t CST816S_bus = 0;
+uint8_t CST816S_irq = 0;
+uint8_t CST816S_rst = 0;
+
+void IRAM_ATTR CST816S_handleISR(void) {
+  CST816S_event_available = true;
 }
 
-bool CST816S_touched() {
-  return CST816S_touchp->available();
+void CST816S_begin(int interrupt = RISING) {
+    pinMode(CST816S_irq, INPUT);
+    pinMode(CST816S_rst, OUTPUT);
+    digitalWrite(CST816S_rst, HIGH);
+    delay(50);
+    digitalWrite(CST816S_rst, LOW);
+    delay(5);
+    digitalWrite(CST816S_rst, HIGH);
+    delay(50);
+    uint8_t version;
+    I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
+    delay(5);
+    uint8_t versionInfo[3];
+    I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
+    attachInterrupt(CST816S_irq, &CST816S_handleISR, interrupt);
 }
 
-int16_t CST816S_x() {
-  return CST816S_touchp->data.x;
-}
-
-int16_t CST816S_y() {
-  return CST816S_touchp->data.y;
-}
-
-uint8_t CST816S_gesture() {
-  switch (CST816S_touchp->data.gestureID)
+uint8_t CST816S_map_gesture(uint8_t gesture) {
+  switch (gesture)
   {
   case 0x01: // SWIPE_UP
     return TS_Gest_Move_Up;
@@ -240,6 +244,39 @@ uint8_t CST816S_gesture() {
     return TS_Gest_None;
     break;
   }
+}
+
+void CST816S_read_touch() {
+    byte data_raw[8];
+    I2cReadBuffer(CST816S_address, 0x01, data_raw, 6, CST816S_bus);
+    uint8_t gesture = data_raw[0];
+    uint8_t touchPoints = data_raw[1];
+    uint8_t event = data_raw[2] >> 6;
+    int x = ((data_raw[2] & 0xF) << 8) + data_raw[3];
+    int y = ((data_raw[4] & 0xF) << 8) + data_raw[5];
+    TSGlobal.raw_touch_xp = x;
+    TSGlobal.raw_touch_yp = y;
+    TSGlobal.gesture = CST816S_map_gesture(gesture);
+}
+
+bool CST816S_available() {
+  if (CST816S_event_available) {
+      CST816S_read_touch();
+      CST816S_event_available = false;
+      return true;
+  }
+  return false;
+}
+
+bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin) {
+  CST816S_found = false;
+  CST816S_bus = bus;
+  CST816S_irq = irq_pin;
+  CST816S_rst = rst_pin;
+  CST816S_begin();
+  CST816S_found = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S"));
+  return CST816S_found;
 }
 
 #endif // USE_CST816S
@@ -368,12 +405,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 
 #ifdef USE_CST816S
   if (CST816S_found) {
-    TSGlobal.touched = CST816S_touched();
-    if (TSGlobal.touched) {
-      TSGlobal.raw_touch_xp = CST816S_x();
-      TSGlobal.raw_touch_yp = CST816S_y();
-      TSGlobal.gesture = CST816S_gesture();
-    }
+    TSGlobal.touched = CST816S_available();
   }
 #endif // USE_CST816S
 
@@ -430,7 +462,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
-    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);

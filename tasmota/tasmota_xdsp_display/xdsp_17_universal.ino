@@ -382,8 +382,7 @@ int8_t cs;
 #endif
       } else if (i2caddr == CST816S_address) {
 #ifdef USE_CST816S
-        if (!wire_n) CST816S_Touch_Init(&Wire, irq, rst);
-        else CST816S_Touch_Init(&Wire1, irq, rst);
+        CST816S_Touch_Init(wire_n, irq, rst);
 #endif
       } else {
 #ifdef USE_FT5206
@@ -400,7 +399,7 @@ int8_t cs;
 #endif
       } else if (i2caddr == CST816S_address) {
 #ifdef USE_CST816S
-      if (!wire_n) CST816S_Touch_Init(&Wire, irq, rst);
+      CST816S_Touch_Init(wire_n, irq, rst);
 #endif
       } else {
 #ifdef USE_FT5206
