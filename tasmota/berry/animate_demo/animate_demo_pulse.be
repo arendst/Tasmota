@@ -6,7 +6,7 @@ import animate
 
 var duration = 10000
 var strip = Leds(5 * 5, gpio.pin(gpio.WS2812, 0))
-var anim = animate(strip)
+var anim = animate.core(strip)
 anim.set_back_color(0x2222AA)
 var pulse = animate.pulse(0xFF4444, 2, 1)
 var osc1 = animate.oscillator(-3, 26, 5000, animate.COSINE)

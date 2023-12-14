@@ -22,8 +22,8 @@ class Animate_core
   static var FAST_LOOP_MIN = 20
   var fast_loop_next  # next time-stamp for fast_loop
   # cb for animation
-  var animate_object  # object called at each tick
-  var animate_method  # method of object called at each tick
+  var obj             # object called at each tick
+  var mth             # method of object called at each tick
   # frame ojects
   var frame           # Leds_frame frame object
   var layer           # Leds_frame for layer on top of frame
@@ -101,8 +101,8 @@ class Animate_core
   end
 
   def set_cb(obj, method)
-    self.animate_object = obj
-    self.animate_method = method
+    self.obj = obj
+    self.mth = method
   end
 
   def fast_loop()
@@ -136,8 +136,8 @@ class Animate_core
         i += 1
       end
       # tirgger animate and display
-      var obj = self.animate_object
-      var mth = self.animate_method
+      var obj = self.obj
+      var mth = self.mth
       if (obj && mth)
         mth(obj)
       end

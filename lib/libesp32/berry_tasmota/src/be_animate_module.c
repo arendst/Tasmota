@@ -111,8 +111,7 @@ module animate (scope: global, strings: weak) {
   PALETTE_STANDARD_VAL, comptr(PALETTE_STANDARD_VAL)
   PALETTE_SATURATED_TAG, comptr(PALETTE_SATURATED_TAG)
 
-  (), class(be_class_Animate_core)
-  core, class(be_class_Animate_core)        // alias
+  core, class(be_class_Animate_core)
   animator, class(be_class_Animate_animator)
   frame, class(be_class_Leds_frame)
   pulse, class(be_class_Animate_pulse)
