@@ -1,15 +1,15 @@
-/* Solidification of leds_0_animator.h */
+/* Solidification of animate_0_core.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
 
-extern const bclass be_class_Leds_animator;
+extern const bclass be_class_Animate_core;
 
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-be_local_closure(Leds_animator_remove,   /* name */
+be_local_closure(Animate_core_remove,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -44,7 +44,7 @@ be_local_closure(Leds_animator_remove,   /* name */
 /********************************************************************
 ** Solidified function: add_background_animator
 ********************************************************************/
-be_local_closure(Leds_animator_add_background_animator,   /* name */
+be_local_closure(Animate_core_add_background_animator,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -79,7 +79,7 @@ be_local_closure(Leds_animator_add_background_animator,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-be_local_closure(Leds_animator_clear,   /* name */
+be_local_closure(Animate_core_clear,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -112,7 +112,7 @@ be_local_closure(Leds_animator_clear,   /* name */
 /********************************************************************
 ** Solidified function: add_animator
 ********************************************************************/
-be_local_closure(Leds_animator_add_animator,   /* name */
+be_local_closure(Animate_core_add_animator,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -143,7 +143,7 @@ be_local_closure(Leds_animator_add_animator,   /* name */
 /********************************************************************
 ** Solidified function: animate
 ********************************************************************/
-be_local_closure(Leds_animator_animate,   /* name */
+be_local_closure(Animate_core_animate,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -167,7 +167,7 @@ be_local_closure(Leds_animator_animate,   /* name */
 /********************************************************************
 ** Solidified function: get_bri
 ********************************************************************/
-be_local_closure(Leds_animator_get_bri,   /* name */
+be_local_closure(Animate_core_get_bri,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -194,7 +194,7 @@ be_local_closure(Leds_animator_get_bri,   /* name */
 /********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
-be_local_closure(Leds_animator_set_bri,   /* name */
+be_local_closure(Animate_core_set_bri,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -221,7 +221,7 @@ be_local_closure(Leds_animator_set_bri,   /* name */
 /********************************************************************
 ** Solidified function: set_back_color
 ********************************************************************/
-be_local_closure(Leds_animator_set_back_color,   /* name */
+be_local_closure(Animate_core_set_back_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -248,7 +248,7 @@ be_local_closure(Leds_animator_set_back_color,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-be_local_closure(Leds_animator_stop,   /* name */
+be_local_closure(Animate_core_stop,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -299,7 +299,7 @@ be_local_closure(Leds_animator_stop,   /* name */
 /********************************************************************
 ** Solidified function: set_cb
 ********************************************************************/
-be_local_closure(Leds_animator_set_cb,   /* name */
+be_local_closure(Animate_core_set_cb,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
@@ -328,9 +328,9 @@ be_local_closure(Leds_animator_set_cb,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Leds_animator_init,   /* name */
+be_local_closure(Animate_core_init,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    7,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -363,15 +363,15 @@ be_local_closure(Leds_animator_init,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str_weak(strip),
-    /* K1   */  be_nested_str_weak(bri),
-    /* K2   */  be_nested_str_weak(running),
-    /* K3   */  be_nested_str_weak(pixel_count),
-    /* K4   */  be_nested_str_weak(animators),
-    /* K5   */  be_nested_str_weak(painters),
-    /* K6   */  be_nested_str_weak(clear),
-    /* K7   */  be_nested_str_weak(frame),
-    /* K8   */  be_nested_str_weak(Leds_frame),
+    /* K0   */  be_nested_str_weak(animate),
+    /* K1   */  be_nested_str_weak(strip),
+    /* K2   */  be_nested_str_weak(bri),
+    /* K3   */  be_nested_str_weak(running),
+    /* K4   */  be_nested_str_weak(pixel_count),
+    /* K5   */  be_nested_str_weak(animators),
+    /* K6   */  be_nested_str_weak(painters),
+    /* K7   */  be_nested_str_weak(clear),
+    /* K8   */  be_nested_str_weak(frame),
     /* K9   */  be_nested_str_weak(layer),
     /* K10  */  be_nested_str_weak(fast_loop_cb),
     /* K11  */  be_nested_str_weak(back_color),
@@ -379,39 +379,40 @@ be_local_closure(Leds_animator_init,   /* name */
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[32]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x4C0C0000,  //  0001  LDNIL	R3
-      0x1C0C0403,  //  0002  EQ	R3	R2	R3
-      0x780E0000,  //  0003  JMPF	R3	#0005
-      0x540A0031,  //  0004  LDINT	R2	50
-      0x90020202,  //  0005  SETMBR	R0	K1	R2
-      0x500C0000,  //  0006  LDBOOL	R3	0	0
-      0x90020403,  //  0007  SETMBR	R0	K2	R3
-      0x8C0C0303,  //  0008  GETMET	R3	R1	K3
-      0x7C0C0200,  //  0009  CALL	R3	1
-      0x90020603,  //  000A  SETMBR	R0	K3	R3
-      0x600C0012,  //  000B  GETGBL	R3	G18
-      0x7C0C0000,  //  000C  CALL	R3	0
-      0x90020803,  //  000D  SETMBR	R0	K4	R3
-      0x600C0012,  //  000E  GETGBL	R3	G18
-      0x7C0C0000,  //  000F  CALL	R3	0
-      0x90020A03,  //  0010  SETMBR	R0	K5	R3
-      0x8C0C0106,  //  0011  GETMET	R3	R0	K6
-      0x7C0C0200,  //  0012  CALL	R3	1
-      0xB80E1000,  //  0013  GETNGBL	R3	K8
-      0x88100103,  //  0014  GETMBR	R4	R0	K3
-      0x7C0C0200,  //  0015  CALL	R3	1
-      0x90020E03,  //  0016  SETMBR	R0	K7	R3
-      0xB80E1000,  //  0017  GETNGBL	R3	K8
-      0x88100103,  //  0018  GETMBR	R4	R0	K3
-      0x7C0C0200,  //  0019  CALL	R3	1
-      0x90021203,  //  001A  SETMBR	R0	K9	R3
-      0x840C0000,  //  001B  CLOSURE	R3	P0
-      0x90021403,  //  001C  SETMBR	R0	K10	R3
-      0x9002170C,  //  001D  SETMBR	R0	K11	K12
-      0xA0000000,  //  001E  CLOSE	R0
-      0x80000000,  //  001F  RET	0
+    ( &(const binstruction[33]) {  /* code */
+      0xA40E0000,  //  0000  IMPORT	R3	K0
+      0x90020201,  //  0001  SETMBR	R0	K1	R1
+      0x4C100000,  //  0002  LDNIL	R4
+      0x1C100404,  //  0003  EQ	R4	R2	R4
+      0x78120000,  //  0004  JMPF	R4	#0006
+      0x540A0031,  //  0005  LDINT	R2	50
+      0x90020402,  //  0006  SETMBR	R0	K2	R2
+      0x50100000,  //  0007  LDBOOL	R4	0	0
+      0x90020604,  //  0008  SETMBR	R0	K3	R4
+      0x8C100304,  //  0009  GETMET	R4	R1	K4
+      0x7C100200,  //  000A  CALL	R4	1
+      0x90020804,  //  000B  SETMBR	R0	K4	R4
+      0x60100012,  //  000C  GETGBL	R4	G18
+      0x7C100000,  //  000D  CALL	R4	0
+      0x90020A04,  //  000E  SETMBR	R0	K5	R4
+      0x60100012,  //  000F  GETGBL	R4	G18
+      0x7C100000,  //  0010  CALL	R4	0
+      0x90020C04,  //  0011  SETMBR	R0	K6	R4
+      0x8C100107,  //  0012  GETMET	R4	R0	K7
+      0x7C100200,  //  0013  CALL	R4	1
+      0x8C100708,  //  0014  GETMET	R4	R3	K8
+      0x88180104,  //  0015  GETMBR	R6	R0	K4
+      0x7C100400,  //  0016  CALL	R4	2
+      0x90021004,  //  0017  SETMBR	R0	K8	R4
+      0x8C100708,  //  0018  GETMET	R4	R3	K8
+      0x88180104,  //  0019  GETMBR	R6	R0	K4
+      0x7C100400,  //  001A  CALL	R4	2
+      0x90021204,  //  001B  SETMBR	R0	K9	R4
+      0x84100000,  //  001C  CLOSURE	R4	P0
+      0x90021404,  //  001D  SETMBR	R0	K10	R4
+      0x9002170C,  //  001E  SETMBR	R0	K11	K12
+      0xA0000000,  //  001F  CLOSE	R0
+      0x80000000,  //  0020  RET	0
     })
   )
 );
@@ -421,7 +422,7 @@ be_local_closure(Leds_animator_init,   /* name */
 /********************************************************************
 ** Solidified function: add_painter
 ********************************************************************/
-be_local_closure(Leds_animator_add_painter,   /* name */
+be_local_closure(Animate_core_add_painter,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -452,7 +453,7 @@ be_local_closure(Leds_animator_add_painter,   /* name */
 /********************************************************************
 ** Solidified function: fast_loop
 ********************************************************************/
-be_local_closure(Leds_animator_fast_loop,   /* name */
+be_local_closure(Animate_core_fast_loop,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -585,7 +586,7 @@ be_local_closure(Leds_animator_fast_loop,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(Leds_animator_start,   /* name */
+be_local_closure(Animate_core_start,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -636,49 +637,49 @@ be_local_closure(Leds_animator_start,   /* name */
 
 
 /********************************************************************
-** Solidified class: Leds_animator
+** Solidified class: Animate_core
 ********************************************************************/
-be_local_class(Leds_animator,
+be_local_class(Animate_core,
     13,
     NULL,
     be_nested_map(28,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(bri, 23), be_const_var(2) },
-        { be_const_key_weak(remove, -1), be_const_closure(Leds_animator_remove_closure) },
-        { be_const_key_weak(start, 21), be_const_closure(Leds_animator_start_closure) },
-        { be_const_key_weak(fast_loop, -1), be_const_closure(Leds_animator_fast_loop_closure) },
-        { be_const_key_weak(add_animator, -1), be_const_closure(Leds_animator_add_animator_closure) },
+        { be_const_key_weak(remove, -1), be_const_closure(Animate_core_remove_closure) },
+        { be_const_key_weak(start, 21), be_const_closure(Animate_core_start_closure) },
+        { be_const_key_weak(fast_loop, -1), be_const_closure(Animate_core_fast_loop_closure) },
+        { be_const_key_weak(add_animator, -1), be_const_closure(Animate_core_add_animator_closure) },
         { be_const_key_weak(FAST_LOOP_MIN, 8), be_const_int(20) },
-        { be_const_key_weak(animate, -1), be_const_closure(Leds_animator_animate_closure) },
+        { be_const_key_weak(animate, -1), be_const_closure(Animate_core_animate_closure) },
         { be_const_key_weak(pixel_count, -1), be_const_var(1) },
         { be_const_key_weak(animators, -1), be_const_var(4) },
         { be_const_key_weak(back_color, 11), be_const_var(12) },
         { be_const_key_weak(fast_loop_cb, 12), be_const_var(6) },
         { be_const_key_weak(frame, -1), be_const_var(10) },
         { be_const_key_weak(animate_object, -1), be_const_var(8) },
-        { be_const_key_weak(stop, -1), be_const_closure(Leds_animator_stop_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Leds_animator_init_closure) },
-        { be_const_key_weak(set_cb, 13), be_const_closure(Leds_animator_set_cb_closure) },
+        { be_const_key_weak(stop, -1), be_const_closure(Animate_core_stop_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(Animate_core_init_closure) },
+        { be_const_key_weak(set_cb, 13), be_const_closure(Animate_core_set_cb_closure) },
         { be_const_key_weak(running, -1), be_const_var(3) },
         { be_const_key_weak(strip, 15), be_const_var(0) },
         { be_const_key_weak(fast_loop_next, -1), be_const_var(7) },
-        { be_const_key_weak(set_back_color, 14), be_const_closure(Leds_animator_set_back_color_closure) },
-        { be_const_key_weak(add_painter, -1), be_const_closure(Leds_animator_add_painter_closure) },
-        { be_const_key_weak(set_bri, 24), be_const_closure(Leds_animator_set_bri_closure) },
+        { be_const_key_weak(set_back_color, 14), be_const_closure(Animate_core_set_back_color_closure) },
+        { be_const_key_weak(add_painter, -1), be_const_closure(Animate_core_add_painter_closure) },
+        { be_const_key_weak(set_bri, 24), be_const_closure(Animate_core_set_bri_closure) },
         { be_const_key_weak(layer, 9), be_const_var(11) },
         { be_const_key_weak(animate_method, 6), be_const_var(9) },
-        { be_const_key_weak(get_bri, -1), be_const_closure(Leds_animator_get_bri_closure) },
+        { be_const_key_weak(get_bri, -1), be_const_closure(Animate_core_get_bri_closure) },
         { be_const_key_weak(painters, -1), be_const_var(5) },
-        { be_const_key_weak(clear, 3), be_const_closure(Leds_animator_clear_closure) },
-        { be_const_key_weak(add_background_animator, 2), be_const_closure(Leds_animator_add_background_animator_closure) },
+        { be_const_key_weak(clear, 3), be_const_closure(Animate_core_clear_closure) },
+        { be_const_key_weak(add_background_animator, 2), be_const_closure(Animate_core_add_background_animator_closure) },
     })),
-    be_str_weak(Leds_animator)
+    be_str_weak(Animate_core)
 );
 /*******************************************************************/
 
-void be_load_Leds_animator_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Leds_animator);
-    be_setglobal(vm, "Leds_animator");
+void be_load_Animate_core_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_Animate_core);
+    be_setglobal(vm, "Animate_core");
     be_pop(vm, 1);
 }
 /********************************************************************/

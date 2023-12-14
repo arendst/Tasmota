@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Breaking Changed
+- Refactoring of Berry `animate` module for WS2812 Leds
 
 ### Changed
 

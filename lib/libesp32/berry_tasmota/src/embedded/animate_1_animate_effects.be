@@ -1,14 +1,12 @@
-# class Leds_pulse
-
-#@ solidify:Leds_pulse,weak
+# class Animate_pulse
 
 ##########################################################################################
 #
-# class Leds_pulse
+# class Animate_pulse
 #
 # Display a color pulse
 #
-#         index (1)
+#         pos (1)
 #           |
 #           v
 #           _______
@@ -17,16 +15,17 @@
 #         | |     | |
 #         |2|  3  |2|
 #
-# 1: `index`, start of the pulse (in pixel)
+# 1: `pos`, start of the pulse (in pixel)
 # 2: `slew_size`, number of pixels to fade from back to fore color, can be `0`
 # 3: `pulse_size`, number of pixels of the pulse
 #
 ##########################################################################################
 
-class Leds_pulse
+#@ solidify:Animate_pulse,weak
+class Animate_pulse
   var color
   var back_color
-  var index
+  var pos
   var slew_size
   var pulse_size
 
@@ -54,8 +53,8 @@ class Leds_pulse
     self.back_color = c
   end
 
-  def set_index(index)
-    self.index = index
+  def set_pos(pos)
+    self.pos = pos
   end
 
   def set_slew_size(slew_size)
@@ -72,18 +71,18 @@ class Leds_pulse
     if (back_color != 0xFF000000)
       frame.fill_pixels(back_color)      # fill with transparent color
     end
-    var index = self.index
+    var pos = self.pos
     var slew_size = self.slew_size
     var pulse_size = self.pulse_size
     var color = self.color
     var pixel_size = frame.pixel_size
 
-    # var min_index = index - slew_size
-    # var max_index = index + pulse_size + slew_size - 1
+    # var min_index = pos - slew_size
+    # var max_index = pos + pulse_size + slew_size - 1
 
     var pulse_min, pulse_max
-    pulse_min = index
-    pulse_max = index + pulse_size
+    pulse_min = pos
+    pulse_max = pos + pulse_size
     if (pulse_min < 0)   pulse_min = 0    end
     if (pulse_max >= pixel_size)    pulse_max = pixel_size  end
 
@@ -94,28 +93,28 @@ class Leds_pulse
     end
 
     if (slew_size > 0)
-      # check first slew, from `min_index` to `index - 1`
+      # check first slew, from `min_index` to `pos - 1`
       # Slew 1
-      pulse_min = index - slew_size
-      pulse_max = index
+      pulse_min = pos - slew_size
+      pulse_max = pos
       if (pulse_min < 0)   pulse_min = 0    end
       if (pulse_max >= pixel_size)    pulse_max = pixel_size end
       i = pulse_min
       while (i < pulse_max)
         # blend from 255 (back) to 0 (fore)
-        frame[i] = frame.blend(back_color, color, tasmota.scale_int(i, index - slew_size - 1, index, 255, 0))
+        frame[i] = frame.blend(back_color, color, tasmota.scale_int(i, pos - slew_size - 1, pos, 255, 0))
         # blend
         i += 1
       end
       # Slew 2
-      pulse_min = index + pulse_size
-      pulse_max = index + pulse_size + slew_size
+      pulse_min = pos + pulse_size
+      pulse_max = pos + pulse_size + slew_size
       if (pulse_min < 0)   pulse_min = 0    end
       if (pulse_max >= pixel_size)    pulse_max = pixel_size end
       i = pulse_min
       while (i < pulse_max)
         # blend
-        frame[i] = frame.blend(back_color, color, tasmota.scale_int(i, index + pulse_size - 1, index + pulse_size + slew_size, 0, 255))
+        frame[i] = frame.blend(back_color, color, tasmota.scale_int(i, pos + pulse_size - 1, pos + pulse_size + slew_size, 0, 255))
         i += 1
       end
     end
@@ -130,10 +129,11 @@ end
 #
 if false
 
-var frame = Leds_frame(10)
+import animate
+var frame = animate.frame(10)
 assert(frame.tohex() == '00000000000000000000000000000000000000000000000000000000000000000000000000000000')
 
-var pulse = Leds_pulse(0x00FF00, 3, 2)
+var pulse = Animate_pulse(0x00FF00, 3, 2)
 pulse.set_index(5)
 pulse.paint(frame)
 assert(frame.tohex() == '0000000000000000000000000055000000AA000000FF000000FF000000FF000000AA000000550000')

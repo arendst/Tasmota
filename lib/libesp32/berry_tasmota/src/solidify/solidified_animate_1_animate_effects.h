@@ -1,15 +1,42 @@
-/* Solidification of leds_1_animate_effects.h */
+/* Solidification of animate_1_animate_effects.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
 
-extern const bclass be_class_Leds_pulse;
+extern const bclass be_class_Animate_pulse;
+
+/********************************************************************
+** Solidified function: set_pulse_size
+********************************************************************/
+be_local_closure(Animate_pulse_set_pulse_size,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(pulse_size),
+    }),
+    be_str_weak(set_pulse_size),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: set_slew_size
 ********************************************************************/
-be_local_closure(Leds_pulse_set_slew_size,   /* name */
+be_local_closure(Animate_pulse_set_slew_size,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -36,7 +63,7 @@ be_local_closure(Leds_pulse_set_slew_size,   /* name */
 /********************************************************************
 ** Solidified function: set_back_color
 ********************************************************************/
-be_local_closure(Leds_pulse_set_back_color,   /* name */
+be_local_closure(Animate_pulse_set_back_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -61,9 +88,9 @@ be_local_closure(Leds_pulse_set_back_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_index
+** Solidified function: set_pos
 ********************************************************************/
-be_local_closure(Leds_pulse_set_index,   /* name */
+be_local_closure(Animate_pulse_set_pos,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -74,9 +101,9 @@ be_local_closure(Leds_pulse_set_index,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(index),
+    /* K0   */  be_nested_str_weak(pos),
     }),
-    be_str_weak(set_index),
+    be_str_weak(set_pos),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
@@ -88,9 +115,9 @@ be_local_closure(Leds_pulse_set_index,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_pulse_size
+** Solidified function: set_color
 ********************************************************************/
-be_local_closure(Leds_pulse_set_pulse_size,   /* name */
+be_local_closure(Animate_pulse_set_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -101,9 +128,9 @@ be_local_closure(Leds_pulse_set_pulse_size,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(pulse_size),
+    /* K0   */  be_nested_str_weak(color),
     }),
-    be_str_weak(set_pulse_size),
+    be_str_weak(set_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
@@ -117,7 +144,7 @@ be_local_closure(Leds_pulse_set_pulse_size,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Leds_pulse_init,   /* name */
+be_local_closure(Animate_pulse_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     4,                          /* argc */
@@ -170,36 +197,9 @@ be_local_closure(Leds_pulse_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_color
-********************************************************************/
-be_local_closure(Leds_pulse_set_color,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(color),
-    }),
-    be_str_weak(set_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x80000000,  //  0001  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: paint
 ********************************************************************/
-be_local_closure(Leds_pulse_paint,   /* name */
+be_local_closure(Animate_pulse_paint,   /* name */
   be_nested_proto(
     22,                          /* nstack */
     2,                          /* argc */
@@ -213,7 +213,7 @@ be_local_closure(Leds_pulse_paint,   /* name */
     /* K0   */  be_nested_str_weak(back_color),
     /* K1   */  be_const_int(-16777216),
     /* K2   */  be_nested_str_weak(fill_pixels),
-    /* K3   */  be_nested_str_weak(index),
+    /* K3   */  be_nested_str_weak(pos),
     /* K4   */  be_nested_str_weak(slew_size),
     /* K5   */  be_nested_str_weak(pulse_size),
     /* K6   */  be_nested_str_weak(color),
@@ -325,33 +325,33 @@ be_local_closure(Leds_pulse_paint,   /* name */
 
 
 /********************************************************************
-** Solidified class: Leds_pulse
+** Solidified class: Animate_pulse
 ********************************************************************/
-be_local_class(Leds_pulse,
+be_local_class(Animate_pulse,
     5,
     NULL,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(paint, 9), be_const_closure(Leds_pulse_paint_closure) },
-        { be_const_key_weak(set_slew_size, -1), be_const_closure(Leds_pulse_set_slew_size_closure) },
+        { be_const_key_weak(paint, -1), be_const_closure(Animate_pulse_paint_closure) },
+        { be_const_key_weak(set_slew_size, -1), be_const_closure(Animate_pulse_set_slew_size_closure) },
         { be_const_key_weak(pulse_size, -1), be_const_var(4) },
-        { be_const_key_weak(set_back_color, 6), be_const_closure(Leds_pulse_set_back_color_closure) },
-        { be_const_key_weak(set_index, 7), be_const_closure(Leds_pulse_set_index_closure) },
-        { be_const_key_weak(back_color, -1), be_const_var(1) },
-        { be_const_key_weak(set_color, 8), be_const_closure(Leds_pulse_set_color_closure) },
+        { be_const_key_weak(set_back_color, 8), be_const_closure(Animate_pulse_set_back_color_closure) },
         { be_const_key_weak(color, -1), be_const_var(0) },
-        { be_const_key_weak(init, -1), be_const_closure(Leds_pulse_init_closure) },
-        { be_const_key_weak(set_pulse_size, -1), be_const_closure(Leds_pulse_set_pulse_size_closure) },
+        { be_const_key_weak(back_color, -1), be_const_var(1) },
+        { be_const_key_weak(set_pos, -1), be_const_closure(Animate_pulse_set_pos_closure) },
+        { be_const_key_weak(set_color, -1), be_const_closure(Animate_pulse_set_color_closure) },
+        { be_const_key_weak(init, 7), be_const_closure(Animate_pulse_init_closure) },
+        { be_const_key_weak(pos, -1), be_const_var(2) },
         { be_const_key_weak(slew_size, 5), be_const_var(3) },
-        { be_const_key_weak(index, 0), be_const_var(2) },
+        { be_const_key_weak(set_pulse_size, 0), be_const_closure(Animate_pulse_set_pulse_size_closure) },
     })),
-    be_str_weak(Leds_pulse)
+    be_str_weak(Animate_pulse)
 );
 /*******************************************************************/
 
-void be_load_Leds_pulse_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Leds_pulse);
-    be_setglobal(vm, "Leds_pulse");
+void be_load_Animate_pulse_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_Animate_pulse);
+    be_setglobal(vm, "Animate_pulse");
     be_pop(vm, 1);
 }
 /********************************************************************/
