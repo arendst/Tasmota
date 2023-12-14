@@ -199,23 +199,6 @@ void IRAM_ATTR CST816S_handleISR(void) {
   CST816S_event_available = true;
 }
 
-void CST816S_begin(int interrupt = RISING) {
-    pinMode(CST816S_irq, INPUT);
-    pinMode(CST816S_rst, OUTPUT);
-    digitalWrite(CST816S_rst, HIGH);
-    delay(50);
-    digitalWrite(CST816S_rst, LOW);
-    delay(5);
-    digitalWrite(CST816S_rst, HIGH);
-    delay(50);
-    uint8_t version;
-    I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
-    delay(5);
-    uint8_t versionInfo[3];
-    I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
-    attachInterrupt(CST816S_irq, &CST816S_handleISR, interrupt);
-}
-
 uint8_t CST816S_map_gesture(uint8_t gesture) {
   switch (gesture)
   {
@@ -246,34 +229,38 @@ uint8_t CST816S_map_gesture(uint8_t gesture) {
   }
 }
 
-void CST816S_read_touch() {
-    byte data_raw[8];
-    I2cReadBuffer(CST816S_address, 0x01, data_raw, 6, CST816S_bus);
-    uint8_t gesture = data_raw[0];
-    uint8_t touchPoints = data_raw[1];
-    uint8_t event = data_raw[2] >> 6;
-    int x = ((data_raw[2] & 0xF) << 8) + data_raw[3];
-    int y = ((data_raw[4] & 0xF) << 8) + data_raw[5];
-    TSGlobal.raw_touch_xp = x;
-    TSGlobal.raw_touch_yp = y;
-    TSGlobal.gesture = CST816S_map_gesture(gesture);
-}
-
 bool CST816S_available() {
   if (CST816S_event_available) {
-      CST816S_read_touch();
-      CST816S_event_available = false;
-      return true;
+    byte data_raw[8];
+    I2cReadBuffer(CST816S_address, 0x01, data_raw, 6, CST816S_bus);
+    TSGlobal.raw_touch_xp = ((data_raw[2] & 0xF) << 8) + data_raw[3];
+    TSGlobal.raw_touch_yp = ((data_raw[4] & 0xF) << 8) + data_raw[5];
+    TSGlobal.gesture = CST816S_map_gesture(data_raw[0]);
+    CST816S_event_available = false;
+    return true;
   }
   return false;
 }
 
-bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin) {
+bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interrupt = RISING) {
   CST816S_found = false;
   CST816S_bus = bus;
   CST816S_irq = irq_pin;
   CST816S_rst = rst_pin;
-  CST816S_begin();
+  pinMode(CST816S_irq, INPUT);
+  pinMode(CST816S_rst, OUTPUT);
+  digitalWrite(CST816S_rst, HIGH);
+  delay(50);
+  digitalWrite(CST816S_rst, LOW);
+  delay(5);
+  digitalWrite(CST816S_rst, HIGH);
+  delay(50);
+  uint8_t version;
+  I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
+  delay(5);
+  uint8_t versionInfo[3];
+  I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
+  attachInterrupt(CST816S_irq, &CST816S_handleISR, interrupt);
   CST816S_found = true;
   AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S"));
   return CST816S_found;
