@@ -142,7 +142,6 @@ void RDDLNotarize(){
   if( claimNotarizationMutex() )
   {
     // create notarization message
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS8_POWER "\":"));
     int start_position = ResponseLength();
     getNotarizationMessage();
     int current_position  = ResponseLength();
@@ -222,9 +221,6 @@ bool Xdrv129(uint32_t function) {
       RDDLNetworkSettingsSave();
       break;
     case FUNC_COMMAND:
-      RDDLNotarize();
-      result = true;
-
       break;
     case FUNC_PRE_INIT:
       RDDLNetworkSettingsLoad(0);
