@@ -214,6 +214,7 @@ enum UserSelectablePins {
   GPIO_HDMI_CEC,                        // Support for HDMI CEC
   GPIO_HC8_RXD,                         // HC8 Serial interface
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
+  GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -475,6 +476,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HDMI_CEC "|"
   D_SENSOR_HC8_RX "|"
   D_SENSOR_I2S_DAC "|"
+  D_GPIO_MAGIC_SWITCH "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -493,6 +495,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DSB          4
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
+#define MAX_MAGIC_SWITCH_MODES   2
 #define MAX_BL0942_RX    4              // Baudrates 1 (4800), 2 (9600), 3 (19200), 4 (38400)
 
 const uint16_t kGpioNiceList[] PROGMEM = {
@@ -1141,6 +1144,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DINGTIAN_PL),
   AGPIO(GPIO_DINGTIAN_OE),
   AGPIO(GPIO_DINGTIAN_RCK),
+#endif
+
+#ifdef USE_MAGIC_SWITCH
+  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGIC_SWITCH_MODES,
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
