@@ -1106,11 +1106,11 @@ void be_load_Animate_palette_class(bvm *vm) {
 extern const bclass be_class_Animate_oscillator;
 
 /********************************************************************
-** Solidified function: set_b
+** Solidified function: set_duty_cycle
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_b,   /* name */
+be_local_closure(Animate_oscillator_set_duty_cycle,   /* name */
   be_nested_proto(
-    2,                          /* nstack */
+    3,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1118,14 +1118,22 @@ be_local_closure(Animate_oscillator_set_b,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(b),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(duty_cycle),
     }),
-    be_str_weak(set_b),
+    be_str_weak(set_duty_cycle),
     &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x80000000,  //  0001  RET	0
+    ( &(const binstruction[ 9]) {  /* code */
+      0x14080300,  //  0000  LT	R2	R1	K0
+      0x780A0000,  //  0001  JMPF	R2	#0003
+      0x58040000,  //  0002  LDCONST	R1	K0
+      0x540A0063,  //  0003  LDINT	R2	100
+      0x24080202,  //  0004  GT	R2	R1	R2
+      0x780A0000,  //  0005  JMPF	R2	#0007
+      0x54060063,  //  0006  LDINT	R1	100
+      0x90020201,  //  0007  SETMBR	R0	K1	R1
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -1153,6 +1161,100 @@ be_local_closure(Animate_oscillator_set_a,   /* name */
     ( &(const binstruction[ 2]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_b
+********************************************************************/
+be_local_closure(Animate_oscillator_set_b,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(b),
+    }),
+    be_str_weak(set_b),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_form
+********************************************************************/
+be_local_closure(Animate_oscillator_set_form,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_const_int(1),
+    /* K1   */  be_nested_str_weak(form),
+    }),
+    be_str_weak(set_form),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0000,  //  0002  JMPF	R2	#0004
+      0x58040000,  //  0003  LDCONST	R1	K0
+      0x90020201,  //  0004  SETMBR	R0	K1	R1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_phase
+********************************************************************/
+be_local_closure(Animate_oscillator_set_phase,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_weak(phase),
+    }),
+    be_str_weak(set_phase),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x14080300,  //  0000  LT	R2	R1	K0
+      0x780A0000,  //  0001  JMPF	R2	#0003
+      0x58040000,  //  0002  LDCONST	R1	K0
+      0x540A0063,  //  0003  LDINT	R2	100
+      0x24080202,  //  0004  GT	R2	R1	R2
+      0x780A0000,  //  0005  JMPF	R2	#0007
+      0x54060063,  //  0006  LDINT	R1	100
+      0x90020201,  //  0007  SETMBR	R0	K1	R1
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -1401,96 +1503,27 @@ be_local_closure(Animate_oscillator_animate,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_duty_cycle
-********************************************************************/
-be_local_closure(Animate_oscillator_set_duty_cycle,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_weak(duty_cycle),
-    }),
-    be_str_weak(set_duty_cycle),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x14080300,  //  0000  LT	R2	R1	K0
-      0x780A0000,  //  0001  JMPF	R2	#0003
-      0x58040000,  //  0002  LDCONST	R1	K0
-      0x540A0063,  //  0003  LDINT	R2	100
-      0x24080202,  //  0004  GT	R2	R1	R2
-      0x780A0000,  //  0005  JMPF	R2	#0007
-      0x54060063,  //  0006  LDINT	R1	100
-      0x90020201,  //  0007  SETMBR	R0	K1	R1
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_phase
-********************************************************************/
-be_local_closure(Animate_oscillator_set_phase,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_weak(phase),
-    }),
-    be_str_weak(set_phase),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x14080300,  //  0000  LT	R2	R1	K0
-      0x780A0000,  //  0001  JMPF	R2	#0003
-      0x58040000,  //  0002  LDCONST	R1	K0
-      0x540A0063,  //  0003  LDINT	R2	100
-      0x24080202,  //  0004  GT	R2	R1	R2
-      0x780A0000,  //  0005  JMPF	R2	#0007
-      0x54060063,  //  0006  LDINT	R1	100
-      0x90020201,  //  0007  SETMBR	R0	K1	R1
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Animate_oscillator
 ********************************************************************/
 extern const bclass be_class_Animate_animator;
 be_local_class(Animate_oscillator,
     6,
     &be_class_Animate_animator,
-    be_nested_map(12,
+    be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(phase, -1), be_const_var(0) },
-        { be_const_key_weak(b, -1), be_const_var(3) },
-        { be_const_key_weak(set_b, -1), be_const_closure(Animate_oscillator_set_b_closure) },
-        { be_const_key_weak(set_a, 10), be_const_closure(Animate_oscillator_set_a_closure) },
+        { be_const_key_weak(animate, -1), be_const_closure(Animate_oscillator_animate_closure) },
         { be_const_key_weak(a, -1), be_const_var(2) },
-        { be_const_key_weak(set_phase, -1), be_const_closure(Animate_oscillator_set_phase_closure) },
+        { be_const_key_weak(init, 11), be_const_closure(Animate_oscillator_init_closure) },
+        { be_const_key_weak(duty_cycle, 10), be_const_var(1) },
+        { be_const_key_weak(b, -1), be_const_var(3) },
         { be_const_key_weak(value, -1), be_const_var(5) },
-        { be_const_key_weak(duty_cycle, -1), be_const_var(1) },
-        { be_const_key_weak(animate, 7), be_const_closure(Animate_oscillator_animate_closure) },
-        { be_const_key_weak(set_duty_cycle, -1), be_const_closure(Animate_oscillator_set_duty_cycle_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Animate_oscillator_init_closure) },
-        { be_const_key_weak(form, 5), be_const_var(4) },
+        { be_const_key_weak(set_duty_cycle, 2), be_const_closure(Animate_oscillator_set_duty_cycle_closure) },
+        { be_const_key_weak(set_a, -1), be_const_closure(Animate_oscillator_set_a_closure) },
+        { be_const_key_weak(set_b, -1), be_const_closure(Animate_oscillator_set_b_closure) },
+        { be_const_key_weak(set_form, -1), be_const_closure(Animate_oscillator_set_form_closure) },
+        { be_const_key_weak(phase, -1), be_const_var(0) },
+        { be_const_key_weak(form, -1), be_const_var(4) },
+        { be_const_key_weak(set_phase, 0), be_const_closure(Animate_oscillator_set_phase_closure) },
     })),
     be_str_weak(Animate_oscillator)
 );

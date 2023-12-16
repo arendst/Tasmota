@@ -444,6 +444,11 @@ class Animate_oscillator : Animate_animator
     self.b = b
   end
 
+  def set_form(form)
+    if (form == nil)    form = 1    end
+    self.form = form
+  end
+
   def animate(millis)
     if (self.duration_ms == nil)   return    end
     if millis == nil    millis = tasmota.millis()   end
