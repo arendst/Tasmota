@@ -495,7 +495,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DSB          4
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
-#define MAX_MAGICSWITCH_MODES   8
+#define MAX_MAGIC_SWITCH_MODES   2
 #define MAX_BL0942_RX    4              // Baudrates 1 (4800), 2 (9600), 3 (19200), 4 (38400)
 
 const uint16_t kGpioNiceList[] PROGMEM = {
@@ -1147,7 +1147,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #ifdef USE_MAGIC_SWITCH
-  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGICSWITCH_MODES,
+  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGIC_SWITCH_MODES,
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
