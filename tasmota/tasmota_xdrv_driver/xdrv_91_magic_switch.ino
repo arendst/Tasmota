@@ -96,12 +96,12 @@ void MagicSwitchLoop()
     if (!MagicSwitch->switch_state) {
       SwitchSetVirtualPinState(MagicSwitch->key_offset, 0);
       MagicSwitch->pulse_len = 0;       // acknowledge the pulse, close the masking window
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MSW: end of window"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MSW: end"));
     }
   } else if (MagicSwitch->pulse_len) {
     SwitchSetVirtualPinState(MagicSwitch->key_offset, 1);
     MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MSW: pulse length:%d, windows:%d"), MagicSwitch->pulse_len, MagicSwitch->switch_state);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MSW: length:%d, window:%d"), MagicSwitch->pulse_len, MagicSwitch->switch_state);
   }
 }
 
@@ -132,7 +132,7 @@ bool MagicSwitchAddSwitch(void) {
   if (MagicSwitch->key_offset < 0) { 
     MagicSwitch->key_offset = XdrvMailbox.index;
     Settings->switchmode[MagicSwitch->key_offset] = 4;
-    AddLog(LOG_LEVEL_INFO, PSTR("MSW: MagicSwitch is Switch %d, Switchmode set to 4"), MagicSwitch->key_offset + 1);
+    AddLog(LOG_LEVEL_INFO, PSTR("MSW: Switch %d, Switchmode 4"), MagicSwitch->key_offset + 1);
     return true;
   }
   return false;
