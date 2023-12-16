@@ -154,7 +154,7 @@ be_local_closure(Animate_pulse_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(16777215),
     /* K1   */  be_const_int(1),
     /* K2   */  be_const_int(0),
@@ -163,10 +163,11 @@ be_local_closure(Animate_pulse_init,   /* name */
     /* K5   */  be_const_int(-16777216),
     /* K6   */  be_nested_str_weak(pulse_size),
     /* K7   */  be_nested_str_weak(slew_size),
+    /* K8   */  be_nested_str_weak(pos),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
+    ( &(const binstruction[24]) {  /* code */
       0x4C100000,  //  0000  LDNIL	R4
       0x1C100204,  //  0001  EQ	R4	R1	R4
       0x78120000,  //  0002  JMPF	R4	#0004
@@ -189,7 +190,8 @@ be_local_closure(Animate_pulse_init,   /* name */
       0x78120000,  //  0013  JMPF	R4	#0015
       0x580C0002,  //  0014  LDCONST	R3	K2
       0x90020E03,  //  0015  SETMBR	R0	K7	R3
-      0x80000000,  //  0016  RET	0
+      0x90021102,  //  0016  SETMBR	R0	K8	K2
+      0x80000000,  //  0017  RET	0
     })
   )
 );

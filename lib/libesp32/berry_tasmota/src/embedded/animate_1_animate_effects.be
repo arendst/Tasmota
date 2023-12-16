@@ -40,6 +40,7 @@ class Animate_pulse
     self.pulse_size = pulse_size
     if slew_size < 0      slew_size = 0     end
     self.slew_size = slew_size
+    self.pos = 0
   end
 
   ##
