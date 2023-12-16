@@ -1,8 +1,6 @@
 ## Available Features and Sensors
 
-ESP8266 / ESP32
-
-l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
+l = lite, t = tasmota (ESP8266 / ESP32), k = knx, s = sensors, i = ir, d = display
 
 Note: `minimal` variant is not listed as it shouldn't be used outside of the [upgrading](https://tasmota.github.io/docs/Upgrading/) process.
 

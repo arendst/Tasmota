@@ -1762,6 +1762,13 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0D000003) {  // 13.0.0.3
       Settings->battery_level_percent = 101;
     }
+/*    
+#if (LANGUAGE_LCID == 1049)
+    if (Settings->version < 0x0D020003) {  // 13.2.0.3
+      SettingsUpdateText(SET_CANVAS, PSTR("linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)"));
+    }
+#endif
+*/
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

@@ -39,6 +39,9 @@ uint8_t tsl2591_type = 0;
 uint8_t tsl2591_valid = 0;
 float tsl2591_lux = 0;
 
+tsl2591Gain_t gain_enum_array[4] = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
+tsl2591IntegrationTime_t int_enum_array[6] = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
+
 void Tsl2591Init(void)
 {
 //  if (I2cSetDevice(0x29) || I2cSetDevice(0x39) || I2cSetDevice(0x49)) {
@@ -90,6 +93,26 @@ void Tsl2591Show(bool json)
   }
 }
 
+bool tsl2591CommandSensor() {
+  bool serviced = true;
+  char argument[XdrvMailbox.data_len];
+  long value = 0;
+
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
+  }
+
+  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
+
+  tsl.setGain(gain_enum_array[XdrvMailbox.payload-1]);
+  tsl.setTiming(int_enum_array[value-1]);
+
+  Response_P(PSTR("{\"Gain input\":%d,\"Gain hex\":0x%x,"),XdrvMailbox.payload,tsl.getGain());
+  ResponseAppend_P(PSTR("\"Timing input\":%d,\"Timing hex\":0x0%x}"),value,tsl.getTiming());
+  return serviced;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -116,6 +139,11 @@ bool Xsns57(uint32_t function)
         Tsl2591Show(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_57 == XdrvMailbox.index) {
+          result = tsl2591CommandSensor();
+        }
+        break;
     }
   }
   return result;

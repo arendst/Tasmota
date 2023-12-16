@@ -513,7 +513,7 @@ public:
         rmt_tx_channel_config_t config = {};
         config.clk_src = RMT_CLK_SRC_DEFAULT;
         config.gpio_num = static_cast<gpio_num_t>(_pin);
-        config.mem_block_symbols = 64;          // memory block size, 64 * 4 = 256 Bytes
+        config.mem_block_symbols = 192;         // memory block size, 64 * 4 = 256 Bytes
         config.resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ; // 1 MHz tick resolution, i.e., 1 tick = 1 µs
         config.trans_queue_depth = 4;           // set the number of transactions that can pend in the background
         config.flags.invert_out = false;        // do not invert output signal
@@ -529,7 +529,9 @@ public:
 
         // ESP_LOGI(TAG, "Enable RMT TX channel");
         ret += rmt_enable(_channel.RmtChannelNumber);
-        AddLog(2,"RMT:initialized with error code: %u on pin: %u",ret, _pin);
+        // if (ret) {
+        //     AddLog(2,"RMT: initialized with error code: %u on pin: %u",ret, _pin);
+        // }
     }
 
     void Update(bool maintainBufferConsistency)

@@ -5,7 +5,7 @@
 import os
 import global
 import solidify
-import string
+import string as string2
 import re
 
 import sys
@@ -18,12 +18,26 @@ var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,M
             "_lvgl,"
             "int64"
 
-for g:string.split(globs, ",")
+for g:string2.split(globs, ",")
   global.(g) = nil
 end
 
 var prefix_dir = "src/embedded/"
 var prefix_out = "src/solidify/"
+
+def sort(l)
+  # insertion sort
+  for i:1..size(l)-1
+    var k = l[i]
+    var j = i
+    while (j > 0) && (l[j-1] > k)
+      l[j] = l[j-1]
+      j -= 1
+    end
+    l[j] = k
+  end
+  return l
+end
 
 def clean_directory(dir)
   var file_list = os.listdir(dir)
@@ -44,9 +58,9 @@ def parse_file(fname, prefix_out)
   var compiled = compile(src)
   compiled()      # run the compile code to instanciate the classes and modules
   # output solidified
-  var fname_h = string.split(fname, '.be')[0] + '.h'  # take whatever is before the first '.be'
+  var fname_h = string2.split(fname, '.be')[0] + '.h'  # take whatever is before the first '.be'
   var fout = open(prefix_out + "solidified_" + fname_h, "w")
-  fout.write(format("/* Solidification of %s */\n", fname_h))
+  fout.write(f"/* Solidification of {fname_h} */\n")
   fout.write("/********************************************************************\\\n")
   fout.write("* Generated code, don't edit                                         *\n")
   fout.write("\\********************************************************************/\n")
@@ -56,13 +70,13 @@ def parse_file(fname, prefix_out)
   # print(directives)
 
   for directive : directives
-    var object_list = string.split(directive[1], ',')
+    var object_list = string2.split(directive[1], ',')
     var object_name = object_list[0]
     var weak = (object_list.find('weak') != nil)          # do we solidify with weak strings?
     var o = global
     var cl_name = nil
     var obj_name = nil
-    for subname : string.split(object_name, '.')
+    for subname : string2.split(object_name, '.')
       o = o.(subname)
       cl_name = obj_name
       obj_name = subname
@@ -78,6 +92,7 @@ end
 clean_directory(prefix_out)
 
 var src_file_list = os.listdir(prefix_dir)
+src_file_list = sort(src_file_list)
 for src_file : src_file_list
   if src_file[0] == '.'  continue end
   parse_file(src_file, prefix_out)

@@ -432,11 +432,10 @@ const be_ctypes_structure_t be_lv_draw_mask_saved = {
 
 const be_ctypes_structure_t be_lv_meter_scale = {
   36,  /* size in bytes */
-  15,  /* number of elements */
+  14,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[15]) {
+  (const be_ctypes_structure_item_t[14]) {
     { "angle_range", 30, 0, 0, ctypes_u16, 0 },
-    { "label_color", 18, 0, 0, ctypes_i16, 0 },
     { "label_gap", 16, 0, 0, ctypes_i16, 0 },
     { "max", 24, 0, 0, ctypes_i32, 0 },
     { "min", 20, 0, 0, ctypes_i32, 0 },
