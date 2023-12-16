@@ -348,13 +348,16 @@ extern "C" {
       uint32_t r = (color_a >> 16) & 0xFF;
       uint32_t g = (color_a >>  8) & 0xFF;
       uint32_t b = (color_a      ) & 0xFF;
+      uint32_t a = (color_a >> 24) & 0xFF;
       uint32_t r2 = (color_b >> 16) & 0xFF;
       uint32_t g2 = (color_b >>  8) & 0xFF;
       uint32_t b2 = (color_b      ) & 0xFF;
+      uint32_t a2 = (color_b >> 24) & 0xFF;
       uint32_t r3 = changeUIntScale(alpha, 0, 255, r2, r);
       uint32_t g3 = changeUIntScale(alpha, 0, 255, g2, g);
       uint32_t b3 = changeUIntScale(alpha, 0, 255, b2, b);
-      uint32_t rgb = (r3 << 16) | (g3 << 8) | b3;
+      uint32_t a3 = changeUIntScale(alpha, 0, 255, a2, a);
+      uint32_t rgb = (a3 << 24) | (r3 << 16) | (g3 << 8) | b3;
       be_pushint(vm, rgb);
       be_return(vm);
     }

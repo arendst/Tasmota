@@ -62,6 +62,28 @@ class Animate_core
     self.animators.push(anim)
   end
 
+  # remove a specific animator
+  # remove all animators if no parameter or nil
+  # silently ignores if the animator can't be found
+  def remove_animator(anim)
+    var animators = self.animators
+    if (anim != nil)
+      animators.remove(animators.find(anim))
+    else
+      animators.clear()
+    end
+  end
+
+  def remove_painter(p)
+    var painters = self.painters
+    if (p != nil)
+      painters.remove(painters.find(p))
+    else
+      painters.clear()
+    end
+  end
+
+
   def add_painter(painter)
     self.painters.push(painter)
   end
