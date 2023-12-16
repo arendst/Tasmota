@@ -26,10 +26,12 @@
  */
 
 #ifndef MAGICSWITCH_MIN_PULSE
-#define MAGICSWITCH_MIN_PULSE  12000
+#define MAGICSWITCH_MIN_PULSE  4000
 #endif
 
-#define MAGICSWITCH_MAX_REASONABLE_PULSE 500000
+#ifndef MAGICSWITCH_MASKING_WINDOW_LEN
+#define MAGICSWITCH_MASKING_WINDOW_LEN  5
+#endif
 
 /********************************************************************************************************
  * Global private data
@@ -49,17 +51,19 @@
 //    7     6   Pull-Up
 //    8     7   No Pull-up
 
+#define MAGICSWITCH_MODE_NO_PULLUP    0x01
+
+
 struct MAGICSWITCH_DATA {
   uint32_t    start_time;           // timestamp at rising edge
   uint32_t    pulse_len;            // measured pulse length
-  uint32_t    pulse_min;            // minimum pulse length
-  uint32_t    switch_state;         // switch state
+  uint32_t    min_pulse;            // minimum pulse length
+  uint8_t     switch_state;         // switch state - count down for masking window
   uint8_t     pin;                  // the GPIO of the input
   uint8_t     mode;                 // mode
   int8_t      key_offset;           // index of the MagicSwitch in the list of Switches
 } *MagicSwitch = nullptr;
 
-#define MAGICSWITCH_MODE_NO_PULLUP       0x01
 
 /********************************************************************************************************
  * Interrupt level operations
@@ -68,13 +72,36 @@ struct MAGICSWITCH_DATA {
 extern "C" void IRAM_ATTR MagicSwitch_intr(void *arg) {
   struct MAGICSWITCH_DATA* ms = (struct MAGICSWITCH_DATA*)arg;
   uint32_t now = micros();
-  bool state = digitalRead(ms->pin);
-  if (state) {
-    ms->start_time = now | 1; // "| 1" => avoid 1 in 4M chance to get 0
-  } else if (ms->start_time) {
-    uint32_t diff = now - ms->start_time;
-    if (diff >= ms->pulse_min && diff <= MAGICSWITCH_MAX_REASONABLE_PULSE)
-      ms->pulse_len = diff;
+  bool pin_state = digitalRead(ms->pin);
+  if (ms->pulse_len) {            // previous pulse not aknowledged, ignoring the edge
+    return;                   
+  } else if (pin_state) {         // rising edge (hopefully if we didn't missed), record start time
+    ms->start_time = now | 1;     // "| 1" => avoid 1 in 4M chance to get 0
+  } else if (ms->start_time) {    // falling edge, compute pulse length
+    uint32_t pulse_len = now - ms->start_time;
+    ms->start_time = 0;           // in case of missing an rising edge, avoid triggering false detection
+    if (pulse_len >= ms->min_pulse)
+      ms->pulse_len = pulse_len;
+  }
+}
+
+/********************************************************************************************************
+ * Driver operations
+ */
+
+void MagicSwitchLoop()
+{
+  if (MagicSwitch->switch_state) {
+    MagicSwitch->switch_state--;
+    if (!MagicSwitch->switch_state) {
+      SwitchSetVirtualPinState(MagicSwitch->key_offset, 0);
+      MagicSwitch->pulse_len = 0;       // acknowledge the pulse, close the masking window
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MSW: end of window"));
+    }
+  } else if (MagicSwitch->pulse_len) {
+    SwitchSetVirtualPinState(MagicSwitch->key_offset, 1);
+    MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MSW: pulse length:%d, windows:%d"), MagicSwitch->pulse_len, MagicSwitch->switch_state);
   }
 }
 
@@ -91,7 +118,7 @@ void MagicSwitchInit(void) {
       MagicSwitch->pin  = Pin(GPIO_MAGIC_SWITCH, GPIO_ANY);   // input
       MagicSwitch->mode = GetPin(MagicSwitch->pin) - AGPIO(GPIO_MAGIC_SWITCH); // Index 1 => mode 0, etc...
       MagicSwitch->key_offset = -1; // means not yet configured
-      MagicSwitch->pulse_min = MAGICSWITCH_MIN_PULSE;
+      MagicSwitch->min_pulse = MAGICSWITCH_MIN_PULSE;
 
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MSW: pin:%d, mode:%d"), MagicSwitch->pin, MagicSwitch->mode);
 
@@ -105,28 +132,10 @@ bool MagicSwitchAddSwitch(void) {
   if (MagicSwitch->key_offset < 0) { 
     MagicSwitch->key_offset = XdrvMailbox.index;
     Settings->switchmode[MagicSwitch->key_offset] = 4;
-    AddLog(LOG_LEVEL_INFO, PSTR("MSW: MagicSwitch is Switch %d"), MagicSwitch->key_offset + 1);
+    AddLog(LOG_LEVEL_INFO, PSTR("MSW: MagicSwitch is Switch %d, Switchmode set to 4"), MagicSwitch->key_offset + 1);
     return true;
   }
   return false;
-}
-
-/********************************************************************************************************
- * Driver operations
- */
-
-void MagicSwitchLoop()
-{
-  uint32_t pulse_len = MagicSwitch->pulse_len;
-  MagicSwitch->pulse_len = 0;
-  if (pulse_len) {
-    MagicSwitch->switch_state = 1;
-    SwitchSetVirtualPinState(MagicSwitch->key_offset, MagicSwitch->switch_state);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MSW: pulse length:%d"), pulse_len);
-  } else if (MagicSwitch->switch_state) {
-    MagicSwitch->switch_state = 0;
-    SwitchSetVirtualPinState(MagicSwitch->key_offset, MagicSwitch->switch_state);
-  }
 }
 
 /********************************************************************************************************
@@ -143,10 +152,10 @@ void (* const MagicSwitchCommand[])(void) PROGMEM = {
 
 void CmndMagicSwitchPulse(void)
 {
-  if ((XdrvMailbox.payload >= 1000) && (XdrvMailbox.payload < MAGICSWITCH_MAX_REASONABLE_PULSE)) {
-    MagicSwitch->pulse_min = XdrvMailbox.payload;
+  if ((XdrvMailbox.payload >= 1000) && (XdrvMailbox.payload < 500000)) {
+    MagicSwitch->min_pulse = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(MagicSwitch->pulse_min);
+  ResponseCmndNumber(MagicSwitch->min_pulse);
 }
 
 /*********************************************************************************************\
