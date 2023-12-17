@@ -70,6 +70,59 @@ static const uint8_t PALETTE_ib_jul01_gp[] = {
   0xFF,     0xBB, 0x03, 0x0D,     // rgb(187,  3, 13) 100.000%
 };
 
+// Gradient palette "ib44"
+// http://soliton.vm.bytemark.co.uk/pub/cpt-city/ing/general/tn/ib44.png.index.html
+static const uint8_t PALETTE_ib_44[] = {
+    0,     214,  24,  16,
+   64,     227, 115,  78,
+  255,     239, 206, 140,
+};
+
+// Gradient palette "Fire-1"
+// http://soliton.vm.bytemark.co.uk/pub/cpt-city/ds/icons/Fire-1.c3g
+static const uint8_t PALETTE_Fire_1[] = {
+    0,     255,   0,   0,
+  128,     255, 128,   0,
+  255,     255, 255,   0,
+};
+
+// Gradient palette "bhw1_sunconure"
+// http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw1/tn/bhw1_sunconure.png.index.html
+static const uint8_t PALETTE_bhw1_sunconure[] = {
+    0,      97, 240,  78,
+  161,     246, 137,  30,
+  255,     246,  45,  30,
+};
+
+// Gradient palette "bhw3_41"
+// http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw3/tn/bhw3_41.png.index.html
+static const uint8_t PALETTE_bhw3_41[] = {
+    0,       0,   0, 128,
+   71,      64,  64, 255,
+   75,     160, 160, 255,
+   76,     255, 255, 255,
+  178,     255, 255, 255,
+  179,     255, 128, 128,
+  196,     255,   0,   0,
+  255,     128,   0,   0,
+};
+
+// Gradient palette "bhw4_089"
+// http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw4/tn/bhw4_089.png.index.html
+static const uint8_t PALETTE_bhw4_089[] = {
+    0,     174,  52,  28,
+   28,     224, 154, 133,
+   53,     235, 208, 206,
+   79,     249, 208, 118,
+  109,     228,  95,  50,
+  132,     227, 165, 116,
+  163,     226, 131,  67,
+  184,     252, 213, 118,
+  201,     252, 169, 125,
+  224,     255, 194, 101,
+  255,     215,  80,  35,
+};
+
 static const uint8_t PALETTE_STANDARD_VAL[] = {
   0x00,     0xFF, 0x00, 0x00,     // red
   0x2A,     0xFF, 0xA5, 0x00,     // orange
@@ -108,6 +161,11 @@ module animate (scope: global, strings: weak) {
   PALETTE_RAINBOW_WHITE, comptr(PALETTE_RAINBOW_WHITE)
   PALETTE_STANDARD_VAL, comptr(PALETTE_STANDARD_VAL)
   PALETTE_SATURATED_TAG, comptr(PALETTE_SATURATED_TAG)
+  PALETTE_ib_jul01_gp, comptr(PALETTE_ib_jul01_gp)
+  PALETTE_ib_44, comptr(PALETTE_ib_44)
+  PALETTE_Fire_1, comptr(PALETTE_Fire_1)
+  PALETTE_bhw1_sunconure, comptr(PALETTE_bhw1_sunconure)
+  PALETTE_bhw4_089, comptr(PALETTE_bhw4_089)
 
   core, class(be_class_Animate_core)
   animator, class(be_class_Animate_animator)
