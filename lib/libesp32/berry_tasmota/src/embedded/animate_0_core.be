@@ -67,7 +67,9 @@ class Animate_core
   end
 
   def add_animator(anim)
-    self.animators.push(anim)
+    if self.animators.find(anim) == nil
+      self.animators.push(anim)
+    end
   end
 
   # remove a specific animator
@@ -93,7 +95,9 @@ class Animate_core
 
 
   def add_painter(painter)
-    self.painters.push(painter)
+    if self.painters.find(painter) == nil
+      self.painters.push(painter)
+    end
   end
 
   def clear()

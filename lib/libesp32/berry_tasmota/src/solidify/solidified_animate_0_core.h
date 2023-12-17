@@ -183,18 +183,26 @@ be_local_closure(Animate_core_add_animator,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(animators),
-    /* K1   */  be_nested_str_weak(push),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(push),
     }),
     be_str_weak(add_animator),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
+      0x4C0C0000,  //  0004  LDNIL	R3
+      0x1C080403,  //  0005  EQ	R2	R2	R3
+      0x780A0003,  //  0006  JMPF	R2	#000B
+      0x88080100,  //  0007  GETMBR	R2	R0	K0
+      0x8C080502,  //  0008  GETMET	R2	R2	K2
+      0x5C100200,  //  0009  MOVE	R4	R1
+      0x7C080400,  //  000A  CALL	R2	2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -322,18 +330,26 @@ be_local_closure(Animate_core_add_painter,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(painters),
-    /* K1   */  be_nested_str_weak(push),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(push),
     }),
     be_str_weak(add_painter),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
+      0x4C0C0000,  //  0004  LDNIL	R3
+      0x1C080403,  //  0005  EQ	R2	R2	R3
+      0x780A0003,  //  0006  JMPF	R2	#000B
+      0x88080100,  //  0007  GETMBR	R2	R0	K0
+      0x8C080502,  //  0008  GETMET	R2	R2	K2
+      0x5C100200,  //  0009  MOVE	R4	R1
+      0x7C080400,  //  000A  CALL	R2	2
+      0x80000000,  //  000B  RET	0
     })
   )
 );
