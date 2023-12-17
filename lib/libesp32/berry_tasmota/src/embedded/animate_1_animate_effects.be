@@ -1,5 +1,25 @@
 # class Animate_pulse
 
+#@ solidify:Animate_painter,weak
+# painter superclass
+class Animate_painter
+
+  def init()
+    # register ourselves into the current animate.core
+    var core = global._cur_anim
+    if (core != nil)
+      core.add_painter(self)
+    end
+  end
+
+  # return true if buffer was filled successfully
+  #
+  # Needs to be overwritten
+  def paint(frame)
+  end
+
+end
+
 ##########################################################################################
 #
 # class Animate_pulse
@@ -22,7 +42,7 @@
 ##########################################################################################
 
 #@ solidify:Animate_pulse,weak
-class Animate_pulse
+class Animate_pulse : Animate_painter
   var color
   var back_color
   var pos
@@ -30,6 +50,8 @@ class Animate_pulse
   var pulse_size
 
   def init(color, pulse_size, slew_size)
+    super(self).init()
+    
     if (color == nil)         color = 0xFFFFFF  end     # white by default
     if (pulse_size == nil)   pulse_size = 1   end
     if (slew_size == nil)     slew_size = 0     end

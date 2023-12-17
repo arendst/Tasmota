@@ -96,8 +96,12 @@ class Animate_animator
   var obj               # object to call
   var mth               # object method to call
 
-  def init(duration_ms)
-    self.duration_ms = duration_ms
+  def init()
+    # register ourselves into the current animate.core
+    var core = global._cur_anim
+    if (core != nil)
+      core.add_animator(self)
+    end
   end
 
   def set_duration_ms(duration_ms)
@@ -155,16 +159,27 @@ class Animate_palette : Animate_animator
   var color             # instance of light_state, used for color calculation (reuse of object)
 
   def init(palette, duration_ms)
-    super(self).init(duration_ms)
+    super(self).init()
+
+    self.duration_ms = duration_ms
     self.running = false
+    self.bri = 100
+    self.color = light_state(light_state.RGB)
+    #
+    self.set_palette(palette)
+  end
+
+  # load or change palette
+  def set_palette(palette)
     if (type(palette) == 'ptr')   palette = self.ptr_to_palette(palette)    end   # convert comptr to palette buffer
     self.palette = palette
-    self.bri = 100
     self.slots = size(palette) / 4
-    if duration_ms != nil
-      self.set_duration(duration_ms)
+    # recompute palette
+    if self.duration_ms != nil
+      self.set_duration(self.duration_ms)
+    elif (self.range_min != nil) && (self.range_max != nil)
+      self.set_range(self.range_min, self.range_max)
     end
-    self.color = light_state(light_state.RGB)
   end
 
   # setter to be used as cb
@@ -415,6 +430,7 @@ class Animate_oscillator : Animate_animator
   var value
   
   def init(a, b, duration_ms, form)
+    super(self).init()
     self.phase = 0
     self.duty_cycle = 50
     self.a = a

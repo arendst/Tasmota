@@ -32,6 +32,7 @@ class Animate_core
 
   def init(strip, bri)
     import animate
+
     self.strip = strip
     if (bri == nil)   bri = 50    end
     self.bri = bri      # percentage of brightness 0..100
@@ -46,6 +47,13 @@ class Animate_core
     #
     self.fast_loop_cb = def() self.fast_loop() end
     self.back_color = 0x000000
+    #
+    self.set_current()
+  end
+
+  # set this animate.core as the current animator for configuration
+  def set_current()
+    global._cur_anim = self       # declare the current animate.core for painters and animators to register
   end
 
   # cb

@@ -12,12 +12,8 @@ var pulse = animate.pulse(0xFF4444, 2, 1)
 var osc1 = animate.oscillator(-3, 26, 5000, animate.COSINE)
 osc1.set_cb(pulse, pulse.set_pos)
 
-anim.add_animator(osc1)
-anim.add_painter(pulse)
-
 # animate color of pulse
 var palette = animate.palette(animate.PALETTE_RAINBOW_WHITE, 30000)
 palette.set_cb(pulse, pulse.set_color)
-anim.add_animator(palette)
 
 anim.start()
