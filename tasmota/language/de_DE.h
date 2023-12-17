@@ -278,12 +278,12 @@
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Wirklich neustarten?"
 
-#define D_CONFIGURE_MODULE "Gerät konfigurieren"
-#define D_CONFIGURE_WIFI "WLAN konfigurieren"
-#define D_CONFIGURE_MQTT "MQTT konfigurieren"
-#define D_CONFIGURE_DOMOTICZ "Domoticz konfigurieren"
-#define D_CONFIGURE_LOGGING "Logging konfigurieren"
-#define D_CONFIGURE_OTHER "Sonstige Konfiguration"
+#define D_CONFIGURE_MODULE "Geräteeinstellungen"
+#define D_CONFIGURE_WIFI "WLAN-Einstellungen"
+#define D_CONFIGURE_MQTT "MQTT-Einstellungen"
+#define D_CONFIGURE_DOMOTICZ "Domoticz-Einstellungen"
+#define D_CONFIGURE_LOGGING "Logging-Einstellungen"
+#define D_CONFIGURE_OTHER "Weitere Einstellungen"
 #define D_CONFIRM_RESET_CONFIGURATION "Zurücksetzen der Konfiguration bestätigen"
 #define D_RESET_CONFIGURATION "Konfiguration zurücksetzen"
 #define D_BACKUP_CONFIGURATION "Konfiguration sichern"
@@ -322,7 +322,7 @@
 #define D_SHOW_MORE_OPTIONS "Mehr Optionen"
 #define D_CHECK_CREDENTIALS "Bitte SSID/Passwort überprüfen"
 #define D_SUCCESSFUL_WIFI_CONNECTION "mit Wifi verbunden"
-#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Fenster kann geschlossen werden"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Das Fenster kann geschlossen werden"
 #define D_REDIRECTING_TO_NEW_IP "Umleitung zur neuen Geräte IP-Adresse"
 
 #define D_MQTT_PARAMETERS "MQTT-Einstellungen"
@@ -339,7 +339,7 @@
 #define D_SYSLOG_PORT "Syslog Port"
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
 
-#define D_OTHER_PARAMETERS "Sonstige Einstellungen"
+#define D_OTHER_PARAMETERS "Weiterte Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
@@ -348,7 +348,7 @@
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
 #define D_HTTP_API_ENABLE "HTTP API aktivieren"
-#define D_FRIENDLY_NAME "Name [Friendly Name]"
+#define D_FRIENDLY_NAME "Friendly Name"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "Einzelnes Gerät"
@@ -443,7 +443,7 @@
 #define D_3_RESPONSE_PACKETS_SENT "3 Antwortpakete gesendet"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Domoticz-Parameter"
+#define D_DOMOTICZ_PARAMETERS "Domoticz-Einstellungen"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
@@ -461,7 +461,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Update Zeitplan"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Zeitplan konfigurieren"
+#define D_CONFIGURE_TIMER "Zeitplaneinstellungen"
 #define D_TIMER_PARAMETERS "Zeitplaneinstellungen"
 #define D_TIMER_ENABLE "Zeitpläne aktivieren"
 #define D_TIMER_ARM "Aktiv"
@@ -957,7 +957,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
-#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
+#define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "A"
