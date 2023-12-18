@@ -322,6 +322,7 @@
 #define USE_XPT2046
 #define USE_FT5206
 #define USE_GT911
+#define USE_CST816S
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
