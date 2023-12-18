@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.1]
 ### Added
 - Support for Sonoff Basic R4 Magic Switch (#20247)
+- Support for CST816S touch interface (#20213)
+- NeoPool hydrolysis FL1 and Redox flag (#20258)
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)
@@ -14,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Matter Contact sensor was not triggering any update (#20232)
+- CVE-2021-36603 Cross Site Scripting (XSS) vulnerability (#12221)
 
 ### Removed
 
