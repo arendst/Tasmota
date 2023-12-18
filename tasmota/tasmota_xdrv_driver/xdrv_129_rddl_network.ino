@@ -157,9 +157,27 @@ void RemoveFiles(){
   deleteOldestFiles(500);
 }
 
-extern fs::FS* TfsFileSysHandle();
-void deleteOldestFiles( int count ) {
-    FS* filesystem = TfsFileSysHandle();
+extern fs::FS* TfsGlobalFileSysHandle();
+extern fs::FS* TfsFlashFileSysHandle();
+extern fs::FS* TfsDownloadFileSysHandle();
+
+#define MAX_FILES 10000
+
+void deleteOldestFiles( int count ){
+  FS* filesystem = TfsGlobalFileSysHandle();
+  if( filesystem )
+    deleteOldestFilesFromFS( filesystem, count);
+
+  filesystem = TfsFlashFileSysHandle();
+  if( filesystem )
+    deleteOldestFilesFromFS( filesystem, count);
+
+  filesystem = TfsDownloadFileSysHandle();
+  if( filesystem )
+    deleteOldestFilesFromFS( filesystem, count);
+}
+
+void deleteOldestFilesFromFS( FS* filesystem, int count ) {
     if( !filesystem )
       Serial.println("Failed to mount file system");
     

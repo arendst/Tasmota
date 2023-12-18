@@ -365,9 +365,19 @@ size_t TfsFileSize(const char *fname){
   return flen;
 }
 
-fs::FS* TfsFileSysHandle(){
+fs::FS* TfsGlobalFileSysHandle(){
+  if (!ffs_type) { return nullptr; } 
+  return ufsp;
+}
+
+fs::FS* TfsFlashFileSysHandle(){
   if (!ffs_type) { return nullptr; } 
   return ffsp;
+}
+
+fs::FS* TfsDownloadFileSysHandle(){
+  if (!ffs_type) { return nullptr; } 
+  return dfsp;
 }
 
 bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
