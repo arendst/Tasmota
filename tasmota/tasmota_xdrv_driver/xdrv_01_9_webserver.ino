@@ -247,7 +247,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_TEXT
+  "<div style='background:#%06x;text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_BACKGROUND, COLOR_TEXT
 #ifdef FIRMWARE_MINIMAL
 #ifdef FIRMWARE_SAFEBOOT
   "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEBOOT "</h3></span>"  // COLOR_TEXT_WARNING
@@ -447,9 +447,9 @@ const char kUploadErrors[] PROGMEM =
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions { HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY };
-enum WebCmndStatus { WEBCMND_DONE=0, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR
+enum WebCmndStatus { WEBCMND_DONE, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAILED, WEBCMND_HOST_NOT_FOUND, WEBCMND_MEMORY_ERROR, WEBCMND_VALID_RESPONSE
 #ifdef USE_WEBGETCONFIG
-  , WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
+  ,WEBCMND_FILE_NOT_FOUND, WEBCMND_OTHER_HTTP_ERROR, WEBCMND_CONNECTION_LOST, WEBCMND_INVALID_FILE
 #endif // USE_WEBGETCONFIG
                    };
 
@@ -726,6 +726,9 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer '%s' denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."), referer.c_str());
     return false;
   } else {
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+    MI32suspendScanTask();
+#endif // defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     return true;
   }
 }
@@ -897,7 +900,11 @@ void WSContentSendStyle_P(const char* formatP, ...) {
     _WSContentSendBuffer(false, formatP, arg);
     va_end(arg);
   }
-  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
+  if (strlen(SettingsText(SET_CANVAS))) {
+//    WSContentSend_P(PSTR("body{background:%s;background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"), SettingsText(SET_CANVAS));
+    WSContentSend_P(PSTR("body{background:%s 0 0 / cover no-repeat fixed;}"), SettingsText(SET_CANVAS));
+  }
+  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_BACKGROUND), WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
   WebColor(COL_TEXT_WARNING),
 #endif
@@ -997,6 +1004,9 @@ void WSContentEnd(void) {
   WSContentFlush();                                // Flush chunk buffer
   _WSContentSend("");                              // Signal end of chunked content
   Webserver->client().stop();
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+  MI32resumeScanTask();
+#endif // defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
 }
 
 void WSContentStop(void) {
@@ -3353,36 +3363,48 @@ int WebQuery(char *buffer) {
       else return status;
 
       if (http_code > 0) {                    // http_code will be negative on error
-        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
+        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
           // Return received data to the user - Adds 900+ bytes to the code
-          const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
-          ResponseClear();
-          Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
-          char text[2] = { 0 };
+          String response = http.getString(); // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = response.c_str();
+
+//          uint32_t len = response.length() + 1;
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Response '%*_H' = %s"), len, (uint8_t*)read, read);
+
+          char text[3] = { 0 };               // Make room foor double %
           text[0] = *read++;
-          bool assume_json = (text[0] == '{') || (text[0] == '[');
-          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-          while (text[0] != '\0') {
-            if (text[0] > 31) {               // Remove control characters like linefeed
-              if (assume_json) {
-                if (ResponseAppend_P(text) == ResponseSize()) { break; };
-              } else {
-                if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
+          if (text[0] != '\0') {
+            Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
+            bool assume_json = (text[0] == '{') || (text[0] == '[');
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            while (text[0] != '\0') {
+              if (text[0] > 31) {             // Remove control characters like linefeed
+                if ('%' == text[0]) {         // Fix char string formatting for %
+                  text[1] = '%';
+                }
+                if (assume_json) {
+                  if (ResponseAppend_P(text) == ResponseSize()) { break; };
+                } else {
+                  if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
+                }
               }
+              text[0] = *read++;
+              text[1] = '\0';
             }
-            text[0] = *read++;
-          }
-          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-          ResponseJsonEnd();
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            ResponseJsonEnd();
 #ifdef USE_SCRIPT
-          extern uint8_t tasm_cmd_activ;
-          // recursive call must be possible in this case
-          tasm_cmd_activ = 0;
+            extern uint8_t tasm_cmd_activ;
+            // recursive call must be possible in this case
+            tasm_cmd_activ = 0;
 #endif  // USE_SCRIPT
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WEBQUERY));
+            status = WEBCMND_VALID_RESPONSE;
+          } else {
+            status = WEBCMND_DONE;
+          }
+        } else
 #endif  // USE_WEBSEND_RESPONSE
-        }
         status = WEBCMND_DONE;
       } else {
         status = WEBCMND_CONNECT_FAILED;
@@ -3489,7 +3511,11 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR "|" 
 #ifdef USE_WEBGETCONFIG
   "|" D_JSON_FILE_NOT_FOUND "|" D_JSON_OTHER_HTTP_ERROR "|" D_JSON_CONNECTION_LOST "|" D_JSON_INVALID_FILE_TYPE
 #endif // USE_WEBGETCONFIG
@@ -3506,7 +3532,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
-  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
+  D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_WEBCANVAS
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
 #endif
@@ -3527,7 +3553,7 @@ void (* const WebCommand[])(void) PROGMEM = {
   &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
-  &CmndWebColor, &CmndWebSensor, &CmndWebButton
+  &CmndWebColor, &CmndWebSensor, &CmndWebButton, &CmndWebCanvas
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
 #endif
@@ -3537,9 +3563,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #endif  // FIRMWARE_MINIMAL_ONLY
   };
 
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
+/*********************************************************************************************/
 
 void CmndWebTime(void) {
   // 2017-03-07T11:08:02-07:00
@@ -3641,17 +3665,20 @@ void CmndWebSend(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
-    char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    if (result != WEBCMND_VALID_RESPONSE) {
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    }
   }
 }
 
-void CmndWebQuery(void)
-{
+void CmndWebQuery(void) {
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebQuery(XdrvMailbox.data);
-    char stemp1[20];
-    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    if (result != WEBCMND_VALID_RESPONSE) {
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    }
   }
 }
 
@@ -3741,6 +3768,28 @@ void CmndWebButton(void)
       ResponseCmndIdxChar(GetWebButton(XdrvMailbox.index -1));
     }
   }
+}
+
+void CmndWebCanvas(void) {
+  /*
+  WebCanvas allows GUI body canvas configuration using a color, "url" or "gradient".
+  The provided text overrules the body CSS background property "body{background:<WebCanvas> 0 0 / cover no-repeat fixed;}"
+  - WebCanvas "                                                            // Set canvas to WebColor2
+  - WebCanvas 0                                                            // Set canvas to WebColor2
+  - WebCanvas red                                                          // Red canvas
+  - WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)        // Gradient pride flag
+  - WebCanvas linear-gradient(#F02 16%,#F93 16% 33%,#FF4 33% 50%,#082 50% 67%,#00F 67% 84%,#708 84%)  // Pride flag
+  - WebCanvas linear-gradient(90deg,#05A 33%,#FFF 33% 67%,#F43 67%)        // Flag France
+  - WebCanvas linear-gradient(#059 33%,#FFF 33% 67%,#F43 67%)              // Flag The Netherlands
+  - WebCanvas linear-gradient(#05B 50%,#FD0 50%)                           // Flag Ukraine
+  - WebCanvas linear-gradient(#FFF 33%,#07D 33% 67%,#F34 67%)              // Flag Russia
+  - WebCanvas url(http://ota.tasmota.com/tasmota/images/prf.png)           // Pride flag
+  - WebCanvas url(http://ota.tasmota.com/tasmota/images/tasmota_logo.png)  // Tasmota logo
+  */
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_CANVAS, (SC_CLEAR == Shortcut()) ? "" : XdrvMailbox.data);
+  }
+  ResponseCmndChar(SettingsText(SET_CANVAS));
 }
 
 #ifdef USE_CORS

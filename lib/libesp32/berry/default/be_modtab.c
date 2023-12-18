@@ -146,7 +146,10 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_UNISHOX_COMPRESSION
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
+
+#ifdef USE_WS2812
     &be_native_module(animate),
+#endif // USE_WS2812
 
 #ifdef USE_LVGL
     &be_native_module(lv),
@@ -207,7 +210,6 @@ be_extern_native_class(AXP202);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
-be_extern_native_class(Leds_animator);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -276,7 +278,6 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_WS2812
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
-    &be_native_class(Leds_animator),
 #endif // USE_WS2812
 #ifdef USE_ENERGY_SENSOR
     &be_native_class(energy_struct),

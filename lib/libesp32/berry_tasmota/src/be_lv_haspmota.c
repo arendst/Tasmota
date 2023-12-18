@@ -5094,15 +5094,51 @@ void be_load_lvh_btnmatrix_class(bvm *vm) {
 extern const bclass be_class_lvh_bar;
 
 /********************************************************************
+** Solidified function: set_val
+********************************************************************/
+be_local_closure(lvh_bar_set_val,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_value),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(ANIM_OFF),
+    }),
+    be_str_weak(set_val),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0xB8160400,  //  0003  GETNGBL	R5	K2
+      0x88140B03,  //  0004  GETMBR	R5	R5	K3
+      0x7C080600,  //  0005  CALL	R2	3
+      0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_bar
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_bar,
     0,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_bar) },
+        { be_const_key_weak(set_val, -1), be_const_closure(lvh_bar_set_val_closure) },
+        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_bar) },
     })),
     be_str_weak(lvh_bar)
 );

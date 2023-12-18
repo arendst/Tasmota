@@ -1379,9 +1379,6 @@ void EnergyDrvInit(void) {
   Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
   if (!Energy) { return; }
 
-  EnergySettingsLoad(0);
-  EnergyRtcSettingsLoad();
-
   Energy->value = nullptr;
 //  Energy->voltage_common = false;
 //  Energy->frequency_common = false;
@@ -1399,9 +1396,13 @@ void EnergyDrvInit(void) {
   Energy->power_on = true;
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
-  XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
+  XnrgCall(FUNC_PRE_INIT);              // Find first energy driver
   if (TasmotaGlobal.energy_driver) {
+    EnergySettingsLoad(0);
+    EnergyRtcSettingsLoad();
     AddLog(LOG_LEVEL_INFO, PSTR("NRG: Init driver %d"), TasmotaGlobal.energy_driver);
+//  } else {
+//    free(Energy);                       // No energy driver found so release memory
   }
 }
 

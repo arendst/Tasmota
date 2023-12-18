@@ -516,13 +516,15 @@ void CmndDomoticzUpdateTimer(void) {
 }
 
 void CmndDomoticzSend(void) {
-  // DzSend1 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":0,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
-  // DzSend1 418,%var1%;%var2% or DzSend1 418,%var1%:%var2% - Notice colon as substitute to semi-colon
-  // DzSend2 <idx>,<values> - USE_SHUTTER only - {\"idx\":<idx>,\"nvalue\":<position>,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
-  // DzSend3 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":<values>,\"Battery\":xx,\"RSSI\":yy}
-  // DzSend4 <idx>,<state>  - {\"command\":\"switchlight\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
-  // DzSend5 <idx>,<state>  - {\"command\":\"switchscene\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
-
+  /*
+  DzSend1 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":0,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
+    rule1 on power1#state do dzsend1 9001,%value% endon
+  DzSend1 418,%var1%;%var2% or DzSend1 418,%var1%:%var2% - Notice colon as substitute to semi-colon
+  DzSend2 <idx>,<values> - USE_SHUTTER only - {\"idx\":<idx>,\"nvalue\":<position>,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
+  DzSend3 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":<values>,\"Battery\":xx,\"RSSI\":yy}
+  DzSend4 <idx>,<state>  - {\"command\":\"switchlight\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
+  DzSend5 <idx>,<state>  - {\"command\":\"switchscene\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
+  */
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     if (XdrvMailbox.data_len > 0) {
       if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
