@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.3.0.1 - Last update 17.12.2023
+ * Updated until v13.3.0.1 - Last update 18.12.2023
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -176,7 +176,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnetzmaske"
 #define D_SUBSCRIBE_TO "abonniere"
-#define D_UNSUBSCRIBE_FROM "löse abo․ von"
+#define D_UNSUBSCRIBE_FROM "löse Abo․ von"
 #define D_SUCCESSFUL "erfolgreich"
 #define D_SUNRISE "Sonnenaufgang"
 #define D_SUNSET "Sonnenuntergang"
@@ -243,7 +243,7 @@
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen, da der AP nicht antwortet (timeout)"
 #define D_ATTEMPTING_CONNECTION "Verbindungsversuch…"
 #define D_CHECKING_CONNECTION "Prüfe Verbindung…"
-#define D_QUERY_DONE "Suchanfrage abgeschlossen․ MQTT-Services gefunden"
+#define D_QUERY_DONE "Suche abgeschlossen․ MQTT-Services gefunden"
 #define D_MQTT_SERVICE_FOUND "MQTT-Service gefunden bei"
 #define D_FOUND_AT "gefunden bei"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog-Host nicht gefunden"
@@ -339,7 +339,7 @@
 #define D_SYSLOG_PORT "Syslog Port"
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
 
-#define D_OTHER_PARAMETERS "Weiterte Einstellungen"
+#define D_OTHER_PARAMETERS "Weitere Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
@@ -399,7 +399,7 @@
 #define D_UPLOAD_ERR_3 "Falsche Dateisignatur"
 #define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn․ Flashspeicher"
 #define D_UPLOAD_ERR_5 "Upload Buffer Vergleich weicht ab"
-#define D_UPLOAD_ERR_6 "Upload fehlgeschlagen․ Aktiviere logging 3"
+#define D_UPLOAD_ERR_6 "Upload fehlgeschlagen․ Aktiviere Logging 3"
 #define D_UPLOAD_ERR_7 "Upload abgebrochen"
 #define D_UPLOAD_ERR_8 "Datei ungültig"
 #define D_UPLOAD_ERR_9 "Datei zu groß"
@@ -408,7 +408,7 @@
 #define D_UPLOAD_ERR_12 "RF Chip beschreiben fehlgeschlagen"
 #define D_UPLOAD_ERR_13 "RF Firmware ungültig"
 #define D_UPLOAD_ERR_14 "Nicht kompatibel"
-#define D_UPLOAD_ERROR_CODE "Upload Fehler Nummer"
+#define D_UPLOAD_ERROR_CODE "Upload Fehlernummer"
 
 #define D_ENTER_COMMAND "Befehl eingeben"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Aktivere Web Log Level 2 falls Reaktion erwartet"
@@ -445,9 +445,9 @@
 // xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz-Einstellungen"
 #define D_DOMOTICZ_IDX "Idx"
-#define D_DOMOTICZ_KEY_IDX "Key idx"
-#define D_DOMOTICZ_SWITCH_IDX "Switch idx"
-#define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
+#define D_DOMOTICZ_KEY_IDX "Key Idx"
+#define D_DOMOTICZ_SWITCH_IDX "Switch Idx"
+#define D_DOMOTICZ_SENSOR_IDX "Sensor Idx"
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
   #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
@@ -458,7 +458,7 @@
   #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
   #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
-#define D_DOMOTICZ_UPDATE_TIMER "Update Zeitplan"
+#define D_DOMOTICZ_UPDATE_TIMER "Zeitplan-Update"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Zeitplaneinstellungen"
@@ -472,7 +472,7 @@
 #define D_TIMER_ACTION "Aktion"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "KNX konfigurieren"
+#define D_CONFIGURE_KNX "KNX-Einstellungen"
 #define D_KNX_PARAMETERS "KNX-Parameter"
 #define D_KNX_GENERAL_CONFIG "Allgemein"
 #define D_KNX_PHYSICAL_ADDRESS "Physikalische Adresse"
@@ -526,7 +526,7 @@
 // xdrv_89_dali.ino
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
-#define D_CONFIGURE_DALI                  "Konfig․ DALI"
+#define D_CONFIGURE_DALI                  "DALI Einstellungen"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
@@ -539,9 +539,9 @@
 #define D_DOMOTICZ_SHUTTER "Rollo"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Konfiguriere PCF8574"
+#define D_CONFIGURE_PCF8574 "PCF8574 Einstellungen"
 #define D_PCF8574_PARAMETERS "PCF8574 Parameter"
-#define D_INVERT_PORTS "Invertiere Ports"
+#define D_INVERT_PORTS "Ports invertieren"
 #define D_DEVICE "Gerät"
 #define D_DEVICE_INPUT "Eingang"
 #define D_DEVICE_OUTPUT "Ausgang"
