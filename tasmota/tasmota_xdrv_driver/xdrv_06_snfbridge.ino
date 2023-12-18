@@ -516,7 +516,7 @@ void SonoffBridgeAddButton(void) {
     for (uint32_t j = 0; j < 4; j++) {
       idx++;
       WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%s</button></td>"), idx,  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
-        (strlen(GetWebButton(idx -1))) ? GetWebButton(idx -1) : itoa(idx, number, 10));
+        (strlen(GetWebButton(idx -1))) ? HtmlEscape(GetWebButton(idx -1)).c_str() : itoa(idx, number, 10));
     }
   }
   WSContentSend_P(PSTR("</tr></table>"));

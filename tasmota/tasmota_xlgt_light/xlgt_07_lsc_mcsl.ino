@@ -269,7 +269,7 @@ void LscMcAddFuctionButtons(void) {
       WSContentSend_P(PSTR("<td style='width:%d%%'><button onclick='la(\"&lsc=%d\");'>%s</button></td>"),  // &lsc is related to WebGetArg("lsc", tmp, sizeof(tmp));
         100 / cols,
         idx -1,
-        (strlen(GetWebButton(idx))) ? GetWebButton(idx) : itoa(idx, number, 10));
+        (strlen(GetWebButton(idx))) ? HtmlEscape(GetWebButton(idx)).c_str() : itoa(idx, number, 10));
     }
   }
   WSContentSend_P(PSTR("</tr></table>"));

@@ -1624,7 +1624,7 @@ void TuyaAddButton(void) {
     char stemp[33];
     snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
     WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1,
-      (strlen(GetWebButton(TasmotaGlobal.devices_present))) ? GetWebButton(TasmotaGlobal.devices_present) : stemp, "");
+      (strlen(GetWebButton(TasmotaGlobal.devices_present))) ? HtmlEscape(GetWebButton(TasmotaGlobal.devices_present)).c_str() : stemp, "");
     WSContentSend_P(PSTR("</tr></table>"));
   }
 }
