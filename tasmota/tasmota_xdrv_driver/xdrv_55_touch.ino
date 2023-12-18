@@ -71,6 +71,7 @@ typedef struct TSGlobal_t {
 
 TSGlobal_t TSGlobal;
 
+bool CST816S_found = false;
 bool FT5206_found = false;
 bool GT911_found = false;
 bool XPT2046_found = false;
@@ -97,7 +98,7 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
 // return true if succesful, false if not configured
 bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gesture,
                      uint16_t* raw_x, uint16_t* raw_y) {
-  if (TSGlobal.external_ts || FT5206_found || XPT2046_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || XPT2046_found) {
     if (touches)    { *touches = TSGlobal.touches; }
     if (x)          { *x = TSGlobal.touch_xp; }
     if (y)          { *y = TSGlobal.touch_yp; }
@@ -110,7 +111,7 @@ bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gestur
 }
 
 uint32_t Touch_Status(int32_t sel) {
-  if (TSGlobal.external_ts || FT5206_found || GT911_found || XPT2046_found || SRES_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || GT911_found || XPT2046_found || SRES_found) {
     switch (sel) {
       case 0:
         return  TSGlobal.touched;
@@ -184,6 +185,62 @@ int16_t SRES_y() {
   return sres_touch.yp;
 }
 #endif
+
+#ifdef USE_CST816S
+#undef CST816S_address
+#define CST816S_address 0x15
+
+bool CST816S_event_available = false;
+uint8_t CST816S_bus = 0;
+
+uint8_t CST816S_map_gesture(uint8_t gesture) {
+  switch (gesture) {
+    case 0x01: return TS_Gest_Move_Up;    // SWIPE_UP
+    case 0x02: return TS_Gest_Move_Down;  // SWIPE_DOWN
+    case 0x03: return TS_Gest_Move_Left;  // SWIPE_LEFT
+    case 0x04: return TS_Gest_Move_Right; // SWIPE_RIGHT
+    case 0x05: return TS_Gest_None;       // SINGLE_CLICK
+    case 0x0B: return TS_Gest_None;       // DOUBLE_CLICK
+    case 0x0C: return TS_Gest_None;       // LONG_PRESS
+    default: return TS_Gest_None;         // NONE
+  }
+}
+
+bool CST816S_available() {
+  if (CST816S_event_available) {
+    byte data_raw[8];
+    I2cReadBuffer(CST816S_address, 0x01, data_raw, 6, CST816S_bus);
+    TSGlobal.raw_touch_xp = ((data_raw[2] & 0xF) << 8) + data_raw[3];
+    TSGlobal.raw_touch_yp = ((data_raw[4] & 0xF) << 8) + data_raw[5];
+    TSGlobal.gesture = CST816S_map_gesture(data_raw[0]);
+    CST816S_event_available = false;
+    return true;
+  }
+  return false;
+}
+
+bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interrupt = RISING) {
+  CST816S_found = false;
+  CST816S_bus = bus;
+  pinMode(irq_pin, INPUT);
+  pinMode(rst_pin, OUTPUT);
+  digitalWrite(rst_pin, HIGH);
+  delay(50);
+  digitalWrite(rst_pin, LOW);
+  delay(5);
+  digitalWrite(rst_pin, HIGH);
+  delay(50);
+  uint8_t version;
+  I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
+  delay(5);
+  uint8_t versionInfo[3];
+  I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
+  attachInterrupt(irq_pin, []{ CST816S_event_available = true; }, interrupt);
+  CST816S_found = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S, version: %d, versionInfo: %d.%d.%d"), version, versionInfo[0], versionInfo[1], versionInfo[2]);
+  return CST816S_found;
+}
+#endif // USE_CST816S
 
 #ifdef USE_FT5206
 #include <FT5206.h>
@@ -307,6 +364,12 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 #endif
 
+#ifdef USE_CST816S
+  if (CST816S_found) {
+    TSGlobal.touched = CST816S_available();
+  }
+#endif // USE_CST816S
+
 #ifdef USE_FT5206
   if (FT5206_found) {
     TSGlobal.touched = FT5206_touched();
@@ -360,7 +423,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
-    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);
@@ -522,7 +585,7 @@ bool Xdrv55(uint32_t function) {
     case FUNC_INIT:
       break;
     case FUNC_EVERY_100_MSECOND:
-      if (FT5206_found || XPT2046_found || GT911_found || SRES_found) {
+      if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || SRES_found) {
         Touch_Check(TS_RotConvert);
       }
       break;

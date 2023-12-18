@@ -35,6 +35,8 @@ extern FS *ffsp;
 
 #undef GT911_address
 #define GT911_address 0x5D
+#undef CST816S_address
+#define CST816S_address 0x15
 
 enum {GPIO_DP_RES=GPIO_SENSOR_END-1,GPIO_DP_CS,GPIO_DP_RS,GPIO_DP_WR,GPIO_DP_RD,GPIO_DPAR0,GPIO_DPAR1,GPIO_DPAR2,GPIO_DPAR3,GPIO_DPAR4,GPIO_DPAR5,GPIO_DPAR6,GPIO_DPAR7,GPIO_DPAR8,GPIO_DPAR9,GPIO_DPAR10,GPIO_DPAR11,GPIO_DPAR12,GPIO_DPAR13,GPIO_DPAR14,GPIO_DPAR15};
 
@@ -312,7 +314,7 @@ int8_t cs;
     udisp  = new uDisplay(ddesc);
 
     // checck for touch option TI1 or TI2
-#if defined(USE_FT5206) || defined(USE_GT911)
+#if defined (USE_CST816S) || defined(USE_FT5206) || defined(USE_GT911)
     cp = strstr(ddesc, ":TI");
     if (cp) {
       uint8_t wire_n = 1;
@@ -350,6 +352,8 @@ int8_t cs;
       if (I2cSetDevice(i2caddr, wire_n)) {
         if (i2caddr == GT911_address) {
           I2cSetActiveFound(i2caddr, "GT911", wire_n);
+        } else if (i2caddr == CST816S_address) {
+          I2cSetActiveFound(i2caddr, "CST816S", wire_n);
         } else {
           I2cSetActiveFound(i2caddr, "FT5206", wire_n);
         }
@@ -361,6 +365,8 @@ int8_t cs;
       if (I2cSetDevice(i2caddr)) {
         if (i2caddr == GT911_address) {
           I2cSetActiveFound(i2caddr, "GT911");
+        } else if (i2caddr == CST816S_address) {
+          I2cSetActiveFound(i2caddr, "CST816S");
         } else {
           I2cSetActiveFound(i2caddr, "FT5206");
         }
@@ -374,6 +380,10 @@ int8_t cs;
         if (!wire_n) GT911_Touch_Init(&Wire, irq, rst, xs, ys);
         else GT911_Touch_Init(&Wire1, irq, rst, xs, ys);
 #endif
+      } else if (i2caddr == CST816S_address) {
+#ifdef USE_CST816S
+        CST816S_Touch_Init(wire_n, irq, rst);
+#endif
       } else {
 #ifdef USE_FT5206
         if (!wire_n) FT5206_Touch_Init(Wire);
@@ -386,6 +396,10 @@ int8_t cs;
       if (i2caddr == GT911_address) {
 #ifdef USE_GT911
       if (!wire_n) GT911_Touch_Init(&Wire, irq, rst, xs, ys);
+#endif
+      } else if (i2caddr == CST816S_address) {
+#ifdef USE_CST816S
+      CST816S_Touch_Init(wire_n, irq, rst);
 #endif
       } else {
 #ifdef USE_FT5206
