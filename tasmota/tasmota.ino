@@ -845,7 +845,6 @@ void Scheduler(void) {
   DeviceGroupsLoop();
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
-  SyslogAsync(false);
 
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
@@ -887,6 +886,8 @@ void Scheduler(void) {
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 #endif  // ESP8266
+
+  SyslogAsync(false);
 }
 
 void loop(void) {
