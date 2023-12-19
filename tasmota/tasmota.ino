@@ -886,6 +886,8 @@ void Scheduler(void) {
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 #endif  // ESP8266
+
+  SyslogAsync(false);
 }
 
 void loop(void) {

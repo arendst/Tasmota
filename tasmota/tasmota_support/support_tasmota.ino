@@ -1142,7 +1142,6 @@ void PerformEverySecond(void)
   }
 
   MqttPublishLoggingAsync(false);
-  SyslogAsync(false);
 
   ResetGlobalValues();
 
