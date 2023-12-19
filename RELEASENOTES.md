@@ -126,6 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
 
 ### Changed
+- Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)
