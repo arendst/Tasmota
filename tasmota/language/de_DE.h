@@ -526,7 +526,7 @@
 // xdrv_89_dali.ino
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
-#define D_CONFIGURE_DALI                  "DALI Einstellungen"
+#define D_CONFIGURE_DALI                  "DALI-Einstellungen"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"
@@ -539,7 +539,7 @@
 #define D_DOMOTICZ_SHUTTER "Rollo"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "PCF8574 Einstellungen"
+#define D_CONFIGURE_PCF8574 "PCF8574-Einstellungen"
 #define D_PCF8574_PARAMETERS "PCF8574 Parameter"
 #define D_INVERT_PORTS "Ports invertieren"
 #define D_DEVICE "Gerät"
