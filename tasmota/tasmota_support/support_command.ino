@@ -21,6 +21,8 @@
 #include "rddl.h"
 #include "planetmintgo.h"
 #include "rddlSDKAPI.h"
+#include "rddlSDKUtils.h"
+
 
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
@@ -45,6 +47,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
+  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -89,6 +92,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
+  &CmndChallenge, &CmndPoPChallengeResult,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -978,7 +982,7 @@ void CmndPoPChallenge(void) {
     Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Please define a challenge" );
   }
   
-  CmndStatusResponse(32);
+  MqttPublishPrefixTopicRulesProcess_P(STAT, D_CMND_POPCHALLENGERESULT, Settings->flag5.mqtt_status_retain);
   ResponseClear();
 }
 
@@ -1062,6 +1066,50 @@ void CmndPoPInit(void) {
     Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPINIT, "Please pass the block height of the PoP" );
   }
   CmndStatusResponse(35);
+  ResponseClear();
+}
+
+void CmndChallenge(void) {
+
+  if( XdrvMailbox.data_len )
+  {
+    char buffer[200]= {0};
+    const char* token = " ";
+    strcpy( buffer, XdrvMailbox.data);
+    char* address = strtok(buffer, " ");
+    char* cid = strtok(NULL, " ");
+    AddLog( 2, "cid: %s", cid);
+    AddLog( 2, "address: %s", address);
+    
+    bool result = ChallengeChallengee( cid, address);
+    
+    if( result )
+      Response_P( "{ \"%s\": accepted }", D_CMND_CHALLENGE);
+    else
+      Response_P( "{ \"%s\": failed }", D_CMND_CHALLENGE);
+  }
+  else{
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_CHALLENGE, "Please pass the address and CID to be challenged" );
+  }
+  CmndStatusResponse(36);
+  ResponseClear();
+}
+
+void CmndPoPChallengeResult(void) {
+  AddLog(2, "PopChallengeResult");
+  if( XdrvMailbox.data_len )
+  {
+    sdkClearStack();
+    bool  result = processPoPChallengeResponse( XdrvMailbox.data, XdrvMailbox.data_len );
+    if( result )
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "PoP: success!" );
+    else
+       Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "PoP: failed!" );
+  } 
+  else{
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "Please pass CID, encoding, and data" );
+  }
+  CmndStatusResponse(37);
   ResponseClear();
 }
 

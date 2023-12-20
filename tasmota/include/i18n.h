@@ -271,6 +271,8 @@
 #define D_CMND_PLANETMINTCHAINID "PlanetmintChainID"
 #define D_CMND_POPCHALLENGE "PoPChallenge"
 #define D_CMND_POPINIT "PoPInit"
+#define D_CMND_CHALLENGE "Challenge"
+#define D_CMND_POPCHALLENGERESULT "PoPChallengeResult"
 #define D_CMND_ATTESTMACHINE "AttestMachine"
 #define D_CMND_NOTARIZATION_PERIODICITY "NotarizationPeriodicity"
 #define D_CMND_NOTARIZE "Notarize"
