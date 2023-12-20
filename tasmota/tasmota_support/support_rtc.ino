@@ -109,6 +109,18 @@ String GetBuildDateAndTime(void) {
   return String(bdt);  // 2017-03-07T11:08:02
 }
 
+String GetSyslogDate(char* mxtime) {
+  // Mmm dd hh:mm:ss
+  // Jan  3 09:23:45
+  // Assuming the day hasn't changed yet ;-)
+  uint32_t month_idx = (RtcTime.month -1) * 3;
+  char month[4] = { 0 };
+  strncpy_P(month, kMonthNamesEnglish + month_idx, 3);
+  char dt[16];
+  snprintf_P(dt, sizeof(dt), PSTR("%s %2d %s"), month, RtcTime.day_of_month, mxtime);
+  return String(dt);
+}
+
 String GetMinuteTime(uint32_t minutes) {
   char tm[6];
   snprintf_P(tm, sizeof(tm), PSTR("%02d:%02d"), minutes / 60, minutes % 60);

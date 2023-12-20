@@ -2297,8 +2297,9 @@ void SyslogAsync(bool refresh) {
   char* line;
   size_t len;
   while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
-    // 00:00:02.096 HTP: Web server active on wemos5 with IP address 192.168.2.172
-    //              HTP: Web server active on wemos5 with IP address 192.168.2.172
+    // <--- mxtime ---> TAG  MSG
+    // 00:00:02.096-029 HTP: Web server active on wemos5 with IP address 192.168.2.172
+    //                  HTP: Web server active on wemos5 with IP address 192.168.2.172
     uint32_t mxtime = strchr(line, ' ') - line +1;  // Remove mxtime
     if (mxtime > 0) {
       uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
@@ -2321,7 +2322,14 @@ void SyslogAsync(bool refresh) {
       }
 
       char header[64];
-      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
+      // RFC3164 - BSD syslog protocol - <PRI>TIMESTAMP HOSTNAME TAG MSG
+      // <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
+      // TIMESTAMP = Mmm dd hh:mm:ss
+      // <134>Jan  1 00:00:02 wemos5 ESP-HTP: server active on wemos5 with IP address 192.168.2.172
+      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
+      // Legacy format
+//      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
+
       char* line_start = line +mxtime;
 #ifdef ESP8266
       // Packets over 1460 bytes are not send
