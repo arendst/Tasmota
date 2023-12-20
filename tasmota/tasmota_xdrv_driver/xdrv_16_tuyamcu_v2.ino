@@ -2129,7 +2129,7 @@ void TuyaProcessCommand(unsigned char *buffer){
     }
 */
     for (uint8_t cmdsID = 0; cmdsID < sizeof(TuyaExcludeCMDsFromMQTT); cmdsID++) {
-      if (pgm_read_byte(TuyaExcludeCMDsFromMQTT +cmdsID) == Tuya.buffer[3]) {
+      if (pgm_read_byte(TuyaExcludeCMDsFromMQTT +cmdsID) == cmd) {
         isCmdToSuppress = true;
         break;
       }
