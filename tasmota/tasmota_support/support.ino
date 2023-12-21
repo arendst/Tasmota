@@ -2338,36 +2338,44 @@ void SyslogAsync(bool refresh) {
          Notice in both cases the date and time is taken from the syslog server. Uncompression message is gone.
       */
       snprintf_P(header, sizeof(header), PSTR("<134>%s ESP-"), NetworkHostname());
+
+//       SYSLOG-MSG = <134>wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
 //       Result = 2023-12-21T11:31:50.378816+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s Tasmota "), NetworkHostname());
 
       /* RFC3164 - BSD syslog protocol - <PRI>TIMESTAMP HOSTNAME TAG: MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
          TIMESTAMP = Mmm dd hh:mm:ss
+         TAG: = ESP-HTP:
          SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-01-01T00:00:02+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice Year is taken from syslog server. Month, day and time is provided by Tasmota device. No milliseconds
       */
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
+
+//       SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
 //       Result = 2023-01-01T00:00:02+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s Tasmota "), GetSyslogDate(line).c_str(), NetworkHostname());
 
       /* RFC5425 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
-         TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnZ (= UTC) or yyyy-mm-ddThh:mm:ss.nnn-hh:mm (= local with timezone)
+         VERSION = 1
+         TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnnnn-hh:mm (= local with timezone)
          APP_NAME = Tasmota
          PROCID = -
          STRUCTURED-DATA = -
-         MSGID = -
-         SYSLOG-MSG = <134>1 2023-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - HTP: Web server active on wemos5 with IP address 192.168.2.172
+         MSGID = ESP-HTP:
+         SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice date and time is provided by Tasmota device.
       */
-//      char line_time[13];
+//      char line_time[mxtime];
 //      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
 //      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
 //      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
 //      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - ESP-"), systime.c_str(), NetworkHostname());
+
+//       SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - HTP: Web server active on wemos5 with IP address 192.168.2.172
 //       Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
 //      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - "), systime.c_str(), NetworkHostname());
 
