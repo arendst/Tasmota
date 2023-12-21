@@ -76,6 +76,7 @@ extern "C" {
 **  BLE - generic BLE functions
 ********************************************************************/
   extern bool MI32checkBLEinitialization();
+  extern void MI32BerryLoop();
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern void MI32setBerryServerCB(void* function, uint8_t *buffer);
@@ -93,6 +94,10 @@ extern "C" {
     }
     be_raise(vm, "ble_error", "BLE: device not initialized");
     be_return_nil(vm);
+  }
+
+  void be_BLE_loop(void){
+    MI32BerryLoop();
   }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);

@@ -46,6 +46,9 @@ module MI32 (scope: global) {
 
 extern int be_BLE_init(bvm *vm);
 
+extern void be_BLE_loop(void);
+BE_FUNC_CTYPE_DECLARE(be_BLE_loop, "", "");
+
 extern void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
 BE_FUNC_CTYPE_DECLARE(be_BLE_reg_conn_cb, "", "cc");
 
@@ -79,6 +82,7 @@ BE_FUNC_CTYPE_DECLARE(be_BLE_adv_block, "", "@(bytes)~[i]");
 /* @const_object_info_begin
 module BLE (scope: global) {
   init,       func(be_BLE_init)
+  loop,       ctype_func(be_BLE_loop)
   conn_cb,    ctype_func(be_BLE_reg_conn_cb)
   set_svc,    ctype_func(be_BLE_set_service)
   run,        ctype_func(be_BLE_run)

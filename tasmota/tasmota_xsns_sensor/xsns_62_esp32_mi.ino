@@ -707,6 +707,10 @@ extern "C" {
     return (MI32.mode.init && Settings->flag5.mi32_enable);
   }
 
+  void MI32BerryLoop(){
+    MI32BLELoop();
+  }
+
   bool MI32runBerryServer(uint16_t operation, bool response){
     MI32.conCtx->operation = operation;
     MI32.conCtx->response = response;
@@ -1861,15 +1865,10 @@ void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int RSSI) {
 }
 
 /**
- * @brief Launch functions from Core 1 to make race conditions less likely
- *
- */
-
-void MI32Every50mSecond(){
-  if(MI32.mode.shallTriggerTele){
-      MI32.mode.shallTriggerTele = 0;
-      MI32triggerTele();
-  }
+ * Called automatically every 50 milliseconds or can be triggered from Berry with BLE.loop() - useful from fast_loop
+*/
+void MI32BLELoop()
+{
   if(MI32.mode.triggerBerryAdvCB == 1){
     if(MI32.beAdvCB != nullptr){
         // AddLogBuffer(LOG_LEVEL_DEBUG,MI32.beAdvBuf,40);
@@ -1945,14 +1944,25 @@ void MI32Every50mSecond(){
       }
     }
   }
-
   if(MI32.infoMsg > 0){
     char _message[32];
     GetTextIndexed(_message, sizeof(_message), MI32.infoMsg-1, kMI32_BLEInfoMsg);
     AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s"),_message);
     MI32.infoMsg = 0;
   }
+}
 
+/**
+ * @brief Launch functions from Core 1 to make race conditions less likely
+ *
+ */
+
+void MI32Every50mSecond(){
+  if(MI32.mode.shallTriggerTele){
+      MI32.mode.shallTriggerTele = 0;
+      MI32triggerTele();
+  }
+  MI32BLELoop();
 }
 
 /**
