@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "連線失敗:無法連線至存取點"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "連線失敗"
 #define D_CONNECT_FAILED_AP_TIMEOUT "連線失敗:存取點超時"
-#define D_ATTEMPTING_CONNECTION "正在試圖連線中..."
-#define D_CHECKING_CONNECTION "正在檢查連線中..."
+#define D_ATTEMPTING_CONNECTION "正在試圖連線中…"
+#define D_CHECKING_CONNECTION "正在檢查連線中…"
 #define D_QUERY_DONE "已完成查詢，找到MQTT服務了"
 #define D_MQTT_SERVICE_FOUND "MQTT服務位於:"
 #define D_FOUND_AT "位於"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "需要 user=<使用者名稱>&password=<密碼>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "驗證 TLS 指紋碼..."
+#define D_FINGERPRINT "驗證 TLS 指紋碼…"
 #define D_TLS_CONNECT_FAILED_TO "TLS 連線失敗，因為"
 #define D_RETRY_IN "重新嘗試倒數"
 #define D_VERIFIED "驗證成功"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "沒有任何事件觸發中斷!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "聽取中..."
+#define D_AS3935_NOMESS "聽取中…"
 #define D_AS3935_ON "開啟"
 #define D_AS3935_OFF "關閉"
 #define D_AS3935_INDOORS "室內"

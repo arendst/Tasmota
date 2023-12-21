@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Ferbining mislearre om't AP net te berikken is"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Verbinding mislukt"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbinding mislukt door AP time-out"
-#define D_ATTEMPTING_CONNECTION "Verbinden..."
-#define D_CHECKING_CONNECTION "Controleer verbinding..."
+#define D_ATTEMPTING_CONNECTION "Verbinden…"
+#define D_CHECKING_CONNECTION "Controleer verbinding…"
 #define D_QUERY_DONE "Aanvraag klaar. Aantal MQTT diensten gevonden"
 #define D_MQTT_SERVICE_FOUND "MQTT dienst gevonden op"
 #define D_FOUND_AT "gevonden op"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Ferplicht user=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "TLS-fingerprint kontrolearje ..."
+#define D_FINGERPRINT "TLS-fingerprint kontrolearje…"
 #define D_TLS_CONNECT_FAILED_TO "TLS-ferbining mislearre"
 #define D_RETRY_IN "Besykje opnij oer"
 #define D_VERIFIED "Kontrolearre mei fingerprint"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

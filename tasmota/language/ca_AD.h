@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Connexió fallida ja que no hem localitzar el PA"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Connexió fallida per mot de pas"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Connexió fallida per temps d'espera excedit"
-#define D_ATTEMPTING_CONNECTION "Provant de fer connexió..."
-#define D_CHECKING_CONNECTION "Verificant connexió..."
+#define D_ATTEMPTING_CONNECTION "Provant de fer connexió…"
+#define D_CHECKING_CONNECTION "Verificant connexió…"
 #define D_QUERY_DONE "Consulta feta. Hem trobat serveis MQTT"
 #define D_MQTT_SERVICE_FOUND "Servei MQTT trobat a "
 #define D_FOUND_AT "trobat a"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Neecessito user=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Verifica la petjada TLS ..."
+#define D_FINGERPRINT "Verifica la petjada TLS…"
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect no ha pogut"
 #define D_RETRY_IN "Reintent en"
 #define D_VERIFIED "Verificat fet servir petjada"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupció sense Event!"
 #define D_AS3935_FLICKER "Transició a IRQ!"
 #define D_AS3935_POWEROFF "Apagat"
-#define D_AS3935_NOMESS "escoltant..."
+#define D_AS3935_NOMESS "escoltant…"
 #define D_AS3935_ON "Engegat"
 #define D_AS3935_OFF "Apagat"
 #define D_AS3935_INDOORS "Interior"

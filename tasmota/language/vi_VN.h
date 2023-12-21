@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Kết nối thất bại do không tìm thấy điểm truy cập"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Kết nối thất bại"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Kết nối đến điểm truy cập thất bại do quá thời hạn"
-#define D_ATTEMPTING_CONNECTION "Đang thử kết nối..."
-#define D_CHECKING_CONNECTION "Đang kiểm tra kết nối..."
+#define D_ATTEMPTING_CONNECTION "Đang thử kết nối…"
+#define D_CHECKING_CONNECTION "Đang kiểm tra kết nối…"
 #define D_QUERY_DONE "Hoàn thành truy vấn. Đã tìm thấy dịch vụ MQTT"
 #define D_MQTT_SERVICE_FOUND "Dịch vụ MQTT đang bật"
 #define D_FOUND_AT "tìm thấy tại"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Yêu cầu người dùng =<username>&mật khẩu=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Xác nhận thông tin TLS ..."
+#define D_FINGERPRINT "Xác nhận thông tin TLS…"
 #define D_TLS_CONNECT_FAILED_TO "Kết nối TLS thất bại đến "
 #define D_RETRY_IN "Thử lại trong"
 #define D_VERIFIED "Đã xác nhận thông qua vân tay"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ Pin flicker!"
 #define D_AS3935_POWEROFF "Tắt nguồn"
-#define D_AS3935_NOMESS "đang lắng nghe..."
+#define D_AS3935_NOMESS "đang lắng nghe…"
 #define D_AS3935_ON "Bật"
 #define D_AS3935_OFF "Tắt"
 #define D_AS3935_INDOORS "Trong nhà"

@@ -151,7 +151,7 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
 
   uint32_t retry = 2;
   while (!WiFi.mode(wifi_mode) && retry--) {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Retry set Mode..."));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Retry set Mode…"));
     delay(100);
   }
 
@@ -261,7 +261,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
   } else {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
   }
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s…"),
     Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
   if (Settings->flag5.wait_for_wifi_result) {  // SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
@@ -294,7 +294,7 @@ void WifiBeginAfterScan(void)
     if (WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
       WiFi.scanNetworks(true);                      // Start wifi scan async
       Wifi.scan_state++;
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network (re)scan started..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network (re)scan started…"));
       return;
     }
   }
@@ -370,14 +370,14 @@ void WifiBeginAfterScan(void)
     if (wifi_scan_result != WIFI_SCAN_RUNNING) {
       WiFi.scanNetworks(true);                      // Start wifi scan async
       Wifi.scan_state++;
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan started..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan started…"));
       return;
     }
   }
   // Check scan done
   if (7 == Wifi.scan_state) {
     if (wifi_scan_result != WIFI_SCAN_RUNNING) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan finished..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan finished…"));
       Wifi.scan_state++;
       return;
     }
@@ -427,7 +427,7 @@ void WifiBeginAfterScan(void)
   }
   // Wait 1 minute before cleaning the results so the user can ask for the them using wifiscan command (HTTP use-case)
   if (69 == Wifi.scan_state) {
-    //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan results deleted..."));
+    //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan results deleted…"));
     Wifi.scan_state = 0;
     WiFi.scanDelete();                            // Clean up Ram
   }
@@ -1324,7 +1324,7 @@ void WifiPollNtp() {
 
     TasmotaGlobal.ntp_force_sync = false;
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Sync time..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Sync time…"));
     ntp_run_time = millis();
     uint64_t ntp_nanos = WifiGetNtp();
     uint32_t ntp_time = ntp_nanos / 1000000000;
@@ -1346,7 +1346,7 @@ void WifiPollNtp() {
 uint64_t WifiGetNtp(void) {
   static uint8_t ntp_server_id = 0;
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Start NTP Sync %d ..."), ntp_server_id);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Start NTP Sync %d…"), ntp_server_id);
 
   IPAddress time_server_ip;
 

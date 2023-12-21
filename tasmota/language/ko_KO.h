@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "연결이 닿지 않아 AP에 연결할 수 없습니다"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "연결할 수 없습니다"
 #define D_CONNECT_FAILED_AP_TIMEOUT "시간초과로 AP에 연결할 수 없습니다"
-#define D_ATTEMPTING_CONNECTION "연결 시도 중..."
-#define D_CHECKING_CONNECTION "연결 체크 중..."
+#define D_ATTEMPTING_CONNECTION "연결 시도 중…"
+#define D_CHECKING_CONNECTION "연결 체크 중…"
 #define D_QUERY_DONE "쿼리 완료. MQTT 서비스 발견"
 #define D_MQTT_SERVICE_FOUND "MQTT 서비스 발견"
 #define D_FOUND_AT "다음을 발견"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "user=<아이디>&password=<비밀번호> 필요"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "TLS 지문 확인..."
+#define D_FINGERPRINT "TLS 지문 확인…"
 #define D_TLS_CONNECT_FAILED_TO "TLS 연결 실패"
 #define D_RETRY_IN "재시도 중"
 #define D_VERIFIED "지문 확인 완료"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

@@ -108,7 +108,7 @@ extern "C" uint32_t _FS_start;     // ... depending on core-sdk-version
  */
 void FLOG::init(void)
 {
-DEBUG_SENSOR_LOG(PSTR("FLOG: init ..."));
+DEBUG_SENSOR_LOG(PSTR("FLOG: init…"));
 size = ESP.getSketchSize();
 // round one sector up
 start = (size + FLASH_SECTOR_SIZE - 1) & (~(FLASH_SECTOR_SIZE - 1));
@@ -207,7 +207,7 @@ void FLOG::_findFirstErasedSector(){
       first_erased_sector = i; // save this for the whole next write operation
       sector.header.physical_start_sector = i; // save to header for every sector
       current_sector = i;  // this is our actual sector to write to
-      DEBUG_SENSOR_LOG(PSTR("FLOG: first erased sector: %u, now init ..."), first_erased_sector);
+      DEBUG_SENSOR_LOG(PSTR("FLOG: first erased sector: %u, now init…"), first_erased_sector);
       return;
     }
   }

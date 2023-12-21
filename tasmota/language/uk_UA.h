@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Помилка з'єднання, AP не знайдено"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Помилка з'єднання"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Помилка з'єднання з AP по тайм-ауту"
-#define D_ATTEMPTING_CONNECTION "Спроба підключення..."
-#define D_CHECKING_CONNECTION "Перевірка з'єднання..."
+#define D_ATTEMPTING_CONNECTION "Спроба підключення…"
+#define D_CHECKING_CONNECTION "Перевірка з'єднання…"
 #define D_QUERY_DONE "Запит виконаний. Виявлено сервер MQTT"
 #define D_MQTT_SERVICE_FOUND "MQTT сервер знайдено"
 #define D_FOUND_AT "знайдено за адресою"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Очікується user=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Перевірка відбитка TLS..."
+#define D_FINGERPRINT "Перевірка відбитка TLS…"
 #define D_TLS_CONNECT_FAILED_TO "Збій TLS підключення до"
 #define D_RETRY_IN "Повторити"
 #define D_VERIFIED "Перевірено відбиток"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

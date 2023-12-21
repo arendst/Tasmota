@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Kon nie verbind nie, aangesien toegang nie bereik kan word nie"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Kon nie verbind nie"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Kon nie verbinding maak met AP-time-out nie"
-#define D_ATTEMPTING_CONNECTION "Attempting connection..."
-#define D_CHECKING_CONNECTION "Probeer tans verbinding ..."
+#define D_ATTEMPTING_CONNECTION "Attempting connection…"
+#define D_CHECKING_CONNECTION "Probeer tans verbinding…"
 #define D_QUERY_DONE "Navraag gedoen. MQTT-dienste gevind"
 #define D_MQTT_SERVICE_FOUND "MQTT-diens gevind op"
 #define D_FOUND_AT "gevind op"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<wagwoord>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Verifieer TLS-vingerafdruk ..."
+#define D_FINGERPRINT "Verifieer TLS-vingerafdruk…"
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect kon nie"
 #define D_RETRY_IN "Probeer weer"
 #define D_VERIFIED "Geverifieer met behulp van vingerafdruk"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Onderbreek met geen geleentheid nie!"
 #define D_AS3935_FLICKER "IRQ Pin flikker!"
 #define D_AS3935_POWEROFF "Skakel af"
-#define D_AS3935_NOMESS "luister..."
+#define D_AS3935_NOMESS "luister…"
 #define D_AS3935_ON "Aan"
 #define D_AS3935_OFF "Uit"
 #define D_AS3935_INDOORS "Binnenshuis"

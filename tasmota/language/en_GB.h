@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Connect failed as AP cannot be reached"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Connect failed"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Connect failed with AP timeout"
-#define D_ATTEMPTING_CONNECTION "Attempting connection..."
-#define D_CHECKING_CONNECTION "Checking connection..."
+#define D_ATTEMPTING_CONNECTION "Attempting connection…"
+#define D_CHECKING_CONNECTION "Checking connection…"
 #define D_QUERY_DONE "Query done. MQTT services found"
 #define D_MQTT_SERVICE_FOUND "MQTT service found on"
 #define D_FOUND_AT "found at"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Need user=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Verify TLS fingerprint..."
+#define D_FINGERPRINT "Verify TLS fingerprint…"
 #define D_TLS_CONNECT_FAILED_TO "TLS Connect failed to"
 #define D_RETRY_IN "Retry in"
 #define D_VERIFIED "Verified using Fingerprint"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ Pin flicker!"
 #define D_AS3935_POWEROFF "Powerd Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

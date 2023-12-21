@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "连接失败，无法连接 AP"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "连接失败"
 #define D_CONNECT_FAILED_AP_TIMEOUT "连接失败，AP 超时"
-#define D_ATTEMPTING_CONNECTION "尝试连接..."
-#define D_CHECKING_CONNECTION "检查连接..."
+#define D_ATTEMPTING_CONNECTION "尝试连接…"
+#define D_CHECKING_CONNECTION "检查连接…"
 #define D_QUERY_DONE "查询完成。 发现 MQTT 服务"
 #define D_MQTT_SERVICE_FOUND "发现 MQTT 服务:"
 #define D_FOUND_AT "发现:"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
 
 // xdrv_00_mqtt.ino
-#define D_FINGERPRINT "验证 TLS 指纹..."
+#define D_FINGERPRINT "验证 TLS 指纹…"
 #define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"
 #define D_RETRY_IN "重试倒计时:"
 #define D_VERIFIED "验证成功"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

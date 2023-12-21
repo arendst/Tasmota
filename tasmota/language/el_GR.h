@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Αποτυχία σύνδεσης, δεν ανταποκρίνεται το AP"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Αποτυχία σύνδεσης"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Αποτυχία σύνδεσης, λήξη ορίου απόκρισης από το AP"
-#define D_ATTEMPTING_CONNECTION "Προσπάθεια για σύνδεση..."
-#define D_CHECKING_CONNECTION "Έλεγχος σύνδεσης..."
+#define D_ATTEMPTING_CONNECTION "Προσπάθεια για σύνδεση…"
+#define D_CHECKING_CONNECTION "Έλεγχος σύνδεσης…"
 #define D_QUERY_DONE "Ολοκλήρωση ερωτήματος. Βρέθηκε υπηρεσία MQTT"
 #define D_MQTT_SERVICE_FOUND "Βρέθηκε υπηρεσία MQTT στο"
 #define D_FOUND_AT "βρέθηκε στο"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Χρειάζεται user=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Επιβεβαίωση αποτυπώματος TLS..."
+#define D_FINGERPRINT "Επιβεβαίωση αποτυπώματος TLS…"
 #define D_TLS_CONNECT_FAILED_TO "Αποτυχία σύνδεσης TLS στο"
 #define D_RETRY_IN "Νέα προσπάθεια σε"
 #define D_VERIFIED "Επιβεβαιώθηκε με χρήση αποτυπώματος TLS"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"

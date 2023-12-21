@@ -363,7 +363,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
     ">%s</button></form>"
   "</fieldset>"
   "</div>"
-  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
+  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "…</b></div>";
 
 // upload via factory partition
 const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
@@ -374,8 +374,8 @@ const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
     ">%s</button></form>"
   "</fieldset>"
   "</div>"
-  "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
-  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
+  "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "…</b></div>"
+  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "…</b></div>";
 
 #ifdef USE_CONSOLE_CSS_FLEX
 const char HTTP_CMND_STYLE[] PROGMEM =  // Overrule CSS for flex console
@@ -1908,7 +1908,7 @@ void HandleWifiConfiguration(void) {
       WebGetArg(PSTR("p1"), tmp, sizeof(tmp));   // PASSWORD1
       SettingsUpdateText(SET_STAPWD1, tmp);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s…"),
         SettingsText(SET_STASSID1), TasmotaGlobal.hostname);
 
       WiFi.begin(SettingsText(SET_STASSID1), SettingsText(SET_STAPWD1));
@@ -1953,7 +1953,7 @@ void HandleWifiConfiguration(void) {
     } else {
       if (Webserver->hasArg(F("scan"))) { limitScannedNetworks = false; }
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Scanning..."));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Scanning…"));
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -2672,7 +2672,7 @@ void HandleUpgradeFirmwareStart(void) {
   WSContentStart_P(PSTR(D_INFORMATION));
   WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_OTA_RESTART_RECONNECT_TIME);
   WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED "…</b></div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();

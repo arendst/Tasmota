@@ -241,8 +241,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Conexiune eșuată, nu s-a găsit AP"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "Conexiune eșuată"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Conexiune eșuată, expirare timp AP"
-#define D_ATTEMPTING_CONNECTION "Conectare in curs ..."
-#define D_CHECKING_CONNECTION "Verificare conexiune..."
+#define D_ATTEMPTING_CONNECTION "Conectare in curs…"
+#define D_CHECKING_CONNECTION "Verificare conexiune…"
 #define D_QUERY_DONE "Căutare terminată. Servicii MQTT găsite"
 #define D_MQTT_SERVICE_FOUND "Servicii MQTT găsite"
 #define D_FOUND_AT "Găsite la"
@@ -415,7 +415,7 @@
 #define D_NEED_USER_AND_PASSWORD "Necesită utilizator=<nume utilizator>&parolă=<parolă>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Verificare amprentă TLS..."
+#define D_FINGERPRINT "Verificare amprentă TLS…"
 #define D_TLS_CONNECT_FAILED_TO "Conexiune TLS eșuată"
 #define D_RETRY_IN "Reîncearcă în"
 #define D_VERIFIED "Verificat folosind amprenta"
@@ -1097,7 +1097,7 @@
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
 #define D_AS3935_FLICKER "IRQ flicker!"
 #define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_NOMESS "listening…"
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"
