@@ -172,6 +172,8 @@ void As608Loop(void) {
     p = As608Finger->fingerSearch();      // Match found
     if (p != FINGERPRINT_OK) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("AS6: No matching finger"));
+      Response_P(PSTR("{\"" D_JSON_FPRINT "\":\"NOMATCH\"}"));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_FPRINT));
       return;
     }
 
