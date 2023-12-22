@@ -291,16 +291,16 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  static uint32_t ApplyBriGamma(uint32_t color_a /* 0xRRGGBB */, uint32_t bri /* 0..100 */, bool gamma) {
+  static uint32_t ApplyBriGamma(uint32_t color_a /* 0xRRGGBB */, uint32_t bri /* 0..255 */, bool gamma) {
     if (bri == 0) { return 0x000000; }              // if bri is zero, short-cut
     uint32_t r = (color_a >> 16) & 0xFF;
     uint32_t g = (color_a >>  8) & 0xFF;
     uint32_t b = (color_a      ) & 0xFF;
 
-    if (bri < 100) {              // apply bri
-      r = changeUIntScale(bri, 0, 100, 0, r);
-      g = changeUIntScale(bri, 0, 100, 0, g);
-      b = changeUIntScale(bri, 0, 100, 0, b);
+    if (bri < 255) {              // apply bri
+      r = changeUIntScale(bri, 0, 255, 0, r);
+      g = changeUIntScale(bri, 0, 255, 0, g);
+      b = changeUIntScale(bri, 0, 255, 0, b);
     }
 
     if (gamma) {                  // apply gamma
@@ -312,23 +312,23 @@ extern "C" {
     return rgb;
   }
   
-  // Leds.apply_bri_gamma(color_rgb:int (0xRRGGBB) [bri:int (0..100), gamma:bool]) -> color:int (0xRRGGBB)
+  // Leds.apply_bri_gamma(color_rgb:int (0xRRGGBB) [bri:int (0..255), gamma:bool]) -> color:int (0xRRGGBB)
   //
   int32_t be_leds_apply_bri_gamma(bvm *vm);
   int32_t be_leds_apply_bri_gamma(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top >= 1 && be_isint(vm, 1)) {
       uint32_t color_a = be_toint(vm, 1);
-      uint32_t bri = 100;
+      uint32_t bri255 = 255;
       if (top >= 2 && be_isint(vm, 2)) {
-        bri = be_toint(vm, 2);
+        bri255 = be_toint(vm, 2);
       }
       bool gamma = false;
       if (top >= 3) {
         gamma = be_tobool(vm, 3);
       }
 
-      uint32_t rgb = ApplyBriGamma(color_a, bri, gamma);
+      uint32_t rgb = ApplyBriGamma(color_a, bri255, gamma);
 
       be_pushint(vm, rgb);
       be_return(vm);
@@ -453,9 +453,9 @@ extern "C" {
       size_t dest_len = 0;
       uint8_t * dest_buf = (uint8_t*) be_tobytes(vm, 2, &dest_len);
 
-      uint32_t bri = 100;
+      uint32_t bri255 = 255;
       if (top >= 3 && be_isint(vm, 3)) {
-        bri = be_toint(vm, 3);
+        bri255 = be_toint(vm, 3);
       }
       bool gamma = false;
       if (top >= 4 && be_isbool(vm, 4)) {
@@ -466,7 +466,7 @@ extern "C" {
       if (pixels_count > dest_len / 3) { pixels_count = dest_len / 3; }
       if (pixels_count > 0) {
         for (size_t i = 0; i < pixels_count; i++) {
-          uint32_t src_argb = ApplyBriGamma(src_buf[i], bri, gamma);
+          uint32_t src_argb = ApplyBriGamma(src_buf[i], bri255, gamma);
           uint32_t src_r = (src_argb >> 16) & 0xFF;
           uint32_t src_g = (src_argb >>  8) & 0xFF;
           uint32_t src_b = (src_argb      ) & 0xFF;

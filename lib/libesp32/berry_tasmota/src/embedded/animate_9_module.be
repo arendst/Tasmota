@@ -4,15 +4,6 @@
 # Animation framework
 #
 
-animate = module("animate")
-
-# for solidification
-class Leds_frame end
-
-animate.("()") = Animate_core    # make it available as `animate()`
-animate.frame = Leds_frame
-animate.pulse = Animate_pulse
-
 #################################################################################
 # class Animate_palette
 #
@@ -85,7 +76,6 @@ animate.pulse = Animate_pulse
 # )
 # # animate.PALETTE_STANDARD = PALETTE_STANDARD
 
-
 #@ solidify:Animate_animator,weak
 class Animate_animator
   # timing information
@@ -134,6 +124,7 @@ class Animate_animator
   end
 
 end
+animate.animator = Animate_animator
 
 #@ solidify:Animate_palette,weak
 class Animate_palette : Animate_animator
@@ -408,7 +399,6 @@ animate.SAWTOOTH  = 1
 animate.TRIANGLE  = 2
 animate.SQUARE    = 3
 animate.COSINE    = 4
-animate.SINE      = 5
 animate.LASTFOMR  = 5     # identify last form
 
 #@ solidify:Animate_oscillator,weak
@@ -471,7 +461,7 @@ class Animate_oscillator : Animate_animator
     var past = millis - self.origin
     if past < 0
       past = 0
-      millis = self.originally
+      millis = self.origin
     end
     var duration_ms = self.duration_ms
     var duration_ms_mid                       # mid point considering duty cycle
@@ -506,13 +496,10 @@ class Animate_oscillator : Animate_animator
       else
         value = b
       end
-    elif (self.form == 4) #-COSINE-# || (self.form == 5) #-SINE-#
+    elif (self.form == 4) #-COSINE-#
       # map timing to 0..32767
       var angle = tasmota.scale_int(past_with_phase, 0, duration_ms - 1, 0, 32767)
-      if (self.form == 4) #-COSINE-#
-        angle -= 8192
-      end
-      var x = tasmota.sine_int(angle)   # -4096 .. 4096
+      var x = tasmota.sine_int(angle - 8192)   # -4096 .. 4096, dephase from cosine to sine
       value = tasmota.scale_int(x, -4096, 4096, a, b)
     end
     self.value = value
@@ -526,4 +513,4 @@ class Animate_oscillator : Animate_animator
     return value
   end
 end
-animate.oscillator = Animate_oscillator
+global.animate.oscillator = Animate_oscillator

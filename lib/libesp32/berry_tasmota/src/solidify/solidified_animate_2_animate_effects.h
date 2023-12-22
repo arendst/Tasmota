@@ -1,4 +1,4 @@
-/* Solidification of animate_1_animate_effects.h */
+/* Solidification of animate_2_animate_effects.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
