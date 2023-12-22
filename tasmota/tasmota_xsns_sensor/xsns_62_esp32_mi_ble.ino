@@ -376,6 +376,7 @@ struct mi_sensor_t{
       uint32_t light:1; // binary light sensor
       uint32_t scale:1;
       uint32_t impedance:1;
+      uint32_t flooding:1;
     };
     uint32_t raw;
   } feature;
@@ -395,6 +396,7 @@ struct mi_sensor_t{
       uint32_t PairBtn:1;
       uint32_t light:1; // binary light sensor
       uint32_t scale:1;
+      uint32_t flooding:1;
     };
     uint32_t raw;
   } eventType;
@@ -403,6 +405,7 @@ struct mi_sensor_t{
   uint8_t pairing;
   int8_t light; // binary light sensor - initialise to -1
   int16_t Btn; // moved so we can initialise to -1
+  int16_t flooding;
 
   uint32_t lastTime;
   uint32_t lux;
@@ -486,8 +489,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_SCALE_V2    16
 #define MI_CGDK2       17
 #define AT_BTN         18
+#define MI_SJWS01LM    19
 
-#define MI_MI32_TYPES    18 //count this manually
+#define MI_MI32_TYPES    19 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -507,7 +511,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x181d, // Mi Scale V1
   0x181b,  // Mi Scale V2
   0x066f,  // CGDK2
-  0x004e  // Avago Tech Bluetooth Buttons (Company Id)
+  0x004e, // Avago Tech Bluetooth Buttons (Company Id)
+  0x0863   // SJWS01LM
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -528,7 +533,8 @@ const char kMI32DeviceType14[] PROGMEM ="MISCALEV1";
 const char kMI32DeviceType15[] PROGMEM ="MISCALEV2";
 const char kMI32DeviceType16[] PROGMEM ="CGDK2";
 const char kMI32DeviceType17[] PROGMEM ="ATBTN";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16,kMI32DeviceType17};
+const char kMI32DeviceType18[] PROGMEM = "SJWS01LM";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16,kMI32DeviceType17,kMI32DeviceType18};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -1539,6 +1545,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
   _newSensor.lux = 0x00ffffff;
   _newSensor.light = -1;
   _newSensor.Btn = -1;
+  _newSensor.flooding = -1;
   _newSensor.lastCnt = counter;
   switch (_type)
     {
@@ -1585,6 +1592,11 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
     case AT_BTN:
       _newSensor.feature.Btn=1;
       _newSensor.needkey = KEY_NOT_REQUIRED;
+      break;
+    case MI_SJWS01LM:
+      _newSensor.feature.flooding = 1;
+      _newSensor.feature.Btn = 1;
+      _newSensor.feature.bat = 1;
       break;
 
     default:
@@ -2104,6 +2116,14 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       res = 0;
     } break;
     //Flooding	0x1014	1	1
+    case 0x1014:{                                                      //'Flooding sensor' - 0=dry, 1=wet SJWS01LM
+      MIBLEsensors[_slot].flooding = (uint8_t)parsed->payload.data[0]; // just an 8 bit value in a union.
+      MIBLEsensors[_slot].eventType.flooding = 1;
+      MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MIBLEsensors[_slot].feature.flooding = 1;
+    }
+    break;
     //smoke	0x1015	1	1
     //Gas	0x1016
     case 0x1017:{ // 'No one moves'
@@ -2752,6 +2772,7 @@ const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s" " Weight removed" "{m
 const char HTTP_MISCALE_WEIGHT_STABILIZED[] PROGMEM = "{s}%s" " Weight stabilized" "{m}%s{e}";
 const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s" " Impedance" "{m}%u{e}";
 const char HTTP_MISCALE_IMPEDANCE_STABILIZED[] PROGMEM = "{s}%s" " Impedance stabilized" "{m}%s{e}";
+const char HTTP_SJWS01LM_FLOODING[] PROGMEM = "{s}%s Flooding{m}%u {e}";
 
 //const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
 //  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
@@ -2983,6 +3004,15 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
       ){
         ResponseAppend_P(PSTR(",\"Btn\":%d"),p->Btn);
+      }
+    }
+    if (p->feature.flooding){
+      if(p->eventType.flooding || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate
+#ifdef USE_HOME_ASSISTANT
+          ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+      ){
+        ResponseAppend_P(PSTR(",\"Flooding\":%d"),p->flooding);
       }
     }
     if(p->eventType.PairBtn && p->pairing){
@@ -3647,6 +3677,10 @@ void MI32Show(bool json)
       }
       if (p->feature.Btn){
         WSContentSend_PD(HTTP_LASTBUTTON, typeName, p->Btn);
+      }
+      if (p->feature.flooding)
+      {
+        WSContentSend_PD(HTTP_SJWS01LM_FLOODING, typeName, p->flooding);
       }
       if (p->pairing){
         WSContentSend_PD(HTTP_PAIRING, typeName);
