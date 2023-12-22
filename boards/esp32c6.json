@@ -39,6 +39,9 @@
       "require_upload_port": true,
       "speed": 460800
     },
+    "download": {
+      "speed": 230400
+    },
     "url": "https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html",
     "vendor": "Espressif"
   }

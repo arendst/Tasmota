@@ -38,6 +38,9 @@
     "require_upload_port": true,
     "speed": 460800
   },
+  "download": {
+    "speed": 230400
+  },
   "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-saola-1-v1.2.html",
   "vendor": "Espressif"
 }
