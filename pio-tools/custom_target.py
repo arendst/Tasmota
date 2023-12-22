@@ -186,6 +186,7 @@ def parse_partition_table(content):
 def get_partition_table():
     esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
+    download_speed = join(str(board.get("download.speed", "115200")))
     if "none" in upload_port:
         env.AutodetectUploadPort()
         upload_port = join(env.get("UPLOAD_PORT", "none"))
@@ -193,7 +194,7 @@ def get_partition_table():
     esptoolpy_flags = [
             "--chip", mcu,
             "--port", upload_port,
-            "--baud",  env.subst("$UPLOAD_SPEED"),
+            "--baud",  download_speed,
             "--before", "default_reset",
             "--after", "hard_reset",
             "read_flash",
@@ -246,6 +247,7 @@ def download_fs(fs_info: FSInfo):
     print(fs_info)
     esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
+    download_speed = join(str(board.get("download.speed", "115200")))
     if "none" in upload_port:
         env.AutodetectUploadPort()
         upload_port = join(env.get("UPLOAD_PORT", "none"))
@@ -253,7 +255,7 @@ def download_fs(fs_info: FSInfo):
     esptoolpy_flags = [
             "--chip", mcu,
             "--port", upload_port,
-            "--baud",  env.subst("$UPLOAD_SPEED"),
+            "--baud",  download_speed,
             "--before", "default_reset",
             "--after", "hard_reset",
             "read_flash",
@@ -278,7 +280,7 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
     unpack_dir = env.GetProjectOption("custom_unpack_dir", "unpacked_fs")
     #unpack_dir = "unpacked_fs"
     if not os.path.exists(downloaded_file):
-        print(f"ERROR: {downloaded_file} with filesystem not found, maybe download failed due to upload_speed setting being too high.")
+        print(f"ERROR: {downloaded_file} with filesystem not found, maybe download failed due to download_speed setting being too high.")
         assert(0)
     try:
         if os.path.exists(unpack_dir):
@@ -305,7 +307,7 @@ def display_fs(extracted_dir):
     print("Extracted " + str(file_count) + " file(s) from filesystem.")
 
 def command_download_fs(*args, **kwargs):
-    print("Entrypoint")
+    #print("Entrypoint")
     #print(env.Dump())
     get_partition_table()
     info = get_fs_type_start_and_length()
@@ -356,3 +358,4 @@ env.AddCustomTarget(
     title="Flash factory",
     description="Flash factory firmware"
 )
+
