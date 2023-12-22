@@ -19,6 +19,7 @@ class Animate_painter
   end
 
 end
+animate.painter = global.Animate_painter
 
 ##########################################################################################
 #
@@ -144,8 +145,8 @@ class Animate_pulse : Animate_painter
 
     return true
   end
-
 end
+animate.pulse = global.Animate_pulse
 
 #
 # Unit tests
@@ -156,8 +157,8 @@ import animate
 var frame = animate.frame(10)
 assert(frame.tohex() == '00000000000000000000000000000000000000000000000000000000000000000000000000000000')
 
-var pulse = Animate_pulse(0x00FF00, 3, 2)
-pulse.set_index(5)
+var pulse = animate.pulse(0x00FF00, 3, 2)
+pulse.set_pos(5)
 pulse.paint(frame)
 assert(frame.tohex() == '0000000000000000000000000055000000AA000000FF000000FF000000FF000000AA000000550000')
 

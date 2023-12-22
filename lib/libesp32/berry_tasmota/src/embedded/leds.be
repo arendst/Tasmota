@@ -27,6 +27,7 @@ class Leds_ntv end
 class Leds : Leds_ntv
   var gamma       # if true, apply gamma (true is default)
   var leds        # number of leds
+  var bri         # implicit brightness for this led strip (0..255, default is 50% = 127)
   # leds:int = number of leds of the strip
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # typ:int (optional) = Type of LED, defaults to WS2812 RGB
@@ -34,6 +35,7 @@ class Leds : Leds_ntv
   def init(leds, gpio_phy, typ, rmt)   # rmt is optional
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
     self.leds = int(leds)
+    self.bri = 127        # 50% brightness by default
 
     # if no GPIO, abort
     if gpio_phy == nil
@@ -93,6 +95,16 @@ class Leds : Leds_ntv
     self.show()
   end
 
+  # set bri (0..255)
+  def set_bri(bri)
+    if (bri < 0)    bri = 0   end
+    if (bri > 255)  bri = 255 end
+    self.bri = bri
+  end
+  def get_bri()
+    return self.bri
+  end
+
   def ctor(leds, gpio_phy, typ, rmt)
     if typ == nil
       typ = self.WS2812_GRB
@@ -136,13 +148,21 @@ class Leds : Leds_ntv
     return 0
   end
   def clear_to(col, bri)
+    if (bri == nil)   bri = self.bri    end
     self.call_native(9, self.to_gamma(col, bri))
   end
   def set_pixel_color(idx, col, bri)
+    if (bri == nil)   bri = self.bri    end
     self.call_native(10, idx, self.to_gamma(col, bri))
   end
   def get_pixel_color(idx)
     return self.call_native(11, idx)
+  end
+  def set_gamma(gamma)
+    self.gamma = bool(gamma)
+  end
+  def get_gamma()
+    return self.gamma
   end
   # def rotate_left(rot, first, last)
   #   self.call_native(20, rot, first, last)
@@ -159,6 +179,7 @@ class Leds : Leds_ntv
 
   # apply gamma and bri
   def to_gamma(rgb, bri)
+    if (bri == nil)   bri = self.bri    end
     return self.apply_bri_gamma(rgb, bri, self.gamma)
   end
 
@@ -216,6 +237,7 @@ class Leds : Leds_ntv
         return self.leds
       end
       def clear_to(col, bri)
+        if (bri == nil)   bri = self.bri    end
         self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.leds)
         # var i = 0
         # while i < self.leds
@@ -224,6 +246,7 @@ class Leds : Leds_ntv
         # end
       end
       def set_pixel_color(idx, col, bri)
+        if (bri == nil)   bri = self.bri    end
         self.strip.set_pixel_color(idx + self.offset, col, bri)
       end
       def get_pixel_color(idx)
@@ -301,9 +324,11 @@ class Leds : Leds_ntv
         return self.offset
       end
       def clear_to(col, bri)
+        if (bri == nil)   bri = self.bri    end
         self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.w * self.h)
       end
       def set_pixel_color(idx, col, bri)
+        if (bri == nil)   bri = self.bri    end
         self.strip.set_pixel_color(idx + self.offset, col, bri)
       end
       def get_pixel_color(idx)
@@ -328,6 +353,7 @@ class Leds : Leds_ntv
       end
 
       def set_matrix_pixel_color(x, y, col, bri)
+        if (bri == nil)   bri = self.bri    end
         if self.alternate && x % 2
           # reversed line
           self.strip.set_pixel_color(x * self.w + self.h - y - 1 + self.offset, col, bri)

@@ -36,6 +36,7 @@ class Animate_core
     self.strip = strip
     if (bri == nil)   bri = 50    end
     self.bri = bri      # percentage of brightness 0..100
+    self.set_strip_bri()
     self.running = false
     self.pixel_count = strip.pixel_count()
     self.animators = []
@@ -49,6 +50,10 @@ class Animate_core
     self.back_color = 0x000000
     #
     self.set_current()
+  end
+
+  def set_strip_bri()
+    self.strip.set_bri(tasmota.scale_uint(self.bri, 0, 100, 0, 255))
   end
 
   # set this animate.core as the current animator for configuration
@@ -129,6 +134,7 @@ class Animate_core
 
   def set_bri(bri)
     self.bri = bri
+    self.set_strip_bri()
   end
   def get_bri(bri)
     return self.bri
@@ -165,7 +171,10 @@ class Animate_core
       while i < size(self.painters)
         layer.fill_pixels(0xFF000000)      # fill with transparent color
         if (self.painters[i].paint(layer))
+# print(f"frame0 {self.frame.tohex()}")
+# print(f"layer0 {self.layer.tohex()}")
           frame.blend_pixels(layer)
+# print(f"frame1 {self.frame.tohex()}")
         end
         i += 1
       end
@@ -177,7 +186,7 @@ class Animate_core
       end
       self.animate()
       # now display the frame
-      self.frame.paste_pixels(self.strip.pixels_buffer(), self.bri, self.strip.gamma)
+      self.frame.paste_pixels(self.strip.pixels_buffer(), self.strip.get_bri(), self.strip.get_gamma())
       self.strip.dirty()
       self.strip.show()
     end
@@ -192,3 +201,4 @@ class Animate_core
     tasmota.remove_fast_loop(self.fast_loop_cb)
   end
 end
+animate.core = global.Animate_core

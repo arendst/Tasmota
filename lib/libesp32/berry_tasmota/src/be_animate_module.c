@@ -24,8 +24,8 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#include "solidify/solidified_animate_0_core.h"
-#include "solidify/solidified_animate_1_animate_effects.h"
+#include "solidify/solidified_animate_1_core.h"
+#include "solidify/solidified_animate_2_animate_effects.h"
 #include "solidify/solidified_animate_9_module.h"
 
 
@@ -154,7 +154,6 @@ module animate (scope: global, strings: weak) {
   TRIANGLE, int(2)
   SQUARE, int(3)
   COSINE, int(4)
-  SINE, int(5)
   LASTFORM, int(5)
 
   PALETTE_STANDARD_TAG, comptr(PALETTE_STANDARD_TAG)
@@ -182,14 +181,14 @@ module animate (scope: global, strings: weak) {
 import animate
 var p, gradient
 p = animate.palette.ptr_to_palette(animate.PALETTE_STANDARD_TAG)
-assert(p == bytes('40FF000040FFA50040FFFF004000FF00400000FF40FF00FF40FFFFFF00FF0000'))
+assert(p == bytes('40FF000040FFA50040FFFF004000FF00400000FF40FF00FF40EE44A500FF0000'))
 gradient = animate.palette.to_css_gradient(p)
-assert(gradient == 'background:linear-gradient(to right,#FF0000 0.0%,#FFA500 14.3%,#FFFF00 28.6%,#00FF00 42.9%,#0000FF 57.1%,#FF00FF 71.4%,#FFFFFF 85.7%,#FF0000 100.0%);')
+assert(gradient == 'background:linear-gradient(to right,#FF0000 0.0%,#FFA500 14.3%,#FFFF00 28.6%,#00FF00 42.9%,#0000FF 57.1%,#FF00FF 71.4%,#EE44A5 85.7%,#FF0000 100.0%);')
 
 p = animate.palette.ptr_to_palette(animate.PALETTE_STANDARD_VAL)
-assert(p == bytes('00FF000024FFA50049FFFF006E00FF00920000FFB7FF00FFDBFFFFFFFFFF0000'))
+assert(p == bytes('00FF00002AFFA50055FFFF007F00FF00AA0000FFD4FF00FFFFFF0000'))
 gradient = animate.palette.to_css_gradient(animate.PALETTE_STANDARD_VAL)
-assert(gradient == 'background:linear-gradient(to right,#FF0000 0.0%,#FFA500 14.1%,#FFFF00 28.6%,#00FF00 43.1%,#0000FF 57.3%,#FF00FF 71.8%,#FFFFFF 85.9%,#FF0000 100.0%);')
+assert(gradient == 'background:linear-gradient(to right,#FF0000 0.0%,#FFA500 16.5%,#FFFF00 33.3%,#00FF00 49.8%,#0000FF 66.7%,#FF00FF 83.1%,#FF0000 100.0%);')
 
 
 # unit tests
@@ -226,16 +225,6 @@ assert(o.animate(4100) == 1000)
 assert(o.animate(6000) == 1000)
 assert(o.animate(7000) == -1000)
 assert(o.animate(7100) == -1000)
-
-o = animate.oscillator(-1000, 1000, 6000, animate.SINE)
-o.start(1000)
-assert(o.animate(1000) == 0)
-assert(o.animate(1500) == 500)
-assert(o.animate(2000) == 867)
-assert(o.animate(2500) == 1000)
-assert(o.animate(4000) == 0)
-assert(o.animate(5500) == -1000)
-assert(o.animate(7000) == 0)
 
 o = animate.oscillator(-1000, 1000, 6000, animate.COSINE)
 o.start(1000)
