@@ -72,6 +72,11 @@ class Matter_Device
   var root_salt
   var root_w0
   var root_L
+  # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
+  var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
+  var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
+                                      # if timestamp is `0`, this should be scheduled in priority
+
 
   #############################################################
   def init()
@@ -131,10 +136,6 @@ class Matter_Device
 
     # autoconfigure other plugins if needed
     self.autoconf_device()
-
-    # for now read sensors every 30 seconds
-    # TODO still needed?
-    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
@@ -322,6 +323,27 @@ class Matter_Device
     while idx < size(self.plugins)
       self.plugins[idx].every_250ms()
       idx += 1
+    end
+  end
+
+  #############################################################
+  # add a scheduler for `read_sensors` and update schedule time
+  # if it's more often than previously
+  def add_read_sensors_schedule(update_time)
+    if (self.probe_sensor_time == nil) || (self.probe_sensor_time > update_time)
+      self.probe_sensor_time = update_time
+      self.probe_sensor_timestamp = matter.jitter(update_time)
+    end
+  end
+
+  #############################################################
+  # check if we need to call `read_sensors()`
+  def read_sensors_scheduler()
+    if (self.probe_sensor_time == nil)    return  end       # nothing to schedule
+    if (self.probe_sensor_timestamp == 0) || (tasmota.time_reached(self.probe_sensor_timestamp))
+      self._trigger_read_sensors()
+      # set new next timestamp
+      self.probe_sensor_timestamp = tasmota.millis(self.probe_sensor_time)
     end
   end
 
