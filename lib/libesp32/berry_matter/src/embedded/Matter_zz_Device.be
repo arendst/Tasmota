@@ -353,6 +353,10 @@ class Matter_Device
   def _trigger_read_sensors()
     import json
     var rs_json = tasmota.read_sensors()
+    if tasmota.loglevel(3)
+      tasmota.log("MTR: read_sensors: "+str(rs_json), 3)
+    end
+    print("read_sensors", rs_json)
     if rs_json == nil   return  end
     var rs = json.load(rs_json)
     if rs != nil
