@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability (#12221)
 - ESP32 piezo ceramic buzzer doesn't buzz (#20118)
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' (#14689)
+- Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
 
 ### Removed
 

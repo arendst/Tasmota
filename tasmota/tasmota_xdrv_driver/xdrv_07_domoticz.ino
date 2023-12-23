@@ -218,14 +218,18 @@ bool DomoticzMqttData(void) {
     return true;  // No valid data
   }
 
-  int32_t relay_index = -1;
+//  char dom_data[XdrvMailbox.data_len +1];
+//  strcpy(dom_data, XdrvMailbox.data);
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "Topic '%s', Data '%s'"), XdrvMailbox.topic, RemoveControlCharacter(dom_data));
 
   // Quick check if this is mine using topic domoticz/out/{$idx}
   if (strlen(XdrvMailbox.topic) > strlen(DOMOTICZ_OUT_TOPIC)) {
     char* topic_index = &XdrvMailbox.topic[strlen(DOMOTICZ_OUT_TOPIC) +1];
-    relay_index = DomoticzIdx2Relay(atoi(topic_index));
-    if (relay_index < 0) {
-      return true;  // Idx not mine
+    int32_t top_index = atoi(topic_index);  // 0 if no number (in case of domoticz/out/floor/room)
+    if (top_index > 0) {
+      if (DomoticzIdx2Relay(top_index) < 0) {
+        return true;  // Idx not mine
+      }
     }
   }
 
@@ -235,18 +239,16 @@ bool DomoticzMqttData(void) {
   if (!domoticz) {
     return true;  // To much or invalid data
   }
+  int32_t relay_index = DomoticzIdx2Relay(domoticz.getUInt(PSTR("idx"), 0));
   if (relay_index < 0) {
-    relay_index = DomoticzIdx2Relay(domoticz.getUInt(PSTR("idx"), 0));
-    if (relay_index < 0) {
-      return true;  // Idx not mine
-    }
+    return true;  // Idx not mine
   }
   int32_t nvalue = domoticz.getInt(PSTR("nvalue"), -1);
   if ((nvalue < 0) || (nvalue > 16)) {
     return true;  // Nvalue out of boundaries
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), Settings->domoticz_relay_idx[relay_index], nvalue);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "Topic %s, idx %d, nvalue %d"), XdrvMailbox.topic, Settings->domoticz_relay_idx[relay_index], nvalue);
 
   bool iscolordimmer = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Color Switch")) == 0);
   bool isShutter = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Light/Switch")) == 0) && (strncmp_P(domoticz.getStr(PSTR("switchType")),PSTR("Blinds"), 6) == 0);
