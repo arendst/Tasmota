@@ -358,7 +358,6 @@ class Matter_Device
     if tasmota.loglevel(3)
       tasmota.log("MTR: read_sensors: "+str(rs_json), 3)
     end
-    print("read_sensors", rs_json)
     if rs_json == nil   return  end
     var rs = json.load(rs_json)
     if rs != nil
