@@ -318,6 +318,8 @@ class Matter_Device
   # dispatch every 250ms to all plugins
   def every_250ms()
     self.message_handler.every_250ms()
+    # call read_sensors if needed
+    self.read_sensors_scheduler()
     # call all plugins, use a manual loop to avoid creating a new object
     var idx = 0
     while idx < size(self.plugins)

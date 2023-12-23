@@ -3994,32 +3994,35 @@ be_local_closure(Matter_Device_every_250ms,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(message_handler),
     /* K1   */  be_nested_str_weak(every_250ms),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(plugins),
-    /* K4   */  be_const_int(1),
+    /* K2   */  be_nested_str_weak(read_sensors_scheduler),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_nested_str_weak(plugins),
+    /* K5   */  be_const_int(1),
     }),
     be_str_weak(every_250ms),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[18]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
-      0x58040002,  //  0003  LDCONST	R1	K2
-      0x6008000C,  //  0004  GETGBL	R2	G12
-      0x880C0103,  //  0005  GETMBR	R3	R0	K3
-      0x7C080200,  //  0006  CALL	R2	1
-      0x14080202,  //  0007  LT	R2	R1	R2
-      0x780A0005,  //  0008  JMPF	R2	#000F
-      0x88080103,  //  0009  GETMBR	R2	R0	K3
-      0x94080401,  //  000A  GETIDX	R2	R2	R1
-      0x8C080501,  //  000B  GETMET	R2	R2	K1
-      0x7C080200,  //  000C  CALL	R2	1
-      0x00040304,  //  000D  ADD	R1	R1	K4
-      0x7001FFF4,  //  000E  JMP		#0004
-      0x80000000,  //  000F  RET	0
+      0x8C040102,  //  0003  GETMET	R1	R0	K2
+      0x7C040200,  //  0004  CALL	R1	1
+      0x58040003,  //  0005  LDCONST	R1	K3
+      0x6008000C,  //  0006  GETGBL	R2	G12
+      0x880C0104,  //  0007  GETMBR	R3	R0	K4
+      0x7C080200,  //  0008  CALL	R2	1
+      0x14080202,  //  0009  LT	R2	R1	R2
+      0x780A0005,  //  000A  JMPF	R2	#0011
+      0x88080104,  //  000B  GETMBR	R2	R0	K4
+      0x94080401,  //  000C  GETIDX	R2	R2	R1
+      0x8C080501,  //  000D  GETMET	R2	R2	K1
+      0x7C080200,  //  000E  CALL	R2	1
+      0x00040305,  //  000F  ADD	R1	R1	K5
+      0x7001FFF4,  //  0010  JMP		#0006
+      0x80000000,  //  0011  RET	0
     })
   )
 );
