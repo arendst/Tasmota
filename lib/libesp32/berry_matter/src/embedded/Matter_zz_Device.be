@@ -72,6 +72,11 @@ class Matter_Device
   var root_salt
   var root_w0
   var root_L
+  # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
+  var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
+  var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
+                                      # if timestamp is `0`, this should be scheduled in priority
+
 
   #############################################################
   def init()
@@ -131,10 +136,6 @@ class Matter_Device
 
     # autoconfigure other plugins if needed
     self.autoconf_device()
-
-    # for now read sensors every 30 seconds
-    # TODO still needed?
-    tasmota.add_cron("*/30 * * * * *", def () self._trigger_read_sensors() end, "matter_sensors_30s")
 
     self._start_udp(self.UDP_PORT)
 
@@ -317,6 +318,8 @@ class Matter_Device
   # dispatch every 250ms to all plugins
   def every_250ms()
     self.message_handler.every_250ms()
+    # call read_sensors if needed
+    self.read_sensors_scheduler()
     # call all plugins, use a manual loop to avoid creating a new object
     var idx = 0
     while idx < size(self.plugins)
@@ -326,11 +329,35 @@ class Matter_Device
   end
 
   #############################################################
+  # add a scheduler for `read_sensors` and update schedule time
+  # if it's more often than previously
+  def add_read_sensors_schedule(update_time)
+    if (self.probe_sensor_time == nil) || (self.probe_sensor_time > update_time)
+      self.probe_sensor_time = update_time
+      self.probe_sensor_timestamp = matter.jitter(update_time)
+    end
+  end
+
+  #############################################################
+  # check if we need to call `read_sensors()`
+  def read_sensors_scheduler()
+    if (self.probe_sensor_time == nil)    return  end       # nothing to schedule
+    if (self.probe_sensor_timestamp == 0) || (tasmota.time_reached(self.probe_sensor_timestamp))
+      self._trigger_read_sensors()
+      # set new next timestamp
+      self.probe_sensor_timestamp = tasmota.millis(self.probe_sensor_time)
+    end
+  end
+
+  #############################################################
   # trigger a read_sensors and dispatch to plugins
   # Internally used by cron
   def _trigger_read_sensors()
     import json
     var rs_json = tasmota.read_sensors()
+    if tasmota.loglevel(3)
+      tasmota.log("MTR: read_sensors: "+str(rs_json), 3)
+    end
     if rs_json == nil   return  end
     var rs = json.load(rs_json)
     if rs != nil

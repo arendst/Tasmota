@@ -33,6 +33,17 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   var shadow_value                                  # Last known value
 
   #############################################################
+  # Constructor
+  #
+  # device: contains the root device object so the plugin can "call home"
+  # endpoint: (int) the endpoint number (16 bits)
+  # arguments: (map) the map for all complementary arguments that are plugin specific
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
+    device.add_read_sensors_schedule(self.UPDATE_TIME)
+  end
+
+  #############################################################
   # parse_configuration
   #
   # Parse configuration map
