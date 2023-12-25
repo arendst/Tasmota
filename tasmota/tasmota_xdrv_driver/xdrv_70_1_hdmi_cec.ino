@@ -189,7 +189,7 @@ void CmndHDMISend(void) {
 //
 void CmndHDMIType(void) {
   if (XdrvMailbox.data_len > 0) {
-    if ((XdrvMailbox.payload < 1) && (XdrvMailbox.payload >= CEC_Device::CDT_LAST)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < CEC_Device::CDT_LAST)) {
       uint8_t type = XdrvMailbox.payload;
       if (type != Settings->hdmi_cec_device_type) {
         Settings->hdmi_cec_device_type = XdrvMailbox.payload;
