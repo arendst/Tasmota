@@ -38,6 +38,10 @@ jobs:
         run: |
           cd lib/libesp32/berry_matter
           ../berry/berry -s -g solidify_all.be
+      - name: Berry Animate Code
+        run: |
+          cd lib/libesp32/berry_animate
+          ../berry/berry -s -g solidify_all.be
       - name: LVGL Berry Code
         run: |
           cd lib/libesp32_lvgl/lv_binding_berry

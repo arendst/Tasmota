@@ -31,6 +31,9 @@ extern "C" {
 #ifdef USE_MATTER_DEVICE
   #include "berry_matter.h"
 #endif
+#ifdef USE_WS2812
+  #include "berry_animate.h"
+#endif
 #include "be_vm.h"
 #include "ZipReadFS.h"
 #include "ccronexpr.h"
