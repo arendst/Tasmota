@@ -65,7 +65,7 @@ void HdmiCecInit(void)
 {
   // CEC device type
   CEC_Device::CEC_DEVICE_TYPE device_type = (CEC_Device::CEC_DEVICE_TYPE) Settings->hdmi_cec_device_type;
-  if (device_type == CEC_Device::CDT_TV || device_type >= CEC_Device::CDT_LAST) {
+  if (device_type < 0 || device_type >= CEC_Device::CDT_LAST) {
     // if type in Settings is invalid, default to PLAYBACK_DEVICE
     device_type = CEC_Device::CDT_PLAYBACK_DEVICE;
     Settings->hdmi_cec_device_type = (uint8_t) device_type;
