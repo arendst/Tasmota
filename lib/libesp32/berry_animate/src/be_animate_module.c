@@ -21,6 +21,7 @@
  * `animate` global module
 \*******************************************************************/
 
+#ifdef USE_BERRY
 #include "be_constobj.h"
 #include "be_mapping.h"
 
@@ -239,3 +240,5 @@ assert(o.animate(7000) == -1000)
 
 
 */
+
+#endif // USE_BERRY
