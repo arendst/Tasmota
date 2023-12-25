@@ -377,7 +377,7 @@ void CmndRgxPort(void)
 void ResponseRgxConfig(void)
 {
   RgxCheckConfig();
-  Response_P(PSTR("{\"Rgx\":{\"Valid\":\"%s\",\"" D_CMND_SSID "\":\"%s\",\"" D_CMND_PASSWORD "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\"}"),
+  Response_P(PSTR("{\"Rgx\":{\"Valid\":\"%s\",\"" D_CMND_SSID "\":\"%s\",\"" D_CMND_PASSWORD "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\"}}"),
              (RgxSettings.status == RGX_CONFIG_INCOMPLETE) ? "false" : "true",
              EscapeJSONString(SettingsText(SET_RGX_SSID)).c_str(),
              EscapeJSONString(SettingsText(SET_RGX_PASSWORD)).c_str(),
