@@ -67,7 +67,7 @@ jobs:
           name: |
             berry_tasmota
             berry_matter
-            berrt_animate
+            berry_animate
             berry_lvgl
             berry_header
           path: |
