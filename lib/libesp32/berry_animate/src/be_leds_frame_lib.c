@@ -3,6 +3,7 @@
  * 
  *******************************************************************/
 
+#ifdef USE_BERRY
 #include "be_constobj.h"
 
 #ifdef USE_WS2812
@@ -37,3 +38,4 @@ class be_class_Leds_frame (scope: global, name: Leds_frame, super:be_class_bytes
 #include "be_fixed_be_class_Leds_frame.h"
 
 #endif // USE_WS2812
+#endif // USE_BERRY

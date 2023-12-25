@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` (#20260)
+- Moved Berry animate to its own `berry_animate` lib
 
 ### Fixed
 - Matter Contact sensor was not triggering any update (#20232)
