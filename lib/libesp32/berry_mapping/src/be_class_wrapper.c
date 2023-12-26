@@ -399,7 +399,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
 //         `+` forbids any NULL value (raises an exception) while `=` allows a NULL value
 static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
   if (name == NULL) return;    // do nothing if no name of attribute
-  if (name[0] == '+' && ptr == NULL)  { be_raise(vm, "value_error", "argument cannot be NULL"); }
+  if (name[0] == '+' && ptr == NULL)  { be_raise(vm, "value_error", "native constructor cannot return NULL"); }
   if (name[0] == '+' || name[0] == '=') { name++; }   // skip prefix '^' if any
   if (strlen(name) == 0) return;  // do nothing if name is empty
 
