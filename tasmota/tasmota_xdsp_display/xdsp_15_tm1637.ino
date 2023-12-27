@@ -1131,7 +1131,7 @@ void TM1637Dim(void)
   {
     for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
     {
-      max7219display->setIntensity(MAX7219_ADDR, brightness); // 0 - 7
+      max7219display->setIntensity(MAX7219_ADDR  + dev_addr, brightness); // 0 - 7
     }
   }
 }
