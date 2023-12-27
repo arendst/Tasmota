@@ -979,6 +979,9 @@ bool Xdrv09(uint32_t function)
     case FUNC_COMMAND:
       result = DecodeCommand(kTimerCommands, TimerCommand);
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

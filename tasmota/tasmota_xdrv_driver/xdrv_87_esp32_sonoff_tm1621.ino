@@ -600,6 +600,9 @@ bool Xdrv87(uint32_t function) {
       case FUNC_COMMAND:
         result = DecodeCommand(kTm1621Commands, kTm1621Command);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

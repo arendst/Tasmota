@@ -518,6 +518,9 @@ bool Xdrv56(uint32_t function) {
       case FUNC_JSON_APPEND:
         if (RtcChip.ShowSensor) RtcChip.ShowSensor(1);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
 

@@ -2484,6 +2484,9 @@ bool Xdrv23(uint32_t function) {
           restoreDumpAllDevices();
         }
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

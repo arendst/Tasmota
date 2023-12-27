@@ -611,6 +611,9 @@ bool Xdrv30(uint32_t function)
       result = DecodeCommand(kExsCommands, ExsCommand);
       break;
 #endif
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

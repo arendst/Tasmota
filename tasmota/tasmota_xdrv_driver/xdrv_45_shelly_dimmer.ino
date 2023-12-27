@@ -872,6 +872,9 @@ bool Xdrv45(uint32_t function) {
         result = DecodeCommand(kShdCommands, ShdCommand);
         break;
 #endif // SHELLY_CMDS
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
 

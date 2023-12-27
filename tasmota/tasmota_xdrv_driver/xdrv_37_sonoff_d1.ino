@@ -191,6 +191,9 @@ bool Xdrv37(uint32_t function)
       case FUNC_MODULE_INIT:
         result = SonoffD1ModuleSelected();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

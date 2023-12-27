@@ -617,6 +617,9 @@ bool Xdrv43(uint32_t function)
       case FUNC_COMMAND:
         result = MLX90640Cmd();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

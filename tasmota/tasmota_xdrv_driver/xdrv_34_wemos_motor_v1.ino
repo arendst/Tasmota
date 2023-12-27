@@ -284,6 +284,9 @@ bool Xdrv34(uint32_t function)
           result = WMotorV1Command();
         }
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

@@ -524,6 +524,9 @@ bool Xdrv58(uint32_t function)
         }
       }
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

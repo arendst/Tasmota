@@ -589,6 +589,9 @@ bool Xdrv55(uint32_t function) {
         Touch_Check(TS_RotConvert);
       }
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

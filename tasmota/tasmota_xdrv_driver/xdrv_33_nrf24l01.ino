@@ -85,6 +85,10 @@ bool Xdrv33(uint32_t function) {
 
   if (FUNC_INIT == function) {
     NRF24Detect();
+  } else if (NRF24.chipType) {
+    if (FUNC_ACTIVE == function) {
+      result = true;
+    }
   }
   return result;
 }

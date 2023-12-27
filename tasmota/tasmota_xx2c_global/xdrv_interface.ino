@@ -1063,6 +1063,8 @@ const uint8_t kXdrvList[] = {
 
 /*********************************************************************************************/
 
+uint32_t Xdrv_active[4] = { 0 };
+
 void XsnsDriverState(void) {
   ResponseAppend_P(PSTR(",\"Drivers\":\""));  // Use string for future enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXdrvList); i++) {
@@ -1071,7 +1073,7 @@ void XsnsDriverState(void) {
 #else
     uint32_t driverid = kXdrvList[i];
 #endif
-    ResponseAppend_P(PSTR("%s%d"), (i) ? "," : "", driverid);
+    ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (!bitRead(Xdrv_active[i / 32], i % 32)) ? "!" : "", driverid);
   }
   ResponseAppend_P(PSTR("\""));
 }
@@ -1133,11 +1135,15 @@ bool XdrvCall(uint32_t function) {
 
 //  DEBUG_TRACE_LOG(PSTR("DRV: %d"), function);
 
+#ifdef USE_PROFILE_FUNCTION
   uint32_t profile_driver_start = millis();
+#endif  // USE_PROFILE_FUNCTION
 
   for (uint32_t x = 0; x < xdrv_present; x++) {
 
+#ifdef USE_PROFILE_FUNCTION
     uint32_t profile_function_start = millis();
+#endif  // USE_PROFILE_FUNCTION
 
     result = xdrv_func_ptr[x](function);
 
@@ -1150,6 +1156,9 @@ bool XdrvCall(uint32_t function) {
     PROFILE_FUNCTION("drv", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
+    if (FUNC_ACTIVE == function) {
+      bitWrite(Xdrv_active[x / 32], x % 32, result);
+    }
     if (result && (function > FUNC_return_result)) {
       break;
     }

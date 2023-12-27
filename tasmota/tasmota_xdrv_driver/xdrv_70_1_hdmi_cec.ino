@@ -302,21 +302,21 @@ bool Xdrv70(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      HdmiCecInit();
-      break;
-    case FUNC_LOOP:
-    case FUNC_SLEEP_LOOP:
-      if (HDMI_CEC_device) {
+  if (FUNC_INIT == function) {
+    HdmiCecInit();
+  } else if (HDMI_CEC_device) {
+    switch (function) {
+      case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         HDMI_CEC_device->run();
-      }
-      break;
-    case FUNC_COMMAND:
-      if (HDMI_CEC_device) {
+        break;
+      case FUNC_COMMAND:
         result = DecodeCommand(kHDMICommands, HDMICommand);
-      }
-      break;
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
+    }
   }
   return result;
 }

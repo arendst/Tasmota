@@ -566,6 +566,9 @@ bool Xdrv06(uint32_t function)
       case FUNC_PRE_INIT:
         SetSerial(19200, TS_SERIAL_8N1);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
 #endif  // ESP8266

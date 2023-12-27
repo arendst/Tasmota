@@ -1336,6 +1336,10 @@ bool Xdrv44(uint32_t function) {
 	case FUNC_COMMAND:
 		result = DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
 		break;
+
+    case FUNC_ACTIVE:
+        result = true;
+        break;
 	}
 
 	return (result);

@@ -2204,6 +2204,10 @@ bool Xdrv39(uint32_t function)
     case FUNC_COMMAND:
       result = DecodeCommand(kThermostatCommands, ThermostatCommand);
       break;
+
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

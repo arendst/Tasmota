@@ -3634,6 +3634,9 @@ bool Xdrv79(uint32_t function)
       WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   return result;
 }

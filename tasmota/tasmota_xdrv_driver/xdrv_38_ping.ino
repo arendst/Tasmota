@@ -442,11 +442,14 @@ bool Xdrv38(uint32_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-    PingResponsePoll();   // TODO
-    break;
+      PingResponsePoll();   // TODO
+      break;
     case FUNC_COMMAND:
-    result = DecodeCommand(kPingCommands, PingCommand);
-    break;
+      result = DecodeCommand(kPingCommands, PingCommand);
+      break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

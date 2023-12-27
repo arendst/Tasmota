@@ -2682,6 +2682,9 @@ bool Xdrv86(uint32_t function) {
       case FUNC_BUTTON_PRESSED:
         result = SSPMButton();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

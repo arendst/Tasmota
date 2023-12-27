@@ -948,6 +948,10 @@ bool Xdrv35(uint32_t function)
     case FUNC_PRE_INIT:
       PWMModulePreInit();
       break;
+      
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

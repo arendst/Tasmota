@@ -1116,13 +1116,17 @@ bool XsnsCall(uint32_t function) {
 
 //  DEBUG_TRACE_LOG(PSTR("SNS: %d"), function);
 
+#ifdef USE_PROFILE_FUNCTION
   uint32_t profile_driver_start = millis();
+#endif  // USE_PROFILE_FUNCTION
 
   for (uint32_t x = 0; x < xsns_present; x++) {
     if (XsnsEnabled(0, x)) {  // Skip disabled sensor
       if ((FUNC_WEB_SENSOR == function) && !XsnsEnabled(1, x)) { continue; }  // Skip web info for disabled sensors
 
+#ifdef USE_PROFILE_FUNCTION
       uint32_t profile_function_start = millis();
+#endif  // USE_PROFILE_FUNCTION
 
       result = xsns_func_ptr[x](function);
 

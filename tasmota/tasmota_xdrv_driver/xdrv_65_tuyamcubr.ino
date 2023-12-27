@@ -1110,6 +1110,10 @@ Xdrv65(uint32_t function)
 	case FUNC_COMMAND:
 		result = DecodeCommand(tuyamcubr_cmnd_names, tuyamcubr_cmnds);
 		break;
+
+    case FUNC_ACTIVE:
+        result = true;
+        break;
 	}
 
 	return (result);

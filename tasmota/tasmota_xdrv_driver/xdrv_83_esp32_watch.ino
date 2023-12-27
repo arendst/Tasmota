@@ -458,6 +458,9 @@ bool Xdrv83(uint32_t function) {
     case FUNC_LOOP:
       TTGO_loop(1);
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
 
   }
   return result;

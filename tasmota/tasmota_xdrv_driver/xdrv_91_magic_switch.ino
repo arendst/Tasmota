@@ -179,6 +179,9 @@ bool Xdrv91(uint32_t function) {
       case FUNC_COMMAND:
         result = DecodeCommand(kMagicSwitchCommands, MagicSwitchCommand);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

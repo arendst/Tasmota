@@ -486,33 +486,36 @@ bool Xdrv88(uint32_t function) {
 
   if (FUNC_SETUP_RING2 == function) {
     ShellyProPreInit();
-    } else if (SPro.detected) {
-      switch (function) {
+  } else if (SPro.detected) {
+    switch (function) {
 /*
-        case FUNC_BUTTON_PRESSED:
-          result = ShellyProButton();
-          break;
+      case FUNC_BUTTON_PRESSED:
+        result = ShellyProButton();
+        break;
 */
-        case FUNC_EVERY_SECOND:
-          ShellyProLedLinkWifiOff();
-          break;
-        case FUNC_SET_POWER:
-          ShellyProPower();
-          break;
-        case FUNC_INIT:
-          ShellyProInit();
-          break;
-        case FUNC_ADD_BUTTON:
-          result = ShellyProAddButton();
-          break;
-        case FUNC_ADD_SWITCH:
-          result = ShellyProAddSwitch();
-          break;
-        case FUNC_LED_LINK:
-          ShellyProLedLink();
-          break;
-      }
+      case FUNC_EVERY_SECOND:
+        ShellyProLedLinkWifiOff();
+        break;
+      case FUNC_SET_POWER:
+        ShellyProPower();
+        break;
+      case FUNC_INIT:
+        ShellyProInit();
+        break;
+      case FUNC_ADD_BUTTON:
+        result = ShellyProAddButton();
+        break;
+      case FUNC_ADD_SWITCH:
+        result = ShellyProAddSwitch();
+        break;
+      case FUNC_LED_LINK:
+        ShellyProLedLink();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
+  }
   return result;
 }
 

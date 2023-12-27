@@ -120,6 +120,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Support for CST816S touch interface [#20213](https://github.com/arendst/Tasmota/issues/20213)
 - Support for Sonoff Basic R4 Magic Switch [#20247](https://github.com/arendst/Tasmota/issues/20247)
+- Display of active drivers using command ``status 4``
 - NeoPool hydrolysis FL1 and Redox flag [#20258](https://github.com/arendst/Tasmota/issues/20258)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
 

@@ -1785,6 +1785,9 @@ bool Xdrv85(uint32_t function)
     case FUNC_WEB_SENSOR:
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   return result;
 }

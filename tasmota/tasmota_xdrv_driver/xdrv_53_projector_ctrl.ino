@@ -473,6 +473,10 @@ bool Xdrv53(uint32_t function) {
 		result = projector_ctrl_set_power(sc);
 		break;
 
+    case FUNC_ACTIVE:
+        result = true;
+        break;
+
 	}
 
 	return (result);

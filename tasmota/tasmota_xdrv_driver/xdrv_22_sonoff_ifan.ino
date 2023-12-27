@@ -261,6 +261,9 @@ bool Xdrv22(uint32_t function) {
       case FUNC_MODULE_INIT:
         result = SonoffIfanInit();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

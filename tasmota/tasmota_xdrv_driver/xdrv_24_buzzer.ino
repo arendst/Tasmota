@@ -253,6 +253,9 @@ bool Xdrv24(uint32_t function) {
       case FUNC_PIN_STATE:
         result = BuzzerPinState();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

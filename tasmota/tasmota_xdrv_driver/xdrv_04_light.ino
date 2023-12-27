@@ -3460,17 +3460,20 @@ bool Xdrv04(uint32_t function)
         LightInit();
         break;
 #ifdef USE_LIGHT_ARTNET
-    case FUNC_JSON_APPEND:
-      ArtNetJSONAppend();
-      break;
-    case FUNC_NETWORK_UP:
-      ArtNetFuncNetworkUp();
-      break;
-    case FUNC_NETWORK_DOWN:
-      ArtNetFuncNetworkDown();
-      break;
+      case FUNC_JSON_APPEND:
+        ArtNetJSONAppend();
+        break;
+      case FUNC_NETWORK_UP:
+        ArtNetFuncNetworkUp();
+        break;
+      case FUNC_NETWORK_DOWN:
+        ArtNetFuncNetworkDown();
+        break;
 #endif // USE_LIGHT_ARTNET
-    }
+      case FUNC_ACTIVE:
+        result = true;
+        break;
+   }
   }
   return result;
 }

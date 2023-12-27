@@ -613,6 +613,9 @@ bool Xdrv15(uint32_t function)
         result = PCA9685_Command();
       }
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

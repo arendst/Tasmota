@@ -316,6 +316,9 @@ bool Xdrv68(uint32_t function)
         break;
 #endif  // ZCDIMMERSET_SHOW
 #endif  // USE_WEBSERVER        
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

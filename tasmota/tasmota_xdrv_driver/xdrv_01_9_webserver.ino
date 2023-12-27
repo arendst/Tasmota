@@ -3894,6 +3894,9 @@ bool Xdrv01(uint32_t function)
     case FUNC_COMMAND:
       result = DecodeCommand(kWebCommands, WebCommand);
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

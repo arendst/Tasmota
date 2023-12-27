@@ -190,6 +190,9 @@ bool Xdrv18(uint32_t function)
       case FUNC_SET_CHANNELS:
         result = ArmtronixSetChannels();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

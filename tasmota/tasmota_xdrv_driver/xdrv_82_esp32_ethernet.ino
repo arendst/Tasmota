@@ -384,6 +384,9 @@ bool Xdrv82(uint32_t function) {
     case FUNC_INIT:
       EthernetInit();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

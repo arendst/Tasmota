@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for CST816S touch interface (#20213)
 - NeoPool hydrolysis FL1 and Redox flag (#20258)
 - Matter support for password for remote Tasmota devices (#20296)
+- Display of active drivers using command ``status 4``
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)

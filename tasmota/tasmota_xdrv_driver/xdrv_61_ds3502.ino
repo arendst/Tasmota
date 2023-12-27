@@ -86,6 +86,9 @@ bool Xdrv61(uint32_t function) {
       case FUNC_COMMAND:
         result = DecodeCommand(kDS3502Commands, DS3502Command);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

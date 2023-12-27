@@ -2033,6 +2033,9 @@ bool Xdrv02(uint32_t function)
       case FUNC_PRE_INIT:
         MqttInit();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

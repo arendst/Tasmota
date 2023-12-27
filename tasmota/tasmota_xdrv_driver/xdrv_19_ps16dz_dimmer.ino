@@ -225,6 +225,9 @@ bool Xdrv19(uint32_t function)
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

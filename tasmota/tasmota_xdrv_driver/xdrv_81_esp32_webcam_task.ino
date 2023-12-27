@@ -3037,6 +3037,9 @@ bool Xdrv99(uint32_t function) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART after delay"));
 #endif      
     } break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
 
   }
   return result;

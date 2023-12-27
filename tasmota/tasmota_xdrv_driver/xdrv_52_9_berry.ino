@@ -969,6 +969,9 @@ bool Xdrv52(uint32_t function)
       callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 0, nullptr);
       break;
 
+    case FUNC_ACTIVE:
+      result = true;
+      break;
 
   }
   return result;

@@ -527,6 +527,9 @@ bool Xdrv69(uint32_t function) {
       case FUNC_ADD_SWITCH:
         result = PCA9557AddSwitch();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

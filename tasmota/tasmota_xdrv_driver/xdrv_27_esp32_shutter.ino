@@ -2371,6 +2371,9 @@ bool Xdrv27(uint32_t function)
         ShutterShow();
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;
