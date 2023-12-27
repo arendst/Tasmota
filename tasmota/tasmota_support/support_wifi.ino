@@ -102,6 +102,7 @@ void WifiConfig(uint8_t type)
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();                       // Solve possible Wifi hangs
+    delay(100);
     Wifi.config_type = type;
 
 #ifndef USE_WEBSERVER
@@ -146,7 +147,6 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
 
     // See: https://github.com/esp8266/Arduino/issues/6172#issuecomment-500457407
     WiFi.forceSleepWake(); // Make sure WiFi is really active.
-    delay(100);
   }
 
   uint32_t retry = 2;
@@ -158,10 +158,8 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
   if (wifi_mode == WIFI_OFF) {
     delay(1000);
     WiFi.forceSleepBegin();
-    delay(1);
-  } else {
-    delay(30); // Must allow for some time to init.
   }
+  delay(100);  // Must allow for some time to init.
 }
 
 void WiFiSetSleepMode(void)
@@ -201,6 +199,7 @@ void WiFiSetSleepMode(void)
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
     }
   }
+  delay(100);
 }
 
 void WifiBegin(uint8_t flag, uint8_t channel) {
@@ -215,15 +214,13 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 
 #ifdef USE_WIFI_RANGE_EXTENDER
   if (WiFi.getMode() != WIFI_AP_STA || !RgxApUp()) {  // Preserve range extender connections (#17103)
-    WiFi.disconnect(true);  // Delete SDK wifi config
-    delay(200);
-    WifiSetMode(WIFI_STA);  // Disable AP mode
-  }
-#else
-  WiFi.disconnect(true);    // Delete SDK wifi config
+#endif  // USE_WIFI_RANGE_EXTENDER
+  WiFi.disconnect(true);  // Delete SDK wifi config
   delay(200);
-  WifiSetMode(WIFI_STA);    // Disable AP mode
-#endif
+  WifiSetMode(WIFI_STA);  // Disable AP mode
+#ifdef USE_WIFI_RANGE_EXTENDER
+  }
+#endif  // USE_WIFI_RANGE_EXTENDER
 
   WiFiSetSleepMode();
   WifiSetOutputPower();
@@ -261,6 +258,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
   } else {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
   }
+  delay(500);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
@@ -804,6 +802,9 @@ bool HasIP(void) {
 }
 
 void WifiCheckIp(void) {
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
+  Wifi.counter = WIFI_CHECK_SEC;
+
 #ifdef USE_IPV6
   if (WL_CONNECTED == WiFi.status()) {
 #ifdef ESP32
@@ -939,8 +940,6 @@ void WifiCheck(uint8_t param)
       }
     } else {
       if (Wifi.counter <= 0) {
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
-        Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && WifiHasIP() && !Wifi.config_type) {
@@ -978,6 +977,7 @@ float WifiGetOutputPower(void) {
 void WifiSetOutputPower(void) {
   if (Settings->wifi_output_power) {
     WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+    delay(100);
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Dynamic Tx power enabled"));  // WifiPower 0
   }
