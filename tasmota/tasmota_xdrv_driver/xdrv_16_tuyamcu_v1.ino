@@ -1335,9 +1335,12 @@ void TuyaHandlePkgUpgradeResponse(void) {
   if (0 == Tuya.data_len) { // check data length
       Tuya.mcu_upg.retry_cnt = 0;
       // send next package in 1 second, so the OTA process is more stable
+#ifndef TUYA_MCU_UPGRADE_PACKAGE_IMMEDIATELY
       Tuya.mcu_upg.response_timeout = millis() + 500;
       Tuya.mcu_upg.flags.trigger_next_packet = 1;
-      //TuyaSendUpgradePackage(true);
+#else
+      TuyaSendUpgradePackage(true);
+#endif
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: MCU-Upgrade: Upgrade package response: Invalid data size (%d)!"), Tuya.data_len);
     TuyaCleanupMcuUpgradeData(false);
