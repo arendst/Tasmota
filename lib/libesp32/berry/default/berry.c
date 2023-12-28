@@ -59,6 +59,13 @@
     FULL_VERSION " (build in " __DATE__ ", " __TIME__ ")\n"         \
     "[" COMPILER "] on " OS_NAME " (default)\n"                     \
 
+#if defined(_WIN32)
+#define PATH_SEPARATOR ";"
+#else
+#define PATH_SEPARATOR ":"
+#endif
+
+
 /* command help information */
 #define help_information                                            \
     "Usage: berry [options] [script [args]]\n"                      \
@@ -66,6 +73,7 @@
     "  -i        enter interactive mode after executing 'file'\n"   \
     "  -l        all variables in 'file' are parsed as local\n"     \
     "  -e        load 'script' source string and execute\n"         \
+    "  -m <path> custom module search path(s) separated by '" PATH_SEPARATOR "'\n"\
     "  -c <file> compile script 'file' to bytecode file\n"          \
     "  -o <file> save bytecode to 'file'\n"                         \
     "  -g        force named globals in VM\n"                       \
@@ -87,6 +95,7 @@
 #define arg_g       (1 << 7)
 #define arg_s       (1 << 8)
 #define arg_err     (1 << 9)
+#define arg_m       (1 << 10)
 
 struct arg_opts {
     int idx;
@@ -95,6 +104,7 @@ struct arg_opts {
     const char *errarg;
     const char *src;
     const char *dst;
+    const char *modulepath;
 };
 
 /* check if the character is a letter */
@@ -257,6 +267,10 @@ static int parse_arg(struct arg_opts *opt, int argc, char *argv[])
         case 'e': args |= arg_e; break;
         case 'g': args |= arg_g; break;
         case 's': args |= arg_s; break;
+        case 'm':
+            args |= arg_m;
+            opt->modulepath = opt->optarg;
+            break;
         case '?': return args | arg_err;
         case 'c':
             args |= arg_c;
@@ -286,12 +300,47 @@ static void push_args(bvm *vm, int argc, char *argv[])
     be_pop(vm, 1);
 }
 
+#if defined(_WIN32)
+#define BERRY_ROOT "\\Windows\\system32"
+static const char *module_paths[] = {
+    BERRY_ROOT "\\berry\\packages",
+};
+#else
+#define BERRY_ROOT "/usr/local"
+static const char *module_paths[] = {
+    BERRY_ROOT "/lib/berry/packages",
+};
+#endif
+
+static void berry_paths(bvm * vm)
+{
+    size_t i;
+    for (i = 0; i < array_count(module_paths); ++i) {
+        be_module_path_set(vm, module_paths[i]);
+    }
+}
+
+static void berry_custom_paths(bvm *vm, const char *modulepath)
+{
+    const char delim[] = PATH_SEPARATOR;
+    char *copy = malloc(strlen(modulepath) + 1);
+    strcpy(copy, modulepath);
+    char *ptr = strtok(copy, delim);
+
+    while (ptr != NULL) {
+        be_module_path_set(vm, ptr);
+        ptr = strtok(NULL, delim);
+    }
+    free(copy);
+}
+
 /* 
  * command format: berry [options] [script [args]]
  *  command options:
  *   -i: enter interactive mode after executing 'script'
  *   -b: load code from bytecode file
  *   -e: load 'script' source and execute
+ *   -m: specify custom module search path(s)
  * command format: berry options
  *  command options:
  *   -v: show version information
@@ -305,7 +354,7 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
 {
     int args = 0;
     struct arg_opts opt = { 0 };
-    opt.pattern = "vhilegsc?o?";
+    opt.pattern = "m?vhilegsc?o?";
     args = parse_arg(&opt, argc, argv);
     argc -= opt.idx;
     argv += opt.idx;
@@ -315,6 +364,16 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
         be_pop(vm, 1);
         return -1;
     }
+    
+    if (args & arg_m) {
+        berry_custom_paths(vm, opt.modulepath);        
+        args &= ~arg_m;
+    }
+    else {
+        // use default module paths
+        berry_paths(vm);
+    }
+    
     if (args & arg_g) {
         comp_set_named_gbl(vm); /* forced named global in VM code */
         args &= ~arg_g;         /* clear the flag for this option not to interfere with other options */
@@ -339,31 +398,11 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
     return load_script(vm, argc, argv, args);
 }
 
-#if defined(_WIN32)
-#define BERRY_ROOT "\\Windows\\system32"
-static const char *module_paths[] = {
-    BERRY_ROOT "\\berry\\packages",
-};
-#else
-#define BERRY_ROOT "/usr/local"
-static const char *module_paths[] = {
-    BERRY_ROOT "/lib/berry/packages",
-};
-#endif
-
-static void berry_paths(bvm * vm)
-{
-    size_t i;
-    for (i = 0; i < array_count(module_paths); ++i) {
-        be_module_path_set(vm, module_paths[i]);
-    }
-}
 
 int main(int argc, char *argv[])
 {
     int res;
     bvm *vm = be_vm_new(); /* create a virtual machine instance */
-    berry_paths(vm);
     res = analysis_args(vm, argc, argv);
     be_vm_delete(vm); /* free all objects and vm */
     return res;
