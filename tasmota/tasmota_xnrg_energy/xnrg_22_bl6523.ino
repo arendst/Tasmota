@@ -238,6 +238,9 @@ void Bl6523Init(void)
       {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6: Serial UART%d and UART%d"), Bl6523RxSerial->getUart(), Bl6523TxSerial->getUart());
+#endif
       Bl6523.type = 1;
       Energy->phase_count = 1;
       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:Init Success" ));

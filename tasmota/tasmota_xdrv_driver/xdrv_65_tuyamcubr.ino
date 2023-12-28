@@ -996,6 +996,10 @@ tuyamcubr_pre_init(void)
 	if (sc->sc_serial->hardwareSerial())
 		ClaimSerial();
 
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR(TUYAMCUBR_LOGNAME ": Serial UART%d"), sc->sc_serial->getUart());
+#endif
+
 	/* commit */
 	tuyamcubr_sc = sc;
 

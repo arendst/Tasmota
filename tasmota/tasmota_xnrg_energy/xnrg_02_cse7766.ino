@@ -232,6 +232,9 @@ void CseSnsInit(void) {
       SetSerial(4800, TS_SERIAL_8E1);
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: Serial UART%d"), CseSerial->getUart());
+#endif
     if (0 == Settings->param[P_CSE7766_INVALID_POWER]) {
       Settings->param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }

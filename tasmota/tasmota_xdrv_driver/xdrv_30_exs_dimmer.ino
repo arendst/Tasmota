@@ -415,6 +415,9 @@ void ExsInit(void)
       {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Serial UART%d"), ExsSerial->getUart());
+#endif  // ESP32
       ExsSerial->flush();
       EsxMcuStart();
       ExsSendCmd(EXS_CH_LOCK, 0);

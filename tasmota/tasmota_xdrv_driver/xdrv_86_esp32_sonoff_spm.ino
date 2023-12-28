@@ -1917,6 +1917,11 @@ void SSPMInit(void) {
     return;
   }
 
+  if (SspmSerial->hardwareSerial()) {
+    ClaimSerial();
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Serial UART%d"), SspmSerial->getUart());
+
   Xdrv86SettingsLoad(0);
 
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);

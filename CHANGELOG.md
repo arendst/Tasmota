@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool hydrolysis FL1 and Redox flag (#20258)
 - Matter support for password for remote Tasmota devices (#20296)
 - Display of active drivers using command ``status 4``
+- ESP32 used UART information
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)
@@ -24,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 piezo ceramic buzzer doesn't buzz (#20118)
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' (#14689)
 - Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
+- Berry claiming UART0 if needed (#20324)
 
 ### Removed
 

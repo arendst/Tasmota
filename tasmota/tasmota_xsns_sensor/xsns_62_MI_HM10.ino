@@ -698,6 +698,9 @@ void HM10SerialInit(void) {
       ClaimSerial();
       DEBUG_SENSOR_LOG(PSTR("%s: claim HW"),D_CMND_HM10);
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("HM1: Serial UART%d"), HM10Serial->getUart());
+#endif
     HM10_Reset();
     HM10.mode.pending_task = 1;
     HM10.mode.init = 1;

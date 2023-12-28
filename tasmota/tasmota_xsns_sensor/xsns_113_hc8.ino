@@ -86,6 +86,9 @@ void Hc8Init(void)
     Hc8Serial = new TasmotaSerial(Pin(GPIO_HC8_RXD), -1, 1);
     if (Hc8Serial->begin(9600)) {
       if (Hc8Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("HC8: Serial UART%d"), Hc8Serial->getUart());
+#endif
       Hc8Initialized = true;
     }
   }

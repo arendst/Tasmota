@@ -394,6 +394,9 @@ void CM11Init(void)
     CM11Serial = new TasmotaSerial(Pin(GPIO_CM11_RXD), Pin(GPIO_CM11_TXD), 1);
     if (CM11Serial->begin(9600)) {
       if (CM11Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CM1: Serial UART%d"), CM11Serial->getUart());
+#endif
       cm11_type = 1;
       CM11SendCmd(CM11_CMND_SW_VERSION);
     }

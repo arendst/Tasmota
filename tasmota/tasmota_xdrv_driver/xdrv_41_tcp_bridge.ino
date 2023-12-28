@@ -156,7 +156,7 @@ void TCPInit(void) {
         ClaimSerial();
       }
 #ifdef ESP32
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "using hardserial %d"), TCPSerial->getUart());
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Serial UART%d"), TCPSerial->getUart());
 #endif
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed init serial"));

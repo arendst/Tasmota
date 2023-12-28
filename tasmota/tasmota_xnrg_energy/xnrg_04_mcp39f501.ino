@@ -572,6 +572,9 @@ void McpSnsInit(void)
     } else {
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Serial UART%d"), McpSerial->getUart());
+#endif
     DigitalWrite(GPIO_MCP39F5_RST, 0, 1);  // MCP enable
     Energy->use_overtemp = true;            // Use global temperature for overtemp detection
   } else {

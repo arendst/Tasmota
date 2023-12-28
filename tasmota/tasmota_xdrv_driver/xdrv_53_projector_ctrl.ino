@@ -122,6 +122,9 @@ projector_ctrl_pre_init(void)
 		ClaimSerial();
 		SetSerial(baudrate, TS_SERIAL_8N1);
 	}
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR(PROJECTOR_CTRL_LOGNAME ": Serial UART%d"), sc->sc_serial->getUart());
+#endif
 
   UpdateDevicesPresent(1); /* claim a POWER device slot */
 	sc->sc_device = TasmotaGlobal.devices_present;

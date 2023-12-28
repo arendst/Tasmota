@@ -183,6 +183,12 @@ void MP3PlayerInit(void)
   // start serial communication fixed to 9600 baud
   if (MP3Player->begin(9600))
   {
+#ifdef ESP32
+    if (MP3Player->hardwareSerial()) {
+      ClaimSerial();  // Disable console using uart0
+    }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MP3: Serial UART%d"), MP3Player->getUart());
+#endif  // ESP32
     MP3Player->flush();
     delay(1000);
     MP3_CMD(MP3_CMD_RESET, MP3_CMD_RESET_VALUE);    // reset the player to defaults

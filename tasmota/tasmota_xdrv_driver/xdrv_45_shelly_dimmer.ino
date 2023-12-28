@@ -664,6 +664,10 @@ void ShdInit(void)
             if (ShdSerial->hardwareSerial())
                 ClaimSerial();
 
+#ifdef ESP32
+            AddLog(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Serial UART%d"), ShdSerial->getUart());
+#endif
+
             ShdSerial->flush();
 
             ShdResetToAppMode();

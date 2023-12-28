@@ -383,6 +383,9 @@ void UBXDetect(void)
         ClaimSerial();
         DEBUG_SENSOR_LOG(PSTR("UBX: claim HW"));
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UBX: Serial UART%d"), UBXSerial->getUart());
+#endif
     }
   }
   else {

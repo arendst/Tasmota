@@ -271,6 +271,9 @@ void AzInit(void)
     AzSerial = new TasmotaSerial(Pin(GPIO_AZ_RXD), Pin(GPIO_AZ_TXD), 1);
     if (AzSerial->begin(9600)) {
       if (AzSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("AZ7: Serial UART%d"), AzSerial->getUart());
+#endif
       az_type = 1;
     }
   }

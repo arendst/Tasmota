@@ -332,6 +332,9 @@ void PmsInit(void) {
     PmsSerial = new TasmotaSerial(Pin(GPIO_PMS5003_RX), (PinUsed(GPIO_PMS5003_TX)) ? Pin(GPIO_PMS5003_TX) : -1, 1);
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("PMS: Serial UART%d"), PmsSerial->getUart());
+#endif
 
       if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings->pms_wake_interval = 0;
@@ -345,7 +348,6 @@ void PmsInit(void) {
           Pms.time = Settings->pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
         }
       }
-
       Pms.type = 1;
     }
   }

@@ -207,6 +207,9 @@ bool ModbusBridgeBegin(void) {
     if (2 == result) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: Serial UART%d"), modbusBridgeModbus->getUart());
+#endif
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
 
     if (nullptr == modbusBridge.buffer) {

@@ -56,6 +56,11 @@ extern "C" {
       if (!ok) {
         delete ser;
         be_raise(vm, "internal_error", "Unable to start serial");
+      } else {
+        if (ser->hardwareSerial()) {
+          ClaimSerial();  // Disable console using uart0
+        }
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BRY: Serial UART%d"), ser->getUart());
       }
       be_pushcomptr(vm, (void*) ser);
       be_setmember(vm, 1, ".p");

@@ -303,6 +303,9 @@ void ZigbeeInitSerial(void)
     if (ZigbeeSerial->hardwareSerial()) {
       ClaimSerial();
 		}
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Serial UART%d"), ZigbeeSerial->getUart());
+#endif  // ESP32
     zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
 
     zigbee.active = true;

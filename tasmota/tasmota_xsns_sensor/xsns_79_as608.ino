@@ -116,6 +116,9 @@ void As608Init(void) {
 
     As608Finger->begin(57600);
     if (As608Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("AS6: Serial UART%d"), As608Serial->getUart());
+#endif
 
     if (As608Finger->verifyPassword()) {
       As608Finger->getTemplateCount();

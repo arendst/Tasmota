@@ -307,6 +307,9 @@ void Bl09XXInit(void) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Serial UART%d"), Bl09XXSerial->getUart());
+#endif
     if (HLW_UREF_PULSE == EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) {
       for (uint32_t i = 0; i < 2; i++) {
         EnergySetCalibration(ENERGY_POWER_CALIBRATION, bl09xx_pref[Bl09XX.model], i);
