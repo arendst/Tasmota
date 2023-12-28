@@ -231,10 +231,10 @@ bool Xdrv47(uint32_t function) {
       case FUNC_JSON_APPEND:
         ftc532_show();
         break;
-      }
       case FUNC_ACTIVE:
         result = true;
         break;
+      }
   }
   // Return bool result
   return result;
