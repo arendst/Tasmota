@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Display of active drivers using command ``status 4``
 - ESP32 used UART information
 - HASPmota added `haspmota.page_show()` to change page
+- Berry added `introspect.set()` for class attributes
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)

@@ -643,6 +643,10 @@ BERRY_API bbool be_setmember(bvm *vm, int index, const char *k)
         bstring *key = be_newstr(vm, k);
         bmodule *mod = var_toobj(o);
         return be_module_setmember(vm, mod, key, v);
+    } else if (var_isclass(o)) {
+        bstring *key = be_newstr(vm, k);
+        bclass *cl = var_toobj(o);
+        return be_class_setmember(vm, cl, key, v);
     }
     return bfalse;
 }
