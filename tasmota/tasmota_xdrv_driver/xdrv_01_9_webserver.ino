@@ -2765,9 +2765,10 @@ void HandleUploadLoop(void) {
       if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
       UploadServices(1);
 
-//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
 
       upload_error_signalled = true;
+      Web.upload_error = 0;
     }
     return;
   }
