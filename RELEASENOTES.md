@@ -122,7 +122,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Sonoff Basic R4 Magic Switch [#20247](https://github.com/arendst/Tasmota/issues/20247)
 - Display of active drivers using command ``status 4``
 - NeoPool hydrolysis FL1 and Redox flag [#20258](https://github.com/arendst/Tasmota/issues/20258)
+- Support negative power on BL0942 using index 5..8 [#20322](https://github.com/arendst/Tasmota/issues/20322)
 - ESP32 used UART information
+- Berry added `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
+- HASPmota added `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
 
 ### Breaking Changed
