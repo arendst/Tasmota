@@ -96,7 +96,7 @@ static int m_findmember(bvm *vm)
 static int m_setmember(bvm *vm)
 {
     int top = be_top(vm);
-    if (top >= 3 && (be_isinstance(vm, 1) || be_ismodule(vm, 1)) && be_isstring(vm, 2)) {
+    if (top >= 3 && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
         be_setmember(vm, 1, be_tostring(vm, 2));
         be_return(vm);
     }
