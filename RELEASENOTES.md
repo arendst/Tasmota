@@ -139,6 +139,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' [#14689](https://github.com/arendst/Tasmota/issues/14689)
 - Support for Domoticz floor/room topics. Regression from v12.0.1 [#20299](https://github.com/arendst/Tasmota/issues/20299)
 - ESP32 piezo ceramic buzzer doesn't buzz [#20118](https://github.com/arendst/Tasmota/issues/20118)
+- LVGL fix type for lv_imgbtn [#20354](https://github.com/arendst/Tasmota/issues/20354)
 - Berry claiming UART0 if needed [#20324](https://github.com/arendst/Tasmota/issues/20324)
 - Matter Contact sensor was not triggering any update [#20232](https://github.com/arendst/Tasmota/issues/20232)
 
