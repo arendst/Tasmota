@@ -329,6 +329,7 @@ enum miel_hvac_parser_state {
 struct miel_hvac_parser {
 	enum miel_hvac_parser_state
 				 p_state;
+	uint8_t			 p_tmo;
 	uint8_t			 p_type;
 	uint8_t			 p_sum;
 	uint8_t			 p_len;
@@ -386,6 +387,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 		/* reset state */
 		p->p_sum = 0;
+		p->p_tmo = 0;
 
 		nstate = MIEL_HVAC_P_TYPE;
 		break;
@@ -1234,7 +1236,19 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STAGE,
 	};
 
+	struct miel_hvac_parser *p = &sc->sc_parser;
 	unsigned int i;
+
+	if (p->p_state != MIEL_HVAC_P_START) {
+		if (p->p_tmo) {
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			   ": read timeout"));
+			sc->sc_parser.p_state = MIEL_HVAC_P_START;
+		} else {
+			p->p_tmo = 1;
+			return;
+		}
+	}
 
 	if (miel_hvac_update_pending(sc)) {
 		struct miel_hvac_msg_update *update = &sc->sc_update;
