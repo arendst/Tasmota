@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' (#14689)
 - Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
 - Berry claiming UART0 if needed (#20324)
+- LVGL fix type for lv_imgbtn
 
 ### Removed
 

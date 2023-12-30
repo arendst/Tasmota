@@ -124,6 +124,8 @@ return_types = {
   "lv_anim_path_cb_t": "c",
   "lv_anim_ready_cb_t": "c",
   "lv_anim_start_cb_t": "c",
+  # lv_imgbtn
+  "lv_imgbtn_state_t": "i",
 
   # arrays
   "constchar * []": "str_arr",

@@ -651,8 +651,8 @@ const be_ntv_func_def_t lv_colorwheel_func[] = {
 /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
 const be_ntv_func_def_t lv_imgbtn_func[] = {
-  { "set_src", { (const void*) &lv_imgbtn_set_src, "", "(lv.lv_obj)(lv.lv_imgbtn_state)..." } },
-  { "set_state", { (const void*) &lv_imgbtn_set_state, "", "(lv.lv_obj)(lv.lv_imgbtn_state)" } },
+  { "set_src", { (const void*) &lv_imgbtn_set_src, "", "(lv.lv_obj)i..." } },
+  { "set_state", { (const void*) &lv_imgbtn_set_state, "", "(lv.lv_obj)i" } },
 };
 #endif // BE_LV_WIDGET_IMGBTN
 
