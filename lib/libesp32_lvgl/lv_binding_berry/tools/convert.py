@@ -126,6 +126,12 @@ return_types = {
   "lv_anim_start_cb_t": "c",
   # lv_imgbtn
   "lv_imgbtn_state_t": "i",
+  # lv_btnmatrix
+  "lv_btnmatrix_ctrl_t": "i",
+
+  "lv_group_refocus_policy_t": "i",
+  "lv_roller_mode_t": "i",
+  "lv_table_cell_ctrl_t": "i",
 
   # arrays
   "constchar * []": "str_arr",
