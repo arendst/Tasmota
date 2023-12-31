@@ -216,6 +216,7 @@ enum UserSelectablePins {
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
   GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
   GPIO_PIPSOLAR_TX, GPIO_PIPSOLAR_RX,   // pipsolar inverter
+  GPIO_PULSE_COUNTER,                   // Pulse Counter Modules
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -479,6 +480,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_DAC "|"
   D_GPIO_MAGIC_SWITCH "|"
   D_SENSOR_PIPSOLAR_TX "|" D_SENSOR_PIPSOLAR_RX "|"
+  "Pulse Counter" "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1182,6 +1184,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ETH_PHY_MDC),
   AGPIO(GPIO_ETH_PHY_MDIO),             // Ethernet
 #endif  // USE_ETHERNET
+
+#ifdef USE_PULSE_COUNTER
+  AGPIO(GPIO_PULSE_COUNTER) + MAX_PULSE_COUNTER_MODULES, //Pulse Counter Modules
+#endif
 
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 multiple Analog / Digital converter inputs
@@ -2874,11 +2880,11 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0,  RTC
     AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1,  RTC
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2,  RTC
-    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3,  RTC 
-    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4,  RTC 
-    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, RTC 
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3,  RTC
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4,  RTC
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, RTC
     AGPIO(GPIO_USER),            // 6       IO                  GPIO6,
-    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, 
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7,
     AGPIO(GPIO_USER),            // 8       IO                  GPIO8, Strapping
     AGPIO(GPIO_USER),            // 9       IO                  GPIO9, Strapping
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10
@@ -2983,7 +2989,7 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, LP_GPIO0
     AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, LP_GPIO1
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, LP_GPIO2
-    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3, LP_GPIO3 
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3, LP_GPIO3
     AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, LP_GPIO4, Strapping
     AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC1_CH5, LP_GPIO5, Strapping
     AGPIO(GPIO_USER),            // 6       IO                  GPIO6, ADC1_CH6, LP_GPIO6
