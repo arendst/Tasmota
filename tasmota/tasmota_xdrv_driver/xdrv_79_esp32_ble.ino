@@ -421,6 +421,7 @@ uint64_t BLELastLoopTime = 0;
 int BLEScanTimeS = 20; // scan duraiton in S
 int BLEMaxTimeBetweenAdverts = 120; // we expect an advert at least this frequently, else restart BLE (in S)
 uint64_t BLEScanLastAdvertismentAt = 0;
+uint32_t BLEScanLastAdvertisementAtResets = 0;
 uint32_t lastopid = 0; // incrementing uinique opid
 uint32_t BLEResets = 0;
 // controls request of details about one device
@@ -1333,6 +1334,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
+    BLEScanLastAdvertisementAtResets = BLEResets; // note the number of resets when the last advertisement occurred
 
     uint32_t totalCount = BLEAdvertisment.totalCount;
     memset(&BLEAdvertisment, 0, sizeof(BLEAdvertisment));
@@ -1604,6 +1606,7 @@ static void BLEInit(void) {
 
   uint64_t now = esp_timer_get_time();
   BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+  BLEScanLastAdvertisementAtResets = BLEResets; // initialise the number of resets for the last advertisement
   BLELastLoopTime = now;
 
   BLEInitState = 1;
@@ -1692,6 +1695,7 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
   // don't restart because of these for a while
   BLELastLoopTime = now; // initialise the time of the last advertisment
   BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+  BLEScanLastAdvertisementAtResets = BLEResets; // initialise the number of resets for the last advertisement
 
 }
 
@@ -1839,6 +1843,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   // set the last advert time each time we start an operation
   uint64_t now = esp_timer_get_time();
   BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+  BLEScanLastAdvertisementAtResets = BLEResets; // initialise the number of resets for the last advertisement
 
 
   generic_sensor_t* op = *pCurrentOperation;
@@ -2718,6 +2723,7 @@ void CmndBLEMode(void){
         } break;
       }
       BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
+      BLEScanLastAdvertisementAtResets = BLEResets; // note the number of resets when the last advertisement occurred
     } break;
     case BLEModeRegularScan:{
       uint64_t now = esp_timer_get_time();
@@ -2737,6 +2743,7 @@ void CmndBLEMode(void){
         } break;
       }
       BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
+      BLEScanLastAdvertisementAtResets = BLEResets; // note the number of resets when the last advertisement occurred
     } break;
     default:
       ResponseCmndChar("InvalidIndex");
@@ -3244,6 +3251,7 @@ static void mainThreadBLETimeouts() {
   if (!BLERunning){
     BLELastLoopTime = now; // initialise the time of the last advertisment
     BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+    BLEScanLastAdvertisementAtResets = BLEResets; // initialise the number of resets when the last advertisement
     return;
   }
 
@@ -3260,10 +3268,18 @@ static void mainThreadBLETimeouts() {
   // if no adverts for 120s, and BLE is running, retsart NimBLE.
   // belt and braces....
   uint64_t adTimeout = ((uint64_t)BLEMaxTimeBetweenAdverts)*1000L*1000L;
-  if (BLEScanLastAdvertismentAt + adTimeout < now){
-    BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+  if ((BLEScanLastAdvertisementAtResets == BLEResets) && (BLEScanLastAdvertismentAt + adTimeout < now)){
     BLERestartNimBLE = 1;
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: scan stall? no adverts > 120s, restart BLE"));
+
+    BLERestartBLEReason = BLE_RESTART_BLE_REASON_ADVERT_BLE_TIMEOUT;
+  }
+
+  // if no adverts for 240s, and NimBLE restart didn't fix the problem, restart Tasmota.
+  if ((BLEScanLastAdvertisementAtResets != BLEResets) && (BLEScanLastAdvertismentAt + (2L*adTimeout) < now))
+  {
+    BLERestartTasmota = 10;
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLE: scan still stall? no adverts > 240s, restart Tasmota in 10s"));
 
     BLERestartBLEReason = BLE_RESTART_BLE_REASON_ADVERT_BLE_TIMEOUT;
   }
