@@ -2587,7 +2587,7 @@ void CmndBLEAdv(void){
 
 
 //////////////////////////////////////////////////////////////
-// Determine what to do with advertismaents
+// Determine what to do with advertisements
 // BLEAdv0 -> suppress MQTT about devices found
 // BLEAdv1 -> send MQTT about devices found after each scan
 void CmndBLEDebug(void){
