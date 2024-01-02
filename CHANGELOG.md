@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota added `haspmota.page_show()` to change page (#20333)
 - Berry added `introspect.set()` for class attributes (#20339)
 - Support negative power on BL0942 using index 5..8 (#20322)
+- HASPmota type `chart`
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)

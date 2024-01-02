@@ -20,7 +20,7 @@ var classes = [
   "btn", "switch", "checkbox",
   "label", "spinner", "line", "img", "roller", "btnmatrix",
   "bar", "slider", "arc", "textarea", "dropdown",
-  "qrcode"
+  "qrcode", "chart"
 ]
 var f = open("haspmota.c", "w")
 for c:classes
@@ -73,6 +73,9 @@ class lvh_obj
     "y": "y",
     "w": "width",
     "h": "height",
+    # special case for height/width that can be in styles
+    "height": "style_height",
+    "width": "style_width",
     # arc
     # "asjustable": nil,
     # "mode": nil,
@@ -96,6 +99,7 @@ class lvh_obj
     "bg_grad_color": "style_bg_grad_color",
     "bg_grad_dir": "style_bg_grad_dir",
     "line_color": "style_line_color",
+    "line_rounded": "style_line_rounded",
     "pad_left": "style_pad_left",
     "pad_right": "style_pad_right",
     "pad_top": "style_pad_top",
@@ -836,6 +840,12 @@ class lvh_obj
       end
     end
 
+    # finally try any `get_XXX` within the LVGL object
+    f = introspect.get(self._lv_obj, "get_" + k)
+    if type(f) == 'function'                  # found and function, call it
+      return f(self._lv_obj)
+    end
+
     # fallback to exception if attribute unknown or not a function
     raise "value_error", "unknown attribute " + str(k)
   end
@@ -905,7 +915,16 @@ class lvh_obj
         print("HSP: Could not find function set_"+kv)
       end
     else
-      print("HSP: unknown attribute:", k)
+      f = introspect.get(self._lv_obj, "set_" + k)
+      if type(f) == 'function'
+        try
+          f(self._lv_obj, v)
+        except .. as e, m
+          raise e, m + " for " + k
+        end
+      else
+        print("HSP: unknown attribute:", k)
+      end
     end
   end
 
@@ -1329,6 +1348,79 @@ class lvh_bar : lvh_obj
 end
 
 #################################################################################
+# Special case for lv.chart
+# Adapted to getting values one after the other
+#################################################################################
+class lvh_chart : lvh_obj
+  static _lv_class = lv.chart
+  # ser1/ser2 contains the first/second series of data
+  var ser1, ser2
+  # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
+  var y_min, y_max
+  # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
+  var h_div, v_div
+
+  def post_init()
+    # default values from LVGL are 0..100
+    self.y_min = 0
+    self.y_max = 100
+    # default values
+    #define LV_CHART_HDIV_DEF 3
+    #define LV_CHART_VDIV_DEF 5
+    self.h_div = 3
+    self.v_div = 5
+
+    self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
+
+    self.ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
+    self.ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+  end
+
+  def add_point(v)
+    self._lv_obj.set_next_value(self.ser1, v)
+  end
+  def add_point2(v)
+    self._lv_obj.set_next_value(self.ser2, v)
+  end
+
+  def set_val(v)
+    self.add_point(v)
+  end
+  def set_val2(v)
+    self.add_point2(v)
+  end
+  def get_y_min()
+    return self.y_min
+  end
+  def get_y_max()
+    return self.y_max
+  end
+  def set_y_min(y_min)
+    self.y_min = y_min
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  end
+  def set_y_max(y_max)
+    self.y_max = y_max
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  end
+
+  def set_series1_color(color)
+    self._lv_obj.set_series_color(self.ser1, color)
+  end
+  def set_series2_color(color)
+    self._lv_obj.set_series_color(self.ser2, color)
+  end
+  def set_h_div_line_count(h_div)
+    self.h_div = h_div
+    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
+  end
+  def set_v_div_line_count(v_div)
+    self.v_div = v_div
+    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
+  end
+end
+
+#################################################################################
 #
 # All other subclasses than just map the LVGL object
 # and doesn't have any specific behavior
@@ -1523,6 +1615,8 @@ class HASPmota
  	# static lvh_gauge = lvh_gauge
 	static lvh_textarea = lvh_textarea    # additional?
   static lvh_qrcode = lvh_qrcode
+  # special cases
+  static lvh_chart = lvh_chart
 
   static def_templ_name = "pages.jsonl" # default template name
 
@@ -1912,7 +2006,7 @@ class HASPmota
       end
 
       if obj_class == nil
-        print("HSP: cannot find object of type " + str(obj_type))
+        print("HSP: Cannot find object of type " + str(obj_type))
         return
       end
       
