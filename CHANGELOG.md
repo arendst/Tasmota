@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.1]
+## [13.3.0.2]
+### Added
+- HASPmota type `chart` (#20372)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [13.3.0.1] 20240101
 ### Added
 - Support for Sonoff Basic R4 Magic Switch (#20247)
 - Support for CST816S touch interface (#20213)
@@ -11,10 +24,9 @@ All notable changes to this project will be documented in this file.
 - Matter support for password for remote Tasmota devices (#20296)
 - Display of active drivers using command ``status 4``
 - ESP32 used UART information
-- HASPmota added `haspmota.page_show()` to change page (#20333)
-- Berry added `introspect.set()` for class attributes (#20339)
+- HASPmota `haspmota.page_show()` to change page (#20333)
+- Berry `introspect.set()` for class attributes (#20339)
 - Support negative power on BL0942 using index 5..8 (#20322)
-- HASPmota type `chart`
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)
@@ -32,8 +44,6 @@ All notable changes to this project will be documented in this file.
 - Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
 - Berry claiming UART0 if needed (#20324)
 - LVGL fix type for lv_imgbtn (#20354)
-
-### Removed
 
 ## [Released]
 

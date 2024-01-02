@@ -116,7 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.3.0.1
+## Changelog v13.3.0.2
 ### Added
 - Support for CST816S touch interface [#20213](https://github.com/arendst/Tasmota/issues/20213)
 - Support for Sonoff Basic R4 Magic Switch [#20247](https://github.com/arendst/Tasmota/issues/20247)
@@ -124,8 +124,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool hydrolysis FL1 and Redox flag [#20258](https://github.com/arendst/Tasmota/issues/20258)
 - Support negative power on BL0942 using index 5..8 [#20322](https://github.com/arendst/Tasmota/issues/20322)
 - ESP32 used UART information
-- Berry added `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
-- HASPmota added `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
+- Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
+- HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
+- HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
 
 ### Breaking Changed
