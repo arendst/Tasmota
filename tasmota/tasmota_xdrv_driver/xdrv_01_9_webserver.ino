@@ -2765,10 +2765,9 @@ void HandleUploadLoop(void) {
       if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
       UploadServices(1);
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
 
       upload_error_signalled = true;
-      Web.upload_error = 0;
     }
     return;
   }
@@ -2779,7 +2778,10 @@ void HandleUploadLoop(void) {
   if (UPLOAD_FILE_START == upload.status) {
     Web.upload_error = 0;
     upload_error_signalled = false;
-    upload_size = 0;
+    char tmp[16];
+    
+    WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
+    upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
 
     UploadServices(0);
 
@@ -2787,18 +2789,25 @@ void HandleUploadLoop(void) {
       Web.upload_error = 1;  // No file selected
       return;
     }
-    SettingsSave(1);  // Free flash for upload
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s"), upload.filename.c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_FILE " %s (%d bytes)"), upload.filename.c_str(), upload_size);
 
 #ifdef USE_UFILESYS
     if (UPL_UFSFILE == Web.upload_file_type) {
+      const uint32_t freeBytes = (UfsFree() * 1024);
+      if (upload_size > freeBytes) {
+        Web.upload_error = 9;   // File too large
+        return;
+      }
+
       if (!UfsUploadFileOpen(upload.filename.c_str())) {
-        Web.upload_error = 2;
+        Web.upload_error = 2;   // Not enough space
         return;
       }
     }
 #endif  // USE_UFILESYS
+
+    SettingsSave(1);  // Free flash for upload
   }
 
   // ***** Step2: Write upload file
@@ -2892,7 +2901,7 @@ void HandleUploadLoop(void) {
       Web.config_block_count++;
     }
 #ifdef USE_UFILESYS
-    else if (UPL_UFSFILE == Web.upload_file_type) {
+    else if (!Web.upload_error && UPL_UFSFILE == Web.upload_file_type) {
       if (!UfsUploadFileWrite(upload.buf, upload.currentSize)) {
         Web.upload_error = 9;  // File too large
         return;
@@ -2927,7 +2936,7 @@ void HandleUploadLoop(void) {
       }
     }
 #ifdef USE_UFILESYS
-    else if (UPL_UFSFILE == Web.upload_file_type) {
+    else if (!Web.upload_error && UPL_UFSFILE == Web.upload_file_type) {
       UfsUploadFileClose();
     }
 #endif  // USE_UFILESYS
