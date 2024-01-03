@@ -940,6 +940,7 @@ int genericUnitReadFn(int slot){
 int genericTimeWriteFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
+    case MI_LYWSD02MMC:
     case MI_LYWSD02: {
       union {
         uint8_t buf[5];
@@ -1378,6 +1379,10 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
     }
     memcpy(parsed->macdata.mac, &data[byteindex], 6);
     byteindex += 6;
+  } else {
+    // Use slotmac if no MAC in frame
+    memcpy(parsed->macdata.mac, slotmac, 6);
+    MI32_ReverseMAC(parsed->macdata.mac);
   }
 
   int decres = 1;
@@ -1386,10 +1391,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
     if (len < byteindex + 3+4+1){
       return 0;
     }
-    const uint8_t* mac = slotmac;
-    if (parsed->framedata.MACFlag){
-      mac = parsed->macdata.mac;
-    }
+    const uint8_t* mac = parsed->macdata.mac;
     uint8_t nonce[12];
     uint8_t *p = nonce;
     memcpy(p, mac, 6);
