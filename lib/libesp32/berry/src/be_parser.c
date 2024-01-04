@@ -1571,15 +1571,11 @@ static void class_stmt(bparser *parser)
         begin_block(parser->finfo, &binfo, 0);
 
         bstring *class_str = parser_newstr(parser, "_class");   /* we always define `_class` local variable */
-        if (e.type == ETLOCAL) {
-            bexpdesc e1;                        /* if inline class, we add a second local variable for _class */
-            init_exp(&e1, ETLOCAL, 0);
-            e1.v.idx = new_localvar(parser, class_str);
-            be_code_setvar(parser->finfo, &e1, &e, 1);
-        } else {                                /* if global class, we just reuse the newly created class in the register */
-            init_exp(&e, ETLOCAL, 0);
-            e.v.idx = new_localvar(parser, class_str);
-        }
+        bexpdesc e1;                        /* if inline class, we add a second local variable for _class */
+        init_exp(&e1, ETLOCAL, 0);
+        e1.v.idx = new_localvar(parser, class_str);
+        be_code_setvar(parser->finfo, &e1, &e, 1);
+
         begin_varinfo(parser, class_str);
 
         class_block(parser, c, &e);
