@@ -554,7 +554,7 @@ void MESHevery50MSecond(void) {
               if (!_peer.isAlive) {
                 _peer.isAlive = true;
                 char stopic[TOPSZ];
-                GetTopic_P(stopic, TELE, _peer.topic, PSTR("LWT"));
+                GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
                 MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
               }
               break;
@@ -602,7 +602,7 @@ void MESHEverySecond(void) {
     if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > 3000) {
       _peer.isAlive = false;
       char stopic[TOPSZ];
-      GetTopic_P(stopic, TELE, _peer.topic, PSTR("LWT"));
+      GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
       MqttPublishPayload(stopic, PSTR(MQTT_LWT_OFFLINE));
     }
   }
