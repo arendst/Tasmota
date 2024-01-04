@@ -547,6 +547,7 @@ void MESHevery50MSecond(void) {
         }
         break;
       case PACKET_TYPE_HEARTBEAT:
+#if TASMESH_HEARTBEAT
           for (auto &_peer : MESH.peers){
             if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
               _peer.lastHeartbeatFromPeer = millis();
@@ -560,7 +561,10 @@ void MESHevery50MSecond(void) {
               break;
             }
           }
-      
+#else
+        break;
+#endif // TASMESH_HEARTBEAT
+
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
       break;
@@ -598,14 +602,16 @@ void MESHEverySecond(void) {
     MESH.multiPackets.erase(MESH.multiPackets.begin());
   }
 
+#if TASMESH_HEARTBEAT
   for (auto &_peer : MESH.peers){
-    if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > 3000) {
+    if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > TASMESH_OFFLINE_DELAY * 1000) {
       _peer.isAlive = false;
       char stopic[TOPSZ];
       GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
       MqttPublishPayload(stopic, PSTR(MQTT_LWT_OFFLINE));
     }
   }
+#endif TASMESH_HEARTBEAT
 }
 
 #else  // ESP8266
@@ -674,6 +680,7 @@ void MESHEverySecond(void) {
       WifiBegin(3, MESH.channel);
     }
 
+#if TASMESH_HEARTBEAT
     MESH.sendPacket.counter++;
     MESH.sendPacket.TTL = 2;
     MESH.sendPacket.chunks = 0;
@@ -681,6 +688,7 @@ void MESHEverySecond(void) {
     MESH.sendPacket.chunkSize = 0;
     MESH.sendPacket.type = PACKET_TYPE_HEARTBEAT;
     MESHsendPacket(&MESH.sendPacket);
+#endif // TASMESH_HEARTBEAT
   }
 }
 
