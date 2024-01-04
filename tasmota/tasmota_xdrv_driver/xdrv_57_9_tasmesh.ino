@@ -472,6 +472,22 @@ void MESHevery50MSecond(void) {
     // do something on the node
     // AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: %30_H), (uint8_t *)&MESH.packetToConsume.front());
 
+#ifdef USE_TASMESH_HEARTBEAT
+    for (auto &_peer : MESH.peers){
+      if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
+        _peer.lastHeartbeatFromPeer = millis();
+
+        if (!_peer.isAlive) {
+          _peer.isAlive = true;
+          char stopic[TOPSZ];
+          GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+          MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
+        }
+        break;
+      }
+    }
+#endif // USE_TASMESH_HEARTBEAT
+
     MESHencryptPayload(&MESH.packetToConsume.front(), 0);
     switch (MESH.packetToConsume.front().type) {
       // case PACKET_TYPE_REGISTER_NODE:
@@ -547,21 +563,6 @@ void MESHevery50MSecond(void) {
         }
         break;
       case PACKET_TYPE_HEARTBEAT:
-#ifdef USE_TASMESH_HEARTBEAT
-        for (auto &_peer : MESH.peers){
-          if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
-            _peer.lastHeartbeatFromPeer = millis();
-
-            if (!_peer.isAlive) {
-              _peer.isAlive = true;
-              char stopic[TOPSZ];
-              GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
-              MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
-            }
-            break;
-          }
-        }
-#endif // USE_TASMESH_HEARTBEAT
         break;
 
       default:
