@@ -548,22 +548,21 @@ void MESHevery50MSecond(void) {
         break;
       case PACKET_TYPE_HEARTBEAT:
 #if TASMESH_HEARTBEAT
-          for (auto &_peer : MESH.peers){
-            if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
-              _peer.lastHeartbeatFromPeer = millis();
+        for (auto &_peer : MESH.peers){
+          if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
+            _peer.lastHeartbeatFromPeer = millis();
 
-              if (!_peer.isAlive) {
-                _peer.isAlive = true;
-                char stopic[TOPSZ];
-                GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
-                MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
-              }
-              break;
+            if (!_peer.isAlive) {
+              _peer.isAlive = true;
+              char stopic[TOPSZ];
+              GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+              MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
             }
+            break;
           }
-#else
-        break;
+        }
 #endif // TASMESH_HEARTBEAT
+        break;
 
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
