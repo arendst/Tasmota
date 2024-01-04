@@ -124,7 +124,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool hydrolysis FL1 and Redox flag [#20258](https://github.com/arendst/Tasmota/issues/20258)
 - Support negative power on BL0942 using index 5..8 [#20322](https://github.com/arendst/Tasmota/issues/20322)
 - ESP32 used UART information
-- ESP32 experimental support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 - Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)

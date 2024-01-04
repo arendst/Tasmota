@@ -6,7 +6,6 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.2]
 ### Added
 - HASPmota type `chart` (#20372)
-- ESP32 experimental support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 
 ### Breaking Changed
 
