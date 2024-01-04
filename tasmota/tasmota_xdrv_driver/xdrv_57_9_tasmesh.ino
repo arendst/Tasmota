@@ -546,6 +546,21 @@ void MESHevery50MSecond(void) {
 //          AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
         }
         break;
+      case PACKET_TYPE_HEARTBEAT:
+          for (auto &_peer : MESH.peers){
+            if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
+              _peer.lastHeartbeatFromPeer = millis();
+
+              if (!_peer.isAlive) {
+                _peer.isAlive = true;
+                char stopic[TOPSZ];
+                GetTopic_P(stopic, TELE, _peer.topic, PSTR("LWT"));
+                MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
+              }
+              break;
+            }
+          }
+      
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
       break;
@@ -581,6 +596,15 @@ void MESHEverySecond(void) {
   if (MESH.multiPackets.size() > 3) {
     AddLog(LOG_LEVEL_INFO, PSTR("MSH: Multi packets in buffer %u"), MESH.multiPackets.size());
     MESH.multiPackets.erase(MESH.multiPackets.begin());
+  }
+
+  for (auto &_peer : MESH.peers){
+    if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > 3000) {
+      _peer.isAlive = false;
+      char stopic[TOPSZ];
+      GetTopic_P(stopic, TELE, _peer.topic, PSTR("LWT"));
+      MqttPublishPayload(stopic, PSTR(MQTT_LWT_OFFLINE));
+    }
   }
 }
 
@@ -649,6 +673,14 @@ void MESHEverySecond(void) {
       MESHsetWifi(1);
       WifiBegin(3, MESH.channel);
     }
+
+    MESH.sendPacket.counter++;
+    MESH.sendPacket.TTL = 2;
+    MESH.sendPacket.chunks = 0;
+    MESH.sendPacket.chunk = 0;
+    MESH.sendPacket.chunkSize = 0;
+    MESH.sendPacket.type = PACKET_TYPE_HEARTBEAT;
+    MESHsendPacket(&MESH.sendPacket);
   }
 }
 
