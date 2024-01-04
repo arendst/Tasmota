@@ -90,11 +90,11 @@ struct mesh_peer_t {
   uint8_t MAC[6];
   uint32_t lastMessageFromPeer;    // Time of last message from peer
 #ifdef ESP32
-  bool isAlive;                    // True if we have gotten a heartbeat recently
   char topic[MESH_TOPICSZ];
-#if TASMESH_HEARTBEAT
+#ifdef USE_TASMESH_HEARTBEAT
+  bool isAlive;                    // True if we have gotten a heartbeat recently
   uint32_t lastHeartbeatFromPeer;  // Time of last heartbeat from peer
-#endif // TASMESH_HEARTBEAT
+#endif // USE_TASMESH_HEARTBEAT
 #endif //ESP32
 };
 
@@ -169,9 +169,9 @@ enum MESH_Packet_Type {            // Type of packet
   PACKET_TYPE_REFRESH_NODE,        // refresh node infos with encrypted broker-MAC, announce mqtt topic to ESP32-proxy - broker will send time slightly delayed
   PACKET_TYPE_MQTT,                // send regular mqtt messages, single or multipackets
   PACKET_TYPE_WANTTOPIC,           // the broker has no topic for this peer/node
-#if TASMESH_HEARTBEAT
+#ifdef USE_TASMESH_HEARTBEAT
   PACKET_TYPE_HEARTBEAT            // sent periodically from nodes to the broker to signal aliveness
-#endif // TASMESH_HEARTBEAT
+#endif // USE_TASMESH_HEARTBEAT
 };
 
 /*********************************************************************************************\
