@@ -17,6 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define USE_ESP32_GPIO_VIEWER
+#ifdef USE_ESP32_GPIO_VIEWER
+#include <gpio_viewer.h> // Must me the first include in your project
+GPIOViewer gpio_viewer;
+#endif  // USE_ESP32_GPIO_VIEWER
+
 // Location specific includes
 #ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
@@ -892,6 +898,15 @@ void Scheduler(void) {
 #ifndef SYSLOG_UPDATE_SECOND
   SyslogAsync(false);
 #endif  // SYSLOG_UPDATE_SECOND
+
+#ifdef USE_ESP32_GPIO_VIEWER
+  static bool gpio_viewer_wifi_connected = false;
+  if (!gpio_viewer_wifi_connected && !TasmotaGlobal.global_state.network_down) {
+    gpio_viewer_wifi_connected = true;
+    gpio_viewer.setSamplingInterval(200);  // You can set the sampling interval in ms, if not set default is 100ms
+    gpio_viewer.begin();
+  }
+#endif  // USE_ESP32_GPIO_VIEWER
 }
 
 void loop(void) {
