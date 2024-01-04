@@ -395,7 +395,9 @@
                                                  // Enabled by default on ESP32 and variants
 
 // -- ESP-NOW -------------------------------------
-//#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
+#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
+#define TASMESH_HEARTBEAT      1                 // If enabled, the broker will detect when nodes come online and offline and send Birth and LWT messages over MQTT correspondingly (0 = off, 1 = on)
+#define TASMESH_OFFLINE_DELAY  3                 // Maximum number of seconds since the last heartbeat before the broker considers a node to be offline
 
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA with ESP8266 (+13k code)
