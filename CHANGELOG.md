@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.2]
 ### Added
 - HASPmota type `chart` (#20372)
+- Berry add support for `tcpclientasync` in `tcpserver`
 
 ### Breaking Changed
 
