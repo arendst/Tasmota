@@ -1442,7 +1442,9 @@ void CmndThermostatModeSet(void)
         // Make sure the relay is switched to off once if the thermostat is being disabled,
         // or it will get stuck on (danger!)
         Thermostat[ctr_output].status.command_output = IFACE_OFF;
+        struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
         ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+        XdrvMailbox = save_XdrvMailbox;
       }
       if ((value > THERMOSTAT_OFF) && (value < THERMOSTAT_MODES_MAX)) {
         DebugControllerParameters(ctr_output);
