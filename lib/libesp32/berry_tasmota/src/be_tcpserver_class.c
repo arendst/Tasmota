@@ -13,7 +13,7 @@ extern void tcpserver_deinit(void *server_tcp);                         BE_FUNC_
 extern void tcpserver_close(void *server);                              BE_FUNC_CTYPE_DECLARE(tcpserver_close, "", ".")
 extern bbool tcpserver_hasclient(void *server);                         BE_FUNC_CTYPE_DECLARE(tcpserver_hasclient, "b", ".")
 extern void * tcpserver_accept(struct bvm *vm, void *server);           BE_FUNC_CTYPE_DECLARE(tcpserver_accept, "tcpclient", "@.")
-
+extern void * tcpserver_acceptasync(struct bvm *vm, void *server);      BE_FUNC_CTYPE_DECLARE(tcpserver_acceptasync, "tcpclientasync", "@.")
 
 #include "be_fixed_be_class_tcpserver.h"
 
@@ -26,6 +26,7 @@ class be_class_tcpserver (scope: global, name: tcpserver) {
     close, ctype_func(tcpserver_close)
     hasclient, ctype_func(tcpserver_hasclient)
     accept, ctype_func(tcpserver_accept)
+    acceptasync, ctype_func(tcpserver_acceptasync)
 }
 @const_object_info_end */
 
