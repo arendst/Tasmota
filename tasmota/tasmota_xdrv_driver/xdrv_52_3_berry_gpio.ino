@@ -324,8 +324,25 @@ extern "C" {
     }
     return -1;
   }
-// extern void gp_get_duty(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp_get_duty, "i", "i");
-// extern void gp_get_duty_resolution(int32_t pin);    BE_FUNC_CTYPE_DECLARE(gp_get_duty_resolution, "i", "i");
+
+  // gpio.get_pin_type(phy_gpio:int) -> int
+  //
+  // Get the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin(int32_t pin);
+  extern int gp_get_pin(int32_t pin) {
+    return GetPin(pin) / 32;
+  }
+
+  // gpio.get_pin_type_index(phy_gpio:int) -> int
+  //
+  // Get the sub-index for the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin_index(int32_t pin);
+  extern int gp_get_pin_index(int32_t pin) {
+    return GetPin(pin) % 32;
+  }
+
 }
 
 #endif  // USE_BERRY
