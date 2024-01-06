@@ -128,63 +128,63 @@ uint8_t PIPSOLARpollingValuePosition = PIPSOLARpollingListCount;
 
 // (233.6 50.0 230.2 49.9 0299 0236 005 363 51.80 000 036 0039 00.1 000.0 00.00 00005 00010000 00 00 00000 010
 struct PipSolar::ValueSetting PIPSOLARqpigsValueSettings[] = {
-    {{}, PipSolar::ValueSetting::Type::floatType, 1, 5, PSTR("Grid_voltage"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 7, 4, PSTR("Grid_frequency"), PSTR("Hz"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 12, 5, PSTR("AC_output_voltage"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 18, 4, PSTR("AC_output_frequency"), PSTR("Hz"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 23, 4, PSTR("AC_output_apparent_power"), PSTR("W"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 28, 4, PSTR("AC_output_active_power"), PSTR("W"), true},
-    {{}, PipSolar::ValueSetting::Type::intType, 33, 3, PSTR("Output_load_percent"), PSTR("%"), true},
-    {{}, PipSolar::ValueSetting::Type::intType, 37, 3, PSTR("BUS_voltage"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 41, 5, PSTR("Battery_voltage"), PSTR("V"), true},
-    {{}, PipSolar::ValueSetting::Type::intType, 47, 3, PSTR("Battery_charging_current"), PSTR("A"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 51, 3, PSTR("Battery_capacity"), PSTR("Ah"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 55, 4, PSTR("Heat_sink_temperature"), PSTR("°C"), true},
-    {{}, PipSolar::ValueSetting::Type::floatType, 60, 4, PSTR("PV_Input_current"), PSTR("A"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 65, 5, PSTR("PV_Input_voltage"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::floatType, 71, 5, PSTR("Battery_voltage_from_SCC"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 77, 5, PSTR("Battery_discharge_current"), PSTR("A"), false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 1, 5, "Grid_voltage", "V", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 7, 4, "Grid_frequency", "Hz", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 12, 5, "AC_output_voltage", "V", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 18, 4, "AC_output_frequency", "Hz", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 23, 4, "AC_output_apparent_power", "W", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 28, 4, "AC_output_active_power", "W", true},
+    {{}, PipSolar::ValueSetting::Type::intType, 33, 3, "Output_load_percent", "%", true},
+    {{}, PipSolar::ValueSetting::Type::intType, 37, 3, "BUS_voltage", "V", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 41, 5, "Battery_voltage", "V", true},
+    {{}, PipSolar::ValueSetting::Type::intType, 47, 3, "Battery_charging_current", "A", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 51, 3, "Battery_capacity", "Ah", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 55, 4, "Heat_sink_temperature", "°C", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 60, 4, "PV_Input_current", "A", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 65, 5, "PV_Input_voltage", "V", false},
+    {{}, PipSolar::ValueSetting::Type::floatType, 71, 5, "Battery_voltage_from_SCC", "V", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 77, 5, "Battery_discharge_current", "A", false},
     // deviceStatus 8x
-    {{}, PipSolar::ValueSetting::Type::stringType, 83, 8, PSTR("Device status"), PSTR(""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 83, 1, PSTR("a7"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 84, 1, PSTR("a6"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 85, 1, PSTR("a5"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 86, 1, PSTR("a4"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 87, 1, PSTR("a3"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 88, 1, PSTR("a2"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 89, 1, PSTR("a1"), ""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 90, 1, PSTR("a0"), ""), false},
+    {{}, PipSolar::ValueSetting::Type::stringType, 83, 8, "Device status", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 83, 1, "a7", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 84, 1, "a6", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 85, 1, "a5", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 86, 1, "a4", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 87, 1, "a3", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 88, 1, "a2", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 89, 1, "a1", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 90, 1, "a0", "", false},
 
-    {{}, PipSolar::ValueSetting::Type::intType, 92, 2, PSTR("Battery_voltage_offset_ffo"), PSTR("V"), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 95, 2, PSTR("EEPROM_version"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intType, 98, 5, PSTR("PV_Charging_power"), PSTR("W"), true},
+    {{}, PipSolar::ValueSetting::Type::intType, 92, 2, "Battery_voltage_offset_ffo", "V", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 95, 2, "EEPROM_version", "", false},
+    {{}, PipSolar::ValueSetting::Type::intType, 98, 5, "PV_Charging_power", "W", true},
     // deviceStatus 3x
-    {{}, PipSolar::ValueSetting::Type::stringType, 100, 3, PSTR("Device status"), PSTR(""), false},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 100, 1, PSTR("Device_status[8]"), PSTR("")},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 101, 1, PSTR("Device_status[9]"), PSTR("")},
-    //{{}, PipSolar::ValueSetting::Type::boolType, 102, 1, PSTR("Device_status[10]"), PSTR("")},
+    {{}, PipSolar::ValueSetting::Type::stringType, 100, 3, "Device status", "", false},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 100, 1, "Device_status[8]", ""},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 101, 1, "Device_status[9]", ""},
+    //{{}, PipSolar::ValueSetting::Type::boolType, 102, 1, "Device_status[10]", ""},
 };
 constexpr uint8_t PIPSOLARqpigsValueSettingsCount = sizeof(PIPSOLARqpigsValueSettings) / sizeof(PipSolar::ValueSetting);
 
 // (B
 struct PipSolar::ValueSetting PIPSOLARqmodValueSettings[] = {
-    {{}, PipSolar::ValueSetting::Type::charType, 1, 1, PSTR("Mode"), PSTR(""), true},
+    {{}, PipSolar::ValueSetting::Type::charType, 1, 1, "Mode", "", true},
 };
 constexpr uint8_t PIPSOLARqmodValueSettingsCount = sizeof(PIPSOLARqmodValueSettings) / sizeof(PipSolar::ValueSetting);
 
 // (YYYYMMDDHHMMSS
 struct PipSolar::ValueSetting PIPSOLARqtValueSettings[] = {
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 1, 4, PSTR("Year"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 5, 2, PSTR("Month"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 7, 2, PSTR("Day"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 9, 2, PSTR("Hour"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 11, 2, PSTR("Minute"), PSTR(""), false},
-    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 13, 2, PSTR("Second"), PSTR(""), false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 1, 4, "Year", "", false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 5, 2, "Month", "", false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 7, 2, "Day", "", false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 9, 2, "Hour", "", false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 11, 2, "Minute", "", false},
+    {{}, PipSolar::ValueSetting::Type::intTypeCopy, 13, 2, "Second", "", false},
 };
 constexpr uint8_t PIPSOLARqtValueSettingsCount = sizeof(PIPSOLARqtValueSettings) / sizeof(PipSolar::ValueSetting);
 
 struct PipSolar::ValueSetting PIPSOLARqexValueSettings[] = {
-    {{}, PipSolar::ValueSetting::Type::intType, 1, 8, PSTR("Total_Energy"), PSTR("Wh"), true},
+    {{}, PipSolar::ValueSetting::Type::intType, 1, 8, "Total_Energy", "Wh", true},
 };
 constexpr uint8_t PIPSOLARqexValueSettingsCount = sizeof(PIPSOLARqexValueSettings) / sizeof(PipSolar::ValueSetting);
 
