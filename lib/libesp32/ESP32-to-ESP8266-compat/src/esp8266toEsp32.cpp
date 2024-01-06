@@ -342,6 +342,17 @@ uint8_t ledcReadResolution(uint8_t chan) {
   return res;
 }
 
+// Version of ledcRead that works for both Core2 and Core3
+// Return -1 if pin is not configured as PWM
+int32_t ledcRead2(uint8_t pin) {
+  int32_t chan = analogGetChannel2(pin);
+  if (chan >= 0) {
+    uint8_t group=(chan/8), channel=(chan%8);
+    return ledc_get_duty((ledc_mode_t)group, (ledc_channel_t)channel);
+  }
+  return -1;
+}
+
 // void analogWrite(uint8_t pin, int val);
 extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val) {
   analogWritePhase(pin, val, 0);      // if unspecified, use phase = 0

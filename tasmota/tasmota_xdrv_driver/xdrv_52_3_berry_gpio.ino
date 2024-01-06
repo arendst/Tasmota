@@ -302,6 +302,30 @@ extern "C" {
   int gp_counter_add(bvm *vm) {
     return gp_counter_set_add(vm, true);
   }
+
+  // gpio.get_duty(pin:int) -> int
+  //
+  // Read the value of a PWM within resolution
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty(int32_t pin);
+  int gp_get_duty(int32_t pin) {
+    return ledcRead2(pin);
+  }
+
+  // gpio.get_duty_resolution(pin:int) -> int
+  //
+  // Read the resolution of a PWM
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty_resolution(int32_t pin);
+  int gp_get_duty_resolution(int32_t pin) {
+    int32_t channel = analogGetChannel2(pin);
+    if (channel >= 0) {
+      return (1 << ledcReadResolution(channel));
+    }
+    return -1;
+  }
+// extern void gp_get_duty(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp_get_duty, "i", "i");
+// extern void gp_get_duty_resolution(int32_t pin);    BE_FUNC_CTYPE_DECLARE(gp_get_duty_resolution, "i", "i");
 }
 
 #endif  // USE_BERRY
