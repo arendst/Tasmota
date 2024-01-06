@@ -38,8 +38,6 @@ class WiFiServerAsync {
 
 
   public:
-    void listenOnLocalhost(){}
-
     WiFiServerAsync(uint16_t port=80, uint8_t max_clients=4):sockfd(-1),_accepted_sockfd(-1),_addr(),_port(port),_max_clients(max_clients),_listening(false),_noDelay(false) {
     }
     WiFiServerAsync(const IPAddress& addr, uint16_t port=80, uint8_t max_clients=4):sockfd(-1),_accepted_sockfd(-1),_addr(addr),_port(port),_max_clients(max_clients),_listening(false),_noDelay(false) {
@@ -117,8 +115,11 @@ AsyncTCPClient * WiFiServerAsync::availableAsync(){
     int val = 1;
     if(setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(int)) == ESP_OK) {
       val = _noDelay;
-      if(setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(int)) == ESP_OK)
-        return new AsyncTCPClient(client_sock);
+      if(setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(int)) == ESP_OK) {
+        if (fcntl(client_sock, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK ) == ESP_OK) {    // set non-blocking
+          return new AsyncTCPClient(client_sock);
+        }
+      }
     }
   }
   return new AsyncTCPClient();
