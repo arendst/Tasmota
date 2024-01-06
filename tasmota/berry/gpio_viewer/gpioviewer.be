@@ -26,7 +26,6 @@ gpio_viewer.Webserver_async = Webserver_async
 class GPIO_viewer
   var web
   var sampling_interval
-  var free_space
   var pin_actual       # actual value
   var last_pin_states       # state converted to 0..255
   var new_pin_states        # get a snapshot of newest values
@@ -70,7 +69,6 @@ class GPIO_viewer
   def init(port)
     self.web = Webserver_async(5555)
     self.sampling_interval = self.SAMPLING
-    self.free_space = 500
 
     # pins
     import gpio
@@ -107,7 +105,8 @@ class GPIO_viewer
       port = int(host_split[1])
     end
 
-    var html = format(self.HTML_SCRIPT, port, ip, port, ip, self.sampling_interval, self.free_space)
+    var free_space = f"{tasmota.memory().find('program_free', 0)} KB"
+    var html = format(self.HTML_SCRIPT, port, ip, port, ip, self.sampling_interval, free_space)
     cnx.write(html)
     cnx.content_stop()
   end
@@ -160,7 +159,7 @@ class GPIO_viewer
     # send free heap
     var payload = f"id:{tasmota.millis()}\r\n"
                    "event:free_heap\r\n"
-                   "data:{tasmota.memory().find('heap_free', 0)}\r\n\r\n"
+                   "data:{tasmota.memory().find('heap_free', 0)} KB\r\n\r\n"
     cnx.write(payload)
 
     tasmota.set_timer(self.sampling_interval, def () self.send_events_tick(cnx) end)
