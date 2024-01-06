@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry `gpio.read_pwm` and `gpio.read_pwm_resolution`
 - Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index`
 - Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
+- GPIO viewer in Berry initial version using async webserver
 
 ### Breaking Changed
 
