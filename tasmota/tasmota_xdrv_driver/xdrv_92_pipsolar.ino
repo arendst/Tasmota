@@ -17,8 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_PIPSOLAR
-
 #if defined(USE_PIPSOLAR)
 
 #define XDRV_92 92
