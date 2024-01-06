@@ -23,12 +23,10 @@ const char *GVRelease = "1.0.5";
 #define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
 
 #ifdef ESP32
-const int GVMaxGPIOPins = 49;
 // Global variables to capture PMW pins
 const int GVMaxChannels = 64;
 #endif  // ESP32
 #ifdef ESP8266
-const int GVMaxGPIOPins = 18;
 // Global variables to capture PMW pins
 const int GVMaxChannels = MAX_PWMS;
 #endif  // ESP8266
@@ -49,7 +47,7 @@ const char HTTP_GV_PAGE[] PROGMEM =
       "var ip='%s';"                                                      // WiFi.localIP().toString().c_str()
       "var source=new EventSource('http://%s:" STR(GV_PORT) "/events');"  // WiFi.localIP().toString().c_str()
       "var sampling_interval='" STR(GV_SAMPLING_INTERVAL) "';"
-      "var freeSketchSpace='%d';"                                         // GV.freeRAM
+      "var freeSketchSpace='%s';"                                         // GVFormatBytes(ESP_getFreeSketchSpace()).c_str()
     "</script>"
   "</head>"
   "<body>"
@@ -66,6 +64,13 @@ const char HTTP_GV_PAGE[] PROGMEM =
   "</body>"
   "</html>";
 
+const char HTTP_GV_EVENT[] PROGMEM =
+  "HTTP/1.1 200 OK\n"
+  "Content-Type: text/event-stream;\n"
+  "Connection: keep-alive\n"
+  "Cache-Control: no-cache\n"
+  "Access-Control-Allow-Origin: *\n\n";
+
 enum GVPinTypes {
   digitalPin = 0,
   PWMPin = 1,
@@ -76,12 +81,12 @@ struct {
   WiFiClient WebClient;
   ESP8266WebServer *WebServer;
   int freeHeap;
-  uint32_t lastPinStates[GVMaxGPIOPins];
+  uint32_t lastPinStates[MAX_GPIO_PIN];
   int ledcChannelPin[GVMaxChannels][2];
   int ledcChannelPinCount;
   int ledcChannelResolution[GVMaxChannels][2];
   int ledcChannelResolutionCount;
-  bool first;
+  bool sse_ready;
   bool active;
 } GV;
 
@@ -215,7 +220,7 @@ void GVResetStatePins(void) {
   uint32_t pintype;
   AddLog(LOG_LEVEL_INFO, "IOV: GPIOViewer Connected, sampling interval is " STR(GV_SAMPLING_INTERVAL) "ms");
 
-  for (int i = 0; i < GVMaxGPIOPins; i++) {
+  for (int i = 0; i < MAX_GPIO_PIN; i++) {
     GV.lastPinStates[i] = GVReadGPIO(i, &originalValue, &pintype);
   }
 }
@@ -237,7 +242,7 @@ void GVMonitorTask(void) {
   String jsonMessage = "{";
   bool hasChanges = false;
 
-  for (int i = 0; i < GVMaxGPIOPins; i++) {
+  for (int i = 0; i < MAX_GPIO_PIN; i++) {
     int currentState = GVReadGPIO(i, &originalValue, &pintype);
 
     if (originalValue != GV.lastPinStates[i]) {
@@ -269,44 +274,43 @@ void GVBegin(void) {
   GVPrintPWNTraps();
 
   GV.WebServer = new ESP8266WebServer(GV_PORT);
-
-//  GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // the payload can go on forever
-
   // Set CORS headers for global responses
   GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
   GV.WebServer->sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   GV.WebServer->sendHeader("Access-Control-Allow-Headers", "Content-Type");
-
   GV.WebServer->on("/events", GVHandleEvents);
   GV.WebServer->on("/", GVHandleRoot);
   GV.WebServer->on("/release", GVHandleRelease);
-
   GV.WebServer->begin();
 }
 
 void GVHandleEvents(void) {
-  if (!GV.first) {
+//  if (!GV.sse_ready) {
+
     GVResetStatePins();
-    GV.first = true;
 
     GV.WebClient = GV.WebServer->client();
     GV.WebClient.setNoDelay(true);
 //    GV.WebClient.setSync(true);
 
     GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
-    GV.WebServer->sendContent_P(PSTR("HTTP/1.1 200 OK\nContent-Type: text/event-stream;\nConnection: keep-alive\nCache-Control: no-cache\nAccess-Control-Allow-Origin: *\n\n"));
-  }
+    GV.WebServer->sendContent_P(HTTP_GV_EVENT);
+
+    GV.sse_ready = true;                              // Ready to 
+//  }
 }
 
 void GVHandleRoot(void) {
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         WiFi.localIP().toString().c_str(), 
                                         WiFi.localIP().toString().c_str(), 
-                                        GVFormatBytes(ESP.getFreeSketchSpace()).c_str());
+                                        GVFormatBytes(ESP_getFreeSketchSpace()).c_str());
   if (content == nullptr) { return; }              // Avoid crash
 
   GV.WebServer->send_P(200, "text/html", content);
   free(content);
+
+  GV.sse_ready = false;                                // Allow restart on page load
 }
 
 void GVHandleRelease(void) {
@@ -328,7 +332,7 @@ bool Xdrv121(uint32_t function) {
         if (GV.WebServer) { GV.WebServer->handleClient(); }
         break;
       case FUNC_EVERY_100_MSECOND:
-        if (GV.first) { GVMonitorTask(); }
+        if (GV.sse_ready) { GVMonitorTask(); }
         break;
       case FUNC_ACTIVE:
         result = true;
