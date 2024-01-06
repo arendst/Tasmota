@@ -6,8 +6,9 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.2]
 ### Added
 - HASPmota type `chart` (#20372)
-- Berry add support for `tcpclientasync` in `tcpserver`
-- Berry add `tasmota.urlbecload(url:string) -> bool`
+- Berry add support for `tcpclientasync` in `tcpserver` (#20401)
+- Berry add `tasmota.urlbecload(url:string) -> bool` (#20412)
+- GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
 
 ### Breaking Changed
 
