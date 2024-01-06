@@ -778,6 +778,7 @@ void HandleBerryPartiionWizardLoaderButton(void) {
   }
 }
 
+extern "C" bbool BerryBECLoader(const char * url);
 void HandleBerryPartitionWizardLoader(void) {
   if (BerryBECLoader(USE_BERRY_PARTITION_WIZARD_URL)) {
     // All good, redirect
@@ -792,7 +793,7 @@ void HandleBerryPartitionWizardLoader(void) {
 #endif //USE_BERRY_PARTITION_WIZARD
 
 // return true if successful
-bool BerryBECLoader(const char * url) {
+extern "C" bbool BerryBECLoader(const char * url) {
   bvm *vm = berry.vm;
 
   HTTPClientLight cl;

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - HASPmota type `chart` (#20372)
 - Berry add support for `tcpclientasync` in `tcpserver`
+- Berry add `tasmota.urlbecload(url:string) -> bool`
 
 ### Breaking Changed
 

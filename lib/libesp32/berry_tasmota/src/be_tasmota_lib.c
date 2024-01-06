@@ -6,6 +6,7 @@
 #include "be_constobj.h"
 #include "be_ctypes.h"
 #include "be_mapping.h"
+#include "be_ctypes.h"
 
 extern struct TasmotaGlobal_t TasmotaGlobal;
 extern struct TSettings * Settings;
@@ -68,6 +69,9 @@ extern int tasm_apply_str_op(bvm *vm);
 // tasmota.version() -> int
 extern int32_t be_Tasmota_version(void);
 BE_FUNC_CTYPE_DECLARE(be_Tasmota_version, "i", "-");
+
+extern bbool BerryBECLoader(const char * url);
+BE_FUNC_CTYPE_DECLARE(BerryBECLoader, "b", "s")
 
 #include "solidify/solidified_tasmota_class.h"
 #include "solidify/solidified_rule_matcher.h"
@@ -177,6 +181,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     time_str, closure(Tasmota_time_str_closure)
     urlfetch, closure(Tasmota_urlfetch_closure)
     urlfetch_cmd, closure(Tasmota_urlfetch_cmd_closure)
+    urlbecload, static_ctype_func(BerryBECLoader)
 
     add_cron, closure(Tasmota_add_cron_closure)
     run_cron, closure(Tasmota_run_cron_closure)
