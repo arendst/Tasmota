@@ -186,8 +186,7 @@ public:
             stop();
             break;
           default:
-            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d", res, errno);
-            stop();
+            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d, sockfd=%d", res, errno, sockfd);
             break;
         }
       } else {
