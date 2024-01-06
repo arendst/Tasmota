@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
 - Berry `gpio.read_pwm` and `gpio.read_pwm_resolution`
 - Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index`
+- Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
 
 ### Breaking Changed
 
