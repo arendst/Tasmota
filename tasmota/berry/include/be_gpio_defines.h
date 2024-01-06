@@ -334,6 +334,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ZIGBEE_RST", (int32_t) GPIO_ZIGBEE_RST },
     { "ZIGBEE_RX", (int32_t) GPIO_ZIGBEE_RX },
     { "ZIGBEE_TX", (int32_t) GPIO_ZIGBEE_TX },
+    { "PIPSOLAR_RX", (int32_t) GPIO_PIPSOLAR_RX },
+    { "PIPSOLAR_TX", (int32_t) GPIO_PIPSOLAR_TX },
 
 };
 

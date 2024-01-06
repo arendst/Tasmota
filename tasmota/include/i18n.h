@@ -809,6 +809,19 @@
 // xsns_71_veml7700.ino
 #define D_JSON_WHITE_CONTENT "WhiteContent"
 
+// xdrv_92_pipsolar.ino
+#define D_CMND_PIP_PREFIX "PipSolar"
+#define D_CMND_PIP_QT "QT"
+#define D_CMND_PIP_QET "QET"
+#define D_CMND_PIP_QEY "QEY"
+#define D_CMND_PIP_QEM "QEM"
+#define D_CMND_PIP_QED "QED"
+#define D_CMND_PIP_QEH "QEH"
+#define D_CMND_PIP_DAT "DAT"
+#define D_CMND_PIP_POLLVALUES "PollValues"
+#define D_CMND_PIP_BAUDRATE "BaudRate"
+#define D_CMND_PIP_SERIALCONFIG "SerialConfig"
+
 /********************************************************************************************/
 
 // Log message prefix

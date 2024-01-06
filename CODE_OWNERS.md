@@ -100,6 +100,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_88_esp32_shelly_pro     | @arendst
 | xdrv_89_esp32_dali           | @eeak
 | xdrv_90_esp32_dingtian_relay | @barbudor
+| xdrv_92_pipsolar             | @chefpro
 |                              |
 | xdrv_122_file_settings_demo  | @arendst
 | xdrv_127_debug               | @arendst

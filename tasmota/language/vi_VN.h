@@ -1222,4 +1222,8 @@
 #define D_AVG_RAD_DOSE                    "liều bức xạ trung bình"
 #define D_UNIT_US_H                       "µSv/h"
 
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
 #endif  // _LANGUAGE_VI_VN_H_
