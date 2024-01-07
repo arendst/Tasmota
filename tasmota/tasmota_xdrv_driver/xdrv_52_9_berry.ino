@@ -764,33 +764,50 @@ void HandleBerryConsole(void)
   WSContentStop();
 }
 
-#ifdef USE_BERRY_PARTITION_WIZARD
-// Display a Button to dynamically load the Partition Wizard
-void HandleBerryPartiionWizardLoaderButton(void) {
+
+// const BeBECCode_t BECCode[] = {
+// struct BeBECCode_t {
+//   const char * display_name;      // display name in Web UI (must be URL encoded)
+//   const char * id;                // id in requested URL
+//   const char * url;               // absolute URL to download the bec file
+//   const char * redirect;          // relative URI to redirect after loading
+// };
+
+// Display Buttons to dynamically load bec files
+void HandleBerryBECLoaderButton(void) {
   bvm * vm = berry.vm;
-  static const char PARTITION_WIZARD_NAME[] = "partition_wizard";
-  if (!berry.partition_wizard_loaded) {
-    if (be_global_find(vm, be_newstr(vm, PARTITION_WIZARD_NAME)) < 0) {    // the global name `partition_wizard` doesn't exist
-      WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='Partition_Wizard'/><button>[Load Partition Wizard]</button></form><p></p>");
-    } else {
-      berry.partition_wizard_loaded = true;
+
+  for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
+    const BeBECCode_t &bec = BECCode[i];
+    if (!(*bec.loaded)) {
+      if (be_global_find(vm, be_newstr(vm, bec.id)) < 0) {    // the global name  doesn't exist
+        WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form><p></p>", bec.id, bec.display_name);
+      } else {
+        *bec.loaded = true;
+      }
     }
   }
 }
 
 extern "C" bbool BerryBECLoader(const char * url);
-void HandleBerryPartitionWizardLoader(void) {
-  if (BerryBECLoader(USE_BERRY_PARTITION_WIZARD_URL)) {
-    // All good, redirect
-    Webserver->sendHeader("Location", "/part_wiz", true);
-    Webserver->send(302, "text/plain", "");
-    berry.partition_wizard_loaded = true;
-  } else {
-    Webserver->sendHeader("Location", "/mn?", true);
-    Webserver->send(302, "text/plain", "");
+
+void HandleBerryBECLoader(void) {
+  String n = Webserver->arg("n");
+  for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
+    const BeBECCode_t &bec = BECCode[i];
+    if (n.equals(bec.id)) {
+      if (BerryBECLoader(bec.url)) {
+        // All good, redirect
+        Webserver->sendHeader("Location", bec.redirect, true);
+        Webserver->send(302, "text/plain", "");
+        *bec.loaded  = true;
+      } else {
+        Webserver->sendHeader("Location", "/mn?", true);
+        Webserver->send(302, "text/plain", "");
+      }
+    }
   }
 }
-#endif //USE_BERRY_PARTITION_WIZARD
 
 // return true if successful
 extern "C" bbool BerryBECLoader(const char * url) {
@@ -925,9 +942,7 @@ bool Xdrv52(uint32_t function)
         XdrvMailbox.index++;
       } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
-#ifdef USE_BERRY_PARTITION_WIZARD
-      HandleBerryPartiionWizardLoaderButton();
-#endif // USE_BERRY_PARTITION_WIZARD
+        HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
         callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
       }
@@ -946,10 +961,8 @@ bool Xdrv52(uint32_t function)
         callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
         berry.web_add_handler_done = true;
       }
-      WebServer_on(PSTR("/bc"), HandleBerryConsole);
-#ifdef USE_BERRY_PARTITION_WIZARD
-      Webserver->on("/tapp", HTTP_GET, HandleBerryPartitionWizardLoader);
-#endif // USE_BERRY_PARTITION_WIZARD
+      WebServer_on("/bc", HandleBerryConsole);
+      WebServer_on("/tapp", HandleBerryBECLoader, HTTP_GET);
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
