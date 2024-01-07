@@ -275,6 +275,7 @@
 #define D_INFORMATION "Информация"
 #define D_FIRMWARE_UPGRADE "Обновяване на софтуера"
 #define D_MANAGEMENT "Терминали"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Терминал"
 #define D_CONFIRM_RESTART "Потвърдете рестартиране"
 

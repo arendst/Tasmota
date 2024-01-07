@@ -275,6 +275,7 @@
 #define D_INFORMATION "정보"
 #define D_FIRMWARE_UPGRADE "펌웨어 업그레이드"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "콘솔"
 #define D_CONFIRM_RESTART "재시작"
 

@@ -275,6 +275,7 @@
 #define D_INFORMATION "Informace"
 #define D_FIRMWARE_UPGRADE "Aktualizace firmware"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konzole"
 #define D_CONFIRM_RESTART "Potvrzení restartu"
 

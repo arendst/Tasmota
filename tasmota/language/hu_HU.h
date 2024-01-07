@@ -275,6 +275,7 @@
 #define D_INFORMATION "Információ"
 #define D_FIRMWARE_UPGRADE "Firmware frissítés"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konzol"
 #define D_CONFIRM_RESTART "Biztosan újraindítsam a modult?"
 

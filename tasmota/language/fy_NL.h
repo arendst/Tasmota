@@ -275,6 +275,7 @@
 #define D_INFORMATION "Ynformaasje"
 #define D_FIRMWARE_UPGRADE "Opwurdearje"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Befestigje opnij starte"
 

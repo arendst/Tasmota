@@ -275,6 +275,7 @@
 #define D_INFORMATION "Інформація"
 #define D_FIRMWARE_UPGRADE "Оновлення прошивки"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Консоль"
 #define D_CONFIRM_RESTART "Підтвердити перезавантаження"
 

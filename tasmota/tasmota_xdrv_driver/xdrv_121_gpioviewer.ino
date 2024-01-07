@@ -38,7 +38,7 @@ const char HTTP_GV_PAGE[] PROGMEM =
       "var ip='%s';"                                                      // WiFi.localIP().toString().c_str()
       "var source=new EventSource('http://%s:" STR(GV_PORT) "/events');"  // WiFi.localIP().toString().c_str()
       "var sampling_interval='" STR(GV_SAMPLING_INTERVAL) "';"
-      "var freeSketchSpace='%s';"                                         // GVFormatBytes(ESP_getFreeSketchSpace()).c_str()
+      "var freeSketchSpace='%d KB';"                                      // ESP_getFreeSketchSpace() / 1024
     "</script>"
   "</head>"
   "<body>"
@@ -63,6 +63,9 @@ const char HTTP_GV_EVENT[] PROGMEM =
   "Cache-Control: no-cache\n"
   "Access-Control-Allow-Origin: *\n\n";
 
+const char HTTP_BTN_MENU_GV[] PROGMEM =
+  "<p><form action='http://%s:" STR(GV_PORT) "/' method='post' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
+
 enum GVPinTypes {
   digitalPin = 0,
   PWMPin = 1,
@@ -79,18 +82,6 @@ struct {
   bool sse_ready;
   bool active;
 } GV;
-
-String GVFormatBytes(size_t bytes) {
-  if (bytes < 1024) {
-    return String(bytes) + " B";
-  }
-  else if (bytes < (1024 * 1024)) {
-    return String(bytes / 1024.0, 2) + " KB";
-  }
-  else {
-    return String(bytes / 1024.0 / 1024.0, 2) + " MB";
-  }
-}
 
 int GVReadGPIO(int gpioNum, uint32_t *originalValue, uint32_t *pintype) {
   uint32_t pin_type = GetPin(gpioNum) / 32;
@@ -184,7 +175,6 @@ void GVMonitorTask(void) {
       hasChanges = true;
     }
   }
-
   jsonMessage += "}";
 
   if (hasChanges) {
@@ -194,7 +184,9 @@ void GVMonitorTask(void) {
   uint32_t heap = ESP_getFreeHeap();
   if (heap != GV.freeHeap) {
     GV.freeHeap = heap;
-    GVEventSend(GVFormatBytes(GV.freeHeap).c_str(), "free_heap", millis());
+    char temp[20];
+    snprintf_P(temp, sizeof(temp), PSTR("%d KB"), heap / 1024);
+    GVEventSend(temp, "free_heap", millis());
   }
 
 #ifdef ESP32
@@ -202,8 +194,12 @@ void GVMonitorTask(void) {
     uint32_t psram = ESP.getFreePsram();
     if (psram != GV.freePSRAM) {
       GV.freePSRAM = psram;
-      GVEventSend(GVFormatBytes(GV.freePSRAM).c_str(), "free_psram", millis());
+      char temp[20];
+      snprintf_P(temp, sizeof(temp), PSTR("%d KB"), psram / 1024);
+      GVEventSend(temp, "free_psram", millis());
     }
+  } else {
+    GVEventSend("No PSRAM", "free_psram", millis());
   }
 #endif  // ESP32
 }
@@ -237,7 +233,7 @@ void GVHandleRoot(void) {
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         WiFi.localIP().toString().c_str(), 
                                         WiFi.localIP().toString().c_str(), 
-                                        GVFormatBytes(ESP_getFreeSketchSpace()).c_str());
+                                        ESP_getFreeSketchSpace() / 1024);
   if (content == nullptr) { return; }                      // Avoid crash
 
   GV.WebServer->send_P(200, "text/html", content);
@@ -267,6 +263,15 @@ bool Xdrv121(uint32_t function) {
       case FUNC_EVERY_100_MSECOND:
         if (GV.sse_ready) { GVMonitorTask(); }
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
+        if (XdrvMailbox.index) {
+          XdrvMailbox.index++;
+        } else {
+          WSContentSend_P(HTTP_BTN_MENU_GV, WiFi.localIP().toString().c_str());
+        }
+        break;
+#endif // USE_WEBSERVER
       case FUNC_ACTIVE:
         result = true;
         break;

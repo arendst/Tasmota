@@ -275,6 +275,7 @@
 #define D_INFORMATION "Bilgi"
 #define D_FIRMWARE_UPGRADE "Cihaz yazılımını Güncelle"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsol"
 #define D_CONFIRM_RESTART "Yeniden Başlatmayı Onayla"
 

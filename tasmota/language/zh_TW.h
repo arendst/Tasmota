@@ -275,6 +275,7 @@
 #define D_INFORMATION "資訊"
 #define D_FIRMWARE_UPGRADE "韌體升級"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "確認重新啟動"
 

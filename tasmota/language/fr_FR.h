@@ -275,6 +275,7 @@
 #define D_INFORMATION "Informations"
 #define D_FIRMWARE_UPGRADE "Mise à jour du Firmware"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmer le redémarrage"
 

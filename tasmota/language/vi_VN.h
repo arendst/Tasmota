@@ -275,6 +275,7 @@
 #define D_INFORMATION "Thông tin"
 #define D_FIRMWARE_UPGRADE "Nâng cấp Firmware"
 #define D_MANAGEMENT "Consoles"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Dòng Lệnh"
 #define D_CONFIRM_RESTART "Xác nhận khởi động lại"
 

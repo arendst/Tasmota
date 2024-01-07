@@ -275,6 +275,7 @@
 #define D_INFORMATION "Πληροφορίες"
 #define D_FIRMWARE_UPGRADE "Αναβάθμιση"
 #define D_MANAGEMENT "Διαχείριση"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Κονσόλα"
 #define D_CONFIRM_RESTART "Επιβεβαίωση επανεκκίνησης"
 
