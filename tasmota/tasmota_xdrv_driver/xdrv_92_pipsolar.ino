@@ -695,7 +695,7 @@ void PIPSOLARInterpret(void)
     break;
   case PipSolar::CommandType::DAT:
     if (wasQuery) {
-      PIPSOLARPublish(PSTR("DAT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3));
+      PIPSOLARPublish(PSTR("RESULT/DAT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3));
     }
     break;
   }
