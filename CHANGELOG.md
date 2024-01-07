@@ -9,10 +9,11 @@ All notable changes to this project will be documented in this file.
 - Berry add support for `tcpclientasync` in `tcpserver` (#20401)
 - Berry add `tasmota.urlbecload(url:string) -> bool` (#20412)
 - GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
-- Berry `gpio.read_pwm` and `gpio.read_pwm_resolution`
-- Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index`
 - Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
-- GPIO viewer in Berry initial version using async webserver
+- Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index` (#20415)
+- Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
+- Berry GPIO viewer initial version using async webserver (#20416)
+- Berry add `string` to `bytes()` (#20420)
 
 ### Breaking Changed
 
@@ -34,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - HASPmota `haspmota.page_show()` to change page (#20333)
 - Berry `introspect.set()` for class attributes (#20339)
 - Support negative power on BL0942 using index 5..8 (#20322)
-- Berry add `string` to `bytes()`
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds (#20236)
