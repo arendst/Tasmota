@@ -19,10 +19,6 @@
 
 var gpio_viewer = module('gpio_viewer')
 
-gpio_viewer.Webserver_async_cnx = Webserver_async_cnx
-gpio_viewer.Webserver_dispatcher = Webserver_dispatcher
-gpio_viewer.Webserver_async = Webserver_async
-
 class GPIO_viewer
   var web
   var sampling_interval
@@ -30,6 +26,7 @@ class GPIO_viewer
   var last_pin_states       # state converted to 0..255
   var new_pin_states        # get a snapshot of newest values
   var pin_types             # array of types
+  var payload1, payload2               # temporary object bytes() to avoid reallocation
 
   static var TYPE_DIGITAL = 0
   static var TYPE_PWM = 1
@@ -67,8 +64,10 @@ class GPIO_viewer
     "</body></html>"
   
   def init(port)
-    self.web = Webserver_async(5555)
+    self.web = webserver_async(5555)
     self.sampling_interval = self.SAMPLING
+    self.payload1 = bytes(100)              # reserve 100 bytes by default
+    self.payload2 = bytes(100)              # reserve 100 bytes by default
 
     # pins
     import gpio
@@ -81,6 +80,8 @@ class GPIO_viewer
     self.pin_types = []
     self.pin_types.resize(gpio.MAX_GPIO)     # full of nil
 
+    self.web.set_chunked(true)
+    self.web.set_cors(true)
     self.web.on("/release", self, self.send_release_page)
     self.web.on("/events", self, self.send_events_page)
     self.web.on("/", self, self.send_index_page)
@@ -118,7 +119,7 @@ class GPIO_viewer
   end
 
   def send_events_page(cnx, uri, verb)
-    cnx.set_mode_chunked(false)     # no chunking since we use EventSource
+    cnx.set_chunked(false)     # no chunking since we use EventSource
     cnx.send(200, "text/event-stream")
 
     self.send_events_tick(cnx)
@@ -127,7 +128,9 @@ class GPIO_viewer
   def send_events_tick(cnx)
     import gpio
     var max_gpio = gpio.MAX_GPIO
-    var msg = "{"
+    var payload1 = self.payload1
+    payload1.clear()
+    payload1 .. '{'
     var dirty = false
     var pin = 0
     self.read_states()
@@ -136,24 +139,44 @@ class GPIO_viewer
       var prev = self.last_pin_states[pin]
       var val = self.new_pin_states[pin]
       if (prev != val) || (val != nil)      # TODO for now send everything every time
-        if dirty      msg += ","    end
-        msg += f'"{pin}":{{"s":{val},"v":{prev},"t":{self.pin_types[pin]}}}'
+        if dirty
+          # msg += ","
+          payload1 .. ","
+        end
+        payload1 .. '"'
+        payload1 .. str(pin)
+        payload1 .. '":{"s":'
+        payload1 .. str(val)
+        payload1 .. ',"v":'
+        payload1 .. str(self.pin_actual[pin])
+        payload1 .. ',"t":'
+        payload1 .. str(self.pin_types[pin])
+        payload1 .. '}'
+        # msg += f'"{pin}":{{"s":{val},"v":{prev},"t":{self.pin_types[pin]}}}}'
         dirty = true
 
         self.last_pin_states[pin] = val
       end
       pin += 1
     end
-    msg += "}"
+    payload1 .. '}'
+    # msg += "}"
 
     if dirty
       # prepare payload
-      var payload = f"id:{tasmota.millis()}\r\n"
-                    "event:gpio-state\r\n"
-                    "data:{msg}\r\n\r\n"
+      var payload2 = self.payload2
+      payload2.clear()
+      payload2 .. 'id:'
+      payload2 .. str(tasmota.millis())
+      payload2 .. "\r\nevent:gpio-state\r\ndata:"
+      payload2 .. payload1
+      payload2 .. "\r\n\r\n"
+      # var payload = f"id:{tasmota.millis()}\r\n"
+      #             "event:gpio-state\r\n"
+      #             "data:{msg}\r\n\r\n"
 
       # tasmota.log(f"GPV: sending '{msg}'", 3)
-      cnx.write(payload)
+      cnx.write(payload2)
     end
 
     # send free heap
