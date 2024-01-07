@@ -18,9 +18,9 @@
 #define GV_PORT               5557
 #define GV_SAMPLING_INTERVAL  100    // Relates to FUNC_EVERY_100_MSECOND
 
-const char *GVRelease = "1.0.7";
-
 #define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+
+const char *GVRelease = "1.0.7";
 
 const char HTTP_GV_PAGE[] PROGMEM =
   "<!DOCTYPE HTML>"
@@ -280,8 +280,14 @@ bool Xdrv121(uint32_t function) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         if (!TasmotaGlobal.global_state.network_down) {
-          GVBegin();
-          GV.active = true;
+          // Add delay to finish network setup
+          static uint32_t gv_delay = 3;
+          if (gv_delay) {
+            gv_delay--;
+          } else {
+            GVBegin();
+            GV.active = true;
+          }
         }
         break;
     }
