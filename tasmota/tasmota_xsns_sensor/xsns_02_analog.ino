@@ -324,6 +324,19 @@ void AdcInit(void) {
   }
 }
 
+uint32_t AdcResolution(void) {
+  return ANALOG_RESOLUTION;
+}
+
+bool AdcPin(uint32_t pin) {
+  for (uint32_t idx = 0; idx < Adcs.present; idx++) {
+    if (pin == Adc[idx].pin) {
+      return true;
+    }
+  }
+  return false;
+}
+
 uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 1 = 2 samples
   // factor 2 = 4 samples

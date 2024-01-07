@@ -218,7 +218,7 @@ void ShutterRtc50mS(void)
           ShutterUpdateVelocity(i);
           Shutter[i].real_position +=  Shutter[i].direction > 0 ? Shutter[i].pwm_velocity : (Shutter[i].direction < 0 ? -Shutter[i].pwm_velocity : 0);
           Shutter[i].pwm_value = SHT_DIV_ROUND((Settings->shutter_pwmrange[1][i]-Settings->shutter_pwmrange[0][i]) * Shutter[i].real_position , Shutter[i].open_max)+Settings->shutter_pwmrange[0][i];
-          analogWrite(Pin(GPIO_PWM1, i), Shutter[i].pwm_value);
+          AnalogWrite(Pin(GPIO_PWM1, i), Shutter[i].pwm_value);
         break;
 
         case SHT_COUNTER:
@@ -572,7 +572,7 @@ void ShutterDecellerateForStop(uint8_t i)
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
 #ifdef ESP8266
-        analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
+        AnalogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
 #endif
 #ifdef ESP32
         TasmotaGlobal.pwm_value[i] = 0;
@@ -629,12 +629,12 @@ void ShutterPowerOff(uint8_t i)
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
       Shutter[i].pwm_value = SHT_DIV_ROUND((Settings->shutter_pwmrange[1][i]-Settings->shutter_pwmrange[0][i]) * Shutter[i].target_position , Shutter[i].open_max)+Settings->shutter_pwmrange[0][i];
-      analogWrite(Pin(GPIO_PWM1, i), Shutter[i].pwm_value);
+      AnalogWrite(Pin(GPIO_PWM1, i), Shutter[i].pwm_value);
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: PWM final %d"),Shutter[i].pwm_value);
       char scmnd[20];
   #ifdef SHUTTER_CLEAR_PWM_ONSTOP
       // free the PWM servo lock on stop.
-      analogWrite(Pin(GPIO_PWM1, i), 0);
+      AnalogWrite(Pin(GPIO_PWM1, i), 0);
   #endif
       break;
   }
@@ -754,7 +754,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       case SHT_COUNTER:
 #ifdef ESP8266
         analogWriteFreq(Shutter[i].pwm_velocity);
-        analogWrite(Pin(GPIO_PWM1, i), 0);
+        AnalogWrite(Pin(GPIO_PWM1, i), 0);
 #endif
 #ifdef ESP32
         analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));

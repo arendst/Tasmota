@@ -6897,12 +6897,12 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
     pwmpin[channel] = -value;
     pinMode(pwmpin[channel], OUTPUT);
     analogWriteFreq(freq);
-    analogWrite(pwmpin[channel], 0);
+    AnalogWrite(pwmpin[channel], 0);
   } else {
     if (value > 1023) {
       value = 1023;
     }
-    analogWrite(pwmpin[channel],value);
+    AnalogWrite(pwmpin[channel],value);
   }
 #endif // ESP32
 }

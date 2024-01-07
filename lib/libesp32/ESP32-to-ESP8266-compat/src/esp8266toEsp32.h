@@ -99,6 +99,12 @@ void analogWrite(uint8_t pin, int val);
 extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 
 //
+// ledcReadDutyResolution - read the resolution
+//
+// return -1 if pin is not assigned to ledc
+int32_t ledcReadDutyResolution(uint8_t pin);
+
+//
 // ledcRead2 - read the value of PWM
 //
 // return -1 if pin is not assigned to ledc

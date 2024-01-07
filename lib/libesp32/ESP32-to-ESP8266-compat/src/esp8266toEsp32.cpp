@@ -342,6 +342,14 @@ uint8_t ledcReadResolution(uint8_t chan) {
   return res;
 }
 
+int32_t ledcReadDutyResolution(uint8_t pin) {
+  int32_t chan = analogGetChannel2(pin);
+  if (chan >= 0) {
+    return (1 << ledcReadResolution(chan));
+  }
+  return -1;
+}
+
 // Version of ledcRead that works for both Core2 and Core3
 // Return -1 if pin is not configured as PWM
 int32_t ledcRead2(uint8_t pin) {
