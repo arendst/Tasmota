@@ -25,12 +25,13 @@
 # - support for limited headers
 # - HTTP 1.0 only
 
-#@ solidify:Webserver_async
+#@ solidify:webserver_async
 #@ solidify:Webserver_async_cnx
 
 class Webserver_async_cnx
   var server                                      # link to server object
   var cnx                                         # holds the tcpclientasync instance
+  var close_after_send                            # if true, close after sending
   var fastloop_cb                                 # cb for fastloop
   var buf_in                                      # incoming buffer
   var buf_in_offset
@@ -44,7 +45,10 @@ class Webserver_async_cnx
   # response
   var resp_headers
   var resp_version
-  var mode_chunked
+  var chunked                                     # if true enable chunked encoding (default true)
+  var cors                                        # if true send CORS headers (default true)
+  # bytes objects to be reused
+  var payload1
   # conversion
   static var CODE_TO_STRING = {
     100: "Continue",
@@ -68,17 +72,25 @@ class Webserver_async_cnx
     self.buf_in_offset = 0
     self.buf_out = bytes()
     self.phase = 0
+    # util
+    self.payload1 = bytes()
+    self.close_after_send = false
     # response
     self.resp_headers = ''
     self.resp_version = 1       # HTTP 1.1      # TODO
-    self.mode_chunked = true
+    self.chunked = true
+    self.cors = true
     # register cb
     self.fastloop_cb = def () self.loop() end
     tasmota.add_fast_loop(self.fastloop_cb)
   end
 
-  def set_mode_chunked(mode_chunked)
-    self.mode_chunked = bool(mode_chunked)
+  def set_chunked(chunked)
+    self.chunked = bool(chunked)
+  end
+
+  def set_cors(cors)
+    self.cors = bool(cors)
   end
 
   #############################################################
@@ -86,6 +98,28 @@ class Webserver_async_cnx
   def connected()
     return self.cnx ? self.cnx.connected() : false
   end
+
+  #############################################################
+  # test if out buffer is empty, meaning all was sent
+  def buf_out_empty()
+    return size(self.buf_out) == 0
+  end
+
+  #############################################################
+  # write bytes or string
+  #
+  # v must be bytes()
+  def _write(v)
+    if (size(v) == 0)   return end
+
+    var buf_out = self.buf_out
+    var buf_out_sz = size(buf_out)
+    buf_out.resize(buf_out_sz + size(v))
+    buf_out.setbytes(buf_out_sz, v)
+
+    self._send()                    # try sending this now
+  end
+
   #############################################################
   # closing web server
   def close()
@@ -104,9 +138,12 @@ class Webserver_async_cnx
       return
     end
 
-    # any incoming data?
-    var cnx = self.cnx
+    self._send()      # try sending outgoing
 
+    var cnx = self.cnx
+    if (cnx == nil)   return      end   # it's possible that it was closed after _send()
+
+    # any incoming data?
     if cnx.available() > 0
       var buf_in_new = cnx.read()
       if (!self.buf_in)
@@ -119,6 +156,39 @@ class Webserver_async_cnx
     # parse incoming if any
     if (self.buf_in)
       self.parse()
+    end
+  end
+
+  #############################################################
+  # try sending what we can immediately
+  def _send()
+    # any data waiting to go out?
+    var cnx = self.cnx
+    if (cnx == nil)     return    end
+    var buf_out = self.buf_out
+    if size(buf_out) > 0
+      if cnx.listening()
+        var sent = cnx.write(buf_out)
+        if sent > 0
+          # we did sent something
+          if sent >= size(buf_out)
+            # all sent
+            self.buf_out.clear()
+          else
+            # remove the first bytes already sent
+            self.buf_out.setbytes(0, buf_out, sent)
+            self.byf_out.resize(size(buf_out) - sent)
+          end
+        end
+      end
+    else
+      # empty buffer, do the cleaning
+      self.buf_out.clear()
+      self.buf_in_offset = 0
+
+      if self.close_after_send
+        self.close()
+      end
     end
   end
 
@@ -209,13 +279,6 @@ class Webserver_async_cnx
     if (header_key == "Host")
       self.header_host = header_value
     end
-    # import string
-    # header_key = string.tolower(header_key)
-    # header_value = string.tolower(header_value)
-    # print("header=", header_key, header_value)
-    # if   header_key == 'transfer-encoding' && string.tolower(header_value) == 'chunked'
-    #   self.is_chunked = true
-    # end
   end
 
   #############################################################
@@ -223,12 +286,6 @@ class Webserver_async_cnx
   #
   # All headers are received
   def event_http_headers_end()
-    # print("event_http_headers_end")
-    # truncate to save space
-    # if self.buf_in_offset > 0
-    #   self.buf_in = self.buf_in[self.buf_in_offset .. ]
-    #   self.buf_in_offset = 0
-    # end
   end
 
   #############################################################
@@ -242,7 +299,6 @@ class Webserver_async_cnx
 
   #############################################################
   # Responses
-  #############################################################
   #############################################################
   # parse incoming payload (if any)
   def send_header(name, value, first)
@@ -260,13 +316,15 @@ class Webserver_async_cnx
 
     # force chunked TODO
     self.send_header("Accept-Ranges", "none")
-    if self.mode_chunked
+    if self.chunked
       self.send_header("Transfer-Encoding", "chunked")
     end
     # cors
-    self.send_header("Access-Control-Allow-Origin", "*")
-    self.send_header("Access-Control-Allow-Methods", "*")
-    self.send_header("Access-Control-Allow-Headers", "*")
+    if self.cors
+      self.send_header("Access-Control-Allow-Origin", "*")
+      self.send_header("Access-Control-Allow-Methods", "*")
+      self.send_header("Access-Control-Allow-Headers", "*")
+    end
     # others
     self.send_header("Connection", "close")
 
@@ -275,7 +333,7 @@ class Webserver_async_cnx
     self.resp_headers = nil
 
     # send
-    self._write(response)
+    self.write_raw(response)
 
     if (content)    self.write(content)   end
   end
@@ -286,26 +344,43 @@ class Webserver_async_cnx
 
   #############################################################
   # async write
-  def write(s)
+  def write(v)
+    if type(v) == 'string'          # if string, convert to bytes
+      v = bytes().fromstring(v)
+    end
+
     # use chunk encoding
-    if self.mode_chunked
-      var chunk = f"{size(s):X}\r\n{s}\r\n"
-      tasmota.log(f"WEB: sending chunk '{bytes().fromstring(chunk).tohex()}'")
-      self._write(chunk)
+    if self.chunked
+      var payload1 = self.payload1
+      payload1.clear()
+      payload1 .. f"{size(v):X}\r\n"
+      payload1 .. v
+      payload1 .. "\r\n"
+
+      # var chunk = f"{size(v):X}\r\n{v}\r\n"
+      # tasmota.log(f"WEB: sending chunk '{payload1.tohex()}'")
+      self._write(payload1)
     else
-      self._write(s)
+      self._write(v)
     end
   end
-  
+
   #############################################################
   # async write
-  def _write(s)
-    self.cnx.write(s)     # TODO move to async later
+  def write_raw(v)
+    if (size(v) == 0)   return end
+
+    if type(v) == 'string'          # if string, convert to bytes
+      v = bytes().fromstring(v)
+    end
+
+    self._write(v)
   end
 
+  
   def content_stop()
     self.write('')
-    self.close()
+    self.close_after_send = true
   end
 end
 
@@ -337,7 +412,7 @@ class Webserver_dispatcher
   end
 end
 
-class Webserver_async
+class webserver_async
   var local_port                                  # listening port, 80 is already used by Tasmota
   var server                                      # instance of `tcpserver`
   var fastloop_cb                                 # closure used by fastloop
@@ -347,6 +422,9 @@ class Webserver_async
   # var auth                                        # web authentication string (Basic Auth) or `nil`, in format `user:password` as bade64
   # var cmd                                         # GET url command
   var dispatchers
+  # copied in each connection
+  var chunked                                     # if true enable chunked encoding (default true)
+  var cors                                        # if true send CORS headers (default true)
 
   static var TIMEOUT = 1000                       # default timeout: 1000ms
   static var HTTP_REQ = "^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n"
@@ -377,6 +455,14 @@ class Webserver_async
       global._re_http_srv_header  = re.compile(self.HTTP_HEADER_REGEX)
       global._re_http_srv_body   = re.compile(self.HTTP_BODY_REGEX)
     end
+  end
+
+  def set_chunked(chunked)
+    self.chunked = bool(chunked)
+  end
+
+  def set_cors(cors)
+    self.cors = bool(cors)
   end
 
   #############################################################
@@ -420,9 +506,10 @@ class Webserver_async
     # check if any incoming connection
     while self.server.hasclient()
       # retrieve new client
-      var cnx = Webserver_async_cnx(self, self.server.accept())   # TODO move to self.server.acceptasync
+      var cnx = Webserver_async_cnx(self, self.server.acceptasync())
+      cnx.set_chunked(self.chunked)
+      cnx.set_cors(self.cors)
       self.connections.push(cnx)
-      tasmota.log(f"WEB: received connection from XXX")
     end
   end
 
@@ -451,9 +538,11 @@ class Webserver_async
 
 end
 
+#return webserver_async
+
 #- Test
 
-var web = Webserver_async(888)
+var web = webserver_async(888)
 
 def send_more(cnx, i)
   cnx.write(f"<p>Hello world {i}</p>")
