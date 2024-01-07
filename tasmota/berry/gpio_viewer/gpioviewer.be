@@ -20,6 +20,7 @@
 var gpio_viewer = module('gpio_viewer')
 
 class GPIO_viewer
+  var port
   var web
   var sampling_interval
   var pin_actual       # actual value
@@ -64,6 +65,7 @@ class GPIO_viewer
     "</body></html>"
   
   def init(port)
+    self.port = port
     self.web = webserver_async(5555)
     self.sampling_interval = self.SAMPLING
     self.payload1 = bytes(100)              # reserve 100 bytes by default
@@ -85,9 +87,12 @@ class GPIO_viewer
     self.web.on("/release", self, self.send_release_page)
     self.web.on("/events", self, self.send_events_page)
     self.web.on("/", self, self.send_index_page)
+
+    tasmota.add_driver(self)
   end
 
   def close()
+    tasmota.remove_driver(self)
     self.web.close()
   end
 
@@ -217,15 +222,28 @@ class GPIO_viewer
     end
   end
 
+  # Add button 'GPIO Viewer' redirects to '/part_wiz?'
+  def web_add_button()
+    import webserver
+    var ip = tasmota.wifi().find('ip')
+    if (ip == nil)
+      ip = tasmota.eth().find('ip')
+    end
+    if (ip != nil)
+      webserver.content_send(
+        f"<form style='display: block;' action='http://{ip}:{self.port}/' method='post' target='_blank'><button>GPIO Viewer</button></form><p></p>")
+    end
+  end
+
 end
 
 gpio_viewer.GPIO_viewer = GPIO_viewer
 
 if tasmota
-  var gpio_viewer = GPIO_viewer(5555)
+  global.gpioviewer = GPIO_viewer(5555)
 end
 
-return gpio_viewer
+return global.gpioviewer
 
 #- Test
 
