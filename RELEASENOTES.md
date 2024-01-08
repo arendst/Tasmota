@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` [#20414](https://github.com/arendst/Tasmota/issues/20414)
 - Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index` [#20415](https://github.com/arendst/Tasmota/issues/20415)
 - Berry `string` to `bytes()` [#20420](https://github.com/arendst/Tasmota/issues/20420)
+- Berry button to dynamically load GPIO Viewer with Berry backend [#20424](https://github.com/arendst/Tasmota/issues/20424)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
@@ -141,6 +142,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
 
 ### Changed
+- Renamed button "Consoles" to "Tools"
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
 
 ### Fixed
