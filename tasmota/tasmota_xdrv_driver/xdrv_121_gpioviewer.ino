@@ -1,32 +1,35 @@
 /*
   xdrv_121_gpioviewer.ino - GPIOViewer for Tasmota
 
-  SPDX-FileCopyrightText: 2024 Theo Arends
+  SPDX-FileCopyrightText: 2024 Theo Arends, Stephan Hadinger and Charles Giguere
 
   SPDX-License-Identifier: GPL-3.0-only
 */
 
 #ifdef USE_GPIO_VIEWER
 /*********************************************************************************************\
- * GPIOViewer support
+ * GPIOViewer support based on work by Charles Giguere
  * 
- * Open webpage <device_ip_address>:8080 and watch realtime GPIO states
+ * Resources:
+ *       GPIO Viewer: https://github.com/thelastoutpostworkshop/gpio_viewer
+ * Server Sent Event: https://github.com/esp8266/Arduino/issues/7008
 \*********************************************************************************************/
 
 #define XDRV_121              121
 
 #define GV_PORT               5557
-#define GV_SAMPLING_INTERVAL  100    // Relates to FUNC_EVERY_100_MSECOND
+#define GV_SAMPLING_INTERVAL  100    // milliseconds - Relates to FUNC_EVERY_100_MSECOND
+#define GV_KEEP_ALIVE         1000   // milliseconds - If no activity after this do a heap size event anyway
 
 #define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
 
-const char *GVRelease = "1.0.7";
+const char *GVRelease = "1.0.8";
 
 const char HTTP_GV_PAGE[] PROGMEM =
   "<!DOCTYPE HTML>"
   "<html>"
     "<head>"
-    "<title>%s - GPIO State</title>"
+    "<title>%s - GPIO Viewer</title>"
     "<base href='" GV_BASE_URL "'>"
     "<link id='defaultStyleSheet' rel='stylesheet' href=''>"
     "<link id='boardStyleSheet' rel='stylesheet' href=''>"
@@ -38,6 +41,9 @@ const char HTTP_GV_PAGE[] PROGMEM =
       "var ip='%s';"                                                      // WiFi.localIP().toString().c_str()
       "var source=new EventSource('http://%s:" STR(GV_PORT) "/events');"  // WiFi.localIP().toString().c_str()
       "var sampling_interval='" STR(GV_SAMPLING_INTERVAL) "';"
+#ifdef ESP32
+      "var psramSize='%d KB';"                                            // ESP.getPsramSize() / 1024
+#endif  // ESP32
       "var freeSketchSpace='%d KB';"                                      // ESP_getFreeSketchSpace() / 1024
     "</script>"
   "</head>"
@@ -67,60 +73,53 @@ const char HTTP_BTN_MENU_GV[] PROGMEM =
   "<p><form action='http://%s:" STR(GV_PORT) "/' method='post' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
 
 enum GVPinTypes {
-  digitalPin = 0,
-  PWMPin = 1,
-  analogPin = 2
+  GV_DigitalPin = 0,
+  GV_PWMPin = 1,
+  GV_AnalogPin = 2
 };
 
 struct {
   WiFiClient WebClient;
   ESP8266WebServer *WebServer;
   uint32_t lastPinStates[MAX_GPIO_PIN];
-  uint32_t resolution;
+  uint32_t lastSentWithNoActivity;
   uint32_t freeHeap;
   uint32_t freePSRAM;
   bool sse_ready;
   bool active;
 } GV;
 
-int GVReadGPIO(int gpioNum, uint32_t *originalValue, uint32_t *pintype) {
-  uint32_t pin_type = GetPin(gpioNum) / 32;
+int GVReadGPIO(uint32_t pin, uint32_t *pintype) {
+  uint32_t pin_type = GetPin(pin) / 32;
 /*  
   if (GPIO_NONE == pin_type) {
-    *pintype = digitalPin;
-    *originalValue = 0;
+    *pintype = GV_DigitalPin;
     return 0;
   }
 */
 #ifdef ESP32
-  int pwm_resolution = ledcReadDutyResolution(gpioNum);
+  int pwm_resolution = ledcReadDutyResolution(pin);
   if (pwm_resolution > 0) {
-    *pintype = PWMPin;
-    *originalValue = ledcRead2(gpioNum);
-    return changeUIntScale(*originalValue, 0, pwm_resolution, 0, 255);   // bring back to 0..255
+    *pintype = GV_PWMPin;
+    return ledcRead2(pin);
   }
 #endif  // ESP32
 
 #ifdef ESP8266
-  int pwm_value = AnalogRead(gpioNum);
+  int pwm_value = AnalogRead(pin);
   if (pwm_value > -1) {
-    *pintype = PWMPin;
-    *originalValue = pwm_value;
-    int pwm_resolution = GV.resolution;
-    return changeUIntScale(*originalValue, 0, pwm_resolution, 0, 255);   // bring back to 0..255
+    *pintype = GV_PWMPin;
+    return pwm_value;
   }
 #endif  // ESP8266
 
-  else if (AdcPin(gpioNum)) {
-    int adc_resolution = (1 << AdcResolution()) - 1;
-    *originalValue = AdcRead(gpioNum, 2);
-    *pintype = analogPin;
-    return changeUIntScale(*originalValue, 0, adc_resolution, 0, 255);   // bring back to 0..255
+  else if (AdcPin(pin)) {
+    *pintype = GV_AnalogPin;
+    return AdcRead(pin, 2);
   }
 
-  *pintype = digitalPin;
-  int value = digitalRead(gpioNum);
-  *originalValue = value;
+  *pintype = GV_DigitalPin;
+  int value = digitalRead(pin);
   if (value == 1) {
     return 256;
   }
@@ -128,12 +127,11 @@ int GVReadGPIO(int gpioNum, uint32_t *originalValue, uint32_t *pintype) {
 }
 
 void GVResetStatePins(void) {
-  uint32_t originalValue;
-  uint32_t pintype;
   AddLog(LOG_LEVEL_INFO, "IOV: GPIOViewer Connected, sampling interval is " STR(GV_SAMPLING_INTERVAL) "ms");
 
+  uint32_t pintype;
   for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
-    GV.lastPinStates[pin] = GVReadGPIO(pin, &originalValue, &pintype);
+    GV.lastPinStates[pin] = GVReadGPIO(pin, &pintype);
   }
 }
 
@@ -148,35 +146,19 @@ void GVEventSend(const char *message, const char *event, uint32_t id) {
 
 // Monitor GPIO Values
 void GVMonitorTask(void) {
-#ifdef ESP8266
-  // Can change on the fly
-  uint32_t pwm_range = Settings->pwm_range + 1;
-  GV.resolution = 0;
-  while (pwm_range) {
-    GV.resolution++;
-    pwm_range >>= 1;
-  }
-#endif  // ESP8266
-
-  uint32_t originalValue;
   uint32_t pintype;
-
-  String jsonMessage = "{";
   bool hasChanges = false;
+  String jsonMessage = "{";
   for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
-    int currentState = GVReadGPIO(pin, &originalValue, &pintype);
-
-    if (originalValue != GV.lastPinStates[pin]) {
-      if (hasChanges) {
-        jsonMessage += ", ";
-      }
-      jsonMessage += "\"" + String(pin) + "\": {\"s\": " + currentState + ", \"v\": " + originalValue + ", \"t\": " + pintype + "}";
+    int currentState = GVReadGPIO(pin, &pintype);
+    if (currentState != GV.lastPinStates[pin]) {
+      if (hasChanges) { jsonMessage += ","; }
+      jsonMessage += "\"" + String(pin) + "\":{\"s\":" + currentState + ",\"v\":" + GV.lastPinStates[pin] + ",\"t\":" + pintype + "}";
       GV.lastPinStates[pin] = currentState;
       hasChanges = true;
     }
   }
   jsonMessage += "}";
-
   if (hasChanges) {
     GVEventSend(jsonMessage.c_str(), "gpio-state", millis());
   }
@@ -187,6 +169,7 @@ void GVMonitorTask(void) {
     char temp[20];
     snprintf_P(temp, sizeof(temp), PSTR("%d KB"), heap / 1024);
     GVEventSend(temp, "free_heap", millis());
+    hasChanges = true;
   }
 
 #ifdef ESP32
@@ -197,11 +180,23 @@ void GVMonitorTask(void) {
       char temp[20];
       snprintf_P(temp, sizeof(temp), PSTR("%d KB"), psram / 1024);
       GVEventSend(temp, "free_psram", millis());
+      hasChanges = true;
     }
-  } else {
-    GVEventSend("No PSRAM", "free_psram", millis());
   }
 #endif  // ESP32
+
+  if (!hasChanges) {
+    uint32_t last_sent = millis() - GV.lastSentWithNoActivity;
+    if (last_sent > GV_KEEP_ALIVE) {
+      // No activity, resending for pulse
+      char temp[20];
+      snprintf_P(temp, sizeof(temp), PSTR("%d KB"), heap / 1024);
+      GVEventSend(temp, "free_heap", millis());
+      GV.lastSentWithNoActivity = millis();
+    }
+  } else {
+    GV.lastSentWithNoActivity = millis();
+  }
 }
 
 void GVBegin(void) {
@@ -213,6 +208,9 @@ void GVBegin(void) {
   GV.WebServer->on("/events", GVHandleEvents);
   GV.WebServer->on("/", GVHandleRoot);
   GV.WebServer->on("/release", GVHandleRelease);
+#ifdef ESP32
+  GV.WebServer->on("/free_psram", GVHandleFreePSRam);
+#endif  // ESP32
   GV.WebServer->begin();
 }
 
@@ -234,9 +232,11 @@ void GVHandleRoot(void) {
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
                                         WiFi.localIP().toString().c_str(), 
                                         WiFi.localIP().toString().c_str(), 
+#ifdef ESP32
+                                        ESP.getPsramSize() / 1024,
+#endif  // ESP32
                                         ESP_getFreeSketchSpace() / 1024);
   if (content == nullptr) { return; }                      // Avoid crash
-
   GV.WebServer->send_P(200, "text/html", content);
   free(content);
 
@@ -244,8 +244,18 @@ void GVHandleRoot(void) {
 }
 
 void GVHandleRelease(void) {
-  String jsonResponse = "{\"release\": \"" + String(GVRelease) + "\"}";
+  String jsonResponse = "{\"release\":\"" + String(GVRelease) + "\"}";
+  GV.WebServer->send(200, "application/json", jsonResponse);
+}
 
+void GVHandleFreePSRam(void) {
+  String jsonResponse = "{\"freePSRAM\":\"";
+#ifdef ESP32
+  if (UsePSRAM()) {
+    jsonResponse += String(ESP.getFreePsram() / 1024) + " KB\"}";
+  } else
+#endif
+    jsonResponse += "No PSRAM\"}";
   GV.WebServer->send(200, "application/json", jsonResponse);
 }
 
