@@ -264,8 +264,7 @@ typedef union {
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
     uint32_t spare23 : 1;                  // bit 23
-    uint32_t spare24 : 1;                  // bit 24
-    uint32_t spare25 : 1;                  // bit 25
+    uint32_t FTP_Mode : 2;                  // bit 24, 25
     uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
     uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
