@@ -274,7 +274,7 @@
 #define D_CONFIGURATION "Configuració"
 #define D_INFORMATION "Informació"
 #define D_FIRMWARE_UPGRADE "Actualització de programari"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
 #define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Consola"
 #define D_CONFIRM_RESTART "Confirma el Reinici"

@@ -26,7 +26,7 @@ const char HTTP_GV_PAGE[] PROGMEM =
   "<!DOCTYPE HTML>"
   "<html>"
     "<head>"
-    "<title>Tasmota GPIO State</title>"
+    "<title>%s - GPIO State</title>"
     "<base href='" GV_BASE_URL "'>"
     "<link id='defaultStyleSheet' rel='stylesheet' href=''>"
     "<link id='boardStyleSheet' rel='stylesheet' href=''>"
@@ -231,6 +231,7 @@ void GVHandleEvents(void) {
 
 void GVHandleRoot(void) {
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
+                                        SettingsTextEscaped(SET_DEVICENAME).c_str(),
                                         WiFi.localIP().toString().c_str(), 
                                         WiFi.localIP().toString().c_str(), 
                                         ESP_getFreeSketchSpace() / 1024);

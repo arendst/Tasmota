@@ -274,7 +274,7 @@
 #define D_CONFIGURATION "Konfigurering"
 #define D_INFORMATION "Information"
 #define D_FIRMWARE_UPGRADE "Uppgradera firmware"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
 #define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsol"
 #define D_CONFIRM_RESTART "Bekräfta omstart"

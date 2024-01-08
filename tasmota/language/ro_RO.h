@@ -274,7 +274,7 @@
 #define D_CONFIGURATION "Configurație"
 #define D_INFORMATION "Informație"
 #define D_FIRMWARE_UPGRADE "Actualizare Firmware"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
 #define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Consolă"
 #define D_CONFIRM_RESTART "Confirmare Restart"
