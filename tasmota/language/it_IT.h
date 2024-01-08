@@ -1220,7 +1220,6 @@
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 // xsns_106_gdk101.ino
-//#define D_AVG_RAD_DOSE                    "Dose media radiazioni"
 #define D_AVG_RAD_DOSE                    "Radiazioni"
 #define D_UNIT_US_H                       "µSv/h"
 
