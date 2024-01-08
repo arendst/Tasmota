@@ -198,7 +198,7 @@ class Webserver_async_cnx
   # pre: self.buf_in is not empty
   # post: self.buf_in has made progress (smaller or '')
   def parse()
-    tasmota.log(f"WEB: incoming {bytes().fromstring(self.buf_in).tohex()}", 3)
+    # tasmota.log(f"WEB: incoming {bytes().fromstring(self.buf_in).tohex()}", 3)
     if self.phase == 0
       self.parse_http_req_line()
     elif self.phase == 1
@@ -274,7 +274,7 @@ class Webserver_async_cnx
   #
   # Received header
   def event_http_header(header_key, header_value)
-    tasmota.log(f"WEB: header key '{header_key}' = '{header_value}'")
+    # tasmota.log(f"WEB: header key '{header_key}' = '{header_value}'")
 
     if (header_key == "Host")
       self.header_host = header_value
@@ -291,7 +291,7 @@ class Webserver_async_cnx
   #############################################################
   # parse incoming payload (if any)
   def parse_http_payload()
-    tasmota.log(f"WEB: parsing payload '{bytes().fromstring(self.buf_in).tohex()}'")
+    # tasmota.log(f"WEB: parsing payload '{bytes().fromstring(self.buf_in).tohex()}'")
     # dispatch request before parsing payload
     self.server.dispatch(self, self.req_uri, self.req_verb)
   end
@@ -538,7 +538,7 @@ class webserver_async
 
 end
 
-#return webserver_async
+return webserver_async
 
 #- Test
 
