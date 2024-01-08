@@ -93,6 +93,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.infoMsg = MI32_DID_CONNECT;
     MI32.mode.willConnect = 0;
     MI32.mode.connected = 1;
+    pclient->updateConnParams(8,11,0,1000);
   }
   void onDisconnect(NimBLEClient* pclient) {
     MI32.mode.connected = 0;
@@ -250,7 +251,7 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
     memcpy(item.buffer,pData,length);
     item.header.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
     item.header.handle = pRemoteCharacteristic->getHandle();
-    xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(1));
+    xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(5));
     MI32.mode.readingDone = 1;
     MI32.infoMsg = MI32_GOT_NOTIFICATION;
     return;
@@ -711,9 +712,8 @@ extern "C" {
     MI32BLELoop();
   }
 
-  bool MI32runBerryServer(uint16_t operation, bool response){
+  bool MI32runBerryServer(uint16_t operation){
     MI32.conCtx->operation = operation;
-    MI32.conCtx->response = response;
     AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Berry server op: %d, response: %u"),MI32.conCtx->operation, MI32.conCtx->response);
     if(MI32.mode.readyForNextServerJob == 0){
       MI32.mode.triggerNextServerJob = 0;
@@ -724,14 +724,22 @@ extern "C" {
     return true;
   }
 
-  bool MI32runBerryConnection(uint8_t operation, bool response){
+  bool MI32runBerryConnection(uint8_t operation, bool response, int32_t* arg1){
     if(MI32.conCtx != nullptr){
+      if(arg1 != nullptr){
+        MI32.conCtx->arg1 = *arg1;
+        MI32.conCtx->hasArg1 = true;
+        AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: arg1: %u"),MI32.conCtx->arg1);
+      }
+      else{
+        MI32.conCtx->hasArg1 = false;
+      }
+      MI32.conCtx->response = response;
       if(operation > 200){
-        return MI32runBerryServer(operation,response);
+        return MI32runBerryServer(operation);
       }
       MI32.conCtx->oneOp = (operation > 9);
       MI32.conCtx->operation = operation%10;
-      MI32.conCtx->response = response;
       AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Berry connection op: %d, addrType: %d, oneOp: %u, response: %u"),MI32.conCtx->operation, MI32.conCtx->addrType, MI32.conCtx->oneOp, MI32.conCtx->response);
       if(MI32.conCtx->oneOp){
         MI32StartConnectionTask();
@@ -1214,7 +1222,7 @@ bool MI32StartConnectionTask(){
       2,                /* Priority of the task */
       &MI32.ConnTask,   /* Task handle. */
       0);               /* Core where the task should run */
-      return true;
+    return true;
 }
 
 void MI32ConnectionTask(void *pvParameters){
@@ -1240,7 +1248,7 @@ void MI32ConnectionTask(void *pvParameters){
         timer++;
         vTaskDelay(10/ portTICK_PERIOD_MS);
       }
-      if(MI32.mode.discoverAttributes){
+      if(MI32.mode.discoverAttributes || MI32.conCtx->hasArg1){ // explicit or in the first run with selection by handle
         MI32Client->discoverAttributes(); // solves connection problems on i.e. yeelight dimmer
       }
       NimBLERemoteService* pSvc = nullptr;
@@ -1271,7 +1279,12 @@ void MI32ConnectionTask(void *pvParameters){
           MI32ConnectionGetServices();
         }
         else{
-          pSvc = MI32Client->getService(MI32.conCtx->serviceUUID);
+          if(MI32.conCtx->hasArg1){
+            pSvc = nullptr; // invalidate possible dangling service from last operation
+          }
+          else{
+            pSvc = MI32Client->getService(MI32.conCtx->serviceUUID);
+          }
         }
 
         if(pSvc) {
@@ -1279,8 +1292,11 @@ void MI32ConnectionTask(void *pvParameters){
             MI32ConnectionGetCharacteristics(pSvc);
           }
           else{
-            pChr = pSvc->getCharacteristic(MI32.conCtx->charUUID);
+          pChr = pSvc->getCharacteristic(MI32.conCtx->charUUID);
           }
+        }
+        else if(MI32.conCtx->hasArg1){
+          pChr = MI32Client->getCharacteristic(MI32.conCtx->arg1); // get by handle, overriding svc and chr values
         }
         else{
           if(MI32.conCtx->operation != 6){
@@ -1291,12 +1307,13 @@ void MI32ConnectionTask(void *pvParameters){
           switch(MI32.conCtx->operation){
             case 1:
               if(pChr->canRead()) {
-              NimBLEAttValue _val = pChr->readValue();
-              MI32.conCtx->buffer[0] = _val.size();
-                 memcpy( MI32.conCtx->buffer + 1,_val.data(),MI32.conCtx->buffer[0]);
+                NimBLEAttValue _val = pChr->readValue();
+                MI32.conCtx->buffer[0] = _val.size();
+                memcpy( MI32.conCtx->buffer + 1,_val.data(),MI32.conCtx->buffer[0]);
+                MI32.conCtx->handle = pChr->getHandle();
               }
               else{
-              MI32.conCtx->error = MI32_CONN_CAN_NOT_READ;
+                MI32.conCtx->error = MI32_CONN_CAN_NOT_READ;
               }
               break;
             case 2:
@@ -1304,6 +1321,7 @@ void MI32ConnectionTask(void *pvParameters){
                 uint8_t len = MI32.conCtx->buffer[0];
                 if(pChr->writeValue(MI32.conCtx->buffer + 1,len,MI32.conCtx->response & !pChr->canWriteNoResponse())) { // falls always back to "no response" if server provides both options
                   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: write op done"));
+                  MI32.conCtx->handle = pChr->getHandle();
                 }
                 else{
                 MI32.conCtx->error = MI32_CONN_DID_NOT_WRITE;
@@ -1322,15 +1340,31 @@ void MI32ConnectionTask(void *pvParameters){
                   break;
                 }
               }
-              charvector = pSvc->getCharacteristics(true); // always try to subscribe to all characteristics with the same UUID
-              for (auto &it: *charvector) {
-                if (it->getUUID() == MI32.conCtx->charUUID) {
-                  if (it->canNotify()) {
-                    if(!it->subscribe(true, MI32notifyCB, MI32.conCtx->response)) {
-                      MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY; // will return the last result only ATM, maybe check differently
+              if(MI32.conCtx->hasArg1){ // characteristic selected by handle
+                if (pChr->canNotify()) {
+                  if(!pChr->subscribe(true, MI32notifyCB, MI32.conCtx->response)) {
+                    MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY; // will return the last result only ATM, maybe check differently
+                  }
+                }
+              }
+              else { //  characteristic selected by UUID
+                charvector = pSvc->getCharacteristics(true); // always try to subscribe to all characteristics with the same UUID
+                uint32_t position = 1;
+                for (auto &it: *charvector) {
+                  if (it->getUUID() == MI32.conCtx->charUUID) {
+                    if (it->canNotify()) {
+                      if(!it->subscribe(true, MI32notifyCB, MI32.conCtx->response)) {
+                        MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY; // will return the last result only ATM, maybe check differently
+                      }
+                      else{
+                        MI32.conCtx->buffer[position++] = it->getHandle() >> 8;
+                        MI32.conCtx->buffer[position++] = it->getHandle() & 0xff;
+                        MI32.conCtx->handle = it->getHandle();
+                      }
                     }
                   }
                 }
+                MI32.conCtx->buffer[0] = position - 1;
               }
               break;
           default:
@@ -1403,7 +1437,7 @@ bool MI32StartServerTask(){
     2,                /* Priority of the task */
     &MI32.ServerTask,   /* Task handle. */
     0);               /* Core where the task should run */
-    return true;
+  return true;
 }
 
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
@@ -1416,6 +1450,15 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
  */
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
   NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  /**  optional argument arg1
+    BLE_GAP_CONN_MODE_NON (0) - not connectable advertising
+    BLE_GAP_CONN_MODE_DIR (1) - directed connectable advertising
+    BLE_GAP_CONN_MODE_UND (2) - undirected connectable advertising
+   */
+  if(MI32.conCtx->hasArg1){
+    pAdvertising->setAdvertisementType(MI32.conCtx->arg1);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: AdvertisementType: %u"),MI32.conCtx->arg1);
+  }
   struct{
     BLERingBufferItem_t header;
     uint8_t buffer[255];
@@ -1447,7 +1490,10 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
   adv.addData((char *)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
   if(MI32.conCtx->operation == BLE_OP_SET_ADV){
     pAdvertising->setAdvertisementData(adv); // replace whole advertisement with our custom data from the Berry side
-    pAdvertising->start();
+    if(pAdvertising->isAdvertising() == false && !shallStartServices){ // first advertisement
+      vTaskDelay(1000/ portTICK_PERIOD_MS);   // work around to prevent crash on start
+      pAdvertising->start();
+    }
   } else
   {
     pAdvertising->setScanResponseData(adv);
@@ -1486,11 +1532,16 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
   NimBLECharacteristic *pCharacteristic = pService->getCharacteristic(MI32.conCtx->charUUID); // again retrieve ...
   if(pCharacteristic == nullptr){
     uint32_t _writeRSP = MI32.conCtx->response ?  NIMBLE_PROPERTY::WRITE :  NIMBLE_PROPERTY::WRITE_NR;
+    uint32_t _property = NIMBLE_PROPERTY::READ |
+                         _writeRSP |
+                         NIMBLE_PROPERTY::NOTIFY |
+                         NIMBLE_PROPERTY::INDICATE; // default to "all"
+    if(MI32.conCtx->hasArg1){
+      _property = MI32.conCtx->arg1;    // override with optional argument
+      // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: _property: %u"),_property);
+    }
     pCharacteristic = pService->createCharacteristic(MI32.conCtx->charUUID,
-                                                    NIMBLE_PROPERTY::READ |
-                                                    _writeRSP |
-                                                    NIMBLE_PROPERTY::NOTIFY |
-                                                    NIMBLE_PROPERTY::INDICATE);  //... or create characteristic.
+                                                    _property);  //... or create characteristic.
     if(pCharacteristic == nullptr){
       MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
       return;
@@ -1499,7 +1550,7 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
     MI32.infoMsg = MI32_SERV_CHARACTERISTIC_ADDED;
   }
   pCharacteristic->setValue(MI32.conCtx->buffer + 1, MI32.conCtx->buffer[0]); // set value
-  pCharacteristic->notify(true); // always notify .. for now
+  pCharacteristic->notify(true); // TODO: fallback to indication
   struct{
     BLERingBufferItem_t header;
   } item;
