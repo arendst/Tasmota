@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Renamed button "Consoles" to "Tools"
+- Header `Host` is now collected by Webserver
 
 ### Fixed
 
