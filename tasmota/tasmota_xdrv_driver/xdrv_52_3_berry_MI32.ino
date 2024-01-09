@@ -80,7 +80,7 @@ extern "C" {
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern void MI32setBerryServerCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation, bbool response);
+  extern bool MI32runBerryConnection(uint8_t operation, bbool response, int32_t *arg1);
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
@@ -161,13 +161,19 @@ extern "C" {
     be_raisef(vm, "ble_error", "BLE: could not set characteristic");
   }
 
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response);
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response){
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1);
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1){
+    int32_t argc = be_top(vm); // Get the number of arguments
     bool _response = false;    
     if(response){
       _response = response;
     }
-    if (MI32runBerryConnection(operation,_response)) return;
+    int32_t *ptr_arg1 = nullptr;
+    int32_t _arg1 = arg1;
+    if(argc == 3){
+      ptr_arg1 = &_arg1;
+    }
+    if (MI32runBerryConnection(operation, _response, ptr_arg1)) return;
 
     be_raisef(vm, "ble_error", "BLE: could not run operation");
   }

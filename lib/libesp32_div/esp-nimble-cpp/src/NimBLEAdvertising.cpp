@@ -67,7 +67,7 @@ void NimBLEAdvertising::reset() {
     m_advParams.disc_mode            = BLE_GAP_DISC_MODE_GEN;
     m_customAdvData                  = false;
     m_customScanResponseData         = false;
-    m_scanResp                       = true;
+    m_scanResp                       = false;
     m_advDataSet                     = false;
     // Set this to non-zero to prevent auto start if host reset before started by app.
     m_duration                       = BLE_HS_FOREVER;
