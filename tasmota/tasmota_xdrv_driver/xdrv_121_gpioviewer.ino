@@ -86,12 +86,87 @@ struct {
   bool sse_ready;
 } GV;
 
+void GVBegin(void) {
+  GV.WebServer = new ESP8266WebServer(GV_PORT);
+  // Set CORS headers for global responses
+  GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
+  GV.WebServer->sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  GV.WebServer->sendHeader("Access-Control-Allow-Headers", "Content-Type");
+  GV.WebServer->on("/events", GVHandleEvents);
+  GV.WebServer->on("/", GVHandleRoot);
+  GV.WebServer->on("/release", GVHandleRelease);
+  GV.WebServer->on("/free_psram", GVHandleFreePSRam);
+  GV.WebServer->begin();
+
+  GV.active = true;
+}
+
+void GVStop(void) {
+  GV.sse_ready = false;
+  GV.active = false;
+
+  GV.WebServer->stop();
+  GV.WebServer = nullptr;
+}
+
+void GVHandleEvents(void) {
+  GV.WebClient = GV.WebServer->client();
+  GV.WebClient.setNoDelay(true);
+//  GV.WebClient.setSync(true);
+
+  GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
+  GV.WebServer->sendContent_P(HTTP_GV_EVENT);
+
+  GV.sse_ready = true;                                     // Ready for async updates
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Client connected"));
+}
+
+void GVHandleRoot(void) {
+  char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
+                                        SettingsTextEscaped(SET_DEVICENAME).c_str(),
+                                        WiFi.localIP().toString().c_str(), 
+                                        WiFi.localIP().toString().c_str(), 
+#ifdef ESP32
+                                        ESP.getPsramSize() / 1024,
+#endif  // ESP32
+                                        ESP_getFreeSketchSpace() / 1024);
+  if (content == nullptr) { return; }                      // Avoid crash
+  GV.WebServer->send_P(200, "text/html", content);
+  free(content);
+
+  GV.sse_ready = false;                                    // Allow restart of updates on page load
+}
+
+void GVHandleRelease(void) {
+  String jsonResponse = "{\"release\":\"" + String(GVRelease) + "\"}";
+  GV.WebServer->send(200, "application/json", jsonResponse);
+}
+
+void GVHandleFreePSRam(void) {
+  String jsonResponse = "{\"freePSRAM\":\"";
+#ifdef ESP32
+  if (UsePSRAM()) {
+    jsonResponse += String(ESP.getFreePsram() / 1024) + " KB\"}";
+  } else
+#endif
+    jsonResponse += "No PSRAM\"}";
+  GV.WebServer->send(200, "application/json", jsonResponse);
+}
+
 //void GVEventSend(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
 void GVEventSend(const char *message, const char *event, uint32_t id) {
   if (GV.WebClient.connected()) {
     // generateEventMessage() in AsyncEventSource.cpp
 //    GV.WebClient.printf_P(PSTR("retry: 0\r\nid: %u\r\nevent: %s\r\ndata: %s\r\n\r\n"), id, event, message);
     GV.WebClient.printf_P(PSTR("id: %u\r\nevent: %s\r\ndata: %s\r\n\r\n"), id, event, message);
+  } else {
+    if (GV.sse_ready) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Client disconnected"));
+    }
+//    GVStop();    // This will stop the webserver but not all memory will be released resulting in memory leaks
+    GV.sse_ready = false;  // This just stops the event to be restarted by opening root page again
+
   }
 }
 
@@ -194,60 +269,33 @@ void GVMonitorTask(void) {
   }
 }
 
-void GVBegin(void) {
-  GV.WebServer = new ESP8266WebServer(GV_PORT);
-  // Set CORS headers for global responses
-  GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
-  GV.WebServer->sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  GV.WebServer->sendHeader("Access-Control-Allow-Headers", "Content-Type");
-  GV.WebServer->on("/events", GVHandleEvents);
-  GV.WebServer->on("/", GVHandleRoot);
-  GV.WebServer->on("/release", GVHandleRelease);
-  GV.WebServer->on("/free_psram", GVHandleFreePSRam);
-  GV.WebServer->begin();
-}
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
 
-void GVHandleEvents(void) {
-  GV.WebClient = GV.WebServer->client();
-  GV.WebClient.setNoDelay(true);
-//  GV.WebClient.setSync(true);
+const char kGVCommands[] PROGMEM = "GV|"  // Prefix
+  "Viewer";
 
-  GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
-  GV.WebServer->sendContent_P(HTTP_GV_EVENT);
+void (* const GVCommand[])(void) PROGMEM = {
+  &CmndGVViewer};
 
-  GV.sse_ready = true;                                     // Ready for async updates
-}
-
-void GVHandleRoot(void) {
-  char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
-                                        SettingsTextEscaped(SET_DEVICENAME).c_str(),
-                                        WiFi.localIP().toString().c_str(), 
-                                        WiFi.localIP().toString().c_str(), 
-#ifdef ESP32
-                                        ESP.getPsramSize() / 1024,
-#endif  // ESP32
-                                        ESP_getFreeSketchSpace() / 1024);
-  if (content == nullptr) { return; }                      // Avoid crash
-  GV.WebServer->send_P(200, "text/html", content);
-  free(content);
-
-  GV.sse_ready = false;                                    // Allow restart of updates on page load
-}
-
-void GVHandleRelease(void) {
-  String jsonResponse = "{\"release\":\"" + String(GVRelease) + "\"}";
-  GV.WebServer->send(200, "application/json", jsonResponse);
-}
-
-void GVHandleFreePSRam(void) {
-  String jsonResponse = "{\"freePSRAM\":\"";
-#ifdef ESP32
-  if (UsePSRAM()) {
-    jsonResponse += String(ESP.getFreePsram() / 1024) + " KB\"}";
-  } else
-#endif
-    jsonResponse += "No PSRAM\"}";
-  GV.WebServer->send(200, "application/json", jsonResponse);
+void CmndGVViewer(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+    uint32_t state = XdrvMailbox.payload;
+    if (2 == state) {           // Toggle
+      state = GV.active ^1;
+    }
+    if (state) {                // On
+      GVBegin();
+    } else {                    // Off
+      GVStop();
+    }
+  }
+  if (GV.active) {
+    Response_P(PSTR("{\"%s\":\"Active on http://%s:" STR(GV_PORT) "/\"}"), XdrvMailbox.command, WiFi.localIP().toString().c_str());
+  } else {
+    ResponseCmndChar_P(PSTR("Stopped"));
+  }
 }
 
 /*********************************************************************************************\
@@ -257,7 +305,6 @@ void GVHandleFreePSRam(void) {
 #define WEB_HANDLE_GV "gv1"
 
 const char HTTP_BTN_MENU_GV[] PROGMEM =
-//  "<p><form action='http://%s:" STR(GV_PORT) "/' method='post' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
   "<p><form action='" WEB_HANDLE_GV "' method='get' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
 
 void GVSetupAndStart(void) {
@@ -267,7 +314,6 @@ void GVSetupAndStart(void) {
 
   if (!GV.active) {
     GVBegin();
-    GV.active = true;
   }
 
   char redirect[100];
@@ -285,6 +331,9 @@ bool Xdrv121(uint32_t function) {
   bool result = false;
 
   switch (function) {
+    case FUNC_COMMAND:
+      result = DecodeCommand(kGVCommands, GVCommand);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_MANAGEMENT_BUTTON:
       if (XdrvMailbox.index) {
