@@ -171,16 +171,20 @@ extern "C" {
   int32_t l_rtc(struct bvm *vm);
   int32_t l_rtc(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_int(vm, "utc", Rtc.utc_time);
-      be_map_insert_int(vm, "local", Rtc.local_time);
-      be_map_insert_int(vm, "restart", Rtc.restart_time);
-      be_map_insert_int(vm, "timezone", Rtc.time_timezone);
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_int(vm, "utc", Rtc.utc_time);
+    be_map_insert_int(vm, "local", Rtc.local_time);
+    be_map_insert_int(vm, "restart", Rtc.restart_time);
+    be_map_insert_int(vm, "timezone", Rtc.time_timezone);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.rtc_utc() -> int
@@ -196,28 +200,32 @@ extern "C" {
   int32_t l_memory(struct bvm *vm);
   int32_t l_memory(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_int(vm, "flash", ESP_getFlashChipMagicSize() / 1024);
-      be_map_insert_int(vm, "flash_real", ESP.getFlashChipSize() / 1024);
-      be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
-      be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
-      be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
-      be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
-      // give info about stack size
-      be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
-      be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
-      if (UsePSRAM()) {
-        be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
-        be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
-      }
-      // IRAM information
-      int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
-      be_map_insert_int(vm, "iram_free", iram_free / 1024);
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_int(vm, "flash", ESP_getFlashChipMagicSize() / 1024);
+    be_map_insert_int(vm, "flash_real", ESP.getFlashChipSize() / 1024);
+    be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
+    be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
+    be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
+    be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
+    // give info about stack size
+    be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
+    be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
+    if (UsePSRAM()) {
+      be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
+      be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+    }
+    // IRAM information
+    int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    be_map_insert_int(vm, "iram_free", iram_free / 1024);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.wifi() -> map
@@ -225,38 +233,42 @@ extern "C" {
   int32_t l_wifi(struct bvm *vm);
   int32_t l_wifi(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
-      be_map_insert_bool(vm, "up", WifiHasIP());
-      if (Settings->flag4.network_wifi) {
-        int32_t rssi = WiFi.RSSI();
-        bool show_rssi = false;
-#ifdef USE_IPV6
-        String ipv6_addr = WifiGetIPv6Str();
-        if (ipv6_addr != "") {
-          be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
-          show_rssi = true;
-        }
-        ipv6_addr = WifiGetIPv6LinkLocalStr();
-        if (ipv6_addr != "") {
-          be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
-          show_rssi = true;
-        }
-#endif // USE_IPV6
-        if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-          be_map_insert_str(vm, "ip", IPAddress((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
-          show_rssi = true;
-        }
-        if (show_rssi) {
-          be_map_insert_int(vm, "rssi", rssi);
-          be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
-        }
-      }
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+    be_map_insert_bool(vm, "up", WifiHasIP());
+    if (Settings->flag4.network_wifi) {
+      int32_t rssi = WiFi.RSSI();
+      bool show_rssi = false;
+#ifdef USE_IPV6
+      String ipv6_addr = WifiGetIPv6Str();
+      if (ipv6_addr != "") {
+        be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+        show_rssi = true;
+      }
+      ipv6_addr = WifiGetIPv6LinkLocalStr();
+      if (ipv6_addr != "") {
+        be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+        show_rssi = true;
+      }
+#endif // USE_IPV6
+      if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+        be_map_insert_str(vm, "ip", IPAddress((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
+        show_rssi = true;
+      }
+      if (show_rssi) {
+        be_map_insert_int(vm, "rssi", rssi);
+        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+      }
+    }
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.eth() -> map
@@ -264,34 +276,38 @@ extern "C" {
   int32_t l_eth(struct bvm *vm);
   int32_t l_eth(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
+      // (-2) map instance, (-1) map
+    }
 #ifdef USE_ETHERNET
-      be_map_insert_bool(vm, "up", EthernetHasIP());
-      String eth_mac = EthernetMacAddress().c_str();
-      if (eth_mac != "00:00:00:00:00:00") {
-        be_map_insert_str(vm, "mac", eth_mac.c_str());
-      }
-      if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-        be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
-      }
+    be_map_insert_bool(vm, "up", EthernetHasIP());
+    String eth_mac = EthernetMacAddress().c_str();
+    if (eth_mac != "00:00:00:00:00:00") {
+      be_map_insert_str(vm, "mac", eth_mac.c_str());
+    }
+    if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+      be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
+    }
 #ifdef USE_IPV6
-      String ipv6_addr = EthernetGetIPv6Str();
-      if (ipv6_addr != "") {
-        be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
-      }
-      ipv6_addr = EthernetGetIPv6LinkLocalStr();
-      if (ipv6_addr != "") {
-        be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
-      }
+    String ipv6_addr = EthernetGetIPv6Str();
+    if (ipv6_addr != "") {
+      be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+    }
+    ipv6_addr = EthernetGetIPv6LinkLocalStr();
+    if (ipv6_addr != "") {
+      be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+    }
 #endif // USE_IPV6
 #else // USE_ETHERNET
-      be_map_insert_bool(vm, "up", bfalse);
+    be_map_insert_bool(vm, "up", bfalse);
 #endif // USE_ETHERNET
-      be_pop(vm, 1);
-      be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.hostname() -> string
