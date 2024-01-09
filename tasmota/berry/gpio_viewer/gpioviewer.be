@@ -125,6 +125,7 @@ class GPIO_viewer
 
   def send_events_page(cnx, uri, verb)
     cnx.set_chunked(false)     # no chunking since we use EventSource
+    cnx.set_cors(true)
     cnx.send(200, "text/event-stream")
 
     self.send_events_tick(cnx)
