@@ -335,6 +335,23 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: `webserver.header(name:string) -> string or nil`
+  int32_t w_webserver_header(struct bvm *vm);
+  int32_t w_webserver_header(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * header_name = be_tostring(vm, 1);
+      String header = Webserver->header(header_name);
+      if (header.length() > 0) {
+        be_pushstring(vm, header.c_str());
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
 }
 
 #endif // USE_WEBSERVER
