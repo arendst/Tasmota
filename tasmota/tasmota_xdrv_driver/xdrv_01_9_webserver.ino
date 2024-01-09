@@ -534,7 +534,7 @@ void ShowWebSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %_I"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), (uint32_t)Webserver->client().remoteIP());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), Webserver->client().remoteIP().toString().c_str());
   }
 }
 
@@ -1075,8 +1075,6 @@ void WebRestart(uint32_t type) {
       WSContentSpaceButton(BUTTON_MAIN);
     }
   }
-  WSContentStop();
-
   if (!(2 == type)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
     ShowWebSource(SRC_WEBGUI);
@@ -1085,6 +1083,7 @@ void WebRestart(uint32_t type) {
 #endif  // ESP32
     TasmotaGlobal.restart_flag = 2;
   }
+  WSContentStop();
 }
 
 /*********************************************************************************************/
