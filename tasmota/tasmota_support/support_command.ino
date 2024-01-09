@@ -1049,16 +1049,21 @@ void CmndRemoveFiles(void) {
   ResponseClear();
 }
 
+
+
 void CmndPoPInit(void) {
 
   if( XdrvMailbox.data_len )
   {
+    sdkClearStack();
     // read the pop height (int64)
     // lookup PoP from chain
     // setup logic to challenge or respond to a challenge accordingly
-    bool result = getPoPFromChain( XdrvMailbox.data );
-    if( result )
+    bool result = getPoPFromChain( XdrvMailbox.data );    
+    if( result ){
       Response_P( "{ \"%s\": accepted }", D_CMND_POPINIT);
+      SetExecutePoP();
+    }
     else
       Response_P( "{ \"%s\": failed }", D_CMND_POPINIT);
   }
@@ -1073,6 +1078,7 @@ void CmndChallenge(void) {
 
   if( XdrvMailbox.data_len )
   {
+    sdkClearStack();
     char buffer[200]= {0};
     const char* token = " ";
     strcpy( buffer, XdrvMailbox.data);
@@ -1084,7 +1090,7 @@ void CmndChallenge(void) {
     bool result = ChallengeChallengee( cid, address);
     
     if( result )
-      Response_P( "{ \"%s\": accepted }", D_CMND_CHALLENGE);
+      Response_P( "{ \"%s\": broadcasted }", D_CMND_CHALLENGE);
     else
       Response_P( "{ \"%s\": failed }", D_CMND_CHALLENGE);
   }
@@ -1102,7 +1108,7 @@ void CmndPoPChallengeResult(void) {
     sdkClearStack();
     bool  result = processPoPChallengeResponse( XdrvMailbox.data, XdrvMailbox.data_len );
     if( result )
-      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "PoP: success!" );
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "PoP: successfully executed!" );
     else
        Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGERESULT, "PoP: failed!" );
   } 

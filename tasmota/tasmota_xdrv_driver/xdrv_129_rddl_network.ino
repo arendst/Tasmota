@@ -132,6 +132,10 @@ bool claimNotarizationMutex()
   else
     return false;
 }
+bool executePoP = false;
+void SetExecutePoP(){
+  executePoP = true;
+}
 
 void releaseNotarizationMutex()
 {
@@ -216,12 +220,35 @@ void deleteOldestFilesFromFS( FS* filesystem, int count ) {
     }
 }
 
-void RDDLNetworkNotarizationScheduler(){
+void InitializePoPWorkflow(){
+  bool IamChallenger = amIChallenger();
+  if( IamChallenger ){
+    AddLog(2, "PoP: initialize PoP challenge");
+
+    // select CID
+    char* cid = getCIDofChallengee();
+    AddLog(2, "PoP: CID to be challenged %s", cid );
+    bool result = ChallengeChallengee( cid, NULL);
+    if( result )
+      AddLog(2, "{ \"PoP\": challenge broadcasted }");
+    else
+      AddLog(2, "{ \"PoP\": challenge initialization failed }");
+  }
+  else
+    AddLog(2, "PoP: not the challenger");
+}
+
+void RDDLNetworkScheduler(){
   ++counted_seconds;
   if( counted_seconds >= (uint32_t)atoi(sdkGetSetting( SET_NOTARIZTATION_PERIODICITY)))
   {
     counted_seconds=0;
     RDDLNotarize();
+  }
+  else if( counted_seconds % 2 == 0 && executePoP ){
+    executePoP = false;
+    InitializePoPWorkflow();
+    
   }
 }
 
