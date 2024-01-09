@@ -28,6 +28,9 @@
 #@ solidify:webserver_async
 #@ solidify:Webserver_async_cnx
 
+#############################################################
+# class Webserver_async_cnx
+#############################################################
 class Webserver_async_cnx
   var server                                      # link to server object
   var cnx                                         # holds the tcpclientasync instance
@@ -46,7 +49,7 @@ class Webserver_async_cnx
   var resp_headers
   var resp_version
   var chunked                                     # if true enable chunked encoding (default true)
-  var cors                                        # if true send CORS headers (default true)
+  var cors                                        # if true send CORS headers (default false)
   # bytes objects to be reused
   var payload1
   # conversion
@@ -79,7 +82,7 @@ class Webserver_async_cnx
     self.resp_headers = ''
     self.resp_version = 1       # HTTP 1.1      # TODO
     self.chunked = true
-    self.cors = true
+    self.cors = false
     # register cb
     self.fastloop_cb = def () self.loop() end
     tasmota.add_fast_loop(self.fastloop_cb)
@@ -384,6 +387,9 @@ class Webserver_async_cnx
   end
 end
 
+#############################################################
+# class Webserver_dispatcher
+#############################################################
 class Webserver_dispatcher
   var uri_prefix                                  # prefix string, must start with '/'
   var verb                                        # verb to match, or nil for ANY
@@ -412,6 +418,11 @@ class Webserver_dispatcher
   end
 end
 
+#############################################################
+# class webserver_async
+#
+# This is the main class to call
+#############################################################
 class webserver_async
   var local_port                                  # listening port, 80 is already used by Tasmota
   var server                                      # instance of `tcpserver`
@@ -424,7 +435,9 @@ class webserver_async
   var dispatchers
   # copied in each connection
   var chunked                                     # if true enable chunked encoding (default true)
-  var cors                                        # if true send CORS headers (default true)
+  var cors                                        # if true send CORS headers (default false)
+  #
+  var payload1, payload2                          # temporary object bytes() to avoid reallocation
 
   static var TIMEOUT = 1000                       # default timeout: 1000ms
   static var HTTP_REQ = "^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n"
@@ -438,6 +451,10 @@ class webserver_async
     self.connections = []
     self.dispatchers = []
     self.server = tcpserver(port)                 # throws an exception if port is not available
+    self.chunked = true
+    self.cors = false
+    self.payload1 = bytes(100)              # reserve 100 bytes by default
+    self.payload2 = bytes(100)              # reserve 100 bytes by default
     # TODO what about max_clients ?
     self.compile_re()
     # register cb
@@ -457,12 +474,71 @@ class webserver_async
     end
   end
 
+  #############################################################
+  # enable or disable chunked mode (enabled by default)
   def set_chunked(chunked)
     self.chunked = bool(chunked)
   end
 
+  #############################################################
+  # enable or disable CORS mode (enabled by default)
   def set_cors(cors)
     self.cors = bool(cors)
+  end
+
+  #############################################################
+  # Helper function to encode integer as hex (uppercase)
+  static def bytes_format_hex(b, i, default)
+    b.clear()
+    if (i == nil)   b .. default    return  end
+    # sanity check
+    if (i < 0)    i = -i    end
+    if (i < 0)    return    end     # special case for MININT
+    if (i == 0)   b.resize(1)   b[0] = 0x30   return  end   # return bytes("30")
+
+    b.resize(8)
+    var len = 0
+    while i > 0
+      var digit = i & 0x0F
+      if (digit < 10)
+        b[len] = 0x30 + digit
+      else
+        b[len] = 0x37 + digit # 0x37 = 0x41 ('A') - 10
+      end
+      len += 1
+      i = (i >> 4)
+    end
+    # reverse order
+    b.resize(len)
+    b.reverse()
+  end
+
+  #############################################################
+  # Helper function to encode integer as int
+  static def bytes_format_int(b, i, default)
+    b.clear()
+    if (i == nil)   b .. default    return  end
+    var negative = false
+    # sanity check
+    if (i < 0)    i = -i    negative = true   end
+    if (i < 0)    return    end     # special case for MININT
+    if (i == 0)   b.resize(1)   b[0] = 0x30   return  end   # return bytes("30")
+
+    b.resize(11)    # max size for 32 bits ints '-2147483647'
+    var len = 0
+    while i > 0
+      var digit = i % 10
+      b[len] = 0x30 + digit
+      len += 1
+      i = (i / 10)
+    end
+    if negative
+      b[len] = 0x2D
+      len += 1
+    end
+    # reverse order
+    b.resize(len)
+    b.reverse()
   end
 
   #############################################################

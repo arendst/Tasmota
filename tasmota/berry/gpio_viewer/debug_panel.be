@@ -21,8 +21,6 @@ class debug_panel
   var port
   var web
   var sampling_interval
-  #
-  var payload1, payload2               # temporary object bytes() to avoid reallocation
 
   static var SAMPLING = 100
   static var HTML_HEAD1 = 
@@ -73,8 +71,6 @@ class debug_panel
     self.port = port
     self.web = webserver_async(port)
     self.sampling_interval = self.SAMPLING
-    self.payload1 = bytes(100)              # reserve 100 bytes by default
-    self.payload2 = bytes(100)              # reserve 100 bytes by default
 
     self.web.set_chunked(true)
     self.web.set_cors(true)
@@ -110,30 +106,74 @@ class debug_panel
     cnx.content_stop()
   end
   
+  static class feeder
+    var cnx                                   # connection object
+
+    def init(cnx)
+      self.cnx = cnx
+      tasmota.add_driver(self)
+    end
+
+    def close()
+      tasmota.remove_driver(self)
+    end
+
+    def every_100ms()
+      self.send_feed()
+    end
+
+    def send_feed()
+      var cnx = self.cnx
+      if !cnx.connected()
+        self.close()
+        return
+      end
+
+      var payload1 = self.cnx.server.payload1
+      var payload2 = self.cnx.server.payload2
+      var server = self.cnx.server
+      if cnx.buf_out_empty()
+        # if out buffer is not empty, do not send any new information
+        # var payload
+        # send free heap
+        payload1.clear()
+        payload1 .. "id:"
+        server.bytes_format_int(payload2, tasmota.millis())
+        payload1 .. payload2
+        payload1 .. "\r\nevent:free_heap\r\ndata:"
+        server.bytes_format_int(payload2, tasmota.memory('heap_free'), '---')
+        payload1 .. payload2
+        payload1 .. " KB\r\n\r\n"
+        # payload = f"id:{tasmota.millis()}\r\n"
+        #           "event:free_heap\r\n"
+        #           "data:{tasmota.memory().find('heap_free', 0)} KB\r\n\r\n"
+        cnx.write(payload1)
+
+        # send wifi rssi
+        payload1.clear()
+        payload1 .. "id:"
+        server.bytes_format_int(payload2, tasmota.millis())
+        payload1 .. payload2
+        payload1 .. "\r\nevent:wifi_rssi\r\ndata:"
+        server.bytes_format_int(payload2, tasmota.wifi('quality'), '--')
+        payload1 .. payload2
+        payload1 .. "%\r\n\r\n"
+
+        # payload = f"id:{tasmota.millis()}\r\n"
+        #           "event:wifi_rssi\r\n"
+        #           "data:{tasmota.wifi().find('quality', '--')}%\r\n\r\n"
+        cnx.write(payload1)
+      end
+    end
+
+  end
+
   def send_info_feed(cnx, uri, verb)
     cnx.set_chunked(false)     # no chunking since we use EventSource
     cnx.send(200, "text/event-stream")
-    self.send_info_tick(cnx)
-  end
-
-  def send_info_tick(cnx)
-    if cnx.buf_out_empty()
-      # if out buffer is not empty, do not send any new information
-      var payload
-      # send free heap
-      payload = f"id:{tasmota.millis()}\r\n"
-                "event:free_heap\r\n"
-                "data:{tasmota.memory().find('heap_free', 0)} KB\r\n\r\n"
-      cnx.write(payload)
-
-      # send wifi rssi
-      payload = f"id:{tasmota.millis()}\r\n"
-                "event:wifi_rssi\r\n"
-                "data:{tasmota.wifi().find('quality', '--')}%\r\n\r\n"
-      cnx.write(payload)
-    end
-
-    tasmota.set_timer(self.sampling_interval, def () self.send_info_tick(cnx) end)
+    #
+    var feed = feeder(cnx)
+    feed.send_feed()          # send first values immediately
   end
 
   # Add button 'GPIO Viewer' redirects to '/part_wiz?'
