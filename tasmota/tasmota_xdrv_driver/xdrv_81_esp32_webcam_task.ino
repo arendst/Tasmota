@@ -701,7 +701,9 @@ void WcInterrupt(uint32_t state) {
   // Stop camera ISR if active to fix TG1WDT_SYS_RESET
   if (!Wc.up) { return; }
 
-  WcSetStreamserver(state);
+  // why stop/start the server itself here?
+  // stopping the cam interrupt should be enough?
+  //WcSetStreamserver(state);
   if (state) {
     // Re-enable interrupts
     cam_start();
@@ -1589,7 +1591,9 @@ uint32_t WcSetStreamserver(uint32_t flag) {
     WcEndStream();
     return 0; 
   }
-
+#ifdef WEBCAM_DEV_DEBUG  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WcSetStreamserver %d"), flag);
+#endif
   if (flag) {
     if (!Wc.CamServer) {
       TasAutoMutex localmutex(&WebcamMutex, "HandleWebcamMjpeg", 20000);
