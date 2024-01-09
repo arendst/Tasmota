@@ -544,7 +544,6 @@ bool wc_jpg2rgb888(const uint8_t *src, size_t src_len, struct PICSTORE * out, in
     }
     return true;
 }
-#endif
 
 
 bool wc_jpg2rgb565(const uint8_t *src, size_t src_len, struct PICSTORE * out, int scale)
@@ -561,6 +560,7 @@ bool wc_jpg2rgb565(const uint8_t *src, size_t src_len, struct PICSTORE * out, in
     }
     return true;
 }
+#endif
 
 
 // general jpeg to pixel conversion

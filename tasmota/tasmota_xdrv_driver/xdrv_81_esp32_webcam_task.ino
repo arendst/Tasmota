@@ -108,8 +108,8 @@ As soon as the screenshare ended, back to 53fps at 30mhz clock.
  *    background(4)
  *     e.g. could be used to read pixels, or change pixels from berry.
 
- * WcMenuvideoon   = turn on video in main menu
- * WcMenuvideooff  = turn off video in main menu
+ * WcMenuvideodisable 0 = turn on video in main menu
+ * WcMenuvideodisable 1 = turn off video in main menu
 
  * WcSetOptionsNN  = call WcSetOptions function with (index, payload).
  *   - can oprate many of the functions above, plus:
@@ -701,7 +701,9 @@ void WcInterrupt(uint32_t state) {
   // Stop camera ISR if active to fix TG1WDT_SYS_RESET
   if (!Wc.up) { return; }
 
-  WcSetStreamserver(state);
+  // why stop/start the server itself here?
+  // stopping the cam interrupt should be enough?
+  //WcSetStreamserver(state);
   if (state) {
     // Re-enable interrupts
     cam_start();
@@ -1589,7 +1591,9 @@ uint32_t WcSetStreamserver(uint32_t flag) {
     WcEndStream();
     return 0; 
   }
-
+#ifdef WEBCAM_DEV_DEBUG  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WcSetStreamserver %d"), flag);
+#endif
   if (flag) {
     if (!Wc.CamServer) {
       TasAutoMutex localmutex(&WebcamMutex, "HandleWebcamMjpeg", 20000);
@@ -2251,7 +2255,7 @@ void WcShowStream(void) {
       WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcinit", "Try WCINIT");
     } else {
       if (Settings->webcam_config.spare15) {
-        WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcmenuvideoon", "Turn On Video");
+        WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcmenuvideodisable%200", "Turn On Video");
       }
     }
   }
@@ -2260,7 +2264,7 @@ void WcShowStream(void) {
   if (!Settings->webcam_config.spare15 && Settings->webcam_config.stream && Wc.CamServer && Wc.up!=0) {
     // Give the webcam webserver some time to prepare the stream - catch error in JS
     WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
-    WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcmenuvideooff", "Turn Off Video");
+    WSContentSend_P(HTTP_WEBCAM_MENUVIDEOCONTROL, "wcmenuvideodisable%201", "Turn Off Video");
   }
 }
 
@@ -2331,8 +2335,7 @@ void WcInit(void) {
 #define D_CMND_WC_STARTTASK "Starttask"
 #define D_CMND_WC_STOPTASK "Stoptask"
 
-#define D_CMND_WC_MENUVIDEOOFF "Menuvideooff"
-#define D_CMND_WC_MENUVIDEOON "Menuvideoon"
+#define D_CMND_WC_MENUVIDEODISABLE "MenuVideoDisable"
 
 // for testing to see what happens after cam_stop()
 #define D_CMND_WC_INTERRUPT "Interrupt"
@@ -2363,7 +2366,7 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
   D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|"
   D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT "|" D_CMND_WC_AUTH "|" D_CMND_WC_CLK "|" 
-  D_CMND_WC_STARTTASK "|" D_CMND_WC_STOPTASK "|" D_CMND_WC_MENUVIDEOOFF "|" D_CMND_WC_MENUVIDEOON "|" 
+  D_CMND_WC_STARTTASK "|" D_CMND_WC_STOPTASK "|" D_CMND_WC_MENUVIDEODISABLE "|" 
   D_CMND_WC_INTERRUPT "|" D_CMND_WC_GETFRAME "|" D_CMND_WC_GETPICSTORE "|" 
 #ifdef USE_WEBCAM_MOTION
   D_CMND_WC_SETMOTIONDETECT "|" D_CMND_WC_GETMOTIONPIXELS "|"
@@ -2385,7 +2388,7 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
   &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults,
   &CmndWebcamStats, &CmndWebcamInit, &CmndWebcamAuth, &CmndWebcamClock,
-  &CmndWebcamStartTask, &CmndWebcamStopTask, &CmndWebcamMenuVideoOff, &CmndWebcamMenuVideoOn,
+  &CmndWebcamStartTask, &CmndWebcamStopTask, &CmndWebcamMenuVideoDisable,
   &CmndWebcamCamStartStop, &CmndWebcamGetFrame, &CmndWebcamGetPicStore,
 #ifdef USE_WEBCAM_MOTION
   &CmndWebcamSetMotionDetect, &CmndWebcamGetMotionPixels, 
@@ -2412,7 +2415,7 @@ void CmndWebcam(void) {
     D_CMND_WC_AGC_GAIN "\":%d,\"" D_CMND_WC_GAINCEILING "\":%d,\"" D_CMND_WC_RAW_GMA "\":%d,\""
     D_CMND_WC_LENC "\":%d,\"" D_CMND_WC_WPC "\":%d,\"" D_CMND_WC_DCW "\":%d,\"" D_CMND_WC_BPC "\":%d,\""
     D_CMND_WC_COLORBAR "\":%d,\"" D_CMND_WC_FEATURE "\":%d,\"" D_CMND_WC_AUTH "\":%d,\"" D_CMND_WC_CLK "\":%d,\""
-    D_CMND_WC_MENUVIDEOOFF "\":%d"
+    D_CMND_WC_MENUVIDEODISABLE "\":%d"
 #ifdef ENABLE_RTSPSERVER
   ",\"" D_CMND_RTSP "\":%d"
 #endif // ENABLE_RTSPSERVER
@@ -2620,13 +2623,10 @@ void CmdWebcamAppendPic(){
   WebcamSavePic(1)? ResponseCmndDone(): ResponseCmndError();
 }
 
-void CmndWebcamMenuVideoOff(void) {
-  Settings->webcam_config.spare15 = 1;
-  ResponseCmndStateText(Settings->webcam_config.spare15);
-}
-
-void CmndWebcamMenuVideoOn(void) {
-  Settings->webcam_config.spare15 = 0;
+void CmndWebcamMenuVideoDisable(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings->webcam_config.spare15 = XdrvMailbox.payload;
+  }
   ResponseCmndStateText(Settings->webcam_config.spare15);
 }
 
