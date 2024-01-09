@@ -56,6 +56,8 @@ extern int l_respAppend(bvm *vm);
 extern int l_webSend(bvm *vm);
 extern int l_webSendDecimal(bvm *vm);
 
+extern int l_webcolor(bvm *vm);
+
 extern int l_getlight(bvm *vm);
 extern int l_setlight(bvm *vm);
 extern int l_getpower(bvm *vm);
@@ -143,6 +145,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     response_append, func(l_respAppend)
     web_send, func(l_webSend)
     web_send_decimal, func(l_webSendDecimal)
+    webcolor, static_func(l_webcolor)
 
     get_power, func(l_getpower)
     set_power, func(l_setpower)

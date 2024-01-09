@@ -820,6 +820,33 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // get webcolors
+  int32_t l_webcolor(bvm *vm);
+  int32_t l_webcolor(bvm *vm) {
+    char tmp[16];
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 1 && be_isint(vm, 1)) {  // argument is int
+      int32_t idx = be_toint(vm, 1);
+      if (idx >= 0 && idx < COL_LAST) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("#%06x"), WebColor(idx));
+        be_pushstring(vm, tmp);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    } else {
+      be_newobject(vm, "list");
+      for (uint32_t i = 0; i < COL_LAST; i++) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("#%06x"), WebColor(i));
+        be_pushstring(vm, tmp);
+        be_data_push(vm, -2);
+        be_pop(vm, 1);
+      }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
+  }
+
   // get power
   int32_t l_getpower(bvm *vm);
   int32_t l_getpower(bvm *vm) {
