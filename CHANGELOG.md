@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Header `Host` is now collected by Webserver
 
 ### Fixed
+- Fixed Zigbee Aqara attributes on ESP32
 
 ### Removed
 
