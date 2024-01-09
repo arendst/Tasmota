@@ -265,9 +265,9 @@ void Sgp4xShow(bool json)
   if (sgp4x_state == STATE_SGP4X_NORMAL) {
     if (json) {
       if (sgp4x_type == TYPE_SGP41) {
-        ResponseAppend_P(PSTR(",\"SGP40\":{\"VOC_" D_JSON_RAW "\":%d,\"NOX_" D_JSON_RAW "\":%d,\"" D_TVOC "\":%d,\"" D_NOX "\":%d"), srawVoc, srawNox, voc_index_sgp4x, nox_index_sgp4x);
+        ResponseAppend_P(PSTR(",\"SGP41\":{\"VOC_" D_JSON_RAW "\":%d,\"NOX_" D_JSON_RAW "\":%d,\"" D_TVOC "\":%d,\"" D_NOX "\":%d"), srawVoc, srawNox, voc_index_sgp4x, nox_index_sgp4x);
       } else {
-        ResponseAppend_P(PSTR(",\"SGP41\":{\"VOC_" D_JSON_RAW "\":%d,,\"" D_TVOC "\":%d,"), srawVoc, voc_index_sgp4x);
+        ResponseAppend_P(PSTR(",\"SGP40\":{\"VOC_" D_JSON_RAW "\":%d,,\"" D_TVOC "\":%d,"), srawVoc, voc_index_sgp4x);
       }
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
