@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry `debug_panel.tapp` to display real-time heap and wifi rssi
 - Berry `webserver.header` to read browser sent headers
 - Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc`
+- Berry `tasmota.webcolor`
 
 ### Breaking Changed
 
