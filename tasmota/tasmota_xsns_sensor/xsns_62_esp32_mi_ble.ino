@@ -2102,8 +2102,8 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       }
       _tempFloat=(float)(pld->HT.hum)/10.0f;
       if(_tempFloat < 100){
-          MIBLEsensors[_slot].hum = _tempFloat;
-          if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum updated"));
+        MIBLEsensors[_slot].hum = _tempFloat;
+        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum updated"));
       } else {
         if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum ignored > 100 (%2_f)"), &_tempFloat);
       }
@@ -2316,7 +2316,7 @@ void MI32notifyHT_LY(int slot, char *_buf, int len){
       if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: LYWSD0x: hum updated"));
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
-    if (MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
+    if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
       // ok, so CR2032 is 3.0v, but drops immediately to ~2.9.
       // so we'll go with the 2.1 min, 2.95 max.
       float minVolts = 2100.0;
