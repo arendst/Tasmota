@@ -391,37 +391,86 @@ void (* const PipSolarCommand[])(void) PROGMEM = {
   };
 
 
+void PIPSOLARPublishResult(const char *subtopic, const char *payload, const char *parameter)
+{
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\": \"%s\", \"parameter\": \"%s\"}}"), subtopic, payload, parameter);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: RESULT %s"), (const char*)buffer);
+  MqttPublishPayloadPrefixTopic_P(RESULT_OR_STAT, subtopic, (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
+}
+
+void PIPSOLARPublishResult(const char *subtopic, int payload, const char *parameter)
+{
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\": %d, \"parameter\": \"%s\"}}"), subtopic, payload, parameter);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: RESULT %s"), (const char*)buffer);
+  MqttPublishPayloadPrefixTopic_P(RESULT_OR_STAT, subtopic, (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
+}
+
+void PIPSOLARPublishResult(const char *subtopic, const char* payload)
+{
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\": \"%s\"}}"), subtopic, payload);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: RESULT %s"), (const char*)buffer);
+  MqttPublishPayloadPrefixTopic_P(RESULT_OR_STAT, subtopic, (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
+}
+
+void PIPSOLARPublishResult(const char *subtopic, int payload)
+{
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\": %d}}"), subtopic, payload);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: RESULT %s"), (const char*)buffer);
+  MqttPublishPayloadPrefixTopic_P(RESULT_OR_STAT, subtopic, (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
+}
+
 void PIPSOLARPublish(const char *subtopic, const char *payload)
 {
   MqttPublishPayloadPrefixTopic_P(STAT, subtopic, payload);
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": \"%s\"}"), subtopic, payload);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: PUBLISH %s"), (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
+}
+
+void PIPSOLARPublishRaw(const char *subtopic, const char *payload)
+{
+  MqttPublishPayloadPrefixTopic_P(STAT, subtopic, payload);
+  char buffer[150];
+  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": %s}"), subtopic, payload);
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: PUBLISH %s"), (const char*)buffer);
+  XdrvRulesProcess(0, buffer);
 }
 
 void PIPSOLARPublish(const char *subtopic, int value)
 {
   char buffer[15];
-  snprintf(buffer, 15, "%d", value);
-  PIPSOLARPublish(subtopic, buffer);
+  snprintf(buffer, sizeof(buffer), "%d", value);
+  PIPSOLARPublishRaw(subtopic, buffer);
 }
 
 void PIPSOLARPublish(const char *subtopic, float value)
 {
   char buffer[15];
-  snprintf(buffer, 15, "%f", value);
-  PIPSOLARPublish(subtopic, buffer);
+  snprintf(buffer, sizeof(buffer), "%f", value);
+  PIPSOLARPublishRaw(subtopic, buffer);
 }
 
 void PIPSOLARPublish(const char *subtopic, char value)
 {
   char buffer[2];
-  snprintf(buffer, 2, "%c", value);
+  snprintf(buffer, sizeof(buffer), "%c", value);
   PIPSOLARPublish(subtopic, buffer);
 }
 
 void PIPSOLARPublish(const char *subtopic, bool value)
 {
   char buffer[2];
-  snprintf(buffer, 2, "%d", value);
-  PIPSOLARPublish(subtopic, buffer);
+  snprintf(buffer, sizeof(buffer), "%d", value);
+  PIPSOLARPublishRaw(subtopic, buffer);
 }
 
 // crc function is from here: https://forum.arduino.cc/t/rs232-read-data-from-mpp-solar-inverter/600960/6
@@ -659,44 +708,43 @@ void PIPSOLARInterpret(void)
     break;
   case PipSolar::CommandType::QT:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
+      PIPSOLARPublishResult(PSTR("QT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
     PIPSOLARInterpret(PIPSOLARqtValueSettings, PIPSOLARqtValueSettingsCount);
     PIPSOLARPublish(PSTR("Inverter_date_time"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
     break;
   case PipSolar::CommandType::QET:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QET"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8));
+      PIPSOLARPublishResult(PSTR("QET"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)));
     PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEY:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QEY"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8));
+      PIPSOLARPublishResult(PSTR("QEY"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEM:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QEM"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8));
+      PIPSOLARPublishResult(PSTR("QEM"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QED:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QED"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8));
+      PIPSOLARPublishResult(PSTR("QED"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEH:
     if (wasQuery)
-      PIPSOLARPublish(PSTR("RESULT/QEH"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8));
+      PIPSOLARPublishResult(PSTR("QEH"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::DAT:
-    if (wasQuery) {
-      PIPSOLARPublish(PSTR("RESULT/DAT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3));
-    }
+    if (wasQuery)
+      PIPSOLARPublishResult(PSTR("DAT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3), PIPSOLAR.queryCommand.parameter);
     break;
   }
 
