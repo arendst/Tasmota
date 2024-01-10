@@ -1,7 +1,7 @@
 /*
-  xdrv_91_magic_switch.ino - Driver for MagicSwitch as implemented in Sonoff BasicR4
+  xdrv_71_magic_switch.ino - Driver for MagicSwitch as implemented in Sonoff BasicR4
 
-  Copyright (C) 2021 Barbudor
+  Copyright (C) 2023 Barbudor
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #ifdef USE_MAGIC_SWITCH
 
-#define XDRV_91           91
+#define XDRV_71           71
 
 /********************************************************************************************************
  * Check defines
@@ -162,7 +162,7 @@ void CmndMagicSwitchPulse(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv91(uint32_t function) {
+bool Xdrv71(uint32_t function) {
   bool result = false;
 
   if (FUNC_SETUP_RING2 == function) {

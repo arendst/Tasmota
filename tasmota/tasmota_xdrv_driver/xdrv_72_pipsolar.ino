@@ -1,5 +1,5 @@
 /*
-  xdrv_92_pipsolar.ino - modbus bridge support for Tasmota
+  xdrv_72_pipsolar.ino - pipsolar support for Tasmota
 
   Copyright (C) 2023 Peter Rustler
 
@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_PIPSOLAR)
+#ifdef USE_PIPSOLAR
 
-#define XDRV_92 92
+#define XDRV_72 72
 
 #define PIPSOLAR_RECEIVEBUFFER_SIZE TM_SERIAL_BUFFER_SIZE * 2 // 128
 #define PIPSOLAR_SENDBUFFER_SIZE TM_SERIAL_BUFFER_SIZE        // 64
@@ -1010,7 +1010,7 @@ void PIPSOLARShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv92(uint32_t function)
+bool Xdrv72(uint32_t function)
 {
   bool result = true;
 
