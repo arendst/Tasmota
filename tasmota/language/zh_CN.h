@@ -1223,4 +1223,8 @@
 #define D_AVG_RAD_DOSE                    "平均辐射剂量"
 #define D_UNIT_US_H                       "µSv/h"
 
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
 #endif  // _LANGUAGE_ZH_CN_H_
