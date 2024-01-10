@@ -3154,8 +3154,7 @@ void HandleManagement(void)
 
   XdrvMailbox.index = 0;
   XdrvXsnsCall(FUNC_WEB_ADD_CONSOLE_BUTTON);
-
-  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+//  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
   XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
 
   WSContentSpaceButton(BUTTON_MAIN);
