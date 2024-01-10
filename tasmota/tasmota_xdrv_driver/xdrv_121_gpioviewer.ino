@@ -17,8 +17,13 @@
 
 #define XDRV_121              121
 
+#ifndef GV_PORT
 #define GV_PORT               5557
-#define GV_SAMPLING_INTERVAL  100    // milliseconds - Relates to FUNC_EVERY_100_MSECOND
+#endif
+#ifndef GV_SAMPLING_INTERVAL
+#define GV_SAMPLING_INTERVAL  100    // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
+#endif
+
 #define GV_KEEP_ALIVE         1000   // milliseconds - If no activity after this do a heap size event anyway
 
 #define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
@@ -40,7 +45,7 @@ const char HTTP_GV_PAGE[] PROGMEM =
       "var serverPort=" STR(GV_PORT) ";"
       "var ip='%s';"                                                      // WiFi.localIP().toString().c_str()
       "var source=new EventSource('http://%s:" STR(GV_PORT) "/events');"  // WiFi.localIP().toString().c_str()
-      "var sampling_interval='" STR(GV_SAMPLING_INTERVAL) "';"
+      "var sampling_interval='%d';"                                       // Gv.sampling
 #ifdef ESP32
       "var psramSize='%d KB';"                                            // ESP.getPsramSize() / 1024
 #endif  // ESP32
@@ -78,15 +83,21 @@ enum GVPinTypes {
 struct {
   WiFiClient WebClient;
   ESP8266WebServer *WebServer;
+  Ticker ticker;
   int lastPinStates[MAX_GPIO_PIN];
   uint32_t lastSentWithNoActivity;
   uint32_t freeHeap;
   uint32_t freePSRAM;
+  uint32_t sampling;
   bool active;
   bool sse_ready;
 } GV;
 
 void GVBegin(void) {
+  if (0 == GV.sampling) {
+    GV.sampling = (GV_SAMPLING_INTERVAL < 20) ? 20 : GV_SAMPLING_INTERVAL;
+  }
+
   GV.WebServer = new ESP8266WebServer(GV_PORT);
   // Set CORS headers for global responses
   GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
@@ -103,6 +114,7 @@ void GVBegin(void) {
 
 void GVStop(void) {
   GV.sse_ready = false;
+  GV.ticker.detach();
   GV.active = false;
 
   GV.WebServer->stop();
@@ -118,15 +130,18 @@ void GVHandleEvents(void) {
   GV.WebServer->sendContent_P(HTTP_GV_EVENT);
 
   GV.sse_ready = true;                                     // Ready for async updates
-
-  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Client connected"));
+  if (GV.sampling != 100) {
+    GV.ticker.attach_ms(GV.sampling, GVMonitorTask);       // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
 }
 
 void GVHandleRoot(void) {
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
-                                        WiFi.localIP().toString().c_str(), 
-                                        WiFi.localIP().toString().c_str(), 
+                                        WiFi.localIP().toString().c_str(),
+                                        WiFi.localIP().toString().c_str(),
+                                        GV.sampling,
 #ifdef ESP32
                                         ESP.getPsramSize() / 1024,
 #endif  // ESP32
@@ -136,6 +151,7 @@ void GVHandleRoot(void) {
   free(content);
 
   GV.sse_ready = false;                                    // Allow restart of updates on page load
+  GV.ticker.detach();
 }
 
 void GVHandleRelease(void) {
@@ -162,11 +178,11 @@ void GVEventSend(const char *message, const char *event, uint32_t id) {
     GV.WebClient.printf_P(PSTR("id: %u\r\nevent: %s\r\ndata: %s\r\n\r\n"), id, event, message);
   } else {
     if (GV.sse_ready) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Client disconnected"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Disconnected"));
     }
 //    GVStop();    // This will stop the webserver but not all memory will be released resulting in memory leaks
     GV.sse_ready = false;  // This just stops the event to be restarted by opening root page again
-
+    GV.ticker.detach();
   }
 }
 
@@ -216,8 +232,8 @@ void GVMonitorTask(void) {
       originalValue = value;
       if (value == 1) {
         currentState = 256;
-//        } else {
-//          currentState = 0;
+//      } else {
+//        currentState = 0;
       }
     }
 
@@ -274,12 +290,17 @@ void GVMonitorTask(void) {
 \*********************************************************************************************/
 
 const char kGVCommands[] PROGMEM = "GV|"  // Prefix
-  "Viewer";
+  "Viewer|Sampling";
 
 void (* const GVCommand[])(void) PROGMEM = {
-  &CmndGVViewer};
+  &CmndGvViewer, &CmndGvSampling };
 
-void CmndGVViewer(void) {
+void CmndGvViewer(void) {
+  /* GvViewer    - Show current viewer state
+     GvViewer 0  - Turn viewer off
+     GvViewer 1  - Turn viewer On
+     GvViewer 2  - Toggle viewer state
+  */
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     uint32_t state = XdrvMailbox.payload;
     if (2 == state) {           // Toggle
@@ -296,6 +317,18 @@ void CmndGVViewer(void) {
   } else {
     ResponseCmndChar_P(PSTR("Stopped"));
   }
+}
+
+void CmndGvSampling(void) {
+  /* GvSampling             - Show current sampling interval
+     GvSampling 20 .. 1000  - Set sampling interval
+  */
+  if ((XdrvMailbox.payload >= 20) && (XdrvMailbox.payload <= 1000)) {
+    GV.sse_ready = false;               // Stop current updates
+    GV.ticker.detach();
+    GV.sampling = XdrvMailbox.payload;  // 20 - 1000 milliseconds
+  }
+  ResponseCmndNumber(GV.sampling);
 }
 
 /*********************************************************************************************\
@@ -353,7 +386,9 @@ bool Xdrv121(uint32_t function) {
         if (GV.WebServer) { GV.WebServer->handleClient(); }
         break;
       case FUNC_EVERY_100_MSECOND:
-        if (GV.sse_ready) { GVMonitorTask(); }
+        if (GV.sse_ready && (100 == GV.sampling)) {
+          GVMonitorTask();
+        }
         break;
       case FUNC_ACTIVE:
         result = true;
