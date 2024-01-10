@@ -736,7 +736,6 @@ int genericBatReadFn(int slot){
   switch(MIBLEsensors[slot].type) {
     // these use notify for battery read, and it comes in the temp packet
     case MI_LYWSD03MMC:
-    case MI_LYWSD02MMC:
       res = MI32Operation(slot, OP_BATT_READ, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -784,9 +783,11 @@ int genericSensorReadFn(int slot, int force){
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD02_Svc, nullptr, LYWSD02_BattNotifyChar);
       break;*/
     case MI_LYWSD03MMC:
-    case MI_LYWSD02MMC:
       // don't read if key present and we've decoded at least one advert
       if (MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND && !force) return -2;
+      res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
+      break;
+    case MI_LYWSD02MMC:
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -1207,6 +1208,22 @@ void MI32_ReverseMAC(uint8_t _mac[]){
   memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
 }
 
+const char *MIaddrStr(const uint8_t *addr, int useAlias = 0){
+  static char addrstr[32];
+
+  const char *id = nullptr;
+  if (useAlias){
+    id = BLE_ESP32::getAlias(addr);
+  }
+  if (!id || !(*id)){
+    id = addrstr;
+    BLE_ESP32::dump(addrstr, 13, addr, 6);
+  } else {
+  }
+
+  return id;
+}
+
 #ifdef USE_MI_DECRYPTION
 int MI32AddKey(char* payload, char* key = nullptr){
   mi_bindKey_t keyMAC;
@@ -1235,7 +1252,6 @@ int MI32AddKey(char* payload, char* key = nullptr){
   return 0;
 }
 
-
 int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
   uint8_t payload[32];
   uint8_t mac[6];
@@ -1244,17 +1260,17 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   uint8_t _bindkey[32] = {0x0};
   const unsigned char authData[16] = {0x11};
   bool foundNoKey = true;
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Search key for MAC %02x%02x%02x%02x%02x%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Searching key"), MIaddrStr(mac));
   for(uint32_t i = 0; i < MIBLEbindKeys.size(); i++){
     if(!memcmp(mac, MIBLEbindKeys[i].MAC, 6)){
       memcpy(_bindkey, MIBLEbindKeys[i].key, 16);
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Decryption Key found"));
+      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Decryption Key found"), MIaddrStr(mac));
       foundNoKey = false;
       break;
     }
   }
   if(foundNoKey){
-    AddLog(LOG_LEVEL_DEBUG, PSTR("M32: No Key found for MAC %02x%02x%02x%02x%02x%02x"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: No Key found"), MIaddrStr(mac));
     return -2; // indicates needs key
   }
 
@@ -1274,10 +1290,10 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
 
   // crashed in here - why?, so give it more space to work with?
   // returns 1 if matched, else 0
-  int ret = br_ccm_check_tag(&ctx, &tag);
+  int ret = br_ccm_check_tag(&ctx, &tag) - 1;
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Err: %i, Decrypted: %02x %02x %02x %02x %02x"), ret, payload[1], payload[2], payload[3], payload[4], payload[5]);
-  return ret - 1; // -> -1=fail, 0=success
+  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Error %i, Decrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret, payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
+  return ret; // -> -1=fail, 0=success
 }
 
 #endif // USE_MI_DECRYPTION
@@ -1303,22 +1319,6 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
 // xxyy FFEEDDCCBBAA MMMM TTTTHHHH|BB
 // xxyy FFEEDDCCBBAA 0104 TTTTHHHH
 // xxyy FFEEDDCCBBAA 0201 BB
-
-const char *MIaddrStr(const uint8_t *addr, int useAlias = 0){
-  static char addrstr[32];
-
-  const char *id = nullptr;
-  if (useAlias){
-    id = BLE_ESP32::getAlias(addr);
-  }
-  if (!id || !(*id)){
-    id = addrstr;
-    BLE_ESP32::dump(addrstr, 13, addr, 6);
-  } else {
-  }
-
-  return id;
-}
 
 int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const uint8_t *datain, int len){
   uint8_t data[32];
@@ -1758,7 +1758,7 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
       if(_slot == 0xff) return;
 
       if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s:pvvx at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: %s:pvvx at slot %u"), MIaddrStr(addr), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
         MIBLEsensors[_slot].RSSI=RSSI;
         MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
 
@@ -2173,7 +2173,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
     //Formaldehyde (new)	0x101D
 
     default: {
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Unknown MI pld type %x %s"), parsed->payload.type, tmp);
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: Unknown MI pld type: %x - %s"), MIaddrStr(MIBLEsensors[_slot].MAC), parsed->payload.type, tmp);
       res = 0;
     } break;
   }
