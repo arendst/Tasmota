@@ -2045,19 +2045,18 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
           break;
         }
       }
-      MIBLEsensors[_slot].feature.bat = 1;
-      if(pld->bat<101){
+      if (pld->bat < 101) {
         MIBLEsensors[_slot].bat = pld->bat;
-        MIBLEsensors[_slot].eventType.bat  = 1;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode a: bat updated"));
+        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Mode a: bat updated (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       } else {
         MIBLEsensors[_slot].bat = 100;
-        MIBLEsensors[_slot].eventType.bat  = 1;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode a: bat > 100 (%d)"), pld->bat);
+        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Mode a: bat > 100 (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       }
+      MIBLEsensors[_slot].eventType.bat  = 1;
+      MIBLEsensors[_slot].feature.bat = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode a: U8: %u %%"), _beacon.bat);
     break;
-    // 100b-100d -> undefioend in docs.
+    // 100b-100d -> undefined in docs.
     case 0x100d:{ // is this right????
       MIBLEsensors[_slot].feature.tempHum = 1;
       float _tempFloat=(float)(pld->HT.temp)/10.0f;
