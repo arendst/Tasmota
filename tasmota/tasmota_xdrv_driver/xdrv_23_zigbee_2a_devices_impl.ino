@@ -795,7 +795,7 @@ void Z_Device::jsonAddEndpoints(Z_attribute_list & attr_list) const {
   for (uint32_t i = 0; i < endpoints_max; i++) {
     uint8_t endpoint = endpoints[i];
     if (0x00 == endpoint) { break; }
-    arr_ep.add(endpoint);
+    arr_ep.add((uint32_t)endpoint);
   }
   attr_list.addAttributePMEM(PSTR("Endpoints")).setStrRaw(arr_ep.toString().c_str());
 }

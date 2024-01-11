@@ -161,7 +161,7 @@ bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t short
       JsonGeneratorArray gpdi_list;
       for (uint32_t i = 0; i < gpid_len; i++) {
         if (idx_offset >= payload_len + payload_start) { break; }   // end of payload
-        gpdi_list.add(payload.get8(idx_offset++));
+        gpdi_list.add((uint32_t)payload.get8(idx_offset++));
       }
       ResponseAppend_P(PSTR(",\"commandid\":%s"), gpdi_list.toString().c_str());
     }
@@ -171,7 +171,7 @@ bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t short
       JsonGeneratorArray gpdi_list;
       for (uint32_t i = 0; i < clust_report_len; i++) {
         if (idx_offset >= payload_len + payload_start) { break; }   // end of payload
-        gpdi_list.add(payload.get16(idx_offset));
+        gpdi_list.add((uint32_t)payload.get16(idx_offset));
         idx_offset += 2;
       }
       ResponseAppend_P(PSTR(",\"clusterreports\":%s"), gpdi_list.toString().c_str());

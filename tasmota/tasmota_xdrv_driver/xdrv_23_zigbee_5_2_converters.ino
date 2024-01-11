@@ -931,7 +931,7 @@ void ZCLFrame::parseReadAttributes(uint16_t shortaddr, Z_attribute_list& attr_li
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
     uint16_t attrid = payload.get16(i);
-    attr_numbers.add(attrid);
+    attr_numbers.add((uint32_t)attrid);
     read_attr_ids[i/2] = attrid;
 
     // find the attribute name
