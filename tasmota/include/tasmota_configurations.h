@@ -1047,6 +1047,15 @@
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
+    #ifndef USE_FTP
+      #define USE_FTP
+    #endif
+    #ifndef USER_FTP
+      #define USER_FTP "user"
+    #endif
+    #ifndef PW_FTP
+      #define PW_FTP "pass"
+    #endif
     #define USE_SPI
     #define USE_SDCARD
     #define USE_PING
