@@ -28,6 +28,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2023.12.00 to 2024.01.00 (#20445)
 - Header `Host` is now collected by Webserver (#20446)
 - Webcam tweaks (#20451)
+- ESP8266 platform update from 2023.04.00 to 2024.01.00 (#20467)
+- ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.5 (#20467)
 
 ### Fixed
 - ESP32 Zigbee Aqara attributes (#20452)
