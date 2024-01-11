@@ -1768,6 +1768,7 @@ void be_load_byteslib(bvm *vm)
         { "clear", m_clear },
         { "reverse", m_reverse },
         { "copy", m_copy },
+        { "append", m_connect },
         { "+", m_merge },
         { "..", m_connect },
         { "==", m_equal },
@@ -1815,6 +1816,7 @@ class be_class_bytes (scope: global, name: bytes) {
     clear, func(m_clear)
     reverse, func(m_reverse)
     copy, func(m_copy)
+    append, func(m_connect)
     +, func(m_merge)
     .., func(m_connect)
     ==, func(m_equal)
