@@ -37,7 +37,6 @@ end
 class lv_point_arr : bytes
   def init(l)
     if type(l) != 'instance' || !isinstance(l, list)  raise "value_error", "argument must be a list" end
-    # size of the array is 2x number of elements
     super(self).init(size(l) * 4)
 
     for e: l
@@ -51,7 +50,6 @@ end
 class lv_style_prop_arr : bytes
   def init(l)
     if type(l) != 'instance' || !isinstance(l, list)  raise "value_error", "argument must be a list" end
-    # size of the array is 2x number of elements
     super(self).init(size(l) * 4)
 
     for e: l
@@ -60,9 +58,23 @@ class lv_style_prop_arr : bytes
   end
 end
 
+class lv_str_arr : bytes
+  var l                         # keep a copy of the list because we want the pointer to strings to remain valid
+  def init(l)
+    self.l = l
+    super(self).init(size(l) * 4)
+
+    import introspect
+    for e: l
+      self.add(int(introspect.toptr(e)), 4)
+    end
+  end
+end
+
 lv_extra.lv_coord_arr = lv_coord_arr
 lv_extra.lv_point_arr = lv_point_arr
 lv_extra.lv_style_prop_arr = lv_style_prop_arr
+lv_extra.lv_str_arr = lv_str_arr
 
 lv_extra.init = def (m)
   import global
@@ -73,6 +85,7 @@ lv_extra.init = def (m)
   lv.coord_arr = m.lv_coord_arr
   lv.point_arr = m.lv_point_arr
   lv.style_prop_arr = m.lv_style_prop_arr
+  lv.str_arr = m.lv_str_arr
 
   return m
 end
