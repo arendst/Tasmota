@@ -26,7 +26,19 @@
 
 #define GV_KEEP_ALIVE         1000   // milliseconds - If no activity after this do a heap size event anyway
 
-#define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+//#define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+#ifdef ESP8266
+#ifndef GV_BASE_URL
+#undef GV_BASE_URL  // Fix compiler warning
+#define GV_BASE_URL "https://ota.tasmota.com/tasmota/gpio_viewer/assets/"
+#endif
+#endif  // ESP8266
+#ifdef ESP32
+#ifndef GV_BASE_URL
+#undef GV_BASE_URL  // Fix compiler warning
+#define GV_BASE_URL "https://ota.tasmota.com/tasmota32/gpio_viewer/assets/"
+#endif
+#endif  // ESP32
 
 const char *GVRelease = "1.0.7";
 
@@ -196,6 +208,7 @@ void GVMonitorTask(void) {
   for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
     int currentState = 0;
 /*  
+    // Skip unconfigured GPIO
     uint32_t pin_type = GetPin(pin) / 32;
     if (GPIO_NONE == pin_type) {
       pintype = GV_DigitalPin;
@@ -204,6 +217,7 @@ void GVMonitorTask(void) {
     }
 */
 #ifdef ESP32
+    // Read PWM GPIO
     int pwm_resolution = ledcReadDutyResolution(pin);
     if (pwm_resolution > 0) {
       pintype = GV_PWMPin;
@@ -213,6 +227,7 @@ void GVMonitorTask(void) {
 #endif  // ESP32
 
 #ifdef ESP8266
+    // Read PWM GPIO
     int pwm_value = AnalogRead(pin);
     if (pwm_value > -1) {
       pintype = GV_PWMPin;
@@ -222,11 +237,22 @@ void GVMonitorTask(void) {
 #endif  // ESP8266
 
     else if (AdcPin(pin)) {
+      // Read Analog (ADC) GPIO
       pintype = GV_AnalogPin;
+/*
+#ifdef ESP32
       originalValue = AdcRead(pin, 2);
-      int adc_resolution = (1 << AdcResolution()) - 1;
-      currentState = changeUIntScale(originalValue, 0, adc_resolution, 0, 255);   // bring back to 0..255
-    } else {
+#endif  // ESP32
+#ifdef ESP8266
+      // Fix exception 9 if using ticker - GV.sampling != 100 (CallChain: (phy)pm_wakeup_init, (adc)test_tout, ets_timer_arm_new, delay, AdcRead, String6concat, MonitorTask)
+      originalValue = (GV.sampling != 100) ? analogRead(pin) : AdcRead(pin, 1);
+#endif  // ESP8266
+*/
+      originalValue = AdcRead1(pin);
+      currentState = changeUIntScale(originalValue, 0, AdcRange(), 0, 255);   // bring back to 0..255
+    }
+    else {
+      // Read digital GPIO
       pintype = GV_DigitalPin;
       int value = digitalRead(pin);
       originalValue = value;

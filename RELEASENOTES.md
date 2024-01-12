@@ -116,12 +116,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.3.0.2
+## Changelog v13.3.0.3
 ### Added
 - Support for CST816S touch interface [#20213](https://github.com/arendst/Tasmota/issues/20213)
 - Support for Sonoff Basic R4 Magic Switch [#20247](https://github.com/arendst/Tasmota/issues/20247)
 - Display of active drivers using command ``status 4``
 - GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
+- GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
 - NeoPool hydrolysis FL1 and Redox flag [#20258](https://github.com/arendst/Tasmota/issues/20258)
 - Support negative power on BL0942 using index 5..8 [#20322](https://github.com/arendst/Tasmota/issues/20322)
 - Support for pipsolar inverter [#20408](https://github.com/arendst/Tasmota/issues/20408)
@@ -139,6 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `webserver.header` to read browser sent headers [#20447](https://github.com/arendst/Tasmota/issues/20447)
 - Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc` [#20448](https://github.com/arendst/Tasmota/issues/20448)
 - Berry `tasmota.webcolor` [#20454](https://github.com/arendst/Tasmota/issues/20454)
+- Berry `debug.caller` [#20470](https://github.com/arendst/Tasmota/issues/20470)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
@@ -154,11 +156,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
 - Header `Host` is now collected by Webserver [#20446](https://github.com/arendst/Tasmota/issues/20446)
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
+- SML update [#20474](https://github.com/arendst/Tasmota/issues/20474)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' [#14689](https://github.com/arendst/Tasmota/issues/14689)
 - Support for Domoticz floor/room topics. Regression from v12.0.1 [#20299](https://github.com/arendst/Tasmota/issues/20299)
+- Scripter memory leak in `>w x` (#20473)[#20473](https://github.com/arendst/Tasmota/issues/20473)
 - ESP32 piezo ceramic buzzer doesn't buzz [#20118](https://github.com/arendst/Tasmota/issues/20118)
 - ESP32 Zigbee Aqara attributes [#20452](https://github.com/arendst/Tasmota/issues/20452)
 - LVGL fix type for lv_imgbtn [#20354](https://github.com/arendst/Tasmota/issues/20354)

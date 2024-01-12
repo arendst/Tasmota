@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.2]
+## [13.3.0.3]
+### Added
+- Berry `debug.caller` (#20470)
+- GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
+
+### Breaking Changed
+
+### Changed
+- SML update (#20474)
+
+### Fixed
+- Scripter memory leak in `>w x` (#20473)
+- ESP8266 GPIO Viewer exception 9 on reading Analog GPIO
+
+### Removed
+
+
+## [13.3.0.2] 20240111
 ### Added
 - HASPmota type `chart` (#20372)
 - Berry add support for `tcpclientasync` in `tcpserver` (#20401)
@@ -20,9 +37,6 @@ All notable changes to this project will be documented in this file.
 - Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc` (#20448)
 - Berry `tasmota.webcolor` (#20454)
 - Support for pipsolar inverter (#20408)
-- Berry `debug.caller`
-
-### Breaking Changed
 
 ### Changed
 - Renamed button "Consoles" to "Tools"
@@ -34,9 +48,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 Zigbee Aqara attributes (#20452)
-
-### Removed
-
 
 ## [13.3.0.1] 20240101
 ### Added

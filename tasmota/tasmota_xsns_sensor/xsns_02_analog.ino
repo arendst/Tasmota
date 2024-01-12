@@ -324,8 +324,8 @@ void AdcInit(void) {
   }
 }
 
-uint32_t AdcResolution(void) {
-  return ANALOG_RESOLUTION;
+uint32_t AdcRange(void) {
+  return ANALOG_RANGE;
 }
 
 bool AdcPin(uint32_t pin) {
@@ -335,6 +335,14 @@ bool AdcPin(uint32_t pin) {
     }
   }
   return false;
+}
+
+uint16_t AdcRead1(uint32_t pin) {
+#ifdef ESP32 
+  return analogReadMilliVolts(pin) / (ANALOG_V33*1000) * ANALOG_RANGE; // go back from mV to ADC
+#else
+  return analogRead(pin);
+#endif
 }
 
 uint16_t AdcRead(uint32_t pin, uint32_t factor) {
@@ -348,17 +356,10 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   uint32_t samples = 1 << factor;
   uint32_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {
-#ifdef ESP32 
-    analog += analogReadMilliVolts(pin);  // get the value corrected by calibrated values from the eFuses
-#else
-    analog += analogRead(pin);
-#endif
+    analog += AdcRead1(pin);
     delay(1);
   }
   analog >>= factor;
-#ifdef ESP32
-  analog = analog/(ANALOG_V33*1000) * ANALOG_RANGE; // go back from mV to ADC
-#endif
   return analog;
 }
 
