@@ -2350,7 +2350,7 @@ void MI32HandleWebGUI(void){
 const char HTTP_MI32[] PROGMEM = "{s}Mi ESP32 {m} %u devices{e}";
 
 #ifndef USE_MI_EXT_GUI
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
 const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
 const char HTTP_EVENTS[] PROGMEM = "{s}%s Events{m}%u {e}";
 const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";

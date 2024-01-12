@@ -57,6 +57,7 @@
 #define D_AP "Mạng wifi"                    // Access Point
 #define D_AS "với tên gọi"
 #define D_AUTO "AUTO"
+#define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"

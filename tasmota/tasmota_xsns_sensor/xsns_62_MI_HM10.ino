@@ -1952,7 +1952,7 @@ void CmndHM10Option(void){
 
 const char HTTP_HM10[] PROGMEM = "{s}HM10 FW%u   V0960{m}%u%s / %u{e}";
 const char HTTP_HM10_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u%%{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_HM10_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_HM10_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
