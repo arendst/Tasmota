@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Berry `debug.caller` (#20470)
 - GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
+- Support for HardwareSerial invert (#15461)
 
 ### Breaking Changed
 
