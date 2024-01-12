@@ -23,6 +23,7 @@
 
 struct DataParserContext {
     uint8_t type;
+    uint8_t flags;
     uint16_t length;
     time_t timestamp;
     uint8_t system_title[8];
