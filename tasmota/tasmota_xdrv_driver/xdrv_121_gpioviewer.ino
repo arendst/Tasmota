@@ -105,6 +105,15 @@ struct {
   bool sse_ready;
 } GV;
 
+void GVStop(void) {
+  GV.sse_ready = false;
+  GV.ticker.detach();
+  GV.active = false;
+
+  GV.WebServer->stop();
+  GV.WebServer = nullptr;
+}
+
 void GVBegin(void) {
   if (0 == GV.sampling) {
     GV.sampling = (GV_SAMPLING_INTERVAL < 20) ? 20 : GV_SAMPLING_INTERVAL;
@@ -115,40 +124,18 @@ void GVBegin(void) {
   GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
   GV.WebServer->sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   GV.WebServer->sendHeader("Access-Control-Allow-Headers", "Content-Type");
-  GV.WebServer->on("/events", GVHandleEvents);
   GV.WebServer->on("/", GVHandleRoot);
   GV.WebServer->on("/release", GVHandleRelease);
   GV.WebServer->on("/free_psram", GVHandleFreePSRam);
+  GV.WebServer->on("/events", GVHandleEvents);
   GV.WebServer->begin();
 
   GV.active = true;
 }
 
-void GVStop(void) {
-  GV.sse_ready = false;
-  GV.ticker.detach();
-  GV.active = false;
-
-  GV.WebServer->stop();
-  GV.WebServer = nullptr;
-}
-
-void GVHandleEvents(void) {
-  GV.WebClient = GV.WebServer->client();
-  GV.WebClient.setNoDelay(true);
-//  GV.WebClient.setSync(true);
-
-  GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
-  GV.WebServer->sendContent_P(HTTP_GV_EVENT);
-
-  GV.sse_ready = true;                                     // Ready for async updates
-  if (GV.sampling != 100) {
-    GV.ticker.attach_ms(GV.sampling, GVMonitorTask);       // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
-  }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
-}
-
 void GVHandleRoot(void) {
+  GVCloseEvent();
+
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
                                         WiFi.localIP().toString().c_str(),
@@ -161,9 +148,6 @@ void GVHandleRoot(void) {
   if (content == nullptr) { return; }                      // Avoid crash
   GV.WebServer->send_P(200, "text/html", content);
   free(content);
-
-  GV.sse_ready = false;                                    // Allow restart of updates on page load
-  GV.ticker.detach();
 }
 
 void GVHandleRelease(void) {
@@ -182,6 +166,34 @@ void GVHandleFreePSRam(void) {
   GV.WebServer->send(200, "application/json", jsonResponse);
 }
 
+void GVHandleEvents(void) {
+  GV.WebClient = GV.WebServer->client();
+  GV.WebClient.setNoDelay(true);
+//  GV.WebClient.setSync(true);
+
+  GV.WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
+  GV.WebServer->sendContent_P(HTTP_GV_EVENT);
+
+  GV.sse_ready = true;                                     // Ready for async updates
+  if (GV.sampling != 100) {
+    GV.ticker.attach_ms(GV.sampling, GVMonitorTask);       // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
+}
+
+void GVEventDisconnected(void) {
+  if (GV.sse_ready) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Disconnected"));
+  }
+  GV.sse_ready = false;  // This just stops the event to be restarted by opening root page again
+  GV.ticker.detach();
+}
+
+void GVCloseEvent(void) {
+  GVEventSend("{}", "close", millis());  // Closes window
+  GVEventDisconnected();
+}
+
 //void GVEventSend(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
 void GVEventSend(const char *message, const char *event, uint32_t id) {
   if (GV.WebClient.connected()) {
@@ -189,12 +201,7 @@ void GVEventSend(const char *message, const char *event, uint32_t id) {
 //    GV.WebClient.printf_P(PSTR("retry: 0\r\nid: %u\r\nevent: %s\r\ndata: %s\r\n\r\n"), id, event, message);
     GV.WebClient.printf_P(PSTR("id: %u\r\nevent: %s\r\ndata: %s\r\n\r\n"), id, event, message);
   } else {
-    if (GV.sse_ready) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Disconnected"));
-    }
-//    GVStop();    // This will stop the webserver but not all memory will be released resulting in memory leaks
-    GV.sse_ready = false;  // This just stops the event to be restarted by opening root page again
-    GV.ticker.detach();
+    GVEventDisconnected();
   }
 }
 
@@ -335,6 +342,7 @@ void CmndGvViewer(void) {
     if (state) {                // On
       GVBegin();
     } else {                    // Off
+      GVCloseEvent();           // Stop current updates
       GVStop();
     }
   }
@@ -350,8 +358,7 @@ void CmndGvSampling(void) {
      GvSampling 20 .. 1000  - Set sampling interval
   */
   if ((XdrvMailbox.payload >= 20) && (XdrvMailbox.payload <= 1000)) {
-    GV.sse_ready = false;               // Stop current updates
-    GV.ticker.detach();
+    GVCloseEvent();                     // Stop current updates
     GV.sampling = XdrvMailbox.payload;  // 20 - 1000 milliseconds
   }
   ResponseCmndNumber(GV.sampling);
@@ -371,7 +378,7 @@ void GVSetupAndStart(void) {
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_GPIO_VIEWER));
 
-  if (!GV.active) {
+  if (!GV.active) {          // WebServer not started
     GVBegin();
   }
 
