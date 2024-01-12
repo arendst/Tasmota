@@ -110,10 +110,17 @@ assert(str(b) == "bytes('AA')")
 b = b1 + '01'
 assert(str(b) == "bytes('AA3031')")
 
-#- .. -#
+#- .. and append as synonym-#
 b1 = bytes("1122")
 b2 = bytes("334455")
 b = b1..b2
+assert(str(b1) == "bytes('1122334455')")
+assert(str(b2) == "bytes('334455')")
+assert(str(b) == "bytes('1122334455')")
+#
+b1 = bytes("1122")
+b2 = bytes("334455")
+b = b1.append(b2)
 assert(str(b1) == "bytes('1122334455')")
 assert(str(b2) == "bytes('334455')")
 assert(str(b) == "bytes('1122334455')")
@@ -123,6 +130,12 @@ b1 = bytes("AA")
 b1 .. ''
 assert(str(b1) == "bytes('AA')")
 b1 .. '01'
+assert(str(b1) == "bytes('AA3031')")
+#
+b1 = bytes("AA")
+b1.append('')
+assert(str(b1) == "bytes('AA')")
+b1.append('01')
 assert(str(b1) == "bytes('AA3031')")
 
 #- item -#

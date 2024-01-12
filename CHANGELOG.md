@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc` (#20448)
 - Berry `tasmota.webcolor` (#20454)
 - Support for pipsolar inverter (#20408)
+- Berry `debug.caller`
 
 ### Breaking Changed
 
