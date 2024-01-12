@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Scripter memory leak in `>w x` (#20473)
 - ESP8266 GPIO Viewer exception 9 on reading Analog GPIO
 - GPIO Viewer single instance
+- Fix random crash in Zigbee main page
 
 ### Removed
 
