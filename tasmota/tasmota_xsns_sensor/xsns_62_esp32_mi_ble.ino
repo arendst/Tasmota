@@ -74,9 +74,6 @@
 */
 //#undef USE_MI_ESP32
 
-// Move to language files later
-#define D_BATTERY "Battery"
-
 // for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 #ifdef USE_BLE_ESP32
 

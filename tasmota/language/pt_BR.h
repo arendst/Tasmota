@@ -57,6 +57,7 @@
 #define D_AP "Ponto de acesso"     	// Ponto de Acesso
 #define D_AS "como"
 #define D_AUTO "Auto"
+#define D_BATTERY "Battery"
 #define D_BATT "Bat"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Piscar"
