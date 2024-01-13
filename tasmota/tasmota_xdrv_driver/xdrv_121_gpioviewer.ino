@@ -29,57 +29,27 @@
 //#define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
 #ifdef ESP8266
 #ifndef GV_BASE_URL
-#undef GV_BASE_URL  // Fix compiler warning
+#undef GV_BASE_URL                                         // Fix compiler warning
 #define GV_BASE_URL "https://ota.tasmota.com/tasmota/gpio_viewer/assets/"
 #endif
 #endif  // ESP8266
 #ifdef ESP32
 #ifndef GV_BASE_URL
-#undef GV_BASE_URL  // Fix compiler warning
+#undef GV_BASE_URL                                         // Fix compiler warning
 #define GV_BASE_URL "https://ota.tasmota.com/tasmota32/gpio_viewer/assets/"
 #endif
 #endif  // ESP32
 
 const char *GVRelease = "1.0.7";
 
-const char HTTP_GV_PAGE[] PROGMEM =
-  "<!DOCTYPE HTML>"
-  "<html>"
-    "<head>"
-    "<title>%s - GPIO Viewer</title>"
-    "<base href='" GV_BASE_URL "'>"
-    "<link id='defaultStyleSheet' rel='stylesheet' href=''>"
-    "<link id='boardStyleSheet' rel='stylesheet' href=''>"
-    "<link rel='icon' href='favicon.ico' type='image/x-icon'>"
-    "<script src='script/webSocket.js'></script>"
-    "<script src='script/boardSwitcher.js'></script>"
-    "<script>"
-      "var serverPort=" STR(GV_PORT) ";"
-      "var ip='%s';"                                                      // WiFi.localIP().toString().c_str()
-      "var source=new EventSource('http://%s:" STR(GV_PORT) "/events');"  // WiFi.localIP().toString().c_str()
-      "var sampling_interval='%d';"                                       // Gv.sampling
-#ifdef ESP32
-      "var psramSize='%d KB';"                                            // ESP.getPsramSize() / 1024
-#endif  // ESP32
-      "var freeSketchSpace='%d KB';"                                      // ESP_getFreeSketchSpace() / 1024
-    "</script>"
-  "</head>"
-  "<body>"
-    "<div class='grid-container'>"
-      "<div id='messageBox' class='message-box hidden'></div>"
-      "<header class='header'></header>"
-      // Image
-      "<div class='image-container'>"
-        "<div id='imageWrapper' class='image-wrapper'>"
-          "<img id='boardImage' src='' alt='Board Image'>"
-          "<div id='indicators'></div>"
-        "</div>"
-      "</div>"
-    "</div>"
-  "</body>"
-  "</html>";
+#ifdef USE_UNISHOX_COMPRESSION
+  #include "./html_compressed/HTTP_GV_PAGE.h"
+#else
+  #include "./html_uncompressed/HTTP_GV_PAGE.h"
+#endif
 
 const char HTTP_GV_EVENT[] PROGMEM =
+  // Set CORS headers for global responses
   "HTTP/1.1 200 OK\n"
   "Content-Type: text/event-stream;\n"
   "Connection: keep-alive\n"
@@ -121,9 +91,9 @@ void GVBegin(void) {
 
   GV.WebServer = new ESP8266WebServer(GV_PORT);
   // Set CORS headers for global responses
-  GV.WebServer->sendHeader("Access-Control-Allow-Origin", "*");
-  GV.WebServer->sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  GV.WebServer->sendHeader("Access-Control-Allow-Headers", "Content-Type");
+//  GV.WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+//  GV.WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST, OPTIONS"));
+//  GV.WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
   GV.WebServer->on("/", GVHandleRoot);
   GV.WebServer->on("/release", GVHandleRelease);
   GV.WebServer->on("/free_psram", GVHandleFreePSRam);
@@ -138,11 +108,15 @@ void GVHandleRoot(void) {
 
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
+                                        GV_BASE_URL,
+                                        GV_PORT,
                                         WiFi.localIP().toString().c_str(),
-                                        WiFi.localIP().toString().c_str(),
+                                        WiFi.localIP().toString().c_str(), GV_PORT,
                                         GV.sampling,
 #ifdef ESP32
                                         ESP.getPsramSize() / 1024,
+#else
+                                        0,                                        
 #endif  // ESP32
                                         ESP_getFreeSketchSpace() / 1024);
   if (content == nullptr) { return; }                      // Avoid crash
@@ -185,12 +159,12 @@ void GVEventDisconnected(void) {
   if (GV.sse_ready) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Disconnected"));
   }
-  GV.sse_ready = false;  // This just stops the event to be restarted by opening root page again
+  GV.sse_ready = false;                                    // This just stops the event to be restarted by opening root page again
   GV.ticker.detach();
 }
 
 void GVCloseEvent(void) {
-  GVEventSend("{}", "close", millis());  // Closes window
+  GVEventSend("{}", "close", millis());                    // Closes web page
   GVEventDisconnected();
 }
 
@@ -229,7 +203,7 @@ void GVMonitorTask(void) {
     if (pwm_resolution > 0) {
       pintype = GV_PWMPin;
       originalValue = ledcRead2(pin);
-      currentState = changeUIntScale(originalValue, 0, pwm_resolution, 0, 255);   // bring back to 0..255
+      currentState = changeUIntScale(originalValue, 0, pwm_resolution, 0, 255);   // Bring back to 0..255
     }
 #endif  // ESP32
 
@@ -239,7 +213,7 @@ void GVMonitorTask(void) {
     if (pwm_value > -1) {
       pintype = GV_PWMPin;
       originalValue = pwm_value;
-      currentState = changeUIntScale(originalValue, 0, Settings->pwm_range, 0, 255);  // bring back to 0..255
+      currentState = changeUIntScale(originalValue, 0, Settings->pwm_range, 0, 255);  // Bring back to 0..255
     }
 #endif  // ESP8266
 
@@ -251,12 +225,12 @@ void GVMonitorTask(void) {
       originalValue = AdcRead(pin, 2);
 #endif  // ESP32
 #ifdef ESP8266
-      // Fix exception 9 if using ticker - GV.sampling != 100 (CallChain: (phy)pm_wakeup_init, (adc)test_tout, ets_timer_arm_new, delay, AdcRead, String6concat, MonitorTask)
+      // Fix exception 9 if using ticker - GV.sampling != 100 caused by delay(1) in AdcRead() (CallChain: (phy)pm_wakeup_init, (adc)test_tout, ets_timer_arm_new, delay, AdcRead, String6concat, MonitorTask)
       originalValue = (GV.sampling != 100) ? analogRead(pin) : AdcRead(pin, 1);
 #endif  // ESP8266
 */
       originalValue = AdcRead1(pin);
-      currentState = changeUIntScale(originalValue, 0, AdcRange(), 0, 255);   // bring back to 0..255
+      currentState = changeUIntScale(originalValue, 0, AdcRange(), 0, 255);   // Bring back to 0..255
     }
     else {
       // Read digital GPIO
@@ -284,6 +258,7 @@ void GVMonitorTask(void) {
 
   uint32_t heap = ESP_getFreeHeap();
   if (heap != GV.freeHeap) {
+    // Send freeHeap
     GV.freeHeap = heap;
     char temp[20];
     snprintf_P(temp, sizeof(temp), PSTR("%d KB"), heap / 1024);
@@ -293,6 +268,7 @@ void GVMonitorTask(void) {
 
 #ifdef ESP32
   if (UsePSRAM()) {
+    // Send freePsram
     uint32_t psram = ESP.getFreePsram();
     if (psram != GV.freePSRAM) {
       GV.freePSRAM = psram;
@@ -305,6 +281,7 @@ void GVMonitorTask(void) {
 #endif  // ESP32
 
   if (!hasChanges) {
+    // Send freeHeap as keepAlive
     uint32_t last_sent = millis() - GV.lastSentWithNoActivity;
     if (last_sent > GV_KEEP_ALIVE) {
       // No activity, resending for pulse
