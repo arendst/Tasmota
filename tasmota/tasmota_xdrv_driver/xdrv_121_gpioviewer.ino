@@ -26,19 +26,23 @@
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway
 
-//#define GV_BASE_URL "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+#ifndef GV_BASE_URL
+#define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+#endif
+/*
 #ifdef ESP8266
 #ifndef GV_BASE_URL
 #undef GV_BASE_URL                         // Fix compiler warning
-#define GV_BASE_URL "https://ota.tasmota.com/tasmota/gpio_viewer/assets/"
+#define GV_BASE_URL           "https://ota.tasmota.com/tasmota/gpio_viewer/assets/"
 #endif
 #endif  // ESP8266
 #ifdef ESP32
 #ifndef GV_BASE_URL
 #undef GV_BASE_URL                         // Fix compiler warning
-#define GV_BASE_URL "https://ota.tasmota.com/tasmota32/gpio_viewer/assets/"
+#define GV_BASE_URL           "https://ota.tasmota.com/tasmota32/gpio_viewer/assets/"
 #endif
 #endif  // ESP32
+*/
 
 const char *GVRelease = "1.0.7";
 
@@ -171,7 +175,7 @@ void GVCloseEvent(void) {
 void GVEventSend(const char *message, const char *event, uint32_t id) {
   if (GV.WebClient.connected()) {
     // generateEventMessage() in AsyncEventSource.cpp
-//    GV.WebClient.printf_P(PSTR("retry:0\nid:%u\nevent:%s\ndata:%s\n\n"), id, event, message);
+//    GV.WebClient.printf_P(PSTR("retry:1000\nid:%u\nevent:%s\ndata:%s\n\n"), id, event, message);
     GV.WebClient.printf_P(PSTR("id:%u\nevent:%s\ndata:%s\n\n"), id, event, message);
   } else {
     GVEventDisconnected();
