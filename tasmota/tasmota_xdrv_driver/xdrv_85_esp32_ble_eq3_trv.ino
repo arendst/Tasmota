@@ -460,10 +460,8 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
     ResponseAppend_P(PSTR(",\"stattime\":%u"), stattime);
     eq3->TargetTemp = (float)status[5] / 2;
     ResponseAppend_P(PSTR(",\"temp\":%2.1f"), eq3->TargetTemp);
-//    ResponseAppend_P(PSTR(",\"temp\":%2.1f"), ((float)status[5])/2);
     eq3->DutyCycle = status[3];
     ResponseAppend_P(PSTR(",\"posn\":%d"), eq3->DutyCycle);
-//    ResponseAppend_P(PSTR(",\"posn\":%d"), status[3]);
     int stat = status[2];
     ResponseAppend_P(PSTR(",\"mode\":"));
     switch (stat & 3){
@@ -504,7 +502,6 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
     ResponseAppend_P(PSTR(",\"state\":\"%s\""), (stat & 32) ? "locked" : "unlocked");
     eq3->Battery = stat & 128;
     ResponseAppend_P(PSTR(",\"battery\":\"%s\""), eq3->Battery ? "LOW" : "GOOD");
-//    ResponseAppend_P(PSTR(",\"battery\":\"%s\""), (stat & 128)?"LOW":"GOOD");
   }
 
   if ((statlen >= 10) && (status[0] == 2) && (status[1] == 1)){
