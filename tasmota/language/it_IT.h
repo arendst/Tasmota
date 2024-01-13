@@ -548,7 +548,7 @@
 #define D_DEVICE_INPUT        "Ingresso"
 #define D_DEVICE_OUTPUT       "Uscita"
 
-// xdrv_39_thermostat.ino
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Termostato"
 #define D_THERMOSTAT_SET_POINT        "Temperatura impostata"
 #define D_THERMOSTAT_SENSOR           "Temperatura attuale"
