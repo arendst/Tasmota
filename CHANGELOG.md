@@ -8,18 +8,20 @@ All notable changes to this project will be documented in this file.
 - Berry `debug.caller` (#20470)
 - GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
 - Support for HardwareSerial invert (#15461)
-- LVGL add `lv.str_arr`
+- SML support for IM350 (#20474)
+- LVGL `lv.str_arr` (#20480)
+- ESP32 MI BLE support for Xiaomi LYWSD02MMC (#20381)
 
 ### Breaking Changed
 
 ### Changed
-- SML update (#20474)
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
 - ESP8266 GPIO Viewer exception 9 on reading Analog GPIO
 - GPIO Viewer single instance
-- Fix random crash in Zigbee main page
+- Zigbee ramdom crash in main page (#20481)
+- Web file upload response on upload error (#20340)
 
 ### Removed
 
