@@ -665,6 +665,19 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * parent)
 void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_imgbtn_state_t state, const void * src_left, const void * src_mid, const void * src_right)
 void lv_imgbtn_set_state(lv_obj_t * imgbtn, lv_imgbtn_state_t state)
 
+// ../../lvgl/src/extra/widgets/keyboard/lv_keyboard.h
+lv_obj_t * lv_keyboard_create(lv_obj_t * parent)
+void lv_keyboard_set_textarea(lv_obj_t * kb, lv_obj_t * ta)
+void lv_keyboard_set_mode(lv_obj_t * kb, lv_keyboard_mode_t mode)
+void lv_keyboard_set_popovers(lv_obj_t * kb, bool en)
+void lv_keyboard_set_map(lv_obj_t * kb, lv_keyboard_mode_t mode, const char * map[], const lv_btnmatrix_ctrl_t ctrl_map[])
+lv_obj_t * lv_keyboard_get_textarea(const lv_obj_t * kb)
+lv_keyboard_mode_t lv_keyboard_get_mode(const lv_obj_t * kb)
+bool lv_btnmatrix_get_popovers(const lv_obj_t * obj)
+static inline const char ** lv_keyboard_get_map_array(const lv_obj_t * kb)
+static inline uint16_t lv_keyboard_get_selected_btn(const lv_obj_t * obj)
+static inline const char * lv_keyboard_get_btn_text(const lv_obj_t * obj, uint16_t btn_id)
+
 // ../../lvgl/src/extra/widgets/led/lv_led.h
 lv_obj_t * lv_led_create(lv_obj_t * parent)
 void lv_led_set_color(lv_obj_t * led, lv_color_t color)
