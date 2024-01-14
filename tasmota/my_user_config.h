@@ -1207,6 +1207,7 @@
     #define BE_LV_WIDGET_MSGBOX
     #define BE_LV_WIDGET_SPINBOX
     #define BE_LV_WIDGET_SPINNER
+    #define BE_LV_WIDGET_KEYBOARD
 
     #define BE_LV_WIDGET_QRCODE
 

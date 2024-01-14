@@ -204,7 +204,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
               'dropdown', 'img', 'label', 'line', 'roller', 'slider',
               'switch', 'table', 'textarea' ]
 # extra widgets
-lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
+lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner', 'keyboard' ]
 
 # add qrcode
 lv_widgets = lv_widgets + [ 'qrcode' ]
