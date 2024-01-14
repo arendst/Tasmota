@@ -36,11 +36,7 @@
 \*******************************************************************************************/
 
 
-#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_GT911) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS) || defined(SIMPLE_RES_TOUCH)
-
-#ifdef USE_DISPLAY_LVGL_ONLY
-#undef USE_TOUCH_BUTTONS
-#endif
+#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_GT911) || defined(USE_LILYGO47) || defined(USE_UNIVERSAL_TOUCH) || defined(USE_TOUCH_BUTTONS) || defined(SIMPLE_RES_TOUCH)
 
 #include <renderer.h>
 
@@ -76,6 +72,7 @@ bool FT5206_found = false;
 bool GT911_found = false;
 bool XPT2046_found = false;
 bool SRES_found = false;
+bool utouch_found = false;
 
 #ifndef MAX_TOUCH_BUTTONS
 #define MAX_TOUCH_BUTTONS 16
@@ -98,7 +95,7 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
 // return true if succesful, false if not configured
 bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gesture,
                      uint16_t* raw_x, uint16_t* raw_y) {
-  if (TSGlobal.external_ts || CST816S_found || FT5206_found || XPT2046_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || XPT2046_found || utouch_found) {
     if (touches)    { *touches = TSGlobal.touches; }
     if (x)          { *x = TSGlobal.touch_xp; }
     if (y)          { *y = TSGlobal.touch_yp; }
@@ -111,7 +108,7 @@ bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gestur
 }
 
 uint32_t Touch_Status(int32_t sel) {
-  if (TSGlobal.external_ts || CST816S_found || FT5206_found || GT911_found || XPT2046_found || SRES_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || GT911_found || XPT2046_found || utouch_found || SRES_found) {
     switch (sel) {
       case 0:
         return  TSGlobal.touched;
@@ -242,6 +239,40 @@ bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interru
 }
 #endif // USE_CST816S
 
+
+#ifdef USE_UNIVERSAL_TOUCH
+
+void utouch_Touch_Init() {
+  if (renderer) {
+    char *name;
+    utouch_found = renderer->utouch_Init(&name);
+    if (utouch_found) {
+      AddLog(LOG_LEVEL_INFO, PSTR("UT: %s"), name);
+    }
+  }
+}
+
+bool utouch_touched() {
+  if (renderer) {
+    return renderer->touched();
+  }
+}
+int16_t utouch_x() {
+  if (renderer) {
+    return renderer->getPoint_x();
+  } else {
+    return 0;
+  }
+}
+int16_t utouch_y() {
+  if (renderer) {
+    return renderer->getPoint_y();
+  } else {
+    return 0;
+  }
+}
+#endif // USE_UNIVERSAL_TOUCH
+
 #ifdef USE_FT5206
 #include <FT5206.h>
 // touch panel controller
@@ -370,6 +401,16 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 #endif // USE_CST816S
 
+#ifdef USE_UNIVERSAL_TOUCH
+  if (utouch_found) {
+    TSGlobal.touched = utouch_touched();
+    if (TSGlobal.touched) {
+      TSGlobal.raw_touch_xp = utouch_x();
+      TSGlobal.raw_touch_yp = utouch_y();
+    }
+  }
+#endif // USE_UNIVERSAL_TOUCH
+
 #ifdef USE_FT5206
   if (FT5206_found) {
     TSGlobal.touched = FT5206_touched();
@@ -458,6 +499,9 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
 #ifdef USE_FT5206
   if (FT5206_found) ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
+#endif
+#ifdef USE_UNIVERSAL_TOUCH
+  if (utouch_found) ResponseTime_P(PSTR(",\"UTOUCH\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
 #endif
 #ifdef USE_XPT2046
   if (XPT2046_found) ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
@@ -585,7 +629,7 @@ bool Xdrv55(uint32_t function) {
     case FUNC_INIT:
       break;
     case FUNC_EVERY_100_MSECOND:
-      if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || SRES_found) {
+      if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || utouch_found || SRES_found) {
         Touch_Check(TS_RotConvert);
       }
       break;
