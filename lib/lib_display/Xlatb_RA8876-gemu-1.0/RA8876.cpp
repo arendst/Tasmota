@@ -193,6 +193,10 @@ void RA8876::DisplayOnff(int8_t on) {
   }
 }
 
+void RA8876::dim10(uint8_t contrast, uint16_t contrast_gamma) {
+  dim(contrast / 16); 
+}
+
 // 0-15
 void RA8876::dim(uint8_t contrast) {
   SPI.beginTransaction(m_spiSettings);
