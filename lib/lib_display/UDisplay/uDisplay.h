@@ -190,6 +190,13 @@ class uDisplay : public Renderer {
   void invertDisplay(boolean i);
   void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
   void SetDimCB(dim_cb cb) { dim_cbp = cb; };
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  bool utouch_Init(char **name);
+  bool touched(void);
+  int16_t getPoint_x();
+  int16_t getPoint_y();
+#endif // USE_UNIVERSAL_TOUCH
 
  private:
    void beginTransaction(SPISettings s);
@@ -411,6 +418,26 @@ class uDisplay : public Renderer {
    void pushPixelsDMA(uint16_t* image, uint32_t len);
    void pushPixels3DMA(uint8_t* image, uint32_t len);
 #endif // ESP32
+
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  void ut_trans(char **sp, uint8_t *ut_code);
+  int16_t ut_execute(uint8_t *ut_code);
+  uint8_t ut_par(char **cp, uint32_t mode);
+  uint32_t ut_result;
+  uint8_t ut_array[16];
+  uint8_t ut_r1; 
+  uint8_t ut_mode;
+  uint8_t ut_i2caddr;
+  int8_t ut_reset;
+  int8_t ut_irq;
+  char ut_name[8];
+  uint8_t ut_init_code[32];
+  uint8_t ut_touch_code[16];
+  uint8_t ut_getx_code[16];
+  uint8_t ut_gety_code[16];
+
+#endif // USE_UNIVERSAL_TOUCH
 };
 
 
