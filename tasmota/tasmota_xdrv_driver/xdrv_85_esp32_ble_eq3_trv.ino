@@ -989,7 +989,8 @@ int EQ3SendResult(char *requested, const char *result){
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_EQ3_HL[]           PROGMEM = "{s}<hr>{m}<hr>{e}";
+const char HTTP_EQ3_HL[]           PROGMEM = "<tr><td colspan=2><hr>{e}";
+const char HTTP_EQ3_HL_THIN[]      PROGMEM = "{s}<hr size=1>{m}<hr size=1>{e}";
 const char HTTP_EQ3_ALIAS[]        PROGMEM = "{s}EQ3 %d Alias{m}%s{e}";
 const char HTTP_EQ3_MAC[]          PROGMEM = "{s}EQ3 %d " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}EQ3 %d " D_RSSI "{m}%d dBm{e}";
@@ -1000,10 +1001,13 @@ const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}EQ3 %d " D_BATTERY "{m}%s{e}";
 void EQ3Show(void)
 {
   char c_unit = D_UNIT_CELSIUS[0]; // ToDo: Check if fahrenheit is possible -> temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
+  bool FirstSensorShown = false;
 
   for (int i = 0; i < EQ3_NUM_DEVICESLOTS; i++) {
     if (EQ3Devices[i].timeoutTime) {
-      WSContentSend_P(HTTP_EQ3_HL);
+      if (TasmotaGlobal.FirstLineSend && !FirstSensorShown) WSContentSend_P(HTTP_EQ3_HL);
+      if (FirstSensorShown) WSContentSend_P(HTTP_EQ3_HL_THIN);
+      FirstSensorShown = true;
       const char *alias = BLE_ESP32::getAlias(EQ3Devices[i].addr);
       if (alias && *alias){
         WSContentSend_PD(HTTP_EQ3_ALIAS, i + 1, alias);

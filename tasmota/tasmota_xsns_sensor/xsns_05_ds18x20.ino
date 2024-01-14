@@ -542,6 +542,8 @@ void Ds18x20EverySecond(void) {
 }
 
 void Ds18x20Show(bool json) {
+  bool FirstSensorShown = false;
+
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
@@ -573,6 +575,8 @@ void Ds18x20Show(bool json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
+        if (TasmotaGlobal.FirstLineSend && !FirstSensorShown) WSContentSend_P("<tr><td colspan=2><hr>{e}");
+        FirstSensorShown = true;
         WSContentSend_Temp(DS18X20Data.name, ds18x20_sensor[index].temperature);
 #endif  // USE_WEBSERVER
       }

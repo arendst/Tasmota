@@ -290,6 +290,7 @@ void Ds18x20EverySecond(void) {
 }
 
 void Ds18x20Show(bool json) {
+  bool FirstSensorShown = false;
   float t;
 
   uint8_t dsxflg = 0;
@@ -339,6 +340,8 @@ void Ds18x20Show(bool json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
+        if (TasmotaGlobal.FirstLineSend && !FirstSensorShown) WSContentSend_P("<tr><td colspan=2><hr>{e}");
+        FirstSensorShown = true;
         WSContentSend_Temp(DS18X20Data.name, t);
 #endif  // USE_WEBSERVER
       }

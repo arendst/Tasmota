@@ -434,6 +434,10 @@ struct TasmotaGlobal_t {
 #ifdef USE_BERRY
   bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif // USE_BERRY
+
+#ifdef USE_WEBSERVER
+  bool FirstLineSend = false;           // Determine if first line is send to WebUI
+#endif // USE_WEBSERVER
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;

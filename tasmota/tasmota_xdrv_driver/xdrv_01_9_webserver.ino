@@ -833,6 +833,8 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
   int len = strlen(content);
   if (0 == len) { return; }                        // No content
 
+  TasmotaGlobal.FirstLineSend = true;
+
   if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
@@ -1468,6 +1470,7 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
+  TasmotaGlobal.FirstLineSend = false;
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
   }
