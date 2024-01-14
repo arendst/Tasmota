@@ -548,7 +548,7 @@
 #define D_DEVICE_INPUT "Bemenet"
 #define D_DEVICE_OUTPUT "Kimenet"
 
-// xdrv_39_thermostat.ino
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Thermostat"
 #define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
 #define D_THERMOSTAT_SENSOR           "Current Temperature"
