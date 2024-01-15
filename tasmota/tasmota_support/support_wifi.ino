@@ -712,11 +712,11 @@ bool IPGetListeningAddress(IPAddress * ip)
 String IPGetListeningAddressStr(void)
 {
   IPAddress ip;
-  if (IPGetListeningAddress(&ip)) {
-    return ip.toString(true);
-  } else {
-    return String();
-  }
+#ifdef USE_IPV6
+  return IPGetListeningAddress(&ip) ? ip.toString(true) : String();
+#else
+  return IPGetListeningAddress(&ip) ? ip.toString() : String();
+#endif
 }
 
 // Because of IPv6, we can't test an IP address agains (uint32_t)0L anymore
@@ -794,7 +794,11 @@ bool WifiHasIP(void) {
 String WifiGetIPStr(void)
 {
   IPAddress ip;
+#ifdef USE_IPV6
   return WifiGetIP(&ip) ? ip.toString(true) : String();
+#else
+  return WifiGetIP(&ip) ? ip.toString() : String();
+#endif
 }
 
 // Has a routable IP, whether IPv4 or IPv6, Wifi or Ethernet
