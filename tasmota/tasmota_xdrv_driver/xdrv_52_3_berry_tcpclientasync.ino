@@ -504,10 +504,10 @@ extern "C" {
       tcp->update_local_addr_port();
       if (tcp->local_port > 0) {
         be_map_insert_int(vm, "local_port", tcp->local_port);
-        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString().c_str());
+        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString(true).c_str());
       }
       be_map_insert_int(vm, "remote_port", tcp->remotePort());
-      be_map_insert_str(vm, "remote_addr", tcp->remoteIP().toString().c_str());
+      be_map_insert_str(vm, "remote_addr", tcp->remoteIP().toString(true).c_str());
     }
     be_pop(vm, 1);
     be_return(vm);
