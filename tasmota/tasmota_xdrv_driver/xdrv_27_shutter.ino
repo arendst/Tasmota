@@ -1141,6 +1141,7 @@ void ShutterToggle(bool dir)
 void ShutterShow(){
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, (Settings->shutter_options[i] & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
+    TasmotaGlobal.NeedSeparatorLine = false; // Do not diplay sensor separation
   }
 }
 

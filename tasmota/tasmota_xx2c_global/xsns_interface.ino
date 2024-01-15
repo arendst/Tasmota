@@ -1123,6 +1123,7 @@ bool XsnsCall(uint32_t function) {
   for (uint32_t x = 0; x < xsns_present; x++) {
     if (XsnsEnabled(0, x)) {  // Skip disabled sensor
       if ((FUNC_WEB_SENSOR == function) && !XsnsEnabled(1, x)) { continue; }  // Skip web info for disabled sensors
+      TasmotaGlobal.NeedSeparatorLine = false;
 
 #ifdef USE_PROFILE_FUNCTION
       uint32_t profile_function_start = millis();
@@ -1139,9 +1140,9 @@ bool XsnsCall(uint32_t function) {
       PROFILE_FUNCTION("sns", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
-      if (result && (function > FUNC_return_result)) {
-        break;
-      }
+      if (result && (function > FUNC_return_result)) break;
+
+      if (FUNC_WEB_SENSOR == function && TasmotaGlobal.NeedSeparatorLine) WSContentSend_P("<tr><td colspan=2><hr>{e}");
 
     }
   }

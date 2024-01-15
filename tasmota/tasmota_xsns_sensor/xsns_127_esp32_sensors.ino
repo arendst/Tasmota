@@ -79,7 +79,6 @@ void Esp32SensorShow(bool json) {
 
 #ifdef USE_WEBSERVER
     } else {
-      if (TasmotaGlobal.FirstLineSend) WSContentSend_P("<tr><td colspan=2><hr>{e}");
       WSContentSend_Temp("ESP32", t);
 #endif  // USE_WEBSERVER
     }

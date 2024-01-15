@@ -3520,7 +3520,6 @@ void MI32Show(bool json)
     }
     if (numsensors == 0) i=-1; // only for the GUI
 
-    if (TasmotaGlobal.FirstLineSend) WSContentSend_P(HTTP_MI32_HL);
     WSContentSend_P(HTTP_MI32, i + 1, stemp, numsensors);
     for (i; i<j; i++) {
       WSContentSend_P(HTTP_MI32_HL_THIN);

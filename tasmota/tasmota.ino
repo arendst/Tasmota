@@ -435,9 +435,7 @@ struct TasmotaGlobal_t {
   bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif // USE_BERRY
 
-#ifdef USE_WEBSERVER
-  bool FirstLineSend = false;           // Determine if first line is send to WebUI
-#endif // USE_WEBSERVER
+  bool NeedSeparatorLine = false;           // Determine if a separator line should be send to WebUI after sensor/driver output
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;

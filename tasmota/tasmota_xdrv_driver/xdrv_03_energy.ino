@@ -1409,7 +1409,7 @@ void EnergyShow(bool json) {
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
-    WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+    WSContentSend_P(PSTR("</table>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
     bool label_o = voltage_common;
     bool no_label = (1 == Energy->phase_count);
     char number[4];
@@ -1448,7 +1448,7 @@ void EnergyShow(bool json) {
       WSContentSend_PD(HTTP_SNS_EXPORT_ACTIVE, WebEnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
     }
     XnrgCall(FUNC_WEB_COL_SENSOR);
-    WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER
   }

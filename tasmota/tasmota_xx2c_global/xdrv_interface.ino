@@ -1140,6 +1140,7 @@ bool XdrvCall(uint32_t function) {
 #endif  // USE_PROFILE_FUNCTION
 
   for (uint32_t x = 0; x < xdrv_present; x++) {
+    TasmotaGlobal.NeedSeparatorLine = false;
 
 #ifdef USE_PROFILE_FUNCTION
     uint32_t profile_function_start = millis();
@@ -1159,9 +1160,10 @@ bool XdrvCall(uint32_t function) {
     if (FUNC_ACTIVE == function) {
       bitWrite(Xdrv_active[x / 32], x % 32, result);
     }
-    if (result && (function > FUNC_return_result)) {
-      break;
-    }
+
+    if (result && (function > FUNC_return_result)) break;
+
+    if (FUNC_WEB_SENSOR == function && TasmotaGlobal.NeedSeparatorLine) WSContentSend_P("<tr><td colspan=2><hr>{e}");
   }
 
   PROFILE_DRIVER("drv", function, profile_driver_start);
