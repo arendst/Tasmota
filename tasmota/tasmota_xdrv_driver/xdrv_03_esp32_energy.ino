@@ -1667,7 +1667,7 @@ void EnergyShow(bool json) {
       Energy->gui_count = relay_show - Energy->gui_offset;
       if (Energy->gui_count > Energy->Settings.gui_cols) { Energy->gui_count = Energy->Settings.gui_cols; }
 
-      WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
+      WSContentSend_P(PSTR("</table>"));        // Close current table as we will use different column count
       bool label_o = voltage_common;
       if (ENERGY_DISPLAY_TABS == Energy->Settings.gui_display) {
         uint32_t tabs = (relay_show -1 + Energy->Settings.gui_cols) / Energy->Settings.gui_cols;
@@ -1731,7 +1731,7 @@ void EnergyShow(bool json) {
       }
 
       XnrgCall(FUNC_WEB_COL_SENSOR);
-      WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
       XnrgCall(FUNC_WEB_SENSOR);
     }
 #endif  // USE_WEBSERVER

@@ -833,6 +833,8 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
   int len = strlen(content);
   if (0 == len) { return; }                        // No content
 
+  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
+
   if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
@@ -980,6 +982,24 @@ void WSContentButton(uint32_t title_index, bool show=true) {
 void WSContentSpaceButton(uint32_t title_index, bool show=true) {
   WSContentSend_P(PSTR("<div id=but%dd style=\"display: %s;\"></div>"),title_index, show ? "block":"none");            // 5px padding
   WSContentButton(title_index, show);
+}
+
+void WSContentSeparator(uint32_t state) {
+  // Send two column separator
+  static bool request = false;
+  switch (state) {
+    case 0:    // Print separator (fall through to WSContentSeparator(1))
+      request = true;
+    case 1:    // Print separator if needed
+      if (request) {
+        WSContentSend_P(HTTP_SNS_HR);  // <tr><td colspan=2><hr/>{e}
+        request = false;
+      }
+      break;
+    case 2:    // Print separator on next WSContentSeparator(1)
+      request = true;
+      break;
+  }
 }
 
 void WSContentSend_Temp(const char *types, float f_temperature) {
@@ -1467,12 +1487,14 @@ bool HandleRootStatusRefresh(void)
 #else
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
-  WSContentSend_P(PSTR("{t}"));
+
+  WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
+  WSContentSeparator(0);               // Print separator
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
+    WSContentSeparator(0);             // Print separator
   }
   XsnsXdrvCall(FUNC_WEB_SENSOR);
-
   WSContentSend_P(PSTR("</table>"));
 
   if (TasmotaGlobal.devices_present) {

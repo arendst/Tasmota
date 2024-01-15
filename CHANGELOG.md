@@ -11,7 +11,8 @@ All notable changes to this project will be documented in this file.
 - SML support for IM350 (#20474)
 - LVGL `lv.str_arr` (#20480)
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC (#20381)
-- LVGL option to add `lv.keyboard` extra widget
+- LVGL option to add `lv.keyboard` extra widget (#20496)
+- GUI sensor separators (#20495)
 
 ### Breaking Changed
 

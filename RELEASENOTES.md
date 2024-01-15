@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for pipsolar inverter [#20408](https://github.com/arendst/Tasmota/issues/20408)
 - Support for HardwareSerial invert [#15461](https://github.com/arendst/Tasmota/issues/15461)
 - SML support for IM350 [#20474](https://github.com/arendst/Tasmota/issues/20474)
+- GUI sensor separators [#20495](https://github.com/arendst/Tasmota/issues/20495)
 - ESP32 used UART information
 - ESP32 experimental support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC [#20381](https://github.com/arendst/Tasmota/issues/20381)
@@ -145,6 +146,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `tasmota.webcolor` [#20454](https://github.com/arendst/Tasmota/issues/20454)
 - Berry `debug.caller` [#20470](https://github.com/arendst/Tasmota/issues/20470)
 - LVGL `lv.str_arr` [#20480](https://github.com/arendst/Tasmota/issues/20480)
+- LVGL option to add `lv.keyboard` extra widget [#20496](https://github.com/arendst/Tasmota/issues/20496)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
