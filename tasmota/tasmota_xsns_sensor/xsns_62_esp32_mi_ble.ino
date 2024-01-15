@@ -2725,32 +2725,31 @@ void CmndMi32Keys(void){
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 " MI32_VERSION "{m}%u%s / %u{e}";
 const char HTTP_MI32_ALIAS[] PROGMEM = "{s}%s Alias{m}%s{e}";
-const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
-const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
-const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
-const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
-const char HTTP_EVENTS[] PROGMEM = "{s}%s Events{m}%u {e}";
-const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
-const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s Fertility{m}%u us/cm{e}";
-const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
+const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
+const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
+const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u{e}";
+const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
+const char HTTP_MI32_NMT[] PROGMEM = "{s}%s No motion{m}> %u " D_SECONDS "{e}";
+const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s Fertility{m}%u " D_UNIT_MICROSIEMENS_PER_CM "{e}";
 const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s " D_LIGHT "{m}%d{e}";
 const char HTTP_MISCALE_WEIGHT[] PROGMEM = "{s}%s " D_WEIGHT "{m}%*_f %s{e}";
 const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s Weight removed{m}%s{e}";
 const char HTTP_MISCALE_WEIGHT_STABILIZED[] PROGMEM = "{s}%s Weight stabilized{m}%s{e}";
 const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s Impedance{m}%u{e}";
 const char HTTP_MISCALE_IMPEDANCE_STABILIZED[] PROGMEM = "{s}%s Impedance stabilized{m}%s{e}";
-const char HTTP_SJWS01LM_FLOODING[] PROGMEM = "{s}%s Flooding{m}%u {e}";
+const char HTTP_SJWS01LM_FLOODING[] PROGMEM = "{s}%s Flooding{m}%u{e}";
 
 //const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
 //  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m} {e}";
+//  "\">%s</a>{m}{e}";
 
 //const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
 //  "http://127.0.0.1:8887/keys/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m} {e}";
+//  "\">%s</a>{m}{e}";
 const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
   "https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-  "\">%s</a>{m} {e}";
+  "\">%s</a>{m}{e}";
 
 
 const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair Button Pressed{m} {e}";
@@ -3521,7 +3520,7 @@ void MI32Show(bool json)
 
     WSContentSend_P(HTTP_MI32, i + 1, stemp, numsensors);
     for (i; i<j; i++) {
-      WSContentSend_P(HTTP_MI32_HL);
+      WSContentSend_P(HTTP_SNS_HR_THIN);
       mi_sensor_t *p;
       p = &MIBLEsensors[i];
 
@@ -3532,8 +3531,8 @@ void MI32Show(bool json)
       }
       char _MAC[18];
       ToHex_P(p->MAC,6,_MAC,18);//,':');
-      WSContentSend_P(HTTP_MI32_MAC, typeName, D_MAC_ADDRESS, _MAC);
-      WSContentSend_PD(HTTP_RSSI, typeName, p->RSSI);
+      WSContentSend_P(HTTP_MI32_MAC, typeName, _MAC);
+      WSContentSend_PD(HTTP_MI32_RSSI, typeName, p->RSSI);
 
       // for some reason, display flora differently
       switch(p->type){
@@ -3597,11 +3596,11 @@ void MI32Show(bool json)
 #endif //USE_MI_DECRYPTION
 
       if (p->feature.events){
-        WSContentSend_PD(HTTP_EVENTS, typeName, p->events);
+        WSContentSend_PD(HTTP_MI32_EVENTS, typeName, p->events);
       }
       if (p->feature.NMT){
         // no motion time
-        if(p->NMT>0) WSContentSend_PD(HTTP_NMT, typeName, p->NMT);
+        if(p->NMT>0) WSContentSend_PD(HTTP_MI32_NMT, typeName, p->NMT);
       }
 
       if (p->feature.lux){
@@ -3626,10 +3625,10 @@ void MI32Show(bool json)
         }
       }
       if(p->bat!=0x00){
-          WSContentSend_PD(HTTP_BATTERY, typeName, p->bat);
+          WSContentSend_PD(HTTP_MI32_BATTERY, typeName, p->bat);
       }
       if (p->feature.Btn){
-        WSContentSend_PD(HTTP_LASTBUTTON, typeName, p->Btn);
+        WSContentSend_PD(HTTP_MI32_LASTBUTTON, typeName, p->Btn);
       }
       if (p->feature.flooding)
       {
