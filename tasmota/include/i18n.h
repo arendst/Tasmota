@@ -275,6 +275,7 @@
   #define D_STATUS13_SHUTTER "SHT"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
+#define D_CMND_TIMEDPOWER "TimedPower"
 #define D_CMND_FANSPEED "FanSpeed"
 #define D_CMND_POWERONSTATE "PowerOnState"
 #define D_CMND_PULSETIME "PulseTime"

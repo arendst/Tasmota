@@ -23,7 +23,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // Other commands
   D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_RESTART "|"
 #ifndef FIRMWARE_MINIMAL_ONLY
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_TIMEDPOWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
   D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
@@ -63,7 +63,7 @@ SO_SYNONYMS(kTasmotaSynonyms,
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl, &CmndSeriallog, &CmndRestart,
 #ifndef FIRMWARE_MINIMAL_ONLY
-  &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep,
+  &CmndBacklog, &CmndDelay, &CmndPower, &CmndTimedPower, &CmndStatus, &CmndState, &CmndSleep,
   &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
   &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
@@ -493,6 +493,46 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 
 /********************************************************************************************/
 
+bool SetTimedCmnd(uint32_t time, const char *command) {
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
+      TasmotaGlobal.timed_cmnd[i].time = millis() + time;
+      if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
+        TasmotaGlobal.timed_cmnd[i].time++;
+      }
+      TasmotaGlobal.timed_cmnd[i].command = command;
+      return true;
+    }
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("TIM: No more timer slots left"));
+  return false;
+}
+
+void ResetTimedCmnd(const char *command) {
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
+        TasmotaGlobal.timed_cmnd[i].time = 0;
+        TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
+      }
+    }
+  }
+}
+
+void LoopTimedCmnd(void) {
+  uint32_t now = millis();
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if ((TasmotaGlobal.timed_cmnd[i].time > 0) && (now > TasmotaGlobal.timed_cmnd[i].time)) {
+      TasmotaGlobal.timed_cmnd[i].time = 0;
+      String cmd = TasmotaGlobal.timed_cmnd[i].command;
+      TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
+      ExecuteCommand((char*)cmd.c_str(), SRC_TIMER);
+    }
+  }
+}
+
+/********************************************************************************************/
+
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
@@ -692,6 +732,42 @@ void CmndPower(void)
       MqttPublishTeleState();
     }
     ResponseClear();
+  }
+}
+
+void CmndTimedPower(void) {
+  /*
+  TimedPower<index> <milliseconds>[,0|1|2|3]
+  TimedPower0 3000    - Turn all power on and then off after 3 seconds
+  TimedPower1 2000    - Turn power1 on and then off after 2 seconds
+  TimedPower2 2000,0  - Turn power2 off and then on after 2 seconds
+  TimedPower1 2200,1  - Turn power1 on and then off after 2.2 seconds
+  TimedPower2 2000,2  - Toggle power2 and then toggle again after 2 seconds
+  TimedPower2 2500,3  - Blink power2 and then turn off after 2.5 seconds
+  */
+  if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t parm[2] = { 0, 0 };
+      uint32_t parms = ParseParameters(2, parm);
+      uint32_t time = parm[0];
+      uint32_t start_state = 1;                 // Default on
+      if (2 == parms) {
+        start_state = parm[1] & 0x03;           // 0,1,2,3       
+      }
+      const uint8_t contra_state[] = { 1, 0, 2, 0 };
+      uint32_t end_state = contra_state[start_state];
+  
+      char cmnd[32];
+      snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state);
+      if (SetTimedCmnd(time, cmnd)) {
+        XdrvMailbox.payload = start_state;
+        CmndPower();
+      }
+    } else {
+      // Remove all POWER timed command
+      ResetTimedCmnd(D_CMND_POWER);
+      ResponseCmndDone();
+    }
   }
 }
 

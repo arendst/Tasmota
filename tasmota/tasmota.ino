@@ -292,6 +292,11 @@ HardwareSerial TasConsole = Serial;         // Only serial interface
 
 char EmptyStr[1] = { 0 };                   // Provide a pointer destination to an empty char string
 
+typedef struct {
+  uint32_t time;
+  String   command;
+} tTimedCmnd;
+
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate
@@ -411,6 +416,7 @@ struct TasmotaGlobal_t {
   uint8_t backlog_pointer;                  // Command backlog pointer
   String backlog[MAX_BACKLOG];              // Command backlog buffer
 #endif
+  tTimedCmnd timed_cmnd[MAX_TIMED_CMND];    // Timed command buffer
 
 #ifdef MQTT_DATA_STRING
   String mqtt_data;                         // Buffer filled by Response functions
@@ -851,6 +857,7 @@ void Scheduler(void) {
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+    LoopTimedCmnd();
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
