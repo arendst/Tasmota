@@ -17,7 +17,8 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- IP stack compatible with new Core3 IPv6 implementation ()
+- ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
+- IP stack compatible with new Core3 IPv6 implementation (#20509)
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
