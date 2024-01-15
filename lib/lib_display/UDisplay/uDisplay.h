@@ -101,6 +101,9 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
 #endif
 
+enum {
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_DBG,UT_END
+};
 
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
 #define GPIO_SET_SLOW(A) digitalWrite(A, HIGH)
@@ -423,7 +426,7 @@ class uDisplay : public Renderer {
 // universal touch driver
   void ut_trans(char **sp, uint8_t *ut_code);
   int16_t ut_execute(uint8_t *ut_code);
-  uint8_t ut_par(char **cp, uint32_t mode);
+  uint16_t ut_par(char **cp, uint32_t mode);
   uint32_t ut_result;
   uint8_t ut_array[16];
   uint8_t ut_r1; 
@@ -433,7 +436,7 @@ class uDisplay : public Renderer {
   int8_t ut_irq;
   char ut_name[8];
   uint8_t ut_init_code[32];
-  uint8_t ut_touch_code[16];
+  uint8_t ut_touch_code[32];
   uint8_t ut_getx_code[16];
   uint8_t ut_gety_code[16];
 

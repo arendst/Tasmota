@@ -37,6 +37,9 @@ extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
 
 #define renderer_swap(a, b) { int16_t t = a; a = b; b = t; }
 
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
   UDISP_YELLOW,UDISP_NAVY,UDISP_DARKGREEN,UDISP_DARKCYAN,UDISP_MAROON,UDISP_PURPLE,UDISP_OLIVE,\
 UDISP_LIGHTGREY,UDISP_DARKGREY,UDISP_ORANGE,UDISP_GREENYELLOW,UDISP_PINK};
@@ -136,6 +139,18 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     lut_cmd[cnt] = 0xff;
     lut_array[cnt] = 0;
   }
+
+#ifdef USE_UNIVERSAL_TOUCH
+  ut_init_code[0] = UT_RT;
+  ut_init_code[1] = UT_END;
+  ut_touch_code[0] = UT_RT;
+  ut_touch_code[1] = UT_END;
+  ut_getx_code[0] = UT_RT;
+  ut_getx_code[1] = UT_END;
+  ut_gety_code[0] = UT_RT;
+  ut_gety_code[1] = UT_END;
+#endif // USE_UNIVERSAL_TOUCH
+
   lut_partial = 0;
   lut_full = 0;
   char linebuff[UDSP_LBSIZE];
@@ -2541,19 +2556,17 @@ char *uDisplay::devname(void) {
   return dname;
 }
 
-enum {
-  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_RT,UT_END
-};
+
 
 #ifdef USE_UNIVERSAL_TOUCH
 
-uint8_t uDisplay::ut_par(char **lp, uint32_t mode) {
+uint16_t uDisplay::ut_par(char **lp, uint32_t mode) {
   char *cp = *lp;
   while (*cp != ' ') {
     cp++;
   }
   cp++;
-  uint8_t result;
+  uint16_t result;
   if (!mode) {
     result = strtol(cp, &cp, 16);
   } else {
@@ -2566,23 +2579,51 @@ uint8_t uDisplay::ut_par(char **lp, uint32_t mode) {
 void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
   char *cp = *sp;
   uint16_t length;
+  uint16_t wval;
   while (*cp) {
     if (*cp == ':' || *cp == '#') {
       break;
     }
-    if (!strncmp(cp, "RDM", 3)) {
+    if (!strncmp(cp, "RDWM", 4)) {
+      // read word many
+      *ut_code++ = UT_RDWM;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval>>8;
+      *ut_code++ = wval;
+      wval = ut_par(&cp, 1);
+      if (wval > sizeof(ut_array)) {
+        wval = sizeof(ut_array);
+      }
+      *ut_code++ = wval;
+      length += 4;
+    } else if (!strncmp(cp, "RDW", 3)) {
+      // read word one
+      *ut_code++ = UT_RDW;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval>>8;
+      *ut_code++ = wval;
+      length += 3;
+    } else if (!strncmp(cp, "RDM", 3)) {
       // read many
       *ut_code++ = UT_RDM;
       *ut_code++ = ut_par(&cp, 0);
-      *ut_code++ = ut_par(&cp, 1);
+      wval = ut_par(&cp, 1);
+      if (wval > sizeof(ut_array)) {
+        wval = sizeof(ut_array);
+      }
+      *ut_code++ = wval;
       length += 3;
-
     } else if (!strncmp(cp, "RD", 2)) {
       // read one
       *ut_code++ = UT_RD;
       *ut_code++ = ut_par(&cp, 0);
       length += 2;
-    } else if (!strncmp(cp, "CP", 2)) {
+    } else if (!strncmp(cp, "CPR", 3)) {
+      // cmp and set
+      *ut_code++ = UT_CPR;
+      *ut_code++ = ut_par(&cp, 0);
+      length += 2;
+     } else if (!strncmp(cp, "CP", 2)) {
       // cmp and set
       *ut_code++ = UT_CP;
       *ut_code++ = ut_par(&cp, 0);
@@ -2590,6 +2631,10 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
     } else if (!strncmp(cp, "RTF", 3)) {
       // return when false
       *ut_code++ = UT_RTF;
+      length += 1;
+    } else if (!strncmp(cp, "RTT", 3)) {
+      // return when true
+      *ut_code++ = UT_RTT;
       length += 1;
     } else if (!strncmp(cp, "MV", 2)) {
       // move
@@ -2601,6 +2646,32 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
       // return status
       *ut_code++ = UT_RT;
       length += 1;
+    } else if (!strncmp(cp, "WRW", 3)) {
+      *ut_code++ = UT_WRW;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval>>8;
+      *ut_code++ = wval;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval;
+      length += 4;
+    } else if (!strncmp(cp, "WR", 2)) {
+      *ut_code++ = UT_WR;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval;
+      length += 3;
+    } else if (!strncmp(cp, "AND", 3)) {
+      *ut_code++ = UT_AND;
+      wval = ut_par(&cp, 0);
+      *ut_code++ = wval>>8;
+      *ut_code++ = wval;
+      length += 3;
+    } else if (!strncmp(cp, "DBG", 3)) {
+      *ut_code++ = UT_DBG;
+      wval = ut_par(&cp, 1);
+      *ut_code++ = wval;
+      length += 2;
     }
 
     cp++;
@@ -2609,11 +2680,13 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
   *sp = cp - 1;
 }
 
+
 int16_t uDisplay::ut_execute(uint8_t *ut_code) {
 int16_t result = 0;
 uint8_t iob, len;
 TwoWire *wire;
 uint8_t index = 0;
+uint16_t wval;
 
   if (ut_mode == 1) {
     wire = &Wire;
@@ -2632,7 +2705,7 @@ uint8_t index = 0;
         // read 1 byte
         wire->beginTransmission(ut_i2caddr);
         wire->write(*ut_code++);
-        wire->endTransmission();
+        wire->endTransmission(false);
         wire->requestFrom(ut_i2caddr, (size_t)1);
         ut_array[0]  = wire->read();
         break;
@@ -2640,17 +2713,60 @@ uint8_t index = 0;
         // read multiple bytes
         wire->beginTransmission(ut_i2caddr);
         wire->write(*ut_code++);
-        wire->endTransmission();
+        wire->endTransmission(false);
         len = *ut_code++;
         wire->requestFrom(ut_i2caddr, (size_t)len);
+        index = 0;
         while (wire->available()) {
           ut_array[index++] = wire->read();
         }
+        break;
+      case UT_RDW:
+        // read 1 byte
+        //wire->flush();
+        wire->beginTransmission(ut_i2caddr);
+        wire->write(*ut_code++);
+        wire->write(*ut_code++);
+        wire->endTransmission(false);
+        wire->requestFrom(ut_i2caddr, (size_t)1);
+        ut_array[0]  = wire->read();
+        break;
+      case UT_RDWM:
+        // read multiple bytes
+        //wire->flush();
+        wire->beginTransmission(ut_i2caddr);
+        wire->write(*ut_code++);
+        wire->write(*ut_code++);
+        wire->endTransmission(false);
+        len = *ut_code++;
+        wire->requestFrom(ut_i2caddr, (size_t)len);
+        index = 0;
+        while (wire->available()) {
+          ut_array[index++] = wire->read();
+        }
+        break;
+      case UT_WR:
+        wire->beginTransmission(ut_i2caddr);
+        wire->write(*ut_code++);
+        wire->write(*ut_code++);
+        wire->endTransmission(true);
+        break;
+       case UT_WRW:
+        wire->beginTransmission(ut_i2caddr);
+        wire->write(*ut_code++);
+        wire->write(*ut_code++);
+        wire->write(*ut_code++);
+        wire->endTransmission(true);
         break;
       case UT_CP:
         // compare
         iob = *ut_code++;
         result = (iob == ut_array[0]);
+        break;
+      case UT_CPR:
+        // compare
+        iob = *ut_code++;
+        result = (iob == result);
         break;
       case UT_RTF:
         // return when false
@@ -2658,6 +2774,12 @@ uint8_t index = 0;
           return false;
         }
         break;
+      case UT_RTT:
+         // return when true
+        if (result > 0) {
+          return false;
+        }
+        break;     
       case UT_MV:
         // move
         // source
@@ -2665,16 +2787,32 @@ uint8_t index = 0;
         iob = *ut_code++;
         if (iob == 1) {
           result = ut_array[result];
-        } else {
+        } else if (iob == 2) {
           iob = result;
           result = ut_array[iob] << 8;
           result |= ut_array[iob + 1];
+        } else {
+          iob = result;
+          result = ut_array[iob + 1] << 8;
+          result |= ut_array[iob];
         }
         result &= 0xfff;
+        break;
+       case UT_AND:
+        // and 
+        wval = *ut_code++ << 8;
+        wval |= *ut_code++;
+        result &= wval;
         break;
       case UT_RT:
         // result
         return result;
+        break;
+      case UT_DBG:
+        // debug show result
+        //Serial.printf("UTDBG: %d\n", result);
+        wval = *ut_code++;
+        AddLog(LOG_LEVEL_INFO, PSTR("UTDBG %d: %02x : %02x,%02x,%02x,%02x"), wval, result, ut_array[0], ut_array[1], ut_array[2], ut_array[3]);
         break;
       case UT_END:
         break;
@@ -2682,7 +2820,7 @@ uint8_t index = 0;
   }
   return result;
 }
-#endif
+#endif // USE_UNIVERSAL_TOUCH
 
 uint32_t uDisplay::str2c(char **sp, char *vp, uint32_t len) {
     char *lp = *sp;
