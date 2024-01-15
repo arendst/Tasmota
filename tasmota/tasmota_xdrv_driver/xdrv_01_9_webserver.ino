@@ -999,6 +999,9 @@ void WSContentSeparator(uint32_t state) {
     case 2:    // Print separator on next WSContentSeparator(1)
       request = true;
       break;
+    case 3:    // Don't print separator on next WSContentSeparator(1)
+      request = false;
+      break;
   }
 }
 
