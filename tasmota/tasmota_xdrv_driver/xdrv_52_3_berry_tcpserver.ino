@@ -240,7 +240,7 @@ extern "C" {
     WiFiClient * client_ptr = nullptr;
     if (server_tcp->hasClient()) {
       WiFiClient new_client = server_tcp->available();
-      AddLog(LOG_LEVEL_INFO, "BRY: Got connection from %s:%i local %s:%i", new_client.remoteIP().toString().c_str(), new_client.remotePort(), new_client.localIP().toString().c_str(), new_client.localPort());
+      AddLog(LOG_LEVEL_INFO, "BRY: Got connection from %s:%i local %s:%i", new_client.remoteIP().toString(true).c_str(), new_client.remotePort(), new_client.localIP().toString().c_str(), new_client.localPort());
       client_ptr = new WiFiClient();
       *client_ptr = new_client;
     } else {
@@ -254,7 +254,7 @@ extern "C" {
     AsyncTCPClient * client_ptr = nullptr;
     if (server_tcp->hasClient()) {
       client_ptr = server_tcp->availableAsync();
-      AddLog(LOG_LEVEL_INFO, "BRY: Got connection from %s:%i local %s:%i", client_ptr->remoteIP().toString().c_str(), client_ptr->remotePort(), client_ptr->localIP().toString().c_str(), client_ptr->localPort());
+      AddLog(LOG_LEVEL_INFO, "BRY: Got connection from %s:%i local %s:%i", client_ptr->remoteIP().toString(true).c_str(), client_ptr->remotePort(), client_ptr->localIP().toString().c_str(), client_ptr->localPort());
     } else {
       be_raise(vm, "internal_error", "tcpserver has no client connected");
     }

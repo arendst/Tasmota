@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- IP stack compatible with new Core3 IPv6 implementation ()
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
