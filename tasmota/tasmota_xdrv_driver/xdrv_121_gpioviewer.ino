@@ -220,6 +220,7 @@ void GVMonitorTask(void) {
     }
 #endif  // ESP8266
 
+#ifdef USE_ADC
     else if (AdcPin(pin)) {
       // Read Analog (ADC) GPIO
       pintype = GV_AnalogPin;
@@ -235,6 +236,8 @@ void GVMonitorTask(void) {
       originalValue = AdcRead1(pin);
       currentState = changeUIntScale(originalValue, 0, AdcRange(), 0, 255);   // Bring back to 0..255
     }
+#endif  // USE_ADC
+
     else {
       // Read digital GPIO
       pintype = GV_DigitalPin;
@@ -402,6 +405,9 @@ bool Xdrv121(uint32_t function) {
         if (GV.sse_ready && (100 == GV.sampling)) {
           GVMonitorTask();
         }
+        break;
+      case FUNC_SAVE_BEFORE_RESTART:
+        GVCloseEvent();                        // Stop current updates
         break;
       case FUNC_ACTIVE:
         result = true;
