@@ -1130,7 +1130,9 @@ bool XsnsCall(uint32_t function) {
 
       result = xsns_func_ptr[x](function);
 
+#ifdef USE_WEBSERVER
       if (FUNC_WEB_SENSOR == function) { WSContentSeparator(1); }  // Show separator if needed
+#endif // USE_WEBSERVER
 
 #ifdef USE_PROFILE_FUNCTION
 #ifdef XFUNC_PTR_IN_ROM
