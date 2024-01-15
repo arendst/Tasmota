@@ -26,6 +26,8 @@
 #include "driver/spi_master.h"
 #endif
 
+#include "tasmota_options.h"
+
 #undef SPRINT
 #define SPRINT(A) {char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);}
 
@@ -147,10 +149,14 @@ enum ExternalFontFamily
 typedef uint8_t FontFlags;
 #define RA8876_FONT_FLAG_XLAT_FULLWIDTH 0x01  // Translate ASCII to Unicode fullwidth forms
 
+
+#ifndef RA8876_SPI_SPEED
 // 1MHz. TODO: Figure out actual speed to use
 // Data sheet section 5.2 says maximum SPI clock is 50MHz.
 //#define RA8876_SPI_SPEED 10000000
-#define RA8876_SPI_SPEED 25000000
+//#define RA8876_SPI_SPEED 25000000
+#define RA8876_SPI_SPEED 40000000
+#endif
 
 // With SPI, the RA8876 expects an initial byte where the top two bits are meaningful. Bit 7
 // is A0, bit 6 is WR#. See data sheet section 7.3.2 and section 19.
@@ -501,6 +507,7 @@ class RA8876 : public Renderer {
   void setDrawMode(uint8_t mode);
   void setDrawMode_reg(uint8_t mode);
   void dim(uint8_t contrast);
+  void dim10(uint8_t contrast, uint16_t contrast_gamma);
   void FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str);
 
  private:
