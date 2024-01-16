@@ -561,6 +561,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'U':
             if (!strncmp(lp1, "TI", 2)) {
               // init
+              ut_wire = 0;
+              ut_reset = -1;
+              ut_irq = -1;
               lp1 += 3;
               str2c(&lp1, ut_name, sizeof(ut_name));
               if (*lp1 == 'I') {
@@ -568,8 +571,6 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                 lp1++;
                 uint8_t ut_mode = *lp1 & 0xf;
                 lp1 += 2;
-                ut_reset = -1;
-                ut_irq = -1;
                 ut_i2caddr = next_hex(&lp1);
                 ut_reset = next_val(&lp1);
                 ut_irq = next_val(&lp1);
@@ -583,9 +584,8 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                   ut_wire = &Wire;
 #endif
                 }
-              } else {
+              } else if (*lp1 == 'S') {
                 // spi mode
-                ut_wire = 0;
                 lp1++;
                 uint8_t ut_mode = *lp1 & 0xf;
                 lp1 += 2;
@@ -599,6 +599,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                 digitalWrite(ut_spi_cs, HIGH);
 
                 ut_spiSettings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
+              } else {
+                // simple resistive touch
+                lp1++;
               }
               ut_trans(&lp, ut_init_code, sizeof(ut_init_code));
             } else if (!strncmp(lp1, "TT", 2)) {
@@ -1913,9 +1916,6 @@ bool uDisplay::utouch_Init(char **name) {
     attachInterrupt(ut_irq, ut_touch_irq, FALLING);
   }
 
-  if (!ut_wire) {
-    // assume spi, use same as display
-  }
   return ut_execute(ut_init_code);
 }
 
@@ -2694,6 +2694,12 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code, int32_t size) {
       *ut_code++ = wval>>8;
       *ut_code++ = wval;
       size -= 3;
+    } else if (!strncmp(cp, "GSRT", 4)) {
+      *ut_code++ = UT_GSRT;
+      wval = ut_par(&cp, 1);
+      *ut_code++ = wval>>8;
+      *ut_code++ = wval;
+      size -= 3;
     } else if (!strncmp(cp, "DBG", 3)) {
       *ut_code++ = UT_DBG;
       wval = ut_par(&cp, 1);
@@ -2838,6 +2844,28 @@ uint16_t wval;
       case UT_RT:
         // result
         return result;
+        break;
+      case UT_GSRT:
+#ifdef USE_ESP32_S3      
+        { uint32_t val = get_sr_touch(SIMPLERS_XP, SIMPLERS_XM, SIMPLERS_YP, SIMPLERS_YM);
+        if (val == 0) {
+          return false;
+        }
+        uint16_t xp = val >> 16;
+        uint16_t yp = val;
+
+        wval = *ut_code++ << 8;
+        wval |= *ut_code++;
+        if (xp > wval && yp > wval) {
+          ut_array[0] = val >> 24;
+          ut_array[1] = val >> 16;
+          ut_array[2] = val >> 8;
+          ut_array[3] = val;
+          return true;
+        }
+        return false;
+        }
+#endif // USE_ESP32_S3
         break;
       case UT_DBG:
         // debug show result
