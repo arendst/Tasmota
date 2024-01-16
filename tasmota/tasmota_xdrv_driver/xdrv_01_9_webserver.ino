@@ -1492,6 +1492,7 @@ bool HandleRootStatusRefresh(void)
 #endif  // USE_WEB_SSE
 
   WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
+  WSContentSeparator(3);               // Reset seperator to ignore previous outputs 
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
     WSContentSeparator(0);             // Print separator
