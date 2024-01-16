@@ -1208,6 +1208,9 @@
     #define BE_LV_WIDGET_SPINBOX
     #define BE_LV_WIDGET_SPINNER
     // #define BE_LV_WIDGET_KEYBOARD
+    // #define BE_LV_WIDGET_TABVIEW
+    // #define BE_LV_WIDGET_TILEVIEW
+    // #define BE_LV_WIDGET_LIST
 
     #define BE_LV_WIDGET_QRCODE
 
