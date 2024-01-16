@@ -46,8 +46,10 @@
 #define D_ERROR_FILE_NOT_FOUND "SHT: ERROR File system not ready or file not found"
 
 const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
+  "<tr><td colspan=2>"
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
+  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>"
+  "{e}";
 
 const uint16_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
 
@@ -1162,6 +1164,7 @@ void ShutterShow()
 {
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (ShutterGetOptions(i) & 1) ? D_OPEN : D_CLOSE,(ShutterGetOptions(i) & 1) ? D_CLOSE : D_OPEN, (ShutterGetOptions(i) & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
+    WSContentSeparator(3); // Don't print separator on next WSContentSeparator(1)
   }
 }
 
