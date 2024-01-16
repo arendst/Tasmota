@@ -275,7 +275,7 @@
 #define D_CONFIGURATION "Einstellungen"
 #define D_INFORMATION "Informationen"
 #define D_FIRMWARE_UPGRADE "Firmware Update"
-#define D_MANAGEMENT "Konsolen"
+#define D_MANAGEMENT "Tools"
 #define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Wirklich neustarten?"
