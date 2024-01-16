@@ -514,8 +514,8 @@ bool SolaxX1_cmd(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_solaxX1_Num[] PROGMEM = "{s}%s{m}</td><td style='text-align:%s'>%s</td><td>&nbsp;</td><td> %s{e}";
-const char HTTP_SNS_solaxX1_Str[] PROGMEM = "{s}%s{m}</td><td colspan='3' style='text-align:%s'>%s{e}";
+const char HTTP_SNS_solaxX1_Num[] PROGMEM = "{s}" D_SOLAX_X1 " %s{m}</td><td style='text-align:%s'>%s</td><td>&nbsp;</td><td> %s{e}";
+const char HTTP_SNS_solaxX1_Str[] PROGMEM = "{s}" D_SOLAX_X1 " %s{m}</td><td colspan='3' style='text-align:%s'>%s{e}";
 #endif // USE_WEBSERVER
 
 void solaxX1_Show(bool json)
@@ -557,23 +557,23 @@ void solaxX1_Show(bool json)
 #ifdef USE_WEBSERVER
   } else {
     String table_align = Settings->flag5.gui_table_align?"right":"left";
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
 #ifdef SOLAXX1_PV2
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
 #endif
     char SXTemperature[16];
     dtostrfd(solaxX1.temperature, Settings->flag2.temperature_resolution, SXTemperature);
-    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
-    WSContentSend_P(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_UPTIME, table_align.c_str(), String(solaxX1.runtime_total).c_str(), D_UNIT_HOUR);
-    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " " D_STATUS, table_align.c_str(), status);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
+    WSContentSend_P(HTTP_SNS_solaxX1_Num, D_UPTIME, table_align.c_str(), String(solaxX1.runtime_total).c_str(), D_UNIT_HOUR);
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_STATUS, table_align.c_str(), status);
     char errorCodeString[33];
-    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " " D_ERROR, table_align.c_str(), GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
-    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " Inverter SN", table_align.c_str(), solaxX1.SerialNumber);
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_ERROR, table_align.c_str(), GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, "Inverter SN", table_align.c_str(), solaxX1.SerialNumber);
 #endif  // USE_WEBSERVER
   }
 }
