@@ -768,15 +768,19 @@ void CmndTimedPower(void) {
   */
   if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
     if (XdrvMailbox.data_len > 0) {
-      uint32_t parm[2];
-      uint32_t parms = ParseParameters(2, parm);
-      uint32_t time = (parm[0] < 50) ? 50 : parm[0];  // Lowest is 50ms (state_50msecond)
-      uint32_t start_state = POWER_ON;          // Default on
-      if (2 == parms) {
-        start_state = parm[1] & 0x03;           // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
+      uint32_t time = (XdrvMailbox.payload < 50) ? 50 : XdrvMailbox.payload;
+      int start_state = POWER_ON;               // Default on
+      if (ArgC() > 1) {
+        char state_text[XdrvMailbox.data_len];
+        ArgV(state_text, 2);
+        start_state = GetStateNumber(Trim(state_text));
+        if (start_state < 0) {
+          start_state = atoi(state_text);
+        }
+        start_state &= 0x03;                    // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
       }
       const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_OFF };
-      char cmnd[32];
+      char cmnd[CMDSZ];
       snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
       if (SetTimedCmnd(time, cmnd)) {           // Skip if no more timers left (MAX_TIMED_CMND)
         XdrvMailbox.payload = start_state;
@@ -786,7 +790,7 @@ void CmndTimedPower(void) {
       if (!XdrvMailbox.usridx) {
         ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
       } else {
-        char cmnd[32];
+        char cmnd[CMDSZ];
         snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d"), XdrvMailbox.index);
         ResetTimedCmnd(cmnd);                   // Remove POWER<index> timed command 
       }
