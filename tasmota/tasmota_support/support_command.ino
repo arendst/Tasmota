@@ -494,13 +494,28 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 /********************************************************************************************/
 
 bool SetTimedCmnd(uint32_t time, const char *command) {
+  uint32_t now = millis();
+  // Try to use the same slot if command is already present
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strcmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str())) {
+        // Stored command already present
+        TasmotaGlobal.timed_cmnd[i].time = now + time;
+        if (0 == TasmotaGlobal.timed_cmnd[i].time) {   // Skip empty slot flag
+          TasmotaGlobal.timed_cmnd[i].time++;
+        }
+        return true;
+      }
+    }
+  }
+  // Try to find an empty slot and add command
   for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
     if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
-      TasmotaGlobal.timed_cmnd[i].time = millis() + time;
+      TasmotaGlobal.timed_cmnd[i].command = command;
+      TasmotaGlobal.timed_cmnd[i].time = now + time;
       if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
         TasmotaGlobal.timed_cmnd[i].time++;
       }
-      TasmotaGlobal.timed_cmnd[i].command = command;
       return true;
     }
   }
@@ -743,6 +758,7 @@ void CmndTimedPower(void) {
   TimedPower                 - Clear active power timers
   TimedPower 2000            - Turn power1 on and then off after 2 seconds
   TimedPower1                - Clear active Power1 timers
+  TimedPower1 0              - Stop timer and perform timed action
   TimedPower0 3000           - Turn all power on and then off after 3 seconds
   TimedPower1 2000           - Turn power1 on and then off after 2 seconds
   TimedPower2 2000,0|off     - Turn power2 off and then on after 2 seconds
