@@ -566,29 +566,53 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               if (*lp1 == 'I') {
                 // i2c mode
                 lp1++;
-                ut_mode = *lp1 & 0xf;
+                uint8_t ut_mode = *lp1 & 0xf;
                 lp1 += 2;
                 ut_reset = -1;
                 ut_irq = -1;
                 ut_i2caddr = next_hex(&lp1);
                 ut_reset = next_val(&lp1);
                 ut_irq = next_val(&lp1);
+
+                if (ut_mode == 1) {
+                  ut_wire = &Wire;
+                } else {
+#ifdef ESP32
+                  ut_wire = &Wire1;
+#else
+                  ut_wire = &Wire;
+#endif
+                }
               } else {
                 // spi mode
+                ut_wire = 0;
+                lp1++;
+                uint8_t ut_mode = *lp1 & 0xf;
+                lp1 += 2;
+                ut_reset = -1;
+                ut_irq = -1;
+                ut_spi_cs = next_val(&lp1);
+                ut_reset = next_val(&lp1);
+                ut_irq = next_val(&lp1);
+                // assume displays SPI bus
+                pinMode(ut_spi_cs, OUTPUT);
+                digitalWrite(ut_spi_cs, HIGH);
+
+                ut_spiSettings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
               }
-              ut_trans(&lp, ut_init_code);
+              ut_trans(&lp, ut_init_code, sizeof(ut_init_code));
             } else if (!strncmp(lp1, "TT", 2)) {
               lp1 += 2;
               // touch
-              ut_trans(&lp, ut_touch_code);
+              ut_trans(&lp, ut_touch_code, sizeof(ut_touch_code));
             } else if (!strncmp(lp1, "TX", 2)) {
               lp1 += 2;
               // get x
-              ut_trans(&lp, ut_getx_code);
+              ut_trans(&lp, ut_getx_code, sizeof(ut_getx_code));
             } else if (!strncmp(lp1, "TY", 2)) {
               lp1 += 2;
               // get y
-              ut_trans(&lp, ut_gety_code);
+              ut_trans(&lp, ut_gety_code, sizeof(ut_gety_code));
             }
             break;
 #endif // USE_UNIVERSAL_TOUCH
@@ -1888,6 +1912,10 @@ bool uDisplay::utouch_Init(char **name) {
   if (ut_irq >= 0) {
     attachInterrupt(ut_irq, ut_touch_irq, FALLING);
   }
+
+  if (!ut_wire) {
+    // assume spi, use same as display
+  }
   return ut_execute(ut_init_code);
 }
 
@@ -2576,9 +2604,8 @@ uint16_t uDisplay::ut_par(char **lp, uint32_t mode) {
   return result;
 }
 
-void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
+void uDisplay::ut_trans(char **sp, uint8_t *ut_code, int32_t size) {
   char *cp = *sp;
-  uint16_t length;
   uint16_t wval;
   while (*cp) {
     if (*cp == ':' || *cp == '#') {
@@ -2595,14 +2622,14 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
         wval = sizeof(ut_array);
       }
       *ut_code++ = wval;
-      length += 4;
+      size -= 4;
     } else if (!strncmp(cp, "RDW", 3)) {
       // read word one
       *ut_code++ = UT_RDW;
       wval = ut_par(&cp, 0);
       *ut_code++ = wval>>8;
       *ut_code++ = wval;
-      length += 3;
+      size -= 3;
     } else if (!strncmp(cp, "RDM", 3)) {
       // read many
       *ut_code++ = UT_RDM;
@@ -2612,40 +2639,40 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
         wval = sizeof(ut_array);
       }
       *ut_code++ = wval;
-      length += 3;
+      size -= 3;
     } else if (!strncmp(cp, "RD", 2)) {
       // read one
       *ut_code++ = UT_RD;
       *ut_code++ = ut_par(&cp, 0);
-      length += 2;
+      size -= 2;
     } else if (!strncmp(cp, "CPR", 3)) {
       // cmp and set
       *ut_code++ = UT_CPR;
       *ut_code++ = ut_par(&cp, 0);
-      length += 2;
+      size -= 2;
      } else if (!strncmp(cp, "CP", 2)) {
       // cmp and set
       *ut_code++ = UT_CP;
       *ut_code++ = ut_par(&cp, 0);
-      length += 2;
+      size -= 2;
     } else if (!strncmp(cp, "RTF", 3)) {
       // return when false
       *ut_code++ = UT_RTF;
-      length += 1;
+      size -= 1;
     } else if (!strncmp(cp, "RTT", 3)) {
       // return when true
       *ut_code++ = UT_RTT;
-      length += 1;
+      size -= 1;
     } else if (!strncmp(cp, "MV", 2)) {
       // move
       *ut_code++ = UT_MV;
       *ut_code++ = ut_par(&cp, 1);
       *ut_code++ = ut_par(&cp, 1);
-      length += 3;
+      size -= 3;
     } else if (!strncmp(cp, "RT", 2)) {
       // return status
       *ut_code++ = UT_RT;
-      length += 1;
+      size -= 1;
     } else if (!strncmp(cp, "WRW", 3)) {
       *ut_code++ = UT_WRW;
       wval = ut_par(&cp, 0);
@@ -2653,25 +2680,28 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
       *ut_code++ = wval;
       wval = ut_par(&cp, 0);
       *ut_code++ = wval;
-      length += 4;
+      size -= 4;
     } else if (!strncmp(cp, "WR", 2)) {
       *ut_code++ = UT_WR;
       wval = ut_par(&cp, 0);
       *ut_code++ = wval;
       wval = ut_par(&cp, 0);
       *ut_code++ = wval;
-      length += 3;
+      size -= 3;
     } else if (!strncmp(cp, "AND", 3)) {
       *ut_code++ = UT_AND;
       wval = ut_par(&cp, 0);
       *ut_code++ = wval>>8;
       *ut_code++ = wval;
-      length += 3;
+      size -= 3;
     } else if (!strncmp(cp, "DBG", 3)) {
       *ut_code++ = UT_DBG;
       wval = ut_par(&cp, 1);
       *ut_code++ = wval;
-      length += 2;
+      size -= 2;
+    }
+    if (size <= 1) {
+      break;
     }
 
     cp++;
@@ -2680,83 +2710,84 @@ void uDisplay::ut_trans(char **sp, uint8_t *ut_code) {
   *sp = cp - 1;
 }
 
+uint8_t *uDisplay::ut_rd(uint8_t *iop, uint32_t len, uint32_t amode) {
+  if (ut_wire) {
+    // i2c mode
+    ut_wire->beginTransmission(ut_i2caddr);
+    ut_wire->write(*iop++);
+    if (amode == 2) {
+      ut_wire->write(*iop++);
+    }
+    ut_wire->endTransmission(false);
+    if (len > 1) {
+      len = *iop++;
+    }
+    ut_wire->requestFrom(ut_i2caddr, (size_t)len);
+    uint8_t index = 0;
+    while (ut_wire->available()) {
+      ut_array[index++] = ut_wire->read();
+    }
+  } else {
+    // spi mode
+    uint16_t val = *iop++;
+    digitalWrite(ut_spi_cs, LOW);
+    if (spi_nr <= 2) {
+      uspi->beginTransaction(ut_spiSettings);
+      val = uspi->transfer16(val);
+      uspi->endTransaction();
+      ut_array[0] = val << 8;
+      ut_array[1] = val;
+    }
+    digitalWrite(ut_spi_cs, HIGH);
+  }
+  return iop;
+}
+
+uint8_t *uDisplay::ut_wr(uint8_t *iop, uint32_t amode) {
+  if (ut_wire) {
+    // i2c mode
+    ut_wire->beginTransmission(ut_i2caddr);
+    ut_wire->write(*iop++);
+    if (amode == 2) {
+      ut_wire->write(*iop++);
+    }
+    ut_wire->write(*iop++);
+    ut_wire->endTransmission(true);
+  } else {
+    // spi mode
+  }
+  return iop;
+}
 
 int16_t uDisplay::ut_execute(uint8_t *ut_code) {
 int16_t result = 0;
 uint8_t iob, len;
-TwoWire *wire;
-uint8_t index = 0;
 uint16_t wval;
-
-  if (ut_mode == 1) {
-    wire = &Wire;
-  } else {
-#ifdef ESP32
-    wire = &Wire1;
-#else
-    wire = &Wire;
-#endif
-  }
 
   while (*ut_code != UT_END) {
     iob = *ut_code++;
     switch (iob) {
       case UT_RD:
         // read 1 byte
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->endTransmission(false);
-        wire->requestFrom(ut_i2caddr, (size_t)1);
-        ut_array[0]  = wire->read();
+        ut_code = ut_rd(ut_code, 1, 1);
         break;
       case UT_RDM:
         // read multiple bytes
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->endTransmission(false);
-        len = *ut_code++;
-        wire->requestFrom(ut_i2caddr, (size_t)len);
-        index = 0;
-        while (wire->available()) {
-          ut_array[index++] = wire->read();
-        }
+        ut_code = ut_rd(ut_code, 2, 1);
         break;
       case UT_RDW:
         // read 1 byte
-        //wire->flush();
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->write(*ut_code++);
-        wire->endTransmission(false);
-        wire->requestFrom(ut_i2caddr, (size_t)1);
-        ut_array[0]  = wire->read();
+        ut_code = ut_rd(ut_code, 1, 2);
         break;
       case UT_RDWM:
         // read multiple bytes
-        //wire->flush();
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->write(*ut_code++);
-        wire->endTransmission(false);
-        len = *ut_code++;
-        wire->requestFrom(ut_i2caddr, (size_t)len);
-        index = 0;
-        while (wire->available()) {
-          ut_array[index++] = wire->read();
-        }
+        ut_code = ut_rd(ut_code, 2, 2);
         break;
       case UT_WR:
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->write(*ut_code++);
-        wire->endTransmission(true);
+        ut_code = ut_wr(ut_code, 1);
         break;
        case UT_WRW:
-        wire->beginTransmission(ut_i2caddr);
-        wire->write(*ut_code++);
-        wire->write(*ut_code++);
-        wire->write(*ut_code++);
-        wire->endTransmission(true);
+        ut_code = ut_wr(ut_code, 2);
         break;
       case UT_CP:
         // compare

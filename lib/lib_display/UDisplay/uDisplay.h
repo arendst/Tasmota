@@ -424,16 +424,19 @@ class uDisplay : public Renderer {
 
 #ifdef USE_UNIVERSAL_TOUCH
 // universal touch driver
-  void ut_trans(char **sp, uint8_t *ut_code);
+  void ut_trans(char **sp, uint8_t *ut_code, int32_t size);
   int16_t ut_execute(uint8_t *ut_code);
   uint16_t ut_par(char **cp, uint32_t mode);
+  uint8_t *ut_rd(uint8_t *io, uint32_t len, uint32_t amode);
+  uint8_t *ut_wr(uint8_t *io, uint32_t amode);
   uint32_t ut_result;
   uint8_t ut_array[16];
-  uint8_t ut_r1; 
-  uint8_t ut_mode;
   uint8_t ut_i2caddr;
+  uint8_t ut_spi_cs;
   int8_t ut_reset;
   int8_t ut_irq;
+  TwoWire *ut_wire;
+  SPISettings ut_spiSettings;
   char ut_name[8];
   uint8_t ut_init_code[32];
   uint8_t ut_touch_code[32];
