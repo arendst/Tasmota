@@ -1,7 +1,7 @@
 /*
   xdrv_27_Shutter.ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2024 Stefan Bode
+  Copyright (C) 2023 Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
