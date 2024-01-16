@@ -1148,7 +1148,18 @@ bool XdrvCall(uint32_t function) {
     result = xdrv_func_ptr[x](function);
 
 #ifdef USE_WEBSERVER
-    if (FUNC_WEB_SENSOR == function) { WSContentSeparator(1); }  // Show separator if needed
+    if (FUNC_WEB_SENSOR == function) { 
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t index = pgm_read_byte(kXdrvList + x);
+#else
+      uint32_t index = kXdrvList[x];
+#endif
+      if (52 == index) {  // Skip berry
+        WSContentSeparator(3);
+      } else {
+        WSContentSeparator(1);
+      }
+    }  // Show separator if needed
 #endif // USE_WEBSERVER
 
 #ifdef USE_PROFILE_FUNCTION
