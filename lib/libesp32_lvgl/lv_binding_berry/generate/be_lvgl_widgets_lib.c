@@ -541,6 +541,8 @@ extern int lvbe_obj_get_style_grid_cell_row_pos(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_row_span(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_x_align(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_y_align(bvm *vm);
+extern int lvbe_obj_set_tile(bvm *vm);
+extern int lvbe_obj_set_tile_id(bvm *vm);
 extern int lvbe_obj_move_foreground(bvm *vm);
 extern int lvbe_obj_move_background(bvm *vm);
 extern int lvbe_obj_get_child_id(bvm *vm);
@@ -685,6 +687,12 @@ extern int lvbe_led_off(bvm *vm);
 extern int lvbe_led_toggle(bvm *vm);
 extern int lvbe_led_get_brightness(bvm *vm);
 
+/* `lv_list` external functions definitions */
+extern int lvbe_list_create(bvm *vm);
+extern int lvbe_list_add_text(bvm *vm);
+extern int lvbe_list_add_btn(bvm *vm);
+extern int lvbe_list_get_btn_text(bvm *vm);
+
 /* `lv_meter` external functions definitions */
 extern int lvbe_meter_create(bvm *vm);
 extern int lvbe_meter_add_scale(bvm *vm);
@@ -730,6 +738,20 @@ extern int lvbe_spinbox_decrement(bvm *vm);
 
 /* `lv_spinner` external functions definitions */
 extern int lvbe_spinner_create(bvm *vm);
+
+/* `lv_tabview` external functions definitions */
+extern int lvbe_tabview_create(bvm *vm);
+extern int lvbe_tabview_add_tab(bvm *vm);
+extern int lvbe_tabview_rename_tab(bvm *vm);
+extern int lvbe_tabview_get_content(bvm *vm);
+extern int lvbe_tabview_get_tab_btns(bvm *vm);
+extern int lvbe_tabview_set_act(bvm *vm);
+extern int lvbe_tabview_get_tab_act(bvm *vm);
+
+/* `lv_tileview` external functions definitions */
+extern int lvbe_tileview_create(bvm *vm);
+extern int lvbe_tileview_add_tile(bvm *vm);
+extern int lvbe_tileview_get_tile_act(bvm *vm);
 
 /* `lv_anim` external functions definitions */
 extern int lvbe_anim_init(bvm *vm);
@@ -983,10 +1005,13 @@ extern int be_ntv_lv_imgbtn_init(bvm *vm);
 extern int be_ntv_lv_keyboard_init(bvm *vm);
 extern int be_ntv_lv_btnmatrix_init(bvm *vm);
 extern int be_ntv_lv_led_init(bvm *vm);
+extern int be_ntv_lv_list_init(bvm *vm);
 extern int be_ntv_lv_meter_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
 extern int be_ntv_lv_spinner_init(bvm *vm);
+extern int be_ntv_lv_tabview_init(bvm *vm);
+extern int be_ntv_lv_tileview_init(bvm *vm);
 extern int be_ntv_lv_anim_init(bvm *vm);
 extern int be_ntv_lv_timer_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
@@ -1024,6 +1049,7 @@ extern const bclass be_class_lv_keyboard;
 extern const bclass be_class_lv_label;
 extern const bclass be_class_lv_led;
 extern const bclass be_class_lv_line;
+extern const bclass be_class_lv_list;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
@@ -1035,8 +1061,10 @@ extern const bclass be_class_lv_spinner;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
+extern const bclass be_class_lv_tabview;
 extern const bclass be_class_lv_textarea;
 extern const bclass be_class_lv_theme;
+extern const bclass be_class_lv_tileview;
 extern const bclass be_class_lv_timer;
 
 
@@ -1263,6 +1291,17 @@ class be_class_lv_led (scope: global, name: lv_led, super: be_class_lv_obj, stri
 @const_object_info_end */
 
 /********************************************************************
+** Solidified class: lv_list
+********************************************************************/
+#include "be_fixed_be_class_lv_list.h"
+/* @const_object_info_begin
+class be_class_lv_list (scope: global, name: lv_list, super: be_class_lv_obj, strings: weak) {
+    _class, comptr(&lv_list_class)
+    init, func(be_ntv_lv_list_init)
+}
+@const_object_info_end */
+
+/********************************************************************
 ** Solidified class: lv_meter
 ********************************************************************/
 #include "be_fixed_be_class_lv_meter.h"
@@ -1305,6 +1344,28 @@ class be_class_lv_spinner (scope: global, name: lv_spinner, super: be_class_lv_a
     init, func(be_ntv_lv_spinner_init)
     _arc_anim_start_angle, comptr(&arc_anim_start_angle)
     _arc_anim_end_angle, comptr(&arc_anim_end_angle)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_tabview
+********************************************************************/
+#include "be_fixed_be_class_lv_tabview.h"
+/* @const_object_info_begin
+class be_class_lv_tabview (scope: global, name: lv_tabview, super: be_class_lv_obj, strings: weak) {
+    _class, comptr(&lv_tabview_class)
+    init, func(be_ntv_lv_tabview_init)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_tileview
+********************************************************************/
+#include "be_fixed_be_class_lv_tileview.h"
+/* @const_object_info_begin
+class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv_obj, strings: weak) {
+    _class, comptr(&lv_tileview_class)
+    init, func(be_ntv_lv_tileview_init)
 }
 @const_object_info_end */
 

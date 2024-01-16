@@ -529,6 +529,8 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "set_style_width", { (const void*) &lv_obj_set_style_width, "", "(lv.lv_obj)ii" } },
   { "set_style_x", { (const void*) &lv_obj_set_style_x, "", "(lv.lv_obj)ii" } },
   { "set_style_y", { (const void*) &lv_obj_set_style_y, "", "(lv.lv_obj)ii" } },
+  { "set_tile", { (const void*) &lv_obj_set_tile, "", "(lv.lv_obj)(lv.lv_obj)i" } },
+  { "set_tile_id", { (const void*) &lv_obj_set_tile_id, "", "(lv.lv_obj)iii" } },
   { "set_user_data", { (const void*) &lv_obj_set_user_data, "", "(lv.lv_obj)." } },
   { "set_width", { (const void*) &lv_obj_set_width, "", "(lv.lv_obj)i" } },
   { "set_x", { (const void*) &lv_obj_set_x, "", "(lv.lv_obj)i" } },
@@ -704,6 +706,15 @@ const be_ntv_func_def_t lv_led_func[] = {
 };
 #endif // BE_LV_WIDGET_LED
 
+/* `lv_list` methods */
+#ifdef BE_LV_WIDGET_LIST
+const be_ntv_func_def_t lv_list_func[] = {
+  { "add_btn", { (const void*) &lv_list_add_btn, "lv.lv_obj", "(lv.lv_obj).s" } },
+  { "add_text", { (const void*) &lv_list_add_text, "lv.lv_obj", "(lv.lv_obj)s" } },
+  { "get_btn_text", { (const void*) &lv_list_get_btn_text, "s", "(lv.lv_obj)(lv.lv_obj)" } },
+};
+#endif // BE_LV_WIDGET_LIST
+
 /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
 const be_ntv_func_def_t lv_meter_func[] = {
@@ -761,6 +772,26 @@ const be_ntv_func_def_t lv_spinbox_func[] = {
 const be_ntv_func_def_t lv_spinner_func[] = {
 };
 #endif // BE_LV_WIDGET_SPINNER
+
+/* `lv_tabview` methods */
+#ifdef BE_LV_WIDGET_TABVIEW
+const be_ntv_func_def_t lv_tabview_func[] = {
+  { "add_tab", { (const void*) &lv_tabview_add_tab, "lv.lv_obj", "(lv.lv_obj)s" } },
+  { "get_content", { (const void*) &lv_tabview_get_content, "lv.lv_obj", "(lv.lv_obj)" } },
+  { "get_tab_act", { (const void*) &lv_tabview_get_tab_act, "i", "(lv.lv_obj)" } },
+  { "get_tab_btns", { (const void*) &lv_tabview_get_tab_btns, "lv.lv_obj", "(lv.lv_obj)" } },
+  { "rename_tab", { (const void*) &lv_tabview_rename_tab, "", "(lv.lv_obj)is" } },
+  { "set_act", { (const void*) &lv_tabview_set_act, "", "(lv.lv_obj)ii" } },
+};
+#endif // BE_LV_WIDGET_TABVIEW
+
+/* `lv_tileview` methods */
+#ifdef BE_LV_WIDGET_TILEVIEW
+const be_ntv_func_def_t lv_tileview_func[] = {
+  { "add_tile", { (const void*) &lv_tileview_add_tile, "lv.lv_obj", "(lv.lv_obj)iii" } },
+  { "get_tile_act", { (const void*) &lv_tileview_get_tile_act, "lv.lv_obj", "(lv.lv_obj)" } },
+};
+#endif // BE_LV_WIDGET_TILEVIEW
 
 /* `lv_anim` methods */
 const be_ntv_func_def_t lv_anim_func[] = {
@@ -1062,6 +1093,7 @@ extern const bclass be_class_lv_keyboard;
 extern const bclass be_class_lv_label;
 extern const bclass be_class_lv_led;
 extern const bclass be_class_lv_line;
+extern const bclass be_class_lv_list;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
@@ -1073,8 +1105,10 @@ extern const bclass be_class_lv_spinner;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
+extern const bclass be_class_lv_tabview;
 extern const bclass be_class_lv_textarea;
 extern const bclass be_class_lv_theme;
+extern const bclass be_class_lv_tileview;
 extern const bclass be_class_lv_timer;
 
 
@@ -1131,6 +1165,9 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_LINE
   { "lv_line", &be_class_lv_line, lv_line_func, sizeof(lv_line_func) / sizeof(lv_line_func[0]) },
 #endif // BE_LV_WIDGET_LINE
+#ifdef BE_LV_WIDGET_LIST
+  { "lv_list", &be_class_lv_list, lv_list_func, sizeof(lv_list_func) / sizeof(lv_list_func[0]) },
+#endif // BE_LV_WIDGET_LIST
 #ifdef BE_LV_WIDGET_METER
   { "lv_meter", &be_class_lv_meter, lv_meter_func, sizeof(lv_meter_func) / sizeof(lv_meter_func[0]) },
 #endif // BE_LV_WIDGET_METER
@@ -1160,10 +1197,16 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_TABLE
   { "lv_table", &be_class_lv_table, lv_table_func, sizeof(lv_table_func) / sizeof(lv_table_func[0]) },
 #endif // BE_LV_WIDGET_TABLE
+#ifdef BE_LV_WIDGET_TABVIEW
+  { "lv_tabview", &be_class_lv_tabview, lv_tabview_func, sizeof(lv_tabview_func) / sizeof(lv_tabview_func[0]) },
+#endif // BE_LV_WIDGET_TABVIEW
 #ifdef BE_LV_WIDGET_TEXTAREA
   { "lv_textarea", &be_class_lv_textarea, lv_textarea_func, sizeof(lv_textarea_func) / sizeof(lv_textarea_func[0]) },
 #endif // BE_LV_WIDGET_TEXTAREA
   { "lv_theme", &be_class_lv_theme, lv_theme_func, sizeof(lv_theme_func) / sizeof(lv_theme_func[0]) },
+#ifdef BE_LV_WIDGET_TILEVIEW
+  { "lv_tileview", &be_class_lv_tileview, lv_tileview_func, sizeof(lv_tileview_func) / sizeof(lv_tileview_func[0]) },
+#endif // BE_LV_WIDGET_TILEVIEW
   { "lv_timer", &be_class_lv_timer, lv_timer_func, sizeof(lv_timer_func) / sizeof(lv_timer_func[0]) },
 };
 const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
@@ -1210,6 +1253,10 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_LED
   int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LED
+  /* `lv_list` methods */
+#ifdef BE_LV_WIDGET_LIST
+  int be_ntv_lv_list_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_list_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_LIST
   /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
   int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+_p", "(lv.lv_obj)"); }
@@ -1226,6 +1273,14 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_SPINNER
   int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+_p", "(lv.lv_obj)ii"); }
 #endif // BE_LV_WIDGET_SPINNER
+  /* `lv_tabview` methods */
+#ifdef BE_LV_WIDGET_TABVIEW
+  int be_ntv_lv_tabview_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_tabview_create, "+_p", "(lv.lv_obj)ii"); }
+#endif // BE_LV_WIDGET_TABVIEW
+  /* `lv_tileview` methods */
+#ifdef BE_LV_WIDGET_TILEVIEW
+  int be_ntv_lv_tileview_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_tileview_create, "+_p", "(lv.lv_obj)"); }
+#endif // BE_LV_WIDGET_TILEVIEW
   /* `lv_anim` methods */
   /* `lv_timer` methods */
   /* `lv_arc` methods */
