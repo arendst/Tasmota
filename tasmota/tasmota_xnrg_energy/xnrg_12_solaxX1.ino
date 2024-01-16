@@ -2,7 +2,7 @@
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
   Copyright (C) 2021 by Pablo Zerón
-  Copyright (C) 2023 by Stefan Wershoven
+  Copyright (C) 2024 by Stefan Wershoven
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -514,22 +514,8 @@ bool SolaxX1_cmd(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_solaxX1_DATA1[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_SOLAR_POWER "{m}%s " D_UNIT_WATT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_POWER "{m}%s " D_UNIT_WATT "{e}";
-#ifdef SOLAXX1_PV2
-const char HTTP_SNS_solaxX1_DATA2[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_PV2_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV2_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV2_POWER "{m}%s " D_UNIT_WATT "{e}";
-#endif
-const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%d " D_UNIT_HOUR "{e}"
-    "{s}" D_SOLAX_X1 " " D_STATUS "{m}%s"
-    "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s"
-    "{s}" D_SOLAX_X1 " Inverter SN{m}%s";
+const char HTTP_SNS_solaxX1_Num[] PROGMEM = "{s}%s{m}</td><td style='text-align:%s'>%s</td><td>&nbsp;</td><td> %s{e}";
+const char HTTP_SNS_solaxX1_Str[] PROGMEM = "{s}%s{m}</td><td colspan='3' style='text-align:%s'>%s{e}";
 #endif // USE_WEBSERVER
 
 void solaxX1_Show(bool json)
@@ -570,15 +556,24 @@ void solaxX1_Show(bool json)
 
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, solar_power, pv1_voltage, pv1_current, pv1_power);
+    String table_align = Settings->flag5.gui_table_align?"right":"left";
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
 #ifdef SOLAXX1_PV2
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
 #endif
-    WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
+    char SXTemperature[16];
+    dtostrfd(solaxX1.temperature, Settings->flag2.temperature_resolution, SXTemperature);
+    WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
+    WSContentSend_P(HTTP_SNS_solaxX1_Num, D_SOLAX_X1 " " D_UPTIME, table_align.c_str(), String(solaxX1.runtime_total).c_str(), D_UNIT_HOUR);
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " " D_STATUS, table_align.c_str(), status);
     char errorCodeString[33];
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, solaxX1.runtime_total, status,
-      GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError),
-      solaxX1.SerialNumber);
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " " D_ERROR, table_align.c_str(), GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
+    WSContentSend_P(HTTP_SNS_solaxX1_Str, D_SOLAX_X1 " Inverter SN", table_align.c_str(), solaxX1.SerialNumber);
 #endif  // USE_WEBSERVER
   }
 }
@@ -599,7 +594,7 @@ bool Xnrg12(uint32_t function)
       solaxX1_Show(1);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
+    case FUNC_WEB_COL_SENSOR:
       solaxX1_Show(0);
       break;
 #endif  // USE_WEBSERVER
