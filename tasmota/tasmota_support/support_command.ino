@@ -512,6 +512,7 @@ void ResetTimedCmnd(const char *command) {
   for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
     if (TasmotaGlobal.timed_cmnd[i].time != 0) {
       if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
+        // Stored command starts with command
         TasmotaGlobal.timed_cmnd[i].time = 0;
         TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
       }
@@ -737,35 +738,42 @@ void CmndPower(void)
 
 void CmndTimedPower(void) {
   /*
+  Allow timed power changes on a 50ms granularity
   TimedPower<index> <milliseconds>[,0|1|2|3]
-  TimedPower0 3000    - Turn all power on and then off after 3 seconds
-  TimedPower1 2000    - Turn power1 on and then off after 2 seconds
-  TimedPower2 2000,0  - Turn power2 off and then on after 2 seconds
-  TimedPower1 2200,1  - Turn power1 on and then off after 2.2 seconds
-  TimedPower2 2000,2  - Toggle power2 and then toggle again after 2 seconds
-  TimedPower2 2500,3  - Blink power2 and then turn off after 2.5 seconds
+  TimedPower                 - Clear active power timers
+  TimedPower 2000            - Turn power1 on and then off after 2 seconds
+  TimedPower1                - Clear active Power1 timers
+  TimedPower0 3000           - Turn all power on and then off after 3 seconds
+  TimedPower1 2000           - Turn power1 on and then off after 2 seconds
+  TimedPower2 2000,0|off     - Turn power2 off and then on after 2 seconds
+  TimedPower1 2200,1|on      - Turn power1 on and then off after 2.2 seconds
+  TimedPower2 2000,2|toggle  - Toggle power2 and then toggle again after 2 seconds
+  TimedPower2 2500,3|blink   - Blink power2 and then turn off after 2.5 seconds
   */
   if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
     if (XdrvMailbox.data_len > 0) {
-      uint32_t parm[2] = { 0, 0 };
+      uint32_t parm[2];
       uint32_t parms = ParseParameters(2, parm);
-      uint32_t time = parm[0];
-      uint32_t start_state = 1;                 // Default on
+      uint32_t time = (parm[0] < 50) ? 50 : parm[0];  // Lowest is 50ms (state_50msecond)
+      uint32_t start_state = POWER_ON;          // Default on
       if (2 == parms) {
-        start_state = parm[1] & 0x03;           // 0,1,2,3       
+        start_state = parm[1] & 0x03;           // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
       }
-      const uint8_t contra_state[] = { 1, 0, 2, 0 };
-      uint32_t end_state = contra_state[start_state];
-  
+      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_OFF };
       char cmnd[32];
-      snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state);
-      if (SetTimedCmnd(time, cmnd)) {
+      snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
+      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more timers left (MAX_TIMED_CMND)
         XdrvMailbox.payload = start_state;
         CmndPower();
       }
     } else {
-      // Remove all POWER timed command
-      ResetTimedCmnd(D_CMND_POWER);
+      if (!XdrvMailbox.usridx) {
+        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+      } else {
+        char cmnd[32];
+        snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d"), XdrvMailbox.index);
+        ResetTimedCmnd(cmnd);                   // Remove POWER<index> timed command 
+      }
       ResponseCmndDone();
     }
   }
