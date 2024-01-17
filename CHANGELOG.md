@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
 - IP stack compatible with new Core3 IPv6 implementation (#20509)
+- Command ``TimedPower`` from erasing all timers to showing remaining timers
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
@@ -27,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - GPIO Viewer single instance
 - Zigbee ramdom crash in main page (#20481)
 - Web file upload response on upload error (#20340)
+- ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
 
 ### Removed
 

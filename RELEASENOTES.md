@@ -173,6 +173,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Scripter memory leak in `>w x` (#20473)[#20473](https://github.com/arendst/Tasmota/issues/20473)
 - Zigbee ramdom crash in main page (#20481)[#20473](https://github.com/arendst/Tasmota/issues/20481)
 - ESP32 piezo ceramic buzzer doesn't buzz [#20118](https://github.com/arendst/Tasmota/issues/20118)
+- ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` [#20524](https://github.com/arendst/Tasmota/issues/20524)
 - ESP32 Zigbee Aqara attributes [#20452](https://github.com/arendst/Tasmota/issues/20452)
 - LVGL fix type for lv_imgbtn [#20354](https://github.com/arendst/Tasmota/issues/20354)
 - Berry claiming UART0 if needed [#20324](https://github.com/arendst/Tasmota/issues/20324)

@@ -535,6 +535,27 @@ void ResetTimedCmnd(const char *command) {
   }
 }
 
+void ShowTimedCmnd(const char *command) {
+  bool found = false;
+  uint32_t now = millis();
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
+        // Stored command starts with command
+        ResponseAppend_P(PSTR("%s"), (found) ? "," : "[");
+        found = true;
+        ResponseAppend_P(PSTR("{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"), TasmotaGlobal.timed_cmnd[i].time - now, TasmotaGlobal.timed_cmnd[i].command.c_str());
+      }
+    }
+  }
+  if (found) {
+    ResponseAppend_P(PSTR("]}"));
+  } else {
+    ResponseAppend_P(PSTR("\"" D_JSON_EMPTY "\"}"));
+  }
+}
+
 void LoopTimedCmnd(void) {
   uint32_t now = millis();
   for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
@@ -755,7 +776,7 @@ void CmndTimedPower(void) {
   /*
   Allow timed power changes on a 50ms granularity
   TimedPower<index> <milliseconds>[,0|1|2|3]
-  TimedPower                 - Clear active power timers
+  TimedPower                 - Show remaining timers
   TimedPower 2000            - Turn power1 on and then off after 2 seconds
   TimedPower1                - Clear active Power1 timers
   TimedPower1 0              - Stop timer and perform timed action
@@ -788,7 +809,9 @@ void CmndTimedPower(void) {
       }
     } else {
       if (!XdrvMailbox.usridx) {
-        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+//        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+        ShowTimedCmnd(D_CMND_POWER);            // Show remaining timers
+        return;
       } else {
         char cmnd[CMDSZ];
         snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d"), XdrvMailbox.index);
