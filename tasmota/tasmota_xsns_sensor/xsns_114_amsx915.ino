@@ -59,24 +59,6 @@ struct {
   int16_t   pmax;
 } amsx915Settings;
 
-void Amsx915Detect(void) {
-  // sensor datasheets does not provide any information/commands on sensor
-  // specific register so it is not possible to properly detect sensor type
-  if(Wire.available() != 4) {
-    // Error
-    amsx915data.present = false;
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS not detected!"));
-
-    return;
-  }
-  while(Wire.available()) {
-    Wire.read();
-  }
-  amsx915data.present = true;
-  I2cSetActiveFound(AMSX915_ADDR, "AMSx915");
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS detected"));
-}
-
 bool Amsx915Command() {
   int32_t vals[2];
   ParseParameters(2,(uint32_t *)vals);
@@ -97,6 +79,7 @@ bool Amsx915Command() {
 }
 
 void Amsx915ReadData(void) {
+  // i2c frontend does not provide any commands/register to detect this sensor type -> request 4 bytes and check for 4 byte response is mandatory
   uint8_t buffer[4];
   Wire.requestFrom(AMSX915_ADDR, 4);
   if(Wire.available() != 4) {
@@ -111,7 +94,10 @@ void Amsx915ReadData(void) {
 
   amsx915data.pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0)*(amsx915Settings.pmax-amsx915Settings.pmin)/13107+amsx915Settings.pmin;
   amsx915data.temperature = (((256.0*buffer[2]+buffer[3])*200.0)/65536)-50;
-  amsx915data.present = true;
+  if(!amsx915data.present) {
+    I2cSetActiveFound(AMSX915_ADDR, "AMSx915");
+    amsx915data.present = true;
+  }
 }
 
 void Amsx915Show(bool json) {
@@ -222,7 +208,7 @@ bool Xsns114(uint32_t function) {
       Amsx915SettingsLoad(0);
       break;
     case FUNC_INIT:
-      Amsx915Detect();
+      Amsx915ReadData();
       break;
     case FUNC_EVERY_SECOND:
       Amsx915ReadData();
