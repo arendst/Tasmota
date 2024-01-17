@@ -83,7 +83,6 @@ void Amsx915ReadData(void) {
   uint8_t buffer[4];
   Wire.requestFrom(AMSX915_ADDR, 4);
   if(Wire.available() != 4) {
-    Serial.println("AMS error read!");
     amsx915data.present = false;
     return;
   }
@@ -121,11 +120,6 @@ void Amsx915Show(bool json) {
 
 void Amsx915SettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
-  // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
-
-  // *** Start init default values in case file is not found ***
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
-
   memset(&amsx915Settings, 0x00, sizeof(amsx915Settings));
   amsx915Settings.version = AMSX915_VERSION;
   amsx915Settings.pmax = PMAX_DEFAULT;
@@ -144,7 +138,6 @@ void Amsx915SettingsLoad(bool erase) {
     TfsDeleteFile(filename);  // Use defaults
   }
   else if (TfsLoadFile(filename, (uint8_t*)&amsx915Settings, sizeof(amsx915Settings))) {
-  Serial.println("TfsLoadFile");
     if (amsx915Settings.version != AMSX915_VERSION) {      // Fix version dependent changes
 
       // *** Start fix possible setting deltas ***
@@ -163,7 +156,7 @@ void Amsx915SettingsLoad(bool erase) {
       amsx915Settings.version = AMSX915_VERSION;
       Amsx915SettingsSave();
     }
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS config loaded from file"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: AMS config loaded from file"));
   }
   else {
     // File system not ready: No flash space reserved for file system
