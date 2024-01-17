@@ -687,7 +687,7 @@ void ShutterInit(void)
           Shutter[i].min_realPositionChange = 0;
         break;
         case SHT_COUNTER:
-          Shutter[i].min_realPositionChange = SHT_DIV_ROUND(Shutter[i].min_realPositionChange, Shutter[i].motordelay);
+          Shutter[i].min_realPositionChange = SHT_DIV_ROUND(Shutter[i].min_realPositionChange, Shutter[i].motordelay > 0?Shutter[i].motordelay : 1);
         break;
       }
 
