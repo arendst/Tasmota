@@ -59,7 +59,7 @@ struct {
   int16_t   pmax;
 } amsx915Settings;
 
-void AmsDetect(void) {
+void Amsx915Detect(void) {
   // sensor datasheets does not provide any information/commands on sensor
   // specific register so it is not possible to properly detect sensor type
   if(Wire.available() != 4) {
@@ -77,7 +77,7 @@ void AmsDetect(void) {
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS detected"));
 }
 
-bool AmsCommand() {
+bool Amsx915Command() {
   int32_t vals[2];
   ParseParameters(2,(uint32_t *)vals);
   if(XdrvMailbox.data_len >= 3 && XdrvMailbox.data_len < 13) {
@@ -85,7 +85,7 @@ bool AmsCommand() {
       if (vals[1] >= -32768 && vals[1] < 32768) {
         amsx915Settings.pmin = (int16_t)vals[0]; // save pmin of sensor
         amsx915Settings.pmax = (int16_t)vals[1];  // same with pmax
-        AmsSettingsSave();
+        Amsx915SettingsSave();
         Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_114, "pressure range set");
         return true;
       }
@@ -96,7 +96,7 @@ bool AmsCommand() {
   return false;
 }
 
-void AmsReadData(void) {
+void Amsx915ReadData(void) {
   uint8_t buffer[4];
   Wire.requestFrom(AMSX915_ADDR, 4);
   if(Wire.available() != 4) {
@@ -114,7 +114,7 @@ void AmsReadData(void) {
   amsx915data.present = true;
 }
 
-void AmsShow(bool json) {
+void Amsx915Show(bool json) {
   if(amsx915data.present) {
     if (json) {
       ResponseAppend_P(PSTR(",\"AMSx915\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915data.temperature, &amsx915data.pressure);
@@ -133,7 +133,7 @@ void AmsShow(bool json) {
  * Driver Settings load and save
 \*********************************************************************************************/
 
-void AmsSettingsLoad(bool erase) {
+void Amsx915SettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
@@ -175,7 +175,7 @@ void AmsSettingsLoad(bool erase) {
 
       // Set current version and save settings
       amsx915Settings.version = AMSX915_VERSION;
-      AmsSettingsSave();
+      Amsx915SettingsSave();
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS config loaded from file"));
   }
@@ -186,7 +186,7 @@ void AmsSettingsLoad(bool erase) {
 #endif  // USE_UFILESYS
 }
 
-void AmsSettingsSave(void) {
+void Amsx915SettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 #ifdef USE_UFILESYS
   uint32_t crc32 = GetCfgCrc32((uint8_t*)&amsx915Settings +4, sizeof(amsx915Settings) -4);  // Skip crc32
@@ -219,28 +219,28 @@ bool Xsns114(uint32_t function) {
 
   switch(function) {
     case FUNC_PRE_INIT:
-      AmsSettingsLoad(0);
+      Amsx915SettingsLoad(0);
       break;
     case FUNC_INIT:
-      AmsDetect();
+      Amsx915Detect();
       break;
     case FUNC_EVERY_SECOND:
-      AmsReadData();
+      Amsx915ReadData();
       break;
     case FUNC_SAVE_SETTINGS:
-      AmsSettingsSave();
+      Amsx915SettingsSave();
       break;
     case FUNC_COMMAND_SENSOR:
       if(XSNS_114 == XdrvMailbox.index) {
-        result = AmsCommand();
+        result = Amsx915Command();
       }
       break;
     case FUNC_JSON_APPEND:
-      AmsShow(1);
+      Amsx915Show(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
-      AmsShow(0);
+      Amsx915Show(0);
       break;
 #endif  // USE_WEBSERVER
   }
