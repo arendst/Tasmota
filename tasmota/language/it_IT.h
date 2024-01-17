@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 08.01.2024
+ * Updated until v9.4.0.1 - Last update 17.01.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -57,7 +57,7 @@
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
 #define D_AUTO                 "AUTO"
-#define D_BATTERY              "Battery"
+#define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
 #define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
@@ -1225,7 +1225,7 @@
 #define D_UNIT_US_H                       "µSv/h"
 
 // ixrv92_pipsolar.ino
-#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
-#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
 
 #endif  // _LANGUAGE_IT_IT_H_
