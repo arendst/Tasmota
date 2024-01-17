@@ -62,6 +62,9 @@ lv_fun_globs = [
                   "extra/widgets/spinbox/*.h",
                   "extra/widgets/spinner/*.h",
                   "extra/widgets/keyboard/*.h",
+                  "extra/widgets/tabview/*.h",
+                  "extra/widgets/tileview/*.h",
+                  "extra/widgets/list/*.h",
                   "extra/themes/default/*.h",
                   "extra/themes/mono/*.h",
                   "extra/layouts/**/*.h",
@@ -341,7 +344,7 @@ for header_name in headers_names:
         # item is ready
         exclude = False
         for exclude_prefix in ["_", "LV_BIDI_DIR_", "LV_FONT_", "LV_IMG_CF_RESERVED_", "LV_IMG_CF_USER_",
-                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_",
+                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_",
                                "LV_LRU_"]:
           if enum_item.startswith(exclude_prefix): exclude = True
         if exclude: continue
