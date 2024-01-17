@@ -130,7 +130,7 @@ void Amsx915SettingsLoad(bool erase) {
 #ifndef USE_UFILESYS
   AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS defaults as file system not enabled"));
 #else
-  // Try to load file /.drvset122
+  // Try to load sensor config file
   char filename[20];
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_114);
 
@@ -139,19 +139,6 @@ void Amsx915SettingsLoad(bool erase) {
   }
   else if (TfsLoadFile(filename, (uint8_t*)&amsx915Settings, sizeof(amsx915Settings))) {
     if (amsx915Settings.version != AMSX915_VERSION) {      // Fix version dependent changes
-
-      // *** Start fix possible setting deltas ***
-      if (Settings->version < 0x01010100) {
-        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update oldest version restore"));
-
-      }
-      if (Settings->version < 0x01010101) {
-        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update old version restore"));
-
-      }
-
-      // *** End setting deltas ***
-
       // Set current version and save settings
       amsx915Settings.version = AMSX915_VERSION;
       Amsx915SettingsSave();
@@ -170,7 +157,7 @@ void Amsx915SettingsSave(void) {
 #ifdef USE_UFILESYS
   uint32_t crc32 = GetCfgCrc32((uint8_t*)&amsx915Settings +4, sizeof(amsx915Settings) -4);  // Skip crc32
   if (crc32 != amsx915Settings.crc32) {
-    // Try to save file /.drvset122
+    // Try to save sensor config file
     amsx915Settings.crc32 = crc32;
 
     char filename[20];
