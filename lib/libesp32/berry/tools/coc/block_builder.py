@@ -23,6 +23,7 @@ class block_builder:
         self.block = block()
         self.strtab = []
         self.strtab_weak = []
+        self.strtab_long = []
 
         self.block.name = obj.name
         if depend(obj, macro):
