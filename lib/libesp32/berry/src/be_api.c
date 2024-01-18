@@ -731,10 +731,13 @@ BERRY_API bbool be_getindex(bvm *vm, int index)
 static bvalue* list_setindex(blist *list, bvalue *key)
 {
     int idx = var_toidx(key);
-    if (idx < be_list_count(list)) {
-        return be_list_at(list, idx);
+    if (idx < 0) {
+        idx = list->count + idx;
     }
-    return NULL;
+    if (idx < 0 || idx >= list->count) {
+        return NULL;
+    }
+    return be_list_at(list, idx);
 }
 
 BERRY_API bbool be_setindex(bvm *vm, int index)

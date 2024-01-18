@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Web file upload response on upload error (#20340)
 - ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
 - GPIOViewer exception 3
+- Berry assigment to list with negative index
 
 ### Removed
 - Max number of 30 backlog entries
