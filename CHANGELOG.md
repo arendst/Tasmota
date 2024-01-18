@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - LVGL option to add `lv.keyboard` extra widget (#20496)
 - GUI sensor separators (#20495)
 - Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|OFF]``
+- Berry add solidification of strings longer than 255 bytes
 
 ### Breaking Changed
 
