@@ -785,7 +785,7 @@ void CmndTimedPower(void) {
   TimedPower2 2000,0|off     - Turn power2 off and then on after 2 seconds
   TimedPower1 2200,1|on      - Turn power1 on and then off after 2.2 seconds
   TimedPower2 2000,2|toggle  - Toggle power2 and then toggle again after 2 seconds
-  TimedPower2 2500,3|blink   - Blink power2 and then turn off after 2.5 seconds
+  TimedPower2 2500,3|blink   - Blink power2 and then stop blink after 2.5 seconds
   */
   if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
     if (XdrvMailbox.data_len > 0) {
@@ -800,7 +800,7 @@ void CmndTimedPower(void) {
         }
         start_state &= 0x03;                    // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
       }
-      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_OFF };
+      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_BLINK_STOP };
       char cmnd[CMDSZ];
       snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
       if (SetTimedCmnd(time, cmnd)) {           // Skip if no more timers left (MAX_TIMED_CMND)
