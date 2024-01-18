@@ -101,6 +101,15 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
 #endif
 
+enum {
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_DBG,UT_GSRT,UT_END
+};
+
+#define SIMPLERS_XP par_dbl[1]
+#define SIMPLERS_XM par_cs
+#define SIMPLERS_YP par_rs
+#define SIMPLERS_YM par_dbl[0]
+
 
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
 #define GPIO_SET_SLOW(A) digitalWrite(A, HIGH)
@@ -190,6 +199,13 @@ class uDisplay : public Renderer {
   void invertDisplay(boolean i);
   void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
   void SetDimCB(dim_cb cb) { dim_cbp = cb; };
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  bool utouch_Init(char **name);
+  bool touched(void);
+  int16_t getPoint_x();
+  int16_t getPoint_y();
+#endif // USE_UNIVERSAL_TOUCH
 
  private:
    void beginTransaction(SPISettings s);
@@ -411,6 +427,29 @@ class uDisplay : public Renderer {
    void pushPixelsDMA(uint16_t* image, uint32_t len);
    void pushPixels3DMA(uint8_t* image, uint32_t len);
 #endif // ESP32
+
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  void ut_trans(char **sp, uint8_t *ut_code, int32_t size);
+  int16_t ut_execute(uint8_t *ut_code);
+  uint16_t ut_par(char **cp, uint32_t mode);
+  uint8_t *ut_rd(uint8_t *io, uint32_t len, uint32_t amode);
+  uint8_t *ut_wr(uint8_t *io, uint32_t amode);
+  uint32_t ut_result;
+  uint8_t ut_array[16];
+  uint8_t ut_i2caddr;
+  uint8_t ut_spi_cs;
+  int8_t ut_reset;
+  int8_t ut_irq;
+  TwoWire *ut_wire;
+  SPISettings ut_spiSettings;
+  char ut_name[8];
+  uint8_t ut_init_code[32];
+  uint8_t ut_touch_code[32];
+  uint8_t ut_getx_code[16];
+  uint8_t ut_gety_code[16];
+
+#endif // USE_UNIVERSAL_TOUCH
 };
 
 
