@@ -65,6 +65,7 @@ void Cmd_Time(void);
 void Rtttl(char *buffer);
 void CmndI2SRtttl(void);
 void I2sWebRadioStopPlaying(void);
+void CmndI2SMP3Stream(void);
 
 /*********************************************************************************************\
  * More structures
@@ -79,7 +80,7 @@ struct AUDIO_I2S_MP3_t {
   void *mp3ram = NULL;
 #endif // USE_I2S_MP3
 
-#if defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO)
+#if defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO) || defined(USE_SHINE) || defined(MP3_MIC_STREAM)
   AudioGeneratorMP3 *decoder = NULL;
   TaskHandle_t mp3_task_handle;
   TaskHandle_t mic_task_handle;
@@ -107,6 +108,9 @@ struct AUDIO_I2S_MP3_t {
   int8_t ptt_pin = -1;
 
 } audio_i2s_mp3;
+
+#define I2S_AUDIO_MODE_MIC 1
+#define I2S_AUDIO_MODE_SPK 2
 
 /*********************************************************************************************\
  * Commands definitions
@@ -1033,7 +1037,7 @@ void CmndI2SMicGain(void) {
 \*********************************************************************************************/
 
 void I2sMp3Loop(void);
-void I2sMp3Init(void);
+void I2sMp3Init(uint32_t on);
 void MP3ShowStream(void);
 
 bool Xdrv42(uint32_t function) {
@@ -1059,7 +1063,7 @@ bool Xdrv42(uint32_t function) {
       break;
     case FUNC_WEB_ADD_HANDLER:
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
-      audio_i2s.stream_enable = 1;
+      audio_i2s.Settings->tx.stream_enable = 1;
       I2sMp3Init(1);
 #endif
 #if defined(I2S_BRIDGE)
