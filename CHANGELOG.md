@@ -13,8 +13,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC (#20381)
 - LVGL option to add `lv.keyboard` extra widget (#20496)
 - GUI sensor separators (#20495)
-- Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|OFF]``
-- Berry add solidification of strings longer than 255 bytes
+- Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|BLINK_OFF]``
+- Berry solidification of strings longer than 255 bytes (#20529)
 
 ### Breaking Changed
 
@@ -30,9 +30,10 @@ All notable changes to this project will be documented in this file.
 - Zigbee ramdom crash in main page (#20481)
 - Web file upload response on upload error (#20340)
 - ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
+- GPIOViewer exception 3
 
 ### Removed
-
+- Max number of 30 backlog entries
 
 ## [13.3.0.2] 20240111
 ### Added

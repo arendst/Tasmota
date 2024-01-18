@@ -411,11 +411,6 @@ struct TasmotaGlobal_t {
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
 
-#ifndef SUPPORT_IF_STATEMENT
-  uint8_t backlog_index;                    // Command backlog index
-  uint8_t backlog_pointer;                  // Command backlog pointer
-  String backlog[MAX_BACKLOG];              // Command backlog buffer
-#endif
   tTimedCmnd timed_cmnd[MAX_TIMED_CMND];    // Timed command buffer
 
 #ifdef MQTT_DATA_STRING
@@ -438,19 +433,15 @@ struct TasmotaGlobal_t {
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
 
 #ifdef USE_BERRY
-  bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
+  bool berry_fast_loop_enabled = false;     // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif // USE_BERRY
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;
 
-#ifdef SUPPORT_IF_STATEMENT
-  #include <LinkedList.h>
-  LinkedList<String> backlog;               // Command backlog implemented with LinkedList
-  #define BACKLOG_EMPTY (backlog.size() == 0)
-#else
-  #define BACKLOG_EMPTY (TasmotaGlobal.backlog_pointer == TasmotaGlobal.backlog_index)
-#endif
+#include <LinkedList.h>
+LinkedList<String> backlog;                 // Command backlog implemented with LinkedList
+#define BACKLOG_EMPTY (backlog.size() == 0)
 
 /*********************************************************************************************\
  * Main
@@ -794,14 +785,7 @@ void BacklogLoop(void) {
       bool nodelay_detected = false;
       String cmd;
       do {
-#ifdef SUPPORT_IF_STATEMENT
         cmd = backlog.shift();
-#else
-        cmd = TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer];
-        TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
-        TasmotaGlobal.backlog_pointer++;
-        if (TasmotaGlobal.backlog_pointer >= MAX_BACKLOG) { TasmotaGlobal.backlog_pointer = 0; }
-#endif
         nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
         if (nodelay_detected) { nodelay = true; }
       } while (!BACKLOG_EMPTY && nodelay_detected);

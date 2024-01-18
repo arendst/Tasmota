@@ -2066,7 +2066,7 @@ void ExecuteCommandBlock(const char * commands, int len)
     sCurrentCommand.trim();
 /*
     if (sCurrentCommand.length() > 0
-      && backlog.size() < MAX_BACKLOG && !TasmotaGlobal.backlog_mutex)
+      && !TasmotaGlobal.backlog_mutex)
     {
       //Insert into backlog
       TasmotaGlobal.backlog_mutex = true;
@@ -2075,7 +2075,7 @@ void ExecuteCommandBlock(const char * commands, int len)
       insertPosition++;
     }
 */
-    if ((sCurrentCommand.length() > 0) && (backlog.size() < MAX_BACKLOG)) {
+    if (sCurrentCommand.length() > 0) {
       //Insert into backlog
       backlog.add(insertPosition, sCurrentCommand);
       insertPosition++;

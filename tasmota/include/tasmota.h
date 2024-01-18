@@ -220,7 +220,6 @@ const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log l
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
-const uint8_t MAX_BACKLOG = 30;             // Max number of commands in backlog
 const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 const uint8_t MAX_TIMED_CMND = 16;          // Max number of timed commands
 
