@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - GUI sensor separators (#20495)
 - Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|BLINK_OFF]``
 - Berry solidification of strings longer than 255 bytes (#20529)
+- Berry/Zigbee add web hook per device for customized status display
 
 ### Breaking Changed
 
