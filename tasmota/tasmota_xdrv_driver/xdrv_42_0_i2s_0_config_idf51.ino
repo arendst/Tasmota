@@ -79,7 +79,8 @@ typedef struct{
     uint8_t  slot_config = I2S_SLOT_MSB;// B07 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
     uint8_t  channels = 2;          // B08 - mono/stereo - 1 is added for both
     bool     apll = 1;              // B09 - will be ignored on unsupported SOC's
-    uint8_t  spare[6];              // B0A-0F
+    bool     stream_enable = 0;     // B0A - enable streaming of MP3
+    uint8_t  spare[5];              // B0B-0F
   } tx;
   struct {
     uint32_t sample_rate = 16000;  // B00-03
