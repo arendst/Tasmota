@@ -837,7 +837,7 @@ class Matter_Device
     tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
-    self.plugins.push(matter.Plugin_Aggregator(self, 0xFF00, {}))
+    self.plugins.push(matter.Plugin_Aggregator(self, matter.AGGREGATOR_ENDPOINT, {}))
 
     for ep: endpoints
       if ep == 0  continue end          # skip endpoint 0
@@ -859,7 +859,7 @@ class Matter_Device
         tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
     end
-    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0xFF00, 'aggregator', ''), 2)
+    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", matter.AGGREGATOR_ENDPOINT, 'aggregator', ''), 2)
 
     tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
@@ -1396,7 +1396,7 @@ class Matter_Device
   def signal_endpoints_changed()
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
-    self.attribute_updated(0xFF00, 0x001D, 0x0003, false)
+    self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
   end
 
   #############################################################

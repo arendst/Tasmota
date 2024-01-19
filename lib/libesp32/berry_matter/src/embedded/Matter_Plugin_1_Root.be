@@ -158,7 +158,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
-          nocs.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # Label
+          nocs.add_TLV(matter.AGGREGATOR_ENDPOINT, TLV.U2, loc_fabric.get_fabric_index())    # Label
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -312,7 +312,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var disable_bridge_mode = self.device.disable_bridge_mode
         for ep: eps
           # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
-          if !disable_bridge_mode || ep < 0xFF00
+          if !disable_bridge_mode || ep < matter.AGGREGATOR_ENDPOINT
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end
