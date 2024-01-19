@@ -2211,6 +2211,7 @@ void ZigbeeShow(bool json)
 
       uint32_t now = Rtc.utc_time;
 
+      // iterate through devices by alphabetical order
       for (uint32_t i = 0; i < zigbee_num; i++) {
         const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
         uint16_t shortaddr = device.shortaddr;
@@ -2365,6 +2366,10 @@ void ZigbeeShow(bool json)
           }
           WSContentSend_P(PSTR("{e}"));
         }
+#ifdef USE_BERRY
+        // Berry hook to display additional customized information
+        callBerryZigbeeDispatcher("web_device_status", nullptr, nullptr, shortaddr);
+#endif // USE_BERRY
       }
 
       WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table
