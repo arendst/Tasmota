@@ -103,7 +103,9 @@
 #include "include/tasmota_types.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
+#include "driver/gpio.h"
 #include "soc/efuse_reg.h"
+#include "bootloader_common.h"
 #endif
 
 /*********************************************************************************************\
@@ -450,22 +452,28 @@ LinkedList<String> backlog;                 // Command backlog implemented with 
 void setup(void) {
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32
+
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif  // DISABLE_ESP32_BROWNOUT
 
   // restore GPIO16/17 if no PSRAM is found
-  #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
+  // #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+    uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
+    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#else // ESP_IDF_VERSION_MAJOR >= 5
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_version = chip_ver & 0x7;
     if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#endif // ESP_IDF_VERSION_MAJOR >= 5
       gpio_reset_pin(GPIO_NUM_16);
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
-  #endif
+  // #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
