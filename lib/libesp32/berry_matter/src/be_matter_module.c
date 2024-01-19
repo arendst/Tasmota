@@ -285,6 +285,7 @@ module matter (scope: global, strings: weak) {
   _STYLESHEET, comptr(MATTER_STYLESHEET)
   _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
+  AGGREGATOR_ENDPOINT, int(0xFE)    // for Alexa we need only 8 bits endpoints
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
   Verhoeff, class(be_class_Matter_Verhoeff)

@@ -46,7 +46,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
         for ep: eps
-          if ep < 0xFF00
+          if ep < matter.AGGREGATOR_ENDPOINT
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end
