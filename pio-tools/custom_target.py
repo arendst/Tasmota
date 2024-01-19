@@ -1,5 +1,7 @@
 # Written by Maximilian Gerhardt <maximilian.gerhardt@rub.de>
 # 29th December 2020
+# and Christian Baars, Johann Obermeier
+# 2023 / 2024
 # License: Apache
 # Expanded from functionality provided by PlatformIO's espressif32 and espressif8266 platforms, credited below.
 # This script provides functions to download the filesystem (LittleFS) from a running ESP32 / ESP8266
