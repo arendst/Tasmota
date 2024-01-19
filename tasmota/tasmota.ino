@@ -458,7 +458,6 @@ void setup(void) {
 #endif  // DISABLE_ESP32_BROWNOUT
 
   // restore GPIO16/17 if no PSRAM is found
-  // #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
 #if (ESP_IDF_VERSION_MAJOR >= 5)
@@ -473,7 +472,6 @@ void setup(void) {
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
-  // #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
