@@ -27,15 +27,18 @@
  * I2C Address: 0x28
 \*********************************************************************************************/
 
-#define XSNS_114            114
-#define XI2C_86              86  // See I2CDEVICES.md
+#define XSNS_114               114
+#define XI2C_86                86  // See I2CDEVICES.md
 
 #ifndef AMSX915_ADDR
   #define AMSX915_ADDR         0x28
 #endif
 
-#define PMIN_DEFAULT      0
-#define PMAX_DEFAULT      0
+#define AMSX915_EVERYNSECONDS  5
+#define AMSX915_DEVICE_NAME		 "AMSx915"
+
+#define PMIN_DEFAULT           0
+#define PMAX_DEFAULT           0
 
 #ifndef USE_UFILESYS
 #warning "AMSx915 pressure settings cannot be saved persistent due to missing filesystem"
@@ -47,6 +50,7 @@ struct amsx915_data {
   float pressure;
   float temperature;
   bool present;
+  uint8_t cnt;
 } amsx915data;
 
 const uint16_t AMSX915_VERSION = 0x0100;       // Latest sensor version (See settings deltas below)
@@ -78,37 +82,52 @@ bool Amsx915Command() {
   return false;
 }
 
-void Amsx915ReadData(void) {
+void Amsx915Detect(void) {
   // i2c frontend does not provide any commands/register to detect this sensor type -> request 4 bytes and check for 4 byte response is mandatory
-  uint8_t buffer[4];
-  Wire.requestFrom(AMSX915_ADDR, 4);
-  if(Wire.available() != 4) {
-    amsx915data.present = false;
-    return;
-  }
-  buffer[0] = Wire.read();
-  buffer[1] = Wire.read();
-  buffer[2] = Wire.read();
-  buffer[3] = Wire.read();
-
-  amsx915data.pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0)*(amsx915Settings.pmax-amsx915Settings.pmin)/13107+amsx915Settings.pmin;
-  amsx915data.temperature = (((256.0*buffer[2]+buffer[3])*200.0)/65536)-50;
-  if(!amsx915data.present) {
-    I2cSetActiveFound(AMSX915_ADDR, "AMSx915");
+  if (!I2cActive(AMSX915_ADDR))
+  {
+    Wire.requestFrom(AMSX915_ADDR, 4);
+    if(Wire.available() != 4) {
+      amsx915data.present = false;
+      return;
+    }
     amsx915data.present = true;
+    I2cSetActiveFound(AMSX915_ADDR, AMSX915_DEVICE_NAME);
+  }
+}
+
+void Amsx915ReadData(void) {
+  if(amsx915data.cnt++ == AMSX915_EVERYNSECONDS) { // try to read sensor every n seconds
+    amsx915data.cnt = 0;
+    uint8_t buffer[4];
+    Wire.requestFrom(AMSX915_ADDR, 4);
+    if(Wire.available() != 4) {
+      amsx915data.present = false;
+      return;
+    }
+    buffer[0] = Wire.read();
+    buffer[1] = Wire.read();
+    buffer[2] = Wire.read();
+    buffer[3] = Wire.read();
+
+    amsx915data.pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0f)*(amsx915Settings.pmax-amsx915Settings.pmin)/13107+amsx915Settings.pmin;
+    amsx915data.temperature = (((256.0*buffer[2]+buffer[3])*200.0f)/65536)-50;
+    if(!amsx915data.present) {
+      amsx915data.present = true;
+    }
   }
 }
 
 void Amsx915Show(bool json) {
   if(amsx915data.present) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"AMSx915\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915data.temperature, &amsx915data.pressure);
+      ResponseAppend_P(PSTR(",\"" AMSX915_DEVICE_NAME "\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915data.temperature, &amsx915data.pressure);
 #ifdef USE_WEBSERVER
       } else {
         char str_pressure[9];
         dtostrfd(amsx915data.pressure, 2, str_pressure);
-        WSContentSend_PD(HTTP_SNS_PRESSURE, "AMSx915", str_pressure, PressureUnit().c_str());
-        WSContentSend_Temp("AMSx915", amsx915data.temperature);
+        WSContentSend_PD(HTTP_SNS_PRESSURE, AMSX915_DEVICE_NAME, str_pressure, PressureUnit().c_str());
+        WSContentSend_Temp(AMSX915_DEVICE_NAME, amsx915data.temperature);
 #endif  // USE_WEBSERVER
       }
   }
@@ -128,7 +147,7 @@ void Amsx915SettingsLoad(bool erase) {
   // *** End Init default values ***
 
 #ifndef USE_UFILESYS
-  AddLog(LOG_LEVEL_INFO, PSTR("CFG: AMS defaults as file system not enabled"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: " AMSX915_DEVICE_NAME " defaults as file system not enabled"));
 #else
   // Try to load sensor config file
   char filename[20];
@@ -143,11 +162,11 @@ void Amsx915SettingsLoad(bool erase) {
       amsx915Settings.version = AMSX915_VERSION;
       Amsx915SettingsSave();
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: AMS config loaded from file"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: " AMSX915_DEVICE_NAME " config loaded from file"));
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: AMS use defaults as file system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: " AMSX915_DEVICE_NAME " use defaults as file system not ready or file not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -164,15 +183,14 @@ void Amsx915SettingsSave(void) {
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_114);
 
     if (TfsSaveFile(filename, (const uint8_t*)&amsx915Settings, sizeof(amsx915Settings))) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: AMS Settings saved to file"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: " AMSX915_DEVICE_NAME " Settings saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: ERROR AMS file system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: ERROR " AMSX915_DEVICE_NAME " file system not ready or unable to save file"));
     }
   }
 #endif  // USE_UFILESYS
 }
-
 
 /*********************************************************************************************\
  * Interface
@@ -188,7 +206,7 @@ bool Xsns114(uint32_t function) {
       Amsx915SettingsLoad(0);
       break;
     case FUNC_INIT:
-      Amsx915ReadData();
+      Amsx915Detect();
       break;
     case FUNC_EVERY_SECOND:
       Amsx915ReadData();
