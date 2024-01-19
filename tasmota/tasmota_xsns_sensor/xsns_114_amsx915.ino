@@ -49,7 +49,8 @@
 struct amsx915_data {
   float pressure;
   float temperature;
-  bool present;
+  bool sensor_present;
+  bool meas_valid;
   uint8_t cnt;
 } amsx915data;
 
@@ -86,23 +87,33 @@ void Amsx915Detect(void) {
   // i2c frontend does not provide any commands/register to detect this sensor type -> request 4 bytes and check for 4 byte response is mandatory
   if (!I2cActive(AMSX915_ADDR))
   {
-    Wire.requestFrom(AMSX915_ADDR, 4);
-    if(Wire.available() != 4) {
-      amsx915data.present = false;
-      return;
+    amsx915data.cnt = 0;
+    uint8_t i;
+    while(i++ < 2) { // try 2 times because sensor sometimes not respond at first request
+      Wire.requestFrom(AMSX915_ADDR, 4);
+      if(Wire.available() != 4) {
+        amsx915data.sensor_present = false;
+        amsx915data.meas_valid = false;
+      }
+      else {
+        amsx915data.sensor_present = true;
+        break;
+      }
     }
-    amsx915data.present = true;
-    I2cSetActiveFound(AMSX915_ADDR, AMSX915_DEVICE_NAME);
+    if(amsx915data.sensor_present) {
+      I2cSetActiveFound(AMSX915_ADDR, AMSX915_DEVICE_NAME);
+    }
   }
 }
 
 void Amsx915ReadData(void) {
+  if(!amsx915data.sensor_present) { return; }
   if(amsx915data.cnt++ == AMSX915_EVERYNSECONDS) { // try to read sensor every n seconds
     amsx915data.cnt = 0;
     uint8_t buffer[4];
     Wire.requestFrom(AMSX915_ADDR, 4);
     if(Wire.available() != 4) {
-      amsx915data.present = false;
+      amsx915data.meas_valid = false;
       return;
     }
     buffer[0] = Wire.read();
@@ -112,14 +123,12 @@ void Amsx915ReadData(void) {
 
     amsx915data.pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0f)*(amsx915Settings.pmax-amsx915Settings.pmin)/13107+amsx915Settings.pmin;
     amsx915data.temperature = (((256.0*buffer[2]+buffer[3])*200.0f)/65536)-50;
-    if(!amsx915data.present) {
-      amsx915data.present = true;
-    }
+    amsx915data.meas_valid = true;
   }
 }
 
 void Amsx915Show(bool json) {
-  if(amsx915data.present) {
+  if(amsx915data.meas_valid) {
     if (json) {
       ResponseAppend_P(PSTR(",\"" AMSX915_DEVICE_NAME "\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915data.temperature, &amsx915data.pressure);
 #ifdef USE_WEBSERVER
