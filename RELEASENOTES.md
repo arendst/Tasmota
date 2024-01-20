@@ -34,11 +34,11 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.5** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.6** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 This release will be supported from ESP32/Arduino library Core version **2.0.14**.
 
-Support of ESP8266 Core versions before 2.7.5 and ESP32 Core versions before 2.0.14 have been removed.
+Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 2.0.14 have been removed.
 
 ## Support of TLS
 
@@ -55,7 +55,7 @@ Easy initial installation of Tasmota can be performed using the [Tasmota WebInst
 ## Provided Binary Downloads
 
 ### ESP8266 or ESP8285 based
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.5**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.6**.
 
 - **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
 - **tasmota-4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
@@ -147,6 +147,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `tasmota.webcolor` [#20454](https://github.com/arendst/Tasmota/issues/20454)
 - Berry `debug.caller` [#20470](https://github.com/arendst/Tasmota/issues/20470)
 - Berry solidification of strings longer than 255 bytes [#20529](https://github.com/arendst/Tasmota/issues/20529)
+- Berry syntax coloring for Notepad++ by FransO [#20541](https://github.com/arendst/Tasmota/issues/20541)
+- Berry/Zigbee web hook per device for customized status display [#20542](https://github.com/arendst/Tasmota/issues/20542)
 - LVGL `lv.str_arr` [#20480](https://github.com/arendst/Tasmota/issues/20480)
 - LVGL option to add `lv.keyboard` extra widget [#20496](https://github.com/arendst/Tasmota/issues/20496)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
@@ -157,8 +159,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
 
 ### Changed
-- ESP8266 platform update from 2023.04.00 to 2024.01.00 [#20467](https://github.com/arendst/Tasmota/issues/20467)
-- ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.5 [#20467](https://github.com/arendst/Tasmota/issues/20467)
+- ESP8266 platform update from 2023.04.00 to 2024.01.01 [#20539](https://github.com/arendst/Tasmota/issues/20539)
+- ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.6 [#20539](https://github.com/arendst/Tasmota/issues/20539)
 - ESP32 platform update from 2023.11.01 to 2024.01.01 [#20473](https://github.com/arendst/Tasmota/issues/20473)
 - Renamed button "Consoles" to "Tools"
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
@@ -166,19 +168,25 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Header `Host` is now collected by Webserver [#20446](https://github.com/arendst/Tasmota/issues/20446)
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
+- Refactor Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)
 - Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' [#14689](https://github.com/arendst/Tasmota/issues/14689)
 - Support for Domoticz floor/room topics. Regression from v12.0.1 [#20299](https://github.com/arendst/Tasmota/issues/20299)
-- Scripter memory leak in `>w x` (#20473)[#20473](https://github.com/arendst/Tasmota/issues/20473)
-- Zigbee ramdom crash in main page (#20481)[#20473](https://github.com/arendst/Tasmota/issues/20481)
+- Scripter memory leak in `>w x` [#20473](https://github.com/arendst/Tasmota/issues/20473)
+- Zigbee ramdom crash in main page [#20481](https://github.com/arendst/Tasmota/issues/20481)
+- ESP8266 IPv6 support [#20539](https://github.com/arendst/Tasmota/issues/20539)
 - ESP32 piezo ceramic buzzer doesn't buzz [#20118](https://github.com/arendst/Tasmota/issues/20118)
 - ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` [#20524](https://github.com/arendst/Tasmota/issues/20524)
 - ESP32 Zigbee Aqara attributes [#20452](https://github.com/arendst/Tasmota/issues/20452)
+- ESP32 Audio for Core3, MP3Stream and Shine [#20540](https://github.com/arendst/Tasmota/issues/20540)
+- ESP32 Core3 reset GPIOs 16/17 when PSRAM is not used [#20547](https://github.com/arendst/Tasmota/issues/20547)
 - LVGL fix type for lv_imgbtn [#20354](https://github.com/arendst/Tasmota/issues/20354)
 - Berry claiming UART0 if needed [#20324](https://github.com/arendst/Tasmota/issues/20324)
+- Berry assigment to list with negative index [#20537](https://github.com/arendst/Tasmota/issues/20537)
 - Matter Contact sensor was not triggering any update [#20232](https://github.com/arendst/Tasmota/issues/20232)
+- Matter support for Alexa [#20545](https://github.com/arendst/Tasmota/issues/20545)
 
 ### Removed
 - Max number of 30 backlog entries

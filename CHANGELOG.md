@@ -15,8 +15,8 @@ All notable changes to this project will be documented in this file.
 - GUI sensor separators (#20495)
 - Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|BLINK_OFF]``
 - Berry solidification of strings longer than 255 bytes (#20529)
-- Berry syntax coloring for Notepad++ (by FransO)
-- Berry/Zigbee add web hook per device for customized status display
+- Berry syntax coloring for Notepad++ by FransO (#20541)
+- Berry/Zigbee web hook per device for customized status display (#20542)
 
 ### Breaking Changed
 
@@ -24,6 +24,9 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
 - IP stack compatible with new Core3 IPv6 implementation (#20509)
 - Command ``TimedPower`` from erasing all timers to showing remaining timers
+- ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
+- ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
+- Refactor Pio filesystem download script (#20544)
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
@@ -33,8 +36,11 @@ All notable changes to this project will be documented in this file.
 - Web file upload response on upload error (#20340)
 - ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
 - GPIOViewer exception 3
-- Berry assigment to list with negative index
-- Matter fix support for Alexa
+- Berry assigment to list with negative index (#20537)
+- Matter support for Alexa (#20545)
+- ESP8266 IPv6 support (#20539)
+- ESP32 Audio for Core3, MP3Stream and Shine (#20540)
+- ESP32 Core3 reset GPIOs 16/17 when PSRAM is not used (20547)
 
 ### Removed
 - Max number of 30 backlog entries
