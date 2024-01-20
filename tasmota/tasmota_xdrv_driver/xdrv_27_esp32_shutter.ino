@@ -2312,6 +2312,11 @@ bool Xdrv27(uint32_t function)
           XdrvMailbox.index    = i;
           XdrvMailbox.payload  = rescue_payload;
           XdrvMailbox.data_len = rescue_data_len;
+	  if (!ShutterSettings.version) {
+            ShutterSettingsLoad(0);
+            ShutterSettings.shutter_startrelay[0] = 1;
+            ShutterInit();
+          }
           result = DecodeCommand(kShutterCommands, ShutterCommand);
         }
         break;
