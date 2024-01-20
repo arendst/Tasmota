@@ -2070,14 +2070,14 @@ void ExecuteCommandBlock(const char * commands, int len)
     {
       //Insert into backlog
       TasmotaGlobal.backlog_mutex = true;
-      backlog.add(insertPosition, sCurrentCommand);
+      BacklogInsert(insertPosition, sCurrentCommand.c_str());
       TasmotaGlobal.backlog_mutex = false;
       insertPosition++;
     }
 */
     if (sCurrentCommand.length() > 0) {
       //Insert into backlog
-      backlog.add(insertPosition, sCurrentCommand);
+      BacklogInsert(insertPosition, sCurrentCommand.c_str());
       insertPosition++;
     }
   }

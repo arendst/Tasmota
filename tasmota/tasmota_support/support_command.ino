@@ -493,82 +493,40 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 
 /********************************************************************************************/
 
-bool SetTimedCmnd(uint32_t time, const char *command) {
-  uint32_t now = millis();
-  // Try to use the same slot if command is already present
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strcmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str())) {
-        // Stored command already present
-        TasmotaGlobal.timed_cmnd[i].time = now + time;
-        if (0 == TasmotaGlobal.timed_cmnd[i].time) {   // Skip empty slot flag
-          TasmotaGlobal.timed_cmnd[i].time++;
-        }
-        return true;
-      }
-    }
-  }
-  // Try to find an empty slot and add command
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
-      TasmotaGlobal.timed_cmnd[i].command = command;
-      TasmotaGlobal.timed_cmnd[i].time = now + time;
-      if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
-        TasmotaGlobal.timed_cmnd[i].time++;
-      }
-      return true;
-    }
-  }
-  AddLog(LOG_LEVEL_INFO, PSTR("TIM: No more timer slots left"));
-  return false;
-}
-
-void ResetTimedCmnd(const char *command) {
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
-        // Stored command starts with command
-        TasmotaGlobal.timed_cmnd[i].time = 0;
-        TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      }
-    }
+void BacklogAdd(const char* blcommand) {
+  // Add object at end of list
+  char* temp = (char*)malloc(strlen(blcommand)+1);
+  if (temp != nullptr) {
+    strcpy(temp, blcommand);
+    backlog.add(temp);
   }
 }
 
-void ShowTimedCmnd(const char *command) {
-  bool found = false;
-  uint32_t now = millis();
-  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
-        // Stored command starts with command
-        ResponseAppend_P(PSTR("%s"), (found) ? "," : "[");
-        found = true;
-        ResponseAppend_P(PSTR("{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"), TasmotaGlobal.timed_cmnd[i].time - now, TasmotaGlobal.timed_cmnd[i].command.c_str());
-      }
-    }
-  }
-  if (found) {
-    ResponseAppend_P(PSTR("]}"));
-  } else {
-    ResponseAppend_P(PSTR("\"" D_JSON_EMPTY "\"}"));
+void BacklogInsert(uint32_t position, const char* blcommand) {
+  // Add object at position in list
+  char* temp = (char*)malloc(strlen(blcommand)+1);
+  if (temp != nullptr) {
+    strcpy(temp, (char*)blcommand);
+    backlog.add(position, temp);
   }
 }
 
-void LoopTimedCmnd(void) {
-  uint32_t now = millis();
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if ((TasmotaGlobal.timed_cmnd[i].time > 0) && (now > TasmotaGlobal.timed_cmnd[i].time)) {
-      TasmotaGlobal.timed_cmnd[i].time = 0;
-      String cmd = TasmotaGlobal.timed_cmnd[i].command;
-      TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      ExecuteCommand((char*)cmd.c_str(), SRC_TIMER);
-    }
+void BacklogClear(void) {
+  // Clear list
+  while (backlog.size()) {
+    free(backlog.pop());
   }
 }
 
-/********************************************************************************************/
+char* BacklogHead(char* blcommand) {
+  // Remove first object from list
+  char* temp = backlog.shift();
+  strcpy(blcommand, temp);
+  free(temp);
+  return blcommand;
+}
+
+/*------------------------------------------------------------------------------------------*/
 
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
@@ -599,7 +557,7 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-        backlog.add(blcommand);
+        BacklogAdd(blcommand);
       }
       blcommand = strtok(nullptr, ";");
     }
@@ -608,10 +566,12 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
-    backlog.clear();
+    BacklogClear();
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
+
+/********************************************************************************************/
 
 void CmndJson(void) {
   // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
@@ -648,31 +608,6 @@ void CmndJson(void) {
     // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
     // Output:
     // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
-/*
-    String backlog;
-    for (auto command_key : root) {
-      const char *command = command_key.getStr();
-      JsonParserToken parameters = command_key.getValue();
-      if (parameters.isArray()) {
-        JsonParserArray parameter_arr = parameters.getArray();
-        uint32_t index = 1;
-        for (auto value : parameter_arr) {
-          backlog = command;
-          backlog += index++;
-          backlog += " ";
-          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
-          ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-        }
-      } else if (parameters.isObject()) {       // Should have been escaped
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
-      } else {
-        backlog = command;
-        backlog += " ";
-        backlog += parameters.getStr();         // HSBColor 51,97,100
-        ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-      }
-    }
-*/
     String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
@@ -751,6 +686,85 @@ void CmndPower(void)
   }
 }
 
+/********************************************************************************************/
+
+bool SetTimedCmnd(uint32_t time, const char *command) {
+  uint32_t now = millis();
+  // Try to use the same slot if command is already present
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strcmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str())) {
+        // Stored command already present
+        TasmotaGlobal.timed_cmnd[i].time = now + time;
+        if (0 == TasmotaGlobal.timed_cmnd[i].time) {   // Skip empty slot flag
+          TasmotaGlobal.timed_cmnd[i].time++;
+        }
+        return true;
+      }
+    }
+  }
+  // Try to find an empty slot and add command
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
+      TasmotaGlobal.timed_cmnd[i].command = command;
+      TasmotaGlobal.timed_cmnd[i].time = now + time;
+      if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
+        TasmotaGlobal.timed_cmnd[i].time++;
+      }
+      return true;
+    }
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("TIM: No more timer slots left"));
+  return false;
+}
+
+void ResetTimedCmnd(const char *command) {
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
+        // Stored command starts with command
+        TasmotaGlobal.timed_cmnd[i].time = 0;
+        TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
+      }
+    }
+  }
+}
+
+void ShowTimedCmnd(const char *command) {
+  bool found = false;
+  uint32_t now = millis();
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
+      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
+        // Stored command starts with command
+        ResponseAppend_P(PSTR("%s"), (found) ? "," : "[");
+        found = true;
+        ResponseAppend_P(PSTR("{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"), TasmotaGlobal.timed_cmnd[i].time - now, TasmotaGlobal.timed_cmnd[i].command.c_str());
+      }
+    }
+  }
+  if (found) {
+    ResponseAppend_P(PSTR("]}"));
+  } else {
+    ResponseAppend_P(PSTR("\"" D_JSON_EMPTY "\"}"));
+  }
+}
+
+void LoopTimedCmnd(void) {
+  uint32_t now = millis();
+  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
+    if ((TasmotaGlobal.timed_cmnd[i].time > 0) && (now > TasmotaGlobal.timed_cmnd[i].time)) {
+      TasmotaGlobal.timed_cmnd[i].time = 0;
+      String cmd = TasmotaGlobal.timed_cmnd[i].command;
+      TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
+      ExecuteCommand((char*)cmd.c_str(), SRC_TIMER);
+    }
+  }
+}
+
+/*------------------------------------------------------------------------------------------*/
+
 void CmndTimedPower(void) {
   /*
   Allow timed power changes on a 50ms granularity
@@ -800,6 +814,8 @@ void CmndTimedPower(void) {
     }
   }
 }
+
+/********************************************************************************************/
 
 void CmndStatusResponse(uint32_t index) {
   static String all_status = (const char*) nullptr;

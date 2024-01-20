@@ -442,7 +442,7 @@ struct TasmotaGlobal_t {
 TSettings* Settings = nullptr;
 
 #include <LinkedList.h>
-LinkedList<String> backlog;                 // Command backlog implemented with LinkedList
+LinkedList<char*> backlog;                  // Command backlog implemented with LinkedList
 #define BACKLOG_EMPTY (backlog.size() == 0)
 
 /*********************************************************************************************\
@@ -788,19 +788,19 @@ void BacklogLoop(void) {
     if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
-      bool nodelay_detected = false;
-      String cmd;
       do {
-        cmd = backlog.shift();
-        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
-        if (nodelay_detected) { nodelay = true; }
-      } while (!BACKLOG_EMPTY && nodelay_detected);
-      if (!nodelay_detected) {
-        ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
-      }
-      if (nodelay || TasmotaGlobal.backlog_nodelay) {
-        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-      }
+        char cmd[strlen(backlog.get(0))+1];  // Need to accomodate large commands like Template
+        BacklogHead(cmd);
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
+      } while (!BACKLOG_EMPTY);
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {
