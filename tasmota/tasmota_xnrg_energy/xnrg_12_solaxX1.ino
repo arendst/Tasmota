@@ -108,7 +108,7 @@ struct SOLAXX1_LIVEDATA {
   float dc2_power = 0;
   int16_t runMode = 0;
   uint32_t errorCode = 0;
-  uint8_t SerialNumber[16] = {0x6e, 0x2f, 0x61}; // "n/a"
+  uint8_t SerialNumber[16] = {0x00};
 } solaxX1;
 
 struct SOLAXX1_GLOBALDATA {
@@ -127,7 +127,7 @@ struct SOLAXX1_SENDDATA {
   uint8_t ControlCode[1] = {0x00};
   uint8_t FunctionCode[1] = {0x00};
   uint8_t DataLength[1] = {0x00};
-  uint8_t Payload[16] = {0};
+  uint8_t Payload[16] = {0x00};
 } solaxX1_SendData;
 
 TasmotaSerial *solaxX1Serial;
@@ -289,7 +289,8 @@ void solaxX1_250MSecond(void) { // Every 250 milliseconds
       Energy->apparent_power[0] = Energy->active_power[0]; // U*I from inverter is not valid for apparent power; U*I could be lower than active power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
       Energy->import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
-      solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
+      uint32_t runtime_total = (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
+      if (runtime_total) solaxX1.runtime_total = runtime_total; // Work Time valid
       solaxX1.runMode =        (DataRead[39] << 8) | DataRead[40]; // Work mode
       //temporal = (float)((DataRead[41] << 8) | DataRead[42]); // Grid voltage fault value 0.1V
       //temporal = (float)((DataRead[43] << 8) | DataRead[44]); // Gird frequency fault value 0.01Hz
@@ -542,27 +543,30 @@ void solaxX1_Show(uint32_t function) {
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_COL_SENSOR: {
-      if (solaxX1.runMode == -1) break; // Show numeric live data only when inverter is online
       String table_align = Settings->flag5.gui_table_align?"right":"left";
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
+      static uint32_t LastOnlineTime;
+      if (solaxX1.runMode != -1) LastOnlineTime = TasmotaGlobal.uptime;
+      if (TasmotaGlobal.uptime < LastOnlineTime + 300) { // Hide numeric live data, when inverter is offline for more than 5 min
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
 #ifdef SOLAXX1_PV2
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
 #endif
-      char SXTemperature[16];
-      dtostrfd(solaxX1.temperature, Settings->flag2.temperature_resolution, SXTemperature);
-      WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
+        char SXTemperature[16];
+        dtostrfd(solaxX1.temperature, Settings->flag2.temperature_resolution, SXTemperature);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
+      }
       WSContentSend_P(HTTP_SNS_solaxX1_Num, D_UPTIME, table_align.c_str(), String(solaxX1.runtime_total).c_str(), D_UNIT_HOUR);
       break; }
     case FUNC_WEB_SENSOR:
       char errorCodeString[33];
       WSContentSend_P(HTTP_SNS_solaxX1_Str, D_STATUS, status);
       WSContentSend_P(HTTP_SNS_solaxX1_Str, D_ERROR, GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
-      WSContentSend_P(HTTP_SNS_solaxX1_Str, "Inverter SN", solaxX1.SerialNumber);
+      if (solaxX1.SerialNumber[0]) WSContentSend_P(HTTP_SNS_solaxX1_Str, "Inverter SN", solaxX1.SerialNumber);
       break;
 #endif  // USE_WEBSERVER
   }
