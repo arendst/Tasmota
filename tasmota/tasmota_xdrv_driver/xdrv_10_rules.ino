@@ -2062,24 +2062,18 @@ void ExecuteCommandBlock(const char * commands, int len)
     }
     //Start to process current command we found
     //Going to insert the command into backlog
-    String sCurrentCommand = oneCommand;
-    sCurrentCommand.trim();
-/*
-    if (sCurrentCommand.length() > 0
-      && !TasmotaGlobal.backlog_mutex)
-    {
+    char* blcommand = oneCommand;
+    Trim(blcommand);
+    if (strlen(blcommand)) {
       //Insert into backlog
-      TasmotaGlobal.backlog_mutex = true;
-      BacklogInsert(insertPosition, sCurrentCommand.c_str());
-      TasmotaGlobal.backlog_mutex = false;
+      char* temp = (char*)malloc(strlen(blcommand)+1);
+      if (temp != nullptr) {
+        strcpy(temp, blcommand);
+        backlog.add(insertPosition, temp);
+      }
       insertPosition++;
     }
-*/
-    if (sCurrentCommand.length() > 0) {
-      //Insert into backlog
-      BacklogInsert(insertPosition, sCurrentCommand.c_str());
-      insertPosition++;
-    }
+
   }
   return;
 }

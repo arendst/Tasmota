@@ -491,43 +491,6 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   TasmotaGlobal.fallback_topic_flag = false;
 }
 
-/********************************************************************************************/
-
-void BacklogAdd(const char* blcommand) {
-  // Add object at end of list
-  char* temp = (char*)malloc(strlen(blcommand)+1);
-  if (temp != nullptr) {
-    strcpy(temp, blcommand);
-    backlog.add(temp);
-  }
-}
-
-void BacklogInsert(uint32_t position, const char* blcommand) {
-  // Add object at position in list
-  char* temp = (char*)malloc(strlen(blcommand)+1);
-  if (temp != nullptr) {
-    strcpy(temp, (char*)blcommand);
-    backlog.add(position, temp);
-  }
-}
-
-void BacklogClear(void) {
-  // Clear list
-  while (backlog.size()) {
-    free(backlog.pop());
-  }
-}
-
-char* BacklogHead(char* blcommand) {
-  // Remove first object from list
-  char* temp = backlog.shift();
-  strcpy(blcommand, temp);
-  free(temp);
-  return blcommand;
-}
-
-/*------------------------------------------------------------------------------------------*/
-
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
@@ -557,7 +520,11 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-        BacklogAdd(blcommand);
+        char* temp = (char*)malloc(strlen(blcommand)+1);
+        if (temp != nullptr) {
+          strcpy(temp, blcommand);
+          backlog.add(temp);
+        }
       }
       blcommand = strtok(nullptr, ";");
     }
@@ -566,12 +533,12 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
-    BacklogClear();
+    while (backlog.size()) {
+      free(backlog.pop());
+    }
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
-
-/********************************************************************************************/
 
 void CmndJson(void) {
   // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}

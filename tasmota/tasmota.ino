@@ -789,12 +789,13 @@ void BacklogLoop(void) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
       do {
-        char cmd[strlen(backlog.get(0))+1];  // Need to accomodate large commands like Template
-        BacklogHead(cmd);
+        char* cmd = backlog.shift();
         if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
           nodelay = true;
         } else {
           ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
           if (nodelay || TasmotaGlobal.backlog_nodelay) {
             TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
           }
