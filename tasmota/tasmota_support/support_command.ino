@@ -523,7 +523,8 @@ void CmndBacklog(void) {
         char* temp = (char*)malloc(strlen(blcommand)+1);
         if (temp != nullptr) {
           strcpy(temp, blcommand);
-          backlog.add(temp);
+          char* &elem = backlog.addToLast();
+          elem = temp;
         }
       }
       blcommand = strtok(nullptr, ";");
@@ -533,8 +534,9 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
-    while (backlog.size()) {
-      free(backlog.pop());
+    for (auto &elem : backlog) {
+      free(elem);
+      backlog.remove(&elem);
     }
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }

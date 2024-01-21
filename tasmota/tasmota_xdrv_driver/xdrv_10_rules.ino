@@ -2069,7 +2069,8 @@ void ExecuteCommandBlock(const char * commands, int len)
       char* temp = (char*)malloc(strlen(blcommand)+1);
       if (temp != nullptr) {
         strcpy(temp, blcommand);
-        backlog.add(insertPosition, temp);
+        char* &elem = backlog.insertAt(insertPosition);
+        elem = temp;
       }
       insertPosition++;
     }

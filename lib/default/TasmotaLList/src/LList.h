@@ -145,14 +145,13 @@ void LList<T>::reset(void) {
 template <typename T>
 T * LList<T>::removeHead(void) {
   if (_head) {
-    T & orginal_head = _head.val;
+    T * orginal_head = &_head->_val;
     LList_elt<T> * next = _head->next();
     delete _head;
     _head = next;
     return orginal_head;
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 template <typename T>

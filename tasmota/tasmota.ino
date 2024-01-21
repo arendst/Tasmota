@@ -434,9 +434,8 @@ struct TasmotaGlobal_t {
 
 TSettings* Settings = nullptr;
 
-#include <LinkedList.h>
-LinkedList<char*> backlog;                  // Command backlog implemented with LinkedList
-#define BACKLOG_EMPTY (backlog.size() == 0)
+LList<char*> backlog;                       // Command backlog implemented with TasmotaLList
+#define BACKLOG_EMPTY (backlog.isEmpty())
 
 /*********************************************************************************************\
  * Main
@@ -782,7 +781,12 @@ void BacklogLoop(void) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
       do {
-        char* cmd = backlog.shift();
+        char* cmd = *backlog.head();
+        backlog.removeHead();
+/*
+        // This adds 32 bytes
+        char* cmd = *backlog.removeHead();
+*/
         if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
           free(cmd);
           nodelay = true;
@@ -795,6 +799,23 @@ void BacklogLoop(void) {
           break;
         }
       } while (!BACKLOG_EMPTY);
+/*
+      // This adds 96 bytes
+      for (auto &cmd : backlog) {
+        backlog.remove(&cmd);
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
+      }
+*/
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {
