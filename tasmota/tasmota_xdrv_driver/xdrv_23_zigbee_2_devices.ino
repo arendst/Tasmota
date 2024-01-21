@@ -109,6 +109,19 @@ Output:
 00:00:00.231 >>>: v16=65535 out=63000 <> hex=0xFF
 */
 
+/*********************************************************************************************\
+ *
+ * Flag to no advertize for Hue (Alexa) or Matter
+ *
+\*********************************************************************************************/
+
+enum class Z_no_advertize : uint8_t {
+  Z_no_ad_default = 0X00,         // advertize on all 
+  Z_no_ad_hue  = 0x01,            // no-advertize on Hue
+  Z_no_ad_matter = 0x02,          // no-advertize on Matter
+  Z_no_ad_all = 0xFF,             // no-advertize on all
+};
+
 enum class Z_Data_Type : uint8_t {
   Z_Unknown = 0x00,
   Z_Light = 1,              // Lights 1-5 channels
@@ -961,7 +974,9 @@ public:
   uint32_t              batt_last_probed;   // Time when the device was last probed for batteyr values
   uint8_t               lqi;                // lqi from last message, 0xFF means unknown
   uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknwon
-  uint16_t              reserved_for_alignment;
+  Z_no_advertize        no_advertize;       // no advertize for Hue or Matter
+  uint8_t               reserved_for_alignment;
+
   // Debounce informmation when receiving commands
   // If we receive the same ZCL transaction number from the same device and the same endpoint within 300ms
   // then discard the second packet
@@ -989,7 +1004,8 @@ public:
     batt_last_probed(0),
     lqi(0xFF),
     batt_percent(0xFF),
-    reserved_for_alignment(0xFFFF),
+    no_advertize(Z_no_advertize::Z_no_ad_default),
+    reserved_for_alignment(0xFF),
     debounce_endpoint(0),
     debounce_transact(0)
     { };
@@ -1008,6 +1024,28 @@ public:
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
   inline bool validBattLastSeen(void)   const { return (0x0 != batt_last_seen) && (batt_last_seen < 0xFFFFFFF0); }
 
+  inline bool isAdvertizeNone(void)     const { return (no_advertize == Z_no_advertize::Z_no_ad_all); }       // never advertize in bridge mode
+  inline bool isAdvertizeHue(void)      const { return !((uint8_t)no_advertize & (uint8_t)Z_no_advertize::Z_no_ad_hue) ; }      // advertize to Alexa/Hue (if a bulb)
+  inline bool isAdvertizeMatter(void)   const { return !((uint8_t)no_advertize & (uint8_t)Z_no_advertize::Z_no_ad_matter) ; }   // advertize to Matter (type has to be defined in Matter)
+  inline bool isAdvertizeAll(void)      const { return (no_advertize == Z_no_advertize::Z_no_ad_default) ; }  // advertize to all possible (default)
+
+  inline void setAdvertizeNone(void)    { no_advertize = Z_no_advertize::Z_no_ad_all; }
+  inline void setAdvertizeAll(void)     { no_advertize = Z_no_advertize::Z_no_ad_default; }
+  inline void setAdvertizeHue(bool adv) {
+    if (adv) {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize & ~(uint8_t)Z_no_advertize::Z_no_ad_hue);
+    } else {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize | (uint8_t)Z_no_advertize::Z_no_ad_hue);
+    }
+  }
+  inline void setAdvertizeMatter(bool adv) {
+    if (adv) {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize & ~(uint8_t)Z_no_advertize::Z_no_ad_matter);
+    } else {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize | (uint8_t)Z_no_advertize::Z_no_ad_matter);
+    }
+  }
+  
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep = 0)  const;
@@ -1053,6 +1091,7 @@ public:
   void jsonAddModelManuf(Z_attribute_list & attr_list) const;
   void jsonAddEndpoints(Z_attribute_list & attr_list) const;
   void jsonAddConfig(Z_attribute_list & attr_list) const;
+  void jsonAddEmulation(Z_attribute_list & attr_list) const;
   void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
   void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
   void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;

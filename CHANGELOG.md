@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Berry solidification of strings longer than 255 bytes (#20529)
 - Berry syntax coloring for Notepad++ by FransO (#20541)
 - Berry/Zigbee web hook per device for customized status display (#20542)
+- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation
 
 ### Breaking Changed
 

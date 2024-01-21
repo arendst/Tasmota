@@ -144,7 +144,7 @@ void ZigbeeCheckHue(String & response, bool * appending) {
       uint8_t ep = device.endpoints[i];
       if (i > 0 && ep == 0) { break; }
       int8_t bulbtype = device.getHueBulbtype(ep);
-      if (bulbtype >= 0) {
+      if (bulbtype >= 0 && device.isAdvertizeHue()) {
         // this bulb is advertized
         if (*appending) { response += ","; }
         response += "\"";

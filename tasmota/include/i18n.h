@@ -700,6 +700,7 @@
 #define D_CMND_ZIGBEE_SCAN "Scan"
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
 #define D_CMND_ZIGBEE_CIE "CIE"
+#define D_CMND_ZIGBEE_EMULATION "Emulation"
 #define D_CMND_ZIGBEE_ENROLL "Enroll"
 #define D_CMND_ZIGBEE_LOAD "Load"
 #define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
