@@ -294,11 +294,6 @@ HardwareSerial TasConsole = Serial;         // Only serial interface
 
 char EmptyStr[1] = { 0 };                   // Provide a pointer destination to an empty char string
 
-typedef struct {
-  uint32_t time;
-  String   command;
-} tTimedCmnd;
-
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate
@@ -412,8 +407,6 @@ struct TasmotaGlobal_t {
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
-
-  tTimedCmnd timed_cmnd[MAX_TIMED_CMND];    // Timed command buffer
 
 #ifdef MQTT_DATA_STRING
   String mqtt_data;                         // Buffer filled by Response functions

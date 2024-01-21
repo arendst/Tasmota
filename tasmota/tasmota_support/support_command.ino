@@ -655,44 +655,38 @@ void CmndPower(void)
 
 /********************************************************************************************/
 
+typedef struct {
+  uint32_t time;
+  char*    command;
+} tTimedCmnd;
+LList<tTimedCmnd> timed_cmnd;          // Timed command buffer
+
 bool SetTimedCmnd(uint32_t time, const char *command) {
-  uint32_t now = millis();
-  // Try to use the same slot if command is already present
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strcmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str())) {
-        // Stored command already present
-        TasmotaGlobal.timed_cmnd[i].time = now + time;
-        if (0 == TasmotaGlobal.timed_cmnd[i].time) {   // Skip empty slot flag
-          TasmotaGlobal.timed_cmnd[i].time++;
-        }
-        return true;
-      }
+  // Remove command if present
+  for (auto &elem : timed_cmnd) {
+    if (strcmp(command, elem.command) == 0) {  // Equal
+      free(elem.command);
+      timed_cmnd.remove(&elem);
+      break;
     }
   }
-  // Try to find an empty slot and add command
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
-      TasmotaGlobal.timed_cmnd[i].command = command;
-      TasmotaGlobal.timed_cmnd[i].time = now + time;
-      if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
-        TasmotaGlobal.timed_cmnd[i].time++;
-      }
-      return true;
-    }
+  // Add command
+  char* cmnd = (char*)malloc(strlen(command) +1);
+  if (cmnd) {
+    strcpy(cmnd, command);
+    tTimedCmnd &elem = timed_cmnd.addToLast();
+    elem.time = millis() + time;
+    elem.command = cmnd;
+    return true;
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("TIM: No more timer slots left"));
   return false;
 }
 
 void ResetTimedCmnd(const char *command) {
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
-        // Stored command starts with command
-        TasmotaGlobal.timed_cmnd[i].time = 0;
-        TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      }
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      free(elem.command);
+      timed_cmnd.remove(&elem);
     }
   }
 }
@@ -701,31 +695,23 @@ void ShowTimedCmnd(const char *command) {
   bool found = false;
   uint32_t now = millis();
   Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
-        // Stored command starts with command
-        ResponseAppend_P(PSTR("%s"), (found) ? "," : "[");
-        found = true;
-        ResponseAppend_P(PSTR("{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"), TasmotaGlobal.timed_cmnd[i].time - now, TasmotaGlobal.timed_cmnd[i].command.c_str());
-      }
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      ResponseAppend_P(PSTR("%s{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"),
+        (found) ? "," : "[", elem.time - now, elem.command);
+      found = true;
     }
   }
-  if (found) {
-    ResponseAppend_P(PSTR("]}"));
-  } else {
-    ResponseAppend_P(PSTR("\"" D_JSON_EMPTY "\"}"));
-  }
+  ResponseAppend_P((found) ? PSTR("]}") : PSTR("\"" D_JSON_EMPTY "\"}"));
 }
 
 void LoopTimedCmnd(void) {
-  uint32_t now = millis();
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if ((TasmotaGlobal.timed_cmnd[i].time > 0) && (now > TasmotaGlobal.timed_cmnd[i].time)) {
-      TasmotaGlobal.timed_cmnd[i].time = 0;
-      String cmd = TasmotaGlobal.timed_cmnd[i].command;
-      TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      ExecuteCommand((char*)cmd.c_str(), SRC_TIMER);
+  for (auto &elem : timed_cmnd) {
+    if (TimeReached(elem.time)) {
+      char* command = elem.command;
+      timed_cmnd.remove(&elem);
+      ExecuteCommand(command, SRC_TIMER);
+      free(command);
     }
   }
 }
@@ -763,7 +749,7 @@ void CmndTimedPower(void) {
       const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_BLINK_STOP };
       char cmnd[CMDSZ];
       snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
-      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more timers left (MAX_TIMED_CMND)
+      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more room for timers
         XdrvMailbox.payload = start_state;
         CmndPower();
       }

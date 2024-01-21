@@ -149,6 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry solidification of strings longer than 255 bytes [#20529](https://github.com/arendst/Tasmota/issues/20529)
 - Berry syntax coloring for Notepad++ by FransO [#20541](https://github.com/arendst/Tasmota/issues/20541)
 - Berry/Zigbee web hook per device for customized status display [#20542](https://github.com/arendst/Tasmota/issues/20542)
+- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation [#20552](https://github.com/arendst/Tasmota/issues/20552)
 - LVGL `lv.str_arr` [#20480](https://github.com/arendst/Tasmota/issues/20480)
 - LVGL option to add `lv.keyboard` extra widget [#20496](https://github.com/arendst/Tasmota/issues/20496)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)

@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Berry solidification of strings longer than 255 bytes (#20529)
 - Berry syntax coloring for Notepad++ by FransO (#20541)
 - Berry/Zigbee web hook per device for customized status display (#20542)
-- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation
+- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation (#20552)
 
 ### Breaking Changed
 
@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
 - ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
 - Refactor Pio filesystem download script (#20544)
+- Command ``TimedPower`` refactored from String to LList
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)

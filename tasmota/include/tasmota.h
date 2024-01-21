@@ -221,7 +221,6 @@ const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log l
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
 const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
-const uint8_t MAX_TIMED_CMND = 16;          // Max number of timed commands
 
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
