@@ -215,6 +215,12 @@ enum UserSelectablePins {
   GPIO_HC8_RXD,                         // HC8 Serial interface
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
   GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
+  GPIO_MBRPT_RX,
+  GPIO_MBRPT_TX,
+  GPIO_MBRPT_TX_ENA,
+  GPIO_MBRPT2_RX,
+  GPIO_MBRPT2_TX,
+  GPIO_MBRPT2_TX_ENA,
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -477,6 +483,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HC8_RX "|"
   D_SENSOR_I2S_DAC "|"
   D_GPIO_MAGIC_SWITCH "|"
+  D_SENSOR_MBRPT_RX "|"
+  D_SENSOR_MBRPT_TX "|"
+  D_SENSOR_MBRPT_TX_ENA "|"
+  D_SENSOR_MBRPT2_RX "|"
+  D_SENSOR_MBRPT2_TX "|"
+  D_SENSOR_MBRPT2_TX_ENA "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -953,6 +965,14 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MBR_TX_ENA),               // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_TX),                   // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_RX),                   // Modbus Bridge Serial interface
+#endif
+#ifdef USE_MODBUS_PT_BRIDGE
+  AGPIO(GPIO_MBRPT_RX),                   // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBRPT_TX),                   // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBRPT_TX_ENA),               // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBRPT2_RX),                   // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBRPT2_TX),                   // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBRPT2_TX_ENA),               // Modbus Bridge Serial interface
 #endif
 #ifdef USE_TCP_BRIDGE
   AGPIO(GPIO_TCP_TX),                   // TCP Serial bridge

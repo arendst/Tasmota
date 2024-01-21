@@ -896,8 +896,10 @@ constexpr uint32_t feature[] = {
 #ifdef USE_MATTER_DEVICE
   0x80000000 |  // xdrv_52_9_berry.ino
 #endif
+#ifdef USE_MODBUS_PT_BRIDGE
+  0x00000001 |  // xdrv_130_modbus_passtrough_bridge.ino
+#endif
   0,
-//  0x00000001 |  // 
 //  0x00000002 |  // 
 //  0x00000004 |  // 
 //  0x00000008 |  // 

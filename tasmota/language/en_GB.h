@@ -960,6 +960,12 @@
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 #define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
+#define D_SENSOR_MBRPT_TX        "ModBrPt Tx"
+#define D_SENSOR_MBRPT_TX_ENA        "ModBrPt Tx Ena"
+#define D_SENSOR_MBRPT_RX        "ModBrPt Rx"
+#define D_SENSOR_MBRPT2_TX        "ModBrPt2 Tx"
+#define D_SENSOR_MBRPT2_TX_ENA        "ModBrPt2 Tx Ena"
+#define D_SENSOR_MBRPT2_RX        "ModBrPt2 Rx"
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CELSIUS "C"
@@ -1218,6 +1224,10 @@
 #define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+
+#define D_SENSOR_MBR_TX        "ModBr Tx"
+#define D_SENSOR_MBR_RX        "ModBr Rx"
+#define D_SENSOR_MBR_TX_ENA    "ModBr Tx Ena"
 
 // xsns_106_gdk101.ino
 //#define D_AVG_RAD_DOSE                    "Average Radiation Dose"

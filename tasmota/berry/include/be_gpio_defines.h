@@ -334,6 +334,10 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ZIGBEE_RST", (int32_t) GPIO_ZIGBEE_RST },
     { "ZIGBEE_RX", (int32_t) GPIO_ZIGBEE_RX },
     { "ZIGBEE_TX", (int32_t) GPIO_ZIGBEE_TX },
+    { "MBRPT_RX", (int32_t) GPIO_MBRPT_RX },
+    { "MBRPT_TX", (int32_t) GPIO_MBRPT_TX },
+    { "MBRPT2_RX", (int32_t) GPIO_MBRPT2_RX },
+    { "MBRPT2_TX", (int32_t) GPIO_MBRPT2_TX },
 
 };
 

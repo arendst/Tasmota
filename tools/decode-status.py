@@ -302,7 +302,7 @@ a_features = [[
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
     "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
     ],[
-    "","","","",
+    "USE_MODBUS_PT_BRIDGE","","","",
     "","","","",
     "","","","",
     "","","","",
