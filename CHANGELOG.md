@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.3]
+## [13.3.0.4]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
+
+### Fixed
+
+### Removed
+
+## [13.3.0.3] 20240122
 ### Added
 - Berry `debug.caller` (#20470)
 - GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
@@ -19,8 +31,6 @@ All notable changes to this project will be documented in this file.
 - Berry/Zigbee web hook per device for customized status display (#20542)
 - Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation (#20552)
 
-### Breaking Changed
-
 ### Changed
 - ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
 - IP stack compatible with new Core3 IPv6 implementation (#20509)
@@ -29,7 +39,6 @@ All notable changes to this project will be documented in this file.
 - ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
 - Refactored Pio filesystem download script (#20544)
 - Command ``TimedPower`` refactored from String to LList
-- Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
