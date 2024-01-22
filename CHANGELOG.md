@@ -27,8 +27,9 @@ All notable changes to this project will be documented in this file.
 - Command ``TimedPower`` from erasing all timers to showing remaining timers
 - ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
 - ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
-- Refactor Pio filesystem download script (#20544)
+- Refactored Pio filesystem download script (#20544)
 - Command ``TimedPower`` refactored from String to LList
+- Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)

@@ -167,16 +167,6 @@ void (* const RulesCommand[])(void) PROGMEM = {
 #endif
   };
 
-#ifdef SUPPORT_MQTT_EVENT
-  #include <LinkedList.h>                 // Import LinkedList library
-  typedef struct {
-    String Event;
-    String Topic;
-    String Key;
-  } MQTT_Subscription;
-  LinkedList<MQTT_Subscription> subscriptions;
-#endif  // SUPPORT_MQTT_EVENT
-
 struct RULES {
   String event_value;
   unsigned long timer[MAX_RULE_TIMERS] = { 0 };
@@ -1156,6 +1146,14 @@ void RulesSetPower(void)
 }
 
 #ifdef SUPPORT_MQTT_EVENT
+
+typedef struct {
+  char* event;
+  char* topic;
+  char* key;
+} MQTT_Subscription;
+LList<MQTT_Subscription> subscriptions;
+
 /********************************************************************************************/
 /*
  * Rules: Process received MQTT message.
@@ -1167,66 +1165,88 @@ void RulesSetPower(void)
  *      false     - The message is not in our list.
  */
 bool RulesMqttData(void) {
-  if ((XdrvMailbox.data_len < 1) || (XdrvMailbox.data_len > RULE_MAX_MQTT_EVENTSZ)) {
-    return false;
+/*
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data = (char*)data;
+  XdrvMailbox.data_len = data_len;
+*/
+  if (XdrvMailbox.data_len < 1) {
+    return false;                              // Process unchanged data
   }
   bool serviced = false;
-  String sTopic = XdrvMailbox.topic;
-  String buData = XdrvMailbox.data;
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
-  MQTT_Subscription event_item;
-  //Looking for matched topic
-  char json_event[RULE_MAX_MQTT_EVENTSZ +32];  // Add chars for {"Event":{"<item.Event>": .. }
-  for (uint32_t index = 0; index < subscriptions.size(); index++) {
+  String buData = XdrvMailbox.data;            // Could be very long SENSOR message
 
-    String sData = buData;
+  // Looking for matched topic
+  for (auto &event_item : subscriptions) {
+    char stopic[strlen(event_item.topic)+2];
+    strcpy(stopic, event_item.topic);
+    strcat(stopic, "/");
+    if ((strcmp(XdrvMailbox.topic, event_item.topic) == 0) ||                    // Equal
+        (strncmp(XdrvMailbox.topic, stopic, strlen(XdrvMailbox.topic)) == 0)) {  // StartsWith 
 
-    event_item = subscriptions.get(index);
-
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
-    if ((sTopic == event_item.Topic) || sTopic.startsWith(event_item.Topic+"/")) {
-      //This topic is subscribed by us, so serve it
+      // This topic is subscribed by us, so serve it
       serviced = true;
       String value;
-      if (event_item.Key.length() == 0) {   //If did not specify Key
-        value = sData;
-      } else {      //If specified Key, need to parse Key/Value from JSON data
+      if (strlen(event_item.key) == 0) {       // If did not specify Key
+        value = buData;
+      } else {                                 // If specified Key, need to parse Key/Value from JSON data
+        String sData = buData;
         JsonParser parser((char*)sData.c_str());
         JsonParserObject jsonData = parser.getRootObject();
+        if (!jsonData) break;                  // Failed to parse JSON data, ignore this message.
 
-        String key1 = event_item.Key;
+        String key1 = event_item.key;
         String key2;
-        if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
+
         int dot;
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
           JsonParserToken value_tok = jsonData[key1.c_str()].getObject()[key2.c_str()];
-          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
+          if (!value_tok) break;               // Failed to get the key/value, ignore this message.
           value = value_tok.getStr();
           // if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
           // value = (const char *)jsonData[key1][key2];
         } else {
           JsonParserToken value_tok = jsonData[key1.c_str()];
-          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
+          if (!value_tok) break;               // Failed to get the key/value, ignore this message.
           value = value_tok.getStr();
           // if (!jsonData[key1].success()) break;
           // value = (const char *)jsonData[key1];
         }
       }
       value.trim();
-
-/*
-      //Create an new event. Cannot directly call RulesProcessEvent().
-      snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
-      // 20230107 Superseded by the following code
-*/
       bool quotes = (value[0] != '{');
-      snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.Event.c_str(), (quotes)?"\"":"", value.c_str(), (quotes)?"\"":"");
-      RulesProcessEvent(json_event);
+      Response_P(PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.event, (quotes)?"\"":"", value.c_str(), (quotes)?"\"":"");
+      RulesProcessEvent(ResponseData());
     }
   }
   return serviced;
+}
+
+bool RuleUnsubscribe(const char* event) {
+  UpperCase((char*)event, event);
+  bool do_all = (strcmp(event, "*") == 0);     // Wildcard
+  //Search all subscriptions
+  for (auto &index : subscriptions) {
+    if (do_all ||                              // All
+        (strcmp(event, index.event) == 0)) {   // Equal
+      //If find exists one, remove it.
+      char stopic[strlen(index.topic)+3];
+      strcpy(stopic, index.topic);
+      strcat(stopic, "/#");
+      MqttUnsubscribe(stopic);
+      free(index.key);
+      free(index.topic);
+      free(index.event);
+      subscriptions.remove(&index);
+      if (!do_all) {
+        return true;
+      }
+    }
+  }
+  return do_all;
 }
 
 /********************************************************************************************/
@@ -1245,77 +1265,58 @@ bool RulesMqttData(void) {
  * Return:
  *      A string include subscribed event, topic and key.
  */
-void CmndSubscribe(void)
-{
-  MQTT_Subscription subscription_item;
-  String events;
+void CmndSubscribe(void) {
   if (XdrvMailbox.data_len > 0) {
-    char parameters[XdrvMailbox.data_len+1];
-    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
-    parameters[XdrvMailbox.data_len] = '\0';
-    String event_name, topic, key;
+    char* event = Trim(strtok(XdrvMailbox.data, ","));
+    char* topic = Trim(strtok(nullptr, ","));
+    char* key = Trim(strtok(nullptr, ","));
 
-    char * pos = strtok(parameters, ",");
-    if (pos) {
-      event_name = Trim(pos);
-      pos = strtok(nullptr, ",");
-      if (pos) {
-        topic = Trim(pos);
-        pos = strtok(nullptr, ",");
-        if (pos) {
-          key = Trim(pos);
-        }
-      }
-    }
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
-    event_name.toUpperCase();
-    if (event_name.length() > 0 && topic.length() > 0) {
-      //Search all subscriptions
-      for (uint32_t index=0; index < subscriptions.size(); index++) {
-        if (subscriptions.get(index).Event.equals(event_name)) {
-          //If find exists one, remove it.
-          String stopic = subscriptions.get(index).Topic + "/#";
-          MqttUnsubscribe(stopic.c_str());
-          subscriptions.remove(index);
-          break;
-        }
-      }
-      //Add "/#" to the topic
-      if (!topic.endsWith("#")) {
-        if (topic.endsWith("/")) {
-          topic.concat("#");
+    if (event && topic) {
+      RuleUnsubscribe(event);
+
+      // Add "/#" to the topic
+      uint32_t slen = strlen(topic);
+      char stopic[slen +3];
+      strcpy(stopic, topic);
+      if (stopic[slen-1] != '#') {
+        if (stopic[slen-1] == '/') {
+          strcat(stopic, "#");
         } else {
-          topic.concat("/#");
+          strcat(stopic, "/#");
         }
       }
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
-      //MQTT Subscribe
-      subscription_item.Event = event_name;
-      subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
-      subscription_item.Key = key;
-      subscriptions.add(subscription_item);
 
-      if (2 == XdrvMailbox.index) {
-        topic = subscription_item.Topic;  // Do not append "/#""
-      }
-      MqttSubscribe(topic.c_str());
+      if (!key) { key = EmptyStr; }
 
-      events.concat(event_name + "," + topic
-        + (key.length()>0 ? "," : "")
-        + key);
-    } else {
-      events = D_JSON_WRONG_PARAMETERS;
+      // MQTT Subscribe
+      char* hevent = (char*)malloc(strlen(event) +1);
+      char* htopic = (char*)malloc(strlen(stopic) -1);  // Remove "/#"
+      char* hkey = (char*)malloc(strlen(key) +1);
+      if (hevent && htopic && hkey) {
+        strcpy(hevent, event);
+        strlcpy(htopic, stopic, strlen(stopic)-1);      // Remove "/#" so easy to match
+        strcpy(hkey, key);
+        MQTT_Subscription &subscription_item = subscriptions.addToLast();
+        subscription_item.event = hevent;
+        subscription_item.topic = htopic;
+        subscription_item.key = hkey;
+        char* ftopic = (2 == XdrvMailbox.index)?htopic:stopic;  // Subscribe2
+        MqttSubscribe(ftopic);
+        ResponseCmnd();                        // {"Subscribe":
+        ResponseAppend_P(PSTR("\"%s,%s%s%s\"}"), hevent, ftopic, (strlen(hkey))?",":"", EscapeJSONString(hkey).c_str());
+      }        
     }
-  } else {
-    //If did not specify the event name, list all subscribed event
-    for (uint32_t index=0; index < subscriptions.size(); index++) {
-      subscription_item = subscriptions.get(index);
-      events.concat(subscription_item.Event + "," + subscription_item.Topic
-        + (subscription_item.Key.length()>0 ? "," : "")
-        + subscription_item.Key + "; ");
-    }
+    return;                                    // {"Error"}
   }
-  ResponseCmndChar(events.c_str());
+  // If did not specify the event name, list all subscribed event
+  bool found = false;
+  ResponseCmnd();                              // {"Subscribe":
+  for (auto &items : subscriptions) {
+    ResponseAppend_P(PSTR("%s%s,%s%s%s"),
+      (found) ? "; " : "\"", items.event, items.topic, (strlen(items.key))?",":"", EscapeJSONString(items.key).c_str());
+    found = true;  
+  }
+  ResponseAppend_P((found) ? PSTR("\"}") : PSTR("\"" D_JSON_EMPTY "\"}"));
 }
 
 /********************************************************************************************/
@@ -1329,32 +1330,16 @@ void CmndSubscribe(void)
  * Return:
  *      list all the events unsubscribed.
  */
-void CmndUnsubscribe(void)
-{
-  MQTT_Subscription subscription_item;
-  String events;
+void CmndUnsubscribe(void) {
   if (XdrvMailbox.data_len > 0) {
-    for (uint32_t index = 0; index < subscriptions.size(); index++) {
-      subscription_item = subscriptions.get(index);
-      if (subscription_item.Event.equalsIgnoreCase(XdrvMailbox.data)) {
-        String stopic = subscription_item.Topic + "/#";
-        MqttUnsubscribe(stopic.c_str());
-        events = subscription_item.Event;
-        subscriptions.remove(index);
-        break;
-      }
+    char* event = Trim(XdrvMailbox.data);
+    if (RuleUnsubscribe(event)) {
+      ResponseCmndChar(event);
     }
-  } else {
-    // If did not specify the event name, unsubscribe all event
-    String stopic;
-    while (subscriptions.size() > 0) {
-      events.concat(subscriptions.get(0).Event + "; ");
-      stopic = subscriptions.get(0).Topic + "/#";
-      MqttUnsubscribe(stopic.c_str());
-      subscriptions.remove(0);
-    }
+    return;                                    // {"Error"}
   }
-  ResponseCmndChar(events.c_str());
+  RuleUnsubscribe("*");
+  ResponseCmndDone();
 }
 
 #endif  // SUPPORT_MQTT_EVENT

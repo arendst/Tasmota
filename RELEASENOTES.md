@@ -164,12 +164,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.6 [#20539](https://github.com/arendst/Tasmota/issues/20539)
 - ESP32 platform update from 2023.11.01 to 2024.01.01 [#20473](https://github.com/arendst/Tasmota/issues/20473)
 - Renamed button "Consoles" to "Tools"
+- Refactored rule ``Subscribe`` using LList allowing full message size and enabled by default
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
 - Web file upload response on upload error [#20340](https://github.com/arendst/Tasmota/issues/20340)
 - Header `Host` is now collected by Webserver [#20446](https://github.com/arendst/Tasmota/issues/20446)
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
-- Refactor Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
+- Refactored Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)
