@@ -627,7 +627,7 @@ bool Renderer::utouch_Init(char **name) {
   return false;
 }
 
-bool Renderer::touched(void) {
+uint16_t Renderer::touched(void) {
   return false;
 }
 
