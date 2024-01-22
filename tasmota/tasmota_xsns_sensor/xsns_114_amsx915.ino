@@ -36,6 +36,7 @@
 
 #define AMSX915_EVERYNSECONDS  5
 #define AMSX915_DEVICE_NAME		 "AMSx915"
+#define AMSX915_LOG            "AMS"
 
 #define PMIN_DEFAULT           0
 #define PMAX_DEFAULT           0
@@ -46,23 +47,20 @@
 
 /********************************************************************************************/
 
-struct amsx915_data {
+typedef struct amsx915data_s {
+  uint32_t  file_crc32;    // To detect file changes
+  uint16_t  file_version;  // To detect driver function changes
+  int16_t   pmin;
+  int16_t   pmax;
   float pressure;
   float temperature;
   bool sensor_present;
   bool meas_valid;
   uint8_t cnt;
-} amsx915data;
+} amsx915data_t;
+amsx915data_t *amsx915 = nullptr;
 
 const uint16_t AMSX915_VERSION = 0x0100;       // Latest sensor version (See settings deltas below)
-
-// Global structure containing driver saved variables
-struct {
-  uint32_t  crc32;    // To detect file changes
-  uint16_t  version;  // To detect driver function changes
-  int16_t   pmin;
-  int16_t   pmax;
-} amsx915Settings;
 
 bool Amsx915Command() {
   int32_t vals[2];
@@ -70,16 +68,19 @@ bool Amsx915Command() {
   if(XdrvMailbox.data_len >= 3 && XdrvMailbox.data_len < 13) {
     if (vals[0] >= -32768 && vals[0] < 32768) {
       if (vals[1] >= -32768 && vals[1] < 32768) {
-        amsx915Settings.pmin = (int16_t)vals[0]; // save pmin of sensor
-        amsx915Settings.pmax = (int16_t)vals[1];  // same with pmax
+        amsx915->pmin = (int16_t)vals[0]; // save pmin of sensor
+        amsx915->pmax = (int16_t)vals[1];  // same with pmax
         Amsx915SettingsSave();
         Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_114, "pressure range set");
         return true;
       }
     }
-    Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_114, "invalid pressure range [-32768..32767]");
-    return false;
   }
+  else if(XdrvMailbox.data_len == 0) {
+    Response_P(PSTR("{\"" AMSX915_DEVICE_NAME "\": {\"pmin\":%i,\"pmax\":%i}}"), amsx915->pmin, amsx915->pmax);
+    return true;
+  }
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_114, "invalid pressure range [-32768..32767]");
   return false;
 }
 
@@ -87,33 +88,31 @@ void Amsx915Detect(void) {
   // i2c frontend does not provide any commands/register to detect this sensor type -> request 4 bytes and check for 4 byte response is mandatory
   if (!I2cActive(AMSX915_ADDR))
   {
-    amsx915data.cnt = 0;
     uint8_t i;
     while(i++ < 2) { // try 2 times because sensor sometimes not respond at first request
       Wire.requestFrom(AMSX915_ADDR, 4);
-      if(Wire.available() != 4) {
-        amsx915data.sensor_present = false;
-        amsx915data.meas_valid = false;
-      }
-      else {
-        amsx915data.sensor_present = true;
+      if(Wire.available() == 4) {
+        I2cSetActiveFound(AMSX915_ADDR, AMSX915_DEVICE_NAME);
+        amsx915 = (amsx915data_t *)calloc(1, sizeof(amsx915data_t));
+        if (!amsx915) {
+          AddLog(LOG_LEVEL_ERROR, PSTR(AMSX915_LOG ":@%02X Memory error!"), AMSX915_ADDR);
+        }
+        else {
+          Amsx915SettingsLoad(0); // load config
+        }
         break;
       }
-    }
-    if(amsx915data.sensor_present) {
-      I2cSetActiveFound(AMSX915_ADDR, AMSX915_DEVICE_NAME);
     }
   }
 }
 
 void Amsx915ReadData(void) {
-  if(!amsx915data.sensor_present) { return; }
-  if(amsx915data.cnt++ == AMSX915_EVERYNSECONDS) { // try to read sensor every n seconds
-    amsx915data.cnt = 0;
+  if(amsx915->cnt++ == AMSX915_EVERYNSECONDS) { // try to read sensor every n seconds
+    amsx915->cnt = 0;
     uint8_t buffer[4];
     Wire.requestFrom(AMSX915_ADDR, 4);
     if(Wire.available() != 4) {
-      amsx915data.meas_valid = false;
+      amsx915->meas_valid = false;
       return;
     }
     buffer[0] = Wire.read();
@@ -121,22 +120,22 @@ void Amsx915ReadData(void) {
     buffer[2] = Wire.read();
     buffer[3] = Wire.read();
 
-    amsx915data.pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0f)*(amsx915Settings.pmax-amsx915Settings.pmin)/13107+amsx915Settings.pmin;
-    amsx915data.temperature = (((256.0*buffer[2]+buffer[3])*200.0f)/65536)-50;
-    amsx915data.meas_valid = true;
+    amsx915->pressure = ((256*(buffer[0]&0x3F)+buffer[1])-1638.0f)*((amsx915->pmax)-(amsx915->pmin))/13107+(amsx915->pmin);
+    amsx915->temperature = (((256.0*buffer[2]+buffer[3])*200.0f)/65536)-50;
+    amsx915->meas_valid = true;
   }
 }
 
 void Amsx915Show(bool json) {
-  if(amsx915data.meas_valid) {
+  if(amsx915->meas_valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"" AMSX915_DEVICE_NAME "\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915data.temperature, &amsx915data.pressure);
+      ResponseAppend_P(PSTR(",\"" AMSX915_DEVICE_NAME "\":{\"" D_JSON_TEMPERATURE "\":%1_f,\"" D_JSON_PRESSURE "\":%2_f}"), &amsx915->temperature, &amsx915->pressure);
 #ifdef USE_WEBSERVER
       } else {
         char str_pressure[9];
-        dtostrfd(amsx915data.pressure, 2, str_pressure);
+        dtostrfd(amsx915->pressure, 2, str_pressure);
         WSContentSend_PD(HTTP_SNS_PRESSURE, AMSX915_DEVICE_NAME, str_pressure, PressureUnit().c_str());
-        WSContentSend_Temp(AMSX915_DEVICE_NAME, amsx915data.temperature);
+        WSContentSend_Temp(AMSX915_DEVICE_NAME, amsx915->temperature);
 #endif  // USE_WEBSERVER
       }
   }
@@ -148,10 +147,10 @@ void Amsx915Show(bool json) {
 
 void Amsx915SettingsLoad(bool erase) {
   // Called from FUNC_PRE_INIT (erase = 0) once at restart
-  memset(&amsx915Settings, 0x00, sizeof(amsx915Settings));
-  amsx915Settings.version = AMSX915_VERSION;
-  amsx915Settings.pmax = PMAX_DEFAULT;
-  amsx915Settings.pmin = PMIN_DEFAULT;
+  memset(amsx915, 0x00, sizeof(amsx915data_t));
+  amsx915->file_version = AMSX915_VERSION;
+  amsx915->pmax = PMAX_DEFAULT;
+  amsx915->pmin = PMIN_DEFAULT;
 
   // *** End Init default values ***
 
@@ -165,10 +164,10 @@ void Amsx915SettingsLoad(bool erase) {
   if (erase) {
     TfsDeleteFile(filename);  // Use defaults
   }
-  else if (TfsLoadFile(filename, (uint8_t*)&amsx915Settings, sizeof(amsx915Settings))) {
-    if (amsx915Settings.version != AMSX915_VERSION) {      // Fix version dependent changes
+  else if (TfsLoadFile(filename, (uint8_t*)amsx915, sizeof(amsx915data_t))) {
+    if (amsx915->file_version != AMSX915_VERSION) {      // Fix version dependent changes
       // Set current version and save settings
-      amsx915Settings.version = AMSX915_VERSION;
+      amsx915->file_version = AMSX915_VERSION;
       Amsx915SettingsSave();
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: " AMSX915_DEVICE_NAME " config loaded from file"));
@@ -183,15 +182,15 @@ void Amsx915SettingsLoad(bool erase) {
 void Amsx915SettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 #ifdef USE_UFILESYS
-  uint32_t crc32 = GetCfgCrc32((uint8_t*)&amsx915Settings +4, sizeof(amsx915Settings) -4);  // Skip crc32
-  if (crc32 != amsx915Settings.crc32) {
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)amsx915 +4, sizeof(amsx915data_t) -4);  // Skip crc32
+  if (crc32 != amsx915->file_crc32) {
     // Try to save sensor config file
-    amsx915Settings.crc32 = crc32;
+    amsx915->file_crc32 = crc32;
 
     char filename[20];
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_114);
 
-    if (TfsSaveFile(filename, (const uint8_t*)&amsx915Settings, sizeof(amsx915Settings))) {
+    if (TfsSaveFile(filename, (const uint8_t*)amsx915, sizeof(amsx915data_t))) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: " AMSX915_DEVICE_NAME " Settings saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
@@ -210,32 +209,28 @@ bool Xsns114(uint32_t function) {
 
   bool result = false;
 
-  switch(function) {
-    case FUNC_PRE_INIT:
-      Amsx915SettingsLoad(0);
-      break;
-    case FUNC_INIT:
-      Amsx915Detect();
-      break;
-    case FUNC_EVERY_SECOND:
-      Amsx915ReadData();
-      break;
-    case FUNC_SAVE_SETTINGS:
-      Amsx915SettingsSave();
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if(XSNS_114 == XdrvMailbox.index) {
-        result = Amsx915Command();
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      Amsx915Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Amsx915Show(0);
-      break;
-#endif  // USE_WEBSERVER
+  if (function == FUNC_INIT) {
+    Amsx915Detect();
+  }
+  if(amsx915) {
+    switch(function) {
+      case FUNC_EVERY_SECOND:
+        Amsx915ReadData();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if(XSNS_114 == XdrvMailbox.index) {
+          result = Amsx915Command();
+        }
+        break;
+      case FUNC_JSON_APPEND:
+        Amsx915Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Amsx915Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }
