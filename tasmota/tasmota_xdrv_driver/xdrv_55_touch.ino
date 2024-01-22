@@ -254,8 +254,13 @@ void utouch_Touch_Init() {
 
 bool utouch_touched() {
   if (renderer) {
-    return renderer->touched();
+    uint16 status = renderer->touched();
+    if (status & 1) {
+      TSGlobal.gesture = status >> 8;
+      return true;
+    }
   }
+  return false;
 }
 int16_t utouch_x() {
   if (renderer) {
