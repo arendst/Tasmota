@@ -1175,53 +1175,49 @@ bool RulesMqttData(void) {
     return false;                              // Process unchanged data
   }
   bool serviced = false;
-  String buData = XdrvMailbox.data;            // Distroyed by JsonParser. Could be very long SENSOR message
+  String buData = XdrvMailbox.data;            // Destroyed by JsonParser. Could be very long SENSOR message
   char ctopic[strlen(XdrvMailbox.topic)+1];
-  strcpy(ctopic, XdrvMailbox.topic);           // Distroyed by result of following iteration
+  strcpy(ctopic, XdrvMailbox.topic);           // Destroyed by result of following iteration
 
-  // Looking for matched topic
-  for (auto &event_item : subscriptions) {
+  for (auto &event_item : subscriptions) {     // Looking for all matched topics
     char etopic[strlen(event_item.topic)+2];
-    strcpy(etopic, event_item.topic);
-    strcat(etopic, "/");
-    if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal
-        (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith 
+    strcpy(etopic, event_item.topic);          // tele/tasmota/SENSOR
+    strcat(etopic, "/");                       // tele/tasmota/SENSOR/
+    if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal tele/tasmota/SENSOR
+        (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith tele/tasmota/SENSOR/
 
-      // This topic is subscribed by us, so serve it
-      serviced = true;
-      String value;
-      if (strlen(event_item.key) == 0) {       // If did not specify Key
-        value = buData;
-      } else {                                 // If specified Key, need to parse Key/Value from JSON data
-        String sData = buData;
+      serviced = true;                         // This topic is subscribed by us, so serve it
+      String sData = buData;                   // sData will be destroyed by JsonParser
+      char* value = nullptr;
+      if (strlen(event_item.key) == 0) {       // If no key specified
+        value = (char*)buData.c_str();         // {"DS18B20":{"Id":"0000048EC44C","Temperature":23.3}}
+      } else {                                 // If key specified, need to parse Key/Value from JSON data
         JsonParser parser((char*)sData.c_str());
         JsonParserObject jsonData = parser.getRootObject();
-        if (!jsonData) break;                  // Failed to parse JSON data, ignore this message.
+        if (!jsonData) { break; }              // Failed to parse JSON data, ignore this message.
 
-        String key1 = event_item.key;
-        String key2;
-
-        int dot;
-        if ((dot = key1.indexOf('.')) > 0) {
-          key2 = key1.substring(dot+1);
-          key1 = key1.substring(0, dot);
-          JsonParserToken value_tok = jsonData[key1.c_str()].getObject()[key2.c_str()];
-          if (!value_tok) break;               // Failed to get the key/value, ignore this message.
-          value = value_tok.getStr();
-          // if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
-          // value = (const char *)jsonData[key1][key2];
-        } else {
-          JsonParserToken value_tok = jsonData[key1.c_str()];
-          if (!value_tok) break;               // Failed to get the key/value, ignore this message.
-          value = value_tok.getStr();
-          // if (!jsonData[key1].success()) break;
-          // value = (const char *)jsonData[key1];
+        char ckey1[strlen(event_item.key)+1];
+        strcpy(ckey1, event_item.key);         // DS18B20.Temperature
+        char* ckey2 = strchr(ckey1, '.');
+        if (ckey2 != nullptr) {                // .Temperature
+          *ckey2++ = '\0';                     // Temperature and ckey1 becomes DS18B20
+          JsonParserToken val = jsonData[ckey1].getObject()[ckey2];
+          if (val) { 
+            value = (char*)val.getStr();       // 23.3
+          }
+        } else {                               // DS18B20
+          JsonParserToken val = jsonData[ckey1];
+          if (val) { 
+            value = (char*)val.getStr();       // \0
+          }
         }
       }
-      value.trim();
-      bool quotes = (value[0] != '{');
-      Response_P(PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.event, (quotes)?"\"":"", value.c_str(), (quotes)?"\"":"");
-      RulesProcessEvent(ResponseData());
+      if (value) {
+        Trim(value);
+        bool quotes = (value[0] != '{');
+        Response_P(PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.event, (quotes)?"\"":"", value, (quotes)?"\"":"");
+        RulesProcessEvent(ResponseData());
+      }
     }
   }
   return serviced;
