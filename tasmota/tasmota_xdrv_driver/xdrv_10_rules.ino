@@ -114,8 +114,6 @@
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
 #ifdef USE_EXPRESSION
-  #include <LinkedList.h>                 // Import LinkedList library
-
   const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
@@ -126,7 +124,6 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
   const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
-
 
   #define LOGIC_OPERATOR_AND        1
   #define LOGIC_OPERATOR_OR         2
@@ -1642,53 +1639,92 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
  *  2             +                                   1
  *  3             /                                   2
  */
-float evaluateExpression(const char * expression, unsigned int len)
-{
+float evaluateExpression(const char * expression, unsigned int len) {
   char expbuf[len + 1];
   memcpy(expbuf, expression, len);
   expbuf[len] = '\0';
   char * scan_pointer = expbuf;
 
-  LinkedList<float> object_values;
-  LinkedList<int8_t> operators;
-  int8_t op;
+  float object_values[21];
+  int8_t operators[20];
   float va;
   //Find and add the value of first object
   if (findNextObjectValue(scan_pointer, va)) {
-    object_values.add(va);
+    object_values[0] = va;
   } else {
     return 0;
   }
-  while (*scan_pointer)
-  {
+
+  uint32_t operators_size = 0;
+  uint32_t object_values_size = 1;
+  int8_t op;
+  while (*scan_pointer) {
     if (findNextOperator(scan_pointer, op)
         && *scan_pointer
         && findNextObjectValue(scan_pointer, va))
     {
-      operators.add(op);
-      object_values.add(va);
+      operators[operators_size++] = op;
+      object_values[object_values_size++] = va;
     } else {
       //No operator followed or no more object after this operator, we done.
       break;
     }
+
+    if (operators_size >= 20) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+    }
   }
 
-  //Going to evaluate the whole expression
-  //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
-  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
+  // Going to evaluate the whole expression
+  // Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
+  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority > 0; priority--) {
     int index = 0;
-    while (index < operators.size()) {
-      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
-        //get current object value and remove the next object with current operator
-        va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
+    while (index < operators_size) {
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators[index])) {     //need to calculate the operator first
+        // Get current object value and remove the next object with current operator
+        va = calculateTwoValues(object_values[index], object_values[index + 1], operators[index]);
+
+        uint32_t i = index;
+        while (i <= operators_size) {
+          operators[i++] = operators[i];           // operators.remove(index)
+          object_values[i] = object_values[i +1];  // object_values.remove(index + 1)
+        }
+        object_values_size--;
+        operators_size--;
+
+
+/*
+        uint32_t i = index +1;
+        while (i <= object_values_size) {
+          object_values[i++] = object_values[i];  // object_values.remove(index + 1)
+        }
+        object_values_size--;
+
+        i = index;
+        while (i <= operators_size) {
+          operators[i++] = operators[i];          // operators.remove(index)
+        }
+        operators_size--;
+*/
+/*
+        for (uint32_t i = index +1; i <= object_values_size; i++) {
+          object_values[i] = object_values[i +1];  // object_values.remove(index + 1)
+        }
+        object_values_size--;
+
+        for (uint32_t i = index; i <= operators_size; i++) {
+          operators[i] = operators[i +1];          // operators.remove(index)
+        }
+        operators_size--;
+*/
         //Replace the current value with the result
-        object_values.set(index, va);
+        object_values[index] =  va;
       } else {
         index++;
       }
     }
   }
-  return object_values.get(0);
+  return object_values[0];
 }
 #endif  // USE_EXPRESSION
 
@@ -1873,58 +1909,74 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
  * Return:
  *      boolean     - the value of logical expression
  */
-bool evaluateLogicalExpression(const char * expression, int len)
-{
+bool evaluateLogicalExpression(const char * expression, int len) {
   //Make a copy first
   char expbuff[len + 1];
   memcpy(expbuff, expression, len);
   expbuff[len] = '\0';
-
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("EvalLogic: |%s|"), expbuff);
   char * pointer = expbuff;
-  LinkedList<bool> values;
-  LinkedList<int8_t> logicOperators;
+
+  bool values[21];
+  int8_t logicOperators[20];
+
   //Find first comparison expression
   bool bValue;
   if (findNextLogicObjectValue(pointer, bValue)) {
-    values.add(bValue);
+    values[0] = bValue;
   } else {
     return false;
   }
+
+  uint32_t logicOperators_size = 0;
+  uint32_t values_size = 1;
   int8_t op;
   while (*pointer) {
     if (findNextLogicOperator(pointer, op)
       && (*pointer) && findNextLogicObjectValue(pointer, bValue))
     {
-      logicOperators.add(op);
-      values.add(bValue);
+      logicOperators[logicOperators_size++] = op;
+      values[values_size++] = bValue;
     } else {
       break;
     }
+    if (logicOperators_size >= 20) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+    }
   }
-  //Calculate all "AND" first
+
+  // Calculate all "AND" first
   int index = 0;
-  while (index < logicOperators.size()) {
-    if (logicOperators.get(index) == LOGIC_OPERATOR_AND) {
-      values.set(index, values.get(index) && values.get(index+1));
-      values.remove(index + 1);
-      logicOperators.remove(index);
+  while (index < logicOperators_size) {
+    if (logicOperators[index] == LOGIC_OPERATOR_AND) {
+      values[index] &= values[index +1];
+      uint32_t i = index;
+      while (i <= logicOperators_size) {
+        logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
+        values[i] = values[i +1];                 // values.remove(index + 1);
+      }
+      values_size--;
+      logicOperators_size--;
     } else {
       index++;
     }
   }
-  //Then, calculate all "OR"
+  // Then, calculate all "OR"
   index = 0;
-  while (index < logicOperators.size()) {
-    if (logicOperators.get(index) == LOGIC_OPERATOR_OR) {
-      values.set(index, values.get(index) || values.get(index+1));
-      values.remove(index + 1);
-      logicOperators.remove(index);
+  while (index < logicOperators_size) {
+    if (logicOperators[index] == LOGIC_OPERATOR_OR) {
+      values[index] |= values[index+1];
+      uint32_t i = index;
+      while (i <= logicOperators_size) {
+        logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
+        values[i] = values[i +1];                 // values.remove(index + 1);
+      }
+      values_size--;
+      logicOperators_size--;
     } else {
       index++;
     }
   }
-  return values.get(0);
+  return values[0];
 }
 
 /********************************************************************************************/
