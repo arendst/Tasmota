@@ -1175,15 +1175,17 @@ bool RulesMqttData(void) {
     return false;                              // Process unchanged data
   }
   bool serviced = false;
-  String buData = XdrvMailbox.data;            // Could be very long SENSOR message
+  String buData = XdrvMailbox.data;            // Distroyed by JsonParser. Could be very long SENSOR message
+  char ctopic[strlen(XdrvMailbox.topic)+1];
+  strcpy(ctopic, XdrvMailbox.topic);           // Distroyed by result of following iteration
 
   // Looking for matched topic
   for (auto &event_item : subscriptions) {
-    char stopic[strlen(event_item.topic)+2];
-    strcpy(stopic, event_item.topic);
-    strcat(stopic, "/");
-    if ((strcmp(XdrvMailbox.topic, event_item.topic) == 0) ||                    // Equal
-        (strncmp(XdrvMailbox.topic, stopic, strlen(XdrvMailbox.topic)) == 0)) {  // StartsWith 
+    char etopic[strlen(event_item.topic)+2];
+    strcpy(etopic, event_item.topic);
+    strcat(etopic, "/");
+    if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal
+        (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith 
 
       // This topic is subscribed by us, so serve it
       serviced = true;
