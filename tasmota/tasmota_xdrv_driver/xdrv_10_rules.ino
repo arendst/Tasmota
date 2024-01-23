@@ -1171,7 +1171,7 @@ bool RulesMqttData(void) {
   XdrvMailbox.data = (char*)data;
   XdrvMailbox.data_len = data_len;
 */
-  if (XdrvMailbox.data_len < 1) {
+  if ((XdrvMailbox.data_len < 1) || (subscriptions.isEmpty())) {
     return false;                              // Process unchanged data
   }
   bool serviced = false;
