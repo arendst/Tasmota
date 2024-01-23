@@ -2542,7 +2542,7 @@ void SML_Show(boolean json) {
           tpowstr[i] = 0;
           // export html
           //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s{e}", b_mqtt_data,tpowstr);
-          WSContentSend_PD(PSTR("{s}%s{e}"), tpowstr);
+          WSContentSend_P(PSTR("<tr><td colspan=2>%s{e}"), tpowstr);
           // rewind, to ensure strchr
           mp--;
           mp = strchr(mp, '|');
@@ -2670,7 +2670,10 @@ void SML_Show(boolean json) {
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
-             if (strcmp(name, "*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"), sml_globs.mp[mindex].prefix, name,tpowstr, unit);
+              if (strcmp(name, "*")) {
+                WSContentSend_P(PSTR("{s}%s %s{m}"), sml_globs.mp[mindex].prefix, name);  // Do not replace decimal separator in label
+                WSContentSend_PD(PSTR("%s %s{e}"), tpowstr, unit); // Replace decimal separator in value
+              }
             }
           }
         }
