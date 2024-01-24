@@ -99,7 +99,11 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_valid = true;
 }
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+void TasmotaSerial::end() {
+#else
 void TasmotaSerial::end(bool turnOffDebug) {
+#endif // ESP_IDF_VERSION_MAJOR >= 5
 #ifdef ESP8266
   if (m_hardserial) {
 //    Serial.end();  // Keep active for logging
@@ -117,7 +121,11 @@ void TasmotaSerial::end(bool turnOffDebug) {
 #ifdef ESP32
 //  Serial.printf("TSR: Freeing UART%d\n", m_uart);
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+  TSerial->end();
+#else
   TSerial->end(turnOffDebug);
+#endif // ESP_IDF_VERSION_MAJOR >= 5
   bitClear(tasmota_serial_uart_bitmap, m_uart);
 #endif  // ESP32
 }

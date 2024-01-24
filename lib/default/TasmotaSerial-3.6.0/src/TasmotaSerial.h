@@ -45,7 +45,11 @@ class TasmotaSerial : public Stream {
     size_t getRxBufferSize() { return serial_buffer_size; }
 
     bool begin(uint32_t speed = TM_SERIAL_BAUDRATE, uint32_t config = SERIAL_8N1);
+    #if ESP_IDF_VERSION_MAJOR >= 5
+    void end();
+    #else
     void end(bool turnOffDebug = true);
+    #endif // ESP_IDF_VERSION_MAJOR >= 5
     bool hardwareSerial(void);
     int peek(void);
 
