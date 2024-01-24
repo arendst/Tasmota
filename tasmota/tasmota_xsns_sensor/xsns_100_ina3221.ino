@@ -261,6 +261,7 @@ bool Ina3221CmndSensor(void)
 {
   int argc = ArgC();
   if(argc != 1 && argc != 4) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_INA3221 ": Not enough arguments (1 or 4)"));
     return false;
   }
 
