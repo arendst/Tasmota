@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
 - Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
+- ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
 
 ### Fixed
 
@@ -33,7 +34,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation (#20552)
 
 ### Changed
-- ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
+- ESP32 Core2 platform update from 2024.01.00 to 2024.01.01 (#20508)
 - IP stack compatible with new Core3 IPv6 implementation (#20509)
 - Command ``TimedPower`` from erasing all timers to showing remaining timers
 - ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
