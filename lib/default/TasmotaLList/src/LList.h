@@ -208,6 +208,10 @@ T & LList<T>::addToLast(void) {
 
 template <typename T>
 T & LList<T>::insertAt(size_t index) {
+  if (0 == index) {
+    return addHead();    // insert at the head
+  }
+  index--;
   LList_elt<T> **curr_ptr = &_head;
   size_t count = 0;
   while (*curr_ptr) {
