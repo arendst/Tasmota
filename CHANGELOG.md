@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.3.0.4]
 ### Added
+- HASPmota support for `min` and `max` attribute in `slider`
 
 ### Breaking Changed
 

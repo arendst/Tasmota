@@ -1238,6 +1238,18 @@ class lvh_slider : lvh_obj
   def set_val(t)
     self._lv_obj.set_value(t, 0)    # add second parameter - no animation
   end
+  def set_min(t)
+    self._lv_obj.set_range(int(t), self.get_max())
+  end
+  def set_max(t)
+    self._lv_obj.set_range(self.get_min(), int(t))
+  end
+  def get_min()
+    return self._lv_obj.get_min_value()
+  end
+  def get_max()
+    return self._lv_obj.get_max_value()
+  end
 end
 
 #====================================================================
