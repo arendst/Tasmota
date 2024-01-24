@@ -498,8 +498,8 @@
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+13k code, +768 bytes mem)
   #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+1k8 code)
-//  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k3 code)
-//  #define SUPPORT_IF_STATEMENT                   // Add support for IF statement in rules (+3k3)
+  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+1k7 code)
+    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+2k7)
 //  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed

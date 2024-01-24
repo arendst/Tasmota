@@ -1586,10 +1586,8 @@ bool findNextOperator(char * &pointer, int8_t &op)
  *      true    - succeed
  *      false   - failed
  */
-float calculateTwoValues(float v1, float v2, uint8_t op)
-{
-  switch (op)
-  {
+float calculateTwoValues(float v1, float v2, uint8_t op) {
+  switch (op) {
     case EXPRESSION_OPERATOR_ADD:
       return v1 + v2;
     case EXPRESSION_OPERATOR_SUBTRACT:
@@ -1601,7 +1599,7 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
     case EXPRESSION_OPERATOR_MODULO:
       return (0 == v2) ? 0 : (int(v1) % int(v2));
     case EXPRESSION_OPERATOR_POWER:
-      return FastPrecisePow(v1, v2);
+      return FastPrecisePowf(v1, v2);
   }
   return 0;
 }
@@ -1619,7 +1617,7 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
  *      expression  - The expression to be evaluated
  *      len         - Length of the expression
  * Return:
- *      float      - result.
+ *      float       - result
  *      0           - if the expression is invalid
  * An example:
  * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
@@ -1638,6 +1636,14 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
  *  1             %                                   3
  *  2             +                                   1
  *  3             /                                   2
+ * Results in:
+ *      (10 + VAR2 ^2) = 235
+ *  (MEM1 * 235 - 100) = 605
+ *          (2 + MEM2) = 8
+ *            605 % 10 = 5
+ *            3.14 * 5 = 15.7
+ *  VAR10 / 8 = 80 / 8 = 10
+ *           15.7 + 10 = 25.7 <== end result
  */
 float evaluateExpression(const char * expression, unsigned int len) {
   char expbuf[len + 1];
@@ -1648,7 +1654,7 @@ float evaluateExpression(const char * expression, unsigned int len) {
   float object_values[21];
   int8_t operators[20];
   float va;
-  //Find and add the value of first object
+  // Find and add the value of first object
   if (findNextObjectValue(scan_pointer, va)) {
     object_values[0] = va;
   } else {
@@ -1656,7 +1662,6 @@ float evaluateExpression(const char * expression, unsigned int len) {
   }
 
   uint32_t operators_size = 0;
-  uint32_t object_values_size = 1;
   int8_t op;
   while (*scan_pointer) {
     if (findNextOperator(scan_pointer, op)
@@ -1664,77 +1669,63 @@ float evaluateExpression(const char * expression, unsigned int len) {
         && findNextObjectValue(scan_pointer, va))
     {
       operators[operators_size++] = op;
-      object_values[object_values_size++] = va;
+      object_values[operators_size] = va;
     } else {
-      //No operator followed or no more object after this operator, we done.
+      // No operator followed or no more object after this operator, we done.
       break;
     }
-
     if (operators_size >= 20) {
       AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+      return 0;
     }
   }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Expression '%s'"), expbuf);
 
   // Going to evaluate the whole expression
   // Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
   for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority > 0; priority--) {
     int index = 0;
     while (index < operators_size) {
-      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators[index])) {     //need to calculate the operator first
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators[index])) {  // Need to calculate the operator first
         // Get current object value and remove the next object with current operator
         va = calculateTwoValues(object_values[index], object_values[index + 1], operators[index]);
-
         uint32_t i = index;
         while (i <= operators_size) {
           operators[i++] = operators[i];           // operators.remove(index)
           object_values[i] = object_values[i +1];  // object_values.remove(index + 1)
         }
-        object_values_size--;
         operators_size--;
+        object_values[index] =  va;                // Replace the current value with the result
 
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Intermediate '%4_f'"), &object_values[index]);
 
-/*
-        uint32_t i = index +1;
-        while (i <= object_values_size) {
-          object_values[i++] = object_values[i];  // object_values.remove(index + 1)
-        }
-        object_values_size--;
-
-        i = index;
-        while (i <= operators_size) {
-          operators[i++] = operators[i];          // operators.remove(index)
-        }
-        operators_size--;
-*/
-/*
-        for (uint32_t i = index +1; i <= object_values_size; i++) {
-          object_values[i] = object_values[i +1];  // object_values.remove(index + 1)
-        }
-        object_values_size--;
-
-        for (uint32_t i = index; i <= operators_size; i++) {
-          operators[i] = operators[i +1];          // operators.remove(index)
-        }
-        operators_size--;
-*/
-        //Replace the current value with the result
-        object_values[index] =  va;
       } else {
         index++;
       }
     }
   }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Result '%4_f'"), &object_values[0]);
+
   return object_values[0];
 }
 #endif  // USE_EXPRESSION
 
 #ifdef  SUPPORT_IF_STATEMENT
-void CmndIf(void)
-{
+/********************************************************************************************/
+/*
+ * Process an if command
+ * Example:
+ * rule1 on event#test do backlog status 1; status 2; if (var1==10 AND var3==9 OR var4==8) status 3;status 4 endif; status 5; status 6 endon
+ * 
+ * Notice:
+ * In case of "if" is true commands ``status 3`` and ``status 4`` will be inserted into the backlog between ``status 2`` and ``status 5``
+ */
+void CmndIf(void) {
   if (XdrvMailbox.data_len > 0) {
-    char parameters[XdrvMailbox.data_len+1];
-    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
-    parameters[XdrvMailbox.data_len] = '\0';
+    char parameters[XdrvMailbox.data_len +1];
+    strcpy(parameters, XdrvMailbox.data);
     ProcessIfStatement(parameters);
   }
   ResponseCmndDone();
@@ -1928,19 +1919,19 @@ bool evaluateLogicalExpression(const char * expression, int len) {
   }
 
   uint32_t logicOperators_size = 0;
-  uint32_t values_size = 1;
   int8_t op;
   while (*pointer) {
     if (findNextLogicOperator(pointer, op)
       && (*pointer) && findNextLogicObjectValue(pointer, bValue))
     {
       logicOperators[logicOperators_size++] = op;
-      values[values_size++] = bValue;
+      values[logicOperators_size] = bValue;
     } else {
       break;
     }
     if (logicOperators_size >= 20) {
       AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+      return false;
     }
   }
 
@@ -1954,7 +1945,6 @@ bool evaluateLogicalExpression(const char * expression, int len) {
         logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
         values[i] = values[i +1];                 // values.remove(index + 1);
       }
-      values_size--;
       logicOperators_size--;
     } else {
       index++;
@@ -1964,18 +1954,20 @@ bool evaluateLogicalExpression(const char * expression, int len) {
   index = 0;
   while (index < logicOperators_size) {
     if (logicOperators[index] == LOGIC_OPERATOR_OR) {
-      values[index] |= values[index+1];
+      values[index] |= values[index +1];
       uint32_t i = index;
       while (i <= logicOperators_size) {
         logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
         values[i] = values[i +1];                 // values.remove(index + 1);
       }
-      values_size--;
       logicOperators_size--;
     } else {
       index++;
     }
   }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Expression '%s' = %d"), expbuff, values[0]);
+
   return values[0];
 }
 
@@ -2058,7 +2050,6 @@ void ExecuteCommandBlock(const char * commands, int len)
   memcpy(cmdbuff, commands, len);
   cmdbuff[len] = '\0';
 
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("ExecCmd: |%s|"), cmdbuff);
   char oneCommand[len + 1];     //To put one command
   int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
   char * pos = cmdbuff;
@@ -2099,17 +2090,18 @@ void ExecuteCommandBlock(const char * commands, int len)
     //Going to insert the command into backlog
     char* blcommand = oneCommand;
     Trim(blcommand);
+
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Position %d, Command '%s'"), insertPosition, blcommand);
+
     if (strlen(blcommand)) {
       //Insert into backlog
       char* temp = (char*)malloc(strlen(blcommand)+1);
       if (temp != nullptr) {
         strcpy(temp, blcommand);
-        char* &elem = backlog.insertAt(insertPosition);
+        char* &elem = backlog.insertAt(insertPosition++);
         elem = temp;
       }
-      insertPosition++;
     }
-
   }
   return;
 }
