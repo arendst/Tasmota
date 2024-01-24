@@ -5196,6 +5196,72 @@ void be_load_lvh_bar_class(bvm *vm) {
 extern const bclass be_class_lvh_slider;
 
 /********************************************************************
+** Solidified function: set_max
+********************************************************************/
+be_local_closure(lvh_slider_set_max,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_min),
+    }),
+    be_str_weak(set_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x8C100102,  //  0002  GETMET	R4	R0	K2
+      0x7C100200,  //  0003  CALL	R4	1
+      0x60140009,  //  0004  GETGBL	R5	G9
+      0x5C180200,  //  0005  MOVE	R6	R1
+      0x7C140200,  //  0006  CALL	R5	1
+      0x7C080600,  //  0007  CALL	R2	3
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_min
+********************************************************************/
+be_local_closure(lvh_slider_get_min,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_min_value),
+    }),
+    be_str_weak(get_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
 be_local_closure(lvh_slider_set_val,   /* name */
@@ -5229,16 +5295,86 @@ be_local_closure(lvh_slider_set_val,   /* name */
 
 
 /********************************************************************
+** Solidified function: get_max
+********************************************************************/
+be_local_closure(lvh_slider_get_max,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_max_value),
+    }),
+    be_str_weak(get_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_min
+********************************************************************/
+be_local_closure(lvh_slider_set_min,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_max),
+    }),
+    be_str_weak(set_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x60100009,  //  0002  GETGBL	R4	G9
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C100200,  //  0004  CALL	R4	1
+      0x8C140102,  //  0005  GETMET	R5	R0	K2
+      0x7C140200,  //  0006  CALL	R5	1
+      0x7C080600,  //  0007  CALL	R2	3
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_slider
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_slider,
     0,
     &be_class_lvh_obj,
-    be_nested_map(2,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(set_min, 5), be_const_closure(lvh_slider_set_min_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_slider) },
+        { be_const_key_weak(get_min, -1), be_const_closure(lvh_slider_get_min_closure) },
         { be_const_key_weak(set_val, -1), be_const_closure(lvh_slider_set_val_closure) },
-        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_slider) },
+        { be_const_key_weak(set_max, 0), be_const_closure(lvh_slider_set_max_closure) },
+        { be_const_key_weak(get_max, -1), be_const_closure(lvh_slider_get_max_closure) },
     })),
     be_str_weak(lvh_slider)
 );
