@@ -154,6 +154,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL option to add `lv.keyboard` extra widget [#20496](https://github.com/arendst/Tasmota/issues/20496)
 - HASPmota `haspmota.page_show()` to change page [#20333](https://github.com/arendst/Tasmota/issues/20333)
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
+- HASPmota support for `min` and `max` attribute in `slider` [#20582](https://github.com/arendst/Tasmota/issues/20582)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
 
 ### Breaking Changed
