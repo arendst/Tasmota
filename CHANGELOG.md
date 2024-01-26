@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.4]
 ### Added
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
+- ESP32-C3 support for GPIO11 (#18350)
 
 ### Breaking Changed
 
@@ -13,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
 - Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
+- Utouch optimizations, rgb i2c init (#20596)
 
 ### Fixed
 

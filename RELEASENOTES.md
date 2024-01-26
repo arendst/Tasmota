@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 used UART information
 - ESP32 experimental support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC [#20381](https://github.com/arendst/Tasmota/issues/20381)
+- ESP32-C3 support for GPIO11 [#18350](https://github.com/arendst/Tasmota/issues/18350)
 - Berry GPIO viewer initial version using async webserver [#20416](https://github.com/arendst/Tasmota/issues/20416)
 - Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
 - Berry support for `tcpclientasync` in `tcpserver` [#20401](https://github.com/arendst/Tasmota/issues/20401)
@@ -171,6 +172,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` [#20260](https://github.com/arendst/Tasmota/issues/20260)
 - Web file upload response on upload error [#20340](https://github.com/arendst/Tasmota/issues/20340)
 - Header `Host` is now collected by Webserver [#20446](https://github.com/arendst/Tasmota/issues/20446)
+- Utouch optimizations, rgb i2c init [#20596](https://github.com/arendst/Tasmota/issues/20596)
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
 - Refactored Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
