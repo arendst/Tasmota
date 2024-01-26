@@ -133,7 +133,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 used UART information
 - ESP32 support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC [#20381](https://github.com/arendst/Tasmota/issues/20381)
-- ESP32 support for DS18x20 on Shelly Plus Add-On [#20580](https://github.com/arendst/Tasmota/issues/20580)
+- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
+ [#20580](https://github.com/arendst/Tasmota/issues/20580)
 - ESP32-C3 support for GPIO11 [#18350](https://github.com/arendst/Tasmota/issues/18350)
 - Berry GPIO viewer initial version using async webserver [#20416](https://github.com/arendst/Tasmota/issues/20416)
 - Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
@@ -167,6 +168,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.6 [#20539](https://github.com/arendst/Tasmota/issues/20539)
 - ESP32 Core2 platform update from 2023.11.01 to 2024.01.01 [#20473](https://github.com/arendst/Tasmota/issues/20473)
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 [#20576](https://github.com/arendst/Tasmota/issues/20576)
+- Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On [#20580](https://github.com/arendst/Tasmota/issues/20580)
 - Renamed button "Consoles" to "Tools"
 - Refactored rule ``Subscribe`` using LList allowing full message size and enabled by default
 - Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default

@@ -7,11 +7,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
-- ESP32 support for DS18x20 on Shelly Plus Add-On (#20580)
+- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
 
 ### Breaking Changed
 
 ### Changed
+- Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
 - Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
 - Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
