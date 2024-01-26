@@ -33,6 +33,12 @@ OneWire is now very mature code.  No changes other than adding
 definitions for newer hardware support are anticipated.
 
 =======
+Version 2.3.3 Tasmota 26JAN2024
+  Add support for Shelly Add-On by Theo Arends
+
+Version 2.3.3 Tasmota 15AUG2023
+  Add support for ESP32 Arduino core 3 by @Jason2866
+
 Version 2.3.3 ESP32 Stickbreaker 06MAY2019
   Add a #ifdef to isolate ESP32 mods
 Version 2.3.1 ESP32 everslick 30APR2018
@@ -152,19 +158,180 @@ sample code bearing this copyright.
 
 #include "OneWire.h"
 
-#ifdef ESP32
+// Platform specific I/O definitions
+
+#if defined(ARDUINO_ARCH_ESP8266)
+// Special note: I depend on the ESP community to maintain these definitions and
+// submit good pull requests.  I can not answer any ESP questions or help you
+// resolve any problems related to ESP chips.  Please do not contact me and please
+// DO NOT CREATE GITHUB ISSUES for ESP support.  All ESP questions must be asked
+// on ESP community forums.
+#define PIN_TO_BASEREG(pin)             ((volatile uint32_t*) GPO)
+#define PIN_TO_BITMASK(pin)             (1UL << pin)
+#define IO_REG_TYPE uint32_t
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+
+static inline __attribute__((always_inline))
+void directModeInput(IO_REG_TYPE mask)
+{
+    if(mask > 0x8000)
+    {
+        GP16FFS(GPFFS_GPIO(16));
+        GPC16 = 0;
+        GP16E &= ~1;
+    }
+    else
+    {
+        GPE &= ~(mask);
+    }
+}
+
+static inline __attribute__((always_inline))
+void directModeOutput(IO_REG_TYPE mask)
+{
+    if(mask > 0x8000)
+    {
+        GP16FFS(GPFFS_GPIO(16));
+        GPC16 = 0; 
+        GP16E |= 1;
+    }
+    else
+    {
+        GPE |= (mask);
+    }
+}
+
+static inline __attribute__((always_inline))
+bool directRead(IO_REG_TYPE mask)
+{
+    if(mask > 0x8000)
+        return GP16I & 0x01;
+    else
+        return ((GPI & (mask)) ? true : false);
+}
+
+#define DIRECT_READ(base, mask)             directRead(mask)
+#define DIRECT_MODE_INPUT(base, mask)       directModeInput(mask)
+#define DIRECT_MODE_OUTPUT(base, mask)      directModeOutput(mask)
+#define DIRECT_WRITE_LOW(base, mask)    (mask > 0x8000) ? GP16O &= ~1 : (GPOC = (mask))
+#define DIRECT_WRITE_HIGH(base, mask)   (mask > 0x8000) ? GP16O |= 1 : (GPOS = (mask))
+
+#define CRIT_TIMING
 #define t_noInterrupts() {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;portENTER_CRITICAL(&mux)
 #define t_interrupts() portEXIT_CRITICAL(&mux);}
-#else
-#define t_noInterrupts noInterrupts
-#define t_interrupts interrupts
+
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <driver/rtc_io.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "soc/gpio_periph.h"
+#endif // ESP_IDF_VERSION_MAJOR >= 5
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define IO_REG_TYPE uint32_t
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+
+static inline __attribute__((always_inline))
+IO_REG_TYPE directRead(IO_REG_TYPE pin)
+{
+#if SOC_GPIO_PIN_COUNT <= 32
+    return (GPIO.in.val >> pin) & 0x1;
+#else  // ESP32 with over 32 gpios
+    if ( pin < 32 )
+        return (GPIO.in >> pin) & 0x1;
+    else
+        return (GPIO.in1.val >> (pin - 32)) & 0x1;
+#endif
+    return 0;
+
+}
+
+static inline __attribute__((always_inline))
+void directWriteLow(IO_REG_TYPE pin)
+{
+#if SOC_GPIO_PIN_COUNT <= 32
+    GPIO.out_w1tc.val = ((uint32_t)1 << pin);
+#else  // ESP32 with over 32 gpios
+    if ( pin < 32 )
+        GPIO.out_w1tc = ((uint32_t)1 << pin);
+    else
+        GPIO.out1_w1tc.val = ((uint32_t)1 << (pin - 32));
+#endif
+}
+
+static inline __attribute__((always_inline))
+void directWriteHigh(IO_REG_TYPE pin)
+{
+#if SOC_GPIO_PIN_COUNT <= 32
+    GPIO.out_w1ts.val = ((uint32_t)1 << pin);
+#else  // ESP32 with over 32 gpios
+    if ( pin < 32 )
+        GPIO.out_w1ts = ((uint32_t)1 << pin);
+    else
+        GPIO.out1_w1ts.val = ((uint32_t)1 << (pin - 32));
 #endif
 
-OneWire::OneWire(uint8_t pin)
+}
+
+static inline __attribute__((always_inline))
+void directModeInput(IO_REG_TYPE pin)
 {
+    if ( digitalPinIsValid(pin) )
+    {
+        // Input
+#if SOC_GPIO_PIN_COUNT <= 32
+        GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
+#else  // ESP32 with over 32 gpios
+        if ( pin < 32 )
+            GPIO.enable_w1tc = ((uint32_t)1 << pin);
+        else
+            GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
+#endif
+    }
+
+}
+
+static inline __attribute__((always_inline))
+void directModeOutput(IO_REG_TYPE pin)
+{
+    if ( digitalPinCanOutput(pin) ) 
+    {
+        // Output
+#if SOC_GPIO_PIN_COUNT <= 32
+        GPIO.enable_w1ts.val = ((uint32_t)1 << (pin));
+#else  // ESP32 with over 32 gpios
+        if ( pin < 32 )
+            GPIO.enable_w1ts = ((uint32_t)1 << pin);
+        else
+            GPIO.enable1_w1ts.val = ((uint32_t)1 << (pin - 32));
+#endif
+    }
+
+}
+
+#define DIRECT_READ(base, pin)          directRead(pin)
+#define DIRECT_WRITE_LOW(base, pin)     directWriteLow(pin)
+#define DIRECT_WRITE_HIGH(base, pin)    directWriteHigh(pin)
+#define DIRECT_MODE_INPUT(base, pin)    directModeInput(pin)
+#define DIRECT_MODE_OUTPUT(base, pin)   directModeOutput(pin)
+
+#define CRIT_TIMING IRAM_ATTR
+#define t_noInterrupts noInterrupts
+#define t_interrupts interrupts
+
+#endif
+
+OneWire::OneWire(uint8_t pin, int8_t pin_out) {
     pinMode(pin, INPUT);
     bitmask = PIN_TO_BITMASK(pin);
     baseReg = PIN_TO_BASEREG(pin);
+    dual_mode = (pin_out > -1);
+    if (dual_mode) {
+      pinMode(pin_out, OUTPUT);
+      bitmask_out = PIN_TO_BITMASK(pin_out);
+      baseReg_out = PIN_TO_BASEREG(pin_out);
+    }
 #if ONEWIRE_SEARCH
     reset_search();
 #endif
@@ -177,19 +344,19 @@ OneWire::OneWire(uint8_t pin)
 //
 // Returns 1 if a device asserted a presence pulse, 0 otherwise.
 //
-#ifdef ARDUINO_ARCH_ESP32
-uint8_t IRAM_ATTR OneWire::reset(void)
-#else
-uint8_t OneWire::reset(void)
-#endif
+uint8_t CRIT_TIMING OneWire::reset(void)
 {
-    IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
-    volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
-    uint8_t r;
-    uint8_t retries = 125;
+  IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
+  volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
+
+  uint8_t r;
+  uint8_t retries = 125;
+
+  if (!dual_mode) {
     t_noInterrupts();
     DIRECT_MODE_INPUT(reg, mask);
     t_interrupts();
+
     // wait until the wire is high... just in case
     do {
         if (--retries == 0) return 0;
@@ -204,7 +371,33 @@ uint8_t OneWire::reset(void)
     delayMicroseconds(70);
     r = !DIRECT_READ(reg, mask);
     t_interrupts();
+
     delayMicroseconds(410);
+  } else {
+    IO_REG_TYPE mask_out IO_REG_MASK_ATTR = bitmask_out;
+    volatile IO_REG_TYPE *reg_out IO_REG_BASE_ATTR = baseReg_out;
+
+    t_noInterrupts();
+    DIRECT_WRITE_HIGH(reg_out, mask_out);
+    t_interrupts();
+
+    // wait until the wire is high... just in case
+    do {
+        if (--retries == 0) return 0;
+        delayMicroseconds(2);
+    } while ( !DIRECT_READ(reg, mask));
+ 
+    t_noInterrupts();
+    DIRECT_WRITE_LOW(reg_out, mask_out);
+    delayMicroseconds(480);
+    DIRECT_WRITE_HIGH(reg_out, mask_out);
+    delayMicroseconds(70);
+    r = !DIRECT_READ(reg, mask);
+    t_interrupts();
+
+    delayMicroseconds(410);
+  }
+
   return r;
 }
 
@@ -212,57 +405,84 @@ uint8_t OneWire::reset(void)
 // Write a bit. Port and bit is used to cut lookup time and provide
 // more certain timing.
 //
-#ifdef ARDUINO_ARCH_ESP32
-void IRAM_ATTR OneWire::write_bit(uint8_t v)
-#else
-void OneWire::write_bit(uint8_t v)
-#endif
+void CRIT_TIMING OneWire::write_bit(uint8_t v)
 {
 	IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
 	volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
 
-	if (v & 1) {
-        t_noInterrupts();
-		DIRECT_WRITE_LOW(reg, mask);
-		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
-		delayMicroseconds(10);
-		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
-        t_interrupts();
-		delayMicroseconds(55);
-	} else {
-        t_noInterrupts();
-		DIRECT_WRITE_LOW(reg, mask);
-		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
-		delayMicroseconds(65);
-		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
-        t_interrupts();
-		delayMicroseconds(5);
-	}
+  if (!dual_mode) {
+    if (v & 1) {
+          t_noInterrupts();
+      DIRECT_WRITE_LOW(reg, mask);
+      DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
+      delayMicroseconds(10);
+      DIRECT_WRITE_HIGH(reg, mask);	// drive output high
+          t_interrupts();
+      delayMicroseconds(55);
+    } else {
+          t_noInterrupts();
+      DIRECT_WRITE_LOW(reg, mask);
+      DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
+      delayMicroseconds(65);
+      DIRECT_WRITE_HIGH(reg, mask);	// drive output high
+          t_interrupts();
+      delayMicroseconds(5);
+    }
+  } else {
+    IO_REG_TYPE mask_out IO_REG_MASK_ATTR = bitmask_out;
+    volatile IO_REG_TYPE *reg_out IO_REG_BASE_ATTR = baseReg_out;
+
+    if (v & 1) {
+          t_noInterrupts();
+      DIRECT_WRITE_LOW(reg_out, mask_out);
+      delayMicroseconds(10);
+      DIRECT_WRITE_HIGH(reg_out, mask_out);	// drive output high
+          t_interrupts();
+      delayMicroseconds(55);
+    } else {
+          t_noInterrupts();
+      DIRECT_WRITE_LOW(reg_out, mask_out);
+      delayMicroseconds(65);
+      DIRECT_WRITE_HIGH(reg_out, mask_out);	// drive output high
+          t_interrupts();
+      delayMicroseconds(5);
+    }
+  }
 }
 
 //
 // Read a bit. Port and bit is used to cut lookup time and provide
 // more certain timing.
 //
-#ifdef ARDUINO_ARCH_ESP32
-uint8_t IRAM_ATTR OneWire::read_bit(void)
-#else
-uint8_t OneWire::read_bit(void)
-#endif
+uint8_t CRIT_TIMING OneWire::read_bit(void)
 {
 	IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
 	volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
 	uint8_t r;
 
-    t_noInterrupts();
-	DIRECT_MODE_OUTPUT(reg, mask);
-	DIRECT_WRITE_LOW(reg, mask);
-	delayMicroseconds(3);
-	DIRECT_MODE_INPUT(reg, mask);	// let pin float, pull up will raise
-	delayMicroseconds(10);
-	r = DIRECT_READ(reg, mask);
-    t_interrupts();
-	delayMicroseconds(53);
+  if (!dual_mode) {
+      t_noInterrupts();
+    DIRECT_MODE_OUTPUT(reg, mask);
+    DIRECT_WRITE_LOW(reg, mask);
+    delayMicroseconds(3);
+    DIRECT_MODE_INPUT(reg, mask);	// let pin float, pull up will raise
+    delayMicroseconds(10);
+    r = DIRECT_READ(reg, mask);
+      t_interrupts();
+    delayMicroseconds(53);
+  } else {
+    IO_REG_TYPE mask_out IO_REG_MASK_ATTR = bitmask_out;
+    volatile IO_REG_TYPE *reg_out IO_REG_BASE_ATTR = baseReg_out;
+
+      t_noInterrupts();
+    DIRECT_WRITE_LOW(reg_out, mask_out);
+    delayMicroseconds(3);
+    DIRECT_WRITE_HIGH(reg_out, mask_out);
+    delayMicroseconds(10);
+    r = DIRECT_READ(reg, mask);
+      t_interrupts();
+    delayMicroseconds(53);
+  }
 	return r;
 }
 
@@ -280,10 +500,16 @@ void OneWire::write(uint8_t v, uint8_t power /* = 0 */) {
     OneWire::write_bit( (bitMask & v)?1:0);
   }
   if ( !power) {
+    if (!dual_mode) {
       t_noInterrupts();
       DIRECT_MODE_INPUT(baseReg, bitmask);
       DIRECT_WRITE_LOW(baseReg, bitmask);
       t_interrupts();
+    } else {
+//      t_noInterrupts();
+//      DIRECT_WRITE_LOW(baseReg_out, bitmask_out);
+//      t_interrupts();
+    }      
   }
 }
 
@@ -291,10 +517,16 @@ void OneWire::write_bytes(const uint8_t *buf, uint16_t count, bool power /* = 0 
   for (uint16_t i = 0 ; i < count ; i++)
     write(buf[i]);
   if (!power) {
-    t_noInterrupts();
-    DIRECT_MODE_INPUT(baseReg, bitmask);
-    DIRECT_WRITE_LOW(baseReg, bitmask);
-    t_interrupts();
+    if (!dual_mode) {
+      t_noInterrupts();
+      DIRECT_MODE_INPUT(baseReg, bitmask);
+      DIRECT_WRITE_LOW(baseReg, bitmask);
+      t_interrupts();
+    } else {
+//      t_noInterrupts();
+//      DIRECT_WRITE_LOW(baseReg_out, bitmask_out);
+//      t_interrupts();
+    }      
   }
 }
 
@@ -338,9 +570,9 @@ void OneWire::skip()
 
 void OneWire::depower()
 {
-    t_noInterrupts();
-    DIRECT_MODE_INPUT(baseReg, bitmask);
-    t_interrupts();
+//    t_noInterrupts();
+//    DIRECT_MODE_INPUT(baseReg, bitmask);
+//    t_interrupts();
 }
 
 #if ONEWIRE_SEARCH

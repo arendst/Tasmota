@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
+- ESP32 support for DS18x20 on Shelly Plus Add-On (#20580)
 
 ### Breaking Changed
 

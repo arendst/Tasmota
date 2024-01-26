@@ -731,9 +731,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DS18x20
   AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
-#ifdef ESP8266
   AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
-#endif  // ESP8266
 #endif  // USE_DS18x20
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),                    // LMT01, count pulses on GPIO
