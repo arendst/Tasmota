@@ -218,8 +218,8 @@ bool directRead(IO_REG_TYPE mask)
 #define DIRECT_WRITE_HIGH(base, mask)   (mask > 0x8000) ? GP16O |= 1 : (GPOS = (mask))
 
 #define CRIT_TIMING
-#define t_noInterrupts() {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;portENTER_CRITICAL(&mux)
-#define t_interrupts() portEXIT_CRITICAL(&mux);}
+#define t_noInterrupts noInterrupts
+#define t_interrupts interrupts
 
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <driver/rtc_io.h>
@@ -317,8 +317,8 @@ void directModeOutput(IO_REG_TYPE pin)
 #define DIRECT_MODE_OUTPUT(base, pin)   directModeOutput(pin)
 
 #define CRIT_TIMING IRAM_ATTR
-#define t_noInterrupts noInterrupts
-#define t_interrupts interrupts
+#define t_noInterrupts() {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;portENTER_CRITICAL(&mux)
+#define t_interrupts() portEXIT_CRITICAL(&mux);}
 
 #endif
 
