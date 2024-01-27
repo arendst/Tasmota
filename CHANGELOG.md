@@ -17,9 +17,10 @@ All notable changes to this project will be documented in this file.
 - Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
 - Utouch optimizations, rgb i2c init (#20596)
+- GPIO Viewer update from 1.0.7 to 1.5.0
 
 ### Fixed
-- Berry C mapping, raise an error if too many arguments are sent
+- Berry C mapping, raise an error if too many arguments are sent (#20604)
 
 ### Removed
 

@@ -195,6 +195,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL fix type for lv_imgbtn [#20354](https://github.com/arendst/Tasmota/issues/20354)
 - Berry claiming UART0 if needed [#20324](https://github.com/arendst/Tasmota/issues/20324)
 - Berry assigment to list with negative index [#20537](https://github.com/arendst/Tasmota/issues/20537)
+- Berry C mapping, raise an error if too many arguments are sent [#20604](https://github.com/arendst/Tasmota/issues/20604)
 - Matter Contact sensor was not triggering any update [#20232](https://github.com/arendst/Tasmota/issues/20232)
 - Matter support for Alexa [#20545](https://github.com/arendst/Tasmota/issues/20545)
 
