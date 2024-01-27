@@ -255,11 +255,16 @@ int be_ctypes_member(bvm *vm) {
         if (member->mapping > 0 && definitions->instance_mapping) {
             const char * mapping_name = definitions->instance_mapping[member->mapping - 1];
             if (mapping_name) {
-                be_getglobal(vm, mapping_name);     // stack: class
-                be_pushvalue(vm, -2);               // stack: class, value
-                be_pushint(vm, -1);                 // stack; class, value, -1
-                be_call(vm, 2);                     // call constructor with 2 parameters
-                be_pop(vm, 2);                      // leave new instance on top of stack
+                int32_t found = be_find_global_or_module_member(vm, mapping_name);
+                if (found == 1) {
+                    // we have found only one element from a module, which is expected
+                    be_pushvalue(vm, -2);               // stack: class, value
+                    be_pushint(vm, -1);                 // stack; class, value, -1
+                    be_call(vm, 2);                     // call constructor with 2 parameters
+                    be_pop(vm, 2);                      // leave new instance on top of stack
+                } else {
+                    be_raisef(vm, "internal_error", "mapping for  '%s' not found", mapping_name);
+                }
             }
         }
         be_return(vm);
