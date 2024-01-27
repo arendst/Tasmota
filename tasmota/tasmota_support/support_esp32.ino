@@ -501,6 +501,10 @@ uint32_t ESP_getFreeSketchSpace(void) {
   return ESP.getFreeSketchSpace();
 }
 
+uint32_t ESP_getHeapSize(void) {
+  return ESP.getHeapSize();
+}
+
 uint32_t ESP_getFreeHeap(void) {
   // ESP_getFreeHeap() returns also IRAM which we don't use
   return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
@@ -556,6 +560,18 @@ uint8_t* FlashDirectAccess(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X, Data %*_H"), address, data, sizeof(buf), (uint8_t*)&buf);
 */
   return data;
+}
+
+uint32_t ESP_getPsramSize(void) {
+  return ESP.getPsramSize();
+}
+
+uint32_t ESP_getFreePsram(void) {
+  return ESP.getFreePsram();
+}
+
+uint32_t ESP_getMaxAllocPsram(void) {
+  return ESP.getMaxAllocPsram();
 }
 
 extern "C" {
@@ -946,6 +962,18 @@ String GetCodeCores(void) {
 #else
   return F("");
 #endif
+}
+
+uint32_t ESP_getChipCores(void) {
+  return ESP.getChipCores();
+}
+
+uint32_t ESP_getChipRevision(void) {
+  return ESP.getChipRevision();
+}
+
+String ESP_getEfuseMac(void) {
+  return String(ESP.getEfuseMac());
 }
 
 /*********************************************************************************************\
