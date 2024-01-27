@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Utouch optimizations, rgb i2c init (#20596)
 
 ### Fixed
+- Berry C mapping, raise an error if too many arguments are sent
 
 ### Removed
 
