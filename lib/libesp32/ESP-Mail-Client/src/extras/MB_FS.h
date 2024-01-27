@@ -70,9 +70,7 @@ extern FS *ufsp;
 class MB_FS {
 
 public:
-    MB_FS() {
-        mfsp = ufsp;
-    }
+    MB_FS() {}
     ~MB_FS() {}
 
 
@@ -347,7 +345,7 @@ public:
 private:
     uint16_t flash_filename_crc = 0;
     MB_String flash_file, sd_file;
-    FS *mfsp= ufsp;
+    FS *mfsp;
     File mb_File;
 
 };
