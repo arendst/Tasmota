@@ -49,7 +49,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware_safeboot
           path: ./build_output
@@ -86,7 +86,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -127,7 +127,7 @@ jobs:
           pip install wheel
           pip install -U platformio
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -137,7 +137,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -164,7 +164,7 @@ jobs:
           pip install wheel
           pip install -U platformio
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -174,7 +174,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -186,12 +186,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Download Tasmota firmwares
-      uses: actions/download-artifact@v4
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware
         path: ./mv_firmware
     - name: Download safeboot firmwares
-      uses: actions/download-artifact@v4
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware_safeboot
         path: ./mv_firmware
