@@ -40,7 +40,7 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -68,7 +68,7 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -133,7 +133,7 @@ jobs:
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -161,7 +161,7 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
-      - uses: actions/upload-artifact@v3
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
