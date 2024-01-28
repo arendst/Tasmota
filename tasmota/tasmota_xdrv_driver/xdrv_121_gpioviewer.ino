@@ -265,8 +265,7 @@ void GVEventDisconnected(void) {
 }
 
 void GVCloseEvent(void) {
-//  GVEventSend("{}", "close", millis());                    // Closes web page
-  GVEventSend("{}", "error", millis());                    // Closes web page
+  GVEventSend("{}", "close", millis());                    // Closes web page
   GVEventDisconnected();
 }
 
