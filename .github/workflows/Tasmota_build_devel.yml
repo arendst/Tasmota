@@ -76,7 +76,7 @@ jobs:
             ./lib/libesp32/berry_animate/src/solidify
             ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
             ./lib/libesp32/berry/generate
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Solidified Code updated
 
@@ -116,7 +116,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware_safeboot
           path: ./build_output
@@ -154,7 +154,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -199,7 +199,7 @@ jobs:
           cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -209,7 +209,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -238,7 +238,7 @@ jobs:
           cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -248,7 +248,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
