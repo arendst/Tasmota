@@ -33,11 +33,11 @@ jobs:
           - tasmota32c6-safeboot
           - tasmota32c6cdc-safeboot
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -49,7 +49,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware_safeboot
           path: ./build_output
@@ -72,11 +72,11 @@ jobs:
           - tasmota-zbbridge
           - tasmota-zigbee
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -86,7 +86,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -115,11 +115,11 @@ jobs:
           - tasmota32s3cdc
           - tasmota32solo1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -127,7 +127,7 @@ jobs:
           pip install wheel
           pip install -U platformio
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v3
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -137,7 +137,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -152,11 +152,11 @@ jobs:
         variant: [ tasmota, tasmota32 ]
         language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -164,7 +164,7 @@ jobs:
           pip install wheel
           pip install -U platformio
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v3
+        uses: jason2866/download-artifact@v3.0.4
         with:
           name: firmware_safeboot
           path: ./firmware
@@ -174,7 +174,7 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v3
+        uses: jason2866/upload-artifact@v2.0.3
         with:
           name: firmware
           path: ./build_output
@@ -184,14 +184,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Download Tasmota firmwares
-      uses: actions/download-artifact@v3
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware
         path: ./mv_firmware
     - name: Download safeboot firmwares
-      uses: actions/download-artifact@v3
+      uses: jason2866/download-artifact@v3.0.4
       with:
         name: firmware_safeboot
         path: ./mv_firmware
