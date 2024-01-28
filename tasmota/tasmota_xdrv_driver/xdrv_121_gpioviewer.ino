@@ -42,9 +42,9 @@
 const char *GVRelease = "1.5.0";
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #include "./html_compressed/HTTP_GV_PAGE_150.h"
+  #include "./html_compressed/HTTP_GV_PAGE.h"
 #else
-  #include "./html_uncompressed/HTTP_GV_PAGE_150.h"
+  #include "./html_uncompressed/HTTP_GV_PAGE.h"
 #endif
 
 const char HTTP_GV_EVENT[] PROGMEM =
@@ -164,7 +164,7 @@ void GVHandleFreePSRam(void) {
 }
 
 void GVHandleSampling(void) {
-  String jsonResponse = "{\"sampling\": \"" + String(GV.sampling) + "\"}";
+  String jsonResponse = "{\"sampling\":\"" + String(GV.sampling) + "\"}";
   GVWebserverSendJson(jsonResponse);
 }
 
@@ -265,7 +265,8 @@ void GVEventDisconnected(void) {
 }
 
 void GVCloseEvent(void) {
-  GVEventSend("{}", "close", millis());                    // Closes web page
+//  GVEventSend("{}", "close", millis());                    // Closes web page
+  GVEventSend("{}", "error", millis());                    // Closes web page
   GVEventDisconnected();
 }
 

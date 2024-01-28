@@ -229,26 +229,25 @@ String ESP_getEfuseMac(void) {
   uint32_t mac0 = *(uint32_t*)(0x3FF00050);
   uint32_t mac1 = *(uint32_t*)(0x3FF00054);
   uint32_t mac3 = *(uint32_t*)(0x3FF0005C);
-
   uint32_t mach = 0;
   uint32_t macl = 0;
   if (mac3 != 0) {
-    mach = ((mac3 >> 16) & 0xFF) << 16;
-    mach |= ((mac3 >> 8) & 0xFF) << 8;
-    mach |= mac3 & 0xFF;
+    macl = (mac3 >> 16) & 0xFF;
+    macl |= ((mac3 >> 8) & 0xFF) << 8;
+    macl |= (mac3 & 0xFF) << 16;
   }
   else if (((mac1 >> 16) & 0xFF) == 0) {
-    mach = 0x18FE34;
+    macl = 0x34FE18;
   }
   else if (((mac1 >> 16) & 0xFF) == 1) {
-    mach = 0xACD074;
+    macl = 0x74D0AC;
   }
   String macStr = "";
-  if (mach > 0) {
-    macl = ((mac1 >> 8) & 0xFF) << 16;
-    macl |= (mac1 & 0xFF) << 8;
-    macl |= (mac0 >> 24) & 0xFF;
-  
+  if (macl > 0) {
+    mach = (mac1 >> 8) & 0xFF;
+    mach |= (mac1 & 0xFF) << 8;
+    mach |= ((mac0 >> 24) & 0xFF) << 16;
+
     uint64_t maca = ((uint64_t)mach << 24) | macl;
     // Need uint64ToString with base 10 as ESP8266 WStrings does not support uint64_t
     while (maca > 0) {

@@ -1,33 +1,24 @@
 const char HTTP_GV_PAGE[] PROGMEM =
-  "<!DOCTYPE HTML>"
-  "<html>"
-    "<head>"
+  "<!DOCTYPE html>"
+  "<html lang='en'>"
+  "<head>"
     "<title>%s - GPIO Viewer</title>"                           // SettingsTextEscaped(SET_DEVICENAME).c_str()
+    "<meta charset='UTF-8'>"
     "<base href='%s'>"                                          // GV_BASE_URL
-    "<link id='defaultStyleSheet' rel='stylesheet' href=''>"
-    "<link id='boardStyleSheet' rel='stylesheet' href=''>"
-    "<link rel='icon' href='favicon.ico' type='image/x-icon'>"
-    "<script src='script/webSocket.js'></script>"
-    "<script src='script/boardSwitcher.js'></script>"
-    "<script>"
-      "var serverPort=%d;"                                      // GV_PORT
-      "var ip='%s';"                                            // WiFi.localIP().toString().c_str()
-      "var source=new EventSource('http://%s:%d/events');"      // WiFi.localIP().toString().c_str(), GV_PORT
-      "var sampling_interval='%d';"                             // Gv.sampling
-      "var psramSize='%d KB';"                                  // ESP.getPsramSize() / 1024
-      "var freeSketchSpace='%d KB';"                            // ESP_getFreeSketchSpace() / 1024
+    "<link rel='icon' href='favicon.ico'>"
+    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+    "<script type='module' crossorigin src='GPIOViewerVue.js'>"
     "</script>"
+    "<link rel='stylesheet' crossorigin href='assets/main.css'>"
   "</head>"
   "<body>"
-    "<div class='grid-container'>"
-      "<div id='messageBox' class='message-box hidden'></div>"
-      "<header class='header'></header>"
-      "<div class='image-container'>"
-        "<div id='imageWrapper' class='image-wrapper'>"
-          "<img id='boardImage' src='' alt='Board Image'>"
-          "<div id='indicators'></div>"
-        "</div>"
-      "</div>"
-    "</div>"
+    "<div id='app'></div>"
+    "<script>"
+      "window.gpio_settings = {"
+        "ip:'%s',"                                              // WiFi.localIP().toString().c_str()
+        "port:'%d',"                                            // GV_PORT
+        "freeSketchRam:'%d KB'"                                 // ESP_getFreeSketchSpace() / 1024
+      "};"
+    "</script>"
   "</body>"
   "</html>";
