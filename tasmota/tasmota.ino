@@ -770,8 +770,6 @@ void setup(void) {
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
 
-  XdrvCall(FUNC_ACTIVE);         // FUNC_ACTIVE
-
   TasmotaGlobal.rules_flag.system_init = 1;
 }
 
@@ -887,6 +885,7 @@ void Scheduler(void) {
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
+    XdrvCall(FUNC_ACTIVE);
     XdrvXsnsCall(FUNC_EVERY_SECOND);
   }
 
