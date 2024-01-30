@@ -38,9 +38,9 @@ FUNC_WEB_COL_SENSOR         |      |  2   |  1   |  3   |      | Add sensor data
 FUNC_COMMAND                |  x   |  1   |  2   |  3   |  4   | When a command is not recognized
 FUNC_COMMAND_DRIVER         |  x   |  x   |      |      |      | When command Driver\<id\> is executed
 FUNC_COMMAND_SENSOR         |  x   |      |  x   |      |      | When command Sensor\<id\> is executed
-FUNC_MQTT_SUBSCRIBE         |      |  x   |      |      |      | At end of MQTT subscriptions
+FUNC_MQTT_SUBSCRIBE         |      |  x   |      |  x   |      | At end of MQTT subscriptions
 FUNC_MQTT_INIT              |      |  x   |      |      |      | Once at end of MQTT connection
-FUNC_MQTT_DATA              |  x   |  x   |      |      |      | Before decoding command
+FUNC_MQTT_DATA              |  x   |  x   |      |  x   |      | Before decoding command
 FUNC_SET_POWER              |      |  1   |  2   |      |      | Before setting relays
 FUNC_SET_DEVICE_POWER       |  x   |  x   |      |      |      | Set relay
 FUNC_SHOW_SENSOR            |      |  x   |      |      |      | When FUNC_JSON_APPEND completes
