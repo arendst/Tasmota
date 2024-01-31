@@ -891,11 +891,11 @@ void EnergyEverySecond(void) {
           Energy->voltage[i] = 0;
           Energy->current[i] = 0;
           Energy->active_power[i] = 0;
-          if (!isnan(Energy->apparent_power[i])) Energy->apparent_power[i] = 0;
-          if (!isnan(Energy->reactive_power[i])) Energy->reactive_power[i] = 0;
-          if (!isnan(Energy->frequency[i]))      Energy->frequency[i] = 0;
-          if (!isnan(Energy->power_factor[i]))   Energy->power_factor[i] = 0;
-          if (!isnan(Energy->export_active[i]))  Energy->export_active[i] = 0;
+          if (!isnan(Energy->apparent_power[i])) { Energy->apparent_power[i] = 0; }
+          if (!isnan(Energy->reactive_power[i])) { Energy->reactive_power[i] = 0; }
+          if (!isnan(Energy->frequency[i]))      { Energy->frequency[i] = 0; }
+          if (!isnan(Energy->power_factor[i]))   { Energy->power_factor[i] = 0; }
+          if (!isnan(Energy->export_active[i]))  { Energy->export_active[i] = 0; }
           data_valid--;
         }
       }
@@ -1795,12 +1795,6 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_NETWORK_DOWN:
         XnrgCall(FUNC_NETWORK_DOWN);
-        break;
-      case FUNC_MQTT_SUBSCRIBE:
-        XnrgCall(FUNC_MQTT_SUBSCRIBE);
-        break;
-      case FUNC_MQTT_DATA:
-        result = XnrgCall(FUNC_MQTT_DATA);
         break;
       case FUNC_ACTIVE:
         result = true;
