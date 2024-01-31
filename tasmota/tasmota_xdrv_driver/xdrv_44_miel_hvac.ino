@@ -161,8 +161,12 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_MODE_FAN	0x07
 #define MIEL_HVAC_UPDATE_MODE_AUTO	0x08
 	uint8_t			temp;
-#define MIEL_HVAC_UPDATE_TEMP_MIN	16
+#ifndef MIEL_HVAC_UPDATE_TEMP_MIN
+#define MIEL_HVAC_UPDATE_TEMP_MIN	10
+#endif
+#ifndef MIEL_HVAC_UPDATE_TEMP_MAX
 #define MIEL_HVAC_UPDATE_TEMP_MAX	31
+#endif
 	uint8_t			fan;
 #define MIEL_HVAC_UPDATE_FAN_AUTO	0x00
 #define MIEL_HVAC_UPDATE_FAN_QUIET	0x01
