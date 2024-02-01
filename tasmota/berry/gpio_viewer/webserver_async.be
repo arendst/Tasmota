@@ -180,7 +180,7 @@ class Webserver_async_cnx
           else
             # remove the first bytes already sent
             self.buf_out.setbytes(0, buf_out, sent)
-            self.byf_out.resize(size(buf_out) - sent)
+            self.buf_out.resize(size(buf_out) - sent)
           end
         end
       end
