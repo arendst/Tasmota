@@ -1003,6 +1003,32 @@ static int m_setfloat(bvm *vm)
 }
 
 /*
+ * Add a 32 bits float
+ * `addfloat(value:real or int [, big_endian:bool]) -> instance`
+ * 
+ */
+static int m_addfloat(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 4); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+    if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
+    if (argc >=2 && (be_isint(vm, 2) || be_isreal(vm, 2))) {
+        float val_f = (float) be_toreal(vm, 2);
+        int32_t* val_i = (int32_t*) &val_f;
+        bbool be = bfalse;
+        if (argc >= 3) {
+            be = be_tobool(vm, 3);
+        }
+        if (be) { buf_add4_be(&attr, *val_i); } else { buf_add4_le(&attr, *val_i); }
+        be_pop(vm, argc - 1);
+        m_write_attributes(vm, 1, &attr);  /* update attributes */
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
+/*
  * Fills a buffer with another buffer.
  *
  * This is meant to be very flexible and avoid loops
@@ -1761,6 +1787,7 @@ void be_load_byteslib(bvm *vm)
         { "setbytes", m_setbytes },
         { "getfloat", m_getfloat },
         { "setfloat", m_setfloat },
+        { "addfloat", m_addfloat },
         { "item", m_item },
         { "setitem", m_setitem },
         { "size", m_size },
@@ -1806,6 +1833,7 @@ class be_class_bytes (scope: global, name: bytes) {
     geti, func(m_geti)
     getfloat, func(m_getfloat)
     setfloat, func(m_setfloat)
+    addfloat, func(m_addfloat)
     set, func(m_set)
     seti, func(m_set)
     setbytes, func(m_setbytes)

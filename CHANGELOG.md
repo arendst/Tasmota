@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
 - ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
+- Berry add `introspect.contains` and `bytes.addfloat`
 
 ### Breaking Changed
 

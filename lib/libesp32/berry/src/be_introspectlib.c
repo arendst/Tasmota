@@ -93,6 +93,19 @@ static int m_findmember(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_contains(bvm *vm)
+{
+    bbool contains = bfalse;
+    int top = be_top(vm);
+    if (top >= 2 && be_isstring(vm, 2) && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1))) {
+        if (be_getmember(vm, 1, be_tostring(vm, 2))) {
+            contains = btrue;
+        }
+    }
+    be_pushbool(vm, contains);
+    be_return(vm);
+}
+
 static int m_setmember(bvm *vm)
 {
     int top = be_top(vm);
@@ -225,6 +238,7 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("get", m_findmember),
     be_native_module_function("set", m_setmember),
+    be_native_module_function("contains", m_contains),
 
     be_native_module_function("module", m_getmodule),
     be_native_module_function("setmodule", m_setmodule),
@@ -245,6 +259,7 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     get, func(m_findmember)
     set, func(m_setmember)
+    contains, func(m_contains)
 
     module, func(m_getmodule)
     setmodule, func(m_setmodule)
