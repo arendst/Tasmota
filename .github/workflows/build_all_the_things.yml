@@ -47,7 +47,7 @@ jobs:
           path: ./build_output
 
   os-check-mac:
-    runs-on: macOS-14
+    runs-on: macos-14
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install wheel
-          #python -m pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -U platformio
           #platformio upgrade --dev
           #platformio update
