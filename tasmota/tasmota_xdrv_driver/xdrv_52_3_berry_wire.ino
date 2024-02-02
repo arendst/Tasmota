@@ -164,7 +164,7 @@ extern "C" {
         myWire.write(value);
       } else if (be_isstring(vm, 2)) {
         const char * s = be_tostring(vm, 1);
-        myWire.write(s);
+        myWire.write((uint8_t*) s, strlen(s));
       } else if ((buf = be_tobytes(vm, 2, &len)) != nullptr) {
         myWire.write((uint8_t*) buf, len);
       } else {
