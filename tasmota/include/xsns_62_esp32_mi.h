@@ -141,12 +141,15 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
-struct BTHome_info_t{
-  uint8_t encrypted:1;
-  uint8_t reserved:1;
-  uint8_t triggered:1;
-  uint8_t reserved2:2;
-  uint8_t version:2;
+union BTHome_info_t{
+  struct{
+    uint8_t encrypted:1;
+    uint8_t reserved:1;
+    uint8_t triggered:1;
+    uint8_t reserved2:2;
+    uint8_t version:2;
+  };
+  char byte_value;
 };
 
 struct BLERingBufferItem_t{

@@ -1827,7 +1827,8 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
   MIBLEsensors[_slot].RSSI = RSSI;
   MIBLEsensors[_slot].lastTime = millis();
 
-  BTHome_info_t info = (BTHome_info_t)_buf[0];
+  BTHome_info_t info;
+  info.byte_value = _buf[0];
   MIBLEsensors[_slot].feature.needsKey = info.encrypted;
 
   uint32_t idx = 1;
