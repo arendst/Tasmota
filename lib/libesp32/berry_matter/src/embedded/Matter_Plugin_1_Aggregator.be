@@ -26,9 +26,10 @@ import matter
 class Matter_Plugin_Aggregator : Matter_Plugin
   static var TYPE = "aggregator"      # name of the plug-in in json
   static var DISPLAY_NAME = "Aggregator"      # display name of the plug-in
-#   static var CLUSTERS  = {
-#     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
-#   }
+  static var CLUSTERS  = matter.consolidate_clusters(_class, {
+    # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
+    0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
+  })
   static var TYPES = { 0x000E: 1 }    # Aggregator
 
   #############################################################
@@ -39,14 +40,30 @@ class Matter_Plugin_Aggregator : Matter_Plugin
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
-    if   cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+    # ====================================================================================================
+    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
+      if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
+        return tlv_solo.set(TLV.U2, 0)      # no identification in progress
+      elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
+        return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
+      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
+        return tlv_solo.set(TLV.U4, 0)    # no features
+      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
+        return tlv_solo.set(TLV.U4, 4)    # "new data model format and notation"
+      end
 
+    elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
+      if attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
+        var pl = TLV.Matter_TLV_array()
+        # from connectedhome reference implementation
+        pl.add_TLV(nil, TLV.U2, 0x001E)     # Binding
+        return pl        
       # overwrite PartsList
-      if   attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
+      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
         for ep: eps
-          if ep < matter.AGGREGATOR_ENDPOINT
+          if ep != matter.AGGREGATOR_ENDPOINT
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end
@@ -62,6 +79,39 @@ class Matter_Plugin_Aggregator : Matter_Plugin
     # no match found, return that the attribute is unsupported
   end
 
+  #############################################################
+  # Invoke a command
+  #
+  # returns a TLV object if successful, contains the response
+  #   or an `int` to indicate a status
+  def invoke_request(session, val, ctx)
+    var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var command = ctx.command
+
+    # ====================================================================================================
+    if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
+
+      if   command == 0x0000            # ---------- Identify ----------
+        # ignore
+        return true
+      elif command == 0x0001            # ---------- IdentifyQuery ----------
+        # create IdentifyQueryResponse
+        # ID=1
+        #  0=Certificate (octstr)
+        var iqr = TLV.Matter_TLV_struct()
+        iqr.add_TLV(0, TLV.U2, 0)       # Timeout
+        ctx.command = 0x00              # IdentifyQueryResponse
+        return iqr
+      elif command == 0x0040            # ---------- TriggerEffect ----------
+        # ignore
+        return true
+      end
+      
+    else
+      return super(self).invoke_request(session, val, ctx)
+    end
+  end
+
 end
 matter.Plugin_Aggregator = Matter_Plugin_Aggregator
-  

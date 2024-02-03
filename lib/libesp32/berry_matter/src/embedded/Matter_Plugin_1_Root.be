@@ -154,6 +154,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
         var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
         for loc_fabric: fabs
+          if loc_fabric.is_marked_for_deletion()    continue end    # fabric is scheduled for deletion
           if loc_fabric == nil    continue  end
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
@@ -166,6 +167,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
         for loc_fabric: fabs
           if loc_fabric == nil    continue  end
+          if loc_fabric.is_marked_for_deletion()    continue end    # fabric is scheduled for deletion
           var root_ca_tlv = TLV.parse(loc_fabric.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
@@ -305,14 +307,20 @@ class Matter_Plugin_Root : Matter_Plugin
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
 
+      # overwrite ClientList
+      if   attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
+        var pl = TLV.Matter_TLV_array()
+        # from connectedhome reference implementation
+        pl.add_TLV(nil, TLV.U2, 0x001F)     # Access Control Cluster
+        return pl        
       # overwrite PartsList
-      if   attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
+      elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
         var disable_bridge_mode = self.device.disable_bridge_mode
         for ep: eps
           # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
-          if !disable_bridge_mode || ep < matter.AGGREGATOR_ENDPOINT
+          if !disable_bridge_mode || ep != matter.AGGREGATOR_ENDPOINT
             pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
           end
         end
@@ -572,6 +580,7 @@ class Matter_Plugin_Root : Matter_Plugin
           if fab.get_fabric_index() == index
             # tasmota.log("MTR: removing fabric " + fab.get_fabric_id().copy().reverse().tohex(), 2)
             # defer actual removal to send a response
+            fab.mark_for_deletion()       # this should not appear anymore in the list
             tasmota.set_timer(2000, def () self.device.remove_fabric(fab) end)
             return true                 # Ok
           end

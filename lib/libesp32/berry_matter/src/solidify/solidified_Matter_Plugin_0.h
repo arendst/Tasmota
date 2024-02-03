@@ -273,7 +273,7 @@ be_local_closure(Matter_Plugin_read_attribute,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[20]) {     /* constants */
+    ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
     /* K1   */  be_nested_str_weak(TLV),
     /* K2   */  be_nested_str_weak(cluster),
@@ -292,12 +292,10 @@ be_local_closure(Matter_Plugin_read_attribute,   /* name */
     /* K15  */  be_const_int(2),
     /* K16  */  be_const_int(3),
     /* K17  */  be_nested_str_weak(set),
-    /* K18  */  be_nested_str_weak(BOOL),
-    /* K19  */  be_nested_str_weak(read_attribute),
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[114]) {  /* code */
+    ( &(const binstruction[92]) {  /* code */
       0xB8120000,  //  0000  GETNGBL	R4	K0
       0x88100901,  //  0001  GETMBR	R4	R4	K1
       0x88140502,  //  0002  GETMBR	R5	R2	K2
@@ -386,32 +384,10 @@ be_local_closure(Matter_Plugin_read_attribute,   /* name */
       0x5828000B,  //  0055  LDCONST	R10	K11
       0x7C1C0600,  //  0056  CALL	R7	3
       0x80040E00,  //  0057  RET	1	R7
-      0x70020017,  //  0058  JMP		#0071
-      0x541E0038,  //  0059  LDINT	R7	57
-      0x1C1C0A07,  //  005A  EQ	R7	R5	R7
-      0x781E0012,  //  005B  JMPF	R7	#006F
-      0x541E0010,  //  005C  LDINT	R7	17
-      0x1C1C0C07,  //  005D  EQ	R7	R6	R7
-      0x781E0005,  //  005E  JMPF	R7	#0065
-      0x8C1C0711,  //  005F  GETMET	R7	R3	K17
-      0x88240912,  //  0060  GETMBR	R9	R4	K18
-      0x5828000B,  //  0061  LDCONST	R10	K11
-      0x7C1C0600,  //  0062  CALL	R7	3
-      0x80040E00,  //  0063  RET	1	R7
-      0x70020008,  //  0064  JMP		#006E
-      0x601C0003,  //  0065  GETGBL	R7	G3
-      0x5C200000,  //  0066  MOVE	R8	R0
-      0x7C1C0200,  //  0067  CALL	R7	1
-      0x8C1C0F13,  //  0068  GETMET	R7	R7	K19
-      0x5C240200,  //  0069  MOVE	R9	R1
-      0x5C280400,  //  006A  MOVE	R10	R2
-      0x5C2C0600,  //  006B  MOVE	R11	R3
-      0x7C1C0800,  //  006C  CALL	R7	4
-      0x80040E00,  //  006D  RET	1	R7
-      0x70020001,  //  006E  JMP		#0071
-      0x4C1C0000,  //  006F  LDNIL	R7
-      0x80040E00,  //  0070  RET	1	R7
-      0x80000000,  //  0071  RET	0
+      0x70020001,  //  0058  JMP		#005B
+      0x4C1C0000,  //  0059  LDNIL	R7
+      0x80040E00,  //  005A  RET	1	R7
+      0x80000000,  //  005B  RET	0
     })
   )
 );
@@ -1303,7 +1279,7 @@ be_local_class(Matter_Plugin,
         { be_const_key_weak(VIRTUAL, 6), be_const_bool(0) },
         { be_const_key_weak(node_label, 34), be_const_var(5) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(29, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(6,
@@ -1314,11 +1290,6 @@ be_local_class(Matter_Plugin,
         be_const_int(3),
         be_const_int(65532),
         be_const_int(65533),
-    }))    ) } )) },
-        { be_const_key_int(57, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(1,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(17),
     }))    ) } )) },
     }))    ) } )) },
         { be_const_key_weak(update_shadow_lazy, -1), be_const_closure(Matter_Plugin_update_shadow_lazy_closure) },

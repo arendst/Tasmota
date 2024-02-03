@@ -43,6 +43,7 @@ class Matter_Fabric : Matter_Expirable
   var _store                      # reference back to session store
   # timestamp
   var created
+  var deleted                     # timestamp when the deletion of fabric was requested, and deferred
   # fabric-index
   var fabric_index                # index number for fabrics, starts with `1`
   var fabric_parent               # index of the parent fabric, i.e. the fabric that triggered the provisioning (if nested)
@@ -76,6 +77,7 @@ class Matter_Fabric : Matter_Expirable
     self._sessions = matter.Expirable_list()
     self.fabric_label = ""
     self.created = tasmota.rtc_utc()
+    # self.deleted = nil      # no need to actually set to nil
     # init group counters
     self._counter_group_data_snd_impl = matter.Counter()
     self._counter_group_ctrl_snd_impl  = matter.Counter()
@@ -274,6 +276,16 @@ class Matter_Fabric : Matter_Expirable
       idx += 1
     end
     return session
+  end
+
+  #############################################################
+  # Mark for deleteion in the near future
+  #
+  def mark_for_deletion()
+    self.deleted = tasmota.rtc_utc()
+  end
+  def is_marked_for_deletion()
+    return self.deleted != nil
   end
 
   #############################################################
