@@ -58,24 +58,23 @@ enum GVPinTypes {
   GV_DigitalPin = 0,
   GV_PWMPin = 1,
   GV_AnalogPin = 2,
-#ifdef GV_INPUT_DETECTION
   GV_InputPin = 3,
   GV_InputPullUp = 4,
   GV_InputPullDn = 5
-#endif  // GV_INPUT_DETECTION
 };
 
 typedef struct {
   ESP8266WebServer *WebServer;
   Ticker ticker;
   String baseUrl;
+  int lastPinStates[MAX_GPIO_PIN];
   uint32_t lastSentWithNoActivity;
   uint32_t freeHeap;
   uint32_t freePSRAM;
   uint32_t sampling;
   uint16_t port;
-  int8_t lastPinStates[MAX_GPIO_PIN];
   bool sse_ready;
+  bool init_done;
 } tGV;
 tGV* GV = nullptr;
 WiFiClient GVWebClient;
@@ -94,6 +93,7 @@ int GetPinMode(uint8_t pin) {
   uint32_t port = digitalPinToPort(pin);
   volatile uint32_t *reg = portModeRegister(port);
   if (*reg & bit) { return OUTPUT; }                       // ESP8266 = 0x01, ESP32 = 0x03
+  // Detecting INPUT_PULLUP doesn't function consistently
   volatile uint32_t *out = portOutputRegister(port);
   return ((*out & bit) ? INPUT_PULLUP : INPUT);            // ESP8266 = 0x02 : 0x00, ESP32 = 0x05 : x01
 }
@@ -139,6 +139,8 @@ void GVBegin(void) {
 
 void GVHandleRoot(void) {
   GVCloseEvent();
+
+  GV->init_done = false;
 
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
@@ -299,15 +301,7 @@ void GVMonitorTask(void) {
   String jsonMessage = "{";
   for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
     int currentState = 0;
-/*  
-    // Skip unconfigured GPIO
-    uint32_t pin_type = GetPin(pin) / 32;
-    if (GPIO_NONE == pin_type) {
-      pintype = GV_DigitalPin;
-      originalValue = 0;
-//      currentState = 0;
-    }
-*/
+
 #ifdef ESP32
     // Read PWM GPIO
     int pwm_resolution = ledcReadDutyResolution(pin);
@@ -371,7 +365,18 @@ void GVMonitorTask(void) {
     }
   }
   jsonMessage += "}";
-  if (hasChanges) {
+
+  if (!GV->init_done) {
+    // Show at least configured GPIOs
+    for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
+      uint32_t pin_type = GetPin(pin) / 32;
+      if (pin_type != GPIO_NONE) {
+        GV->lastPinStates[pin] = -1;
+      }
+    }
+    GV->init_done = true;
+  }
+  else if (hasChanges) {
     GVEventSend(jsonMessage.c_str(), "gpio-state", millis());
   }
 

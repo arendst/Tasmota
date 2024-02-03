@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
 - ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
-- Berry add `introspect.contains` and `bytes.addfloat`
+- ESP32 MI32 Legacy initial support for sensors using BTHOME packet format (#20625)
+- Berry `introspect.contains` and `bytes.addfloat` (#20635)
 
 ### Breaking Changed
 
@@ -19,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
 - Utouch optimizations, rgb i2c init (#20596)
 - GPIO Viewer update from 1.0.7 to 1.5.0
+- Miel HVAC lower the minimum temperature to 10C (#20628)
 
 ### Fixed
 - Berry C mapping, raise an error if too many arguments are sent (#20604)

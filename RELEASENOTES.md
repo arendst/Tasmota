@@ -133,8 +133,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 used UART information
 - ESP32 support GPIOViewer when ``define USE_ESP32_GPIO_VIEWER`` is enabled
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC [#20381](https://github.com/arendst/Tasmota/issues/20381)
-- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
- [#20580](https://github.com/arendst/Tasmota/issues/20580)
+- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 [#20580](https://github.com/arendst/Tasmota/issues/20580)
+- ESP32 MI32 Legacy initial support for sensors using BTHOME packet format [#20625](https://github.com/arendst/Tasmota/issues/20625)
 - ESP32-C3 support for GPIO11 [#18350](https://github.com/arendst/Tasmota/issues/18350)
 - Berry GPIO viewer initial version using async webserver [#20416](https://github.com/arendst/Tasmota/issues/20416)
 - Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)
@@ -152,6 +152,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry solidification of strings longer than 255 bytes [#20529](https://github.com/arendst/Tasmota/issues/20529)
 - Berry syntax coloring for Notepad++ by FransO [#20541](https://github.com/arendst/Tasmota/issues/20541)
 - Berry/Zigbee web hook per device for customized status display [#20542](https://github.com/arendst/Tasmota/issues/20542)
+- Berry `introspect.contains` and `bytes.addfloat` [#20635](https://github.com/arendst/Tasmota/issues/20635)
 - Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation [#20552](https://github.com/arendst/Tasmota/issues/20552)
 - LVGL `lv.str_arr` [#20480](https://github.com/arendst/Tasmota/issues/20480)
 - LVGL option to add `lv.keyboard` extra widget [#20496](https://github.com/arendst/Tasmota/issues/20496)
@@ -176,6 +177,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Web file upload response on upload error [#20340](https://github.com/arendst/Tasmota/issues/20340)
 - Header `Host` is now collected by Webserver [#20446](https://github.com/arendst/Tasmota/issues/20446)
 - Utouch optimizations, rgb i2c init [#20596](https://github.com/arendst/Tasmota/issues/20596)
+- Miel HVAC lower the minimum temperature to 10C [#20628](https://github.com/arendst/Tasmota/issues/20628)
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
 - Refactored Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
