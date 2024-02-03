@@ -786,6 +786,7 @@ class Matter_Device
       if self.plugins_config != nil
         tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
         self.adjust_next_ep()
+        self.check_config_ep()
         self.plugins_persist = true
       end
       self.plugins_config_remotes = j.find("remotes", {})
@@ -1160,7 +1161,7 @@ class Matter_Device
     var m = {}
 
     # check if we have a light
-    var endpoint = 1
+    var endpoint = matter.START_ENDPOINT
     var light_present = false
 
     import light
@@ -1397,6 +1398,25 @@ class Matter_Device
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
     self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
+  end
+
+  #############################################################
+  # Check that all ep are valid, i.e. don't collied with root or aggregator
+  #
+  def check_config_ep()
+    # copy into list so we can change the map on the fly
+    var keys = []
+    for k: self.plugins_config.keys()   k.push(int(k))    end
+    for ep: keys
+      if ep == 0
+        tasmota.log("MTR: invalid entry with ep '0'", 2)
+        self.plugins_config.remove(str(ep))
+      elif ep == matter.AGGREGATOR_ENDPOINT
+        tasmota.log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
+        self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]
+        self.plugins_config.remove(str(ep))
+      end
+    end
   end
 
   #############################################################

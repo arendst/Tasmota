@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry `introspect.contains` and `bytes.addfloat` (#20635)
 
 ### Breaking Changed
+- Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations
 
 ### Changed
 - Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)

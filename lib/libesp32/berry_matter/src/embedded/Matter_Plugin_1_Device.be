@@ -119,8 +119,6 @@ class Matter_Plugin_Device : Matter_Plugin
         return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     else

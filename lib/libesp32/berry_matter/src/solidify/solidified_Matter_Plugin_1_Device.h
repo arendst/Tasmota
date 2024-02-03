@@ -60,7 +60,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[264]) {  /* code */
+    ( &(const binstruction[254]) {  /* code */
       0xB8120000,  //  0000  GETNGBL	R4	K0
       0x88100901,  //  0001  GETMBR	R4	R4	K1
       0x88140502,  //  0002  GETMBR	R5	R2	K2
@@ -100,7 +100,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x542A0003,  //  0024  LDINT	R10	4
       0x7C1C0600,  //  0025  CALL	R7	3
       0x80040E00,  //  0026  RET	1	R7
-      0x700200DE,  //  0027  JMP		#0107
+      0x700200D4,  //  0027  JMP		#00FD
       0x541E0003,  //  0028  LDINT	R7	4
       0x1C1C0A07,  //  0029  EQ	R7	R5	R7
       0x781E0016,  //  002A  JMPF	R7	#0042
@@ -126,7 +126,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x542A0003,  //  003E  LDINT	R10	4
       0x7C1C0600,  //  003F  CALL	R7	3
       0x80040E00,  //  0040  RET	1	R7
-      0x700200C4,  //  0041  JMP		#0107
+      0x700200BA,  //  0041  JMP		#00FD
       0x541E0004,  //  0042  LDINT	R7	5
       0x1C1C0A07,  //  0043  EQ	R7	R5	R7
       0x781E0011,  //  0044  JMPF	R7	#0057
@@ -147,7 +147,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x542A0003,  //  0053  LDINT	R10	4
       0x7C1C0600,  //  0054  CALL	R7	3
       0x80040E00,  //  0055  RET	1	R7
-      0x700200AF,  //  0056  JMP		#0107
+      0x700200A5,  //  0056  JMP		#00FD
       0x541E001C,  //  0057  LDINT	R7	29
       0x1C1C0A07,  //  0058  EQ	R7	R5	R7
       0x781E003E,  //  0059  JMPF	R7	#0099
@@ -213,10 +213,10 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x5C2C0600,  //  0095  MOVE	R11	R3
       0x7C1C0800,  //  0096  CALL	R7	4
       0x80040E00,  //  0097  RET	1	R7
-      0x7002006D,  //  0098  JMP		#0107
+      0x70020063,  //  0098  JMP		#00FD
       0x541E0038,  //  0099  LDINT	R7	57
       0x1C1C0A07,  //  009A  EQ	R7	R5	R7
-      0x781E0061,  //  009B  JMPF	R7	#00FE
+      0x781E0057,  //  009B  JMPF	R7	#00F4
       0xA41E2E00,  //  009C  IMPORT	R7	K23
       0x1C200D04,  //  009D  EQ	R8	R6	K4
       0x7822000A,  //  009E  JMPF	R8	#00AA
@@ -230,7 +230,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x942C171B,  //  00A6  GETIDX	R11	R11	K27
       0x7C200600,  //  00A7  CALL	R8	3
       0x80041000,  //  00A8  RET	1	R8
-      0x70020052,  //  00A9  JMP		#00FD
+      0x70020048,  //  00A9  JMP		#00F3
       0x54220004,  //  00AA  LDINT	R8	5
       0x1C200C08,  //  00AB  EQ	R8	R6	R8
       0x78220006,  //  00AC  JMPF	R8	#00B4
@@ -240,7 +240,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x7C2C0200,  //  00B0  CALL	R11	1
       0x7C200600,  //  00B1  CALL	R8	3
       0x80041000,  //  00B2  RET	1	R8
-      0x70020048,  //  00B3  JMP		#00FD
+      0x7002003E,  //  00B3  JMP		#00F3
       0x54220009,  //  00B4  LDINT	R8	10
       0x1C200C08,  //  00B5  EQ	R8	R6	R8
       0x78220015,  //  00B6  JMPF	R8	#00CD
@@ -265,7 +265,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x5C341000,  //  00C9  MOVE	R13	R8
       0x7C280600,  //  00CA  CALL	R10	3
       0x80041400,  //  00CB  RET	1	R10
-      0x7002002F,  //  00CC  JMP		#00FD
+      0x70020025,  //  00CC  JMP		#00F3
       0x5422000E,  //  00CD  LDINT	R8	15
       0x1C200C08,  //  00CE  EQ	R8	R6	R8
       0x7822000B,  //  00CF  JMPF	R8	#00DC
@@ -280,7 +280,7 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x7C2C0600,  //  00D8  CALL	R11	3
       0x7C200600,  //  00D9  CALL	R8	3
       0x80041000,  //  00DA  RET	1	R8
-      0x70020020,  //  00DB  JMP		#00FD
+      0x70020016,  //  00DB  JMP		#00F3
       0x54220010,  //  00DC  LDINT	R8	17
       0x1C200C08,  //  00DD  EQ	R8	R6	R8
       0x78220005,  //  00DE  JMPF	R8	#00E5
@@ -289,10 +289,10 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x582C0008,  //  00E1  LDCONST	R11	K8
       0x7C200600,  //  00E2  CALL	R8	3
       0x80041000,  //  00E3  RET	1	R8
-      0x70020017,  //  00E4  JMP		#00FD
+      0x7002000D,  //  00E4  JMP		#00F3
       0x54220011,  //  00E5  LDINT	R8	18
       0x1C200C08,  //  00E6  EQ	R8	R6	R8
-      0x7822000B,  //  00E7  JMPF	R8	#00F4
+      0x7822000A,  //  00E7  JMPF	R8	#00F3
       0x8C200706,  //  00E8  GETMET	R8	R3	K6
       0x88280918,  //  00E9  GETMBR	R10	R4	K24
       0xB82E3200,  //  00EA  GETNGBL	R11	K25
@@ -305,26 +305,16 @@ be_local_closure(Matter_Plugin_Device_read_attribute,   /* name */
       0x7C200600,  //  00F1  CALL	R8	3
       0x80041000,  //  00F2  RET	1	R8
       0x70020008,  //  00F3  JMP		#00FD
-      0x60200003,  //  00F4  GETGBL	R8	G3
-      0x5C240000,  //  00F5  MOVE	R9	R0
-      0x7C200200,  //  00F6  CALL	R8	1
-      0x8C201116,  //  00F7  GETMET	R8	R8	K22
-      0x5C280200,  //  00F8  MOVE	R10	R1
-      0x5C2C0400,  //  00F9  MOVE	R11	R2
-      0x5C300600,  //  00FA  MOVE	R12	R3
-      0x7C200800,  //  00FB  CALL	R8	4
-      0x80041000,  //  00FC  RET	1	R8
-      0x70020008,  //  00FD  JMP		#0107
-      0x601C0003,  //  00FE  GETGBL	R7	G3
-      0x5C200000,  //  00FF  MOVE	R8	R0
-      0x7C1C0200,  //  0100  CALL	R7	1
-      0x8C1C0F16,  //  0101  GETMET	R7	R7	K22
-      0x5C240200,  //  0102  MOVE	R9	R1
-      0x5C280400,  //  0103  MOVE	R10	R2
-      0x5C2C0600,  //  0104  MOVE	R11	R3
-      0x7C1C0800,  //  0105  CALL	R7	4
-      0x80040E00,  //  0106  RET	1	R7
-      0x80000000,  //  0107  RET	0
+      0x601C0003,  //  00F4  GETGBL	R7	G3
+      0x5C200000,  //  00F5  MOVE	R8	R0
+      0x7C1C0200,  //  00F6  CALL	R7	1
+      0x8C1C0F16,  //  00F7  GETMET	R7	R7	K22
+      0x5C240200,  //  00F8  MOVE	R9	R1
+      0x5C280400,  //  00F9  MOVE	R10	R2
+      0x5C2C0600,  //  00FA  MOVE	R11	R3
+      0x7C1C0800,  //  00FB  CALL	R7	4
+      0x80040E00,  //  00FC  RET	1	R7
+      0x80000000,  //  00FD  RET	0
     })
   )
 );
@@ -597,17 +587,19 @@ be_local_class(Matter_Plugin_Device,
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
-        { be_const_key_int(4, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(3,
+        { be_const_key_int(29, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(6,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
+        be_const_int(1),
+        be_const_int(2),
+        be_const_int(3),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(57, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(7,
+        be_const_list( *     be_nested_list(6,
     ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(17),
         be_const_int(3),
         be_const_int(5),
         be_const_int(10),
@@ -623,13 +615,10 @@ be_local_class(Matter_Plugin_Device,
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
-        { be_const_key_int(29, 1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(6,
+        { be_const_key_int(4, 1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(3,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
-        be_const_int(1),
-        be_const_int(2),
-        be_const_int(3),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
