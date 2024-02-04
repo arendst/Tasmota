@@ -72,9 +72,10 @@ typedef struct {
   uint32_t freeHeap;
   uint32_t freePSRAM;
   uint32_t sampling;
+  uint32_t init_done;
   uint16_t port;
+  bool mutex;
   bool sse_ready;
-  bool init_done;
 } tGV;
 tGV* GV = nullptr;
 WiFiClient GVWebClient;
@@ -140,7 +141,8 @@ void GVBegin(void) {
 void GVHandleRoot(void) {
   GVCloseEvent();
 
-  GV->init_done = false;
+  GV->init_done = 2000 / GV->sampling;     // Allow 2 seconds to stabilize on GPIO usage fixing slow browsers
+  GV->mutex = false;
 
   char* content = ext_snprintf_malloc_P(HTTP_GV_PAGE, 
                                         SettingsTextEscaped(SET_DEVICENAME).c_str(),
@@ -261,7 +263,7 @@ void GVHandleEvents(void) {
 
   GV->sse_ready = true;                                     // Ready for async updates
   if (GV->sampling != 100) {
-    GV->ticker.attach_ms(GV->sampling, GVMonitorTask);       // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
+    GV->ticker.attach_ms(GV->sampling, GVMonitorTask);      // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
 }
@@ -276,7 +278,7 @@ void GVEventDisconnected(void) {
 
 void GVCloseEvent(void) {
   if (GV->WebServer) {
-    GVEventSend("{}", "close", millis());                  // Closes web page
+    GVEventSend("{}", "close", millis());                   // Closes web page
     GVEventDisconnected();
   }
 }
@@ -294,6 +296,9 @@ void GVEventSend(const char *message, const char *event, uint32_t id) {
 
 void GVMonitorTask(void) {
   // Monitor GPIO Values
+  if (GV->mutex) { return; }
+  GV->mutex = true;
+
   uint32_t originalValue;
   uint32_t pintype;
   bool hasChanges = false;
@@ -357,6 +362,10 @@ void GVMonitorTask(void) {
 #endif      
     }
 
+    if (GV->init_done) {
+      uint32_t pin_type = GetPin(pin) / 32;
+      GV->lastPinStates[pin] = (pin_type != GPIO_NONE) ? -1 : originalValue;  // During init provide configured GPIOs fixing slow browsers
+    }
     if (originalValue != GV->lastPinStates[pin]) { 
       if (hasChanges) { jsonMessage += ","; }
       jsonMessage += "\"" + String(pin) + "\":{\"s\":" + currentState + ",\"v\":" + originalValue + ",\"t\":" + pintype + "}";
@@ -365,19 +374,12 @@ void GVMonitorTask(void) {
     }
   }
   jsonMessage += "}";
-
-  if (!GV->init_done) {
-    // Show at least configured GPIOs
-    for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
-      uint32_t pin_type = GetPin(pin) / 32;
-      if (pin_type != GPIO_NONE) {
-        GV->lastPinStates[pin] = -1;
-      }
-    }
-    GV->init_done = true;
-  }
-  else if (hasChanges) {
+  if (hasChanges) {
     GVEventSend(jsonMessage.c_str(), "gpio-state", millis());
+  }
+
+  if (GV->init_done) {
+    GV->init_done--;
   }
 
   uint32_t heap = ESP_getFreeHeap();
@@ -417,6 +419,8 @@ void GVMonitorTask(void) {
   } else {
     GV->lastSentWithNoActivity = millis();
   }
+
+  GV->mutex = false;
 }
 
 /*********************************************************************************************\
