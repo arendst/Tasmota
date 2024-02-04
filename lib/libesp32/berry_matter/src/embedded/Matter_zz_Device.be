@@ -769,6 +769,7 @@ class Matter_Device
   # Load Matter Device parameters
   def load_param()
     import crypto
+    var dirty = false
     try
 
       var f = open(self.FILENAME)
@@ -786,7 +787,7 @@ class Matter_Device
       if self.plugins_config != nil
         tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
         self.adjust_next_ep()
-        self.check_config_ep()
+        dirty = self.check_config_ep()
         self.plugins_persist = true
       end
       self.plugins_config_remotes = j.find("remotes", {})
@@ -799,7 +800,6 @@ class Matter_Device
       end
     end
 
-    var dirty = false
     if self.root_discriminator == nil
       self.root_discriminator = crypto.random(2).get(0,2) & 0xFFF
       dirty = true
@@ -1403,20 +1403,26 @@ class Matter_Device
   #############################################################
   # Check that all ep are valid, i.e. don't collied with root or aggregator
   #
+  # return `true` if configuration was adjusted and needs to be saved
   def check_config_ep()
     # copy into list so we can change the map on the fly
+    var dirty = false
     var keys = []
     for k: self.plugins_config.keys()   k.push(int(k))    end
     for ep: keys
       if ep == 0
         tasmota.log("MTR: invalid entry with ep '0'", 2)
         self.plugins_config.remove(str(ep))
+        dirty = true
       elif ep == matter.AGGREGATOR_ENDPOINT
+        dirty = true
         tasmota.log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
         self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]
         self.plugins_config.remove(str(ep))
+        self.next_ep += 1
       end
     end
+    return dirty
   end
 
   #############################################################
