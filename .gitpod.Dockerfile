@@ -1,3 +1,3 @@
-FROM gitpod/workspace-full
-                    
+FROM gitpod/workspace-python-3.11
+
 USER gitpod
