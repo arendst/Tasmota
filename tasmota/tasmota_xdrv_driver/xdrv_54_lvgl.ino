@@ -18,7 +18,7 @@
 */
 
 
-#ifdef USE_LVGL
+#if defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)
 
 #include <renderer.h>
 #include "lvgl.h"
@@ -30,20 +30,26 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
-#include "Adafruit_LvGL_Glue.h"
-
-Adafruit_LvGL_Glue * glue;
+struct LVGL_Glue {
+  lv_display_t *lv_display = nullptr;
+  lv_indev_t *lv_indev = nullptr;
+  lv_color_t *lv_pixel_buf = nullptr;
+  lv_color_t *lv_pixel_buf2 = nullptr;
+  Ticker tick;
+  File * screenshot = nullptr;
+  bool first_frame = true;  // Tracks if a call to `lv_flush_callback` needs to wait for DMA transfer to complete
+};
+LVGL_Glue * lvgl_glue;
 
 // **************************************************
 // Logging
 // **************************************************
 #if LV_USE_LOG
 #ifdef USE_BERRY
-static void lvbe_debug(const char *msg);
-static void lvbe_debug(const char *msg) {
+static void lvbe_debug(lv_log_level_t, const char *msg);
+static void lvbe_debug(lv_log_level_t, const char *msg) {
   be_writebuffer("LVG: ", sizeof("LVG: "));
   be_writebuffer(msg, strlen(msg));
-  be_writebuffer("\n", sizeof("\n"));
 }
 #endif
 #endif
@@ -54,16 +60,13 @@ static void lvbe_debug(const char *msg) {
 // This is the flush function required for LittlevGL screen updates.
 // It receives a bounding rect and an array of pixel data (conveniently
 // already in 565 format, so the Earth was lucky there).
-void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
-  // Get pointer to glue object from indev user data
-  Adafruit_LvGL_Glue *glue = (Adafruit_LvGL_Glue *)disp->user_data;
-
+void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color_p);
+void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color_p) {
   uint16_t width = (area->x2 - area->x1 + 1);
   uint16_t height = (area->y2 - area->y1 + 1);
 
   // check if we are currently doing a screenshot
-  if (glue->getScreenshotFile() != nullptr) {
+  if (lvgl_glue->screenshot != nullptr) {
     // save pixels to file
     int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
     while (btw > 0) {
@@ -72,7 +75,7 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
       for (uint32_t i = 0; i < btw / 2; i++) (pix[i] = pix[i] << 8 | pix[i] >> 8);
 #endif
       if (btw > 0) {    // if we had a previous error (ex disk full) don't try to write anymore
-        int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
+        int32_t ret = lvgl_glue->screenshot->write((const uint8_t*) color_p, btw);
         if (ret >= 0) {
           btw -= ret;
         } else {
@@ -84,25 +87,23 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
     return; // ok
   }
 
-  Renderer *display = glue->display;
-
-  if (!glue->first_frame) {
-      //display->dmaWait();  // Wait for prior DMA transfer to complete
-      //display->endWrite(); // End transaction from any prior call
+  if (!lvgl_glue->first_frame) {
+      //renderer->dmaWait();  // Wait for prior DMA transfer to complete
+      //disrendererplay->endWrite(); // End transaction from any prior call
   } else {
-      glue->first_frame = false;
+      lvgl_glue->first_frame = false;
   }
 
   uint32_t pixels_len = width * height;
   uint32_t chrono_start = millis();
-  display->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
-  display->pushColors((uint16_t *)color_p, pixels_len, false);
-  display->setAddrWindow(0,0,0,0);
+  renderer->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
+  renderer->pushColors((uint16_t *)color_p, pixels_len, true);
+  renderer->setAddrWindow(0,0,0,0);
   uint32_t chrono_time = millis() - chrono_start;
 
   lv_disp_flush_ready(disp);
 
-  if (pixels_len >= 10000 && (!display->lvgl_param.use_dma)) {
+  if (pixels_len >= 10000 && (!renderer->lvgl_param.use_dma)) {
     AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
             chrono_time > 0 ? pixels_len / chrono_time : -1);
   }
@@ -336,54 +337,136 @@ extern "C" {
 
 }
 
+// ARCHITECTURE-SPECIFIC TIMER STUFF ---------------------------------------
+
+extern void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t * px_map);
+
+// Tick interval for LittlevGL internal timekeeping; 1 to 10 ms recommended
+static const int lv_tick_interval_ms = 5;
+
+static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
+
+// TOUCHSCREEN STUFF -------------------------------------------------------
+
+uint32_t Touch_Status(int32_t sel);
+
+//typedef void (*lv_indev_read_cb_t)(lv_indev_t * indev, lv_indev_data_t * data);
+void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data);
+void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
+  data->point.x = Touch_Status(1); // Last-pressed coordinates
+  data->point.y = Touch_Status(2);
+  data->state = Touch_Status(0) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+  data->continue_reading = false; /*No buffering now so no more data read*/
+  // keep data for TS calibration
+  lv_ts_calibration.state = data->state;
+  if (data->state == LV_INDEV_STATE_PRESSED) {    // if not pressed, the data may be invalid
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LVG: TS: %i, %i", data->point.x, data->point.y);
+    lv_ts_calibration.x = data->point.x;
+    lv_ts_calibration.y = data->point.y;
+    lv_ts_calibration.raw_x = Touch_Status(-1);
+    lv_ts_calibration.raw_y = Touch_Status(-2);
+  }
+}
+
+// Actual RAM usage will be 2X these figures, since using 2 DMA buffers...
+#define LV_BUFFER_ROWS 60 // Most others have a bit more space
+
 /************************************************************
  * Initialize the display / touchscreen drivers then launch lvgl
  *
- * We use Adafruit_LvGL_Glue to leverage the Adafruit
- * display ecosystem.
+ * We use our own simplified mapping on top of Universal display
  ************************************************************/
 extern Renderer *Init_uDisplay(const char *desc);
-
 
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
 
-  if (glue != nullptr) {
+  if (lvgl_glue != nullptr) {
     AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "LVGL was already initialized");
     return;
   }
 
   if (!renderer || uconfig) {
-#ifdef USE_UNIVERSAL_DISPLAY    // TODO - we will probably support only UNIV_DISPLAY
     renderer  = Init_uDisplay((char*)uconfig);
+    AddLog(LOG_LEVEL_ERROR, "LVG: Could not start Universal Display");
     if (!renderer) return;
-#else
-    return;
-#endif
   }
 
   renderer->DisplayOnff(true);
 
   // **************************************************
-  // Initialize the glue between Adafruit and LVGL
+  // Initialize LVGL
   // **************************************************
-  glue = new Adafruit_LvGL_Glue();
+  lvgl_glue = new LVGL_Glue;
 
-  // Initialize glue, passing in address of display & touchscreen
-  LvGLStatus status = glue->begin(renderer, (void*)1, false);
-  if (status != LVGL_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("Glue error %d"), status);
+  // Initialize lvgl_glue, passing in address of display & touchscreen
+  lv_init();
+
+  // Allocate LvGL display buffer (x2 because DMA double buffering)
+  bool status_ok = true;
+  size_t lvgl_buffer_size;
+  do {
+    //lvgl_buffer_size = LV_HOR_RES_MAX * LV_BUFFER_ROWS;
+    uint32_t flushlines = renderer->lvgl_pars()->fluslines;
+    lvgl_buffer_size = renderer->width() * (flushlines ? flushlines:LV_BUFFER_ROWS);
+    if (renderer->lvgl_pars()->use_dma) {
+      lvgl_buffer_size /= 2;
+      if (lvgl_buffer_size < 1000000) {
+        lvgl_glue->lv_pixel_buf2 = new lv_color_t[lvgl_buffer_size];
+      }
+      if (!lvgl_glue->lv_pixel_buf2) {
+        status_ok = false;
+        break;
+      }
+    }
+
+    lvgl_glue->lv_pixel_buf = new lv_color_t[lvgl_buffer_size];
+    if (!lvgl_glue->lv_pixel_buf) {
+      status_ok = false;
+      break;
+    }
+  } while (0);
+
+  if (!status_ok) {
+    if (lvgl_glue->lv_pixel_buf) {
+      delete[] lvgl_glue->lv_pixel_buf;
+      lvgl_glue->lv_pixel_buf = NULL;
+    }
+    if (lvgl_glue->lv_pixel_buf2) {
+      delete[] lvgl_glue->lv_pixel_buf2;
+      lvgl_glue->lv_pixel_buf2 = NULL;
+    }
+    delete lvgl_glue;
+    lvgl_glue = nullptr;
+    AddLog(LOG_LEVEL_ERROR, "LVG: Could not allocate buffers");
     return;
   }
+
+  // Initialize LvGL display driver
+  lvgl_glue->lv_display = lv_display_create(renderer->width(), renderer->height());
+  lv_display_set_flush_cb(lvgl_glue->lv_display, lv_flush_callback);
+  lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size, LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+  // Initialize LvGL input device (touchscreen already started)
+  lvgl_glue->lv_indev = lv_indev_create();
+  lv_indev_set_type(lvgl_glue->lv_indev, LV_INDEV_TYPE_POINTER);
+  lv_indev_set_read_cb(lvgl_glue->lv_indev, lvgl_touchscreen_read);
+
+  // ESP 32------------------------------------------------
+  lvgl_glue->tick.attach_ms(lv_tick_interval_ms, lv_tick_handler);
+  // -----------------------------------------
 
   // Set the default background color of the display
   // This is normally overriden by an opaque screen on top
 #ifdef USE_BERRY
   // By default set the display color to black and opacity to 100%
-  lv_disp_set_bg_color(NULL, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
-  lv_disp_set_bg_opa(NULL, LV_OPA_COVER);
-  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_from_uint32(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
-  lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+  lv_obj_t * background = lv_layer_bottom();
+  lv_obj_set_style_bg_color(background, lv_color_hex(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+  lv_obj_set_style_bg_opa(background, LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+  // lv_disp_set_bg_color(NULL, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
+  // lv_disp_set_bg_opa(NULL, LV_OPA_COVER);
+  lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+  lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
@@ -420,14 +503,40 @@ void start_lvgl(const char * uconfig) {
                    UsePSRAM() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
 #endif
 #ifdef USE_LVGL_PNG_DECODER
-  lv_png_init();
+  lv_lodepng_init();
 #endif // USE_LVGL_PNG_DECODER
 
+  // TODO check later about cache size
   if (UsePSRAM()) {
-    lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE_PSRAM);
+    lv_cache_set_max_size(LV_GLOBAL_DEFAULT()->img_cache, LV_IMG_CACHE_DEF_SIZE_PSRAM, nullptr);
+  } else {
+    lv_cache_set_max_size(LV_GLOBAL_DEFAULT()->img_cache, LV_IMG_CACHE_DEF_SIZE_NOPSRAM, nullptr);
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
+}
+
+/*********************************************************************************************\
+ * Callable from Berry
+\*********************************************************************************************/
+bool lvgl_started(void);
+bool lvgl_started(void) {
+  return (lvgl_glue != nullptr);
+}
+
+void lvgl_set_screenshot_file(File * file);
+void lvgl_set_screenshot_file(File * file) {
+  lvgl_glue->screenshot = file;
+}
+
+void lvgl_reset_screenshot_file(void);
+void lvgl_reset_screenshot_file(void) {
+  lvgl_glue->screenshot = nullptr;
+}
+
+File * lvgl_get_screenshot_file(void);
+File * lvgl_get_screenshot_file(void) {
+  return lvgl_glue->screenshot;
 }
 
 /*********************************************************************************************\
@@ -441,7 +550,7 @@ bool Xdrv54(uint32_t function)
     case FUNC_INIT:
       break;
     case FUNC_LOOP:
-      if (glue) {
+      if (lvgl_glue) {
         if (TasmotaGlobal.sleep > USE_LVGL_MAX_SLEEP) {
           TasmotaGlobal.sleep = USE_LVGL_MAX_SLEEP;   // sleep is max 10ms
         }
@@ -479,4 +588,4 @@ bool Xdrv54(uint32_t function)
   return result;
 }
 
-#endif  // USE_LVGL
+#endif  // defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)

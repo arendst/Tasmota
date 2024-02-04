@@ -9,13 +9,15 @@
 #include <stddef.h>
 
 #include "lv_group.h"
-#include "../misc/lv_gc.h"
 #include "../core/lv_obj.h"
-#include "../core/lv_indev.h"
+#include "../core/lv_global.h"
+#include "../indev/lv_indev.h"
 
 /*********************
  *      DEFINES
  *********************/
+#define default_group LV_GLOBAL_DEFAULT()->group_default
+#define group_ll_p &(LV_GLOBAL_DEFAULT()->group_ll)
 
 /**********************
  *      TYPEDEFS
@@ -32,7 +34,6 @@ static lv_indev_t * get_indev(const lv_group_t * g);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_group_t * default_group;
 
 /**********************
  *      MACROS
@@ -44,12 +45,17 @@ static lv_group_t * default_group;
 
 void _lv_group_init(void)
 {
-    _lv_ll_init(&LV_GC_ROOT(_lv_group_ll), sizeof(lv_group_t));
+    _lv_ll_init(group_ll_p, sizeof(lv_group_t));
+}
+
+void _lv_group_deinit(void)
+{
+    _lv_ll_clear(group_ll_p);
 }
 
 lv_group_t * lv_group_create(void)
 {
-    lv_group_t * group = _lv_ll_ins_head(&LV_GC_ROOT(_lv_group_ll));
+    lv_group_t * group = _lv_ll_ins_head(group_ll_p);
     LV_ASSERT_MALLOC(group);
     if(group == NULL) return NULL;
     _lv_ll_init(&group->obj_ll, sizeof(lv_obj_t *));
@@ -61,19 +67,16 @@ lv_group_t * lv_group_create(void)
     group->editing        = 0;
     group->refocus_policy = LV_GROUP_REFOCUS_POLICY_PREV;
     group->wrap           = 1;
-
-#if LV_USE_USER_DATA
-    group->user_data = NULL;
-#endif
+    group->user_data      = NULL;
 
     return group;
 }
 
-void lv_group_del(lv_group_t * group)
+void lv_group_delete(lv_group_t * group)
 {
     /*Defocus the currently focused object*/
     if(group->obj_focus != NULL) {
-        lv_event_send(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
+        lv_obj_send_event(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
         lv_obj_invalidate(*group->obj_focus);
     }
 
@@ -86,16 +89,18 @@ void lv_group_del(lv_group_t * group)
     /*Remove the group from any indev devices */
     lv_indev_t * indev = lv_indev_get_next(NULL);
     while(indev) {
-        if(indev->group == group) {
+        if(lv_indev_get_group(indev) == group) {
             lv_indev_set_group(indev, NULL);
         }
         indev = lv_indev_get_next(indev);
     }
 
-    if(default_group == group) default_group = NULL;
+    /*If the group is the default group, set the default group as NULL*/
+    if(group == lv_group_get_default()) lv_group_set_default(NULL);
+
     _lv_ll_clear(&(group->obj_ll));
-    _lv_ll_remove(&LV_GC_ROOT(_lv_group_ll), group);
-    lv_mem_free(group);
+    _lv_ll_remove(group_ll_p, group);
+    lv_free(group);
 }
 
 void lv_group_set_default(lv_group_t * group)
@@ -185,7 +190,7 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
         /*If this is the only object in the group then focus to nothing.*/
         if(_lv_ll_get_head(&g->obj_ll) == g->obj_focus && _lv_ll_get_tail(&g->obj_ll) == g->obj_focus) {
-            lv_event_send(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
+            lv_obj_send_event(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
         }
         /*If there more objects in the group then focus to the next/prev object*/
         else {
@@ -205,7 +210,7 @@ void lv_group_remove_obj(lv_obj_t * obj)
     _LV_LL_READ(&g->obj_ll, i) {
         if(*i == obj) {
             _lv_ll_remove(&g->obj_ll, i);
-            lv_mem_free(i);
+            lv_free(i);
             if(obj->spec_attr) obj->spec_attr->group_p = NULL;
             break;
         }
@@ -217,7 +222,7 @@ void lv_group_remove_all_objs(lv_group_t * group)
 {
     /*Defocus the currently focused object*/
     if(group->obj_focus != NULL) {
-        lv_event_send(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
+        lv_obj_send_event(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
         lv_obj_invalidate(*group->obj_focus);
         group->obj_focus = NULL;
     }
@@ -246,8 +251,8 @@ void lv_group_focus_obj(lv_obj_t * obj)
     _LV_LL_READ(&g->obj_ll, i) {
         if(*i == obj) {
             if(g->obj_focus != NULL && obj != *g->obj_focus) {  /*Do not defocus if the same object needs to be focused again*/
-                lv_res_t res = lv_event_send(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
-                if(res != LV_RES_OK) return;
+                lv_result_t res = lv_obj_send_event(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
+                if(res != LV_RESULT_OK) return;
                 lv_obj_invalidate(*g->obj_focus);
             }
 
@@ -255,8 +260,8 @@ void lv_group_focus_obj(lv_obj_t * obj)
 
             if(g->obj_focus != NULL) {
                 if(g->focus_cb) g->focus_cb(g);
-                lv_res_t res = lv_event_send(*g->obj_focus, LV_EVENT_FOCUSED, get_indev(g));
-                if(res != LV_RES_OK) return;
+                lv_result_t res = lv_obj_send_event(*g->obj_focus, LV_EVENT_FOCUSED, get_indev(g));
+                if(res != LV_RESULT_OK) return;
                 lv_obj_invalidate(*g->obj_focus);
             }
             break;
@@ -288,14 +293,14 @@ void lv_group_focus_freeze(lv_group_t * group, bool en)
     else group->frozen = 1;
 }
 
-lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c)
+lv_result_t lv_group_send_data(lv_group_t * group, uint32_t c)
 {
     lv_obj_t * act = lv_group_get_focused(group);
-    if(act == NULL) return LV_RES_OK;
+    if(act == NULL) return LV_RESULT_OK;
 
-    if(lv_obj_has_state(act, LV_STATE_DISABLED)) return LV_RES_OK;
+    if(lv_obj_has_state(act, LV_STATE_DISABLED)) return LV_RESULT_OK;
 
-    return lv_event_send(act, LV_EVENT_KEY, &c);
+    return lv_obj_send_event(act, LV_EVENT_KEY, &c);
 }
 
 void lv_group_set_focus_cb(lv_group_t * group, lv_group_focus_cb_t focus_cb)
@@ -319,8 +324,8 @@ void lv_group_set_editing(lv_group_t * group, bool edit)
     lv_obj_t * focused = lv_group_get_focused(group);
 
     if(focused) {
-        lv_res_t res = lv_event_send(*group->obj_focus, LV_EVENT_FOCUSED, get_indev(group));
-        if(res != LV_RES_OK) return;
+        lv_result_t res = lv_obj_send_event(*group->obj_focus, LV_EVENT_FOCUSED, get_indev(group));
+        if(res != LV_RESULT_OK) return;
 
         lv_obj_invalidate(focused);
     }
@@ -359,18 +364,38 @@ lv_group_edge_cb_t lv_group_get_edge_cb(const lv_group_t * group)
 bool lv_group_get_editing(const lv_group_t * group)
 {
     if(!group) return false;
-    return group->editing ? true : false;
+    return group->editing;
 }
 
 bool lv_group_get_wrap(lv_group_t * group)
 {
     if(!group) return false;
-    return group->wrap ? true : false;
+    return group->wrap;
 }
 
 uint32_t lv_group_get_obj_count(lv_group_t * group)
 {
     return _lv_ll_get_len(&group->obj_ll);
+}
+
+uint32_t lv_group_get_count(void)
+{
+    return _lv_ll_get_len(group_ll_p);
+}
+
+lv_group_t  * lv_group_by_index(uint32_t index)
+{
+    uint32_t len = 0;
+    void * node;
+
+    for(node = _lv_ll_get_tail(group_ll_p); node != NULL; node = _lv_ll_get_prev(group_ll_p, node)) {
+        if(len == index) {
+            return (lv_group_t *) node;
+        }
+        len++;
+    }
+
+    return NULL;
 }
 /**********************
  *   STATIC FUNCTIONS
@@ -449,15 +474,15 @@ static bool focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
     if(obj_next == group->obj_focus) return focus_changed; /*There's only one visible object and it's already focused*/
 
     if(group->obj_focus) {
-        lv_res_t res = lv_event_send(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
-        if(res != LV_RES_OK) return focus_changed;
+        lv_result_t res = lv_obj_send_event(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
+        if(res != LV_RESULT_OK) return focus_changed;
         lv_obj_invalidate(*group->obj_focus);
     }
 
     group->obj_focus = obj_next;
 
-    lv_res_t res = lv_event_send(*group->obj_focus, LV_EVENT_FOCUSED, get_indev(group));
-    if(res != LV_RES_OK) return focus_changed;
+    lv_result_t res = lv_obj_send_event(*group->obj_focus, LV_EVENT_FOCUSED, get_indev(group));
+    if(res != LV_RESULT_OK) return focus_changed;
 
     lv_obj_invalidate(*group->obj_focus);
 
@@ -467,7 +492,7 @@ static bool focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
 }
 
 /**
- * Find an indev preferably with KEYPAD or ENCOEDR type that uses the given group.
+ * Find an indev preferably with POINTER type (because it's the most generic) that uses the given group.
  * In other words, find an indev, that is related to the given group.
  * In the worst case simply return the latest indev
  * @param g     a group the find in the indevs
@@ -475,24 +500,18 @@ static bool focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
  */
 static lv_indev_t * get_indev(const lv_group_t * g)
 {
-    lv_indev_t * indev_encoder = NULL;
-    lv_indev_t * indev_group = NULL;
+    lv_indev_t * indev_guess = NULL;
     lv_indev_t * indev = lv_indev_get_next(NULL);
+
     while(indev) {
         lv_indev_type_t indev_type = lv_indev_get_type(indev);
-        if(indev->group == g) {
-            /*Prefer KEYPAD*/
-            if(indev_type == LV_INDEV_TYPE_KEYPAD) return indev;
-            if(indev_type == LV_INDEV_TYPE_ENCODER) indev_encoder = indev;
-            indev_group = indev;
+        /*Prefer POINTER*/
+        if(indev_type == LV_INDEV_TYPE_POINTER) return indev;
+        if(lv_indev_get_group(indev) == g) {
+            indev_guess = indev;
         }
         indev = lv_indev_get_next(indev);
     }
 
-    if(indev_encoder) return indev_encoder;
-    if(indev_group) return indev_group;
-
-    /*In lack of a better option use the first input device. (It can be NULL if there is no input device)*/
-    return lv_indev_get_next(NULL);
+    return indev_guess;
 }
-

@@ -25,6 +25,18 @@ def init(lv_tasmota)
   lv.register_button_encoder = lv_tasmota.register_button_encoder
   lv.screenshot = lv_tasmota.screenshot
 
+  # add version information
+  lv.version = lv.version_major()
+  # use the following to retrofit the version:
+  #-
+    def fix_lv_version()
+      import introspect
+      var v = introspect.get(lv, "version")
+      # if `lv.version` does not exist, v is `module('undefined')`
+      if type(v) != 'int'  lv.version = 8 end
+    end
+  -#
+
   # add widgets
   lv.clock = lv_clock
   lv.clock_icon = lv_clock_icon
@@ -112,8 +124,7 @@ def splash()
   tas_logo.set_zoom(150)
   tas_logo.set_style_img_recolor_opa(255, 0)  # lv.PART_MAIN | lv.STATE_DEFAULT
   tas_logo.set_style_img_recolor(white, 0)    # lv.PART_MAIN | lv.STATE_DEFAULT
-  tas_logo.set_align(lv.ALIGN_LEFT_MID)
-  tas_logo.set_x(-12)
+  tas_logo.align(lv.ALIGN_LEFT_MID, -12, 0)
 
   var tas = lv.label(bg)
   # tas.set_style_bg_opa(lv.OPA_TRANSP, lv.PART_MAIN | lv.STATE_DEFAULT)

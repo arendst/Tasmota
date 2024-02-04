@@ -1,6 +1,6 @@
 {
   "name":"freetype",
-  "version": "2.10.4",
+  "version": "2.13.2",
   "description":"Software library to render fonts",
   "keywords":"freetype",
   "license": "FreeType License",
