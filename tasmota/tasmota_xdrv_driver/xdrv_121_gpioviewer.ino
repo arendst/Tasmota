@@ -110,15 +110,17 @@ int GetPinMode(uint32_t pin) {
 
 #endif  // GV_INPUT_DETECTION
 
-void GVInit(void) {
+bool GVInit(void) {
   if (!GV) {
     GV = (tGV*)calloc(sizeof(tGV), 1);
     if (GV) {
       GV->sampling = (GV_SAMPLING_INTERVAL < 20) ? 20 : GV_SAMPLING_INTERVAL;
       GV->baseUrl = GV_BASE_URL;
       GV->port = GV_PORT;
+      return true;
     }
   }
+  return false;
 }
 
 void GVStop(void) {
@@ -448,7 +450,7 @@ void CmndGvViewer(void) {
      GvViewer 1  - Turn viewer on
      GvViewer 2  - Toggle viewer state
   */
-  GVInit();
+  if (!GVInit()) { return; }
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     uint32_t state = XdrvMailbox.payload;
     if (2 == state) {                      // Toggle
@@ -473,7 +475,7 @@ void CmndGvSampling(void) {
      GvSampling 1           - Set default sampling interval
      GvSampling 20 .. 1000  - Set sampling interval
   */
-  GVInit();
+  if (!GVInit()) { return; }
   if ((SC_DEFAULT == XdrvMailbox.payload) || ((XdrvMailbox.payload >= 20) && (XdrvMailbox.payload <= 1000))) {
     GVCloseEvent();                        // Stop current updates
     GV->sampling = (SC_DEFAULT == XdrvMailbox.payload) ? GV_SAMPLING_INTERVAL : XdrvMailbox.payload;  // 20 - 1000 milliseconds
@@ -486,7 +488,7 @@ void CmndGvPort(void) {
      GvPort 1    - Select default port
      GvPort 5557 - Set port
   */
-  GVInit();
+  if (!GVInit()) { return; }
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 65536)) {
     GVCloseEvent();                        // Stop current updates
     GV->port = (SC_DEFAULT == XdrvMailbox.payload) ? GV_PORT : XdrvMailbox.payload;
@@ -499,7 +501,7 @@ void CmndGvUrl(void) {
      GvUrl 1     - Select default url
      GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
   */
-  GVInit();
+  if (!GVInit()) { return; }
   if (XdrvMailbox.data_len > 0) {
     GVCloseEvent();                        // Stop current updates
     GV->baseUrl = (SC_DEFAULT == XdrvMailbox.payload) ? GV_BASE_URL : XdrvMailbox.data;
@@ -521,7 +523,7 @@ void GVSetupAndStart(void) {
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_GPIO_VIEWER));
 
-  GVInit();
+  if (!GVInit()) { return; }
   GVBegin();                               // Start WebServer
 
   char redirect[100];
