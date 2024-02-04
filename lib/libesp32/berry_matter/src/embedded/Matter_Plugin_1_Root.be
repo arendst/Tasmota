@@ -561,7 +561,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # 2=DebugText (opt)
         var nocr = TLV.Matter_TLV_struct()
         nocr.add_TLV(0, TLV.U1, matter.SUCCESS)   # Status
-        nocr.add_TLV(1, TLV.U1, 1)   # fabric-index
+        nocr.add_TLV(1, TLV.U1, new_fabric.get_fabric_index())   # fabric-index
         ctx.command = 0x08              # NOCResponse
         return nocr
 
@@ -582,7 +582,16 @@ class Matter_Plugin_Root : Matter_Plugin
             # defer actual removal to send a response
             fab.mark_for_deletion()       # this should not appear anymore in the list
             tasmota.set_timer(2000, def () self.device.remove_fabric(fab) end)
-            return true                 # Ok
+
+            # create NOCResponse
+            # 0=StatusCode
+            # 1=FabricIndex (1-254) (opt)
+            # 2=DebugText (opt)
+            var nocr = TLV.Matter_TLV_struct()
+            nocr.add_TLV(0, TLV.U1, matter.SUCCESS)   # Status
+            nocr.add_TLV(1, TLV.U1, index)   # fabric-index
+            ctx.command = 0x08              # NOCResponse
+            return nocr
           end
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)
