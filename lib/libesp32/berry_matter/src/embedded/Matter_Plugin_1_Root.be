@@ -555,6 +555,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # tasmota.log("MTR: fabric=" + matter.inspect(session._fabric), 3)
         # tasmota.log("MTR: ------------------------------------------", 3)
         new_fabric.log_new_fabric()        # log that we registered a new fabric
+        new_fabric.assign_fabric_index()
         # create NOCResponse
         # 0=StatusCode
         # 1=FabricIndex (1-254) (opt)
@@ -569,8 +570,16 @@ class Matter_Plugin_Root : Matter_Plugin
         var label = val.findsubval(0)     # Label string max 32
         session.set_fabric_label(label)
         tasmota.log(format("MTR: .          Update fabric '%s' label='%s'", session._fabric.get_fabric_id().copy().reverse().tohex(), str(label)), 3)
-        ctx.status = matter.SUCCESS                  # OK
-        return nil                      # trigger a standalone ack
+        
+        # create NOCResponse
+        # 0=StatusCode
+        # 1=FabricIndex (1-254) (opt)
+        # 2=DebugText (opt)
+        var nocr = TLV.Matter_TLV_struct()
+        nocr.add_TLV(0, TLV.U1, matter.SUCCESS)   # Status
+        nocr.add_TLV(1, TLV.U1, session.get_fabric().get_fabric_index())   # fabric-index
+        ctx.command = 0x08              # NOCResponse
+        return nocr
 
       elif command == 0x000A            # ---------- RemoveFabric ----------
         var index = val.findsubval(0)     # FabricIndex
