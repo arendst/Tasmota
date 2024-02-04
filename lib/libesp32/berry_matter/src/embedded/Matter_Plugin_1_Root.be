@@ -172,8 +172,8 @@ class Matter_Plugin_Root : Matter_Plugin
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
           fab.add_TLV(2, TLV.U2, loc_fabric.get_admin_vendor())      # VendorID
-          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_id())            # FabricID
-          fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id())          # NodeID
+          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_id_as_int64())            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id_as_int64())          # NodeID
           fab.add_TLV(5, TLV.UTF1, loc_fabric.get_fabric_label())    # Label
           fab.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # idx
         end
@@ -561,7 +561,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # 2=DebugText (opt)
         var nocr = TLV.Matter_TLV_struct()
         nocr.add_TLV(0, TLV.U1, matter.SUCCESS)   # Status
-        nocr.add_TLV(1, TLV.U1, 1)   # fabric-index
+        nocr.add_TLV(1, TLV.U1, new_fabric.get_fabric_index())   # fabric-index
         ctx.command = 0x08              # NOCResponse
         return nocr
 
@@ -582,7 +582,16 @@ class Matter_Plugin_Root : Matter_Plugin
             # defer actual removal to send a response
             fab.mark_for_deletion()       # this should not appear anymore in the list
             tasmota.set_timer(2000, def () self.device.remove_fabric(fab) end)
-            return true                 # Ok
+
+            # create NOCResponse
+            # 0=StatusCode
+            # 1=FabricIndex (1-254) (opt)
+            # 2=DebugText (opt)
+            var nocr = TLV.Matter_TLV_struct()
+            nocr.add_TLV(0, TLV.U1, matter.SUCCESS)   # Status
+            nocr.add_TLV(1, TLV.U1, index)   # fabric-index
+            ctx.command = 0x08              # NOCResponse
+            return nocr
           end
         end
         tasmota.log("MTR: RemoveFabric fabric("+str(index)+") not found", 2)

@@ -97,6 +97,17 @@ class Matter_Fabric : Matter_Expirable
   def get_ca()                return self.root_ca_certificate end
   def get_fabric_index()      return self.fabric_index      end
 
+  def get_fabric_id_as_int64()
+    var i64 = int64()
+    i64.frombytes(self.fabric_id)
+    return i64
+  end
+  def get_device_id_as_int64()
+    var i64 = int64()
+    i64.frombytes(self.device_id)
+    return i64
+  end
+
   def get_admin_vendor_name()
     var vnd = self.admin_vendor
     if vnd == nil   return ""  end
