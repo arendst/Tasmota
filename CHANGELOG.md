@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry C mapping, raise an error if too many arguments are sent (#20604)
+- Matter fixed error when removing device from Google Home
 
 ### Removed
 
