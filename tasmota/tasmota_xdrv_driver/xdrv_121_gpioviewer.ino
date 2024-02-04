@@ -34,11 +34,7 @@
 #define XDRV_121              121
 
 //#define GV_INPUT_DETECTION                 // Report type of digital input
-
 #define GV_USE_ESPINFO                     // Provide ESP info
-#ifdef ESP32
-#define GV_USE_ESPINFO                     // Provide ESP info
-#endif
 
 #ifndef GV_PORT
 #define GV_PORT               5557         // [GvPort] SSE webserver port
@@ -46,7 +42,6 @@
 #ifndef GV_SAMPLING_INTERVAL
 #define GV_SAMPLING_INTERVAL  100          // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
 #endif
-
 #ifndef GV_BASE_URL
 #define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/"  // [GvUrl]
 #endif
