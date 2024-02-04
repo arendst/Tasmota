@@ -1,6 +1,7 @@
 // Command:
 //    python3 LVGLImage.py --ofmt C --cf RGB565A8 TASMOTA_Symbol_64.png
 
+#ifdef USE_LVGL
 #include "lvgl.h"
 
 
@@ -126,3 +127,4 @@ const lv_img_dsc_t TASMOTA_Symbol_64 = {
   .data = TASMOTA_Symbol_64_map,
 };
 
+#endif // USE_LVGL
