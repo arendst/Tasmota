@@ -172,8 +172,8 @@ class Matter_Plugin_Root : Matter_Plugin
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, TLV.B2, root_ca_tlv.findsubval(9)) # RootPublicKey
           fab.add_TLV(2, TLV.U2, loc_fabric.get_admin_vendor())      # VendorID
-          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_id())            # FabricID
-          fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id())          # NodeID
+          fab.add_TLV(3, TLV.U8, loc_fabric.get_fabric_id_as_int64())            # FabricID
+          fab.add_TLV(4, TLV.U8, loc_fabric.get_device_id_as_int64())          # NodeID
           fab.add_TLV(5, TLV.UTF1, loc_fabric.get_fabric_label())    # Label
           fab.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # idx
         end
