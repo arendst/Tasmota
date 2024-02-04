@@ -163,6 +163,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
+- Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations [#20654](https://github.com/arendst/Tasmota/issues/20654)
 
 ### Changed
 - ESP8266 platform update from 2023.04.00 to 2024.01.01 [#20539](https://github.com/arendst/Tasmota/issues/20539)
