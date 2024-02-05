@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
 - ESP32 MI32 Legacy initial support for sensors using BTHOME packet format (#20625)
 - Berry `introspect.contains` and `bytes.addfloat` (#20635)
+- Matter add human readable names for TimeSync cluster (#20666)
 
 ### Breaking Changed
 - Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
@@ -25,7 +26,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry C mapping, raise an error if too many arguments are sent (#20604)
-- Matter fixed error when removing device from Google Home
+- Matter error when removing device from Google Home (#20665)
+- Matter exception when fabrics is not initialized (#20667)
 
 ### Removed
 

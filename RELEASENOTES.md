@@ -160,6 +160,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota type `chart` [#20372](https://github.com/arendst/Tasmota/issues/20372)
 - HASPmota support for `min` and `max` attribute in `slider` [#20582](https://github.com/arendst/Tasmota/issues/20582)
 - Matter support for password for remote Tasmota devices [#20296](https://github.com/arendst/Tasmota/issues/20296)
+- Matter add human readable names for TimeSync cluster [#20666](https://github.com/arendst/Tasmota/issues/20666)
 
 ### Breaking Changed
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
@@ -201,6 +202,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry C mapping, raise an error if too many arguments are sent [#20604](https://github.com/arendst/Tasmota/issues/20604)
 - Matter Contact sensor was not triggering any update [#20232](https://github.com/arendst/Tasmota/issues/20232)
 - Matter support for Alexa [#20545](https://github.com/arendst/Tasmota/issues/20545)
+- Matter error when removing device from Google Home [#20665](https://github.com/arendst/Tasmota/issues/20665)
+- Matter exception when fabrics is not initialized [#20667](https://github.com/arendst/Tasmota/issues/20667)
 
 ### Removed
 - Max number of 30 backlog entries
