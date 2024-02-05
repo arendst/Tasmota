@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.4]
+## [13.3.0.5]
+### Added
+
+### Breaking Changed
+- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.3.0.4] 20240205
 ### Added
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
@@ -14,7 +26,6 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
-- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
 
 ### Changed
 - Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
@@ -29,8 +40,6 @@ All notable changes to this project will be documented in this file.
 - Berry C mapping, raise an error if too many arguments are sent (#20604)
 - Matter error when removing device from Google Home (#20665)
 - Matter exception when fabrics is not initialized (#20667)
-
-### Removed
 
 ## [13.3.0.3] 20240122
 ### Added
