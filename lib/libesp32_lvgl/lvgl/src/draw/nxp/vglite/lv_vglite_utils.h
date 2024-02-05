@@ -4,27 +4,9 @@
  */
 
 /**
- * MIT License
+ * Copyright 2022-2024 NXP
  *
- * Copyright 2022, 2023 NXP
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next paragraph)
- * shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef LV_VGLITE_UTILS_H
@@ -39,33 +21,43 @@ extern "C" {
  *********************/
 #include "../../../lv_conf_internal.h"
 
-#if LV_USE_GPU_NXP_VG_LITE
-#include "vg_lite.h"
+#if LV_USE_DRAW_VGLITE
 #include "../../sw/lv_draw_sw.h"
-#include "../../../misc/lv_log.h"
+
+#include "vg_lite.h"
+#include "vg_lite_options.h"
 
 /*********************
  *      DEFINES
  *********************/
 
-#ifndef LV_GPU_NXP_VG_LITE_LOG_ERRORS
-/** Enable logging of VG-Lite errors (\see LV_LOG_ERROR)*/
-#define LV_GPU_NXP_VG_LITE_LOG_ERRORS 1
+#define ENUM_TO_STRING(e) \
+    case (e):             \
+    return #e
+
+#if LV_USE_VGLITE_ASSERT
+#define VGLITE_ASSERT(expr) LV_ASSERT(expr)
+#else
+#define VGLITE_ASSERT(expr)
 #endif
 
-#ifndef LV_GPU_NXP_VG_LITE_LOG_TRACES
-/** Enable logging of VG-Lite traces (\see LV_LOG_ERROR)*/
-#define LV_GPU_NXP_VG_LITE_LOG_TRACES 0
-#endif
+#define VGLITE_ASSERT_MSG(expr, msg)                                 \
+    do {                                                             \
+        if(!(expr)) {                                                \
+            LV_LOG_ERROR(msg);                                       \
+            VGLITE_ASSERT(false);                                    \
+        }                                                            \
+    } while(0)
 
-
-/* The optimal Bezier control point offset for radial unit
- * see: https://spencermortensen.com/articles/bezier-circle/
- **/
-#define BEZIER_OPTIM_CIRCLE 0.551915024494f
-
-/* Draw lines for control points of Bezier curves */
-#define BEZIER_DBG_CONTROL_POINTS   0
+#define VGLITE_CHECK_ERROR(function)                                 \
+    do {                                                             \
+        vg_lite_error_t error = function;                            \
+        if(error != VG_LITE_SUCCESS) {                               \
+            LV_LOG_ERROR("Execute '" #function "' error(%d): %s",    \
+                         (int)error, vglite_error_to_string(error)); \
+            VGLITE_ASSERT(false);                                    \
+        }                                                            \
+    } while (0)
 
 /**********************
  *      TYPEDEFS
@@ -76,35 +68,44 @@ extern "C" {
  **********************/
 
 /**
- * Enable scissor and set the clipping box.
+ * Set the clipping box.
  *
  * @param[in] clip_area Clip area with relative coordinates of destination buffer
+ *
  */
-static inline void lv_vglite_set_scissor(const lv_area_t * clip_area);
-
-/**
- * Disable scissor.
- */
-static inline void lv_vglite_disable_scissor(void);
-
+static inline void vglite_set_scissor(const lv_area_t * clip_area);
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
+const char * vglite_error_to_string(vg_lite_error_t error);
+
+#if LV_USE_VGLITE_DRAW_ASYNC
 /**
- * Premultiplies and swizzles given LVGL 32bit color to obtain vglite color.
+ * Get VG-Lite command buffer flushed status.
  *
- * @param[in/out] vg_col32 The obtained vglite color
- * @param[in] lv_col32 The initial LVGL 32bit color
- * @param[in] opa The opacity to premultiply with
- * @param[in] vg_col_format The format of the resulting vglite color
- *
- * @retval LV_RES_OK Operation completed
- * @retval LV_RES_INV Error occurred (\see LV_GPU_NXP_VG_LITE_LOG_ERRORS)
  */
-lv_res_t lv_vglite_premult_and_swizzle(vg_lite_color_t * vg_col32, lv_color32_t lv_col32, lv_opa_t opa,
-                                       vg_lite_buffer_format_t vg_col_format);
+bool vglite_cmd_buf_is_flushed(void);
+#endif
+
+/**
+ * Flush command to VG-Lite.
+ *
+ */
+void vglite_run(void);
+
+/**
+ * Get vglite color. Premultiplies (if not hw already) and swizzles the given
+ * LVGL 32bit color to obtain vglite color.
+ *
+ * @param[in] lv_col32 The initial LVGL 32bit color
+ * @param[in] gradient True for gradient color
+ *
+ * @retval The vglite 32-bit color value:
+ *
+ */
+vg_lite_color_t vglite_get_color(lv_color32_t lv_col32, bool gradient);
 
 /**
  * Get vglite blend mode.
@@ -112,86 +113,56 @@ lv_res_t lv_vglite_premult_and_swizzle(vg_lite_color_t * vg_col32, lv_color32_t 
  * @param[in] lv_blend_mode The LVGL blend mode
  *
  * @retval The vglite blend mode
+ *
  */
-vg_lite_blend_t lv_vglite_get_blend_mode(lv_blend_mode_t lv_blend_mode);
+vg_lite_blend_t vglite_get_blend_mode(lv_blend_mode_t lv_blend_mode);
 
 /**
- * Clear cache and flush command to VG-Lite.
+ * Get vglite buffer format.
  *
- * @retval LV_RES_OK Run completed
- * @retval LV_RES_INV Error occurred (\see LV_GPU_NXP_VG_LITE_LOG_ERRORS)
+ * @param[in] cf Color format
+ *
+ * @retval The vglite buffer format
+ *
  */
-lv_res_t lv_vglite_run(void);
+vg_lite_buffer_format_t vglite_get_buf_format(lv_color_format_t cf);
+
+/**
+ * Get vglite buffer alignment.
+ *
+ * @param[in] cf Color format
+ *
+ * @retval Alignment requirement in bytes
+ *
+ */
+uint8_t vglite_get_alignment(lv_color_format_t cf);
+
+/**
+ * Check memory and stride alignment.
+ *
+ * @param[in] buf Buffer address
+ * @param[in] stride Stride of buffer in bytes
+ * @param[in] cf Color format - to calculate the expected alignment
+ *
+ * @retval true Alignment OK
+ *
+ */
+bool vglite_buf_aligned(const void * buf, uint32_t stride, lv_color_format_t cf);
 
 /**********************
  *      MACROS
  **********************/
 
-#define VG_LITE_COND_STOP(cond, txt)          \
-    do {                                      \
-        if (cond) {                           \
-            LV_LOG_ERROR("%s. STOP!", txt);   \
-            for ( ; ; );                      \
-        }                                     \
-    } while(0)
-
-#if LV_GPU_NXP_VG_LITE_LOG_ERRORS
-#define VG_LITE_ERR_RETURN_INV(err, fmt, ...) \
-    do {                                      \
-        if(err != VG_LITE_SUCCESS) {          \
-            LV_LOG_ERROR(fmt" (err = %d)",    \
-                         err, ##__VA_ARGS__); \
-            return LV_RES_INV;                \
-        }                                     \
-    } while (0)
-#else
-#define VG_LITE_ERR_RETURN_INV(err, fmt, ...) \
-    do {                                      \
-        if(err != VG_LITE_SUCCESS) {          \
-            return LV_RES_INV;                \
-        }                                     \
-    }while(0)
-#endif /*LV_GPU_NXP_VG_LITE_LOG_ERRORS*/
-
-#if LV_GPU_NXP_VG_LITE_LOG_TRACES
-#define VG_LITE_LOG_TRACE(fmt, ...)           \
-    do {                                      \
-        LV_LOG(fmt, ##__VA_ARGS__);     \
-    } while (0)
-
-#define VG_LITE_RETURN_INV(fmt, ...)          \
-    do {                                      \
-        LV_LOG_ERROR(fmt, ##__VA_ARGS__);     \
-        return LV_RES_INV;                    \
-    } while (0)
-#else
-#define VG_LITE_LOG_TRACE(fmt, ...)           \
-    do {                                      \
-    } while (0)
-#define VG_LITE_RETURN_INV(fmt, ...)          \
-    do {                                      \
-        return LV_RES_INV;                    \
-    }while(0)
-#endif /*LV_GPU_NXP_VG_LITE_LOG_TRACES*/
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static inline void lv_vglite_set_scissor(const lv_area_t * clip_area)
+static inline void vglite_set_scissor(const lv_area_t * clip_area)
 {
-    vg_lite_enable_scissor();
-    vg_lite_set_scissor((int32_t)clip_area->x1, (int32_t)clip_area->y1,
-                        (int32_t)lv_area_get_width(clip_area),
-                        (int32_t)lv_area_get_height(clip_area));
+    vg_lite_set_scissor(clip_area->x1, clip_area->y1, clip_area->x2 + 1, clip_area->y2 + 1);
 }
 
-static inline void lv_vglite_disable_scissor(void)
-{
-    vg_lite_disable_scissor();
-}
-
-#endif /*LV_USE_GPU_NXP_VG_LITE*/
+#endif /*LV_USE_DRAW_VGLITE*/
 
 #ifdef __cplusplus
 } /*extern "C"*/

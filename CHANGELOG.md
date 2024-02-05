@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
+- LVGL library updated to v9.0.0, some small breaking changes in C, none in HASPmota
 
 ### Changed
 - Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
