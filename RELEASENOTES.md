@@ -163,6 +163,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter add human readable names for TimeSync cluster [#20666](https://github.com/arendst/Tasmota/issues/20666)
 
 ### Breaking Changed
+- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota [#20659](https://github.com/arendst/Tasmota/issues/20659)
 - Refactoring of Berry `animate` module for WS2812 Leds [#20236](https://github.com/arendst/Tasmota/issues/20236)
 - Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations [#20654](https://github.com/arendst/Tasmota/issues/20654)
 
