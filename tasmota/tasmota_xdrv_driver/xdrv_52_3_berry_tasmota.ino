@@ -790,7 +790,7 @@ extern "C" {
 
   */
 
-  // web append with decimal conversion
+  // web append without decimal conversion
   int32_t l_webSend(bvm *vm);
   int32_t l_webSend(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -814,6 +814,7 @@ extern "C" {
       be_pop(vm, top);  // avoid Error be_top is non zero message
 #ifdef USE_WEBSERVER
       WSContentSend_PD(PSTR("%s"), msg);
+      WSContentSeparator(0);
 #endif  // USE_WEBSERVER
       be_return_nil(vm); // Return nil when something goes wrong
     }

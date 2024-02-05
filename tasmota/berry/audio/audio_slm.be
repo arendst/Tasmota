@@ -61,7 +61,7 @@ class Audio_SLM
             self.audio_input.get_gain(),
             self.rms,
             self.peak / 32767)
-    tasmota.web_send(msg)
+    tasmota.web_send_decimal(msg)
     self.peak = 0
     self.rms = 0
   end
