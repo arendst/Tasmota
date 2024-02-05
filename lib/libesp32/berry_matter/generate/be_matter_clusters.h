@@ -648,6 +648,38 @@ const matter_command_t matter_Commands_0037[] = {
   { 0xFFFF, NULL },
 };
 
+const matter_attribute_t matter_Attributes_0038[] = {
+  { 0x0000, 0, 0x02, "UTCTime" },
+  { 0x0001, 0, 0x02, "Granularity" },
+  { 0x0002, 0, 0x02, "TimeSource" },
+  { 0x0003, 0, 0x02, "TrustedTimeSource" },
+  { 0x0004, 0, 0x02, "DefaultNTP" },
+  { 0x0005, 0, 0x02, "TimeZone" },
+  { 0x0006, 0, 0x02, "DSTOffset" },
+  { 0x0007, 0, 0x02, "LocalTime" },
+  { 0x0008, 0, 0x02, "TimeZoneDatabase" },
+  { 0x0009, 0, 0x02, "NTPServerAvailable" },
+  { 0x000A, 0, 0x02, "TimeZoneListMaxSize" },
+  { 0x000B, 0, 0x02, "DSTOffsetListMaxSize" },
+  { 0x000C, 0, 0x02, "SupportsDNSResolve" },
+  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
+  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
+  { 0xFFFB, 0, 0x02, "AttributeList" },
+  { 0xFFFC, 0, 0x02, "FeatureMap" },
+  { 0xFFFD, 0, 0x02, "ClusterRevision" },
+  { 0xFFFF, 0, 0x00, NULL },
+};
+
+const matter_command_t matter_Commands_0038[] = {
+  { 0x0000, "SetUTCTime" },
+  { 0x0001, "SetTrustedTimeSource" },
+  { 0x0002, "SetTimeZone" },
+  { 0x0003, "SetTimzZoneResponse" },
+  { 0x0004, "SetDSTOffset" },
+  { 0x0005, "SetDefaultNTP" },
+  { 0xFFFF, NULL },
+};
+
 const matter_attribute_t matter_Attributes_0039[] = {
   { 0x0001, 0, 0x02, "VendorName" },
   { 0x0002, 0, 0x02, "VendorID" },
@@ -1531,6 +1563,7 @@ const matter_cluster_t matterAllClusters[] = {
   // { 0x0035, "ThreadNetworkDiagnostics", matter_Attributes_0035, matter_Commands_0035 },
   { 0x0036, "WiFiNetworkDiagnostics", matter_Attributes_0036, matter_Commands_0036 },
   { 0x0037, "EthernetNetworkDiagnostics", matter_Attributes_0037, matter_Commands_0037 },
+  { 0x0038, "TimeSync", matter_Attributes_0038, matter_Commands_0038 },
   { 0x0039, "BridgedDeviceBasic", matter_Attributes_0039, matter_Commands_0039 },
   { 0x003B, "Switch", matter_Attributes_003B, matter_Commands_003B },
   { 0x003C, "AdministratorCommissioning", matter_Attributes_003C, matter_Commands_003C },
