@@ -785,7 +785,7 @@ class Matter_Device
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
-        tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
+        tasmota.log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
         dirty = self.check_config_ep()
         self.plugins_persist = true
@@ -796,7 +796,7 @@ class Matter_Device
       end
     except .. as e, m
       if e != "io_error"
-        tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
+        tasmota.log("MTR: load_param Exception:" + str(e) + "|" + str(m), 2)
       end
     end
 
@@ -1408,7 +1408,7 @@ class Matter_Device
     # copy into list so we can change the map on the fly
     var dirty = false
     var keys = []
-    for k: self.plugins_config.keys()   k.push(int(k))    end
+    for k: self.plugins_config.keys()   keys.push(int(k))    end
     for ep: keys
       if ep == 0
         tasmota.log("MTR: invalid entry with ep '0'", 2)

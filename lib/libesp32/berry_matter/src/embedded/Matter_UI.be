@@ -1012,6 +1012,7 @@ class Matter_UI
   # Show bridge status
   #######################################################################
   def show_bridge_status()
+    if (self.device.plugins == nil)   return  end
     import webserver
     var bridge_plugin_by_host
     
@@ -1063,7 +1064,7 @@ class Matter_UI
     if self.matter_enabled()
 
       # mtc0 = close, mtc1 = open commissioning
-      var fabrics_count = self.device.sessions.count_active_fabrics()
+      var fabrics_count = (self.device.sessions != nil) ? self.device.sessions.count_active_fabrics() : 0
       if fabrics_count == 0
         webserver.content_send(format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: No active association"))
       else
