@@ -1121,6 +1121,7 @@ void SettingsDefaultSet2(void) {
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
   flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
 //  flag.mqtt_serial |= 0;
+  flag6.mqtt_disable_modbus |= MQTT_DISABLE_MODBUSRECEIVED;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
   flag3.button_switch_force_local |= MQTT_BUTTON_SWITCH_FORCE_LOCAL;
