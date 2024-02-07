@@ -539,6 +539,179 @@ bool UfsExecuteCommandFile(const char *fname) {
 }
 
 /*********************************************************************************************\
+ * File JSON settings support
+ * 
+ * {"UserSet1":{"Param1":123,"Param2":"Text1"},"UserSet2":{"Param1":123,"Param2":"Text2"},"UserSet3":{"Param1":123,"Param2":"Text3"}}
+\*********************************************************************************************/
+
+bool UfsJsonSettingsWrite(const char* data) {
+  // Add new UserSet replacing present UserSet
+  // Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+
+  if (!TfsFileExists(TASM_FILE_JSON_SETTINGS)) {
+    File ofile = ffsp->open(TASM_FILE_JSON_SETTINGS, "w");
+    if (!ofile) { return false; }
+
+    ofile.write((uint8_t*)data, strlen(data));
+    ofile.close();
+    return true;
+  }
+
+  char bfname[16];
+  strcpy_P(bfname, PSTR("/gtmp.json"));
+  File ofile = ffsp->open(bfname, "w");
+  if (!ofile) { return false; }
+  File ifile = ffsp->open(TASM_FILE_JSON_SETTINGS, "r");
+  if (!ifile) { 
+    ofile.close();
+    ffsp->remove(bfname);
+    return false;
+  }
+
+  char *p = strchr(data, '"');
+  if (!p) { return false; }
+  char *q = strchr(++p, '"');
+  if (!q) { return false; }
+  uint32_t len = (uint32_t)q - (uint32_t)p;
+  char key[len +1];
+  memcpy(key, p, len);
+  key[len] = '\0';                     // key = UserSet2
+
+  char buffer[32];                     // Max key length
+  uint8_t buf[1];
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  int entries = 0;
+  bool quote = false;
+  bool mine = false;
+  while (ifile.available()) {          // Process file
+    ifile.read(buf, 1);
+    if (bracket_count > 1) {           // Copy or skip old data
+      if (!mine) {
+        ofile.write(buf, 1);           // Copy data
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        break;                         // End of file
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          entries++;
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+          if (mine) {
+            entries--;                 // Skip old data
+          } else {
+            ofile.write((entries) ? (uint8_t*)",\"" : (uint8_t*)"{\"", 2);
+            ofile.write((uint8_t*)buffer, strlen(buffer));
+            ofile.write((uint8_t*)"\":{", 3);
+          }
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  ifile.close();
+  // Append new data
+  ofile.write((entries) ? (uint8_t*)"," : (uint8_t*)"{", 1);
+  ofile.write((uint8_t*)data +1, strlen(data) -1);
+  ofile.close();
+  if (index > sizeof(buffer) -2) { return false; }
+  ffsp->remove(TASM_FILE_JSON_SETTINGS);
+  ffsp->rename(bfname, TASM_FILE_JSON_SETTINGS);
+  return true;
+}
+
+String UfsJsonSettingsRead(const char* key) {
+  // Input "UserSet2"
+  // Returns {"Param1":123,"Param2":"Text2"}
+
+  String data = "";
+  if (!TfsFileExists(TASM_FILE_JSON_SETTINGS)) { return data; }
+  File file = ffsp->open(TASM_FILE_JSON_SETTINGS, "r");
+  if (!file) { return data; }
+
+  Trim((char*)key);
+  char buffer[128];
+  uint8_t buf[1] = { 0 };
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  bool quote = false;
+  bool mine = false;
+  while (file.available()) {           // Process file
+    file.read(buf, 1);
+    if (bracket_count > 1) {           // Build JSON
+      if (mine) {
+        buffer[index++] = buf[0];      // Add key data
+        if (index > sizeof(buffer) -2) {
+          buffer[index] = '\0'; 
+          data += buffer;              // Add buffer to result
+          index = 0;
+        }
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+        if (1 == bracket_count) {
+          if (mine) {
+            break;                     // End of key data
+          } else {
+            index = 0;                 // End of data which is not mine
+          }
+        }
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        index = 0;
+        break;                         // End of file - key not found
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          index = 0;
+          buffer[index++] = buf[0];    // Start of key data
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          index = 0;
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  file.close();
+  buffer[index] = '\0';
+  data += buffer;
+  return data;
+}
+
+/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
