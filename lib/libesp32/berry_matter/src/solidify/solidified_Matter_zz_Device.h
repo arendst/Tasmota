@@ -3899,7 +3899,7 @@ be_local_closure(Matter_Device_check_config_ep,   /* name */
       0xA8020007,  //  0008  EXBLK	0	#0011
       0x5C100600,  //  0009  MOVE	R4	R3
       0x7C100000,  //  000A  CALL	R4	0
-      0x8C140902,  //  000B  GETMET	R5	R4	K2
+      0x8C140502,  //  000B  GETMET	R5	R2	K2
       0x601C0009,  //  000C  GETGBL	R7	G9
       0x5C200800,  //  000D  MOVE	R8	R4
       0x7C1C0200,  //  000E  CALL	R7	1
@@ -4447,7 +4447,7 @@ be_local_closure(Matter_Device_load_param,   /* name */
     /* K16  */  be_nested_str_weak(config),
     /* K17  */  be_nested_str_weak(tasmota),
     /* K18  */  be_nested_str_weak(log),
-    /* K19  */  be_nested_str_weak(MTR_X3A_X20load_config_X20_X3D_X20),
+    /* K19  */  be_nested_str_weak(MTR_X3A_X20Load_config_X20_X3D_X20_X25s),
     /* K20  */  be_const_int(3),
     /* K21  */  be_nested_str_weak(adjust_next_ep),
     /* K22  */  be_nested_str_weak(check_config_ep),
@@ -4456,7 +4456,7 @@ be_local_closure(Matter_Device_load_param,   /* name */
     /* K25  */  be_nested_str_weak(remotes),
     /* K26  */  be_nested_str_weak(MTR_X3A_X20load_remotes_X20_X3D_X20),
     /* K27  */  be_nested_str_weak(io_error),
-    /* K28  */  be_nested_str_weak(MTR_X3A_X20Session_Store_X3A_X3Aload_X20Exception_X3A),
+    /* K28  */  be_nested_str_weak(MTR_X3A_X20load_param_X20Exception_X3A),
     /* K29  */  be_nested_str_weak(_X7C),
     /* K30  */  be_const_int(2),
     /* K31  */  be_nested_str_weak(random),
@@ -4521,10 +4521,10 @@ be_local_closure(Matter_Device_load_param,   /* name */
       0x781E000E,  //  0032  JMPF	R7	#0042
       0xB81E2200,  //  0033  GETNGBL	R7	K17
       0x8C1C0F12,  //  0034  GETMET	R7	R7	K18
-      0x60240008,  //  0035  GETGBL	R9	G8
-      0x8828010F,  //  0036  GETMBR	R10	R0	K15
-      0x7C240200,  //  0037  CALL	R9	1
-      0x00262609,  //  0038  ADD	R9	K19	R9
+      0x60240018,  //  0035  GETGBL	R9	G24
+      0x58280013,  //  0036  LDCONST	R10	K19
+      0x882C010F,  //  0037  GETMBR	R11	R0	K15
+      0x7C240400,  //  0038  CALL	R9	2
       0x58280014,  //  0039  LDCONST	R10	K20
       0x7C1C0600,  //  003A  CALL	R7	3
       0x8C1C0115,  //  003B  GETMET	R7	R0	K21
