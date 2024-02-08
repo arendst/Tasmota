@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v13.3.0.5
 ### Added
 - Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|OFF]``
+- Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages [#20678](https://github.com/arendst/Tasmota/issues/20678)
 - Display of active drivers using command ``status 4``
 - GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
 - GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
@@ -184,6 +185,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Webcam tweaks [#20451](https://github.com/arendst/Tasmota/issues/20451)
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
 - Refactored Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
+- Matter improve `MtrInfo` [#20686](https://github.com/arendst/Tasmota/issues/20686)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)

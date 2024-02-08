@@ -6,12 +6,13 @@ All notable changes to this project will be documented in this file.
 ## [13.3.0.5]
 ### Added
 - Internal support for persistent JSON settings using single file
+- Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages (#20678)
 
 ### Breaking Changed
 - ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
 
 ### Changed
-- Matter improve `MtrInfo`
+- Matter improve `MtrInfo` (#20686)
 
 ### Fixed
 
