@@ -60,7 +60,6 @@
 
 #define XSNS_62                    62
 
-#include <NimBLEDevice.h>
 // undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
 #undef LOG_LEVEL_DEBUG
 #undef LOG_LEVEL_NONE
