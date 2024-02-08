@@ -136,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC [#20381](https://github.com/arendst/Tasmota/issues/20381)
 - ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 [#20580](https://github.com/arendst/Tasmota/issues/20580)
 - ESP32 MI32 Legacy initial support for sensors using BTHOME packet format [#20625](https://github.com/arendst/Tasmota/issues/20625)
+- ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
 - ESP32-C3 support for GPIO11 [#18350](https://github.com/arendst/Tasmota/issues/18350)
 - Berry GPIO viewer initial version using async webserver [#20416](https://github.com/arendst/Tasmota/issues/20416)
 - Berry `introspect.set()` for class attributes [#20339](https://github.com/arendst/Tasmota/issues/20339)

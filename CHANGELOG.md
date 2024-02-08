@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Internal support for persistent JSON settings using single file
 - Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages (#20678)
+- ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
 
 ### Breaking Changed
 - ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
