@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
 
 ### Changed
+- Matter improve `MtrInfo`
 
 ### Fixed
 
