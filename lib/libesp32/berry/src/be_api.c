@@ -665,6 +665,7 @@ BERRY_API bbool be_copy(bvm *vm, int index)
 }
 
 /* `onlyins` limits the search to instance, and discards module. Makes sure getmethod does not return anything for module. */
+/* may return BE_NONE */
 static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
 {
     int type = BE_NIL;
@@ -681,12 +682,12 @@ static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
         bmodule *module = var_toobj(o);
         type = be_module_attr(vm, module, be_newstr(vm, k), top);
     }
-    return type == BE_NONE ? BE_NIL : type;
+    return type;
 }
 
 BERRY_API bbool be_getmember(bvm *vm, int index, const char *k)
 {
-    return ins_member(vm, index, k, bfalse) != BE_NIL;
+    return ins_member(vm, index, k, bfalse) != BE_NONE;
 }
 
 BERRY_API bbool be_getmethod(bvm *vm, int index, const char *k)
