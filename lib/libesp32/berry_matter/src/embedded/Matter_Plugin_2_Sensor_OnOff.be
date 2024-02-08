@@ -95,6 +95,8 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
   #
   # Output the current state in JSON
   # New values need to be appended with `,"key":value` (including prefix comma)
+  #
+  # Override the default behavior to use the key `OnOff` instead of `Power`
   def append_state_json()
     return f',"OnOff":{int(self.shadow_onoff)}'
   end

@@ -178,6 +178,7 @@ class Matter_Plugin_Device : Matter_Plugin
   # New values need to be appended with `,"key":value` (including prefix comma)
   def append_state_json()
     import introspect
+    import json
     var ret = ""
 
     # ret: string
@@ -191,6 +192,13 @@ class Matter_Plugin_Device : Matter_Plugin
         if type(val) == 'bool'    val = int(val)  end         # transform bool into 1/0
         ret += f',"{key}":{json.dump(val)}'
       end
+    end
+
+    # If sensor with JSON_NAME using `val`
+    var json_name = introspect.get(self, 'JSON_NAME')
+    if json_name && introspect.contains(self, 'shadow_value')
+      var val = (self.shadow_value != nil) ? json.dump(self.shadow_value) : "null"
+      ret += f',"{json_name}":{val}'
     end
 
     # lights

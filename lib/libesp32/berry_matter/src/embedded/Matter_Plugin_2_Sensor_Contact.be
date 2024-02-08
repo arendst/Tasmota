@@ -119,14 +119,5 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     super(self).update_virtual(payload_json)
   end
 
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Contact":{int(self.shadow_contact)}'
-  end
-
 end
 matter.Plugin_Sensor_Contact = Matter_Plugin_Sensor_Contact
