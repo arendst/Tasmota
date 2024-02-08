@@ -31,7 +31,6 @@
 #warning **** USE_DRV_FILE_JSON_DEMO is enabled ****
 
 #define XDRV_122               122
-#define XDRV_KEY               "drvset122"
 
 #define DRV_DEMO_MAX_DRV_TEXT  16
 
@@ -53,9 +52,10 @@ struct {
  * Driver Settings load and save
 \*********************************************************************************************/
 
+#define XDRV_122_KEY           "drvset122"
+
 bool DrvDemoLoadData(void) {
-  char key[20];
-  snprintf_P(key, sizeof(key), PSTR(XDRV_KEY));
+  char key[] = XDRV_122_KEY;
   String json = UfsJsonSettingsRead(key);
   if (json.length() == 0) { return false; }
 
@@ -63,19 +63,13 @@ bool DrvDemoLoadData(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
-  JsonParserToken val = root[PSTR("Crc")];
-  if (val) {
-    DrvDemoSettings.crc32 = val.getUInt();
-  }
-  val = root[PSTR("Version")];
-  if (val) {
-    DrvDemoSettings.version = val.getInt();
-  }
+  DrvDemoSettings.crc32 = root.getUInt(PSTR("Crc"), DrvDemoSettings.crc32);
+  DrvDemoSettings.version = root.getUInt(PSTR("Version"), DrvDemoSettings.version);
   JsonParserArray arr = root[PSTR("Text")];
   if (arr) {
     for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
       if (arr[i]) {
-        snprintf(DrvDemoSettings.drv_text[i], 10, arr[i].getStr());
+        strlcpy(DrvDemoSettings.drv_text[i], arr[i].getStr(), sizeof(DrvDemoSettings.drv_text[0]));
       }
     }
   }
@@ -83,17 +77,23 @@ bool DrvDemoLoadData(void) {
 }
 
 bool DrvDemoSaveData(void) {
-  Response_P(PSTR("{\"" XDRV_KEY "\":{\"Crc\":%u,\"Version\":%u,\"Text\":["), DrvDemoSettings.crc32, DrvDemoSettings.version);
+  Response_P(PSTR("{\"" XDRV_122_KEY "\":{"
+                   "\"Crc\":%u,"
+                   "\"Version\":%u,"
+                   "\"Text\":["),
+                   DrvDemoSettings.crc32,
+                   DrvDemoSettings.version);
   for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
-    ResponseAppend_P(PSTR("%s\"%s\""), (i)?",":"", DrvDemoSettings.drv_text[i]);
+    ResponseAppend_P(PSTR("%s\"%s\""),
+                          (i)?",":"",
+                          DrvDemoSettings.drv_text[i]);
   }
   ResponseAppend_P(PSTR("]}}"));
   return UfsJsonSettingsWrite(ResponseData());
 }
 
 void DrvDemoDeleteData(void) {
-  char key[20];
-  snprintf_P(key, sizeof(key), PSTR(XDRV_KEY));
+  char key[] = XDRV_122_KEY;
   UfsJsonSettingsDelete(key);  // Use defaults
 }
 

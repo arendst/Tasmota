@@ -670,6 +670,11 @@ bool UfsJsonSettingsWrite(const char* data) {
   // Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
   // Output 0 = Error, 1 = Append success
 
+  String json = data;
+  JsonParser parser((char*)json.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }         // Error - invalid JSON
+
   char filename[14];
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
   if (!TfsFileExists(filename)) {
