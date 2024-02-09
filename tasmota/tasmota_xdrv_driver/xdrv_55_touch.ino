@@ -234,7 +234,7 @@ bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interru
   I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
   attachInterrupt(irq_pin, []{ CST816S_event_available = true; }, interrupt);
   CST816S_found = true;
-  AddLog(LOG_LEVEL_INFO, PSTR("TI: CST816S, version: %d, versionInfo: %d.%d.%d"), version, versionInfo[0], versionInfo[1], versionInfo[2]);
+  AddLog(LOG_LEVEL_INFO, PSTR("UTI: CST816S, version: %d, versionInfo: %d.%d.%d"), version, versionInfo[0], versionInfo[1], versionInfo[2]);
   return CST816S_found;
 }
 #endif // USE_CST816S
@@ -290,10 +290,10 @@ bool FT5206_Touch_Init(TwoWire &i2c) {
   FT5206_found = false;
   FT5206_touchp = new FT5206_Class();
   if (FT5206_touchp->begin(i2c, FT5206_address)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: FT5206"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: FT5206 initialized"));
     FT5206_found = true;
   }
-  //AddLog(LOG_LEVEL_INFO, PSTR("TS: FT5206 %d"),FT5206_found);
+  //AddLog(LOG_LEVEL_INFO, PSTR("UTI: FT5206 %d"),FT5206_found);
   return FT5206_found;
 }
 
@@ -319,10 +319,10 @@ bool GT911_Touch_Init(TwoWire *i2c, int8_t irq_pin, int8_t rst_pin, uint16_t xs,
   GT911_found = false;
   GT911_touchp = new GT911();
   if (ESP_OK == GT911_touchp->begin(i2c, irq_pin, rst_pin, xs, ys)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: GT911 initialized"));
     GT911_found = true;
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911 failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: GT911 failed"));
   }
   return GT911_found;
 }
