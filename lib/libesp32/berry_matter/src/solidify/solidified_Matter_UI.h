@@ -100,7 +100,7 @@ be_local_closure(Matter_UI_page_part_mgr_adv,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
+    ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
     /* K1   */  be_nested_str_weak(check_privileged_access),
     /* K2   */  be_nested_str_weak(content_start),
@@ -109,13 +109,12 @@ be_local_closure(Matter_UI_page_part_mgr_adv,   /* name */
     /* K5   */  be_nested_str_weak(matter_enabled),
     /* K6   */  be_nested_str_weak(show_passcode_form),
     /* K7   */  be_nested_str_weak(show_fabric_info),
-    /* K8   */  be_nested_str_weak(content_button),
-    /* K9   */  be_nested_str_weak(BUTTON_CONFIGURATION),
-    /* K10  */  be_nested_str_weak(content_stop),
+    /* K8   */  be_nested_str_weak(web_add_config_button),
+    /* K9   */  be_nested_str_weak(content_stop),
     }),
     be_str_weak(page_part_mgr_adv),
     &be_const_str_solidified,
-    ( &(const binstruction[24]) {  /* code */
+    ( &(const binstruction[23]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
       0x7C080200,  //  0002  CALL	R2	1
@@ -134,12 +133,11 @@ be_local_closure(Matter_UI_page_part_mgr_adv,   /* name */
       0x7C080200,  //  000F  CALL	R2	1
       0x8C080107,  //  0010  GETMET	R2	R0	K7
       0x7C080200,  //  0011  CALL	R2	1
-      0x8C080308,  //  0012  GETMET	R2	R1	K8
-      0x88100309,  //  0013  GETMBR	R4	R1	K9
-      0x7C080400,  //  0014  CALL	R2	2
-      0x8C08030A,  //  0015  GETMET	R2	R1	K10
-      0x7C080200,  //  0016  CALL	R2	1
-      0x80000000,  //  0017  RET	0
+      0x8C080108,  //  0012  GETMET	R2	R0	K8
+      0x7C080200,  //  0013  CALL	R2	1
+      0x8C080309,  //  0014  GETMET	R2	R1	K9
+      0x7C080200,  //  0015  CALL	R2	1
+      0x80000000,  //  0016  RET	0
     })
   )
 );

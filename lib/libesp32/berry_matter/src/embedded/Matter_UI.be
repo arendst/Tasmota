@@ -68,7 +68,7 @@ class Matter_UI
   # ####################################################################################################
   # Init web handlers
   # ####################################################################################################
-  # Displays a "Autoconf" button on the configuration page
+  # Displays the Configure Matter button on the configuration page
   def web_add_config_button()
     import webserver
     # webserver.content_send("<p><form id=ac action='matterc' style='display: block;' method='get'><button>Configure Matter</button></form></p>")
@@ -524,7 +524,8 @@ class Matter_UI
       self.show_passcode_form()
       self.show_fabric_info()
     end
-    webserver.content_button(webserver.BUTTON_CONFIGURATION)
+    self.web_add_config_button()
+    #webserver.content_button(webserver.BUTTON_CONFIGURATION)
     webserver.content_stop()                        #- end of web page -#
   end
 
