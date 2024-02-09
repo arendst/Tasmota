@@ -812,8 +812,8 @@ class Matter_UI
             idx += 1
           end
         end
-        #- reload same page -#
-        webserver.redirect("/matterc?")
+        #- reload advanced page -#
+        webserver.redirect("/mattera?")
 
       #---------------------------------------------------------------------#
       # Reset to default auto-configuration
