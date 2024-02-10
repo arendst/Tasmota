@@ -34,7 +34,7 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     # 0x0006: inherited                             # On/Off 1.5 p.48
-    0x0008: [0,2,3,0x0F,0x11,0xFFFC,0xFFFD],        # Level Control 1.6 p.57
+    0x0008: [0,2,3,0x0F,0x11],                      # Level Control 1.6 p.57
   })
   static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
@@ -101,15 +101,10 @@ class Matter_Plugin_Bridge_Light1 : Matter_Plugin_Bridge_Light0
         else
           return tlv_solo.set(TLV.NULL, nil)
         end
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0X01)    # OnOff
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 5)    # "new data model format and notation"
       end
       
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

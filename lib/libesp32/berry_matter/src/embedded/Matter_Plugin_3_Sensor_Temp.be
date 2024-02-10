@@ -29,7 +29,7 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   static var JSON_NAME = "Temperature"              # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Temperature")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0402: [0,1,2,0xFFFC,0xFFFD],                  # Temperature Measurement p.97 - no writable
+    0x0402: [0,1,2],                                # Temperature Measurement p.97 - no writable
   })
   static var TYPES = { 0x0302: 2 }                  # Temperature Sensor, rev 2
 
@@ -74,15 +74,10 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
         return tlv_solo.set(TLV.I2, -5000)  # -50 °C
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 (*100) ----------
         return tlv_solo.set(TLV.I2, 15000)  # 150 °C
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # 4 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
 end
