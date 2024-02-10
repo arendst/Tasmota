@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Matter improve `MtrInfo` (#20686)
+- Matter implement auto-attributes
 
 ### Fixed
 

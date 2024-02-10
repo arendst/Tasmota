@@ -33,7 +33,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
-    0x0102: [7,0xC,0xF,0xFFFC],                      # Window Covering 5.3 p.289
+    0x0102: [7,0xC,0xF],                            # Window Covering 5.3 p.289
   })
   # inherited static var TYPES = { 0x0202: 2 }                  # New data model format and notation
 
@@ -125,7 +125,6 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
         return tlv_solo.set(TLV.U4, 3 + 4 + 16)    # Lift + Tilt + PA_LF + PA_TL
       end
     end
-    # else
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
 

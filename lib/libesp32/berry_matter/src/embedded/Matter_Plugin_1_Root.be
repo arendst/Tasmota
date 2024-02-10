@@ -34,7 +34,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
     0x0030: [0,1,2,3,4],              # GeneralCommissioning cluster 11.9 p.627
-    0x0031: [3,4,0xFFFC],             # Network Commissioning Cluster cluster 11.8 p.606
+    0x0031: [3,4],                    # Network Commissioning Cluster cluster 11.8 p.606
     0x0032: [],                       # Diagnostic Logs Cluster 11.10 p.637
     0x0033: [0,1,2,8],                # General Diagnostics Cluster 11.11 p.642
     0x0034: [],                       # Software Diagnostics Cluster 11.12 p.654
@@ -301,8 +301,6 @@ class Matter_Plugin_Root : Matter_Plugin
     elif cluster == 0x0031              # ========== Network Commissioning Cluster cluster 11.8 p.606 ==========
       if   attribute == 0x0003          #  ---------- ConnectMaxTimeSeconds / uint8 ----------
         return tlv_solo.set(TLV.U1, 30)    # 30 - value taking from example in esp-matter
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x04)  # Put Eth for now which should work for any on-network
       end
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
@@ -325,15 +323,10 @@ class Matter_Plugin_Root : Matter_Plugin
           end
         end
         return pl
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
-
     end
-    # no match found, return that the attribute is unsupported
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

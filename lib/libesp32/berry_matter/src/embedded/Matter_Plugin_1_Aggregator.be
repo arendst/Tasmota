@@ -28,7 +28,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
   static var DISPLAY_NAME = "Aggregator"      # display name of the plug-in
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
-    0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
+    0x0003: [0,1,],                   # Identify 1.2 p.16
   })
   static var TYPES = { 0x000E: 1 }    # Aggregator
 
@@ -46,10 +46,6 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         return tlv_solo.set(TLV.U2, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
         return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # no features
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # "new data model format and notation"
       end
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
@@ -68,15 +64,10 @@ class Matter_Plugin_Aggregator : Matter_Plugin
           end
         end
         return pl
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
-
     end
-    # no match found, return that the attribute is unsupported
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

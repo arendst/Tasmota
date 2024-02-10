@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
   static var DISPLAY_NAME = "Illuminance"         # display name of the plug-in
 
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
+    0x0400: [0,1,2],                                # Illuminance Measurement p.95 - no writable
   })
   static var TYPES = { 0x0106: 2 }                  # Illuminance Sensor, rev 2
 
@@ -77,15 +77,10 @@ class Matter_Plugin_Bridge_Sensor_Illuminance : Matter_Plugin_Bridge_Sensor
         return tlv_solo.set(TLV.U2, 1)  # 1 lux
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.U2, 0xFFFE)
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

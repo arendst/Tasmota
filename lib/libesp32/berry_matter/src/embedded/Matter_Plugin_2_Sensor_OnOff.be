@@ -29,7 +29,7 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 750                      # update every 750ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
+    0x0006: [0],                                    # On/Off 1.5 p.48
   })
   static var TYPES = { 0x0850: 2 }                  # OnOff Sensor, rev 2
 
@@ -79,15 +79,10 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
         return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
