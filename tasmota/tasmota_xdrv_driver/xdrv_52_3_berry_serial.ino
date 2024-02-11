@@ -26,10 +26,7 @@
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
- * import wire
- * 
- * wire.get_free_heap() -> int
- * 
+ * `ser = serial(4, 5, 9600, serial.SERIAL_7E1)`
 \*********************************************************************************************/
 extern "C" {
   TasmotaSerial * b_serial_get(struct bvm *vm) {
@@ -39,7 +36,7 @@ extern "C" {
     return ow;
   }
 
-  // Berry: `init(rx_gpio:int, tx_gpio:int, speed:int [, config:int])`
+  // Berry: `init(rx_gpio:int, tx_gpio:int, speed:int [, config:int, inverted:bool])`
   int32_t b_serial_init(struct bvm *vm);
   int32_t b_serial_init(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -48,10 +45,14 @@ extern "C" {
       int32_t tx = be_toint(vm, 3);
       int32_t speed = be_toint(vm, 4);
       int32_t mode = SERIAL_8N1;
+      bool inverted = false;
       if (argc >= 5 && be_isint(vm, 5)) {
         mode = be_toint(vm, 5);
       }
-      TasmotaSerial * ser = new TasmotaSerial(rx, tx);
+      if (argc >= 6 && be_isbool(vm, 6)) {
+        inverted = be_tobool(vm, 6);
+      }
+      TasmotaSerial * ser = new TasmotaSerial(rx, tx, 0, 0, TM_SERIAL_BUFFER_SIZE, inverted);
       bool ok = ser->begin(speed, mode);
       if (!ok) {
         delete ser;
