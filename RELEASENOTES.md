@@ -187,6 +187,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - IP stack compatible with new Core3 IPv6 implementation [#20509](https://github.com/arendst/Tasmota/issues/20509)
 - Refactored Pio filesystem download script [#20544](https://github.com/arendst/Tasmota/issues/20544)
 - Matter improve `MtrInfo` [#20686](https://github.com/arendst/Tasmota/issues/20686)
+- Matter redirects for Advanced Matter configuration UI [#20690](https://github.com/arendst/Tasmota/issues/20690)
+- Matter implement auto-attributes [#20694](https://github.com/arendst/Tasmota/issues/20694)
 
 ### Fixed
 - CVE-2021-36603 Cross Site Scripting (XSS) vulnerability [#12221](https://github.com/arendst/Tasmota/issues/12221)

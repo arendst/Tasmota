@@ -14,10 +14,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Matter improve `MtrInfo` (#20686)
-- Matter implement auto-attributes
+- Matter implement auto-attributes (#20694)
 
 ### Fixed
-- LVGL9 restore missing layouts
+- Matter redirects for Advanced Matter configuration UI (#20690)
+- LVGL9 restore missing layouts (#20701)
 
 ### Removed
 
