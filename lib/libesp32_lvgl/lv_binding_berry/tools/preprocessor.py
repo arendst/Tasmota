@@ -55,6 +55,7 @@ lv_fun_globs = [
                   "libs/qrcode/lv_qrcode.h",
                   "core/*.h",
                   "indev/lv_indev.h",
+                  "layouts/*/*.h",
                   # "draw/*.h",
                   "themes/lv_theme.h",
                   "draw/lv_draw_arc.h",
@@ -184,8 +185,7 @@ lv_fun_globs = [
                   "misc/*.h",
                   "widgets/*/*.h",
                   "display/lv_display.h",
-                  "extra/widgets/**/*.h",
-                  "extra/layouts/**/*.h",
+                  "layouts/**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 

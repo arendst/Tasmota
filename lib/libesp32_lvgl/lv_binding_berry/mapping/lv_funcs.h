@@ -700,6 +700,19 @@ bool lv_indev_remove_event(lv_indev_t * indev, uint32_t index)
 uint32_t lv_indev_remove_event_cb_with_user_data(lv_indev_t * indev, lv_event_cb_t event_cb, void * user_data)
 lv_result_t lv_indev_send_event(lv_indev_t * indev, lv_event_code_t code, void * param)
 
+// ../../lvgl/src/layouts/flex/lv_flex.h
+void lv_flex_init(void)
+void lv_obj_set_flex_flow(lv_obj_t * obj, lv_flex_flow_t flow)
+void lv_obj_set_flex_align(lv_obj_t * obj, lv_flex_align_t main_place, lv_flex_align_t cross_place, lv_flex_align_t track_cross_place)
+void lv_obj_set_flex_grow(lv_obj_t * obj, uint8_t grow)
+
+// ../../lvgl/src/layouts/grid/lv_grid.h
+void lv_grid_init(void)
+void lv_obj_set_grid_dsc_array(lv_obj_t * obj, const int32_t col_dsc[], const int32_t row_dsc[])
+void lv_obj_set_grid_align(lv_obj_t * obj, lv_grid_align_t column_align, lv_grid_align_t row_align)
+void lv_obj_set_grid_cell(lv_obj_t * obj, lv_grid_align_t column_align, int32_t col_pos, int32_t col_span, lv_grid_align_t row_align, int32_t row_pos, int32_t row_span)
+static inline int32_t lv_grid_fr(uint8_t x)
+
 // ../../lvgl/src/libs/qrcode/lv_qrcode.h
 lv_obj_t * lv_qrcode_create(lv_obj_t * parent)
 void lv_qrcode_set_size(lv_obj_t * obj, int32_t size)

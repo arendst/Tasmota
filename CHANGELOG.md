@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Matter implement auto-attributes
 
 ### Fixed
+- LVGL9 restore missing layouts
 
 ### Removed
 
