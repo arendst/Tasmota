@@ -71,7 +71,7 @@ void CounterIsrArg(void *arg) {
     // passed debounce check, save pin state and timing
     Counter.timer_low_high[index] = time;
     Counter.pin_state ^= (1<<index);
-    // do not count on rising edge
+    // for rising edge
     if bitRead(Counter.pin_state, index) {
       // PWMfrequency 100
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
@@ -79,7 +79,10 @@ void CounterIsrArg(void *arg) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
       if (index == 3) ACDimmerZeroCross(time);
 #endif //USE_AC_ZERO_CROSS_DIMMER
-      return;
+      // do not count on rising edge if CounterDebounceLow and CounterDebounceHigh is unset
+      if (0 == Settings->pulse_counter_debounce_low && 0 == Settings->pulse_counter_debounce_high) {
+        return;
+      }
     }
   }
 
