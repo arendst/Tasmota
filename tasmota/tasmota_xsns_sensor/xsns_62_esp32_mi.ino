@@ -60,7 +60,6 @@
 
 #define XSNS_62                    62
 
-#include <NimBLEDevice.h>
 // undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
 #undef LOG_LEVEL_DEBUG
 #undef LOG_LEVEL_NONE
@@ -95,11 +94,12 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.mode.connected = 1;
     pclient->updateConnParams(8,11,0,1000);
   }
-  void onDisconnect(NimBLEClient* pclient) {
+  void onDisconnect(NimBLEClient* pclient, int reason) {
     MI32.mode.connected = 0;
     MI32.infoMsg = MI32_DID_DISCONNECT;
-    MI32.conCtx->error = MI32_CONN_DID_DISCCONNECT;
-    MI32.mode.triggerBerryConnCB = 1; //mainly for unexpected or requested disconnects
+    MI32.conCtx->error = reason;
+    MI32.conCtx->operation = 5; //set for all disconnects that come from the remote device or connection loss
+    MI32.mode.triggerBerryConnCB = 1;
     //AddLog(LOG_LEVEL_DEBUG,PSTR("disconnected"));
   }
 };
@@ -1827,7 +1827,8 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
   MIBLEsensors[_slot].RSSI = RSSI;
   MIBLEsensors[_slot].lastTime = millis();
 
-  BTHome_info_t info = (BTHome_info_t)_buf[0];
+  BTHome_info_t info;
+  info.byte_value = _buf[0];
   MIBLEsensors[_slot].feature.needsKey = info.encrypted;
 
   uint32_t idx = 1;

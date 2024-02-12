@@ -165,7 +165,7 @@ class AXP192 : I2C_Driver
              "{s}Batt Voltage{m}%.3f V{e}"..
              "{s}Batt Current{m}%.1f mA{e}"..
              #"{s}Batt Power{m}%.3f{e}"..
-             "{s}Temp AXP{m}%.1f &deg;C{e}",
+             "{s}AXP Temperature{m}%.1f &deg;C{e}",
              self.get_vbus_voltage(), self.get_vbus_voltage(),
              self.get_bat_voltage(), self.get_bat_current(),
              #self.get_bat_power(),

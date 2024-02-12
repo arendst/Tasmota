@@ -772,9 +772,10 @@ class Matter_IM
     attr_name = attr_name ? " (" + attr_name + ")" : ""
 
     if res != nil
-      var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
       if tasmota.loglevel(3)
+        var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
         tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
+        # tasmota.log(f"MTR: {res.tlv2raw().tohex()}", 3)
       end
       # if matter.profiler.active && tasmota.loglevel(3)
       #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight

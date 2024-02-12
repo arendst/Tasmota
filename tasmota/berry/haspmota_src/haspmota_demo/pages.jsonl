@@ -36,17 +36,16 @@
 
 {"page":4,"comment":"---------- Page 4 - fan animation ----------"}
 {"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
-{"id":11,"obj":"img","src":"A:/haspmota_demo.tapp#noun_Fan_35097_140.png","auto_size":1,"w":140,"h":140,"x":50,"y":50,"image_recolor":"#0080FF","image_recolor_opa":150}
+{"id":11,"obj":"img","src":"A:/haspmota_demo.tapp#noun_Fan_35097_140.png","w":140,"h":140,"x":50,"y":50,"offset_y":18,"image_recolor":"#0080FF","image_recolor_opa":150}
 {"id":12,"obj":"spinner","parentid":11,"x":7,"y":6,"w":126,"h":126,"bg_opa":0,"border_width":0,"line_width":7,"line_width1":7,"type":2,"angle":120,"speed":1000,"value_str":3,"value_font":24}
 
 {"page":5,"comment":"---------- Page 5 - fancy watch ----------"}
 {"id":0,"bg_color":"#000000","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#000000"}
 
 {"id":10,"obj":"img","src":"A:/haspmota_demo.tapp#watch_ren_back_240.png","x":40,"y":0,"w":240,"h":240}
-{"id":11,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_hour_240.png","auto_size":1,"x":110,"y":45}
-{"id":12,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_min_240.png","auto_size":1}
-{"id":13,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_sec_240.png","auto_size":1,"x":110,"y":10}
+{"id":11,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_hour_240.png","x":110,"y":45}
+{"id":12,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_min_240.png"}
+{"id":13,"obj":"img","parentid":10,"src":"A:/haspmota_demo.tapp#watch_ren_sec_240.png","x":110,"y":10}
 {"id":15,"obj":"label","parentid":10,"x":184,"y":112,"w":18,"h":16,"text":"","align":1,"text_font":"montserrat-14"}
-
 
 {"comment":"--- Trigger sensors every 2 seconds ---","berry_run":"tasmota.add_cron('*/2 * * * * *', def () tasmota.publish_rule(tasmota.read_sensors()) end, 'oh_every_5_s')"}

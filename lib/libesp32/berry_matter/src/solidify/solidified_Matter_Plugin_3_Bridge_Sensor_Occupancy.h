@@ -209,7 +209,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute,   /* name
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
     /* K1   */  be_nested_str_weak(TLV),
     /* K2   */  be_nested_str_weak(cluster),
@@ -222,19 +222,18 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute,   /* name
     /* K9   */  be_const_int(1),
     /* K10  */  be_const_int(3),
     /* K11  */  be_const_int(2),
-    /* K12  */  be_nested_str_weak(U4),
-    /* K13  */  be_nested_str_weak(read_attribute),
+    /* K12  */  be_nested_str_weak(read_attribute),
     }),
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[69]) {  /* code */
+    ( &(const binstruction[49]) {  /* code */
       0xB8120000,  //  0000  GETNGBL	R4	K0
       0x88100901,  //  0001  GETMBR	R4	R4	K1
       0x88140502,  //  0002  GETMBR	R5	R2	K2
       0x88180503,  //  0003  GETMBR	R6	R2	K3
       0x541E0405,  //  0004  LDINT	R7	1030
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
-      0x781E0033,  //  0006  JMPF	R7	#003B
+      0x781E0020,  //  0006  JMPF	R7	#0028
       0x1C1C0D04,  //  0007  EQ	R7	R6	K4
       0x781E000F,  //  0008  JMPF	R7	#0019
       0x881C0105,  //  0009  GETMBR	R7	R0	K5
@@ -252,7 +251,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute,   /* name
       0x4C280000,  //  0015  LDNIL	R10
       0x7C1C0600,  //  0016  CALL	R7	3
       0x80040E00,  //  0017  RET	1	R7
-      0x70020020,  //  0018  JMP		#003A
+      0x7002000E,  //  0018  JMP		#0028
       0x1C1C0D09,  //  0019  EQ	R7	R6	K9
       0x781E0005,  //  001A  JMPF	R7	#0021
       0x8C1C0706,  //  001B  GETMET	R7	R3	K6
@@ -260,43 +259,23 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Occupancy_read_attribute,   /* name
       0x5828000A,  //  001D  LDCONST	R10	K10
       0x7C1C0600,  //  001E  CALL	R7	3
       0x80040E00,  //  001F  RET	1	R7
-      0x70020018,  //  0020  JMP		#003A
+      0x70020006,  //  0020  JMP		#0028
       0x1C1C0D0B,  //  0021  EQ	R7	R6	K11
-      0x781E0005,  //  0022  JMPF	R7	#0029
+      0x781E0004,  //  0022  JMPF	R7	#0028
       0x8C1C0706,  //  0023  GETMET	R7	R3	K6
       0x88240907,  //  0024  GETMBR	R9	R4	K7
       0x58280004,  //  0025  LDCONST	R10	K4
       0x7C1C0600,  //  0026  CALL	R7	3
       0x80040E00,  //  0027  RET	1	R7
-      0x70020010,  //  0028  JMP		#003A
-      0x541EFFFB,  //  0029  LDINT	R7	65532
-      0x1C1C0C07,  //  002A  EQ	R7	R6	R7
-      0x781E0005,  //  002B  JMPF	R7	#0032
-      0x8C1C0706,  //  002C  GETMET	R7	R3	K6
-      0x8824090C,  //  002D  GETMBR	R9	R4	K12
-      0x58280004,  //  002E  LDCONST	R10	K4
-      0x7C1C0600,  //  002F  CALL	R7	3
+      0x601C0003,  //  0028  GETGBL	R7	G3
+      0x5C200000,  //  0029  MOVE	R8	R0
+      0x7C1C0200,  //  002A  CALL	R7	1
+      0x8C1C0F0C,  //  002B  GETMET	R7	R7	K12
+      0x5C240200,  //  002C  MOVE	R9	R1
+      0x5C280400,  //  002D  MOVE	R10	R2
+      0x5C2C0600,  //  002E  MOVE	R11	R3
+      0x7C1C0800,  //  002F  CALL	R7	4
       0x80040E00,  //  0030  RET	1	R7
-      0x70020007,  //  0031  JMP		#003A
-      0x541EFFFC,  //  0032  LDINT	R7	65533
-      0x1C1C0C07,  //  0033  EQ	R7	R6	R7
-      0x781E0004,  //  0034  JMPF	R7	#003A
-      0x8C1C0706,  //  0035  GETMET	R7	R3	K6
-      0x8824090C,  //  0036  GETMBR	R9	R4	K12
-      0x5828000A,  //  0037  LDCONST	R10	K10
-      0x7C1C0600,  //  0038  CALL	R7	3
-      0x80040E00,  //  0039  RET	1	R7
-      0x70020008,  //  003A  JMP		#0044
-      0x601C0003,  //  003B  GETGBL	R7	G3
-      0x5C200000,  //  003C  MOVE	R8	R0
-      0x7C1C0200,  //  003D  CALL	R7	1
-      0x8C1C0F0D,  //  003E  GETMET	R7	R7	K13
-      0x5C240200,  //  003F  MOVE	R9	R1
-      0x5C280400,  //  0040  MOVE	R10	R2
-      0x5C2C0600,  //  0041  MOVE	R11	R3
-      0x7C1C0800,  //  0042  CALL	R7	4
-      0x80040E00,  //  0043  RET	1	R7
-      0x80000000,  //  0044  RET	0
     })
   )
 );
@@ -373,7 +352,7 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Occupancy,
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(5, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(8,
+        be_const_list( *     be_nested_list(12,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
@@ -381,51 +360,76 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Occupancy,
         be_const_int(3),
         be_const_int(4),
         be_const_int(5),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(4, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(3,
+        be_const_list( *     be_nested_list(7,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(57, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(7,
+        be_const_list( *     be_nested_list(12,
     ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(17),
         be_const_int(3),
         be_const_int(5),
         be_const_int(10),
         be_const_int(15),
         be_const_int(17),
         be_const_int(18),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
+        be_const_int(65532),
+        be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(3, 2), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(4,
+        be_const_list( *     be_nested_list(8,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(1030, 1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(5,
+        be_const_list( *     be_nested_list(9,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
         be_const_int(2),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },
         { be_const_key_int(29, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(6,
+        be_const_list( *     be_nested_list(10,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(0),
         be_const_int(1),
         be_const_int(2),
         be_const_int(3),
+        be_const_int(65528),
+        be_const_int(65529),
+        be_const_int(65530),
+        be_const_int(65531),
         be_const_int(65532),
         be_const_int(65533),
     }))    ) } )) },

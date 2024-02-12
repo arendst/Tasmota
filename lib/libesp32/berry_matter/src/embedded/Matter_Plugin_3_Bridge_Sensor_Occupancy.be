@@ -33,7 +33,7 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
   static var UPDATE_CMD = "Status 8"                # command to send for updates
 
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
+    0x0406: [0,1,2],                                # Occupancy Sensing p.105 - no writable
   })
   static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
 
@@ -85,15 +85,10 @@ class Matter_Plugin_Bridge_Sensor_Occupancy : Matter_Plugin_Bridge_HTTP
         return tlv_solo.set(TLV.U1, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
         return tlv_solo.set(TLV.U1, 0)  # unknown
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 4 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

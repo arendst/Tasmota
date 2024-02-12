@@ -3,14 +3,37 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.4]
+## [13.3.0.5]
+### Added
+- Internal support for persistent JSON settings using single file
+- Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages (#20678)
+- ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
+- Berry option to invert serial
+
+### Breaking Changed
+- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
+
+### Changed
+- Matter improve `MtrInfo` (#20686)
+- Matter implement auto-attributes (#20694)
+
+### Fixed
+- Matter redirects for Advanced Matter configuration UI (#20690)
+- LVGL9 restore missing layouts (#20701)
+
+### Removed
+
+## [13.3.0.4] 20240205
 ### Added
 - HASPmota support for `min` and `max` attribute in `slider` (#20582)
 - ESP32-C3 support for GPIO11 (#18350)
 - ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
-- Berry add `introspect.contains` and `bytes.addfloat`
+- ESP32 MI32 Legacy initial support for sensors using BTHOME packet format (#20625)
+- Berry `introspect.contains` and `bytes.addfloat` (#20635)
+- Matter add human readable names for TimeSync cluster (#20666)
 
 ### Breaking Changed
+- Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
 
 ### Changed
 - Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
@@ -19,11 +42,12 @@ All notable changes to this project will be documented in this file.
 - ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
 - Utouch optimizations, rgb i2c init (#20596)
 - GPIO Viewer update from 1.0.7 to 1.5.0
+- Miel HVAC lower the minimum temperature to 10C (#20628)
 
 ### Fixed
 - Berry C mapping, raise an error if too many arguments are sent (#20604)
-
-### Removed
+- Matter error when removing device from Google Home (#20665)
+- Matter exception when fabrics is not initialized (#20667)
 
 ## [13.3.0.3] 20240122
 ### Added

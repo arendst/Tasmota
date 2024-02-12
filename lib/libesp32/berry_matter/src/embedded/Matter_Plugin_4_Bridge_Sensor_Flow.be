@@ -28,7 +28,7 @@ class Matter_Plugin_Bridge_Sensor_Flow : Matter_Plugin_Bridge_Sensor
   static var DISPLAY_NAME = "Flow"              # display name of the plug-in
 
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0404: [0,1,2,0xFFFC,0xFFFD],              # Flow Measurement
+    0x0404: [0,1,2],                            # Flow Measurement
   })
   static var TYPES = { 0x0306: 1 }              # Flow Sensor, rev 1
 
@@ -70,15 +70,10 @@ class Matter_Plugin_Bridge_Sensor_Flow : Matter_Plugin_Bridge_Sensor
         return tlv_solo.set(TLV.U2, 0)  # 0 m3/h
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.U2, 65534)  # 65534 m3/h
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

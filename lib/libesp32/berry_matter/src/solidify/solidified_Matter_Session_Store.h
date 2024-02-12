@@ -508,20 +508,28 @@ be_local_closure(Matter_Session_Store_count_active_fabrics,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(remove_expired),
     /* K1   */  be_nested_str_weak(fabrics),
     /* K2   */  be_nested_str_weak(count_persistables),
+    /* K3   */  be_const_int(0),
     }),
     be_str_weak(count_active_fabrics),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[13]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x7C040200,  //  0001  CALL	R1	1
       0x88040101,  //  0002  GETMBR	R1	R0	K1
-      0x8C040302,  //  0003  GETMET	R1	R1	K2
-      0x7C040200,  //  0004  CALL	R1	1
-      0x80040200,  //  0005  RET	1	R1
+      0x4C080000,  //  0003  LDNIL	R2
+      0x20040202,  //  0004  NE	R1	R1	R2
+      0x78060004,  //  0005  JMPF	R1	#000B
+      0x88040101,  //  0006  GETMBR	R1	R0	K1
+      0x8C040302,  //  0007  GETMET	R1	R1	K2
+      0x7C040200,  //  0008  CALL	R1	1
+      0x80040200,  //  0009  RET	1	R1
+      0x70020000,  //  000A  JMP		#000C
+      0x80060600,  //  000B  RET	1	K3
+      0x80000000,  //  000C  RET	0
     })
   )
 );

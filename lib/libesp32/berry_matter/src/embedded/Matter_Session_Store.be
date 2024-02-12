@@ -102,7 +102,11 @@ class Matter_Session_Store
   # Count the number of commissionned fabrics, i.e. persisted
   def count_active_fabrics()
     self.remove_expired()      # clean before
-    return self.fabrics.count_persistables()
+    if self.fabrics != nil
+      return self.fabrics.count_persistables()
+    else
+      return 0
+    end
   end
 
   #############################################################

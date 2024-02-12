@@ -539,6 +539,230 @@ bool UfsExecuteCommandFile(const char *fname) {
 }
 
 /*********************************************************************************************\
+ * File JSON settings support using file /.drvset000
+ * 
+ * {"UserSet1":{"Param1":123,"Param2":"Text1"},"UserSet2":{"Param1":123,"Param2":"Text2"},"UserSet3":{"Param1":123,"Param2":"Text3"}}
+\*********************************************************************************************/
+
+bool _UfsJsonSettingsUpdate(const char* data) {
+  // Delete: Input UserSet2
+  // Append: Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) { return false; }  // Error - File not found
+
+  char bfname[14];
+  strcpy_P(bfname, PSTR("/settmp"));
+  File ofile = ffsp->open(bfname, "w");
+  if (!ofile) { return false; }        // Error - unable to open temporary file
+  File ifile = ffsp->open(filename, "r");
+  if (!ifile) { 
+    ofile.close();
+    ffsp->remove(bfname);
+    return false;                      // Error - unable to open settings file
+  }
+
+  bool append = false;
+  char* key = (char*)data;
+  char key_pos[32];                    // Max key length
+  char *p = strchr(data, '"');
+  if (p) {
+    append = true;
+    char *q = strchr(++p, '"');
+    if (!q) { return false; }          // Error - No valid key provided in data to append
+    uint32_t len = (uint32_t)q - (uint32_t)p;
+    memcpy(key_pos, p, len);
+    key_pos[len] = '\0';               // key = UserSet2
+    key = key_pos;
+  }
+
+  char buffer[32];                     // Max key length
+  uint8_t buf[1];
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  int entries = 0;
+  bool quote = false;
+  bool mine = false;
+  bool deleted = false;
+  while (ifile.available()) {          // Process file
+    ifile.read(buf, 1);
+    if (bracket_count > 1) {           // Copy or skip old data
+      if (!mine) {
+        ofile.write(buf, 1);           // Copy data
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        break;                         // End of file
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          entries++;
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+          if (mine) {
+            entries--;                 // Skip old data
+            deleted = true;
+          } else {
+            ofile.write((entries) ? (uint8_t*)",\"" : (uint8_t*)"{\"", 2);
+            ofile.write((uint8_t*)buffer, strlen(buffer));
+            ofile.write((uint8_t*)"\":{", 3);
+          }
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  ifile.close();
+  if (append) {
+    // Append new data
+    ofile.write((entries) ? (uint8_t*)"," : (uint8_t*)"{", 1);
+    ofile.write((uint8_t*)data +1, strlen(data) -1);
+  } else {
+    // Delete data
+    if (entries) {
+      ofile.write((uint8_t*)"}", 1);
+    }
+  }
+  ofile.close();
+
+  if (index > sizeof(buffer) -2) { 
+    // No changes
+    ffsp->remove(bfname);
+    return false;                      // Error - Key name too long
+  }
+  ffsp->remove(filename);
+  ffsp->rename(bfname, filename);
+  if (!append) {
+    // Delete data
+    if (!entries) {
+      ffsp->remove(filename);
+    }
+    return deleted;                    // State - 0 = Not found, 1 = Deleted
+  }
+  return true;                         // State - Append success
+}
+
+bool UfsJsonSettingsDelete(const char* key) {
+  // Delete: Input UserSet2
+  //         Output 0 = Not found, 1 = Deleted
+  return _UfsJsonSettingsUpdate(key);  // State - 0 = Not found, 1 = Deleted
+}
+
+bool UfsJsonSettingsWrite(const char* data) {
+  // Add new UserSet replacing present UserSet
+  // Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+  // Output 0 = Error, 1 = Append success
+
+  String json = data;
+  JsonParser parser((char*)json.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }         // Error - invalid JSON
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) {
+    File ofile = ffsp->open(filename, "w");
+    if (!ofile) { return false; }      // Error - unable to open settings file
+    ofile.write((uint8_t*)data, strlen(data));
+    ofile.close();
+    return true;                       // State - Append success
+  }
+  return _UfsJsonSettingsUpdate(data); // State - 0 = Error, 1 = Append success
+}
+
+String UfsJsonSettingsRead(const char* key) {
+  // Read: Input UserSet2
+  //       Output "" = Error, {"Param1":123,"Param2":"Text2"} = Data
+
+  String data = "";
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);      // /.drvset000
+  if (!TfsFileExists(filename)) { return data; }  // Error - File not found
+  File file = ffsp->open(filename, "r");
+  if (!file) { return data; }          // Error - unable to open settings file
+
+  Trim((char*)key);
+  char buffer[128];
+  uint8_t buf[1] = { 0 };
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  bool quote = false;
+  bool mine = false;
+  while (file.available()) {           // Process file
+    file.read(buf, 1);
+    if (bracket_count > 1) {           // Build JSON
+      if (mine) {
+        buffer[index++] = buf[0];      // Add key data
+        if (index > sizeof(buffer) -2) {
+          buffer[index] = '\0'; 
+          data += buffer;              // Add buffer to result
+          index = 0;
+        }
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+        if (1 == bracket_count) {
+          if (mine) {
+            break;                     // End of key data
+          } else {
+            index = 0;                 // End of data which is not mine
+          }
+        }
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        index = 0;
+        break;                         // End of file - key not found
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          index = 0;
+          buffer[index++] = buf[0];    // Start of key data
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          index = 0;
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  file.close();
+  buffer[index] = '\0';
+  data += buffer;
+  return data;                         // State - "" = Error, {"Param1":123,"Param2":"Text2"} = Data
+}
+
+/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 

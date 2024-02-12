@@ -386,7 +386,7 @@ void WifiBeginAfterScan(void)
 
     ResponseClear();
 
-    uint32_t initial_item = (Wifi.scan_state - 9)*10;
+    int32_t initial_item = (Wifi.scan_state - 9)*10;
 
     if ( wifi_scan_result > initial_item ) {
       // Sort networks by RSSI

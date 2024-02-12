@@ -769,6 +769,7 @@ class Matter_Device
   # Load Matter Device parameters
   def load_param()
     import crypto
+    var dirty = false
     try
 
       var f = open(self.FILENAME)
@@ -784,8 +785,9 @@ class Matter_Device
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
-        tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
+        tasmota.log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
+        dirty = self.check_config_ep()
         self.plugins_persist = true
       end
       self.plugins_config_remotes = j.find("remotes", {})
@@ -794,11 +796,10 @@ class Matter_Device
       end
     except .. as e, m
       if e != "io_error"
-        tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
+        tasmota.log("MTR: load_param Exception:" + str(e) + "|" + str(m), 2)
       end
     end
 
-    var dirty = false
     if self.root_discriminator == nil
       self.root_discriminator = crypto.random(2).get(0,2) & 0xFFF
       dirty = true
@@ -838,6 +839,7 @@ class Matter_Device
 
     # always include an aggregator for dynamic endpoints
     self.plugins.push(matter.Plugin_Aggregator(self, matter.AGGREGATOR_ENDPOINT, {}))
+    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", matter.AGGREGATOR_ENDPOINT, 'aggregator', ''), 2)
 
     for ep: endpoints
       if ep == 0  continue end          # skip endpoint 0
@@ -859,7 +861,6 @@ class Matter_Device
         tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
     end
-    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", matter.AGGREGATOR_ENDPOINT, 'aggregator', ''), 2)
 
     tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
@@ -1160,7 +1161,7 @@ class Matter_Device
     var m = {}
 
     # check if we have a light
-    var endpoint = 1
+    var endpoint = matter.START_ENDPOINT
     var light_present = false
 
     import light
@@ -1397,6 +1398,31 @@ class Matter_Device
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
     self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
+  end
+
+  #############################################################
+  # Check that all ep are valid, i.e. don't collied with root or aggregator
+  #
+  # return `true` if configuration was adjusted and needs to be saved
+  def check_config_ep()
+    # copy into list so we can change the map on the fly
+    var dirty = false
+    var keys = []
+    for k: self.plugins_config.keys()   keys.push(int(k))    end
+    for ep: keys
+      if ep == 0
+        tasmota.log("MTR: invalid entry with ep '0'", 2)
+        self.plugins_config.remove(str(ep))
+        dirty = true
+      elif ep == matter.AGGREGATOR_ENDPOINT
+        dirty = true
+        tasmota.log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
+        self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]
+        self.plugins_config.remove(str(ep))
+        self.next_ep += 1
+      end
+    end
+    return dirty
   end
 
   #############################################################
