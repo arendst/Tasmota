@@ -64,7 +64,10 @@ class AXP192_M5Stack_Core2 : AXP192
       # Bit 1: APS voltage ADC enable
       # Bit 0: TS pin ADC function enable
       self.write8(0x82, 0xFF)
-  
+
+      # Disable audio as ethernet uses the same GPIO
+      set_speaker_enable(false)
+
       # Reset LCD Controller
       self.set_lcd_reset(false)
       tasmota.delay(100)   # wait for 100ms
