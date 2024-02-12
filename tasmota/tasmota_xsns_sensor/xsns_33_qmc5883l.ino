@@ -211,41 +211,41 @@
  Oversampling values for the CONFIG register  
   Reg.      Definition          00          01            10          11
   OSR       Over Sample Ratio   512         256           128         64	
-  #define QMC5883L_OVERSAMPLE			1	// 0 .. 3 => 512, 256, 128, 64
+  #define QMC5883L_OVERSAMPLE                  1         // 0 .. 3 => 512, 256, 128, 64
 */
 #ifndef QMC5883L_OVERSAMPLE
-  #define QMC5883L_OVERSAMPLE			1
+  #define QMC5883L_OVERSAMPLE                  1
 #elif (QMC5883L_OVERSAMPLE>3)
   #undef QMC5883L_OVERSAMPLE
-  #define QMC5883L_OVERSAMPLE			3
+  #define QMC5883L_OVERSAMPLE                  3
 #endif
 
 /*   Reg.      Definition          00          01            10          11
      RNG       Full Scale          2G          8G            Reserve     Reserve 
-	   #define QMC5883L_GAUSS				1	// 0,1 => 2GAUSS, 8GAUSS
+     #define QMC5883L_GAUSS         1	                 // 0,1 => 2GAUSS, 8GAUSS
 */
 #ifndef QMC5883L_GAUSS
-  #define QMC5883L_GAUSS				1
+  #define QMC5883L_GAUSS1
 #elif (QMC5883L_GAUSS>1)
   #undef QMC5883L_GAUSS
-  #define QMC5883L_GAUSS				1
+  #define QMC5883L_GAUSS            1
 #endif
 #if QMC5883L_GAUSS == 0
-	#define FACTOR 120
+  #define FACTOR                    120
 #else
-	#define FACTOR 30
+  #define FACTOR                    30
 #endif
 
 
 /*   Reg.      Definition          00          01            10          11
     ODR       Output Data Rate    10Hz        50Hz          100Hz       200Hz     
-	#define QMC5883L_FILTER				2	// 0 .. 3 => 10HZ, 50HZ, 109HZ, 200HZ
+    #define QMC5883L_FILTER         2                     // 0 .. 3 => 10HZ, 50HZ, 109HZ, 200HZ
 */
 #ifndef QMC5883L_FILTER
-  #define QMC5883L_FILTER				2
+  #define QMC5883L_FILTER           2
 #elif (QMC5883L_FILTER>3)
   #undef QMC5883L_FILTER
-  #define QMC5883L_FILTER				3
+  #define QMC5883L_FILTER           3
 #endif
 
 /*   Reg.      Definition          00          01            10          11
@@ -256,9 +256,9 @@
 /* Mode values for the CONFIG2 register = Software Reset  */
 #define QMC5883L_CONFIG2_RESET          0b10000000
 
- #define REG_OVL							0x7fff
-// #define OVL								"overflow"
-#define OVL								INFINITY
+#define REG_OVL                        0x7fff
+// #define OVL                            "overflow"
+#define OVL                            INFINITY
 
     // data field
 struct QMC5883L_s {
@@ -290,29 +290,29 @@ void QMC5883L_Init() {
 //Read the magnetic data
 void QMC5883L_read_data(void) {
   // check if chip is ready to provide data
-  switch (I2cRead8(QMC5883L_ADDR, QMC5883L_STATUS) & (QMC5883L_STATUS_DRDY | QMC5883L_STATUS_OVL)){
-	case 1:
-	  QMC5883L->ovl = false;
-	  QMC5883L->MX = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_X_LSB);  // Select LSB register
-	  QMC5883L->MY = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Y_LSB);
-	  QMC5883L->MZ = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Z_LSB);
-      // calculate scalar magnetic induction
+ switch (I2cRead8(QMC5883L_ADDR, QMC5883L_STATUS) & (QMC5883L_STATUS_DRDY | QMC5883L_STATUS_OVL)){
+   case 1:
+     QMC5883L->ovl = false;
+     QMC5883L->MX = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_X_LSB);  // Select LSB register
+     QMC5883L->MY = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Y_LSB);
+     QMC5883L->MZ = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Z_LSB);
+ //     calculate scalar magnetic induction
  //     QMC5883L->scalar = sqrt((QMC5883L->MX * QMC5883L->MX) + (QMC5883L->MY * QMC5883L->MY) + (QMC5883L->MZ * QMC5883L->MZ));  // 650 bytes larger
- //	  QMC5883L->scalar = SqrtInt((QMC5883L->MX * QMC5883L->MX) + (QMC5883L->MY * QMC5883L->MY) + (QMC5883L->MZ * QMC5883L->MZ));
-      break;
-    case 3:
-	  QMC5883L->ovl = true;
-	  AddLog(LOG_LEVEL_DEBUG,PSTR("QMC5883L --> QMC5883L_STATUS_Overflow"));
+ //	QMC5883L->scalar = SqrtInt((QMC5883L->MX * QMC5883L->MX) + (QMC5883L->MY * QMC5883L->MY) + (QMC5883L->MZ * QMC5883L->MZ));
+     break;
+   case 3:
+      QMC5883L->ovl = true;
+      AddLog(LOG_LEVEL_DEBUG,PSTR("QMC5883L --> QMC5883L_STATUS_Overflow"));
 
       QMC5883L->MX = REG_OVL;
       QMC5883L->MY = REG_OVL;
       QMC5883L->MZ = REG_OVL;
 
       break;
-	default:
-	  return;
+   default:
+      return;
       break;
-	}
+  }
   // get temperature
   QMC5883L->temp = ConvertTemp((I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_TEMP_LSB) / 100.0f) + QMC5883L_TEMP_SHIFT);  // Temp in celsius
 }
@@ -347,12 +347,12 @@ void QMC5883L_Show(uint8_t json) {
 //	s_my = s_mz = s_scalar = s_mx;
   }
   if (json) {
-	ResponseAppend_P(PSTR(",\"QMC5883L\":{\"" D_JSON_MX "\":%s,\"" D_JSON_MY "\":%s,\"" D_JSON_MZ "\":%s,\"" D_JSON_MAGNETICFLD "\":%s,\"" D_JSON_TEMPERATURE "\":%*_f}"),
-	s_mx, s_my, s_mz, s_scalar, Settings->flag2.temperature_resolution, &QMC5883L->temp);
+     ResponseAppend_P(PSTR(",\"QMC5883L\":{\"" D_JSON_MX "\":%s,\"" D_JSON_MY "\":%s,\"" D_JSON_MZ "\":%s,\"" D_JSON_MAGNETICFLD "\":%s,\"" D_JSON_TEMPERATURE "\":%*_f}"),
+     s_mx, s_my, s_mz, s_scalar, Settings->flag2.temperature_resolution, &QMC5883L->temp);
 #ifdef USE_WEBSERVER
   } else {
-	WSContentSend_PD(HTTP_SNS_QMC5883L, s_mx, s_my, s_mz, s_scalar);
-    WSContentSend_Temp("QMC5883L", QMC5883L->temp);
+     WSContentSend_PD(HTTP_SNS_QMC5883L, s_mx, s_my, s_mz, s_scalar);
+     WSContentSend_Temp("QMC5883L", QMC5883L->temp);
 #endif
   }
 }
