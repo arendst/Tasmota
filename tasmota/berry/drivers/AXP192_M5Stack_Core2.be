@@ -145,7 +145,7 @@ class AXP192_M5Stack_Core2 : AXP192
   # respond to audio events
   def audio(cmd, idx, payload, raw)
     if cmd == "power"
-      self.set_speaker_enable(idx)
+      self.set_speaker_enable(idx ? 1 : 0)
     end
   end
 
