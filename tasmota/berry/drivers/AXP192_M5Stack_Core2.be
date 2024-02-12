@@ -66,7 +66,7 @@ class AXP192_M5Stack_Core2 : AXP192
       self.write8(0x82, 0xFF)
 
       # Disable audio as ethernet uses the same GPIO
-      set_speaker_enable(false)
+      self.write_gpio(2, 0)
 
       # Reset LCD Controller
       self.set_lcd_reset(false)
