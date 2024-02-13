@@ -241,8 +241,7 @@ class Matter_TLV
       var item_len = TLV._len[item_type]
     
       if item_len == 8                              # i64 / u64 / double
-        self.val = int64()
-        self.val.frombytes(b, idx)
+        self.val = int64.frombytes(b, idx)
         idx += 8
       elif item_type == TLV.BFALSE || item_type == TLV.BTRUE   # bool
         self.val =  (item_type == TLV.BTRUE)

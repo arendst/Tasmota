@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Matter improve `MtrInfo` (#20686)
 - Matter implement auto-attributes (#20694)
+- Berry class `int64` made immutable
 
 ### Fixed
 - Matter redirects for Advanced Matter configuration UI (#20690)
