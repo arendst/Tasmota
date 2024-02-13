@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Matter improve `MtrInfo` (#20686)
 - Matter implement auto-attributes (#20694)
+- GPIO Viewer user selection of assets website is `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
 
 ### Fixed
 - Matter redirects for Advanced Matter configuration UI (#20690)
