@@ -119,8 +119,9 @@ bool GVInit(void) {
       GV->port = GV_PORT;
       return true;
     }
+    return false;
   }
-  return false;
+  return true;
 }
 
 void GVStop(void) {
