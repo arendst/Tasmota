@@ -709,7 +709,7 @@ void RulesVarReplace(String &commands, const String &sfind, const String &replac
 
 /*******************************************************************************************/
 
-bool RuleSetProcess(uint8_t rule_set, String &event_saved)
+bool RuleSetProcess(uint8_t rule_set, String &event_saved, const char *json_event)
 {
   bool serviced = false;
   char stemp[10];
@@ -798,6 +798,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
       RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
+      RulesVarReplace(commands, F("%JSON%"), json_event);
 #if defined(USE_TIMERS)
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
@@ -908,7 +909,7 @@ bool RulesProcessEvent(const char *json_event)
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (GetRuleLen(i) && bitRead(Settings->rule_enabled, i)) {
-      if (RuleSetProcess(i, event_saved)) { serviced = true; }
+      if (RuleSetProcess(i, event_saved, json_event)) { serviced = true; }
     }
   }
 
@@ -1199,12 +1200,12 @@ bool RulesMqttData(void) {
         if (ckey2 != nullptr) {                // .Temperature
           *ckey2++ = '\0';                     // Temperature and ckey1 becomes DS18B20
           JsonParserToken val = jsonData[ckey1].getObject()[ckey2];
-          if (val) { 
+          if (val) {
             value = (char*)val.getStr();       // 23.3
           }
         } else {                               // DS18B20
           JsonParserToken val = jsonData[ckey1];
-          if (val) { 
+          if (val) {
             value = (char*)val.getStr();       // \0
           }
         }
@@ -1299,7 +1300,7 @@ void CmndSubscribe(void) {
         MqttSubscribe(ftopic);
         ResponseCmnd();                        // {"Subscribe":
         ResponseAppend_P(PSTR("\"%s,%s%s%s\"}"), hevent, ftopic, (strlen(hkey))?",":"", EscapeJSONString(hkey).c_str());
-      }        
+      }
     }
     return;                                    // {"Error"}
   }
@@ -1309,7 +1310,7 @@ void CmndSubscribe(void) {
   for (auto &items : subscriptions) {
     ResponseAppend_P(PSTR("%s%s,%s%s%s"),
       (found) ? "; " : "\"", items.event, items.topic, (strlen(items.key))?",":"", EscapeJSONString(items.key).c_str());
-    found = true;  
+    found = true;
   }
   ResponseAppend_P((found) ? PSTR("\"}") : PSTR("\"" D_JSON_EMPTY "\"}"));
 }
@@ -1718,7 +1719,7 @@ float evaluateExpression(const char * expression, unsigned int len) {
  * Process an if command
  * Example:
  * rule1 on event#test do backlog status 1; status 2; if (var1==10 AND var3==9 OR var4==8) status 3;status 4 endif; status 5; status 6 endon
- * 
+ *
  * Notice:
  * In case of "if" is true commands ``status 3`` and ``status 4`` will be inserted into the backlog between ``status 2`` and ``status 5``
  */
