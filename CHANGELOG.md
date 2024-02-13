@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.5]
+## [13.3.0.5] 20240214
 ### Added
 - Internal support for persistent JSON settings using single file
 - Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages (#20678)
@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Matter improve `MtrInfo` (#20686)
 - Matter implement auto-attributes (#20694)
+- GPIO Viewer user selection of assets website is `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
 
 ### Fixed
 - Matter redirects for Advanced Matter configuration UI (#20690)
