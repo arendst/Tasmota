@@ -110,12 +110,12 @@ be_local_closure(Tasmota_fast_loop,   /* name */
       0x600C000C,  //  0005  GETGBL	R3	G12
       0x5C100200,  //  0006  MOVE	R4	R1
       0x7C0C0200,  //  0007  CALL	R3	1
-      0x14100403,  //  0008  LT	R4	R2	R3
-      0x78120003,  //  0009  JMPF	R4	#000E
-      0x94100202,  //  000A  GETIDX	R4	R1	R2
-      0x7C100000,  //  000B  CALL	R4	0
+      0x140C0403,  //  0008  LT	R3	R2	R3
+      0x780E0003,  //  0009  JMPF	R3	#000E
+      0x940C0202,  //  000A  GETIDX	R3	R1	R2
+      0x7C0C0000,  //  000B  CALL	R3	0
       0x00080502,  //  000C  ADD	R2	R2	K2
-      0x7001FFF9,  //  000D  JMP		#0008
+      0x7001FFF6,  //  000D  JMP		#0005
       0x80000000,  //  000E  RET	0
     })
   )

@@ -557,8 +557,7 @@ class Tasmota
 
     # iterate and call each closure
     var i = 0
-    var sz = size(fl)
-    while i < sz
+    while i < size(fl)
       # note: this is not guarded in try/except for performance reasons. The inner function must not raise exceptions
       fl[i]()
       i += 1

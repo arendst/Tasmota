@@ -1917,6 +1917,11 @@ void SSPMInit(void) {
     return;
   }
 
+  if (SspmSerial->hardwareSerial()) {
+    ClaimSerial();
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Serial UART%d"), SspmSerial->getUart());
+
   Xdrv86SettingsLoad(0);
 
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);
@@ -2278,7 +2283,7 @@ void SSPMEnergyShow(bool json) {
       uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = relay_show - offset;
       if (count > 4) { count = 4; }
-      WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
+      WSContentSend_P(PSTR("</table>"));             // Close current table as we will use different column count
       if (SPM_DISPLAY_TABS == Sspm->Settings.flag.display) {
         uint32_t modules = relay_show / 4;
         if (modules > 1) {
@@ -2312,7 +2317,7 @@ void SSPMEnergyShow(bool json) {
       WSContentSend_PD(HTTP_SNS_ENERGY_TODAY, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_PD(HTTP_SNS_ENERGY_YESTERDAY, SSPMEnergyFormat(value_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_PD(HTTP_SNS_ENERGY_TOTAL, SSPMEnergyFormat(value_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
-      WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
 #endif  // USE_WEBSERVER
   }
@@ -2681,6 +2686,9 @@ bool Xdrv86(uint32_t function) {
         break;
       case FUNC_BUTTON_PRESSED:
         result = SSPMButton();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

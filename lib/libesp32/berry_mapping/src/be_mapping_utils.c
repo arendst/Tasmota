@@ -8,61 +8,104 @@
 /* Insert an nil to a key */
 void be_map_insert_nil(bvm *vm, const char *key)
 {
-  be_pushstring(vm, key);
-  be_pushnil(vm);
-  be_data_insert(vm, -3);
-  be_pop(vm, 2);
+  if (be_ismap(vm, -1)) {
+    be_pushstring(vm, key);
+    be_pushnil(vm);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
 }
 /* Insert an int to a key */
+// On stack is either:
+// Case 1;  (-2) map instance, (-1) map
+// Case 2;  (-2) nil, (-1) string -> if key matches then update (-2)
 void be_map_insert_int(bvm *vm, const char *key, bint value)
 {
-  be_pushstring(vm, key);
-  be_pushint(vm, value);
-  be_data_insert(vm, -3);
-  be_pop(vm, 2);
+  if (be_ismap(vm, -1)) {
+    be_pushstring(vm, key);
+    be_pushint(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  } else if (be_isstring(vm, -1)) {
+    const char * needle = be_tostring(vm, -1);
+    if (strcmp(key, needle) == 0) {
+      be_pushint(vm, value);
+      be_moveto(vm, -1, -3);
+      be_pop(vm, 1);
+    }
+  }
 }
 /* Insert an bbool to a key */
 void be_map_insert_bool(bvm *vm, const char *key, bbool value)
 {
-  be_pushstring(vm, key);
-  be_pushbool(vm, value);
-  be_data_insert(vm, -3);
-  be_pop(vm, 2);
+  if (be_ismap(vm, -1)) {
+    be_pushstring(vm, key);
+    be_pushbool(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  } else if (be_isstring(vm, -1)) {
+    const char * needle = be_tostring(vm, -1);
+    if (strcmp(key, needle) == 0) {
+      be_pushbool(vm, value);
+      be_moveto(vm, -1, -3);
+      be_pop(vm, 1);
+    }
+  }
 }
 /* Insert an real to a key */
 /* if value == NAN, ignore */
 void be_map_insert_real(bvm *vm, const char *key, breal value)
 {
-  if (!isnan(value)) {
-    be_pushstring(vm, key);
-    be_pushreal(vm, value);
-    be_data_insert(vm, -3);
-    be_pop(vm, 2);
+  if (be_ismap(vm, -1)) {
+    if (!isnan(value)) {
+      be_pushstring(vm, key);
+      be_pushreal(vm, value);
+      be_data_insert(vm, -3);
+      be_pop(vm, 2);
+    }
+  } else if (be_isstring(vm, -1)) {
+    const char * needle = be_tostring(vm, -1);
+    if (strcmp(key, needle) == 0) {
+      be_pushreal(vm, value);
+      be_moveto(vm, -1, -3);
+      be_pop(vm, 1);
+    }
   }
 }
 /* Insert an C string to a key */
 void be_map_insert_str(bvm *vm, const char *key, const char *value)
 {
-  be_pushstring(vm, key);
-  be_pushstring(vm, value);
-  be_data_insert(vm, -3);
-  be_pop(vm, 2);
+  if (be_ismap(vm, -1)) {
+    be_pushstring(vm, key);
+    be_pushstring(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  } else if (be_isstring(vm, -1)) {
+    const char * needle = be_tostring(vm, -1);
+    if (strcmp(key, needle) == 0) {
+      be_pushstring(vm, value);
+      be_moveto(vm, -1, -3);
+      be_pop(vm, 1);
+    }
+  }
 }
 /* Insert list of bytes as individual integers to a key */
 void be_map_insert_list_uint8(bvm *vm, const char *key, const uint8_t *value, size_t size)
 {
-  be_pushstring(vm, key);
+  if (be_ismap(vm, -1)) {
+    be_pushstring(vm, key);
 
-  be_newobject(vm, "list");
-  for (uint32_t i=0; i < size; i++) {
-    be_pushint(vm, value[i]);
-    be_data_push(vm, -2);
-    be_pop(vm, 1);
+    be_newobject(vm, "list");
+    for (uint32_t i=0; i < size; i++) {
+      be_pushint(vm, value[i]);
+      be_data_push(vm, -2);
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);                  // now list is on top
+
+    be_data_insert(vm, -3);         // insert into map, key/value
+    be_pop(vm, 2);                  // pop both key and value
   }
-  be_pop(vm, 1);                  // now list is on top
-
-  be_data_insert(vm, -3);         // insert into map, key/value
-  be_pop(vm, 2);                  // pop both key and value
 }
 
 /*********************************************************************************************\

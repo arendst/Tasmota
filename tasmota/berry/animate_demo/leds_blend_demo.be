@@ -1,0 +1,37 @@
+# test blending
+
+import animate
+
+var LEDS_LENGTH = 25
+var strip
+var front, back
+var bri
+
+strip = Leds(LEDS_LENGTH, gpio.pin(gpio.WS2812,0))
+bri = 70
+
+back = bytes().resize(LEDS_LENGTH * 4)
+front = bytes().resize(LEDS_LENGTH * 4)
+strip.clear_to(0x442211)
+strip.show()
+
+var back = animate.frame(LEDS_LENGTH)
+var front = animate.frame(LEDS_LENGTH)
+back.fill_pixels(0xFF2200, 80)
+for i:0..24
+  front.set_pixel(i, 0, 255, 0, (i*255)/24)
+end
+back.blend_pixels(back, front)
+
+print("front=", front.tohex())
+print("back =", back.tohex())
+var pixels_buffer = strip.pixels_buffer()
+print("pixs =", pixels_buffer.tohex())
+back.paste_pixels(pixels_buffer, bri, true)
+strip.dirty()
+strip.show()
+
+## Output:
+# front= 00FF000000FF000A00FF001500FF001F00FF002A00FF003500FF003F00FF004A00FF005500FF005F00FF006A00FF007400FF007F00FF008A00FF009400FF009F00FF00AA00FF00B400FF00BF00FF00C900FF00D400FF00DF00FF00E900FF00F400FF00FF
+# back = 0022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF000022FF00
+# pixs = 020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701020701

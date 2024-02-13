@@ -24,6 +24,8 @@
 
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
 
+#include "include/xsns_62_esp32_mi.h"
+
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -76,10 +78,11 @@ extern "C" {
 **  BLE - generic BLE functions
 ********************************************************************/
   extern bool MI32checkBLEinitialization();
+  extern void MI32BerryLoop();
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern void MI32setBerryServerCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation, bbool response);
+  extern bool MI32runBerryConnection(uint8_t operation, bbool response, int32_t *arg1);
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
@@ -93,6 +96,10 @@ extern "C" {
     }
     be_raise(vm, "ble_error", "BLE: device not initialized");
     be_return_nil(vm);
+  }
+
+  void be_BLE_loop(void){
+    MI32BerryLoop();
   }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
@@ -156,13 +163,19 @@ extern "C" {
     be_raisef(vm, "ble_error", "BLE: could not set characteristic");
   }
 
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response);
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response){
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1);
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1){
+    int32_t argc = be_top(vm); // Get the number of arguments
     bool _response = false;    
     if(response){
       _response = response;
     }
-    if (MI32runBerryConnection(operation,_response)) return;
+    int32_t *ptr_arg1 = nullptr;
+    int32_t _arg1 = arg1;
+    if(argc == 3){
+      ptr_arg1 = &_arg1;
+    }
+    if (MI32runBerryConnection(operation, _response, ptr_arg1)) return;
 
     be_raisef(vm, "ble_error", "BLE: could not run operation");
   }
@@ -195,6 +208,48 @@ extern "C" {
   be_raisef(vm, "ble_error", "BLE: could not add MAC to watch list");
   }
 
+  // BLE.info(void) -> map
+  int32_t be_BLE_info(struct bvm *vm);
+  int32_t be_BLE_info(struct bvm *vm) {
+    be_newobject(vm, "map");
+    char _Role[16];
+    GetTextIndexed(_Role, sizeof(_Role), MI32.role, HTTP_MI32_PARENT_BLE_ROLE);
+    char _role[16];
+    LowerCase(_role,_Role);
+    be_map_insert_str(vm, "role", _role);
+    be_map_insert_str(vm, "local_addr", NimBLEDevice::toString().c_str());
+    be_map_insert_int(vm, "power", NimBLEDevice::getPower());
+    be_map_insert_int(vm, "MTU", NimBLEDevice::getMTU());
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV // TODO - BLE 5 is very unsharp
+    be_map_insert_int(vm, "version", 5);
+#else
+    be_map_insert_int(vm, "version", 4);
+#endif
+#ifdef CONFIG_BT_NIMBLE_PERSIST
+    be_map_insert_int(vm, "bonds", NimBLEDevice::getNumBonds());
+#else
+    be_map_insert_nil(vm, "bonds");
+#endif
+    if(MI32.mode.connected == 1){
+        be_pushstring(vm, "connection");
+        be_newobject(vm, "map");
+        auto _info = NimBLEDevice::getClientList()->front()->getConnInfo();
+        be_map_insert_str(vm, "peer_addr", _info.getAddress().toString().c_str());
+        be_map_insert_int(vm, "RSSI", NimBLEDevice::getClientList()->front()->getRssi());
+        be_map_insert_int(vm, "MTU", _info.getMTU());
+        be_map_insert_bool(vm, "bonded", _info.isBonded());
+        be_map_insert_bool(vm, "master", _info.isMaster());
+        be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
+        be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
+
+        be_pop(vm, 1);
+        be_data_insert(vm, -3);
+        be_pop(vm, 2);
+    }
+
+    be_pop(vm, 1);
+    be_return(vm);
+  }
 } //extern "C"
 
 

@@ -214,6 +214,8 @@ enum UserSelectablePins {
   GPIO_HDMI_CEC,                        // Support for HDMI CEC
   GPIO_HC8_RXD,                         // HC8 Serial interface
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
+  GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
+  GPIO_PIPSOLAR_TX, GPIO_PIPSOLAR_RX,   // pipsolar inverter
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -475,6 +477,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HDMI_CEC "|"
   D_SENSOR_HC8_RX "|"
   D_SENSOR_I2S_DAC "|"
+  D_GPIO_MAGIC_SWITCH "|"
+  D_SENSOR_PIPSOLAR_TX "|" D_SENSOR_PIPSOLAR_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -493,7 +497,8 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DSB          4
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
-#define MAX_BL0942_RX    4              // Baudrates 1 (4800), 2 (9600), 3 (19200), 4 (38400)
+#define MAX_MAGIC_SWITCH_MODES   2
+#define MAX_BL0942_RX    8              // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -726,9 +731,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DS18x20
   AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
-#ifdef ESP8266
   AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
-#endif  // ESP8266
 #endif  // USE_DS18x20
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),                    // LMT01, count pulses on GPIO
@@ -1141,6 +1144,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DINGTIAN_PL),
   AGPIO(GPIO_DINGTIAN_OE),
   AGPIO(GPIO_DINGTIAN_RCK),
+#endif
+
+#ifdef USE_MAGIC_SWITCH
+  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGIC_SWITCH_MODES,
+#endif
+
+#ifdef USE_PIPSOLAR                       // xdrv_92_pipsolar.ino
+  AGPIO(GPIO_PIPSOLAR_TX),                // pipsolar inverter Serial interface
+  AGPIO(GPIO_PIPSOLAR_RX),                // pipsolar inverter Serial interface
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

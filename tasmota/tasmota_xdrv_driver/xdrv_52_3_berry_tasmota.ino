@@ -171,16 +171,20 @@ extern "C" {
   int32_t l_rtc(struct bvm *vm);
   int32_t l_rtc(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_int(vm, "utc", Rtc.utc_time);
-      be_map_insert_int(vm, "local", Rtc.local_time);
-      be_map_insert_int(vm, "restart", Rtc.restart_time);
-      be_map_insert_int(vm, "timezone", Rtc.time_timezone);
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_int(vm, "utc", Rtc.utc_time);
+    be_map_insert_int(vm, "local", Rtc.local_time);
+    be_map_insert_int(vm, "restart", Rtc.restart_time);
+    be_map_insert_int(vm, "timezone", Rtc.time_timezone);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.rtc_utc() -> int
@@ -196,28 +200,32 @@ extern "C" {
   int32_t l_memory(struct bvm *vm);
   int32_t l_memory(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_int(vm, "flash", ESP_getFlashChipMagicSize() / 1024);
-      be_map_insert_int(vm, "flash_real", ESP.getFlashChipSize() / 1024);
-      be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
-      be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
-      be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
-      be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
-      // give info about stack size
-      be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
-      be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
-      if (UsePSRAM()) {
-        be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
-        be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
-      }
-      // IRAM information
-      int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
-      be_map_insert_int(vm, "iram_free", iram_free / 1024);
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_int(vm, "flash", ESP_getFlashChipMagicSize() / 1024);
+    be_map_insert_int(vm, "flash_real", ESP.getFlashChipSize() / 1024);
+    be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
+    be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
+    be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
+    be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
+    // give info about stack size
+    be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
+    be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
+    if (UsePSRAM()) {
+      be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
+      be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+    }
+    // IRAM information
+    int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    be_map_insert_int(vm, "iram_free", iram_free / 1024);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.wifi() -> map
@@ -225,38 +233,42 @@ extern "C" {
   int32_t l_wifi(struct bvm *vm);
   int32_t l_wifi(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
-      be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
-      be_map_insert_bool(vm, "up", WifiHasIP());
-      if (Settings->flag4.network_wifi) {
-        int32_t rssi = WiFi.RSSI();
-        bool show_rssi = false;
-#ifdef USE_IPV6
-        String ipv6_addr = WifiGetIPv6Str();
-        if (ipv6_addr != "") {
-          be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
-          show_rssi = true;
-        }
-        ipv6_addr = WifiGetIPv6LinkLocalStr();
-        if (ipv6_addr != "") {
-          be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
-          show_rssi = true;
-        }
-#endif // USE_IPV6
-        if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-          be_map_insert_str(vm, "ip", IPAddress((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
-          show_rssi = true;
-        }
-        if (show_rssi) {
-          be_map_insert_int(vm, "rssi", rssi);
-          be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
-        }
-      }
-      be_pop(vm, 1);
-      be_return(vm);
+      // (-2) map instance, (-1) map
     }
-    be_raise(vm, kTypeError, nullptr);
+    be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+    be_map_insert_bool(vm, "up", WifiHasIP());
+    if (Settings->flag4.network_wifi) {
+      int32_t rssi = WiFi.RSSI();
+      bool show_rssi = false;
+#ifdef USE_IPV6
+      String ipv6_addr = WifiGetIPv6Str();
+      if (ipv6_addr != "") {
+        be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+        show_rssi = true;
+      }
+      ipv6_addr = WifiGetIPv6LinkLocalStr();
+      if (ipv6_addr != "") {
+        be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+        show_rssi = true;
+      }
+#endif // USE_IPV6
+      if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+        be_map_insert_str(vm, "ip", IPAddress((uint32_t)WiFi.localIP()).toString().c_str());   // quick fix for IPAddress bug
+        show_rssi = true;
+      }
+      if (show_rssi) {
+        be_map_insert_int(vm, "rssi", rssi);
+        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+      }
+    }
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.eth() -> map
@@ -264,34 +276,38 @@ extern "C" {
   int32_t l_eth(struct bvm *vm);
   int32_t l_eth(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1) {  // no argument (instance only)
+    if (top >= 1 && be_isstring(vm, 1)) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 1);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
       be_newobject(vm, "map");
+      // (-2) map instance, (-1) map
+    }
 #ifdef USE_ETHERNET
-      be_map_insert_bool(vm, "up", EthernetHasIP());
-      String eth_mac = EthernetMacAddress().c_str();
-      if (eth_mac != "00:00:00:00:00:00") {
-        be_map_insert_str(vm, "mac", eth_mac.c_str());
-      }
-      if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-        be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
-      }
+    be_map_insert_bool(vm, "up", EthernetHasIP());
+    String eth_mac = EthernetMacAddress().c_str();
+    if (eth_mac != "00:00:00:00:00:00") {
+      be_map_insert_str(vm, "mac", eth_mac.c_str());
+    }
+    if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+      be_map_insert_str(vm, "ip", IPAddress((uint32_t)EthernetLocalIP()).toString().c_str());   // quick fix for IPAddress bug
+    }
 #ifdef USE_IPV6
-      String ipv6_addr = EthernetGetIPv6Str();
-      if (ipv6_addr != "") {
-        be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
-      }
-      ipv6_addr = EthernetGetIPv6LinkLocalStr();
-      if (ipv6_addr != "") {
-        be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
-      }
+    String ipv6_addr = EthernetGetIPv6Str();
+    if (ipv6_addr != "") {
+      be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+    }
+    ipv6_addr = EthernetGetIPv6LinkLocalStr();
+    if (ipv6_addr != "") {
+      be_map_insert_str(vm, "ip6local", ipv6_addr.c_str());
+    }
 #endif // USE_IPV6
 #else // USE_ETHERNET
-      be_map_insert_bool(vm, "up", bfalse);
+    be_map_insert_bool(vm, "up", bfalse);
 #endif // USE_ETHERNET
-      be_pop(vm, 1);
-      be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+    be_pop(vm, 1);
+    be_return(vm);
   }
 
   // Berry: tasmota.hostname() -> string
@@ -422,6 +438,61 @@ extern "C" {
       int32_t to_max = be_toint(vm, 5);
       int32_t scaled = changeIntScale(val, from_min, from_max, to_min, to_max);
       be_pushint(vm, scaled);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  /*
+  Implements the 5-order polynomial approximation to sin(x).
+  @param i   angle (with 2^15 units/circle)
+  @return    16 bit fixed point Sine value (4.12) (ie: +4096 = +1 & -4096 = -1)
+
+  The result is accurate to within +- 1 count. ie: +/-2.44e-4.
+  */
+  int16_t fpsin(int16_t i)
+  {
+      /* Convert (signed) input to a value between 0 and 8192. (8192 is pi/2, which is the region of the curve fit). */
+      /* ------------------------------------------------------------------- */
+      i <<= 1;
+      uint8_t c = i<0; //set carry for output pos/neg
+
+      if(i == (i|0x4000)) // flip input value to corresponding value in range [0..8192)
+          i = (1<<15) - i;
+      i = (i & 0x7FFF) >> 1;
+      /* ------------------------------------------------------------------- */
+
+      /* The following section implements the formula:
+      = y * 2^-n * ( A1 - 2^(q-p)* y * 2^-n * y * 2^-n * [B1 - 2^-r * y * 2^-n * C1 * y]) * 2^(a-q)
+      Where the constants are defined as follows:
+      */
+      // enum {A1=3370945099UL, B1=2746362156UL, C1=292421UL};
+      // enum {n=13, p=32, q=31, r=3, a=12};
+
+      uint32_t y = (292421UL*((uint32_t)i))>>13;
+      y = 2746362156UL - (((uint32_t)i*y)>>3);
+      y = (uint32_t)i * (y>>13);
+      y = (uint32_t)i * (y>>13);
+      y = 3370945099UL - (y>>(32-31));
+      y = (uint32_t)i * (y>>13);
+      y = (y+(1UL<<(31-12-1)))>>(31-12); // Rounding
+
+      return c ? -y : y;
+  }
+
+  // Berry: tasmota.sine_int(int) -> int
+  //
+  // Input: 8192 is pi/2
+  // Output: -4096 is -1, 4096 is +1
+  //
+  // https://www.nullhardware.com/blog/fixed-point-sine-and-cosine-for-embedded-systems/
+  int32_t l_sineint(struct bvm *vm);
+  int32_t l_sineint(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 1 && be_isint(vm, 1)) {
+      int32_t val = be_toint(vm, 1);
+
+      be_pushint(vm, fpsin(val));
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -719,7 +790,7 @@ extern "C" {
 
   */
 
-  // web append with decimal conversion
+  // web append without decimal conversion
   int32_t l_webSend(bvm *vm);
   int32_t l_webSend(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -743,10 +814,38 @@ extern "C" {
       be_pop(vm, top);  // avoid Error be_top is non zero message
 #ifdef USE_WEBSERVER
       WSContentSend_PD(PSTR("%s"), msg);
+      WSContentSeparator(0);
 #endif  // USE_WEBSERVER
       be_return_nil(vm); // Return nil when something goes wrong
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // get webcolors
+  int32_t l_webcolor(bvm *vm);
+  int32_t l_webcolor(bvm *vm) {
+    char tmp[16];
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 1 && be_isint(vm, 1)) {  // argument is int
+      int32_t idx = be_toint(vm, 1);
+      if (idx >= 0 && idx < COL_LAST) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("#%06x"), WebColor(idx));
+        be_pushstring(vm, tmp);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    } else {
+      be_newobject(vm, "list");
+      for (uint32_t i = 0; i < COL_LAST; i++) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("#%06x"), WebColor(i));
+        be_pushstring(vm, tmp);
+        be_data_push(vm, -2);
+        be_pop(vm, 1);
+      }
+      be_pop(vm, 1);
+      be_return(vm);
+    }
   }
 
   // get power

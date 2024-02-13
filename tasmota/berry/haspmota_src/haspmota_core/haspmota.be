@@ -20,7 +20,7 @@ var classes = [
   "btn", "switch", "checkbox",
   "label", "spinner", "line", "img", "roller", "btnmatrix",
   "bar", "slider", "arc", "textarea", "dropdown",
-  "qrcode"
+  "qrcode", "chart"
 ]
 var f = open("haspmota.c", "w")
 for c:classes
@@ -55,7 +55,7 @@ class lvh_obj
     "page",
     "comment",
     "parentid",
-    "auto_size",    # TODO not sure it's still needed in LVGL8
+    # "auto_size",    # TODO not sure it's still needed in LVGL8
     # attributes for page
     "prev", "next", "back",
     "berry_run",    # run Berry code after the object is created
@@ -73,6 +73,9 @@ class lvh_obj
     "y": "y",
     "w": "width",
     "h": "height",
+    # special case for height/width that can be in styles
+    "height": "style_height",
+    "width": "style_width",
     # arc
     # "asjustable": nil,
     # "mode": nil,
@@ -96,6 +99,7 @@ class lvh_obj
     "bg_grad_color": "style_bg_grad_color",
     "bg_grad_dir": "style_bg_grad_dir",
     "line_color": "style_line_color",
+    "line_rounded": "style_line_rounded",
     "pad_left": "style_pad_left",
     "pad_right": "style_pad_right",
     "pad_top": "style_pad_top",
@@ -141,11 +145,6 @@ class lvh_obj
     # "meta": nil,
     # roller
     # "options": nil,
-    # qrcode
-    # "qr_size": nil,
-    # "qr_dark_color": nil,
-    # "qr_light_color": nil,
-    # "qr_text": nil,
   }
 
   #====================================================================
@@ -329,7 +328,7 @@ class lvh_obj
     # defer the actual action to the Tasmota event loop
     # print("-> CB fired","self",self,"obj",obj,"event",event.tomap(),"code",event.code)
     var oh = self._page._oh         # haspmota global object
-    var code = event.code           # materialize to a local variable, otherwise the value can change (and don't capture event object)
+    var code = event.get_code()     # materialize to a local variable, otherwise the value can change (and don't capture event object)
     if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
       tasmota.set_timer(0, /-> oh.do_action(self, code))
@@ -340,7 +339,7 @@ class lvh_obj
       import json
 
       var tas_event_more = ""   # complementary data
-      if event.code == lv.EVENT_VALUE_CHANGED
+      if code == lv.EVENT_VALUE_CHANGED
         try
           # try to get the new val
           var val = self.val
@@ -709,8 +708,7 @@ class lvh_obj
   # LV_PART_KNOB         = 0x030000,   /**< Like handle to grab to adjust the value*/
   # LV_PART_SELECTED     = 0x040000,   /**< Indicate the currently selected option or section*/
   # LV_PART_ITEMS        = 0x050000,   /**< Used if the widget has multiple similar elements (e.g. table cells)*/
-  # LV_PART_TICKS        = 0x060000,   /**< Ticks on scale e.g. for a chart or meter*/
-  # LV_PART_CURSOR       = 0x070000,   /**< Mark a specific place e.g. for text area's cursor or on a chart*/
+  # LV_PART_CURSOR       = 0x060000,   /**< Mark a specific place e.g. for text area's cursor or on a chart*/
   # LV_PART_CUSTOM_FIRST = 0x080000,    /**< Extension point for custom widgets*/
   # LV_PART_ANY          = 0x0F0000,    /**< Special value can be used in some functions to target all parts*/
   #
@@ -744,7 +742,7 @@ class lvh_obj
     lv.PART_ITEMS,        # 30    TODO
     lv.PART_ITEMS,        # 40
     lv.PART_SELECTED,     # 50
-    lv.PART_TICKS,        # 60
+    lv.PART_ITEMS,        # 60
     lv.PART_CURSOR,       # 70
     lv.PART_SCROLLBAR,    # 80
     lv.PART_CUSTOM_FIRST, # 90
@@ -836,6 +834,12 @@ class lvh_obj
       end
     end
 
+    # finally try any `get_XXX` within the LVGL object
+    f = introspect.get(self._lv_obj, "get_" + k)
+    if type(f) == 'function'                  # found and function, call it
+      return f(self._lv_obj)
+    end
+
     # fallback to exception if attribute unknown or not a function
     raise "value_error", "unknown attribute " + str(k)
   end
@@ -905,7 +909,16 @@ class lvh_obj
         print("HSP: Could not find function set_"+kv)
       end
     else
-      print("HSP: unknown attribute:", k)
+      f = introspect.get(self._lv_obj, "set_" + k)
+      if type(f) == 'function'
+        try
+          f(self._lv_obj, v)
+        except .. as e, m
+          raise e, m + " for " + k
+        end
+      else
+        print("HSP: unknown attribute:", k)
+      end
     end
   end
 
@@ -1122,7 +1135,7 @@ end
 #====================================================================
 class lvh_spinner : lvh_arc
   static _lv_class = lv.spinner
-  var _anim_start, _anim_end        # the two raw (lv_anim_ntv) objects used for the animation
+  var _speed, _angle
 
   # init
   # - create the LVGL encapsulated object
@@ -1132,40 +1145,29 @@ class lvh_spinner : lvh_arc
     self._page = page
     var angle = jline.find("angle", 60)
     var speed = jline.find("speed", 1000)
-    self._lv_obj = lv.spinner(parent, speed, angle)
+    self._lv_obj = lv.spinner(parent)
+    self._lv_obj.set_anim_params(speed, angle)
     self.post_init()
-    # do some black magic to get the two lv_anim objects used to animate the spinner
-    var anim_start = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_start_angle)
-    var anim_end = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_end_angle)
-    # convert to a ctype C structure via pointer
-    self._anim_start = lv.anim_ntv(anim_start._p)
-    self._anim_end = lv.anim_ntv(anim_end._p)
   end
 
-  def set_angle(t)
-    t = int(t)
-    self._anim_end.start_value = t
-    self._anim_end.end_value = t + 360
-  end
-  def get_angle()
-    return self._anim_end.start_value - self._anim_start.start_value
-  end
-  def set_speed(t)
-    t = int(t)
-    self._anim_start.time = t
-    self._anim_end.time = t
-  end
-  def get_speed()
-    return self._anim_start.time
-  end
+  def set_angle(t) end
+  def get_angle()  end
+  def set_speed(t) end
+  def get_speed()  end
 end
 
 #====================================================================
 #  img
 #====================================================================
 class lvh_img : lvh_obj
-  static _lv_class = lv.img
+  static _lv_class = lv.image
 
+  def set_auto_size(v)
+    if v
+      self._lv_obj.set_inner_align(lv.IMAGE_ALIGN_STRETCH)
+    end
+  end
+  def get_auto_size() end
   def set_angle(v)
     v = int(v)
     self._lv_obj.set_angle(v)
@@ -1181,28 +1183,20 @@ end
 class lvh_qrcode : lvh_obj
   static _lv_class = lv.qrcode
 
-  # init
-  # - create the LVGL encapsulated object
-  # arg1: parent object
-  # arg2: json line object
-  def init(parent, page, jline)
-    self._page = page
-
-    var sz = jline.find("qr_size", 100)
-    var dark_col = self.parse_color(jline.find("qr_dark_color", "#000000"))
-    var light_col = self.parse_color(jline.find("qr_light_color", "#FFFFFF"))
-
-    self._lv_obj = lv.qrcode(parent, sz, dark_col, light_col)
-    self.post_init()
-  end
 
   # ignore attributes, spinner can't be changed once created
-  def set_qr_size(t) end
+  def set_qr_size(t)                  self._lv_obj.set_size(t)                              end
+  def set_size(t)                     self._lv_obj.set_size(t)                              end
   def get_qr_size() end
-  def set_qr_dark_color(t) end
+  def get_size() end
+  def set_qr_dark_color(t)            self._lv_obj.set_dark_color(self.parse_color(t))      end
+  def set_dark_color(t)               self._lv_obj.set_dark_color(self.parse_color(t))      end
   def get_qr_dark_color() end
-  def set_qr_light_color(t) end
+  def get_dark_color() end
+  def set_qr_light_color(t)            self._lv_obj.set_light_color(self.parse_color(t))     end
+  def set_light_color(t)               self._lv_obj.set_light_color(self.parse_color(t))     end
   def get_qr_light_color() end
+  def get_light_color() end
   def set_qr_text(t)
     t = str(t)
     self._lv_obj.update(t, size(t))
@@ -1218,6 +1212,18 @@ class lvh_slider : lvh_obj
 
   def set_val(t)
     self._lv_obj.set_value(t, 0)    # add second parameter - no animation
+  end
+  def set_min(t)
+    self._lv_obj.set_range(int(t), self.get_max())
+  end
+  def set_max(t)
+    self._lv_obj.set_range(self.get_min(), int(t))
+  end
+  def get_min()
+    return self._lv_obj.get_min_value()
+  end
+  def get_max()
+    return self._lv_obj.get_max_value()
   end
 end
 
@@ -1325,6 +1331,79 @@ class lvh_bar : lvh_obj
   
   def set_val(t)
     self._lv_obj.set_value(t, lv.ANIM_OFF)
+  end
+end
+
+#################################################################################
+# Special case for lv.chart
+# Adapted to getting values one after the other
+#################################################################################
+class lvh_chart : lvh_obj
+  static _lv_class = lv.chart
+  # ser1/ser2 contains the first/second series of data
+  var ser1, ser2
+  # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
+  var y_min, y_max
+  # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
+  var h_div, v_div
+
+  def post_init()
+    # default values from LVGL are 0..100
+    self.y_min = 0
+    self.y_max = 100
+    # default values
+    #define LV_CHART_HDIV_DEF 3
+    #define LV_CHART_VDIV_DEF 5
+    self.h_div = 3
+    self.v_div = 5
+
+    self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
+
+    self.ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
+    self.ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+  end
+
+  def add_point(v)
+    self._lv_obj.set_next_value(self.ser1, v)
+  end
+  def add_point2(v)
+    self._lv_obj.set_next_value(self.ser2, v)
+  end
+
+  def set_val(v)
+    self.add_point(v)
+  end
+  def set_val2(v)
+    self.add_point2(v)
+  end
+  def get_y_min()
+    return self.y_min
+  end
+  def get_y_max()
+    return self.y_max
+  end
+  def set_y_min(y_min)
+    self.y_min = y_min
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  end
+  def set_y_max(y_max)
+    self.y_max = y_max
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  end
+
+  def set_series1_color(color)
+    self._lv_obj.set_series_color(self.ser1, color)
+  end
+  def set_series2_color(color)
+    self._lv_obj.set_series_color(self.ser2, color)
+  end
+  def set_h_div_line_count(h_div)
+    self.h_div = h_div
+    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
+  end
+  def set_v_div_line_count(v_div)
+    self.v_div = v_div
+    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
   end
 end
 
@@ -1471,7 +1550,7 @@ class lvh_page
 
     var anim_lvgl = self.show_anim.find(anim, lv.SCR_LOAD_ANIM_NONE)
     # load new screen with animation, no delay, 500ms transition time, no auto-delete
-    lv.scr_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
+    lv.screen_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
   end
 end
 
@@ -1523,13 +1602,24 @@ class HASPmota
  	# static lvh_gauge = lvh_gauge
 	static lvh_textarea = lvh_textarea    # additional?
   static lvh_qrcode = lvh_qrcode
+  # special cases
+  static lvh_chart = lvh_chart
 
   static def_templ_name = "pages.jsonl" # default template name
 
   def init()
+    self.fix_lv_version()
     import re
     self.re_page_target = re.compile("p\\d+")
     # nothing to put here up to now
+  end
+
+  # make sure that `lv.version` returns a version number
+  static def fix_lv_version()
+    import introspect
+    var v = introspect.get(lv, "version")
+    # if `lv.version` does not exist, v is `module('undefined')`
+    if type(v) != 'int'  lv.version = 8 end
   end
 
   def deinit()
@@ -1636,9 +1726,17 @@ class HASPmota
       var jline = json.load(jsonl[0])
 
       if type(jline) == 'instance'
+        if tasmota.loglevel(4)
+          tasmota.log(f"HSP: parsing line '{jsonl[0]}' {tasmota.loglevel(4)=}", 4)
+        end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
         # objects are created in the current page
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
+      else
+        # check if it's invalid json
+        if size(string.tr(jsonl[0], " \t", "")) > 0
+          tasmota.log(f"HSP: invalid JSON line '{jsonl[0]}'", 2)
+        end
       end
       jline = nil
       jsonl.remove(0)
@@ -1740,12 +1838,19 @@ class HASPmota
   #====================================================================
   def do_action(lvh_object, event_code)
     if event_code != lv.EVENT_CLICKED    return end
-    var action = lvh_object._action
-    var cur_page = self.lvh_pages[self.lvh_page_cur_idx]
-    # print("do_action","lvh_object",lvh_object,"action",action,"cur_page",cur_page,self.lvh_page_cur_idx)
+    self.page_show(lvh_object._action)
+  end
 
+  #====================================================================
+  #  Execute a page changing action from string `action`
+  #
+  #  Arg1 `action` can be `prev`, `next`, `back` or `p<number>`
+  #  Returns: nil
+  #====================================================================
+  def page_show(action)
     # action can be `prev`, `next`, `back`, or `p<number>` like `p1`
     var to_page = nil
+    var cur_page = self.lvh_pages[self.lvh_page_cur_idx]
     var sorted_pages_list =  self.pages_list_sorted(self.lvh_page_cur_idx)
     if size(sorted_pages_list) <= 1  return end     # if only 1 page, do nothing
     # handle prev/next/back values
@@ -1820,11 +1925,11 @@ class HASPmota
     import introspect
     var event_ptr = introspect.toptr(event_ptr_i)   # convert to comptr, because it was a pointer in the first place
 
-    if self.event   self.event._change_buffer(event_ptr)
+    if self.event   self.event._p = event_ptr
     else            self.event = lv.lv_event(event_ptr)
     end
 
-    var user_data = self.event.user_data            # it is supposed to be a pointer to the object
+    var user_data = self.event.get_user_data()            # it is supposed to be a pointer to the object
     if int(user_data) != 0
       var target_lvh_obj = introspect.fromptr(user_data)
       if type(target_lvh_obj) == 'instance'
@@ -1859,7 +1964,6 @@ class HASPmota
     end
 
     # if line contains botn 'obj' and 'id', create the object
-    if obj_id == nil return end               # if no object id, ignore line
     if obj_type != "nil" && obj_id != nil
       # 'obj_id' must be between 1 and 254
       if obj_id < 1 || obj_id > 254
@@ -1905,7 +2009,7 @@ class HASPmota
       end
 
       if obj_class == nil
-        print("HSP: cannot find object of type " + str(obj_type))
+        print("HSP: Cannot find object of type " + str(obj_type))
         return
       end
       
@@ -1933,6 +2037,7 @@ class HASPmota
       end
     end
 
+    if obj_id == nil return end               # if no object id, ignore line
     if obj_id == 0 && obj_type != "nil"
       print("HSP: cannot specify 'obj' for 'id':0")
       return

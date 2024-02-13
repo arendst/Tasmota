@@ -454,7 +454,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
 
           JsonGeneratorArray group_list;
           for (uint32_t i = 0; i < xyz.y; i++) {
-            group_list.add(payload.get16(2 + 2*i));
+            group_list.add((uint32_t)payload.get16(2 + 2*i));
           }
           attr_list.addAttribute(command_name, true).setStrRaw(group_list.toString().c_str());
         }

@@ -41,6 +41,9 @@
       "require_upload_port": true,
       "speed": 460800
     },
+    "download": {
+      "speed": 230400
+    },
     "url": "https://en.wikipedia.org/wiki/ESP32",
     "vendor": "Espressif"
   }

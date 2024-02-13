@@ -80,38 +80,15 @@ void RA8876_InitDriver(void) {
     FT5206_Touch_Init(Wire);
 #endif
 
+#ifdef USE_UNIVERSAL_TOUCH
+    utouch_Touch_Init();
+#endif
+
     ra8876_init_done = true;
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: RA8876"));
   }
 }
 
-
-#ifdef USE_FT5206
-#ifdef USE_TOUCH_BUTTONS
-
-// no rotation support
-void RA8876_RotConvert(int16_t *x, int16_t *y) {
-int16_t temp;
-  if (renderer) {
-    *x=*x*renderer->width()/800;
-    *y=*y*renderer->height()/480;
-
-    *x = renderer->width() - *x;
-    *y = renderer->height() - *y;
-  }
-}
-
-// check digitizer hit
-void RA8876_CheckTouch(void) {
-  ra8876_ctouch_counter++;
-  if (2 == ra8876_ctouch_counter) {
-    // every 100 ms should be enough
-    ra8876_ctouch_counter = 0;
-    Touch_Check(RA8876_RotConvert);
-  }
-}
-#endif // USE_TOUCH_BUTTONS
-#endif // USE_FT5206
 
 /*
 void testall() {
@@ -308,11 +285,6 @@ bool Xdsp10(uint32_t function)
     switch (function) {
       case FUNC_DISPLAY_MODEL:
         result = true;
-        break;
-      case FUNC_DISPLAY_EVERY_50_MSECOND:
-#ifdef USE_FT5206
-        if (FT5206_found) RA8876_CheckTouch();
-#endif
         break;
     }
   }

@@ -71,8 +71,11 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
-
+#if ESP_IDF_VERSION_MAJOR >= 5
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_JL1101, 4 = ETH_PHY_DP83848, 5 = ETH_PHY_KSZ8041, 6 = ETH_PHY_KSZ8081, 7 = ETH_PHY_DM9051, 8 = ETH_PHY_W5500, 9 = ETH_PHY_KSZ8851
+#else
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8041, 6 = ETH_PHY_KSZ8081, 7 = ETH_PHY_JL1101
+#endif
 #endif
 
 #ifndef ETH_CLKMODE
@@ -85,6 +88,8 @@
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;
 
+extern esp_netif_t* get_esp_interface_netif(esp_interface_t interface);
+
 void EthernetEvent(arduino_event_t *event);
 void EthernetEvent(arduino_event_t *event) {
   switch (event->event_id) {
@@ -95,14 +100,27 @@ void EthernetEvent(arduino_event_t *event) {
 
     case ARDUINO_EVENT_ETH_CONNECTED:
 #ifdef USE_IPV6
-      ETH.enableIpV6();   // enable Link-Local 
+      ETH.enableIPv6();   // enable Link-Local
+      // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
+      {
+        uint32_t i = 5;   // try 5 times only
+        while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_ETH)) != ESP_OK) {
+          delay(1);
+          if (i-- == 0) {
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH ">>>> HELP"));
+            break;
+          }
+        }
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "ESP_IF_ETH i=%i"), i);
+      }
 #endif // USE_IPV6
+      
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH D_CONNECTED " at %dMbps%s, Mac %s, Hostname %s"),
         ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "",
         ETH.macAddress().c_str(), eth_hostname
         );
         
-      // AddLog(LOG_LEVEL_DEBUG, D_LOG_ETH "ETH.enableIpV6() -> %i", ETH.enableIpV6());
+      // AddLog(LOG_LEVEL_DEBUG, D_LOG_ETH "ETH.enableIPV6() -> %i", ETH.enableIPV6());
       break;
       
     case ARDUINO_EVENT_ETH_GOT_IP:
@@ -128,11 +146,11 @@ void EthernetEvent(arduino_event_t *event) {
     {
       ip_addr_t ip_addr6;
       ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
-      IPAddress addr(ip_addr6);
+      IPAddress addr(&ip_addr6);
       AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
              event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
-             addr.isLocal() ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
-      if (!addr.isLocal()) {    // declare network up on IPv6
+             IPv6isLocal(addr) ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
+      if (!IPv6isLocal(addr)) {    // declare network up on IPv6
         TasmotaGlobal.rules_flag.eth_connected = 1;
         TasmotaGlobal.global_state.eth_down = 0;
       }
@@ -168,12 +186,6 @@ void EthernetSetIp(void) {
 
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
-  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and/or ETH MDIO GPIO defined"));
-    return;
-  }
-
-  eth_config_change = 0;
 
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
     Settings->eth_address = 1;                    // EthAddress
@@ -181,45 +193,43 @@ void EthernetInit(void) {
     Settings->eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
   }
 
-//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s-eth"), TasmotaGlobal.hostname);
+  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
+    if (Settings->eth_type < 7) {
+      // CONFIG_ETH_USE_ESP32_EMAC
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
+    } else {
+      // CONFIG_ETH_SPI_ETHERNET
+      if (!PinUsed(GPIO_ETH_PHY_POWER)) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+      }
+    }
+    return;
+  }
+
+  eth_config_change = 0;
+
   strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "-eth"
   strcat(eth_hostname, "-eth");
 
   WiFi.onEvent(EthernetEvent);
 
-  int eth_power = Pin(GPIO_ETH_PHY_POWER);
-  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
-  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
-//#if CONFIG_IDF_TARGET_ESP32
-  // fix an disconnection issue after rebooting Olimex POE - this forces a clean state for all GPIO involved in RMII
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
-//  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
-//  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
-//  switch (Settings->eth_clk_mode) {
-//    case 0:   // ETH_CLOCK_GPIO0_IN
-//    case 1:   // ETH_CLOCK_GPIO0_OUT
-//      gpio_reset_pin(GPIO_NUM_0);
-//      break;
-//    case 2:   // ETH_CLOCK_GPIO16_OUT
-//      gpio_reset_pin(GPIO_NUM_16);
-//      break;
-//    case 3:   // ETH_CLOCK_GPIO17_OUT
-//      gpio_reset_pin(GPIO_NUM_17);
-//      break;
-//  }
-//  delay(1);
-//#endif // CONFIG_IDF_TARGET_ESP32
+  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);       // Ethernet SPI CS (chip select)
+  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
+  int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
+
+  bool init_ok = false;
 #if ESP_IDF_VERSION_MAJOR >= 5
-  if (!ETH.begin( (eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode)) {
+  if (Settings->eth_type < 7) {
+    // CONFIG_ETH_USE_ESP32_EMAC
+    init_ok = (ETH.begin((eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+  } else {
+    // CONFIG_ETH_SPI_ETHERNET
+    init_ok = (ETH.begin((eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
+  }
 #else
-  if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
+  init_ok = (ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode));
 #endif
+  if (!init_ok) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
     return;
   };
@@ -383,6 +393,9 @@ bool Xdrv82(uint32_t function) {
       break;
     case FUNC_INIT:
       EthernetInit();
+      break;
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

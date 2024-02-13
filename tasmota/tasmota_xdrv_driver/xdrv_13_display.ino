@@ -2939,6 +2939,9 @@ bool Xdrv13(uint32_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kDisplayCommands, DisplayCommand);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

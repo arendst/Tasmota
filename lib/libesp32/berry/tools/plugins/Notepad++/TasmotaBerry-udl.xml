@@ -1,0 +1,64 @@
+<NotepadPlus>
+    <UserLang name="berry" ext="be" udlVersion="2.1">
+        <Settings>
+            <Global caseIgnored="no" allowFoldOfComments="no" foldCompact="no" forcePureLC="0" decimalSeparator="2" />
+            <Prefix Keywords1="no" Keywords2="no" Keywords3="no" Keywords4="no" Keywords5="no" Keywords6="no" Keywords7="no" Keywords8="no" />
+        </Settings>
+        <KeywordLists>
+            <Keywords name="Comments">00# 01 02 03#- 04-#</Keywords>
+            <Keywords name="Numbers, prefix1"></Keywords>
+            <Keywords name="Numbers, prefix2">0x</Keywords>
+            <Keywords name="Numbers, extras1">A B C D E F a b c d e f</Keywords>
+            <Keywords name="Numbers, extras2"></Keywords>
+            <Keywords name="Numbers, suffix1"></Keywords>
+            <Keywords name="Numbers, suffix2"></Keywords>
+            <Keywords name="Numbers, range">..</Keywords>
+            <Keywords name="Operators1">- ! ~ * / % + - &lt;&lt; &gt;&gt; &amp; ^ | .. &lt; &lt;= &gt; &gt;= == != &amp;&amp; || ? ( ) { } [ ] . ,&#x000D;&#x000A;: = += -= *= /= %= &amp;= |= ^= &lt;&lt;= &gt;&gt;=</Keywords>
+            <Keywords name="Operators2"></Keywords>
+            <Keywords name="Folders in code1, open"></Keywords>
+            <Keywords name="Folders in code1, middle"></Keywords>
+            <Keywords name="Folders in code1, close"></Keywords>
+            <Keywords name="Folders in code2, open">if do while for def</Keywords>
+            <Keywords name="Folders in code2, middle">else elif</Keywords>
+            <Keywords name="Folders in code2, close">end</Keywords>
+            <Keywords name="Folders in comment, open"></Keywords>
+            <Keywords name="Folders in comment, middle"></Keywords>
+            <Keywords name="Folders in comment, close"></Keywords>
+            <Keywords name="Keywords1">if elif else while for def&#x000D;&#x000A;end class break continue return true&#x000D;&#x000A;false nil var do import as&#x000D;&#x000A;try except raise static</Keywords>
+            <Keywords name="Keywords2">nil boolean integer real string function class instance module list map range global file math bytes persist</Keywords>
+            <Keywords name="Keywords3">assert print input super type classname classof number int real str bool module size compile issubclass is instance call open</Keywords>
+            <Keywords name="Keywords4">file.write file.read file.readbytes file.readline file.seek file.tell file.size file.close list.tostring list.push list.pop list.insert list.item list.setitem list.size list.resize list.clear list.iter list.keys list.concat list.reverse list.copy map.tostring map.insert map.remove map.item map.setitem map.insert map.contains nap.find map.size map.iter map.keys range.tostring range.iter range.lower range.upper range.incr range.setrange string.count string.split string.find string.hex string.byte string.char string.toupper string.tolower string.tr string.replace string.escape string.format math.pi math.nan math.imin math.imax math.floor math.ceil math.abs math.rand math.srand math.isnan math.sqrt math.cos math.tan math.asin math.acos math.atan math.atan2 math.deg math.rad math.sinh math.cosh math.tanh bytes.size bytes.resize bytes.clear bytes.reverse bytes.copy bytes.ismapped bytes.get bytes.geti bytes.set bytes.seti bytes.add bytes.getfloat bytes.setfloat bytes.getbits bytes.setbits bytes.setbytes bytes.tostring bytes.tohex bytes.fromhex bytes.asstring bytes.tob64 bytes.fromb64 global.contains global.id global.setmember json.load json.dump introspect.members introspect.get introspect.set introspect.name introspect.ismethod introspect.module introspect.setmodule introspect.topr os.getcmd os.chdir os.mkdir os.remove os.listdir os.system os.exit os.path.isdir os.path.isfile os.path.exists os.path.split os.path.splitext persist.save persist.find</Keywords>
+            <Keywords name="Keywords5"></Keywords>
+            <Keywords name="Keywords6"></Keywords>
+            <Keywords name="Keywords7"></Keywords>
+            <Keywords name="Keywords8"></Keywords>
+            <Keywords name="Delimiters">00&quot; 01\ 02&quot; 03&apos; 04\ 05&apos; 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>
+        </KeywordLists>
+        <Styles>
+            <WordsStyle name="DEFAULT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="COMMENTS" fgColor="008040" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="LINE COMMENTS" fgColor="008040" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="NUMBERS" fgColor="FF0000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS1" fgColor="000000" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="KEYWORDS2" fgColor="000000" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS3" fgColor="000000" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="KEYWORDS4" fgColor="000000" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS5" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS6" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS7" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS8" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="OPERATORS" fgColor="008040" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE1" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE2" fgColor="0000FF" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="FOLDER IN COMMENT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS1" fgColor="800040" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS2" fgColor="800040" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS3" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS4" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS5" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS6" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS7" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS8" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+        </Styles>
+    </UserLang>
+</NotepadPlus>

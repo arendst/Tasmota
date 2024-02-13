@@ -444,6 +444,9 @@ bool Xdrv05(uint32_t function)
           result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
         }
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

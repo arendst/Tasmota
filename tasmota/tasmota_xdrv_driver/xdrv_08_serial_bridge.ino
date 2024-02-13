@@ -198,11 +198,11 @@ void SerialBridgeInit(void) {
       } else {
         serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFSIZE));
       }
-      SerialBridgeSerial->flush();
-      SerialBridgePrintf("\r\n");
 #ifdef ESP32
       AddLog(LOG_LEVEL_DEBUG, PSTR("SBR: Serial UART%d"), SerialBridgeSerial->getUart());
 #endif
+      SerialBridgeSerial->flush();
+      SerialBridgePrintf("\r\n");
     }
   }
 }
@@ -335,6 +335,9 @@ bool Xdrv08(uint32_t function) {
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kSerialBridgeCommands, SerialBridgeCommand);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

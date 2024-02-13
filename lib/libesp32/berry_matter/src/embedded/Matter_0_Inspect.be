@@ -83,7 +83,7 @@ matter.inspect = inspect
 # from the inheritance hierarchy
 #@ solidify:matter.consolidate_clusters,weak
 def consolidate_clusters(cl, m)
-  var cl_parent = super(cl).CLUSTERS
+  var cl_parent = super(cl) != nil ? super(cl).CLUSTERS : {}
   var ret = {}
   # clone cl_parent
   for k: cl_parent.keys()
@@ -97,6 +97,22 @@ def consolidate_clusters(cl, m)
     var l = ret.find(k)
     if l == nil     l = []  end
     ret[k] = l + m[k]
+  end
+  # add all auto-attribbutes to each cluster
+  var AUTO_ATTRIBUTES = [                 # pre-defined auto attributes for every cluster
+    0xFFF8,                               # GeneratedCommandList - [] by default
+    0xFFF9,                               # AcceptedCommandList - list of defined commands TODO for auto-generated
+    0xFFFA,                               # EventList - [] by default
+    0xFFFB,                               # AttributeList - list generated from cluster definition
+    0xFFFC,                               # FeatureMap - 0 by default unless redefined
+    0xFFFD,                               # ClusterRevision - 1 by default unless redefined
+  ]
+  for k: m.keys()
+    for at: AUTO_ATTRIBUTES
+      if ret[k].find(at) == nil
+        ret[k].push(at)
+      end
+    end
   end
   # print(ret)
   return ret

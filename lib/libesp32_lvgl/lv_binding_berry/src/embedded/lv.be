@@ -17,5 +17,12 @@ def lv_module_init(lv_solidified)
   var lv_new = module("lv")   # create a dynamic module
   lv_new.member = lv_solidified.member
   # lv_new.lv_solidified = lv_solidified
+
+  # add mapping from LVGL 8 legacy names and LVGL 9
+  lv_new.scr_act = lv_solidified.screen_active
+  lv_new.img = lv_solidified.image
+  lv_new.disp = lv_solidified.display
+  lv_new.btn = lv_solidified.button
+  lv_new.btnmatrix = lv_solidified.buttonmatrix
   return lv_new
 end

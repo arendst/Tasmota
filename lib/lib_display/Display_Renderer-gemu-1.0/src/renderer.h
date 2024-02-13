@@ -92,6 +92,10 @@ public:
   virtual void ep_update_mode(uint8_t mode);
   virtual void ep_update_area(uint16_t xp, uint16_t yp, uint16_t width, uint16_t height, uint8_t mode);
   virtual uint32_t get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym);
+  virtual bool utouch_Init(char **);
+  virtual uint16_t touched(void);
+  virtual int16_t getPoint_x();
+  virtual int16_t getPoint_y();
 
   void setDrawMode(uint8_t mode);
   uint8_t drawmode;

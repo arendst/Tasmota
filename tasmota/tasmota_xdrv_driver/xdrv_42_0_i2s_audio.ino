@@ -760,6 +760,10 @@ bool Xdrv42(uint32_t function) {
       I2S_WR_Show(true);
     break;
 #endif  // USE_I2S_WEBRADIO
+
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

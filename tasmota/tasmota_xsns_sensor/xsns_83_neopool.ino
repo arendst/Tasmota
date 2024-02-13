@@ -1,7 +1,7 @@
 /*
   xsns_83_neopool.ino - Sugar Valley NeoPool Control System Modbus support for Tasmota
 
-  Copyright (C) 2022  Norbert Richter
+  Copyright (C) 2023  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,10 +31,7 @@
  *   Bayrol
  *   Hay
  *
- * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN)
- * pins (from top to bottom):
- *
- *    RS485 MODBUS
+ * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN) pins (from top to bottom):
  *      ___
  *   1 |*  |- +12V (internal power supply)
  *   2 |*  |- (not connected)
@@ -42,10 +39,13 @@
  *   4 |*  |- Modbus B-
  *   5 |*__|- Modbus GND
  *
- *   RS485 Parameter: 19200 Baud / 1 Stopbit / Parity None
+ * Parameter: 19200 Baud / 1 Stopbit / Parity None
+ * Protocol: Modbus RTU
+ *   NeoPool controller is Modbus server (formerly known as slave)
+ *   Tasmota is Modbus client (formerly known as master)
  *
- *   Channel connector DISPLAY is useless as long as the internal display is also connect,
- *   use WIFI or EXTERN instead.
+ * Connector DISPLAY is useless as long as the internal display is also connected to the
+ * second DISPLAY connector. Use WIFI or EXTERN.
  *
  * Hardware serial will be selected if GPIO1 = [NeoPool Rx] and GPIO3 = [NeoPool Tx]
 \*********************************************************************************************/
@@ -81,62 +81,62 @@
  * (see https://downloads.vodnici.net/uploads/wpforo/attachments/69/171-Modbus-registers.pdf)
 \*********************************************************************************************/
 enum NeoPoolRegister {
-                                          // addr    Unit   Description
+                                          // addr    Unit   Description - "!" indicates register is not officially documented
                                           // ------  ------ ------------------------------------------------------------
-  // MODBUS page (0x00xx) - undocumented - for internal use
-  MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         undocumented - power module version (MSB=Major, LSB=Minor)
-  MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         undocumented - power module Node ID (6 register 0x0004 - 0x0009)
-  MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         undocumented - Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
-  MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         undocumented - power module data as requested in MBF_POWER_MODULE_REGISTER
-  MBF_VOLT_24_36 = 0x0022,                // 0x0022*        undocumented - Current 24-36V line in mV
-  MBF_VOLT_12 = 0x0023,                   // 0x0023*        undocumented - Current 12V line in mV
-  MBF_VOLT_5 = 0x006A,                    // 0x006A*        undocumented - 5V line in mV / 0,62069
-  MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072*        undocumented - 2-40mA line in µA * 10 (1=0,01mA)
+  // MODBUS page (0x00xx) - Manages general configuration of the box. This page is reserved for internal purposes
+  MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         ! Power module version (MSB=Major, LSB=Minor)
+  MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         ! Power module Node ID (6 register 0x0004 - 0x0009)
+  MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         ! Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
+  MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         ! power module data as requested in MBF_POWER_MODULE_REGISTER
+  MBF_VOLT_24_36 = 0x0022,                // 0x0022*        ! Current 24-36V line in mV
+  MBF_VOLT_12 = 0x0023,                   // 0x0023*        ! Current 12V line in mV
+  MBF_VOLT_5 = 0x006A,                    // 0x006A*        ! 5V line in mV / 0,62069
+  MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072*        ! 2-40mA line in µA * 10 (1=0,01mA)
 
-  // MEASURE page (0x01xx)
-  MBF_ION_CURRENT = 0x0100,               // 0x0100*        Current measured in the ionization system
-  MBF_HIDRO_CURRENT,                      // 0x0101*        Intensity level currently measured in the hydrolysissystem
-  MBF_MEASURE_PH,                         // 0x0102* ph     Level measured in hundredths (700 = 7.00)
-  MBF_MEASURE_RX,                         // 0x0103* mV     Redox level in mV
-  MBF_MEASURE_CL,                         // 0x0104* ppm    Level measured in hundredths of chlorine ppm (100 = 1.00 ppm)
-  MBF_MEASURE_CONDUCTIVITY,               // 0x0105* %      Level of conductivity measured in the water.
-  MBF_MEASURE_TEMPERATURE,                // 0x0106* °C     Water temperature sensor (100 = 10.0°C)
-  MBF_PH_STATUS,                          // 0x0107* mask   Status of the module control pH
+  // MEASURE page (0x01xx) - Contains the different measurement information including hydrolysis current, pH level, redox level, etc.
+  MBF_ION_CURRENT = 0x0100,               // 0x0100*        Ionization level measured
+  MBF_HIDRO_CURRENT,                      // 0x0101*        Hydrolysis intensity level
+  MBF_MEASURE_PH,                         // 0x0102* ph     pH level measured in 1/100 (700 = 7.00)
+  MBF_MEASURE_RX,                         // 0x0103* mV     Redox level measured in mV
+  MBF_MEASURE_CL,                         // 0x0104* ppm    Chlorine level measured in 1/100 ppm (100 = 1.00 ppm)
+  MBF_MEASURE_CONDUCTIVITY,               // 0x0105* %      Conductivity level measured in %
+  MBF_MEASURE_TEMPERATURE,                // 0x0106* °C     Temperature sensor measured in 1/10° C (100 = 10.0°C)
+  MBF_PH_STATUS,                          // 0x0107* mask   Status of the pH-module
   MBF_RX_STATUS,                          // 0x0108* mask   Status of the Rx-module
   MBF_CL_STATUS,                          // 0x0109* mask   Status of the Chlorine-module
   MBF_CD_STATUS,                          // 0x010A* mask   Status of the Conductivity-module
   MBF_ION_STATUS = 0x010C,                // 0x010C* mask   Status of the Ionization-module
   MBF_HIDRO_STATUS,                       // 0x010D* mask   Status of the Hydrolysis-module
-  MBF_RELAY_STATE,                        // 0x010E* mask   Status of each configurable relays
+  MBF_RELAY_STATE,                        // 0x010E* mask   Status of each configurable relay
   MBF_HIDRO_SWITCH_VALUE,                 // 0x010F*        INTERNAL - contains the opening of the hydrolysis PWM.
-  MBF_NOTIFICATION,                       // 0x0110* mask   Reports whether a page of properties has changed since the last time it was consulted.
-  MBF_HIDRO_VOLTAGE,                      // 0x0111         Reports on the stress applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolating the salinity of the water.
+  MBF_NOTIFICATION,                       // 0x0110* mask   Bit field that informs whether a property page has changed since the last time it was queried. (see MBMSK_NOTIF_*). This register makes it possible to refresh the content of the registers maintained by a modbus master in an optimized way, without the need to reread all registers periodically, but only those on a page that has been changed.
+  MBF_HIDRO_VOLTAGE,                      // 0x0111         The voltage applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolation of water salinity.
 
-  // GLOBAL page (0x02xx)
-  MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        undocumented - cell runtime (32 bit) - low word
-  MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        undocumented - cell runtime (32 bit) - high word
-  MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        undocumented - cell part runtime (32 bit) - low word
-  MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209*        undocumented - cell part runtime (32 bit) - high word
-  MBF_CELL_BOOST = 0x020C,                // 0x020C* mask   undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
-  MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214*        undocumented - cell runtime polarity A (32 bit) - low word
-  MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215*        undocumented - cell runtime polarity A (32 bit) - high word
-  MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216*        undocumented - cell runtime polarity B (32 bit) - low word
-  MBF_CELL_RUNTIME_POLB_HIGH,             // 0x0217*        undocumented - cell runtime polarity B (32 bit) - high word
-  MBF_CELL_RUNTIME_POL_CHANGES_LOW,       // 0x0218*        undocumented - cell runtime polarity changes (32 bit) - low word
-  MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219*        undocumented - cell runtime polarity changes (32 bit) - high word
-  MBF_HIDRO_MODULE_VERSION = 0x0280,      // 0x0280         undocumented - Hydrolysis module version
-  MBF_HIDRO_MODULE_CONNECTIVITY = 0x0281, // 0x0281         undocumented - Hydrolysis module connection quality (in myriad: 0..10000)
-  MBF_SET_COUNTDOWN_KEY_AUX_OFF = 0x0287, // 0x0287  mask   undocumented - switch AUX1-4 OFF - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode  - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
-  MBF_SET_COUNTDOWN_KEY_AUX_ON,           // 0x0288  mask   undocumented - switch AUX1-4 ON  - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
-  MBF_SET_MANUAL_CTRL,                    // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
-  MBF_ESCAPE = 0x0297,                    // 0x0297         undocumented - A write operation to this register is the same as using the ESC button on main screen - clears error
-  MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register starts a EEPROM storage operation immediately. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
-  MBF_EXEC = 0x02F5,                      // 0x02F5         undocumented - immediately take over settings - a write operation to this register take over the previous written data
+  // GLOBAL page (0x02xx) - Contains global information, such as the amount of time that each power unit has been working.
+  MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        ! Cell runtime (32 bit value - low word)
+  MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        ! Cell runtime (32 bit value - high word)
+  MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        ! Cell part runtime (32 bit value - low word)
+  MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209*        ! Cell part runtime (32 bit value - high word)
+  MBF_CELL_BOOST = 0x020C,                // 0x020C* mask   ! Boost control (see MBMSK_CELL_BOOST_*)
+  MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214*        ! Cell runtime polarity 1 (32 bit value - low word)
+  MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215*        ! Cell runtime polarity 1 (32 bit value - high word)
+  MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216*        ! Cell runtime polarity 2 (32 bit value - low word)
+  MBF_CELL_RUNTIME_POLB_HIGH,             // 0x0217*        ! Cell runtime polarity 2 (32 bit value - high word)
+  MBF_CELL_RUNTIME_POL_CHANGES_LOW,       // 0x0218*        ! Cell runtime polarity change count (32 bit value - low word)
+  MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219*        ! Cell runtime polarity change count (32 bit value - high word)
+  MBF_HIDRO_MODULE_VERSION = 0x0280,      // 0x0280         ! Hydrolysis module version
+  MBF_HIDRO_MODULE_CONNECTIVITY = 0x0281, // 0x0281         ! Hydrolysis module connection quality (in myriad: 0..10000)
+  MBF_SET_COUNTDOWN_KEY_AUX_OFF = 0x0287, // 0x0287  mask   ! switch AUX1-4 OFF - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode  - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
+  MBF_SET_COUNTDOWN_KEY_AUX_ON,           // 0x0288  mask   ! switch AUX1-4 ON  - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
+  MBF_SET_MANUAL_CTRL,                    // 0x0289         ! write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
+  MBF_ESCAPE = 0x0297,                    // 0x0297         ! A write operation to this register is the same as using the ESC button on main screen - clears error
+  MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register immediately starts a EEPROM storage operation. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
+  MBF_EXEC = 0x02F5,                      // 0x02F5         ! A write operation to this register immediately take over settings of the previous written data
 
-  // FACTORY page (0x03xx)
-  MBF_PAR_VERSION = 0x0300,               // 0x0300*        Software version of the PowerBox (unused)
+  // FACTORY page (0x03xx) - Contains factory data such as calibration parameters for the different power units.
+  MBF_PAR_VERSION = 0x0300,               // 0x0300*        Software version of the PowerBox
   MBF_PAR_MODEL,                          // 0x0301* mask   System model options
-  MBF_PAR_SERNUM,                         // 0x0302*        Serial number of the PowerBox (unused)
+  MBF_PAR_SERNUM,                         // 0x0302*        Serial number of the PowerBox
   MBF_PAR_ION_NOM,                        // 0x0303*        Ionization maximum production level (DO NOT WRITE!)
   MBF_PAR_HIDRO_NOM = 0x0306,             // 0x0306*        Hydrolysis maximum production level. (DO NOT WRITE!) If the hydrolysis is set to work in percent mode, this value will be 100. If the hydrolysis module is set to work in g/h production, this module will contain the maximum amount of production in g/h units. (DO NOT WRITE!)
   MBF_PAR_SAL_AMPS = 0x030A,              // 0x030A         Current command in regulation for which we are going to measure voltage
@@ -147,17 +147,17 @@ enum NeoPoolRegister {
   MBF_PAR_HIDRO_MAX_PWM_STEP_UP,          // 0x0324         This register sets the PWM ramp up of the hydrolysis in pulses per duty cycle. This register makes it possible to adjust the rate at which the power delivered to the cell increases, allowing a gradual rise in power so that the operation of the switching source of the equipment is not saturated. Default 150
   MBF_PAR_HIDRO_MAX_PWM_STEP_DOWN,        // 0x0325         This register sets the PWM down ramp of the hydrolysis in pulses per duty cycle. This register allows adjusting the rate at which the power delivered to the cell decreases, allowing a gradual drop in power so that the switched source of the equipment is not disconnected due to lack of consumption. This gradual fall must be in accordance with the type of cell used, since said cell stores charge once the current stimulus has ceased. Default 20
 
-  // INSTALLER page (0x04xx)
-  MBF_PAR_ION_POL0 = 0x0400,              // 0x0400         Time in min the team must spend working on positive polarization in copper-silver ionization.
-  MBF_PAR_ION_POL1,                       // 0x0401         Time in min the team must spend working on positive polarization in copper-silver ionization.
-  MBF_PAR_ION_POL2,                       // 0x0402         Time in min the team must spend working on positive polarization in copper-silver ionization.
-  MBF_PAR_HIDRO_ION_CAUDAL,               // 0x0403  mask   Bitmask register regulates the external control mode of ionization, hydrolysis and pumps.
-  MBF_PAR_HIDRO_MODE,                     // 0x0404         Regulates the external control mode of hydrolysis from the modules of measure. 0: no control, 1: standard control (on / off), 2: with timed pump
-  MBF_PAR_HIDRO_POL0,                     // 0x0405         Time must spend working on positive polarization in hydrolysis / electrolysis. Time is stored in minutes.
-  MBF_PAR_HIDRO_POL1,                     // 0x0406         Time must spend working on positive polarization in hydrolysis / electrolysis. Time is stored in minutes.
-  MBF_PAR_HIDRO_POL2,                     // 0x0407         Time must spend working on positive polarization in hydrolysis / electrolysis. Time is stored in minutes.
-  MBF_PAR_TIME_LOW,                       // 0x0408*        System timestamp (32 bit unixtime) - low word
-  MBF_PAR_TIME_HIGH,                      // 0x0409*        System timestamp (32 bit unixtime) - high word
+  // INSTALLER page (0x04xx) - Contains a set of configuration registers related to the equipment installation, such as the relays used for each function, the amount of time that each pump must operate, etc.
+  MBF_PAR_ION_POL0 = 0x0400,              // 0x0400         Time in minutes that the equipment must remain working in positive polarization in the copper-silver ionization.
+  MBF_PAR_ION_POL1,                       // 0x0401         Time in minutes that the equipment must remain working in negative polarization in the copper-silver ionization.
+  MBF_PAR_ION_POL2,                       // 0x0402         Time in minutes that the equipment must remain working in dead time (without delivering power) in the copper-silver ionization.
+  MBF_PAR_HIDRO_ION_CAUDAL,               // 0x0403  mask   Bitmask register regulates the external control mode of ionization, hydrolysis and pumps (see MBMSK_HIDRO_ION_CAUDAL_*)
+  MBF_PAR_HIDRO_MODE,                     // 0x0404         Regulates the external control mode of hydrolysis from the modules of measure. 0 = no control, 1 = standard control (on / off), 2 = with timed pump
+  MBF_PAR_HIDRO_POL0,                     // 0x0405         Time in minutes that the equipment must remain in positive polarization during hydrolysis/electrolysis.
+  MBF_PAR_HIDRO_POL1,                     // 0x0406         Time in minutes that the equipment must remain in negative polarization during hydrolysis/electrolysis.
+  MBF_PAR_HIDRO_POL2,                     // 0x0407         Time in minutes that the equipment must remain working in dead time (without delivering power) in the hydrolysis/electrolysis.
+  MBF_PAR_TIME_LOW,                       // 0x0408*        System timestamp as unix timestamp (32 bit value - low word).
+  MBF_PAR_TIME_HIGH,                      // 0x0409*        System timestamp as unix timestsmp (32 bit value - high word).
   MBF_PAR_PH_ACID_RELAY_GPIO,             // 0x040A*        Relay number assigned to the acid pump function (only with pH module).
   MBF_PAR_PH_BASE_RELAY_GPIO,             // 0x040B*        Relay number assigned to the base pump function (only with pH module).
   MBF_PAR_RX_RELAY_GPIO,                  // 0x040C*        Relay number assigned to the Redox level regulation function. If the value is 0, there is no relay assigned, and therefore there is no pump function (ON / OFF should not be displayed)
@@ -168,27 +168,27 @@ enum NeoPoolRegister {
   MBF_PAR_FILT_MODE,                      // 0x0411*        Filtration mode (see MBV_PAR_FILT_*)
   MBF_PAR_FILT_GPIO,                      // 0x0412*        Relay selected to perform the filtering function (by default it is relay 2). When this value is at zero, there is no relay assigned and therefore it is understood that the equipment does not control the filtration. In this case, the filter option does not appear in the user menu.
   MBF_PAR_FILT_MANUAL_STATE,              // 0x0413         Filtration status in manual mode (on = 1; off = 0)
-  MBF_PAR_HEATING_MODE,                   // 0x0414         Heating mode. 0: the equipment is not heated. 1: the equipment is heating.
-  MBF_PAR_HEATING_GPIO,                   // 0x0415         Relay selected to perform the heating function (by default it is relay 7). When this value is at zero, there is no relay assigned and therefore it is understood that the equipment does not control the heating. In this case, the filter modes associated with heating will not be displayed.
-  MBF_PAR_HEATING_TEMP,                   // 0x0416         Heating setpoint temperature
-  MBF_PAR_CLIMA_ONOFF,                    // 0x0417         Activation of the air conditioning mode (0 inactive; 1 active.
-  MBF_PAR_SMART_TEMP_HIGH,                // 0x0418         Superior temperature of the Smart mode
-  MBF_PAR_SMART_TEMP_LOW,                 // 0x0419         Lower temperature of the Smart mode
-  MBF_PAR_SMART_ANTI_FREEZE,              // 0x041A         Antifreeze mode activated (1) or not (0). This adjustment is only available in the Smart filtration mode.
-  MBF_PAR_SMART_INTERVAL_REDUCTION,       // 0x041B         This register is read-only and reports to the outside what percentage (0 to 100%) is being applied to the nominal filtration time. 100% means that the total programmed time is being filtered.
-  MBF_PAR_INTELLIGENT_TEMP,               // 0x041C         Setpoint temperature for smart mode
-  MBF_PAR_INTELLIGENT_FILT_MIN_TIME,      // 0x041D         Minimum filtration time in minutes
-  MBF_PAR_INTELLIGENT_BONUS_TIME,         // 0x041E         Bonus time for the current set of intervals
-  MBF_PAR_INTELLIGENT_TT_NEXT_INTERVAL,   // 0x041F         Time to next filtration interval. When it reaches 0 an interval is started and the number of seconds is reloaded for the next interval (2x3600)
-  MBF_PAR_INTELLIGENT_INTERVALS,          // 0x0420         Number of started intervals. When it reaches 12 it is reset to 0 and the bonus time is reloaded with the value of MBF_PAR_INTELLIGENT_FILT_MIN_TIME
-  MBF_PAR_FILTRATION_STATE,               // 0x0421         Filtration function state: 0 is off and 1 is on. The filtration state is regulated according to the MBF_PAR_FILT_MANUAL_STATE register if the filtration mode held in register MBF_PAR_FILT_MODE is set to FILT_MODE_MANUAL (0).
+  MBF_PAR_HEATING_MODE,                   // 0x0414         Heating mode: 0 = the equipment is not heated. 1 = the equipment is heating.
+  MBF_PAR_HEATING_GPIO,                   // 0x0415         Relay number assigned to perform the heating function (by default it is relay 7). When this value is at zero, there is no relay assigned and therefore it is understood that the equipment does not control the heating. In this case, the filter modes associated with heating will not be displayed.
+  MBF_PAR_HEATING_TEMP,                   // 0x0416         Heating mode: Heating setpoint temperature
+  MBF_PAR_CLIMA_ONOFF,                    // 0x0417         Activation of the climate mode (0 = inactive, 1 = active).
+  MBF_PAR_SMART_TEMP_HIGH,                // 0x0418         Smart mode: Upper temperature
+  MBF_PAR_SMART_TEMP_LOW,                 // 0x0419         Smart mode: Lower temperature
+  MBF_PAR_SMART_ANTI_FREEZE,              // 0x041A         Smart mode: Antifreeze mode activated (1) or not (0).
+  MBF_PAR_SMART_INTERVAL_REDUCTION,       // 0x041B         Smart mode: This register is read-only and reports to the outside what percentage (0 to 100%) is being applied to the nominal filtration time. 100% means that the total programmed time is being filtered.
+  MBF_PAR_INTELLIGENT_TEMP,               // 0x041C         Intelligent mode: Setpoint temperature
+  MBF_PAR_INTELLIGENT_FILT_MIN_TIME,      // 0x041D         Intelligent mode: Minimum filtration time in minutes
+  MBF_PAR_INTELLIGENT_BONUS_TIME,         // 0x041E         Intelligent mode: Bonus time for the current set of intervals
+  MBF_PAR_INTELLIGENT_TT_NEXT_INTERVAL,   // 0x041F         Intelligent mode: Time to next filtration interval. When it reaches 0 an interval is started and the number of seconds is reloaded for the next interval (2x3600)
+  MBF_PAR_INTELLIGENT_INTERVALS,          // 0x0420         Intelligent mode: Number of started intervals. When it reaches 12 it is reset to 0 and the bonus time is reloaded with the value of MBF_PAR_INTELLIGENT_FILT_MIN_TIME
+  MBF_PAR_FILTRATION_STATE,               // 0x0421         Filtration state: 0 is off and 1 is on. The filtration state is regulated according to the MBF_PAR_FILT_MANUAL_STATE register if the filtration mode held in register MBF_PAR_FILT_MODE is set to FILT_MODE_MANUAL (0).
   MBF_PAR_HEATING_DELAY_TIME,             // 0x0422         Timer in seconds that counts up when the heating is to be enabled. Once this counter reaches 60 seconds, the heating is then enabled. This counter is for internal use only.
-  MBF_PAR_FILTERING_TIME_LOW,             // 0x0423         32-bit value:
-  MBF_PAR_FILTERING_TIME_HIGH,            // 0x0424         Internal timer for the intelligent filtering mode. It counts the filtering time done during a given day. This register is only for internal use and should not be modified by the user.
-  MBF_PAR_INTELLIGENT_INTERVAL_TIME_LOW,  // 0x0425         32-bit value:
-  MBF_PAR_INTELLIGENT_INTERVAL_TIME_HIGH, // 0x0426         Internal timer that counts the filtration interval assigned to the the intelligent mode. This register is only for internal use and should not be modified by the user.
+  MBF_PAR_FILTERING_TIME_LOW,             // 0x0423         Internal timer for the intelligent filtering mode (32-bit value - low word). It counts the filtering time done during a given day. This register is only for internal use and should not be modified by the user.
+  MBF_PAR_FILTERING_TIME_HIGH,            // 0x0424         Internal timer for the intelligent filtering mode (32-bit value - high word)
+  MBF_PAR_INTELLIGENT_INTERVAL_TIME_LOW,  // 0x0425         Internal timer that counts the filtration interval assigned to the the intelligent mode (32-bit value - low word). This register is only for internal use and should not be modified by the user.
+  MBF_PAR_INTELLIGENT_INTERVAL_TIME_HIGH, // 0x0426         Internal timer that counts the filtration interval assigned to the the intelligent mode (32-bit value - high word)
   MBF_PAR_UV_MODE,                        // 0x0427         UV mode active or not - see MBV_PAR_UV_MODE*. To enable UV support for a given device, add the mask MBMSK_MODEL_UV to the MBF_PAR_MODEL register.
-  MBF_PAR_UV_HIDE_WARN,                   // 0x0428  mask   Suppression for warning messages in the UV mode.
+  MBF_PAR_UV_HIDE_WARN,                   // 0x0428  mask   Suppression for warning messages in the UV mode (see MBMSK_UV_HIDE_WARN_*)
   MBF_PAR_UV_RELAY_GPIO,                  // 0x0429         Relay number assigned to the UV function.
   MBF_PAR_PH_PUMP_REP_TIME_ON,            // 0x042A  mask   Time that the pH pump will be turn on in the repetitive mode (see MBMSK_PH_PUMP_*). Contains a special time format, see desc for MBMSK_PH_PUMP_TIME.
   MBF_PAR_PH_PUMP_REP_TIME_OFF,           // 0x042B  mask   Time that the pH pump will be turn off in the repetitive mode. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
@@ -197,33 +197,33 @@ enum NeoPoolRegister {
   MBF_PAR_PUMP_RELAY_TIME_OFF,            // 0x042E         Time level in minutes or seconds that the dosing pump must remain off when the temporized pump mode is selected. This time level register applies to all pumps except pH. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
   MBF_PAR_PUMP_RELAY_TIME_ON,             // 0x042F         Time level in minutes or seconds that the dosing pump must remain on when the temporized pump mode is selected. This time level register applies to all pumps except pH. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
   MBF_PAR_RELAY_PH,                       // 0x0430         Determine what pH regulation configuration the equipment has (see MBV_PAR_RELAY_PH_*)
-  MBF_PAR_RELAY_MAX_TIME,                 // 0x0431         Maximum amount of time, in seconds, that a dosing pump can operate before rising an alarm signal. The behavior of the system when the dosing time is exceeded is regulated by the type of action stored in the MBF_PAR_RELAY_MODE register.
+  MBF_PAR_RELAY_MAX_TIME,                 // 0x0431         Maximum amount of time in seconds, that a dosing pump can operate before rising an alarm signal. The behavior of the system when the dosing time is exceeded is regulated by the type of action stored in the MBF_PAR_RELAY_MODE register.
   MBF_PAR_RELAY_MODE,                     // 0x0432         Behavior of the system when the dosing time is exceeded (see MBMSK_PAR_RELAY_MODE_* and MBV_PAR_RELAY_MODE_*)
   MBF_PAR_RELAY_ACTIVATION_DELAY,         // 0x0433         Delay time in seconds for the pH pump when the measured pH value is outside the allowable pH setpoints. The system internally adds an extra time of 10 seconds to the value stored here. The pump starts the dosing operation once the condition of pH out of valid interval is maintained during the time specified in this register.
-  MBF_PAR_TIMER_BLOCK_BASE,               // 0x0434         This block of 180 registers holds the configuration of the system timers. The system has a set of 12 fully configurable timers, each one assigned to a specific function, described below:
-  MBF_PAR_TIMER_BLOCK_FILT_INT1 = 0x0434, // 0x0434         Filtration interval 1 (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_FILT_INT2 = 0x0443, // 0x0443         Filtration interval 2 (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_FILT_INT3 = 0x0452, // 0x0452         Filtration interval 3 (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX1_INT2 = 0x0461, // 0x0461         Auxiliary relay 1 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_LIGHT_INT = 0x0470, // 0x0470         Lighting interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX2_INT2 = 0x047F, // 0x047F         Auxiliary relay 2 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX3_INT2 = 0x048E, // 0x048E         Auxiliary relay 3 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX4_INT2 = 0x049D, // 0x049D         Auxiliary relay 4 - 2. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX1_INT1 = 0x04AC, // 0x04AC         Auxiliary relay 1 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX2_INT1 = 0x04BB, // 0x04BB         Auxiliary relay 2 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX3_INT1 = 0x04CA, // 0x04CA         Auxiliary relay 3 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
-  MBF_PAR_TIMER_BLOCK_AUX4_INT1 = 0x04D9, // 0x04D9         Auxiliary relay 4 - 1. interval (15 register - see MBV_TIMER_OFFMB_* for desc)
+  MBF_PAR_TIMER_BLOCK_BASE,               // 0x0434         Block of 180 registers containing the configuration of the 12 timers with 15 registers each (see MBV_TIMER_OFFMB_*). The system has a set of 12 fully configurable timers, each one assigned to a specific function:
+  MBF_PAR_TIMER_BLOCK_FILT_INT1 = 0x0434, // 0x0434         Filtration timer 1
+  MBF_PAR_TIMER_BLOCK_FILT_INT2 = 0x0443, // 0x0443         Filtration tiemr 2
+  MBF_PAR_TIMER_BLOCK_FILT_INT3 = 0x0452, // 0x0452         Filtration timer 3
+  MBF_PAR_TIMER_BLOCK_AUX1_INT2 = 0x0461, // 0x0461         Aux1 timer 2
+  MBF_PAR_TIMER_BLOCK_LIGHT_INT = 0x0470, // 0x0470         Lighting timer
+  MBF_PAR_TIMER_BLOCK_AUX2_INT2 = 0x047F, // 0x047F         Aux2 timer 2
+  MBF_PAR_TIMER_BLOCK_AUX3_INT2 = 0x048E, // 0x048E         Aux3 timer 2
+  MBF_PAR_TIMER_BLOCK_AUX4_INT2 = 0x049D, // 0x049D         Aux4 timer 2
+  MBF_PAR_TIMER_BLOCK_AUX1_INT1 = 0x04AC, // 0x04AC         Aux1 timer 1
+  MBF_PAR_TIMER_BLOCK_AUX2_INT1 = 0x04BB, // 0x04BB         Aux2 timer 1
+  MBF_PAR_TIMER_BLOCK_AUX3_INT1 = 0x04CA, // 0x04CA         Aux3 timer 1
+  MBF_PAR_TIMER_BLOCK_AUX4_INT1 = 0x04D9, // 0x04D9         Aux4 timer 1
   MBF_PAR_FILTVALVE_ENABLE = 0x04E8,      // 0x04E8         Filter cleaning functionality mode (0 = off, 1 = Besgo)
   MBF_PAR_FILTVALVE_MODE,                 // 0x04E9         Filter cleaning valve timing mode, possible modes: MBV_PAR_CTIMER_ENABLED, MBV_PAR_CTIMER_ALWAYS_ON, MBV_PAR_CTIMER_ALWAYS_OFF
   MBF_PAR_FILTVALVE_GPIO,                 // 0x04EA         Relay associated with the filter cleaning function. default AUX2 (value 5)
-  MBF_PAR_FILTVALVE_START_LOW,            // 0x04EB         start timestamp of filter cleaning (32-bit)
-  MBF_PAR_FILTVALVE_START_HIGH,           // 0x04EC           "
+  MBF_PAR_FILTVALVE_START_LOW,            // 0x04EB         Start timestamp of filter cleaning (32-bit value - low word)
+  MBF_PAR_FILTVALVE_START_HIGH,           // 0x04EC         Start timestamp of filter cleaning (32-bit value - high word)
   MBF_PAR_FILTVALVE_PERIOD_MINUTES,       // 0x04ED         Period in minutes between cleaning actions. For example, if a value of 60 is stored in this registry, a cleanup action will occur every hour.
   MBF_PAR_FILTVALVE_INTERVAL,             // 0x04EE         Cleaning action duration in seconds.
   MBF_PAR_FILTVALVE_REMAINING,            // 0x04EF         Time remaining for the current cleaning action in seconds. If this register is 0, it means that there is no cleaning function running. When a cleanup function is started, the contents of the MBF_PAR_FILTVALVE_INTERVAL register are copied to this register, then decremented once per second. The display uses this log to track the progress of the cleaning function.
   MBF_ACTION_COPY_TO_RTC,                 // 0x04F0         A write (any value) forces the writing of the RTC time registers MBF_PAR_TIME_LOW (0x0408) and MBF_PAR_TIME_HIGH (0x0409) into the RTC internal microcontroller clock management registers.
 
-  // USER page (0x05xx)  To make the modification of this register persistent, execute the EEPROM storage procedure described in global register MBF_SAVE_TO_EEPROM.
+  // USER page (0x05xx) - Contains user configuration registers, such as the production level for the ionization and the hydrolysis, or the set points for the pH, redox, or chlorine regulation loops.
   MBF_PAR_ION = 0x0500,                   // 0x0500*        Ionization target production level. The value adjusted in this register must not exceed the value set in the MBF_PAR_ION_NOM factory register.
   MBF_PAR_ION_PR,                         // 0x0501*        Amount of time in minutes that the ionization must be activated each time that the filtration starts.
   MBF_PAR_HIDRO,                          // 0x0502*        Hydrolisis target production level. When the hydrolysis production is to be set in percent values, this value will contain the percent of production. If the hydrolysis module is set to work in g/h production, this module will contain the desired amount of production in g/h units. The value adjusted in this register must not exceed the value set in the MBF_PAR_HIDRO_NOM factory register.
@@ -231,47 +231,25 @@ enum NeoPoolRegister {
   MBF_PAR_PH2,                            // 0x0505*        Lower limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.0, the numerical content that we must write in this register is 700. This register must be always lower than MBF_PAR_PH1.
   MBF_PAR_RX1 = 0x0508,                   // 0x0508*        Set point for the redox regulation system. This value must be in the range of 0 to 1000.
   MBF_PAR_CL1 = 0x050A,                   // 0x050A*        Set point for the chlorine regulation system. The value stored in this register is multiplied by 100. This mean that if we want to set a value of 1.5 ppm, we will have to write a numerical value of 150. This value stored in this register must be in the range of 0 to 1000.
-  MBF_PAR_FILTRATION_CONF = 0x050F,       // 0x050F* mask   undocumented - filtration type and speed, see MBMSK_PAR_FILTRATION_CONF_*
-  MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         undocumented - filtration speed function control
+  MBF_PAR_FILTRATION_CONF = 0x050F,       // 0x050F* mask   ! filtration type and speed, see MBMSK_PAR_FILTRATION_CONF_*
+  MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         ! filtration speed function control
   MBF_PAR_FUNCTION_DEPENDENCY = 0x051B,   // 0x051B  mask   Specification for the dependency of different functions, such as heating, from external events like FL1 (see MBMSK_FCTDEP_HEATING/MBMSK_DEPENDENCY_*)
 
-  // MISC page (0x06xx)
+  // MISC page (0x06xx) - Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
   MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight (see MBV_PAR_BACKLIGHT_*)
   MBF_PAR_UICFG_SOUND,                    // 0x0603* mask   Audible alerts (see MBMSK_PAR_SOUND_*)
   MBF_PAR_UICFG_PASSWORD,                 // 0x0604*        System password encoded in BCD
   MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605* mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
-  MBF_PAR_UICFG_VISUAL_OPTIONS_EXT,       // 0x0606* mask   This register stores additional display options for the user interface menus, see MBMSK_VOE_*
+  MBF_PAR_UICFG_VISUAL_OPTIONS_EXT,       // 0x0606* mask   This register stores additional display options for the user interface menus (see MBMSK_VOE_*)
   MBF_PAR_UICFG_MACH_VISUAL_STYLE,        // 0x0607* mask   This register is an expansion of register 0x0600 and 0x0605. The lower part of the register (8 bits LSB) is used to store the type of color selected when in register 0x600 has been specified that the machine is of type "generic". Colors and styles correspond to those listed in record 0x600 MBF_PAR_UICFG_MACHINE. The upper part (8-bit MSB) contains extra bits MBMSK_VS_FORCE_UNITS_GRH, MBMSK_VS_FORCE_UNITS_PERCENTAGE and MBMSK_ELECTROLISIS
-  MBF_PAR_UICFG_MACH_NAME_BOLD_0,         // 0x0608         This set of 4 registers stores an ASCIIZ string of up to 8 characters that is used to specify the bold part of the title to be displayed at startup if the specified machine type is generic. Note: only lowercase letters (a-z) can be used.
-  MBF_PAR_UICFG_MACH_NAME_BOLD_1,         // 0x0609
-  MBF_PAR_UICFG_MACH_NAME_BOLD_2,         // 0x060A
-  MBF_PAR_UICFG_MACH_NAME_BOLD_3,         // 0x060B
-  MBF_PAR_UICFG_MACH_NAME_LIGHT_0,        // 0x060C         This set of 4 registers stores an ASCIIZ string of up to 8 characters that is used to specify the normal intensity part of the title that will be displayed at startup if the specified machine type is generic. Note: Only lowercase letters (a-z) can be used.
-  MBF_PAR_UICFG_MACH_NAME_LIGHT_1,        // 0x060D
-  MBF_PAR_UICFG_MACH_NAME_LIGHT_2,        // 0x060E
-  MBF_PAR_UICFG_MACH_NAME_LIGHT_3,        // 0x060F
-  MBF_PAR_UICFG_MACH_NAME_AUX1_0,         // 0x0610         Aux1 relay name: 5 registers ASCIIZ string of up to 10 characters
-  MBF_PAR_UICFG_MACH_NAME_AUX1_1,         // 0x0611
-  MBF_PAR_UICFG_MACH_NAME_AUX1_2,         // 0x0612
-  MBF_PAR_UICFG_MACH_NAME_AUX1_3,         // 0x0613
-  MBF_PAR_UICFG_MACH_NAME_AUX1_4,         // 0x0614
-  MBF_PAR_UICFG_MACH_NAME_AUX2_0,         // 0x0615         Aux2 relay name: 5 registers ASCIIZ string of up to 10 characters
-  MBF_PAR_UICFG_MACH_NAME_AUX2_1,         // 0x0616
-  MBF_PAR_UICFG_MACH_NAME_AUX2_2,         // 0x0617
-  MBF_PAR_UICFG_MACH_NAME_AUX2_3,         // 0x0618
-  MBF_PAR_UICFG_MACH_NAME_AUX2_4,         // 0x0619
-  MBF_PAR_UICFG_MACH_NAME_AUX3_0,         // 0x061A         Aux3 relay name: 5 registers ASCIIZ string of up to 10 characters
-  MBF_PAR_UICFG_MACH_NAME_AUX3_1,         // 0x061B
-  MBF_PAR_UICFG_MACH_NAME_AUX3_2,         // 0x061C
-  MBF_PAR_UICFG_MACH_NAME_AUX3_3,         // 0x061D
-  MBF_PAR_UICFG_MACH_NAME_AUX3_4,         // 0x061E
-  MBF_PAR_UICFG_MACH_NAME_AUX4_0,         // 0x061F         Aux4 relay name: 5 registers ASCIIZ string of up to 10 characters
-  MBF_PAR_UICFG_MACH_NAME_AUX4_1,         // 0x0620
-  MBF_PAR_UICFG_MACH_NAME_AUX4_2,         // 0x0621
-  MBF_PAR_UICFG_MACH_NAME_AUX4_3,         // 0x0622
-  MBF_PAR_UICFG_MACH_NAME_AUX4_4,         // 0x0623
+  MBF_PAR_UICFG_MACH_NAME_BOLD = 0x0608,  // 0x0608         Machine name bold part title displayed during startup (if machine type is generic). Note: Only lowercase letters (a-z) can be used. 4 register ASCIIZ string with up to 8 characters
+  MBF_PAR_UICFG_MACH_NAME_LIGHT = 0x060C, // 0x060C         Machine name normal intensity part title displayed during startup (if machine type is generic). Note: Only lowercase letters (a-z) can be used. 4 register ASCIIZ string with up to 8 characters
+  MBF_PAR_UICFG_MACH_NAME_AUX1 = 0x0610,  // 0x0610         Aux1 relay name: 5 register ASCIIZ string with up to 10 characters
+  MBF_PAR_UICFG_MACH_NAME_AUX2 = 0x0615,  // 0x0615         Aux2 relay name: 5 register ASCIIZ string with up to 10 characters
+  MBF_PAR_UICFG_MACH_NAME_AUX3 = 0x061A,  // 0x061A         Aux3 relay name: 5 register ASCIIZ string with up to 10 characters
+  MBF_PAR_UICFG_MACH_NAME_AUX4 = 0x061F,  // 0x061F         Aux4 relay name: 5 register ASCIIZ string with up to 10 characters
 };
 
 // Sugar Valley register constants and bit masks
@@ -279,14 +257,14 @@ enum NeoPoolConstAndBitMask {
   // MBF_PH_STATUS
   MBMSK_PH_STATUS_ALARM                   = 0x000F, // PH alarm. The possible alarm values are depending on the regulation model:
       // Valid alarm values for pH regulation with acid and base:
-  MBV_PH_ACID_BASE_ALARM0 = 0,                      // no alarm
-  MBV_PH_ACID_BASE_ALARM1 = 1,                      // pH too high; the pH value is 0.8 points higher than the setpoint (PH1 on acid systems, PH2 on base systems, PH1 on acid+base systems)
-  MBV_PH_ACID_BASE_ALARM2 = 2,                      // pH too low: the pH value is 0.8 points lower than the set point value set in (PH1 on acid systems, PH2 on base systems, PH2 on acid+base systems)
-  MBV_PH_ACID_BASE_ALARM3 = 3,                      // pH pump has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
-  MBV_PH_ACID_BASE_ALARM4 = 4,                      // pH higher than the set point (PH1 + 0.1 on acid systems, PH2 + 0.1 on base systems, PH1 on acid+base systems)
-  MBV_PH_ACID_BASE_ALARM5 = 5,                      // pH lower than the set point  (PH1 - 0.3 on acid systems, PH2 - 0.3 on base systems, PH2 on acid+base systems)
-  MBV_PH_ACID_BASE_ALARM6 = 6,                      // undocumented - tank level alarm
-
+  MBV_PH_ACID_BASE_ALARM0                 = 0,      // no alarm
+  MBV_PH_ACID_BASE_ALARM1                 = 1,      // pH too high; the pH value is 0.8 points higher than the setpoint (PH1 on acid systems, PH2 on base systems, PH1 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM2                 = 2,      // pH too low: the pH value is 0.8 points lower than the set point value set in (PH1 on acid systems, PH2 on base systems, PH2 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM3                 = 3,      // pH pump has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
+  MBV_PH_ACID_BASE_ALARM4                 = 4,      // pH higher than the set point (PH1 + 0.1 on acid systems, PH2 + 0.1 on base systems, PH1 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM5                 = 5,      // pH lower than the set point  (PH1 - 0.3 on acid systems, PH2 - 0.3 on base systems, PH2 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM6                 = 6,      // ! tank level alarm
+                                                    // bit
   MBMSK_PH_STATUS_CTRL_BY_FL              = 0x0400, // 10 Control status of the pH module by flow detection (if enabled by MBF_PAR_HIDRO_ION_CAUDAL)
   MBMSK_PH_STATUS_ACID_PUMP_ACTIVE        = 0x0800, // 11 Acid pH pump relay on (pump on)
   MBMSK_PH_STATUS_BASE_PUMP_ACTIVE        = 0x1000, // 12 Base pH Pump Relay On (Pump On)
@@ -294,38 +272,38 @@ enum NeoPoolConstAndBitMask {
   MBMSK_PH_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active pH measurement module and making measurements. If this bit is at 1, the pH bar should be displayed.
   MBMSK_PH_STATUS_MODULE_PRESENT          = 0x8000, // 15 Detected pH measurement module
 
-  // MBF_RX_STATUS
+  // MBF_RX_STATUS                                  // bit
   MBMSK_RX_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Redox pump relay on (pump activated)
   MBMSK_RX_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active Redox control module and controlling pump
   MBMSK_RX_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active Redox measurement module and performing measurements. If this bit is at 1, the Redox bar should be displayed on the screen.
   MBMSK_RX_STATUS_MODULE_PRESENT          = 0x8000, // 15 Redox measurement module detected in the system
 
-  // MBF_CL_STATUS
+  // MBF_CL_STATUS                                  // bit
   MBMSK_CL_STATUS_CHLORINE_FLOW           = 0x0008, //  3 Chlorine Probe Flow Sensor. This sensor is built into the probe itself and serves to detect whether there is water passing through the chlorine measurement probe. In case the sensor is at 0, the chlorine measurement will not be valid.
   MBMSK_CL_STATUS_CL_PUMP_ACTIVE          = 0x1000, // 12 Chlorine pump relay on (pump on)
   MBMSK_CL_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active chlorine control module and controlling pump
   MBMSK_CL_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active chlorine measurement module and taking measurements. If this bit is 1, the chlorine bar should be displayed on the screen.
   MBMSK_CL_STATUS_MODULE_PRESENT          = 0x8000, // 15 Chlorine measurement module detected in the system
 
-  // MBF_CD_STATUS
+  // MBF_CD_STATUS                                  // bit
   MBMSK_CD_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Conductivity pump relay on (pump active)
   MBMSK_CD_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active conductivity control module and controlling pump
   MBMSK_CD_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active conductivity measurement module and making measurements. If this bit is 1, the conditionality bar should be displayed on the screen.
   MBMSK_CD_STATUS_MODULE_PRESENT          = 0x8000, // 15 Conductivity measurement module detected in the system
 
-  // MBF_ION_STATUS
+  // MBF_ION_STATUS                                 // bit
   MBMSK_ION_STATUS_ON_TARGET              = 0x0001, //  0 On Target - the system has reached the set point.
   MBMSK_ION_STATUS_LOW                    = 0x0002, //  1 Low - Ionization cannot reach the set point.
-  MBMSK_ION_STATUS_RESERVED               = 0x0004, //  2
+  MBMSK_ION_STATUS_RESERVED               = 0x0004, //  2 reserved
   MBMSK_ION_STATUS_PROGTIME_EXCEEDED      = 0x0008, //  3 Pr off - The programmed ionization time has been exceeded
   MBMSK_ION_STATUS_POLOFF                 = 0x1000, // 12 Ion Pol off - Ionization in dead time
   MBMSK_ION_STATUS_POL1                   = 0x2000, // 13 Ion Pol 1 - Ionization working in polarization 1
   MBMSK_ION_STATUS_POL2                   = 0x4000, // 14 Ion Pol 2 - Ionization working in polarization 2
 
-  // MBF_HIDRO_STATUS
+  // MBF_HIDRO_STATUS                               // bit
   MBMSK_HIDRO_STATUS_ON_TARGET            = 0x0001, //  0 On Target - the system has reached the set point.
   MBMSK_HIDRO_STATUS_LOW                  = 0x0002, //  1 Low - Hydrolysis cannot reach the set point.
-  MBMSK_HIDRO_STATUS_RESERVED             = 0x0004, //  2
+  MBMSK_HIDRO_STATUS_RESERVED             = 0x0004, //  2 reserved
   MBMSK_HIDRO_STATUS_FL1                  = 0x0008, //  3 Flow - Hydrolysis cell flow indicator (FL1)
   MBMSK_HIDRO_STATUS_COVER                = 0x0010, //  4 Cover - Cover input activated
   MBMSK_HIDRO_STATUS_MODULE_ACTIVE        = 0x0020, //  5 Active - Active Module hydrolysis (hidroEnable)
@@ -338,7 +316,7 @@ enum NeoPoolConstAndBitMask {
   MBMSK_HIDRO_STATUS_POL1                 = 0x2000, // 13 Ion Pol 1 - Ionization working in polarization 1
   MBMSK_HIDRO_STATUS_POL2                 = 0x4000, // 14 Ion Pol 2 - Ionization working in polarization 2
 
-  // MBF_RELAY_STATE
+  // MBF_RELAY_STATE                                // bit
   MBMSK_RELAY_STATE1                      = 0x0001, //  0 Relay 1 state (1 on; 0 off) (normally assigned to ph)
   MBMSK_RELAY_STATE2                      = 0x0002, //  1 Relay 2 state (1 on; 0 off) (normally assigned to filtering)
   MBMSK_RELAY_STATE3                      = 0x0004, //  2 Relay 3 status (1 on; 0 off) (normally assigned to lighting)
@@ -352,7 +330,7 @@ enum NeoPoolConstAndBitMask {
   MBMSK_RELAY_FILTSPEED                   = 0x0700, // Filtration current speed mask
   MBSHFT_RELAY_FILTSPEED                  = 8,      // Filtration current speed bit shift
 
-  // MBF_NOTIFICATION
+  // MBF_NOTIFICATION                               // bit
   MBMSK_NOTIF_MODBUS_CHANGED              = 0x0001, //  0 Modbus page changed
   MBMSK_NOTIF_GLOBAL_CHANGED              = 0x0002, //  1 Global page changed
   MBMSK_NOTIF_FACTORY_CHANGED             = 0x0004, //  2 Factory page changed
@@ -361,11 +339,11 @@ enum NeoPoolConstAndBitMask {
   MBMSK_NOTIF_MISC_CHANGED                = 0x0020, //  5 Misc page changed
 
   // MBF_CELL_BOOST
-  MBMSK_CELL_BOOST_NO_REDOX_CTL           = 0x8000, // undocumented - Disable redox ctrl
-  MBMSK_CELL_BOOST_STATE                  = 0x0500, // undocumented - Boost
-  MBMSK_CELL_BOOST_START                  = 0x00A0, // undocumented - Start boost
+  MBMSK_CELL_BOOST_NO_REDOX_CTL           = 0x8000, // ! Disable redox ctrl
+  MBMSK_CELL_BOOST_STATE                  = 0x0500, // ! Boost
+  MBMSK_CELL_BOOST_START                  = 0x00A0, // ! Start boost
 
-  // MBF_PAR_MODEL
+  // MBF_PAR_MODEL                                  // bit
   MBMSK_MODEL_ION                         = 0x0001, //  0 The equipment includes ionization control
   MBMSK_MODEL_HIDRO                       = 0x0002, //  1 The equipment includes hydrolysis or electrolysis
   MBMSK_MODEL_UV                          = 0x0004, //  2 The equipment includes disinfection control by ultraviolet lamp
@@ -378,7 +356,7 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_HIDRO_FLOW_SIGNAL_PADDLE_AND_STD= 3,      // Detection based on the paddle switch, associated with the FL1 input, and the standard detector. The system will understand that there is flow when both elements detect flow. If either one opens, the hydrolysis will stop.
   MBV_PAR_HIDRO_FLOW_SIGNAL_PADDLE_OR_STD = 4,      // Detection based on the paddle switch, associated with the FL1 input, or the standard detector. The system will understand that there is flow when either of the two elements detects flow. Hydrolysis will stop only if both detectors detect no flow.
 
-  // MBF_PAR_HIDRO_ION_CAUDAL
+  // MBF_PAR_HIDRO_ION_CAUDAL                       // bit
   MBMSK_HIDRO_ION_CAUDAL_FL1_CTRL         = 0x0001, //  0 If the FL1 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
   MBMSK_HIDRO_ION_CAUDAL_FL2_CTRL         = 0x0002, //  1 If the FL2 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
   MBMSK_HIDRO_ION_CAUDAL_FULL_CL_HIDRO_CTRL=0x0004, //  2 If there is a chlorine module installed and it is detected that its flow sensor is inactive, the action of the different elements of the system is disabled.
@@ -399,9 +377,9 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_UV_MODE0                        = 0,      // UV is switched off and it will not turn on when filtration starts
   MBV_PAR_UV_MODE1                        = 1,      // UV is switched on and it will turn on when filtration starts. Time counter for the UV lamp will be incremented.
 
-  // MBF_PAR_UV_HIDE_WARN
-  MBMSK_UV_HIDE_WARN_CLEAN                = 0x0001, //  0
-  MBMSK_UV_HIDE_WARN_REPLACE              = 0x0002, //  1
+  // MBF_PAR_UV_HIDE_WARN                           // bit
+  MBMSK_UV_HIDE_WARN_CLEAN                = 0x0001, //  0 Suppress UV lamp clean wanring
+  MBMSK_UV_HIDE_WARN_REPLACE              = 0x0002, //  1 Suppress UV lamp replace warning
 
   // MBF_PAR_PH_PUMP_REP_TIME_ON
   MBMSK_PH_PUMP_TIME                      = 0x7FFF, // Time level for the pump: The time level has a special coding format. It can cover periods of 1 to 180 seconds with 1 second granularity and from 3 to 999 minutes with 1 minute granularity. f the value is set to 30 for example, a 30 second time will be considered. If we have the value 200, we will have an on time of (200-180+3) = 23 minutes.
@@ -496,7 +474,7 @@ enum NeoPoolConstAndBitMask {
   MBV_TIMER_OFFMB_TIMER_INTERVAL          = 7,      // Time in seconds that the timer has to run when started (32-bit, LSB first)
   MBV_TIMER_OFFMB_TIMER_COUNTDOWN         = 9,      // Time remaining in seconds for the countdown mode (32-bit, LSB first)
   MBV_TIMER_OFFMB_TIMER_FUNCTION          = 11,     // Function assigned to this timer, see MBV_PAR_CTIMER_FCT_*
-  MBV_TIMER_OFFMB_TIMER_WORK_TIME         = 13,     // Number of seconds that the timer has been operating
+  MBV_TIMER_OFFMB_TIMER_WORK_TIME         = 13,     // Number of seconds that the timer has been operating (valid only if MBV_TIMER_OFFMB_TIMER_ENABLE is in MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode)
   // MBV_TIMER_OFFMB_TIMER_ENABLE working modes:
   MBV_PAR_CTIMER_DISABLE                  = 0,      // Timer disabled
   MBV_PAR_CTIMER_ENABLED                  = 1,      // Timer enabled and independent
@@ -517,21 +495,21 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_CTIMER_FCT_FILTRATION           = 0x0001, // Filtration function of the system
   MBV_PAR_CTIMER_FCT_LIGHTING             = 0x0002, // Lighting function of the system
   MBV_PAR_CTIMER_FCT_HEATING              = 0x0004, // Heating function of the system
-  MBV_PAR_CTIMER_FCT_AUXREL1              = 0x0100, // Function assigned to relay 1 (Filtration)
-  MBV_PAR_CTIMER_FCT_AUXREL2              = 0x0200, // Function assigned to relay 2 (Light)
-  MBV_PAR_CTIMER_FCT_AUXREL3              = 0x0400, // Function assigned to relay 3 (Heating)
-  MBV_PAR_CTIMER_FCT_AUXREL4              = 0x0800, // Function assigned to relay 4 (AUX1)
-  MBV_PAR_CTIMER_FCT_AUXREL5              = 0x1000, // Function assigned to relay 5 (AUX2)
-  MBV_PAR_CTIMER_FCT_AUXREL6              = 0x2000, // Function assigned to relay 6 (AUX3)
-  MBV_PAR_CTIMER_FCT_AUXREL7              = 0x4000, // Function assigned to relay 7 (AUX4)
+  MBV_PAR_CTIMER_FCT_RELAY1               = 0x0100, // Function assigned to relay 1 (Filtration)
+  MBV_PAR_CTIMER_FCT_RELAY2               = 0x0200, // Function assigned to relay 2 (Light)
+  MBV_PAR_CTIMER_FCT_RELAY3               = 0x0400, // Function assigned to relay 3 (pH Pump)
+  MBV_PAR_CTIMER_FCT_RELAY4               = 0x0800, // Function assigned to relay 4 (AUX1)
+  MBV_PAR_CTIMER_FCT_RELAY5               = 0x1000, // Function assigned to relay 5 (AUX2)
+  MBV_PAR_CTIMER_FCT_RELAY6               = 0x2000, // Function assigned to relay 6 (AUX3)
+  MBV_PAR_CTIMER_FCT_RELAY7               = 0x4000, // Function assigned to relay 7 (AUX4)
 
-  // MBF_PAR_UICFG_SOUND
+  // MBF_PAR_UICFG_SOUND                            // bit
   MBMSK_PAR_SOUND_CLICK                   = 0x0001, //  0 Click sounds every time a key is pressed
   MBMSK_PAR_SOUND_POPUP                   = 0x0002, //  1 Sound plays each time a pop-up message appears
   MBMSK_PAR_SOUND_ALERTS                  = 0x0004, //  2 An alarm sounds when there is an alert on the equipment (AL3)
   MBMSK_PAR_SOUND_FILTRATION              = 0x0008, //  3 Audible warning every time the filtration is started
 
-  // MBF_PAR_UICFG_VISUAL_OPTIONS
+  // MBF_PAR_UICFG_VISUAL_OPTIONS                   // bit
   MBMSK_HIDE_TEMPERATURE                  = 0x0001, //  0 Hide temperature measurement from main menu
   MBMSK_HIDE_FILTRATION                   = 0x0002, //  1 Hide filter status from main menu
   MBMSK_HIDE_LIGHTING                     = 0x0004, //  2 Hide lighting status from main menu
@@ -549,7 +527,7 @@ enum NeoPoolConstAndBitMask {
   MBMSK_SHOW_INSTALLER_MENU               = 0x4000, // 14 Shows access to the installer menu in the main menu without the need for a password.
   MBMSK_SHOW_FACTORY_MENU                 = 0x8000, // 15 Shows access to the factory menu in the main menu without the need for a password.
 
-  // MBF_PAR_UICFG_VISUAL_OPTIONS_EXT
+  // MBF_PAR_UICFG_VISUAL_OPTIONS_EXT               // bit
   MBMSK_VOE_SHOW_PNEUMATIC_VALVE          = 0x0001, //  0 Shows the pneumatic valve
   MBMSK_VOE_HIDE_AUX_REL_DEPENDENCY       = 0x0002, //  1 Hides the auxiliary relay dependency
   MBMSK_VOE_SHOW_BESGO_NAME               = 0x0004, //  2 Show “Besgo” instead of “Pneumatic” for the pneumatic valve titles.
@@ -564,13 +542,13 @@ enum NeoPoolConstAndBitMask {
   MBMSK_VOE_HIDE_BASIC_EXT_CONTROL        = 0x0800, // 11 Hide basic external controls
   MBMSK_VOE_HIDE_DIAGNOSTICS              = 0x1000, // 12 Hide diagnostics
 
-  // MBF_PAR_UICFG_MACH_VISUAL_STYLE
+  // MBF_PAR_UICFG_MACH_VISUAL_STYLE                // bit
   MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // 13 Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
   MBMSK_VS_FORCE_UNITS_PERCENTAGE         = 0x4000, // 14 Display the hydrolysis/electrolysis in percentage units (%).
   MBMSK_ELECTROLISIS                      = 0x8000, // 15 Display the word electrolysis instead of hydrolysis in generic mode.
 
   // MBF_POWER_MODULE_REG_*
-  MBV_POWER_MODULE_REG_INFO = 0,          // undocumented - set of 26-byte power module register stores an ASCIIZ string containing the subversion and timestamp of the module, e. g. ".57\nMay 26 2020\n01:08:10\n\0"
+  MBV_POWER_MODULE_REG_INFO               = 0,      // ! set of 26-byte power module register stores an ASCIIZ string containing the subversion and timestamp of the module, e. g. ".57\nMay 26 2020\n01:08:10\n\0"
 };
 
 #include <TasmotaModbus.h>
@@ -1904,6 +1882,10 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_NO_REDOX_CTL) ? 1 : 2) : 0 );
       // S4
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_LOW  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) ? 1 : 0 );
+      // S5
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_FLOW1  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_FL1) ? 0 : 1);
+      // S6
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_REDOX  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_REDOX_ENABLED) ? 1 : 0);
 
       ResponseJsonEnd();
     }
@@ -2165,9 +2147,9 @@ void NeoPoolShow(bool json)
           strncpy_P(sdesc, PSTR(D_NEOPOOL_RELAY_VALVE), sizeof(sdesc));
       } else if (i > 2) {
           // Aux
-          char sname[(MBF_PAR_UICFG_MACH_NAME_AUX2_0 - MBF_PAR_UICFG_MACH_NAME_AUX1_0) * 2 + 1];
-          uint16_t base = MBF_PAR_UICFG_MACH_NAME_AUX1_0 + ((i - 3) * (MBF_PAR_UICFG_MACH_NAME_AUX2_0 - MBF_PAR_UICFG_MACH_NAME_AUX1_0));
-          for (uint16_t k = 0; k < (MBF_PAR_UICFG_MACH_NAME_AUX2_0 - MBF_PAR_UICFG_MACH_NAME_AUX1_0); k++) {
+          char sname[(MBF_PAR_UICFG_MACH_NAME_AUX2 - MBF_PAR_UICFG_MACH_NAME_AUX1) * 2 + 1];
+          uint16_t base = MBF_PAR_UICFG_MACH_NAME_AUX1 + ((i - 3) * (MBF_PAR_UICFG_MACH_NAME_AUX2 - MBF_PAR_UICFG_MACH_NAME_AUX1));
+          for (uint16_t k = 0; k < (MBF_PAR_UICFG_MACH_NAME_AUX2 - MBF_PAR_UICFG_MACH_NAME_AUX1); k++) {
             uint16_t data = NeoPoolGetData(base + k);
             sname[k*2] = (char)(data >> 8);
             sname[k*2 + 1] = (char)(data & 0xFF);
@@ -3019,7 +3001,7 @@ void NeopoolCheckChanges(void) {
     uint16_t data = NeoPoolGetData(pgm_read_word(NeoPoolRegCheck + i) & 0x0FFF);
     if (NeoPoolRegCheckData[i] != data) {
 #ifdef DEBUG_TASMOTA_SENSOR
-      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeopoolCheckChanges() addr 0x%04X: data stored %d (0x%04X), data read %d (0x%04X)"), 
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: NeopoolCheckChanges() addr 0x%04X: data stored %d (0x%04X), data read %d (0x%04X)"),
         pgm_read_word(NeoPoolRegCheck + i) & 0x0FFF,
         NeoPoolRegCheckData[i], NeoPoolRegCheckData[i],
         data, data);

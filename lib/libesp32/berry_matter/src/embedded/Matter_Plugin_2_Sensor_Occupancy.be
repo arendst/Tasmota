@@ -32,7 +32,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   static var UPDATE_TIME = 750                      # update every 750ms
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Occupancy")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0406: [0,1,2,0xFFFC,0xFFFD],                  # Occupancy Sensing p.105 - no writable
+    0x0406: [0,1,2],                                # Occupancy Sensing p.105 - no writable
   })
   static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
 
@@ -96,15 +96,10 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
         return tlv_solo.set(TLV.U1, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
         return tlv_solo.set(TLV.U1, 0)  # unknown
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 4 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
@@ -121,15 +116,6 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
       end
     end
     super(self).update_virtual(payload_json)
-  end
-
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Occupancy":{int(self.shadow_occupancy)}'
   end
 
 end

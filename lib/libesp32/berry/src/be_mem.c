@@ -26,11 +26,42 @@
   #define realloc               BE_EXPLICIT_REALLOC
 #endif
 
-static void* malloc_from_pool(bvm *vm, size_t size);
-static void free_from_pool(bvm *vm, void* ptr, size_t old_size);
-
 #define POOL16_SIZE     16
 #define POOL32_SIZE     32
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#pragma intrinsic(_BitScanForward)
+#endif
+
+#if defined(__GNUC__)
+#define popcount(v)   __builtin_popcount(v)
+#define ffs(v)        __builtin_ffs(v)
+#elif defined(_MSC_VER)
+#define popcount(v)   __popcnt(v)
+
+static int ffs(unsigned x)
+{
+    unsigned long i;
+    return _BitScanForward(&i, x) ? i : 0;
+}
+#else
+/* https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt - count number of 1-bits */
+static int popcount(uint32_t n)
+{
+    n = (n & 0x55555555u) + ((n >> 1) & 0x55555555u);
+    n = (n & 0x33333333u) + ((n >> 2) & 0x33333333u);
+    n = (n & 0x0f0f0f0fu) + ((n >> 4) & 0x0f0f0f0fu);
+    n = (n & 0x00ff00ffu) + ((n >> 8) & 0x00ff00ffu);
+    n = (n & 0x0000ffffu) + ((n >>16) & 0x0000ffffu);
+    return n;
+}
+
+#error "unsupport compiler for ffs()"
+#endif
+
+static void* malloc_from_pool(bvm *vm, size_t size);
+static void free_from_pool(bvm *vm, void* ptr, size_t old_size);
 
 BERRY_API void* be_os_malloc(size_t size)
 {
@@ -66,7 +97,7 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
         if (!ptr || (old_size == 0)) {
             block = malloc_from_pool(vm, new_size);
         }
-    
+
         /* Case 2: deallocate */
         else if (new_size == 0) {
 #if BE_USE_PERF_COUNTERS
@@ -176,11 +207,7 @@ static void* malloc_from_pool(bvm *vm, size_t size) {
             /* look for an empty slot */
             if (pool16->bitmap != 0x0000) {
                 /* there is a free slot */
-#ifdef __GNUC__
-                int bit = __builtin_ffs(pool16->bitmap) - 1;
-#else
                 int bit = ffs(pool16->bitmap) - 1;
-#endif
                 if (bit >= 0) {
                     /* we found a free slot */
                     // bitClear(pool16->bitmap, bit);
@@ -208,11 +235,7 @@ static void* malloc_from_pool(bvm *vm, size_t size) {
             /* look for an empty slot */
             if (pool32->bitmap != 0x0000) {
                 /* there is a free slot */
-#ifdef __GNUC__
-                int bit = __builtin_ffs(pool32->bitmap) - 1;
-#else
                 int bit = ffs(pool32->bitmap) - 1;
-#endif
                 if (bit >= 0) {
                     /* we found a free slot */
                     // bitClear(pool32->bitmap, bit);
@@ -327,24 +350,6 @@ BERRY_API void be_gc_free_memory_pools(bvm *vm) {
     vm->gc.pool32 = NULL;
 }
 
-/* https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt - count number of 1-bits */
-static int pop0(uint32_t n) __attribute__((unused));
-static int pop0(uint32_t n) {
-    n = (n & 0x55555555u) + ((n >> 1) & 0x55555555u);
-    n = (n & 0x33333333u) + ((n >> 2) & 0x33333333u);
-    n = (n & 0x0f0f0f0fu) + ((n >> 4) & 0x0f0f0f0fu);
-    n = (n & 0x00ff00ffu) + ((n >> 8) & 0x00ff00ffu);
-    n = (n & 0x0000ffffu) + ((n >>16) & 0x0000ffffu);
-    return n;
-}
-
-#ifdef __GNUC__
-  #define count_bits_1(v)   __builtin_popcount(v)
-#else
-  #define count_bits_1(v)   pop0(v)
-#endif
-
-
 BERRY_API void be_gc_memory_pools_info(bvm *vm, size_t* slots_used, size_t* slots_allocated) {
     size_t used = 0;
     size_t allocated = 0;
@@ -352,14 +357,14 @@ BERRY_API void be_gc_memory_pools_info(bvm *vm, size_t* slots_used, size_t* slot
     gc16_t* pool16 = vm->gc.pool16;
     while (pool16) {
         allocated += POOL16_SLOTS;
-        used += POOL16_SLOTS - count_bits_1(pool16->bitmap);
+        used += POOL16_SLOTS - popcount(pool16->bitmap);
         pool16 = pool16->next;
     }
 
     gc32_t* pool32 = vm->gc.pool32;
     while (pool32) {
         allocated += POOL32_SLOTS;
-        used += POOL32_SLOTS - count_bits_1(pool32->bitmap);
+        used += POOL32_SLOTS - popcount(pool32->bitmap);
         pool32 = pool32->next;
     }
     if (slots_used) { *slots_used = used; }

@@ -482,24 +482,28 @@ be_local_closure(Matter_Expirable_list_remove,   /* name */
     }),
     be_str_weak(remove),
     &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
-      0x28080300,  //  0000  GE	R2	R1	K0
-      0x780A0007,  //  0001  JMPF	R2	#000A
-      0x6008000C,  //  0002  GETGBL	R2	G12
-      0x5C0C0000,  //  0003  MOVE	R3	R0
-      0x7C080200,  //  0004  CALL	R2	1
-      0x14080202,  //  0005  LT	R2	R1	R2
-      0x780A0002,  //  0006  JMPF	R2	#000A
-      0x94080001,  //  0007  GETIDX	R2	R0	R1
-      0x8C080501,  //  0008  GETMET	R2	R2	K1
-      0x7C080200,  //  0009  CALL	R2	1
-      0x60080003,  //  000A  GETGBL	R2	G3
-      0x5C0C0000,  //  000B  MOVE	R3	R0
+    ( &(const binstruction[21]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x20080202,  //  0001  NE	R2	R1	R2
+      0x780A0010,  //  0002  JMPF	R2	#0014
+      0x28080300,  //  0003  GE	R2	R1	K0
+      0x780A0007,  //  0004  JMPF	R2	#000D
+      0x6008000C,  //  0005  GETGBL	R2	G12
+      0x5C0C0000,  //  0006  MOVE	R3	R0
+      0x7C080200,  //  0007  CALL	R2	1
+      0x14080202,  //  0008  LT	R2	R1	R2
+      0x780A0002,  //  0009  JMPF	R2	#000D
+      0x94080001,  //  000A  GETIDX	R2	R0	R1
+      0x8C080501,  //  000B  GETMET	R2	R2	K1
       0x7C080200,  //  000C  CALL	R2	1
-      0x8C080502,  //  000D  GETMET	R2	R2	K2
-      0x5C100200,  //  000E  MOVE	R4	R1
-      0x7C080400,  //  000F  CALL	R2	2
-      0x80040400,  //  0010  RET	1	R2
+      0x60080003,  //  000D  GETGBL	R2	G3
+      0x5C0C0000,  //  000E  MOVE	R3	R0
+      0x7C080200,  //  000F  CALL	R2	1
+      0x8C080502,  //  0010  GETMET	R2	R2	K2
+      0x5C100200,  //  0011  MOVE	R4	R1
+      0x7C080400,  //  0012  CALL	R2	2
+      0x80040400,  //  0013  RET	1	R2
+      0x80000000,  //  0014  RET	0
     })
   )
 );

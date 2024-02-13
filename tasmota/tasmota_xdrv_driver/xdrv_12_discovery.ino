@@ -328,6 +328,9 @@ bool Xdrv12(uint32_t function) {
     case FUNC_MQTT_INIT:
       TasDiscoverInit();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

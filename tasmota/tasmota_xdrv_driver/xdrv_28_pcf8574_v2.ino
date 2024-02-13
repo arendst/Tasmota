@@ -720,6 +720,9 @@ bool Xdrv28(uint32_t function) {
         break;
 #endif  // USE_PCF8574_DISPLAYINPUT
 #endif  // USE_WEBSERVER
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
 #ifdef USE_PCF8574_MODE2
   } else if (2 == Pcf8574.mode) {
@@ -746,6 +749,9 @@ bool Xdrv28(uint32_t function) {
         break;
       case FUNC_ADD_SWITCH:
         result = Pcf8574AddSwitch();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
 #endif  // USE_PCF8574_MODE2

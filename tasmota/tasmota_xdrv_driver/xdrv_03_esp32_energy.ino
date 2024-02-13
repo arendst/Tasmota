@@ -893,10 +893,9 @@ void EnergyEverySecond(void) {
           Energy->active_power[i] = 0;
           if (!isnan(Energy->apparent_power[i])) { Energy->apparent_power[i] = 0; }
           if (!isnan(Energy->reactive_power[i])) { Energy->reactive_power[i] = 0; }
-          if (!isnan(Energy->frequency[i])) { Energy->frequency[i] = 0; }
-          if (!isnan(Energy->power_factor[i])) { Energy->power_factor[i] = 0; }
-          if (!isnan(Energy->export_active[i])) { Energy->export_active[i] = 0; }
-
+          if (!isnan(Energy->frequency[i]))      { Energy->frequency[i] = 0; }
+          if (!isnan(Energy->power_factor[i]))   { Energy->power_factor[i] = 0; }
+          if (!isnan(Energy->export_active[i]))  { Energy->export_active[i] = 0; }
           data_valid--;
         }
       }
@@ -1178,7 +1177,7 @@ void EnergyCommandCalSetResponse(uint32_t cal_type) {
 void EnergyCommandCalResponse(uint32_t cal_type) {
   Energy->command_code = cal_type;                     // Is XxxCal command too
   if (XnrgCall(FUNC_COMMAND)) {                        // XxxCal
-    Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+    ResponseCmnd();
     EnergyCommandCalSetResponse(cal_type);
   }
 }
@@ -1580,10 +1579,10 @@ void EnergyShow(bool json) {
         ResponseAppend_P(PSTR(",\"" D_JSON_POWERFACTOR "\":%s"),
           EnergyFmt(power_factor, 2));
       }
-      if (!isnan(Energy->frequency[0])) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
-      }
+    }
+    if (!isnan(Energy->frequency[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
+        EnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
     }
     if (Energy->voltage_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"),
@@ -1667,7 +1666,7 @@ void EnergyShow(bool json) {
       Energy->gui_count = relay_show - Energy->gui_offset;
       if (Energy->gui_count > Energy->Settings.gui_cols) { Energy->gui_count = Energy->Settings.gui_cols; }
 
-      WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
+      WSContentSend_P(PSTR("</table>"));        // Close current table as we will use different column count
       bool label_o = voltage_common;
       if (ENERGY_DISPLAY_TABS == Energy->Settings.gui_display) {
         uint32_t tabs = (relay_show -1 + Energy->Settings.gui_cols) / Energy->Settings.gui_cols;
@@ -1702,11 +1701,9 @@ void EnergyShow(bool json) {
       if (Energy->voltage_available) {
         WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFmt(Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
       }
-      if (!Energy->type_dc) {
-        if (!isnan(Energy->frequency[0])) {
-          WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-            WebEnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
-        }
+      if (!isnan(Energy->frequency[0])) {
+        WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
+          WebEnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
       }
       if (Energy->current_available) {
         WSContentSend_PD(HTTP_SNS_CURRENT, WebEnergyFmt(Energy->current, Settings->flag2.current_resolution));
@@ -1731,7 +1728,7 @@ void EnergyShow(bool json) {
       }
 
       XnrgCall(FUNC_WEB_COL_SENSOR);
-      WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
       XnrgCall(FUNC_WEB_SENSOR);
     }
 #endif  // USE_WEBSERVER
@@ -1798,6 +1795,9 @@ bool Xdrv03(uint32_t function)
         break;
       case FUNC_NETWORK_DOWN:
         XnrgCall(FUNC_NETWORK_DOWN);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

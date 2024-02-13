@@ -118,12 +118,20 @@ const char* matter_get_opcode_name(uint16_t opcode) {
 BE_FUNC_CTYPE_DECLARE(matter_get_opcode_name, "s", "i")
 
 const char* matter_get_attribute_name(uint16_t cluster, uint16_t attribute) {
-  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
-    if (cl->id == cluster) {
-      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
-        if (at->id == attribute) {
-          return at->name;
+  if (attribute < 0xFFF0) {
+    for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+      if (cl->id == cluster) {
+        for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+          if (at->id == attribute) {
+            return at->name;
+          }
         }
+      }
+    }
+  } else {
+    for (const matter_attribute_t * at = matter_Attributes_Common; at->id != 0xFFFF; at++) {
+      if (at->id == attribute) {
+        return at->name;
       }
     }
   }
@@ -132,11 +140,13 @@ const char* matter_get_attribute_name(uint16_t cluster, uint16_t attribute) {
 BE_FUNC_CTYPE_DECLARE(matter_get_attribute_name, "s", "ii")
 
 bbool matter_is_attribute_writable(uint16_t cluster, uint16_t attribute) {
-  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
-    if (cl->id == cluster) {
-      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
-        if (at->id == attribute) {
-          return (at->flags & 0x01) ? btrue : bfalse;
+  if (attribute < 0xFFF0) {
+    for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+      if (cl->id == cluster) {
+        for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+          if (at->id == attribute) {
+            return (at->flags & 0x01) ? btrue : bfalse;
+          }
         }
       }
     }
@@ -146,14 +156,18 @@ bbool matter_is_attribute_writable(uint16_t cluster, uint16_t attribute) {
 BE_FUNC_CTYPE_DECLARE(matter_is_attribute_writable, "b", "ii")
 
 bbool matter_is_attribute_reportable(uint16_t cluster, uint16_t attribute) {
-  for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
-    if (cl->id == cluster) {
-      for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
-        if (at->id == attribute) {
-          return (at->flags & 0x02) ? btrue : bfalse;
+  if (attribute < 0xFFF0) {
+    for (const matter_cluster_t * cl = matterAllClusters; cl->id != 0xFFFF; cl++) {
+      if (cl->id == cluster) {
+        for (const matter_attribute_t * at = cl->attributes; at->id != 0xFFFF; at++) {
+          if (at->id == attribute) {
+            return (at->flags & 0x02) ? btrue : bfalse;
+          }
         }
       }
     }
+  } else {
+    return btrue;
   }
   return bfalse;
 }
@@ -285,6 +299,8 @@ module matter (scope: global, strings: weak) {
   _STYLESHEET, comptr(MATTER_STYLESHEET)
   _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
+  AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
+  START_ENDPOINT, int(0x0002)         // endpoint where to start devices
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
   Verhoeff, class(be_class_Matter_Verhoeff)

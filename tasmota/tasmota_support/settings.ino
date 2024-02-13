@@ -420,7 +420,7 @@ bool SettingsBufferAlloc(uint32_t upload_size) {
   } else {  
     char filename[14];
     for (uint32_t i = 0; i < 129; i++) {
-      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);      // /.drvset012
       uint32_t fsize = TfsFileSize(filename);
       if (fsize) {
         if (settings_size == sizeof(TSettings)) {
@@ -466,7 +466,7 @@ uint32_t SettingsConfigBackup(void) {
     filebuf_ptr += sizeof(TSettings);
     char filename[14];
     for (uint32_t i = 0; i < 129; i++) {
-      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);  // /.drvset012
+      snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), i);      // /.drvset012
       uint32_t fsize = TfsFileSize(filename);
       if (fsize) {
         // Add tar header with file size
@@ -474,7 +474,7 @@ uint32_t SettingsConfigBackup(void) {
         filebuf_ptr[14] = fsize;
         filebuf_ptr[15] = fsize >> 8;
         filebuf_ptr += 16;
-        if (XdrvCallDriver(i, FUNC_RESTORE_SETTINGS)) {  // Enabled driver
+        if (i && (XdrvCallDriver(i, FUNC_RESTORE_SETTINGS))) {  // Enabled driver
           // Use most relevant config data which might not have been saved to file
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Backup driver %d"), i);
           uint32_t data_size = fsize;              // Fix possible buffer overflow
@@ -565,10 +565,13 @@ bool SettingsConfigRestore(void) {
       uint32_t driver = atoi((const char*)filebuf_ptr +8);      // /.drvset012 = 12
       uint32_t fsize = filebuf_ptr[15] << 8 | filebuf_ptr[14];  // Tar header settings size
       filebuf_ptr += 16;                           // Start of file settings
-      uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
-      bool valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
+      bool valid_buffer = true;
+      if (driver) {
+        uint32_t buffer_crc32 = filebuf_ptr[3] << 24 | filebuf_ptr[2] << 16 | filebuf_ptr[1] << 8 | filebuf_ptr[0];
+        valid_buffer = (GetCfgCrc32(filebuf_ptr +4, fsize -4) == buffer_crc32);
+      }
       if (valid_buffer) {
-        if (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS)) {
+        if (driver && (XdrvCallDriver(driver, FUNC_RESTORE_SETTINGS))) {
           // Restore live config data which will be saved to file before restart
 //          AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Restore driver %d"), driver);
           filebuf_ptr[1]++;                        // Force invalid crc32 to enable auto upgrade after restart
@@ -1120,6 +1123,7 @@ void SettingsDefaultSet2(void) {
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
   flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
+  flag6.mqtt_disable_modbus |= MQTT_DISABLE_MODBUSRECEIVED;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;

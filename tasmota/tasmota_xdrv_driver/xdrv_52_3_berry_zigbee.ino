@@ -550,7 +550,7 @@ extern "C" {
       } else if (mode == 12) {
         a->setKeyName("array");
         a->newJsonArray();
-        a->val.arrval->add(-1);
+        a->val.arrval->add((int32_t)-1);
         a->val.arrval->addStr("foo");
         a->val.arrval->addStr("bar");
         a->val.arrval->addStr("bar\"baz\'toto");

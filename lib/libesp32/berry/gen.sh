@@ -5,4 +5,4 @@
 # Included in the Platformio build process with `pio-tools/gen-berry-structures.py
 #
 rm -Rf ./generate/be_*.h
-python3 tools/coc/coc -o generate src default ../berry_tasmota/src ../berry_mapping/src ../berry_int64/src ../../libesp32_lvgl/lv_binding_berry/src ../berry_matter/src/solidify ../berry_matter/src ../../libesp32_lvgl/lv_binding_berry/src/solidify ../../libesp32_lvgl/lv_binding_berry/generate -c default/berry_conf.h
+python3 tools/coc/coc -o generate src default ../berry_tasmota/src ../berry_mapping/src ../berry_int64/src ../../libesp32_lvgl/lv_binding_berry/src ../berry_matter/src/solidify ../berry_matter/src ../berry_animate/src/solidify ../berry_animate/src ../../libesp32_lvgl/lv_binding_berry/src/solidify ../../libesp32_lvgl/lv_binding_berry/generate -c default/berry_conf.h

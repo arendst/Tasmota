@@ -17,7 +17,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "lv_txt.h"
+#include "lv_text.h"
 
 /*********************
  *      DEFINES
@@ -30,7 +30,7 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-enum {
+enum _lv_base_dir_t {
     LV_BASE_DIR_LTR      = 0x00,
     LV_BASE_DIR_RTL      = 0x01,
     LV_BASE_DIR_AUTO     = 0x02,
@@ -39,7 +39,11 @@ enum {
     LV_BASE_DIR_WEAK     = 0x21,
 };
 
+#ifdef DOXYGEN
+typedef _lv_base_dir_t lv_base_dir_t;
+#else
 typedef uint8_t lv_base_dir_t;
+#endif /*DOXYGEN*/
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -66,7 +70,7 @@ lv_base_dir_t _lv_bidi_detect_base_dir(const char * txt);
  * Get the logical position of a character in a line
  * @param str_in the input string. Can be only one line.
  * @param bidi_txt internally the text is bidi processed which buffer can be get here.
- * If not required anymore has to freed with `lv_mem_free()`
+ * If not required anymore has to freed with `lv_free()`
  * Can be `NULL` is unused
  * @param len length of the line in character count
  * @param base_dir base direction of the text: `LV_BASE_DIR_LTR` or `LV_BASE_DIR_RTL`
@@ -81,7 +85,7 @@ uint16_t _lv_bidi_get_logical_pos(const char * str_in, char ** bidi_txt, uint32_
  * Get the visual position of a character in a line
  * @param str_in the input string. Can be only one line.
  * @param bidi_txt internally the text is bidi processed which buffer can be get here.
- * If not required anymore has to freed with `lv_mem_free()`
+ * If not required anymore has to freed with `lv_free()`
  * Can be `NULL` is unused
  * @param len length of the line in character count
  * @param base_dir base direction of the text: `LV_BASE_DIR_LTR` or `LV_BASE_DIR_RTL`
@@ -112,7 +116,6 @@ void _lv_bidi_process_paragraph(const char * str_in, char * str_out, uint32_t le
  * @param txt       a text, used with LV_BASE_DIR_AUTO to determine the base direction
  */
 void lv_bidi_calculate_align(lv_text_align_t * align, lv_base_dir_t * base_dir, const char * txt);
-
 
 /**********************
  *      MACROS

@@ -70,14 +70,14 @@ void mic_task(void *arg){
 
   shine_set_config_mpeg_defaults(&config.mpeg);
 
-  if (audio_i2s.mic_channels == 1) {
+  if (audio_i2s.Settings->rx.channels == 1) {
     config.mpeg.mode = MONO;
   } else {
     config.mpeg.mode = STEREO;
   }
   config.mpeg.bitr = 128;
-  config.wave.samplerate = audio_i2s.mic_rate;
-  config.wave.channels = (channels)audio_i2s.mic_channels;
+  config.wave.samplerate = audio_i2s.Settings->rx.sample_rate;
+  config.wave.channels = (channels)audio_i2s.Settings->rx.channels;
 
   if (shine_check_config(config.wave.samplerate, config.mpeg.bitr) < 0) {
     error = 3;
@@ -91,7 +91,7 @@ void mic_task(void *arg){
   }
 
   samples_per_pass = shine_samples_per_pass(s);
-  bytesize = samples_per_pass * 2 * audio_i2s.mic_channels;
+  bytesize = samples_per_pass * 2 * audio_i2s.Settings->rx.channels;
 
   buffer = (int16_t*)malloc(bytesize);
   if (!buffer) {
@@ -103,17 +103,18 @@ void mic_task(void *arg){
 
   while (!audio_i2s_mp3.mic_stop) {
       uint32_t bytes_read;
-      i2s_read(audio_i2s.mic_port, (char *)buffer, bytesize, &bytes_read, (100 / portTICK_RATE_MS));
+      bytes_read = audio_i2s.in->readMic((uint8_t*)buffer, bytesize, true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
+      // i2s_read(audio_i2s.mic_port, (char *)buffer, bytesize, &bytes_read, (100 / portTICK_PERIOD_MS));
 
-      if (audio_i2s.mic_gain > 1) {
+      if (audio_i2s.Settings->rx.gain > 1) {
         // set gain
         for (uint32_t cnt = 0; cnt < bytes_read / 2; cnt++) {
-          buffer[cnt] *= audio_i2s.mic_gain;
+          buffer[cnt] *= audio_i2s.Settings->rx.gain;
         }
       }
       ucp = shine_encode_buffer_interleaved(s, buffer, &written);
 
-      if (!audio_i2s_mp3.use_stream) {
+      if (!audio_i2s.Settings->tx.stream_enable) {
         bwritten = mp3_out.write(ucp, written);
         if (bwritten != written) {
           break;
@@ -152,11 +153,11 @@ exit:
     audio_i2s_mp3.client.stop();
   }
 
-  SpeakerMic(MODE_SPK);
+  SpeakerMic(I2S_AUDIO_MODE_SPK);
   audio_i2s_mp3.mic_stop = 0;
   audio_i2s_mp3.mic_error = error;
   AddLog(LOG_LEVEL_INFO, PSTR("mp3task result code: %d"), error);
-  audio_i2s.mic_task_h = 0;
+  audio_i2s_mp3.mic_task_handle = 0;
   audio_i2s_mp3.recdur = 0;
   audio_i2s_mp3.stream_active = 0;
   vTaskDelete(NULL);
@@ -166,14 +167,14 @@ exit:
 int32_t i2s_record_shine(char *path) {
 esp_err_t err = ESP_OK;
 
-  if (audio_i2s.mic_port == 0) {
+  if (audio_i2s.in) {
     if (audio_i2s_mp3.decoder || audio_i2s_mp3.mp3) return 0;
   }
 
-  err = SpeakerMic(MODE_MIC);
+  err = SpeakerMic(I2S_AUDIO_MODE_MIC);
   if (err) {
-    if (audio_i2s.mic_port == 0) {
-      SpeakerMic(MODE_SPK);
+    if (audio_i2s.in) {
+      SpeakerMic(I2S_AUDIO_MODE_SPK);
     }
     AddLog(LOG_LEVEL_INFO, PSTR("mic init error: %d"), err);
     return err;
@@ -191,7 +192,7 @@ esp_err_t err = ESP_OK;
     stack = 8000;
   }
 
-  err = xTaskCreatePinnedToCore(mic_task, "MIC", stack, NULL, 3, &audio_i2s.mic_task_h, 1);
+  err = xTaskCreatePinnedToCore(mic_task, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
 
   return err;
 }
@@ -206,7 +207,7 @@ void Cmd_MicRec(void) {
       ResponseCmndChar(XdrvMailbox.data);
     }
   } else {
-    if (audio_i2s.mic_task_h) {
+    if (audio_i2s_mp3.mic_task_handle) {
       // stop task
       audio_i2s_mp3.mic_stop = 1;
       while (audio_i2s_mp3.mic_stop) {

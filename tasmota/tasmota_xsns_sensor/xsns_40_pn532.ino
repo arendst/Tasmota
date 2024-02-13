@@ -97,6 +97,9 @@ void PN532_Init(void) {
     PN532_Serial = new TasmotaSerial(Pin(GPIO_PN532_RXD), Pin(GPIO_PN532_TXD), 1);
     if (PN532_Serial->begin(115200)) {
       if (PN532_Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NFC: Serial UART%d"), PN532_Serial->getUart());
+#endif
       PN532_wakeup();
       uint32_t ver = PN532_getFirmwareVersion();
       if (ver) {

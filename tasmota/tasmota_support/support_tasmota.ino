@@ -1142,7 +1142,9 @@ void PerformEverySecond(void)
   }
 
   MqttPublishLoggingAsync(false);
+#ifdef SYSLOG_UPDATE_SECOND
   SyslogAsync(false);
+#endif  // SYSLOG_UPDATE_SECOND
 
   ResetGlobalValues();
 

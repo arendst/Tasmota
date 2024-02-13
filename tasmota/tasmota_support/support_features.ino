@@ -888,7 +888,7 @@ constexpr uint32_t feature[] = {
   0x10000000 |  // xsns_113_hc8.ino
 #endif
 #ifdef USE_HDMI_CEC
-  0x20000000 |  // xdrv_70_0_hdmi_cec.ino
+  0x20000000 |  // xdrv_70_1_hdmi_cec.ino
 #endif
 #ifdef USE_BLE_ESP32
   0x40000000 |  // xdrv_79_esp32_ble.ino
@@ -897,9 +897,15 @@ constexpr uint32_t feature[] = {
   0x80000000 |  // xdrv_52_9_berry.ino
 #endif
   0,
-//  0x00000001 |  // 
-//  0x00000002 |  // 
-//  0x00000004 |  // 
+#ifdef USE_MAGIC_SWITCH
+  0x00000001 |  // xdrv_71_magic_switch.ino
+#endif
+#ifdef USE_PIPSOLAR
+  0x00000002 |  // xdrv_72_pipsolar.ino
+#endif
+#ifdef USE_GPIO_VIEWER
+  0x00000004 |  // xdrv_121_gpioviewer.ino
+#endif
 //  0x00000008 |  // 
 //  0x00000010 |  // 
 //  0x00000020 |  // 

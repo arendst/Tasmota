@@ -1676,7 +1676,7 @@ bool NRFCmd(void) {
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u%%{e}";
 const char HTTP_MINRF_MAC[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 const char HTTP_MINRF_FLORA_DATA[] PROGMEM =  "{s}%s" " Fertility" "{m}%dus/cm{e}";
 const char HTTP_MINRF_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";

@@ -186,6 +186,10 @@ on esp8266 2 filter masks
 9:
 on esp32 1 filter
 on esp8266 6 filters
+
+A:
+decryption flags (8 bits)
+
 */
 
 //#define MODBUS_DEBUG
@@ -490,6 +494,7 @@ struct METER_DESC {
 
 #ifdef USE_SML_DECRYPT
 	bool use_crypt = false;
+  uint8_t crypflags;
 	uint8_t last_iob;
 	uint8_t key[SML_CRYPT_SIZE];
 	Han_Parser *hp;
@@ -753,7 +758,7 @@ void dump2log(void) {
 					d_lastms = millis();
 					uint16_t logsiz;
 					uint8_t *payload;
-					if (mp->hp->readHanPort(&payload, &logsiz)) {
+					if (mp->hp->readHanPort(&payload, &logsiz, mp->crypflags)) {
 						if (logsiz > mp->sbsiz) {
 							logsiz = mp->sbsiz;
 						}
@@ -1408,7 +1413,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
 			mp->lastms = millis();
 			uint16_t len;
 			uint8_t *payload;
-			if (mp->hp->readHanPort(&payload, &len)) {
+			if (mp->hp->readHanPort(&payload, &len, mp->crypflags)) {
 				if (len > mp->sbsiz) {
 					len = mp->sbsiz;
 				}
@@ -2537,7 +2542,7 @@ void SML_Show(boolean json) {
           tpowstr[i] = 0;
           // export html
           //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s{e}", b_mqtt_data,tpowstr);
-          WSContentSend_PD(PSTR("{s}%s{e}"), tpowstr);
+          WSContentSend_P(PSTR("<tr><td colspan=2>%s{e}"), tpowstr);
           // rewind, to ensure strchr
           mp--;
           mp = strchr(mp, '|');
@@ -2665,7 +2670,10 @@ void SML_Show(boolean json) {
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
-             if (strcmp(name, "*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"), sml_globs.mp[mindex].prefix, name,tpowstr, unit);
+              if (strcmp(name, "*")) {
+                WSContentSend_P(PSTR("{s}%s %s{m}"), sml_globs.mp[mindex].prefix, name);  // Do not replace decimal separator in label
+                WSContentSend_PD(PSTR("%s %s{e}"), tpowstr, unit); // Replace decimal separator in value
+              }
             }
           }
         }
@@ -2868,6 +2876,10 @@ struct METER_DESC *mp = &meter_desc[mnum];
 			}
 			break;
 #endif // USE_SML_AUTHKEY
+    case 'A':
+      cp += 2;
+      mp->crypflags = strtol(cp, &cp, 10);
+      break;
 #endif // USE_SML_DECRYPT
 		case '6':
 			cp += 2;
@@ -3633,6 +3645,7 @@ next_line:
 #else
 			mp->hp = new Han_Parser(serial_dispatch, meters, mp->key, nullptr);
 #endif
+      mp->crypflags = 0;
 		}
 #endif
   }

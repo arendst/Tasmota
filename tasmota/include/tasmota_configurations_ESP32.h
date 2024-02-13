@@ -60,6 +60,7 @@
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
+#undef USE_GPIO_VIEWER                           // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
@@ -322,6 +323,7 @@
 #define USE_XPT2046
 #define USE_FT5206
 #define USE_GT911
+#define USE_CST816S
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
@@ -606,6 +608,9 @@
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+#define USE_MAGIC_SWITCH                         // Add Sonoff MagicSwitch support as implemented in Sonoff Basic R4
+#endif
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 

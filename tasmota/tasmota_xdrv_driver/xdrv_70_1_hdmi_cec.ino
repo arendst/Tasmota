@@ -65,7 +65,7 @@ void HdmiCecInit(void)
 {
   // CEC device type
   CEC_Device::CEC_DEVICE_TYPE device_type = (CEC_Device::CEC_DEVICE_TYPE) Settings->hdmi_cec_device_type;
-  if (device_type == CEC_Device::CDT_TV || device_type >= CEC_Device::CDT_LAST) {
+  if (device_type < 0 || device_type >= CEC_Device::CDT_LAST) {
     // if type in Settings is invalid, default to PLAYBACK_DEVICE
     device_type = CEC_Device::CDT_PLAYBACK_DEVICE;
     Settings->hdmi_cec_device_type = (uint8_t) device_type;
@@ -189,7 +189,7 @@ void CmndHDMISend(void) {
 //
 void CmndHDMIType(void) {
   if (XdrvMailbox.data_len > 0) {
-    if ((XdrvMailbox.payload < 1) && (XdrvMailbox.payload >= CEC_Device::CDT_LAST)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < CEC_Device::CDT_LAST)) {
       uint8_t type = XdrvMailbox.payload;
       if (type != Settings->hdmi_cec_device_type) {
         Settings->hdmi_cec_device_type = XdrvMailbox.payload;
@@ -302,21 +302,21 @@ bool Xdrv70(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      HdmiCecInit();
-      break;
-    case FUNC_LOOP:
-    case FUNC_SLEEP_LOOP:
-      if (HDMI_CEC_device) {
+  if (FUNC_INIT == function) {
+    HdmiCecInit();
+  } else if (HDMI_CEC_device) {
+    switch (function) {
+      case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         HDMI_CEC_device->run();
-      }
-      break;
-    case FUNC_COMMAND:
-      if (HDMI_CEC_device) {
+        break;
+      case FUNC_COMMAND:
         result = DecodeCommand(kHDMICommands, HDMICommand);
-      }
-      break;
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
+    }
   }
   return result;
 }

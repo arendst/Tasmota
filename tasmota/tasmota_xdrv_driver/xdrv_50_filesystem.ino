@@ -48,6 +48,13 @@ ufs       fs info
 ufstype   get filesytem type 0=none 1=SD  2=Flashfile
 ufssize   total size in kB
 ufsfree   free size in kB
+ufsdelete
+ufsrename
+ufsrun
+ufsServe
+ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
+
+
 \*********************************************************************************************/
 
 #define XDRV_50           50
@@ -532,6 +539,230 @@ bool UfsExecuteCommandFile(const char *fname) {
 }
 
 /*********************************************************************************************\
+ * File JSON settings support using file /.drvset000
+ * 
+ * {"UserSet1":{"Param1":123,"Param2":"Text1"},"UserSet2":{"Param1":123,"Param2":"Text2"},"UserSet3":{"Param1":123,"Param2":"Text3"}}
+\*********************************************************************************************/
+
+bool _UfsJsonSettingsUpdate(const char* data) {
+  // Delete: Input UserSet2
+  // Append: Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) { return false; }  // Error - File not found
+
+  char bfname[14];
+  strcpy_P(bfname, PSTR("/settmp"));
+  File ofile = ffsp->open(bfname, "w");
+  if (!ofile) { return false; }        // Error - unable to open temporary file
+  File ifile = ffsp->open(filename, "r");
+  if (!ifile) { 
+    ofile.close();
+    ffsp->remove(bfname);
+    return false;                      // Error - unable to open settings file
+  }
+
+  bool append = false;
+  char* key = (char*)data;
+  char key_pos[32];                    // Max key length
+  char *p = strchr(data, '"');
+  if (p) {
+    append = true;
+    char *q = strchr(++p, '"');
+    if (!q) { return false; }          // Error - No valid key provided in data to append
+    uint32_t len = (uint32_t)q - (uint32_t)p;
+    memcpy(key_pos, p, len);
+    key_pos[len] = '\0';               // key = UserSet2
+    key = key_pos;
+  }
+
+  char buffer[32];                     // Max key length
+  uint8_t buf[1];
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  int entries = 0;
+  bool quote = false;
+  bool mine = false;
+  bool deleted = false;
+  while (ifile.available()) {          // Process file
+    ifile.read(buf, 1);
+    if (bracket_count > 1) {           // Copy or skip old data
+      if (!mine) {
+        ofile.write(buf, 1);           // Copy data
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        break;                         // End of file
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          entries++;
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+          if (mine) {
+            entries--;                 // Skip old data
+            deleted = true;
+          } else {
+            ofile.write((entries) ? (uint8_t*)",\"" : (uint8_t*)"{\"", 2);
+            ofile.write((uint8_t*)buffer, strlen(buffer));
+            ofile.write((uint8_t*)"\":{", 3);
+          }
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  ifile.close();
+  if (append) {
+    // Append new data
+    ofile.write((entries) ? (uint8_t*)"," : (uint8_t*)"{", 1);
+    ofile.write((uint8_t*)data +1, strlen(data) -1);
+  } else {
+    // Delete data
+    if (entries) {
+      ofile.write((uint8_t*)"}", 1);
+    }
+  }
+  ofile.close();
+
+  if (index > sizeof(buffer) -2) { 
+    // No changes
+    ffsp->remove(bfname);
+    return false;                      // Error - Key name too long
+  }
+  ffsp->remove(filename);
+  ffsp->rename(bfname, filename);
+  if (!append) {
+    // Delete data
+    if (!entries) {
+      ffsp->remove(filename);
+    }
+    return deleted;                    // State - 0 = Not found, 1 = Deleted
+  }
+  return true;                         // State - Append success
+}
+
+bool UfsJsonSettingsDelete(const char* key) {
+  // Delete: Input UserSet2
+  //         Output 0 = Not found, 1 = Deleted
+  return _UfsJsonSettingsUpdate(key);  // State - 0 = Not found, 1 = Deleted
+}
+
+bool UfsJsonSettingsWrite(const char* data) {
+  // Add new UserSet replacing present UserSet
+  // Input {"UserSet2":{"Param1":123,"Param2":"Text2"}}
+  // Output 0 = Error, 1 = Append success
+
+  String json = data;
+  JsonParser parser((char*)json.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }         // Error - invalid JSON
+
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
+  if (!TfsFileExists(filename)) {
+    File ofile = ffsp->open(filename, "w");
+    if (!ofile) { return false; }      // Error - unable to open settings file
+    ofile.write((uint8_t*)data, strlen(data));
+    ofile.close();
+    return true;                       // State - Append success
+  }
+  return _UfsJsonSettingsUpdate(data); // State - 0 = Error, 1 = Append success
+}
+
+String UfsJsonSettingsRead(const char* key) {
+  // Read: Input UserSet2
+  //       Output "" = Error, {"Param1":123,"Param2":"Text2"} = Data
+
+  String data = "";
+  char filename[14];
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);      // /.drvset000
+  if (!TfsFileExists(filename)) { return data; }  // Error - File not found
+  File file = ffsp->open(filename, "r");
+  if (!file) { return data; }          // Error - unable to open settings file
+
+  Trim((char*)key);
+  char buffer[128];
+  uint8_t buf[1] = { 0 };
+  uint32_t index = 0;
+  uint32_t bracket_count = 0;
+  bool quote = false;
+  bool mine = false;
+  while (file.available()) {           // Process file
+    file.read(buf, 1);
+    if (bracket_count > 1) {           // Build JSON
+      if (mine) {
+        buffer[index++] = buf[0];      // Add key data
+        if (index > sizeof(buffer) -2) {
+          buffer[index] = '\0'; 
+          data += buffer;              // Add buffer to result
+          index = 0;
+        }
+      }
+      if (buf[0] == '}') {
+        bracket_count--;
+        if (1 == bracket_count) {
+          if (mine) {
+            break;                     // End of key data
+          } else {
+            index = 0;                 // End of data which is not mine
+          }
+        }
+      }
+    } else {
+      if (buf[0] == '}') {             // Last bracket
+        index = 0;
+        break;                         // End of file - key not found
+      }
+      else if (buf[0] == '{') {
+        bracket_count++;
+        if (bracket_count > 1) {       // Skip first bracket
+          index = 0;
+          buffer[index++] = buf[0];    // Start of key data
+        }
+      }
+      else if (buf[0] == '"') {
+        quote ^= 1;
+        if (quote) {
+          index = 0;
+        } else {
+          buffer[index] = '\0';        // End of key name
+          mine = (!strcasecmp(buffer, key));
+        }
+      }
+      else {
+        buffer[index++] = buf[0];      // Add key name
+        if (index > sizeof(buffer) -2) {
+          index = 0;
+          break;                       // Key name too long
+        }
+      }
+    }
+  }
+  file.close();
+  buffer[index] = '\0';
+  data += buffer;
+  return data;                         // State - "" = Error, {"Param1":123,"Param2":"Text2"} = Data
+}
+
+/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
@@ -548,13 +779,19 @@ const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
 #ifdef UFILESYS_STATIC_SERVING
   "|Serve"
 #endif
+#ifdef USE_FTP
+  "|FTP"
+#endif
   ;
 
 void (* const kUFSCommand[])(void) PROGMEM = {
   &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun
 #ifdef UFILESYS_STATIC_SERVING
   ,&UFSServe
-#endif  
+#endif
+#ifdef USE_FTP
+  ,&Switch_FTP
+#endif
   };
 
 void UFSInfo(void) {
@@ -790,9 +1027,11 @@ const char UFS_FORM_FILE_UPGc2[] PROGMEM =
   "</div>";
 
 const char UFS_FORM_FILE_UPG[] PROGMEM =
-  "<form method='post' action='ufsu' enctype='multipart/form-data'>"
+  "<form method='post' action='ufsu?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='ufsu'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_UPLOAD "</button></form>"
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"but6\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"ufsu\"].files[0].size;this.form.submit();'"
+  ">" D_UPLOAD "</button></form>"
   "<br><hr>";
 const char UFS_FORM_SDC_DIRa[] PROGMEM =
   "<div style='text-align:left;overflow:auto;height:250px;'>";
@@ -844,6 +1083,40 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</form></fieldset>";
 
 #endif  // #ifdef GUI_EDIT_FILE
+
+void HandleUploadUFSDone(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  HTTPUpload& upload = Webserver->upload();
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
+
+  WifiConfigCounter();
+  UploadServices(1);
+
+  WSContentStart_P(PSTR(D_INFORMATION));
+
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+  if (Web.upload_error) {
+    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
+    char error[100];
+    if (Web.upload_error < 10) {
+      GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
+    } else {
+      snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), Web.upload_error);
+    }
+    WSContentSend_P(error);
+    Web.upload_error = 0;
+  } else {
+    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
+  }
+  WSContentSend_P(PSTR("</div><br>"));
+
+  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+
+  WSContentStop();
+}
 
 void UfsDirectory(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -1348,9 +1621,46 @@ void UfsEditorUpload(void) {
 
 #endif  // USE_WEBSERVER
 
+
+#ifdef USE_FTP
+#include <ESPFtpServer.h>
+FtpServer *ftpSrv;
+
+void FTP_Server(uint32_t mode) {
+  if (mode > 0) {
+    if (ftpSrv) {
+      delete ftpSrv;
+    }
+    ftpSrv = new FtpServer;
+    if (mode == 1) {
+      ftpSrv->begin(USER_FTP,PW_FTP, ufsp);
+    } else {
+      ftpSrv->begin(USER_FTP,PW_FTP, ffsp);
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: FTP Server started in mode: '%d'"), mode);
+  } else {
+    if (ftpSrv) {
+      delete ftpSrv;
+      ftpSrv = nullptr;
+    }
+  }
+}
+
+void Switch_FTP(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) {
+      FTP_Server(XdrvMailbox.payload);
+      Settings->mbflag2.FTP_Mode = XdrvMailbox.payload;
+    }
+  }
+  ResponseCmndNumber(Settings->mbflag2.FTP_Mode);
+}
+#endif // USE_FTP
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+
 
 bool Xdrv50(uint32_t function) {
   bool result = false;
@@ -1358,7 +1668,23 @@ bool Xdrv50(uint32_t function) {
   switch (function) {
     case FUNC_LOOP:
       UfsExecuteCommandFileLoop();
+
+#ifdef USE_FTP
+      if (ftpSrv) {
+        ftpSrv->handleFTP();
+      }
+#endif
+
       break;
+    
+    case FUNC_NETWORK_UP:
+#ifdef USE_FTP
+      if (Settings->mbflag2.FTP_Mode && !ftpSrv) {
+        FTP_Server(Settings->mbflag2.FTP_Mode);
+      }
+#endif
+      break;
+
 /*
 // Moved to support_tasmota.ino for earlier init to be used by scripter
 #ifdef USE_SDCARD
@@ -1391,13 +1717,17 @@ bool Xdrv50(uint32_t function) {
 //      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+      //Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
+      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadLoop);
 #ifdef GUI_EDIT_FILE
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);
 #endif
       break;
 #endif // USE_WEBSERVER
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

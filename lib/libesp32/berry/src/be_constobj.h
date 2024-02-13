@@ -262,6 +262,13 @@ const bntvmodule_t be_native_module(_module) = {                  \
     BE_STRING                                                   \
   }
 
+/* variant for long strings that does not trigger strtab */
+#define be_nested_str_long(_name_)                              \
+  {                                                             \
+    { .s=((bstring*)&be_const_str_##_name_) },                  \
+    BE_STRING                                                   \
+  }
+
 #define be_nested_str_literal(_name_)                           \
   {                                                             \
     { .s=(be_nested_const_str(_name_, _hash, sizeof(_name_)-1 ))\

@@ -345,6 +345,9 @@ bool Xdrv48(uint32_t function) {
     case FUNC_JSON_APPEND:
       ShowValues();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

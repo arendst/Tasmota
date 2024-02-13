@@ -57,6 +57,7 @@
 #define D_AP "存取點"                    // Access Point
 #define D_AS "名稱:"
 #define D_AUTO "自動"
+#define D_BATTERY "Battery"
 #define D_BATT "電池"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"  // Battery charge in % 
 #define D_BLINK "閃爍"
@@ -274,7 +275,8 @@
 #define D_CONFIGURATION "設定"
 #define D_INFORMATION "資訊"
 #define D_FIRMWARE_UPGRADE "韌體升級"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "確認重新啟動"
 
@@ -546,7 +548,7 @@
 #define D_DEVICE_INPUT "輸入"
 #define D_DEVICE_OUTPUT "輸出"
 
-// xdrv_39_thermostat.ino
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Thermostat"
 #define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
 #define D_THERMOSTAT_SENSOR           "Current Temperature"
@@ -957,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE "安培"
@@ -1220,5 +1223,9 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "平均輻射劑量"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 #endif  // _LANGUAGE_ZH_TW_H_

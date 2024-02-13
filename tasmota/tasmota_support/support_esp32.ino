@@ -501,6 +501,10 @@ uint32_t ESP_getFreeSketchSpace(void) {
   return ESP.getFreeSketchSpace();
 }
 
+uint32_t ESP_getHeapSize(void) {
+  return ESP.getHeapSize();
+}
+
 uint32_t ESP_getFreeHeap(void) {
   // ESP_getFreeHeap() returns also IRAM which we don't use
   return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
@@ -558,6 +562,18 @@ uint8_t* FlashDirectAccess(void) {
   return data;
 }
 
+uint32_t ESP_getPsramSize(void) {
+  return ESP.getPsramSize();
+}
+
+uint32_t ESP_getFreePsram(void) {
+  return ESP.getFreePsram();
+}
+
+uint32_t ESP_getMaxAllocPsram(void) {
+  return ESP.getMaxAllocPsram();
+}
+
 extern "C" {
   #if ESP_IDF_VERSION_MAJOR >= 5
     // bool IRAM_ATTR __attribute__((pure)) esp_psram_is_initialized(void)
@@ -571,7 +587,7 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
   return psramFound();
 #else
   #if ESP_IDF_VERSION_MAJOR >= 5
@@ -946,6 +962,18 @@ String GetCodeCores(void) {
 #else
   return F("");
 #endif
+}
+
+uint32_t ESP_getChipCores(void) {
+  return ESP.getChipCores();
+}
+
+uint32_t ESP_getChipRevision(void) {
+  return ESP.getChipRevision();
+}
+
+String ESP_getEfuseMac(void) {
+  return String(ESP.getEfuseMac());
 }
 
 /*********************************************************************************************\

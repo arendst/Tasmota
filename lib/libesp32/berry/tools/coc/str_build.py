@@ -22,9 +22,10 @@ class str_info:
         self.extra = 0
 
 class str_build:
-    def __init__(self, map, map_weak):
+    def __init__(self, map, map_weak, map_long):
         self.map = map.copy()
         self.str_weak = []
+        self.str_long = []
 
         size = int(len(self.map) / 2)         # voluntarily reduce hash size to half
         if size < 4: size = 4
@@ -43,6 +44,11 @@ class str_build:
         for k in sorted(map_weak.keys()):
             if not k in self.map:
                 self.str_weak.append(k)
+
+        # handle long strings
+        for k in sorted(map_long.keys()):
+            if not k in self.map:
+                self.str_long.append(k)
 
     def build(self, path):
         prefix = path + "/be_const_strtab"
@@ -121,6 +127,10 @@ class str_build:
             ostr += escape_operator(k) + ", " + escape_c(k) + ", "
             ostr += "0u, 0, " + str(len(k)) + ", NULL);\n"
 
+        for k in self.str_long:
+            ostr += "be_define_const_str_long("
+            ostr += escape_operator(k) + ", " + escape_c(k) + ", " + str(len(k)) + ");\n"
+
         ostr += "\n"
         ostr += "static const bstring* const m_string_table[] = {\n"
 
@@ -156,4 +166,6 @@ class str_build:
         ostr += "\n/* weak strings */\n"
         for s in self.str_weak:
             ostr += "extern const bcstring be_const_str_" + escape_operator(s) + ";\n"
+        for s in self.str_long:
+            ostr += "extern const bclstring be_const_str_" + escape_operator(s) + ";\n"
         return ostr

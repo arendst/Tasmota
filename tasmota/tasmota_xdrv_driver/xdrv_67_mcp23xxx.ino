@@ -834,6 +834,9 @@ bool Xdrv67(uint32_t function) {
       case FUNC_ADD_SWITCH:
         result = MCP23xAddSwitch();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

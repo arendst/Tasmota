@@ -109,6 +109,25 @@ String GetBuildDateAndTime(void) {
   return String(bdt);  // 2017-03-07T11:08:02
 }
 
+String GetSyslogDate(char* mxtime) {
+  // Mmm dd hh:mm:ss
+  // Jan  3 09:23:45
+  // Assuming the day hasn't changed yet ;-)
+  uint32_t month_idx = (RtcTime.month -1) * 3;
+  char month[4] = { 0 };
+  strncpy_P(month, kMonthNamesEnglish + month_idx, 3);
+  char dt[16];
+  snprintf_P(dt, sizeof(dt), PSTR("%s %2d %s"), month, RtcTime.day_of_month, mxtime);
+  return String(dt);
+}
+
+String GetDate(void) {
+  // yyyy-mm-ddT
+  char dt[12];
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT"), RtcTime.year, RtcTime.month, RtcTime.day_of_month);
+  return String(dt);
+}
+
 String GetMinuteTime(uint32_t minutes) {
   char tm[6];
   snprintf_P(tm, sizeof(tm), PSTR("%02d:%02d"), minutes / 60, minutes % 60);
@@ -195,14 +214,17 @@ String GetDateAndTime(uint8_t time_type) {
   if (DT_LOCAL_MILLIS == time_type) {
     char ms[10];
     snprintf_P(ms, sizeof(ms), PSTR(".%03d"), RtcMillis());
-    dt += ms;
+    dt += ms;               // 2017-03-07T11:08:02.123
     time_type = DT_LOCAL;
   }
 
-  if (Settings->flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
+  if (DT_UTC == time_type) {
+    dt += "Z";              // 2017-03-07T11:08:02.123Z
+  }
+  else if (Settings->flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
-  return dt;  // 2017-03-07T11:08:02-07:00
+  return dt;                // 2017-03-07T11:08:02-07:00 or 2017-03-07T11:08:02.123-07:00
 }
 
 uint32_t UpTime(void) {

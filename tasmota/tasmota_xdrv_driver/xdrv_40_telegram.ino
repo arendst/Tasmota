@@ -487,6 +487,9 @@ bool Xdrv40(uint32_t function)
     case FUNC_COMMAND:
       result = DecodeCommand(kTelegramCommands, TelegramCommand);
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

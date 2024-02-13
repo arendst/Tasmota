@@ -4,7 +4,7 @@
 # use : `import partition_wizard`
 #
 # Provides low-level objects and a Web UI
-# rm Partition_Wizard.tapp; zip Partition_Wizard.tapp -j -0 Partition_Wizard/*
+# rm Partition_Wizard.tapp; zip Partition_Wizard.tapp -j -0 Partition_Wizard/autoexec.be Partition_Wizard/partition_wizard.be
 #######################################################################
 
 var partition_wizard = module('partition_wizard')
@@ -480,7 +480,7 @@ class Partition_wizard_UI
     if safeboot_size > (self.app_size_min * 1024)  raise "internal_error", "safeboot is too large "+str(safeboot_size / 1024)+"kB" end
     tasmota.log(string.format("UPL: flashing `safeboot` from %s %ikB", safeboot_url, (safeboot_size / 1024) + 1), 2)
     var app0 = p.get_ota_slot(0)
-    if app0.start != 0x10000    raise "internal_error", "`app0` offset is not 0x10000" end
+    # if app0.start != 0x10000    raise "internal_error", "`app0` offset is not 0x10000" end
     cl.write_flash(app0.start)
     cl.close()
     return true
@@ -577,7 +577,7 @@ class Partition_wizard_UI
     webserver.content_send(string.format("<p>Step 4: %s</p>", self.display_step_state(self.test_step_4(p), "flash final firmware")))
 
     webserver.content_send("<form action='/part_wiz' method='post' ")
-    webserver.content_send("onsubmit='return confirm(\"This will causes multiple restarts.\");'>")
+    webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
     var ota_url = tasmota.cmd("OtaUrl").find("OtaUrl", "")
     webserver.content_send(string.format("<br><b>OTA Url</b><br><input id='o1' placeholder='OTA_URL' value='%s'><br>",
                                          ota_url))

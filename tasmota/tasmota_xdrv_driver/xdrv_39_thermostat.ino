@@ -1442,7 +1442,9 @@ void CmndThermostatModeSet(void)
         // Make sure the relay is switched to off once if the thermostat is being disabled,
         // or it will get stuck on (danger!)
         Thermostat[ctr_output].status.command_output = IFACE_OFF;
+        struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
         ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+        XdrvMailbox = save_XdrvMailbox;
       }
       if ((value > THERMOSTAT_OFF) && (value < THERMOSTAT_MODES_MAX)) {
         DebugControllerParameters(ctr_output);
@@ -2052,7 +2054,6 @@ const char HTTP_THERMOSTAT_DUTY_CYCLE[]     PROGMEM = "{s}" D_THERMOSTAT_DUTY_CY
 const char HTTP_THERMOSTAT_CYCLE_TIME[]     PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
 const char HTTP_THERMOSTAT_CONTROL_METHOD[] PROGMEM = "{s}" D_THERMOSTAT_CONTROL_METHOD "{m}%s{e}";
 const char HTTP_THERMOSTAT_PI_AUTOTUNE[]    PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
-const char HTTP_THERMOSTAT_HL[]             PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
@@ -2076,7 +2077,7 @@ void ThermostatShow(uint8_t ctr_output, bool json)
   }
 #ifdef USE_WEBSERVER
 
-  WSContentSend_P(HTTP_THERMOSTAT_HL);
+  if (ctr_output) WSContentSend_P(HTTP_SNS_HR_THIN);
 
   if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
     WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_DISABLED );
@@ -2203,6 +2204,10 @@ bool Xdrv39(uint32_t function)
 
     case FUNC_COMMAND:
       result = DecodeCommand(kThermostatCommands, ThermostatCommand);
+      break;
+
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

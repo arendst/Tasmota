@@ -314,6 +314,9 @@ String EthernetMacAddress(void);
 #ifndef MQTT_LWT_ONLINE
 #define MQTT_LWT_ONLINE             "Online"   // MQTT LWT online topic message
 #endif
+#ifndef MQTT_DISABLE_MODBUSRECEIVED
+#define MQTT_DISABLE_MODBUSRECEIVED 0         // 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
+#endif
 
 #ifndef MESSZ
 #define MESSZ                       1040       // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)

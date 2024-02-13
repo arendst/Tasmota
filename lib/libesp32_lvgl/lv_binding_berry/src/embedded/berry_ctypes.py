@@ -69,25 +69,31 @@ types = {
 
 # default is little_endian
 i32    = 14
+i24    = 13
 i16    = 12
 i8     = 11
 u32    =  4
+u24    =  3
 u16    =  2
 u8     =  1
 
 # explicit little endian
 le_i32 = 14
+le_i24 = 13
 le_i16 = 12
 le_i8  = 11
 le_u32 =  4
+le_u24 =  3
 le_u16 =  2
 le_u8  =  1
 
 # big endian
 be_i32 = -14
+be_i26 = -13
 be_i16 = -12
 be_i8  = -11
 be_u32 =  -4
+be_u24 =  -3
 be_u16 =  -2
 be_u8  =  -1
 
@@ -121,16 +127,20 @@ bf_16  = 116
 
 type_mapping = {
   14: "ctypes_i32",
+  13: "ctypes_i24",
   12: "ctypes_i16",
   11: "ctypes_i8",
    4: "ctypes_u32",
+   3: "ctypes_u24",
    2: "ctypes_u16",
    1: "ctypes_u8",
 
   -14:"ctypes_be_i32",  # big endian
+  -13:"ctypes_be_i24",
   -12:"ctypes_be_i16",
   -11:"ctypes_be_i8",
   -4: "ctypes_be_u32",
+  -3: "ctypes_be_u24",
   -2: "ctypes_be_u16",
   -1: "ctypes_be_u8",
 
@@ -300,8 +310,9 @@ class structure:
 
   #- ensure alignment to 1/2/4 bytes -#
   def align(self, n):
+    if n == 3:  n = 4           # 3 bytes are aligned to 4 byest boundaries
     if n != 1 and n != 2 and n != 4:
-      raise Exception("acceptable values are 1/2/4")
+      raise Exception(f"acceptable values are 1/2/3/4 {n=}")
 
     #- align to byte boundary if we're in a bitfield -#
     if self.bit_offset != 0:

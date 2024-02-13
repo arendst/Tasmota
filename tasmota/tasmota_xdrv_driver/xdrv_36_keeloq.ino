@@ -276,6 +276,9 @@ bool Xdrv36(uint32_t function)
       KeeloqInit();
       DEBUG_DRIVER_LOG(PSTR("KLQ: init done"));
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
 
   return result;

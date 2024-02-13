@@ -208,6 +208,9 @@ void NovaSdsInit(void)
       if (NovaSdsSerial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SDS: Serial UART%d"), NovaSdsSerial->getUart());
+#endif
       novasds_type = 1;
       NovaSdsSetWorkPeriod();
     }

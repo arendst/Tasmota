@@ -862,6 +862,7 @@
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
+#undef USE_GPIO_VIEWER                           // Disable GPIO Viewer to see realtime GPIO states (+5k6 code)
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
@@ -1047,6 +1048,17 @@
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
+    #ifdef ESP8266_4M
+      #ifndef USE_FTP
+        #define USE_FTP
+      #endif
+      #ifndef USER_FTP
+        #define USER_FTP "user"
+      #endif
+      #ifndef PW_FTP
+        #define PW_FTP "pass"
+      #endif
+    #endif // ESP8266_4M
     #define USE_SPI
     #define USE_SDCARD
     #define USE_PING

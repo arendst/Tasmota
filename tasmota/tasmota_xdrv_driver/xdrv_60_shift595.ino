@@ -104,16 +104,19 @@ bool Xdrv60(uint32_t function) {
 
   if (FUNC_PRE_INIT == function) {
     Shift595Init();
-    } else if (Shift595) {
-      switch (function) {
-        case FUNC_SET_POWER:
-          Shift595SwitchRelay();
-          break;
-        case FUNC_COMMAND:
-          result = DecodeCommand(kShift595Commands, Shift595Command);
-          break;
-      }
+  } else if (Shift595) {
+    switch (function) {
+      case FUNC_SET_POWER:
+        Shift595SwitchRelay();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kShift595Commands, Shift595Command);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
+  }
   return result;
 }
 

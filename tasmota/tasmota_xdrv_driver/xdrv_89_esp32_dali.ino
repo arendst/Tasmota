@@ -574,6 +574,9 @@ bool Xdrv89(uint32_t function)
         case FUNC_COMMAND:
             result = DaliCmd();
             break;
+        case FUNC_ACTIVE:
+            result = true;
+            break;
         }
     }
     return result;

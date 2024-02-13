@@ -246,6 +246,9 @@ bool Xdrv17(uint32_t function)
       case FUNC_INIT:
         RfInit();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;
