@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- LVGL make lv_touch_3_buttons more responsive
 
 ### Removed
 
