@@ -329,8 +329,10 @@ class Matter_UI
 
       var cl = self.device.plugins_classes.find(typ)
       var arg = ""
+      var arg_hint = ""
       if cl != nil
         arg = cl.ui_conf_to_string(cl, conf)
+        arg_hint = cl.ARG_HINT
       end
 
       found = true
@@ -338,11 +340,11 @@ class Matter_UI
       webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='%s'></td>",
                              ep, webserver.html_escape(conf.find('name', ''))))
       webserver.content_send(f"<td style='font-size:smaller;'><b>{self.plugin_name(conf.find('type', ''))}</b></td>")
-      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s'></td>",
-                             ep, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
-      webserver.content_send(f"<td style='text-align:center;'><button name='del{ep:i}' "
+      webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='1' value='%s' placeholder='%s' title='%s'></td>",
+                             ep, webserver.html_escape(arg), webserver.html_escape(arg_hint), webserver.html_escape(arg_hint)))
+      webserver.content_send(f"<td style='text-align:center;'><button name='del{ep:i}' title='Delete Endpoint {ep:i}' "
                               "style='background:none;border:none;line-height:1;'"
-                              " onclick=\"return confirm('Confirm removing endpoint')\""
+                              " onclick=\"return confirm('Confirm removing endpoint {ep:i}')\""
                               ">"
                               "&#128293;</button></td></tr>")
       i += 1
@@ -395,8 +397,10 @@ class Matter_UI
 
         var cl = self.device.plugins_classes.find(typ)
         var arg = ""
+        var arg_hint = ""
         if cl != nil
           arg = cl.ui_conf_to_string(cl, conf)
+          arg_hint = cl.ARG_HINT
         end
 
         found = true
@@ -405,8 +409,8 @@ class Matter_UI
                                ep, webserver.html_escape(conf.find('name', ''))))
 
         webserver.content_send(format("<td width='115' style='font-size:smaller;'><b>%s</b></select></td>", self.plugin_name(conf.find('type', ''))))
-        webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s'></td>",
-                              ep, webserver.html_escape(arg)))
+        webserver.content_send(format("<td style='font-size:smaller;'><input type='text' name='arg%i' size='8' value='%s' title='%s'></td>",
+                              ep, webserver.html_escape(arg), webserver.html_escape(arg_hint)))
         webserver.content_send(f"<td width='15' style='text-align:center;'><button name='del{ep:i}' "
                                 "style='background:none;border:none;line-height:1;'"
                                 " onclick=\"return confirm('Confirm removing endpoint')\""
@@ -442,7 +446,7 @@ class Matter_UI
                            "</tr>")
 
     webserver.content_send("<tr>"
-                           "<td style='font-size:smaller;'><input type='text' name='nam' size='1' value='' placeholder='(optional)'></td>"
+                           "<td style='font-size:smaller;'><input type='text' name='nam' size='1' value='' placeholder='(optional)' title=''></td>"
                            "<td style='font-size:smaller;'><select id='pi' name='pi' onchange='otm(\"arg\",this.value)'>")
     self.plugin_option('', self._CLASSES_TYPES)
     webserver.content_send("</select></td>")
@@ -667,8 +671,10 @@ class Matter_UI
 
         var cl = self.device.plugins_classes.find(typ)
         var arg = ""
+        var arg_hint = ""
         if cl != nil
           arg = cl.ui_conf_to_string(cl, config)
+          arg_hint = cl.ARG_HINT
         end
 
         webserver.content_send(format("<tr><td style='font-size:smaller;'><input type='text' name='nam%i' size='1' value='' placeholder='(optional)'></td>", i))
@@ -676,8 +682,8 @@ class Matter_UI
         self.plugin_option(typ, self._CLASSES_TYPES2)
         webserver.content_send("</select></td>"
                                "<td style='font-size:smaller;'>")
-        webserver.content_send(format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s' placeholder='%s'>",
-                               i, i, webserver.html_escape(arg), cl ? webserver.html_escape(cl.ARG_HINT) : ''))
+        webserver.content_send(format("<input type='text' id='arg%i' name='arg%i' size='1' value='%s' placeholder='%s' title='%s'>",
+                               i, i, webserver.html_escape(arg), webserver.html_escape(arg_hint), webserver.html_escape(arg_hint)))
         webserver.content_send("</td></tr>")
         i += 1
       end
