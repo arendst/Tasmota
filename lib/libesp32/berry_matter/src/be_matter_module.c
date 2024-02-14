@@ -52,6 +52,7 @@ static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
   "function otm(arg_name,val){"
   "var s=eb(arg_name);"
   "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
+  "s.title=s.placeholder;"
   "};"
   "</script>";
 

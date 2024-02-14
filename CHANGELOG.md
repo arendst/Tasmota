@@ -3,12 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.5]
+## [13.3.0.5] 20240214
 ### Added
 - Internal support for persistent JSON settings using single file
-- Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages (#20678)
+- Command ``SetOption158 1`` to disable publish of ModbusReceived MQTT messages (#20678)
 - ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
 - Berry option to invert serial
+- Command ``SetOption159 1`` to enable counting on both rising and falling edge (#20712)
 
 ### Breaking Changed
 - ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
@@ -16,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Matter improve `MtrInfo` (#20686)
 - Matter implement auto-attributes (#20694)
+- GPIO Viewer user selection of assets website is `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
 - Berry class `int64` made immutable
 
 ### Fixed

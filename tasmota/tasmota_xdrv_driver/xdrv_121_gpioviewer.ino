@@ -43,7 +43,8 @@
 #define GV_SAMPLING_INTERVAL  100          // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
 #endif
 #ifndef GV_BASE_URL
-#define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/"  // [GvUrl]
+//#define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/"  // [GvUrl]
+#define GV_BASE_URL           "https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/"  // [GvUrl]
 #endif
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway

@@ -1055,7 +1055,8 @@ void RulesEvery50ms(void)
         TasmotaGlobal.rules_flag.wifi_disconnected = 0;
         strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event));
       }
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
       else if (TasmotaGlobal.rules_flag.eth_connected) {
         TasmotaGlobal.rules_flag.eth_connected = 0;
         strncpy_P(json_event, PSTR("{\"ETH\":{\"Connected\":1}}"), sizeof(json_event));

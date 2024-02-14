@@ -18,12 +18,12 @@
 */
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32
+//#if CONFIG_IDF_TARGET_ESP32
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
  *
- * Dedicated fixed Phy pins
+ * Dedicated fixed Phy pins (EMAC)
  * GPIO17 - EMAC_CLK_OUT_180
  * GPIO19 - EMAC_TXD0(RMII)
  * GPIO21 - EMAC_TX_EN(RMII)
@@ -55,6 +55,13 @@
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
  * #define ETH_ADDRESS       1
  *
+ * Used SPI
+ * SPI_MOSI
+ * SPI_MISO
+ * SPI_CLK
+ * SPI_RST = Tasmota ETH_POWER
+ * SPI_IRQ = Tasmota ETH_MDIO
+ * SPI_CS  = Tasmota ETH_MDC
 \*********************************************************************************************/
 
 #define XDRV_82           82
@@ -187,23 +194,32 @@ void EthernetSetIp(void) {
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
 
+  int eth_type = Settings->eth_type;
+#if CONFIG_ETH_USE_ESP32_EMAC
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
     Settings->eth_address = 1;                    // EthAddress
     Settings->eth_type = ETH_PHY_LAN8720;         // EthType
     Settings->eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
   }
+#else  // No CONFIG_ETH_USE_ESP32_EMAC
+  if (Settings->eth_type < 7) {
+    Settings->eth_type = 8;                       // Select W5500 (SPI) for non-EMAC hardware
+  }
+  eth_type = Settings->eth_type -7;               // As No EMAC support substract EMAC enums (According ETH.cpp debug info)
+#endif  // CONFIG_ETH_USE_ESP32_EMAC
 
-  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    if (Settings->eth_type < 7) {
-      // CONFIG_ETH_USE_ESP32_EMAC
+  if (Settings->eth_type < 7) {
+    // CONFIG_ETH_USE_ESP32_EMAC
+    if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
-    } else {
-      // CONFIG_ETH_SPI_ETHERNET
-      if (!PinUsed(GPIO_ETH_PHY_POWER)) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
-      }
+      return;
     }
-    return;
+  } else {
+    // ETH_SPI_SUPPORTS_CUSTOM
+    if (!PinUsed(GPIO_ETH_PHY_MDC) || !PinUsed(GPIO_ETH_PHY_MDIO) || !PinUsed(GPIO_ETH_PHY_POWER)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+      return;
+    }
   }
 
   eth_config_change = 0;
@@ -220,17 +236,20 @@ void EthernetInit(void) {
   bool init_ok = false;
 #if ESP_IDF_VERSION_MAJOR >= 5
   if (Settings->eth_type < 7) {
-    // CONFIG_ETH_USE_ESP32_EMAC
-    init_ok = (ETH.begin((eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+#if CONFIG_ETH_USE_ESP32_EMAC
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+#endif  // CONFIG_ETH_USE_ESP32_EMAC
   } else {
-    // CONFIG_ETH_SPI_ETHERNET
-    init_ok = (ETH.begin((eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
+    // ETH_SPI_SUPPORTS_CUSTOM
+//    SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
+    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
   }
 #else
   init_ok = (ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode));
-#endif
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
   if (!init_ok) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType or init error"));
     return;
   };
 
@@ -402,5 +421,5 @@ bool Xdrv82(uint32_t function) {
 }
 
 #endif  // USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
