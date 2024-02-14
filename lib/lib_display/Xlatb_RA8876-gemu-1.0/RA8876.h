@@ -156,8 +156,8 @@ typedef uint8_t FontFlags;
 // 1MHz. TODO: Figure out actual speed to use
 // Data sheet section 5.2 says maximum SPI clock is 50MHz.
 //#define RA8876_SPI_SPEED 10000000
-//#define RA8876_SPI_SPEED 25000000
-#define RA8876_SPI_SPEED 40000000
+#define RA8876_SPI_SPEED 25000000
+//#define RA8876_SPI_SPEED 40000000
 #endif
 
 // With SPI, the RA8876 expects an initial byte where the top two bits are meaningful. Bit 7
