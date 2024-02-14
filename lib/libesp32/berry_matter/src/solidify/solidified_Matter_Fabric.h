@@ -11,7 +11,7 @@ extern const bclass be_class_Matter_Fabric;
 ********************************************************************/
 be_local_closure(Matter_Fabric_get_device_id_as_int64,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    4,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -26,13 +26,12 @@ be_local_closure(Matter_Fabric_get_device_id_as_int64,   /* name */
     }),
     be_str_weak(get_device_id_as_int64),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x7C040000,  //  0001  CALL	R1	0
-      0x8C080301,  //  0002  GETMET	R2	R1	K1
-      0x88100102,  //  0003  GETMBR	R4	R0	K2
-      0x7C080400,  //  0004  CALL	R2	2
-      0x80040200,  //  0005  RET	1	R1
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x880C0102,  //  0002  GETMBR	R3	R0	K2
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80040200,  //  0004  RET	1	R1
     })
   )
 );
@@ -1065,7 +1064,7 @@ be_local_closure(Matter_Fabric_get_ipk_group_key,   /* name */
 ********************************************************************/
 be_local_closure(Matter_Fabric_get_fabric_id_as_int64,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    4,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1080,13 +1079,12 @@ be_local_closure(Matter_Fabric_get_fabric_id_as_int64,   /* name */
     }),
     be_str_weak(get_fabric_id_as_int64),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x7C040000,  //  0001  CALL	R1	0
-      0x8C080301,  //  0002  GETMET	R2	R1	K1
-      0x88100102,  //  0003  GETMBR	R4	R0	K2
-      0x7C080400,  //  0004  CALL	R2	2
-      0x80040200,  //  0005  RET	1	R1
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x880C0102,  //  0002  GETMBR	R3	R0	K2
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80040200,  //  0004  RET	1	R1
     })
   )
 );
