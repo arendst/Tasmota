@@ -98,14 +98,10 @@ class Matter_Fabric : Matter_Expirable
   def get_fabric_index()      return self.fabric_index      end
 
   def get_fabric_id_as_int64()
-    var i64 = int64()
-    i64.frombytes(self.fabric_id)
-    return i64
+    return int64.frombytes(self.fabric_id)
   end
   def get_device_id_as_int64()
-    var i64 = int64()
-    i64.frombytes(self.device_id)
-    return i64
+    return int64.frombytes(self.device_id)
   end
 
   def get_admin_vendor_name()
