@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [13.4.0.1]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [Released]
+
+## [13.4.0] 20240214
+- Release Quinta
+
 ## [13.3.0.5] 20240214
 ### Added
 - Internal support for persistent JSON settings using single file
@@ -22,8 +38,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Matter redirects for Advanced Matter configuration UI (#20690)
 - LVGL9 restore missing layouts (#20701)
-
-### Removed
 
 ## [13.3.0.4] 20240205
 ### Added
@@ -151,8 +165,6 @@ All notable changes to this project will be documented in this file.
 - Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
 - Berry claiming UART0 if needed (#20324)
 - LVGL fix type for lv_imgbtn (#20354)
-
-## [Released]
 
 ## [13.3.0] 20231213
 - Release Quinlan
