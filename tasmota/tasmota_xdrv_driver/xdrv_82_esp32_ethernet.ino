@@ -208,17 +208,18 @@ void EthernetInit(void) {
   eth_type = Settings->eth_type -7;               // As No EMAC support substract EMAC enums (According ETH.cpp debug info)
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
 
-  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    if (Settings->eth_type < 7) {
-      // CONFIG_ETH_USE_ESP32_EMAC
+  if (Settings->eth_type < 7) {
+    // CONFIG_ETH_USE_ESP32_EMAC
+    if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
-    } else {
-      // ETH_SPI_SUPPORTS_CUSTOM
-      if (!PinUsed(GPIO_ETH_PHY_POWER)) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
-      }
+      return;
     }
-    return;
+  } else {
+    // ETH_SPI_SUPPORTS_CUSTOM
+    if (!PinUsed(GPIO_ETH_PHY_MDC) || !PinUsed(GPIO_ETH_PHY_MDIO) || !PinUsed(GPIO_ETH_PHY_POWER)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+      return;
+    }
   }
 
   eth_config_change = 0;
@@ -248,7 +249,7 @@ void EthernetInit(void) {
   init_ok = (ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode));
 #endif  // ESP_IDF_VERSION_MAJOR >= 5
   if (!init_ok) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType or init error"));
     return;
   };
 
