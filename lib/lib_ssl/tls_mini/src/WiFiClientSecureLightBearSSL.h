@@ -131,9 +131,7 @@ class WiFiClientSecure_light : public WiFiClient {
     }
 
   private:
-    unsigned long lastOutActivity;
-    unsigned long lastInActivity;
-    int _loopTimeout=15;
+    int _loopTimeout=5;
     void _clear();
     bool _ctx_present;
     std::shared_ptr<br_ssl_client_context> _sc;

@@ -557,17 +557,15 @@ int WiFiClientSecure_light::_run_until(unsigned target, bool blocking) {
     DEBUG_BSSL("_run_until: Not connected\n");
     return -1;
   }
-  lastInActivity = lastOutActivity = millis();
+  uint32_t t = millis();
   for (int no_work = 0; blocking || no_work < 2;) {
     if (blocking) {
       // Only for blocking operations can we afford to yield()
       optimistic_yield(100);
     }
     
-    unsigned long t = millis();
-    if (t-lastInActivity >= ((int32_t) this->_loopTimeout*1000UL) ){
+    if (((int32_t)(millis()-(t+(uint32_t) this->_loopTimeout*1000UL))>=0)){
       DEBUG_BSSL("_run_until: Timeout\n");
-      lastOutActivity=millis();
       return -1;
     }
 
