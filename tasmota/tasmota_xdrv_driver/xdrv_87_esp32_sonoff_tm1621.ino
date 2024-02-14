@@ -437,6 +437,7 @@ void TM1621Show(void) {
     return;
   }
 
+#ifdef USE_ENERGY_SENSOR
   if (TM1621_POWR316D == Tm1621.device) {
     if (0 == Tm1621.display_rotate) {
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy->voltage[0]);
@@ -452,6 +453,7 @@ void TM1621Show(void) {
     TM1621SendRows();
     return;
   }
+#endif  // USE_ENERGY_SENSOR
 
   if (TM1621_THR316D == Tm1621.device) {
     if (!isnan(TasmotaGlobal.temperature_celsius)) {
