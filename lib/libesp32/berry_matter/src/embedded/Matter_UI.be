@@ -344,7 +344,7 @@ class Matter_UI
                              ep, webserver.html_escape(arg), webserver.html_escape(arg_hint), webserver.html_escape(arg_hint)))
       webserver.content_send(f"<td style='text-align:center;'><button name='del{ep:i}' title='Delete Endpoint {ep:i}' "
                               "style='background:none;border:none;line-height:1;'"
-                              " onclick=\"return confirm('Confirm removing endpoint')\""
+                              " onclick=\"return confirm('Confirm removing endpoint {ep:i}')\""
                               ">"
                               "&#128293;</button></td></tr>")
       i += 1
