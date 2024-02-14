@@ -9,8 +9,9 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- Berry class `int64` made immutable
-- LVGL make lv_touch_3_buttons more responsive
+- ESP32 Core3 SPI ethernet support for all models
+- Berry class `int64` made immutable (#20727)
+- LVGL make lv_touch_3_buttons more responsive (#20728)
 
 ### Fixed
 
