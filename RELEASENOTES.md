@@ -119,7 +119,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v13.3.0.5
 ### Added
 - Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|OFF]``
-- Command ``SetOption158`` to publish or suppress ModbusReceived MQTT messages [#20678](https://github.com/arendst/Tasmota/issues/20678)
+- Command ``SetOption158 1`` to disable publish of ModbusReceived MQTT messages [#20678](https://github.com/arendst/Tasmota/issues/20678)
+- Command ``SetOption159 1`` to enable counting on both rising and falling edge [#20712](https://github.com/arendst/Tasmota/issues/20712)
 - Display of active drivers using command ``status 4``
 - GPIO Viewer to see realtime GPIO states using assets from `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
 - Support for CST816S touch interface [#20213](https://github.com/arendst/Tasmota/issues/20213)
