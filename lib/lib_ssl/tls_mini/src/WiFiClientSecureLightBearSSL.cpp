@@ -564,7 +564,7 @@ int WiFiClientSecure_light::_run_until(unsigned target, bool blocking) {
       optimistic_yield(100);
     }
     
-    if (((int32_t)(millis()-(t+(uint32_t) this->_loopTimeout*1000UL))>=0)){
+    if (((int32_t)(millis() - (t + this->_loopTimeout)) >= 0)){
       DEBUG_BSSL("_run_until: Timeout\n");
       return -1;
     }
