@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Core3 SPI ethernet support for all models
 - Berry class `int64` made immutable (#20727)
 - LVGL make lv_touch_3_buttons more responsive (#20728)
+- HASPmota fix and improve demo with pixel-perfect fonts
 
 ### Fixed
 
