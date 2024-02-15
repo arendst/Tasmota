@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.1]
 ### Added
+- HASPmota `p<x>b<y>.delete` to delete an object
 
 ### Breaking Changed
 
