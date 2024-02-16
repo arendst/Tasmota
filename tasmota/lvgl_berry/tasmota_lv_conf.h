@@ -424,6 +424,7 @@
                                   LV_FONT_DECLARE(robotocondensed_regular_40_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_44_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_48_latin1) \
+                                  LV_FONT_DECLARE(typicons24) \
 
 #define ROBOTOCONDENSED_REGULAR_12_LATIN1  1
 #define ROBOTOCONDENSED_REGULAR_14_LATIN1  0
