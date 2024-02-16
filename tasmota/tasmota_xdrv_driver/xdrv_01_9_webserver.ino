@@ -1816,6 +1816,11 @@ void HandleModuleConfiguration(void) {
 
   if (Webserver->hasArg(F("save"))) {
     ModuleSaveSettings();
+
+#ifdef CONFIG_IDF_TARGET_ESP32
+    analogDetach();
+#endif
+
     WebRestart(1);
     return;
   }

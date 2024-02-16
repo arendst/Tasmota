@@ -323,6 +323,14 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
   return chan;
 }
 
+void analogDetach(void) {
+  for (uint32_t pin = 0; pin < SOC_GPIO_PIN_COUNT; pin++) { 
+    if (pin_to_channel[pin] > 0) {
+      ledcDetachPin(pin);
+    }
+  }
+}
+
 extern "C" uint32_t ledcReadFreq2(uint8_t chan) {
 // extern "C" uint32_t __wrap_ledcReadFreq(uint8_t chan) {
   if (chan > MAX_PWMS) {
