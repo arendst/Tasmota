@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Berry class `int64` made immutable (#20727)
 - LVGL make lv_touch_3_buttons more responsive (#20728)
 - HASPmota fix and improve demo with pixel-perfect fonts (#20734)
+- NeoPool webUI pH alarms (4 & 5) completed
 
 ### Fixed
 
