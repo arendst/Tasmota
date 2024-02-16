@@ -179,6 +179,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - DeepSleep support through TIMERS (#20117)
 - Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
+- HASPmota more attributes
 
 ### Breaking Changed
 - Remove Berry `every_200ms` event which didn't work anyways (#20205)
