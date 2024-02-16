@@ -94,6 +94,7 @@ class lv_signal_arcs : lv_obj
     super(self).init(parent)
     self.set_style_bg_opa(0, 0)         # transparent background
     self.set_style_border_width(0, 0)   # remove border
+    self.set_style_pad_all(0,0)
     # own values
     self.percentage = 100
     # pre-allocate buffers
