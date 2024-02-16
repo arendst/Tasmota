@@ -87,6 +87,8 @@ class lvh_obj
     "border_side": "style_border_side",
     "border_width": "style_border_width",
     "border_color": "style_border_color",
+    "border_opa": "style_border_opa",
+    "border_post": "style_border_pot",
     # "line_width": nil,                      # depends on class
     # "line_width1": nil,                     # depends on class
     # "action": nil,                          # store the action in self.action
@@ -100,6 +102,10 @@ class lvh_obj
     "bg_grad_dir": "style_bg_grad_dir",
     "line_color": "style_line_color",
     "line_rounded": "style_line_rounded",
+    "arc_color": "style_arc_color",
+    "arc_opa": "style_arc_opa",
+    "arc_rounded": "style_arc_rounded",
+    "arc_width": "style_arc_width",
     "pad_left": "style_pad_left",
     "pad_right": "style_pad_right",
     "pad_top": "style_pad_top",
@@ -356,6 +362,22 @@ class lvh_obj
       # print("val=",val)
       tasmota.set_timer(0, /-> tasmota.publish_rule(tas_event))
     end
+  end
+
+  #====================================================================
+  #  `delete` special attribute used to delete the object
+  #====================================================================
+  def set_delete(v)
+    raise "type_error", "you cannot assign to 'delete'"
+  end
+  def get_delete()
+    # remove any rule
+    self.remove_val_rule()
+    self.remove_text_rule()
+    if (self._lv_label)   self._lv_label.del()    self._lv_label = nil    end
+    if (self._lv_obj)     self._lv_obj.del()      self._lv_obj = nil      end
+    # remove from page
+    self._page.remove_obj(self.id)
   end
 
   #====================================================================
@@ -841,7 +863,7 @@ class lvh_obj
     end
 
     # fallback to exception if attribute unknown or not a function
-    raise "value_error", "unknown attribute " + str(k)
+    return module("undefined")
   end
 
   #- ------------------------------------------------------------#
@@ -943,11 +965,14 @@ class lvh_obj
   # `text_rule_format`: format used by `format()`
   #                     Ex: `%.1f °C`
   #====================================================================
-  def set_val_rule(t)
-    # remove previous rule if any
+  def remove_val_rule()
     if self._val_rule != nil
       tasmota.remove_rule(self._val_rule, self)
     end
+  end
+  def set_val_rule(t)
+    # remove previous rule if any
+    self.remove_val_rule()
 
     self._val_rule = str(t)
     tasmota.add_rule(self._val_rule, / val -> self.val_rule_matched(val), self)
@@ -956,11 +981,14 @@ class lvh_obj
     return self._val_rule
   end
   # text_rule
-  def set_text_rule(t)
-    # remove previous rule if any
+  def remove_text_rule()
     if self._text_rule != nil
       tasmota.remove_rule(self._text_rule, self)
     end
+  end
+  def set_text_rule(t)
+    # remove previous rule if any
+    self.remove_text_rule()
 
     self._text_rule = str(t)
     tasmota.add_rule(self._text_rule, / val -> self.text_rule_matched(val), self)
@@ -1502,11 +1530,27 @@ class lvh_page
   #====================================================================
   # add an object to this page
   #====================================================================
-  def set_obj(id, o)
-    self._obj_id[id] = o
+  def get_obj(obj_id)
+    return self._obj_id.find(obj_id)
   end
-  def get_obj(id)
-    return self._obj_id.find(id)
+  def add_obj(obj_id, obj_lvh)
+    # add object to page object
+    self._obj_id[obj_id] = obj_lvh
+    
+    # create a global variable for this object of form p<page>b<id>, ex p1b2
+    var glob_name = format("p%ib%i", obj_lvh._page.id(), obj_id)
+    global.(glob_name) = obj_lvh
+  end
+  def remove_obj(obj_id)
+    # remove object from page object
+    var obj_lvh = self._obj_id.find(obj_id)
+    self._obj_id.remove(obj_id)
+
+    # set the global variable to `nil`
+    if obj_lvh
+      var glob_name = format("p%ib%i", obj_lvh._page.id(), obj_id)
+      global.(glob_name) = nil
+    end
   end
 
   #====================================================================
@@ -1620,16 +1664,6 @@ class HASPmota
     var v = introspect.get(lv, "version")
     # if `lv.version` does not exist, v is `module('undefined')`
     if type(v) != 'int'  lv.version = 8 end
-  end
-
-  def deinit()
-    # remove previous rule if any
-    if self._val_rule != nil
-      tasmota.remove_rule(self._val_rule, self)
-    end
-    if self._text_rule != nil
-      tasmota.remove_rule(self._text_rule, self)
-    end
   end
 
   #====================================================================
@@ -2017,12 +2051,7 @@ class HASPmota
       obj_lvh = obj_class(parent_lvgl, page, jline, lv_instance)
 
       # add object to page object
-      lvh_page_cur.set_obj(obj_id, obj_lvh)
-      
-      # create a global variable for this object of form p<page>b<id>, ex p1b2
-      var glob_name = format("p%ib%i", lvh_page_cur.id(), obj_id)
-      global.(glob_name) = obj_lvh
-
+      lvh_page_cur.add_obj(obj_id, obj_lvh)
     end
 
     if func_compiled != nil

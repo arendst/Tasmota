@@ -6,6 +6,8 @@
 # Touches are simulated as actual touch screen:
 #  x: is spread at coordinates: 1/6, 1/2, 5/6
 #  y: 10 pixels from botton
+#
+# New version: use fast_loop for a more responsive interface
 
 class lv_touch_3_buttons
   var gpios           # (array) physical GPIO numbers for each button, -1 in not assigned
@@ -49,12 +51,12 @@ class lv_touch_3_buttons
     self.x_coords = [ hres / 6, hres / 2, hres * 5 / 6]
     self.y_coords = [ vres - 10, vres - 10, vres - 10]
 
-    # add self to drivers
-    tasmota.add_driver(self)
+    # add self to fast_loop
+    tasmota.add_fast_loop(/-> self.fast_loop())
   end
 
   # scan every 50ms
-  def every_50ms()
+  def fast_loop()
     import display
 
     var i = 0
@@ -89,5 +91,4 @@ return lv_touch_3_buttons(gpio.pin(gpio.GPIO_INPUT, 0), gpio.pin(gpio.GPIO_INPUT
 
 #-
 lv_btn3 = lv_touch_3_buttons(gpio.pin(gpio.GPIO_INPUT, 0), gpio.pin(gpio.GPIO_INPUT, 1), gpio.pin(gpio.GPIO_INPUT, 2), lv_touch_3_buttons.ACTIVE_LOW)
-tasmota.add_driver(lv_btn3)
 -#

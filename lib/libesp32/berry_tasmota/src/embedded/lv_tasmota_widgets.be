@@ -91,18 +91,20 @@ class lv_signal_arcs : lv_obj
   var area, arc_dsc       # instances of objects kept to avoid re-instanciating at each call
 
   def init(parent)
-    # init custom widget (don't call super constructor)
-    _lvgl.create_custom_widget(self, parent)
+    super(self).init(parent)
+    self.set_style_bg_opa(0, 0)         # transparent background
+    self.set_style_border_width(0, 0)   # remove border
+    self.set_style_pad_all(0,0)
     # own values
     self.percentage = 100
     # pre-allocate buffers
     self.area = lv.area()
     self.arc_dsc = lv.draw_arc_dsc()
+    # we don't need a closure with `add_event_cb` because of special handling
+    self.add_event_cb(self.widget_event, lv.EVENT_DRAW_MAIN, 0)
   end
 
-  def widget_event(cl, event)
-    # Call the ancestor's event handler
-    if lv.obj_event_base(cl, event) != lv.RES_OK  return  end
+  def widget_event(event)
     var code = event.get_code()
 
     import math
@@ -164,9 +166,6 @@ class lv_signal_arcs : lv_obj
       arc_dsc.end_angle = 270 + angle
       arc_dsc.color = self.percentage >= 75 ? on_color : off_color
       lv.draw_arc(layer, arc_dsc)
-
-    #elif mode == lv.DESIGN_DRAW_POST    # commented since we don't want a frame around this object
-      # self.ancestor_design.call(self, clip_area, mode)
     end
   end
 
@@ -235,19 +234,20 @@ class lv_signal_bars : lv_obj
   var area, line_dsc          # instances of objects kept to avoid re-instanciating at each call
 
   def init(parent)
-    # init custom widget (don't call super constructor)
-    _lvgl.create_custom_widget(self, parent)
+    super(self).init(parent)
+    self.set_style_bg_opa(0, 0)         # transparent background
+    self.set_style_border_width(0, 0)   # remove border
     # own values
     self.percentage = 100
     # pre-allocate buffers
     self.area = lv.area()
     self.line_dsc = lv.draw_line_dsc()
+    # we don't need a closure with `add_event_cb` because of special handling
+    self.add_event_cb(self.widget_event, lv.EVENT_DRAW_MAIN, 0)
   end
 
-  def widget_event(cl, event)
+  def widget_event(event)
     # Call the ancestor's event handler
-    # tasmota.log(f">>>: widget_event {cl=} {event=}")
-    if lv.obj_event_base(cl, event) != lv.RES_OK  return  end
     var code = event.get_code()
 
     def atleast1(x) if x >= 1 return x else return 1 end end
@@ -278,7 +278,6 @@ class lv_signal_bars : lv_obj
       var on_color = self.get_style_line_color(lv.PART_MAIN | lv.STATE_DEFAULT)
       var off_color = self.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
 
-      # lv.event_send(self, lv.EVENT_DRAW_PART_BEGIN, line_dsc)
       for i:0..3    # 4 bars
         line_dsc.color = self.percentage >= (i+1)*20 ? on_color : off_color
         line_dsc.p1_y = y_ofs + height - 1 - bar_offset
@@ -287,7 +286,6 @@ class lv_signal_bars : lv_obj
         line_dsc.p2_x = line_dsc.p1_x
         lv.draw_line(layer, line_dsc)
       end
-      # lv.event_send(self, lv.EVENT_DRAW_PART_END, line_dsc)
     end
   end
 

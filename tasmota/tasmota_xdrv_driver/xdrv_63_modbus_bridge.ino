@@ -551,7 +551,11 @@ void ModbusBridgeHandle(void)
         ResponseJsonEnd();
 
         if (errorcode == ModbusBridgeError::noerror)
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+            XdrvRulesProcess(0);
+          } else {
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+          }
       }
       else if ((modbusBridge.buffer[1] == 15) || (modbusBridge.buffer[1] == 16)) // Write Multiple Registers
       {
