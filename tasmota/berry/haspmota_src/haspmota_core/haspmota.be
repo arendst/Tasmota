@@ -87,6 +87,8 @@ class lvh_obj
     "border_side": "style_border_side",
     "border_width": "style_border_width",
     "border_color": "style_border_color",
+    "border_opa": "style_border_opa",
+    "border_post": "style_border_pot",
     # "line_width": nil,                      # depends on class
     # "line_width1": nil,                     # depends on class
     # "action": nil,                          # store the action in self.action
@@ -100,6 +102,10 @@ class lvh_obj
     "bg_grad_dir": "style_bg_grad_dir",
     "line_color": "style_line_color",
     "line_rounded": "style_line_rounded",
+    "arc_color": "style_arc_color",
+    "arc_opa": "style_arc_opa",
+    "arc_rounded": "style_arc_rounded",
+    "arc_width": "style_arc_width",
     "pad_left": "style_pad_left",
     "pad_right": "style_pad_right",
     "pad_top": "style_pad_top",
