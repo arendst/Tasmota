@@ -4,7 +4,7 @@
       "ldscript": "eagle.flash.4m3m.ld"
     },
     "core": "esp8266",
-    "extra_flags": "-DESP8266 -DARDUINO_ARCH_ESP8266 -DARDUINO_ESP8266_ESP01 -DESP8266_4M -DESP8266_4M3M",
+    "extra_flags": "-DARDUINO_TASMOTA -DESP8266 -DARDUINO_ARCH_ESP8266 -DARDUINO_ESP8266_ESP01 -DESP8266_4M -DESP8266_4M3M",
     "f_cpu": "80000000L",
     "f_flash": "40000000L",
     "flash_mode": "dout",
