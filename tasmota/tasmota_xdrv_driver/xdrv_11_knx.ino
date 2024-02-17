@@ -204,14 +204,14 @@ const char *device_param_cb[] = {
 #define D_CMND_KNXTXSCENE "Tx_Scene"
 
 #ifdef KNX_DPT9_CMD
-#warning *** KnxTx_ValOld : Add command to send DPT9 values
-#define D_CMND_KNXTXVAL_DPT9 "Tx_ValOld"
+#warning *** KnxTx_DPTNine : Add command to send DPT9 values
+#define D_CMND_KNXTXVAL_DPT9 "Tx_DPTNine"
 
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
   D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|" D_CMND_KNXTXVAL_DPT9 ;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene, &CmndKnxTxValOld};
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene, &CmndKnxTxDPTNine};
 
 #else // not KNX_DPT9_CMD
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
@@ -1140,7 +1140,7 @@ void CmndKnxTxVal(void)
 }
 
 #ifdef KNX_DPT9_CMD
-void CmndKnxTxValOld(void)
+void CmndKnxTxDPTNine(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
