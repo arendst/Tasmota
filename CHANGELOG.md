@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - HASPmota `p<x>b<y>.delete` to delete an object (#20735)
 - LVGL and HASPmota typicons font (#20742)
+- HASPmota more attributes (#20744)
 
 ### Breaking Changed
 
@@ -17,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota fix and improve demo with pixel-perfect fonts (#20734)
 
 ### Fixed
+- ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
 
 ### Removed
 
@@ -179,7 +181,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 - DeepSleep support through TIMERS (#20117)
 - Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
-- HASPmota more attributes
 
 ### Breaking Changed
 - Remove Berry `every_200ms` event which didn't work anyways (#20205)

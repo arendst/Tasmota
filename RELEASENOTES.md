@@ -128,7 +128,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
 - HASPmota fix and improve demo with pixel-perfect fonts [#20734](https://github.com/arendst/Tasmota/issues/20734)
+- HASPmota more attributes [#20744](https://github.com/arendst/Tasmota/issues/20744)
 
 ### Fixed
+- ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 
 ### Removed
