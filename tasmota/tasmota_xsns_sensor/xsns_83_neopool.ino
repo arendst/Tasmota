@@ -834,7 +834,9 @@ const char kNeoPoolpHAlarms[] PROGMEM =
   D_NEOPOOL_SETPOINT_OK "|"
   D_NEOPOOL_PH_HIGH "|"
   D_NEOPOOL_PH_LOW "|"
-  D_NEOPOOL_PUMP_TIME_EXCEEDED
+  D_NEOPOOL_PUMP_TIME_EXCEEDED "|"
+  D_NEOPOOL_PH_HIGH "|"
+  D_NEOPOOL_PH_LOW
   ;
 
 #define NEOPOOL_FMT_PH          "%*_f"
@@ -2043,7 +2045,7 @@ void NeoPoolShow(bool json)
         (((uint16_t)(fvalue*10) > (uint16_t)(fphmax*10)) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE), stemp);
       WSContentSend_PD(PSTR(" "));
       // S2
-      if ((NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) >=1 && (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) <= 3) {
+      if ((NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) > 0) {
         GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM, kNeoPoolpHAlarms);
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, stemp);
       }
