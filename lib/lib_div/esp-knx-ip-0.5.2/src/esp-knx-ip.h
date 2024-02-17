@@ -14,8 +14,8 @@
  * Required EEPROM size is 8 + MAX_GA_CALLBACKS * 3 + 2 + MAX_CONFIG_SPACE which is 552 by default
  */
 #define EEPROM_SIZE               1024 // [Default 1024]
-#define MAX_CALLBACK_ASSIGNMENTS  10 // [Default 10] Maximum number of group address callbacks that can be stored
-#define MAX_CALLBACKS             10 // [Default 10] Maximum number of callbacks that can be stored
+#define MAX_CALLBACK_ASSIGNMENTS  14 // [Default 10] Maximum number of group address callbacks that can be stored
+#define MAX_CALLBACKS             14 // [Default 10] Maximum number of callbacks that can be stored
 #define MAX_CONFIGS               20 // [Default 20] Maximum number of config items that can be stored
 #define MAX_CONFIG_SPACE          0x0200 // [Default 0x0200] Maximum number of bytes that can be stored for custom config
 

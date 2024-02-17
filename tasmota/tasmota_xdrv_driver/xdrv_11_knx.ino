@@ -27,8 +27,8 @@
 Constants in tasmota.h
 -----------------------
 
-#define MAX_KNX_GA             10            Max number of KNX Group Addresses to read that can be set
-#define MAX_KNX_CB             10            Max number of KNX Group Addresses to write that can be set
+#define MAX_KNX_GA             14            Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             14            Max number of KNX Group Addresses to write that can be set
                                              If you change MAX_KNX_CB you also have to change on the esp-knx-ip.h file the following:
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
@@ -116,6 +116,10 @@ device_parameters_t device_param[] = {
   { KNX_SLOT3 , false, false, KNX_Empty },
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
+  { KNX_SLOT6 , false, false, KNX_Empty },
+  { KNX_SLOT7 , false, false, KNX_Empty },
+  { KNX_SLOT8 , false, false, KNX_Empty },
+  { KNX_SLOT9 , false, false, KNX_Empty },
   { KNX_SCENE , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
@@ -152,6 +156,10 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 3",
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
+  D_KNX_TX_SLOT   " 6",
+  D_KNX_TX_SLOT   " 7",
+  D_KNX_TX_SLOT   " 8",
+  D_KNX_TX_SLOT   " 9",
   D_KNX_TX_SCENE      ,
   nullptr
 };
@@ -188,6 +196,10 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 3",
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
+  D_KNX_RX_SLOT   " 6",
+  D_KNX_RX_SLOT   " 7",
+  D_KNX_RX_SLOT   " 8",
+  D_KNX_RX_SLOT   " 9",
   D_KNX_RX_SCENE      ,
   nullptr
 };
@@ -530,6 +542,10 @@ void KNX_INIT(void)
   device_param[KNX_SLOT3-1].show = true;
   device_param[KNX_SLOT4-1].show = true;
   device_param[KNX_SLOT5-1].show = true;
+  device_param[KNX_SLOT6-1].show = true;
+  device_param[KNX_SLOT7-1].show = true;
+  device_param[KNX_SLOT8-1].show = true;
+  device_param[KNX_SLOT9-1].show = true;
   device_param[KNX_SCENE-1].show = true;
 #endif
 
@@ -602,7 +618,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         }
       }
 #ifdef USE_RULES
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (write command)
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (write command)
       {
         if (!toggle_inhibit) {
           char command[35]; //4294967295.00  13chars + 17
@@ -718,7 +734,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
 #endif
 #ifdef USE_RULES
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (read command)
       {
         if (!toggle_inhibit) {
           char command[25];
