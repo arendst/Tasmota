@@ -78,8 +78,8 @@ const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 32;         // Max number of supported pulse timers
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
-const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
-const uint8_t MAX_KNX_CB = 10;              // Max number of KNX Group Addresses to write that can be set
+const uint8_t MAX_KNX_GA = 14;              // Max number of KNX Group Addresses to read that can be set
+const uint8_t MAX_KNX_CB = 14;              // Max number of KNX Group Addresses to write that can be set
 const uint8_t MAX_XNRG_DRIVERS = 32;        // Max number of allowed energy drivers
 const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 128;       // Max number of allowed sensor drivers
@@ -291,9 +291,13 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT3              28
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
-#define KNX_SCENE              31
-#define KNX_MAX_device_param   31
-#define MAX_KNXTX_CMNDS        5
+#define KNX_SLOT6              31
+#define KNX_SLOT7              32
+#define KNX_SLOT8              33
+#define KNX_SLOT9              34
+#define KNX_SCENE              35
+#define KNX_MAX_device_param   35
+#define MAX_KNXTX_CMNDS        9
 
 // XPT2046 resistive touch driver min/max raw values
 #define	XPT2046_MINX			192
