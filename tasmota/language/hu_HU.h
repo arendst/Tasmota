@@ -554,6 +554,7 @@
 #define D_THERMOSTAT_SENSOR           "Current Temperature"
 #define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
 #define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_VALVE_POSITION   "Valve Position"
 #define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
 #define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
 #define D_THERMOSTAT_CONTROL_METHOD   "Control method"

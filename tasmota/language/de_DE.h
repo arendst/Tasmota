@@ -554,6 +554,7 @@
 #define D_THERMOSTAT_SENSOR           "Aktuelle Temperatur"
 #define D_THERMOSTAT_GRADIENT         "Temperaturänderung"
 #define D_THERMOSTAT_DUTY_CYCLE       "Aussteuergrad"
+#define D_THERMOSTAT_VALVE_POSITION   "Ventilöffnung"
 #define D_THERMOSTAT_CYCLE_TIME       "Periodendauer"
 #define D_THERMOSTAT_PI_AUTOTUNE      "Auto PI-Abstimmung"
 #define D_THERMOSTAT_CONTROL_METHOD   "Reglertyp"
