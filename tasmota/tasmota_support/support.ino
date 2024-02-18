@@ -858,6 +858,33 @@ float CalcTempHumToDew(float t, float h) {
   return result;
 }
 
+#ifdef USE_HEAT_INDEX
+float CalcTemHumToHeatIndex(float t, float h) {
+  if (!Settings->flag.temperature_conversion) {                // SetOption8 - Switch between Celsius or Fahrenheit
+    t = t * 1.8f + 32;                                         // Fahrenheit
+  }
+  float hi = 0.5 * (t + 61.0 + ((t - 68.0) * 1.2) + (h * 0.094));
+  if (hi > 79) {
+    float pt = t * t;  // pow(t, 2)
+    float ph = h * h;  // pow(h, 2)
+    hi = -42.379 + 2.04901523 * t + 10.14333127 * h +
+         -0.22475541 * t * h +
+         -0.00683783 * pt +
+         -0.05481717 * ph +
+         0.00122874 * pt * h +
+         0.00085282 * t * ph +
+         -0.00000199 * pt * ph;
+    if ((h < 13) && (t >= 80.0) && (t <= 112.0)) {
+      hi -= ((13.0 - h) * 0.25) * sqrtf((17.0 - abs(t - 95.0)) * 0.05882);
+    }
+    else if ((h > 85.0) && (t >= 80.0) && (t <= 87.0)) {
+      hi += ((h - 85.0) * 0.1) * ((87.0 - t) * 0.2);
+    }
+  }
+  return (Settings->flag.temperature_conversion) ? hi : (hi - 32) / 1.8f;
+}
+#endif  // USE_HEAT_INDEX
+
 float CalcTempHumToAbsHum(float t, float h) {
   if (isnan(t) || isnan(h)) { return NAN; }
   // taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
@@ -1338,13 +1365,19 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings->flag2.time_format);
 }
 
-int ResponseAppendTHD(float f_temperature, float f_humidity)
-{
+int ResponseAppendTHD(float f_temperature, float f_humidity) {
   float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
-  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
-                          Settings->flag2.temperature_resolution, &f_temperature,
-                          Settings->flag2.humidity_resolution, &f_humidity,
-                          Settings->flag2.temperature_resolution, &dewpoint);
+  int len = ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
+                             Settings->flag2.temperature_resolution, &f_temperature,
+                             Settings->flag2.humidity_resolution, &f_humidity,
+                             Settings->flag2.temperature_resolution, &dewpoint);
+#ifdef USE_HEAT_INDEX
+  float heatindex = CalcTemHumToHeatIndex(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
+  int len2 = ResponseAppend_P(PSTR(",\"" D_JSON_HEATINDEX "\":%*_f"),
+                              Settings->flag2.temperature_resolution, &heatindex);
+  return len + len2;                              
+#endif  // USE_HEAT_INDEX
+  return len;
 }
 
 int ResponseJsonEnd(void)

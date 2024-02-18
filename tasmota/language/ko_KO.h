@@ -119,6 +119,7 @@
 #define D_GROUP "그룹"
 #define D_HOST "호스트"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "호스트이름"
 #define D_HUMIDITY "습도"
 #define D_ILLUMINANCE "조도"

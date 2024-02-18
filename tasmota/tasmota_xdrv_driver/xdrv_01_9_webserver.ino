@@ -1027,6 +1027,10 @@ void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
   WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings->flag2.temperature_resolution, parameter);
   WSContentSend_PD(HTTP_SNS_DEW, types, parameter, TempUnit());
+#ifdef USE_HEAT_INDEX
+  dtostrfd(CalcTemHumToHeatIndex(f_temperature, f_humidity), Settings->flag2.temperature_resolution, parameter);
+  WSContentSend_PD(HTTP_SNS_HEATINDEX, types, parameter, TempUnit());
+#endif  // USE_HEAT_INDEX
 }
 
 void WSContentEnd(void) {

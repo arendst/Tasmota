@@ -119,6 +119,7 @@
 #define D_GROUP "Groep"
 #define D_HOST "Gasheer"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Gasheername"
 #define D_HUMIDITY "Humiditeit"
 #define D_ILLUMINANCE "Verligting"

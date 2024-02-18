@@ -119,6 +119,7 @@
 #define D_GROUP "Ομάδα"
 #define D_HOST "Host"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Υγρασία"
 #define D_ILLUMINANCE "Φωτεινότητα"

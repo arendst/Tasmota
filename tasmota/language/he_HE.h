@@ -119,6 +119,7 @@
 #define D_GROUP "קבוצה"
 #define D_HOST "מארח"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "שם מארח"
 #define D_HUMIDITY "לחות"
 #define D_ILLUMINANCE "רמת חשיפה"

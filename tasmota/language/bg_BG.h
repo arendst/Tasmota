@@ -119,6 +119,7 @@
 #define D_GROUP "Група"
 #define D_HOST "Хост"
 #define D_HALL_EFFECT "Ефект на Хол"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Име на хоста"
 #define D_HUMIDITY "Влажност"
 #define D_ILLUMINANCE "Осветеност"

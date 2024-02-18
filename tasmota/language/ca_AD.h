@@ -119,6 +119,7 @@
 #define D_GROUP "Grup"
 #define D_HOST "Hoste"
 #define D_HALL_EFFECT "Efecte Hall"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Nom de màquina"
 #define D_HUMIDITY "Humitat"
 #define D_ILLUMINANCE "Iluminància"

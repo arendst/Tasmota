@@ -119,6 +119,7 @@
 #define D_GROUP "Skupina"
 #define D_HOST "Server"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Názov servera"
 #define D_HUMIDITY "Vlhkosť"
 #define D_ILLUMINANCE "Osvetlenie"

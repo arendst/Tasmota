@@ -1025,8 +1025,13 @@ bool MqttShowSensor(bool call_show_sensor) {
       }
       if (2 == add_comma) {
         float dewpoint = CalcTempHumToDew(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
-        ResponseAppend_P(PSTR("%s\"" D_JSON_DEWPOINT "\":%*_f"),
-          (add_comma)?",":"", Settings->flag2.temperature_resolution, &dewpoint);
+        ResponseAppend_P(PSTR(",\"" D_JSON_DEWPOINT "\":%*_f"),
+          Settings->flag2.temperature_resolution, &dewpoint);
+#ifdef USE_HEAT_INDEX
+        float heatindex = CalcTemHumToHeatIndex(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
+        ResponseAppend_P(PSTR(",\"" D_JSON_HEATINDEX "\":%*_f"),
+          Settings->flag2.temperature_resolution, &heatindex);
+#endif  // USE_HEAT_INDEX
       }
       if (TasmotaGlobal.pressure_hpa != 0) {
         float p = ConvertPressure(TasmotaGlobal.pressure_hpa);

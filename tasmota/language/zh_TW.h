@@ -119,6 +119,7 @@
 #define D_GROUP "群組:"
 #define D_HOST "主機"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "主機名稱"
 #define D_HUMIDITY "濕度"
 #define D_ILLUMINANCE "照度"

@@ -119,6 +119,7 @@
 #define D_GROUP "组:"
 #define D_HOST "主机"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "主机名"
 #define D_HUMIDITY "湿度"
 #define D_ILLUMINANCE "照度"

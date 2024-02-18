@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.4.0.1
 ### Added
+- Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - TasMesh support for LWT messages [#20392](https://github.com/arendst/Tasmota/issues/20392)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)

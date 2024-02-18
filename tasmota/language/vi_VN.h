@@ -119,6 +119,7 @@
 #define D_GROUP "Nhóm"
 #define D_HOST "Máy chủ"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Tên máy chủ"
 #define D_HUMIDITY "Độ ẩm"
 #define D_ILLUMINANCE "Độ sáng"

@@ -119,6 +119,7 @@
 #define D_GROUP "Grupo"
 #define D_HOST "Host"
 #define D_HALL_EFFECT "Efecto Hall"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Humedad"
 #define D_ILLUMINANCE "Luminancia"

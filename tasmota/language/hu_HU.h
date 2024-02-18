@@ -119,6 +119,7 @@
 #define D_GROUP "Csoport"
 #define D_HOST "Hoszt"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Hosztnév"
 #define D_HUMIDITY "Páratartalom"
 #define D_ILLUMINANCE "Megvilágítás"

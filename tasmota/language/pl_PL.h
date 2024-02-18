@@ -119,6 +119,7 @@
 #define D_GROUP "Grupa"
 #define D_HOST "Serwer"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Nazwa serwera"
 #define D_HUMIDITY "Wilgotność"
 #define D_ILLUMINANCE "Podświetlanie"

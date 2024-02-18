@@ -385,6 +385,8 @@
 //#define MY_LANGUAGE            zh_CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh_TW           // Chinese (Traditional) in Taiwan
 
+//#define USE_HEAT_INDEX                           // Show calculated Heat index from temperature and humidity (+1k4 code)
+
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 #define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
