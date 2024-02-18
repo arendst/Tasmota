@@ -95,7 +95,7 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_opentime[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_closetime[MAX_SHUTTERS_ESP32];
   int16_t       shuttercoeff[5][MAX_SHUTTERS_ESP32];
-  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK bit3: extraStopRelay bit4: ExtraEndStop bit8: INVert WebButtons
+  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK  bit3: ExtraEndStop bit4: INVert WebButtons bit5: extraStopRelay
   uint8_t       shutter_set50percent[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_position[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
@@ -806,7 +806,7 @@ void ShutterPowerOff(uint8_t i)
         case SRC_PULSETIMER:
         case SRC_SHUTTER:
         case SRC_WEBGUI:
-          if (ShutterSettings.shutter_options[i] & 3) {  // There is a special STOP Relay
+          if (ShutterSettings.shutter_options[i] & 16) {  // There is a special STOP Relay
             ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 2, 1, SRC_SHUTTER);
           } else {
             ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
@@ -1711,7 +1711,7 @@ void CmndShutterEnableEndStopTime(void)
 
 void CmndShutterExtraStopPulseRelay(void)
 {
-  ShutterOptionsSetHelper(3);
+  ShutterOptionsSetHelper(16);
 }
 
 void CmndShutterFrequency(void)
