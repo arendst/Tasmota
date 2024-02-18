@@ -103,7 +103,6 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS_ESP32];
   tButtonSettings_old shutter_button_old[MAX_SHUTTERS_ESP32*2]; // depreciated 2023-04-28
   tButtonSettings shutter_button[MAX_SHUTTERS_ESP32*2];
-  uint8_t       extra_pulse_stop_relay[MAX_SHUTTERS_ESP32];
 } ShutterSettings;
 
 const uint16_t RESOLUTION = 1000;       // incresed to 1000 in 8.5 to ramp servos
