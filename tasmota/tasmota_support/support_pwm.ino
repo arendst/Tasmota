@@ -89,9 +89,13 @@ void PwmApplyGPIO(bool force_update_all) {
     uint32_t pwm_val = TasmotaGlobal.pwm_cur_value[i];      // logical value of PWM, 0..1023
     uint32_t pwm_phase = TasmotaGlobal.pwm_cur_phase[i];    // pwm_phase is the logical phase of the active pulse, ignoring inverted
 
-    // apply new values to GPIO if GPIO is set
-    if (PinUsed(GPIO_PWM1, i)) {
-      int32_t pin = Pin(GPIO_PWM1, i);
+    if (TasmotaGlobal.pwm_value[i] >= 0) {
+      pwm_val = TasmotaGlobal.pwm_value[i]; // new value explicitly specified
+    }
+
+    // Iterate over settings array and apply pwm_phase and pwm_val on all gpio outputs
+    int pin = Pin(GPIO_PWM1, i, 0);
+    while (pin >= 0) {
       int32_t chan = analogGetChannel2(pin);
       uint32_t res = ledcReadResolution(chan);
       uint32_t range = (1 << res) - 1;
@@ -99,7 +103,6 @@ void PwmApplyGPIO(bool force_update_all) {
 
       // AddLog(LOG_LEVEL_INFO, "PWM: res0=%i freq0=%i pin=%i chan=%i res=%i timer=%i range=%i freq=%i", timer0_resolution, timer0_freq, pin, chan, res, analogGetTimerForChannel(chan), range, freq);
 
-      if (TasmotaGlobal.pwm_value[i] >= 0) { pwm_val = TasmotaGlobal.pwm_value[i]; }    // new value explicitly specified
       if (pwm_val > range) { pwm_val = range; } // prevent overflow
 
       // compute phase
@@ -108,7 +111,7 @@ void PwmApplyGPIO(bool force_update_all) {
       } else if (Settings->flag5.pwm_force_same_phase) {
         pwm_phase = 0;                          // if auto-phase is off
       } else {
-        if (freq == timer0_freq && res == timer0_resolution) {    // only apply if the frequency is equl to global one
+        if (freq == timer0_freq && res == timer0_resolution) {    // only apply if the frequency is equal to global one
           // compute auto-phase only if default frequency
           pwm_phase = pwm_phase_accumulator;
           // accumulate phase for next GPIO
@@ -122,6 +125,9 @@ void PwmApplyGPIO(bool force_update_all) {
         analogWritePhase(pin, pwm_val, pwm_phase);
         // AddLog(LOG_LEVEL_INFO, "PWM: analogWritePhase i=%i val=%03X phase=%03X", i, pwm_val, pwm_phase);
       }
+
+      // Continue with next pin assigned to this PWM channel
+      pin = Pin(GPIO_PWM1, i, pin + 1);
     }
 
     // set new current values
@@ -156,8 +162,10 @@ void GpioInitPwm(void) {
   PwmRearmChanges();
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-    if (PinUsed(GPIO_PWM1, i)) {
-      analogAttach(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i));
+    // Get first pin with PWM channel configured
+    int pin = Pin(GPIO_PWM1, i, 0);
+    while (pin >= 0) {
+      analogAttach(pin, bitRead(TasmotaGlobal.pwm_inverted, i));
 
       if (i < TasmotaGlobal.light_type) {
         // force PWM GPIOs to black
@@ -170,6 +178,9 @@ void GpioInitPwm(void) {
           TasmotaGlobal.pwm_value[i] = Settings->pwm_value_ext[i - MAX_PWMS_LEGACY];
         }
       }
+
+      // Try with next pin in pin list
+      pin = Pin(GPIO_PWM1, i, pin + 1);
     }
   }
   PwmApplyGPIO(true);   // apply all changes
