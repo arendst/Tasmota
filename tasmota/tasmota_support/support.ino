@@ -1411,14 +1411,30 @@ void ConvertGpios(void) {
 }
 #endif  // ESP8266
 
-int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0) {
+/**
+ * @brief Find the pin number with a given GPIO function
+ * 
+ * @param gpio The GPIO function to look for
+ * @param index Special function to look for, custom encoding per GPIO function
+ * @param start_search Start index in the global GPIO function list, use to search
+ *        for multiple occurences of the same GPIO function on different pins. Pass the value
+ *        returned by previous calls to this function.
+ * @returns The pin number of the first pin matching the GPIO function,
+ *          -1 if none found or -2 on invalid start_search parameter.
+ */
+int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0, int start_search = 0) {
+  if (start_search < 0 || start_search >= nitems(TasmotaGlobal.gpio_pin)) {
+    // start_search parameter outside valid range
+    return -2;
+  }
+
   uint16_t real_gpio = gpio << 5;
   uint16_t mask = 0xFFE0;
   if (index < GPIO_ANY) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i < nitems(TasmotaGlobal.gpio_pin); i++) {
+  for (uint32_t i = start_search; i < nitems(TasmotaGlobal.gpio_pin); i++) {
     if ((TasmotaGlobal.gpio_pin[i] & mask) == real_gpio) {
       return i;              // Pin number configured for gpio
     }
@@ -1426,9 +1442,18 @@ int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0) {
   return -1;                 // No pin used for gpio
 }
 
-bool PinUsed(uint32_t gpio, uint32_t index = 0);
-bool PinUsed(uint32_t gpio, uint32_t index) {
-  return (Pin(gpio, index) >= 0);
+/**
+ * @brief Check if a GPIO function is mapped to a pin.
+ * 
+ * @param gpio The GPIO function to look for
+ * @param index Special function to look for, custom encoding per GPIO function
+ * @param start_search Start index in the global GPIO function list, use to search
+ *        for multiple occurences of the same GPIO function on different pins.
+ * @returns True if one or multiple pins are mapped to the GPIO function,
+ *          false if no pins are mapped or on invalid start_search parameter.
+ */
+bool PinUsed(uint32_t gpio, uint32_t index = 0, int start_search = 0) {
+  return (Pin(gpio, index, start_search) >= 0);
 }
 
 uint32_t GetPin(uint32_t lpin) {
