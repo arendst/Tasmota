@@ -1288,6 +1288,7 @@ void CmndShutterPosition(void)
           switch(i) {
             case 0:
               XdrvMailbox.payload = atoi(str);
+              XdrvMailbox.data_len = strlen(XdrvMailbox.data);
               break;
             case 1:
               Shutter[index].tilt_target_pos_override = atoi(str);
@@ -1299,9 +1300,11 @@ void CmndShutterPosition(void)
       // value 0 with data_len > 0 can mean Open
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
       // STOP will come with payload 0 because predefined value in TASMOTA
-      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
+      if (XdrvMailbox.data_len > 3 || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) && XdrvMailbox.data_len > 0) {
         // set len to 0 to avoid loop on close where payload is 0
         XdrvMailbox.data_len = 0;
+        XdrvMailbox.payload = -99;
+	      
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
