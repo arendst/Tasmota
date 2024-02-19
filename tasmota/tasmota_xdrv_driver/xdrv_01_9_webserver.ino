@@ -2468,11 +2468,11 @@ void HandleInformation(void) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->ipv4_address[2]);
 #ifdef USE_IPV6
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%s"), DNSGetIPStr(0).c_str());
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%s"), DNSGetIPStr(1).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 1}2%s"), DNSGetIPStr(0).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 2}2%s"), DNSGetIPStr(1).c_str());
 #else // USE_IPV6
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->ipv4_address[3]);
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->ipv4_address[4]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 1}2%_I"), Settings->ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 2}2%_I"), Settings->ipv4_address[4]);
 #endif // USE_IPV6
   }
 //#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
@@ -2499,11 +2499,11 @@ void HandleInformation(void) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->eth_ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->eth_ipv4_address[2]);
 #ifdef USE_IPV6
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%s"), DNSGetIPStr(0).c_str());
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%s"), DNSGetIPStr(1).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 1}2%s"), DNSGetIPStr(0).c_str());
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 2}2%s"), DNSGetIPStr(1).c_str());
 #else // USE_IPV6
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->eth_ipv4_address[3]);
-    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->eth_ipv4_address[4]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 1}2%_I"), Settings->eth_ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER " 2}2%_I"), Settings->eth_ipv4_address[4]);
 #endif // USE_IPV6
   }
 #endif  // USE_ETHERNET
