@@ -583,14 +583,23 @@ void BmpShow(bool json) {
       float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
       dtostrfd(f_dewpoint, Settings->flag2.temperature_resolution, dewpoint);
+#ifdef USE_HEAT_INDEX
+      float f_heatindex = CalcTemHumToHeatIndex(bmp_temperature, bmp_humidity);
+      char heatindex[33];
+      dtostrfd(f_heatindex, Settings->flag2.temperature_resolution, heatindex);
+#endif  // USE_HEAT_INDEX
 #ifdef USE_BME68X
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
 #endif  // USE_BME68X
 
       if (json) {
-        char json_humidity[80];
+        char json_humidity[100];
+#ifdef USE_HEAT_INDEX
+        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s,\"" D_JSON_HEATINDEX "\":%s"), humidity, dewpoint, heatindex);
+#else
         snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, dewpoint);
+#endif  // USE_HEAT_INDEX
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME68X
@@ -631,6 +640,9 @@ void BmpShow(bool json) {
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
           WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());
+#ifdef USE_HEAT_INDEX
+          WSContentSend_PD(HTTP_SNS_HEATINDEX, name, heatindex, TempUnit());
+#endif  // USE_HEAT_INDEX
         }
         WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
         if (Settings->altitude != 0) {

@@ -860,6 +860,8 @@ float CalcTempHumToDew(float t, float h) {
 
 #ifdef USE_HEAT_INDEX
 float CalcTemHumToHeatIndex(float t, float h) {
+  if (isnan(h) || isnan(t)) { return NAN; }
+
   if (!Settings->flag.temperature_conversion) {                // SetOption8 - Switch between Celsius or Fahrenheit
     t = t * 1.8f + 32;                                         // Fahrenheit
   }
@@ -881,7 +883,10 @@ float CalcTemHumToHeatIndex(float t, float h) {
       hi += ((h - 85.0) * 0.1) * ((87.0 - t) * 0.2);
     }
   }
-  return (Settings->flag.temperature_conversion) ? hi : (hi - 32) / 1.8f;
+  if (!Settings->flag.temperature_conversion) {                // SetOption8 - Switch between Celsius or Fahrenheit
+    hi = (hi - 32) / 1.8f;                                     // Celsius
+  }
+  return hi;
 }
 #endif  // USE_HEAT_INDEX
 
