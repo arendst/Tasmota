@@ -755,6 +755,7 @@
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
 #define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
 #define D_CMND_SHUTTER_SETUP "Setup"
+#define D_CMD_SHUTTER_EXTRASTOPRELAY "StopRelay"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"

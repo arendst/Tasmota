@@ -1,7 +1,7 @@
 /*
   xdrv_27_esp32_shutter.ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2024  Stefan Bode
+  Copyright (C) 2023  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -95,7 +95,7 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_opentime[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_closetime[MAX_SHUTTERS_ESP32];
   int16_t       shuttercoeff[5][MAX_SHUTTERS_ESP32];
-  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];
+  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK  bit3: ExtraEndStop bit4: INVert WebButtons bit5: extraStopRelay
   uint8_t       shutter_set50percent[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_position[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
@@ -132,7 +132,8 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP;
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP "|"
+  D_CMD_SHUTTER_EXTRASTOPRELAY;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -140,7 +141,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup,&CmndShutterExtraStopPulseRelay
   };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
@@ -804,7 +805,11 @@ void ShutterPowerOff(uint8_t i)
         case SRC_PULSETIMER:
         case SRC_SHUTTER:
         case SRC_WEBGUI:
-          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          if (ShutterSettings.shutter_options[i] & 16) {  // There is a special STOP Relay
+            ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 2, 1, SRC_SHUTTER);
+          } else {
+            ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          }
           // switch off direction relay to make it power less
           if (((1 << (ShutterSettings.shutter_startrelay[i])) & TasmotaGlobal.power)  && ShutterSettings.shutter_startrelay[i] + 1 != cur_relay) {
             ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 1, 0, SRC_SHUTTER);
@@ -1703,6 +1708,11 @@ void CmndShutterEnableEndStopTime(void)
   ShutterOptionsSetHelper(4);
 }
 
+void CmndShutterExtraStopPulseRelay(void)
+{
+  ShutterOptionsSetHelper(16);
+}
+
 void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
@@ -1824,8 +1834,7 @@ void CmndShutterPosition(void)
         }
       }
 
-      // special handling fo UP,DOWN,TOGGLE,STOP and similar commands command 
-      // 
+      // special handling fo UP,DOWN,TOGGLE,STOP and similar commands  
       if ( XdrvMailbox.data_len > 0 ) {
         // set len to 0 to avoid loop 
         uint32_t data_len_save = XdrvMailbox.data_len;
