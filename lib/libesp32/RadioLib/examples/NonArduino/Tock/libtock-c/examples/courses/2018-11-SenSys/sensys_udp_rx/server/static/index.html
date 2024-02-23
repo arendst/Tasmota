@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Common metas -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+  Important Client(tm) Imix Dashboard
+  </title>
+  <!-- SEO metas -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 500px;
+      margin: 0 auto;
+    }
+    table td, table th {
+      width: 50%;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+<script>
+    function update() {
+      fetch("/data").then((data) => data.json()).then((body) => {
+        let content = document.getElementById("content");
+        while (content.firstChild) {
+          content.removeChild(content.firstChild);
+        }
+        let header = content.appendChild(document.createElement("tr"));
+        header.appendChild(document.createElement("th")).innerText = "Node";
+        header.appendChild(document.createElement("th")).innerText = "Last Updated";
+        for (let node in body) {
+          let nodeElem = document.createElement("tr");
+	  let nodeName = nodeElem.appendChild(document.createElement("td")).appendChild(document.createElement("a"));
+          nodeName.innerText = node;
+          nodeName.href = "/node.html?" + node;
+          nodeElem.appendChild(document.createElement("td")).innerText = new Date(body[node].timestamp).toLocaleString();
+          content.appendChild(nodeElem);
+        }
+      });
+    }
+    update();
+    window.setInterval(update, 5000);
+</script>
+<h1>Imix Dashboard</h1>
+<table id="content">
+
+</table>
+</body>

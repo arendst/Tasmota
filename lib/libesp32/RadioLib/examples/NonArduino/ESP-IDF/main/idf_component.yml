@@ -1,0 +1,7 @@
+dependencies:
+  RadioLib:
+    # referenced locally because the example is a part of the repository itself
+    # under normal circumstances, it's preferrable to reference the repository instead
+    # for other options, see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-component-manager.html
+    path: ../../../../../RadioLib
+    #git: https://github.com/jgromes/RadioLib.git

@@ -1,0 +1,21 @@
+{
+  "author": "Tock Developers",
+  "name": "sensys_rx",
+  "description": "",
+  "version": "0.0.0",
+  "license": "MIT",
+  "homepage": "http://github.com/tock/libtock-c",
+  "keywords": [],
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "scripts": {
+    "start": "node stream.js"
+  },
+  "main": "./stream.js",
+  "dependencies": {
+    "serialport": "7.0.*",
+    "express": "4.17.*",
+    "serve-static": "1.13.*"
+  }
+}

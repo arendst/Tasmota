@@ -780,6 +780,7 @@
 #define D_SENSOR_MAX31865_CS   "MX31865 CS"
 #define D_GPIO_LORA_CS         "LoRa CS"
 #define D_GPIO_LORA_RST        "LoRa Rst"
+#define D_GPIO_LORA_BUSY       "LoRa Busy"
 #define D_GPIO_LORA_DI         "LoRa DI"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"

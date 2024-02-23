@@ -1,0 +1,6 @@
+[submodule "lua53/lua"]
+	path = lua53/lua
+	url = https://github.com/lua/lua.git
+[submodule "lvgl/lvgl"]
+	path = lvgl/lvgl
+	url = https://github.com/littlevgl/lvgl.git
