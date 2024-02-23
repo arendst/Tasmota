@@ -219,7 +219,8 @@
 
 #elif defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
   #define RADIOLIB_ESP32
-
+  #define RADIOLIB_EEPROM_UNSUPPORTED
+  
   // ESP32 boards
   #define RADIOLIB_PLATFORM                           "ESP32"
   
