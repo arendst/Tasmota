@@ -12,7 +12,7 @@ Jinja2==2.11.3
 Markdown==3.3.4
 MarkupSafe==1.1.1
 packaging==20.9
-Pygments==2.9.0
+Pygments==2.15.0
 pyparsing==2.4.7
 pytz==2021.1
 recommonmark==0.6.0
