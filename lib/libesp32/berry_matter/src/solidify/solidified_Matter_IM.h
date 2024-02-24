@@ -3539,7 +3539,7 @@ be_local_closure(Matter_IM_subscribe_request,   /* name */
       0x88240306,  //  0055  GETMBR	R9	R1	K6
       0x5C280600,  //  0056  MOVE	R10	R3
       0x5C2C0200,  //  0057  MOVE	R11	R1
-      0x50300000,  //  0058  LDBOOL	R12	0	0
+      0x50300200,  //  0058  LDBOOL	R12	1	0
       0x7C1C0A00,  //  0059  CALL	R7	5
       0x8820091A,  //  005A  GETMBR	R8	R4	K26
       0x901E3408,  //  005B  SETMBR	R7	K26	R8
