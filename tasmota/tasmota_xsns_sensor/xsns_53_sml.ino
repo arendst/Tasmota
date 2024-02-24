@@ -256,7 +256,7 @@ SML_ESP32_SERIAL::~SML_ESP32_SERIAL(void) {
 }
 
 void SML_ESP32_SERIAL::setbaud(uint32_t speed) {
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef __riscv
   m_bit_time = 1000000 / speed;
 #else
   m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
@@ -370,7 +370,7 @@ void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
 
   if (!level && !ss_index) {
     // start condition
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef __riscv
     ss_bstart = micros() - (m_bit_time / 4);
 #else
     ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
@@ -380,7 +380,7 @@ void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
   } else {
     // now any bit changes go here
     // calc bit number
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef __riscv
     diff = (micros() - ss_bstart) / m_bit_time;
 #else
     diff = (ESP.getCycleCount() - ss_bstart) / m_bit_time;
@@ -397,7 +397,7 @@ void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
         m_buffer[m_in_pos] = ss_byte >> 1;
         m_in_pos = next;
       }
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef __riscv
       ss_bstart = micros() - (m_bit_time / 4);
 #else
       ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
