@@ -828,7 +828,7 @@ class Matter_IM
       tasmota.log(f"MTR: >Subscribe (%6i) event_requests_size={size(query.event_requests)}", 3)
     end
 
-    var ret = self._inner_process_read_request(msg.session, query, msg, false #-no_log-#)
+    var ret = self._inner_process_read_request(msg.session, query, msg, true #-no_log-#)
     # ret is of type `Matter_ReportDataMessage`
     ret.subscription_id = sub.subscription_id     # enrich with subscription id TODO
     self.send_subscribe_response(msg, ret, sub)
