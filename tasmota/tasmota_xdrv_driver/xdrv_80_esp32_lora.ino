@@ -16,7 +16,9 @@
  * Tasmota currently does not support user config of GPIO33 and GPIO34 on ESP32S3
 \*********************************************************************************************/
 
-#define XDRV_80              80
+#define XDRV_80                 80
+
+#define LORA_MAX_PACKET_LENGTH  252  // Max packet length allowed (defined by RadioLib driver)
 
 #include <RadioLib.h>
 SX1262 LoRa = nullptr;
@@ -24,11 +26,11 @@ SX1262 LoRa = nullptr;
 struct {
   // flag to indicate that a packet was received
   volatile bool receivedFlag;
-  // flag to indicate that a packet was send
-  volatile bool sendFlag;
   // disable interrupt when it's not needed
   volatile bool enableInterrupt;
 
+  bool sendFlag;
+  bool raw;
   bool present;
 } Lora;
 
@@ -49,28 +51,49 @@ void LoraInput(void) {
   // check if the flag is set
   if (!Lora.receivedFlag) { return; }
 
-  // disable the interrupt service routine while
-  // processing the data
+  // disable the interrupt service routine while processing the data
   Lora.enableInterrupt = false;
 
   // reset flag
   Lora.receivedFlag = false;
 
-  // you can read received data as an Arduino String
-  String str;
-  int state = LoRa.readData(str);
-
-  // you can also read received data as byte array
-  /*
-  byte byteArr[8];
-  int state = Lora.readData(byteArr, 8);
-  */
-
+//  String str;
+//  int state = LoRa.readData(str);
+  char data[LORA_MAX_PACKET_LENGTH] = { 0 };
+  int state = LoRa.readData((uint8_t*)data, LORA_MAX_PACKET_LENGTH -1);
   if (state == RADIOLIB_ERR_NONE) { 
     if (!Lora.sendFlag) {
-      float rssi = LoRa.getRSSI();
-      float snr = LoRa.getSNR();
-      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Data '%s', RSSI %1_f dBm, SNR %1_f dB"), str.c_str(), &rssi, &snr);
+      // Find end of raw data being non-zero (No way to know raw data length)
+      uint32_t len = LORA_MAX_PACKET_LENGTH;
+      while (len-- && (0 == data[len]));
+      if (len) {
+        len++;
+        bool raw = Lora.raw;
+        // Set raw mode if zeroes within data
+        for (uint32_t i = 0; i < len; i++) {
+          if (0 == data[i]) {
+            raw = true;
+            break;
+          }
+        }
+        bool assume_json = (!raw && (data[0] == '{'));
+        Response_P(PSTR("{\"LoRaReceived\":"));
+        if (assume_json) {
+          ResponseAppend_P(data);
+        } else {
+          ResponseAppend_P(PSTR("\""));
+          if (raw) {
+            ResponseAppend_P(PSTR("%*_H"), len, data);
+          } else {
+            ResponseAppend_P(EscapeJSONString(data).c_str());
+          }
+          ResponseAppend_P(PSTR("\""));
+        }
+        float rssi = LoRa.getRSSI();
+        float snr = LoRa.getSNR();
+        ResponseAppend_P(PSTR(",\"RSSI\":%1_f,\"SNR\":%1_f}"), &rssi, &snr);
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR("LoRaReceived"));
+      }
     }
   }
   else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
@@ -122,11 +145,66 @@ void (* const LoraCommand[])(void) PROGMEM = {
   &CmndLoraSend };
 
 void CmndLoraSend(void) {
-  if (XdrvMailbox.data_len > 0) {
-    Lora.sendFlag = true;
-    LoRa.startTransmit(XdrvMailbox.data);
+  // LoRaSend "Hello Tiger"     - Send "Hello Tiger\n"
+  // LoRaSend1 "Hello Tiger"    - Send "Hello Tiger\n"
+  // LoRaSend2 "Hello Tiger"    - Send "Hello Tiger"
+  // LoRaSend3 "Hello Tiger"    - Send "Hello Tiger\f"
+  // LoRaSend4 = LoraSend2
+  // LoRaSend5 "AA004566"       - Send "AA004566" as hex values
+  // LoRaSend6 "72,101,108,108" - Send decimals as hex values
+//  if (XdrvMailbox.index > 9) { XdrvMailbox.index -= 10; }                   // Allows leading spaces (not supported - See support_command/CommandHandler)
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+    Lora.raw = (XdrvMailbox.index > 3);                                     // Global flag set even without data
+    if (XdrvMailbox.data_len > 0) {
+      uint8_t data[LORA_MAX_PACKET_LENGTH];
+      uint32_t len = (XdrvMailbox.data_len < LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : LORA_MAX_PACKET_LENGTH -2;
+      if (1 == XdrvMailbox.index) {                                         // "Hello Tiger\n"
+        memcpy(data, XdrvMailbox.data, len);
+        data[len++] = (uint8_t)'\n';
+      }
+      else if ((2 == XdrvMailbox.index) || (4 == XdrvMailbox.index)) {      // "Hello Tiger" or "A0"
+        memcpy(data, XdrvMailbox.data, len);
+      }
+      else if (3 == XdrvMailbox.index) {                                    // "Hello\f"
+        Unescape(XdrvMailbox.data, &len);
+        memcpy(data, XdrvMailbox.data, len);
+      }
+      else if (5 == XdrvMailbox.index) {                                    // "AA004566" as hex values
+        char *p;
+        char stemp[3];
+
+        char *codes = RemoveSpace(XdrvMailbox.data);
+        int size = strlen(XdrvMailbox.data);
+
+        len = 0;
+        while (size > 1) {
+          strlcpy(stemp, codes, sizeof(stemp));
+          data[len++] = strtol(stemp, &p, 16);
+          if (len > LORA_MAX_PACKET_LENGTH -2) { break; }
+          size -= 2;
+          codes += 2;
+        }
+      }
+      else if (6 == XdrvMailbox.index) {                                    // "72,101,108,108"
+        char *p;
+        uint8_t code;
+        char *values = XdrvMailbox.data;
+        len = 0;
+        for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
+          data[len++] = (uint8_t)atoi(str);
+          if (len > LORA_MAX_PACKET_LENGTH -2) { break; }
+        }
+      }
+      else {
+        len = 0;
+      }
+      if (len) {
+        Lora.sendFlag = true;
+        LoRa.startTransmit(data, len);
+      }
+      ResponseCmndDone();
+    }
   }
-  ResponseCmndDone();
 }
 
 /*********************************************************************************************\
