@@ -160,8 +160,7 @@ def esp32_build_filesystem(fs_size):
     if not os.listdir(filesystem_dir):
         print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False
-    env.Replace( MKSPIFFSTOOL=platform.get_package_dir("tool-mklittlefs") + '/mklittlefs' )
-    tool = env.subst(env["MKSPIFFSTOOL"])
+    tool = env.subst(env["MKFSTOOL"])
     cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
     returncode = subprocess.call(cmd, shell=False)
     # print(returncode)
