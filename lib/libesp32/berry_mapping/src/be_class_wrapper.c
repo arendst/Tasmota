@@ -12,6 +12,7 @@
 #include "be_mapping.h"
 #include "be_exec.h"
 #include <string.h>
+#include <stdlib.h>
 
 typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
                                     intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
@@ -191,13 +192,13 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
         be_pop(vm, 3 + ret);
 
         // berry_log_C("func=%p", func);
-        return (int32_t) func;
+        return (intptr_t) func;
       } else {
         be_raisef(vm, "type_error", "Can't find callback generator: 'cb.make_cb'");
       }
     } else if (be_iscomptr(vm, idx)) {
       // if it's a pointer, just pass it without any change
-      return (int32_t) be_tocomptr(vm, idx);;
+      return (intptr_t) be_tocomptr(vm, idx);;
     } else {
       be_raise(vm, "type_error", "Closure expected for callback type");
     }
@@ -314,7 +315,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
     p_idx++;
   }
 
-  for (uint32_t i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
     // extract individual type
     if (arg_type) {

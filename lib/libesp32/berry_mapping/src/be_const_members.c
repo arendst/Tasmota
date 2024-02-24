@@ -23,6 +23,7 @@
 #include "be_mapping.h"
 #include "be_exec.h"
 #include "be_string.h"
+#include "be_module.h"
 #include <string.h>
 /*********************************************************************************************\
  * Takes a pointer to be_const_member_t array and size
