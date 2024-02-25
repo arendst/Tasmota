@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - LVGL make lv_touch_3_buttons more responsive (#20728)
 - HASPmota fix and improve demo with pixel-perfect fonts (#20734)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)
+- Matter reduce memory usage when reading with wildcards
 
 ### Fixed
 - ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
