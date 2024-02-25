@@ -14,18 +14,13 @@
 
 #define XDRV_73                 73
 
-struct {
-  bool raw;
-  bool present;
-} Lora;
-
 /*********************************************************************************************/
 
 void LoraInput(void) {
-  if (!LoraAvailableSx1262()) { return; }
+  if (!Lora.Available()) { return; }
 
   char data[LORA_MAX_PACKET_LENGTH] = { 0 };
-  int packet_size = LoraInputSx1262(data);
+  int packet_size = Lora.Receive(data);
   if (!packet_size) { return; }
 
   bool raw = Lora.raw;
@@ -49,10 +44,7 @@ void LoraInput(void) {
     }
     ResponseAppend_P(PSTR("\""));
   }
-//  float rssi = LoRa.getRSSI();
-//  float snr = LoRa.getSNR();
-//  ResponseAppend_P(PSTR(",\"RSSI\":%1_f,\"SNR\":%1_f}"), &rssi, &snr);
-  ResponseJsonEnd();
+  ResponseAppend_P(PSTR(",\"RSSI\":%1_f,\"SNR\":%1_f}"), &Lora.rssi, &Lora.snr);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR("LoRaReceived"));
 }
@@ -66,10 +58,39 @@ void LoraInit(void) {
 #ifdef ESP32
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 #endif // ESP32
-    if (LoraInitSx1262()) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Initialized"));
+
+    char hardware[20];
+    if (false) {
+    }
+#ifdef USE_LORA_SX127X
+    else if (PinUsed(GPIO_LORA_DI0)) {
+      // SX1276, RFM95W
+      if (LoraInitSx127x()) {
+        Lora.Available = &LoraAvailableSx127x;
+        Lora.Receive = &LoraReceiveSx127x;
+        Lora.Send = &LoraSendSx127x;
+        strcpy_P(hardware, PSTR("SX127x"));
+        Lora.present = true;
+      }
+    }
+#endif  // USE_LORA_SX127X
+#ifdef USE_LORA_SX126X
+    else if (LoraInitSx126x()) {
+      // SX1262, LilyGoT3S3
+      Lora.Available = &LoraAvailableSx126x;
+      Lora.Receive = &LoraReceiveSx126x;
+      Lora.Send = &LoraSendSx126x;
+      strcpy_P(hardware, PSTR("SX126x"));
       Lora.present = true;
     }
+#endif  // USE_LORA_SX126X
+    else {
+      strcpy_P(hardware, PSTR("Not"));
+    }
+    if (Lora.present) {
+      Lora.enableInterrupt = true;
+    }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: %s initialized"), hardware);
   }
 }
 
@@ -140,7 +161,7 @@ void CmndLoraSend(void) {
         len = 0;
       }
       if (len) {
-        LoraSendSx1262(data, len);
+        Lora.Send(data, len);
       }
       ResponseCmndDone();
     }
@@ -176,4 +197,3 @@ bool Xdrv73(uint32_t function) {
 
 #endif  // USE_SPI_LORA
 #endif  // USE_SPI
-
