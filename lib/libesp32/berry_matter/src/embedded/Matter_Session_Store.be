@@ -331,8 +331,7 @@ class Matter_Session_Store
         if fabrics_saved > 0
           f.write(",")
         end
-        var f_json = fab.tojson()
-        f.write(f_json)
+        fab.writejson(f)
         fabrics_saved += 1
       end
       f.write("]")

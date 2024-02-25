@@ -336,6 +336,55 @@ class Matter_Fabric : Matter_Expirable
   end
 
   #############################################################
+  # Fabric::writejson(f)
+  #
+  # convert a single entry as json
+  # write to file
+  #############################################################
+  def writejson(f)
+    import json
+    import introspect
+
+    f.write("{")
+
+    self.persist_pre()
+    var keys = []
+    for k : introspect.members(self)
+      var v = introspect.get(self, k)
+      if type(v) != 'function' && k[0] != '_'   keys.push(k) end
+    end
+    keys = matter.sort(keys)
+
+    var first = true
+    for k : keys
+      var v = introspect.get(self, k)
+      if v == nil     continue end
+      if  isinstance(v, bytes)      v = "$$" + v.tob64() end    # bytes
+      if (!first) f.write(",")  end
+      f.write(format("%s:%s", json.dump(str(k)), json.dump(v)))
+      first = false
+    end
+
+    # add sessions
+    var first_session = true
+    for sess : self._sessions.persistables()
+      if first_session
+        f.write(',"_sessions":[')
+      else
+        f.write(",")
+      end
+      f.write(sess.tojson())
+      first_session = false
+    end
+    if !first_session
+      f.write("]")
+    end
+
+    self.persist_post()
+    f.write("}")
+  end
+
+  #############################################################
   # fromjson()
   #
   # reads a map and load arguments
