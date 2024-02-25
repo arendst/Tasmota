@@ -10,9 +10,20 @@
 #ifdef USE_SPI_LORA
 #ifdef USE_LORA_SX126X
 /*********************************************************************************************\
- * SX126x like LilyGo T3S3 (868MHz)
+ * Semtech SX1261/62 Long Range (LoRa)
+ * - LilyGo T3S3 LoRa32 868MHz ESP32S3 (uses SX1262)
+ * - LilyGo TTGO T-Weigh ESP32 LoRa 868MHz HX711 (uses SX1262)
+ * - Heltec (CubeCell) (uses SX1262)
+ * - Waveshare
  * 
- * Tasmota currently does not support user config of GPIO33 and GPIO34 on ESP32S3
+ * Used GPIO's:
+ * - SPI_CLK
+ * - SPI_MISO 
+ * - SPI_MOSI
+ * - LoRa_CS
+ * - LoRa_Rst
+ * - Lora_Busy (Tasmota currently does not support user config of GPIO34 on ESP32S3
+ * - Lora_DI1  (Tasmota currently does not support user config of GPIO33 on ESP32S3
 \*********************************************************************************************/
 
 #include <RadioLib.h>

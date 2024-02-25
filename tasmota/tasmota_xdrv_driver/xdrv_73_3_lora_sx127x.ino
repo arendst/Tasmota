@@ -10,7 +10,21 @@
 #ifdef USE_SPI_LORA
 #ifdef USE_LORA_SX127X
 /*********************************************************************************************\
- * SX127x and RFM95W
+ * Semtech SX1276/77/78/79 Long Range (LoRa)
+ * - HopeRF RFM95W, RFM96W and RFM98W
+ * - LilyGo TTGO T3 LoRa32 868MHz ESP32 (uses SX1276)
+ * - LilyGo TTGO T-Higrow 868MHz (uses SX1276)
+ * - DFRobot FireBeetle Covers LoRa Radio 868MHz (uses SX1278)
+ * - M5Stack LoRa868 (uses AI-01 which uses SX1276)
+ * - Modtronix
+ * 
+ * Used GPIO's:
+ * - SPI_CLK
+ * - SPI_MISO 
+ * - SPI_MOSI
+ * - LoRa_CS
+ * - LoRa_Rst
+ * - LoRa_DIO0
 \*********************************************************************************************/
 
 #include <LoRa.h>
