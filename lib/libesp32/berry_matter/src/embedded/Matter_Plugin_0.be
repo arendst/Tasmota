@@ -233,12 +233,8 @@ class Matter_Plugin
   def get_endpoint()
     return self.endpoint
   end
-  def get_cluster_list()
-    var ret = []
-    for k: self.clusters.keys()
-      ret.push(k)
-    end
-    return ret
+  def get_cluster_list_sorted()
+    return self.device.k2l(self.clusters)
   end
   def contains_cluster(cluster)
     return self.clusters.contains(cluster)
@@ -302,7 +298,7 @@ class Matter_Plugin
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
         var sl = TLV.Matter_TLV_array()
-        for cl: self.get_cluster_list()
+        for cl: self.get_cluster_list_sorted()
           sl.add_TLV(nil, TLV.U4, cl)
         end
         return sl
@@ -347,6 +343,8 @@ class Matter_Plugin
       return tlv_solo.set(TLV.U4, clusterrevision)
     end
 
+    # no handler found, return nil
+    return nil
   end
 
   #############################################################
