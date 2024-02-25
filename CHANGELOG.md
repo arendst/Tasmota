@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - QMC5883l check for overflow and scale reading (#20643)
 - TasMesh support for LWT messages (#20392)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` (#4771)
+- Berry add explicit error log when memory allocation fails
 
 ### Breaking Changed
 
