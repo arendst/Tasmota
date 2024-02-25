@@ -1,8 +1,8 @@
 #include "LoRaWAN.h"
 #include <string.h>
-#if defined(ESP8266) || defined(ESP32)
-#include "esp_attr.h"
-#endif
+//#if defined(ESP32)
+//#include "esp_attr.h"
+//#endif
 
 #if !RADIOLIB_EXCLUDE_LORAWAN
 

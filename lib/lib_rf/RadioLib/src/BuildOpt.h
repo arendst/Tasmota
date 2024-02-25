@@ -216,13 +216,14 @@
 #elif defined(ESP8266)
   // ESP8266 boards
   #define RADIOLIB_PLATFORM                           "ESP8266"
+  #define RADIOLIB_EEPROM_UNSUPPORTED
 
 #elif defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
   #define RADIOLIB_ESP32
-  #define RADIOLIB_EEPROM_UNSUPPORTED
   
   // ESP32 boards
   #define RADIOLIB_PLATFORM                           "ESP32"
+  #define RADIOLIB_EEPROM_UNSUPPORTED
   
   // ESP32 doesn't support tone(), but it can be emulated via LED control peripheral
   #define RADIOLIB_TONE_UNSUPPORTED
