@@ -676,6 +676,7 @@ enum beobshookevents {
     BE_OBS_GC_END,              /**< end of GC, arg = allocated size */
     BE_OBS_VM_HEARTBEAT,        /**< VM heartbeat called every million instructions */
     BE_OBS_STACK_RESIZE_START,  /**< Berry stack resized */
+    BE_OBS_MALLOC_FAIL,         /**< Memory allocation failed */
 };
 
 typedef int (*bctypefunc)(bvm*, const void*); /**< bctypefunc */

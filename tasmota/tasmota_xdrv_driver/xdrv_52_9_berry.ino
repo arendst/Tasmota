@@ -298,6 +298,12 @@ void BerryObservability(bvm *vm, int event...) {
         }
       }
       break;
+    case BE_OBS_MALLOC_FAIL:
+      {
+        int32_t vm_usage2 = va_arg(param, int32_t);
+        AddLog(LOG_LEVEL_ERROR, D_LOG_BERRY "*** MEMORY ALLOCATION FAILED *** usage %i bytes", vm_usage2);
+      }
+      break;
     default:
       break;
   }
