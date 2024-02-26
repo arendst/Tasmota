@@ -86,9 +86,10 @@ bool Amsx915Command() {
 
 void Amsx915Detect(void) {
   // i2c frontend does not provide any commands/register to detect this sensor type -> request 4 bytes and check for 4 byte response is mandatory
+  
   if (!I2cActive(AMSX915_ADDR))
   {
-    uint8_t i;
+    uint8_t i=0;
     while(i++ < 2) { // try 2 times because sensor sometimes not respond at first request
       Wire.requestFrom(AMSX915_ADDR, 4);
       if(Wire.available() == 4) {
