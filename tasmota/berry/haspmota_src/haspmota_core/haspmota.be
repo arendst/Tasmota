@@ -180,9 +180,8 @@ class lvh_obj
   # Checks if the attribute is a color
   # I.e. ends with `color` (to not conflict with attributes containing `color_<x>`)
   #################################################################################
-  static def is_color_attribute(t)
-    import re
-    return bool(re.search("color$", str(t)))
+  def is_color_attribute(t)
+    return self._page._oh.re_color_suffix.search(str(t))
   end
 
   #- remove trailing NULL chars from a bytes buffer before converting to string -#
@@ -1615,6 +1614,7 @@ class HASPmota
   var lvh_page_cur_idx                  # (int) current page index number
   # regex patterns
   var re_page_target                    # compiled regex for action `p<number>`
+  var re_color_suffix                   # compiled regex for detecting a color
   # specific event_cb handling for less memory usage since we are registering a lot of callbacks
   var event                             # try to keep the event object around and reuse it
   var event_cb                          # the low-level callback for the closure to be registered
@@ -1655,6 +1655,7 @@ class HASPmota
     self.fix_lv_version()
     import re
     self.re_page_target = re.compile("p\\d+")
+    self.re_color_suffix = re.compile("color$")
     # nothing to put here up to now
   end
 
@@ -1761,7 +1762,7 @@ class HASPmota
 
       if type(jline) == 'instance'
         if tasmota.loglevel(4)
-          tasmota.log(f"HSP: parsing line '{jsonl[0]}' {tasmota.loglevel(4)=}", 4)
+          tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
         end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
         # objects are created in the current page
