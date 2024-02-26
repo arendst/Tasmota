@@ -74,14 +74,76 @@ int LoraReceiveSx126x(char* data) {
 
 bool LoraSendSx126x(char* data, uint32_t len) {
   Lora.sendFlag = true;
-  int state = LoRaRadio.startTransmit(data, len);
-  return (RADIOLIB_ERR_NONE == state);
+//  int state = LoRaRadio.startTransmit(data, len);
+//  return (RADIOLIB_ERR_NONE == state);
+  // https://learn.circuit.rocks/battery-powered-lora-sensor-node
+  uint32_t retry_CAD = 0;
+  uint32_t retry_send = 0;
+  bool send_success = false;
+  while (!send_success) {
+//    time_t lora_time = millis();
+    // Check 200ms for an opportunity to send
+    while (LoRaRadio.scanChannel() != RADIOLIB_CHANNEL_FREE) {
+      retry_CAD++;
+      if (retry_CAD == 20) {
+        // LoRa channel is busy too long, give up
+
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Channel is too busy, give up"));
+
+        retry_send++;
+        break;
+      }
+    }
+
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: CAD finished after %ldms tried %d times"), (millis() - loraTime), retryCAD);
+
+    if (retry_CAD < 20) {
+      // Channel is free, start sending
+//      lora_time = millis();
+      int status = LoRaRadio.transmit(data, len);
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Transmit finished after %ldms with status %d"), (millis() - loraTime), status);
+
+      if (status == RADIOLIB_ERR_NONE) {
+        send_success = true;
+      }
+      else {
+        retry_send++;
+      }
+    }
+    if (retry_send == 3) {
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Failed 3 times to send data, giving up"));
+
+      send_success = true;
+    }
+  }
+  return send_success;
+}
+
+bool LoraConfigSx126x(void) {
+  LoRaRadio.setFrequency(Lora.frequency);
+  LoRaRadio.setBandwidth(Lora.bandwidth);
+  LoRaRadio.setSpreadingFactor(Lora.spreading_factor);
+  LoRaRadio.setCodingRate(Lora.coding_rate);
+  LoRaRadio.setSyncWord(Lora.sync_word);
+  LoRaRadio.setOutputPower(Lora.output_power);
+  LoRaRadio.setPreambleLength(Lora.preamble_length);
+  LoRaRadio.setCurrentLimit(Lora.current_limit);
+  LoRaRadio.setCRC(Lora.crc_bytes);
+  if (Lora.implicit_header) { 
+    LoRaRadio.implicitHeader(Lora.implicit_header);
+  } else { 
+    LoRaRadio.explicitHeader();
+  }
+  return true;
 }
 
 bool LoraInitSx126x(void) {
 //    LoRa = new Module(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_DI1), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_BUSY));
   LoRaRadio = new Module(Pin(GPIO_LORA_CS), 33, Pin(GPIO_LORA_RST), 34);
-  if (RADIOLIB_ERR_NONE == LoRaRadio.begin(868.0)) {
+  if (RADIOLIB_ERR_NONE == LoRaRadio.begin(Lora.frequency)) {
+    LoraConfigSx126x();
     LoRaRadio.setDio1Action(LoraOnReceiveSx126x);
     if (RADIOLIB_ERR_NONE == LoRaRadio.startReceive()) {
       return true;
