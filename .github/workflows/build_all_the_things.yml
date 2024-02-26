@@ -41,9 +41,9 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
-          name: check_win
+          name: firmware
           path: ./build_output
 
   os-check-mac:
@@ -69,9 +69,9 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
-          name: check_mac
+          name: firmware
           path: ./build_output
 
   base-images:
@@ -134,9 +134,9 @@ jobs:
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
-          name: check_base-images
+          name: firmware
           path: ./build_output
 
   language-images:
@@ -162,7 +162,7 @@ jobs:
           #platformio update
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
-      - uses: actions/upload-artifact@v4
+      - uses: jason2866/upload-artifact@v2.0.3
         with:
-          name: check_languages
+          name: firmware
           path: ./build_output
