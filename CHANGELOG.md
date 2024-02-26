@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.1]
 ### Added
+- Experimental support for LoRa
 - HASPmota `p<x>b<y>.delete` to delete an object (#20735)
 - LVGL and HASPmota typicons font (#20742)
 - HASPmota more attributes (#20744)
 - QMC5883l check for overflow and scale reading (#20643)
 - TasMesh support for LWT messages (#20392)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` (#4771)
-- Berry add explicit error log when memory allocation fails
+- Berry add explicit error log when memory allocation fails (#20807)
 
 ### Breaking Changed
 
@@ -21,7 +22,7 @@ All notable changes to this project will be documented in this file.
 - LVGL make lv_touch_3_buttons more responsive (#20728)
 - HASPmota fix and improve demo with pixel-perfect fonts (#20734)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)
-- Matter reduce memory usage when reading with wildcards
+- Matter reduce memory usage when reading with wildcards (#20809)
 
 ### Fixed
 - ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
