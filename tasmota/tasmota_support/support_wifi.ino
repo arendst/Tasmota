@@ -386,7 +386,7 @@ void WifiBeginAfterScan(void)
 
     ResponseClear();
 
-    uint32_t initial_item = (Wifi.scan_state - 9)*10;
+    int32_t initial_item = (Wifi.scan_state - 9)*10;
 
     if ( wifi_scan_result > initial_item ) {
       // Sort networks by RSSI
@@ -525,7 +525,8 @@ String WifiGetIPv4Str(void)
 
 bool EthernetGetIPv4(IPAddress *ip)
 {
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   uint32_t wifi_uint = (uint32_t) EthernetLocalIP();
   if (ip != nullptr) { *ip = wifi_uint; }
   return wifi_uint != 0;
@@ -661,7 +662,8 @@ void WifiDumpAddressesIPv6(void)
   }
   AddLog(LOG_LEVEL_DEBUG, "IP : DNS: %s %s", IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString(true).c_str());
   AddLog(LOG_LEVEL_DEBUG, "WIF: v4IP: %_I v6IP: %s mainIP: %s", (uint32_t) WiFi.localIP(), WifiGetIPv6Str().c_str(), WifiGetIPStr().c_str());
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   AddLog(LOG_LEVEL_DEBUG, "ETH: v4IP %_I v6IP: %s mainIP: %s", (uint32_t) EthernetLocalIP(), EthernetGetIPv6Str().c_str(), EthernetGetIPStr().c_str());
 #endif
   AddLog(LOG_LEVEL_DEBUG, "IP : ListeningIP %s", IPGetListeningAddressStr().c_str());
@@ -681,7 +683,8 @@ bool IPGetListeningAddress(IPAddress * ip)
   IPAddress ip_wifi;
   bool has_wifi = WifiGetIP(&ip_wifi);
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   IPAddress ip_eth;
   bool has_eth = EthernetGetIP(&ip_eth);
   if (has_wifi && has_eth) {
@@ -700,7 +703,8 @@ bool IPGetListeningAddress(IPAddress * ip)
   *ip = IPAddress();
   return false;
 #else // USE_IPV6
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   if (EthernetGetIP(ip)) { return true; }
 #endif
   if (WifiGetIP(ip)) { return true; }
@@ -804,7 +808,8 @@ String WifiGetIPStr(void)
 // Has a routable IP, whether IPv4 or IPv6, Wifi or Ethernet
 bool HasIP(void) {
   if (WifiHasIP()) return true;
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   if (EthernetHasIP()) return true;
 #endif
   return false;

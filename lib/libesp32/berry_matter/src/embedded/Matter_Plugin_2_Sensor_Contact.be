@@ -32,7 +32,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   static var UPDATE_TIME = 750                      # update every 750ms
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Contact")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
+    0x0045: [0],                                    # Boolean State p.70 - no writable
   })
   static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
@@ -92,15 +92,10 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
         else
           return tlv_solo.set(TLV.NULL, nil)
         end
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 1)    # 1 = Initial release
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
@@ -117,15 +112,6 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
       end
     end
     super(self).update_virtual(payload_json)
-  end
-
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    return f',"Contact":{int(self.shadow_contact)}'
   end
 
 end

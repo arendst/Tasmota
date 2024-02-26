@@ -241,6 +241,7 @@ class Matter_IM
       attr_name = attr_name ? " (" + attr_name + ")" : ""
 
       # Special case to report unsupported item, if pi==nil
+      ctx.status = nil                # reset status, just in case
       var res = (pi != nil) ? pi.read_attribute(session, ctx, self.tlv_solo) : nil
       var found = true                # stop expansion since we have a value
       var a1_raw_or_list              # contains either a bytes() buffer to append, or a list of bytes(), or nil
@@ -290,9 +291,13 @@ class Matter_IM
           end
         end
       else
-        tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
+        if !no_log
+          tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
+        end
         # ignore if content is nil and status is undefined
-        found = false
+        if direct
+          found = false
+        end
       end
 
       # a1_raw_or_list if either nil, bytes(), of list(bytes())
@@ -772,9 +777,10 @@ class Matter_IM
     attr_name = attr_name ? " (" + attr_name + ")" : ""
 
     if res != nil
-      var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
       if tasmota.loglevel(3)
+        var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
         tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
+        # tasmota.log(f"MTR: {res.tlv2raw().tohex()}", 3)
       end
       # if matter.profiler.active && tasmota.loglevel(3)
       #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight

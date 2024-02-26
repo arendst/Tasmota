@@ -45,6 +45,7 @@
 
 extern "C" uint32_t ledcReadFreq2(uint8_t chan);
 uint8_t ledcReadResolution(uint8_t chan);
+
 //
 // analogAttach - attach a GPIO to a hardware PWM
 //
@@ -54,6 +55,12 @@ uint8_t ledcReadResolution(uint8_t chan);
 //
 // Returns: hardware channel number, or -1 if it failed
 int32_t analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+
+//
+// analogDetachAll - detach all attached GPIOs from a hardware PWM
+//
+// This solves ghost PWM activity on reconfigured GPIOs after a restart
+void analogDetachAll(void);
 
 // change both freq and range
 // `0`: set to global value

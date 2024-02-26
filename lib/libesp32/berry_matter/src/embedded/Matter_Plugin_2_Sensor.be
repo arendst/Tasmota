@@ -106,15 +106,5 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
     super(self).update_virtual(payload_json)
   end
 
-  #############################################################
-  # append_state_json
-  #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  def append_state_json()
-    var val = (self.shadow_value != nil) ? self.shadow_value : "null"
-    return f',"{self.JSON_NAME}":{val}'
-  end
-
 end
 matter.Plugin_Sensor = Matter_Plugin_Sensor

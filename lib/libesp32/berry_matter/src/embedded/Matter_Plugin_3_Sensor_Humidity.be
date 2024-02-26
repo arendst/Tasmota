@@ -29,7 +29,7 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   static var JSON_NAME = "Humidity"                 # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Humidity")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0405: [0,1,2,0xFFFC,0xFFFD],                  # Humidity Measurement p.102 - no writable
+    0x0405: [0,1,2],                                # Humidity Measurement p.102 - no writable
   })
   static var TYPES = { 0x0307: 2 }                  # Humidity Sensor, rev 2
 
@@ -71,15 +71,10 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
         return tlv_solo.set(TLV.U2, 500)  # 0%
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / u16 ----------
         return tlv_solo.set(TLV.U2, 10000)  # 100%
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Extended Range
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 3)    # 3 = New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
 end

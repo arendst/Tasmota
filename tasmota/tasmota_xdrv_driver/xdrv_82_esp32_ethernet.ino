@@ -18,12 +18,12 @@
 */
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32
+//#if CONFIG_IDF_TARGET_ESP32
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
  *
- * Dedicated fixed Phy pins
+ * Dedicated fixed Phy pins (EMAC)
  * GPIO17 - EMAC_CLK_OUT_180
  * GPIO19 - EMAC_TXD0(RMII)
  * GPIO21 - EMAC_TX_EN(RMII)
@@ -55,6 +55,13 @@
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
  * #define ETH_ADDRESS       1
  *
+ * Used SPI
+ * SPI_MOSI
+ * SPI_MISO
+ * SPI_CLK
+ * SPI_RST = Tasmota ETH_POWER
+ * SPI_IRQ = Tasmota ETH_MDIO
+ * SPI_CS  = Tasmota ETH_MDC
 \*********************************************************************************************/
 
 #define XDRV_82           82
@@ -71,8 +78,11 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
-
+#if ESP_IDF_VERSION_MAJOR >= 5
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_JL1101, 4 = ETH_PHY_DP83848, 5 = ETH_PHY_KSZ8041, 6 = ETH_PHY_KSZ8081, 7 = ETH_PHY_DM9051, 8 = ETH_PHY_W5500, 9 = ETH_PHY_KSZ8851
+#else
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8041, 6 = ETH_PHY_KSZ8081, 7 = ETH_PHY_JL1101
+#endif
 #endif
 
 #ifndef ETH_CLKMODE
@@ -104,11 +114,11 @@ void EthernetEvent(arduino_event_t *event) {
         while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_ETH)) != ESP_OK) {
           delay(1);
           if (i-- == 0) {
-            AddLog(LOG_LEVEL_INFO, ">>>> HELP");
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH ">>>> HELP"));
             break;
           }
         }
-        AddLog(LOG_LEVEL_INFO, ">>>> ESP_IF_ETH i=%i", i);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "ESP_IF_ETH i=%i"), i);
       }
 #endif // USE_IPV6
       
@@ -183,59 +193,63 @@ void EthernetSetIp(void) {
 
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
-  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and/or ETH MDIO GPIO defined"));
-    return;
-  }
 
-  eth_config_change = 0;
-
+  int eth_type = Settings->eth_type;
+#if CONFIG_ETH_USE_ESP32_EMAC
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
     Settings->eth_address = 1;                    // EthAddress
     Settings->eth_type = ETH_PHY_LAN8720;         // EthType
     Settings->eth_clk_mode = ETH_CLOCK_GPIO0_IN;  // EthClockMode
   }
+#else  // No CONFIG_ETH_USE_ESP32_EMAC
+  if (Settings->eth_type < 7) {
+    Settings->eth_type = 8;                       // Select W5500 (SPI) for non-EMAC hardware
+  }
+  eth_type = Settings->eth_type -7;               // As No EMAC support substract EMAC enums (According ETH.cpp debug info)
+#endif  // CONFIG_ETH_USE_ESP32_EMAC
 
-//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s-eth"), TasmotaGlobal.hostname);
+  if (Settings->eth_type < 7) {
+    // CONFIG_ETH_USE_ESP32_EMAC
+    if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
+      return;
+    }
+  } else {
+    // ETH_SPI_SUPPORTS_CUSTOM
+    if (!PinUsed(GPIO_ETH_PHY_MDC) || !PinUsed(GPIO_ETH_PHY_MDIO) || !PinUsed(GPIO_ETH_PHY_POWER)) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+      return;
+    }
+  }
+
+  eth_config_change = 0;
+
   strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "-eth"
   strcat(eth_hostname, "-eth");
 
   WiFi.onEvent(EthernetEvent);
 
-  int eth_power = Pin(GPIO_ETH_PHY_POWER);
-  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
-  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
-//#if CONFIG_IDF_TARGET_ESP32
-  // fix an disconnection issue after rebooting Olimex POE - this forces a clean state for all GPIO involved in RMII
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_POWER);
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDC);
-//  gpio_reset_pin((gpio_num_t)GPIO_ETH_PHY_MDIO);
-//  gpio_reset_pin(GPIO_NUM_19);    // EMAC_TXD0 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_21);    // EMAC_TX_EN - hardcoded
-//  gpio_reset_pin(GPIO_NUM_22);    // EMAC_TXD1 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_25);    // EMAC_RXD0 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_26);    // EMAC_RXD1 - hardcoded
-//  gpio_reset_pin(GPIO_NUM_27);    // EMAC_RX_CRS_DV - hardcoded
-//  switch (Settings->eth_clk_mode) {
-//    case 0:   // ETH_CLOCK_GPIO0_IN
-//    case 1:   // ETH_CLOCK_GPIO0_OUT
-//      gpio_reset_pin(GPIO_NUM_0);
-//      break;
-//    case 2:   // ETH_CLOCK_GPIO16_OUT
-//      gpio_reset_pin(GPIO_NUM_16);
-//      break;
-//    case 3:   // ETH_CLOCK_GPIO17_OUT
-//      gpio_reset_pin(GPIO_NUM_17);
-//      break;
-//  }
-//  delay(1);
-//#endif // CONFIG_IDF_TARGET_ESP32
+  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);       // Ethernet SPI CS (chip select)
+  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
+  int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
+
+  bool init_ok = false;
 #if ESP_IDF_VERSION_MAJOR >= 5
-  if (!ETH.begin( (eth_phy_type_t)Settings->eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode)) {
+  if (Settings->eth_type < 7) {
+#if CONFIG_ETH_USE_ESP32_EMAC
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+#endif  // CONFIG_ETH_USE_ESP32_EMAC
+  } else {
+    // ETH_SPI_SUPPORTS_CUSTOM
+//    SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
+    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
+  }
 #else
-  if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
-#endif
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad PHY type or init error"));
+  init_ok = (ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode));
+#endif  // ESP_IDF_VERSION_MAJOR >= 5
+  if (!init_ok) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType or init error"));
     return;
   };
 
@@ -407,5 +421,5 @@ bool Xdrv82(uint32_t function) {
 }
 
 #endif  // USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32

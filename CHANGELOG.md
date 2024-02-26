@@ -3,7 +3,85 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.3.0.3]
+## [13.4.0.1]
+### Added
+- Experimental support for LoRa
+- HASPmota `p<x>b<y>.delete` to delete an object (#20735)
+- LVGL and HASPmota typicons font (#20742)
+- HASPmota more attributes (#20744)
+- QMC5883l check for overflow and scale reading (#20643)
+- TasMesh support for LWT messages (#20392)
+- Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` (#4771)
+- Berry add explicit error log when memory allocation fails (#20807)
+
+### Breaking Changed
+
+### Changed
+- ESP32 Core3 SPI ethernet support for all models
+- Berry class `int64` made immutable (#20727)
+- LVGL make lv_touch_3_buttons more responsive (#20728)
+- HASPmota fix and improve demo with pixel-perfect fonts (#20734)
+- NeoPool webUI pH alarms (4 & 5) completed (#20743)
+- Matter reduce memory usage when reading with wildcards (#20809)
+
+### Fixed
+- ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
+- Shutter inverted using internal commands (#20752)
+
+### Removed
+
+## [Released]
+
+## [13.4.0] 20240214
+- Release Quinta
+
+## [13.3.0.5] 20240214
+### Added
+- Internal support for persistent JSON settings using single file
+- Command ``SetOption158 1`` to disable publish of ModbusReceived MQTT messages (#20678)
+- ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
+- Berry option to invert serial
+- Command ``SetOption159 1`` to enable counting on both rising and falling edge (#20712)
+
+### Breaking Changed
+- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
+
+### Changed
+- Matter improve `MtrInfo` (#20686)
+- Matter implement auto-attributes (#20694)
+- GPIO Viewer user selection of assets website is `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
+
+### Fixed
+- Matter redirects for Advanced Matter configuration UI (#20690)
+- LVGL9 restore missing layouts (#20701)
+
+## [13.3.0.4] 20240205
+### Added
+- HASPmota support for `min` and `max` attribute in `slider` (#20582)
+- ESP32-C3 support for GPIO11 (#18350)
+- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
+- ESP32 MI32 Legacy initial support for sensors using BTHOME packet format (#20625)
+- Berry `introspect.contains` and `bytes.addfloat` (#20635)
+- Matter add human readable names for TimeSync cluster (#20666)
+
+### Breaking Changed
+- Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
+
+### Changed
+- Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
+- Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
+- Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
+- ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
+- Utouch optimizations, rgb i2c init (#20596)
+- GPIO Viewer update from 1.0.7 to 1.5.0
+- Miel HVAC lower the minimum temperature to 10C (#20628)
+
+### Fixed
+- Berry C mapping, raise an error if too many arguments are sent (#20604)
+- Matter error when removing device from Google Home (#20665)
+- Matter exception when fabrics is not initialized (#20667)
+
+## [13.3.0.3] 20240122
 ### Added
 - Berry `debug.caller` (#20470)
 - GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
@@ -13,13 +91,20 @@ All notable changes to this project will be documented in this file.
 - ESP32 MI BLE support for Xiaomi LYWSD02MMC (#20381)
 - LVGL option to add `lv.keyboard` extra widget (#20496)
 - GUI sensor separators (#20495)
-- Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|OFF]``
-
-### Breaking Changed
+- Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|BLINK_OFF]``
+- Berry solidification of strings longer than 255 bytes (#20529)
+- Berry syntax coloring for Notepad++ by FransO (#20541)
+- Berry/Zigbee web hook per device for customized status display (#20542)
+- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation (#20552)
 
 ### Changed
-- ESP32 platform update from 2024.01.00 to 2024.01.01 (#20508)
+- ESP32 Core2 platform update from 2024.01.00 to 2024.01.01 (#20508)
 - IP stack compatible with new Core3 IPv6 implementation (#20509)
+- Command ``TimedPower`` from erasing all timers to showing remaining timers
+- ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
+- ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
+- Refactored Pio filesystem download script (#20544)
+- Command ``TimedPower`` refactored from String to LList
 
 ### Fixed
 - Scripter memory leak in `>w x` (#20473)
@@ -27,9 +112,16 @@ All notable changes to this project will be documented in this file.
 - GPIO Viewer single instance
 - Zigbee ramdom crash in main page (#20481)
 - Web file upload response on upload error (#20340)
+- ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
+- GPIOViewer exception 3
+- Berry assigment to list with negative index (#20537)
+- Matter support for Alexa (#20545)
+- ESP8266 IPv6 support (#20539)
+- ESP32 Audio for Core3, MP3Stream and Shine (#20540)
+- ESP32 Core3 reset GPIOs 16/17 when PSRAM is not used (20547)
 
 ### Removed
-
+- Max number of 30 backlog entries
 
 ## [13.3.0.2] 20240111
 ### Added
@@ -89,8 +181,6 @@ All notable changes to this project will be documented in this file.
 - Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
 - Berry claiming UART0 if needed (#20324)
 - LVGL fix type for lv_imgbtn (#20354)
-
-## [Released]
 
 ## [13.3.0] 20231213
 - Release Quinlan

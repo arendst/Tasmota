@@ -4,7 +4,7 @@
         "ldscript": "esp32c6_out.ld"
       },
       "core": "esp32",
-      "extra_flags": "-DARDUINO_USB_MODE=1 -DESP32_4M -DESP32C6 -DUSE_USB_CDC_CONSOLE",
+      "extra_flags": "-DARDUINO_TASMOTA -DARDUINO_USB_MODE=1 -DESP32_4M -DESP32C6 -DUSE_USB_CDC_CONSOLE",
       "f_cpu": "160000000L",
       "f_flash": "80000000L",
       "flash_mode": "qio",
@@ -24,8 +24,7 @@
       "openocd_target": "esp32c6.cfg"
     },
     "frameworks": [
-      "arduino",
-      "espidf"
+      "arduino"
     ],
     "name": "Espressif Generic ESP32-C6 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
     "upload": {

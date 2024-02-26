@@ -46,7 +46,7 @@ class Leds_animation_UI
     webserver.content_send(string.format("<p>Step 4: %s</p>", self.display_step_state(self.test_step_4(p), "flash final firmware")))
 
     webserver.content_send("<form action='/part_wiz' method='post' ")
-    webserver.content_send("onsubmit='return confirm(\"This will causes multiple restarts.\");'>")
+    webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
     var ota_url = tasmota.cmd("OtaUrl").find("OtaUrl", "")
     webserver.content_send(string.format("<br><b>OTA Url</b><br><input id='o1' placeholder='OTA_URL' value='%s'><br>",
                                          ota_url))

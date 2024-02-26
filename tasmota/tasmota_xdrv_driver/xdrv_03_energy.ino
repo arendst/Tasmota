@@ -673,10 +673,9 @@ void EnergyEverySecond(void) {
           Energy->active_power[i] = 0;
           if (!isnan(Energy->apparent_power[i])) { Energy->apparent_power[i] = 0; }
           if (!isnan(Energy->reactive_power[i])) { Energy->reactive_power[i] = 0; }
-          if (!isnan(Energy->frequency[i])) { Energy->frequency[i] = 0; }
-          if (!isnan(Energy->power_factor[i])) { Energy->power_factor[i] = 0; }
-          if (!isnan(Energy->export_active[i])) { Energy->export_active[i] = 0; }
-
+          if (!isnan(Energy->frequency[i]))      { Energy->frequency[i] = 0; }
+          if (!isnan(Energy->power_factor[i]))   { Energy->power_factor[i] = 0; }
+          if (!isnan(Energy->export_active[i]))  { Energy->export_active[i] = 0; }
           data_valid--;
         }
       }
@@ -959,7 +958,7 @@ void EnergyCommandCalSetResponse(uint32_t cal_type) {
 void EnergyCommandCalResponse(uint32_t cal_type) {
   Energy->command_code = cal_type;                     // Is XxxCal command too
   if (XnrgCall(FUNC_COMMAND)) {                        // XxxCal
-    Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+    ResponseCmnd();
     EnergyCommandCalSetResponse(cal_type);
   }
 }
@@ -1345,10 +1344,10 @@ void EnergyShow(bool json) {
         ResponseAppend_P(PSTR(",\"" D_JSON_POWERFACTOR "\":%s"),
           EnergyFmt(power_factor, 2));
       }
-      if (!isnan(Energy->frequency[0])) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
-      }
+    }
+    if (!isnan(Energy->frequency[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
+        EnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
     }
     if (Energy->voltage_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"),
@@ -1420,11 +1419,9 @@ void EnergyShow(bool json) {
     if (Energy->voltage_available) {
       WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFmt(Energy->voltage, Settings->flag2.voltage_resolution, voltage_common));
     }
-    if (!Energy->type_dc) {
-      if (!isnan(Energy->frequency[0])) {
-        WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-          WebEnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
-      }
+    if (!isnan(Energy->frequency[0])) {
+      WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
+        WebEnergyFmt(Energy->frequency, Settings->flag2.frequency_resolution, frequency_common));
     }
     if (Energy->current_available) {
       WSContentSend_PD(HTTP_SNS_CURRENT, WebEnergyFmt(Energy->current, Settings->flag2.current_resolution));

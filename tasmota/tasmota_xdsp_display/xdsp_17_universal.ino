@@ -374,6 +374,7 @@ int8_t cs;
 #endif // ESP8266
 
       // start digitizer
+
 #ifdef ESP32
       if (i2caddr == GT911_address) {
 #ifdef USE_GT911
@@ -468,13 +469,18 @@ int8_t cs;
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
 
+#ifdef USE_UNIVERSAL_TOUCH
+    utouch_Touch_Init();
+#endif
+
     bool iniinv = Settings->display_options.invert;
+    /*
     cp = strstr(ddesc, ":n,");
     if (cp) {
       cp+=3;
       iniinv = strtol(cp, &cp, 10);
       Settings->display_options.invert = iniinv;
-    }
+    }*/
     renderer->invertDisplay(iniinv);
 
     ApplyDisplayDimmer();

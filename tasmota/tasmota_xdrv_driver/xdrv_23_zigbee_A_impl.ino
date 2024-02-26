@@ -42,6 +42,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN "|" D_CMND_ZIGBEE_ENROLL "|" D_CMND_ZIGBEE_CIE "|"
+  D_CMND_ZIGBEE_EMULATION "|"
   D_CMND_ZIGBEE_LOAD "|" D_CMND_ZIGBEE_UNLOAD "|" D_CMND_ZIGBEE_LOADDUMP
 #ifdef ZIGBEE_DOC
    "|" D_CMND_ZIGBEE_ATTRDUMP
@@ -67,7 +68,8 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbLight, &CmndZbOccupancy,
   &CmndZbRestore, &CmndZbBindState, &CmndZbMap, &CmndZbLeave,
   &CmndZbConfig, &CmndZbData, &CmndZbScan,
-  &CmndZbenroll, &CmndZbcie,
+  &CmndZbenroll, &CmndZbCIE,
+  &CmndZbEmulation,
   &CmndZbLoad, &CmndZbUnload, &CmndZbLoadDump,
 #ifdef ZIGBEE_DOC
   &CmndZbAttrDump,
@@ -1518,7 +1520,7 @@ void CmndZbenroll(void) {
   }
 }
 
-void CmndZbcie(void) {
+void CmndZbCIE(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
 
   if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
@@ -1529,6 +1531,38 @@ void CmndZbcie(void) {
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
     
     Z_WriteCIEAddress(device.shortaddr, 0, 500, enrollEndpoint, 0);
+    
+    ResponseCmndDone();
+  } else {
+    ResponseCmndError();
+  }
+}
+
+void CmndZbEmulation(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
+  if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
+    char argument[XdrvMailbox.data_len];
+    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1), nullptr, nullptr, XdrvMailbox.payload);
+    char * arg_v = ArgV(argument, 2);
+    int emulation = atoi(arg_v);
+    if (strlen(arg_v) == 0) { emulation = 255; }
+
+    if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+
+    if (emulation == 0) {
+      device.setAdvertizeNone();
+    } else if (emulation == 255) {
+      device.setAdvertizeAll();
+    } else if (emulation == 1) {
+      device.setAdvertizeHue(true);
+    } else if (emulation == 2) {
+      device.setAdvertizeMatter(true);
+    } else if (emulation == -1) {
+      device.setAdvertizeHue(false);
+    } else if (emulation == -2) {
+      device.setAdvertizeMatter(false);
+    }
     
     ResponseCmndDone();
   } else {
@@ -1755,20 +1789,27 @@ void ZigbeePermitJoinUpdate(void) {
 //
 // Command `ZbStatus`
 //
+// Options:
+// 0.   `ZbStatus0` - Show information about coordinator `{"ZbStatus0":{"Device":"0x0000","IEEEAddr":"0x00124B0026B684E4","TotalDevices":19}}`
+// 1.a. `ZbStatus` - Show all devices shortaddr and names `{"ZbStatus1":[{"Device":"0x868E","Name":"Room"}...]}`
+// 1.b. `ZbStatus Room` - Show single device shortaddr and name `{"ZbStatus1":[{"Device":"0x868E","Name":"Room"}]}`
+// 2.   `ZbStatus2 Room` - Show detailed information of device `{"ZbStatus2":[{"Device":"0x868E","Name":"Room","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":[1,242],"Config":["L01.2","O01"]}]}`
 void CmndZbStatus(void) {
   if (ZigbeeSerial) {
     if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
     String dump;
 
-    if (0 == XdrvMailbox.index) {
+    if (0 == XdrvMailbox.index) {     // Case 0
       dump = zigbee_devices.dumpCoordinator();
     } else {
       Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);
       if (XdrvMailbox.data_len > 0) {
         if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+        // case 1.b and 2.
         dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device);
       } else {
         if (XdrvMailbox.index >= 2) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+        // case 1.a
         dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device_unk);
       }
     }
@@ -2211,6 +2252,7 @@ void ZigbeeShow(bool json)
 
       uint32_t now = Rtc.utc_time;
 
+      // iterate through devices by alphabetical order
       for (uint32_t i = 0; i < zigbee_num; i++) {
         const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
         uint16_t shortaddr = device.shortaddr;
@@ -2365,6 +2407,10 @@ void ZigbeeShow(bool json)
           }
           WSContentSend_P(PSTR("{e}"));
         }
+#ifdef USE_BERRY
+        // Berry hook to display additional customized information
+        callBerryZigbeeDispatcher("web_device_status", nullptr, nullptr, shortaddr);
+#endif // USE_BERRY
       }
 
       WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table

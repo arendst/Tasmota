@@ -523,27 +523,6 @@ class Matter_Device
   # returns: `true` if processed succesfully, `false` if error occured. If `direct`, the error is returned to caller, but if expanded the error is silently ignored and the attribute skipped.
   # In case of `direct` but the endpoint/cluster/attribute is not suppported, it calls `cb(nil, ctx, true)` so you have a chance to encode the exact error (UNSUPPORTED_ENDPOINT/UNSUPPORTED_CLUSTER/UNSUPPORTED_ATTRIBUTE/UNREPORTABLE_ATTRIBUTE)
   def process_attribute_expansion(ctx, cb)
-    #################################################################################
-    # Returns the keys of a map as a sorted list
-    #################################################################################
-    def keys_sorted(m)
-      var l = []
-      for k: m.keys()
-        l.push(k)
-      end
-      # insertion sort
-      for i:1..size(l)-1
-        var k = l[i]
-        var j = i
-        while (j > 0) && (l[j-1] > k)
-          l[j] = l[j-1]
-          j -= 1
-        end
-        l[j] = k
-      end
-      return l
-    end
-  
     var endpoint = ctx.endpoint
     var cluster = ctx.cluster
     var attribute = ctx.attribute
@@ -555,68 +534,22 @@ class Matter_Device
 
     # tasmota.log(f"MTR: process_attribute_expansion {str(ctx))}", 4)
 
-    # build the list of candidates
+    # build the generator for all endpoint/cluster/attributes candidates
+    var path_generator = matter.PathGenerator(self)
+    path_generator.start(ctx, nil)      # TODO add session if we think it's needed later
 
-    # list of all endpoints
-    var all = {}                          # map of {endpoint: {cluster: {attributes:[pi]}}
-    # tasmota.log(format("MTR: endpoint=%s cluster=%s attribute=%s", endpoint, cluster, attribute), 4)
-    for pi: self.plugins
-      var ep = pi.get_endpoint()    # get supported endpoints for this plugin
-
-      if endpoint != nil && ep != endpoint    continue      end       # skip if specific endpoint and no match
-      # from now on, 'ep' is a good candidate
-      if !all.contains(ep)                    all[ep] = {}  end       # create empty structure if not already in the list
-      endpoint_found = true
-
-      # now explore the cluster list for 'ep'
-      var cluster_list = pi.get_cluster_list()                        # cluster_list is the actual list of candidate cluster for this pluging and endpoint
-      # tasmota.log(format("MTR: pi=%s ep=%s cl_list=%s", str(pi), str(ep), str(cluster_list)), 4)
-      for cl: cluster_list
-        if cluster != nil && cl != cluster    continue      end       # skip if specific cluster and no match
-        # from now on, 'cl' is a good candidate
-        if !all[ep].contains(cl)              all[ep][cl] = {}  end
-        cluster_found = true
-
-        # now filter on attributes
-        var attr_list = pi.get_attribute_list(cl)
-        # tasmota.log(format("MTR: pi=%s ep=%s cl=%s at_list=%s", str(pi), str(ep), str(cl), str(attr_list)), 4)
-        for at: attr_list
-          if attribute != nil && at != attribute  continue  end       # skip if specific attribute and no match
-          # from now on, 'at' is a good candidate
-          if !all[ep][cl].contains(at)        all[ep][cl][at] = [] end
-          attribute_found = true
-
-          all[ep][cl][at].push(pi)                                    # add plugin to the list
-        end
-      end
-    end
-
-    # import json
-    # tasmota.log("MTR: all = " + json.dump(all), 2)
-
-    # iterate on candidates
-    for ep: keys_sorted(all)
-      for cl: keys_sorted(all[ep])
-        for at: keys_sorted(all[ep][cl])
-          for pi: all[ep][cl][at]
-            # tasmota.log(format("MTR: expansion [%02X]%04X/%04X", ep, cl, at), 3)
-            ctx.endpoint = ep
-            ctx.cluster = cl
-            ctx.attribute = at
-            var finished = cb(pi, ctx, direct)   # call the callback with the plugin and the context
-            # tasmota.log("MTR: gc="+str(tasmota.gc()), 2)
-            if direct && finished     return end
-          end
-        end
-      end
+    var concrete_path
+    while ((concrete_path := path_generator.next()) != nil)
+      var finished = cb(path_generator.get_pi(), concrete_path, direct)   # call the callback with the plugin and the context
+      if direct && finished     return end
     end
 
     # we didn't have any successful match, report an error if direct (non-expansion request)
     if direct
       # since it's a direct request, ctx has already the correct endpoint/cluster/attribute
-      if   !endpoint_found      ctx.status = matter.UNSUPPORTED_ENDPOINT
-      elif !cluster_found       ctx.status = matter.UNSUPPORTED_CLUSTER
-      elif !attribute_found     ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+      if   !path_generator.endpoint_found      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      elif !path_generator.cluster_found       ctx.status = matter.UNSUPPORTED_CLUSTER
+      elif !path_generator.attribute_found     ctx.status = matter.UNSUPPORTED_ATTRIBUTE
       else                      ctx.status = matter.UNREPORTABLE_ATTRIBUTE
       end
       cb(nil, ctx, true)
@@ -769,6 +702,7 @@ class Matter_Device
   # Load Matter Device parameters
   def load_param()
     import crypto
+    var dirty = false
     try
 
       var f = open(self.FILENAME)
@@ -784,8 +718,9 @@ class Matter_Device
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
       if self.plugins_config != nil
-        tasmota.log("MTR: load_config = " + str(self.plugins_config), 3)
+        tasmota.log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
+        dirty = self.check_config_ep()
         self.plugins_persist = true
       end
       self.plugins_config_remotes = j.find("remotes", {})
@@ -794,11 +729,10 @@ class Matter_Device
       end
     except .. as e, m
       if e != "io_error"
-        tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
+        tasmota.log("MTR: load_param Exception:" + str(e) + "|" + str(m), 2)
       end
     end
 
-    var dirty = false
     if self.root_discriminator == nil
       self.root_discriminator = crypto.random(2).get(0,2) & 0xFFF
       dirty = true
@@ -837,7 +771,8 @@ class Matter_Device
     tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
-    self.plugins.push(matter.Plugin_Aggregator(self, 0xFF00, {}))
+    self.plugins.push(matter.Plugin_Aggregator(self, matter.AGGREGATOR_ENDPOINT, {}))
+    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", matter.AGGREGATOR_ENDPOINT, 'aggregator', ''), 2)
 
     for ep: endpoints
       if ep == 0  continue end          # skip endpoint 0
@@ -859,7 +794,6 @@ class Matter_Device
         tasmota.log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
     end
-    tasmota.log(format("MTR:   endpoint = %5i type:%s%s", 0xFF00, 'aggregator', ''), 2)
 
     tasmota.publish_result('{"Matter":{"Initialized":1}}', 'Matter')
   end
@@ -1160,7 +1094,7 @@ class Matter_Device
     var m = {}
 
     # check if we have a light
-    var endpoint = 1
+    var endpoint = matter.START_ENDPOINT
     var light_present = false
 
     import light
@@ -1396,7 +1330,32 @@ class Matter_Device
   def signal_endpoints_changed()
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
-    self.attribute_updated(0xFF00, 0x001D, 0x0003, false)
+    self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
+  end
+
+  #############################################################
+  # Check that all ep are valid, i.e. don't collied with root or aggregator
+  #
+  # return `true` if configuration was adjusted and needs to be saved
+  def check_config_ep()
+    # copy into list so we can change the map on the fly
+    var dirty = false
+    var keys = []
+    for k: self.plugins_config.keys()   keys.push(int(k))    end
+    for ep: keys
+      if ep == 0
+        tasmota.log("MTR: invalid entry with ep '0'", 2)
+        self.plugins_config.remove(str(ep))
+        dirty = true
+      elif ep == matter.AGGREGATOR_ENDPOINT
+        dirty = true
+        tasmota.log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
+        self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]
+        self.plugins_config.remove(str(ep))
+        self.next_ep += 1
+      end
+    end
+    return dirty
   end
 
   #############################################################

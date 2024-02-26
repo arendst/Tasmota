@@ -4,7 +4,7 @@
         "ldscript": "esp32c2_out.ld"
       },
       "core": "esp32",
-      "extra_flags": "-DESP32_2M -DESP32C2",
+      "extra_flags": "-DARDUINO_TASMOTA -DESP32_2M -DESP32C2",
       "f_cpu": "120000000L",
       "f_flash": "60000000L",
       "flash_mode": "qio",
@@ -20,8 +20,7 @@
       "openocd_target": "esp32c2.cfg"
     },
     "frameworks": [
-      "arduino",
-      "espidf"
+      "arduino"
     ],
     "name": "Espressif Generic ESP32-C2 = 2M Flash, Tasmota 1245kB Code/OTA, 64k FS",
     "upload": {

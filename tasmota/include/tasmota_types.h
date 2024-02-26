@@ -191,8 +191,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t sen5x_passive_mode : 1;       // bit 10 (v13.1.0.1) - SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
     uint32_t neopool_outputsensitive : 1;  // bit 11 (v13.2.0.1) - SetOption157 - (NeoPool) Output sensitive data (1)
-    uint32_t spare12 : 1;                  // bit 12
-    uint32_t spare13 : 1;                  // bit 13
+    uint32_t mqtt_disable_modbus : 1;      // bit 12 (v13.3.0.5) - SetOption158 - (MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead
+    uint32_t counter_both_edges : 1;       // bit 13 (v13.3.0.5) - SetOption159 - (Counter) Enable counting on both rising and falling edge (1)
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
     uint32_t spare16 : 1;                  // bit 16

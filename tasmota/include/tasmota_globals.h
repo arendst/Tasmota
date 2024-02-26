@@ -54,13 +54,13 @@ void InfluxDbProcess(bool use_copy = false);
 #endif
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
+//#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
 #endif  // USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -129,9 +129,9 @@ String EthernetMacAddress(void);
 
 
 #else   // Disable features not present in other ESP32 like ESP32C3, ESP32S2, ESP32S3 etc.
-#ifdef USE_ETHERNET
-#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
-#endif
+//#ifdef USE_ETHERNET
+//#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
+//#endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 
 /*-------------------------------------------------------------------------------------------*\
@@ -313,6 +313,9 @@ String EthernetMacAddress(void);
 #endif
 #ifndef MQTT_LWT_ONLINE
 #define MQTT_LWT_ONLINE             "Online"   // MQTT LWT online topic message
+#endif
+#ifndef MQTT_DISABLE_MODBUSRECEIVED
+#define MQTT_DISABLE_MODBUSRECEIVED 0         // 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
 #endif
 
 #ifndef MESSZ

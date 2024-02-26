@@ -171,7 +171,7 @@ class Rule_Matcher
       var keyu = string.toupper(keyi)
       if isinstance(m, map)
         for k:m.keys()
-          if string.toupper(k)==keyu
+          if string.toupper(str(k))==keyu
             return k
           end
         end

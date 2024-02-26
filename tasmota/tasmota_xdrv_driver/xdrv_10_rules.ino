@@ -114,8 +114,6 @@
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
 #ifdef USE_EXPRESSION
-  #include <LinkedList.h>                 // Import LinkedList library
-
   const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
@@ -126,7 +124,6 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
   const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
-
 
   #define LOGIC_OPERATOR_AND        1
   #define LOGIC_OPERATOR_OR         2
@@ -166,16 +163,6 @@ void (* const RulesCommand[])(void) PROGMEM = {
   , &CmndIf
 #endif
   };
-
-#ifdef SUPPORT_MQTT_EVENT
-  #include <LinkedList.h>                 // Import LinkedList library
-  typedef struct {
-    String Event;
-    String Topic;
-    String Key;
-  } MQTT_Subscription;
-  LinkedList<MQTT_Subscription> subscriptions;
-#endif  // SUPPORT_MQTT_EVENT
 
 struct RULES {
   String event_value;
@@ -1068,7 +1055,8 @@ void RulesEvery50ms(void)
         TasmotaGlobal.rules_flag.wifi_disconnected = 0;
         strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event));
       }
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
       else if (TasmotaGlobal.rules_flag.eth_connected) {
         TasmotaGlobal.rules_flag.eth_connected = 0;
         strncpy_P(json_event, PSTR("{\"ETH\":{\"Connected\":1}}"), sizeof(json_event));
@@ -1156,6 +1144,14 @@ void RulesSetPower(void)
 }
 
 #ifdef SUPPORT_MQTT_EVENT
+
+typedef struct {
+  char* event;
+  char* topic;
+  char* key;
+} MQTT_Subscription;
+LList<MQTT_Subscription> subscriptions;
+
 /********************************************************************************************/
 /*
  * Rules: Process received MQTT message.
@@ -1167,66 +1163,86 @@ void RulesSetPower(void)
  *      false     - The message is not in our list.
  */
 bool RulesMqttData(void) {
-  if ((XdrvMailbox.data_len < 1) || (XdrvMailbox.data_len > RULE_MAX_MQTT_EVENTSZ)) {
-    return false;
+/*
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data = (char*)data;
+  XdrvMailbox.data_len = data_len;
+*/
+  if ((XdrvMailbox.data_len < 1) || (subscriptions.isEmpty())) {
+    return false;                              // Process unchanged data
   }
   bool serviced = false;
-  String sTopic = XdrvMailbox.topic;
-  String buData = XdrvMailbox.data;
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
-  MQTT_Subscription event_item;
-  //Looking for matched topic
-  char json_event[RULE_MAX_MQTT_EVENTSZ +32];  // Add chars for {"Event":{"<item.Event>": .. }
-  for (uint32_t index = 0; index < subscriptions.size(); index++) {
+  String buData = XdrvMailbox.data;            // Destroyed by JsonParser. Could be very long SENSOR message
+  char ctopic[strlen(XdrvMailbox.topic)+1];
+  strcpy(ctopic, XdrvMailbox.topic);           // Destroyed by result of following iteration
 
-    String sData = buData;
+  for (auto &event_item : subscriptions) {     // Looking for all matched topics
+    char etopic[strlen(event_item.topic)+2];
+    strcpy(etopic, event_item.topic);          // tele/tasmota/SENSOR
+    strcat(etopic, "/");                       // tele/tasmota/SENSOR/
+    if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal tele/tasmota/SENSOR
+        (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith tele/tasmota/SENSOR/
 
-    event_item = subscriptions.get(index);
-
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
-    if ((sTopic == event_item.Topic) || sTopic.startsWith(event_item.Topic+"/")) {
-      //This topic is subscribed by us, so serve it
-      serviced = true;
-      String value;
-      if (event_item.Key.length() == 0) {   //If did not specify Key
-        value = sData;
-      } else {      //If specified Key, need to parse Key/Value from JSON data
+      serviced = true;                         // This topic is subscribed by us, so serve it
+      String sData = buData;                   // sData will be destroyed by JsonParser
+      char* value = nullptr;
+      if (strlen(event_item.key) == 0) {       // If no key specified
+        value = (char*)buData.c_str();         // {"DS18B20":{"Id":"0000048EC44C","Temperature":23.3}}
+      } else {                                 // If key specified, need to parse Key/Value from JSON data
         JsonParser parser((char*)sData.c_str());
         JsonParserObject jsonData = parser.getRootObject();
+        if (!jsonData) { break; }              // Failed to parse JSON data, ignore this message.
 
-        String key1 = event_item.Key;
-        String key2;
-        if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
-        int dot;
-        if ((dot = key1.indexOf('.')) > 0) {
-          key2 = key1.substring(dot+1);
-          key1 = key1.substring(0, dot);
-          JsonParserToken value_tok = jsonData[key1.c_str()].getObject()[key2.c_str()];
-          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
-          value = value_tok.getStr();
-          // if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
-          // value = (const char *)jsonData[key1][key2];
-        } else {
-          JsonParserToken value_tok = jsonData[key1.c_str()];
-          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
-          value = value_tok.getStr();
-          // if (!jsonData[key1].success()) break;
-          // value = (const char *)jsonData[key1];
+        char ckey1[strlen(event_item.key)+1];
+        strcpy(ckey1, event_item.key);         // DS18B20.Temperature
+        char* ckey2 = strchr(ckey1, '.');
+        if (ckey2 != nullptr) {                // .Temperature
+          *ckey2++ = '\0';                     // Temperature and ckey1 becomes DS18B20
+          JsonParserToken val = jsonData[ckey1].getObject()[ckey2];
+          if (val) { 
+            value = (char*)val.getStr();       // 23.3
+          }
+        } else {                               // DS18B20
+          JsonParserToken val = jsonData[ckey1];
+          if (val) { 
+            value = (char*)val.getStr();       // \0
+          }
         }
       }
-      value.trim();
-
-/*
-      //Create an new event. Cannot directly call RulesProcessEvent().
-      snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
-      // 20230107 Superseded by the following code
-*/
-      bool quotes = (value[0] != '{');
-      snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.Event.c_str(), (quotes)?"\"":"", value.c_str(), (quotes)?"\"":"");
-      RulesProcessEvent(json_event);
+      if (value) {
+        Trim(value);
+        bool quotes = (value[0] != '{');
+        Response_P(PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.event, (quotes)?"\"":"", value, (quotes)?"\"":"");
+        RulesProcessEvent(ResponseData());
+      }
     }
   }
   return serviced;
+}
+
+bool RuleUnsubscribe(const char* event) {
+  UpperCase((char*)event, event);
+  bool do_all = (strcmp(event, "*") == 0);     // Wildcard
+  //Search all subscriptions
+  for (auto &index : subscriptions) {
+    if (do_all ||                              // All
+        (strcmp(event, index.event) == 0)) {   // Equal
+      //If find exists one, remove it.
+      char stopic[strlen(index.topic)+3];
+      strcpy(stopic, index.topic);
+      strcat(stopic, "/#");
+      MqttUnsubscribe(stopic);
+      free(index.key);
+      free(index.topic);
+      free(index.event);
+      subscriptions.remove(&index);
+      if (!do_all) {
+        return true;
+      }
+    }
+  }
+  return do_all;
 }
 
 /********************************************************************************************/
@@ -1245,77 +1261,58 @@ bool RulesMqttData(void) {
  * Return:
  *      A string include subscribed event, topic and key.
  */
-void CmndSubscribe(void)
-{
-  MQTT_Subscription subscription_item;
-  String events;
+void CmndSubscribe(void) {
   if (XdrvMailbox.data_len > 0) {
-    char parameters[XdrvMailbox.data_len+1];
-    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
-    parameters[XdrvMailbox.data_len] = '\0';
-    String event_name, topic, key;
+    char* event = Trim(strtok(XdrvMailbox.data, ","));
+    char* topic = Trim(strtok(nullptr, ","));
+    char* key = Trim(strtok(nullptr, ","));
 
-    char * pos = strtok(parameters, ",");
-    if (pos) {
-      event_name = Trim(pos);
-      pos = strtok(nullptr, ",");
-      if (pos) {
-        topic = Trim(pos);
-        pos = strtok(nullptr, ",");
-        if (pos) {
-          key = Trim(pos);
-        }
-      }
-    }
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
-    event_name.toUpperCase();
-    if (event_name.length() > 0 && topic.length() > 0) {
-      //Search all subscriptions
-      for (uint32_t index=0; index < subscriptions.size(); index++) {
-        if (subscriptions.get(index).Event.equals(event_name)) {
-          //If find exists one, remove it.
-          String stopic = subscriptions.get(index).Topic + "/#";
-          MqttUnsubscribe(stopic.c_str());
-          subscriptions.remove(index);
-          break;
-        }
-      }
-      //Add "/#" to the topic
-      if (!topic.endsWith("#")) {
-        if (topic.endsWith("/")) {
-          topic.concat("#");
+    if (event && topic) {
+      RuleUnsubscribe(event);
+
+      // Add "/#" to the topic
+      uint32_t slen = strlen(topic);
+      char stopic[slen +3];
+      strcpy(stopic, topic);
+      if (stopic[slen-1] != '#') {
+        if (stopic[slen-1] == '/') {
+          strcat(stopic, "#");
         } else {
-          topic.concat("/#");
+          strcat(stopic, "/#");
         }
       }
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
-      //MQTT Subscribe
-      subscription_item.Event = event_name;
-      subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
-      subscription_item.Key = key;
-      subscriptions.add(subscription_item);
 
-      if (2 == XdrvMailbox.index) {
-        topic = subscription_item.Topic;  // Do not append "/#""
-      }
-      MqttSubscribe(topic.c_str());
+      if (!key) { key = EmptyStr; }
 
-      events.concat(event_name + "," + topic
-        + (key.length()>0 ? "," : "")
-        + key);
-    } else {
-      events = D_JSON_WRONG_PARAMETERS;
+      // MQTT Subscribe
+      char* hevent = (char*)malloc(strlen(event) +1);
+      char* htopic = (char*)malloc(strlen(stopic) -1);  // Remove "/#"
+      char* hkey = (char*)malloc(strlen(key) +1);
+      if (hevent && htopic && hkey) {
+        strcpy(hevent, event);
+        strlcpy(htopic, stopic, strlen(stopic)-1);      // Remove "/#" so easy to match
+        strcpy(hkey, key);
+        MQTT_Subscription &subscription_item = subscriptions.addToLast();
+        subscription_item.event = hevent;
+        subscription_item.topic = htopic;
+        subscription_item.key = hkey;
+        char* ftopic = (2 == XdrvMailbox.index)?htopic:stopic;  // Subscribe2
+        MqttSubscribe(ftopic);
+        ResponseCmnd();                        // {"Subscribe":
+        ResponseAppend_P(PSTR("\"%s,%s%s%s\"}"), hevent, ftopic, (strlen(hkey))?",":"", EscapeJSONString(hkey).c_str());
+      }        
     }
-  } else {
-    //If did not specify the event name, list all subscribed event
-    for (uint32_t index=0; index < subscriptions.size(); index++) {
-      subscription_item = subscriptions.get(index);
-      events.concat(subscription_item.Event + "," + subscription_item.Topic
-        + (subscription_item.Key.length()>0 ? "," : "")
-        + subscription_item.Key + "; ");
-    }
+    return;                                    // {"Error"}
   }
-  ResponseCmndChar(events.c_str());
+  // If did not specify the event name, list all subscribed event
+  bool found = false;
+  ResponseCmnd();                              // {"Subscribe":
+  for (auto &items : subscriptions) {
+    ResponseAppend_P(PSTR("%s%s,%s%s%s"),
+      (found) ? "; " : "\"", items.event, items.topic, (strlen(items.key))?",":"", EscapeJSONString(items.key).c_str());
+    found = true;  
+  }
+  ResponseAppend_P((found) ? PSTR("\"}") : PSTR("\"" D_JSON_EMPTY "\"}"));
 }
 
 /********************************************************************************************/
@@ -1329,32 +1326,16 @@ void CmndSubscribe(void)
  * Return:
  *      list all the events unsubscribed.
  */
-void CmndUnsubscribe(void)
-{
-  MQTT_Subscription subscription_item;
-  String events;
+void CmndUnsubscribe(void) {
   if (XdrvMailbox.data_len > 0) {
-    for (uint32_t index = 0; index < subscriptions.size(); index++) {
-      subscription_item = subscriptions.get(index);
-      if (subscription_item.Event.equalsIgnoreCase(XdrvMailbox.data)) {
-        String stopic = subscription_item.Topic + "/#";
-        MqttUnsubscribe(stopic.c_str());
-        events = subscription_item.Event;
-        subscriptions.remove(index);
-        break;
-      }
+    char* event = Trim(XdrvMailbox.data);
+    if (RuleUnsubscribe(event)) {
+      ResponseCmndChar(event);
     }
-  } else {
-    // If did not specify the event name, unsubscribe all event
-    String stopic;
-    while (subscriptions.size() > 0) {
-      events.concat(subscriptions.get(0).Event + "; ");
-      stopic = subscriptions.get(0).Topic + "/#";
-      MqttUnsubscribe(stopic.c_str());
-      subscriptions.remove(0);
-    }
+    return;                                    // {"Error"}
   }
-  ResponseCmndChar(events.c_str());
+  RuleUnsubscribe("*");
+  ResponseCmndDone();
 }
 
 #endif  // SUPPORT_MQTT_EVENT
@@ -1606,10 +1587,8 @@ bool findNextOperator(char * &pointer, int8_t &op)
  *      true    - succeed
  *      false   - failed
  */
-float calculateTwoValues(float v1, float v2, uint8_t op)
-{
-  switch (op)
-  {
+float calculateTwoValues(float v1, float v2, uint8_t op) {
+  switch (op) {
     case EXPRESSION_OPERATOR_ADD:
       return v1 + v2;
     case EXPRESSION_OPERATOR_SUBTRACT:
@@ -1621,7 +1600,7 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
     case EXPRESSION_OPERATOR_MODULO:
       return (0 == v2) ? 0 : (int(v1) % int(v2));
     case EXPRESSION_OPERATOR_POWER:
-      return FastPrecisePow(v1, v2);
+      return FastPrecisePowf(v1, v2);
   }
   return 0;
 }
@@ -1639,7 +1618,7 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
  *      expression  - The expression to be evaluated
  *      len         - Length of the expression
  * Return:
- *      float      - result.
+ *      float       - result
  *      0           - if the expression is invalid
  * An example:
  * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
@@ -1658,64 +1637,96 @@ float calculateTwoValues(float v1, float v2, uint8_t op)
  *  1             %                                   3
  *  2             +                                   1
  *  3             /                                   2
+ * Results in:
+ *      (10 + VAR2 ^2) = 235
+ *  (MEM1 * 235 - 100) = 605
+ *          (2 + MEM2) = 8
+ *            605 % 10 = 5
+ *            3.14 * 5 = 15.7
+ *  VAR10 / 8 = 80 / 8 = 10
+ *           15.7 + 10 = 25.7 <== end result
  */
-float evaluateExpression(const char * expression, unsigned int len)
-{
+float evaluateExpression(const char * expression, unsigned int len) {
   char expbuf[len + 1];
   memcpy(expbuf, expression, len);
   expbuf[len] = '\0';
   char * scan_pointer = expbuf;
 
-  LinkedList<float> object_values;
-  LinkedList<int8_t> operators;
-  int8_t op;
+  float object_values[21];
+  int8_t operators[20];
   float va;
-  //Find and add the value of first object
+  // Find and add the value of first object
   if (findNextObjectValue(scan_pointer, va)) {
-    object_values.add(va);
+    object_values[0] = va;
   } else {
     return 0;
   }
-  while (*scan_pointer)
-  {
+
+  uint32_t operators_size = 0;
+  int8_t op;
+  while (*scan_pointer) {
     if (findNextOperator(scan_pointer, op)
         && *scan_pointer
         && findNextObjectValue(scan_pointer, va))
     {
-      operators.add(op);
-      object_values.add(va);
+      operators[operators_size++] = op;
+      object_values[operators_size] = va;
     } else {
-      //No operator followed or no more object after this operator, we done.
+      // No operator followed or no more object after this operator, we done.
       break;
+    }
+    if (operators_size >= 20) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+      return 0;
     }
   }
 
-  //Going to evaluate the whole expression
-  //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
-  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Expression '%s'"), expbuf);
+
+  // Going to evaluate the whole expression
+  // Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
+  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority > 0; priority--) {
     int index = 0;
-    while (index < operators.size()) {
-      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
-        //get current object value and remove the next object with current operator
-        va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
-        //Replace the current value with the result
-        object_values.set(index, va);
+    while (index < operators_size) {
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators[index])) {  // Need to calculate the operator first
+        // Get current object value and remove the next object with current operator
+        va = calculateTwoValues(object_values[index], object_values[index + 1], operators[index]);
+        uint32_t i = index;
+        while (i <= operators_size) {
+          operators[i++] = operators[i];           // operators.remove(index)
+          object_values[i] = object_values[i +1];  // object_values.remove(index + 1)
+        }
+        operators_size--;
+        object_values[index] =  va;                // Replace the current value with the result
+
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Intermediate '%4_f'"), &object_values[index]);
+
       } else {
         index++;
       }
     }
   }
-  return object_values.get(0);
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Result '%4_f'"), &object_values[0]);
+
+  return object_values[0];
 }
 #endif  // USE_EXPRESSION
 
 #ifdef  SUPPORT_IF_STATEMENT
-void CmndIf(void)
-{
+/********************************************************************************************/
+/*
+ * Process an if command
+ * Example:
+ * rule1 on event#test do backlog status 1; status 2; if (var1==10 AND var3==9 OR var4==8) status 3;status 4 endif; status 5; status 6 endon
+ * 
+ * Notice:
+ * In case of "if" is true commands ``status 3`` and ``status 4`` will be inserted into the backlog between ``status 2`` and ``status 5``
+ */
+void CmndIf(void) {
   if (XdrvMailbox.data_len > 0) {
-    char parameters[XdrvMailbox.data_len+1];
-    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
-    parameters[XdrvMailbox.data_len] = '\0';
+    char parameters[XdrvMailbox.data_len +1];
+    strcpy(parameters, XdrvMailbox.data);
     ProcessIfStatement(parameters);
   }
   ResponseCmndDone();
@@ -1890,58 +1901,75 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
  * Return:
  *      boolean     - the value of logical expression
  */
-bool evaluateLogicalExpression(const char * expression, int len)
-{
+bool evaluateLogicalExpression(const char * expression, int len) {
   //Make a copy first
   char expbuff[len + 1];
   memcpy(expbuff, expression, len);
   expbuff[len] = '\0';
-
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("EvalLogic: |%s|"), expbuff);
   char * pointer = expbuff;
-  LinkedList<bool> values;
-  LinkedList<int8_t> logicOperators;
+
+  bool values[21];
+  int8_t logicOperators[20];
+
   //Find first comparison expression
   bool bValue;
   if (findNextLogicObjectValue(pointer, bValue)) {
-    values.add(bValue);
+    values[0] = bValue;
   } else {
     return false;
   }
+
+  uint32_t logicOperators_size = 0;
   int8_t op;
   while (*pointer) {
     if (findNextLogicOperator(pointer, op)
       && (*pointer) && findNextLogicObjectValue(pointer, bValue))
     {
-      logicOperators.add(op);
-      values.add(bValue);
+      logicOperators[logicOperators_size++] = op;
+      values[logicOperators_size] = bValue;
     } else {
       break;
     }
+    if (logicOperators_size >= 20) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("RUL: Too many arguments"));
+      return false;
+    }
   }
-  //Calculate all "AND" first
+
+  // Calculate all "AND" first
   int index = 0;
-  while (index < logicOperators.size()) {
-    if (logicOperators.get(index) == LOGIC_OPERATOR_AND) {
-      values.set(index, values.get(index) && values.get(index+1));
-      values.remove(index + 1);
-      logicOperators.remove(index);
+  while (index < logicOperators_size) {
+    if (logicOperators[index] == LOGIC_OPERATOR_AND) {
+      values[index] &= values[index +1];
+      uint32_t i = index;
+      while (i <= logicOperators_size) {
+        logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
+        values[i] = values[i +1];                 // values.remove(index + 1);
+      }
+      logicOperators_size--;
     } else {
       index++;
     }
   }
-  //Then, calculate all "OR"
+  // Then, calculate all "OR"
   index = 0;
-  while (index < logicOperators.size()) {
-    if (logicOperators.get(index) == LOGIC_OPERATOR_OR) {
-      values.set(index, values.get(index) || values.get(index+1));
-      values.remove(index + 1);
-      logicOperators.remove(index);
+  while (index < logicOperators_size) {
+    if (logicOperators[index] == LOGIC_OPERATOR_OR) {
+      values[index] |= values[index +1];
+      uint32_t i = index;
+      while (i <= logicOperators_size) {
+        logicOperators[i++] = logicOperators[i];  // logicOperators.remove(index);
+        values[i] = values[i +1];                 // values.remove(index + 1);
+      }
+      logicOperators_size--;
     } else {
       index++;
     }
   }
-  return values.get(0);
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Expression '%s' = %d"), expbuff, values[0]);
+
+  return values[0];
 }
 
 /********************************************************************************************/
@@ -2023,7 +2051,6 @@ void ExecuteCommandBlock(const char * commands, int len)
   memcpy(cmdbuff, commands, len);
   cmdbuff[len] = '\0';
 
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("ExecCmd: |%s|"), cmdbuff);
   char oneCommand[len + 1];     //To put one command
   int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
   char * pos = cmdbuff;
@@ -2062,23 +2089,19 @@ void ExecuteCommandBlock(const char * commands, int len)
     }
     //Start to process current command we found
     //Going to insert the command into backlog
-    String sCurrentCommand = oneCommand;
-    sCurrentCommand.trim();
-/*
-    if (sCurrentCommand.length() > 0
-      && backlog.size() < MAX_BACKLOG && !TasmotaGlobal.backlog_mutex)
-    {
+    char* blcommand = oneCommand;
+    Trim(blcommand);
+
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Position %d, Command '%s'"), insertPosition, blcommand);
+
+    if (strlen(blcommand)) {
       //Insert into backlog
-      TasmotaGlobal.backlog_mutex = true;
-      backlog.add(insertPosition, sCurrentCommand);
-      TasmotaGlobal.backlog_mutex = false;
-      insertPosition++;
-    }
-*/
-    if ((sCurrentCommand.length() > 0) && (backlog.size() < MAX_BACKLOG)) {
-      //Insert into backlog
-      backlog.add(insertPosition, sCurrentCommand);
-      insertPosition++;
+      char* temp = (char*)malloc(strlen(blcommand)+1);
+      if (temp != nullptr) {
+        strcpy(temp, blcommand);
+        char* &elem = backlog.insertAt(insertPosition++);
+        elem = temp;
+      }
     }
   }
   return;

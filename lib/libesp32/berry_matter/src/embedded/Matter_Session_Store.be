@@ -57,15 +57,19 @@ class Matter_Session_Store
   #############################################################
   # remove fabric
   def remove_fabric(fabric)
-    var idx = 0
-    while idx < size(self.sessions)
-      if self.sessions[idx]._fabric == fabric
-        self.sessions.remove(idx)
-      else
-        idx += 1
+    if (self.sessions != nil)
+      var idx = 0
+      while idx < size(self.sessions)
+        if self.sessions[idx]._fabric == fabric
+          self.sessions.remove(idx)
+        else
+          idx += 1
+        end
       end
     end
-    self.fabrics.remove(self.fabrics.find(fabric))     # fail safe
+    if (self.fabrics != nil)
+      self.fabrics.remove(self.fabrics.find(fabric))     # fail safe
+    end
   end
 
   #############################################################
@@ -98,7 +102,11 @@ class Matter_Session_Store
   # Count the number of commissionned fabrics, i.e. persisted
   def count_active_fabrics()
     self.remove_expired()      # clean before
-    return self.fabrics.count_persistables()
+    if self.fabrics != nil
+      return self.fabrics.count_persistables()
+    else
+      return 0
+    end
   end
 
   #############################################################
@@ -323,8 +331,7 @@ class Matter_Session_Store
         if fabrics_saved > 0
           f.write(",")
         end
-        var f_json = fab.tojson()
-        f.write(f_json)
+        fab.writejson(f)
         fabrics_saved += 1
       end
       f.write("]")

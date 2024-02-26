@@ -3527,9 +3527,8 @@ static const lv_font_fmt_txt_cmap_t cmaps[] =
  *  ALL CUSTOM DATA
  *--------------------*/
 
-#if LV_VERSION_CHECK(8, 0, 0)
+#if LVGL_VERSION_MAJOR >= 8
 /*Store all the custom data of the font*/
-static  lv_font_fmt_txt_glyph_cache_t cache;
 static const lv_font_fmt_txt_dsc_t font_dsc = {
 #else
 static lv_font_fmt_txt_dsc_t font_dsc = {
@@ -3543,9 +3542,6 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
     .bpp = 3,
     .kern_classes = 0,
     .bitmap_format = 1,
-#if LV_VERSION_CHECK(8, 0, 0)
-    .cache = &cache
-#endif
 };
 
 
@@ -3554,7 +3550,7 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
  *----------------*/
 
 /*Initialize a public general font descriptor*/
-#if LV_VERSION_CHECK(8, 0, 0)
+#if LVGL_VERSION_MAJOR >= 8
 const lv_font_t robotocondensed_regular_24_latin1 = {
 #else
 lv_font_t robotocondensed_regular_24_latin1 = {

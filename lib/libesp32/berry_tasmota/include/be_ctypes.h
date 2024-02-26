@@ -8,14 +8,17 @@
 
 enum {
     ctypes_i32    =  14,
+    ctypes_i24    =  13,
     ctypes_i16    =  12,
     ctypes_i8     =  11,
     ctypes_u32    =   4,
+    ctypes_u24    =   3,
     ctypes_u16    =   2,
     ctypes_u8     =   1,
 
     // big endian
     ctypes_be_i32 = -14,
+    ctypes_be_i24 = -13,
     ctypes_be_i16 = -12,
     ctypes_be_i8  = -11,
     ctypes_be_u32 =  -4,

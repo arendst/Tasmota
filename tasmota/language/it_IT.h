@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 08.01.2024
+ * Updated until v9.4.0.1 - Last update 20.02.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -57,7 +57,7 @@
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
 #define D_AUTO                 "AUTO"
-#define D_BATTERY              "Battery"
+#define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
 #define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
@@ -119,6 +119,7 @@
 #define D_GROUP                "Gruppo"
 #define D_HOST                 "Host"
 #define D_HALL_EFFECT          "Effetto hall"
+#define D_HEATINDEX            "Indice calore"
 #define D_HOSTNAME             "Nome host"
 #define D_HUMIDITY             "Umidità"
 #define D_ILLUMINANCE          "Illuminazione"
@@ -554,6 +555,7 @@
 #define D_THERMOSTAT_SENSOR           "Temperatura attuale"
 #define D_THERMOSTAT_GRADIENT         "Gradiente temperatura"
 #define D_THERMOSTAT_DUTY_CYCLE       "Ciclo lavoro"
+#define D_THERMOSTAT_VALVE_POSITION   "Posizione valvola"
 #define D_THERMOSTAT_CYCLE_TIME       "Tempo ciclo"
 #define D_THERMOSTAT_PI_AUTOTUNE      "Regolazione automatica  PI"
 #define D_THERMOSTAT_CONTROL_METHOD   "Metodo controllo"
@@ -775,6 +777,10 @@
 #define D_SENSOR_MAX31855_CLK           "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO            "MX31855 - DO"
 #define D_SENSOR_MAX31865_CS            "MX31865 - CS"
+#define D_GPIO_LORA_CS                  "LoRa - CS"
+#define D_GPIO_LORA_RST                 "LoRa - Rst"
+#define D_GPIO_LORA_BUSY                "LoRa - Busy"
+#define D_GPIO_LORA_DI                  "LoRa - DI"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL                "HLWBL - SEL"     // Suffix "i"
 #define D_SENSOR_NRG_CF1                "HLWBL - CF1"
 #define D_SENSOR_HLW_CF                 "HLW8012 - CF"
@@ -1225,7 +1231,7 @@
 #define D_UNIT_US_H                       "µSv/h"
 
 // ixrv92_pipsolar.ino
-#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
-#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
 
 #endif  // _LANGUAGE_IT_IT_H_

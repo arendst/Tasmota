@@ -980,7 +980,8 @@ void MqttConnected(void) {
           ResponseAppend_P(PSTR(",\"" D_JSON_IP6_LOCAL "\":\"%s\""), WifiGetIPv6LinkLocalStr().c_str());
 #endif  // USE_IPV6
         }
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
         if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
           ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\"}"),
             EthernetHostname(), (uint32_t)EthernetLocalIP());

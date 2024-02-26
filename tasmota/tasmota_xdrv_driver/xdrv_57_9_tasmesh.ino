@@ -472,6 +472,22 @@ void MESHevery50MSecond(void) {
     // do something on the node
     // AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: %30_H), (uint8_t *)&MESH.packetToConsume.front());
 
+#ifdef USE_TASMESH_HEARTBEAT
+    for (auto &_peer : MESH.peers){
+      if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
+        _peer.lastHeartbeatFromPeer = millis();
+
+        if (!_peer.isAlive) {
+          _peer.isAlive = true;
+          char stopic[TOPSZ];
+          GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+          MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
+        }
+        break;
+      }
+    }
+#endif // USE_TASMESH_HEARTBEAT
+
     MESHencryptPayload(&MESH.packetToConsume.front(), 0);
     switch (MESH.packetToConsume.front().type) {
       // case PACKET_TYPE_REGISTER_NODE:
@@ -546,6 +562,9 @@ void MESHevery50MSecond(void) {
 //          AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
         }
         break;
+      case PACKET_TYPE_HEARTBEAT:
+        break;
+
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
       break;
@@ -582,6 +601,17 @@ void MESHEverySecond(void) {
     AddLog(LOG_LEVEL_INFO, PSTR("MSH: Multi packets in buffer %u"), MESH.multiPackets.size());
     MESH.multiPackets.erase(MESH.multiPackets.begin());
   }
+
+#ifdef USE_TASMESH_HEARTBEAT
+  for (auto &_peer : MESH.peers){
+    if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > TASMESH_OFFLINE_DELAY * 1000) {
+      _peer.isAlive = false;
+      char stopic[TOPSZ];
+      GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+      MqttPublishPayload(stopic, PSTR(MQTT_LWT_OFFLINE));
+    }
+  }
+#endif // USE_TASMESH_HEARTBEAT
 }
 
 #else  // ESP8266
@@ -649,6 +679,16 @@ void MESHEverySecond(void) {
       MESHsetWifi(1);
       WifiBegin(3, MESH.channel);
     }
+
+#ifdef USE_TASMESH_HEARTBEAT
+    MESH.sendPacket.counter++;
+    MESH.sendPacket.TTL = 2;
+    MESH.sendPacket.chunks = 0;
+    MESH.sendPacket.chunk = 0;
+    MESH.sendPacket.chunkSize = 0;
+    MESH.sendPacket.type = PACKET_TYPE_HEARTBEAT;
+    MESHsendPacket(&MESH.sendPacket);
+#endif // USE_TASMESH_HEARTBEAT
   }
 }
 

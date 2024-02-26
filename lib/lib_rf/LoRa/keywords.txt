@@ -1,0 +1,68 @@
+#######################################
+# Syntax Coloring Map For LoRa
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+LoRa	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+end	KEYWORD2
+
+beginPacket	KEYWORD2
+endPacket	KEYWORD2
+
+parsePacket	KEYWORD2
+packetRssi	KEYWORD2
+packetSnr	KEYWORD2
+packetFrequencyError	KEYWORD2
+
+rssi	KEYWORD2
+
+write	KEYWORD2
+
+available	KEYWORD2
+read	KEYWORD2
+peek	KEYWORD2
+flush	KEYWORD2
+
+onReceive	KEYWORD2
+onTxDone	KEYWORD2
+onCadDone	KEYWORD2
+channelActivityDetection	KEYWORD2
+receive	KEYWORD2
+idle	KEYWORD2
+sleep	KEYWORD2
+
+setTxPower	KEYWORD2
+setFrequency	KEYWORD2
+setSpreadingFactor	KEYWORD2
+setSignalBandwidth	KEYWORD2
+setCodingRate4	KEYWORD2
+setPreambleLength	KEYWORD2
+setSyncWord	KEYWORD2
+enableCrc	KEYWORD2
+disableCrc	KEYWORD2
+enableInvertIQ	KEYWORD2
+disableInvertIQ	KEYWORD2
+enableLowDataRateOptimize	KEYWORD2
+disableLowDataRateOptimize	KEYWORD2
+setGain	KEYWORD2
+
+random	KEYWORD2
+setPins	KEYWORD2
+setSPIFrequency	KEYWORD2
+dumpRegisters	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+PA_OUTPUT_RFO_PIN	LITERAL1
+PA_OUTPUT_PA_BOOST_PIN	LITERAL1

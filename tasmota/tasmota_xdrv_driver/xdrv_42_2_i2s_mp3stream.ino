@@ -1,5 +1,5 @@
 
-#ifdef ESP32
+#if defined(ESP32) && (ESP_IDF_VERSION_MAJOR < 5)
 #if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
 #ifdef MP3_MIC_STREAM
@@ -61,4 +61,4 @@ void Cmd_MP3Stream(void) {
 
 
 #endif // USE_SHINE
-#endif // ESP32
+#endif // defined(ESP32) && (ESP_IDF_VERSION_MAJOR < 5)

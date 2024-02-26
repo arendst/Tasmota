@@ -385,6 +385,8 @@
 //#define MY_LANGUAGE            zh_CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh_TW           // Chinese (Traditional) in Taiwan
 
+//#define USE_HEAT_INDEX                           // Show calculated Heat index from temperature and humidity (+1k4 code)
+
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 #define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
@@ -396,6 +398,8 @@
 
 // -- ESP-NOW -------------------------------------
 //#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
+//#define USE_TASMESH_HEARTBEAT                    // If enabled, the broker will detect when nodes come online and offline and send Birth and LWT messages over MQTT correspondingly
+//#define TASMESH_OFFLINE_DELAY  3                 // Maximum number of seconds since the last heartbeat before the broker considers a node to be offline
 
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA with ESP8266 (+13k code)
@@ -418,6 +422,7 @@
 #define MQTT_TELE_RETAIN       0                 // Tele messages may send retain flag (0 = off, 1 = on)
 #define MQTT_CLEAN_SESSION     1                 // Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
 #define MQTT_DISABLE_SSERIALRECEIVED 0           // 1 = Disable sserialreceived mqtt messages, 0 = Enable sserialreceived mqtt messages (default)
+#define MQTT_DISABLE_MODBUSRECEIVED  0           // 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
 
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem)
@@ -470,8 +475,7 @@
   #define USE_ENHANCED_GUI_WIFI_SCAN             // Enable Wi-Fi scan output with BSSID (+0k5 code)
 //  #define USE_WEBSEND_RESPONSE                   // Enable command WebSend response message (+1k code)
 //  #define USE_WEBGETCONFIG                       // Enable restoring config from external webserver (+0k6)
-//  #define USE_GPIO_VIEWER                        // Enable GPIO Viewer to see realtime GPIO states (+4k code)
-//    #define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer/assets/"
+//  #define USE_GPIO_VIEWER                        // Enable GPIO Viewer to see realtime GPIO states (+6k code)
 //    #define GV_SAMPLING_INTERVAL  100            // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
   #define USE_EMULATION_HUE                      // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
   #define USE_EMULATION_WEMO                     // Enable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
@@ -496,14 +500,15 @@
 
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
-#define USE_RULES                                // Add support for rules (+8k code)
-//  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
-//    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
+#define USE_RULES                                // Add support for rules (+13k code, +768 bytes mem)
+  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+1k8 code)
+  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+1k7 code)
+    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+2k7)
 //  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed
 
-//#define USE_SCRIPT                               // Add support for script (+17k code)
+//#define USE_SCRIPT                               // Add support for script (+36k code, +1k mem)
 //  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
@@ -707,6 +712,9 @@
 //  #define USE_QMC5883L                           // [I2CDriver71] Enable QMC5883L magnetic induction sensor (I2C address 0x0D) (+0k8 code)
 //  #define USE_HMC5883L                           // [I2CDriver73] Enable HMC5883L magnetic induction sensor (I2C address 0x1E) (+1k3 code)
 //    #define QMC5883L_TEMP_SHIFT       23         // sensor temperature are not calibrated (only relativ measurement) and need an absolute ground value in °C (see datasheet)
+//    #define QMC5883L_OVERSAMPLE       1          // 0 .. 3 => 512, 256(default), 128, 64
+//    #define QMC5883L_GAUSS            0          // 0,1(default) => 2GAUSS, 8GAUSS(default)
+//    #define QMC5883L_FILTER           2          // 0 .. 3 => 10HZ, 50HZ, 109HZ(default), 200HZ
 //  #define USE_INA3221                            // [I2CDriver72] Enable INA3221 3-channel DC voltage and current sensor (I2C address 0x40-0x44) (+3.2k code)
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
@@ -1098,6 +1106,7 @@
 #endif
 
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
+#define USE_GPIO_VIEWER                          // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
 
 // #define USE_DALI                              // Add support for DALI
     #define DALI_IN_INVERT  0                 // DALI RX inverted ?
@@ -1184,14 +1193,18 @@
   #define USE_LVGL_BG_DEFAULT 0x000000           // Default color for the uninitialized background screen (black)
   // Disabling select widgets that will be rarely used in Tasmota (-13KB)
   // Main widgets as defined in LVGL8
+    #define BE_LV_WIDGET_OBJ
     #define BE_LV_WIDGET_ARC
     #define BE_LV_WIDGET_BAR
-    #define BE_LV_WIDGET_BTN
-    #define BE_LV_WIDGET_BTNMATRIX
+    #define BE_LV_WIDGET_BTN        // LVGL 8
+    #define BE_LV_WIDGET_BUTTON     // LVGL 9
+    #define BE_LV_WIDGET_BTNMATRIX  // LVGL 8
+    #define BE_LV_WIDGET_BUTTONMATRIX // LVGL 9
     #define BE_LV_WIDGET_CANVAS
     #define BE_LV_WIDGET_CHECKBOX
     #define BE_LV_WIDGET_DROPDOWN
-    #define BE_LV_WIDGET_IMG
+    #define BE_LV_WIDGET_IMG        // LVGL 8
+    #define BE_LV_WIDGET_IMAGE      // LVGL 9
     #define BE_LV_WIDGET_LABEL
     #define BE_LV_WIDGET_LINE
     #define BE_LV_WIDGET_ROLLER
@@ -1200,20 +1213,23 @@
     #define BE_LV_WIDGET_TABLE
     #define BE_LV_WIDGET_TEXTAREA
 
+    #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
     #define BE_LV_WIDGET_COLORWHEEL
-    #define BE_LV_WIDGET_IMGBTN
+    #define BE_LV_WIDGET_IMGBTN       // LVGL 8
+    #define BE_LV_WIDGET_IMAGEBUTTON  // LVGL 9
+    // #define BE_LV_WIDGET_KEYBOARD
     #define BE_LV_WIDGET_LED
+    // #define BE_LV_WIDGET_LIST
     #define BE_LV_WIDGET_METER
     #define BE_LV_WIDGET_MSGBOX
+    #define BE_LV_WIDGET_QRCODE
+    #define BE_LV_WIDGET_SCALE
     #define BE_LV_WIDGET_SPINBOX
     #define BE_LV_WIDGET_SPINNER
-    // #define BE_LV_WIDGET_KEYBOARD
+    #define BE_LV_WIDGET_SPANGROUP
     // #define BE_LV_WIDGET_TABVIEW
     // #define BE_LV_WIDGET_TILEVIEW
-    // #define BE_LV_WIDGET_LIST
-
-    #define BE_LV_WIDGET_QRCODE
 
 #endif  // ESP32
 

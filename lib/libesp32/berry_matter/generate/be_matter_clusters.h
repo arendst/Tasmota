@@ -28,11 +28,6 @@ typedef struct {
 const matter_attribute_t matter_Attributes_0003[] = {
   { 0x0000, 0, 0x03, "IdentifyTime" },
   { 0x0001, 0, 0x02, "IdentifyType" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -44,11 +39,6 @@ const matter_command_t matter_Commands_0003[] = {
 
 const matter_attribute_t matter_Attributes_0004[] = {
   { 0x0000, 0, 0x02, "NameSupport" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -68,11 +58,6 @@ const matter_attribute_t matter_Attributes_0005[] = {
   { 0x0002, 0, 0x02, "CurrentGroup" },
   { 0x0003, 0, 0x02, "SceneValid" },
   { 0x0004, 0, 0x02, "NameSupport" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -93,11 +78,6 @@ const matter_attribute_t matter_Attributes_0006[] = {
   { 0x4001, 0, 0x03, "OnTime" },
   { 0x4002, 0, 0x03, "OffWaitTime" },
   { 0x4003, 0, 0x03, "StartUpOnOff" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -114,11 +94,6 @@ const matter_command_t matter_Commands_0006[] = {
 const matter_attribute_t matter_Attributes_0007[] = {
   { 0x0000, 0, 0x02, "SwitchType" },
   { 0x0010, 0, 0x03, "SwitchActions" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -141,11 +116,6 @@ const matter_attribute_t matter_Attributes_0008[] = {
   { 0x0013, 0, 0x03, "OffTransitionTime" },
   { 0x0014, 0, 0x03, "DefaultMoveRate" },
   { 0x4000, 0, 0x03, "StartUpCurrentLevel" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -165,11 +135,6 @@ const matter_attribute_t matter_Attributes_000F[] = {
   { 0x0051, 0, 0x03, "OutOfService" },
   { 0x0055, 0, 0x03, "PresentValue" },
   { 0x006F, 0, 0x02, "StatusFlags" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -182,11 +147,7 @@ const matter_attribute_t matter_Attributes_001D[] = {
   { 0x0001, 0, 0x02, "ServerList" },
   { 0x0002, 0, 0x02, "ClientList" },
   { 0x0003, 0, 0x02, "PartsList" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
+  { 0x0004, 0, 0x02, "TagList" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -196,11 +157,6 @@ const matter_command_t matter_Commands_001D[] = {
 
 const matter_attribute_t matter_Attributes_001E[] = {
   { 0x0000, 0, 0x03, "Binding" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -214,11 +170,6 @@ const matter_attribute_t matter_Attributes_001F[] = {
   { 0x0002, 0, 0x02, "SubjectsPerAccessControlEntry" },
   { 0x0003, 0, 0x02, "TargetsPerAccessControlEntry" },
   { 0x0004, 0, 0x02, "AccessControlEntriesPerFabric" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -230,11 +181,6 @@ const matter_attribute_t matter_Attributes_0025[] = {
   { 0x0000, 0, 0x02, "ActionList" },
   { 0x0001, 0, 0x02, "EndpointLists" },
   { 0x0002, 0, 0x02, "SetupURL" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -275,11 +221,6 @@ const matter_attribute_t matter_Attributes_0028[] = {
   { 0x0011, 0, 0x02, "Reachable" },
   { 0x0012, 0, 0x02, "UniqueID" },
   { 0x0013, 0, 0x02, "CapabilityMinima" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -320,10 +261,6 @@ const matter_command_t matter_Commands_002A[] = {
 const matter_attribute_t matter_Attributes_002B[] = {
   { 0x0000, 0, 0x03, "ActiveLocale" },
   { 0x0001, 0, 0x02, "SupportedLocales" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -335,10 +272,6 @@ const matter_attribute_t matter_Attributes_002C[] = {
   { 0x0000, 0, 0x03, "HourFormat" },
   { 0x0001, 0, 0x03, "ActiveCalendarType" },
   { 0x0002, 0, 0x02, "SupportedCalendarTypes" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -360,11 +293,6 @@ const matter_command_t matter_Commands_002D[] = {
 
 const matter_attribute_t matter_Attributes_002E[] = {
   { 0x0000, 0, 0x02, "Sources" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -404,11 +332,6 @@ const matter_attribute_t matter_Attributes_002F[] = {
   { 0x001C, 0, 0x02, "BatFunctionalWhileCharging" },
   { 0x001D, 0, 0x02, "BatChargingCurrent" },
   { 0x001E, 0, 0x02, "ActiveBatChargeFaults" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -422,11 +345,6 @@ const matter_attribute_t matter_Attributes_0030[] = {
   { 0x0002, 0, 0x02, "RegulatoryConfig" },
   { 0x0003, 0, 0x02, "LocationCapability" },
   { 0x0004, 0, 0x02, "SupportsConcurrentConnection" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -449,10 +367,6 @@ const matter_attribute_t matter_Attributes_0031[] = {
   { 0x0005, 0, 0x02, "LastNetworkingStatus" },
   { 0x0006, 0, 0x02, "LastNetworkID" },
   { 0x0007, 0, 0x02, "LastConnectErrorValue" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -467,11 +381,6 @@ const matter_command_t matter_Commands_0031[] = {
 };
 
 const matter_attribute_t matter_Attributes_0032[] = {
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -490,11 +399,6 @@ const matter_attribute_t matter_Attributes_0033[] = {
   { 0x0006, 0, 0x02, "ActiveRadioFaults" },
   { 0x0007, 0, 0x02, "ActiveNetworkFaults" },
   { 0x0008, 0, 0x02, "TestEventTriggersEnabled" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -508,11 +412,6 @@ const matter_attribute_t matter_Attributes_0034[] = {
   { 0x0001, 0, 0x02, "CurrentHeapFree" },
   { 0x0002, 0, 0x02, "CurrentHeapUsed" },
   { 0x0003, 0, 0x02, "CurrentHeapHighWatermark" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -585,11 +484,6 @@ const matter_attribute_t matter_Attributes_0035[] = {
   { 0x003C, 0, 0x02, "ChannelPage0Mask" },
   { 0x003D, 0, 0x02, "OperationalDatasetComponents" },
   { 0x003E, 0, 0x02, "ActiveNetworkFaultsList" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -612,11 +506,6 @@ const matter_attribute_t matter_Attributes_0036[] = {
   { 0x000A, 0, 0x02, "PacketUnicastTxCount" },
   { 0x000B, 0, 0x02, "CurrentMaxRate" },
   { 0x000C, 0, 0x02, "OverrunCount" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -635,16 +524,38 @@ const matter_attribute_t matter_Attributes_0037[] = {
   { 0x0006, 0, 0x02, "OverrunCount" },
   { 0x0007, 0, 0x02, "CarrierDetect" },
   { 0x0008, 0, 0x02, "TimeSinceReset" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
 const matter_command_t matter_Commands_0037[] = {
   { 0x0000, "ResetCounts" },
+  { 0xFFFF, NULL },
+};
+
+const matter_attribute_t matter_Attributes_0038[] = {
+  { 0x0000, 0, 0x02, "UTCTime" },
+  { 0x0001, 0, 0x02, "Granularity" },
+  { 0x0002, 0, 0x02, "TimeSource" },
+  { 0x0003, 0, 0x02, "TrustedTimeSource" },
+  { 0x0004, 0, 0x02, "DefaultNTP" },
+  { 0x0005, 0, 0x02, "TimeZone" },
+  { 0x0006, 0, 0x02, "DSTOffset" },
+  { 0x0007, 0, 0x02, "LocalTime" },
+  { 0x0008, 0, 0x02, "TimeZoneDatabase" },
+  { 0x0009, 0, 0x02, "NTPServerAvailable" },
+  { 0x000A, 0, 0x02, "TimeZoneListMaxSize" },
+  { 0x000B, 0, 0x02, "DSTOffsetListMaxSize" },
+  { 0x000C, 0, 0x02, "SupportsDNSResolve" },
+  { 0xFFFF, 0, 0x00, NULL },
+};
+
+const matter_command_t matter_Commands_0038[] = {
+  { 0x0000, "SetUTCTime" },
+  { 0x0001, "SetTrustedTimeSource" },
+  { 0x0002, "SetTimeZone" },
+  { 0x0003, "SetTimzZoneResponse" },
+  { 0x0004, "SetDSTOffset" },
+  { 0x0005, "SetDefaultNTP" },
   { 0xFFFF, NULL },
 };
 
@@ -664,11 +575,6 @@ const matter_attribute_t matter_Attributes_0039[] = {
   { 0x000F, 0, 0x02, "SerialNumber" },
   { 0x0011, 0, 0x02, "Reachable" },
   { 0x0012, 0, 0x02, "UniqueID" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -680,11 +586,6 @@ const matter_attribute_t matter_Attributes_003B[] = {
   { 0x0000, 0, 0x02, "NumberOfPositions" },
   { 0x0001, 0, 0x02, "CurrentPosition" },
   { 0x0002, 0, 0x02, "MultiPressMax" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -696,11 +597,6 @@ const matter_attribute_t matter_Attributes_003C[] = {
   { 0x0000, 0, 0x02, "WindowStatus" },
   { 0x0001, 0, 0x02, "AdminFabricIndex" },
   { 0x0002, 0, 0x02, "AdminVendorId" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -718,11 +614,6 @@ const matter_attribute_t matter_Attributes_003E[] = {
   { 0x0003, 0, 0x02, "CommissionedFabrics" },
   { 0x0004, 0, 0x02, "TrustedRootCertificates" },
   { 0x0005, 0, 0x02, "CurrentFabricIndex" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -747,11 +638,6 @@ const matter_attribute_t matter_Attributes_003F[] = {
   { 0x0001, 0, 0x02, "GroupTable" },
   { 0x0002, 0, 0x02, "MaxGroupsPerFabric" },
   { 0x0003, 0, 0x02, "MaxGroupKeysPerFabric" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -765,11 +651,6 @@ const matter_command_t matter_Commands_003F[] = {
 
 const matter_attribute_t matter_Attributes_0040[] = {
   { 0x0000, 0, 0x02, "LabelList" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -779,10 +660,6 @@ const matter_command_t matter_Commands_0040[] = {
 
 const matter_attribute_t matter_Attributes_0041[] = {
   { 0x0000, 0, 0x03, "LabelList" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -792,11 +669,6 @@ const matter_command_t matter_Commands_0041[] = {
 
 const matter_attribute_t matter_Attributes_0045[] = {
   { 0x0000, 0, 0x02, "StateValue" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -811,11 +683,6 @@ const matter_attribute_t matter_Attributes_0050[] = {
   { 0x0003, 0, 0x02, "CurrentMode" },
   { 0x0004, 0, 0x03, "StartUpMode" },
   { 0x0005, 0, 0x03, "OnMode" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -850,11 +717,6 @@ const matter_attribute_t matter_Attributes_0101[] = {
   { 0x0030, 0, 0x03, "WrongCodeEntryLimit" },
   { 0x0031, 0, 0x03, "UserCodeTemporaryDisableTime" },
   { 0x0033, 0, 0x01, "RequirePINforRemoteOperation" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -903,11 +765,6 @@ const matter_attribute_t matter_Attributes_0102[] = {
   { 0x0013, 0, 0x02, "InstalledClosedLimitTilt" },
   { 0x0017, 0, 0x03, "Mode" },
   { 0x001A, 0, 0x02, "SafetyStatus" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -927,11 +784,6 @@ const matter_attribute_t matter_Attributes_0103[] = {
   { 0x0002, 0, 0x02, "BarrierSafetyStatus" },
   { 0x0003, 0, 0x02, "BarrierCapabilities" },
   { 0x000A, 0, 0x02, "BarrierPosition" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -965,11 +817,6 @@ const matter_attribute_t matter_Attributes_0200[] = {
   { 0x0017, 0, 0x03, "LifetimeEnergyConsumed" },
   { 0x0020, 0, 0x03, "OperationMode" },
   { 0x0021, 0, 0x03, "ControlMode" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1021,11 +868,6 @@ const matter_attribute_t matter_Attributes_0202[] = {
   { 0x0008, 0, 0x03, "RockSetting" },
   { 0x0009, 0, 0x02, "WindSupport" },
   { 0x000A, 0, 0x03, "WindSetting" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1037,11 +879,6 @@ const matter_attribute_t matter_Attributes_0204[] = {
   { 0x0000, 0, 0x03, "TemperatureDisplayMode" },
   { 0x0001, 0, 0x03, "KeypadLockout" },
   { 0x0002, 0, 0x03, "ScheduleProgrammingVisibility" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1102,11 +939,6 @@ const matter_attribute_t matter_Attributes_0300[] = {
   { 0x400C, 0, 0x02, "ColorTempPhysicalMaxMireds" },
   { 0x400D, 0, 0x02, "CoupleColorTempToLevelMinMireds" },
   { 0x4010, 0, 0x03, "StartUpColorTemperatureMireds" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1148,11 +980,6 @@ const matter_attribute_t matter_Attributes_0301[] = {
   { 0x0033, 0, 0x03, "LampBurnHours" },
   { 0x0034, 0, 0x03, "LampAlarmMode" },
   { 0x0035, 0, 0x03, "LampBurnHoursTripPoint" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1166,11 +993,6 @@ const matter_attribute_t matter_Attributes_0400[] = {
   { 0x0002, 0, 0x02, "MaxMeasuredValue" },
   { 0x0003, 0, 0x02, "Tolerance" },
   { 0x0004, 0, 0x02, "LightSensorType" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1218,11 +1040,6 @@ const matter_attribute_t matter_Attributes_0404[] = {
   { 0x0001, 0, 0x02, "MinMeasuredValue" },
   { 0x0002, 0, 0x02, "MaxMeasuredValue" },
   { 0x0003, 0, 0x02, "Tolerance" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1235,11 +1052,6 @@ const matter_attribute_t matter_Attributes_0405[] = {
   { 0x0001, 0, 0x02, "MinMeasuredValue" },
   { 0x0002, 0, 0x02, "MaxMeasuredValue" },
   { 0x0003, 0, 0x02, "Tolerance" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1251,11 +1063,6 @@ const matter_attribute_t matter_Attributes_0406[] = {
   { 0x0000, 0, 0x02, "Occupancy" },
   { 0x0001, 0, 0x02, "OccupancySensorType" },
   { 0x0002, 0, 0x02, "OccupancySensorTypeBitmap" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1265,11 +1072,6 @@ const matter_command_t matter_Commands_0406[] = {
 
 const matter_attribute_t matter_Attributes_0503[] = {
   { 0x0000, 0, 0x02, "MACAddress" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1281,11 +1083,6 @@ const matter_attribute_t matter_Attributes_0504[] = {
   { 0x0000, 0, 0x02, "ChannelList" },
   { 0x0001, 0, 0x02, "Lineup" },
   { 0x0002, 0, 0x02, "CurrentChannel" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1299,11 +1096,6 @@ const matter_command_t matter_Commands_0504[] = {
 const matter_attribute_t matter_Attributes_0505[] = {
   { 0x0000, 0, 0x02, "TargetList" },
   { 0x0001, 0, 0x02, "CurrentTarget" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1320,11 +1112,6 @@ const matter_attribute_t matter_Attributes_0506[] = {
   { 0x0004, 0, 0x02, "PlaybackSpeed" },
   { 0x0005, 0, 0x02, "SeekRangeEnd" },
   { 0x0006, 0, 0x02, "SeekRangeStart" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1346,11 +1133,6 @@ const matter_command_t matter_Commands_0506[] = {
 const matter_attribute_t matter_Attributes_0507[] = {
   { 0x0000, 0, 0x02, "InputList" },
   { 0x0001, 0, 0x02, "CurrentInput" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1363,11 +1145,6 @@ const matter_command_t matter_Commands_0507[] = {
 };
 
 const matter_attribute_t matter_Attributes_0508[] = {
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1377,11 +1154,6 @@ const matter_command_t matter_Commands_0508[] = {
 };
 
 const matter_attribute_t matter_Attributes_0509[] = {
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1393,11 +1165,6 @@ const matter_command_t matter_Commands_0509[] = {
 const matter_attribute_t matter_Attributes_050A[] = {
   { 0x0000, 0, 0x02, "AcceptHeader" },
   { 0x0001, 0, 0x03, "SupportedStreamingProtocols" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1410,11 +1177,6 @@ const matter_command_t matter_Commands_050A[] = {
 const matter_attribute_t matter_Attributes_050B[] = {
   { 0x0000, 0, 0x02, "OutputList" },
   { 0x0001, 0, 0x02, "CurrentOutput" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1427,11 +1189,6 @@ const matter_command_t matter_Commands_050B[] = {
 const matter_attribute_t matter_Attributes_050C[] = {
   { 0x0000, 0, 0x02, "CatalogList" },
   { 0x0001, 0, 0x03, "CurrentApp" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1451,11 +1208,6 @@ const matter_attribute_t matter_Attributes_050D[] = {
   { 0x0005, 0, 0x02, "Status" },
   { 0x0006, 0, 0x02, "ApplicationVersion" },
   { 0x0007, 0, 0x02, "AllowedVendorList" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1464,11 +1216,6 @@ const matter_command_t matter_Commands_050D[] = {
 };
 
 const matter_attribute_t matter_Attributes_050E[] = {
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1491,16 +1238,22 @@ const matter_attribute_t matter_Attributes_0B04[] = {
   { 0x050B, 0, 0x02, "ActivePower" },
   { 0x050C, 0, 0x02, "ActivePowerMin" },
   { 0x050D, 0, 0x02, "ActivePowerMax" },
-  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
-  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
 const matter_command_t matter_Commands_0B04[] = {
   { 0xFFFF, NULL },
+};
+
+// specifal cluster for attributes common to all clusters
+const matter_attribute_t matter_Attributes_Common[] = {
+  { 0xFFF8, 0, 0x02, "GeneratedCommandList" },
+  { 0xFFF9, 0, 0x02, "AcceptedCommandList" },
+  { 0xFFFA, 0, 0x02, "EventList" },
+  { 0xFFFB, 0, 0x02, "AttributeList" },
+  { 0xFFFC, 0, 0x02, "FeatureMap" },
+  { 0xFFFD, 0, 0x02, "ClusterRevision" },
+  { 0xFFFF, 0, 0x00, NULL },
 };
 
 const matter_cluster_t matterAllClusters[] = {
@@ -1531,6 +1284,7 @@ const matter_cluster_t matterAllClusters[] = {
   // { 0x0035, "ThreadNetworkDiagnostics", matter_Attributes_0035, matter_Commands_0035 },
   { 0x0036, "WiFiNetworkDiagnostics", matter_Attributes_0036, matter_Commands_0036 },
   { 0x0037, "EthernetNetworkDiagnostics", matter_Attributes_0037, matter_Commands_0037 },
+  { 0x0038, "TimeSync", matter_Attributes_0038, matter_Commands_0038 },
   { 0x0039, "BridgedDeviceBasic", matter_Attributes_0039, matter_Commands_0039 },
   { 0x003B, "Switch", matter_Attributes_003B, matter_Commands_003B },
   { 0x003C, "AdministratorCommissioning", matter_Attributes_003C, matter_Commands_003C },

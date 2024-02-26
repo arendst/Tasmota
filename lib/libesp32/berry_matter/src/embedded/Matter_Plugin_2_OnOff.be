@@ -35,7 +35,7 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
-    0x0006: [0,0xFFFC,0xFFFD],                      # On/Off 1.5 p.48
+    0x0006: [0],                                    # On/Off 1.5 p.48
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power")
   static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
@@ -109,15 +109,10 @@ class Matter_Plugin_OnOff : Matter_Plugin_Device
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
         return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

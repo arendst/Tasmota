@@ -35,7 +35,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     # 0x0006: inherited                             # On/Off 1.5 p.48
     # 0x0008: inherited                             # Level Control 1.6 p.57
-    0x0300: [0,1,7,8,0xF,0x4001,0x400A,0xFFFC,0xFFFD],# Color Control 3.2 p.111
+    0x0300: [0,1,7,8,0xF,0x4001,0x400A],            # Color Control 3.2 p.111
   })
   static var TYPES = { 0x010D: 2 }                  # Extended Color Light
 
@@ -126,16 +126,10 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
         return tlv_solo.set(TLV.U1, 0)
-
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x01)    # HS
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 5)    # "new data model format and notation, FeatureMap support"
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

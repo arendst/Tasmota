@@ -99,7 +99,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_valid = true;
 }
 
-void TasmotaSerial::end(bool turnOffDebug) {
+void TasmotaSerial::end(void) {
 #ifdef ESP8266
   if (m_hardserial) {
 //    Serial.end();  // Keep active for logging
@@ -117,7 +117,7 @@ void TasmotaSerial::end(bool turnOffDebug) {
 #ifdef ESP32
 //  Serial.printf("TSR: Freeing UART%d\n", m_uart);
 
-  TSerial->end(turnOffDebug);
+  TSerial->end();
   bitClear(tasmota_serial_uart_bitmap, m_uart);
 #endif  // ESP32
 }

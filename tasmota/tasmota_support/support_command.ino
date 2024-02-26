@@ -251,6 +251,10 @@ void CmndWifiTest(void)
 
 #endif  // not defined FIRMWARE_MINIMAL_ONLY
 
+void ResponseCmnd(void) {
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+}
+
 void ResponseCmndNumber(int value) {
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
 }
@@ -491,64 +495,6 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   TasmotaGlobal.fallback_topic_flag = false;
 }
 
-/********************************************************************************************/
-
-bool SetTimedCmnd(uint32_t time, const char *command) {
-  uint32_t now = millis();
-  // Try to use the same slot if command is already present
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strcmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str())) {
-        // Stored command already present
-        TasmotaGlobal.timed_cmnd[i].time = now + time;
-        if (0 == TasmotaGlobal.timed_cmnd[i].time) {   // Skip empty slot flag
-          TasmotaGlobal.timed_cmnd[i].time++;
-        }
-        return true;
-      }
-    }
-  }
-  // Try to find an empty slot and add command
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (0 == TasmotaGlobal.timed_cmnd[i].time) {       // Free slot
-      TasmotaGlobal.timed_cmnd[i].command = command;
-      TasmotaGlobal.timed_cmnd[i].time = now + time;
-      if (0 == TasmotaGlobal.timed_cmnd[i].time) {     // Skip empty slot flag
-        TasmotaGlobal.timed_cmnd[i].time++;
-      }
-      return true;
-    }
-  }
-  AddLog(LOG_LEVEL_INFO, PSTR("TIM: No more timer slots left"));
-  return false;
-}
-
-void ResetTimedCmnd(const char *command) {
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if (TasmotaGlobal.timed_cmnd[i].time != 0) {
-      if (!strncmp(command, TasmotaGlobal.timed_cmnd[i].command.c_str(), strlen(command))) {
-        // Stored command starts with command
-        TasmotaGlobal.timed_cmnd[i].time = 0;
-        TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      }
-    }
-  }
-}
-
-void LoopTimedCmnd(void) {
-  uint32_t now = millis();
-  for (uint32_t i = 0; i < MAX_TIMED_CMND; i++) {
-    if ((TasmotaGlobal.timed_cmnd[i].time > 0) && (now > TasmotaGlobal.timed_cmnd[i].time)) {
-      TasmotaGlobal.timed_cmnd[i].time = 0;
-      String cmd = TasmotaGlobal.timed_cmnd[i].command;
-      TasmotaGlobal.timed_cmnd[i].command = (const char*) nullptr;  // Force deallocation of the String internal memory
-      ExecuteCommand((char*)cmd.c_str(), SRC_TIMER);
-    }
-  }
-}
-
-/********************************************************************************************/
-
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
@@ -559,14 +505,7 @@ void CmndBacklog(void) {
     }
 
     char *blcommand = strtok(XdrvMailbox.data, ";");
-#ifdef SUPPORT_IF_STATEMENT
-    while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
-#else
-    uint32_t bl_pointer = (!TasmotaGlobal.backlog_pointer) ? MAX_BACKLOG -1 : TasmotaGlobal.backlog_pointer;
-    bl_pointer--;
-    while ((blcommand != nullptr) && (TasmotaGlobal.backlog_index != bl_pointer))
-#endif
-    {
+    while (blcommand != nullptr) {
       // Ignore semicolon (; = end of single command) between brackets {}
       char *next = strchr(blcommand, '\0') +1;  // Prepare for next ;
       while ((next != nullptr) && (ChrCount(blcommand, "{") != ChrCount(blcommand, "}"))) {  // Check for valid {} pair
@@ -585,17 +524,12 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-#ifdef SUPPORT_IF_STATEMENT
-        if (backlog.size() < MAX_BACKLOG) {
-          backlog.add(blcommand);
+        char* temp = (char*)malloc(strlen(blcommand)+1);
+        if (temp != nullptr) {
+          strcpy(temp, blcommand);
+          char* &elem = backlog.addToLast();
+          elem = temp;
         }
-#else
-        TasmotaGlobal.backlog[TasmotaGlobal.backlog_index] = blcommand;
-        TasmotaGlobal.backlog_index++;
-        if (TasmotaGlobal.backlog_index >= MAX_BACKLOG) {
-          TasmotaGlobal.backlog_index = 0;
-        }
-#endif
       }
       blcommand = strtok(nullptr, ";");
     }
@@ -604,11 +538,10 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
-#ifdef SUPPORT_IF_STATEMENT
-    backlog.clear();
-#else
-    TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
-#endif
+    for (auto &elem : backlog) {
+      free(elem);
+      backlog.remove(&elem);
+    }
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
@@ -648,31 +581,6 @@ void CmndJson(void) {
     // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
     // Output:
     // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
-/*
-    String backlog;
-    for (auto command_key : root) {
-      const char *command = command_key.getStr();
-      JsonParserToken parameters = command_key.getValue();
-      if (parameters.isArray()) {
-        JsonParserArray parameter_arr = parameters.getArray();
-        uint32_t index = 1;
-        for (auto value : parameter_arr) {
-          backlog = command;
-          backlog += index++;
-          backlog += " ";
-          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
-          ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-        }
-      } else if (parameters.isObject()) {       // Should have been escaped
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
-      } else {
-        backlog = command;
-        backlog += " ";
-        backlog += parameters.getStr();         // HSBColor 51,97,100
-        ExecuteCommand((char*)backlog.c_str(), SRC_FILE);
-      }
-    }
-*/
     String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
@@ -751,11 +659,76 @@ void CmndPower(void)
   }
 }
 
+/********************************************************************************************/
+
+typedef struct {
+  uint32_t time;
+  char*    command;
+} tTimedCmnd;
+LList<tTimedCmnd> timed_cmnd;          // Timed command buffer
+
+bool SetTimedCmnd(uint32_t time, const char *command) {
+  // Remove command if present
+  for (auto &elem : timed_cmnd) {
+    if (strcmp(command, elem.command) == 0) {  // Equal
+      free(elem.command);
+      timed_cmnd.remove(&elem);
+      break;
+    }
+  }
+  // Add command
+  char* cmnd = (char*)malloc(strlen(command) +1);
+  if (cmnd) {
+    strcpy(cmnd, command);
+    tTimedCmnd &elem = timed_cmnd.addToLast();
+    elem.time = millis() + time;
+    elem.command = cmnd;
+    return true;
+  }
+  return false;
+}
+
+void ResetTimedCmnd(const char *command) {
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      free(elem.command);
+      timed_cmnd.remove(&elem);
+    }
+  }
+}
+
+void ShowTimedCmnd(const char *command) {
+  bool found = false;
+  uint32_t now = millis();
+  ResponseCmnd();     // {"TimedPower":
+  for (auto &elem : timed_cmnd) {
+    if (strncmp(command, elem.command, strlen(command)) == 0) {  // StartsWith
+      ResponseAppend_P(PSTR("%s{\"" D_JSON_REMAINING "\":%d,\"" D_JSON_COMMAND "\":\"%s\"}"),
+        (found) ? "," : "[", elem.time - now, elem.command);
+      found = true;
+    }
+  }
+  ResponseAppend_P((found) ? PSTR("]}") : PSTR("\"" D_JSON_EMPTY "\"}"));
+}
+
+void LoopTimedCmnd(void) {
+  for (auto &elem : timed_cmnd) {
+    if (TimeReached(elem.time)) {
+      char* command = elem.command;
+      timed_cmnd.remove(&elem);
+      ExecuteCommand(command, SRC_TIMER);
+      free(command);
+    }
+  }
+}
+
+/*------------------------------------------------------------------------------------------*/
+
 void CmndTimedPower(void) {
   /*
   Allow timed power changes on a 50ms granularity
   TimedPower<index> <milliseconds>[,0|1|2|3]
-  TimedPower                 - Clear active power timers
+  TimedPower                 - Show remaining timers
   TimedPower 2000            - Turn power1 on and then off after 2 seconds
   TimedPower1                - Clear active Power1 timers
   TimedPower1 0              - Stop timer and perform timed action
@@ -764,7 +737,7 @@ void CmndTimedPower(void) {
   TimedPower2 2000,0|off     - Turn power2 off and then on after 2 seconds
   TimedPower1 2200,1|on      - Turn power1 on and then off after 2.2 seconds
   TimedPower2 2000,2|toggle  - Toggle power2 and then toggle again after 2 seconds
-  TimedPower2 2500,3|blink   - Blink power2 and then turn off after 2.5 seconds
+  TimedPower2 2500,3|blink   - Blink power2 and then stop blink after 2.5 seconds
   */
   if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
     if (XdrvMailbox.data_len > 0) {
@@ -779,16 +752,18 @@ void CmndTimedPower(void) {
         }
         start_state &= 0x03;                    // POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
       }
-      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_OFF };
+      const uint8_t end_state[] = { POWER_ON, POWER_OFF, POWER_TOGGLE, POWER_BLINK_STOP };
       char cmnd[CMDSZ];
       snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d %d"), XdrvMailbox.index, end_state[start_state]);
-      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more timers left (MAX_TIMED_CMND)
+      if (SetTimedCmnd(time, cmnd)) {           // Skip if no more room for timers
         XdrvMailbox.payload = start_state;
         CmndPower();
       }
     } else {
       if (!XdrvMailbox.usridx) {
-        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+//        ResetTimedCmnd(D_CMND_POWER);           // Remove all POWER timed command
+        ShowTimedCmnd(D_CMND_POWER);            // Show remaining timers
+        return;
       } else {
         char cmnd[CMDSZ];
         snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_POWER "%d"), XdrvMailbox.index);
@@ -798,6 +773,8 @@ void CmndTimedPower(void) {
     }
   }
 }
+
+/********************************************************************************************/
 
 void CmndStatusResponse(uint32_t index) {
   static String all_status = (const char*) nullptr;
@@ -975,7 +952,8 @@ void CmndStatus(void)
 #ifdef USE_TASMESH
     ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
 #endif  // USE_TASMESH
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
 #ifdef USE_IPV6
     ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""

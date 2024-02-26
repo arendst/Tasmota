@@ -34,7 +34,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
-    0x0102: [0,5,7,0xA,0xB,0xD,0xE,0x17,0xFFFC,0xFFFD],                      # Window Covering 5.3 p.289
+    0x0102: [0,5,7,0xA,0xB,0xD,0xE,0x17],           # Window Covering 5.3 p.289
   })
   static var TYPES = { 0x0202: 2 }                  # New data model format and notation
 
@@ -129,16 +129,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
 
       elif attribute == 0x0017          #  ---------- Mode / u8 ----------
         return tlv_solo.set(TLV.U1, 0)    # normal mode
-
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 1 + 4)    # Lift + PA_LF
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 5)    # New data model format and notation
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

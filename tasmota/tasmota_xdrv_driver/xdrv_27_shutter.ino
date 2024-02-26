@@ -1297,11 +1297,15 @@ void CmndShutterPosition(void)
       }
 
       // value 0 with data_len > 0 can mean Open
-      // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
-      // STOP will come with payload 0 because predefined value in TASMOTA
-      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
-        // set len to 0 to avoid loop on close where payload is 0
-        XdrvMailbox.data_len = 0;
+      // special handling fo UP,DOWN,TOGGLE,STOP and similar commands command 
+      // 
+      if ( XdrvMailbox.data_len > 0 ) {
+        // set len to 0 to avoid loop 
+        uint32_t data_len_save = XdrvMailbox.data_len;
+        int32_t  payload_save  = XdrvMailbox.payload;
+        XdrvMailbox.data_len   = 0;
+        XdrvMailbox.payload    = -99;
+	      
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
@@ -1319,11 +1323,12 @@ void CmndShutterPosition(void)
           return;
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter[index].direction) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
-          // Back to normal: all -99 if not a clear position
-          XdrvMailbox.payload = -99;
           CmndShutterStop();
           return;
         }
+        // restore values
+        XdrvMailbox.payload  = payload_save;
+        XdrvMailbox.data_len = data_len_save;
       }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);

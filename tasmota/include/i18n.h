@@ -95,6 +95,7 @@
 #define D_JSON_HALLEFFECT "HallEffect"
 #define D_JSON_HALTING "Halting"
 #define D_JSON_HEAPSIZE "Heap"
+#define D_JSON_HEATINDEX "HeatIndex"
 #define D_JSON_HIGH "High"
 #define D_JSON_HOST_NOT_FOUND "Host not found"
 #define D_JSON_FILE_NOT_FOUND "File not found"
@@ -700,6 +701,7 @@
 #define D_CMND_ZIGBEE_SCAN "Scan"
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
 #define D_CMND_ZIGBEE_CIE "CIE"
+#define D_CMND_ZIGBEE_EMULATION "Emulation"
 #define D_CMND_ZIGBEE_ENROLL "Enroll"
 #define D_CMND_ZIGBEE_LOAD "Load"
 #define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
@@ -753,6 +755,7 @@
 #define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
 #define D_CMND_SHUTTER_MOTORSTOP "MotorStop"
 #define D_CMND_SHUTTER_SETUP "Setup"
+#define D_CMD_SHUTTER_EXTRASTOPRELAY "StopRelay"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -947,6 +950,7 @@ const char HTTP_SNS_F_ABS_HUM[]     PROGMEM = "{s}%s "  D_ABSOLUTE_HUMIDITY   "{
 
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
+const char HTTP_SNS_HEATINDEX[]     PROGMEM = "{s}%s "  D_HEATINDEX           "{m}%s " D_UNIT_DEGREE            "%c{e}";
 const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{m}%s "                          "%s{e}";
 const char HTTP_SNS_SEAPRESSURE[]   PROGMEM = "{s}%s "  D_PRESSUREATSEALEVEL  "{m}%s "                          "%s{e}";
 const char HTTP_SNS_ANALOG[]        PROGMEM = "{s}%s "  D_ANALOG_INPUT      "%d{m}%d"                             "{e}";

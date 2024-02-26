@@ -60,7 +60,6 @@
 
 #define XSNS_62                    62
 
-#include <NimBLEDevice.h>
 // undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
 #undef LOG_LEVEL_DEBUG
 #undef LOG_LEVEL_NONE
@@ -95,11 +94,12 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.mode.connected = 1;
     pclient->updateConnParams(8,11,0,1000);
   }
-  void onDisconnect(NimBLEClient* pclient) {
+  void onDisconnect(NimBLEClient* pclient, int reason) {
     MI32.mode.connected = 0;
     MI32.infoMsg = MI32_DID_DISCONNECT;
-    MI32.conCtx->error = MI32_CONN_DID_DISCCONNECT;
-    MI32.mode.triggerBerryConnCB = 1; //mainly for unexpected or requested disconnects
+    MI32.conCtx->error = reason;
+    MI32.conCtx->operation = 5; //set for all disconnects that come from the remote device or connection loss
+    MI32.mode.triggerBerryConnCB = 1;
     //AddLog(LOG_LEVEL_DEBUG,PSTR("disconnected"));
   }
 };
@@ -138,10 +138,14 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
     if(UUID==0xfe95) {
       MI32ParseResponse((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
-    else if(UUID==0xfdcd) {
+    else if(UUID==0xfcd2) {
+      std::string optionalName = advertisedDevice->getName();
+      MI32parseBTHomePacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI, optionalName.c_str());
+    }
+    else if(UUID==0xfdcd) { // deprecated
       MI32parseCGD1Packet((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
-    else if(UUID==0x181a) { //ATC and PVVX
+    else if(UUID==0x181a) { //ATC and PVVX - deprecated, change FW setting of these devices to BTHome V2
       MI32ParseATCPacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
   _mutex = false;
@@ -435,7 +439,7 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
  * @param _type       Type number of the sensor
  * @return uint32_t   Known or new slot in the sensors-vector
  */
-uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter){
+uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
   DEBUG_SENSOR_LOG(PSTR("%s: will test ID-type: %x"),D_CMND_MI32, _type);
   uint16_t _pid = _type; // save for unknown types
   bool _success = false;
@@ -450,7 +454,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
 
   DEBUG_SENSOR_LOG(PSTR("%s: vector size %u"),D_CMND_MI32, MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
-    if(memcmp(_MAC,MIBLEsensors[i].MAC,sizeof(_MAC))==0){
+    if(memcmp(_MAC,MIBLEsensors[i].MAC,6)==0){
       DEBUG_SENSOR_LOG(PSTR("%s: known sensor at slot: %u"),D_CMND_MI32, i);
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Counters: %x %x"),MIBLEsensors[i].lastCnt, counter);
       if(MIBLEsensors[i].lastCnt==counter) {
@@ -468,7 +472,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
   }
   DEBUG_SENSOR_LOG(PSTR("%s: found new sensor"),D_CMND_MI32);
   mi_sensor_t _newSensor;
-  memcpy(_newSensor.MAC,_MAC, sizeof(_MAC));
+  memcpy(_newSensor.MAC,_MAC, 6);
   _newSensor.PID = _pid;
   _newSensor.type = _type;
   _newSensor.eventType.raw = 0;
@@ -508,7 +512,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.motion=1;
       _newSensor.feature.NMT=1;
       _newSensor.feature.lux=1;
-      _newSensor.feature.bat=1;
       _newSensor.feature.bat=1;
       _newSensor.NMT=0;
       break;
@@ -579,20 +582,20 @@ void MI32addHistory(uint8_t *history, float value, uint32_t type){
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history hour: %u"),_hour);
   switch(type){
     case 0:  //temperature
-      history[_hour] = (((uint8_t)(value + 5.0f)/4)+1) + 0b10000000; //temp
+      history[_hour] = ((((value + 5.0f)/4) + 1) + 0b10000000); //temp
       break;
     case 1: //humidity
-      history[_hour] = (((uint8_t)(value/5 ))+1) + 0b10000000; //hum
+      history[_hour] = (((value/5.0f) + 1) + 0b10000000) ; //hum
       break;
     case 2: //light
       if(value>100.0f) value=100.0f; //clamp it for now
-      history[_hour] = (((uint8_t)(value/5.0f))+1) + 0b10000000; //lux
+      history[_hour] = (((value/5.0f) + 1) + 0b10000000); //lux
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history lux: %u in hour:%u"),history[_hour], _hour);
       break;
 #ifdef USE_MI_ESP32_ENERGY
     case 100: // energy
       if(value == 0.0f) value = 1.0f;
-      uint8_t _watt = ((uint8_t)(MI32ln(value))*2) + 0b10000000; //watt
+      uint8_t _watt = ((MI32ln(value)*2) + 0b10000000); //watt
       history[_hour] = _watt;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history energy: %u for value:%u"),history[_hour], value); //still playing with the mapping
       break;
@@ -996,6 +999,9 @@ void MI32saveConfig(){
     char _name_feat[64];
     if(_sensor.name != nullptr){
       snprintf_P(_name_feat,64,PSTR(",\"name\":\"%s\",\"feat\":%u"),_sensor.name,_sensor.feature.raw);
+    }
+    else if(_sensor.type == BTHOME && _sensor.name == nullptr){
+      snprintf_P(_name_feat,64,PSTR(",\"feat\":%u"),_sensor.feature.raw);
     }
     else{
       _name_feat[0] = 0;
@@ -1812,6 +1818,71 @@ if(decryptRet!=0){
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
 }
 
+void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI, const char* optionalName){
+  uint32_t _slot;
+  _slot = MIBLEgetSensorSlot(addr, 0xb770, 0); // fake ID, constant fake counter
+  if (optionalName[0] != '\0'){
+      AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), optionalName,_slot);
+  }
+  MIBLEsensors[_slot].RSSI = RSSI;
+  MIBLEsensors[_slot].lastTime = millis();
+
+  BTHome_info_t info;
+  info.byte_value = _buf[0];
+  MIBLEsensors[_slot].feature.needsKey = info.encrypted;
+
+  uint32_t idx = 1;
+  while(idx < length - 1){
+    switch(_buf[idx]){
+      case 0:
+        if(_buf[idx+1] == MIBLEsensors[_slot].lastCnt){
+          return; // known packet
+        }
+        MIBLEsensors[_slot].lastCnt = _buf[idx+1];
+        idx += 2;
+        break;
+      case 1:
+        MIBLEsensors[_slot].bat = _buf[idx+1];
+        MIBLEsensors[_slot].eventType.bat = 1;
+        MIBLEsensors[_slot].feature.bat = 1;
+        idx += 2;
+      break;
+      case 2:
+        MIBLEsensors[_slot].temp = (int16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+        MIBLEsensors[_slot].eventType.temp = 1;
+        MIBLEsensors[_slot].feature.temp = 1;
+        MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
+        idx += 3;
+        break;
+      case 3:
+        MIBLEsensors[_slot].hum = (uint16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+        MIBLEsensors[_slot].eventType.hum = 1;
+        MIBLEsensors[_slot].feature.hum = 1;
+        MI32addHistory(MIBLEsensors[_slot].hum_history, (float)MIBLEsensors[_slot].hum, 1);
+        idx += 3;
+        break;
+      case 0x0b:
+        // power ??
+        idx += 2;
+        break;
+      case 0x0c:
+        //voltage
+        idx += 2;
+        break;
+      default:
+        AddLog(LOG_LEVEL_INFO,PSTR("M32: unknown BTHome data type: %u, discard rest of data buffer!"),_buf[idx]);
+        AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)_buf,length);
+        idx = length; // "break"
+        break;
+    }
+  }
+#ifdef USE_MI_EXT_GUI
+  bitSet(MI32.widgetSlot,_slot);
+#endif //USE_MI_EXT_GUI
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+  if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
+}
+
 void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){
   ATCPacket_t *_packet = (ATCPacket_t*)_buf;
   bool isATC = (length == 0x0d);
@@ -1846,7 +1917,6 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
 #endif //USE_MI_EXT_GUI
   MIBLEsensors[_slot].shallSendMQTT = 1;
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
-
 }
 
 void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){ // no MiBeacon
@@ -2050,6 +2120,10 @@ void CmndMi32Key(void) {
 }
 
 void CmndMi32Name(void) {
+  if(XdrvMailbox.index > MIBLEsensors.size() - 1){
+    ResponseCmndDone();
+    return;
+  }
   if(MIBLEsensors[XdrvMailbox.index].name != nullptr){
     delete []MIBLEsensors[XdrvMailbox.index].name;
   }

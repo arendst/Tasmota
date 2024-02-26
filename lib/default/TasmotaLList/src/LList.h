@@ -59,9 +59,9 @@ public:
   ~LList() { reset(); }
 
   // remove elements
-  void removeHead(void);      // remove first element
+  T * removeHead(void);      // remove first element
   void reset(void);           // remove all elements
-  void remove(const T * val);
+  const T * remove(const T * val);
 
   // read the list
   inline bool isEmpty(void) const { return (_head == nullptr) ? true : false; }
@@ -77,6 +77,7 @@ public:
   T & addHead(void);
   T & addHead(const T &val);
   T & addToLast(void);
+  T & insertAt(size_t index);
   // add an element allocated externally
   // memory is free by us now -- don't free it!
   T & addHead(LList_elt<T> * elt);
@@ -142,17 +143,20 @@ void LList<T>::reset(void) {
 }
 
 template <typename T>
-void LList<T>::removeHead(void) {
+T * LList<T>::removeHead(void) {
   if (_head) {
+    T * orginal_head = &_head->_val;
     LList_elt<T> * next = _head->next();
     delete _head;
     _head = next;
+    return orginal_head;
   }
+  return nullptr;
 }
 
 template <typename T>
-void LList<T>::remove(const T * val) {
-  if (nullptr == val) { return; }
+const T * LList<T>::remove(const T * val) {
+  if (nullptr == val) { return val; }
   // find element in chain and find pointer before
   LList_elt<T> **curr_ptr = &_head;
   while (*curr_ptr) {
@@ -164,6 +168,7 @@ void LList<T>::remove(const T * val) {
     }
     curr_ptr = &((*curr_ptr)->_next);   // move to next element
   }
+  return val;
 }
 
 template <typename T>
@@ -199,6 +204,27 @@ T & LList<T>::addToLast(void) {
   LList_elt<T> * elt = new LList_elt<T>();  // create element
   *curr_ptr = elt;
   return elt->_val;
+}
+
+template <typename T>
+T & LList<T>::insertAt(size_t index) {
+  if (0 == index) {
+    return addHead();    // insert at the head
+  }
+  index--;
+  LList_elt<T> **curr_ptr = &_head;
+  size_t count = 0;
+  while (*curr_ptr) {
+    if (count == index) {
+      LList_elt<T> * elt = new LList_elt<T>();  // create element
+      elt->next((*curr_ptr)->next());
+      (*curr_ptr)->next(elt);
+      return elt->_val;
+    }
+    curr_ptr = &((*curr_ptr)->_next);
+    count++;
+  }
+  return addToLast();
 }
 
 template <typename T>

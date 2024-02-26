@@ -17,6 +17,25 @@
 #endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif
 
+enum {
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_END
+};
+
+#define RA8876_DATA_WRITE  0x80
+#define RA8876_DATA_READ   0xC0
+#define RA8876_CMD_WRITE   0x00
+#define RA8876_STATUS_READ 0x40
+
+#define UDSP_WRITE_16 0xf0
+#define UDSP_READ_DATA 0xf1
+#define UDSP_READ_STATUS 0xf2
+
+
+#define SIMPLERS_XP par_dbl[1]
+#define SIMPLERS_XM par_cs
+#define SIMPLERS_YP par_rs
+#define SIMPLERS_YM par_dbl[0]
+
 #ifdef USE_ESP32_S3
 #include <esp_lcd_panel_io.h>
 #include "esp_private/gdma.h"
@@ -100,6 +119,8 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define GPIO_CLR(A) GPIO.out_w1tc = (1 << A)
 #define GPIO_SET(A) GPIO.out_w1ts = (1 << A)
 #endif
+
+
 
 
 #define GPIO_CLR_SLOW(A) digitalWrite(A, LOW)
@@ -190,6 +211,13 @@ class uDisplay : public Renderer {
   void invertDisplay(boolean i);
   void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
   void SetDimCB(dim_cb cb) { dim_cbp = cb; };
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  bool utouch_Init(char **name);
+  uint16_t touched(void);
+  int16_t getPoint_x();
+  int16_t getPoint_y();
+#endif // USE_UNIVERSAL_TOUCH
 
  private:
    void beginTransaction(SPISettings s);
@@ -213,6 +241,9 @@ class uDisplay : public Renderer {
    void write16(uint16_t val);
    void write32(uint32_t val);
    void spi_data9(uint8_t d, uint8_t dc);
+   uint8_t readData(void);
+   uint8_t readStatus(void);
+   uint8_t writeReg16(uint8_t reg, uint16_t wval);
    void WriteColor(uint16_t color);
    void SetLut(const unsigned char* lut);
    void SetLuts(void);
@@ -245,6 +276,7 @@ class uDisplay : public Renderer {
    uint8_t interface;
    uint8_t i2caddr;
    int8_t i2c_scl;
+   int8_t spec_init;
    TwoWire *wire;
    int8_t wire_n;
    int8_t i2c_sda;
@@ -411,6 +443,33 @@ class uDisplay : public Renderer {
    void pushPixelsDMA(uint16_t* image, uint32_t len);
    void pushPixels3DMA(uint8_t* image, uint32_t len);
 #endif // ESP32
+
+#ifdef USE_UNIVERSAL_TOUCH
+// universal touch driver
+  void ut_trans(char **sp, uint8_t **ut_code);
+  int16_t ut_execute(uint8_t *ut_code);
+  uint32_t ut_par(char **cp, uint32_t mode);
+  uint8_t *ut_rd(uint8_t *io, uint32_t len, uint32_t amode);
+  uint8_t *ut_wr(uint8_t *io, uint32_t amode);
+  uint16_t ut_XPT2046(uint16_t zh);
+  int16_t besttwoavg( int16_t x , int16_t y , int16_t z );
+
+  uint8_t ut_array[16];
+  uint8_t ut_i2caddr;
+  uint8_t ut_spi_cs;
+  int8_t ut_reset;
+  int8_t ut_irq;
+  uint8_t ut_spi_nr;
+  TwoWire *ut_wire;
+  SPIClass *ut_spi;
+  SPISettings ut_spiSettings;
+  char ut_name[8];
+  uint8_t *ut_init_code;
+  uint8_t *ut_touch_code;
+  uint8_t *ut_getx_code;
+  uint8_t *ut_gety_code;
+
+#endif // USE_UNIVERSAL_TOUCH
 };
 
 

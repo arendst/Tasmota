@@ -579,6 +579,7 @@ bool IsNumeric(const char* value) {
 
 char* Trim(char* p) {
   // Remove leading and trailing tab, \n, \v, \f, \r and space
+  if (p == nullptr) { return p; }
   if (*p != '\0') {
     while ((*p != '\0') && isspace(*p)) { p++; }  // Trim leading spaces
     char* q = p + strlen(p) -1;
@@ -856,6 +857,38 @@ float CalcTempHumToDew(float t, float h) {
   }
   return result;
 }
+
+#ifdef USE_HEAT_INDEX
+float CalcTemHumToHeatIndex(float t, float h) {
+  if (isnan(h) || isnan(t)) { return NAN; }
+
+  if (!Settings->flag.temperature_conversion) {                // SetOption8 - Switch between Celsius or Fahrenheit
+    t = t * 1.8f + 32;                                         // Fahrenheit
+  }
+  float hi = 0.5 * (t + 61.0 + ((t - 68.0) * 1.2) + (h * 0.094));
+  if (hi > 79) {
+    float pt = t * t;  // pow(t, 2)
+    float ph = h * h;  // pow(h, 2)
+    hi = -42.379 + 2.04901523 * t + 10.14333127 * h +
+         -0.22475541 * t * h +
+         -0.00683783 * pt +
+         -0.05481717 * ph +
+         0.00122874 * pt * h +
+         0.00085282 * t * ph +
+         -0.00000199 * pt * ph;
+    if ((h < 13) && (t >= 80.0) && (t <= 112.0)) {
+      hi -= ((13.0 - h) * 0.25) * sqrtf((17.0 - abs(t - 95.0)) * 0.05882);
+    }
+    else if ((h > 85.0) && (t >= 80.0) && (t <= 87.0)) {
+      hi += ((h - 85.0) * 0.1) * ((87.0 - t) * 0.2);
+    }
+  }
+  if (!Settings->flag.temperature_conversion) {                // SetOption8 - Switch between Celsius or Fahrenheit
+    hi = (hi - 32) / 1.8f;                                     // Celsius
+  }
+  return hi;
+}
+#endif  // USE_HEAT_INDEX
 
 float CalcTempHumToAbsHum(float t, float h) {
   if (isnan(t) || isnan(h)) { return NAN; }
@@ -1337,13 +1370,19 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings->flag2.time_format);
 }
 
-int ResponseAppendTHD(float f_temperature, float f_humidity)
-{
+int ResponseAppendTHD(float f_temperature, float f_humidity) {
   float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
-  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
-                          Settings->flag2.temperature_resolution, &f_temperature,
-                          Settings->flag2.humidity_resolution, &f_humidity,
-                          Settings->flag2.temperature_resolution, &dewpoint);
+  int len = ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
+                             Settings->flag2.temperature_resolution, &f_temperature,
+                             Settings->flag2.humidity_resolution, &f_humidity,
+                             Settings->flag2.temperature_resolution, &dewpoint);
+#ifdef USE_HEAT_INDEX
+  float heatindex = CalcTemHumToHeatIndex(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
+  int len2 = ResponseAppend_P(PSTR(",\"" D_JSON_HEATINDEX "\":%*_f"),
+                              Settings->flag2.temperature_resolution, &heatindex);
+  return len + len2;                              
+#endif  // USE_HEAT_INDEX
+  return len;
 }
 
 int ResponseJsonEnd(void)
@@ -1679,8 +1718,10 @@ bool FlashPin(uint32_t pin) {
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C2
   return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
+#elif CONFIG_IDF_TARGET_ESP32C3
+  return ((pin > 13) && (pin < 18));   // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 11 12 13 are useable
 #elif CONFIG_IDF_TARGET_ESP32C6
   return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
@@ -1696,8 +1737,10 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
   return (9 == pin) || (10 == pin);
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
-  return (12 == pin) || (13 == pin);   // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
+#if CONFIG_IDF_TARGET_ESP32C2
+  return (12 == pin) || (13 == pin);   // ESP32C2: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32C3
+  return (11 == pin) || (12 == pin) || (13 == pin);  // ESP32C3: GPIOs 11 12 13 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32C6
   return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32S2
@@ -2565,6 +2608,15 @@ uint32_t HighestLogLevel() {
 }
 
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
+#ifdef ESP32
+  if (xPortInIsrContext()) {
+    // When called from an ISR, you should not send out logs.
+    // Allocating memory from within an ISR is a big no-no.
+    // Also long-time blocking like sending logs (especially to a syslog server) 
+    // is also really not a good idea from an ISR call.
+    return;
+  }
+#endif
   uint32_t highest_loglevel = HighestLogLevel();
 
   // If no logging is requested then do not access heap to fight fragmentation

@@ -216,6 +216,7 @@ enum UserSelectablePins {
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
   GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
   GPIO_PIPSOLAR_TX, GPIO_PIPSOLAR_RX,   // pipsolar inverter
+  GPIO_LORA_CS, GPIO_LORA_RST, GPIO_LORA_BUSY, GPIO_LORA_DI0, GPIO_LORA_DI1, GPIO_LORA_DI2, GPIO_LORA_DI3, GPIO_LORA_DI4, GPIO_LORA_DI5,  // LoRa SPI
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -479,6 +480,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_DAC "|"
   D_GPIO_MAGIC_SWITCH "|"
   D_SENSOR_PIPSOLAR_TX "|" D_SENSOR_PIPSOLAR_RX "|"
+  D_GPIO_LORA_CS "|" D_GPIO_LORA_RST "|" D_GPIO_LORA_BUSY "|" D_GPIO_LORA_DI "0|" D_GPIO_LORA_DI "1|" D_GPIO_LORA_DI "2|" D_GPIO_LORA_DI "3|" D_GPIO_LORA_DI "4|" D_GPIO_LORA_DI "5|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -618,6 +620,19 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MCP23XXX_DRV
   AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX,
 #endif  // USE_MCP23XXX_DRV
+#ifdef ESP32
+#ifdef USE_SPI_LORA
+  AGPIO(GPIO_LORA_CS),
+  AGPIO(GPIO_LORA_RST),
+  AGPIO(GPIO_LORA_BUSY),
+  AGPIO(GPIO_LORA_DI0),
+  AGPIO(GPIO_LORA_DI1),
+  AGPIO(GPIO_LORA_DI2),
+  AGPIO(GPIO_LORA_DI3),
+  AGPIO(GPIO_LORA_DI4),
+  AGPIO(GPIO_LORA_DI5),
+#endif  // USE_SPI_LORA
+#endif  // ESP32
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)
@@ -731,9 +746,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DS18x20
   AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
-#ifdef ESP8266
   AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
-#endif  // ESP8266
 #endif  // USE_DS18x20
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),                    // LMT01, count pulses on GPIO

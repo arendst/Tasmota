@@ -4,7 +4,7 @@
       "ldscript": "esp32s2_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DBOARD_HAS_PSRAM -DESP32_4M -DESP32S2",
+    "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DESP32_4M -DESP32S2",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dio",
@@ -19,7 +19,6 @@
     "openocd_target": "esp32s2.cfg"
   },
   "frameworks": [
-    "espidf",
     "arduino"
   ],
   "name": "Espressif Generic ESP32-S2 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",

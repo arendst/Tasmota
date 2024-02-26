@@ -657,7 +657,7 @@ void DomoticzSaveSettings(void) {
     snprintf_P(arg_idx, sizeof(arg_idx), PSTR("l%d"), i -1);
     cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
   }
-  ExecuteWebCommand((char*)cmnd.c_str());  // Note: beware of max number of commands in backlog currently 30 (MAX_BACKLOG)
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 #endif  // USE_WEBSERVER
 

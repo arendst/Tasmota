@@ -85,6 +85,10 @@ uint32_t ESP_getSketchSize(void) {
   return ESP.getSketchSize();
 }
 
+uint32_t ESP_getHeapSize(void) {
+  return 32768;  // Using default heap (No PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED)
+}
+
 uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
 }
@@ -98,6 +102,10 @@ float ESP_getFreeHeap1024(void) {
 }
 */
 
+uint32_t ESP_getMaxAllocHeap(void) {
+  return ESP.getFreeHeap();
+}
+
 uint32_t ESP_getFlashChipId(void) {
   return ESP.getFlashChipId();
 }
@@ -108,6 +116,18 @@ uint32_t ESP_getFlashChipRealSize(void) {
 
 uint32_t ESP_getFlashChipSize(void) {
   return ESP.getFlashChipSize();
+}
+
+uint32_t ESP_getPsramSize(void) {
+  return 0;
+}
+
+uint32_t ESP_getFreePsram(void) {
+  return 0;
+}
+
+uint32_t ESP_getMaxAllocPsram(void) {
+  return 0;
 }
 
 void ESP_Restart(void) {
@@ -195,6 +215,47 @@ String GetDeviceHardwareRevision(void) {
 
 String GetCodeCores(void) {
   return F("");
+}
+
+uint32_t ESP_getChipCores(void) {
+  return 1;
+}
+
+uint32_t ESP_getChipRevision(void) {
+  return 1;
+}
+
+String ESP_getEfuseMac(void) {
+  uint32_t mac0 = *(uint32_t*)(0x3FF00050);
+  uint32_t mac1 = *(uint32_t*)(0x3FF00054);
+  uint32_t mac3 = *(uint32_t*)(0x3FF0005C);
+  uint32_t mach = 0;
+  uint32_t macl = 0;
+  if (mac3 != 0) {
+    macl = (mac3 >> 16) & 0xFF;
+    macl |= ((mac3 >> 8) & 0xFF) << 8;
+    macl |= (mac3 & 0xFF) << 16;
+  }
+  else if (((mac1 >> 16) & 0xFF) == 0) {
+    macl = 0x34FE18;
+  }
+  else if (((mac1 >> 16) & 0xFF) == 1) {
+    macl = 0x74D0AC;
+  }
+  String macStr = "";
+  if (macl > 0) {
+    mach = (mac1 >> 8) & 0xFF;
+    mach |= (mac1 & 0xFF) << 8;
+    mach |= ((mac0 >> 24) & 0xFF) << 16;
+
+    uint64_t maca = ((uint64_t)mach << 24) | macl;
+    // Need uint64ToString with base 10 as ESP8266 WStrings does not support uint64_t
+    while (maca > 0) {
+      macStr = String((uint32_t)(maca % 10), 10) + macStr;
+      maca /= 10;
+    }
+  }
+  return String(macStr);
 }
 
 /*********************************************************************************************\
