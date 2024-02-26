@@ -10,7 +10,7 @@
 #ifdef USE_SPI_LORA
 #ifdef USE_LORA_SX127X
 /*********************************************************************************************\
- * Semtech SX1276/77/78/79 Long Range (LoRa)
+ * Legacy Semtech SX1276/77/78/79 Long Range (LoRa)
  * - HopeRF RFM95W, RFM96W and RFM98W
  * - LilyGo TTGO T3 LoRa32 868MHz ESP32 (uses SX1276)
  * - LilyGo TTGO T-Higrow 868MHz (uses SX1276)
@@ -27,9 +27,7 @@
  * - LoRa_DIO0
 \*********************************************************************************************/
 
-#include <LoRa.h>
-
-/*********************************************************************************************/
+#include <LoRa.h>                          // extern LoRaClass LoRa;
 
 void LoraOnCadDoneSx127x(boolean signalDetected) {
   if (signalDetected) {                    // detect preamble

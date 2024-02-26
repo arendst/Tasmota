@@ -10,7 +10,7 @@
 #ifdef USE_SPI_LORA
 #ifdef USE_LORA_SX126X
 /*********************************************************************************************\
- * Semtech SX1261/62 Long Range (LoRa)
+ * Latest Semtech SX1261/62 Long Range (LoRa)
  * - LilyGo T3S3 LoRa32 868MHz ESP32S3 (uses SX1262)
  * - LilyGo TTGO T-Weigh ESP32 LoRa 868MHz HX711 (uses SX1262)
  * - Heltec (CubeCell) (uses SX1262)
@@ -27,9 +27,7 @@
 \*********************************************************************************************/
 
 #include <RadioLib.h>
-SX1262 LoRaRadio = nullptr;
-
-/*********************************************************************************************/
+SX1262 LoRaRadio = nullptr;               // Select LoRa support
 
 void LoraOnReceiveSx126x(void) {
   if (!Lora.enableInterrupt) { return; }  // check if the interrupt is enabled
@@ -140,8 +138,11 @@ bool LoraConfigSx126x(void) {
 }
 
 bool LoraInitSx126x(void) {
-//    LoRa = new Module(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_DI1), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_BUSY));
-  LoRaRadio = new Module(Pin(GPIO_LORA_CS), 33, Pin(GPIO_LORA_RST), 34);
+  int lora_di1 = Pin(GPIO_LORA_DI1);
+  if (lora_di1 == -1) { lora_di1 = 33; }    // Workaround support user config of GPIO33 on ESP32S3 for LilyGo T3S3
+  int lora_busy = Pin(GPIO_LORA_BUSY);
+  if (lora_busy == -1) { lora_busy = 34; }  // Workaround support user config of GPIO34 on ESP32S3 for LilyGo T3S3
+  LoRaRadio = new Module(Pin(GPIO_LORA_CS), lora_di1, Pin(GPIO_LORA_RST), lora_busy);
   if (RADIOLIB_ERR_NONE == LoRaRadio.begin(Lora.frequency)) {
     LoraConfigSx126x();
     LoRaRadio.setDio1Action(LoraOnReceiveSx126x);
