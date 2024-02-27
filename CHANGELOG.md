@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
 - Shutter inverted using internal commands (#20752)
 - HASPmota PSRAM memory leak (#20818)
+- Berry Memory leak in `import re`
 
 ### Removed
 
