@@ -31,9 +31,9 @@
 
 void LoraOnCadDoneSx127x(boolean signalDetected) {
   if (signalDetected) {                    // detect preamble
-
+#ifdef USE_LORA_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Signal detected"));
-    
+#endif    
     LoRa.receive();                        // put the radio into continuous receive mode
   } else {
     LoRa.channelActivityDetection();       // try next activity dectection

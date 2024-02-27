@@ -22,8 +22,8 @@
  * - SPI_MOSI
  * - LoRa_CS
  * - LoRa_Rst
- * - Lora_Busy (Tasmota currently does not support user config of GPIO34 on ESP32S3
- * - Lora_DI1  (Tasmota currently does not support user config of GPIO33 on ESP32S3
+ * - Lora_Busy
+ * - Lora_DI1
 \*********************************************************************************************/
 
 #include <RadioLib.h>
@@ -46,10 +46,10 @@ int LoraReceiveSx126x(char* data) {
   int state = LoRaRadio.readData((uint8_t*)data, LORA_MAX_PACKET_LENGTH -1);
   if (RADIOLIB_ERR_NONE == state) { 
     if (!Lora.sendFlag) {
-      // Find end of raw data being non-zero (No way to know raw data length)
-      packet_size = LORA_MAX_PACKET_LENGTH;
-      while (packet_size-- && (0 == data[packet_size]));
-      if (0 != data[packet_size]) { packet_size++; }
+      packet_size = LoRaRadio.getPacketLength();
+#ifdef USE_LORA_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Packet %d, Rcvd %32_H"), packet_size, data);
+#endif
     }
   }
   else if (RADIOLIB_ERR_CRC_MISMATCH == state) {
@@ -72,36 +72,45 @@ int LoraReceiveSx126x(char* data) {
 
 bool LoraSendSx126x(char* data, uint32_t len) {
   Lora.sendFlag = true;
-//  int state = LoRaRadio.startTransmit(data, len);
-//  return (RADIOLIB_ERR_NONE == state);
+#ifdef USE_LORA_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Len %d, Send %*_H"), len, len + 2, data);
+#endif
+/*
+  int state = LoRaRadio.startTransmit(data, len);
+  return (RADIOLIB_ERR_NONE == state);
+*/
   // https://learn.circuit.rocks/battery-powered-lora-sensor-node
   uint32_t retry_CAD = 0;
   uint32_t retry_send = 0;
   bool send_success = false;
   while (!send_success) {
-//    time_t lora_time = millis();
+#ifdef USE_LORA_DEBUG
+    time_t lora_time = millis();
+#endif
     // Check 200ms for an opportunity to send
     while (LoRaRadio.scanChannel() != RADIOLIB_CHANNEL_FREE) {
       retry_CAD++;
       if (retry_CAD == 20) {
         // LoRa channel is busy too long, give up
-
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Channel is too busy, give up"));
-
+#ifdef USE_LORA_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Channel is too busy, give up"));
+#endif
         retry_send++;
         break;
       }
     }
-
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: CAD finished after %ldms tried %d times"), (millis() - loraTime), retryCAD);
-
+#ifdef USE_LORA_DEBUG
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: CAD finished after %ldms tried %d times"), (millis() - lora_time), retry_CAD);
+#endif
     if (retry_CAD < 20) {
       // Channel is free, start sending
-//      lora_time = millis();
+#ifdef USE_LORA_DEBUG
+      lora_time = millis();
+#endif
       int status = LoRaRadio.transmit(data, len);
-
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Transmit finished after %ldms with status %d"), (millis() - loraTime), status);
-
+#ifdef USE_LORA_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Transmit finished after %ldms with status %d"), (millis() - lora_time), status);
+#endif
       if (status == RADIOLIB_ERR_NONE) {
         send_success = true;
       }
@@ -110,9 +119,9 @@ bool LoraSendSx126x(char* data, uint32_t len) {
       }
     }
     if (retry_send == 3) {
-
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Failed 3 times to send data, giving up"));
-
+#ifdef USE_LORA_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Failed 3 times to send data, giving up"));
+#endif
       send_success = true;
     }
   }
@@ -120,15 +129,15 @@ bool LoraSendSx126x(char* data, uint32_t len) {
 }
 
 bool LoraConfigSx126x(void) {
-  LoRaRadio.setFrequency(Lora.frequency);
-  LoRaRadio.setBandwidth(Lora.bandwidth);
-  LoRaRadio.setSpreadingFactor(Lora.spreading_factor);
   LoRaRadio.setCodingRate(Lora.coding_rate);
   LoRaRadio.setSyncWord(Lora.sync_word);
-  LoRaRadio.setOutputPower(Lora.output_power);
   LoRaRadio.setPreambleLength(Lora.preamble_length);
   LoRaRadio.setCurrentLimit(Lora.current_limit);
   LoRaRadio.setCRC(Lora.crc_bytes);
+  LoRaRadio.setSpreadingFactor(Lora.spreading_factor);
+  LoRaRadio.setBandwidth(Lora.bandwidth);
+  LoRaRadio.setFrequency(Lora.frequency);
+  LoRaRadio.setOutputPower(Lora.output_power);
   if (Lora.implicit_header) { 
     LoRaRadio.implicitHeader(Lora.implicit_header);
   } else { 
@@ -138,11 +147,7 @@ bool LoraConfigSx126x(void) {
 }
 
 bool LoraInitSx126x(void) {
-  int lora_di1 = Pin(GPIO_LORA_DI1);
-  if (lora_di1 == -1) { lora_di1 = 33; }    // Workaround support user config of GPIO33 on ESP32S3 for LilyGo T3S3
-  int lora_busy = Pin(GPIO_LORA_BUSY);
-  if (lora_busy == -1) { lora_busy = 34; }  // Workaround support user config of GPIO34 on ESP32S3 for LilyGo T3S3
-  LoRaRadio = new Module(Pin(GPIO_LORA_CS), lora_di1, Pin(GPIO_LORA_RST), lora_busy);
+  LoRaRadio = new Module(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_DI1), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_BUSY));
   if (RADIOLIB_ERR_NONE == LoRaRadio.begin(Lora.frequency)) {
     LoraConfigSx126x();
     LoRaRadio.setDio1Action(LoraOnReceiveSx126x);
