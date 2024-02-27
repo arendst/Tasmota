@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v13.4.0.1
 ### Added
 - Experimental support for LoRa
+- Support for AMS5915/AMS6915 temperature and pressure sensors [#20814](https://github.com/arendst/Tasmota/issues/20814)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - TasMesh support for LWT messages [#20392](https://github.com/arendst/Tasmota/issues/20392)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
@@ -140,5 +141,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
+- HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 
 ### Removed

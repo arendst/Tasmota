@@ -304,8 +304,8 @@ a_features = [[
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
     "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
     ],[
-    "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","",
-    "","","","",
+    "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
+    "USE_SPI_LORA","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -339,7 +339,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.3.0.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.4.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

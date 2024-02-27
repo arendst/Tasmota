@@ -84,7 +84,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_70_1_hdmi_cec           | @s-hadinger
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro
-| xdrv_73                      |
+| xdrv_73_lora                 | @arendst
 | xdrv_74                      |
 | xdrv_75                      |
 | xdrv_76                      |
@@ -107,6 +107,7 @@ In addition to @arendst the following code is mainly owned by:
 |                              |
 | xdrv_121_gpioviewer          | @arendst
 | xdrv_122_file_settings_demo  | @arendst
+| xdrv_122_file_json_settings_demo | @arendst
 | xdrv_127_debug               | @arendst
 |                              |
 | Tasmota Sensors              |
@@ -224,6 +225,12 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_108_tc74                | Michael Loftis
 | xsns_109_sgp4x               | Andrew Klaus
 | xsns_110_max17043            | Vincent de Groot
+| xsns_111_ens16x              | Christoph Friese
+| xsns_112_ens210              | Christoph Friese
+| xsns_113_hc8                 | Daniel Maier
+| xsns_114_amsx915             | Bastian Urschel
+|                              |
+| xsns_127_esp32_sensors       | @arendst
 |                              |
 | Libraries                    |
 |                              |

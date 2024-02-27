@@ -906,8 +906,12 @@ constexpr uint32_t feature[] = {
 #ifdef USE_GPIO_VIEWER
   0x00000004 |  // xdrv_121_gpioviewer.ino
 #endif
-//  0x00000008 |  // 
-//  0x00000010 |  // 
+#if defined(USE_I2C) && defined(USE_AMSX915)
+  0x00000008 |  // xsns_114_amsx915.ino
+#endif
+#if defined(USE_SPI) && defined(USE_SPI_LORA)
+  0x00000010 |  // xdrv_73_9_lora.ino
+#endif
 //  0x00000020 |  // 
 //  0x00000040 |  // 
 //  0x00000080 |  // 
