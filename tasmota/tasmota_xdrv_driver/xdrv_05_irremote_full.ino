@@ -72,7 +72,7 @@ def ir_expand(ir_compact):
 #endif
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
-                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY };
+                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY, IE_INVALID_HEXDATA };
 
 const char kIrRemoteCommands[] PROGMEM = "|"
   D_CMND_IRHVAC "|" D_CMND_IRSEND ; // No prefix
@@ -544,6 +544,40 @@ void CmndIrHvac(void)
   if (error != IE_RESPONSE_PROVIDED) { IrRemoteCmndResponse(error); }    // otherwise response was already provided
 }
 
+// Helper function
+// Reverse an arbitrary long field of bits
+// Code produced by Mistral chatbot
+void reverseBits(uint8_t* arr, int n) {
+    int numBytes = (n + 7) / 8; // number of bytes needed to represent n bits
+
+    // reverse bits in each byte
+    for(int i = 0; i < numBytes; i++) {
+        arr[i] = (arr[i] & 0x55) << 1 | (arr[i] & 0xAA) >> 1;
+        arr[i] = (arr[i] & 0x33) << 2 | (arr[i] & 0xCC) >> 2;
+        arr[i] = (arr[i] & 0x0F) << 4 | (arr[i] & 0xF0) >> 4;
+    }
+
+    // reverse bytes
+    for(int i = 0; i < numBytes / 2; i++) {
+        uint8_t temp = arr[i];
+        arr[i] = arr[numBytes - i - 1];
+        arr[numBytes - i - 1] = temp;
+    }
+
+    // reverse bits across bytes
+    int bitIndex = 0;
+    for(int i = numBytes - 1; i >= 0; i--) {
+        uint8_t byte = arr[i];
+        for(int j = 7; j >= 0 && bitIndex < n; j--, bitIndex++) {
+            if((byte >> j) & 1) {
+                arr[bitIndex / 8] |= 1 << (7 - (bitIndex % 8));
+            } else {
+                arr[bitIndex / 8] &= ~(1 << (7 - (bitIndex % 8)));
+            }
+        }
+    }
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -552,6 +586,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 {
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
+  // IRsend {"Protocol":"CARRIER_AC84","Bits":84,"Data":0x0C04233200120012001204}
   RemoveSpace(XdrvMailbox.data);    // TODO is this really needed?
   JsonParser parser(XdrvMailbox.data);
   JsonParserObject root = parser.getRootObject();
@@ -567,30 +602,70 @@ uint32_t IrRemoteCmndIrSendJson(void)
   value = root[PSTR(D_JSON_IRHVAC_PROTOCOL)];
   if (root) { protocol = strToDecodeType(value.getStr()); }
   if (decode_type_t::UNKNOWN == protocol) { return IE_UNSUPPORTED_PROTOCOL; }
+  AddLog(LOG_LEVEL_INFO, PSTR("IRS: protocol %d"), protocol);
 
   uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
   uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
   int8_t channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
-
-  uint64_t data;
-  value = root[PSTR(D_JSON_IR_DATALSB)];
-  if (root) { data = reverseBitsInBytes64(value.getULong()); }    // accept LSB values
-  value = root[PSTR(D_JSON_IR_DATA)];
-  if (value) { data = value.getULong(); }       // or classical MSB (takes priority)
   if (0 == bits) { return IE_SYNTAX_IRSEND; }
-
   // check if the IRSend<x> is greater than repeat, but can be overriden with JSON
   if (XdrvMailbox.index > repeat + 1) { repeat = XdrvMailbox.index - 1; }
 
-  char dvalue[32];
-  char hvalue[32];
-  // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
-  //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
+  bool success = false;
+  if (bits <= 64) {
+    uint64_t data64;              // for 64 bits and less
+    value = root[PSTR(D_JSON_IR_DATALSB)];
+    if (value) { data64 = reverseBitsInBytes64(value.getULong()); }    // accept LSB values
+    value = root[PSTR(D_JSON_IR_DATA)];
+    if (value) { data64 = value.getULong(); }       // or classical MSB (takes priority)
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
-  IRsend irsend = IrSendInitGPIO(channel);
-  bool success = irsend.send(protocol, data, bits, repeat);
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+    IRsend irsend = IrSendInitGPIO(channel);
+    // AddLog(LOG_LEVEL_INFO, PSTR("IRS: protocol %d, bits %d, data 0x%08X, repeat %d"), protocol, bits, (uint32_t) data64, repeat);
+    success = irsend.send(protocol, data64, bits, repeat);
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
+
+  } else {
+    uint8_t * data65 = nullptr;   // for 65 bits and more
+    // bits >= 65
+    // Always MSB - LSB conversion would cost some decent
+    const char * data_hex = nullptr;
+    bool lsb = false;
+    value = root[PSTR(D_JSON_IR_DATALSB)];
+    if (value) { data_hex = value.getStr(); lsb = true; }
+    value = root[PSTR(D_JSON_IR_DATA)];
+    if (value) { data_hex = value.getStr(); lsb = false; }
+
+    if (!data_hex) { return IE_INVALID_HEXDATA; }
+    // check that the value starts with "0x" or "0X"
+    if ((data_hex[0] != '0') || ((data_hex[1] != 'x') && (data_hex[1] != 'X'))) {
+      AddLog(LOG_LEVEL_INFO, PSTR("IRS: data or data_lsb must start with '0x'"));
+      return IE_INVALID_HEXDATA;
+    }
+    data_hex += 2;        // skip '0x'
+    size_t data_hex_len = strlen_P(data_hex);
+
+    // convert hex string to bytes
+    size_t num_bytes = (bits + 7) / 8;
+
+    if (num_bytes * 2 != data_hex_len) {
+      AddLog(LOG_LEVEL_INFO, PSTR("IRS: data or data_lsb must have %d digits"), num_bytes * 2);
+      return IE_INVALID_HEXDATA;
+    }
+
+    uint8_t data_bytes[num_bytes];        // allocate on stack since it's small enough
+    if (HexToBytes(data_hex, data_bytes, &num_bytes) <= 0) { return IE_INVALID_HEXDATA; }
+
+    if (lsb) {
+      reverseBits(data_bytes, bits);
+    }
+
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+    IRsend irsend = IrSendInitGPIO(channel);
+    // AddLog(LOG_LEVEL_INFO, PSTR("IRS: protocol %d, bits %d, data 0x%08X"), protocol, bits, *(uint32_t*)data_bytes);
+    success = irsend.send(protocol, data_bytes, (bits + 7) / 8);
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
+  }
 
   if (!success) {
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -858,6 +933,9 @@ void IrRemoteCmndResponse(uint32_t error)
       break;
     case IE_INVALID_JSON:
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
+      break;
+    case IE_INVALID_HEXDATA:
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_HEXDATA));
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
