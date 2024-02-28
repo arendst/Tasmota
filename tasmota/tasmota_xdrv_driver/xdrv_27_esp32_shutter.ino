@@ -294,7 +294,7 @@ bool ShutterButtonHandlerMulti(void)
 
       // reset button to default
       Button.press_counter[button_index] = 0;
-        
+
       CmndShutterPosition();
     }
 
@@ -303,7 +303,7 @@ bool ShutterButtonHandlerMulti(void)
       char scommand[CMDSZ];
       char stopic[TOPSZ];
       for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-        if ((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all)) {
+        if (((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all))  && 0 == (ShutterSettings.shutter_options[i] & 2) ) {
           snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
           GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
           Response_P("%d", position);
@@ -318,7 +318,7 @@ bool ShutterButtonHandlerMulti(void)
   ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, Shutter[shutter_index].button_simu_pressed ? 0 : button_index+1, button_press_counter);
   ResponseJsonEnd();
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-  
+
   // reset simu pressed record
   Shutter[shutter_index].button_simu_pressed = 0;
 
