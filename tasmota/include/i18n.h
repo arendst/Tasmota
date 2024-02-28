@@ -537,6 +537,7 @@
 // Commands xdrv_05_irremote.ino
 #define D_CMND_IRSEND "IRSend"
   #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_INVALID_HEXDATA "Invalid Hex data"
   #define D_JSON_INVALID_RAWDATA "Invalid RawData"
   #define D_JSON_NO_BUFFER_SPACE "No buffer space"
   #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
