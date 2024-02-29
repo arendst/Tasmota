@@ -27,8 +27,11 @@
  * - LoRa_DIO0
 \*********************************************************************************************/
 
+//#define USE_LORA_SX127X_CAD
+
 #include <LoRa.h>                          // extern LoRaClass LoRa;
 
+#ifdef USE_LORA_SX127X_CAD
 void LoraOnCadDoneSx127x(boolean signalDetected) {
   if (signalDetected) {                    // detect preamble
 #ifdef USE_LORA_DEBUG
@@ -39,6 +42,7 @@ void LoraOnCadDoneSx127x(boolean signalDetected) {
     LoRa.channelActivityDetection();       // try next activity dectection
   }
 }
+#endif  // USE_LORA_SX127X_CAD
 
 // this function is called when a complete packet is received by the module
 void LoraOnReceiveSx127x(int packet_size) {
@@ -69,9 +73,9 @@ int LoraReceiveSx127x(char* data) {
 
   Lora.rssi = LoRa.packetRssi();
   Lora.snr = LoRa.packetSnr();
-
+#ifdef USE_LORA_SX127X_CAD
   LoRa.channelActivityDetection();         // put the radio into CAD mode
-
+#endif  // USE_LORA_SX127X_CAD
   return packet_size;
 }
 
@@ -112,10 +116,13 @@ bool LoraInitSx127x(void) {
   LoRa.setPins(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_DI0));
   if (LoRa.begin(Lora.frequency * 1000 * 1000)) {
     LoraConfigSx127x();
-    LoRa.onCadDone(LoraOnCadDoneSx127x);   // register the channel activity dectection callback
     LoRa.onReceive(LoraOnReceiveSx127x);
-//    LoRa.receive();
+#ifdef USE_LORA_SX127X_CAD
+    LoRa.onCadDone(LoraOnCadDoneSx127x);   // register the channel activity dectection callback
     LoRa.channelActivityDetection();
+#else
+    LoRa.receive();
+#endif  // USE_LORA_SX127X_CAD
     return true;
   }
   return false;

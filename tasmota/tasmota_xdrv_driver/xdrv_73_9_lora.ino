@@ -76,6 +76,7 @@ void LoraInit(void) {
     LoraDefaults();
 
     char hardware[20];
+    strcpy_P(hardware, PSTR("Not"));
     if (false) {
     }
 #ifdef USE_LORA_SX127X
@@ -104,9 +105,6 @@ void LoraInit(void) {
       }
     }
 #endif  // USE_LORA_SX126X
-    else {
-      strcpy_P(hardware, PSTR("Not"));
-    }
     AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: %s initialized"), hardware);
   }
 }
