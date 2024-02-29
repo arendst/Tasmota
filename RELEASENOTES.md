@@ -116,11 +116,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.4.0.1
+## Changelog v13.4.0.2
 ### Added
 - Experimental support for LoRa
 - Support for AMS5915/AMS6915 temperature and pressure sensors [#20814](https://github.com/arendst/Tasmota/issues/20814)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
+- IR support data larger than 64 bits [#20831](https://github.com/arendst/Tasmota/issues/20831)
 - TasMesh support for LWT messages [#20392](https://github.com/arendst/Tasmota/issues/20392)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - Berry add explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
@@ -141,6 +142,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
+- Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 
 ### Removed
