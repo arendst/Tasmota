@@ -122,7 +122,7 @@ static int m_toptr(bvm *vm)
     if (top >= 1) {
         bvalue *v = be_indexof(vm, 1);
         if (var_type(v) == BE_STRING) {
-            be_pushcomptr(vm, be_tostring(vm, 1));
+            be_pushcomptr(vm, (void*)be_tostring(vm, 1));
             be_return(vm);
         } else if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
             be_pushcomptr(vm, var_toobj(v));

@@ -8,6 +8,7 @@
 #include "be_constobj.h"
 #include "be_mem.h"
 #include "be_object.h"
+#include "be_exec.h"
 #include "../../re1.5/re1.5.h"
 
 /********************************************************************

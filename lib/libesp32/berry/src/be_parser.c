@@ -197,6 +197,7 @@ static void begin_block(bfuncinfo *finfo, bblockinfo *binfo, int type)
     binfo->type = (bbyte)type;
     binfo->hasupval = 0;
     binfo->sideeffect = 0;
+    binfo->lastjmp = 0;
     binfo->beginpc = finfo->pc; /* set starting pc for this block */
     binfo->nactlocals = (bbyte)be_list_count(finfo->local); /* count number of local variables in previous block */
     if (type & BLOCK_LOOP) {
