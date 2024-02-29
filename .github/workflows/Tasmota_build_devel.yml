@@ -120,7 +120,8 @@ jobs:
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add SHA to footer
         run: |
-          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
+          SHA=${{ env.COMMIT_SHA }}
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"$SHA-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
@@ -161,7 +162,8 @@ jobs:
           pip install -U platformio
       - name: Add SHA to footer
         run: |
-          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
+          SHA=${{ env.COMMIT_SHA }}
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"$SHA-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
@@ -216,7 +218,8 @@ jobs:
           path: ./firmware
       - name: Add SHA to footer
         run: |
-          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
+          SHA=${{ env.COMMIT_SHA }}
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"$SHA-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
@@ -255,7 +258,8 @@ jobs:
           path: ./firmware
       - name: Add SHA to footer
         run: |
-          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
+          SHA=${{ env.COMMIT_SHA }}
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"$SHA-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
