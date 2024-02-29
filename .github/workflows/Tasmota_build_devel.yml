@@ -118,6 +118,9 @@ jobs:
           pip install -U platformio
           cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
           cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Add SHA to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
@@ -156,6 +159,9 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+      - name: Add SHA to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
@@ -208,9 +214,9 @@ jobs:
         with:
           name: firmware_safeboot
           path: ./firmware
-      - name: Display downloaded files
+      - name: Add SHA to footer
         run: |
-          ls -R ./firmware/
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
@@ -247,9 +253,9 @@ jobs:
         with:
           name: firmware_safeboot
           path: ./firmware
-      - name: Display downloaded files
+      - name: Add SHA to footer
         run: |
-          ls -R ./firmware/
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT = \"\"${{ env.COMMIT_SHA }}\"-\"/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
