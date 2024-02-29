@@ -130,6 +130,8 @@
 
 #define TUYA_BYTE_TIMEOUT_MS   500
 
+#define HEARTBEAT_INTERVAL_S   15
+
 #define TUYAREAD32FROMPTR(x) (((uint8_t*)x)[0] << 24 | ((uint8_t*)x)[1] << 16 | ((uint8_t*)x)[2] << 8 | ((uint8_t*)x)[3])
 
 enum {
@@ -2529,7 +2531,7 @@ bool Xdrv16(uint32_t function) {
         //if (TuyaSerial && pTuya->wifi_state != TuyaGetTuyaWifiState()) { TuyaSetWifiLed(); }
         if (!pTuya->low_power_mode) {
           pTuya->heartbeat_timer++;
-          if (pTuya->heartbeat_timer > 10) {
+          if (pTuya->heartbeat_timer >= HEARTBEAT_INTERVAL_S) {
             pTuya->heartbeat_timer = 0;
             pTuya->send_heartbeat = 1;
           }
