@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.2]
 ### Added
+- Berry add `path.rename()`
 
 ### Breaking Changed
 
