@@ -620,7 +620,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MCP23XXX_DRV
   AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX,
 #endif  // USE_MCP23XXX_DRV
-#ifdef ESP32
 #ifdef USE_SPI_LORA
   AGPIO(GPIO_LORA_CS),
   AGPIO(GPIO_LORA_RST),
@@ -632,7 +631,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LORA_DI4),
   AGPIO(GPIO_LORA_DI5),
 #endif  // USE_SPI_LORA
-#endif  // ESP32
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)
