@@ -24,7 +24,7 @@
   "frameworks": [
     "arduino"
   ],
-  "name": "Espressif Generic ESP32 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+  "name": "Espressif Generic ESP32-solo1 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [
@@ -43,6 +43,6 @@
   "download": {
     "speed": 230400
   },
-  "url": "https://en.wikipedia.org/wiki/ESP32",
+  "url": "https://www.espressif.com/sites/default/files/documentation/esp32-solo-1_datasheet_en.pdf",
   "vendor": "Espressif"
 }
