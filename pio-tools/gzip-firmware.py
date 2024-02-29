@@ -4,6 +4,7 @@ import os
 import shutil
 import tasmotapiolib
 import gzip
+from colorama import Fore, Back, Style
 
 def map_gzip(source, target, env):
     # create string with location and file names based on variant
@@ -50,14 +51,12 @@ if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATF
         GZ_FIRMWARE_SIZE = gzip_file.stat().st_size
 
         if ORG_FIRMWARE_SIZE > 995326 and env["PIOPLATFORM"] != "espressif32":
-            print(
-                "\u001b[31;1m!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! \u001b[0m".format(
+            print(Fore.RED + "!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! ".format(
                     ORG_FIRMWARE_SIZE
                 )
             )
         else:
-            print(
-                "Compression reduced firmware size to {:.0f}% (was {} bytes, now {} bytes)".format(
+            print(Fore.GREEN + "Compression reduced firmware size to {:.0f}% (was {} bytes, now {} bytes)".format(
                     (GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100,
                     ORG_FIRMWARE_SIZE,
                     GZ_FIRMWARE_SIZE,

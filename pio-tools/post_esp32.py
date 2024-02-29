@@ -103,7 +103,7 @@ def esp32_detect_flashsize():
                         return size, True
             return "4MB",False
         except subprocess.CalledProcessError as exc:
-            print("Did get chip info failed with " + str(exc))
+            print(Fore.YELLOW + "Did get chip info failed with " + str(exc))
             return "4MB",False
 
 flash_size_from_esp, flash_size_was_overridden = esp32_detect_flashsize()
@@ -166,7 +166,7 @@ def esp32_build_filesystem(fs_size):
                     print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
                 open(target, "wb").write(response.content)
             else:
-                print("Failed to download: ",file)
+                print(Fore.RED + "Failed to download: ",file)
             continue
         if os.path.isdir(file):
             shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
