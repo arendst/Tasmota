@@ -84,7 +84,7 @@ static int codeABx(bfuncinfo *finfo, bopcode op, int a, int bx)
 /* returns false if the move operation happened, or true if there was a register optimization and `b` should be replaced by `a` */
 static bbool code_move(bfuncinfo *finfo, int a, int b)
 {
-    if (finfo->pc) {  /* If not the first instruction of the function */
+    if (finfo->pc > finfo->binfo->lastjmp) {  /* If not the first instruction of the function */
         binstruction *i = be_vector_end(&finfo->code);  /* get the last instruction */
         bopcode op = IGET_OP(*i);
         if (op <= OP_LDNIL) { /* binop or unop */
@@ -171,6 +171,13 @@ static int get_jump(bfuncinfo *finfo, int pc)
 
 static void patchlistaux(bfuncinfo *finfo, int list, int vtarget, int dtarget)
 {
+    /* mark the last destination point of a jump to avoid false register optimization */
+    if (vtarget > finfo->binfo->lastjmp) {
+        finfo->binfo->lastjmp = vtarget;
+    }
+    if (dtarget > finfo->binfo->lastjmp) {
+        finfo->binfo->lastjmp = dtarget;
+    }
     while (list != NO_JUMP) {
         int next = get_jump(finfo, list);
         if (isjumpbool(finfo, list)) {
