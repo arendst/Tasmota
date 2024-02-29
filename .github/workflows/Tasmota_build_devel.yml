@@ -30,6 +30,7 @@ jobs:
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
           COMMIT_SHA_SHORT=${COMMIT_SHA_LONG::7}
           echo "COMMIT_SHA=$COMMIT_SHA_SHORT" >> $GITHUB_ENV
+          echo $COMMIT_SHA_SHORT
           echo ${{ env.COMMIT_SHA }}
       - name: Install clang compiler
         run: |
