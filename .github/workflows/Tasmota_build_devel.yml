@@ -25,6 +25,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Get and store commit SHA
+        run: |
+          COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
+          COMMIT_SHA_SHORT=${COMMIT_SHA_LONG::7}
+          echo "COMMIT_SHA=$COMMIT_SHA_SHORT" >> $GITHUB_ENV
       - name: Install clang compiler
         run: |
           sudo apt-get install -f clang
