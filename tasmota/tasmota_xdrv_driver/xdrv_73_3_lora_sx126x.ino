@@ -70,7 +70,7 @@ int LoraReceiveSx126x(char* data) {
   return packet_size;
 }
 
-bool LoraSendSx126x(char* data, uint32_t len) {
+bool LoraSendSx126x(uint8_t* data, uint32_t len) {
   Lora.sendFlag = true;
 #ifdef USE_LORA_DEBUG
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Len %d, Send %*_H"), len, len + 2, data);

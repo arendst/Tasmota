@@ -51,7 +51,7 @@ struct {
   bool (* Config)(void);
   bool (* Available)(void);
   int (* Receive)(char*);
-  bool (* Send)(char*, uint32_t);
+  bool (* Send)(uint8_t*, uint32_t);
   float rssi;
   float snr;
   float frequency;                     // 868.0 MHz

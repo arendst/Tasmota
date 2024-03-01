@@ -182,7 +182,7 @@ void CmndLoraSend(void) {
         len = 0;
       }
       if (len) {
-        Lora.Send(data, len);
+        Lora.Send((uint8_t*)data, len);
       }
       ResponseCmndDone();
     }

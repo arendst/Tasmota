@@ -82,10 +82,10 @@ int LoraReceiveSx127x(char* data) {
   return packet_size;
 }
 
-bool LoraSendSx127x(char* data, uint32_t len) {
+bool LoraSendSx127x(uint8_t* data, uint32_t len) {
 //  Lora.sendFlag = true;
   LoRa.beginPacket(Lora.implicit_header);  // start packet
-  LoRa.write((uint8_t*)data, len);         // send message
+  LoRa.write(data, len);         // send message
   LoRa.endPacket();                        // finish packet and send it
   LoRa.receive();                          // go back into receive mode
   return true;
