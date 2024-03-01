@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Berry `path.rename()` (#20840)
 
 ### Breaking Changed
+- Drop support for old (insecure) fingerprint format
 
 ### Changed
 
